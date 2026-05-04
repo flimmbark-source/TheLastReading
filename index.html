@@ -25,25 +25,25 @@
   .scoring-sheet .r .mult{width:34px;margin-left:6px}
   #abilityRef .r{font-size:11px}
 
-  .spread-wrap{margin-top:8px}
-  .spread{min-height:132px;padding:34px 2px 0;justify-content:center}
-  .slot{flex:0 0 72px;width:72px;height:108px;margin-left:-3px;border-radius:5px}
+  .spread-wrap{position:fixed;left:0;right:0;top:46%;bottom:auto;transform:translateY(-50%);margin-top:0;z-index:12}
+  .spread{min-height:136px;padding:24px 2px 0;justify-content:center}
+  .slot{flex:0 0 80px;width:80px;height:120px;margin-left:-10px;border-radius:5px}
   .slot .num{font-size:9px;top:3px;left:5px}
   .spread-actions{top:-24px}
   .spread-actions button{padding:4px 10px;font-size:11px}
-  .score-preview{top:-58px;max-width:calc(100vw - 24px);white-space:normal;text-align:center;border-radius:10px;font-size:11px;line-height:1.25;padding:5px 9px}
+  .score-preview{top:-48px;max-width:calc(100vw - 24px);white-space:normal;text-align:center;border-radius:10px;font-size:11px;line-height:1.25;padding:5px 9px}
 
-  .card{width:72px;height:108px;border-radius:5px;grid-template-rows:12px 1fr;border-width:1px}
-  .title{font-size:5px;line-height:12px;letter-spacing:.45px;padding:0 9px}
-  .sym{font-size:42px}
-  .plaque{font-size:6px;padding:2px 5px;letter-spacing:.45px;max-width:64px;overflow:hidden;text-overflow:ellipsis}
-  .seal{width:13px;height:13px;font-size:7px}
+  .card{width:80px;height:120px;border-radius:5px;grid-template-rows:13px 1fr;border-width:1px}
+  .title{font-size:5.8px;line-height:13px;letter-spacing:.45px;padding:0 9px}
+  .sym{font-size:47px}
+  .plaque{font-size:6.5px;padding:2px 6px;letter-spacing:.45px;max-width:72px;overflow:hidden;text-overflow:ellipsis}
+  .seal{width:14px;height:14px;font-size:7.5px}
   .seal.tr{top:4px;right:4px}
 
-  .handDock{height:78px}
-  .hand .card{margin-left:-34px}
-  .hand .card:hover,.hand .card.sel,.hand .card.ability-picked{transform:translateY(-58px) rotate(0deg)}
-  .ability-prompt{bottom:142px;width:calc(100vw - 16px);padding:8px 10px;gap:8px;align-items:flex-start}
+  .handDock{height:88px}
+  .hand .card{margin-left:-38px}
+  .hand .card:hover,.hand .card.sel,.hand .card.ability-picked{transform:translateY(-66px) rotate(0deg)}
+  .ability-prompt{bottom:278px;width:calc(100vw - 16px);padding:8px 10px;gap:8px;align-items:flex-start}
   .ability-prompt h3{font-size:13px}
   .ability-prompt p{font-size:11px;line-height:1.25}
   .ability-prompt button{margin-left:auto;flex:0 0 auto}
@@ -64,11 +64,11 @@
 }
 
 @media (max-width: 380px){
-  .slot{flex-basis:66px;width:66px;height:99px;margin-left:-4px}
-  .card{width:66px;height:99px}
-  .sym{font-size:38px}
-  .plaque{font-size:5.5px;max-width:58px}
-  .hand .card{margin-left:-32px}
+  .slot{flex-basis:76px;width:76px;height:114px;margin-left:-10px}
+  .card{width:76px;height:114px}
+  .sym{font-size:44px}
+  .plaque{font-size:6px;max-width:68px}
+  .hand .card{margin-left:-37px}
   .scoring-sheet td{font-size:10px}
   .shop-grid{grid-template-columns:1fr}
 }
