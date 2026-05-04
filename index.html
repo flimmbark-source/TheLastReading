@@ -26,14 +26,14 @@
   #abilityRef .r{font-size:11px}
 
   .spread-wrap{position:fixed;left:0;right:0;top:46%;bottom:auto;transform:translateY(-50%);margin-top:0;z-index:12}
-  .spread{min-height:168px;padding:24px 2px 0;justify-content:center}
-  .slot{flex:0 0 100px;width:100px;height:150px;margin-left:-28px;border-radius:7px}
+  .spread{min-height:168px;padding:24px 8px 0;justify-content:center;gap:4px}
+  .slot{flex:0 0 min(94px, calc((100vw - 36px) / 5));width:min(94px, calc((100vw - 36px) / 5));height:calc(min(94px, calc((100vw - 36px) / 5)) * 1.5);margin-left:0;border-radius:7px}
   .slot .num{font-size:9px;top:3px;left:5px}
   .spread-actions{top:-24px}
   .spread-actions button{padding:4px 10px;font-size:11px}
   .score-preview{top:-86px;max-width:calc(100vw - 24px);white-space:normal;text-align:center;border-radius:10px;font-size:11px;line-height:1.25;padding:5px 9px}
 
-  .card{width:100px;height:150px;border-radius:7px;grid-template-rows:16px 1fr;border-width:1px}
+  .card{width:min(94px, calc((100vw - 36px) / 5));height:calc(min(94px, calc((100vw - 36px) / 5)) * 1.5);border-radius:7px;grid-template-rows:16px 1fr;border-width:1px}
   .title{font-size:7px;line-height:16px;letter-spacing:.55px;padding:0 11px}
   .sym{font-size:60px}
   .plaque{font-size:7.8px;padding:3px 8px;letter-spacing:.55px;max-width:90px;overflow:hidden;text-overflow:ellipsis}
@@ -63,11 +63,18 @@
   .ghost.big{font-size:19px}
 }
 
+@media (max-width: 430px){
+  .slot{flex-basis:min(88px, calc((100vw - 34px) / 5));width:min(88px, calc((100vw - 34px) / 5));height:calc(min(88px, calc((100vw - 34px) / 5)) * 1.5);margin-left:0}
+  .card{width:min(88px, calc((100vw - 34px) / 5));height:calc(min(88px, calc((100vw - 34px) / 5)) * 1.5)}
+  .sym{font-size:52px}
+  .plaque{font-size:6.8px;max-width:78px}
+}
+
 @media (max-width: 380px){
-  .slot{flex-basis:92px;width:92px;height:138px;margin-left:-25px}
-  .card{width:92px;height:138px}
-  .sym{font-size:55px}
-  .plaque{font-size:7px;max-width:82px}
+  .slot{flex-basis:min(84px, calc((100vw - 32px) / 5));width:min(84px, calc((100vw - 32px) / 5));height:calc(min(84px, calc((100vw - 32px) / 5)) * 1.5);margin-left:0}
+  .card{width:min(84px, calc((100vw - 32px) / 5));height:calc(min(84px, calc((100vw - 32px) / 5)) * 1.5)}
+  .sym{font-size:50px}
+  .plaque{font-size:6.6px;max-width:76px}
   .hand .card{margin-left:-36px}
   .handDock{height:104px}
   .hand .card:hover,.hand .card.sel,.hand .card.ability-picked{transform:translateY(-80px) rotate(0deg)}
