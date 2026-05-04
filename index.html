@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Last Reading — Neighbor/Kin Prototype</title>
+<style>
+  *{box-sizing:border-box} body{margin:0;background:radial-gradient(circle at top,#302214,#0d0907 70%);color:#ead9b5;font-family:system-ui,Segoe UI,sans-serif;min-height:100vh;padding:12px 18px 150px} h1{font:700 22px Georgia,serif;margin:0 0 8px;color:#f0d58a}.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0 14px;padding-right:150px}.score-stack{position:fixed;top:12px;right:18px;z-index:25;display:flex;flex-direction:column;gap:6px;align-items:flex-end}.score-stack .pill{min-width:118px;text-align:left;display:grid;grid-template-columns:58px 1fr;column-gap:10px;align-items:center}.score-stack .pill b{justify-self:center}.pill{background:#1d1410;border:1px solid #70582d;border-radius:999px;padding:7px 11px;font-size:13px}.pill b{color:#ffd978}.threshold-pill{position:absolute;left:50%;transform:translateX(-50%)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;position:relative}.refs-layer{position:fixed;top:104px;left:18px;z-index:30;display:flex;gap:10px;align-items:flex-start;pointer-events:none}.refs-layer .ref{pointer-events:auto;box-shadow:0 12px 34px rgba(0,0,0,.55)}.spread-wrap{position:relative}.score-preview{position:absolute;left:50%;top:-66px;transform:translateX(-50%);z-index:6;background:rgba(22,16,13,.94);border:1px solid #5f4c29;border-radius:999px;padding:5px 12px;font-size:12px;color:#d9c38b;box-shadow:0 8px 24px rgba(0,0,0,.4);white-space:nowrap;pointer-events:none}.score-preview b{color:#ffd978}.score-preview.hidden{display:none}.spread-actions{position:absolute;left:50%;top:-28px;transform:translateX(-50%);z-index:5;display:flex;justify-content:center;align-items:center;pointer-events:none}.spread-actions button{pointer-events:auto;padding:5px 12px}button{background:#ead9b5;color:#20130b;border:1px solid #7a5a2d;border-radius:6px;padding:7px 12px;font-weight:700;cursor:pointer}button:hover{filter:brightness(1.08)}button:disabled{opacity:.35;cursor:not-allowed}.danger{background:#e6a29a}.ref{max-width:720px;background:#16100d;border:1px solid #5f4c29;border-radius:8px;padding:10px 12px;margin:0;font-size:13px;line-height:1.45}.ref.hidden{display:none}.ref table{width:100%;border-collapse:collapse}.ref td{padding:2px 6px}.ref .r{text-align:right;color:#f3cf76;white-space:nowrap}#abilityRef .r{text-align:left;white-space:normal}.scoring-sheet{display:inline-block;width:auto;max-width:max-content;padding:10px 12px}.scoring-sheet table{width:auto}.scoring-sheet td{padding:2px 6px;border-bottom:none;font-size:13px;line-height:1.45}.scoring-sheet .m{color:#9f9a92;padding-left:10px;white-space:nowrap}.scoring-sheet .r{font-variant-numeric:tabular-nums;color:#e6d29a;text-align:left;white-space:nowrap}.scoring-sheet .r .chips{display:inline-block;width:62px;text-align:left}.scoring-sheet .r .mult{display:inline-block;width:42px;text-align:left;margin-left:10px}.scoring-sheet .score-head{color:#cdb883;font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:10px}.scoring-sheet .arcana-row td{padding-top:8px;color:#cdb883;font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:11px}.scoring-sheet .arcana-row:first-child td{padding-top:0}.label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#b99a5d;margin:10px 0 2px}.spread{display:flex;justify-content:center;align-items:flex-start;gap:0;min-height:205px;padding:36px 6px 0;overflow:visible}.slot{flex:0 0 130px;width:130px;height:195px;margin-left:-5px;border:2px dashed #775f3a;border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.045);position:relative;transform:rotate(var(--a));transform-origin:50% -180%;transition:.18s}.slot:first-child{margin-left:0}.slot.empty{cursor:pointer}.slot.empty:hover,.slot.target{background:rgba(98,170,104,.16);border-color:#79c778}.slot .num{position:absolute;top:5px;left:8px;color:#8b7651;font-size:12px}.ability-prompt{position:fixed;left:50%;bottom:234px;transform:translateX(-50%);z-index:35;background:rgba(22,16,13,.96);border:1px solid #856536;border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.55);padding:10px 14px;display:none;align-items:center;gap:12px;max-width:min(92vw,760px)}.ability-prompt.show{display:flex}.ability-prompt h3{margin:0;color:#f0d58a;font:700 14px Georgia,serif}.ability-prompt p{margin:2px 0 0;color:#d0bc8c;font-size:12px}.ability-prompt button:disabled{opacity:.35}.handDock{position:fixed;left:0;right:0;bottom:0;height:126px;display:flex;justify-content:center;align-items:flex-start;background:linear-gradient(transparent,rgba(0,0,0,.7));z-index:20;pointer-events:none}.hand{display:flex;align-items:flex-start;pointer-events:auto}.card{width:130px;height:195px;background:linear-gradient(165deg,#2a1810,#140907);border:2px solid #6b4f25;border-radius:6px;box-shadow:0 5px 14px rgba(0,0,0,.45);display:grid;grid-template-rows:17px 1fr;position:relative;overflow:hidden;cursor:pointer;user-select:none;font-family:Georgia,serif;color:#ecd8a4}.card.major{border-color:#9a7842}.hand .card{margin-left:-50px;transform:rotate(var(--a));transform-origin:50% 140%;transition:.18s}.hand .card:first-child{margin-left:0}.hand .card:hover,.hand .card.sel{transform:translateY(-92px) rotate(0deg);z-index:999!important;box-shadow:0 10px 28px rgba(0,0,0,.75),0 0 0 2px #d4af6a}.hand .card.ability-target{box-shadow:0 0 0 2px #79c778,0 5px 14px rgba(0,0,0,.45)}.hand .card.ability-picked{transform:translateY(-92px) rotate(0deg);z-index:1000!important;box-shadow:0 10px 28px rgba(0,0,0,.75),0 0 0 3px #ffd978}.hand .card.ability-disabled{opacity:.35;filter:grayscale(.5)}.title{font-size:7px;letter-spacing:1px;font-weight:900;text-align:center;line-height:17px;text-transform:uppercase;background:#160b07;color:#d4af6a;border-bottom:1px solid #60451f;padding:0 15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.title.bot{transform:rotate(180deg);border-top:1px solid #60451f;border-bottom:0}.art{position:relative;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#3b2917,#160b07 75%)}.sym{font-size:86px;line-height:1;opacity:.84;text-shadow:0 0 15px rgba(236,193,93,.35)}.plaque{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:linear-gradient(#f0e0bc,#caa86e);color:#1a0d08;border:1px solid #3b2412;border-radius:3px;padding:4px 10px;font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;z-index:2}.scroll{position:absolute;left:8px;right:8px;background:linear-gradient(#d7bd8a,#b89258);color:#231006;border:1px solid #816332;border-radius:2px;font-size:6px;line-height:1.15;text-align:center;font-style:italic;padding:2px 4px}.scroll.t{top:5px}.scroll.b{bottom:5px;transform:rotate(180deg)}.seal{position:absolute;width:19px;height:19px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#cf4e45,#7f1714 72%,#3b0706);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#f5e0b4;z-index:3}.seal.tr{top:7px;right:7px}.seal.bl{bottom:7px;left:7px;transform:rotate(180deg)}.modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}.modal.show{display:flex}.modal.collapsed{background:transparent;align-items:flex-start;justify-content:center;pointer-events:none}.modal.collapsed .box{pointer-events:auto;width:auto;max-width:420px;padding:10px 12px}.modal.collapsed #modalPrompt,.modal.collapsed #choices{display:none}.modal.collapsed .box h2{margin:0;font-size:14px}.modal.collapsed #modalToggle{font-size:12px;padding:4px 9px}.modalHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:5px}#modalToggle{flex:0 0 auto}.box{background:#1b120e;border:1px solid #856536;border-radius:10px;box-shadow:0 18px 50px rgba(0,0,0,.7);padding:16px;width:min(96vw,1180px);max-width:1180px;max-height:88vh;overflow:auto}.box h2{margin:0 0 5px;font:700 18px Georgia,serif;color:#f0d58a}.box p{margin:0 0 12px;color:#d0bc8c}.choices{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,130px));gap:12px;justify-content:center;align-items:start}.summary{max-width:620px;background:#1b120e;border:1px solid #856536;border-radius:10px;padding:16px}.summary.shop-summary{max-width:760px;width:min(88vw,760px)}.shop-grid{display:grid;grid-template-columns:repeat(5,minmax(112px,1fr));gap:8px;margin:10px 0}.shop-card{position:relative;border:1px solid #5f4c29;border-radius:8px;padding:24px 8px 8px;background:rgba(255,255,255,.035);min-height:124px;display:flex;flex-direction:column}.shop-card.affordable{border-color:#6fa36a;background:rgba(90,160,90,.11)}.shop-cost{position:absolute;top:8px;right:8px;color:#ffd978;font-weight:800;font-size:11px}.shop-card p{margin:4px 0 8px;color:#d0bc8c;font-size:11px;line-height:1.2;flex:1}.shop-footer{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto}@media(max-width:900px){.shop-grid{grid-template-columns:repeat(2,minmax(150px,1fr))}}@media(max-width:520px){.shop-grid{grid-template-columns:1fr}}.summary h3{margin:0 0 8px;color:#f0d58a}.summary table{width:100%;border-collapse:collapse}.summary td{padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.08)}.summary .r{text-align:right;color:#ffd978}.meld td{color:#ffb36b}.ghost{position:absolute;left:50%;top:-10px;transform:translateX(-50%);font:900 22px monospace;color:#70d37d;text-shadow:0 2px 4px #000;animation:rise 1.65s forwards;pointer-events:none;z-index:50;overflow:visible}.ghost.big{color:#ff9b52;font-size:26px}@keyframes rise{0%{opacity:0;transform:translate(-50%,0) scale(.6)}12%{opacity:1;transform:translate(-50%,-12px) scale(1.1)}62%{opacity:1;transform:translate(-50%,-34px) scale(1)}100%{opacity:0;transform:translate(-50%,-64px) scale(1)}}.bump{animation:bump .32s}@keyframes bump{45%{transform:rotate(var(--a)) translateY(-12px) scale(1.06)}}
+</style>
+</head>
+<body>
+<h1>The Last Reading</h1>
+<div class="bar"><span class="pill">Reading <b id="reading">1</b>/<b>5</b></span><span class="pill threshold-pill">Threshold <b id="threshold">30</b></span><span class="pill">Discards <b id="discards">3</b></span></div>
+<div class="score-stack"><div class="pill">Score <b id="current">0</b></div><div class="pill">Reserve <b id="pool">0</b></div></div>
+<div class="actions"><button id="scoringBtn" onclick="toggleRef(event)">Scoring</button><button id="abilitiesBtn" onclick="toggleAbilityRef(event)">Abilities</button><button id="mullBtn" onclick="mulligan()" style="display:none">Mulligan</button></div>
+<div class="refs-layer">
+<div id="ref" class="ref hidden scoring-sheet">
+  <table>
+    <tr class="arcana-row"><td>Minor Arcana</td><td class="m"></td><td class="r score-head"><span class="chips">Bonus</span><span class="mult">Multi</span></td></tr>
+    <tr><td>Three of a Rank</td><td class="m">3 cards</td><td class="r"><span class="chips">+10 chips</span><span class="mult">×1.25</span></td></tr>
+    <tr><td>Four of a Rank</td><td class="m">4 cards</td><td class="r"><span class="chips">+12 chips</span><span class="mult">×1.5</span></td></tr>
+    <tr><td>Flush</td><td class="m">4+ cards, same suit</td><td class="r"><span class="chips">+15 chips</span><span class="mult">×1.5</span></td></tr>
+    <tr><td>Full Court</td><td class="m">4+ cards</td><td class="r"><span class="chips">+18 chips</span><span class="mult">×1.75</span></td></tr>
+    <tr><td>Royal Court</td><td class="m">4+ cards, same suit</td><td class="r"><span class="chips">+20 chips</span><span class="mult">×2</span></td></tr>
+    <tr class="arcana-row"><td>Major Arcana</td><td class="m"></td><td class="r"></td></tr>
+    <tr><td>Sequence of 3</td><td class="m">3 cards</td><td class="r"><span class="chips">+10 chips</span><span class="mult">×2.5</span></td></tr>
+    <tr><td>Sequence of 4</td><td class="m">4 cards</td><td class="r"><span class="chips">+15 chips</span><span class="mult">×3</span></td></tr>
+    <tr><td>Sequence of 5</td><td class="m">5 cards</td><td class="r"><span class="chips">+18 chips</span><span class="mult">×4</span></td></tr>
+    <tr><td>Path of the Magi</td><td class="m">3 cards</td><td class="r"><span class="chips">+30 chips</span><span class="mult">×5</span></td></tr>
+  </table>
+</div>
+<div id="abilityRef" class="ref hidden">
+  <table>
+    <tr><td><b>Ability</b></td><td class="r"><b>What it does</b></td></tr>
+    <tr><td>Draw 1 / 2 / 3</td><td class="r">Draw that many cards.</td></tr>
+    <tr><td>Peek 3 / 5</td><td class="r">Look at that many cards. Take 1. Put the rest on the bottom.</td></tr>
+    <tr><td>Search</td><td class="r">Take any card from the deck, then shuffle.</td></tr>
+    <tr><td>Reshuffle</td><td class="r">Shuffle the discard pile into the deck, then draw 2.</td></tr>
+    <tr><td>Neighbor 2</td><td class="r">Choose a card. Reveal up to 2 adjacent cards from the deck. Take 1.</td></tr>
+    <tr><td>Kin 2</td><td class="r">Choose a card. Reveal up to 2 cards of the same Arcana from the deck. Take 1.</td></tr>
+    <tr><td>Mirror 1</td><td class="r">Choose a card. Take the card opposite it across centerline of its Arcana.</td></tr>
+    <tr><td>Between 2</td><td class="r">Choose two cards. Reveal up to 2 cards between them from the deck. Take 1.</td></tr>
+  </table>
+</div>
+</div>
+<div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="danger" onclick="discardSelected()" disabled>Discard</button></div><div id="spread" class="spread"></div></div>
+<div id="abilityPrompt" class="ability-prompt"><div><h3 id="abilityPromptTitle"></h3><p id="abilityPromptText"></p></div><button id="abilityConfirm" onclick="confirmAbilitySelection()" disabled>Choose</button></div>
+<div class="handDock"><div id="hand" class="hand"></div></div>
+<div id="summary"></div>
+<div id="modal" class="modal"><div class="box"><div class="modalHead"><h2 id="modalTitle"></h2><button id="modalToggle" onclick="toggleModalCollapse()">Hide</button></div><p id="modalPrompt"></p><div id="choices" class="choices"></div></div></div>
+<script>
+const ROMAN=['0','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX','XXI'];
+const SUITS=['Cups','Wands','Swords','Pentacles'], GLYPH={Cups:'🍷',Wands:'🪄',Swords:'🗡️',Pentacles:'𖤐'};
+const RANKS=['Page','Knight','Queen','King','Ace'];
+const TXT={DRAW_1:'Draw 1',DRAW_2:'Draw 2',DRAW_3:'Draw 3',PEEK_3:'Peek 3',PEEK_5:'Peek 5',SEARCH:'Search',WORLD:'Reshuffle',NEIGHBOR_2:'Neighbor 2',KIN_2:'Kin 2',MIRROR_1:'Mirror 1',BETWEEN_2:'Between 2'};
+const MAJOR_G={0:'✦',1:'∞',2:'☾',3:'♀',4:'♛',5:'☥',6:'♡',7:'⚔',8:'∞',9:'☼',10:'⊛',11:'⚖',12:'✝',13:'✟',14:'⚱',15:'⛧',16:'⚡',17:'✧',18:'☽',19:'☉',20:'⚭',21:'○'};
+const MEAN={major_0:['Beginnings, innocence','Recklessness, naivety'],major_1:['Will, mastery','Manipulation, illusion'],major_2:['Intuition, mystery','Secrets withheld'],major_3:['Abundance, creation','Dependence, neglect'],major_4:['Authority, structure','Domination, rigidity'],major_5:['Tradition, doctrine','Rebellion, reform'],major_6:['Union, choice','Disharmony, betrayal'],major_7:['Resolve, victory','Loss of direction'],major_8:['Courage, patience','Self-doubt, weakness'],major_9:['Solitude, search','Isolation, lost'],major_10:['Cycles, fortune','Resistance, stagnation'],major_11:['Truth, fairness','Injustice, evasion'],major_12:['Surrender, suspension','Stalling, vain sacrifice'],major_13:['Endings, transformation','Resistance to change'],major_14:['Balance, patience','Excess, imbalance'],major_15:['Bondage, addiction','Release, awareness'],major_16:['Upheaval, ruin','Averting disaster'],major_17:['Hope, renewal','Despair, lost faith'],major_18:['Illusion, fear','Truth revealed'],major_19:['Joy, vitality','False optimism'],major_20:['Awakening, reckoning','Refused calling'],major_21:['Completion, wholeness','Unfinished, stagnation']};
+const COURT_MEAN={Page:['Curiosity, learning','Inexperience, gossip'],Knight:['Action, pursuit','Recklessness, haste'],Queen:['Compassion, intuition','Withdrawal, anxiety'],King:['Mastery, command','Cruelty, coldness']};
+const SUIT_MEAN={Cups:['Emotion, love','Hidden feelings'],Wands:['Will, creation','Burnout, delay'],Swords:['Truth, conflict','Deceit, anguish'],Pentacles:['Work, abundance','Greed, loss']};
+const MAJORS=[[0,'Fool',5,true,'PEEK_3'],[1,'Magician',5,true,'SEARCH'],[2,'High Priestess',1,false,'NEIGHBOR_2'],[3,'Empress',1,false,'DRAW_2'],[4,'Emperor',1,false,'DRAW_1'],[5,'Hierophant',1,false,'BETWEEN_2'],[6,'Lovers',1,false,'KIN_2'],[7,'Chariot',1,false,'DRAW_1'],[8,'Strength',1,false,'DRAW_1'],[9,'Hermit',1,false,'NEIGHBOR_2'],[10,'Wheel',1,false,'MIRROR_1'],[11,'Justice',1,false,'KIN_2'],[12,'Hanged Man',1,false,'BETWEEN_2'],[13,'Death',1,false,'DRAW_3'],[14,'Temperance',1,false,'BETWEEN_2'],[15,'Devil',1,false,'DRAW_2'],[16,'Tower',1,false,'DRAW_2'],[17,'Star',1,false,'KIN_2'],[18,'Moon',1,false,'MIRROR_1'],[19,'Sun',1,false,'DRAW_2'],[20,'Judgement',1,false,'MIRROR_1'],[21,'World',5,true,'WORLD']];
+const COURTS=[['Page',2,'DRAW_1'],['Knight',3,'PEEK_3'],['Queen',4,'DRAW_2'],['King',5,'PEEK_5']];
+const TH=[30,60,110], MAX=5;
+let persist={pool:0,up:{discards:0,hand:0,mulligan:0,rank:0,sequence:0,neighbor:0,kin:0,mirror:0,between:0}};
+let state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,carry:0,busy:false,shopOffer:null,abilitySelect:null};
+const $=s=>document.querySelector(s), shuffle=a=>{for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function buildDeck(){let id=0,d=[];for(const [num,name,pts,trull,ab] of MAJORS)d.push({uid:id++,type:'major',id:'major_'+num,num,name:ROMAN[num]+' '+name,points:pts,trull,ability:ab});for(const suit of SUITS)for(const [rank,pts,ab]of COURTS)d.push({uid:id++,type:'court',id:'court_'+suit+'_'+rank,suit,rank,name:rank+' of '+suit,points:pts,ability:ab});for(const suit of ['Cups','Pentacles'])d.push({uid:id++,type:'ace',id:'ace_'+suit,suit,rank:'Ace',name:'Ace of '+suit,points:1,ability:suit==='Cups'?'DRAW_3':'PEEK_5'});return d}
+function title(c){if(c.type==='major')return ROMAN[c.num]+' · '+c.name.replace(/^[IVXLCDM\d]+\s+/,'');if(c.type==='court')return c.rank+' of '+GLYPH[c.suit];if(c.type==='ace')return 'Ace of '+GLYPH[c.suit];return c.name}
+function meanings(c){if(c.type==='major')return MEAN[c.id]||['',''];if(c.type==='court')return COURT_MEAN[c.rank]||['',''];return SUIT_MEAN[c.suit]||['','']}
+function symbol(c){return c.type==='major'?(MAJOR_G[c.num]||'✦'):GLYPH[c.suit]}
+function cardHTML(c){return `<div class="title">${title(c)}</div><div class="art"><div class="sym">${symbol(c)}</div><div class="plaque">${TXT[c.ability]}</div><div class="seal tr">${c.points}</div></div>`}
+function sortCards(cards){return [...cards].sort((a,b)=>{let o={major:0,court:1,ace:2};if(o[a.type]!==o[b.type])return o[a.type]-o[b.type];if(a.type==='major')return a.num-b.num;return(a.suit||'').localeCompare(b.suit||'')||RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank)})}
+function maxHand(){return 5+persist.up.hand}function maxDiscards(){return 3+persist.up.discards}function hasMull(){return persist.up.mulligan>0}
+function drawN(n){for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;state.hand.push(state.deck.shift())}}function drawTo(n){while(state.hand.length<n&&state.deck.length)state.hand.push(state.deck.shift())}
+function startReading(){state.deck=shuffle(buildDeck());state.hand=[];state.discard=[];state.spread=Array(5).fill(null);state.selected=null;state.discards=maxDiscards();state.mull=false;drawTo(maxHand());clearOverlay();snapCounter(state.carry);render()}
+function render(){ $('#reading').textContent=state.reading;$('#threshold').textContent=TH[state.th];$('#pool').textContent=persist.pool;$('#discards').textContent=state.discards;let placed=state.spread.filter(Boolean),now=computeScore(placed);let sp=$('#spread');sp.innerHTML='';for(let i=0;i<5;i++){let s=document.createElement('div');s.className='slot '+(state.spread[i]?'filled':'empty')+(state.selected!==null&&!state.spread[i]?' target':'');s.style.setProperty('--a',((i-2)*4)+'deg');if(state.spread[i]){let e=document.createElement('div');e.className='card '+(state.spread[i].type==='major'?'major':'');e.innerHTML=cardHTML(state.spread[i]);s.appendChild(e)}else{s.innerHTML='<div class="num">'+(i+1)+'</div>';s.onclick=()=>placeCard(i)}sp.appendChild(s)}let h=$('#hand');h.innerHTML='';state.hand.forEach((c,i)=>{let e=document.createElement('div');let ability=state.abilitySelect,valid=ability&&ability.validIds.has(c.uid),picked=ability&&ability.picked.includes(c.uid);e.className='card '+(c.type==='major'?'major ':'')+(state.selected===c.uid&&!ability?'sel ':'')+(valid?'ability-target ':'')+(picked?'ability-picked ':'')+(ability&&!valid?'ability-disabled ':'');e.style.zIndex=state.hand.length-i;e.style.setProperty('--a',((i-(state.hand.length-1)/2)*5)+'deg');e.innerHTML=cardHTML(c);e.onclick=()=>{if(ability){handleAbilityHandClick(c);return}if(state.busy)return;state.selected=state.selected===c.uid?null:c.uid;render()};h.appendChild(e)});renderAbilityPrompt();updateScorePreview(now);$('#discardBtn').disabled=state.selected===null||state.discards<=0;$('#mullBtn').style.display=hasMull()?'inline-block':'none';$('#mullBtn').disabled=state.mull||!state.spread.every(x=>!x)||state.hand.length!==maxHand()}
+function computeScore(cards){let chips=cards.reduce((s,c)=>s+c.points,0),base=chips,mult=1,m=[];let rankBonus=persist.up.rank*5;for(const rank of ['Page','Knight','Queen','King']){let a=cards.filter(c=>c.type==='court'&&c.rank===rank);if(a.length===4){let x=12+rankBonus;m.push(['Four of a Rank ('+rank+'s)',x,1.5]);chips+=x;mult*=1.5}else if(a.length===3){let x=10+rankBonus;m.push(['Three of a Rank ('+rank+'s)',x,1.25]);chips+=x;mult*=1.25}}let ranks=new Set(cards.filter(c=>c.type==='court').map(c=>c.rank));let full=['Page','Knight','Queen','King'].every(r=>ranks.has(r));let aces=cards.filter(c=>c.type==='ace'),same=null;if(full)for(const suit of SUITS){let rs=new Set(cards.filter(c=>c.type==='court'&&c.suit===suit).map(c=>c.rank));if(rs.size===4){same=suit;break}}let rf=same&&aces.some(a=>a.suit===same);let court=false;if(same){m.push(['Royal Court ('+same+')',20,2]);chips+=20;mult*=2;court=true}else if(full){m.push(['Full Court',18,1.75]);chips+=18;mult*=1.75;court=true}if(!court)for(const suit of SUITS){let suited=cards.filter(c=>c.suit===suit);if(suited.length>=4){m.push(['Flush ('+suit+')',15,1.5]);chips+=15;mult*=1.5}}let nums=[...new Set(cards.filter(c=>c.type==='major').map(c=>c.num))].sort((a,b)=>a-b),best=1,cur=1;for(let i=1;i<nums.length;i++){if(nums[i]===nums[i-1]+1){cur++;best=Math.max(best,cur)}else cur=1}let seqBonus=persist.up.sequence*5;if(best>=5){let x=18+seqBonus;m.push(['Sequence of '+best,x,4]);chips+=x;mult*=4}else if(best>=4){let x=15+seqBonus;m.push(['Sequence of '+best,x,3]);chips+=x;mult*=3}else if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,2.5]);chips+=x;mult*=2.5}if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){m.push(['Path of the Magi',30,5]);chips+=30;mult*=5}return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}}
+function cleanName(c){return c.type==='major'?c.name.split(' ').slice(1).join(' '):c.name}
+function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=computeScore([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
+function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let before=new Set(computeScore(state.spread.filter(Boolean)).melds.map(x=>x[0]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.filter(x=>!before.has(x[0]));let delay=420;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;setTimeout(()=>ghost(anchor,'+'+m[1]+' ×'+m[2],true),ghostDelay);holdEffects(ghostDelay+1700);delay+=slots.length*130+700});setCounterTarget(state.carry+after.finalScore);checkEnd()}
+let effectsUntil=0;
+function holdEffects(ms){effectsUntil=Math.max(effectsUntil,Date.now()+ms)}
+function ghost(i,t,big=false){let s=document.querySelectorAll('.slot')[i];if(!s)return;holdEffects(1700);let g=document.createElement('div');g.className='ghost '+(big?'big':'');g.textContent=t;s.appendChild(g);setTimeout(()=>g.remove(),1700)}
+function bump(i){let s=document.querySelectorAll('.slot')[i];if(!s)return;s.classList.remove('bump');void s.offsetWidth;s.classList.add('bump')}
+function slotsForMeld(name){let filled=state.spread.map((c,i)=>c?{c,i}:null).filter(Boolean);if(name.startsWith('Three of a Rank')||name.startsWith('Four of a Rank')){let rank=['Page','Knight','Queen','King'].find(r=>name.includes(r+'s'));return rank?filled.filter(x=>x.c.type==='court'&&x.c.rank===rank).map(x=>x.i):[]}if(name==='Full Court'){let seen=new Set(),out=[];for(const x of filled){if(x.c.type==='court'&&!seen.has(x.c.rank)&&['Page','Knight','Queen','King'].includes(x.c.rank)){seen.add(x.c.rank);out.push(x.i)}}return out}if(name.startsWith('Royal Court')||name.startsWith('Flush')){let suit=SUITS.find(s=>name.includes(s));return suit?filled.filter(x=>x.c.suit===suit).map(x=>x.i):[]}if(name.startsWith('Sequence')){let tr=filled.filter(x=>x.c.type==='major').sort((a,b)=>a.c.num-b.c.num);let bs=0,bl=1,cs=0,cl=1;for(let j=1;j<tr.length;j++){if(tr[j].c.num===tr[j-1].c.num+1){cl++;if(cl>bl){bl=cl;bs=cs}}else{cs=j;cl=1}}return tr.slice(bs,bs+bl).map(x=>x.i)}if(name==='Path of the Magi')return filled.filter(x=>['major_0','major_1','major_21'].includes(x.c.id)).map(x=>x.i);return[]}
+let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
+function setCounterTarget(v){counterTarget=v;if(counterTimer)clearTimeout(counterTimer);counterTimer=setTimeout(()=>{if(counterCancel)counterCancel();counterCancel=rollCounter(counterShown,counterTarget,650);counterShown=counterTarget;counterTimer=null},700)}
+function snapCounter(v){if(counterTimer){clearTimeout(counterTimer);counterTimer=null}if(counterCancel){counterCancel();counterCancel=null}counterShown=counterTarget=v;$('#current').textContent=v;$('#current').style.color=''}
+function rollCounter(from,to,dur){let el=$('#current'),start=performance.now(),dead=false;function step(now){if(dead)return;let t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color=''}}requestAnimationFrame(step);return()=>{dead=true;el.style.color=''}}
+function discardSelected(){if(state.busy||state.selected===null||state.discards<=0)return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let c=state.hand.splice(idx,1)[0];state.discard.push(c);state.selected=null;state.discards--;resolveAbility(c.ability,()=>{render();checkEnd()},c)}
+function resolveAbility(ab,done,sourceCard=null){if(ab==='DRAW_1'){drawN(1);done()}else if(ab==='DRAW_2'){drawN(2);done()}else if(ab==='DRAW_3'){drawN(3);done()}else if(ab==='PEEK_3')peek(3,done);else if(ab==='PEEK_5')peek(5,done);else if(ab==='SEARCH')search(done);else if(ab==='NEIGHBOR_2')relation('Neighbor 2','Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers, court ranks in the same suit, or King from an Ace.',neighbor,2+(persist.up.neighbor||0),done);else if(ab==='KIN_2')relation('Kin 2','Choose an anchor card. Kin finds cards of the same Arcana.',kin,2+(persist.up.kin||0),done);else if(ab==='MIRROR_1')relation('Mirror 1','Choose a card. Take the card opposite it across centerline of its Arcana.',mirror,1+(persist.up.mirror||0),done);else if(ab==='BETWEEN_2')betweenAbility(done,sourceCard);else if(ab==='WORLD'){state.deck.push(...state.discard.splice(0));shuffle(state.deck);drawN(2);done()}else done()}
+function peek(n,done){state.busy=true;let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){state.busy=false;done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{state.hand.push(p);cards.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));state.busy=false;done()})}
+function search(done){state.busy=true;if(!state.deck.length){state.busy=false;done();return}choice('Search deck','Pick any card. The deck reshuffles.',sortCards(state.deck),p=>{let i=state.deck.findIndex(c=>c.uid===p.uid);if(i>=0)state.deck.splice(i,1);state.hand.push(p);shuffle(state.deck);state.busy=false;done()})}
+function inPlay(){return[...state.hand,...state.spread.filter(Boolean)]}
+function neighbor(t){if(t.type==='major')return state.deck.filter(c=>c.type==='major'&&(c.num===t.num-1||c.num===t.num+1));if(t.type==='court'){let i=RANKS.indexOf(t.rank),r=[RANKS[i-1],RANKS[i+1]].filter(Boolean);return state.deck.filter(c=>c.suit===t.suit&&r.includes(c.rank))}if(t.type==='ace')return state.deck.filter(c=>c.type==='court'&&c.suit===t.suit&&c.rank==='King');return[]}
+function kin(t){if(t.type==='major')return state.deck.filter(c=>c.type==='major'&&c.uid!==t.uid);if(t.type==='court'||t.type==='ace')return state.deck.filter(c=>(c.type==='court'||c.type==='ace')&&c.uid!==t.uid);return[]}
+function mirror(t){if(t.type==='major'){let n=21-t.num;return state.deck.filter(c=>c.type==='major'&&c.num===n)}if(t.type==='court'){let pair={Page:'King',King:'Page',Knight:'Queen',Queen:'Knight'}[t.rank];return state.deck.filter(c=>c.type==='court'&&c.suit===t.suit&&c.rank===pair)}if(t.type==='ace')return state.deck.filter(c=>c.type==='ace'&&c.suit!==t.suit);return[]}
+function betweenPool(a,b){
+  if(!a||!b||a.uid===b.uid)return[];
+
+  // Major Arcana: cards numerically between two Major Arcana anchors.
+  if(a.type==='major'&&b.type==='major'){
+    let lo=Math.min(a.num,b.num),hi=Math.max(a.num,b.num);
+    if(hi-lo<=1)return[];
+    return state.deck.filter(c=>c.type==='major'&&c.num>lo&&c.num<hi);
+  }
+
+  // Minor Arcana: cards between two anchors in the same suit ladder.
+  // Ladder: Page -> Knight -> Queen -> King -> Ace
+  let aMinor=(a.type==='court'||a.type==='ace'), bMinor=(b.type==='court'||b.type==='ace');
+  if(aMinor&&bMinor&&a.suit===b.suit){
+    let ia=RANKS.indexOf(a.rank),ib=RANKS.indexOf(b.rank);
+    if(ia<0||ib<0)return[];
+    let lo=Math.min(ia,ib),hi=Math.max(ia,ib);
+    if(hi-lo<=1)return[];
+    return state.deck.filter(c=>c.suit===a.suit&&RANKS.indexOf(c.rank)>lo&&RANKS.indexOf(c.rank)<hi);
+  }
+
+  return[];
+}
+function uniqueCards(cards){let seen=new Set();return cards.filter(c=>{if(seen.has(c.uid))return false;seen.add(c.uid);return true})}
+function fallbackAbility(done,title='No valid ability result'){drawN(1);choice(title,'No valid target was available. Draw 1 instead.',state.hand.slice(-1),()=>{state.busy=false;done()})}
+function selectFromHand(title,prompt,cards,count,cb,previewFn=null){
+  state.abilitySelect={title,prompt,validIds:new Set(cards.map(c=>c.uid)),picked:[],count,cb,previewFn};
+  render();
+}
+function handleAbilityHandClick(card){
+  const a=state.abilitySelect;
+  if(!a||!a.validIds.has(card.uid))return;
+  const idx=a.picked.indexOf(card.uid);
+  if(idx>=0)a.picked.splice(idx,1);
+  else{
+    if(a.picked.length>=a.count)a.picked.shift();
+    a.picked.push(card.uid);
+  }
+  render();
+}
+function renderAbilityPrompt(){
+  const el=$('#abilityPrompt');
+  if(!el)return;
+  const a=state.abilitySelect;
+  if(!a){el.classList.remove('show');return}
+  $('#abilityPromptTitle').textContent=a.title;
+  let preview='';
+  if(a.previewFn&&a.picked.length){
+    const picked=a.picked.map(id=>state.hand.find(c=>c.uid===id)).filter(Boolean);
+    preview=a.previewFn(...picked)||'';
+  }
+  $('#abilityPromptText').innerHTML=preview?a.prompt+'<br><b>'+preview+'</b>':a.prompt;
+  $('#abilityConfirm').disabled=a.picked.length<a.count;
+  el.classList.add('show');
+}
+function confirmAbilitySelection(){
+  const a=state.abilitySelect;
+  if(!a||a.picked.length<a.count)return;
+  const picked=a.picked.map(id=>state.hand.find(c=>c.uid===id)).filter(Boolean);
+  const cb=a.cb;
+  state.abilitySelect=null;
+  render();
+  cb(...picked);
+}
+function betweenAbility(done,sourceCard=null){
+  state.busy=true;
+  const anchors=sortCards(state.hand);
+  const validFirst=anchors.filter(a=>anchors.some(b=>b.uid!==a.uid&&betweenPool(a,b).length>0));
+
+  if(!validFirst.length){fallbackAbility(done,'Between 2 — no cards between');return}
+
+  selectFromHand('Between 2 — choose first anchor','Choose the first card from your hand. Only valid anchors are highlighted.',validFirst,1,a=>{
+    const validSecond=anchors.filter(b=>b.uid!==a.uid&&betweenPool(a,b).length>0);
+    if(!validSecond.length){fallbackAbility(done,'Between 2 — no second anchor');return}
+
+    selectFromHand('Between 2 — choose second anchor','First anchor: '+cleanName(a)+'. Choose the card it should connect toward.',validSecond,1,b=>{
+      const n=2+(persist.up.between||0);
+      const found=sortCards(shuffle(uniqueCards([...betweenPool(a,b)])).slice(0,n));
+      if(!found.length){fallbackAbility(done,'Between 2 — no cards found');return}
+
+      choice('Between 2 — '+cleanName(a)+' + '+cleanName(b),'These cards are between your two anchors. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
+        for(const c of found){
+          let i=state.deck.findIndex(d=>d.uid===c.uid);
+          if(i>=0)state.deck.splice(i,1);
+        }
+        state.hand.push(p);
+        found.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
+        state.busy=false;
+        done();
+      });
+    });
+  });
+}
+function cardDisplayName(c){return c.type==='major'?ROMAN[c.num]+' - '+cleanName(c):cleanName(c)}
+function relation(title,prompt,fn,n,done){
+  state.busy=true;
+  let targets=sortCards(state.hand).filter(t=>fn(t).length);
+  if(!targets.length){fallbackAbility(done);return}
+  const previewFn=title==='Mirror 1'?t=>{
+    let reflected=sortCards([...fn(t)]);
+    return reflected.length?cardDisplayName(reflected[0]):'';
+  }:null;
+  selectFromHand(title+' — choose anchor',prompt+' Valid hand cards are highlighted.',targets,1,t=>{
+    let found=sortCards(shuffle([...fn(t)]).slice(0,n));
+
+    // Mirror is deterministic: once the player chooses the anchor and presses Choose,
+    // take the reflected card immediately instead of opening a second modal.
+    if(title==='Mirror 1'&&found.length){
+      let p=found[0];
+      let i=state.deck.findIndex(d=>d.uid===p.uid);
+      if(i>=0)state.deck.splice(i,1);
+      state.hand.push(p);
+      state.busy=false;
+      done();
+      return;
+    }
+
+    choice(title+' — '+cleanName(t),'Cards found from '+cleanName(t)+'. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
+      for(const c of found){let i=state.deck.findIndex(d=>d.uid===c.uid);if(i>=0)state.deck.splice(i,1)}
+      state.hand.push(p);
+      found.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
+      state.busy=false;
+      done();
+    });
+  },previewFn);
+}
+function choice(title,prompt,cards,cb){$('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';let ch=$('#choices');ch.innerHTML='';cards.forEach(c=>{let e=document.createElement('div');e.className='card '+(c.type==='major'?'major':'');e.innerHTML=cardHTML(c);e.onclick=()=>{$('#modal').classList.remove('show','collapsed');cb(c)};ch.appendChild(e)});$('#modal').classList.remove('collapsed');$('#modal').classList.add('show')}
+function toggleModalCollapse(){let m=$('#modal');if(!m.classList.contains('show'))return;m.classList.toggle('collapsed');$('#modalToggle').textContent=m.classList.contains('collapsed')?'Show':'Hide'}
+function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;waitForCounterThenScore()}
+function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
+function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards),total=state.carry+res.finalScore,pass=total>=TH[state.th];let html='<div class="summary"><h3>Reading Result</h3><table>';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){html+=`<tr><td><b>Patterns formed</b></td><td class="r"></td></tr>`;res.melds.forEach(m=>html+=`<tr class="meld"><td>${m[0]}</td><td class="r">+${m[1]} ×${m[2]}</td></tr>`)}else html+=`<tr><td>No scoring pattern formed</td><td class="r">Base only</td></tr>`;html+=`<tr><td>This reading</td><td class="r">${res.chips} × ${res.mult} = <b>${res.finalScore}</b></td></tr>`;if(state.carry)html+=`<tr><td>Carryover</td><td class="r">${state.carry}</td></tr>`;html+=`<tr><td>${pass?'PASSED':'Below'} threshold ${TH[state.th]}</td><td class="r"><b>${total}</b></td></tr></table>`;if(pass){persist.pool+=total;state.carry=0;state.th++;html+=`<p>Threshold cleared. ${total} added to pool.</p>`;if(state.th>=TH.length||state.reading>=MAX)html+='<button onclick="endSession()">End session</button>';else html+='<button onclick="openShop()">Open Shop →</button>'}else{state.carry=total;if(state.reading>=MAX){state.carry=0;html+='<p>The candles burn out.</p><button onclick="endSession()">End session</button>'}else html+=`<p>Score carries forward.</p><button onclick="continueReading()">Continue to reading ${state.reading+1} →</button>`}html+='</div>';showOverlay(html);render()}
+function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML=''}
+function continueReading(){state.shopOffer=null;state.reading++;startReading()}function endSession(){showOverlay('<div class="summary"><h3>Session complete</h3><p>Reserve: <b>'+persist.pool+'</b>.</p><button onclick="resetSession()">New session</button></div>')}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,carry:0,busy:false,shopOffer:null,abilitySelect:null};startReading()}
+const SHOP={discards:['Extra Discard','+1 discard each reading.',15,1.75],hand:['Wider Hand','+1 starting hand size.',40,2],mulligan:['Mulligan','Once each reading, redraw your starting hand.',20,1.75],rank:['Rank Chips','Three/Four of a Rank gain +5 chips.',25,1.75],sequence:['Sequence Chips','All Sequences gain +5 chips.',25,1.75],neighbor:['Neighbor Lens','Neighbor reveals +1 extra card.',30,1.8],kin:['Kin Lens','Kin reveals +1 extra card.',30,1.8],mirror:['Mirror Lens','Mirror reveals +1 extra reflected result when possible.',35,2],between:['Between Lens','Between reveals +1 extra card.',35,2]};
+function shopCost(k){let s=SHOP[k],lvl=persist.up[k]||0;return Math.floor(s[2]*Math.pow(s[3],lvl))}
+function drawShopOffer(){return shuffle(Object.keys(SHOP)).slice(0,5)}
+function openShop(newOffer=true){if(newOffer||!state.shopOffer)state.shopOffer=drawShopOffer();let html='<div class="summary shop-summary"><h3>Shop</h3><p>Spend Reserve to improve future readings.</p><div class="shop-grid">';for(const k of state.shopOffer){let s=SHOP[k],cost=shopCost(k),lvl=persist.up[k]||0,ok=persist.pool>=cost;html+=`<div class="shop-card ${ok?'affordable':''}"><div class="shop-cost">Cost ${cost}</div><b>${s[0]}</b><p>${s[1]}</p><div class="shop-footer"><span>Lv ${lvl}</span><button ${ok?'':'disabled'} onclick="buyUpgrade('${k}')">Buy</button></div></div>`}html+='</div><button onclick="continueReading()">Skip shop →</button></div>';showOverlay(html)}
+function buyUpgrade(k){let cost=shopCost(k);if(persist.pool<cost)return;persist.pool-=cost;persist.up[k]=(persist.up[k]||0)+1;openShop(false)}
+function mulligan(){if(state.busy||!hasMull()||state.mull||!state.spread.every(x=>!x)||state.hand.length!==maxHand())return;state.deck.push(...state.hand.splice(0));drawTo(maxHand());state.mull=true;state.selected=null;snapCounter(state.carry);render()}
+function closeRefs(){ $('#ref').classList.add('hidden'); $('#abilityRef').classList.add('hidden') }
+function toggleRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ref.classList.contains('hidden'); closeRefs(); if(wasHidden)ref.classList.remove('hidden') }
+function toggleAbilityRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ability.classList.contains('hidden'); closeRefs(); if(wasHidden)ability.classList.remove('hidden') }
+document.addEventListener('click',e=>{let inside=e.target.closest('.refs-layer')||e.target.closest('#scoringBtn')||e.target.closest('#abilitiesBtn');if(!inside)closeRefs()});
+startReading();
+</script>
+</body>
+</html>
