@@ -26,7 +26,7 @@
   #abilityRef .r{font-size:11px}
 
   .spread-wrap{position:fixed;left:0;right:0;top:46%;bottom:auto;transform:translateY(-50%);margin-top:0;z-index:12}
-  .spread{min-height:168px;padding:24px 8px 0;justify-content:center;gap:0;overflow-x:auto;overflow-y:visible}
+  .spread{min-height:168px;padding:24px 12px 0;justify-content:flex-start;gap:0;overflow-x:auto;overflow-y:visible;max-width:100vw;-webkit-overflow-scrolling:touch;scrollbar-width:none}.spread::-webkit-scrollbar{display:none}
   .slot{flex:0 0 100px;width:100px;height:150px;margin-left:-12px;border-radius:7px}
   .slot:first-child{margin-left:0}
   .slot .num{font-size:9px;top:3px;left:5px}
@@ -65,7 +65,7 @@
 }
 
 @media (max-width: 430px){
-  .slot{flex-basis:100px;width:100px;height:150px;margin-left:-8px}
+  .slot{flex-basis:100px;width:100px;height:150px;margin-left:-12px}
   .slot:first-child{margin-left:0}
   .card{width:100px;height:150px}
   .sym{font-size:60px}
@@ -73,8 +73,8 @@
 }
 
 @media (max-width: 380px){
-  .slot{flex-basis:100px;width:100px;height:150px;margin-left:-8px}
-  .slot:first-child{margin-left:0}
+  .slot{flex-basis:100px;width:100px;height:150px;margin-left:-12px}
+  .slot:first-child{m
   .card{width:100px;height:150px}
   .sym{font-size:60px}
   .plaque{font-size:7.8px;max-width:90px}
