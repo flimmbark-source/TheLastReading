@@ -392,7 +392,9 @@ function closeRefs(){ $('#ref').classList.add('hidden'); $('#abilityRef').classL
 function toggleRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ref.classList.contains('hidden'); closeRefs(); if(wasHidden)ref.classList.remove('hidden') }
 function toggleAbilityRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ability.classList.contains('hidden'); closeRefs(); if(wasHidden)ability.classList.remove('hidden') }
 document.addEventListener('click',e=>{let inside=e.target.closest('.refs-layer')||e.target.closest('#scoringBtn')||e.target.closest('#abilitiesBtn');if(!inside)closeRefs()});
+function showTutorial(){showOverlay('<div class="summary tutorial"><h3>How to Play</h3><p>Make a 5-card reading.</p><p>Tap a card to select it, then tap an empty space to place it and gain the points on the card. Build scoring patterns to earn more points and multipliers.</p><p>Discard cards to use their abilities and try to draw a better scoring hand.</p><p>Beat each Threshold to win, each threshold clear opens the Shop. If you fall short, your Score carries into the next reading.</p><p>Use Scoring and Abilities for quick reminders.</p><button onclick="clearOverlay()">Begin Reading</button></div>')}
 startReading();
+showTutorial();
 </script>
 </body>
 </html>
