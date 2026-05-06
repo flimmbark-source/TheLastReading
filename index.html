@@ -418,29 +418,30 @@ function confirmAbilitySelection(){
 function betweenAbility(done,sourceCard=null){
   state.busy=true;
   const anchors=sortCards(state.hand);
-  const validFirst=anchors.filter(a=>anchors.some(b=>b.uid!==a.uid&&betweenPool(a,b).length>0));
+  const validAnchors=anchors.filter(a=>anchors.some(b=>b.uid!==a.uid&&betweenPool(a,b).length>0));
 
-  if(!validFirst.length){fallbackAbility(done,'Between — no cards between');return}
+  if(!validAnchors.length){fallbackAbility(done,'Between — no cards between');return}
 
-  selectFromHand('Between — choose first anchor','Choose the first card from your hand. Only valid anchors are highlighted.',validFirst,1,a=>{
-    const validSecond=anchors.filter(b=>b.uid!==a.uid&&betweenPool(a,b).length>0);
-    if(!validSecond.length){fallbackAbility(done,'Between — no second anchor');return}
+  const previewFn=(a,b)=>{
+    if(!a||!b)return'';
+    const total=betweenPool(a,b).length;
+    return total?('Between these anchors: '+total+' card'+(total===1?'':'s')):'No cards between these anchors.';
+  };
 
-    selectFromHand('Between — choose second anchor','First anchor: '+cleanName(a)+'. Choose the card it should connect toward.',validSecond,1,b=>{
-      const n=2+(persist.up.between||0);
-      const found=sortCards(shuffle(uniqueCards([...betweenPool(a,b)])).slice(0,n));
-      if(!found.length){fallbackAbility(done,'Between — no cards found');return}
+  selectFromHand('Between','Choose 2 cards to draw between. Valid hand cards are highlighted.',validAnchors,2,(a,b)=>{
+    const n=2+(persist.up.between||0);
+    const found=sortCards(shuffle(uniqueCards([...betweenPool(a,b)])).slice(0,n));
+    if(!found.length){fallbackAbility(done,'Between — no cards found');return}
 
-      choice('Between — '+cleanName(a)+' + '+cleanName(b),'These cards are between your two anchors. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
-        for(const c of found){
-          let i=state.deck.findIndex(d=>d.uid===c.uid);
-          if(i>=0)state.deck.splice(i,1);
-        }
-        state.hand.push(p);
-        found.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
-        state.busy=false;
-        done();
-      });
+    choice('Between — '+cleanName(a)+' + '+cleanName(b),'These cards are between your two anchors. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
+      for(const c of found){
+        let i=state.deck.findIndex(d=>d.uid===c.uid);
+        if(i>=0)state.deck.splice(i,1);
+      }
+      state.hand.push(p);
+      found.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
+      state.busy=false;
+      done();
     });
   });
 }
