@@ -111,6 +111,8 @@
 .tut-arrow.up{border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:10px solid #856536;top:-10px}
 .tut-foot{display:flex;gap:8px;margin-top:10px;justify-content:flex-end}
 #tutSkipBtn{background:transparent;border:1px solid #5f4c29;color:#7a6540;font-size:11px;padding:3px 8px;font-weight:400}
+.card.photo{border:none;background:none;border-radius:4px}
+.card.photo .title,.card.photo .art{display:none}
 </style>
 </head>
 <body>
@@ -174,6 +176,27 @@ function buildDeck(){let id=0,d=[];for(const [num,name,pts,trull,ab] of MAJORS)d
 function title(c){if(c.type==='major')return ROMAN[c.num]+' · '+c.name.replace(/^[IVXLCDM\d]+\s+/,'');if(c.type==='court')return c.rank+' of '+GLYPH[c.suit];if(c.type==='ace')return 'Ace of '+GLYPH[c.suit];return c.name}
 function meanings(c){if(c.type==='major')return MEAN[c.id]||['',''];if(c.type==='court')return COURT_MEAN[c.rank]||['',''];return SUIT_MEAN[c.suit]||['','']}
 function symbol(c){return c.type==='major'?(MAJOR_G[c.num]||'✦'):GLYPH[c.suit]}
+const CARD_SHEET={
+  major_0:[1,0],major_1:[1,1],major_2:[1,2],major_3:[1,3],
+  major_4:[2,0],major_5:[2,1],major_6:[2,2],major_7:[2,3],
+  major_8:[3,0],major_9:[3,1],major_10:[3,2],major_11:[3,3],
+  major_12:[4,0],major_13:[4,1],major_14:[4,2],major_15:[4,3],
+  major_16:[5,0],major_17:[5,1],major_18:[5,2],major_19:[5,3],
+  major_20:[6,0],major_21:[6,1],ace_Cups:[6,2],ace_Pentacles:[6,3],
+  court_Wands_Page:[7,0],court_Cups_Page:[7,1],court_Swords_Page:[7,2],court_Pentacles_Page:[7,3],
+  court_Wands_Knight:[8,0],court_Cups_Knight:[8,1],court_Swords_Knight:[8,2],court_Pentacles_Knight:[8,3],
+  court_Wands_Queen:[9,0],court_Cups_Queen:[9,1],court_Swords_Queen:[9,2],court_Pentacles_Queen:[9,3],
+  court_Wands_King:[10,0],court_Cups_King:[10,1],court_Swords_King:[10,2],court_Pentacles_King:[10,3],
+};
+function applyCardPhoto(el,card){
+  const s=CARD_SHEET[card.id];
+  if(!s)return;
+  const[sheet,pos]=s;
+  el.classList.add('photo');
+  el.style.backgroundImage=`url(sheet${String(sheet).padStart(2,'0')}.png)`;
+  el.style.backgroundSize='200% 200%';
+  el.style.backgroundPosition=`${(pos%2)*100}% ${Math.floor(pos/2)*100}%`;
+}
 function cardHTML(c){
   if(cardHTMLCache.has(c.uid))return cardHTMLCache.get(c.uid);
   const html=`<div class="title">${title(c)}</div><div class="art"><div class="sym">${symbol(c)}</div><div class="plaque">${TXT[c.ability]}</div><div class="seal tr">${c.points}</div></div>`;
@@ -208,6 +231,7 @@ function render(){
       e.className='card '+(card.type==='major'?'major ':'')+(validSpread?'ability-target ':'')+(pickedSpread?'ability-picked ':'')+(ability&&!validSpread?'ability-disabled ':'');
       e.dataset.uid=card.uid;
       e.innerHTML=cardHTML(card);
+      applyCardPhoto(e,card);
       if(ability)e.onclick=()=>handleAbilityHandClick(card);
       s.appendChild(e);
     }else{
@@ -232,6 +256,7 @@ function render(){
     e.style.zIndex=handLen-i;
     e.style.setProperty('--a',((i-(handLen-1)/2)*5)+'deg');
     e.innerHTML=cardHTML(c);
+    applyCardPhoto(e,c);
     e.onclick=()=>{
       if(ability){handleAbilityHandClick(c);return}
       if(state.busy)return;
@@ -525,7 +550,7 @@ function relation(title,prompt,fn,n,done){
     });
   },previewFn);
 }
-function choice(title,prompt,cards,cb){$('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';let ch=$('#choices');ch.innerHTML='';cards.forEach(c=>{let e=document.createElement('div');e.className='card '+(c.type==='major'?'major':'');applyHint(e,c,uniqueCards([...state.spread.filter(Boolean),...state.hand,c]));e.innerHTML=cardHTML(c);e.onclick=()=>{$('#modal').classList.remove('show','collapsed');cb(c)};ch.appendChild(e)});$('#modal').classList.remove('collapsed');$('#modal').classList.add('show')}
+function choice(title,prompt,cards,cb){$('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';let ch=$('#choices');ch.innerHTML='';cards.forEach(c=>{let e=document.createElement('div');e.className='card '+(c.type==='major'?'major':'');applyHint(e,c,uniqueCards([...state.spread.filter(Boolean),...state.hand,c]));e.innerHTML=cardHTML(c);applyCardPhoto(e,c);e.onclick=()=>{$('#modal').classList.remove('show','collapsed');cb(c)};ch.appendChild(e)});$('#modal').classList.remove('collapsed');$('#modal').classList.add('show')}
 function toggleModalCollapse(){let m=$('#modal');if(!m.classList.contains('show'))return;m.classList.toggle('collapsed');$('#modalToggle').textContent=m.classList.contains('collapsed')?'Show':'Hide'}
 function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;waitForCounterThenScore()}
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
