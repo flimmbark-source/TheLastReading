@@ -102,6 +102,8 @@
 }
 #tutTip{position:fixed;z-index:90;background:rgba(22,16,13,.97);border:1px solid #856536;border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.65);padding:12px 14px;max-width:min(88vw,300px);color:#d0bc8c;font-size:13px;line-height:1.5;display:none}
 #tutTip.show{display:block}
+#tutTip.tut-center{left:50%!important;top:50%!important;bottom:auto!important;transform:translate(-50%,-50%);max-width:min(88vw,360px)!important}
+#tutTip.tut-center .tut-arrow{display:none}
 #tutTip p{margin:0}
 #tutTip p b{color:#f0d58a}
 .tut-arrow{position:absolute;width:0;height:0;left:50%;transform:translateX(-50%)}
@@ -149,7 +151,7 @@
 <div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="danger" onclick="discardSelected()" disabled>Discard</button></div><div id="spread" class="spread"></div></div>
 <div id="abilityPrompt" class="ability-prompt"><div><h3 id="abilityPromptTitle"></h3><p id="abilityPromptText"></p></div><button id="abilityConfirm" onclick="confirmAbilitySelection()" disabled>Choose</button></div>
 <div class="handDock"><div id="hand" class="hand"></div></div>
-<div id="tutTip"><span class="tut-arrow"></span><p id="tutText"></p><div class="tut-foot"><button id="tutSkipBtn" onclick="tutSkip()">Skip tutorial</button></div></div>
+<div id="tutTip"><span class="tut-arrow"></span><p id="tutText"></p><div class="tut-foot"><button id="tutSkipBtn" onclick="tutSkip();event.stopPropagation()">Skip tutorial</button></div></div>
 <div id="summary"></div>
 <div id="modal" class="modal"><div class="box"><div class="modalHead"><h2 id="modalTitle"></h2><button id="modalToggle" onclick="toggleModalCollapse()">Hide</button></div><p id="modalPrompt"></p><div id="choices" class="choices"></div></div></div>
 <script>
@@ -229,9 +231,7 @@ function render(){
     e.onclick=()=>{
       if(ability){handleAbilityHandClick(c);return}
       if(state.busy)return;
-      const selecting=selectedId!==c.uid;
       state.selected=selectedId===c.uid?null:c.uid;
-      if(selecting)tutAdvance(1);
       refreshHandState();
     };
     hFrag.appendChild(e);
@@ -345,7 +345,7 @@ function applyHint(el,card,poolCards=null){
   el.dataset.hint=hints.map(h=>h.label).join(' + ');
 }
 function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=computeScore([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
-function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let before=new Set(computeScore(state.spread.filter(Boolean)).melds.map(x=>x[0]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;tutAdvance(2);state.selected=null;render();ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.filter(x=>!before.has(x[0]));let delay=420;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;setTimeout(()=>ghost(anchor,'+'+m[1]+' ×'+m[2],true),ghostDelay);holdEffects(ghostDelay+1700);delay+=slots.length*130+700});setCounterTarget(state.carry+after.finalScore);checkEnd()}
+function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let before=new Set(computeScore(state.spread.filter(Boolean)).melds.map(x=>x[0]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.filter(x=>!before.has(x[0]));let delay=420;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;setTimeout(()=>ghost(anchor,'+'+m[1]+' ×'+m[2],true),ghostDelay);holdEffects(ghostDelay+1700);delay+=slots.length*130+700});setCounterTarget(state.carry+after.finalScore);checkEnd()}
 let effectsUntil=0;
 function holdEffects(ms){effectsUntil=Math.max(effectsUntil,Date.now()+ms)}
 function ghost(i,t,big=false){let s=document.querySelectorAll('.slot')[i];if(!s)return;holdEffects(1700);let g=document.createElement('div');g.className='ghost '+(big?'big':'');g.textContent=t;s.appendChild(g);setTimeout(()=>g.remove(),1700)}
@@ -496,7 +496,7 @@ function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;wa
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
 function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards),total=state.carry+res.finalScore,pass=total>=TH[state.th];let html='<div class="summary"><h3>Reading Result</h3><table>';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){html+=`<tr><td><b>Patterns formed</b></td><td class="r"></td></tr>`;res.melds.forEach(m=>html+=`<tr class="meld"><td>${m[0]}</td><td class="r">+${m[1]} ×${m[2]}</td></tr>`)}else html+=`<tr><td>No scoring pattern formed</td><td class="r">Base only</td></tr>`;html+=`<tr><td>This reading</td><td class="r">${res.chips} × ${res.mult} = <b>${res.finalScore}</b></td></tr>`;if(state.carry)html+=`<tr><td>Carryover</td><td class="r">${state.carry}</td></tr>`;html+=`<tr><td>${pass?'PASSED':'Below'} threshold ${TH[state.th]}</td><td class="r"><b>${total}</b></td></tr></table>`;if(pass){persist.pool+=total;state.carry=0;state.th++;html+=`<p>Threshold cleared. ${total} added to pool.</p>`;if(state.th>=TH.length||state.reading>=MAX)html+='<button onclick="endSession()">End session</button>';else html+='<button onclick="openShop()">Open Shop →</button>'}else{state.carry=total;if(state.reading>=MAX){state.carry=0;html+='<p>The candles burn out.</p><button onclick="endSession()">End session</button>'}else html+=`<p>Score carries forward.</p><button onclick="continueReading()">Continue to reading ${state.reading+1} →</button>`}html+='</div>';showOverlay(html);render()}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML=''}
-function continueReading(){state.shopOffer=null;state.reading++;startReading()}function endSession(){showOverlay('<div class="summary"><h3>Session complete</h3><p>Reserve: <b>'+persist.pool+'</b>.</p><button onclick="resetSession()">New session</button></div>')}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,carry:0,busy:false,shopOffer:null,abilitySelect:null};startReading()}
+function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.shopOffer=null;state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(6),400)}}function endSession(){showOverlay('<div class="summary"><h3>Session complete</h3><p>Reserve: <b>'+persist.pool+'</b>.</p><button onclick="resetSession()">New session</button></div>')}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,carry:0,busy:false,shopOffer:null,abilitySelect:null};startReading()}
 const SHOP={discards:['Extra Discard','+1 discard each reading.',15,1.75],hand:['Wider Hand','+1 starting hand size.',40,2],mulligan:['Mulligan','Once each reading, redraw your starting hand.',20,1.75],rank:['Rank Chips','Three/Four of a Rank gain +5 chips.',25,1.75],sequence:['Sequence Chips','All Sequences gain +5 chips.',25,1.75],neighbor:['Neighbor Lens','Neighbor reveals +1 extra card.',30,1.8],kin:['Kin Lens','Kin reveals +1 extra card.',30,1.8],mirror:['Mirror Lens','Mirror reveals +1 extra reflected result when possible.',35,2],between:['Between Lens','Between reveals +1 extra card.',35,2]};
 function shopCost(k){let s=SHOP[k],lvl=persist.up[k]||0;return Math.floor(s[2]*Math.pow(s[3],lvl))}
 function drawShopOffer(){return shuffle(Object.keys(SHOP)).slice(0,5)}
@@ -504,7 +504,7 @@ function openShop(newOffer=true){if(newOffer||!state.shopOffer)state.shopOffer=d
 function buyUpgrade(k){let cost=shopCost(k);if(persist.pool<cost)return;persist.pool-=cost;persist.up[k]=(persist.up[k]||0)+1;openShop(false)}
 function mulligan(){if(state.busy||!hasMull()||state.mull||!state.spread.every(x=>!x)||state.hand.length!==maxHand())return;state.deck.push(...state.hand.splice(0));drawTo(maxHand());state.mull=true;state.selected=null;snapCounter(state.carry);render()}
 function closeRefs(){ $('#ref').classList.add('hidden'); $('#abilityRef').classList.add('hidden') }
-function toggleRef(e){ if(e)e.stopPropagation(); tutAdvance(0); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ref.classList.contains('hidden'); closeRefs(); if(wasHidden)ref.classList.remove('hidden') }
+function toggleRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ref.classList.contains('hidden'); closeRefs(); if(wasHidden)ref.classList.remove('hidden') }
 function toggleAbilityRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ability.classList.contains('hidden'); closeRefs(); if(wasHidden)ability.classList.remove('hidden') }
 document.addEventListener('click',e=>{
   let insideRefs=e.target.closest('.refs-layer')||e.target.closest('#scoringBtn')||e.target.closest('#abilitiesBtn');
@@ -519,29 +519,41 @@ document.addEventListener('click',e=>{
 const TUT_KEY='tlr_tut_done';
 let tutStep=-1,tutTimer=null,tutDone=!!localStorage.getItem(TUT_KEY);
 const TUT_STEPS=[
+  {center:true, text:'Use the cards in your hand to complete a reading. Tap a card to select it, then tap an empty slot in the spread to score it.'},
+  {sel:'.threshold-pill',arrow:'up',text:'Score enough points to beat the <b>Threshold</b>.'},
   {sel:'.handDock',arrow:'down',text:'Glowing cards form <b>potential</b> scoring patterns. Check <b>Scoring</b> to see what\'s possible, and use card <b>Abilities</b> to form a scoring pattern.'},
   {sel:'#abilitiesBtn',arrow:'up',text:'Discarding a card uses its <b>Ability</b> instead of scoring — a way to reshape your hand before placing.'},
   {sel:'.spread-wrap',arrow:'down',text:'Tap a card to see how much it adds and which patterns it completes. Then tap an empty slot to place it.'},
   {sel:'.threshold-pill',arrow:'up',text:'Fill all 5 slots to complete the reading. Beat the <b>Threshold</b> to win — your score carries forward if you fall short.'},
+  {center:true, text:'Each time you reach a Threshold, it increases in difficulty. Beat the third Threshold to win.'},
 ];
 function tutSkip(){localStorage.setItem(TUT_KEY,'1');tutDone=true;tutHide()}
-function tutHide(){clearTimeout(tutTimer);tutTimer=null;const t=$('#tutTip');if(t)t.classList.remove('show')}
+function tutHide(){clearTimeout(tutTimer);tutTimer=null;tutStep=-1;const t=$('#tutTip');if(t){t.classList.remove('show','tut-center');t.style.cssText=''}}
 function tutShow(step){
-  if(tutDone)return;
+  if(tutDone&&step<6)return;
   clearTimeout(tutTimer);tutTimer=null;
   tutStep=step;
   const s=TUT_STEPS[step];
-  if(!s){tutSkip();return}
-  const target=document.querySelector(s.sel);
-  if(!target)return;
+  if(!s)return;
   const tip=$('#tutTip');
-  const arrow=tip.querySelector('.tut-arrow');
-  arrow.className='tut-arrow '+s.arrow;
+  tip.classList.remove('show','tut-center');
+  tip.style.cssText='';
   $('#tutText').innerHTML=s.text;
-  tip.classList.add('show');
-  requestAnimationFrame(()=>posTutTip(target,s.arrow));
-  if(step===0)tutTimer=setTimeout(()=>tutShow(1),6000);
-  if(step===3)tutTimer=setTimeout(()=>tutSkip(),8000);
+  if(s.center){
+    tip.classList.add('show','tut-center');
+  } else {
+    const target=document.querySelector(s.sel);
+    if(!target)return;
+    tip.classList.add('show');
+    requestAnimationFrame(()=>posTutTip(target,s.arrow));
+  }
+  if(step===2)tutTimer=setTimeout(()=>{if(tutStep===2)tutShow(3)},6000);
+}
+function tutNext(){
+  if(tutStep<0)return;
+  if(tutStep===5){tutSkip();return}
+  if(tutStep===6){tutHide();return}
+  tutShow(tutStep+1);
 }
 function posTutTip(target,arrowDir){
   const tip=$('#tutTip');
@@ -556,11 +568,12 @@ function posTutTip(target,arrowDir){
   if(arrowDir==='down'){tip.style.top='';tip.style.bottom=(window.innerHeight-r.top+14)+'px'}
   else{tip.style.top=(r.bottom+14)+'px';tip.style.bottom=''}
   const arrow=tip.querySelector('.tut-arrow');
+  arrow.className='tut-arrow '+arrowDir;
   const arrowX=anchorX-left;
   arrow.style.left=Math.max(16,Math.min(arrowX,tipW-16))+'px';
   arrow.style.transform='translateX(-50%)';
 }
-function tutAdvance(fromStep){if(tutDone||tutStep!==fromStep)return;tutShow(fromStep+1)}
+document.addEventListener('click',()=>tutNext());
 startReading();
 if(!tutDone)setTimeout(()=>tutShow(0),400);
 </script>
