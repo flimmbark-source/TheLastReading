@@ -270,10 +270,21 @@ function hintRGB(group){
   };
   return map[group]||map['hint-gold'];
 }
+function colorKeyRGB(key){
+  if(!key)return null;
+  const SUIT={Cups:'80,220,180',Wands:'255,155,70',Swords:'100,185,255',Pentacles:'185,240,90'};
+  const RANK={Page:'255,121,78',Knight:'220,90,220',Queen:'255,190,70',King:'80,215,215'};
+  const SEQ=['142,112,255','200,90,255','100,150,255','220,130,255'];
+  if(key.startsWith('flush:'))return SUIT[key.slice(6)]||'94,214,136';
+  if(key.startsWith('rank:'))return RANK[key.slice(5)]||'255,121,78';
+  if(key.startsWith('seq:')){const s=parseInt(key.slice(4));return SEQ[s%SEQ.length]}
+  return null;
+}
+function hintColor(h){return colorKeyRGB(h.colorKey)||hintRGB(h.group||hintGroup(h.label))}
 function multiHintShadow(hints,level){
   const ring=level==='complete'?'1px':'0.75px';
   const parts=[];
-  const colors=hints.slice(0,4).map(h=>hintRGB(h.group||hintGroup(h.label)));
+  const colors=hints.slice(0,4).map(hintColor);
   if(colors.length)parts.push(`0 0 0 ${ring} rgba(${colors[0]},.98)`);
   colors.forEach((rgb,i)=>{
     const blur=26+i*16;
@@ -283,23 +294,35 @@ function multiHintShadow(hints,level){
   parts.push('0 5px 14px rgba(0,0,0,.45)');
   return parts.join(',');
 }
+function seqRunStart(num,cards){
+  const nums=new Set(cards.filter(c=>c.type==='major').map(c=>c.num));
+  let s=num;while(nums.has(s-1))s--;return 'seq:'+s;
+}
 function cardHints(card, poolCards=null){
   const spread=state.spread.filter(Boolean);
   const base=poolCards||uniqueCards([...spread,...state.hand,card]);
   const all=uniqueCards([...base,card]);
   const hints=[];
   const seen=new Set();
-  const add=(level,label)=>{if(seen.has(label))return;seen.add(label);hints.push({level,label,group:hintGroup(label)})};
+  const add=(level,label,colorKey=null)=>{if(seen.has(label))return;seen.add(label);hints.push({level,label,group:hintGroup(label),colorKey})};
 
   // Strong glow: every scoring pattern this exact card would create if placed now.
+  const placed=[...spread,card];
   const before=new Set(computeScore(spread).melds.map(m=>m[0]));
-  const after=computeScore([...spread,card]);
-  after.melds.filter(m=>!before.has(m[0])).forEach(m=>add('complete',normMeldName(m[0])));
+  const after=computeScore(placed);
+  after.melds.filter(m=>!before.has(m[0])).forEach(m=>{
+    const norm=normMeldName(m[0]);
+    let ck=null;
+    if(norm==='Sequence')ck=seqRunStart(card.num,placed);
+    else if(norm==='Flush'||norm==='Royal Court'){const mt=m[0].match(/\((\w+)\)/);if(mt)ck='flush:'+mt[1];}
+    else if(norm==='Three of a Rank'||norm==='Four of a Rank'){const mt=m[0].match(/\((\w+)s\)/);if(mt)ck='rank:'+mt[1];}
+    add('complete',norm,ck);
+  });
 
   // Soft glow: this card is part of promising scoring shapes across hand + spread.
   if(card.type==='major'){
     const majorNums=new Set(all.filter(c=>c.type==='major'&&c.uid!==card.uid).map(c=>c.num));
-    if(majorNums.has(card.num-1)||majorNums.has(card.num+1))add('near','Sequence');
+    if(majorNums.has(card.num-1)||majorNums.has(card.num+1))add('near','Sequence',seqRunStart(card.num,all));
   }
 
   if(['major_0','major_1','major_21'].includes(card.id)){
@@ -309,13 +332,13 @@ function cardHints(card, poolCards=null){
 
   if(card.type==='court'){
     const sameRank=all.filter(c=>c.type==='court'&&c.rank===card.rank);
-    if(sameRank.length>=4)add('near','Four of a Rank');
-    else if(sameRank.length>=2)add('near','Three of a Rank');
+    if(sameRank.length>=4)add('near','Four of a Rank','rank:'+card.rank);
+    else if(sameRank.length>=2)add('near','Three of a Rank','rank:'+card.rank);
   }
 
   if(card.type==='court'){
     const sameSuitRanks=new Set(all.filter(c=>c.type==='court'&&c.suit===card.suit).map(c=>c.rank));
-    if(sameSuitRanks.size>=3)add('near','Royal Court');
+    if(sameSuitRanks.size>=3)add('near','Royal Court','flush:'+card.suit);
   }
 
   if(card.type==='court'){
@@ -325,7 +348,7 @@ function cardHints(card, poolCards=null){
 
   if(card.suit){
     const suited=all.filter(c=>c.suit===card.suit);
-    if(suited.length>=3)add('near','Flush');
+    if(suited.length>=3)add('near','Flush','flush:'+card.suit);
   }
 
   return hints;
@@ -337,7 +360,7 @@ function applyHint(el,card,poolCards=null){
   const hasComplete=hints.some(h=>h.level==='complete');
   const primary=hints.find(h=>h.level==='complete')||hints[0];
   el.classList.add(hasComplete?'hint-complete':'hint-card',primary.group||hintGroup(primary.label));
-  el.style.setProperty('--hint-rgb',hintRGB(primary.group||hintGroup(primary.label)));
+  el.style.setProperty('--hint-rgb',hintColor(primary));
   if(hints.length>1){
     el.classList.add('hint-multi');
     el.style.setProperty('--hint-shadow',multiHintShadow(hints,hasComplete?'complete':'near'));
