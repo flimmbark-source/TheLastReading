@@ -203,8 +203,12 @@ function render(){
     s.style.setProperty('--a',((i-2)*4)+'deg');
     if(card){
       const e=document.createElement('div');
-      e.className='card '+(card.type==='major'?'major':'');
+      const validSpread=ability&&ability.validIds.has(card.uid);
+      const pickedSpread=ability&&ability.picked.includes(card.uid);
+      e.className='card '+(card.type==='major'?'major ':'')+(validSpread?'ability-target ':'')+(pickedSpread?'ability-picked ':'')+(ability&&!validSpread?'ability-disabled ':'');
+      e.dataset.uid=card.uid;
       e.innerHTML=cardHTML(card);
+      if(ability)e.onclick=()=>handleAbilityHandClick(card);
       s.appendChild(e);
     }else{
       s.innerHTML='<div class="num">'+(i+1)+'</div>';
@@ -250,6 +254,9 @@ function refreshHandState(){
     const uid=Number(el.dataset.uid);
     el.classList.toggle('sel',!ability&&state.selected===uid);
     if(ability)el.classList.toggle('ability-picked',ability.picked.includes(uid));
+  });
+  document.querySelectorAll('#spread .card[data-uid]').forEach(el=>{
+    if(ability)el.classList.toggle('ability-picked',ability.picked.includes(Number(el.dataset.uid)));
   });
   renderAbilityPrompt();
   updateScorePreview(computeScore(state.spread.filter(Boolean)));
@@ -434,7 +441,8 @@ function renderAbilityPrompt(){
   $('#abilityPromptTitle').textContent=a.title;
   let preview='';
   if(a.previewFn&&a.picked.length){
-    const picked=a.picked.map(id=>state.hand.find(c=>c.uid===id)).filter(Boolean);
+    const allCards=[...state.hand,...state.spread.filter(Boolean)];
+    const picked=a.picked.map(id=>allCards.find(c=>c.uid===id)).filter(Boolean);
     preview=a.previewFn(...picked)||'';
   }
   $('#abilityPromptText').innerHTML=preview?a.prompt+'<br><b>'+preview+'</b>':a.prompt;
@@ -444,7 +452,8 @@ function renderAbilityPrompt(){
 function confirmAbilitySelection(){
   const a=state.abilitySelect;
   if(!a||a.picked.length<a.count)return;
-  const picked=a.picked.map(id=>state.hand.find(c=>c.uid===id)).filter(Boolean);
+  const allCards=[...state.hand,...state.spread.filter(Boolean)];
+  const picked=a.picked.map(id=>allCards.find(c=>c.uid===id)).filter(Boolean);
   const cb=a.cb;
   state.abilitySelect=null;
   render();
@@ -452,7 +461,7 @@ function confirmAbilitySelection(){
 }
 function betweenAbility(done,sourceCard=null){
   state.busy=true;
-  const anchors=sortCards(state.hand);
+  const anchors=sortCards([...state.hand,...state.spread.filter(Boolean)]);
   const validAnchors=anchors.filter(a=>anchors.some(b=>b.uid!==a.uid&&betweenPool(a,b).length>0));
 
   if(!validAnchors.length){fallbackAbility(done,'Between — no cards between');return}
@@ -463,7 +472,7 @@ function betweenAbility(done,sourceCard=null){
     return total?('Between these anchors: '+total+' card'+(total===1?'':'s')):'No cards between these anchors.';
   };
 
-  selectFromHand('Between','Choose 2 cards to draw between. Valid hand cards are highlighted.',validAnchors,2,(a,b)=>{
+  selectFromHand('Between','Choose 2 cards to draw between. Valid cards are highlighted.',validAnchors,2,(a,b)=>{
     const n=2+(persist.up.between||0);
     const found=sortCards(shuffle(uniqueCards([...betweenPool(a,b)])).slice(0,n));
     if(!found.length){fallbackAbility(done,'Between — no cards found');return}
@@ -483,13 +492,13 @@ function betweenAbility(done,sourceCard=null){
 function cardDisplayName(c){return c.type==='major'?ROMAN[c.num]+' - '+cleanName(c):cleanName(c)}
 function relation(title,prompt,fn,n,done){
   state.busy=true;
-  let targets=sortCards(state.hand).filter(t=>fn(t).length);
+  let targets=sortCards([...state.hand,...state.spread.filter(Boolean)]).filter(t=>fn(t).length);
   if(!targets.length){fallbackAbility(done);return}
   const previewFn=title==='Mirror'?t=>{
     let reflected=sortCards([...fn(t)]);
     return reflected.length?cardDisplayName(reflected[0]):'';
   }:null;
-  selectFromHand(title+' — choose anchor',prompt+' Valid hand cards are highlighted.',targets,1,t=>{
+  selectFromHand(title+' — choose anchor',prompt+' Valid cards are highlighted.',targets,1,t=>{
     let found=sortCards(shuffle([...fn(t)]).slice(0,n));
 
     // Mirror is deterministic: once the player chooses the anchor and presses Choose,
