@@ -148,7 +148,7 @@
   </table>
 </div>
 </div>
-<div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="danger" onclick="discardSelected()" disabled>Discard</button></div><div id="spread" class="spread"></div></div>
+<div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="danger" onclick="discardSelected()" disabled>Discard</button><button id="purgeBtn" onclick="purgeSelected()" disabled>Purge</button></div><div id="spread" class="spread"></div></div>
 <div id="abilityPrompt" class="ability-prompt"><div><h3 id="abilityPromptTitle"></h3><p id="abilityPromptText"></p></div><button id="abilityConfirm" onclick="confirmAbilitySelection()" disabled>Choose</button></div>
 <div class="handDock"><div id="hand" class="hand"></div></div>
 <div id="tutTip"><span class="tut-arrow"></span><p id="tutText"></p><div class="tut-foot"><button id="tutSkipBtn" onclick="tutSkip();event.stopPropagation()">Skip tutorial</button></div></div>
@@ -203,8 +203,12 @@ function render(){
     s.style.setProperty('--a',((i-2)*4)+'deg');
     if(card){
       const e=document.createElement('div');
-      e.className='card '+(card.type==='major'?'major':'');
+      const validSpread=ability&&ability.validIds.has(card.uid);
+      const pickedSpread=ability&&ability.picked.includes(card.uid);
+      e.className='card '+(card.type==='major'?'major ':'')+(validSpread?'ability-target ':'')+(pickedSpread?'ability-picked ':'')+(ability&&!validSpread?'ability-disabled ':'');
+      e.dataset.uid=card.uid;
       e.innerHTML=cardHTML(card);
+      if(ability)e.onclick=()=>handleAbilityHandClick(card);
       s.appendChild(e);
     }else{
       s.innerHTML='<div class="num">'+(i+1)+'</div>';
@@ -241,6 +245,7 @@ function render(){
   renderAbilityPrompt();
   updateScorePreview(now);
   $('#discardBtn').disabled=state.selected===null||state.discards<=0;
+  $('#purgeBtn').disabled=state.selected===null;
   $('#mullBtn').style.display=hasMull()?'inline-block':'none';
   $('#mullBtn').disabled=state.mull||!state.spread.every(x=>!x)||state.hand.length!==maxHand();
 }
@@ -251,9 +256,13 @@ function refreshHandState(){
     el.classList.toggle('sel',!ability&&state.selected===uid);
     if(ability)el.classList.toggle('ability-picked',ability.picked.includes(uid));
   });
+  document.querySelectorAll('#spread .card[data-uid]').forEach(el=>{
+    if(ability)el.classList.toggle('ability-picked',ability.picked.includes(Number(el.dataset.uid)));
+  });
   renderAbilityPrompt();
   updateScorePreview(computeScore(state.spread.filter(Boolean)));
   $('#discardBtn').disabled=state.selected===null||state.discards<=0;
+  $('#purgeBtn').disabled=state.selected===null;
 }
 function computeScore(cards){let chips=cards.reduce((s,c)=>s+c.points,0),base=chips,mult=1,m=[];let rankBonus=persist.up.rank*5;for(const rank of ['Page','Knight','Queen','King']){let a=cards.filter(c=>c.type==='court'&&c.rank===rank);if(a.length===4){let x=12+rankBonus;m.push(['Four of a Rank ('+rank+'s)',x,1.5]);chips+=x;mult*=1.5}else if(a.length===3){let x=10+rankBonus;m.push(['Three of a Rank ('+rank+'s)',x,1.25]);chips+=x;mult*=1.25}}let ranks=new Set(cards.filter(c=>c.type==='court').map(c=>c.rank));let full=['Page','Knight','Queen','King'].every(r=>ranks.has(r));let aces=cards.filter(c=>c.type==='ace'),same=null;if(full)for(const suit of SUITS){let rs=new Set(cards.filter(c=>c.type==='court'&&c.suit===suit).map(c=>c.rank));if(rs.size===4){same=suit;break}}let rf=same&&aces.some(a=>a.suit===same);let court=false;if(same){m.push(['Royal Court ('+same+')',20,2]);chips+=20;mult*=2;court=true}else if(full){m.push(['Full Court',18,1.75]);chips+=18;mult*=1.75;court=true}if(!court)for(const suit of SUITS){let suited=cards.filter(c=>c.suit===suit);if(suited.length>=4){m.push(['Flush ('+suit+')',15,1.5]);chips+=15;mult*=1.5}}let nums=[...new Set(cards.filter(c=>c.type==='major').map(c=>c.num))].sort((a,b)=>a-b),best=1,cur=1;for(let i=1;i<nums.length;i++){if(nums[i]===nums[i-1]+1){cur++;best=Math.max(best,cur)}else cur=1}let seqBonus=persist.up.sequence*5;if(best>=5){let x=18+seqBonus;m.push(['Sequence of '+best,x,4]);chips+=x;mult*=4}else if(best>=4){let x=15+seqBonus;m.push(['Sequence of '+best,x,3]);chips+=x;mult*=3}else if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,2.5]);chips+=x;mult*=2.5}if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){m.push(['Path of the Magi',30,5]);chips+=30;mult*=5}return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}}
 function cleanName(c){return c.type==='major'?c.name.split(' ').slice(1).join(' '):c.name}
@@ -378,6 +387,7 @@ let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 function setCounterTarget(v){counterTarget=v;if(counterTimer)clearTimeout(counterTimer);counterTimer=setTimeout(()=>{if(counterCancel)counterCancel();counterCancel=rollCounter(counterShown,counterTarget,650);counterShown=counterTarget;counterTimer=null},700)}
 function snapCounter(v){if(counterTimer){clearTimeout(counterTimer);counterTimer=null}if(counterCancel){counterCancel();counterCancel=null}counterShown=counterTarget=v;$('#current').textContent=v;$('#current').style.color=''}
 function rollCounter(from,to,dur){let el=$('#current'),start=performance.now(),dead=false;function step(now){if(dead)return;let t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color=''}}requestAnimationFrame(step);return()=>{dead=true;el.style.color=''}}
+function purgeSelected(){if(state.busy||state.selected===null)return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;state.hand.splice(idx,1);state.selected=null;state.discards=Math.min(state.discards+1,maxDiscards());render()}
 function discardSelected(){if(state.busy||state.selected===null||state.discards<=0)return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let c=state.hand.splice(idx,1)[0];state.discard.push(c);state.selected=null;state.discards--;resolveAbility(c.ability,()=>{render();checkEnd()},c)}
 function resolveAbility(ab,done,sourceCard=null){if(ab==='DRAW_1'){drawN(1);done()}else if(ab==='DRAW_2'){drawN(2);done()}else if(ab==='DRAW_3'){drawN(3);done()}else if(ab==='PEEK_3')peek(3,done);else if(ab==='PEEK_5')peek(5,done);else if(ab==='SEARCH')search(done);else if(ab==='NEIGHBOR_2')relation('Neighbor','Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers, court ranks in the same suit, or King from an Ace.',neighbor,2+(persist.up.neighbor||0),done);else if(ab==='KIN_2')relation('Kin','Choose an anchor card. Kin finds cards of the same Arcana.',kin,2+(persist.up.kin||0),done);else if(ab==='MIRROR_1')relation('Mirror','Choose a card. Take the card opposite it across centerline of its Arcana.',mirror,1+(persist.up.mirror||0),done);else if(ab==='BETWEEN_2')betweenAbility(done,sourceCard);else if(ab==='WORLD'){state.deck.push(...state.discard.splice(0));shuffle(state.deck);drawN(2);done()}else done()}
 function peek(n,done){state.busy=true;let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){state.busy=false;done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{state.hand.push(p);cards.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));state.busy=false;done()})}
@@ -434,7 +444,8 @@ function renderAbilityPrompt(){
   $('#abilityPromptTitle').textContent=a.title;
   let preview='';
   if(a.previewFn&&a.picked.length){
-    const picked=a.picked.map(id=>state.hand.find(c=>c.uid===id)).filter(Boolean);
+    const allCards=[...state.hand,...state.spread.filter(Boolean)];
+    const picked=a.picked.map(id=>allCards.find(c=>c.uid===id)).filter(Boolean);
     preview=a.previewFn(...picked)||'';
   }
   $('#abilityPromptText').innerHTML=preview?a.prompt+'<br><b>'+preview+'</b>':a.prompt;
@@ -444,7 +455,8 @@ function renderAbilityPrompt(){
 function confirmAbilitySelection(){
   const a=state.abilitySelect;
   if(!a||a.picked.length<a.count)return;
-  const picked=a.picked.map(id=>state.hand.find(c=>c.uid===id)).filter(Boolean);
+  const allCards=[...state.hand,...state.spread.filter(Boolean)];
+  const picked=a.picked.map(id=>allCards.find(c=>c.uid===id)).filter(Boolean);
   const cb=a.cb;
   state.abilitySelect=null;
   render();
@@ -452,7 +464,7 @@ function confirmAbilitySelection(){
 }
 function betweenAbility(done,sourceCard=null){
   state.busy=true;
-  const anchors=sortCards(state.hand);
+  const anchors=sortCards([...state.hand,...state.spread.filter(Boolean)]);
   const validAnchors=anchors.filter(a=>anchors.some(b=>b.uid!==a.uid&&betweenPool(a,b).length>0));
 
   if(!validAnchors.length){fallbackAbility(done,'Between — no cards between');return}
@@ -463,7 +475,7 @@ function betweenAbility(done,sourceCard=null){
     return total?('Between these anchors: '+total+' card'+(total===1?'':'s')):'No cards between these anchors.';
   };
 
-  selectFromHand('Between','Choose 2 cards to draw between. Valid hand cards are highlighted.',validAnchors,2,(a,b)=>{
+  selectFromHand('Between','Choose 2 cards to draw between. Valid cards are highlighted.',validAnchors,2,(a,b)=>{
     const n=2+(persist.up.between||0);
     const found=sortCards(shuffle(uniqueCards([...betweenPool(a,b)])).slice(0,n));
     if(!found.length){fallbackAbility(done,'Between — no cards found');return}
@@ -483,13 +495,13 @@ function betweenAbility(done,sourceCard=null){
 function cardDisplayName(c){return c.type==='major'?ROMAN[c.num]+' - '+cleanName(c):cleanName(c)}
 function relation(title,prompt,fn,n,done){
   state.busy=true;
-  let targets=sortCards(state.hand).filter(t=>fn(t).length);
+  let targets=sortCards([...state.hand,...state.spread.filter(Boolean)]).filter(t=>fn(t).length);
   if(!targets.length){fallbackAbility(done);return}
   const previewFn=title==='Mirror'?t=>{
     let reflected=sortCards([...fn(t)]);
     return reflected.length?cardDisplayName(reflected[0]):'';
   }:null;
-  selectFromHand(title+' — choose anchor',prompt+' Valid hand cards are highlighted.',targets,1,t=>{
+  selectFromHand(title+' — choose anchor',prompt+' Valid cards are highlighted.',targets,1,t=>{
     let found=sortCards(shuffle([...fn(t)]).slice(0,n));
 
     // Mirror is deterministic: once the player chooses the anchor and presses Choose,
@@ -519,7 +531,7 @@ function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;wa
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
 function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards),total=state.carry+res.finalScore,pass=total>=TH[state.th];let html='<div class="summary"><h3>Reading Result</h3><table>';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){html+=`<tr><td><b>Patterns formed</b></td><td class="r"></td></tr>`;res.melds.forEach(m=>html+=`<tr class="meld"><td>${m[0]}</td><td class="r">+${m[1]} ×${m[2]}</td></tr>`)}else html+=`<tr><td>No scoring pattern formed</td><td class="r">Base only</td></tr>`;html+=`<tr><td>This reading</td><td class="r">${res.chips} × ${res.mult} = <b>${res.finalScore}</b></td></tr>`;if(state.carry)html+=`<tr><td>Carryover</td><td class="r">${state.carry}</td></tr>`;html+=`<tr><td>${pass?'PASSED':'Below'} threshold ${TH[state.th]}</td><td class="r"><b>${total}</b></td></tr></table>`;if(pass){persist.pool+=total;state.carry=0;state.th++;html+=`<p>Threshold cleared. ${total} added to pool.</p>`;if(state.th>=TH.length||state.reading>=MAX)html+='<button onclick="endSession()">End session</button>';else html+='<button onclick="openShop()">Open Shop →</button>'}else{state.carry=total;if(state.reading>=MAX){state.carry=0;html+='<p>The candles burn out.</p><button onclick="endSession()">End session</button>'}else html+=`<p>Score carries forward.</p><button onclick="continueReading()">Continue to reading ${state.reading+1} →</button>`}html+='</div>';showOverlay(html);render()}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML=''}
-function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.shopOffer=null;state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(6),400)}}function endSession(){showOverlay('<div class="summary"><h3>Session complete</h3><p>Reserve: <b>'+persist.pool+'</b>.</p><button onclick="resetSession()">New session</button></div>')}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,carry:0,busy:false,shopOffer:null,abilitySelect:null};startReading()}
+function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.shopOffer=null;state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(7),400)}}function endSession(){showOverlay('<div class="summary"><h3>Session complete</h3><p>Reserve: <b>'+persist.pool+'</b>.</p><button onclick="resetSession()">New session</button></div>')}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,carry:0,busy:false,shopOffer:null,abilitySelect:null};startReading()}
 const SHOP={discards:['Extra Discard','+1 discard each reading.',15,1.75],hand:['Wider Hand','+1 starting hand size.',40,2],mulligan:['Mulligan','Once each reading, redraw your starting hand.',20,1.75],rank:['Rank Chips','Three/Four of a Rank gain +5 chips.',25,1.75],sequence:['Sequence Chips','All Sequences gain +5 chips.',25,1.75],neighbor:['Neighbor Lens','Neighbor reveals +1 extra card.',30,1.8],kin:['Kin Lens','Kin reveals +1 extra card.',30,1.8],mirror:['Mirror Lens','Mirror reveals +1 extra reflected result when possible.',35,2],between:['Between Lens','Between reveals +1 extra card.',35,2]};
 function shopCost(k){let s=SHOP[k],lvl=persist.up[k]||0;return Math.floor(s[2]*Math.pow(s[3],lvl))}
 function drawShopOffer(){return shuffle(Object.keys(SHOP)).slice(0,5)}
@@ -546,6 +558,7 @@ const TUT_STEPS=[
   {sel:'.threshold-pill',arrow:'up',text:'Score enough points to beat the <b>Threshold</b>.'},
   {sel:'.handDock',arrow:'down',text:'Glowing cards form <b>potential</b> scoring patterns. Check <b>Scoring</b> to see what\'s possible, and use card <b>Abilities</b> to form a scoring pattern.'},
   {sel:'#abilitiesBtn',arrow:'up',text:'Discarding a card uses its <b>Ability</b> instead of scoring — a way to reshape your hand before placing.'},
+  {sel:'#purgeBtn',arrow:'up',text:'<b>Purge</b> removes a card from your hand for the rest of the reading and refunds 1 Discard — useful for cards that don\'t fit your pattern.'},
   {sel:'.handDock',arrow:'down',text:'The red circle shows how much a card scores for. Tap a card to see which patterns it completes, then tap an empty slot to place it.'},
   {sel:'.threshold-pill',arrow:'up',text:'Fill all 5 slots to complete the reading. Beat the <b>Threshold</b> to win — your score carries forward if you fall short.'},
   {center:true, text:'Each time you reach a Threshold, it increases in difficulty. Beat the third Threshold to win.'},
@@ -553,7 +566,7 @@ const TUT_STEPS=[
 function tutSkip(){localStorage.setItem(TUT_KEY,'1');tutDone=true;tutHide()}
 function tutHide(){clearTimeout(tutTimer);tutTimer=null;tutStep=-1;const t=$('#tutTip');if(t){t.classList.remove('show','tut-center');t.style.cssText=''}}
 function tutShow(step){
-  if(tutDone&&step<6)return;
+  if(tutDone&&step<7)return;
   clearTimeout(tutTimer);tutTimer=null;
   tutStep=step;
   const s=TUT_STEPS[step];
@@ -573,8 +586,8 @@ function tutShow(step){
 }
 function tutNext(){
   if(tutStep<0)return;
-  if(tutStep===5){tutSkip();return}
-  if(tutStep===6){tutHide();return}
+  if(tutStep===6){tutSkip();return}
+  if(tutStep===7){tutHide();return}
   tutShow(tutStep+1);
 }
 function posTutTip(target,arrowDir){
