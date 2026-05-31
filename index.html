@@ -547,7 +547,6 @@ function tutShow(step){
     tip.classList.add('show');
     requestAnimationFrame(()=>posTutTip(target,s.arrow));
   }
-  if(step===2)tutTimer=setTimeout(()=>{if(tutStep===2)tutShow(3)},6000);
 }
 function tutNext(){
   if(tutStep<0)return;
