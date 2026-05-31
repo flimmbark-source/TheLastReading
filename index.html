@@ -100,6 +100,15 @@
   .scoring-sheet td{font-size:10px}
   .shop-grid{grid-template-columns:1fr}
 }
+#tutTip{position:fixed;z-index:90;background:rgba(22,16,13,.97);border:1px solid #856536;border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.65);padding:12px 14px;max-width:min(88vw,300px);color:#d0bc8c;font-size:13px;line-height:1.5;display:none}
+#tutTip.show{display:block}
+#tutTip p{margin:0}
+#tutTip p b{color:#f0d58a}
+.tut-arrow{position:absolute;width:0;height:0;left:50%;transform:translateX(-50%)}
+.tut-arrow.down{border-left:8px solid transparent;border-right:8px solid transparent;border-top:10px solid #856536;bottom:-10px}
+.tut-arrow.up{border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:10px solid #856536;top:-10px}
+.tut-foot{display:flex;gap:8px;margin-top:10px;justify-content:flex-end}
+#tutSkipBtn{background:transparent;border:1px solid #5f4c29;color:#7a6540;font-size:11px;padding:3px 8px;font-weight:400}
 </style>
 </head>
 <body>
@@ -140,6 +149,7 @@
 <div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="danger" onclick="discardSelected()" disabled>Discard</button></div><div id="spread" class="spread"></div></div>
 <div id="abilityPrompt" class="ability-prompt"><div><h3 id="abilityPromptTitle"></h3><p id="abilityPromptText"></p></div><button id="abilityConfirm" onclick="confirmAbilitySelection()" disabled>Choose</button></div>
 <div class="handDock"><div id="hand" class="hand"></div></div>
+<div id="tutTip"><span class="tut-arrow"></span><p id="tutText"></p><div class="tut-foot"><button id="tutSkipBtn" onclick="tutSkip()">Skip tutorial</button></div></div>
 <div id="summary"></div>
 <div id="modal" class="modal"><div class="box"><div class="modalHead"><h2 id="modalTitle"></h2><button id="modalToggle" onclick="toggleModalCollapse()">Hide</button></div><p id="modalPrompt"></p><div id="choices" class="choices"></div></div></div>
 <script>
@@ -219,7 +229,9 @@ function render(){
     e.onclick=()=>{
       if(ability){handleAbilityHandClick(c);return}
       if(state.busy)return;
+      const selecting=selectedId!==c.uid;
       state.selected=selectedId===c.uid?null:c.uid;
+      if(selecting)tutAdvance(1);
       refreshHandState();
     };
     hFrag.appendChild(e);
@@ -333,7 +345,7 @@ function applyHint(el,card,poolCards=null){
   el.dataset.hint=hints.map(h=>h.label).join(' + ');
 }
 function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=computeScore([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
-function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let before=new Set(computeScore(state.spread.filter(Boolean)).melds.map(x=>x[0]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.filter(x=>!before.has(x[0]));let delay=420;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;setTimeout(()=>ghost(anchor,'+'+m[1]+' ×'+m[2],true),ghostDelay);holdEffects(ghostDelay+1700);delay+=slots.length*130+700});setCounterTarget(state.carry+after.finalScore);checkEnd()}
+function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let before=new Set(computeScore(state.spread.filter(Boolean)).melds.map(x=>x[0]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;tutAdvance(2);state.selected=null;render();ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.filter(x=>!before.has(x[0]));let delay=420;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;setTimeout(()=>ghost(anchor,'+'+m[1]+' ×'+m[2],true),ghostDelay);holdEffects(ghostDelay+1700);delay+=slots.length*130+700});setCounterTarget(state.carry+after.finalScore);checkEnd()}
 let effectsUntil=0;
 function holdEffects(ms){effectsUntil=Math.max(effectsUntil,Date.now()+ms)}
 function ghost(i,t,big=false){let s=document.querySelectorAll('.slot')[i];if(!s)return;holdEffects(1700);let g=document.createElement('div');g.className='ghost '+(big?'big':'');g.textContent=t;s.appendChild(g);setTimeout(()=>g.remove(),1700)}
@@ -492,7 +504,7 @@ function openShop(newOffer=true){if(newOffer||!state.shopOffer)state.shopOffer=d
 function buyUpgrade(k){let cost=shopCost(k);if(persist.pool<cost)return;persist.pool-=cost;persist.up[k]=(persist.up[k]||0)+1;openShop(false)}
 function mulligan(){if(state.busy||!hasMull()||state.mull||!state.spread.every(x=>!x)||state.hand.length!==maxHand())return;state.deck.push(...state.hand.splice(0));drawTo(maxHand());state.mull=true;state.selected=null;snapCounter(state.carry);render()}
 function closeRefs(){ $('#ref').classList.add('hidden'); $('#abilityRef').classList.add('hidden') }
-function toggleRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ref.classList.contains('hidden'); closeRefs(); if(wasHidden)ref.classList.remove('hidden') }
+function toggleRef(e){ if(e)e.stopPropagation(); tutAdvance(0); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ref.classList.contains('hidden'); closeRefs(); if(wasHidden)ref.classList.remove('hidden') }
 function toggleAbilityRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ability.classList.contains('hidden'); closeRefs(); if(wasHidden)ability.classList.remove('hidden') }
 document.addEventListener('click',e=>{
   let insideRefs=e.target.closest('.refs-layer')||e.target.closest('#scoringBtn')||e.target.closest('#abilitiesBtn');
@@ -504,9 +516,53 @@ document.addEventListener('click',e=>{
     refreshHandState();
   }
 });
-function showTutorial(){showOverlay('<div class="summary tutorial"><h3>How to Play</h3><p>Make a 5-card reading.</p><p>Tap a card to select it, then tap an empty space to place it and gain the points on the card. Build scoring patterns to earn more points and multipliers.</p><p>Discard cards to use their abilities and try to draw a better scoring hand.</p><p>Beat each Threshold to win, each threshold clear opens the Shop. If you fall short, your Score carries into the next reading.</p><p>Use Scoring and Abilities for quick reminders.</p><button onclick="clearOverlay()">Begin Reading</button></div>')}
+const TUT_KEY='tlr_tut_done';
+let tutStep=-1,tutTimer=null,tutDone=!!localStorage.getItem(TUT_KEY);
+const TUT_STEPS=[
+  {sel:'.handDock',arrow:'down',text:'Glowing cards form <b>potential</b> scoring patterns. Check <b>Scoring</b> to see what\'s possible, and use card <b>Abilities</b> to form a scoring pattern.'},
+  {sel:'#abilitiesBtn',arrow:'up',text:'Discarding a card uses its <b>Ability</b> instead of scoring — a way to reshape your hand before placing.'},
+  {sel:'.spread-wrap',arrow:'down',text:'Tap a card to see how much it adds and which patterns it completes. Then tap an empty slot to place it.'},
+  {sel:'.threshold-pill',arrow:'up',text:'Fill all 5 slots to complete the reading. Beat the <b>Threshold</b> to win — your score carries forward if you fall short.'},
+];
+function tutSkip(){localStorage.setItem(TUT_KEY,'1');tutDone=true;tutHide()}
+function tutHide(){clearTimeout(tutTimer);tutTimer=null;const t=$('#tutTip');if(t)t.classList.remove('show')}
+function tutShow(step){
+  if(tutDone)return;
+  clearTimeout(tutTimer);tutTimer=null;
+  tutStep=step;
+  const s=TUT_STEPS[step];
+  if(!s){tutSkip();return}
+  const target=document.querySelector(s.sel);
+  if(!target)return;
+  const tip=$('#tutTip');
+  const arrow=tip.querySelector('.tut-arrow');
+  arrow.className='tut-arrow '+s.arrow;
+  $('#tutText').innerHTML=s.text;
+  tip.classList.add('show');
+  requestAnimationFrame(()=>posTutTip(target,s.arrow));
+  if(step===0)tutTimer=setTimeout(()=>tutShow(1),6000);
+  if(step===3)tutTimer=setTimeout(()=>tutSkip(),8000);
+}
+function posTutTip(target,arrowDir){
+  const tip=$('#tutTip');
+  const tipW=Math.min(300,window.innerWidth*0.88);
+  tip.style.maxWidth=tipW+'px';
+  const r=target.getBoundingClientRect();
+  const anchorX=r.left+r.width/2;
+  let left=anchorX-tipW/2;
+  left=Math.max(8,Math.min(left,window.innerWidth-tipW-8));
+  tip.style.left=left+'px';
+  tip.style.right='';
+  if(arrowDir==='down'){tip.style.top='';tip.style.bottom=(window.innerHeight-r.top+14)+'px'}
+  else{tip.style.top=(r.bottom+14)+'px';tip.style.bottom=''}
+  const arrow=tip.querySelector('.tut-arrow');
+  const arrowX=anchorX-left;
+  arrow.style.left=Math.max(16,Math.min(arrowX,tipW-16))+'px';
+  arrow.style.transform='translateX(-50%)';
+}
+function tutAdvance(fromStep){if(tutDone||tutStep!==fromStep)return;tutShow(fromStep+1)}
 startReading();
-showTutorial();
+if(!tutDone)setTimeout(()=>tutShow(0),400);
 </script>
 </body>
 </html>
