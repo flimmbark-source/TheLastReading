@@ -169,12 +169,12 @@
 .sbtn:active:not(:disabled){filter:brightness(.9)}
 .sbtn:disabled{cursor:not-allowed;filter:none;opacity:1}
 .spread-actions .sbtn{pointer-events:auto;min-width:unset}
-/* Discard & Purge — sprite 438×140, row1(y=40)=disabled, row2(y=199)=normal, scale 38/140 */
+/* Discard & Purge — sprite 438×140, row1(y=40)=normal, row2(y=199)=disabled, scale 38/140 */
 .sbtn-discard,.sbtn-purge{width:119px;height:38px;background-size:393px 295px}
-.sbtn-discard{background-position:-40px -54px}
-.sbtn-discard:disabled{background-position:-40px -11px}
-.sbtn-purge{background-position:-165px -54px}
-.sbtn-purge:disabled{background-position:-165px -11px}
+.sbtn-discard{background-position:-40px -11px}
+.sbtn-discard:disabled{background-position:-40px -54px}
+.sbtn-purge{background-position:-165px -11px}
+.sbtn-purge:disabled{background-position:-165px -54px}
 /* Open (442×112) & Pick (425×112) — scale 24/112 */
 .sbtn-open,.sbtn-pick{height:24px;background-size:310px 233px}
 .sbtn-open{width:94px;background-position:-46px -81px}
@@ -203,10 +203,10 @@
 .shop-pack-banner .isp,.upg-art .isp{position:relative;z-index:1}
 @media(max-width:640px){
   .sbtn-discard,.sbtn-purge{width:94px;height:30px;background-size:310px 233px}
-  .sbtn-discard{background-position:-31px -43px}
-  .sbtn-discard:disabled{background-position:-31px -9px}
-  .sbtn-purge{background-position:-130px -43px}
-  .sbtn-purge:disabled{background-position:-130px -9px}
+  .sbtn-discard{background-position:-31px -9px}
+  .sbtn-discard:disabled{background-position:-31px -43px}
+  .sbtn-purge{background-position:-130px -9px}
+  .sbtn-purge:disabled{background-position:-130px -43px}
   .sbtn-open{width:79px;height:20px;background-size:259px 194px;background-position:-38px -68px}
   .sbtn-open:hover:not(:disabled){background-position:-37px -90px}
   .sbtn-open:active:not(:disabled){background-position:-38px -114px}
