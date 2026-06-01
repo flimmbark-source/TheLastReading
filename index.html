@@ -590,22 +590,29 @@ function mirror(t){if(t.type==='major'){let n=21-t.num;return state.deck.filter(
 function betweenPool(a,b){
   if(!a||!b||a.uid===b.uid)return[];
 
-  // Major Arcana: cards numerically between two Major Arcana anchors.
+  // Major Arcana: cards numerically between two Major Arcana anchors (majors and minors).
   if(a.type==='major'&&b.type==='major'){
     let lo=Math.min(a.num,b.num),hi=Math.max(a.num,b.num);
     if(hi-lo<=1)return[];
-    return state.deck.filter(c=>c.type==='major'&&c.num>lo&&c.num<hi);
+    const minorRankPos=[0,5,10,15,20]; // Page,Knight,Queen,King,Ace mapped onto 0-21
+    return state.deck.filter(c=>{
+      if(c.type==='major')return c.num>lo&&c.num<hi;
+      let ri=RANKS.indexOf(c.rank);
+      if(ri<0)return false;
+      let pos=minorRankPos[ri];
+      return pos>lo&&pos<hi;
+    });
   }
 
-  // Minor Arcana: cards between two anchors in the same suit ladder.
+  // Minor Arcana: cards between two anchors in the rank ladder (any suit).
   // Ladder: Page -> Knight -> Queen -> King -> Ace
   let aMinor=(a.type==='court'||a.type==='ace'), bMinor=(b.type==='court'||b.type==='ace');
-  if(aMinor&&bMinor&&a.suit===b.suit){
+  if(aMinor&&bMinor){
     let ia=RANKS.indexOf(a.rank),ib=RANKS.indexOf(b.rank);
     if(ia<0||ib<0)return[];
     let lo=Math.min(ia,ib),hi=Math.max(ia,ib);
     if(hi-lo<=1)return[];
-    return state.deck.filter(c=>c.suit===a.suit&&RANKS.indexOf(c.rank)>lo&&RANKS.indexOf(c.rank)<hi);
+    return state.deck.filter(c=>(c.type==='court'||c.type==='ace')&&RANKS.indexOf(c.rank)>lo&&RANKS.indexOf(c.rank)<hi);
   }
 
   return[];
