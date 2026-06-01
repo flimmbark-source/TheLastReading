@@ -673,9 +673,9 @@ const SHOP={
 };
 function shopCost(k){let s=SHOP[k],lvl=persist.up[k]||0;return Math.floor(s[2]*Math.pow(s[3],lvl))}
 const PACKS={
-  arcana:{name:'Scoring Pack',desc:'Choose a scoring upgrade for your reading patterns.',icon:'🌟',cost:30,pool:'scoring'},
-  instrument:{name:'Powerup Pack',desc:'Choose a powerup that changes how you play.',icon:'🔮',cost:25,pool:'utility'},
-  mystery:{name:'Mystery Pack',desc:'Choose from a random mix of scoring and powerup upgrades.',icon:'✨',cost:38,pool:'all'},
+  arcana:{name:'Scoring Pack',desc:'Choose a scoring upgrade for your reading patterns.',icon:'🌟',cost:20,pool:'scoring'},
+  instrument:{name:'Powerup Pack',desc:'Choose a powerup that changes how you play.',icon:'🔮',cost:15,pool:'utility'},
+  mystery:{name:'Mystery Pack',desc:'Choose from a random mix of scoring and powerup upgrades.',icon:'✨',cost:28,pool:'all'},
 };
 function openShop(){
   let html='<div class="summary tarot-shop">';
