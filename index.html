@@ -113,27 +113,55 @@
 #tutSkipBtn{background:transparent;border:1px solid #5f4c29;color:#7a6540;font-size:11px;padding:3px 8px;font-weight:400}
 .card.photo{border:none;background:none;border-radius:4px}
 .card.photo .title,.card.photo .art{display:none}
+/* Purge selection mode */
+.hand .card.purge-target{opacity:.6}
+.hand .card.purge-picked{transform:translate3d(0,-92px,0) rotate(0deg)!important;z-index:999!important;box-shadow:0 10px 28px rgba(0,0,0,.75),0 0 0 2px #c06060!important}
+@media(max-width:640px){.hand .card.purge-picked{transform:translateY(-86px) rotate(0deg)!important}}
+/* Tarot shop redesign */
+.tarot-shop{max-width:880px;width:min(92vw,880px)}
+.shop-header{text-align:center;border-bottom:1px solid #5f4c29;padding-bottom:12px;margin-bottom:16px}
+.shop-header h3{margin:0;font:700 20px Georgia,serif;color:#f0d58a;letter-spacing:.04em}
+.shop-reserve-display{color:#b99a5d;font-size:13px;margin:5px 0 0}
+.shop-reserve-display b{color:#ffd978}
+.shop-section-title{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#b99a5d;margin:0 0 10px;display:flex;align-items:center;gap:10px}
+.shop-section-title::before,.shop-section-title::after{content:'';flex:1;height:1px;background:rgba(95,76,41,.5)}
+.shop-items-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+.shop-item-card{width:130px;background:linear-gradient(160deg,#231510,#140907);border:1px solid #705530;border-radius:8px;padding:0 0 10px;display:flex;flex-direction:column;overflow:hidden;transition:transform .15s,box-shadow .15s}
+.shop-item-card.scoring{border-color:#7a6030}
+.shop-item-card.affordable.scoring{border-color:#d4af6a;box-shadow:0 0 12px rgba(212,175,106,.22)}
+.shop-item-card.affordable.utility{border-color:#6fa36a;box-shadow:0 0 10px rgba(111,163,106,.2)}
+.shop-item-top{background:linear-gradient(#1e1008,#2a1810);border-bottom:1px solid #4a3820;display:flex;align-items:center;justify-content:center;height:72px;font-size:34px;position:relative}
+.shop-item-top::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 60%,rgba(212,175,106,.07),transparent 70%)}
+.shop-item-body{padding:8px 8px 0;flex:1}
+.shop-item-name{font:700 11px Georgia,serif;color:#f0d58a;margin-bottom:4px}
+.shop-item-desc{font-size:10px;color:#c0ac80;line-height:1.25}
+.shop-item-footer{padding:6px 8px 0;display:flex;justify-content:space-between;align-items:flex-end}
+.shop-item-cost{color:#ffd978;font-weight:800;font-size:12px}
+.shop-item-level{color:#8b7651;font-size:9px;margin-top:2px}
+.shop-item-buy{padding:3px 9px;font-size:11px}
+.shop-leave{width:100%;margin-top:4px}
+@media(max-width:640px){.shop-item-card{width:110px}.shop-item-top{height:58px;font-size:28px}.shop-item-name{font-size:10px}.tarot-shop{width:calc(100vw - 20px)}.shop-items-row{gap:8px}}
 </style>
 </head>
 <body>
 <h1>The Last Reading</h1>
-<div class="bar"><span class="pill">Reading <b id="reading">1</b>/<b>5</b></span></div>
+<div class="bar"></div>
 <div class="score-stack"><div class="pill">Score <b id="current">0</b></div><div class="pill threshold-pill">Threshold <b id="threshold">30</b></div></div><div class="reserve-stack"><div class="pill reserve-pill">Reserve <b id="pool">0</b></div><div class="pill">Discards <b id="discards">3</b></div></div>
 <div class="actions"><button id="scoringBtn" onclick="toggleRef(event)">Scoring</button><button id="abilitiesBtn" onclick="toggleAbilityRef(event)">Abilities</button><button id="mullBtn" onclick="mulligan()" style="display:none">Mulligan</button></div>
 <div class="refs-layer">
 <div id="ref" class="ref hidden scoring-sheet">
   <table>
     <tr class="arcana-row"><td>Minor Arcana</td><td class="m"></td><td class="r score-head"><span class="chips">Bonus</span><span class="mult">Multi</span></td></tr>
-    <tr><td>Three of a Rank</td><td class="m">3 cards</td><td class="r"><span class="chips">+10 chips</span><span class="mult">×1.25</span></td></tr>
-    <tr><td>Four of a Rank</td><td class="m">4 cards</td><td class="r"><span class="chips">+12 chips</span><span class="mult">×1.5</span></td></tr>
-    <tr><td>Flush</td><td class="m">4+ cards, same suit</td><td class="r"><span class="chips">+15 chips</span><span class="mult">×1.5</span></td></tr>
-    <tr><td>Full Court</td><td class="m">4+ cards</td><td class="r"><span class="chips">+18 chips</span><span class="mult">×1.75</span></td></tr>
-    <tr><td>Royal Court</td><td class="m">4+ cards, same suit</td><td class="r"><span class="chips">+20 chips</span><span class="mult">×2</span></td></tr>
+    <tr><td>Three of a Rank</td><td class="m">3 cards</td><td class="r"><span class="chips">+10 chips</span><span class="mult">×1</span></td></tr>
+    <tr><td>Four of a Rank</td><td class="m">4 cards</td><td class="r"><span class="chips">+12 chips</span><span class="mult">×1</span></td></tr>
+    <tr><td>Flush</td><td class="m">4+ cards, same suit</td><td class="r"><span class="chips">+15 chips</span><span class="mult">×1</span></td></tr>
+    <tr><td>Full Court</td><td class="m">4+ cards</td><td class="r"><span class="chips">+18 chips</span><span class="mult">×1</span></td></tr>
+    <tr><td>Royal Court</td><td class="m">4+ cards, same suit</td><td class="r"><span class="chips">+20 chips</span><span class="mult">×1</span></td></tr>
     <tr class="arcana-row"><td>Major Arcana</td><td class="m"></td><td class="r"></td></tr>
-    <tr><td>Sequence of 3</td><td class="m">3 cards</td><td class="r"><span class="chips">+10 chips</span><span class="mult">×2.5</span></td></tr>
-    <tr><td>Sequence of 4</td><td class="m">4 cards</td><td class="r"><span class="chips">+15 chips</span><span class="mult">×3</span></td></tr>
-    <tr><td>Sequence of 5</td><td class="m">5 cards</td><td class="r"><span class="chips">+18 chips</span><span class="mult">×4</span></td></tr>
-    <tr><td>Path of the Magi</td><td class="m">3 cards</td><td class="r"><span class="chips">+30 chips</span><span class="mult">×5</span></td></tr>
+    <tr><td>Sequence of 3</td><td class="m">3 cards</td><td class="r"><span class="chips">+10 chips</span><span class="mult">×2</span></td></tr>
+    <tr><td>Sequence of 4</td><td class="m">4 cards</td><td class="r"><span class="chips">+15 chips</span><span class="mult">×2</span></td></tr>
+    <tr><td>Sequence of 5</td><td class="m">5 cards</td><td class="r"><span class="chips">+18 chips</span><span class="mult">×2</span></td></tr>
+    <tr><td>Path of the Magi</td><td class="m">3 cards</td><td class="r"><span class="chips">+30 chips</span><span class="mult">×2</span></td></tr>
   </table>
 </div>
 <div id="abilityRef" class="ref hidden">
@@ -150,8 +178,9 @@
   </table>
 </div>
 </div>
-<div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="danger" onclick="discardSelected()" disabled>Discard</button><button id="purgeBtn" onclick="purgeSelected()" disabled>Purge</button></div><div id="spread" class="spread"></div></div>
+<div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="danger" onclick="discardSelected()" disabled>Discard</button><button id="purgeBtn" onclick="startPurge()" disabled>Purge</button></div><div id="spread" class="spread"></div></div>
 <div id="abilityPrompt" class="ability-prompt"><div><h3 id="abilityPromptTitle"></h3><p id="abilityPromptText"></p></div><button id="abilityConfirm" onclick="confirmAbilitySelection()" disabled>Choose</button></div>
+<div id="purgePrompt" class="ability-prompt"><div><h3>Purge</h3><p>Select 3 cards to sacrifice for 1 Discard. <b><span id="purgeCount">0</span>/3</b> selected.</p></div><button id="purgeConfirm" onclick="confirmPurge()" disabled>Sacrifice</button><button onclick="cancelPurge()">Cancel</button></div>
 <div class="handDock"><div id="hand" class="hand"></div></div>
 <div id="tutTip"><span class="tut-arrow"></span><p id="tutText"></p><div class="tut-foot"><button id="tutSkipBtn" onclick="tutSkip();event.stopPropagation()">Skip tutorial</button></div></div>
 <div id="summary"></div>
@@ -167,9 +196,9 @@ const COURT_MEAN={Page:['Curiosity, learning','Inexperience, gossip'],Knight:['A
 const SUIT_MEAN={Cups:['Emotion, love','Hidden feelings'],Wands:['Will, creation','Burnout, delay'],Swords:['Truth, conflict','Deceit, anguish'],Pentacles:['Work, abundance','Greed, loss']};
 const MAJORS=[[0,'Fool',5,true,'PEEK_3'],[1,'Magician',5,true,'SEARCH'],[2,'High Priestess',1,false,'NEIGHBOR_2'],[3,'Empress',1,false,'DRAW_2'],[4,'Emperor',1,false,'DRAW_1'],[5,'Hierophant',1,false,'BETWEEN_2'],[6,'Lovers',1,false,'KIN_2'],[7,'Chariot',1,false,'DRAW_1'],[8,'Strength',1,false,'DRAW_1'],[9,'Hermit',1,false,'NEIGHBOR_2'],[10,'Wheel',1,false,'MIRROR_1'],[11,'Justice',1,false,'KIN_2'],[12,'Hanged Man',1,false,'BETWEEN_2'],[13,'Death',1,false,'DRAW_3'],[14,'Temperance',1,false,'BETWEEN_2'],[15,'Devil',1,false,'DRAW_2'],[16,'Tower',1,false,'DRAW_2'],[17,'Star',1,false,'KIN_2'],[18,'Moon',1,false,'MIRROR_1'],[19,'Sun',1,false,'DRAW_2'],[20,'Judgement',1,false,'MIRROR_1'],[21,'World',5,true,'WORLD']];
 const COURTS=[['Page',2,'DRAW_1'],['Knight',3,'PEEK_3'],['Queen',4,'DRAW_2'],['King',5,'PEEK_5']];
-const TH=[30,60,110], MAX=5;
-let persist={pool:0,up:{discards:0,hand:0,mulligan:0,rank:0,sequence:0,neighbor:0,kin:0,mirror:0,between:0}};
-let state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,carry:0,busy:false,shopOffer:null,abilitySelect:null};
+const TH=[30,60,110];
+let persist={pool:0,up:{discards:0,hand:0,mulligan:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,flush_chips:0,flush_mult:0,court_chips:0,path_chips:0,neighbor:0,kin:0,mirror:0,between:0}};
+let state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,busy:false,shopOffer:null,abilitySelect:null,purgeSelect:null};
 const $=s=>document.querySelector(s), shuffle=a=>{for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const cardHTMLCache=new Map();
 function buildDeck(){let id=0,d=[];for(const [num,name,pts,trull,ab] of MAJORS)d.push({uid:id++,type:'major',id:'major_'+num,num,name:ROMAN[num]+' '+name,points:pts,trull,ability:ab});for(const suit of SUITS)for(const [rank,pts,ab]of COURTS)d.push({uid:id++,type:'court',id:'court_'+suit+'_'+rank,suit,rank,name:rank+' of '+suit,points:pts,ability:ab});for(const suit of ['Cups','Pentacles'])d.push({uid:id++,type:'ace',id:'ace_'+suit,suit,rank:'Ace',name:'Ace of '+suit,points:1,ability:suit==='Cups'?'DRAW_3':'PEEK_5'});return d}
@@ -206,9 +235,8 @@ function cardHTML(c){
 function sortCards(cards){return [...cards].sort((a,b)=>{let o={major:0,court:1,ace:2};if(o[a.type]!==o[b.type])return o[a.type]-o[b.type];if(a.type==='major')return a.num-b.num;return(a.suit||'').localeCompare(b.suit||'')||RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank)})}
 function maxHand(){return 5+persist.up.hand}function maxDiscards(){return 3+persist.up.discards}function hasMull(){return persist.up.mulligan>0}
 function drawN(n){for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;state.hand.push(state.deck.shift())}}function drawTo(n){while(state.hand.length<n&&state.deck.length)state.hand.push(state.deck.shift())}
-function startReading(){state.deck=shuffle(buildDeck());state.hand=[];state.discard=[];state.spread=Array(5).fill(null);state.selected=null;state.discards=maxDiscards();state.mull=false;drawTo(maxHand());clearOverlay();snapCounter(state.carry);render()}
+function startReading(){state.deck=shuffle(buildDeck());state.hand=[];state.discard=[];state.spread=Array(5).fill(null);state.selected=null;state.purgeSelect=null;state.discards=maxDiscards();state.mull=false;drawTo(maxHand());clearOverlay();snapCounter(0);render()}
 function render(){
-  $('#reading').textContent=state.reading;
   $('#threshold').textContent=TH[state.th];
   $('#pool').textContent=persist.pool;
   $('#discards').textContent=state.discards;
@@ -216,6 +244,7 @@ function render(){
   const placed=state.spread.filter(Boolean);
   const now=computeScore(placed);
   const ability=state.abilitySelect;
+  const inPurge=state.purgeSelect!==null;
 
   const sp=$('#spread');
   const spFrag=document.createDocumentFragment();
@@ -250,8 +279,13 @@ function render(){
     const e=document.createElement('div');
     const valid=ability&&ability.validIds.has(c.uid);
     const picked=ability&&ability.picked.includes(c.uid);
-    e.className='card '+(c.type==='major'?'major ':'')+(selectedId===c.uid&&!ability?'sel ':'')+(valid?'ability-target ':'')+(picked?'ability-picked ':'')+(ability&&!valid?'ability-disabled ':'');
-    applyHint(e,c);
+    const purgePicked=inPurge&&state.purgeSelect.includes(c.uid);
+    e.className='card '+(c.type==='major'?'major ':'')
+      +(inPurge?(purgePicked?'purge-picked ':'purge-target '):'')
+      +(selectedId===c.uid&&!ability&&!inPurge?'sel ':'')
+      +(valid?'ability-target ':'')+(picked?'ability-picked ':'')
+      +(ability&&!valid?'ability-disabled ':'');
+    if(!inPurge)applyHint(e,c);
     e.dataset.uid=c.uid;
     e.style.zIndex=handLen-i;
     e.style.setProperty('--a',((i-(handLen-1)/2)*5)+'deg');
@@ -259,6 +293,7 @@ function render(){
     applyCardPhoto(e,c);
     e.onclick=()=>{
       if(ability){handleAbilityHandClick(c);return}
+      if(inPurge){togglePurgeCard(c.uid);return}
       if(state.busy)return;
       state.selected=selectedId===c.uid?null:c.uid;
       refreshHandState();
@@ -268,28 +303,65 @@ function render(){
   h.replaceChildren(hFrag);
 
   renderAbilityPrompt();
+  renderPurgePrompt();
   updateScorePreview(now);
-  $('#discardBtn').disabled=state.selected===null||state.discards<=0;
-  $('#purgeBtn').disabled=state.selected===null;
+  $('#discardBtn').disabled=state.selected===null||state.discards<=0||inPurge;
+  $('#purgeBtn').disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
   $('#mullBtn').style.display=hasMull()?'inline-block':'none';
   $('#mullBtn').disabled=state.mull||!state.spread.every(x=>!x)||state.hand.length!==maxHand();
 }
 function refreshHandState(){
   const ability=state.abilitySelect;
+  const inPurge=state.purgeSelect!==null;
   document.querySelectorAll('#hand .card').forEach(el=>{
     const uid=Number(el.dataset.uid);
-    el.classList.toggle('sel',!ability&&state.selected===uid);
+    el.classList.toggle('sel',!ability&&!inPurge&&state.selected===uid);
     if(ability)el.classList.toggle('ability-picked',ability.picked.includes(uid));
+    if(inPurge){
+      el.classList.toggle('purge-picked',state.purgeSelect.includes(uid));
+      el.classList.toggle('purge-target',!state.purgeSelect.includes(uid));
+    }
   });
   document.querySelectorAll('#spread .card[data-uid]').forEach(el=>{
     if(ability)el.classList.toggle('ability-picked',ability.picked.includes(Number(el.dataset.uid)));
   });
   renderAbilityPrompt();
+  renderPurgePrompt();
   updateScorePreview(computeScore(state.spread.filter(Boolean)));
-  $('#discardBtn').disabled=state.selected===null||state.discards<=0;
-  $('#purgeBtn').disabled=state.selected===null;
+  $('#discardBtn').disabled=state.selected===null||state.discards<=0||inPurge;
+  $('#purgeBtn').disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
 }
-function computeScore(cards){let chips=cards.reduce((s,c)=>s+c.points,0),base=chips,mult=1,m=[];let rankBonus=persist.up.rank*5;for(const rank of ['Page','Knight','Queen','King']){let a=cards.filter(c=>c.type==='court'&&c.rank===rank);if(a.length===4){let x=12+rankBonus;m.push(['Four of a Rank ('+rank+'s)',x,1.5]);chips+=x;mult*=1.5}else if(a.length===3){let x=10+rankBonus;m.push(['Three of a Rank ('+rank+'s)',x,1.25]);chips+=x;mult*=1.25}}let ranks=new Set(cards.filter(c=>c.type==='court').map(c=>c.rank));let full=['Page','Knight','Queen','King'].every(r=>ranks.has(r));let aces=cards.filter(c=>c.type==='ace'),same=null;if(full)for(const suit of SUITS){let rs=new Set(cards.filter(c=>c.type==='court'&&c.suit===suit).map(c=>c.rank));if(rs.size===4){same=suit;break}}let rf=same&&aces.some(a=>a.suit===same);let court=false;if(same){m.push(['Royal Court ('+same+')',20,2]);chips+=20;mult*=2;court=true}else if(full){m.push(['Full Court',18,1.75]);chips+=18;mult*=1.75;court=true}if(!court)for(const suit of SUITS){let suited=cards.filter(c=>c.suit===suit);if(suited.length>=4){m.push(['Flush ('+suit+')',15,1.5]);chips+=15;mult*=1.5}}let nums=[...new Set(cards.filter(c=>c.type==='major').map(c=>c.num))].sort((a,b)=>a-b),best=1,cur=1;for(let i=1;i<nums.length;i++){if(nums[i]===nums[i-1]+1){cur++;best=Math.max(best,cur)}else cur=1}let seqBonus=persist.up.sequence*5;if(best>=5){let x=18+seqBonus;m.push(['Sequence of '+best,x,4]);chips+=x;mult*=4}else if(best>=4){let x=15+seqBonus;m.push(['Sequence of '+best,x,3]);chips+=x;mult*=3}else if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,2.5]);chips+=x;mult*=2.5}if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){m.push(['Path of the Magi',30,5]);chips+=30;mult*=5}return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}}
+function computeScore(cards){
+  let chips=cards.reduce((s,c)=>s+c.points,0),base=chips,mult=1,m=[];
+  let rankBonus=(persist.up.rank||0)*5;
+  let rankMult=1+(persist.up.rank_mult||0)*0.25;
+  for(const rank of ['Page','Knight','Queen','King']){
+    let a=cards.filter(c=>c.type==='court'&&c.rank===rank);
+    if(a.length===4){let x=12+rankBonus;m.push(['Four of a Rank ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
+    else if(a.length===3){let x=10+rankBonus;m.push(['Three of a Rank ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
+  }
+  let ranks=new Set(cards.filter(c=>c.type==='court').map(c=>c.rank));
+  let full=['Page','Knight','Queen','King'].every(r=>ranks.has(r));
+  let same=null;
+  if(full)for(const suit of SUITS){let rs=new Set(cards.filter(c=>c.type==='court'&&c.suit===suit).map(c=>c.rank));if(rs.size===4){same=suit;break}}
+  let flushChips=(persist.up.flush_chips||0)*8;
+  let flushMult=1+(persist.up.flush_mult||0)*0.25;
+  let courtChips=(persist.up.court_chips||0)*8;
+  let court=false;
+  if(same){let x=20+flushChips+courtChips;m.push(['Royal Court ('+same+')',x,flushMult]);chips+=x;mult*=flushMult;court=true}
+  else if(full){let x=18+courtChips;m.push(['Full Court',x,1]);chips+=x;court=true}
+  if(!court)for(const suit of SUITS){let suited=cards.filter(c=>c.suit===suit);if(suited.length>=4){let x=15+flushChips;m.push(['Flush ('+suit+')',x,flushMult]);chips+=x;mult*=flushMult}}
+  let nums=[...new Set(cards.filter(c=>c.type==='major').map(c=>c.num))].sort((a,b)=>a-b),best=1,cur=1;
+  for(let i=1;i<nums.length;i++){if(nums[i]===nums[i-1]+1){cur++;best=Math.max(best,cur)}else cur=1}
+  let seqBonus=(persist.up.sequence||0)*5;
+  let seqMult=2+(persist.up.seq_mult||0)*0.5;
+  if(best>=5){let x=18+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
+  else if(best>=4){let x=15+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
+  else if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
+  let pathChips=(persist.up.path_chips||0)*15;
+  if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=30+pathChips;m.push(['Path of the Magi',x,seqMult]);chips+=x;mult*=seqMult}
+  return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}
+}
 function cleanName(c){return c.type==='major'?c.name.split(' ').slice(1).join(' '):c.name}
 function normMeldName(name){if(name.startsWith('Sequence'))return 'Sequence';if(name.startsWith('Flush'))return 'Flush';if(name.startsWith('Royal Court'))return 'Royal Court';if(name.startsWith('Three of a Rank'))return 'Three of a Rank';if(name.startsWith('Four of a Rank'))return 'Four of a Rank';return name}
 function hintGroup(label){if(label==='Sequence'||label==='Path of the Magi')return 'hint-major';if(label==='Flush'||label==='Royal Court')return 'hint-suit';if(label==='Three of a Rank'||label==='Four of a Rank')return 'hint-rank';if(label==='Full Court')return 'hint-court';return 'hint-gold'}
@@ -402,7 +474,7 @@ function applyHint(el,card,poolCards=null){
   el.dataset.hint=hints.map(h=>h.label).join(' + ');
 }
 function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=computeScore([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
-function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let before=new Set(computeScore(state.spread.filter(Boolean)).melds.map(x=>x[0]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.filter(x=>!before.has(x[0]));let delay=420;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;setTimeout(()=>ghost(anchor,'+'+m[1]+' ×'+m[2],true),ghostDelay);holdEffects(ghostDelay+1700);delay+=slots.length*130+700});setCounterTarget(state.carry+after.finalScore);checkEnd()}
+function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let before=new Set(computeScore(state.spread.filter(Boolean)).melds.map(x=>x[0]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.filter(x=>!before.has(x[0]));let delay=420;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;setTimeout(()=>ghost(anchor,'+'+m[1]+' ×'+m[2],true),ghostDelay);holdEffects(ghostDelay+1700);delay+=slots.length*130+700});setCounterTarget(after.finalScore);checkEnd()}
 let effectsUntil=0;
 function holdEffects(ms){effectsUntil=Math.max(effectsUntil,Date.now()+ms)}
 function ghost(i,t,big=false){let s=document.querySelectorAll('.slot')[i];if(!s)return;holdEffects(1700);let g=document.createElement('div');g.className='ghost '+(big?'big':'');g.textContent=t;s.appendChild(g);setTimeout(()=>g.remove(),1700)}
@@ -412,7 +484,11 @@ let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 function setCounterTarget(v){counterTarget=v;if(counterTimer)clearTimeout(counterTimer);counterTimer=setTimeout(()=>{if(counterCancel)counterCancel();counterCancel=rollCounter(counterShown,counterTarget,650);counterShown=counterTarget;counterTimer=null},700)}
 function snapCounter(v){if(counterTimer){clearTimeout(counterTimer);counterTimer=null}if(counterCancel){counterCancel();counterCancel=null}counterShown=counterTarget=v;$('#current').textContent=v;$('#current').style.color=''}
 function rollCounter(from,to,dur){let el=$('#current'),start=performance.now(),dead=false;function step(now){if(dead)return;let t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color=''}}requestAnimationFrame(step);return()=>{dead=true;el.style.color=''}}
-function purgeSelected(){if(state.busy||state.selected===null)return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;state.hand.splice(idx,1);state.selected=null;state.discards=Math.min(state.discards+1,maxDiscards());render()}
+function startPurge(){if(state.busy||state.hand.length<3||state.abilitySelect||state.purgeSelect!==null)return;state.purgeSelect=[];state.selected=null;render()}
+function togglePurgeCard(uid){if(state.purgeSelect===null)return;const idx=state.purgeSelect.indexOf(uid);if(idx>=0)state.purgeSelect.splice(idx,1);else if(state.purgeSelect.length<3)state.purgeSelect.push(uid);refreshHandState()}
+function renderPurgePrompt(){const el=$('#purgePrompt');if(!el)return;const active=state.purgeSelect!==null;el.classList.toggle('show',active);if(active){const count=state.purgeSelect.length;const sc=$('#purgeCount');if(sc)sc.textContent=count;const btn=$('#purgeConfirm');if(btn)btn.disabled=count!==3}}
+function confirmPurge(){if(!state.purgeSelect||state.purgeSelect.length!==3)return;state.hand=state.hand.filter(c=>!state.purgeSelect.includes(c.uid));state.discards++;state.purgeSelect=null;render();checkEnd()}
+function cancelPurge(){state.purgeSelect=null;render()}
 function discardSelected(){if(state.busy||state.selected===null||state.discards<=0)return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let c=state.hand.splice(idx,1)[0];state.discard.push(c);state.selected=null;state.discards--;resolveAbility(c.ability,()=>{render();checkEnd()},c)}
 function resolveAbility(ab,done,sourceCard=null){if(ab==='DRAW_1'){drawN(1);done()}else if(ab==='DRAW_2'){drawN(2);done()}else if(ab==='DRAW_3'){drawN(3);done()}else if(ab==='PEEK_3')peek(3,done);else if(ab==='PEEK_5')peek(5,done);else if(ab==='SEARCH')search(done);else if(ab==='NEIGHBOR_2')relation('Neighbor','Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers, court ranks in the same suit, or King from an Ace.',neighbor,2+(persist.up.neighbor||0),done);else if(ab==='KIN_2')relation('Kin','Choose an anchor card. Kin finds cards of the same Arcana.',kin,2+(persist.up.kin||0),done);else if(ab==='MIRROR_1')relation('Mirror','Choose a card. Take the card opposite it across centerline of its Arcana.',mirror,1+(persist.up.mirror||0),done);else if(ab==='BETWEEN_2')betweenAbility(done,sourceCard);else if(ab==='WORLD'){state.deck.push(...state.discard.splice(0));shuffle(state.deck);drawN(2);done()}else done()}
 function peek(n,done){state.busy=true;let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){state.busy=false;done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{state.hand.push(p);cards.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));state.busy=false;done()})}
@@ -554,13 +630,55 @@ function choice(title,prompt,cards,cb){$('#modalTitle').textContent=title;$('#mo
 function toggleModalCollapse(){let m=$('#modal');if(!m.classList.contains('show'))return;m.classList.toggle('collapsed');$('#modalToggle').textContent=m.classList.contains('collapsed')?'Show':'Hide'}
 function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;waitForCounterThenScore()}
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
-function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards),total=state.carry+res.finalScore,pass=total>=TH[state.th];let html='<div class="summary"><h3>Reading Result</h3><table>';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){html+=`<tr><td><b>Patterns formed</b></td><td class="r"></td></tr>`;res.melds.forEach(m=>html+=`<tr class="meld"><td>${m[0]}</td><td class="r">+${m[1]} ×${m[2]}</td></tr>`)}else html+=`<tr><td>No scoring pattern formed</td><td class="r">Base only</td></tr>`;html+=`<tr><td>This reading</td><td class="r">${res.chips} × ${res.mult} = <b>${res.finalScore}</b></td></tr>`;if(state.carry)html+=`<tr><td>Carryover</td><td class="r">${state.carry}</td></tr>`;html+=`<tr><td>${pass?'PASSED':'Below'} threshold ${TH[state.th]}</td><td class="r"><b>${total}</b></td></tr></table>`;if(pass){persist.pool+=total;state.carry=0;state.th++;html+=`<p>Threshold cleared. ${total} added to pool.</p>`;if(state.th>=TH.length||state.reading>=MAX)html+='<button onclick="endSession()">End session</button>';else html+='<button onclick="openShop()">Open Shop →</button>'}else{state.carry=total;if(state.reading>=MAX){state.carry=0;html+='<p>The candles burn out.</p><button onclick="endSession()">End session</button>'}else html+=`<p>Score carries forward.</p><button onclick="continueReading()">Continue to reading ${state.reading+1} →</button>`}html+='</div>';showOverlay(html);render()}
+function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards),total=res.finalScore,pass=total>=TH[state.th];let html='<div class="summary"><h3>Reading Result</h3><table>';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){html+=`<tr><td><b>Patterns formed</b></td><td class="r"></td></tr>`;res.melds.forEach(m=>html+=`<tr class="meld"><td>${m[0]}</td><td class="r">+${m[1]} ×${m[2]}</td></tr>`)}else html+=`<tr><td>No scoring pattern formed</td><td class="r">Base only</td></tr>`;html+=`<tr><td>This reading</td><td class="r">${res.chips} × ${res.mult} = <b>${res.finalScore}</b></td></tr>`;html+=`<tr><td>${pass?'PASSED':'Below'} threshold ${TH[state.th]}</td><td class="r"><b>${total}</b></td></tr></table>`;if(pass){persist.pool+=total;state.th++;html+=`<p>Threshold cleared. ${total} added to pool.</p>`;if(state.th>=TH.length)html+='<button onclick="endSession()">End session</button>';else html+='<button onclick="openShop()">Open Shop →</button>'}else{html+='<p>The candles burn out.</p><button onclick="endSession()">End session</button>'}html+='</div>';showOverlay(html);render()}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML=''}
-function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.shopOffer=null;state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(7),400)}}function endSession(){showOverlay('<div class="summary"><h3>Session complete</h3><p>Reserve: <b>'+persist.pool+'</b>.</p><button onclick="resetSession()">New session</button></div>')}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,carry:0,busy:false,shopOffer:null,abilitySelect:null};startReading()}
-const SHOP={discards:['Extra Discard','+1 discard each reading.',15,1.75],hand:['Wider Hand','+1 starting hand size.',40,2],mulligan:['Mulligan','Once each reading, redraw your starting hand.',20,1.75],rank:['Rank Chips','Three/Four of a Rank gain +5 chips.',25,1.75],sequence:['Sequence Chips','All Sequences gain +5 chips.',25,1.75],neighbor:['Neighbor Lens','Neighbor reveals +1 extra card.',30,1.8],kin:['Kin Lens','Kin reveals +1 extra card.',30,1.8],mirror:['Mirror Lens','Mirror reveals +1 extra reflected result when possible.',35,2],between:['Between Lens','Between reveals +1 extra card.',35,2]};
+function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.shopOffer=null;state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(7),400)}}function endSession(){showOverlay('<div class="summary"><h3>Session complete</h3><p>Reserve: <b>'+persist.pool+'</b>.</p><button onclick="resetSession()">New session</button></div>')}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,busy:false,shopOffer:null,abilitySelect:null,purgeSelect:null};startReading()}
+// [name, desc, baseCost, scale, icon, category]
+const SHOP={
+  discards:['Extra Discard','+1 discard each reading.',15,1.75,'🃏','utility'],
+  hand:['Wider Hand','+1 starting hand size.',40,2,'✋','utility'],
+  mulligan:['Mulligan','Redraw your starting hand once per reading.',20,1.75,'🔄','utility'],
+  neighbor:['Neighbor Lens','Neighbor reveals +1 extra card.',30,1.8,'🔭','utility'],
+  kin:['Kin Lens','Kin reveals +1 extra card.',30,1.8,'🧬','utility'],
+  mirror:['Mirror Lens','Mirror reveals +1 extra card.',35,2,'🪞','utility'],
+  between:['Between Lens','Between reveals +1 extra card.',35,2,'⚖️','utility'],
+  rank:['Rank Sigil','Three/Four of a Rank: +5 chips.',25,1.75,'⚜','scoring'],
+  rank_mult:['Rank Omen','Three/Four of a Rank: +0.25× mult.',22,1.8,'🎭','scoring'],
+  sequence:['Arcana Sigil','All Sequences: +5 chips.',25,1.75,'🌙','scoring'],
+  seq_mult:['Arcana Omen','Sequences & Path: +0.5× mult.',28,1.8,'⭐','scoring'],
+  flush_chips:['Suit Sigil','Flush & Royal Court: +8 chips.',18,1.6,'🌊','scoring'],
+  flush_mult:['Suit Omen','Flush & Royal Court: +0.25× mult.',22,1.8,'💧','scoring'],
+  court_chips:['Court Sigil','Full/Royal Court: +8 chips.',20,1.6,'👑','scoring'],
+  path_chips:['Path Sigil','Path of the Magi: +15 chips.',30,1.9,'✨','scoring'],
+};
 function shopCost(k){let s=SHOP[k],lvl=persist.up[k]||0;return Math.floor(s[2]*Math.pow(s[3],lvl))}
-function drawShopOffer(){return shuffle(Object.keys(SHOP)).slice(0,5)}
-function openShop(newOffer=true){if(newOffer||!state.shopOffer)state.shopOffer=drawShopOffer();let html='<div class="summary shop-summary"><h3>Shop</h3><p>Spend Reserve to improve future readings.</p><div class="shop-grid">';for(const k of state.shopOffer){let s=SHOP[k],cost=shopCost(k),lvl=persist.up[k]||0,ok=persist.pool>=cost;html+=`<div class="shop-card ${ok?'affordable':''}"><div class="shop-cost">Cost ${cost}</div><b>${s[0]}</b><p>${s[1]}</p><div class="shop-footer"><span>Lv ${lvl}</span><button ${ok?'':'disabled'} onclick="buyUpgrade('${k}')">Buy</button></div></div>`}html+='</div><button onclick="continueReading()">Skip shop →</button></div>';showOverlay(html)}
+function drawShopOffer(){
+  const scoring=shuffle(Object.keys(SHOP).filter(k=>SHOP[k][5]==='scoring')).slice(0,3);
+  const utility=shuffle(Object.keys(SHOP).filter(k=>SHOP[k][5]==='utility')).slice(0,2);
+  return{scoring,utility};
+}
+function shopItemHTML(k,cat){
+  let s=SHOP[k],cost=shopCost(k),lvl=persist.up[k]||0,ok=persist.pool>=cost;
+  return`<div class="shop-item-card ${cat} ${ok?'affordable':''}">
+    <div class="shop-item-top">${s[4]}</div>
+    <div class="shop-item-body"><div class="shop-item-name">${s[0]}</div><div class="shop-item-desc">${s[1]}</div></div>
+    <div class="shop-item-footer"><div><div class="shop-item-cost">✦ ${cost}</div><div class="shop-item-level">Lv ${lvl}</div></div>
+    <button class="shop-item-buy" ${ok?'':'disabled'} onclick="buyUpgrade('${k}')">Buy</button></div>
+  </div>`;
+}
+function openShop(newOffer=true){
+  if(newOffer||!state.shopOffer)state.shopOffer=drawShopOffer();
+  let html='<div class="summary tarot-shop">';
+  html+='<div class="shop-header"><h3>✦ The Oracle\'s Market ✦</h3><p class="shop-reserve-display">Reserve: <b>'+persist.pool+'</b></p></div>';
+  html+='<div class="shop-section-title">Arcana</div><div class="shop-items-row">';
+  for(const k of state.shopOffer.scoring)html+=shopItemHTML(k,'scoring');
+  html+='</div>';
+  html+='<div class="shop-section-title">Instruments</div><div class="shop-items-row">';
+  for(const k of state.shopOffer.utility)html+=shopItemHTML(k,'utility');
+  html+='</div>';
+  html+='<button class="shop-leave" onclick="continueReading()">Leave Market →</button></div>';
+  showOverlay(html);
+}
 function buyUpgrade(k){let cost=shopCost(k);if(persist.pool<cost)return;persist.pool-=cost;persist.up[k]=(persist.up[k]||0)+1;openShop(false)}
 function mulligan(){if(state.busy||!hasMull()||state.mull||!state.spread.every(x=>!x)||state.hand.length!==maxHand())return;state.deck.push(...state.hand.splice(0));drawTo(maxHand());state.mull=true;state.selected=null;snapCounter(state.carry);render()}
 function closeRefs(){ $('#ref').classList.add('hidden'); $('#abilityRef').classList.add('hidden') }
@@ -583,9 +701,9 @@ const TUT_STEPS=[
   {sel:'.threshold-pill',arrow:'up',text:'Score enough points to beat the <b>Threshold</b>.'},
   {sel:'.handDock',arrow:'down',text:'Glowing cards form <b>potential</b> scoring patterns. Check <b>Scoring</b> to see what\'s possible, and use card <b>Abilities</b> to form a scoring pattern.'},
   {sel:'#abilitiesBtn',arrow:'up',text:'Discarding a card uses its <b>Ability</b> instead of scoring — a way to reshape your hand before placing.'},
-  {sel:'#purgeBtn',arrow:'up',text:'<b>Purge</b> removes a card from your hand for the rest of the reading and refunds 1 Discard — useful for cards that don\'t fit your pattern.'},
+  {sel:'#purgeBtn',arrow:'up',text:'<b>Purge</b> lets you sacrifice 3 cards from your hand in exchange for 1 Discard — useful for clearing cards that don\'t fit your pattern.'},
   {sel:'.handDock',arrow:'down',text:'The red circle shows how much a card scores for. Tap a card to see which patterns it completes, then tap an empty slot to place it.'},
-  {sel:'.threshold-pill',arrow:'up',text:'Fill all 5 slots to complete the reading. Beat the <b>Threshold</b> to win — your score carries forward if you fall short.'},
+  {sel:'.threshold-pill',arrow:'up',text:'Fill all 5 slots to complete the reading. Beat the <b>Threshold</b> to clear it — fall short and the reading fails.'},
   {center:true, text:'Each time you reach a Threshold, it increases in difficulty. Beat the third Threshold to win.'},
 ];
 function tutSkip(){localStorage.setItem(TUT_KEY,'1');tutDone=true;tutHide()}
