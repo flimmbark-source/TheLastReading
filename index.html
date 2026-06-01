@@ -172,16 +172,16 @@
 <div id="ref" class="ref hidden scoring-sheet">
   <table>
     <tr class="arcana-row"><td>Minor Arcana</td><td class="m"></td><td class="r score-head"><span class="chips">Bonus</span><span class="mult">Multi</span></td></tr>
-    <tr><td>Three of a Rank</td><td class="m">3 cards</td><td class="r"><span class="chips">+10 chips</span><span class="mult">×1</span></td></tr>
-    <tr><td>Four of a Rank</td><td class="m">4 cards</td><td class="r"><span class="chips">+12 chips</span><span class="mult">×1</span></td></tr>
-    <tr><td>Flush</td><td class="m">4+ cards, same suit</td><td class="r"><span class="chips">+15 chips</span><span class="mult">×1</span></td></tr>
-    <tr><td>Full Court</td><td class="m">4+ cards</td><td class="r"><span class="chips">+18 chips</span><span class="mult">×1</span></td></tr>
-    <tr><td>Royal Court</td><td class="m">4+ cards, same suit</td><td class="r"><span class="chips">+20 chips</span><span class="mult">×1</span></td></tr>
+    <tr><td>Three of a Rank</td><td class="m">3 cards</td><td class="r"><span class="chips">+20 chips</span><span class="mult">×1</span></td></tr>
+    <tr><td>Four of a Rank</td><td class="m">4 cards</td><td class="r"><span class="chips">+22 chips</span><span class="mult">×1</span></td></tr>
+    <tr><td>Flush</td><td class="m">4+ cards, same suit</td><td class="r"><span class="chips">+25 chips</span><span class="mult">×1</span></td></tr>
+    <tr><td>Full Court</td><td class="m">4+ cards</td><td class="r"><span class="chips">+28 chips</span><span class="mult">×1</span></td></tr>
+    <tr><td>Royal Court</td><td class="m">4+ cards, same suit</td><td class="r"><span class="chips">+30 chips</span><span class="mult">×1</span></td></tr>
     <tr class="arcana-row"><td>Major Arcana</td><td class="m"></td><td class="r"></td></tr>
-    <tr><td>Sequence of 3</td><td class="m">3 cards</td><td class="r"><span class="chips">+10 chips</span><span class="mult">×2</span></td></tr>
-    <tr><td>Sequence of 4</td><td class="m">4 cards</td><td class="r"><span class="chips">+15 chips</span><span class="mult">×2</span></td></tr>
-    <tr><td>Sequence of 5</td><td class="m">5 cards</td><td class="r"><span class="chips">+18 chips</span><span class="mult">×2</span></td></tr>
-    <tr><td>Path of the Magi</td><td class="m">3 cards</td><td class="r"><span class="chips">+30 chips</span><span class="mult">×2</span></td></tr>
+    <tr><td>Sequence of 3</td><td class="m">3 cards</td><td class="r"><span class="chips">+20 chips</span><span class="mult">×2</span></td></tr>
+    <tr><td>Sequence of 4</td><td class="m">4 cards</td><td class="r"><span class="chips">+25 chips</span><span class="mult">×2</span></td></tr>
+    <tr><td>Sequence of 5</td><td class="m">5 cards</td><td class="r"><span class="chips">+28 chips</span><span class="mult">×2</span></td></tr>
+    <tr><td>Path of the Magi</td><td class="m">3 cards</td><td class="r"><span class="chips">+40 chips</span><span class="mult">×2</span></td></tr>
   </table>
 </div>
 <div id="abilityRef" class="ref hidden">
@@ -357,8 +357,8 @@ function computeScore(cards){
   let rankMult=1+(persist.up.rank_mult||0)*0.25;
   for(const rank of ['Page','Knight','Queen','King']){
     let a=cards.filter(c=>c.type==='court'&&c.rank===rank);
-    if(a.length===4){let x=12+rankBonus;m.push(['Four of a Rank ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
-    else if(a.length===3){let x=10+rankBonus;m.push(['Three of a Rank ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
+    if(a.length===4){let x=22+rankBonus;m.push(['Four of a Rank ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
+    else if(a.length===3){let x=20+rankBonus;m.push(['Three of a Rank ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
   }
   let ranks=new Set(cards.filter(c=>c.type==='court').map(c=>c.rank));
   let full=['Page','Knight','Queen','King'].every(r=>ranks.has(r));
@@ -368,18 +368,18 @@ function computeScore(cards){
   let flushMult=1+(persist.up.flush_mult||0)*0.25;
   let courtChips=(persist.up.court_chips||0)*8;
   let court=false;
-  if(same){let x=20+flushChips+courtChips;m.push(['Royal Court ('+same+')',x,flushMult]);chips+=x;mult*=flushMult;court=true}
-  else if(full){let x=18+courtChips;m.push(['Full Court',x,1]);chips+=x;court=true}
-  if(!court)for(const suit of SUITS){let suited=cards.filter(c=>c.suit===suit);if(suited.length>=4){let x=15+flushChips;m.push(['Flush ('+suit+')',x,flushMult]);chips+=x;mult*=flushMult}}
+  if(same){let x=30+flushChips+courtChips;m.push(['Royal Court ('+same+')',x,flushMult]);chips+=x;mult*=flushMult;court=true}
+  else if(full){let x=28+courtChips;m.push(['Full Court',x,1]);chips+=x;court=true}
+  if(!court)for(const suit of SUITS){let suited=cards.filter(c=>c.suit===suit);if(suited.length>=4){let x=25+flushChips;m.push(['Flush ('+suit+')',x,flushMult]);chips+=x;mult*=flushMult}}
   let nums=[...new Set(cards.filter(c=>c.type==='major').map(c=>c.num))].sort((a,b)=>a-b),best=1,cur=1;
   for(let i=1;i<nums.length;i++){if(nums[i]===nums[i-1]+1){cur++;best=Math.max(best,cur)}else cur=1}
   let seqBonus=(persist.up.sequence||0)*5;
   let seqMult=2+(persist.up.seq_mult||0)*0.5;
-  if(best>=5){let x=18+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
-  else if(best>=4){let x=15+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
-  else if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
+  if(best>=5){let x=28+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
+  else if(best>=4){let x=25+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
+  else if(best>=3){let x=20+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
   let pathChips=(persist.up.path_chips||0)*15;
-  if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=30+pathChips;m.push(['Path of the Magi',x,seqMult]);chips+=x;mult*=seqMult}
+  if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=40+pathChips;m.push(['Path of the Magi',x,seqMult]);chips+=x;mult*=seqMult}
   return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}
 }
 function cleanName(c){return c.type==='major'?c.name.split(' ').slice(1).join(' '):c.name}
