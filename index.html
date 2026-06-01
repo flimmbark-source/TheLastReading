@@ -590,22 +590,29 @@ function mirror(t){if(t.type==='major'){let n=21-t.num;return state.deck.filter(
 function betweenPool(a,b){
   if(!a||!b||a.uid===b.uid)return[];
 
-  // Major Arcana: cards numerically between two Major Arcana anchors.
+  // Major Arcana: cards numerically between two Major Arcana anchors (majors and minors).
   if(a.type==='major'&&b.type==='major'){
     let lo=Math.min(a.num,b.num),hi=Math.max(a.num,b.num);
     if(hi-lo<=1)return[];
-    return state.deck.filter(c=>c.type==='major'&&c.num>lo&&c.num<hi);
+    const minorRankPos=[0,5,10,15,20]; // Page,Knight,Queen,King,Ace mapped onto 0-21
+    return state.deck.filter(c=>{
+      if(c.type==='major')return c.num>lo&&c.num<hi;
+      let ri=RANKS.indexOf(c.rank);
+      if(ri<0)return false;
+      let pos=minorRankPos[ri];
+      return pos>lo&&pos<hi;
+    });
   }
 
-  // Minor Arcana: cards between two anchors in the same suit ladder.
+  // Minor Arcana: cards between two anchors in the rank ladder (any suit).
   // Ladder: Page -> Knight -> Queen -> King -> Ace
   let aMinor=(a.type==='court'||a.type==='ace'), bMinor=(b.type==='court'||b.type==='ace');
-  if(aMinor&&bMinor&&a.suit===b.suit){
+  if(aMinor&&bMinor){
     let ia=RANKS.indexOf(a.rank),ib=RANKS.indexOf(b.rank);
     if(ia<0||ib<0)return[];
     let lo=Math.min(ia,ib),hi=Math.max(ia,ib);
     if(hi-lo<=1)return[];
-    return state.deck.filter(c=>c.suit===a.suit&&RANKS.indexOf(c.rank)>lo&&RANKS.indexOf(c.rank)<hi);
+    return state.deck.filter(c=>(c.type==='court'||c.type==='ace')&&RANKS.indexOf(c.rank)>lo&&RANKS.indexOf(c.rank)<hi);
   }
 
   return[];
@@ -808,7 +815,7 @@ const TUT_STEPS=[
   {sel:'#purgeBtn',arrow:'up',text:'<b>Purge</b> lets you sacrifice 3 cards from your hand in exchange for 1 Discard — useful for clearing cards that don\'t fit your pattern.'},
   {sel:'.handDock',arrow:'down',text:'The red circle shows how much a card scores for. Tap a card to see which patterns it completes, then tap an empty slot to place it.'},
   {sel:'.threshold-pill',arrow:'up',text:'Fill all 5 slots to complete the reading. Beat the <b>Threshold</b> to clear it — fall short and the reading fails.'},
-  {center:true, text:'Each time you reach a Threshold, it increases in difficulty. Beat the third Threshold to win.'},
+  {center:true, text:'Each time you reach a Threshold, it increases in difficulty. Beat the 10th Threshold to win.'},
 ];
 function tutSkip(){localStorage.setItem(TUT_KEY,'1');tutDone=true;tutHide()}
 function tutHide(){clearTimeout(tutTimer);tutTimer=null;tutStep=-1;const t=$('#tutTip');if(t){t.classList.remove('show','tut-center');t.style.cssText=''}}
