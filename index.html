@@ -162,7 +162,58 @@
 .pack-picker-header p{margin:4px 0 0;color:#b99a5d;font-size:12px}
 .pack-pick-btn{padding:4px 12px;font-size:12px;background:#c0a060;border-color:#8a6030}
 .pack-pick-btn:hover{filter:brightness(1.1)}
-/* ── Result Panel ── */
+/* ── Sprite Buttons (buttons.png 1448×1086) ── */
+.sbtn{background-image:url(buttons.png);background-repeat:no-repeat;background-color:transparent;border:none;font-size:0;color:transparent;cursor:pointer;padding:0;display:inline-block;flex-shrink:0;transition:filter .1s}
+.sbtn:hover:not(:disabled){filter:brightness(1.1)}
+.sbtn:active:not(:disabled){filter:brightness(.9)}
+.sbtn:disabled{cursor:not-allowed;filter:none}
+.spread-actions .sbtn{pointer-events:auto;min-width:unset}
+/* Discard & Purge — sprite 438×140, scale 38/140 */
+.sbtn-discard,.sbtn-purge{width:119px;height:38px;background-size:393px 295px}
+.sbtn-discard{background-position:-40px -11px}
+.sbtn-discard:disabled{background-position:-40px -54px}
+.sbtn-purge{background-position:-165px -11px}
+.sbtn-purge:disabled{background-position:-165px -54px}
+/* Open (442×112) & Pick (425×112) — scale 38/112 */
+.sbtn-open,.sbtn-pick{height:38px;background-size:491px 368px}
+.sbtn-open{width:150px;background-position:-73px -129px}
+.sbtn-open:hover:not(:disabled){background-position:-71px -171px}
+.sbtn-open:active:not(:disabled){background-position:-73px -216px}
+.sbtn-open:disabled{filter:brightness(.5);cursor:not-allowed}
+.sbtn-pick{width:144px;background-position:-243px -129px}
+.sbtn-pick:hover{background-position:-240px -171px}
+.sbtn-pick:active{background-position:-243px -216px}
+/* Leave Market — 1222×116, scale 40/116 */
+.sbtn-leave{width:421px;height:40px;background-size:499px 374px;background-position:-38px -267px;max-width:calc(100vw - 40px)}
+/* ── Icon Sprites (icons.png 1448×1086, icons 184×188 each) ── */
+.isp{background-image:url(icons.png);background-repeat:no-repeat;display:inline-block;flex-shrink:0}
+/* 56px pack banners — scale 56/188 */
+.isp-56{width:56px;height:56px;background-size:431px 323px}
+.isp-56.isp-draw{background-position:-21px -57px}.isp-56.isp-peek{background-position:-88px -57px}.isp-56.isp-mirror{background-position:-155px -57px}.isp-56.isp-neighbor{background-position:-221px -57px}.isp-56.isp-between{background-position:-288px -57px}.isp-56.isp-kin{background-position:-355px -57px}
+.isp-56.isp-search{background-position:-21px -131px}.isp-56.isp-reshuffle{background-position:-88px -131px}.isp-56.isp-scoring{background-position:-155px -131px}.isp-56.isp-abilities{background-position:-221px -131px}.isp-56.isp-disc{background-position:-288px -131px}.isp-56.isp-purge-ic{background-position:-355px -131px}
+/* 40px upgrade cards — scale 40/188 */
+.isp-40{width:40px;height:40px;background-size:308px 231px}
+.isp-40.isp-draw{background-position:-15px -40px}.isp-40.isp-peek{background-position:-63px -40px}.isp-40.isp-mirror{background-position:-111px -40px}.isp-40.isp-neighbor{background-position:-158px -40px}.isp-40.isp-between{background-position:-206px -40px}.isp-40.isp-kin{background-position:-254px -40px}
+.isp-40.isp-search{background-position:-15px -94px}.isp-40.isp-reshuffle{background-position:-63px -94px}.isp-40.isp-scoring{background-position:-111px -94px}.isp-40.isp-abilities{background-position:-158px -94px}.isp-40.isp-disc{background-position:-206px -94px}.isp-40.isp-purge-ic{background-position:-254px -94px}
+/* 32px ability reference — scale 32/188 */
+.isp-32{width:32px;height:32px;background-size:246px 185px;vertical-align:middle}
+.isp-32.isp-draw{background-position:-12px -32px}.isp-32.isp-peek{background-position:-50px -32px}.isp-32.isp-mirror{background-position:-89px -32px}.isp-32.isp-neighbor{background-position:-127px -32px}.isp-32.isp-between{background-position:-165px -32px}.isp-32.isp-kin{background-position:-203px -32px}
+.isp-32.isp-search{background-position:-12px -75px}.isp-32.isp-reshuffle{background-position:-50px -75px}.isp-32.isp-scoring{background-position:-89px -75px}.isp-32.isp-abilities{background-position:-127px -75px}.isp-32.isp-disc{background-position:-165px -75px}.isp-32.isp-purge-ic{background-position:-203px -75px}
+.shop-pack-banner .isp,.upg-art .isp{position:relative;z-index:1}
+@media(max-width:640px){
+  .sbtn-discard,.sbtn-purge{width:94px;height:30px;background-size:310px 233px}
+  .sbtn-discard{background-position:-31px -9px}
+  .sbtn-discard:disabled{background-position:-31px -43px}
+  .sbtn-purge{background-position:-130px -9px}
+  .sbtn-purge:disabled{background-position:-130px -43px}
+  .sbtn-open{width:126px;height:32px;background-size:414px 310px;background-position:-61px -108px}
+  .sbtn-open:hover:not(:disabled){background-position:-60px -144px}
+  .sbtn-open:active:not(:disabled){background-position:-61px -182px}
+  .sbtn-pick{width:121px;height:32px;background-size:414px 310px;background-position:-204px -108px}
+  .sbtn-pick:hover{background-position:-202px -144px}
+  .sbtn-pick:active{background-position:-204px -182px}
+  .sbtn-leave{width:min(100%,369px);height:36px;background-size:449px 337px;background-position:-34px -241px}
+}
 .result-panel{max-width:480px;width:min(94vw,480px);background:linear-gradient(170deg,#1d1108,#110806);border:1px solid #856536;border-radius:12px;padding:22px 24px 26px;position:relative;overflow:hidden;box-shadow:0 0 70px rgba(0,0,0,.9),inset 0 1px 0 rgba(212,175,106,.07)}
 .result-panel::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(212,175,106,.016) 0,rgba(212,175,106,.016) 1px,transparent 1px,transparent 14px);pointer-events:none}
 .result-panel.pass{border-color:#b8923a;box-shadow:0 0 70px rgba(0,0,0,.9),0 0 40px rgba(184,146,58,.16),inset 0 1px 0 rgba(212,175,106,.14)}
@@ -256,18 +307,18 @@
 <div id="abilityRef" class="ref hidden">
   <table>
     <tr><td><b>Ability</b></td><td class="r"><b>What it does</b></td></tr>
-    <tr><td>Draw 1 / 2 / 3</td><td class="r">Draw that many cards.</td></tr>
-    <tr><td>Peek 3 / 5</td><td class="r">Look at that many cards. Take 1. Put the rest on the bottom.</td></tr>
-    <tr><td>Search</td><td class="r">Take any card from the deck, then shuffle.</td></tr>
-    <tr><td>Reshuffle</td><td class="r">Shuffle the discard pile into the deck, then draw 2.</td></tr>
-    <tr><td>Neighbor</td><td class="r">Choose a card. Reveal up to 2 adjacent cards from the deck. Take 1.</td></tr>
-    <tr><td>Kin</td><td class="r">Choose a card. Reveal up to 2 cards of the same Arcana from the deck. Take 1.</td></tr>
-    <tr><td>Mirror</td><td class="r">Choose a card. Take the card opposite it across centerline of its Arcana.</td></tr>
-    <tr><td>Between</td><td class="r">Choose two cards. Reveal up to 2 cards between them from the deck. Take 1.</td></tr>
+    <tr><td><span class="isp isp-32 isp-draw" style="margin-right:5px"></span>Draw 1 / 2 / 3</td><td class="r">Draw that many cards.</td></tr>
+    <tr><td><span class="isp isp-32 isp-peek" style="margin-right:5px"></span>Peek 3 / 5</td><td class="r">Look at that many cards. Take 1. Put the rest on the bottom.</td></tr>
+    <tr><td><span class="isp isp-32 isp-search" style="margin-right:5px"></span>Search</td><td class="r">Take any card from the deck, then shuffle.</td></tr>
+    <tr><td><span class="isp isp-32 isp-reshuffle" style="margin-right:5px"></span>Reshuffle</td><td class="r">Shuffle the discard pile into the deck, then draw 2.</td></tr>
+    <tr><td><span class="isp isp-32 isp-neighbor" style="margin-right:5px"></span>Neighbor</td><td class="r">Choose a card. Reveal up to 2 adjacent cards from the deck. Take 1.</td></tr>
+    <tr><td><span class="isp isp-32 isp-kin" style="margin-right:5px"></span>Kin</td><td class="r">Choose a card. Reveal up to 2 cards of the same Arcana from the deck. Take 1.</td></tr>
+    <tr><td><span class="isp isp-32 isp-mirror" style="margin-right:5px"></span>Mirror</td><td class="r">Choose a card. Take the card opposite it across centerline of its Arcana.</td></tr>
+    <tr><td><span class="isp isp-32 isp-between" style="margin-right:5px"></span>Between</td><td class="r">Choose two cards. Reveal up to 2 cards between them from the deck. Take 1.</td></tr>
   </table>
 </div>
 </div>
-<div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="danger" onclick="discardSelected()" disabled>Discard</button><button id="purgeBtn" onclick="startPurge()" disabled>Purge</button></div><div id="spread" class="spread"></div></div>
+<div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="sbtn sbtn-discard" aria-label="Discard" onclick="discardSelected()" disabled></button><button id="purgeBtn" class="sbtn sbtn-purge" aria-label="Purge" onclick="startPurge()" disabled></button></div><div id="spread" class="spread"></div></div>
 <div id="abilityPrompt" class="ability-prompt"><div><h3 id="abilityPromptTitle"></h3><p id="abilityPromptText"></p></div><button id="abilityConfirm" onclick="confirmAbilitySelection()" disabled>Choose</button></div>
 <div id="purgePrompt" class="ability-prompt"><div><h3>Purge</h3><p>Select 3 cards to sacrifice for 1 Discard. <b><span id="purgeCount">0</span>/3</b> selected.</p></div><button id="purgeConfirm" onclick="confirmPurge()" disabled>Sacrifice</button><button onclick="cancelPurge()">Cancel</button></div>
 <div class="handDock"><div id="hand" class="hand"></div></div>
@@ -747,10 +798,11 @@ const SHOP={
 };
 function shopCost(k){let s=SHOP[k],lvl=persist.up[k]||0;return Math.floor(s[2]*Math.pow(s[3],lvl))}
 const PACKS={
-  arcana:{name:'Scoring Pack',desc:'Choose a scoring upgrade for your reading patterns.',icon:'🌟',cost:20,pool:'scoring'},
-  instrument:{name:'Powerup Pack',desc:'Choose a powerup that changes how you play.',icon:'🔮',cost:15,pool:'utility'},
-  mystery:{name:'Mystery Pack',desc:'Choose from a random mix of scoring and powerup upgrades.',icon:'✨',cost:28,pool:'all'},
+  arcana:{name:'Scoring Pack',desc:'Choose a scoring upgrade for your reading patterns.',icon:'isp-scoring',cost:20,pool:'scoring'},
+  instrument:{name:'Powerup Pack',desc:'Choose a powerup that changes how you play.',icon:'isp-abilities',cost:15,pool:'utility'},
+  mystery:{name:'Mystery Pack',desc:'Choose from a random mix of scoring and powerup upgrades.',icon:'isp-reshuffle',cost:28,pool:'all'},
 };
+const SHOP_ICON={discards:'isp-disc',hand:'isp-draw',mulligan:'isp-reshuffle',neighbor:'isp-neighbor',kin:'isp-kin',mirror:'isp-mirror',between:'isp-between',rank:'isp-scoring',sequence:'isp-scoring',flush_chips:'isp-scoring',court_chips:'isp-kin',path_chips:'isp-scoring'};
 function openShop(){
   let html='<div class="summary tarot-shop">';
   html+='<div class="shop-header"><span class="shop-orn">✦ &nbsp; ✦ &nbsp; ✦</span><h3>The Oracle\'s Market</h3><p class="shop-reserve-display">Reserve <b>'+persist.pool+'</b></p></div>';
@@ -759,13 +811,13 @@ function openShop(){
     const ok=persist.pool>=p.cost;
     html+=`<div class="shop-pack ${ok?'affordable':''}">
       <div class="shop-pack-title-strip"><span>${p.name}</span></div>
-      <div class="shop-pack-banner">${p.icon}</div>
+      <div class="shop-pack-banner"><span class="isp isp-56 ${p.icon}"></span></div>
       <div class="shop-pack-desc">${p.desc}</div>
       <div class="shop-pack-footer"><span class="shop-pack-cost">✦ ${p.cost}</span>
-      <button class="shop-pack-buy" ${ok?'':'disabled'} onclick="buyPack('${pk}')">Open</button></div>
+      <button class="sbtn sbtn-open" ${ok?'':'disabled'} aria-label="Open" onclick="buyPack('${pk}')"></button></div>
     </div>`;
   }
-  html+='</div><button class="shop-leave" onclick="continueReading()">Leave Market →</button></div>';
+  html+='</div><button class="sbtn sbtn-leave" aria-label="Leave Market" onclick="continueReading()"></button></div>';
   showOverlay(html);
 }
 function buyPack(pk){
@@ -775,16 +827,16 @@ function buyPack(pk){
   const pool=Object.keys(SHOP).filter(k=>p.pool==='all'||SHOP[k][5]===p.pool);
   const options=shuffle([...pool]).slice(0,4);
   let html='<div class="summary tarot-shop">';
-  html+=`<div class="pack-picker-header"><h3>${p.icon} ${p.name}</h3><p>Pick one upgrade to keep</p></div>`;
+  html+=`<div class="pack-picker-header"><h3><span class="isp isp-40 ${p.icon}" style="vertical-align:middle;margin-right:6px"></span>${p.name}</h3><p>Pick one upgrade to keep</p></div>`;
   html+='<div class="shop-items-row">';
   for(const k of options){
-    const s=SHOP[k],lvl=persist.up[k]||0;
+    const s=SHOP[k],lvl=persist.up[k]||0,ic=SHOP_ICON[k]||'isp-scoring';
     html+=`<div class="upg-card ${s[5]}">
       <div class="upg-title-strip"><span>${s[0]}</span></div>
-      <div class="upg-art">${s[4]}</div>
+      <div class="upg-art"><span class="isp isp-40 ${ic}"></span></div>
       <div class="upg-body"><div class="upg-desc">${s[1]}</div></div>
       <div class="upg-footer"><span class="upg-lv">Lv <b>${lvl}</b></span>
-      <button class="upg-pick-btn" onclick="pickPackUpgrade('${k}')">Pick</button></div>
+      <button class="sbtn sbtn-pick" aria-label="Pick" onclick="pickPackUpgrade('${k}')"></button></div>
     </div>`;
   }
   html+='</div></div>';
