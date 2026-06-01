@@ -696,7 +696,7 @@ function buyPack(pk){
   if(persist.pool<p.cost)return;
   persist.pool-=p.cost;
   const pool=Object.keys(SHOP).filter(k=>p.pool==='all'||SHOP[k][5]===p.pool);
-  const options=shuffle([...pool]).slice(0,3);
+  const options=shuffle([...pool]).slice(0,4);
   let html='<div class="summary tarot-shop">';
   html+=`<div class="pack-picker-header"><h3>${p.icon} ${p.name}</h3><p>Pick one upgrade to keep.</p></div>`;
   html+='<div class="shop-items-row">';
