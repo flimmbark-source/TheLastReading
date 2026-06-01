@@ -815,7 +815,7 @@ const TUT_STEPS=[
   {sel:'#purgeBtn',arrow:'up',text:'<b>Purge</b> lets you sacrifice 3 cards from your hand in exchange for 1 Discard — useful for clearing cards that don\'t fit your pattern.'},
   {sel:'.handDock',arrow:'down',text:'The red circle shows how much a card scores for. Tap a card to see which patterns it completes, then tap an empty slot to place it.'},
   {sel:'.threshold-pill',arrow:'up',text:'Fill all 5 slots to complete the reading. Beat the <b>Threshold</b> to clear it — fall short and the reading fails.'},
-  {center:true, text:'Each time you reach a Threshold, it increases in difficulty. Beat the third Threshold to win.'},
+  {center:true, text:'Each time you reach a Threshold, it increases in difficulty. Beat the 10th Threshold to win.'},
 ];
 function tutSkip(){localStorage.setItem(TUT_KEY,'1');tutDone=true;tutHide()}
 function tutHide(){clearTimeout(tutTimer);tutTimer=null;tutStep=-1;const t=$('#tutTip');if(t){t.classList.remove('show','tut-center');t.style.cssText=''}}
