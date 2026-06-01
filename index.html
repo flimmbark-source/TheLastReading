@@ -160,7 +160,74 @@
 .pack-picker-header p{margin:4px 0 0;color:#b99a5d;font-size:12px}
 .pack-pick-btn{padding:4px 12px;font-size:12px;background:#c0a060;border-color:#8a6030}
 .pack-pick-btn:hover{filter:brightness(1.1)}
-@media(max-width:640px){.shop-item-card{width:110px}.shop-item-top{height:58px;font-size:28px}.shop-item-name{font-size:10px}.tarot-shop{width:calc(100vw - 20px)}.shop-items-row{gap:8px}.shop-pack{width:100px;min-height:170px}.shop-pack-banner{height:74px;font-size:34px}.shop-packs-row{gap:10px}}
+/* ── Result Panel ── */
+.result-panel{max-width:480px;width:min(94vw,480px);background:linear-gradient(170deg,#1d1108,#110806);border:1px solid #856536;border-radius:12px;padding:22px 24px 26px;position:relative;overflow:hidden;box-shadow:0 0 70px rgba(0,0,0,.9),inset 0 1px 0 rgba(212,175,106,.07)}
+.result-panel::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(212,175,106,.016) 0,rgba(212,175,106,.016) 1px,transparent 1px,transparent 14px);pointer-events:none}
+.result-panel.pass{border-color:#b8923a;box-shadow:0 0 70px rgba(0,0,0,.9),0 0 40px rgba(184,146,58,.16),inset 0 1px 0 rgba(212,175,106,.14)}
+.result-panel.fail{border-color:#6e2822;box-shadow:0 0 70px rgba(0,0,0,.9),0 0 28px rgba(110,40,34,.14)}
+.rhead{text-align:center;margin-bottom:18px}
+.rhead .rorn{color:#70582d;font-size:9px;letter-spacing:6px;display:block;margin-bottom:5px}
+.rhead h3{margin:0;font:700 20px Georgia,serif;letter-spacing:.06em}
+.rhead h3.pass{color:#f0d58a}.rhead h3.fail{color:#a04030}
+.rscore{display:flex;align-items:baseline;justify-content:center;gap:9px;margin:16px 0 8px;font-family:Georgia,serif}
+.rscore .rsc{color:#4f9afe;font-size:30px;font-weight:800;text-shadow:0 0 22px rgba(79,154,254,.38)}
+.rscore .rop{color:#5a4428;font-size:22px}
+.rscore .rsm{color:#fe5f55;font-size:30px;font-weight:800;text-shadow:0 0 22px rgba(254,95,85,.32)}
+.rscore .rsf{color:#ffd978;font-size:42px;font-weight:800;line-height:1;text-shadow:0 0 30px rgba(255,217,120,.6),0 2px 8px rgba(0,0,0,.65)}
+.rscore .rsf.fail{color:#c06050;text-shadow:0 0 30px rgba(192,96,80,.45),0 2px 8px rgba(0,0,0,.65)}
+.rverdict{text-align:center;display:block;font:700 10px system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:4px 14px;border-radius:999px;margin:5px auto 14px;width:fit-content}
+.rverdict.pass{color:#c49a3c;background:rgba(196,154,60,.1);border:1px solid rgba(196,154,60,.28)}
+.rverdict.fail{color:#a04030;background:rgba(160,64,48,.1);border:1px solid rgba(160,64,48,.28)}
+.rdiv{border:none;border-top:1px solid rgba(95,76,41,.4);margin:10px 0;position:relative}
+.rdiv::after{content:'✦';position:absolute;left:50%;top:-7px;background:#160d06;padding:0 8px;color:#70582d;font-size:8px}
+.rtable{width:100%;border-collapse:collapse}
+.rtable td{padding:5px 2px;font-size:12px;color:#a09060;border-bottom:1px solid rgba(255,255,255,.04)}
+.rtable td.r{text-align:right;color:#ccb870;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rtable .mrow td{color:#d4a050}.rtable .mrow td.r{color:#ffbe40}
+.rtable .totrow td{color:#f0d58a;font-weight:700;font-size:13px;border-bottom:none;padding-top:9px}
+.rtable .totrow td.r{color:#ffd978;font-size:16px}
+.rbtns{margin-top:18px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.btn-gold{background:linear-gradient(170deg,#c4a03c,#8a5e1c);border-color:#6a4016;color:#1a0900;font-family:Georgia,serif;letter-spacing:.05em;padding:9px 28px;font-size:13px}
+.btn-gold:hover{filter:brightness(1.12)}
+/* ── Shop header ── */
+.shop-header{text-align:center;border-bottom:1px solid rgba(95,76,41,.5);padding-bottom:14px;margin-bottom:18px}
+.shop-header h3{margin:0 0 2px;font:700 22px Georgia,serif;color:#f0d58a;letter-spacing:.06em}
+.shop-header .shop-orn{display:block;font-size:9px;letter-spacing:8px;color:#70582d;margin-bottom:6px}
+.shop-reserve-display{color:#8a7848;font-size:13px;margin:6px 0 0}
+.shop-reserve-display b{color:#ffd978;font-size:16px}
+/* ── Pack cards redesign ── */
+.shop-pack{width:130px;min-height:210px;background:linear-gradient(170deg,#2a1810,#140907);border:2px solid #7a5c30;border-radius:8px;display:flex;flex-direction:column;align-items:stretch;overflow:hidden;transition:transform .15s,box-shadow .15s}
+.shop-pack.affordable{border-color:#c8a040;box-shadow:0 0 18px rgba(200,160,64,.22)}
+.shop-pack-title-strip{background:#160b07;border-bottom:1px solid #4a3018;padding:6px 8px 5px;text-align:center}
+.shop-pack-title-strip span{font:700 9px Georgia,serif;color:#d4af6a;letter-spacing:.12em;text-transform:uppercase}
+.shop-pack-banner{flex:1;background:linear-gradient(180deg,#1e1008,#2e1a0e);border-bottom:1px solid #4a3018;display:flex;align-items:center;justify-content:center;font-size:44px;position:relative;min-height:90px}
+.shop-pack-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 55%,rgba(212,175,106,.12) 0,transparent 70%)}
+.shop-pack-banner::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(212,175,106,.028) 0,rgba(212,175,106,.028) 2px,transparent 2px,transparent 9px)}
+.shop-pack-desc{font-size:9px;color:#a09060;text-align:center;line-height:1.35;padding:6px 8px 0;flex:1}
+.shop-pack-footer{width:100%;display:flex;justify-content:space-between;align-items:center;padding:7px 8px 10px}
+.shop-pack-cost{color:#ffd978;font-weight:800;font-size:12px}
+.shop-pack-buy{padding:4px 10px;font-size:11px}
+.shop-leave{width:100%;margin-top:6px;background:transparent;border-color:#5f4c29;color:#a09060;font-size:12px;letter-spacing:.03em}
+.shop-leave:hover{background:rgba(255,255,255,.04);color:#d0b870}
+/* ── Pack picker upgrade cards (tarot card aesthetic) ── */
+.pack-picker-header{text-align:center;margin-bottom:16px;border-bottom:1px solid rgba(95,76,41,.4);padding-bottom:12px}
+.pack-picker-header h3{margin:0 0 3px;font:700 18px Georgia,serif;color:#f0d58a;letter-spacing:.04em}
+.pack-picker-header p{margin:4px 0 0;color:#8a7848;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+.upg-card{width:130px;background:linear-gradient(165deg,#2a1810,#140907);border:2px solid #6b4f25;border-radius:6px;display:flex;flex-direction:column;overflow:hidden;font-family:Georgia,serif}
+.upg-card.scoring{border-color:#7a6030}
+.upg-card.utility{border-color:#4a6840}
+.upg-title-strip{background:#160b07;border-bottom:1px solid #4a3018;height:17px;display:flex;align-items:center;justify-content:center;padding:0 8px}
+.upg-title-strip span{font:900 7px system-ui,sans-serif;color:#d4af6a;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upg-art{height:80px;background:radial-gradient(circle,#3b2917,#160b07 80%);display:flex;align-items:center;justify-content:center;font-size:38px;position:relative;border-bottom:1px solid #3a2810}
+.upg-art::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 60%,rgba(212,175,106,.07),transparent 65%)}
+.upg-body{padding:7px 8px 4px;flex:1}
+.upg-desc{font-size:9.5px;color:#c0ac80;line-height:1.3;font-family:system-ui,sans-serif}
+.upg-footer{padding:5px 8px 8px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,.05)}
+.upg-lv{font-size:9px;color:#70582d;font-family:system-ui,sans-serif}
+.upg-lv b{color:#a08040}
+.upg-pick-btn{padding:4px 10px;font-size:11px;background:linear-gradient(170deg,#c8a040,#8a6020);border-color:#6a4010;color:#1a0800}
+.upg-pick-btn:hover{filter:brightness(1.12)}
+@media(max-width:640px){.tarot-shop{width:calc(100vw - 20px)}.shop-packs-row{gap:10px}.shop-pack{width:104px;min-height:185px}.shop-pack-banner{min-height:74px;font-size:36px}.shop-items-row{gap:8px}.upg-card{width:110px}.upg-art{height:66px;font-size:30px}.upg-title-strip span{font-size:6.5px}.result-panel{padding:16px 16px 20px}.rscore .rsc,.rscore .rsm{font-size:22px}.rscore .rsf{font-size:32px}}
 </style>
 </head>
 <body>
@@ -650,9 +717,9 @@ function choice(title,prompt,cards,cb){$('#modalTitle').textContent=title;$('#mo
 function toggleModalCollapse(){let m=$('#modal');if(!m.classList.contains('show'))return;m.classList.toggle('collapsed');$('#modalToggle').textContent=m.classList.contains('collapsed')?'Show':'Hide'}
 function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;waitForCounterThenScore()}
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
-function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards),total=res.finalScore,pass=total>=TH[state.th];let html='<div class="summary"><h3>Reading Result</h3><table>';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){html+=`<tr><td><b>Patterns formed</b></td><td class="r"></td></tr>`;res.melds.forEach(m=>html+=`<tr class="meld"><td>${m[0]}</td><td class="r">+${m[1]} ×${m[2]}</td></tr>`)}else html+=`<tr><td>No scoring pattern formed</td><td class="r">Base only</td></tr>`;html+=`<tr><td>This reading</td><td class="r">${res.chips} × ${res.mult} = <b>${res.finalScore}</b></td></tr>`;html+=`<tr><td>${pass?'PASSED':'Below'} threshold ${TH[state.th]}</td><td class="r"><b>${total}</b></td></tr></table>`;if(pass){persist.pool+=total;state.th++;html+=`<p>Threshold cleared. ${total} added to pool.</p>`;if(state.th>=TH.length)html+='<button onclick="endSession()">End session</button>';else html+='<button onclick="openShop()">Open Shop →</button>'}else{html+='<p>The candles burn out.</p><button onclick="endSession()">End session</button>'}html+='</div>';showOverlay(html);render()}
+function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards),total=res.finalScore,pass=total>=TH[state.th];let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+TH[state.th]+' Cleared':'Below Threshold '+TH[state.th]}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){res.melds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">+${m[1]} ×${m[2]}</td></tr>`);}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){persist.pool+=total;state.th++;html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render()}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML=''}
-function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(7),400)}}function endSession(){showOverlay('<div class="summary"><h3>Session complete</h3><p>Reserve: <b>'+persist.pool+'</b>.</p><button onclick="resetSession()">New session</button></div>')}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null};startReading()}
+function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(7),400)}}function endSession(){showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Session Ends</h3></div><div class="rscore"><span class="rsf">${persist.pool}</span></div><span class="rverdict pass">Final Reserve</span><div class="rbtns"><button class="btn-gold" onclick="resetSession()">Begin Again</button></div></div>`)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null};startReading()}
 // [name, desc, baseCost, scale, icon, category, pairedKey?]
 const SHOP={
   discards:   ['Extra Discard',   '+1 Discard each reading',                                                                                                              15,1.75,'🃏','utility'],
@@ -676,13 +743,13 @@ const PACKS={
 };
 function openShop(){
   let html='<div class="summary tarot-shop">';
-  html+='<div class="shop-header"><h3>✦ The Oracle\'s Market ✦</h3><p class="shop-reserve-display">Reserve: <b>'+persist.pool+'</b></p></div>';
+  html+='<div class="shop-header"><span class="shop-orn">✦ &nbsp; ✦ &nbsp; ✦</span><h3>The Oracle\'s Market</h3><p class="shop-reserve-display">Reserve <b>'+persist.pool+'</b></p></div>';
   html+='<div class="shop-section-title">Available Packs</div><div class="shop-packs-row">';
   for(const[pk,p]of Object.entries(PACKS)){
     const ok=persist.pool>=p.cost;
     html+=`<div class="shop-pack ${ok?'affordable':''}">
+      <div class="shop-pack-title-strip"><span>${p.name}</span></div>
       <div class="shop-pack-banner">${p.icon}</div>
-      <div class="shop-pack-name">${p.name}</div>
       <div class="shop-pack-desc">${p.desc}</div>
       <div class="shop-pack-footer"><span class="shop-pack-cost">✦ ${p.cost}</span>
       <button class="shop-pack-buy" ${ok?'':'disabled'} onclick="buyPack('${pk}')">Open</button></div>
@@ -698,15 +765,16 @@ function buyPack(pk){
   const pool=Object.keys(SHOP).filter(k=>p.pool==='all'||SHOP[k][5]===p.pool);
   const options=shuffle([...pool]).slice(0,4);
   let html='<div class="summary tarot-shop">';
-  html+=`<div class="pack-picker-header"><h3>${p.icon} ${p.name}</h3><p>Pick one upgrade to keep.</p></div>`;
+  html+=`<div class="pack-picker-header"><h3>${p.icon} ${p.name}</h3><p>Pick one upgrade to keep</p></div>`;
   html+='<div class="shop-items-row">';
   for(const k of options){
     const s=SHOP[k],lvl=persist.up[k]||0;
-    html+=`<div class="shop-item-card ${s[5]}">
-      <div class="shop-item-top">${s[4]}</div>
-      <div class="shop-item-body"><div class="shop-item-name">${s[0]}</div><div class="shop-item-desc">${s[1]}</div></div>
-      <div class="shop-item-footer"><div><div class="shop-item-level">Lv ${lvl}</div></div>
-      <button class="pack-pick-btn" onclick="pickPackUpgrade('${k}')">Pick</button></div>
+    html+=`<div class="upg-card ${s[5]}">
+      <div class="upg-title-strip"><span>${s[0]}</span></div>
+      <div class="upg-art">${s[4]}</div>
+      <div class="upg-body"><div class="upg-desc">${s[1]}</div></div>
+      <div class="upg-footer"><span class="upg-lv">Lv <b>${lvl}</b></span>
+      <button class="upg-pick-btn" onclick="pickPackUpgrade('${k}')">Pick</button></div>
     </div>`;
   }
   html+='</div></div>';
