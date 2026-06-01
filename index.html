@@ -111,8 +111,9 @@
 .tut-arrow.up{border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:10px solid #856536;top:-10px}
 .tut-foot{display:flex;gap:8px;margin-top:10px;justify-content:flex-end}
 #tutSkipBtn{background:transparent;border:1px solid #5f4c29;color:#7a6540;font-size:11px;padding:3px 8px;font-weight:400}
-.card.photo{border:none;background:linear-gradient(165deg,#2a1810,#140907);border-radius:4px}
+.card.photo{border:none;background:#100806;border-radius:4px}
 .card.photo .title,.card.photo .art{display:none}
+.card-photo-fill{position:absolute;width:200%;height:200%;background-size:100% 100%;background-repeat:no-repeat;pointer-events:none}
 /* Purge selection mode */
 .hand .card.purge-target{opacity:.6}
 .hand .card.purge-picked{transform:translate3d(0,-92px,0) rotate(0deg)!important;z-index:999!important;box-shadow:0 10px 28px rgba(0,0,0,.75),0 0 0 2px #c06060!important}
@@ -241,10 +242,14 @@ function applyCardPhoto(el,card){
   const s=CARD_SHEET[card.id];
   if(!s)return;
   const[sheet,pos]=s;
+  const col=pos%2, row=Math.floor(pos/2);
   el.classList.add('photo');
-  el.style.backgroundImage=`url(sheet${String(sheet).padStart(2,'0')}.png)`;
-  el.style.backgroundSize='200% 200%';
-  el.style.backgroundPosition=`${(pos%2)*100}% ${Math.floor(pos/2)*100}%`;
+  const fill=document.createElement('div');
+  fill.className='card-photo-fill';
+  fill.style.backgroundImage=`url(sheet${String(sheet).padStart(2,'0')}.png)`;
+  fill.style.left=`${-col*100}%`;
+  fill.style.top=`${-row*100}%`;
+  el.appendChild(fill);
 }
 function cardHTML(c){
   if(cardHTMLCache.has(c.uid))return cardHTMLCache.get(c.uid);
