@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>The Last Reading</title>
 <style>
-  *{box-sizing:border-box}button,.card,.slot{touch-action:manipulation} body{margin:0;background:url(background.png) center top/cover no-repeat fixed;color:#ead9b5;font-family:system-ui,Segoe UI,sans-serif;min-height:100vh;padding:12px 18px 202px} h1{font:700 22px Georgia,serif;margin:0 0 8px;color:#f0d58a}.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0 14px}.score-stack{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:25;display:flex;flex-direction:row;gap:8px;align-items:center}.score-stack .pill{min-width:122px;text-align:left;display:grid;grid-template-columns:66px 1fr;column-gap:8px;align-items:center;align-content:center}.score-stack .pill b{justify-self:center}.reserve-stack{display:none}.pill{background:transparent;border:none;border-radius:0;padding:0 18px;font-size:13px;background-repeat:no-repeat;background-position:center;background-size:100% 100%;height:38px}.pill b{color:#ffd978}.score-pill,.threshold-pill{background-image:url(parchment_plaque_large_center.png);color:#3a1a06;font-weight:700;height:48px}.score-pill b,.threshold-pill b{color:#5a1e06;text-shadow:none}.reserve-pill,.discards-pill{background-image:url(pill_dark_medium.png)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;position:relative}.refs-layer{position:fixed;top:104px;left:18px;z-index:30;display:flex;gap:10px;align-items:flex-start;pointer-events:none}.refs-layer .ref{pointer-events:auto;box-shadow:0 12px 34px rgba(0,0,0,.55)}.spread-wrap{position:relative}.score-preview{display:none!important}.score-preview b{color:#ffd978}.score-preview.hidden{display:none}.spread-actions{position:absolute;left:50%;top:-28px;transform:translateX(-50%);z-index:5;display:flex;justify-content:center;align-items:center;gap:8px;pointer-events:none}.spread-actions button{pointer-events:auto;padding:5px 12px;min-width:80px}button{background:#ead9b5;color:#20130b;border:1px solid #7a5a2d;border-radius:6px;padding:7px 12px;font-weight:700;cursor:pointer}button:hover{filter:brightness(1.08)}button:disabled{opacity:.35;cursor:not-allowed}.danger{background:#e6a29a}.ref{max-width:720px;background:#16100d;border:1px solid #5f4c29;border-radius:8px;padding:10px 12px;margin:0;font-size:13px;line-height:1.45}.ref.hidden{display:none}.ref table{width:100%;border-collapse:collapse}.ref td{padding:2px 6px}.ref .r{text-align:right;color:#f3cf76;white-space:nowrap}#abilityRef .r{text-align:left;white-space:normal}.scoring-sheet{display:inline-block;width:auto;max-width:max-content;padding:10px 12px}.scoring-sheet table{width:auto}.scoring-sheet td{padding:2px 6px;border-bottom:none;font-size:13px;line-height:1.45}.scoring-sheet .m{color:#9f9a92;padding-left:10px;white-space:nowrap}.scoring-sheet .r{font-variant-numeric:tabular-nums;color:#e6d29a;text-align:left;white-space:nowrap}.scoring-sheet .r .chips{display:inline-block;width:62px;text-align:left}.scoring-sheet .r .mult{display:inline-block;width:42px;text-align:left;margin-left:10px}.scoring-sheet .score-head{color:#cdb883;font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:10px}.scoring-sheet .arcana-row td{padding-top:8px;color:#cdb883;font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:11px}.scoring-sheet .arcana-row:first-child td{padding-top:0}.label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#b99a5d;margin:10px 0 2px}.spread{display:flex;justify-content:center;align-items:flex-start;gap:0;min-height:205px;padding:36px 6px 0;overflow:visible}.slot{flex:0 0 130px;width:130px;height:195px;margin-left:-5px;border:2px dashed #775f3a;border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.045);position:relative;transform:rotate(var(--a));transform-origin:50% -180%;transition:.18s}.slot:first-child{margin-left:0}.slot.empty{cursor:pointer}.slot.empty:hover,.slot.target{background:rgba(98,170,104,.16);border-color:#79c778}.slot .num{position:absolute;top:5px;left:8px;color:#8b7651;font-size:12px}.ability-prompt{position:fixed;left:50%;bottom:234px;transform:translateX(-50%);z-index:35;background:rgba(22,16,13,.96);border:1px solid #856536;border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.55);padding:10px 14px;display:none;align-items:center;gap:12px;max-width:min(92vw,760px)}.ability-prompt.show{display:flex}.ability-prompt h3{margin:0;color:#f0d58a;font:700 14px Georgia,serif}.ability-prompt p{margin:2px 0 0;color:#d0bc8c;font-size:12px}.ability-prompt button:disabled{opacity:.35}.handDock{position:fixed;left:0;right:0;bottom:0;height:197px;display:flex;justify-content:center;align-items:flex-start;background:linear-gradient(transparent,rgba(0,0,0,.7));z-index:20;pointer-events:none}.hand{display:flex;align-items:flex-start;justify-content:center;pointer-events:auto;max-width:100vw}.card{width:130px;height:195px;background:linear-gradient(165deg,#2a1810,#140907);border:2px solid #6b4f25;border-radius:6px;box-shadow:0 5px 14px rgba(0,0,0,.45);display:grid;grid-template-rows:17px 1fr;position:relative;overflow:hidden;cursor:pointer;user-select:none;font-family:Georgia,serif;color:#ecd8a4}.card.major{border-color:#9a7842}.hand .card{margin-left:-50px;transform:translate3d(0,0,0) rotate(var(--a));transform-origin:50% 140%;transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .14s ease, opacity .14s ease}.hand .card:first-child{margin-left:0}.hand .card:hover,.hand .card.sel{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important;box-shadow:0 10px 28px rgba(0,0,0,.75),0 0 0 2px #d4af6a}.hand .card.hint-card:hover,.hand .card.hint-card.sel{box-shadow:0 0 0 0.75px rgba(var(--hint-rgb,232,196,96),.98),0 0 32px rgba(var(--hint-rgb,232,196,96),.86),0 0 58px rgba(var(--hint-rgb,232,196,96),.42),0 10px 28px rgba(0,0,0,.75)}.hand .card.hint-complete:hover,.hand .card.hint-complete.sel{box-shadow:0 0 0 1px rgba(var(--hint-rgb,255,217,120),1),0 0 42px rgba(var(--hint-rgb,255,217,120),.95),0 0 76px rgba(var(--hint-rgb,255,217,120),.55),0 10px 28px rgba(0,0,0,.75)}.hand .card.ability-target,.spread .card.ability-target{box-shadow:0 0 0 2px #79c778,0 5px 14px rgba(0,0,0,.45)}.hand .card.ability-target.hint-card,.spread .card.ability-target.hint-card{box-shadow:0 0 0 2px #79c778,0 0 0 1.25px rgba(var(--hint-rgb,232,196,96),.88),0 0 32px rgba(var(--hint-rgb,232,196,96),.76),0 0 56px rgba(var(--hint-rgb,232,196,96),.38),0 5px 14px rgba(0,0,0,.45)}.hand .card.ability-target.hint-complete,.spread .card.ability-target.hint-complete{box-shadow:0 0 0 2px #79c778,0 0 0 1.5px rgba(var(--hint-rgb,255,217,120),1),0 0 42px rgba(var(--hint-rgb,255,217,120),.9),0 0 72px rgba(var(--hint-rgb,255,217,120),.5),0 5px 14px rgba(0,0,0,.45)}.hand .card.ability-picked{transform:translate3d(0,-92px,0) rotate(0deg);z-index:1000!important;box-shadow:0 10px 28px rgba(0,0,0,.75),0 0 0 3px #ffd978}.spread .card.ability-picked{box-shadow:0 0 0 3px #ffd978,0 0 18px rgba(255,217,120,.6);z-index:2}.hand .card.ability-disabled,.spread .card.ability-disabled{opacity:.35;filter:grayscale(.5)}.hand .card,.choices .card{overflow:visible}.card.hint-card,.card.hint-complete{position:relative}.card.hint-major{--hint-rgb:142,112,255}.card.hint-suit{--hint-rgb:94,214,136}.card.hint-rank{--hint-rgb:255,121,78}.card.hint-court{--hint-rgb:245,218,164}.card.hint-gold{--hint-rgb:255,217,120}.card.hint-card{border-color:rgb(var(--hint-rgb,232,196,96));box-shadow:0 0 0 0.75px rgba(var(--hint-rgb,232,196,96),.95),0 0 28px rgba(var(--hint-rgb,232,196,96),.78),0 0 54px rgba(var(--hint-rgb,232,196,96),.36),0 5px 14px rgba(0,0,0,.45)}.card.hint-complete{border-color:rgb(var(--hint-rgb,255,217,120));box-shadow:0 0 0 1px rgba(var(--hint-rgb,255,217,120),1),0 0 36px rgba(var(--hint-rgb,255,217,120),.9),0 0 68px rgba(var(--hint-rgb,255,217,120),.48),0 5px 14px rgba(0,0,0,.45)}.card.hint-multi{border-color:rgb(var(--hint-rgb,255,217,120));box-shadow:var(--hint-shadow)!important}.hand .card.hint-multi:hover,.hand .card.hint-multi.sel,.hand .card.hint-multi.ability-picked,.choices .card.hint-multi:hover{box-shadow:var(--hint-shadow)!important}.hand .card.ability-target.hint-multi{box-shadow:0 0 0 2px #79c778,var(--hint-shadow)!important}.card[data-hint]::after{content:attr(data-hint);position:absolute;left:50%;top:-26px;transform:translateX(-50%);background:rgba(22,16,13,.95);border:1px solid #856536;border-radius:999px;padding:3px 8px;color:#ffd978;font:800 11px system-ui,sans-serif;white-space:nowrap;opacity:0;pointer-events:none;z-index:120;box-shadow:0 6px 16px rgba(0,0,0,.45)}.hand .card[data-hint]:hover::after,.hand .card.sel[data-hint]::after,.hand .card.ability-picked[data-hint]::after,.choices .card[data-hint]:hover::after{opacity:1}.title{font-size:7px;letter-spacing:1px;font-weight:900;text-align:center;line-height:17px;text-transform:uppercase;background:#160b07;color:#d4af6a;border-bottom:1px solid #60451f;padding:0 15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.title.bot{transform:rotate(180deg);border-top:1px solid #60451f;border-bottom:0}.art{position:relative;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#3b2917,#160b07 75%)}.sym{font-size:86px;line-height:1;opacity:.84;text-shadow:0 0 15px rgba(236,193,93,.35)}.plaque{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:linear-gradient(#f0e0bc,#caa86e);color:#1a0d08;border:1px solid #3b2412;border-radius:3px;padding:4px 10px;font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;z-index:2}.scroll{position:absolute;left:8px;right:8px;background:linear-gradient(#d7bd8a,#b89258);color:#231006;border:1px solid #816332;border-radius:2px;font-size:6px;line-height:1.15;text-align:center;font-style:italic;padding:2px 4px}.scroll.t{top:5px}.scroll.b{bottom:5px;transform:rotate(180deg)}.seal{position:absolute;width:19px;height:19px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#cf4e45,#7f1714 72%,#3b0706);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#f5e0b4;z-index:3}.seal.tr{top:7px;right:7px}.seal.bl{bottom:7px;left:7px;transform:rotate(180deg)}.modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}.modal.show{display:flex}.modal.collapsed{background:transparent;align-items:flex-start;justify-content:center;pointer-events:none}.modal.collapsed .box{pointer-events:auto;width:auto;max-width:420px;padding:10px 12px}.modal.collapsed #modalPrompt,.modal.collapsed #choices{display:none}.modal.collapsed .box h2{margin:0;font-size:14px}.modal.collapsed #modalToggle{font-size:12px;padding:4px 9px}.modalHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:5px}#modalToggle{flex:0 0 auto}.box{background:#1b120e;border:1px solid #856536;border-radius:10px;box-shadow:0 18px 50px rgba(0,0,0,.7);padding:16px;width:min(96vw,1180px);max-width:1180px;max-height:88vh;overflow:auto}.box h2{margin:0 0 5px;font:700 18px Georgia,serif;color:#f0d58a}.box p{margin:0 0 12px;color:#d0bc8c}.choices{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,130px));gap:12px;justify-content:center;align-items:start}.summary{max-width:620px;background:#1b120e;border:1px solid #856536;border-radius:10px;padding:16px}.summary.shop-summary{max-width:760px;width:min(88vw,760px)}.shop-grid{display:grid;grid-template-columns:repeat(5,minmax(112px,1fr));gap:8px;margin:10px 0}.shop-card{position:relative;border:1px solid #5f4c29;border-radius:8px;padding:24px 8px 8px;background:rgba(255,255,255,.035);min-height:124px;display:flex;flex-direction:column}.shop-card.affordable{border-color:#6fa36a;background:rgba(90,160,90,.11)}.shop-cost{position:absolute;top:8px;right:8px;color:#ffd978;font-weight:800;font-size:11px}.shop-card p{margin:4px 0 8px;color:#d0bc8c;font-size:11px;line-height:1.2;flex:1}.shop-footer{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto}@media(max-width:900px){.shop-grid{grid-template-columns:repeat(2,minmax(150px,1fr))}}@media(max-width:520px){.shop-grid{grid-template-columns:1fr}}.summary h3{margin:0 0 8px;color:#f0d58a}.summary table{width:100%;border-collapse:collapse}.summary td{padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.08)}.summary .r{text-align:right;color:#ffd978}.meld td{color:#ffb36b}.ghost{position:absolute;left:50%;top:-10px;transform:translateX(-50%);font:900 22px monospace;color:#70d37d;text-shadow:0 2px 4px #000;animation:rise 1.65s forwards;pointer-events:none;z-index:50;overflow:visible}.ghost.big{color:#ff9b52;font-size:26px}@keyframes rise{0%{opacity:0;transform:translate(-50%,0) scale(.6)}12%{opacity:1;transform:translate(-50%,-12px) scale(1.1)}62%{opacity:1;transform:translate(-50%,-34px) scale(1)}100%{opacity:0;transform:translate(-50%,-64px) scale(1)}}.bump{animation:bump .32s}@keyframes bump{45%{transform:rotate(var(--a)) translateY(-12px) scale(1.06)}}
+  *{box-sizing:border-box}button,.card,.slot{touch-action:manipulation} body{margin:0;background:url(background.png) center top/cover no-repeat fixed;color:#ead9b5;font-family:system-ui,Segoe UI,sans-serif;min-height:100vh;padding:12px 18px 202px} h1{font:700 22px Georgia,serif;margin:0 0 8px;color:#f0d58a}.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0 14px}.score-stack{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:25;display:flex;flex-direction:row;gap:8px;align-items:center}.score-stack .pill{min-width:122px;text-align:left;display:grid;grid-template-columns:66px 1fr;column-gap:8px;align-items:center;align-content:center}.score-stack .pill b{justify-self:center}.reserve-stack{display:none}.pill{background:transparent;border:none;border-radius:0;padding:0 18px;font-size:13px;background-repeat:no-repeat;background-position:center;background-size:100% 100%;height:38px}.pill b{color:#ffd978}.score-pill,.threshold-pill{background-image:url(parchment_plaque_large_center.png);color:#3a1a06;font-weight:700;height:48px}.score-pill b,.threshold-pill b{color:#5a1e06;text-shadow:none}.reserve-pill,.discards-pill{background-image:url(pill_dark_medium.png)}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;position:relative}.refs-layer{position:fixed;top:104px;left:18px;z-index:30;display:flex;gap:10px;align-items:flex-start;pointer-events:none}.refs-layer .ref{pointer-events:auto;box-shadow:0 12px 34px rgba(0,0,0,.55)}.spread-wrap{position:relative}.score-preview{display:none!important}.score-preview b{color:#ffd978}.score-preview.hidden{display:none}.spread-actions{position:absolute;left:50%;top:-28px;transform:translateX(-50%);z-index:5;display:flex;justify-content:center;align-items:center;gap:8px;pointer-events:none}.spread-actions button{pointer-events:auto;padding:5px 12px;min-width:80px}button{background:#ead9b5;color:#20130b;border:1px solid #7a5a2d;border-radius:6px;padding:7px 12px;font-weight:700;cursor:pointer}button:hover{filter:brightness(1.08)}button:disabled{opacity:.35;cursor:not-allowed}.danger{background:#e6a29a}.ref{max-width:720px;background:#16100d;border:1px solid #5f4c29;border-radius:8px;padding:10px 12px;margin:0;font-size:13px;line-height:1.45}.ref.hidden{display:none}.ref table{width:100%;border-collapse:collapse}.ref td{padding:2px 6px}.ref .r{text-align:right;color:#f3cf76;white-space:nowrap}#abilityRef .r{text-align:left;white-space:normal}.scoring-sheet{display:inline-block;width:auto;max-width:max-content;padding:10px 12px}.scoring-sheet table{width:auto}.scoring-sheet td{padding:2px 6px;border-bottom:none;font-size:13px;line-height:1.45}.scoring-sheet .m{color:#9f9a92;padding-left:10px;white-space:nowrap}.scoring-sheet .r{font-variant-numeric:tabular-nums;color:#e6d29a;text-align:left;white-space:nowrap}.scoring-sheet .r .chips{display:inline-block;width:62px;text-align:left}.scoring-sheet .r .mult{display:inline-block;width:42px;text-align:left;margin-left:10px}.scoring-sheet .score-head{color:#cdb883;font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:10px}.scoring-sheet .arcana-row td{padding-top:8px;color:#cdb883;font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:11px}.scoring-sheet .arcana-row:first-child td{padding-top:0}.ref-table{width:auto;border-collapse:collapse;font-size:12px}.ref-table th{color:#cdb883;font-weight:800;text-transform:uppercase;letter-spacing:.07em;font-size:10px;padding:2px 8px 4px;border-bottom:1px solid rgba(95,76,41,.5);text-align:left}.ref-table td{padding:3px 8px;border-bottom:1px solid rgba(255,255,255,.05);color:#e6d29a;white-space:nowrap}.ref-table td:first-child{color:#ead9b5}.ref-table td:nth-child(3),.ref-table td:nth-child(4){color:#f3cf76;font-variant-numeric:tabular-nums}.ref-upgrades{margin-top:8px;font-size:11px;color:#aaa;border-top:1px solid rgba(95,76,41,.4);padding-top:6px}.ref-upgrades b{color:#ffd978}.label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#b99a5d;margin:10px 0 2px}.spread{display:flex;justify-content:center;align-items:flex-start;gap:0;min-height:205px;padding:36px 6px 0;overflow:visible}.slot{flex:0 0 130px;width:130px;height:195px;margin-left:-5px;border:2px dashed #775f3a;border-radius:6px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.045);position:relative;transform:rotate(var(--a));transform-origin:50% -180%;transition:.18s}.slot:first-child{margin-left:0}.slot.empty{cursor:pointer}.slot.empty:hover,.slot.target{background:rgba(98,170,104,.16);border-color:#79c778}.slot .num{position:absolute;top:5px;left:8px;color:#8b7651;font-size:12px}.ability-prompt{position:fixed;left:50%;bottom:234px;transform:translateX(-50%);z-index:35;background:rgba(22,16,13,.96);border:1px solid #856536;border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.55);padding:10px 14px;display:none;align-items:center;gap:12px;max-width:min(92vw,760px)}.ability-prompt.show{display:flex}.ability-prompt h3{margin:0;color:#f0d58a;font:700 14px Georgia,serif}.ability-prompt p{margin:2px 0 0;color:#d0bc8c;font-size:12px}.ability-prompt button:disabled{opacity:.35}.handDock{position:fixed;left:0;right:0;bottom:0;height:197px;display:flex;justify-content:center;align-items:flex-start;background:linear-gradient(transparent,rgba(0,0,0,.7));z-index:20;pointer-events:none}.hand{display:flex;align-items:flex-start;justify-content:center;pointer-events:auto;max-width:100vw}.card{width:130px;height:195px;background:linear-gradient(165deg,#2a1810,#140907);border:2px solid #6b4f25;border-radius:6px;box-shadow:0 5px 14px rgba(0,0,0,.45);display:grid;grid-template-rows:17px 1fr;position:relative;overflow:hidden;cursor:pointer;user-select:none;font-family:Georgia,serif;color:#ecd8a4}.card.major{border-color:#9a7842}.hand .card{margin-left:-50px;transform:translate3d(0,0,0) rotate(var(--a));transform-origin:50% 140%;transition:transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .14s ease, opacity .14s ease}.hand .card:first-child{margin-left:0}.hand .card:hover,.hand .card.sel{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important;box-shadow:0 10px 28px rgba(0,0,0,.75),0 0 0 2px #d4af6a}.hand .card.hint-card:hover,.hand .card.hint-card.sel{box-shadow:0 0 0 0.75px rgba(var(--hint-rgb,232,196,96),.98),0 0 32px rgba(var(--hint-rgb,232,196,96),.86),0 0 58px rgba(var(--hint-rgb,232,196,96),.42),0 10px 28px rgba(0,0,0,.75)}.hand .card.hint-complete:hover,.hand .card.hint-complete.sel{box-shadow:0 0 0 1px rgba(var(--hint-rgb,255,217,120),1),0 0 42px rgba(var(--hint-rgb,255,217,120),.95),0 0 76px rgba(var(--hint-rgb,255,217,120),.55),0 10px 28px rgba(0,0,0,.75)}.hand .card.ability-target,.spread .card.ability-target{box-shadow:0 0 0 2px #79c778,0 5px 14px rgba(0,0,0,.45)}.hand .card.ability-target.hint-card,.spread .card.ability-target.hint-card{box-shadow:0 0 0 2px #79c778,0 0 0 1.25px rgba(var(--hint-rgb,232,196,96),.88),0 0 32px rgba(var(--hint-rgb,232,196,96),.76),0 0 56px rgba(var(--hint-rgb,232,196,96),.38),0 5px 14px rgba(0,0,0,.45)}.hand .card.ability-target.hint-complete,.spread .card.ability-target.hint-complete{box-shadow:0 0 0 2px #79c778,0 0 0 1.5px rgba(var(--hint-rgb,255,217,120),1),0 0 42px rgba(var(--hint-rgb,255,217,120),.9),0 0 72px rgba(var(--hint-rgb,255,217,120),.5),0 5px 14px rgba(0,0,0,.45)}.hand .card.ability-picked{transform:translate3d(0,-92px,0) rotate(0deg);z-index:1000!important;box-shadow:0 10px 28px rgba(0,0,0,.75),0 0 0 3px #ffd978}.spread .card.ability-picked{box-shadow:0 0 0 3px #ffd978,0 0 18px rgba(255,217,120,.6);z-index:2}.hand .card.ability-disabled,.spread .card.ability-disabled{opacity:.35;filter:grayscale(.5)}.hand .card,.choices .card{overflow:visible}.card.hint-card,.card.hint-complete{position:relative}.card.hint-major{--hint-rgb:142,112,255}.card.hint-suit{--hint-rgb:94,214,136}.card.hint-rank{--hint-rgb:255,121,78}.card.hint-court{--hint-rgb:245,218,164}.card.hint-gold{--hint-rgb:255,217,120}.card.hint-card{border-color:rgb(var(--hint-rgb,232,196,96));box-shadow:0 0 0 0.75px rgba(var(--hint-rgb,232,196,96),.95),0 0 28px rgba(var(--hint-rgb,232,196,96),.78),0 0 54px rgba(var(--hint-rgb,232,196,96),.36),0 5px 14px rgba(0,0,0,.45)}.card.hint-complete{border-color:rgb(var(--hint-rgb,255,217,120));box-shadow:0 0 0 1px rgba(var(--hint-rgb,255,217,120),1),0 0 36px rgba(var(--hint-rgb,255,217,120),.9),0 0 68px rgba(var(--hint-rgb,255,217,120),.48),0 5px 14px rgba(0,0,0,.45)}.card.hint-multi{border-color:rgb(var(--hint-rgb,255,217,120));box-shadow:var(--hint-shadow)!important}.hand .card.hint-multi:hover,.hand .card.hint-multi.sel,.hand .card.hint-multi.ability-picked,.choices .card.hint-multi:hover{box-shadow:var(--hint-shadow)!important}.hand .card.ability-target.hint-multi{box-shadow:0 0 0 2px #79c778,var(--hint-shadow)!important}.card[data-hint]::after{content:attr(data-hint);position:absolute;left:50%;top:-26px;transform:translateX(-50%);background:rgba(22,16,13,.95);border:1px solid #856536;border-radius:999px;padding:3px 8px;color:#ffd978;font:800 11px system-ui,sans-serif;white-space:nowrap;opacity:0;pointer-events:none;z-index:120;box-shadow:0 6px 16px rgba(0,0,0,.45)}.hand .card[data-hint]:hover::after,.hand .card.sel[data-hint]::after,.hand .card.ability-picked[data-hint]::after,.choices .card[data-hint]:hover::after{opacity:1}.title{font-size:7px;letter-spacing:1px;font-weight:900;text-align:center;line-height:17px;text-transform:uppercase;background:#160b07;color:#d4af6a;border-bottom:1px solid #60451f;padding:0 15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.title.bot{transform:rotate(180deg);border-top:1px solid #60451f;border-bottom:0}.art{position:relative;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,#3b2917,#160b07 75%)}.sym{font-size:86px;line-height:1;opacity:.84;text-shadow:0 0 15px rgba(236,193,93,.35)}.plaque{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:linear-gradient(#f0e0bc,#caa86e);color:#1a0d08;border:1px solid #3b2412;border-radius:3px;padding:4px 10px;font-size:10px;font-weight:900;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;z-index:2}.scroll{position:absolute;left:8px;right:8px;background:linear-gradient(#d7bd8a,#b89258);color:#231006;border:1px solid #816332;border-radius:2px;font-size:6px;line-height:1.15;text-align:center;font-style:italic;padding:2px 4px}.scroll.t{top:5px}.scroll.b{bottom:5px;transform:rotate(180deg)}.seal{position:absolute;width:19px;height:19px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#cf4e45,#7f1714 72%,#3b0706);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#f5e0b4;z-index:3}.seal.tr{top:7px;right:7px}.seal.bl{bottom:7px;left:7px;transform:rotate(180deg)}.modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}.modal.show{display:flex}.modal.collapsed{background:transparent;align-items:flex-start;justify-content:center;pointer-events:none}.modal.collapsed .box{pointer-events:auto;width:auto;max-width:420px;padding:10px 12px}.modal.collapsed #modalPrompt,.modal.collapsed #choices{display:none}.modal.collapsed .box h2{margin:0;font-size:14px}.modal.collapsed #modalToggle{font-size:12px;padding:4px 9px}.modalHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:5px}#modalToggle{flex:0 0 auto}.box{background:#1b120e;border:1px solid #856536;border-radius:10px;box-shadow:0 18px 50px rgba(0,0,0,.7);padding:16px;width:min(96vw,1180px);max-width:1180px;max-height:88vh;overflow:auto}.box h2{margin:0 0 5px;font:700 18px Georgia,serif;color:#f0d58a}.box p{margin:0 0 12px;color:#d0bc8c}.choices{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,130px));gap:12px;justify-content:center;align-items:start}.summary{max-width:620px;background:#1b120e;border:1px solid #856536;border-radius:10px;padding:16px}.summary.shop-summary{max-width:760px;width:min(88vw,760px)}.shop-grid{display:grid;grid-template-columns:repeat(5,minmax(112px,1fr));gap:8px;margin:10px 0}.shop-card{position:relative;border:1px solid #5f4c29;border-radius:8px;padding:24px 8px 8px;background:rgba(255,255,255,.035);min-height:124px;display:flex;flex-direction:column}.shop-card.affordable{border-color:#6fa36a;background:rgba(90,160,90,.11)}.shop-cost{position:absolute;top:8px;right:8px;color:#ffd978;font-weight:800;font-size:11px}.shop-card p{margin:4px 0 8px;color:#d0bc8c;font-size:11px;line-height:1.2;flex:1}.shop-footer{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:auto}@media(max-width:900px){.shop-grid{grid-template-columns:repeat(2,minmax(150px,1fr))}}@media(max-width:520px){.shop-grid{grid-template-columns:1fr}}.summary h3{margin:0 0 8px;color:#f0d58a}.summary table{width:100%;border-collapse:collapse}.summary td{padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.08)}.summary .r{text-align:right;color:#ffd978}.meld td{color:#ffb36b}.ghost{position:absolute;left:50%;top:-10px;transform:translateX(-50%);font:900 22px monospace;color:#70d37d;text-shadow:0 2px 4px #000;animation:rise 1.65s forwards;pointer-events:none;z-index:50;overflow:visible}.ghost.big{color:#ff9b52;font-size:26px}@keyframes rise{0%{opacity:0;transform:translate(-50%,0) scale(.6)}12%{opacity:1;transform:translate(-50%,-12px) scale(1.1)}62%{opacity:1;transform:translate(-50%,-34px) scale(1)}100%{opacity:0;transform:translate(-50%,-64px) scale(1)}}.bump{animation:bump .32s}@keyframes bump{45%{transform:rotate(var(--a)) translateY(-12px) scale(1.06)}}
 .score-ghost{position:fixed;font:900 11px monospace;color:#70d37d;text-shadow:0 1px 3px rgba(0,0,0,.8);animation:score-ghost-rise .9s forwards;pointer-events:none;z-index:100;transform:translateX(-50%)}
 @keyframes score-ghost-rise{0%{opacity:0;transform:translateX(-50%) translateY(0) scale(.6)}15%{opacity:1;transform:translateX(-50%) translateY(-7px) scale(1.05)}70%{opacity:.85;transform:translateX(-50%) translateY(-22px) scale(1)}100%{opacity:0;transform:translateX(-50%) translateY(-38px) scale(.9)}}
 
@@ -281,30 +281,37 @@
 .upg-lv b{color:#a08040}
 .upg-pick-btn{padding:4px 10px;font-size:11px;background:linear-gradient(170deg,#c8a040,#8a6020);border-color:#6a4010;color:#1a0800}
 .upg-pick-btn:hover{filter:brightness(1.12)}
+/* ── Relic rack ── */
+.relic-rack{position:fixed;top:12px;right:12px;z-index:25;display:flex;flex-direction:row;gap:6px;align-items:center}
+.relic-btn{width:36px;height:36px;background:rgba(22,16,13,.88);border:1px solid #5f4c29;border-radius:6px;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;padding:0;flex-shrink:0;transition:border-color .15s,box-shadow .15s}
+.relic-btn:hover{border-color:#d4af6a;box-shadow:0 0 8px rgba(212,175,106,.35)}
+.relic-btn.relic-rare{border-color:#9a7842;box-shadow:0 0 6px rgba(212,175,106,.2)}
+.relic-btn.relic-rare:hover{border-color:#ffd978;box-shadow:0 0 12px rgba(255,217,120,.45)}
+.relic-icon-em{line-height:1;pointer-events:none}
+.relic-callout{position:absolute;top:calc(100% + 6px);right:0;background:#1b120e;border:1px solid #856536;border-radius:8px;padding:10px 12px;min-width:190px;max-width:230px;z-index:200;box-shadow:0 8px 28px rgba(0,0,0,.75);text-align:left}
+.relic-callout-name{font:700 13px Georgia,serif;color:#f0d58a;margin-bottom:3px}
+.relic-callout-rarity{font-size:9px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.relic-callout-rarity.common{color:#8a9a5d}
+.relic-callout-rarity.rare{color:#c4882a}
+.relic-callout-desc{font-size:11px;color:#c0aa80;line-height:1.4}
+.relic-activate-btn{margin-top:8px;width:100%;padding:5px 8px;font-size:11px;font-weight:700;background:#2a1e10;border:1px solid #856536;border-radius:5px;color:#ffd978;cursor:pointer}
+.relic-activate-btn:disabled{opacity:.4;cursor:not-allowed}
+.relic-activate-btn:not(:disabled):hover{background:#3a2a18}
+.relic-rarity-badge{font-size:9px;letter-spacing:.1em;text-transform:uppercase}
+.relic-rarity-badge.common{color:#8a9a5d}
+.relic-rarity-badge.rare{color:#c4882a}
+.relic-art{font-size:36px;display:flex;align-items:center;justify-content:center;height:56px;background:transparent}
 @media(max-width:640px){.tarot-shop{width:calc(100vw - 20px);padding:20px 16px 18px!important;background-image:url("Pack_Background_Mobile.png")}.shop-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header p{font-size:10px;margin:8px 0 0}.shop-packs-row{gap:8px;flex-wrap:nowrap;justify-content:center}.shop-pack{flex:1;min-width:0;min-height:230px}.shop-pack-banner{min-height:74px;font-size:36px}.shop-items-row{gap:8px}.upg-card{width:110px}.upg-art{height:66px;font-size:30px}.upg-title-strip span{font-size:6.5px}.result-panel{padding:16px 16px 20px}.rscore .rsc,.rscore .rsm{font-size:22px}.rscore .rsf{font-size:32px}}
 </style>
 </head>
 <body>
 <h1>The Last Reading</h1>
 <div class="bar"></div>
+<div id="relicRack" class="relic-rack"></div>
 <div class="score-stack"><div class="pill reserve-pill">Reserve <b id="pool">0</b></div><div class="pill score-pill">Score <b id="current">0</b></div><div class="pill threshold-pill">Threshold <b id="threshold">30</b></div><div class="pill discards-pill">Discards <b id="discards">3</b></div></div>
 <div class="actions"><button id="scoringBtn" onclick="toggleRef(event)">Scoring</button><button id="abilitiesBtn" onclick="toggleAbilityRef(event)">Abilities</button><button id="mullBtn" onclick="mulligan()" style="display:none">Mulligan</button></div>
 <div class="refs-layer">
-<div id="ref" class="ref hidden scoring-sheet">
-  <table>
-    <tr class="arcana-row"><td>Minor Arcana</td><td class="m"></td><td class="r score-head"><span class="chips">Bonus</span><span class="mult">Multi</span></td></tr>
-    <tr><td>Three of a Rank</td><td class="m">3 cards</td><td class="r"><span class="chips">+10 chips</span><span class="mult">×1</span></td></tr>
-    <tr><td>Four of a Rank</td><td class="m">4 cards</td><td class="r"><span class="chips">+12 chips</span><span class="mult">×1</span></td></tr>
-    <tr><td>Flush</td><td class="m">4+ cards, same suit</td><td class="r"><span class="chips">+15 chips</span><span class="mult">×1</span></td></tr>
-    <tr><td>Full Court</td><td class="m">4+ cards</td><td class="r"><span class="chips">+18 chips</span><span class="mult">×1</span></td></tr>
-    <tr><td>Royal Court</td><td class="m">4+ cards, same suit</td><td class="r"><span class="chips">+20 chips</span><span class="mult">×1</span></td></tr>
-    <tr class="arcana-row"><td>Major Arcana</td><td class="m"></td><td class="r"></td></tr>
-    <tr><td>Sequence of 3</td><td class="m">3 cards</td><td class="r"><span class="chips">+10 chips</span><span class="mult">×2</span></td></tr>
-    <tr><td>Sequence of 4</td><td class="m">4 cards</td><td class="r"><span class="chips">+15 chips</span><span class="mult">×2</span></td></tr>
-    <tr><td>Sequence of 5</td><td class="m">5 cards</td><td class="r"><span class="chips">+18 chips</span><span class="mult">×2</span></td></tr>
-    <tr><td>Path of the Magi</td><td class="m">3 cards</td><td class="r"><span class="chips">+30 chips</span><span class="mult">×2</span></td></tr>
-  </table>
-</div>
+<div id="ref" class="ref hidden scoring-sheet"></div>
 <div id="abilityRef" class="ref hidden">
   <table>
     <tr><td><b>Ability</b></td><td class="r"><b>What it does</b></td></tr>
@@ -338,7 +345,7 @@ const SUIT_MEAN={Cups:['Emotion, love','Hidden feelings'],Wands:['Will, creation
 const MAJORS=[[0,'Fool',5,true,'PEEK_3'],[1,'Magician',5,true,'SEARCH'],[2,'High Priestess',1,false,'NEIGHBOR_2'],[3,'Empress',1,false,'DRAW_2'],[4,'Emperor',1,false,'DRAW_1'],[5,'Hierophant',1,false,'BETWEEN_2'],[6,'Lovers',1,false,'KIN_2'],[7,'Chariot',1,false,'DRAW_1'],[8,'Strength',1,false,'DRAW_1'],[9,'Hermit',1,false,'NEIGHBOR_2'],[10,'Wheel',1,false,'MIRROR_1'],[11,'Justice',1,false,'KIN_2'],[12,'Hanged Man',1,false,'BETWEEN_2'],[13,'Death',1,false,'DRAW_3'],[14,'Temperance',1,false,'BETWEEN_2'],[15,'Devil',1,false,'DRAW_2'],[16,'Tower',1,false,'DRAW_2'],[17,'Star',1,false,'KIN_2'],[18,'Moon',1,false,'MIRROR_1'],[19,'Sun',1,false,'DRAW_2'],[20,'Judgement',1,false,'MIRROR_1'],[21,'World',5,true,'WORLD']];
 const COURTS=[['Page',2,'DRAW_1'],['Knight',3,'PEEK_3'],['Queen',4,'DRAW_2'],['King',5,'PEEK_5']];
 const TH=Array.from({length:10},(_,i)=>(i+1)*10);
-let persist={pool:0,up:{discards:0,hand:0,mulligan:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,flush_chips:0,flush_mult:0,court_chips:0,path_chips:0,neighbor:0,kin:0,mirror:0,between:0}};
+let persist={pool:0,up:{discards:0,hand:0,mulligan:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,flush_chips:0,flush_mult:0,court_chips:0,path_chips:0,neighbor:0,kin:0,mirror:0,between:0,relicSlot:0},relics:[],relicUsed:{}};
 let state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null};
 const $=s=>document.querySelector(s), shuffle=a=>{for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const cardHTMLCache=new Map();
@@ -376,11 +383,20 @@ function cardHTML(c){
 function sortCards(cards){return [...cards].sort((a,b)=>{let o={major:0,court:1,ace:2};if(o[a.type]!==o[b.type])return o[a.type]-o[b.type];if(a.type==='major')return a.num-b.num;return(a.suit||'').localeCompare(b.suit||'')||RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank)})}
 function maxHand(){return 5+persist.up.hand}function maxDiscards(){return 3+persist.up.discards}function hasMull(){return persist.up.mulligan>0}
 function drawN(n){for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;state.hand.push(state.deck.shift())}}function drawTo(n){while(state.hand.length<n&&state.deck.length)state.hand.push(state.deck.shift())}
-function startReading(){state.deck=shuffle(buildDeck());state.hand=[];state.discard=[];state.spread=Array(5).fill(null);state.selected=null;state.purgeSelect=null;state.discards=maxDiscards();state.mull=false;drawTo(maxHand());clearOverlay();snapCounter(0);render()}
+function startReading(){
+  state.deck=shuffle(buildDeck());state.hand=[];state.discard=[];state.spread=Array(5).fill(null);
+  state.selected=null;state.purgeSelect=null;state.discards=maxDiscards();state.mull=false;
+  state.freeDiscardUsed=false;state.discardedCards=[];
+  const extra=persist.relics.includes('threadbare_tarot')?1:0;
+  drawTo(maxHand()+extra);
+  if(persist.relics.includes('torn_page')&&state.deck.length){state.spread[2]=state.deck.shift();}
+  clearOverlay();snapCounter(0);render();
+}
 function render(){
   $('#threshold').textContent=TH[state.th];
   $('#pool').textContent=persist.pool;
   $('#discards').textContent=state.discards;
+  renderRelicRack();
 
   const placed=state.spread.filter(Boolean);
   const now=computeScore(placed);
@@ -491,7 +507,8 @@ function computeScore(cards){
   let court=false;
   if(same){let x=20+flushChips+courtChips;m.push(['Royal Court ('+same+')',x,flushMult]);chips+=x;mult*=flushMult;court=true}
   else if(full){let x=18+courtChips;m.push(['Full Court',x,1]);chips+=x;court=true}
-  if(!court)for(const suit of SUITS){let suited=cards.filter(c=>c.suit===suit);if(suited.length>=4){let x=15+flushChips;m.push(['Flush ('+suit+')',x,flushMult]);chips+=x;mult*=flushMult}}
+  const wildKings=persist.relics.includes('buried_king')?cards.filter(c=>c.rank==='King'):[];
+  if(!court)for(const suit of SUITS){let suited=cards.filter(c=>c.suit===suit);const wilds=wildKings.filter(c=>c.suit!==suit);if(suited.length+wilds.length>=4){let x=15+flushChips;m.push(['Flush ('+suit+')',x,flushMult]);chips+=x;mult*=flushMult;break;}}
   let nums=[...new Set(cards.filter(c=>c.type==='major').map(c=>c.num))].sort((a,b)=>a-b),best=1,cur=1;
   for(let i=1;i<nums.length;i++){if(nums[i]===nums[i-1]+1){cur++;best=Math.max(best,cur)}else cur=1}
   let seqBonus=(persist.up.sequence||0)*5;
@@ -501,8 +518,19 @@ function computeScore(cards){
   else if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
   let pathChips=(persist.up.path_chips||0)*15;
   if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=30+pathChips;m.push(['Path of the Magi',x,seqMult]);chips+=x;mult*=seqMult}
+  // ── Relic effects ──
+  const rel=persist.relics;
+  if(rel.includes('gilded_fool')&&cards.length){chips+=10;}
+  if(rel.includes('ace_dark')){const aceBonus=cards.filter(c=>c.rank==='Ace').reduce((s,c)=>s+c.points*2,0);chips+=aceBonus;}
+  if(rel.includes('hermit_lantern')){const n=cards.filter(c=>c.type==='major').length;if(n){m.push(["Hermit's Lantern",0,n*0.25,'add']);mult+=n*0.25;}}
+  if(rel.includes('mirror_shard')){const rc={};cards.forEach(c=>{const r=c.rank||String(c.num);rc[r]=(rc[r]||0)+1;});const pairs=Object.values(rc).filter(v=>v>=2).reduce((s,v)=>s+Math.floor(v/2),0);if(pairs){m.push(['Mirror Shard',0,pairs,'add']);mult+=pairs;}}
+  if(rel.includes('cups_overflow')&&cards.length===5){const suits=cards.map(c=>c.suit).filter(Boolean);if(suits.length===5&&new Set(suits).size===1){m.push(["Cup's Overflow",0,2,'add']);mult+=2;}}
+  if(rel.includes('court_favor')){const n=cards.filter(c=>['Page','Knight','Queen','King'].includes(c.rank)).length;if(n){m.push(['Court Favor',0,n,'add']);mult+=n;}}
+  if(rel.includes('arcana_codex')){const scoringKeys=['rank','rank_mult','sequence','seq_mult','flush_chips','flush_mult','court_chips','path_chips'];const n=scoringKeys.filter(k=>(persist.up[k]||0)>0).length;if(n){m.push(['Arcana Codex',0,+(n*0.1).toFixed(2),'add']);mult+=n*0.1;}}
+  if(rel.includes('hanged_coin')&&state.discardedCards&&state.discardedCards.length){const bonus=Math.floor(state.discardedCards.reduce((s,c)=>s+c.points,0)/2);if(bonus){m.push(["Hanged Man's Coin",bonus,0]);chips+=bonus;}}
   return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}
 }
+function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';if(chips&&mult)return`+${chips} ×${mult}`;if(chips)return`+${chips}`;if(mult)return additive?`+${mult} Mult`:`×${mult}`;return'';}
 function cleanName(c){return c.type==='major'?c.name.split(' ').slice(1).join(' '):c.name}
 function normMeldName(name){if(name.startsWith('Sequence'))return 'Sequence';if(name.startsWith('Flush'))return 'Flush';if(name.startsWith('Royal Court'))return 'Royal Court';if(name.startsWith('Three of a Rank'))return 'Three of a Rank';if(name.startsWith('Four of a Rank'))return 'Four of a Rank';return name}
 function hintGroup(label){if(label==='Sequence'||label==='Path of the Magi')return 'hint-major';if(label==='Flush'||label==='Royal Court')return 'hint-suit';if(label==='Three of a Rank'||label==='Four of a Rank')return 'hint-rank';if(label==='Full Court')return 'hint-court';return 'hint-gold'}
@@ -615,7 +643,7 @@ function applyHint(el,card,poolCards=null){
   el.dataset.hint=hints.map(h=>h.label).join(' + ');
 }
 function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=computeScore([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
-function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let before=new Set(computeScore(state.spread.filter(Boolean)).melds.map(x=>x[0]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.filter(x=>!before.has(x[0]));let delay=420;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;setTimeout(()=>ghost(anchor,'+'+m[1]+' ×'+m[2],true),ghostDelay);holdEffects(ghostDelay+1700);delay+=slots.length*130+700});setCounterTarget(after.finalScore);checkEnd()}
+function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let before=new Set(computeScore(state.spread.filter(Boolean)).melds.map(x=>x[0]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.filter(x=>!before.has(x[0]));let delay=420;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;setTimeout(()=>ghost(anchor,meldStr(m),true),ghostDelay);holdEffects(ghostDelay+1700);delay+=slots.length*130+700});setCounterTarget(after.finalScore);checkEnd()}
 let effectsUntil=0;
 function holdEffects(ms){effectsUntil=Math.max(effectsUntil,Date.now()+ms)}
 function ghost(i,t,big=false){let s=document.querySelectorAll('.slot')[i];if(!s)return;holdEffects(1700);let g=document.createElement('div');g.className='ghost '+(big?'big':'');g.textContent=t;s.appendChild(g);setTimeout(()=>g.remove(),1700)}
@@ -631,7 +659,18 @@ function togglePurgeCard(uid){if(state.purgeSelect===null)return;const idx=state
 function renderPurgePrompt(){const el=$('#purgePrompt');if(!el)return;const active=state.purgeSelect!==null;el.classList.toggle('show',active);if(active){const count=state.purgeSelect.length;const sc=$('#purgeCount');if(sc)sc.textContent=count;const btn=$('#purgeConfirm');if(btn)btn.disabled=count!==3}}
 function confirmPurge(){if(!state.purgeSelect||state.purgeSelect.length!==3)return;state.hand=state.hand.filter(c=>!state.purgeSelect.includes(c.uid));state.discards++;state.purgeSelect=null;render();checkEnd()}
 function cancelPurge(){state.purgeSelect=null;render()}
-function discardSelected(){if(state.busy||state.selected===null||state.discards<=0)return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let c=state.hand.splice(idx,1)[0];state.discard.push(c);state.selected=null;state.discards--;resolveAbility(c.ability,()=>{render();checkEnd()},c)}
+function discardSelected(){
+  if(state.busy||state.selected===null)return;
+  const free=persist.relics.includes('gilded_discard')&&!state.freeDiscardUsed;
+  if(!free&&state.discards<=0)return;
+  let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;
+  let c=state.hand.splice(idx,1)[0];
+  state.discard.push(c);
+  if(persist.relics.includes('hanged_coin'))state.discardedCards.push(c);
+  state.selected=null;
+  if(free){state.freeDiscardUsed=true;}else{state.discards--;}
+  resolveAbility(c.ability,()=>{render();checkEnd()},c);
+}
 function resolveAbility(ab,done,sourceCard=null){if(ab==='DRAW_1'){drawN(1);done()}else if(ab==='DRAW_2'){drawN(2);done()}else if(ab==='DRAW_3'){drawN(3);done()}else if(ab==='PEEK_3')peek(3,done);else if(ab==='PEEK_5')peek(5,done);else if(ab==='SEARCH')search(done);else if(ab==='NEIGHBOR_2')relation('Neighbor','Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers, court ranks in the same suit, or King from an Ace.',neighbor,2+(persist.up.neighbor||0),done);else if(ab==='KIN_2')relation('Kin','Choose an anchor card. Kin finds cards of the same Arcana.',kin,2+(persist.up.kin||0),done);else if(ab==='MIRROR_1')relation('Mirror','Choose a card. Take the card opposite it across centerline of its Arcana.',mirror,1+(persist.up.mirror||0),done);else if(ab==='BETWEEN_2')betweenAbility(done,sourceCard);else if(ab==='WORLD'){state.deck.push(...state.discard.splice(0));shuffle(state.deck);drawN(2);done()}else done()}
 function peek(n,done){state.busy=true;let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){state.busy=false;done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{state.hand.push(p);cards.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));state.busy=false;done()})}
 function search(done){state.busy=true;if(!state.deck.length){state.busy=false;done();return}choice('Search deck','Pick any card. The deck reshuffles.',sortCards(state.deck),p=>{let i=state.deck.findIndex(c=>c.uid===p.uid);if(i>=0)state.deck.splice(i,1);state.hand.push(p);shuffle(state.deck);state.busy=false;done()})}
@@ -779,9 +818,9 @@ function choice(title,prompt,cards,cb){$('#modalTitle').textContent=title;$('#mo
 function toggleModalCollapse(){let m=$('#modal');if(!m.classList.contains('show'))return;m.classList.toggle('collapsed');$('#modalToggle').textContent=m.classList.contains('collapsed')?'Show':'Hide'}
 function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;waitForCounterThenScore()}
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
-function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards),total=res.finalScore,pass=total>=TH[state.th];let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+TH[state.th]+' Cleared':'Below Threshold '+TH[state.th]}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){res.melds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">+${m[1]} ×${m[2]}</td></tr>`);}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){state.pendingPool=(state.pendingPool||0)+total;state.th++;html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render()}
+function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards),total=res.finalScore,pass=total>=TH[state.th];let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+TH[state.th]+' Cleared':'Below Threshold '+TH[state.th]}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){res.melds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){const miserBonus=persist.relics.includes('miser')?5:0;state.pendingPool=(state.pendingPool||0)+total+miserBonus;state.th++;html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render()}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML=''}
-function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(7),400)}}function endSession(){showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Session Ends</h3></div><div class="rscore"><span class="rsf">${persist.pool}</span></div><span class="rverdict pass">Final Reserve</span><div class="rbtns"><button class="btn-gold" onclick="resetSession()">Begin Again</button></div></div>`)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0};startReading()}
+function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(7),400)}}function endSession(){showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Session Ends</h3></div><div class="rscore"><span class="rsf">${persist.pool}</span></div><span class="rverdict pass">Final Reserve</span><div class="rbtns"><button class="btn-gold" onclick="resetSession()">Begin Again</button></div></div>`)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[]};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;startReading()}
 // [name, desc, baseCost, scale, icon, category, pairedKey?]
 const SHOP={
   discards:   ['Extra Discard',   '+1 Discard each reading',                                                                                                              15,1.75,'🃏','utility'],
@@ -796,36 +835,89 @@ const SHOP={
   flush_chips:['Flush',           'Flush &amp; Royal Court gain <span class="up-chips">+8 Chips</span> and <span class="up-mult">+0.25 Mult</span>',                     24,1.8, '🌊','scoring','flush_mult'],
   court_chips:['Full Court',      'Full &amp; Royal Court gain <span class="up-chips">+8 Chips</span>',                                                                   20,1.6, '👑','scoring'],
   path_chips: ['Path of the Magi','<span class="up-chips">+15 Chips</span>',                                                                                              30,1.9, '✨','scoring'],
+  relicSlot:  ['Relic Vessel',    'Gain +1 Relic Slot (max 5).',                                                                                                         35,2,   '🎁','utility'],
 };
 function shopCost(k){let s=SHOP[k],lvl=persist.up[k]||0;return Math.floor(s[2]*Math.pow(s[3],lvl))}
 const PACKS={
   arcana:{name:'Scoring Pack',desc:'Choose a scoring upgrade for your reading patterns.',icon:'isp-scoring',cost:20,pool:'scoring'},
   instrument:{name:'Powerup Pack',desc:'Choose a powerup that changes how you play.',icon:'isp-abilities',cost:15,pool:'utility'},
-  mystery:{name:'Mystery Pack',desc:'Choose from a random mix of scoring and powerup upgrades.',icon:'isp-reshuffle',cost:28,pool:'all'},
+  relic:{name:'Relic Pack',desc:'Choose a relic to carry through your session.',icon:'isp-reshuffle',cost:28},
 };
-const SHOP_ICON={discards:'isp-disc',hand:'isp-draw',mulligan:'isp-reshuffle',neighbor:'isp-neighbor',kin:'isp-kin',mirror:'isp-mirror',between:'isp-between',rank:'isp-scoring',sequence:'isp-scoring',flush_chips:'isp-scoring',court_chips:'isp-kin',path_chips:'isp-scoring'};
+const SHOP_ICON={discards:'isp-disc',hand:'isp-draw',mulligan:'isp-reshuffle',neighbor:'isp-neighbor',kin:'isp-kin',mirror:'isp-mirror',between:'isp-between',rank:'isp-scoring',sequence:'isp-scoring',flush_chips:'isp-scoring',court_chips:'isp-kin',path_chips:'isp-scoring',relicSlot:'isp-abilities'};
+const RELICS={
+  gilded_fool:    {name:'The Gilded Fool',      desc:'The first card in the spread each reading gains +10 Chips.',                             rarity:'common',icon:'🃏'},
+  hermit_lantern: {name:"Hermit's Lantern",     desc:'Each Major Arcana in the spread adds +0.25 Mult when scoring.',                         rarity:'common',icon:'🔦'},
+  mirror_shard:   {name:'Mirror Shard',          desc:'Each pair of matching ranks in the spread adds +1 Mult.',                               rarity:'common',icon:'🪞'},
+  ace_dark:       {name:'Ace in the Dark',       desc:'Aces contribute triple their base Chips.',                                              rarity:'common',icon:'♠'},
+  threadbare_tarot:{name:'Threadbare Tarot',     desc:'Draw 1 extra card at the start of each reading.',                                       rarity:'common',icon:'🎴'},
+  gilded_discard: {name:'Gilded Discard',        desc:'Your first Discard each reading costs no Discard charge.',                              rarity:'common',icon:'✨'},
+  merchants_scale:{name:"Merchant's Scale",      desc:'All packs cost 3 fewer Reserve.',                                                       rarity:'common',icon:'⚖'},
+  cups_overflow:  {name:"Cup's Overflow",        desc:'If all 5 spread cards share a suit, gain +2 Mult.',                                    rarity:'rare',  icon:'🍷'},
+  court_favor:    {name:'Court Favor',           desc:'Each Court card in the spread adds +1 Mult.',                                           rarity:'rare',  icon:'👑'},
+  hanged_coin:    {name:"Hanged Man's Coin",     desc:'Discarded cards contribute half their base Chips to the score.',                        rarity:'rare',  icon:'🪙'},
+  buried_king:    {name:'The Buried King',       desc:'Kings count as any suit when forming suit-based patterns.',                             rarity:'rare',  icon:'🤴'},
+  miser:          {name:'The Miser',             desc:'Gain +5 bonus Reserve each time you clear a threshold.',                                rarity:'rare',  icon:'💰'},
+  arcana_codex:   {name:'Arcana Codex',          desc:'Each distinct scoring upgrade you own adds +0.1 Mult.',                                 rarity:'rare',  icon:'📖'},
+  torn_page:      {name:'Torn Page',             desc:'Each reading begins with a random card from your deck placed in the centre slot.',      rarity:'rare',  icon:'📄'},
+  watcher:        {name:'The Watcher',           desc:'Once per session: reveal the top 3 cards of your deck, take 1, return the rest to the bottom.',rarity:'rare',icon:'👁',active:true},
+};
 function openShop(){
   if(state.pendingPool){persist.pool+=state.pendingPool;state.pendingPool=0;render();}
   let html='<div class="summary tarot-shop">';
   html+='<div class="shop-header"><span class="shop-orn">✦ &nbsp; ✦ &nbsp; ✦</span><h3>The Oracle\'s Market</h3><p class="shop-reserve-display">Reserve <b>'+persist.pool+'</b></p></div>';
   html+='<div class="shop-section-title"></div><div class="shop-packs-row">';
+  const packDiscount=persist.relics.includes('merchants_scale')?3:0;
   for(const[pk,p]of Object.entries(PACKS)){
-    const ok=persist.pool>=p.cost;
-    html+=`<div class="shop-pack ${ok?'affordable':''}">
+    const cost=Math.max(0,p.cost-packDiscount);
+    const ok=persist.pool>=cost;
+    const relicFull=pk==='relic'&&persist.relics.length>=relicSlots();
+    html+=`<div class="shop-pack ${ok&&!relicFull?'affordable':''}">
       <div class="shop-pack-title-strip"><span>${p.name}</span></div>
       <div class="shop-pack-banner"><span class="isp isp-56 ${p.icon}"></span></div>
-      <div class="shop-pack-desc">${p.desc}</div>
-      <div class="shop-pack-footer"><span class="shop-pack-cost">✦ ${p.cost}</span>
-      <button class="sbtn sbtn-open" ${ok?'':'disabled'} aria-label="Open" onclick="buyPack('${pk}')"></button></div>
+      <div class="shop-pack-desc">${p.desc}${pk==='relic'?`<br><span style="color:#b99a5d;font-size:9px">${persist.relics.length}/${relicSlots()} relics</span>`:''}</div>
+      <div class="shop-pack-footer"><span class="shop-pack-cost">✦ ${cost}</span>
+      <button class="sbtn sbtn-open" ${ok&&!relicFull?'':'disabled'} aria-label="Open" onclick="buyPack('${pk}',${cost})"></button></div>
     </div>`;
   }
   html+='</div><button class="sbtn sbtn-leave" aria-label="Leave Market" onclick="continueReading()"></button></div>';
   showOverlay(html);
 }
-function buyPack(pk){
+function relicSlots(){return 3+Math.min(persist.up.relicSlot||0,2);}
+function relicPool(n=3){
+  const owned=new Set(persist.relics);
+  const avail=Object.keys(RELICS).filter(k=>!owned.has(k));
+  const common=shuffle(avail.filter(k=>RELICS[k].rarity==='common'));
+  const rare=shuffle(avail.filter(k=>RELICS[k].rarity==='rare'));
+  const picks=[];
+  if(rare.length)picks.push(rare.shift());
+  while(picks.length<n&&common.length)picks.push(common.shift());
+  while(picks.length<n&&rare.length)picks.push(rare.shift());
+  return shuffle(picks);
+}
+function buyPack(pk,cost){
   const p=PACKS[pk];
-  if(persist.pool<p.cost)return;
-  persist.pool-=p.cost;
+  const c=cost!==undefined?cost:p.cost;
+  if(persist.pool<c)return;
+  persist.pool-=c;
+  if(pk==='relic'){
+    const options=relicPool(3);
+    let html='<div class="summary tarot-shop">';
+    html+=`<div class="pack-picker-header"><h3>${p.name}</h3><p>Choose one relic to carry</p></div>`;
+    html+='<div class="shop-items-row relic-picker-row">';
+    for(const k of options){
+      const r=RELICS[k];
+      html+=`<div class="upg-card relic-option ${r.rarity}" onclick="acquireRelic('${k}')">
+        <div class="upg-title-strip relic-title-strip"><span>${r.icon} ${r.name}</span></div>
+        <div class="upg-art relic-art">${r.icon}</div>
+        <div class="upg-body"><div class="upg-desc">${r.desc}</div></div>
+        <div class="upg-footer"><span class="relic-rarity-badge ${r.rarity}">${r.rarity}</span>
+        <button class="sbtn sbtn-pick" aria-label="Pick" onclick="acquireRelic('${k}');event.stopPropagation()"></button></div>
+      </div>`;
+    }
+    html+='</div></div>';
+    showOverlay(html);
+    return;
+  }
   const pool=Object.keys(SHOP).filter(k=>p.pool==='all'||SHOP[k][5]===p.pool);
   const options=shuffle([...pool]).slice(0,4);
   let html='<div class="summary tarot-shop">';
@@ -845,13 +937,115 @@ function buyPack(pk){
   showOverlay(html);
 }
 function pickPackUpgrade(k){persist.up[k]=(persist.up[k]||0)+1;const paired=SHOP[k][6];if(paired)persist.up[paired]=(persist.up[paired]||0)+1;openShop()}
+function acquireRelic(key){
+  if(persist.relics.length<relicSlots()){
+    persist.relics.push(key);renderRelicRack();
+    const firstRelic=!localStorage.getItem('tlr_tut_relic');
+    if(firstRelic){localStorage.setItem('tlr_tut_relic','1');openShop();setTimeout(()=>tutShow(8),400);}
+    else{openShop();}
+  }
+}
+function renderRelicRack(){
+  const rack=$('#relicRack');if(!rack)return;
+  rack.innerHTML='';
+  persist.relics.forEach(key=>{
+    const r=RELICS[key];
+    const btn=document.createElement('button');
+    btn.className='relic-btn'+(r.rarity==='rare'?' relic-rare':'');
+    btn.title=r.name;
+    btn.innerHTML=`<span class="relic-icon-em">${r.icon}</span>`;
+    btn.onclick=e=>{e.stopPropagation();toggleRelicCallout(key,btn);};
+    rack.appendChild(btn);
+  });
+}
+let _openRelicKey=null;
+function toggleRelicCallout(key,btn){
+  document.querySelectorAll('.relic-callout').forEach(el=>el.remove());
+  if(_openRelicKey===key){_openRelicKey=null;return;}
+  _openRelicKey=key;
+  const r=RELICS[key];
+  const callout=document.createElement('div');
+  callout.className='relic-callout';
+  const used=r.active&&persist.relicUsed[key];
+  callout.innerHTML=`<div class="relic-callout-name">${r.icon} ${r.name}</div>
+    <div class="relic-callout-rarity ${r.rarity}">${r.rarity}</div>
+    <div class="relic-callout-desc">${r.desc}</div>
+    ${r.active?`<button class="relic-activate-btn" ${used?'disabled':''} onclick="activateRelic('${key}')">${used?'Used this session':'Activate'}</button>`:''}`;
+  btn.appendChild(callout);
+}
+function activateRelic(key){
+  if(persist.relicUsed[key])return;
+  if(key==='watcher'){
+    if(!state.deck.length)return;
+    const top=state.deck.splice(0,Math.min(3,state.deck.length));
+    persist.relicUsed[key]=true;
+    document.querySelectorAll('.relic-callout').forEach(el=>el.remove());_openRelicKey=null;
+    let html='<div class="box" style="max-width:520px;width:min(90vw,520px)">';
+    html+='<div class="modalHead"><h2>The Watcher</h2></div>';
+    html+='<p style="color:#b99a5d;font-size:12px">Choose one card to take into your hand. The rest return to the bottom of your deck.</p>';
+    html+='<div class="choices">';
+    top.forEach(c=>{
+      const el=document.createElement('div');el.innerHTML=cardHTML(c);
+      html+=`<div class="card ${c.type==='major'?'major':''}" onclick="watcherPick(${c.uid})" style="cursor:pointer">${cardHTML(c)}</div>`;
+    });
+    html+='</div></div>';
+    state._watcherCards=top;
+    const modal=$('#modal');modal.innerHTML=html;modal.classList.add('show');
+    renderRelicRack();
+  }
+}
+function watcherPick(uid){
+  const top=state._watcherCards||[];
+  const card=top.find(c=>c.uid===uid);
+  if(!card)return;
+  state.hand.push(card);
+  const rest=top.filter(c=>c.uid!==uid);
+  state.deck.push(...rest);
+  state._watcherCards=null;
+  $('#modal').classList.remove('show');
+  render();
+}
 function mulligan(){if(state.busy||!hasMull()||state.mull||!state.spread.every(x=>!x)||state.hand.length!==maxHand())return;state.deck.push(...state.hand.splice(0));drawTo(maxHand());state.mull=true;state.selected=null;snapCounter(state.carry);render()}
 function closeRefs(){ $('#ref').classList.add('hidden'); $('#abilityRef').classList.add('hidden') }
-function toggleRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ref.classList.contains('hidden'); closeRefs(); if(wasHidden)ref.classList.remove('hidden') }
+function renderScoringSheet(){
+  const u=persist.up;
+  const rankBonus=(u.rank||0)*5;
+  const rankMult=+(1+(u.rank_mult||0)*0.25).toFixed(2);
+  const flushChips=(u.flush_chips||0)*8;
+  const flushMult=+(1+(u.flush_mult||0)*0.25).toFixed(2);
+  const courtChips=(u.court_chips||0)*8;
+  const seqBonus=(u.sequence||0)*5;
+  const seqMult=+(2+(u.seq_mult||0)*0.5).toFixed(2);
+  const pathChips=(u.path_chips||0)*15;
+  const rows=[
+    ['Rank Melds','Three/Four of a Rank',`+${10+rankBonus} / +${12+rankBonus}`,`×${rankMult}`],
+    ['Royal Court','3 Courts, same suit',`+${20+flushChips+courtChips}`,`×${flushMult}`],
+    ['Full Court','3 Courts, any suit',`+${18+courtChips}`,''],
+    ['Flush','4+ cards, same suit',`+${15+flushChips}`,`×${flushMult}`],
+    ['Sequence (3+)','3–4–5 consecutive',`+${10+seqBonus} / +${15+seqBonus} / +${18+seqBonus}`,`×${seqMult}`],
+    ['Path of the Magi','0·I·XXI in spread',`+${30+pathChips}`,`×${seqMult}`],
+  ];
+  const up=[];
+  if(u.rank)up.push(`Rank Chips +${rankBonus}`);
+  if(u.rank_mult)up.push(`Rank Mult ×${rankMult}`);
+  if(u.flush_chips)up.push(`Flush Chips +${flushChips}`);
+  if(u.flush_mult)up.push(`Flush Mult ×${flushMult}`);
+  if(u.court_chips)up.push(`Court Chips +${courtChips}`);
+  if(u.sequence)up.push(`Seq Chips +${seqBonus}`);
+  if(u.seq_mult)up.push(`Seq Mult ×${seqMult}`);
+  if(u.path_chips)up.push(`Path Chips +${pathChips}`);
+  let html='<table class="ref-table"><thead><tr><th>Pattern</th><th>Condition</th><th>Chips</th><th>Mult</th></tr></thead><tbody>';
+  for(const r of rows) html+=`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]||'—'}</td></tr>`;
+  html+='</tbody></table>';
+  if(up.length) html+=`<div class="ref-upgrades"><b>Your upgrades:</b> ${up.join(' · ')}</div>`;
+  $('#ref').innerHTML=html;
+}
+function toggleRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ref.classList.contains('hidden'); closeRefs(); if(wasHidden){renderScoringSheet();ref.classList.remove('hidden')} }
 function toggleAbilityRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ability.classList.contains('hidden'); closeRefs(); if(wasHidden)ability.classList.remove('hidden') }
 document.addEventListener('click',e=>{
   let insideRefs=e.target.closest('.refs-layer')||e.target.closest('#scoringBtn')||e.target.closest('#abilitiesBtn');
   if(!insideRefs)closeRefs();
+  if(!e.target.closest('.relic-btn')){document.querySelectorAll('.relic-callout').forEach(el=>el.remove());_openRelicKey=null;}
 
   let interactive=e.target.closest('.card,.slot,button,.modal,.ref,.ability-prompt,.score-preview,.score-stack,.bar,.actions');
   if(state.selected!==null&&!state.abilitySelect&&!interactive){
@@ -870,6 +1064,7 @@ const TUT_STEPS=[
   {sel:'.handDock',arrow:'down',text:'The red circle shows how much a card scores for. Tap a card to see which patterns it completes, then tap an empty slot to place it.'},
   {sel:'.threshold-pill',arrow:'up',text:'Fill all 5 slots to complete the reading. Beat the <b>Threshold</b> to clear it — fall short and the reading fails.'},
   {center:true, text:'Each time you reach a Threshold, it increases in difficulty. Beat the 10th Threshold to win.'},
+  {sel:'#relicRack',arrow:'up', text:'You\'ve found a <b>Relic</b>! Relics carry powerful passive effects across every reading until you lose. Tap a relic icon to see what it does.'},
 ];
 function tutSkip(){localStorage.setItem(TUT_KEY,'1');tutDone=true;tutHide()}
 function tutHide(){clearTimeout(tutTimer);tutTimer=null;tutStep=-1;const t=$('#tutTip');if(t){t.classList.remove('show','tut-center');t.style.cssText=''}}
@@ -895,7 +1090,7 @@ function tutShow(step){
 function tutNext(){
   if(tutStep<0)return;
   if(tutStep===6){tutSkip();return}
-  if(tutStep===7){tutHide();return}
+  if(tutStep===7||tutStep===8){tutHide();return}
   tutShow(tutStep+1);
 }
 function posTutTip(target,arrowDir){
