@@ -1,0 +1,288 @@
+[
+  {
+    "file": "frame_panel_large.png",
+    "source_box": [
+      18,
+      20,
+      610,
+      316
+    ],
+    "size": [
+      592,
+      296
+    ]
+  },
+  {
+    "file": "frame_panel_medium.png",
+    "source_box": [
+      650,
+      20,
+      1042,
+      315
+    ],
+    "size": [
+      392,
+      295
+    ]
+  },
+  {
+    "file": "frame_panel_square.png",
+    "source_box": [
+      1072,
+      45,
+      1370,
+      330
+    ],
+    "size": [
+      298,
+      285
+    ]
+  },
+  {
+    "file": "parchment_panel_large_dark_seal.png",
+    "source_box": [
+      20,
+      382,
+      386,
+      825
+    ],
+    "size": [
+      366,
+      443
+    ]
+  },
+  {
+    "file": "parchment_panel_large_red_seal.png",
+    "source_box": [
+      372,
+      382,
+      735,
+      825
+    ],
+    "size": [
+      363,
+      443
+    ]
+  },
+  {
+    "file": "pill_dark_long_01.png",
+    "source_box": [
+      645,
+      398,
+      1052,
+      488
+    ],
+    "size": [
+      407,
+      90
+    ]
+  },
+  {
+    "file": "pill_dark_long_02.png",
+    "source_box": [
+      640,
+      482,
+      1050,
+      580
+    ],
+    "size": [
+      410,
+      98
+    ]
+  },
+  {
+    "file": "pill_dark_medium.png",
+    "source_box": [
+      680,
+      572,
+      970,
+      652
+    ],
+    "size": [
+      290,
+      80
+    ]
+  },
+  {
+    "file": "pill_dark_small.png",
+    "source_box": [
+      678,
+      650,
+      892,
+      730
+    ],
+    "size": [
+      214,
+      80
+    ]
+  },
+  {
+    "file": "panel_vertical_tall.png",
+    "source_box": [
+      1068,
+      404,
+      1215,
+      756
+    ],
+    "size": [
+      147,
+      352
+    ]
+  },
+  {
+    "file": "panel_square_upper.png",
+    "source_box": [
+      1215,
+      406,
+      1410,
+      640
+    ],
+    "size": [
+      195,
+      234
+    ]
+  },
+  {
+    "file": "panel_square_lower.png",
+    "source_box": [
+      1215,
+      632,
+      1410,
+      829
+    ],
+    "size": [
+      195,
+      197
+    ]
+  },
+  {
+    "file": "parchment_plaque_large_left.png",
+    "source_box": [
+      18,
+      705,
+      390,
+      860
+    ],
+    "size": [
+      372,
+      155
+    ]
+  },
+  {
+    "file": "parchment_plaque_large_center.png",
+    "source_box": [
+      388,
+      707,
+      710,
+      860
+    ],
+    "size": [
+      322,
+      153
+    ]
+  },
+  {
+    "file": "parchment_plaque_small_right.png",
+    "source_box": [
+      705,
+      720,
+      960,
+      852
+    ],
+    "size": [
+      255,
+      132
+    ]
+  },
+  {
+    "file": "medallion_sun_face.png",
+    "source_box": [
+      18,
+      846,
+      238,
+      1068
+    ],
+    "size": [
+      220,
+      222
+    ]
+  },
+  {
+    "file": "medallion_compass.png",
+    "source_box": [
+      272,
+      845,
+      500,
+      1068
+    ],
+    "size": [
+      228,
+      223
+    ]
+  },
+  {
+    "file": "medallion_dark_coin.png",
+    "source_box": [
+      520,
+      846,
+      752,
+      1068
+    ],
+    "size": [
+      232,
+      222
+    ]
+  },
+  {
+    "file": "divider_plain.png",
+    "source_box": [
+      780,
+      826,
+      1104,
+      888
+    ],
+    "size": [
+      324,
+      62
+    ]
+  },
+  {
+    "file": "divider_sunburst.png",
+    "source_box": [
+      780,
+      864,
+      1388,
+      938
+    ],
+    "size": [
+      608,
+      74
+    ]
+  },
+  {
+    "file": "divider_gem.png",
+    "source_box": [
+      780,
+      944,
+      1388,
+      1003
+    ],
+    "size": [
+      608,
+      59
+    ]
+  },
+  {
+    "file": "divider_crystal.png",
+    "source_box": [
+      778,
+      1000,
+      1390,
+      1065
+    ],
+    "size": [
+      612,
+      65
+    ]
+  }
+]
