@@ -288,7 +288,7 @@
 .relic-btn.relic-rare{border-color:#9a7842;box-shadow:0 0 6px rgba(212,175,106,.2)}
 .relic-btn.relic-rare:hover{border-color:#ffd978;box-shadow:0 0 12px rgba(255,217,120,.45)}
 .relic-icon-em{line-height:1;pointer-events:none}
-.relic-callout{position:absolute;top:calc(100% + 6px);right:0;background:#1b120e;border:1px solid #856536;border-radius:8px;padding:10px 12px;min-width:190px;max-width:230px;z-index:200;box-shadow:0 8px 28px rgba(0,0,0,.75);text-align:left}
+.relic-callout{position:fixed;background:#1b120e;border:1px solid #856536;border-radius:8px;padding:10px 12px;min-width:190px;max-width:230px;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,.75);text-align:left}
 .relic-callout-name{font:700 13px Georgia,serif;color:#f0d58a;margin-bottom:3px}
 .relic-callout-rarity{font-size:9px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
 .relic-callout-rarity.common{color:#8a9a5d}
@@ -910,8 +910,7 @@ function buyPack(pk,cost){
         <div class="upg-title-strip relic-title-strip"><span>${r.icon} ${r.name}</span></div>
         <div class="upg-art relic-art">${r.icon}</div>
         <div class="upg-body"><div class="upg-desc">${r.desc}</div></div>
-        <div class="upg-footer"><span class="relic-rarity-badge ${r.rarity}">${r.rarity}</span>
-        <button class="sbtn sbtn-pick" aria-label="Pick" onclick="acquireRelic('${k}');event.stopPropagation()"></button></div>
+        <div class="upg-footer"><button class="sbtn sbtn-pick" aria-label="Pick" onclick="acquireRelic('${k}');event.stopPropagation()"></button></div>
       </div>`;
     }
     html+='</div></div>';
@@ -968,10 +967,12 @@ function toggleRelicCallout(key,btn){
   callout.className='relic-callout';
   const used=r.active&&persist.relicUsed[key];
   callout.innerHTML=`<div class="relic-callout-name">${r.icon} ${r.name}</div>
-    <div class="relic-callout-rarity ${r.rarity}">${r.rarity}</div>
     <div class="relic-callout-desc">${r.desc}</div>
     ${r.active?`<button class="relic-activate-btn" ${used?'disabled':''} onclick="activateRelic('${key}')">${used?'Used this session':'Activate'}</button>`:''}`;
-  btn.appendChild(callout);
+  document.body.appendChild(callout);
+  const rect=btn.getBoundingClientRect();
+  callout.style.top=(rect.bottom+6)+'px';
+  callout.style.right=(window.innerWidth-rect.right)+'px';
 }
 function activateRelic(key){
   if(persist.relicUsed[key])return;
