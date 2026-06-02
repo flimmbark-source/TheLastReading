@@ -13,10 +13,10 @@
   body{padding:8px 8px 157px;min-height:100dvh;overflow-x:hidden;background-size:auto;background-position:center top;background-attachment:scroll}
   h1{font-size:17px;margin-bottom:6px;padding-right:132px}
   .bar{gap:6px;margin:6px 0 10px;padding-right:0;max-width:calc(100vw - 140px)}
-  .pill{font-size:11px;padding:5px 8px}
+  .pill{font-size:11px;padding:5px 8px 5px 14px}
   .threshold-pill{}
-  .score-stack{top:calc(46% - 200px);gap:4px;flex-wrap:wrap;width:224px;justify-content:center}
-  .score-stack .pill{flex:0 0 110px;min-width:110px;grid-template-columns:56px 1fr;column-gap:6px;height:36px;font-size:11px}
+  .score-stack{top:calc(46% - 215px);gap:4px;flex-wrap:wrap;width:224px;justify-content:center}
+  .score-stack .pill{flex:0 0 110px;min-width:110px;grid-template-columns:50px 1fr;column-gap:6px;height:36px;font-size:11px}
   .score-stack .score-pill,.score-stack .threshold-pill{height:50px}
   .reserve-pill{order:1}.discards-pill{order:2}.score-pill{order:3}.threshold-pill{order:4}
   .actions{gap:6px;margin-bottom:8px}
@@ -247,11 +247,11 @@
 .shop-header{text-align:center;border-bottom:1px solid rgba(95,76,41,.5);padding-bottom:14px;margin-bottom:18px}
 .shop-header h3{margin:0 0 2px;font:700 22px Georgia,serif;color:#f0d58a;letter-spacing:.06em}
 .shop-header .shop-orn{display:block;font-size:9px;letter-spacing:8px;color:#70582d;margin-bottom:6px}
-.shop-reserve-display{color:#8a7848;font-size:13px;margin:6px 0 0}
+.shop-reserve-display{color:#8a7848;font-size:13px;margin:21px 0 0}
 .shop-reserve-display b{color:#ffd978;font-size:16px}
 /* ── Pack cards redesign ── */
-.shop-pack{width:130px;min-height:210px;background:none;border:none;border-radius:0;display:flex;flex-direction:column;align-items:stretch;overflow:visible;transition:filter .15s,box-shadow .15s;position:relative}
-.shop-pack::before{content:'';position:absolute;left:-40px;right:-21px;top:-13px;bottom:-26px;background-image:url("Pack_Background.png");background-size:100% 100%;background-repeat:no-repeat;pointer-events:none;z-index:0}
+.shop-pack{width:130px;min-height:260px;background:none;border:none;border-radius:0;display:flex;flex-direction:column;align-items:stretch;overflow:visible;transition:filter .15s,box-shadow .15s;position:relative}
+.shop-pack::before{content:'';position:absolute;left:-40px;right:-21px;top:-19px;bottom:-37px;background-image:url("Pack_Background.png");background-size:100% 100%;background-repeat:no-repeat;pointer-events:none;z-index:0}
 .shop-pack>*{position:relative;z-index:1}
 .shop-pack.affordable{filter:brightness(1.06);box-shadow:0 0 22px rgba(212,175,106,.38)}
 .shop-pack-title-strip{background:transparent;border-bottom:none;padding:8px 8px 5px;text-align:center}
@@ -283,7 +283,7 @@
 .upg-lv b{color:#a08040}
 .upg-pick-btn{padding:4px 10px;font-size:11px;background:linear-gradient(170deg,#c8a040,#8a6020);border-color:#6a4010;color:#1a0800}
 .upg-pick-btn:hover{filter:brightness(1.12)}
-@media(max-width:640px){.tarot-shop{width:calc(100vw - 20px);padding:20px 16px 18px!important}.shop-packs-row{gap:8px;flex-wrap:nowrap;justify-content:center}.shop-pack{flex:1;min-width:0;min-height:185px}.shop-pack-banner{min-height:74px;font-size:36px}.shop-items-row{gap:8px}.upg-card{width:110px}.upg-art{height:66px;font-size:30px}.upg-title-strip span{font-size:6.5px}.result-panel{padding:16px 16px 20px}.rscore .rsc,.rscore .rsm{font-size:22px}.rscore .rsf{font-size:32px}}
+@media(max-width:640px){.tarot-shop{width:calc(100vw - 20px);padding:20px 16px 18px!important}.shop-packs-row{gap:8px;flex-wrap:nowrap;justify-content:center}.shop-pack{flex:1;min-width:0;min-height:230px}.shop-pack-banner{min-height:74px;font-size:36px}.shop-items-row{gap:8px}.upg-card{width:110px}.upg-art{height:66px;font-size:30px}.upg-title-strip span{font-size:6.5px}.result-panel{padding:16px 16px 20px}.rscore .rsc,.rscore .rsm{font-size:22px}.rscore .rsf{font-size:32px}}
 </style>
 </head>
 <body>
