@@ -121,13 +121,13 @@
 .hand .card.purge-picked{transform:translate3d(0,-92px,0) rotate(0deg)!important;z-index:999!important;box-shadow:0 10px 28px rgba(0,0,0,.75),0 0 0 2px #c06060!important}
 @media(max-width:640px){.hand .card.purge-picked{transform:translateY(-86px) rotate(0deg)!important}}
 /* Tarot shop redesign */
-.tarot-shop{max-width:880px;width:min(92vw,880px)}
+.tarot-shop{max-width:880px;width:min(92vw,880px);background-image:url(frame_shop_modal.png);background-size:100% 100%;background-repeat:no-repeat;border:none!important;padding:28px 32px 24px!important}
 .shop-header{text-align:center;border-bottom:1px solid #5f4c29;padding-bottom:12px;margin-bottom:16px}
 .shop-header h3{margin:0;font:700 20px Georgia,serif;color:#f0d58a;letter-spacing:.04em}
 .shop-reserve-display{color:#b99a5d;font-size:13px;margin:5px 0 0}
 .shop-reserve-display b{color:#ffd978}
-.shop-section-title{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#b99a5d;margin:0 0 10px;display:flex;align-items:center;gap:10px}
-.shop-section-title::before,.shop-section-title::after{content:'';flex:1;height:1px;background:rgba(95,76,41,.5)}
+.shop-section-title{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#d4af6a;margin:0 0 12px;text-align:center;padding:6px 0;background-image:url(frame_divider.png);background-size:100% 100%;background-repeat:no-repeat}
+.shop-section-title::before,.shop-section-title::after{display:none}
 .shop-items-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
 .shop-item-card{width:130px;background:linear-gradient(160deg,#231510,#140907);border:1px solid #705530;border-radius:8px;padding:0 0 10px;display:flex;flex-direction:column;overflow:hidden;transition:transform .15s,box-shadow .15s}
 .shop-item-card.scoring{border-color:#7a6030}
@@ -250,15 +250,15 @@
 .shop-reserve-display{color:#8a7848;font-size:13px;margin:6px 0 0}
 .shop-reserve-display b{color:#ffd978;font-size:16px}
 /* ── Pack cards redesign ── */
-.shop-pack{width:130px;min-height:210px;background:linear-gradient(170deg,#2a1810,#140907);border:2px solid #7a5c30;border-radius:8px;display:flex;flex-direction:column;align-items:stretch;overflow:hidden;transition:transform .15s,box-shadow .15s}
-.shop-pack.affordable{border-color:#c8a040;box-shadow:0 0 18px rgba(200,160,64,.22)}
-.shop-pack-title-strip{background:#160b07;border-bottom:1px solid #4a3018;padding:6px 8px 5px;text-align:center}
-.shop-pack-title-strip span{font:700 9px Georgia,serif;color:#d4af6a;letter-spacing:.12em;text-transform:uppercase}
-.shop-pack-banner{flex:1;background:linear-gradient(180deg,#1e1008,#2e1a0e);border-bottom:1px solid #4a3018;display:flex;align-items:center;justify-content:center;font-size:44px;position:relative;min-height:90px}
-.shop-pack-banner::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 55%,rgba(212,175,106,.12) 0,transparent 70%)}
-.shop-pack-banner::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(212,175,106,.028) 0,rgba(212,175,106,.028) 2px,transparent 2px,transparent 9px)}
-.shop-pack-desc{font-size:9px;color:#a09060;text-align:center;line-height:1.35;padding:6px 8px 0;flex:1}
-.shop-pack-footer{width:100%;display:flex;justify-content:space-between;align-items:center;padding:7px 8px 10px}
+.shop-pack{width:130px;min-height:210px;background-image:url(frame_pack_card.png);background-size:100% 100%;background-repeat:no-repeat;border:none;border-radius:0;display:flex;flex-direction:column;align-items:stretch;overflow:visible;transition:filter .15s,box-shadow .15s}
+.shop-pack.affordable{filter:brightness(1.06);box-shadow:0 0 22px rgba(212,175,106,.38)}
+.shop-pack-title-strip{background:transparent;border-bottom:none;padding:8px 8px 5px;text-align:center}
+.shop-pack-title-strip span{font:700 9px Georgia,serif;color:#f0d58a;letter-spacing:.12em;text-transform:uppercase}
+.shop-pack-banner{flex:1;background:transparent;border-bottom:none;display:flex;align-items:center;justify-content:center;font-size:44px;position:relative;min-height:80px}
+.shop-pack-banner::before{display:none}
+.shop-pack-banner::after{display:none}
+.shop-pack-desc{font-size:9px;color:#c0b882;text-align:center;line-height:1.35;padding:4px 10px 0;flex:1}
+.shop-pack-footer{width:100%;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 8px 12px}
 .shop-pack-cost{color:#ffd978;font-weight:800;font-size:12px}
 .shop-pack-buy{padding:4px 10px;font-size:11px}
 .shop-leave{width:100%;margin-top:6px;background:transparent;border-color:#5f4c29;color:#a09060;font-size:12px;letter-spacing:.03em}
@@ -281,7 +281,7 @@
 .upg-lv b{color:#a08040}
 .upg-pick-btn{padding:4px 10px;font-size:11px;background:linear-gradient(170deg,#c8a040,#8a6020);border-color:#6a4010;color:#1a0800}
 .upg-pick-btn:hover{filter:brightness(1.12)}
-@media(max-width:640px){.tarot-shop{width:calc(100vw - 20px)}.shop-packs-row{gap:8px;flex-wrap:nowrap;justify-content:center}.shop-pack{flex:1;min-width:0;min-height:185px}.shop-pack-banner{min-height:74px;font-size:36px}.shop-items-row{gap:8px}.upg-card{width:110px}.upg-art{height:66px;font-size:30px}.upg-title-strip span{font-size:6.5px}.result-panel{padding:16px 16px 20px}.rscore .rsc,.rscore .rsm{font-size:22px}.rscore .rsf{font-size:32px}}
+@media(max-width:640px){.tarot-shop{width:calc(100vw - 20px);padding:20px 16px 18px!important}.shop-packs-row{gap:8px;flex-wrap:nowrap;justify-content:center}.shop-pack{flex:1;min-width:0;min-height:185px;background-size:100% 100%}.shop-pack-banner{min-height:74px;font-size:36px}.shop-items-row{gap:8px}.upg-card{width:110px}.upg-art{height:66px;font-size:30px}.upg-title-strip span{font-size:6.5px}.result-panel{padding:16px 16px 20px}.rscore .rsc,.rscore .rsm{font-size:22px}.rscore .rsf{font-size:32px}}
 </style>
 </head>
 <body>
