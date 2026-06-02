@@ -15,9 +15,9 @@
   .bar{gap:6px;margin:6px 0 10px;padding-right:0;max-width:calc(100vw - 140px)}
   .pill{font-size:11px;padding:5px 8px}
   .threshold-pill{}
-  .score-stack{top:calc(46% - 185px);gap:4px;flex-wrap:wrap;width:200px;justify-content:center}
-  .score-stack .pill{flex:0 0 98px;min-width:98px;grid-template-columns:50px 1fr;column-gap:6px;height:32px;font-size:11px}
-  .score-stack .score-pill,.score-stack .threshold-pill{height:44px}
+  .score-stack{top:calc(46% - 200px);gap:4px;flex-wrap:wrap;width:224px;justify-content:center}
+  .score-stack .pill{flex:0 0 110px;min-width:110px;grid-template-columns:56px 1fr;column-gap:6px;height:36px;font-size:11px}
+  .score-stack .score-pill,.score-stack .threshold-pill{height:50px}
   .reserve-pill{order:1}.discards-pill{order:2}.score-pill{order:3}.threshold-pill{order:4}
   .actions{gap:6px;margin-bottom:8px}
   button{font-size:12px;padding:6px 9px}
@@ -122,7 +122,7 @@
 .hand .card.purge-picked{transform:translate3d(0,-92px,0) rotate(0deg)!important;z-index:999!important;box-shadow:0 10px 28px rgba(0,0,0,.75),0 0 0 2px #c06060!important}
 @media(max-width:640px){.hand .card.purge-picked{transform:translateY(-86px) rotate(0deg)!important}}
 /* Tarot shop redesign */
-.tarot-shop{max-width:880px;width:min(92vw,880px);background-image:url(parchment_panel_large_dark_seal.png);background-size:100% 100%;background-repeat:no-repeat;border:none!important;padding:28px 32px 24px!important}
+.tarot-shop{max-width:880px;width:min(92vw,880px);background-image:url("Market Background.png");background-size:100% 100%;background-repeat:no-repeat;border:none!important;padding:26px 40px 50px!important}
 .shop-header{text-align:center;border-bottom:1px solid #5f4c29;padding-bottom:12px;margin-bottom:16px}
 .shop-header h3{margin:0;font:700 20px Georgia,serif;color:#f0d58a;letter-spacing:.04em}
 .shop-reserve-display{color:#b99a5d;font-size:13px;margin:5px 0 0}
@@ -250,15 +250,15 @@
 .shop-reserve-display{color:#8a7848;font-size:13px;margin:6px 0 0}
 .shop-reserve-display b{color:#ffd978;font-size:16px}
 /* ── Pack cards redesign ── */
-.shop-pack{width:130px;min-height:210px;background-image:url(panel_square_upper.png);background-size:100% 100%;background-repeat:no-repeat;border:none;border-radius:0;display:flex;flex-direction:column;align-items:stretch;overflow:visible;transition:filter .15s,box-shadow .15s}
+.shop-pack{width:130px;min-height:210px;background-image:url("Pack_Background.png");background-size:100% 100%;background-repeat:no-repeat;border:none;border-radius:0;display:flex;flex-direction:column;align-items:stretch;overflow:visible;transition:filter .15s,box-shadow .15s}
 .shop-pack.affordable{filter:brightness(1.06);box-shadow:0 0 22px rgba(212,175,106,.38)}
-.shop-pack-title-strip{background:rgba(6,3,1,.62);border-bottom:none;padding:8px 8px 5px;text-align:center}
+.shop-pack-title-strip{background:transparent;border-bottom:none;padding:8px 8px 5px;text-align:center}
 .shop-pack-title-strip span{font:700 9px Georgia,serif;color:#f0d58a;letter-spacing:.12em;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,.9)}
-.shop-pack-banner{flex:1;background:rgba(6,3,1,.5);border-bottom:none;display:flex;align-items:center;justify-content:center;font-size:44px;position:relative;min-height:80px}
+.shop-pack-banner{flex:1;background:transparent;border-bottom:none;display:flex;align-items:center;justify-content:center;font-size:44px;position:relative;min-height:80px}
 .shop-pack-banner::before{display:none}
 .shop-pack-banner::after{display:none}
-.shop-pack-desc{font-size:9px;color:#d4c090;text-align:center;line-height:1.35;padding:4px 10px 0;flex:1;background:rgba(6,3,1,.5);text-shadow:0 1px 2px rgba(0,0,0,.85)}
-.shop-pack-footer{width:100%;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 8px 12px;background:rgba(6,3,1,.62)}
+.shop-pack-desc{font-size:9px;color:#d4c090;text-align:center;line-height:1.35;padding:4px 10px 0;flex:1;background:transparent;text-shadow:0 1px 2px rgba(0,0,0,.85)}
+.shop-pack-footer{width:100%;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 8px 12px;background:transparent}
 .shop-pack-cost{color:#ffd978;font-weight:800;font-size:12px;text-shadow:0 1px 3px rgba(0,0,0,.9)}
 .shop-pack-buy{padding:4px 10px;font-size:11px}
 .shop-leave{width:100%;margin-top:6px;background:transparent;border-color:#5f4c29;color:#a09060;font-size:12px;letter-spacing:.03em}
@@ -624,7 +624,7 @@ function slotsForMeld(name){let filled=state.spread.map((c,i)=>c?{c,i}:null).fil
 let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 function setCounterTarget(v){counterTarget=v;if(counterTimer)clearTimeout(counterTimer);counterTimer=setTimeout(()=>{if(counterCancel)counterCancel();counterCancel=rollCounter(counterShown,counterTarget,650);counterShown=counterTarget;counterTimer=null},700)}
 function snapCounter(v){if(counterTimer){clearTimeout(counterTimer);counterTimer=null}if(counterCancel){counterCancel();counterCancel=null}counterShown=counterTarget=v;$('#current').textContent=v;$('#current').style.color=''}
-function fireScoreGhost(){const pill=document.querySelector('.score-stack .pill');if(!pill)return;const r=pill.getBoundingClientRect();const g=document.createElement('span');g.className='score-ghost';g.textContent='+1';g.style.left=(r.left+8+Math.random()*(r.width-16))+'px';g.style.top=(r.top+r.height*0.25)+'px';document.body.appendChild(g);setTimeout(()=>g.remove(),950)}
+function fireScoreGhost(){const pill=document.querySelector('.score-stack .score-pill');if(!pill)return;const r=pill.getBoundingClientRect();const g=document.createElement('span');g.className='score-ghost';g.textContent='+1';g.style.left=(r.left+8+Math.random()*(r.width-16))+'px';g.style.top=(r.top+r.height*0.25)+'px';document.body.appendChild(g);setTimeout(()=>g.remove(),950)}
 function rollCounter(from,to,dur){let el=$('#current'),start=performance.now(),dead=false,lastVal=from;function step(now){if(dead)return;let t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++)fireScoreGhost();lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color=''}}requestAnimationFrame(step);return()=>{dead=true;el.style.color=''}}
 function startPurge(){if(state.busy||state.hand.length<3||state.abilitySelect||state.purgeSelect!==null)return;state.purgeSelect=[];state.selected=null;render()}
 function togglePurgeCard(uid){if(state.purgeSelect===null)return;const idx=state.purgeSelect.indexOf(uid);if(idx>=0)state.purgeSelect.splice(idx,1);else if(state.purgeSelect.length<3)state.purgeSelect.push(uid);refreshHandState()}
