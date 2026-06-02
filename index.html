@@ -829,7 +829,7 @@ function buyPack(pk){
   const pool=Object.keys(SHOP).filter(k=>p.pool==='all'||SHOP[k][5]===p.pool);
   const options=shuffle([...pool]).slice(0,4);
   let html='<div class="summary tarot-shop">';
-  html+=`<div class="pack-picker-header"><span class="shop-orn">✦ &nbsp; ✦ &nbsp; ✦</span><h3>${p.name}</h3><p>Pick one upgrade to keep</p></div>`;
+  html+=`<div class="pack-picker-header"><h3>${p.name}</h3><p>Pick one upgrade to keep</p></div>`;
   html+='<div class="shop-items-row">';
   for(const k of options){
     const s=SHOP[k],lvl=persist.up[k]||0,ic=SHOP_ICON[k]||'isp-scoring';
