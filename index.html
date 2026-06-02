@@ -398,7 +398,7 @@ function render(){
       const e=document.createElement('div');
       const validSpread=ability&&ability.validIds.has(card.uid);
       const pickedSpread=ability&&ability.picked.includes(card.uid);
-      e.className='card '+(card.type==='major'?'major ':'')+(validSpread?'ability-target ':'')+(pickedSpread?'ability-picked ':'')+(ability&&!validSpread?'ability-disabled ':'');
+      e.className='card '+(card.type==='major'?'major ':'')+(validSpread&&!pickedSpread?'ability-target ':'')+(pickedSpread?'ability-picked ':'')+(ability&&!validSpread?'ability-disabled ':'');
       e.dataset.uid=card.uid;
       e.innerHTML=cardHTML(card);
       applyCardPhoto(e,card);
@@ -424,7 +424,7 @@ function render(){
     e.className='card '+(c.type==='major'?'major ':'')
       +(inPurge?(purgePicked?'purge-picked ':'purge-target '):'')
       +(selectedId===c.uid&&!ability&&!inPurge?'sel ':'')
-      +(valid?'ability-target ':'')+(picked?'ability-picked ':'')
+      +(valid&&!picked?'ability-target ':'')+(picked?'ability-picked ':'')
       +(ability&&!valid?'ability-disabled ':'');
     if(!inPurge)applyHint(e,c);
     e.dataset.uid=c.uid;
@@ -457,14 +457,14 @@ function refreshHandState(){
   document.querySelectorAll('#hand .card').forEach(el=>{
     const uid=Number(el.dataset.uid);
     el.classList.toggle('sel',!ability&&!inPurge&&state.selected===uid);
-    if(ability)el.classList.toggle('ability-picked',ability.picked.includes(uid));
+    if(ability){const isPicked=ability.picked.includes(uid);el.classList.toggle('ability-picked',isPicked);el.classList.toggle('ability-target',!isPicked&&ability.validIds.has(uid));}
     if(inPurge){
       el.classList.toggle('purge-picked',state.purgeSelect.includes(uid));
       el.classList.toggle('purge-target',!state.purgeSelect.includes(uid));
     }
   });
   document.querySelectorAll('#spread .card[data-uid]').forEach(el=>{
-    if(ability)el.classList.toggle('ability-picked',ability.picked.includes(Number(el.dataset.uid)));
+    if(ability){const isPicked=ability.picked.includes(Number(el.dataset.uid));el.classList.toggle('ability-picked',isPicked);el.classList.toggle('ability-target',!isPicked&&ability.validIds.has(Number(el.dataset.uid)));}
   });
   renderAbilityPrompt();
   renderPurgePrompt();
