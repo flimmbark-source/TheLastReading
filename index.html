@@ -281,7 +281,7 @@
 .upg-lv b{color:#a08040}
 .upg-pick-btn{padding:4px 10px;font-size:11px;background:linear-gradient(170deg,#c8a040,#8a6020);border-color:#6a4010;color:#1a0800}
 .upg-pick-btn:hover{filter:brightness(1.12)}
-@media(max-width:640px){.tarot-shop{width:calc(100vw - 20px);padding:20px 16px 18px!important}.shop-packs-row{gap:8px;flex-wrap:nowrap;justify-content:center}.shop-pack{flex:1;min-width:0;min-height:230px}.shop-pack-banner{min-height:74px;font-size:36px}.shop-items-row{gap:8px}.upg-card{width:110px}.upg-art{height:66px;font-size:30px}.upg-title-strip span{font-size:6.5px}.result-panel{padding:16px 16px 20px}.rscore .rsc,.rscore .rsm{font-size:22px}.rscore .rsf{font-size:32px}}
+@media(max-width:640px){.tarot-shop{width:calc(100vw - 20px);padding:20px 16px 18px!important}.shop-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header p{font-size:10px;margin:8px 0 0}.shop-packs-row{gap:8px;flex-wrap:nowrap;justify-content:center}.shop-pack{flex:1;min-width:0;min-height:230px}.shop-pack-banner{min-height:74px;font-size:36px}.shop-items-row{gap:8px}.upg-card{width:110px}.upg-art{height:66px;font-size:30px}.upg-title-strip span{font-size:6.5px}.result-panel{padding:16px 16px 20px}.rscore .rsc,.rscore .rsm{font-size:22px}.rscore .rsf{font-size:32px}}
 </style>
 </head>
 <body>
@@ -829,7 +829,7 @@ function buyPack(pk){
   const pool=Object.keys(SHOP).filter(k=>p.pool==='all'||SHOP[k][5]===p.pool);
   const options=shuffle([...pool]).slice(0,4);
   let html='<div class="summary tarot-shop">';
-  html+=`<div class="pack-picker-header"><h3><span class="isp isp-40 ${p.icon}" style="vertical-align:middle;margin-right:6px"></span>${p.name}</h3><p>Pick one upgrade to keep</p></div>`;
+  html+=`<div class="pack-picker-header"><span class="shop-orn">✦ &nbsp; ✦ &nbsp; ✦</span><h3>${p.name}</h3><p>Pick one upgrade to keep</p></div>`;
   html+='<div class="shop-items-row">';
   for(const k of options){
     const s=SHOP[k],lvl=persist.up[k]||0,ic=SHOP_ICON[k]||'isp-scoring';
