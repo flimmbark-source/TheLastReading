@@ -518,10 +518,11 @@ function computeScore(cards){
     if(a.length===4){let x=12+rankBonus;m.push(['Four of a Rank ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
     else if(a.length===3){let x=10+rankBonus;m.push(['Three of a Rank ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
   }
-  let ranks=new Set(cards.filter(c=>c.type==='court').map(c=>c.rank));
-  let full=['Page','Knight','Queen','King'].every(r=>ranks.has(r));
+  const courtElig=cards.filter(c=>c.type==='court'||(c.rank==='Ace'&&c.suit));
+  let ranks=new Set(courtElig.map(c=>c.rank));
+  let full=ranks.size>=3&&['Page','Knight','Queen','King','Ace'].filter(r=>ranks.has(r)).length>=3;
   let same=null;
-  if(full)for(const suit of SUITS){let rs=new Set(cards.filter(c=>c.type==='court'&&c.suit===suit).map(c=>c.rank));if(rs.size===4){same=suit;break}}
+  if(full)for(const suit of SUITS){let rs=new Set(courtElig.filter(c=>c.suit===suit).map(c=>c.rank));if(rs.size>=3){same=suit;break}}
   let flushChips=(persist.up.flush_chips||0)*8;
   let flushMult=1+(persist.up.flush_mult||0)*0.25;
   let courtChips=(persist.up.court_chips||0)*8;
