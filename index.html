@@ -286,7 +286,7 @@
 .relic-btn{width:36px;height:36px;background:rgba(22,16,13,.88);border:1px solid #5f4c29;border-radius:6px;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;padding:0;flex-shrink:0;transition:border-color .15s,box-shadow .15s}
 .relic-btn:hover{border-color:#d4af6a;box-shadow:0 0 8px rgba(212,175,106,.35)}
 .relic-btn.relic-rare{border-color:#9a7842;box-shadow:0 0 6px rgba(212,175,106,.2)}
-.relic-btn.relic-rare:hover{border-color:#ffd978;box-shadow:0 0 12px rgba(255,217,120,.45)}
+.relic-btn.relic-rare:hover{border-color:#ffd978;box-shadow:0 0 12px rgba(255,217,120,.45)}.relic-slot-empty{width:36px;height:36px;border:1px dashed rgba(95,76,41,.45);border-radius:6px;flex-shrink:0}
 .relic-icon-em{line-height:1;pointer-events:none}
 .relic-callout{position:fixed;background:#1b120e;border:1px solid #856536;border-radius:8px;padding:10px 12px;min-width:190px;max-width:230px;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,.75);text-align:left}
 .relic-callout-name{font:700 13px Georgia,serif;color:#f0d58a;margin-bottom:3px}
@@ -968,6 +968,7 @@ function acquireRelic(key){
 function renderRelicRack(){
   const rack=$('#relicRack');if(!rack)return;
   rack.innerHTML='';
+  const slots=relicSlots();
   persist.relics.forEach(key=>{
     const r=RELICS[key];
     const btn=document.createElement('button');
@@ -977,6 +978,8 @@ function renderRelicRack(){
     btn.onclick=e=>{e.stopPropagation();toggleRelicCallout(key,btn);};
     rack.appendChild(btn);
   });
+  const empty=slots-persist.relics.length;
+  for(let i=0;i<empty;i++){const slot=document.createElement('div');slot.className='relic-slot-empty';rack.appendChild(slot);}
 }
 let _openRelicKey=null;
 function toggleRelicCallout(key,btn){
