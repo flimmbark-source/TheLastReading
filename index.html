@@ -358,7 +358,7 @@
 <script>
 const ROMAN=['0','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX','XXI'];
 const SUITS=['Cups','Wands','Swords','Pentacles'], GLYPH={Cups:'🍷',Wands:'🪄',Swords:'🗡️',Pentacles:'𖤐'};
-const RANKS=['Page','Knight','Queen','King','Ace'];
+const RANKS=['Page','Knight','Queen','King'];
 const TXT={DRAW_1:'Draw 1',DRAW_2:'Draw 2',DRAW_3:'Draw 3',PEEK_3:'Peek 3',PEEK_5:'Peek 5',SEARCH:'Search',WORLD:'Reshuffle',NEIGHBOR_2:'',KIN_2:'Kin',MIRROR_1:'Mirror',BETWEEN_2:'Between'};
 const MAJOR_G={0:'✦',1:'∞',2:'☾',3:'♀',4:'♛',5:'☥',6:'♡',7:'⚔',8:'∞',9:'☼',10:'⊛',11:'⚖',12:'✝',13:'✟',14:'⚱',15:'⛧',16:'⚡',17:'✧',18:'☽',19:'☉',20:'⚭',21:'○'};
 const MEAN={major_0:['Beginnings, innocence','Recklessness, naivety'],major_1:['Will, mastery','Manipulation, illusion'],major_2:['Intuition, mystery','Secrets withheld'],major_3:['Abundance, creation','Dependence, neglect'],major_4:['Authority, structure','Domination, rigidity'],major_5:['Tradition, doctrine','Rebellion, reform'],major_6:['Union, choice','Disharmony, betrayal'],major_7:['Resolve, victory','Loss of direction'],major_8:['Courage, patience','Self-doubt, weakness'],major_9:['Solitude, search','Isolation, lost'],major_10:['Cycles, fortune','Resistance, stagnation'],major_11:['Truth, fairness','Injustice, evasion'],major_12:['Surrender, suspension','Stalling, vain sacrifice'],major_13:['Endings, transformation','Resistance to change'],major_14:['Balance, patience','Excess, imbalance'],major_15:['Bondage, addiction','Release, awareness'],major_16:['Upheaval, ruin','Averting disaster'],major_17:['Hope, renewal','Despair, lost faith'],major_18:['Illusion, fear','Truth revealed'],major_19:['Joy, vitality','False optimism'],major_20:['Awakening, reckoning','Refused calling'],major_21:['Completion, wholeness','Unfinished, stagnation']};
@@ -371,8 +371,8 @@ let persist={pool:0,up:{discards:0,hand:0,mulligan:0,rank:0,rank_mult:0,sequence
 let state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null};
 const $=s=>document.querySelector(s), shuffle=a=>{for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const cardHTMLCache=new Map();
-function buildDeck(){let id=0,d=[];for(const [num,name,pts,trull,ab] of MAJORS)d.push({uid:id++,type:'major',id:'major_'+num,num,name:ROMAN[num]+' '+name,points:pts,trull,ability:ab});for(const suit of SUITS)for(const [rank,pts,ab]of COURTS)d.push({uid:id++,type:'court',id:'court_'+suit+'_'+rank,suit,rank,name:rank+' of '+suit,points:pts,ability:ab});for(const suit of ['Cups','Pentacles'])d.push({uid:id++,type:'ace',id:'ace_'+suit,suit,rank:'Ace',name:'Ace of '+suit,points:1,ability:suit==='Cups'?'DRAW_3':'PEEK_5'});return d}
-function title(c){if(c.type==='major')return ROMAN[c.num]+' · '+c.name.replace(/^[IVXLCDM\d]+\s+/,'');if(c.type==='court')return c.rank+' of '+GLYPH[c.suit];if(c.type==='ace')return 'Ace of '+GLYPH[c.suit];return c.name}
+function buildDeck(){let id=0,d=[];for(const [num,name,pts,trull,ab] of MAJORS)d.push({uid:id++,type:'major',id:'major_'+num,num,name:ROMAN[num]+' '+name,points:pts,trull,ability:ab});for(const suit of SUITS)for(const [rank,pts,ab]of COURTS)d.push({uid:id++,type:'court',id:'court_'+suit+'_'+rank,suit,rank,name:rank+' of '+suit,points:pts,ability:ab});return d}
+function title(c){if(c.type==='major')return ROMAN[c.num]+' · '+c.name.replace(/^[IVXLCDM\d]+\s+/,'');if(c.type==='court')return c.rank+' of '+GLYPH[c.suit];return c.name}
 function meanings(c){if(c.type==='major')return MEAN[c.id]||['',''];if(c.type==='court')return COURT_MEAN[c.rank]||['',''];return SUIT_MEAN[c.suit]||['','']}
 function symbol(c){return c.type==='major'?(MAJOR_G[c.num]||'✦'):GLYPH[c.suit]}
 const CARD_SHEET={
@@ -381,7 +381,7 @@ const CARD_SHEET={
   major_8:[3,0],major_9:[3,1],major_10:[3,2],major_11:[3,3],
   major_12:[4,0],major_13:[4,1],major_14:[4,2],major_15:[4,3],
   major_16:[5,0],major_17:[5,1],major_18:[5,2],major_19:[5,3],
-  major_20:[6,0],major_21:[6,1],ace_Cups:[6,2],ace_Pentacles:[6,3],
+  major_20:[6,0],major_21:[6,1],
   court_Wands_Page:[7,0],court_Cups_Page:[7,1],court_Swords_Page:[7,2],court_Pentacles_Page:[7,3],
   court_Wands_Knight:[8,0],court_Cups_Knight:[8,1],court_Swords_Knight:[8,2],court_Pentacles_Knight:[8,3],
   court_Wands_Queen:[9,0],court_Cups_Queen:[9,1],court_Swords_Queen:[9,2],court_Pentacles_Queen:[9,3],
@@ -402,7 +402,7 @@ function cardHTML(c){
   cardHTMLCache.set(c.uid,html);
   return html;
 }
-function sortCards(cards){return [...cards].sort((a,b)=>{let o={major:0,court:1,ace:2};if(o[a.type]!==o[b.type])return o[a.type]-o[b.type];if(a.type==='major')return a.num-b.num;return(a.suit||'').localeCompare(b.suit||'')||RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank)})}
+function sortCards(cards){return [...cards].sort((a,b)=>{let o={major:0,court:1};if(o[a.type]!==o[b.type])return o[a.type]-o[b.type];if(a.type==='major')return a.num-b.num;return(a.suit||'').localeCompare(b.suit||'')||RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank)})}
 function maxHand(){return 5+persist.up.hand-(persist.relics.includes('fool_reversed')?1:0)}function maxDiscards(){return 3+persist.up.discards}function hasMull(){return persist.up.mulligan>0}
 function drawN(n){for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;state.hand.push(state.deck.shift())}}function drawTo(n){while(state.hand.length<n&&state.deck.length)state.hand.push(state.deck.shift())}
 function startReading(){
@@ -518,9 +518,9 @@ function computeScore(cards){
     if(a.length===4){let x=12+rankBonus;m.push(['Four of a Rank ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
     else if(a.length===3){let x=10+rankBonus;m.push(['Three of a Rank ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
   }
-  const courtElig=cards.filter(c=>c.type==='court'||(c.rank==='Ace'&&c.suit));
+  const courtElig=cards.filter(c=>c.type==='court');
   let ranks=new Set(courtElig.map(c=>c.rank));
-  let full=ranks.size>=3&&['Page','Knight','Queen','King','Ace'].filter(r=>ranks.has(r)).length>=3;
+  let full=ranks.size>=3;
   let same=null;
   if(full)for(const suit of SUITS){let rs=new Set(courtElig.filter(c=>c.suit===suit).map(c=>c.rank));if(rs.size>=3){same=suit;break}}
   let flushChips=(persist.up.flush_chips||0)*8;
@@ -543,7 +543,7 @@ function computeScore(cards){
   // ── Relic effects ──
   const rel=persist.relics;
   if(rel.includes('gilded_fool')&&cards.length){chips+=10;}
-  if(rel.includes('ace_dark')){const aceBonus=cards.filter(c=>c.rank==='Ace').reduce((s,c)=>s+c.points*2,0);chips+=aceBonus;}
+
   if(rel.includes('hermit_lantern')){const n=cards.filter(c=>c.type==='major').length;if(n){m.push(["Hermit's Lantern",0,n*0.25,'add']);mult+=n*0.25;}}
   if(rel.includes('mirror_shard')){const rc={};cards.forEach(c=>{const r=c.rank||String(c.num);rc[r]=(rc[r]||0)+1;});const pairs=Object.values(rc).filter(v=>v>=2).reduce((s,v)=>s+Math.floor(v/2),0);if(pairs){m.push(['Mirror Shard',0,pairs,'add']);mult+=pairs;}}
   if(rel.includes('cups_overflow')&&cards.length===5){const suits=cards.map(c=>c.suit).filter(Boolean);if(suits.length===5&&new Set(suits).size===1){m.push(["Cup's Overflow",0,2,'add']);mult+=2;}}
@@ -645,13 +645,13 @@ function cardHints(card, poolCards=null){
     else if(sameRank.length>=2)add('near','Three of a Rank','rank:'+card.rank);
   }
 
-  if(card.type==='court'||(card.rank==='Ace'&&card.suit)){
-    const sameSuitRanks=new Set(all.filter(c=>(c.type==='court'||(c.rank==='Ace'&&c.suit))&&c.suit===card.suit).map(c=>c.rank));
+  if(card.type==='court'){
+    const sameSuitRanks=new Set(all.filter(c=>c.type==='court'&&c.suit===card.suit).map(c=>c.rank));
     if(sameSuitRanks.size>=3)add('near','Royal Court','flush:'+card.suit);
   }
 
-  if(card.type==='court'||(card.rank==='Ace'&&card.suit)){
-    const ranks=new Set(all.filter(c=>c.type==='court'||(c.rank==='Ace'&&c.suit)).map(c=>c.rank));
+  if(card.type==='court'){
+    const ranks=new Set(all.filter(c=>c.type==='court').map(c=>c.rank));
     if(ranks.size>=3)add('near','Full Court');
   }
 
@@ -682,7 +682,7 @@ let effectsUntil=0;
 function holdEffects(ms){effectsUntil=Math.max(effectsUntil,Date.now()+ms)}
 function ghost(i,t,big=false){let s=document.querySelectorAll('.slot')[i];if(!s)return;holdEffects(1700);let g=document.createElement('div');g.className='ghost '+(big?'big':'');g.textContent=t;s.appendChild(g);setTimeout(()=>g.remove(),1700)}
 function bump(i){let s=document.querySelectorAll('.slot')[i];if(!s)return;s.classList.remove('bump');void s.offsetWidth;s.classList.add('bump')}
-function slotsForMeld(name){let filled=state.spread.map((c,i)=>c?{c,i}:null).filter(Boolean);if(name.startsWith('Three of a Rank')||name.startsWith('Four of a Rank')){let rank=['Page','Knight','Queen','King'].find(r=>name.includes(r+'s'));return rank?filled.filter(x=>x.c.type==='court'&&x.c.rank===rank).map(x=>x.i):[]}if(name==='Full Court'){const ELIG=['Page','Knight','Queen','King','Ace'];let seen=new Set(),out=[];for(const x of filled){if((x.c.type==='court'||(x.c.rank==='Ace'&&x.c.suit))&&!seen.has(x.c.rank)&&ELIG.includes(x.c.rank)){seen.add(x.c.rank);out.push(x.i)}}return out}if(name.startsWith('Royal Court')||name.startsWith('Flush')){let suit=SUITS.find(s=>name.includes(s));return suit?filled.filter(x=>x.c.suit===suit).map(x=>x.i):[]}if(name.startsWith('Sequence')){let tr=filled.filter(x=>x.c.type==='major').sort((a,b)=>a.c.num-b.c.num);let bs=0,bl=1,cs=0,cl=1;for(let j=1;j<tr.length;j++){if(tr[j].c.num===tr[j-1].c.num+1){cl++;if(cl>bl){bl=cl;bs=cs}}else{cs=j;cl=1}}return tr.slice(bs,bs+bl).map(x=>x.i)}if(name==='Path of the Magi')return filled.filter(x=>['major_0','major_1','major_21'].includes(x.c.id)).map(x=>x.i);return[]}
+function slotsForMeld(name){let filled=state.spread.map((c,i)=>c?{c,i}:null).filter(Boolean);if(name.startsWith('Three of a Rank')||name.startsWith('Four of a Rank')){let rank=['Page','Knight','Queen','King'].find(r=>name.includes(r+'s'));return rank?filled.filter(x=>x.c.type==='court'&&x.c.rank===rank).map(x=>x.i):[]}if(name==='Full Court'){const ELIG=['Page','Knight','Queen','King'];let seen=new Set(),out=[];for(const x of filled){if(x.c.type==='court'&&!seen.has(x.c.rank)&&ELIG.includes(x.c.rank)){seen.add(x.c.rank);out.push(x.i)}}return out}if(name.startsWith('Royal Court')||name.startsWith('Flush')){let suit=SUITS.find(s=>name.includes(s));return suit?filled.filter(x=>x.c.suit===suit).map(x=>x.i):[]}if(name.startsWith('Sequence')){let tr=filled.filter(x=>x.c.type==='major').sort((a,b)=>a.c.num-b.c.num);let bs=0,bl=1,cs=0,cl=1;for(let j=1;j<tr.length;j++){if(tr[j].c.num===tr[j-1].c.num+1){cl++;if(cl>bl){bl=cl;bs=cs}}else{cs=j;cl=1}}return tr.slice(bs,bs+bl).map(x=>x.i)}if(name==='Path of the Magi')return filled.filter(x=>['major_0','major_1','major_21'].includes(x.c.id)).map(x=>x.i);return[]}
 let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 function setCounterTarget(v){counterTarget=v;if(counterTimer)clearTimeout(counterTimer);counterTimer=setTimeout(()=>{if(counterCancel)counterCancel();counterCancel=rollCounter(counterShown,counterTarget,650);counterShown=counterTarget;counterTimer=null},700)}
 function snapCounter(v){if(counterTimer){clearTimeout(counterTimer);counterTimer=null}if(counterCancel){counterCancel();counterCancel=null}counterShown=counterTarget=v;$('#current').textContent=v;$('#current').style.color=''}
@@ -709,9 +709,9 @@ function resolveAbility(ab,done,sourceCard=null){if(ab==='DRAW_1'){drawN(1);done
 function peek(n,done){state.busy=true;let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){state.busy=false;done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{state.hand.push(p);cards.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));state.busy=false;done()})}
 function search(done){state.busy=true;if(!state.deck.length){state.busy=false;done();return}choice('Search deck','Pick any card. The deck reshuffles.',sortCards(state.deck),p=>{let i=state.deck.findIndex(c=>c.uid===p.uid);if(i>=0)state.deck.splice(i,1);state.hand.push(p);shuffle(state.deck);state.busy=false;done()})}
 function inPlay(){return[...state.hand,...state.spread.filter(Boolean)]}
-function neighbor(t){if(t.type==='major')return state.deck.filter(c=>c.type==='major'&&(c.num===t.num-1||c.num===t.num+1));if(t.type==='court'){let i=RANKS.indexOf(t.rank),r=[RANKS[i-1],RANKS[i+1]].filter(Boolean);return state.deck.filter(c=>c.suit===t.suit&&r.includes(c.rank))}if(t.type==='ace')return state.deck.filter(c=>c.type==='court'&&c.suit===t.suit&&c.rank==='King');return[]}
-function kin(t){if(t.type==='major')return state.deck.filter(c=>c.type==='major'&&c.uid!==t.uid);if(t.type==='court'||t.type==='ace')return state.deck.filter(c=>(c.type==='court'||c.type==='ace')&&c.uid!==t.uid);return[]}
-function mirror(t){if(t.type==='major'){let n=21-t.num;return state.deck.filter(c=>c.type==='major'&&c.num===n)}if(t.type==='court'){let pair={Page:'King',King:'Page',Knight:'Queen',Queen:'Knight'}[t.rank];return state.deck.filter(c=>c.type==='court'&&c.suit===t.suit&&c.rank===pair)}if(t.type==='ace')return state.deck.filter(c=>c.type==='ace'&&c.suit!==t.suit);return[]}
+function neighbor(t){if(t.type==='major')return state.deck.filter(c=>c.type==='major'&&(c.num===t.num-1||c.num===t.num+1));if(t.type==='court'){let i=RANKS.indexOf(t.rank),r=[RANKS[i-1],RANKS[i+1]].filter(Boolean);return state.deck.filter(c=>c.suit===t.suit&&r.includes(c.rank))}return[]}
+function kin(t){if(t.type==='major')return state.deck.filter(c=>c.type==='major'&&c.uid!==t.uid);if(t.type==='court')return state.deck.filter(c=>c.type==='court'&&c.uid!==t.uid);return[]}
+function mirror(t){if(t.type==='major'){let n=21-t.num;return state.deck.filter(c=>c.type==='major'&&c.num===n)}if(t.type==='court'){let pair={Page:'King',King:'Page',Knight:'Queen',Queen:'Knight'}[t.rank];return state.deck.filter(c=>c.type==='court'&&c.suit===t.suit&&c.rank===pair)}return[]}
 function betweenPool(a,b){
   if(!a||!b||a.uid===b.uid)return[];
 
@@ -731,13 +731,13 @@ function betweenPool(a,b){
 
   // Minor Arcana: cards between two anchors in the rank ladder (any suit).
   // Ladder: Page -> Knight -> Queen -> King -> Ace
-  let aMinor=(a.type==='court'||a.type==='ace'), bMinor=(b.type==='court'||b.type==='ace');
+  let aMinor=a.type==='court', bMinor=b.type==='court';
   if(aMinor&&bMinor){
     let ia=RANKS.indexOf(a.rank),ib=RANKS.indexOf(b.rank);
     if(ia<0||ib<0)return[];
     let lo=Math.min(ia,ib),hi=Math.max(ia,ib);
     if(hi-lo<=1)return[];
-    return state.deck.filter(c=>(c.type==='court'||c.type==='ace')&&RANKS.indexOf(c.rank)>lo&&RANKS.indexOf(c.rank)<hi);
+    return state.deck.filter(c=>c.type==='court'&&RANKS.indexOf(c.rank)>lo&&RANKS.indexOf(c.rank)<hi);
   }
 
   return[];
@@ -882,7 +882,6 @@ const RELICS={
   gilded_fool:    {name:'The Gilded Fool',      desc:'The first card in the spread each reading gains +10 Chips.',                             rarity:'common',icon:'🃏'},
   hermit_lantern: {name:"Hermit's Lantern",     desc:'Each Major Arcana in the spread adds +0.25 Mult when scoring.',                         rarity:'common',icon:'🔦'},
   mirror_shard:   {name:'Mirror Shard',          desc:'Each pair of matching ranks in the spread adds +1 Mult.',                               rarity:'common',icon:'🪞'},
-  ace_dark:       {name:'Ace in the Dark',       desc:'Aces contribute triple their base Chips.',                                              rarity:'common',icon:'♠'},
   threadbare_tarot:{name:'Threadbare Tarot',     desc:'Draw 1 extra card at the start of each reading.',                                      rarity:'common',icon:'🎴'},
   gilded_discard: {name:'Gilded Discard',        desc:'Your first Discard each reading costs no Discard charge.',                             rarity:'common',icon:'✨'},
   merchants_scale:{name:"Merchant's Scale",      desc:'All packs cost 3 fewer Reserve.',                                                      rarity:'common',icon:'⚖'},
