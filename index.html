@@ -645,13 +645,13 @@ function cardHints(card, poolCards=null){
     else if(sameRank.length>=2)add('near','Three of a Rank','rank:'+card.rank);
   }
 
-  if(card.type==='court'){
-    const sameSuitRanks=new Set(all.filter(c=>c.type==='court'&&c.suit===card.suit).map(c=>c.rank));
+  if(card.type==='court'||(card.rank==='Ace'&&card.suit)){
+    const sameSuitRanks=new Set(all.filter(c=>(c.type==='court'||(c.rank==='Ace'&&c.suit))&&c.suit===card.suit).map(c=>c.rank));
     if(sameSuitRanks.size>=3)add('near','Royal Court','flush:'+card.suit);
   }
 
-  if(card.type==='court'){
-    const ranks=new Set(all.filter(c=>c.type==='court').map(c=>c.rank));
+  if(card.type==='court'||(card.rank==='Ace'&&card.suit)){
+    const ranks=new Set(all.filter(c=>c.type==='court'||(c.rank==='Ace'&&c.suit)).map(c=>c.rank));
     if(ranks.size>=3)add('near','Full Court');
   }
 
@@ -682,7 +682,7 @@ let effectsUntil=0;
 function holdEffects(ms){effectsUntil=Math.max(effectsUntil,Date.now()+ms)}
 function ghost(i,t,big=false){let s=document.querySelectorAll('.slot')[i];if(!s)return;holdEffects(1700);let g=document.createElement('div');g.className='ghost '+(big?'big':'');g.textContent=t;s.appendChild(g);setTimeout(()=>g.remove(),1700)}
 function bump(i){let s=document.querySelectorAll('.slot')[i];if(!s)return;s.classList.remove('bump');void s.offsetWidth;s.classList.add('bump')}
-function slotsForMeld(name){let filled=state.spread.map((c,i)=>c?{c,i}:null).filter(Boolean);if(name.startsWith('Three of a Rank')||name.startsWith('Four of a Rank')){let rank=['Page','Knight','Queen','King'].find(r=>name.includes(r+'s'));return rank?filled.filter(x=>x.c.type==='court'&&x.c.rank===rank).map(x=>x.i):[]}if(name==='Full Court'){let seen=new Set(),out=[];for(const x of filled){if(x.c.type==='court'&&!seen.has(x.c.rank)&&['Page','Knight','Queen','King'].includes(x.c.rank)){seen.add(x.c.rank);out.push(x.i)}}return out}if(name.startsWith('Royal Court')||name.startsWith('Flush')){let suit=SUITS.find(s=>name.includes(s));return suit?filled.filter(x=>x.c.suit===suit).map(x=>x.i):[]}if(name.startsWith('Sequence')){let tr=filled.filter(x=>x.c.type==='major').sort((a,b)=>a.c.num-b.c.num);let bs=0,bl=1,cs=0,cl=1;for(let j=1;j<tr.length;j++){if(tr[j].c.num===tr[j-1].c.num+1){cl++;if(cl>bl){bl=cl;bs=cs}}else{cs=j;cl=1}}return tr.slice(bs,bs+bl).map(x=>x.i)}if(name==='Path of the Magi')return filled.filter(x=>['major_0','major_1','major_21'].includes(x.c.id)).map(x=>x.i);return[]}
+function slotsForMeld(name){let filled=state.spread.map((c,i)=>c?{c,i}:null).filter(Boolean);if(name.startsWith('Three of a Rank')||name.startsWith('Four of a Rank')){let rank=['Page','Knight','Queen','King'].find(r=>name.includes(r+'s'));return rank?filled.filter(x=>x.c.type==='court'&&x.c.rank===rank).map(x=>x.i):[]}if(name==='Full Court'){const ELIG=['Page','Knight','Queen','King','Ace'];let seen=new Set(),out=[];for(const x of filled){if((x.c.type==='court'||(x.c.rank==='Ace'&&x.c.suit))&&!seen.has(x.c.rank)&&ELIG.includes(x.c.rank)){seen.add(x.c.rank);out.push(x.i)}}return out}if(name.startsWith('Royal Court')||name.startsWith('Flush')){let suit=SUITS.find(s=>name.includes(s));return suit?filled.filter(x=>x.c.suit===suit).map(x=>x.i):[]}if(name.startsWith('Sequence')){let tr=filled.filter(x=>x.c.type==='major').sort((a,b)=>a.c.num-b.c.num);let bs=0,bl=1,cs=0,cl=1;for(let j=1;j<tr.length;j++){if(tr[j].c.num===tr[j-1].c.num+1){cl++;if(cl>bl){bl=cl;bs=cs}}else{cs=j;cl=1}}return tr.slice(bs,bs+bl).map(x=>x.i)}if(name==='Path of the Magi')return filled.filter(x=>['major_0','major_1','major_21'].includes(x.c.id)).map(x=>x.i);return[]}
 let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 function setCounterTarget(v){counterTarget=v;if(counterTimer)clearTimeout(counterTimer);counterTimer=setTimeout(()=>{if(counterCancel)counterCancel();counterCancel=rollCounter(counterShown,counterTarget,650);counterShown=counterTarget;counterTimer=null},700)}
 function snapCounter(v){if(counterTimer){clearTimeout(counterTimer);counterTimer=null}if(counterCancel){counterCancel();counterCancel=null}counterShown=counterTarget=v;$('#current').textContent=v;$('#current').style.color=''}
