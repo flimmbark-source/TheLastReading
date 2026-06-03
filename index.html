@@ -1202,7 +1202,7 @@ function renderScoringSheet(){
   const seqMult=+(2+(u.seq_mult||0)*0.5).toFixed(2);
   const pathChips=(u.path_chips||0)*15;
   const rows=[
-    ['Rank Melds','Three/Four of a Rank',`+${10+rankBonus} / +${12+rankBonus}`,`×${rankMult}`],
+    ['Rank Match','Three/Four of a Rank',`+${10+rankBonus} / +${12+rankBonus}`,`×${rankMult}`],
     ['Royal Court','3 Courts, same suit',`+${20+flushChips+courtChips}`,`×${flushMult}`],
     ['Full Court','3 Courts, any suit',`+${18+courtChips}`,''],
     ['Flush','4+ cards, same suit',`+${15+flushChips}`,`×${flushMult}`],
