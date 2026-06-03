@@ -381,7 +381,7 @@ function cardHTML(c){
   return html;
 }
 function sortCards(cards){return [...cards].sort((a,b)=>{let o={major:0,court:1,ace:2};if(o[a.type]!==o[b.type])return o[a.type]-o[b.type];if(a.type==='major')return a.num-b.num;return(a.suit||'').localeCompare(b.suit||'')||RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank)})}
-function maxHand(){return 5+persist.up.hand}function maxDiscards(){return 3+persist.up.discards}function hasMull(){return persist.up.mulligan>0}
+function maxHand(){return 5+persist.up.hand-(persist.relics.includes('fool_reversed')?1:0)}function maxDiscards(){return 3+persist.up.discards}function hasMull(){return persist.up.mulligan>0}
 function drawN(n){for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;state.hand.push(state.deck.shift())}}function drawTo(n){while(state.hand.length<n&&state.deck.length)state.hand.push(state.deck.shift())}
 function startReading(){
   state.deck=shuffle(buildDeck());state.hand=[];state.discard=[];state.spread=Array(5).fill(null);
@@ -389,7 +389,6 @@ function startReading(){
   state.freeDiscardUsed=false;state.discardedCards=[];
   const extra=persist.relics.includes('threadbare_tarot')?1:0;
   drawTo(maxHand()+extra);
-  if(persist.relics.includes('torn_page')&&state.deck.length){state.spread[2]=state.deck.shift();}
   clearOverlay();snapCounter(0);render();
 }
 function render(){
@@ -528,6 +527,18 @@ function computeScore(cards){
   if(rel.includes('court_favor')){const n=cards.filter(c=>['Page','Knight','Queen','King'].includes(c.rank)).length;if(n){m.push(['Court Favor',0,n,'add']);mult+=n;}}
   if(rel.includes('arcana_codex')){const scoringKeys=['rank','rank_mult','sequence','seq_mult','flush_chips','flush_mult','court_chips','path_chips'];const n=scoringKeys.filter(k=>(persist.up[k]||0)>0).length;if(n){m.push(['Arcana Codex',0,+(n*0.1).toFixed(2),'add']);mult+=n*0.1;}}
   if(rel.includes('hanged_coin')&&state.discardedCards&&state.discardedCards.length){const bonus=Math.floor(state.discardedCards.reduce((s,c)=>s+c.points,0)/2);if(bonus){m.push(["Hanged Man's Coin",bonus,0]);chips+=bonus;}}
+  const COURT_RANKS=['Page','Knight','Queen','King'];
+  if(rel.includes('silver_chalice')){const n=cards.filter(c=>c.suit==='Cups').length;if(n){m.push(['Silver Chalice',n*4,0]);chips+=n*4;}}
+  if(rel.includes('ember_wand')){const n=cards.filter(c=>c.suit==='Wands').length;if(n){m.push(['Ember Wand',n*4,0]);chips+=n*4;}}
+  if(rel.includes('iron_pentacle')){const n=cards.filter(c=>c.suit==='Pentacles').length;if(n){m.push(['Iron Pentacle',n*4,0]);chips+=n*4;}}
+  if(rel.includes('blades_edge')){const n=cards.filter(c=>c.suit==='Swords').length;if(n){m.push(["Blade's Edge",n*4,0]);chips+=n*4;}}
+  if(rel.includes('still_pool')&&!state.discardedCards?.length){m.push(['The Still Pool',0,1,'add']);mult+=1;}
+  if(rel.includes('loaded_die')){const bonus=cards.filter(c=>COURT_RANKS.includes(c.rank)).reduce((s,c)=>s+c.points,0);if(bonus){m.push(['Loaded Die',bonus,0]);chips+=bonus;}}
+  if(rel.includes('lovers_knot')){const rc={};cards.forEach(c=>{const r=c.rank||String(c.num);rc[r]=(rc[r]||0)+1;});const groups=Object.values(rc).filter(v=>v>=2).length;if(groups){m.push(["The Lovers' Knot",0,+(groups*1.5).toFixed(1),'add']);mult+=groups*1.5;}}
+  if(rel.includes('temperance_flask')&&state.discardedCards?.length===1){m.push(['Temperance Flask',0,1.5,'add']);mult+=1.5;}
+  if(rel.includes('strengths_grip')){const n=cards.filter(c=>COURT_RANKS.includes(c.rank)).length;if(n>=3){m.push(['Strength',0,3,'add']);mult+=3;}}
+  if(rel.includes('fool_reversed')){const bonus=cards.length*3;if(bonus){m.push(['The Fool Reversed',bonus,0]);chips+=bonus;}}
+  if(rel.includes('the_world')&&state.worldCarry){m.push(['The World',state.worldCarry,0]);chips+=state.worldCarry;}
   return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}
 }
 function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';if(chips&&mult)return`+${chips} ×${mult}`;if(chips)return`+${chips}`;if(mult)return additive?`+${mult} Mult`:`×${mult}`;return'';}
@@ -818,9 +829,9 @@ function choice(title,prompt,cards,cb){$('#modalTitle').textContent=title;$('#mo
 function toggleModalCollapse(){let m=$('#modal');if(!m.classList.contains('show'))return;m.classList.toggle('collapsed');$('#modalToggle').textContent=m.classList.contains('collapsed')?'Show':'Hide'}
 function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;waitForCounterThenScore()}
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
-function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards),total=res.finalScore,pass=total>=TH[state.th];let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+TH[state.th]+' Cleared':'Below Threshold '+TH[state.th]}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){res.melds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){const miserBonus=persist.relics.includes('miser')?5:0;state.pendingPool=(state.pendingPool||0)+total+miserBonus;state.th++;html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render()}
+function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards),total=res.finalScore,pass=total>=TH[state.th];let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+TH[state.th]+' Cleared':'Below Threshold '+TH[state.th]}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){res.melds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){const miserBonus=persist.relics.includes('miser')?5:0;const threshold=TH[state.th];const worldCarry=persist.relics.includes('the_world')?Math.floor((total-threshold)*0.1):0;state.worldCarry=worldCarry||0;state.pendingPool=(state.pendingPool||0)+total+miserBonus;state.th++;html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render()}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML=''}
-function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(7),400)}}function endSession(){showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Session Ends</h3></div><div class="rscore"><span class="rsf">${persist.pool}</span></div><span class="rverdict pass">Final Reserve</span><div class="rbtns"><button class="btn-gold" onclick="resetSession()">Begin Again</button></div></div>`)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[]};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;startReading()}
+function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(7),400)}}function endSession(){showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Session Ends</h3></div><div class="rscore"><span class="rsf">${persist.pool}</span></div><span class="rverdict pass">Final Reserve</span><div class="rbtns"><button class="btn-gold" onclick="resetSession()">Begin Again</button></div></div>`)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;startReading()}
 // [name, desc, baseCost, scale, icon, category, pairedKey?]
 const SHOP={
   discards:   ['Extra Discard',   '+1 Discard each reading',                                                                                                              15,1.75,'🃏','utility'],
@@ -849,16 +860,26 @@ const RELICS={
   hermit_lantern: {name:"Hermit's Lantern",     desc:'Each Major Arcana in the spread adds +0.25 Mult when scoring.',                         rarity:'common',icon:'🔦'},
   mirror_shard:   {name:'Mirror Shard',          desc:'Each pair of matching ranks in the spread adds +1 Mult.',                               rarity:'common',icon:'🪞'},
   ace_dark:       {name:'Ace in the Dark',       desc:'Aces contribute triple their base Chips.',                                              rarity:'common',icon:'♠'},
-  threadbare_tarot:{name:'Threadbare Tarot',     desc:'Draw 1 extra card at the start of each reading.',                                       rarity:'common',icon:'🎴'},
-  gilded_discard: {name:'Gilded Discard',        desc:'Your first Discard each reading costs no Discard charge.',                              rarity:'common',icon:'✨'},
-  merchants_scale:{name:"Merchant's Scale",      desc:'All packs cost 3 fewer Reserve.',                                                       rarity:'common',icon:'⚖'},
-  cups_overflow:  {name:"Cup's Overflow",        desc:'If all 5 spread cards share a suit, gain +2 Mult.',                                    rarity:'rare',  icon:'🍷'},
-  court_favor:    {name:'Court Favor',           desc:'Each Court card in the spread adds +1 Mult.',                                           rarity:'rare',  icon:'👑'},
-  hanged_coin:    {name:"Hanged Man's Coin",     desc:'Discarded cards contribute half their base Chips to the score.',                        rarity:'rare',  icon:'🪙'},
-  buried_king:    {name:'The Buried King',       desc:'Kings count as any suit when forming suit-based patterns.',                             rarity:'rare',  icon:'🤴'},
-  miser:          {name:'The Miser',             desc:'Gain +5 bonus Reserve each time you clear a threshold.',                                rarity:'rare',  icon:'💰'},
-  arcana_codex:   {name:'Arcana Codex',          desc:'Each distinct scoring upgrade you own adds +0.1 Mult.',                                 rarity:'rare',  icon:'📖'},
-  torn_page:      {name:'Torn Page',             desc:'Each reading begins with a random card from your deck placed in the centre slot.',      rarity:'rare',  icon:'📄'},
+  threadbare_tarot:{name:'Threadbare Tarot',     desc:'Draw 1 extra card at the start of each reading.',                                      rarity:'common',icon:'🎴'},
+  gilded_discard: {name:'Gilded Discard',        desc:'Your first Discard each reading costs no Discard charge.',                             rarity:'common',icon:'✨'},
+  merchants_scale:{name:"Merchant's Scale",      desc:'All packs cost 3 fewer Reserve.',                                                      rarity:'common',icon:'⚖'},
+  silver_chalice: {name:'Silver Chalice',        desc:'Cups cards in the spread each add +4 Chips.',                                          rarity:'common',icon:'🥂'},
+  ember_wand:     {name:'Ember Wand',            desc:'Wands cards in the spread each add +4 Chips.',                                         rarity:'common',icon:'🪵'},
+  iron_pentacle:  {name:'Iron Pentacle',         desc:'Pentacles cards in the spread each add +4 Chips.',                                     rarity:'common',icon:'🔩'},
+  blades_edge:    {name:"Blade's Edge",          desc:'Swords cards in the spread each add +4 Chips.',                                        rarity:'common',icon:'🗡'},
+  still_pool:     {name:'The Still Pool',        desc:'If you use no Discards in a reading, gain +1 Mult when scoring.',                      rarity:'common',icon:'🪷'},
+  loaded_die:     {name:'Loaded Die',            desc:'Court cards (J, Q, K, Page) in the spread contribute double their base Chips.',        rarity:'common',icon:'🎲'},
+  cups_overflow:  {name:"Cup's Overflow",        desc:'If all 5 spread cards share a suit, gain +2 Mult.',                                   rarity:'rare',  icon:'🍷'},
+  court_favor:    {name:'Court Favor',           desc:'Each Court card in the spread adds +1 Mult.',                                          rarity:'rare',  icon:'👑'},
+  hanged_coin:    {name:"Hanged Man's Coin",     desc:'Discarded cards contribute half their base Chips to the score.',                       rarity:'rare',  icon:'🪙'},
+  buried_king:    {name:'The Buried King',       desc:'Kings count as any suit when forming suit-based patterns.',                            rarity:'rare',  icon:'🤴'},
+  miser:          {name:'The Miser',             desc:'Gain +5 bonus Reserve each time you clear a threshold.',                               rarity:'rare',  icon:'💰'},
+  arcana_codex:   {name:'Arcana Codex',          desc:'Each distinct scoring upgrade you own adds +0.1 Mult.',                                rarity:'rare',  icon:'📖'},
+  lovers_knot:    {name:"The Lovers' Knot",      desc:'For each rank that appears 2 or more times in the spread, gain +1.5 Mult.',            rarity:'rare',  icon:'🔗'},
+  temperance_flask:{name:'Temperance Flask',     desc:'Using exactly 1 Discard per reading grants +1.5 Mult when scoring.',                  rarity:'rare',  icon:'⚗'},
+  strengths_grip: {name:'Strength',              desc:'If the spread contains 3 or more Court cards, gain +3 Mult.',                          rarity:'rare',  icon:'💪'},
+  the_world:      {name:'The World',             desc:'10% of chips scored above the threshold carry over as bonus chips next reading.',       rarity:'rare',  icon:'🌍'},
+  fool_reversed:  {name:'The Fool Reversed',     desc:'Your hand size is reduced by 1, but all cards in the spread gain +3 Chips.',           rarity:'rare',  icon:'🙃'},
   watcher:        {name:'The Watcher',           desc:'Once per session: reveal the top 3 cards of your deck, take 1, return the rest to the bottom.',rarity:'rare',icon:'👁',active:true},
 };
 function openShop(){
@@ -900,7 +921,7 @@ function buyPack(pk,cost){
   if(persist.pool<c)return;
   persist.pool-=c;
   if(pk==='relic'){
-    const options=relicPool(3);
+    const options=relicPool(4);
     let html='<div class="summary tarot-shop">';
     html+=`<div class="pack-picker-header"><h3>${p.name}</h3><p>Choose one relic to carry</p></div>`;
     html+='<div class="shop-items-row relic-picker-row">';
