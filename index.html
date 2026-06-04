@@ -323,8 +323,9 @@
 #invDesk{height:var(--inv-h);background:linear-gradient(180deg,#0e0704 0%,#1c1008 55%,#150d06 100%);border-bottom:2px solid #6a4c24;position:relative;overflow:hidden;pointer-events:auto}
 #invDesk::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 110%,rgba(90,45,5,.35),transparent 65%);pointer-events:none;z-index:0}
 #invDesk::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px),repeating-linear-gradient(0deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px);pointer-events:none;z-index:0}
-#invTab{display:block;width:80px;height:28px;margin:0 auto;background:linear-gradient(180deg,#2e1e0e,#1e1208);border:1px solid #6a4c24;border-top:none;border-radius:0 0 10px 10px;cursor:pointer;color:#a07838;font-size:10px;font-weight:700;letter-spacing:.07em;text-align:center;line-height:28px;pointer-events:auto;transition:background .15s,color .15s,box-shadow .15s;padding:0;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.5)}
+#invTab{position:absolute;top:0;left:calc(50% - 40px);width:80px;height:28px;background:linear-gradient(180deg,#2e1e0e,#1e1208);border:1px solid #6a4c24;border-top:none;border-radius:0 0 10px 10px;cursor:grab;color:#a07838;font-size:10px;font-weight:700;letter-spacing:.07em;text-align:center;line-height:28px;pointer-events:auto;transition:background .15s,color .15s,box-shadow .15s;padding:0;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.5);touch-action:none;user-select:none}
 #invTab:hover{background:linear-gradient(180deg,#3e2814,#281810);color:#ffd978;box-shadow:0 4px 14px rgba(0,0,0,.6)}
+#invTab:active{cursor:grabbing}
 .inv-item{position:absolute;cursor:grab;user-select:none;touch-action:none;z-index:1;transition:box-shadow .12s}
 .inv-item:active{cursor:grabbing}
 .inv-item-paper{width:84px;background:linear-gradient(160deg,#ede2be,#d6c488);border:1px solid #9c7c30;border-radius:2px;padding:8px 7px 8px;box-shadow:2px 5px 14px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.28);display:flex;flex-direction:column;align-items:center;gap:5px;position:relative}
@@ -356,7 +357,7 @@
 <body>
 <div id="invWrap">
   <div id="invDesk"></div>
-  <button id="invTab" onclick="toggleInventory()">&#9660; Archives</button>
+  <button id="invTab">&#9660; Archives</button>
 </div>
 <h1>The Last Reading</h1>
 <div class="bar"></div>
@@ -1502,6 +1503,47 @@ function toggleInventory(e){
   document.getElementById('invWrap').classList.toggle('open',invOpen);
   document.getElementById('invTab').innerHTML=invOpen?'&#9650; Archives':'&#9660; Archives';
 }
+function initTabDrag(){
+  const tab=document.getElementById('invTab');
+  if(!tab)return;
+  // Restore saved position
+  const savedX=localStorage.getItem('tlr_tab_x');
+  if(savedX!==null)tab.style.left=Math.max(0,Math.min(window.innerWidth-80,parseFloat(savedX)))+'px';
+  let psx,tabStartX,moved=false,active=false;
+  tab.addEventListener('pointerdown',e=>{
+    e.stopPropagation();
+    tab.setPointerCapture(e.pointerId);
+    psx=e.clientX;
+    tabStartX=parseFloat(tab.style.left)||tab.getBoundingClientRect().left;
+    moved=false;active=true;
+  });
+  tab.addEventListener('pointermove',e=>{
+    if(!active)return;
+    const dx=e.clientX-psx;
+    if(Math.abs(dx)>5)moved=true;
+    if(!moved)return;
+    const nx=Math.max(0,Math.min(window.innerWidth-80,tabStartX+dx));
+    tab.style.left=nx+'px';
+  });
+  tab.addEventListener('pointerup',e=>{
+    if(!active)return;
+    active=false;
+    if(moved){
+      const nx=parseFloat(tab.style.left)||0;
+      try{localStorage.setItem('tlr_tab_x',nx)}catch(e){}
+    } else {
+      toggleInventory(e);
+    }
+    moved=false;
+  });
+  // Keep tab in bounds on resize
+  window.addEventListener('resize',()=>{
+    const cur=parseFloat(tab.style.left)||0;
+    const clamped=Math.max(0,Math.min(window.innerWidth-80,cur));
+    if(clamped!==cur)tab.style.left=clamped+'px';
+  });
+}
+setTimeout(initTabDrag,0);
 function renderInventory(){
   const desk=document.getElementById('invDesk');
   if(!desk)return;
