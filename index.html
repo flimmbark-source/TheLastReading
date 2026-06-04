@@ -1179,7 +1179,9 @@ function renderRelicRack(){
     const btn=document.createElement('button');
     btn.className='relic-btn'+(r.rarity==='rare'?' relic-rare':'');
     btn.title=r.name;
-    btn.style.cssText+=relicIconStyle(key,30);
+    const ic=document.createElement('span');
+    ic.style.cssText=`display:block;width:30px;height:30px;flex-shrink:0;${relicIconStyle(key,30)}`;
+    btn.appendChild(ic);
     btn.onclick=e=>{e.stopPropagation();toggleRelicCallout(key,btn);};
     rack.appendChild(btn);
   });
