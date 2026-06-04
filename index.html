@@ -316,7 +316,10 @@
 .relic-art{display:flex;align-items:center;justify-content:center;height:64px;background:transparent}.relic-art-sprite{width:64px;height:64px;image-rendering:pixelated}
 @media(max-width:640px){.tarot-shop{width:calc(100vw - 20px);padding:20px 16px 18px!important;background-image:url("Pack_Background_Mobile.png")}.shop-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header p{font-size:10px;margin:8px 0 0}.shop-packs-row{gap:8px;flex-wrap:nowrap;justify-content:center}.shop-pack{flex:1;min-width:0;min-height:230px}.shop-pack-banner{min-height:74px;font-size:36px}.shop-items-row{gap:8px}.upg-card{width:110px}.upg-art{height:66px;font-size:30px}.upg-title-strip span{font-size:6.5px}.result-panel{padding:16px 16px 20px}.rscore .rsc,.rscore .rsm{font-size:22px}.rscore .rsf{font-size:32px}}
 .meld-announce{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);font:900 28px Georgia,serif;color:#ffd978;text-shadow:0 0 18px rgba(255,200,80,.7),0 2px 8px rgba(0,0,0,.9);letter-spacing:.06em;text-align:center;white-space:nowrap;pointer-events:none;z-index:200;animation:meld-announce 1.8s forwards}.meld-announce.rare{color:#ffb36b;text-shadow:0 0 22px rgba(255,160,60,.8),0 2px 8px rgba(0,0,0,.9)}@keyframes meld-announce{0%{opacity:0;transform:translate(-50%,-50%) scale(.55)}14%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}28%{opacity:1;transform:translate(-50%,-50%) scale(1)}75%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-68%) scale(.9)}}
-/* ── Inventory Panel ── */
+/* ── Card zoom overlay ── */
+.card-zoom-bg{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.card-zoom-inner{transform:scale(2.4);transform-origin:center;pointer-events:none;box-shadow:0 24px 70px rgba(0,0,0,.95),0 0 0 1px rgba(212,175,106,.18)!important;animation:none!important;transition:none!important}
+@media(max-width:640px){.card-zoom-inner{transform:scale(2)}}
 :root{--inv-h:300px}
 #invWrap{position:fixed;top:0;left:0;right:0;z-index:150;transform:translateY(calc(-1 * var(--inv-h)));transition:transform .38s cubic-bezier(.4,0,.2,1);pointer-events:none}
 #invWrap.open{transform:translateY(0);pointer-events:auto}
@@ -1606,6 +1609,46 @@ function openInvDetail(item){
   document.body.appendChild(bg);
 }
 setTimeout(renderInventory,0);
+
+// ── Card zoom (scroll up or pinch-expand on any card) ──
+function expandCard(card){
+  document.querySelectorAll('.card-zoom-bg').forEach(e=>e.remove());
+  const bg=document.createElement('div');
+  bg.className='card-zoom-bg';
+  const el=document.createElement('div');
+  el.className='card card-zoom-inner'+(card.type==='major'?' major':'');
+  el.innerHTML=cardHTML(card);
+  applyCardPhoto(el,card);
+  bg.appendChild(el);
+  bg.addEventListener('click',()=>bg.remove());
+  document.body.appendChild(bg);
+}
+function _cardFromTarget(t){
+  const el=t.closest('.card[data-uid]');
+  if(!el)return null;
+  const uid=Number(el.dataset.uid);
+  return[...state.hand,...state.spread.filter(Boolean)].find(c=>c.uid===uid)||null;
+}
+document.addEventListener('wheel',e=>{
+  if(e.deltaY>=0)return;
+  const c=_cardFromTarget(e.target);
+  if(!c)return;
+  e.preventDefault();
+  expandCard(c);
+},{passive:false});
+let _pinch=null;
+document.addEventListener('touchstart',e=>{
+  if(e.touches.length!==2)return;
+  const c=_cardFromTarget(e.target);
+  if(!c)return;
+  _pinch={dist:Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY),card:c};
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!_pinch||e.touches.length!==2)return;
+  const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+  if(d>_pinch.dist+28){expandCard(_pinch.card);_pinch=null;}
+},{passive:true});
+document.addEventListener('touchend',()=>{_pinch=null;});
 
 startReading();
 if(!tutDone)setTimeout(()=>tutShow(0),400);
