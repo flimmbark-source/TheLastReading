@@ -1001,16 +1001,13 @@ function animatePackOpen(pk,callback){
   setTimeout(()=>{
     card.style.animation='paShake .5s ease-in-out forwards';
   },500);
-  // phase 4 — burst + rays (820ms)
+  // phase 4 — burst + rays + fade card simultaneously (820ms)
   setTimeout(()=>{
     burst.style.animation='paBurst .5s ease-out forwards';
     rays.style.opacity='1';
-  },820);
-  // phase 5 — card fades out (1050ms)
-  setTimeout(()=>{
-    card.style.animation='paFadeOut .25s ease-in forwards';
+    card.style.animation='paFadeOut .22s ease-in forwards';
     overlay.classList.remove('pa-dim');
-  },1050);
+  },820);
   // phase 6 — done (1280ms)
   setTimeout(()=>{
     overlay.style.opacity='0';
