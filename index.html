@@ -286,7 +286,7 @@
 .relic-btn{width:36px;height:36px;background:rgba(22,16,13,.88);border:1px solid #5f4c29;border-radius:6px;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;padding:0;flex-shrink:0;transition:border-color .15s,box-shadow .15s}
 .relic-btn:hover{border-color:#d4af6a;box-shadow:0 0 8px rgba(212,175,106,.35)}
 .relic-btn.relic-rare{border-color:#9a7842;box-shadow:0 0 6px rgba(212,175,106,.2)}
-.relic-btn.relic-rare:hover{border-color:#ffd978;box-shadow:0 0 12px rgba(255,217,120,.45)}.relic-slot-empty{width:36px;height:36px;border:1px dashed rgba(95,76,41,.45);border-radius:6px;flex-shrink:0}.relic-replace-card{cursor:pointer;transition:border-color .15s,box-shadow .15s}.relic-replace-card:hover{border-color:#d4af6a;box-shadow:0 0 10px rgba(212,175,106,.25)}.relic-replace-selected{border-color:#e07050!important;box-shadow:0 0 14px rgba(220,100,60,.45)!important}.relic-replace-hint{font-size:10px;color:#6a5a3a;letter-spacing:.05em}
+.relic-btn.relic-rare:hover{border-color:#ffd978;box-shadow:0 0 12px rgba(255,217,120,.45)}.relic-slot-empty{width:36px;height:36px;border:1px dashed rgba(95,76,41,.45);border-radius:6px;flex-shrink:0}.relic-replace-card{cursor:pointer;transition:border-color .15s,box-shadow .15s}.relic-replace-card:hover{border-color:#d4af6a;box-shadow:0 0 10px rgba(212,175,106,.25)}.relic-replace-selected{border-color:#e07050!important;box-shadow:0 0 14px rgba(220,100,60,.45)!important}.relic-replace-hint{font-size:10px;color:#6a5a3a;letter-spacing:.05em}.game-toast{position:fixed;bottom:220px;left:50%;transform:translateX(-50%) translateY(12px);background:rgba(26,16,10,.97);border:1px solid #856536;border-radius:8px;padding:9px 16px;font-size:12px;color:#e0c87a;pointer-events:none;z-index:9990;opacity:0;transition:opacity .3s,transform .3s;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.6)}.game-toast.game-toast-show{opacity:1;transform:translateX(-50%) translateY(0)}
 .pack-anim-overlay{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0);pointer-events:none;transition:background .25s}
 .pack-anim-overlay.pa-dim{background:rgba(0,0,0,.82)}
 .pack-anim-card{position:relative;width:160px;height:230px;background:linear-gradient(165deg,#221510,#130907);border:2px solid #7a5a2d;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;box-shadow:0 24px 70px rgba(0,0,0,.9);opacity:0;transform:translateY(80px) scale(.85);will-change:transform,opacity}
@@ -1061,8 +1061,19 @@ function buyPack(pk,cost){
   }); // end animatePackOpen
 }
 function pickPackUpgrade(k){persist.up[k]=(persist.up[k]||0)+1;const paired=SHOP[k][6];if(paired)persist.up[paired]=(persist.up[paired]||0)+1;openShopMain()}
+function showToast(msg,duration=3200){
+  document.querySelectorAll('.game-toast').forEach(el=>el.remove());
+  const t=document.createElement('div');
+  t.className='game-toast';t.innerHTML=msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('game-toast-show'));
+  setTimeout(()=>{t.classList.remove('game-toast-show');setTimeout(()=>t.remove(),400);},duration);
+}
 function _doAcquireRelic(key,afterFn){
   persist.relics.push(key);renderRelicRack();
+  if(persist.relics.length>=relicSlots()){
+    setTimeout(()=>showToast('Relic slots full — your next relic will replace one you already carry.'),600);
+  }
   const firstRelic=!localStorage.getItem('tlr_tut_relic');
   if(firstRelic){localStorage.setItem('tlr_tut_relic','1');afterFn();setTimeout(()=>tutShow(8),400);}
   else{afterFn();}
