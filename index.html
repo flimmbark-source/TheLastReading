@@ -344,6 +344,13 @@
 .inv-detail-content p{margin:0 0 10px}
 .inv-detail-content p:last-child{margin-bottom:0}
 @media(max-width:640px){:root{--inv-h:250px}.inv-item-paper{width:72px;padding:6px 5px 6px}.inv-item-emoji{font-size:21px}}
+/* ── Resonation Glows — warm amber pulse, distinct visual language from hint system ── */
+@keyframes res-breathe-1{0%,100%{box-shadow:0 0 0 1px rgba(255,200,70,.28),0 0 10px rgba(255,175,30,.18),inset 0 0 6px rgba(255,180,40,.04)}50%{box-shadow:0 0 0 1px rgba(255,215,90,.55),0 0 20px rgba(255,190,40,.32),inset 0 0 10px rgba(255,190,40,.08)}}
+@keyframes res-breathe-2{0%,100%{box-shadow:0 0 0 2px rgba(255,205,60,.55),0 0 22px rgba(255,180,30,.45),0 0 44px rgba(255,155,10,.18),inset 0 0 10px rgba(255,185,30,.08)}50%{box-shadow:0 0 0 2px rgba(255,230,90,.92),0 0 36px rgba(255,205,50,.72),0 0 68px rgba(255,175,20,.32),inset 0 0 18px rgba(255,200,40,.14)}}
+@keyframes res-breathe-3{0%,100%{box-shadow:0 0 0 2px rgba(255,225,80,.75),0 0 34px rgba(255,210,55,.72),0 0 70px rgba(255,185,25,.5),0 0 110px rgba(255,155,10,.26),inset 0 0 18px rgba(255,210,50,.12);border-color:rgba(255,225,80,.82)!important;background:rgba(255,195,50,.05)!important}50%{box-shadow:0 0 0 3px rgba(255,245,130,1),0 0 50px rgba(255,230,80,.92),0 0 100px rgba(255,200,40,.68),0 0 160px rgba(255,170,15,.38),inset 0 0 30px rgba(255,220,60,.2);border-color:rgba(255,245,130,1)!important;background:rgba(255,210,60,.1)!important}}
+.slot.res-1{animation:res-breathe-1 2.6s ease-in-out infinite!important;border-color:rgba(255,200,70,.45)!important}
+.slot.res-2{animation:res-breathe-2 1.9s ease-in-out infinite!important;border-color:rgba(255,215,65,.72)!important}
+.slot.res-3{animation:res-breathe-3 1.5s ease-in-out infinite!important}
 </style>
 </head>
 <body>
@@ -441,7 +448,7 @@ function drawN(n){for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.leng
 function startReading(){
   state.deck=shuffle(buildDeck());state.hand=[];state.discard=[];state.spread=Array(5).fill(null);
   state.selected=null;state.purgeSelect=null;state.discards=maxDiscards();state.mullCharges=maxMull();
-  state.freeDiscardUsed=false;state.discardedCards=[];
+  state.freeDiscardUsed=false;state.discardedCards=[];state.resonationTriggeredThisReading={};
   if(persist.up.offering){persist.pool+=(persist.up.offering*5);render();}
   const extra=(persist.relics.includes('threadbare_tarot')?1:0)+(persist.up.deep_current||0);
   drawTo(maxHand()+extra);
@@ -482,6 +489,7 @@ function render(){
     spFrag.appendChild(s);
   }
   sp.replaceChildren(spFrag);
+  applyResonationGlows(state.spread);
 
   const h=$('#hand');
   const hFrag=document.createDocumentFragment();
@@ -543,7 +551,7 @@ function refreshHandState(){
   $('#discardBtn').disabled=state.selected===null||state.discards<=0||inPurge;
   $('#purgeBtn').disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
 }
-function computeScore(cards){
+function computeScore(cards,spreadArr=null){
   const omenBonus=(persist.up.omen||0);
   const resonanceBonus=(persist.up.resonance||0)*3;
   const omenTotal=omenBonus*cards.length;
@@ -604,6 +612,8 @@ function computeScore(cards){
   if(rel.includes('strengths_grip')){const n=cards.filter(c=>COURT_RANKS.includes(c.rank)).length;if(n>=3){m.push(['Strength',0,3,'add']);mult+=3;}}
   if(rel.includes('fool_reversed')){const bonus=cards.length*3;if(bonus){m.push(['The Fool Reversed',bonus,0]);chips+=bonus;}}
   if(rel.includes('the_world')&&state.worldCarry){m.push(['The World',state.worldCarry,0]);chips+=state.worldCarry;}
+  // Resonation bonuses — only applied when scoring the final spread (spreadArr provided)
+  if(spreadArr){for(const{res,level}of checkResonationState(spreadArr)){if(level===res.conditions.length){m.push(['⚷ '+res.name,res.chips,res.mult]);chips+=res.chips;mult*=res.mult;}}}
   return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}
 }
 function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';if(chips&&mult)return`+${chips} ×${mult}`;if(chips)return`+${chips}`;if(mult)return additive?`+${mult} Mult`:`×${mult}`;return'';}
@@ -719,7 +729,7 @@ function applyHint(el,card,poolCards=null){
   el.dataset.hint=hints.map(h=>h.label).join(' + ');
 }
 function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=computeScore([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
-function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let before=new Set(computeScore(state.spread.filter(Boolean)).melds.map(x=>x[0]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.filter(x=>!before.has(x[0]));let delay=420;let announceOffset=0;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;setTimeout(()=>ghost(anchor,meldStr(m),true),ghostDelay);setTimeout(()=>centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5),delay+announceOffset);holdEffects(ghostDelay+1700);delay+=slots.length*130+700;announceOffset+=600;});setCounterTarget(after.finalScore);checkEnd()}
+function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let before=new Set(computeScore(state.spread.filter(Boolean)).melds.map(x=>x[0]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.filter(x=>!before.has(x[0]));let delay=420;let announceOffset=0;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;setTimeout(()=>ghost(anchor,meldStr(m),true),ghostDelay);setTimeout(()=>centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5),delay+announceOffset);holdEffects(ghostDelay+1700);delay+=slots.length*130+700;announceOffset+=600;});setCounterTarget(after.finalScore);setTimeout(()=>checkResonationTriggers(),750);checkEnd()}
 let effectsUntil=0;
 function holdEffects(ms){effectsUntil=Math.max(effectsUntil,Date.now()+ms)}
 function ghost(i,t,big=false){let s=document.querySelectorAll('.slot')[i];if(!s)return;holdEffects(1700);let g=document.createElement('div');g.className='ghost '+(big?'big':'');g.textContent=t;s.appendChild(g);setTimeout(()=>g.remove(),1700)}
@@ -910,7 +920,7 @@ function choice(title,prompt,cards,cb){$('#modalTitle').textContent=title;$('#mo
 function toggleModalCollapse(){let m=$('#modal');if(!m.classList.contains('show'))return;m.classList.toggle('collapsed');$('#modalToggle').textContent=m.classList.contains('collapsed')?'Show':'Hide'}
 function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;waitForCounterThenScore()}
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
-function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards),total=res.finalScore,pass=total>=TH[state.th];let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+TH[state.th]+' Cleared':'Below Threshold '+TH[state.th]}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){res.melds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){const miserBonus=persist.relics.includes('miser')?5:0;const threshold=TH[state.th];const worldCarry=persist.relics.includes('the_world')?Math.floor((total-threshold)*0.1):0;state.worldCarry=worldCarry||0;state.pendingPool=(state.pendingPool||0)+total+miserBonus;state.th++;html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render()}
+function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards,state.spread),total=res.finalScore,pass=total>=TH[state.th];let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+TH[state.th]+' Cleared':'Below Threshold '+TH[state.th]}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){res.melds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){const miserBonus=persist.relics.includes('miser')?5:0;const threshold=TH[state.th];const worldCarry=persist.relics.includes('the_world')?Math.floor((total-threshold)*0.1):0;state.worldCarry=worldCarry||0;state.pendingPool=(state.pendingPool||0)+total+miserBonus;state.th++;html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render()}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML=''}
 function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(7),400)}}function endSession(){showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Session Ends</h3></div><div class="rscore"><span class="rsf">${persist.pool}</span></div><span class="rverdict pass">Final Reserve</span><div class="rbtns"><button class="btn-gold" onclick="resetSession()">Begin Again</button></div></div>`)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;startReading()}
 // [name, desc, baseCost, scale, icon, category, pairedKey?]
@@ -1382,6 +1392,83 @@ function posTutTip(target,arrowDir){
   arrow.style.transform='translateX(-50%)';
 }
 document.addEventListener('click',()=>tutNext());
+// ── Resonation System ──
+// Slot zones (0-indexed): Past=[0,1], Present=[2], Future=[3,4]
+const RES_ZONES={past:[0,1],present:[2],future:[3,4]};
+const RESONATIONS=[
+  {
+    id:'sophias_fall',
+    name:"Sophia's Fall",
+    conditions:[
+      {cardId:'major_2', zone:'past'},    // II High Priestess — keeper of hidden knowledge
+      {cardId:'major_17',zone:'present'}, // XVII The Star — persistent hope in the now
+      {cardId:'major_18',zone:'future'},  // XVIII The Moon — threshold between worlds
+    ],
+    fragmentId:'frag_sophias_fall_1',
+    chips:25,
+    mult:2,
+  },
+];
+// Fragment definitions — unlocked by resonation triggers
+const INV_FRAGMENTS={
+  frag_sophias_fall_1:{
+    id:'frag_sophias_fall_1',
+    type:'Handwritten Note',
+    title:"She Signs It 'S'",
+    emoji:'🖋️',
+    content:'<p>The paper is thin, almost translucent. Written in a careful, deliberate hand — though the letters grow unsteady toward the end, as if interrupted.</p><p style="font-style:italic">"The cards speak if you know how to arrange them. Not the meanings — those are for the books. I mean the <em>positions</em>. What came before, what persists, what is becoming. She knew this. She showed me once, years before any of this. I was not ready to understand what she was describing."</p><p style="font-size:11px;color:#7a4a18;margin-top:4px">— unsigned, recovered from the reading room</p>',
+  },
+};
+function getUnlockedFragments(){try{return JSON.parse(localStorage.getItem('tlr_inv_unlocked')||'[]')}catch(e){return[]}}
+function checkResonationState(spread){
+  return RESONATIONS.map(res=>{
+    let level=0;const matchedSlots=[];
+    for(const cond of res.conditions){
+      const slots=RES_ZONES[cond.zone];
+      for(const si of slots){
+        const card=spread[si];
+        if(card&&card.id===cond.cardId){level++;matchedSlots.push(si);break}
+      }
+    }
+    return{res,level,matchedSlots};
+  });
+}
+function applyResonationGlows(spread){
+  const slots=document.querySelectorAll('.slot');
+  slots.forEach(s=>s.classList.remove('res-1','res-2','res-3'));
+  for(const{res,level,matchedSlots} of checkResonationState(spread)){
+    if(!level)continue;
+    for(const si of matchedSlots){
+      if(slots[si])slots[si].classList.add('res-'+level);
+    }
+  }
+}
+function checkResonationTriggers(){
+  for(const res of RESONATIONS){
+    const key='res_'+res.id;
+    if(state.resonationTriggeredThisReading&&state.resonationTriggeredThisReading[key])continue;
+    const rs=checkResonationState(state.spread).find(r=>r.res.id===res.id);
+    if(rs&&rs.level===res.conditions.length){
+      if(!state.resonationTriggeredThisReading)state.resonationTriggeredThisReading={};
+      state.resonationTriggeredThisReading[key]=true;
+      triggerResonation(res);
+    }
+  }
+}
+function triggerResonation(res){
+  const alreadyUnlocked=getUnlockedFragments().includes(res.fragmentId);
+  if(!alreadyUnlocked&&INV_FRAGMENTS[res.fragmentId]){
+    const unlocked=getUnlockedFragments();
+    unlocked.push(res.fragmentId);
+    try{localStorage.setItem('tlr_inv_unlocked',JSON.stringify(unlocked))}catch(e){}
+    renderInventory();
+    setTimeout(()=>{
+      showToast('Something stirs in the Archives…',4200);
+      setTimeout(()=>{if(!invOpen)toggleInventory()},1400);
+    },500);
+  }
+}
+
 // ── Inventory / Archives System ──
 const INV_ITEMS=[
   {id:'clipping_01',type:'Newspaper Clipping',title:'Strange Obituary',emoji:'📰',content:'<p>Found in the back pages of the <em>Hollow Creek Gazette</em>, dated three years ago. The body of an unnamed woman was discovered in the upper rooms of 14 Morrow Lane.</p><p style="font-style:italic;margin-top:10px">"...the cards were found scattered around the body, each face-down save for one. Investigators noted an unusual five-position spread drawn in chalk on the floor. The single face-up card has not been publicly identified."</p>'},
@@ -1401,7 +1488,8 @@ function renderInventory(){
   const desk=document.getElementById('invDesk');
   if(!desk)return;
   desk.innerHTML='';
-  INV_ITEMS.forEach((item,idx)=>{
+  const allItems=[...INV_ITEMS,...getUnlockedFragments().map(id=>INV_FRAGMENTS[id]).filter(Boolean)];
+  allItems.forEach((item,idx)=>{
     let pos=invPos[item.id];
     if(!pos){
       const rot=(Math.random()*20-10);
