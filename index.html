@@ -1471,9 +1471,27 @@ function triggerResonation(res){
 
 // ── Inventory / Archives System ──
 const INV_ITEMS=[
-  {id:'clipping_01',type:'Newspaper Clipping',title:'Strange Obituary',emoji:'📰',content:'<p>Found in the back pages of the <em>Hollow Creek Gazette</em>, dated three years ago. The body of an unnamed woman was discovered in the upper rooms of 14 Morrow Lane.</p><p style="font-style:italic;margin-top:10px">"...the cards were found scattered around the body, each face-down save for one. Investigators noted an unusual five-position spread drawn in chalk on the floor. The single face-up card has not been publicly identified."</p>'},
-  {id:'letter_01',type:'Correspondence',title:'Unsigned Letter',emoji:'✉️',content:'<p>The ink is smeared in places, as though written in haste or fear. No return address. Postmarked from a city that no longer exists on current maps.</p><p style="font-style:italic;margin-top:10px">"Do not lay the spread in the order shown. The sequence must be broken, or He will find you through it. I have done what I can to delay things. Burn this after you read it."</p>'},
-  {id:'photo_01',type:'Photograph',title:'The Reading Room',emoji:'🖼️',content:'<p>A sepia-toned photograph, slightly water-damaged along the left edge. The room is somehow familiar — the same five-position spread marked on the table. Five people stand around it, all with their faces turned away from the camera.</p><p style="font-style:italic;margin-top:10px">Written on the back in pencil: <em>"Only one of us left now. She does not know yet what she carries."</em></p>'},
+  {
+    id:'clipping_01',
+    type:'Newspaper Clipping',
+    title:'Strange Obituary',
+    emoji:'📰',
+    content:'<p>Found in the back pages of the <em>Hollow Creek Gazette</em>, dated three years ago. The body of a woman — identified only as "S." — was discovered in the upper rooms of 14 Morrow Lane.</p><p style="font-style:italic;margin-top:10px">"...investigators noted an unusual arrangement on the table. Five positions. Only three cards remained face-up: a veiled figure, a star reflected in still water, and a pale crescent hanging low. The other two positions were empty. No explanation was offered for why the remaining cards had been removed."</p><p style="margin-top:10px;font-size:11px;color:#7a4a18">The clipping ends here. The rest of the column has been torn away.</p>',
+  },
+  {
+    id:'letter_01',
+    type:'Correspondence',
+    title:'Unsigned Letter',
+    emoji:'✉️',
+    content:'<p>The ink is smeared in places, as though written in haste or fear. No return address. The paper smells faintly of wax and something older.</p><p style="font-style:italic;margin-top:10px">"She told me the positions matter more than the cards themselves. What came before belongs on the left. What persists goes in the center — that is the only position that cannot lie. What is becoming faces right.</p><p style="font-style:italic">"You will know the three when you see them together. The Veil, the fixed light, the doorway between. She placed them exactly once, in front of me, and I did not understand what I was watching."</p><p style="margin-top:10px;font-size:11px;color:#7a4a18">Unsigned. The signature space is blank.</p>',
+  },
+  {
+    id:'photo_01',
+    type:'Photograph',
+    title:'The Reading Room',
+    emoji:'🖼️',
+    content:'<p>A sepia-toned photograph, slightly water-damaged along the left edge. A table. Five marked positions — two on the left, one in the center, two on the right. Three cards are visible, though the image is too dark to read them clearly.</p><p style="margin-top:10px">What can be made out: the leftmost visible card shows a seated figure with a veil. The center card shows a night sky. The rightmost shows a crescent or low arc of some kind.</p><p style="font-style:italic;margin-top:10px">Written on the back in pencil: <em>"She laid it once. I watched. It worked. Only one of us understood what that meant."</em></p>',
+  },
 ];
 let invOpen=false;
 let invPos=JSON.parse(localStorage.getItem('tlr_inv_pos')||'{}');
