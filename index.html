@@ -367,7 +367,7 @@ const SUIT_MEAN={Cups:['Emotion, love','Hidden feelings'],Wands:['Will, creation
 const MAJORS=[[0,'Fool',5,true,'PEEK_3'],[1,'Magician',5,true,'SEARCH'],[2,'High Priestess',1,false,'NEIGHBOR_2'],[3,'Empress',1,false,'DRAW_2'],[4,'Emperor',1,false,'DRAW_1'],[5,'Hierophant',1,false,'BETWEEN_2'],[6,'Lovers',1,false,'KIN_2'],[7,'Chariot',1,false,'DRAW_1'],[8,'Strength',1,false,'DRAW_1'],[9,'Hermit',1,false,'NEIGHBOR_2'],[10,'Wheel',1,false,'MIRROR_1'],[11,'Justice',1,false,'KIN_2'],[12,'Hanged Man',1,false,'BETWEEN_2'],[13,'Death',1,false,'DRAW_3'],[14,'Temperance',1,false,'BETWEEN_2'],[15,'Devil',1,false,'DRAW_2'],[16,'Tower',1,false,'DRAW_2'],[17,'Star',1,false,'KIN_2'],[18,'Moon',1,false,'MIRROR_1'],[19,'Sun',1,false,'DRAW_2'],[20,'Judgement',1,false,'MIRROR_1'],[21,'World',5,true,'WORLD']];
 const COURTS=[['Page',2,'DRAW_1'],['Knight',3,'PEEK_3'],['Queen',4,'DRAW_2'],['King',5,'PEEK_5']];
 const TH=Array.from({length:10},(_,i)=>(i+1)*10);
-let persist={pool:0,up:{discards:0,hand:0,mulligan:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,flush_chips:0,flush_mult:0,court_chips:0,court_mult:0,path_chips:0,path_mult:0,neighbor:0,kin:0,mirror:0,between:0,relicSlot:0},relics:[],relicUsed:{}};
+let persist={pool:0,up:{discards:0,hand:0,mulligan:0,lens_mastery:0,offering:0,ritual_depth:0,deep_current:0,omen:0,resonance:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,flush_chips:0,flush_mult:0,court_chips:0,court_mult:0,path_chips:0,path_mult:0,relicSlot:0},relics:[],relicUsed:{}};
 let state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null};
 const $=s=>document.querySelector(s), shuffle=a=>{for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const cardHTMLCache=new Map();
@@ -403,13 +403,14 @@ function cardHTML(c){
   return html;
 }
 function sortCards(cards){return [...cards].sort((a,b)=>{let o={major:0,court:1};if(o[a.type]!==o[b.type])return o[a.type]-o[b.type];if(a.type==='major')return a.num-b.num;return(a.suit||'').localeCompare(b.suit||'')||RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank)})}
-function maxHand(){return 5+persist.up.hand-(persist.relics.includes('fool_reversed')?1:0)}function maxDiscards(){return 3+persist.up.discards}function hasMull(){return persist.up.mulligan>0}
+function maxHand(){return 5+persist.up.hand-(persist.relics.includes('fool_reversed')?1:0)}function maxDiscards(){return 3+persist.up.discards}function hasMull(){return persist.up.mulligan>0}function maxMull(){return persist.up.mulligan||0}
 function drawN(n){for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;state.hand.push(state.deck.shift())}}function drawTo(n){while(state.hand.length<n&&state.deck.length)state.hand.push(state.deck.shift())}
 function startReading(){
   state.deck=shuffle(buildDeck());state.hand=[];state.discard=[];state.spread=Array(5).fill(null);
-  state.selected=null;state.purgeSelect=null;state.discards=maxDiscards();state.mull=false;
+  state.selected=null;state.purgeSelect=null;state.discards=maxDiscards();state.mullCharges=maxMull();
   state.freeDiscardUsed=false;state.discardedCards=[];
-  const extra=persist.relics.includes('threadbare_tarot')?1:0;
+  if(persist.up.offering){persist.pool+=(persist.up.offering*5);render();}
+  const extra=(persist.relics.includes('threadbare_tarot')?1:0)+(persist.up.deep_current||0);
   drawTo(maxHand()+extra);
   clearOverlay();snapCounter(0);render();
 }
@@ -486,7 +487,7 @@ function render(){
   $('#discardBtn').disabled=state.selected===null||state.discards<=0||inPurge;
   $('#purgeBtn').disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
   $('#mullBtn').style.display=hasMull()?'inline-block':'none';
-  $('#mullBtn').disabled=state.mull||!state.spread.every(x=>!x)||state.hand.length!==maxHand();
+  $('#mullBtn').disabled=!(state.mullCharges>0)||!state.spread.every(x=>!x)||state.hand.length!==maxHand();
 }
 function refreshHandState(){
   const ability=state.abilitySelect;
@@ -510,7 +511,13 @@ function refreshHandState(){
   $('#purgeBtn').disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
 }
 function computeScore(cards){
+  const omenBonus=(persist.up.omen||0);
+  const resonanceBonus=(persist.up.resonance||0)*3;
+  const omenTotal=omenBonus*cards.length;
+  const resonanceTotal=resonanceBonus*cards.filter(c=>c.type==='major').length;
   let chips=cards.reduce((s,c)=>s+c.points,0),base=chips,mult=1,m=[];
+  if(omenTotal){m.push(['Omen',omenTotal,0]);chips+=omenTotal;}
+  if(resonanceTotal){m.push(['Resonance',resonanceTotal,0]);chips+=resonanceTotal;}
   let rankBonus=(persist.up.rank||0)*5;
   let rankMult=1+(persist.up.rank_mult||0)*0.25;
   for(const rank of ['Page','Knight','Queen','King']){
@@ -550,7 +557,7 @@ function computeScore(cards){
   if(rel.includes('mirror_shard')){const rc={};cards.forEach(c=>{const r=c.rank||String(c.num);rc[r]=(rc[r]||0)+1;});const pairs=Object.values(rc).filter(v=>v>=2).reduce((s,v)=>s+Math.floor(v/2),0);if(pairs){m.push(['Mirror Shard',0,pairs,'add']);mult+=pairs;}}
   if(rel.includes('cups_overflow')&&cards.length===5){const suits=cards.map(c=>c.suit).filter(Boolean);if(suits.length===5&&new Set(suits).size===1){m.push(["Cup's Overflow",0,2,'add']);mult+=2;}}
   if(rel.includes('court_favor')){const n=cards.filter(c=>['Page','Knight','Queen','King'].includes(c.rank)).length;if(n){m.push(['Court Favor',0,n,'add']);mult+=n;}}
-  if(rel.includes('arcana_codex')){const scoringKeys=['rank','rank_mult','sequence','seq_mult','flush_chips','flush_mult','court_chips','court_mult','path_chips','path_mult'];const n=scoringKeys.filter(k=>(persist.up[k]||0)>0).length;if(n){m.push(['Arcana Codex',0,+(n*0.1).toFixed(2),'add']);mult+=n*0.1;}}
+  if(rel.includes('arcana_codex')){const scoringKeys=['rank','rank_mult','sequence','seq_mult','flush_chips','flush_mult','court_chips','court_mult','path_chips','path_mult','omen','resonance'];const n=scoringKeys.filter(k=>(persist.up[k]||0)>0).length;if(n){m.push(['Arcana Codex',0,+(n*0.1).toFixed(2),'add']);mult+=n*0.1;}}
   if(rel.includes('hanged_coin')&&state.discardedCards&&state.discardedCards.length){const bonus=Math.floor(state.discardedCards.reduce((s,c)=>s+c.points,0)/2);if(bonus){m.push(["Hanged Man's Coin",bonus,0]);chips+=bonus;}}
   const COURT_RANKS=['Page','Knight','Queen','King'];
   if(rel.includes('silver_chalice')){const n=cards.filter(c=>c.suit==='Cups').length;if(n){m.push(['Silver Chalice',n*4,0]);chips+=n*4;}}
@@ -707,7 +714,22 @@ function discardSelected(){
   if(free){state.freeDiscardUsed=true;}else{state.discards--;}
   resolveAbility(c.ability,()=>{render();checkEnd()},c);
 }
-function resolveAbility(ab,done,sourceCard=null){if(ab==='DRAW_1'){drawN(1);done()}else if(ab==='DRAW_2'){drawN(2);done()}else if(ab==='DRAW_3'){drawN(3);done()}else if(ab==='PEEK_3')peek(3,done);else if(ab==='PEEK_5')peek(5,done);else if(ab==='SEARCH')search(done);else if(ab==='NEIGHBOR_2')relation('Neighbor','Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers, court ranks in the same suit, or King from an Ace.',neighbor,2+(persist.up.neighbor||0),done);else if(ab==='KIN_2')relation('Kin','Choose an anchor card. Kin finds cards of the same Arcana.',kin,2+(persist.up.kin||0),done);else if(ab==='MIRROR_1')relation('Mirror','Choose a card. Take the card opposite it across centerline of its Arcana.',mirror,1+(persist.up.mirror||0),done);else if(ab==='BETWEEN_2')betweenAbility(done,sourceCard);else if(ab==='WORLD'){state.deck.push(...state.discard.splice(0));shuffle(state.deck);drawN(2);done()}else done()}
+function resolveAbility(ab,done,sourceCard=null){
+  const lens=persist.up.lens_mastery||0;
+  const rd=persist.up.ritual_depth||0;
+  if(ab==='DRAW_1'){drawN(1+rd);done()}
+  else if(ab==='DRAW_2'){drawN(2+rd);done()}
+  else if(ab==='DRAW_3'){drawN(3+rd);done()}
+  else if(ab==='PEEK_3')peek(3+lens,done);
+  else if(ab==='PEEK_5')peek(5+lens,done);
+  else if(ab==='SEARCH')search(done);
+  else if(ab==='NEIGHBOR_2')relation('Neighbor','Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers or court ranks in the same suit.',neighbor,2+lens,done);
+  else if(ab==='KIN_2')relation('Kin','Choose an anchor card. Kin finds cards of the same Arcana.',kin,2+lens,done);
+  else if(ab==='MIRROR_1')relation('Mirror','Choose a card. Take the card opposite it across centerline of its Arcana.',mirror,1+lens,done);
+  else if(ab==='BETWEEN_2')betweenAbility(done,sourceCard);
+  else if(ab==='WORLD'){state.deck.push(...state.discard.splice(0));shuffle(state.deck);drawN(2+rd);done()}
+  else done()
+}
 function peek(n,done){state.busy=true;let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){state.busy=false;done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{state.hand.push(p);cards.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));state.busy=false;done()})}
 function search(done){state.busy=true;if(!state.deck.length){state.busy=false;done();return}choice('Search deck','Pick any card. The deck reshuffles.',sortCards(state.deck),p=>{let i=state.deck.findIndex(c=>c.uid===p.uid);if(i>=0)state.deck.splice(i,1);state.hand.push(p);shuffle(state.deck);state.busy=false;done()})}
 function inPlay(){return[...state.hand,...state.spread.filter(Boolean)]}
@@ -801,7 +823,7 @@ function betweenAbility(done,sourceCard=null){
   };
 
   selectFromHand('Between','Choose 2 cards to draw between. Valid cards are highlighted.',validAnchors,2,(a,b)=>{
-    const n=2+(persist.up.between||0);
+    const n=2+(persist.up.lens_mastery||0);
     const found=sortCards(shuffle(uniqueCards([...betweenPool(a,b)])).slice(0,n));
     if(!found.length){fallbackAbility(done,'Between — no cards found');return}
 
@@ -856,16 +878,18 @@ function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;wa
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
 function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards),total=res.finalScore,pass=total>=TH[state.th];let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+TH[state.th]+' Cleared':'Below Threshold '+TH[state.th]}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){res.melds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){const miserBonus=persist.relics.includes('miser')?5:0;const threshold=TH[state.th];const worldCarry=persist.relics.includes('the_world')?Math.floor((total-threshold)*0.1):0;state.worldCarry=worldCarry||0;state.pendingPool=(state.pendingPool||0)+total+miserBonus;state.th++;html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render()}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML=''}
-function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(7),400)}}function endSession(){showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Session Ends</h3></div><div class="rscore"><span class="rsf">${persist.pool}</span></div><span class="rverdict pass">Final Reserve</span><div class="rbtns"><button class="btn-gold" onclick="resetSession()">Begin Again</button></div></div>`)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;startReading()}
+function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(7),400)}}function endSession(){showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Session Ends</h3></div><div class="rscore"><span class="rsf">${persist.pool}</span></div><span class="rverdict pass">Final Reserve</span><div class="rbtns"><button class="btn-gold" onclick="resetSession()">Begin Again</button></div></div>`)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;startReading()}
 // [name, desc, baseCost, scale, icon, category, pairedKey?]
 const SHOP={
   discards:   ['Extra Discard',   '+1 Discard each reading',                                                                                                              15,1.75,'🃏','utility'],
   hand:       ['Wider Hand',      '+1 starting hand size',                                                                                                                40,2,   '✋','utility'],
-  mulligan:   ['Mulligan',        'Redraw your starting hand once per reading',                                                                                           20,1.75,'🔄','utility'],
-  neighbor:   ['Neighbor Lens',   'Neighbor reveals +1 extra card',                                                                                                       30,1.8, '🔭','utility'],
-  kin:        ['Kin Lens',        'Kin reveals +1 extra card',                                                                                                            30,1.8, '🧬','utility'],
-  mirror:     ['Mirror Lens',     'Mirror reveals +1 extra card',                                                                                                         35,2,   '🪞','utility'],
-  between:    ['Between Lens',    'Between reveals +1 extra card',                                                                                                        35,2,   '⚖️','utility'],
+  mulligan:    ['Mulligan',        '+1 Mulligan charge per reading',                                                                                                      20,1.75,'🔄','utility'],
+  lens_mastery:['Lens Mastery',   'All abilities reveal +1 extra card',                                                                                                  30,1.8, '🔭','utility'],
+  offering:    ['Offering',       'Gain +5 Reserve at the start of each reading',                                                                                        22,1.7, '🕯','utility'],
+  ritual_depth:['Ritual Depth',   'Whenever an ability draws cards, draw +1 extra',                                                                                      28,1.8, '🧬','utility'],
+  deep_current:['Deep Current',   'Draw +1 card at the start of each reading',                                                                                           25,1.75,'🌊','utility'],
+  omen:        ['Omen',           'All spread cards gain +1 base Chips',                                                                                                 24,1.8, '⚜','utility'],
+  resonance:   ['Resonance',      'Each Major Arcana in the spread contributes +3 extra Chips',                                                                          26,1.8, '🌙','utility'],
   rank:       ['Rank of a Kind',  'Three/Four of a Rank gain <span class="up-chips">+5 Chips</span> and <span class="up-mult">+0.25 Mult</span>',                        26,1.8, '⚜','scoring','rank_mult'],
   sequence:   ['Sequence',        'All Sequences gain <span class="up-chips">+5 Chips</span> and <span class="up-mult">+0.5 Mult</span>',                                30,1.85,'🌙','scoring','seq_mult'],
   flush_chips:['Flush',           'Flush &amp; Royal Court gain <span class="up-chips">+8 Chips</span> and <span class="up-mult">+0.25 Mult</span>',                     24,1.8, '🌊','scoring','flush_mult'],
@@ -879,7 +903,7 @@ const PACKS={
   instrument:{name:'Powerup Pack',desc:'Choose a powerup that changes how you play.',icon:'isp-abilities',cost:15,pool:'utility'},
   relic:{name:'Relic Pack',desc:'Choose a relic to carry through your session.',icon:'isp-reshuffle',cost:28},
 };
-const SHOP_ICON={discards:'isp-disc',hand:'isp-draw',mulligan:'isp-reshuffle',neighbor:'isp-neighbor',kin:'isp-kin',mirror:'isp-mirror',between:'isp-between',rank:'isp-scoring',sequence:'isp-scoring',flush_chips:'isp-scoring',court_chips:'isp-kin',path_chips:'isp-scoring',relicSlot:'isp-abilities'};
+const SHOP_ICON={discards:'isp-disc',hand:'isp-draw',mulligan:'isp-reshuffle',lens_mastery:'isp-peek',offering:'isp-scoring',ritual_depth:'isp-kin',deep_current:'isp-draw',omen:'isp-scoring',resonance:'isp-scoring',rank:'isp-scoring',sequence:'isp-scoring',flush_chips:'isp-scoring',court_chips:'isp-kin',path_chips:'isp-scoring',relicSlot:'isp-abilities'};
 const RELICS={
   gilded_fool:    {name:'The Gilded Fool',      desc:'The first card in the spread each reading gains +10 Chips.',                             rarity:'common',icon:'🃏'},
   hermit_lantern: {name:"Hermit's Lantern",     desc:'Each Major Arcana in the spread adds +0.25 Mult when scoring.',                         rarity:'common',icon:'🔦'},
@@ -1198,7 +1222,7 @@ function watcherPick(uid){
   $('#modal').classList.remove('show');
   render();
 }
-function mulligan(){if(state.busy||!hasMull()||state.mull||!state.spread.every(x=>!x)||state.hand.length!==maxHand())return;state.deck.push(...state.hand.splice(0));drawTo(maxHand());state.mull=true;state.selected=null;snapCounter(state.carry);render()}
+function mulligan(){if(state.busy||!hasMull()||!(state.mullCharges>0)||!state.spread.every(x=>!x)||state.hand.length!==maxHand())return;state.deck.push(...state.hand.splice(0));drawTo(maxHand());state.mullCharges--;state.selected=null;snapCounter(state.carry);render()}
 function closeRefs(){ $('#ref').classList.add('hidden'); $('#abilityRef').classList.add('hidden') }
 function renderScoringSheet(){
   const u=persist.up;
