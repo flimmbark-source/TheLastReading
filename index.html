@@ -316,9 +316,48 @@
 .relic-art{display:flex;align-items:center;justify-content:center;height:64px;background:transparent}.relic-art-sprite{width:64px;height:64px;image-rendering:pixelated}
 @media(max-width:640px){.tarot-shop{width:calc(100vw - 20px);padding:20px 16px 18px!important;background-image:url("Pack_Background_Mobile.png")}.shop-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header p{font-size:10px;margin:8px 0 0}.shop-packs-row{gap:8px;flex-wrap:nowrap;justify-content:center}.shop-pack{flex:1;min-width:0;min-height:230px}.shop-pack-banner{min-height:74px;font-size:36px}.shop-items-row{gap:8px}.upg-card{width:110px}.upg-art{height:66px;font-size:30px}.upg-title-strip span{font-size:6.5px}.result-panel{padding:16px 16px 20px}.rscore .rsc,.rscore .rsm{font-size:22px}.rscore .rsf{font-size:32px}}
 .meld-announce{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);font:900 28px Georgia,serif;color:#ffd978;text-shadow:0 0 18px rgba(255,200,80,.7),0 2px 8px rgba(0,0,0,.9);letter-spacing:.06em;text-align:center;white-space:nowrap;pointer-events:none;z-index:200;animation:meld-announce 1.8s forwards}.meld-announce.rare{color:#ffb36b;text-shadow:0 0 22px rgba(255,160,60,.8),0 2px 8px rgba(0,0,0,.9)}@keyframes meld-announce{0%{opacity:0;transform:translate(-50%,-50%) scale(.55)}14%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}28%{opacity:1;transform:translate(-50%,-50%) scale(1)}75%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-68%) scale(.9)}}
+/* ── Inventory Panel ── */
+:root{--inv-h:300px}
+#invWrap{position:fixed;top:0;left:0;right:0;z-index:150;transform:translateY(calc(-1 * var(--inv-h)));transition:transform .38s cubic-bezier(.4,0,.2,1);pointer-events:none}
+#invWrap.open{transform:translateY(0);pointer-events:auto}
+#invDesk{height:var(--inv-h);background:linear-gradient(180deg,#0e0704 0%,#1c1008 55%,#150d06 100%);border-bottom:2px solid #6a4c24;position:relative;overflow:hidden;pointer-events:auto}
+#invDesk::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 110%,rgba(90,45,5,.35),transparent 65%);pointer-events:none;z-index:0}
+#invDesk::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px),repeating-linear-gradient(0deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px);pointer-events:none;z-index:0}
+#invTab{display:block;width:80px;height:28px;margin:0 auto;background:linear-gradient(180deg,#2e1e0e,#1e1208);border:1px solid #6a4c24;border-top:none;border-radius:0 0 10px 10px;cursor:pointer;color:#a07838;font-size:10px;font-weight:700;letter-spacing:.07em;text-align:center;line-height:28px;pointer-events:auto;transition:background .15s,color .15s,box-shadow .15s;padding:0;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.5)}
+#invTab:hover{background:linear-gradient(180deg,#3e2814,#281810);color:#ffd978;box-shadow:0 4px 14px rgba(0,0,0,.6)}
+.inv-item{position:absolute;cursor:grab;user-select:none;touch-action:none;z-index:1;transition:box-shadow .12s}
+.inv-item:active{cursor:grabbing}
+.inv-item-paper{width:84px;background:linear-gradient(160deg,#ede2be,#d6c488);border:1px solid #9c7c30;border-radius:2px;padding:8px 7px 8px;box-shadow:2px 5px 14px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.28);display:flex;flex-direction:column;align-items:center;gap:5px;position:relative}
+.inv-item-paper::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 14px,rgba(100,60,10,.07) 14px,rgba(100,60,10,.07) 15px);pointer-events:none;border-radius:2px}
+.inv-item.named .inv-item-paper{box-shadow:2px 5px 14px rgba(0,0,0,.65),0 0 0 2px rgba(212,164,48,.9),0 0 18px rgba(212,164,48,.45),inset 0 1px 0 rgba(255,255,255,.28)}
+.inv-item-emoji{font-size:26px;line-height:1;pointer-events:none;display:block;text-align:center;position:relative;z-index:1}
+.inv-item-type{font-size:6.5px;letter-spacing:.11em;text-transform:uppercase;color:#7a5018;text-align:center;pointer-events:none;line-height:1.2;position:relative;z-index:1}
+.inv-item-name{font-size:7.5px;font-weight:700;text-align:center;color:#3a1a06;line-height:1.3;font-family:Georgia,serif;pointer-events:none;display:none;position:relative;z-index:1}
+.inv-item.named .inv-item-name{display:block}
+.inv-detail-bg{position:fixed;inset:0;z-index:9995;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:20px}
+.inv-detail-box{background:linear-gradient(160deg,#f4eac8,#dece94);border:2px solid #9a7830;border-radius:6px;max-width:min(88vw,460px);width:100%;padding:22px 24px 26px;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.3)}
+.inv-detail-close{position:absolute;top:8px;right:10px;background:transparent;border:none;font-size:18px;color:#8a5820;cursor:pointer;line-height:1;padding:4px 6px;font-weight:700}
+.inv-detail-close:hover{color:#2a1a06}
+.inv-detail-type{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#9a6820;margin-bottom:4px;font-family:system-ui,sans-serif}
+.inv-detail-title{font:700 17px Georgia,serif;color:#2a1006;margin:0 0 12px;line-height:1.2}
+.inv-detail-content{font-size:13px;line-height:1.65;color:#3a2010;font-family:Georgia,serif}
+.inv-detail-content p{margin:0 0 10px}
+.inv-detail-content p:last-child{margin-bottom:0}
+@media(max-width:640px){:root{--inv-h:250px}.inv-item-paper{width:72px;padding:6px 5px 6px}.inv-item-emoji{font-size:21px}}
+/* ── Resonation Glows — warm amber pulse, distinct visual language from hint system ── */
+@keyframes res-breathe-1{0%,100%{box-shadow:0 0 0 1px rgba(255,200,70,.28),0 0 10px rgba(255,175,30,.18),inset 0 0 6px rgba(255,180,40,.04)}50%{box-shadow:0 0 0 1px rgba(255,215,90,.55),0 0 20px rgba(255,190,40,.32),inset 0 0 10px rgba(255,190,40,.08)}}
+@keyframes res-breathe-2{0%,100%{box-shadow:0 0 0 2px rgba(255,205,60,.55),0 0 22px rgba(255,180,30,.45),0 0 44px rgba(255,155,10,.18),inset 0 0 10px rgba(255,185,30,.08)}50%{box-shadow:0 0 0 2px rgba(255,230,90,.92),0 0 36px rgba(255,205,50,.72),0 0 68px rgba(255,175,20,.32),inset 0 0 18px rgba(255,200,40,.14)}}
+@keyframes res-breathe-3{0%,100%{box-shadow:0 0 0 2px rgba(255,225,80,.75),0 0 34px rgba(255,210,55,.72),0 0 70px rgba(255,185,25,.5),0 0 110px rgba(255,155,10,.26),inset 0 0 18px rgba(255,210,50,.12);border-color:rgba(255,225,80,.82)!important;background:rgba(255,195,50,.05)!important}50%{box-shadow:0 0 0 3px rgba(255,245,130,1),0 0 50px rgba(255,230,80,.92),0 0 100px rgba(255,200,40,.68),0 0 160px rgba(255,170,15,.38),inset 0 0 30px rgba(255,220,60,.2);border-color:rgba(255,245,130,1)!important;background:rgba(255,210,60,.1)!important}}
+.slot.res-1{animation:res-breathe-1 2.6s ease-in-out infinite!important;border-color:rgba(255,200,70,.45)!important}
+.slot.res-2{animation:res-breathe-2 1.9s ease-in-out infinite!important;border-color:rgba(255,215,65,.72)!important}
+.slot.res-3{animation:res-breathe-3 1.5s ease-in-out infinite!important}
 </style>
 </head>
 <body>
+<div id="invWrap">
+  <div id="invDesk"></div>
+  <button id="invTab" onclick="toggleInventory()">&#9660; Archives</button>
+</div>
 <h1>The Last Reading</h1>
 <div class="bar"></div>
 <div id="relicRack" class="relic-rack"></div>
@@ -409,7 +448,7 @@ function drawN(n){for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.leng
 function startReading(){
   state.deck=shuffle(buildDeck());state.hand=[];state.discard=[];state.spread=Array(5).fill(null);
   state.selected=null;state.purgeSelect=null;state.discards=maxDiscards();state.mullCharges=maxMull();
-  state.freeDiscardUsed=false;state.discardedCards=[];
+  state.freeDiscardUsed=false;state.discardedCards=[];state.resonationTriggeredThisReading={};
   if(persist.up.offering){persist.pool+=(persist.up.offering*5);render();}
   const extra=(persist.relics.includes('threadbare_tarot')?1:0)+(persist.up.deep_current||0);
   drawTo(maxHand()+extra);
@@ -450,6 +489,7 @@ function render(){
     spFrag.appendChild(s);
   }
   sp.replaceChildren(spFrag);
+  applyResonationGlows(state.spread);
 
   const h=$('#hand');
   const hFrag=document.createDocumentFragment();
@@ -511,7 +551,7 @@ function refreshHandState(){
   $('#discardBtn').disabled=state.selected===null||state.discards<=0||inPurge;
   $('#purgeBtn').disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
 }
-function computeScore(cards){
+function computeScore(cards,spreadArr=null){
   const omenBonus=(persist.up.omen||0);
   const resonanceBonus=(persist.up.resonance||0)*3;
   const omenTotal=omenBonus*cards.length;
@@ -572,6 +612,8 @@ function computeScore(cards){
   if(rel.includes('strengths_grip')){const n=cards.filter(c=>COURT_RANKS.includes(c.rank)).length;if(n>=3){m.push(['Strength',0,3,'add']);mult+=3;}}
   if(rel.includes('fool_reversed')){const bonus=cards.length*3;if(bonus){m.push(['The Fool Reversed',bonus,0]);chips+=bonus;}}
   if(rel.includes('the_world')&&state.worldCarry){m.push(['The World',state.worldCarry,0]);chips+=state.worldCarry;}
+  // Resonation bonuses — only applied when scoring the final spread (spreadArr provided)
+  if(spreadArr){for(const{res,level}of checkResonationState(spreadArr)){if(level===res.conditions.length){m.push(['⚷ '+res.name,res.chips,res.mult]);chips+=res.chips;mult*=res.mult;}}}
   return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}
 }
 function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';if(chips&&mult)return`+${chips} ×${mult}`;if(chips)return`+${chips}`;if(mult)return additive?`+${mult} Mult`:`×${mult}`;return'';}
@@ -687,7 +729,7 @@ function applyHint(el,card,poolCards=null){
   el.dataset.hint=hints.map(h=>h.label).join(' + ');
 }
 function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=computeScore([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
-function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let before=new Set(computeScore(state.spread.filter(Boolean)).melds.map(x=>x[0]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.filter(x=>!before.has(x[0]));let delay=420;let announceOffset=0;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;setTimeout(()=>ghost(anchor,meldStr(m),true),ghostDelay);setTimeout(()=>centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5),delay+announceOffset);holdEffects(ghostDelay+1700);delay+=slots.length*130+700;announceOffset+=600;});setCounterTarget(after.finalScore);checkEnd()}
+function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let before=new Set(computeScore(state.spread.filter(Boolean)).melds.map(x=>x[0]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.filter(x=>!before.has(x[0]));let delay=420;let announceOffset=0;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;setTimeout(()=>ghost(anchor,meldStr(m),true),ghostDelay);setTimeout(()=>centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5),delay+announceOffset);holdEffects(ghostDelay+1700);delay+=slots.length*130+700;announceOffset+=600;});setCounterTarget(after.finalScore);setTimeout(()=>checkResonationTriggers(),750);checkEnd()}
 let effectsUntil=0;
 function holdEffects(ms){effectsUntil=Math.max(effectsUntil,Date.now()+ms)}
 function ghost(i,t,big=false){let s=document.querySelectorAll('.slot')[i];if(!s)return;holdEffects(1700);let g=document.createElement('div');g.className='ghost '+(big?'big':'');g.textContent=t;s.appendChild(g);setTimeout(()=>g.remove(),1700)}
@@ -878,7 +920,7 @@ function choice(title,prompt,cards,cb){$('#modalTitle').textContent=title;$('#mo
 function toggleModalCollapse(){let m=$('#modal');if(!m.classList.contains('show'))return;m.classList.toggle('collapsed');$('#modalToggle').textContent=m.classList.contains('collapsed')?'Show':'Hide'}
 function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;waitForCounterThenScore()}
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
-function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards),total=res.finalScore,pass=total>=TH[state.th];let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+TH[state.th]+' Cleared':'Below Threshold '+TH[state.th]}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){res.melds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){const miserBonus=persist.relics.includes('miser')?5:0;const threshold=TH[state.th];const worldCarry=persist.relics.includes('the_world')?Math.floor((total-threshold)*0.1):0;state.worldCarry=worldCarry||0;state.pendingPool=(state.pendingPool||0)+total+miserBonus;state.th++;html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render()}
+function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards,state.spread),total=res.finalScore,pass=total>=TH[state.th];let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+TH[state.th]+' Cleared':'Below Threshold '+TH[state.th]}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){res.melds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){const miserBonus=persist.relics.includes('miser')?5:0;const threshold=TH[state.th];const worldCarry=persist.relics.includes('the_world')?Math.floor((total-threshold)*0.1):0;state.worldCarry=worldCarry||0;state.pendingPool=(state.pendingPool||0)+total+miserBonus;state.th++;html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render()}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML=''}
 function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(7),400)}}function endSession(){showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Session Ends</h3></div><div class="rscore"><span class="rsf">${persist.pool}</span></div><span class="rverdict pass">Final Reserve</span><div class="rbtns"><button class="btn-gold" onclick="resetSession()">Begin Again</button></div></div>`)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;startReading()}
 // [name, desc, baseCost, scale, icon, category, pairedKey?]
@@ -1285,7 +1327,7 @@ document.addEventListener('click',e=>{
   if(!insideRefs)closeRefs();
   if(!e.target.closest('.relic-btn')){document.querySelectorAll('.relic-callout').forEach(el=>el.remove());_openRelicKey=null;}
 
-  let interactive=e.target.closest('.card,.slot,button,.modal,.ref,.ability-prompt,.score-preview,.score-stack,.bar,.actions');
+  let interactive=e.target.closest('.card,.slot,button,.modal,.ref,.ability-prompt,.score-preview,.score-stack,.bar,.actions,#invWrap,.inv-detail-bg');
   if(state.selected!==null&&!state.abilitySelect&&!interactive){
     state.selected=null;
     refreshHandState();
@@ -1350,6 +1392,179 @@ function posTutTip(target,arrowDir){
   arrow.style.transform='translateX(-50%)';
 }
 document.addEventListener('click',()=>tutNext());
+// ── Resonation System ──
+// Slot zones (0-indexed): Past=[0,1], Present=[2], Future=[3,4]
+const RES_ZONES={past:[0,1],present:[2],future:[3,4]};
+const RESONATIONS=[
+  {
+    id:'sophias_fall',
+    name:"Sophia's Fall",
+    conditions:[
+      {cardId:'major_2', zone:'past'},    // II High Priestess — keeper of hidden knowledge
+      {cardId:'major_17',zone:'present'}, // XVII The Star — persistent hope in the now
+      {cardId:'major_18',zone:'future'},  // XVIII The Moon — threshold between worlds
+    ],
+    fragmentId:'frag_sophias_fall_1',
+    chips:25,
+    mult:2,
+  },
+];
+// Fragment definitions — unlocked by resonation triggers
+const INV_FRAGMENTS={
+  frag_sophias_fall_1:{
+    id:'frag_sophias_fall_1',
+    type:'Handwritten Note',
+    title:"She Signs It 'S'",
+    emoji:'🖋️',
+    content:'<p>The paper is thin, almost translucent. Written in a careful, deliberate hand — though the letters grow unsteady toward the end, as if interrupted.</p><p style="font-style:italic">"The cards speak if you know how to arrange them. Not the meanings — those are for the books. I mean the <em>positions</em>. What came before, what persists, what is becoming. She knew this. She showed me once, years before any of this. I was not ready to understand what she was describing."</p><p style="font-size:11px;color:#7a4a18;margin-top:4px">— unsigned, recovered from the reading room</p>',
+  },
+};
+function getUnlockedFragments(){try{return JSON.parse(localStorage.getItem('tlr_inv_unlocked')||'[]')}catch(e){return[]}}
+function checkResonationState(spread){
+  return RESONATIONS.map(res=>{
+    let level=0;const matchedSlots=[];
+    for(const cond of res.conditions){
+      const slots=RES_ZONES[cond.zone];
+      for(const si of slots){
+        const card=spread[si];
+        if(card&&card.id===cond.cardId){level++;matchedSlots.push(si);break}
+      }
+    }
+    return{res,level,matchedSlots};
+  });
+}
+function applyResonationGlows(spread){
+  const slots=document.querySelectorAll('.slot');
+  slots.forEach(s=>s.classList.remove('res-1','res-2','res-3'));
+  for(const{res,level,matchedSlots} of checkResonationState(spread)){
+    if(!level)continue;
+    for(const si of matchedSlots){
+      if(slots[si])slots[si].classList.add('res-'+level);
+    }
+  }
+}
+function checkResonationTriggers(){
+  for(const res of RESONATIONS){
+    const key='res_'+res.id;
+    if(state.resonationTriggeredThisReading&&state.resonationTriggeredThisReading[key])continue;
+    const rs=checkResonationState(state.spread).find(r=>r.res.id===res.id);
+    if(rs&&rs.level===res.conditions.length){
+      if(!state.resonationTriggeredThisReading)state.resonationTriggeredThisReading={};
+      state.resonationTriggeredThisReading[key]=true;
+      triggerResonation(res);
+    }
+  }
+}
+function triggerResonation(res){
+  const alreadyUnlocked=getUnlockedFragments().includes(res.fragmentId);
+  if(!alreadyUnlocked&&INV_FRAGMENTS[res.fragmentId]){
+    const unlocked=getUnlockedFragments();
+    unlocked.push(res.fragmentId);
+    try{localStorage.setItem('tlr_inv_unlocked',JSON.stringify(unlocked))}catch(e){}
+    renderInventory();
+    setTimeout(()=>{
+      showToast('Something stirs in the Archives…',4200);
+      setTimeout(()=>{if(!invOpen)toggleInventory()},1400);
+    },500);
+  }
+}
+
+// ── Inventory / Archives System ──
+const INV_ITEMS=[
+  {
+    id:'clipping_01',
+    type:'Newspaper Clipping',
+    title:'Strange Obituary',
+    emoji:'📰',
+    content:'<p>Found in the back pages of the <em>Hollow Creek Gazette</em>, dated three years ago. The body of a woman — identified only as "S." — was discovered in the upper rooms of 14 Morrow Lane.</p><p style="font-style:italic;margin-top:10px">"...investigators noted an unusual arrangement on the table. Five positions. Only three cards remained face-up: a veiled figure, a star reflected in still water, and a pale crescent hanging low. The other two positions were empty. No explanation was offered for why the remaining cards had been removed."</p><p style="margin-top:10px;font-size:11px;color:#7a4a18">The clipping ends here. The rest of the column has been torn away.</p>',
+  },
+  {
+    id:'letter_01',
+    type:'Correspondence',
+    title:'Unsigned Letter',
+    emoji:'✉️',
+    content:'<p>The ink is smeared in places, as though written in haste or fear. No return address. The paper smells faintly of wax and something older.</p><p style="font-style:italic;margin-top:10px">"She told me the positions matter more than the cards themselves. What came before belongs on the left. What persists goes in the center — that is the only position that cannot lie. What is becoming faces right.</p><p style="font-style:italic">"You will know the three when you see them together. The Veil, the fixed light, the doorway between. She placed them exactly once, in front of me, and I did not understand what I was watching."</p><p style="margin-top:10px;font-size:11px;color:#7a4a18">Unsigned. The signature space is blank.</p>',
+  },
+  {
+    id:'photo_01',
+    type:'Photograph',
+    title:'The Reading Room',
+    emoji:'🖼️',
+    content:'<p>A sepia-toned photograph, slightly water-damaged along the left edge. A table. Five marked positions — two on the left, one in the center, two on the right. Three cards are visible, though the image is too dark to read them clearly.</p><p style="margin-top:10px">What can be made out: the leftmost visible card shows a seated figure with a veil. The center card shows a night sky. The rightmost shows a crescent or low arc of some kind.</p><p style="font-style:italic;margin-top:10px">Written on the back in pencil: <em>"She laid it once. I watched. It worked. Only one of us understood what that meant."</em></p>',
+  },
+];
+let invOpen=false;
+let invPos=JSON.parse(localStorage.getItem('tlr_inv_pos')||'{}');
+function _saveInvPos(){try{localStorage.setItem('tlr_inv_pos',JSON.stringify(invPos))}catch(e){}}
+function toggleInventory(e){
+  if(e)e.stopPropagation();
+  invOpen=!invOpen;
+  document.getElementById('invWrap').classList.toggle('open',invOpen);
+  document.getElementById('invTab').innerHTML=invOpen?'&#9650; Archives':'&#9660; Archives';
+}
+function renderInventory(){
+  const desk=document.getElementById('invDesk');
+  if(!desk)return;
+  desk.innerHTML='';
+  const allItems=[...INV_ITEMS,...getUnlockedFragments().map(id=>INV_FRAGMENTS[id]).filter(Boolean)];
+  allItems.forEach((item,idx)=>{
+    let pos=invPos[item.id];
+    if(!pos){
+      const rot=(Math.random()*20-10);
+      pos={x:20+idx*106,y:18,rot,named:false};
+      invPos[item.id]=pos;
+      _saveInvPos();
+    }
+    const el=document.createElement('div');
+    el.className='inv-item'+(pos.named?' named':'');
+    el.dataset.invId=item.id;
+    el.style.cssText='left:'+pos.x+'px;top:'+pos.y+'px;transform:rotate('+pos.rot+'deg)';
+    el.innerHTML='<div class="inv-item-paper"><span class="inv-item-emoji">'+item.emoji+'</span><span class="inv-item-type">'+item.type+'</span><span class="inv-item-name">'+item.title+'</span></div>';
+    let psx,psy,esx,esy,moved=false,active=false;
+    el.addEventListener('pointerdown',e=>{
+      e.stopPropagation();
+      el.setPointerCapture(e.pointerId);
+      psx=e.clientX;psy=e.clientY;
+      esx=parseFloat(el.style.left)||0;esy=parseFloat(el.style.top)||0;
+      moved=false;active=true;el.style.zIndex=50;
+    });
+    el.addEventListener('pointermove',e=>{
+      if(!active)return;
+      const dx=e.clientX-psx,dy=e.clientY-psy;
+      if(Math.abs(dx)>5||Math.abs(dy)>5)moved=true;
+      if(!moved)return;
+      el.style.left=(esx+dx)+'px';el.style.top=(esy+dy)+'px';
+    });
+    el.addEventListener('pointerup',e=>{
+      if(!active)return;
+      active=false;el.style.zIndex='';
+      const nx=parseFloat(el.style.left)||0,ny=parseFloat(el.style.top)||0;
+      invPos[item.id]={...invPos[item.id],x:nx,y:ny};
+      _saveInvPos();
+      if(!moved){
+        if(el.classList.contains('named')){
+          openInvDetail(item);
+        } else {
+          el.classList.add('named');
+          invPos[item.id].named=true;
+          _saveInvPos();
+        }
+      }
+      moved=false;
+    });
+    desk.appendChild(el);
+  });
+}
+function openInvDetail(item){
+  document.querySelectorAll('.inv-detail-bg').forEach(e=>e.remove());
+  const bg=document.createElement('div');
+  bg.className='inv-detail-bg';
+  bg.innerHTML='<div class="inv-detail-box"><button class="inv-detail-close" onclick="this.closest(\'.inv-detail-bg\').remove()">&#x2715;</button><div class="inv-detail-type">'+item.type+'</div><h2 class="inv-detail-title">'+item.title+'</h2><div class="inv-detail-content">'+item.content+'</div></div>';
+  bg.addEventListener('click',e=>{if(e.target===bg)bg.remove()});
+  document.body.appendChild(bg);
+}
+setTimeout(renderInventory,0);
+
 startReading();
 if(!tutDone)setTimeout(()=>tutShow(0),400);
 </script>
