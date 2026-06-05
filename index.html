@@ -523,7 +523,8 @@ function render(){
       if(ability){handleAbilityHandClick(c);return}
       if(inPurge){togglePurgeCard(c.uid);return}
       if(state.busy)return;
-      state.selected=selectedId===c.uid?null:c.uid;
+      if(state.selected===c.uid){expandCard(e);return;}
+      state.selected=c.uid;
       refreshHandState();
     };
     hFrag.appendChild(e);
