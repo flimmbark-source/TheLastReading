@@ -1604,7 +1604,13 @@ function renderInventory(){
       const dx=e.clientX-psx,dy=e.clientY-psy;
       if(Math.hypot(dx,dy)>12)moved=true;
       if(!moved)return;
-      el.style.left=(esx+dx)+'px';el.style.top=(esy+dy)+'px';
+      const desk=document.getElementById('invDesk');
+      const dw=desk?desk.clientWidth:window.innerWidth;
+      const dh=desk?desk.clientHeight:300;
+      const iw=el.offsetWidth||84,ih=el.offsetHeight||100;
+      const margin=24;
+      el.style.left=Math.max(-iw+margin,Math.min(dw-margin,esx+dx))+'px';
+      el.style.top=Math.max(0,Math.min(dh-margin,esy+dy))+'px';
     });
     el.addEventListener('pointerup',e=>{
       if(!active)return;
