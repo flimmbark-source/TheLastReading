@@ -451,7 +451,7 @@ function drawN(n){for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.leng
 function startReading(){
   state.deck=shuffle(buildDeck());state.hand=[];state.discard=[];state.spread=Array(5).fill(null);
   state.selected=null;state.purgeSelect=null;state.discards=maxDiscards();state.mullCharges=maxMull();
-  state.freeDiscardUsed=false;state.discardedCards=[];state.resonationTriggeredThisReading={};_resStateKey=null;
+  state.freeDiscardUsed=false;state.discardedCards=[];state.resonationTriggeredThisReading={};state.resonationBonus={chips:0,mult:0};_resStateKey=null;
   if(persist.up.offering){persist.pool+=(persist.up.offering*5);render();}
   const extra=(persist.relics.includes('threadbare_tarot')?1:0)+(persist.up.deep_current||0);
   drawTo(maxHand()+extra);
@@ -615,8 +615,8 @@ function computeScore(cards,spreadArr=null){
   if(rel.includes('strengths_grip')){const n=cards.filter(c=>COURT_RANKS.includes(c.rank)).length;if(n>=3){m.push(['Strength',0,3,'add']);mult+=3;}}
   if(rel.includes('fool_reversed')){const bonus=cards.length*3;if(bonus){m.push(['The Fool Reversed',bonus,0]);chips+=bonus;}}
   if(rel.includes('the_world')&&state.worldCarry){m.push(['The World',state.worldCarry,0]);chips+=state.worldCarry;}
-  // Resonation bonuses — only applied when scoring the final spread (spreadArr provided)
-  if(spreadArr){for(const{res,level}of checkResonationState(spreadArr)){if(level===res.conditions.length){m.push(['⚷ '+res.name,res.chips,res.mult,'add']);chips+=res.chips;mult+=res.mult;}}}
+  // Resonation bonuses — accumulated in state.resonationBonus as they trigger during play
+  if(state.resonationBonus&&(state.resonationBonus.chips||state.resonationBonus.mult)){const rb=state.resonationBonus;m.push(['⚷ '+(rb.name||'Resonation'),rb.chips,rb.mult,'add']);chips+=rb.chips;mult+=rb.mult;}
   return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}
 }
 function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';if(chips&&mult)return`+${chips} ×${mult}`;if(chips)return`+${chips}`;if(mult)return additive?`+${mult} Mult`:`×${mult}`;return'';}
@@ -1466,6 +1466,11 @@ function triggerResonation(res){
   centerGhost(res.name,true);
   holdEffects(2000);
   setTimeout(()=>{document.querySelectorAll('.slot.res-2,.slot.res-3').forEach(s=>{s.classList.remove('res-2','res-3');s.classList.add('res-1');});},2100);
+  if(!state.resonationBonus)state.resonationBonus={chips:0,mult:0,name:res.name};
+  state.resonationBonus.chips+=res.chips;
+  state.resonationBonus.mult+=res.mult;
+  state.resonationBonus.name=res.name;
+  setCounterTarget(computeScore(state.spread.filter(Boolean)).finalScore);
   const alreadyUnlocked=getUnlockedFragments().includes(res.fragmentId);
   if(!alreadyUnlocked&&INV_FRAGMENTS[res.fragmentId]){
     const unlocked=getUnlockedFragments();
