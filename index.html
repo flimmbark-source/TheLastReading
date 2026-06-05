@@ -1534,9 +1534,16 @@ function toggleInventory(e){
 function initTabDrag(){
   const tab=document.getElementById('invTab');
   if(!tab)return;
-  // Restore saved position
+  // Restore saved position, or default to 10px right of the h1 title
   const savedX=localStorage.getItem('tlr_tab_x');
-  if(savedX!==null)tab.style.left=Math.max(0,Math.min(window.innerWidth-80,parseFloat(savedX)))+'px';
+  // Ignore the old centered default (near 50% of viewport) so new placement takes effect
+  const midGuard=savedX!==null&&Math.abs(parseFloat(savedX)-(window.innerWidth/2-40))<60;
+  if(savedX!==null&&!midGuard){
+    tab.style.left=Math.max(0,Math.min(window.innerWidth-80,parseFloat(savedX)))+'px';
+  }else{
+    const h1=document.querySelector('h1');
+    if(h1){const r=h1.getBoundingClientRect();tab.style.left=Math.min(window.innerWidth-80,r.right+10)+'px';}
+  }
   let psx,tabStartX,moved=false,active=false;
   tab.addEventListener('pointerdown',e=>{
     e.stopPropagation();
