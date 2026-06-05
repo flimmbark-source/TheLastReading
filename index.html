@@ -577,16 +577,27 @@ function computeScore(cards,spreadArr=null){
   }
   const courtElig=cards.filter(c=>c.type==='court');
   let ranks=new Set(courtElig.map(c=>c.rank));
-  let full=ranks.size>=3;
-  let same=null;
-  if(full)for(const suit of SUITS){let rs=new Set(courtElig.filter(c=>c.suit===suit).map(c=>c.rank));if(rs.size>=3){same=suit;break}}
+  let fullCount=ranks.size; // distinct ranks in spread
+  let same=null,sameCount=0;
+  if(fullCount>=3)for(const suit of SUITS){let rs=new Set(courtElig.filter(c=>c.suit===suit).map(c=>c.rank));if(rs.size>=3){same=suit;sameCount=rs.size;break}}
   let flushChips=(persist.up.flush_chips||0)*8;
   let flushMult=1+(persist.up.flush_mult||0)*0.25;
   let courtChips=(persist.up.court_chips||0)*8;
   let courtMult=1+(persist.up.court_mult||0)*0.25;
   let court=false;
-  if(same){let x=20+flushChips+courtChips;m.push(['Royal Court ('+same+')',x,flushMult]);chips+=x;mult*=flushMult;court=true}
-  else if(full){let x=18+courtChips;m.push(['Full Court',x,courtMult]);chips+=x;mult*=courtMult;court=true}
+  if(same){
+    // Royal Court: 3 same-suit courts = base; each extra rank in that suit adds chips+mult
+    const extra=sameCount-3; // 0, 1
+    const x=Math.round(20+extra*8+flushChips+courtChips);
+    const xm=+(flushMult+(extra*0.25)).toFixed(2);
+    m.push(['Royal Court ('+same+')'+( extra?' ×'+(sameCount):'' ),x,xm]);chips+=x;mult*=xm;court=true;
+  } else if(fullCount>=3){
+    // Full Court: 3 distinct ranks = base; each rank beyond 3 adds chips+mult
+    const extra=Math.min(fullCount-3,1); // cap at 4 ranks for now
+    const x=Math.round(18+extra*6+courtChips);
+    const xm=+(courtMult+(extra*0.25)).toFixed(2);
+    m.push(['Full Court'+(extra?' ×'+fullCount:''),x,xm]);chips+=x;mult*=xm;court=true;
+  }
   const wildKings=persist.relics.includes('buried_king')?cards.filter(c=>c.rank==='King'):[];
   if(!court)for(const suit of SUITS){let suited=cards.filter(c=>c.suit===suit);const wilds=wildKings.filter(c=>c.suit!==suit);if(suited.length+wilds.length>=4){let x=15+flushChips;m.push(['Flush ('+suit+')',x,flushMult]);chips+=x;mult*=flushMult;break;}}
   let nums=[...new Set(cards.filter(c=>c.type==='major').map(c=>c.num))].sort((a,b)=>a-b),best=1,cur=1;
@@ -627,7 +638,7 @@ function computeScore(cards,spreadArr=null){
 }
 function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';if(chips&&mult)return`+${chips} ×${mult}`;if(chips)return`+${chips}`;if(mult)return additive?`+${mult} Mult`:`×${mult}`;return'';}
 function cleanName(c){return c.type==='major'?c.name.split(' ').slice(1).join(' '):c.name}
-function normMeldName(name){if(name.startsWith('Sequence'))return 'Sequence';if(name.startsWith('Flush'))return 'Flush';if(name.startsWith('Royal Court'))return 'Royal Court';if(name.startsWith('Three of a Rank'))return 'Three of a Rank';if(name.startsWith('Four of a Rank'))return 'Four of a Rank';return name}
+function normMeldName(name){if(name.startsWith('Sequence'))return 'Sequence';if(name.startsWith('Flush'))return 'Flush';if(name.startsWith('Royal Court'))return 'Royal Court';if(name.startsWith('Full Court'))return 'Full Court';if(name.startsWith('Three of a Rank'))return 'Three of a Rank';if(name.startsWith('Four of a Rank'))return 'Four of a Rank';return name}
 function hintGroup(label){if(label==='Sequence'||label==='Path of the Magi')return 'hint-major';if(label==='Flush'||label==='Royal Court')return 'hint-suit';if(label==='Three of a Rank'||label==='Four of a Rank')return 'hint-rank';if(label==='Full Court')return 'hint-court';return 'hint-gold'}
 function runLengthContaining(nums,n){let set=new Set(nums),best=0;for(let x of set){if(!set.has(x-1)){let y=x,len=0,has=false;while(set.has(y)){if(y===n)has=true;len++;y++}if(has)best=Math.max(best,len)}}return best}
 function hintRGB(group){
@@ -1307,8 +1318,8 @@ function renderScoringSheet(){
   const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
   const rows=[
     ['Rank Match','Three/Four of a Rank',`+${10+rankBonus} / +${12+rankBonus}`,`×${rankMult}`],
-    ['Royal Court','3 Courts, same suit',`+${20+flushChips+courtChips}`,`×${flushMult}`],
-    ['Full Court','3 Courts, any suit',`+${18+courtChips}`,`×${courtMult}`],
+    ['Royal Court','3+ Courts, same suit',`+${20+flushChips+courtChips} / +${28+flushChips+courtChips}`,`×${flushMult} / ×${+(flushMult+0.25).toFixed(2)}`],
+    ['Full Court','3+ Courts, any suit',`+${18+courtChips} / +${24+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
     ['Flush','4+ cards, same suit',`+${15+flushChips}`,`×${flushMult}`],
     ['Sequence (3+)','Consecutive Arcana',`+${10+seqBonus} / +${15+seqBonus} / +${18+seqBonus}`,`×${seqMult}`],
     ['Path of the Magi','0·I·XXI in spread',`+${30+pathChips}`,`×${pathMult}`],
