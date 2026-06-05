@@ -1411,7 +1411,7 @@ const RESONATIONS=[
     name:"Sophia's Fall",
     conditions:[
       {cardId:'major_2'},   // II High Priestess — must be leftmost of the three
-      {cardId:'major_17'},  // XVII The Star     — must be between the other two
+      {cardId:'major_17',anyOf:['major_17','major_14']},  // XVII The Star or XIV Temperance — must be between the other two
       {cardId:'major_18'},  // XVIII The Moon    — must be rightmost of the three
     ],
     fragmentId:'frag_sophias_fall_1',
@@ -1433,7 +1433,7 @@ function getUnlockedFragments(){try{return JSON.parse(localStorage.getItem('tlr_
 function checkResonationState(spread){
   return RESONATIONS.map(res=>{
     // Find the slot index for each condition card in the order they are listed
-    const placed=res.conditions.map(cond=>spread.findIndex(c=>c&&c.id===cond.cardId));
+    const placed=res.conditions.map(cond=>{const ids=cond.anyOf||[cond.cardId];return spread.findIndex(c=>c&&ids.includes(c.id));});
     const present=placed.map((idx,i)=>({idx,i})).filter(p=>p.idx!==-1);
     if(!present.length)return{res,level:0,matchedSlots:[]};
     const matchedSlots=present.map(p=>p.idx);
