@@ -1465,6 +1465,7 @@ function checkResonationTriggers(){
 function triggerResonation(res){
   centerGhost(res.name,true);
   holdEffects(2000);
+  setTimeout(()=>{document.querySelectorAll('.slot.res-2,.slot.res-3').forEach(s=>{s.classList.remove('res-2','res-3');s.classList.add('res-1');});},2100);
   const alreadyUnlocked=getUnlockedFragments().includes(res.fragmentId);
   if(!alreadyUnlocked&&INV_FRAGMENTS[res.fragmentId]){
     const unlocked=getUnlockedFragments();
