@@ -616,7 +616,7 @@ function computeScore(cards,spreadArr=null){
   if(rel.includes('fool_reversed')){const bonus=cards.length*3;if(bonus){m.push(['The Fool Reversed',bonus,0]);chips+=bonus;}}
   if(rel.includes('the_world')&&state.worldCarry){m.push(['The World',state.worldCarry,0]);chips+=state.worldCarry;}
   // Resonation bonuses — only applied when scoring the final spread (spreadArr provided)
-  if(spreadArr){for(const{res,level}of checkResonationState(spreadArr)){if(level===res.conditions.length){m.push(['⚷ '+res.name,res.chips,res.mult]);chips+=res.chips;mult*=res.mult;}}}
+  if(spreadArr){for(const{res,level}of checkResonationState(spreadArr)){if(level===res.conditions.length){m.push(['⚷ '+res.name,res.chips,res.mult,'add']);chips+=res.chips;mult+=res.mult;}}}
   return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}
 }
 function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';if(chips&&mult)return`+${chips} ×${mult}`;if(chips)return`+${chips}`;if(mult)return additive?`+${mult} Mult`:`×${mult}`;return'';}
@@ -1409,7 +1409,7 @@ const RESONATIONS=[
     ],
     fragmentId:'frag_sophias_fall_1',
     chips:25,
-    mult:2,
+    mult:1,
   },
 ];
 // Fragment definitions — unlocked by resonation triggers
@@ -1463,6 +1463,8 @@ function checkResonationTriggers(){
   }
 }
 function triggerResonation(res){
+  centerGhost(res.name,true);
+  holdEffects(2000);
   const alreadyUnlocked=getUnlockedFragments().includes(res.fragmentId);
   if(!alreadyUnlocked&&INV_FRAGMENTS[res.fragmentId]){
     const unlocked=getUnlockedFragments();
