@@ -348,13 +348,12 @@
 .inv-detail-content p{margin:0 0 10px}
 .inv-detail-content p:last-child{margin-bottom:0}
 @media(max-width:640px){:root{--inv-h:250px}.inv-item-paper{width:72px;padding:6px 5px 6px}.inv-item-emoji{font-size:21px}}
-/* ── Resonation Glows — warm amber pulse, distinct visual language from hint system ── */
-@keyframes res-breathe-1{0%,100%{box-shadow:0 0 0 1px rgba(255,200,70,.28),0 0 10px rgba(255,175,30,.18),inset 0 0 6px rgba(255,180,40,.04)}50%{box-shadow:0 0 0 1px rgba(255,215,90,.55),0 0 20px rgba(255,190,40,.32),inset 0 0 10px rgba(255,190,40,.08)}}
-@keyframes res-breathe-2{0%,100%{box-shadow:0 0 0 2px rgba(255,205,60,.55),0 0 22px rgba(255,180,30,.45),0 0 44px rgba(255,155,10,.18),inset 0 0 10px rgba(255,185,30,.08)}50%{box-shadow:0 0 0 2px rgba(255,230,90,.92),0 0 36px rgba(255,205,50,.72),0 0 68px rgba(255,175,20,.32),inset 0 0 18px rgba(255,200,40,.14)}}
-@keyframes res-breathe-3{0%,100%{box-shadow:0 0 0 2px rgba(255,225,80,.75),0 0 34px rgba(255,210,55,.72),0 0 70px rgba(255,185,25,.5),0 0 110px rgba(255,155,10,.26),inset 0 0 18px rgba(255,210,50,.12);border-color:rgba(255,225,80,.82)!important;background:rgba(255,195,50,.05)!important}50%{box-shadow:0 0 0 3px rgba(255,245,130,1),0 0 50px rgba(255,230,80,.92),0 0 100px rgba(255,200,40,.68),0 0 160px rgba(255,170,15,.38),inset 0 0 30px rgba(255,220,60,.2);border-color:rgba(255,245,130,1)!important;background:rgba(255,210,60,.1)!important}}
-.slot.res-1{animation:res-breathe-1 2.6s ease-in-out infinite!important;border-color:rgba(255,200,70,.45)!important}
-.slot.res-2{animation:res-breathe-2 1.9s ease-in-out infinite!important;border-color:rgba(255,215,65,.72)!important}
-.slot.res-3{animation:res-breathe-3 1.5s ease-in-out infinite!important}
+/* ── Resonation Glows — pseudo-element with static shadow, only opacity animates (GPU composited) ── */
+@keyframes res-fade{0%,100%{opacity:.3}50%{opacity:1}}
+.slot.res-1::before,.slot.res-2::before,.slot.res-3::before{content:'';position:absolute;inset:-3px;border-radius:8px;pointer-events:none;z-index:0;will-change:opacity}
+.slot.res-1::before{box-shadow:0 0 14px 3px rgba(255,200,70,.55),inset 0 0 8px rgba(255,190,40,.08);border:1px solid rgba(255,200,70,.45);animation:res-fade 2.6s ease-in-out infinite}
+.slot.res-2::before{box-shadow:0 0 26px 6px rgba(255,208,60,.75),0 0 52px 10px rgba(255,190,30,.3),inset 0 0 14px rgba(255,195,40,.12);border:1px solid rgba(255,215,65,.7);animation:res-fade 1.9s ease-in-out infinite}
+.slot.res-3::before{box-shadow:0 0 40px 10px rgba(255,222,80,.9),0 0 80px 18px rgba(255,200,45,.5),0 0 130px 24px rgba(255,175,20,.25),inset 0 0 22px rgba(255,212,55,.18);border:2px solid rgba(255,232,92,.88);animation:res-fade 1.4s ease-in-out infinite}
 </style>
 </head>
 <body>
@@ -452,7 +451,7 @@ function drawN(n){for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.leng
 function startReading(){
   state.deck=shuffle(buildDeck());state.hand=[];state.discard=[];state.spread=Array(5).fill(null);
   state.selected=null;state.purgeSelect=null;state.discards=maxDiscards();state.mullCharges=maxMull();
-  state.freeDiscardUsed=false;state.discardedCards=[];state.resonationTriggeredThisReading={};
+  state.freeDiscardUsed=false;state.discardedCards=[];state.resonationTriggeredThisReading={};_resStateKey=null;
   if(persist.up.offering){persist.pool+=(persist.up.offering*5);render();}
   const extra=(persist.relics.includes('threadbare_tarot')?1:0)+(persist.up.deep_current||0);
   drawTo(maxHand()+extra);
@@ -1438,14 +1437,17 @@ function checkResonationState(spread){
     return{res,level,matchedSlots};
   });
 }
+let _resStateKey=null;
 function applyResonationGlows(spread){
+  const states=checkResonationState(spread);
+  const key=states.map(({level,matchedSlots})=>level+':'+matchedSlots.join(',')).join('|');
+  if(key===_resStateKey)return;
+  _resStateKey=key;
   const slots=document.querySelectorAll('.slot');
   slots.forEach(s=>s.classList.remove('res-1','res-2','res-3'));
-  for(const{res,level,matchedSlots} of checkResonationState(spread)){
+  for(const{level,matchedSlots} of states){
     if(!level)continue;
-    for(const si of matchedSlots){
-      if(slots[si])slots[si].classList.add('res-'+level);
-    }
+    for(const si of matchedSlots){if(slots[si])slots[si].classList.add('res-'+level);}
   }
 }
 function checkResonationTriggers(){
