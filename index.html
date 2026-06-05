@@ -1397,16 +1397,16 @@ function posTutTip(target,arrowDir){
 }
 document.addEventListener('click',()=>tutNext());
 // ── Resonation System ──
-// Slot zones (0-indexed): Past=[0,1], Present=[2], Future=[3,4]
-const RES_ZONES={past:[0,1],present:[2],future:[3,4]};
+// Condition: resonation cards must appear in the spread in left-to-right slot order
+// matching their listed sequence. No fixed zones — position is relative.
 const RESONATIONS=[
   {
     id:'sophias_fall',
     name:"Sophia's Fall",
     conditions:[
-      {cardId:'major_2', zone:'past'},    // II High Priestess — keeper of hidden knowledge
-      {cardId:'major_17',zone:'present'}, // XVII The Star — persistent hope in the now
-      {cardId:'major_18',zone:'future'},  // XVIII The Moon — threshold between worlds
+      {cardId:'major_2'},   // II High Priestess — must be leftmost of the three
+      {cardId:'major_17'},  // XVII The Star     — must be between the other two
+      {cardId:'major_18'},  // XVIII The Moon    — must be rightmost of the three
     ],
     fragmentId:'frag_sophias_fall_1',
     chips:25,
@@ -1426,14 +1426,15 @@ const INV_FRAGMENTS={
 function getUnlockedFragments(){try{return JSON.parse(localStorage.getItem('tlr_inv_unlocked')||'[]')}catch(e){return[]}}
 function checkResonationState(spread){
   return RESONATIONS.map(res=>{
-    let level=0;const matchedSlots=[];
-    for(const cond of res.conditions){
-      const slots=RES_ZONES[cond.zone];
-      for(const si of slots){
-        const card=spread[si];
-        if(card&&card.id===cond.cardId){level++;matchedSlots.push(si);break}
-      }
-    }
+    // Find the slot index for each condition card in the order they are listed
+    const placed=res.conditions.map(cond=>spread.findIndex(c=>c&&c.id===cond.cardId));
+    const present=placed.map((idx,i)=>({idx,i})).filter(p=>p.idx!==-1);
+    if(!present.length)return{res,level:0,matchedSlots:[]};
+    const matchedSlots=present.map(p=>p.idx);
+    // Cards must appear in ascending slot order matching their condition sequence
+    let inOrder=true;
+    for(let j=1;j<present.length;j++){if(present[j].idx<=present[j-1].idx){inOrder=false;break;}}
+    const level=inOrder?present.length:1;
     return{res,level,matchedSlots};
   });
 }
