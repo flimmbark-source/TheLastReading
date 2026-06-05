@@ -1602,7 +1602,7 @@ function renderInventory(){
     el.addEventListener('pointermove',e=>{
       if(!active)return;
       const dx=e.clientX-psx,dy=e.clientY-psy;
-      if(Math.abs(dx)>5||Math.abs(dy)>5)moved=true;
+      if(Math.hypot(dx,dy)>12)moved=true;
       if(!moved)return;
       el.style.left=(esx+dx)+'px';el.style.top=(esy+dy)+'px';
     });
@@ -1613,6 +1613,7 @@ function renderInventory(){
       invPos[item.id]={...invPos[item.id],x:nx,y:ny};
       _saveInvPos();
       if(!moved){
+        e.stopPropagation();
         if(el.classList.contains('named')){
           openInvDetail(item);
         } else {
@@ -1635,7 +1636,8 @@ function openInvDetail(item){
   }else{
     bg.innerHTML='<div class="inv-detail-box"><button class="inv-detail-close" onclick="this.closest(\'.inv-detail-bg\').remove()">&#x2715;</button><div class="inv-detail-type">'+item.type+'</div><h2 class="inv-detail-title">'+item.title+'</h2><div class="inv-detail-content">'+item.content+'</div></div>';
   }
-  bg.addEventListener('click',e=>{if(e.target===bg)bg.remove()});
+  const openedAt=Date.now();
+  bg.addEventListener('click',e=>{if(Date.now()-openedAt<350)return;if(e.target===bg||e.target.classList.contains('inv-detail-fullart'))bg.remove()});
   document.body.appendChild(bg);
 }
 setTimeout(renderInventory,0);
