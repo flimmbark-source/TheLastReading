@@ -1602,7 +1602,7 @@ function renderInventory(){
     el.addEventListener('pointermove',e=>{
       if(!active)return;
       const dx=e.clientX-psx,dy=e.clientY-psy;
-      if(Math.abs(dx)>5||Math.abs(dy)>5)moved=true;
+      if(Math.hypot(dx,dy)>12)moved=true;
       if(!moved)return;
       el.style.left=(esx+dx)+'px';el.style.top=(esy+dy)+'px';
     });
