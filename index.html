@@ -421,7 +421,7 @@ const MAJORS=[[0,'Fool',5,true,'PEEK_3'],[1,'Magician',5,true,'SEARCH'],[2,'High
 const COURTS=[['Page',2,'DRAW_1'],['Knight',3,'PEEK_3'],['Queen',4,'DRAW_2'],['King',5,'PEEK_5']];
 const TH=Array.from({length:10},(_,i)=>(i+1)*10);
 let persist={pool:0,up:{discards:0,hand:0,mulligan:0,lens_mastery:0,offering:0,ritual_depth:0,deep_current:0,omen:0,resonance:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,flush_chips:0,flush_mult:0,court_chips:0,court_mult:0,path_chips:0,path_mult:0,relicSlot:0},relics:[],relicUsed:{}};
-let state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null};
+let state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null};
 const $=s=>document.querySelector(s), shuffle=a=>{for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const cardHTMLCache=new Map();
 function buildDeck(){let id=0,d=[];for(const [num,name,pts,trull,ab] of MAJORS)d.push({uid:id++,type:'major',id:'major_'+num,num,name:ROMAN[num]+' '+name,points:pts,trull,ability:ab});for(const suit of SUITS)for(const [rank,pts,ab]of COURTS)d.push({uid:id++,type:'court',id:'court_'+suit+'_'+rank,suit,rank,name:rank+' of '+suit,points:pts,ability:ab});return d}
@@ -461,7 +461,7 @@ function drawN(n){for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.leng
 function startReading(){
   state.deck=shuffle(buildDeck());state.hand=[];state.discard=[];state.spread=Array(5).fill(null);
   state.selected=null;state.purgeSelect=null;state.discards=maxDiscards();state.mullCharges=maxMull();
-  state.freeDiscardUsed=false;state.discardedCards=[];state.resonationTriggeredThisReading={};state.resonationBonus={chips:0,mult:0};_resStateKey=null;
+  state.freeDiscardUsed=false;state.discardedCards=[];state.resonationTriggeredThisReading={};state.resonationBonus={chips:0,mult:0};state.thBonus=(state.thBonus||0)+(state.thBonusPending||0);state.thBonusPending=0;_resStateKey=null;
   if(persist.up.offering){persist.pool+=(persist.up.offering*5);render();}
   const extra=(persist.relics.includes('threadbare_tarot')?1:0)+(persist.up.deep_current||0);
   drawTo(maxHand()+extra);
@@ -949,7 +949,7 @@ function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;wa
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
 function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards,state.spread),total=res.finalScore,curTH=TH[state.th]+(state.thBonus||0),pass=total>=curTH;let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+curTH+' Cleared':'Below Threshold '+curTH}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;if(res.melds.length){res.melds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){const miserBonus=persist.relics.includes('miser')?5:0;const threshold=curTH;const worldCarry=persist.relics.includes('the_world')?Math.floor((total-threshold)*0.1):0;state.worldCarry=worldCarry||0;state.pendingPool=(state.pendingPool||0)+total+miserBonus;state.th++;html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render()}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML=''}
-function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(7),400)}}function endSession(){showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Session Ends</h3></div><div class="rscore"><span class="rsf">${persist.pool}</span></div><span class="rverdict pass">Final Reserve</span><div class="rbtns"><button class="btn-gold" onclick="resetSession()">Begin Again</button></div></div>`)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;startReading()}
+function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(7),400)}}function endSession(){showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Session Ends</h3></div><div class="rscore"><span class="rsf">${persist.pool}</span></div><span class="rverdict pass">Final Reserve</span><div class="rbtns"><button class="btn-gold" onclick="resetSession()">Begin Again</button></div></div>`)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;startReading()}
 // [name, desc, baseCost, scale, icon, category, pairedKey?]
 const SHOP={
   discards:   ['Extra Discard',   '+1 Discard each reading',                                                                                                              15,1.75,'🃏','utility'],
@@ -1496,10 +1496,9 @@ function triggerResonation(res){
   state.resonationBonus.chips+=res.chips;
   state.resonationBonus.mult+=res.mult;
   state.resonationBonus.name=res.name;
-  state.thBonus+=10;
+  state.thBonusPending=(state.thBonusPending||0)+10;
   setTimeout(()=>{if(res.chips)fireScoreGhost();if(res.mult)fireMultGhost('+'+res.mult+' Mult');},400);
   setCounterTarget(computeScore(state.spread.filter(Boolean)).finalScore);
-  render();
   const alreadyUnlocked=getUnlockedFragments().includes(res.fragmentId);
   if(!alreadyUnlocked&&INV_FRAGMENTS[res.fragmentId]){
     const unlocked=getUnlockedFragments();
