@@ -1038,7 +1038,7 @@ function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;wa
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
 function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards,state.spread),total=res.finalScore,curTH=TH[state.th]+(state.thBonus||0),pass=total>=curTH;let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+curTH+' Cleared':'Below Threshold '+curTH}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;const _regMelds=res.melds.filter(m=>!m[0].startsWith('⚷'));const _resMelds=res.melds.filter(m=>m[0].startsWith('⚷'));if(_regMelds.length||_resMelds.length){_regMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);_resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){const miserBonus=persist.relics.includes('miser')?5:0;const threshold=curTH;const worldCarry=persist.relics.includes('the_world')?Math.floor((total-threshold)*0.1):0;state.worldCarry=worldCarry||0;state.pendingPool=(state.pendingPool||0)+total+miserBonus;state.relicEarned=total>=curTH*2;state.th++;html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render();}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML=''}
-function continueReading(){const firstShop=!localStorage.getItem('tlr_tut_shop');state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}}function endSession(){showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Session Ends</h3></div><div class="rscore"><span class="rsf">${persist.pool}</span></div><span class="rverdict pass">Final Reserve</span><div class="rbtns"><button class="btn-gold" onclick="resetSession()">Begin Again</button></div></div>`)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;startReading()}
+function continueReading(){_packBuys={};const firstShop=!localStorage.getItem('tlr_tut_shop');state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}}function endSession(){showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Session Ends</h3></div><div class="rscore"><span class="rsf">${persist.pool}</span></div><span class="rverdict pass">Final Reserve</span><div class="rbtns"><button class="btn-gold" onclick="resetSession()">Begin Again</button></div></div>`)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;startReading()}
 // [name, desc, baseCost, scale, icon, category, pairedKey?]
 const SHOP={
   discards:   ['Extra Discard',   '+1 Discard each reading',                                                                                                              15,1.75,'🃏','utility'],
@@ -1100,6 +1100,7 @@ function relicIconStyle(key,size){
   const p=RELIC_SPRITE[key];if(!p)return'';
   return`background-image:url('relic%20icons.png');background-size:${size*6}px ${size*4}px;background-position:${-p[0]*size}px ${-p[1]*size}px;background-repeat:no-repeat;`;
 }
+let _packBuys={};
 function openShopMain(){
   if(state.pendingPool){persist.pool+=state.pendingPool;state.pendingPool=0;render();}
   let html='<div class="summary tarot-shop">';
@@ -1107,7 +1108,7 @@ function openShopMain(){
   html+='<div class="shop-section-title"></div><div class="shop-packs-row">';
   const packDiscount=persist.relics.includes('merchants_scale')?3:0;
   for(const[pk,p]of Object.entries(PACKS)){
-    const cost=Math.max(0,p.cost-packDiscount);
+    const cost=Math.max(0,p.cost+(_packBuys[pk]||0)*8-packDiscount);
     const ok=persist.pool>=cost;
     html+=`<div class="shop-pack ${ok?'affordable':''}">
       <div class="shop-pack-title-strip"><span>${p.name}</span></div>
@@ -1222,6 +1223,7 @@ function buyPack(pk,cost){
   const c=cost!==undefined?cost:p.cost;
   if(persist.pool<c)return;
   persist.pool-=c;
+  _packBuys[pk]=(_packBuys[pk]||0)+1;
   animatePackOpen(pk,()=>{
   if(pk==='relic'){
     const options=relicPool(4);
