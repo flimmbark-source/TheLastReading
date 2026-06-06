@@ -374,7 +374,7 @@
 #invTab{position:absolute;top:var(--inv-h);left:calc(50% - 40px);width:80px;height:28px;background:linear-gradient(180deg,#2e1e0e,#1e1208);border:1px solid #6a4c24;border-top:none;border-radius:0 0 10px 10px;cursor:grab;color:#a07838;font-size:10px;font-weight:700;letter-spacing:.07em;text-align:center;line-height:28px;pointer-events:auto;transition:background .15s,color .15s,box-shadow .15s;padding:0;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.5);touch-action:none;user-select:none}
 #invTab:hover{background:linear-gradient(180deg,#3e2814,#281810);color:#ffd978;box-shadow:0 4px 14px rgba(0,0,0,.6)}
 #invTab:active{cursor:grabbing}
-.inv-item{position:absolute;cursor:grab;user-select:none;touch-action:none;z-index:1;transition:box-shadow .12s}
+.inv-item{position:absolute;cursor:grab;user-select:none;touch-action:none;z-index:1;transition:box-shadow .12s;will-change:transform}
 .inv-item:active{cursor:grabbing}
 .inv-item-paper{width:84px;background:linear-gradient(160deg,#ede2be,#d6c488);border:1px solid #9c7c30;border-radius:2px;padding:8px 7px 8px;box-shadow:2px 5px 14px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.28);display:flex;flex-direction:column;align-items:center;gap:5px;position:relative}
 .inv-item-paper::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 14px,rgba(100,60,10,.07) 14px,rgba(100,60,10,.07) 15px);pointer-events:none;border-radius:2px}
@@ -1727,12 +1727,16 @@ function renderInventory(){
     el.style.cssText='left:'+pos.x+'px;top:'+pos.y+'px;transform:rotate('+pos.rot+'deg)';
     const iconHtml=item.image?'<img class="inv-item-img" src="'+item.image+'" alt="">':`<span class="inv-item-emoji">${item.emoji}</span>`;
     el.innerHTML='<div class="inv-item-paper">'+iconHtml+'<span class="inv-item-type">'+item.type+'</span><span class="inv-item-name">'+item.title+'</span></div>';
-    let psx,psy,esx,esy,moved=false,active=false;
+    let psx,psy,esx,esy,dw,dh,iw,ih,moved=false,active=false;
     el.addEventListener('pointerdown',e=>{
       e.stopPropagation();
       el.setPointerCapture(e.pointerId);
       psx=e.clientX;psy=e.clientY;
       esx=parseFloat(el.style.left)||0;esy=parseFloat(el.style.top)||0;
+      const desk=document.getElementById('invDesk');
+      dw=desk?desk.clientWidth:window.innerWidth;
+      dh=desk?desk.clientHeight:300;
+      iw=el.offsetWidth||84;ih=el.offsetHeight||100;
       moved=false;active=true;el.style.zIndex=50;
     });
     el.addEventListener('pointermove',e=>{
@@ -1740,10 +1744,6 @@ function renderInventory(){
       const dx=e.clientX-psx,dy=e.clientY-psy;
       if(Math.hypot(dx,dy)>12)moved=true;
       if(!moved)return;
-      const desk=document.getElementById('invDesk');
-      const dw=desk?desk.clientWidth:window.innerWidth;
-      const dh=desk?desk.clientHeight:300;
-      const iw=el.offsetWidth||84,ih=el.offsetHeight||100;
       const margin=24;
       el.style.left=Math.max(-iw+margin,Math.min(dw-margin,esx+dx))+'px';
       el.style.top=Math.max(0,Math.min(dh-margin,esy+dy))+'px';
