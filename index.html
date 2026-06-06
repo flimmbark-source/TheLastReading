@@ -1427,9 +1427,9 @@ const RESONATIONS=[
     id:'sophias_fall',
     name:"Sophia's Fall",
     conditions:[
-      {cardId:'major_2'},   // II High Priestess — must be leftmost of the three
-      {cardId:'major_17',anyOf:['major_17','major_14']},  // XVII The Star or XIV Temperance — must be between the other two
-      {cardId:'major_18'},  // XVIII The Moon    — must be rightmost of the three
+      {cardId:'major_2',  itemId:'photo_01'},                              // II High Priestess — The Reading Room
+      {cardId:'major_17', itemId:'letter_01', anyOf:['major_17','major_14']}, // XVII The Star or XIV Temperance — Unsigned Letter
+      {cardId:'major_18', itemId:'clipping_01'},                           // XVIII The Moon — Strange Obituary
     ],
     fragmentId:'frag_sophias_fall_1',
     chips:25,
@@ -1449,16 +1449,15 @@ const INV_FRAGMENTS={
 function getUnlockedFragments(){try{return JSON.parse(localStorage.getItem('tlr_inv_unlocked')||'[]')}catch(e){return[]}}
 function checkResonationState(spread){
   return RESONATIONS.map(res=>{
-    // Find the slot index for each condition card in the order they are listed
-    const placed=res.conditions.map(cond=>{const ids=cond.anyOf||[cond.cardId];return spread.findIndex(c=>c&&ids.includes(c.id));});
-    const present=placed.map((idx,i)=>({idx,i})).filter(p=>p.idx!==-1);
-    if(!present.length)return{res,level:0,matchedSlots:[]};
+    const placed=res.conditions.map((cond,ci)=>{const ids=cond.anyOf||[cond.cardId];const idx=spread.findIndex(c=>c&&ids.includes(c.id));return{idx,ci,cond};});
+    const present=placed.filter(p=>p.idx!==-1);
+    if(!present.length)return{res,level:0,matchedSlots:[],matchedConditions:[]};
     const matchedSlots=present.map(p=>p.idx);
-    // Cards must appear in ascending slot order matching their condition sequence
+    const matchedConditions=present; // [{idx, ci, cond}]
     let inOrder=true;
     for(let j=1;j<present.length;j++){if(present[j].idx<=present[j-1].idx){inOrder=false;break;}}
     const level=inOrder?present.length:1;
-    return{res,level,matchedSlots};
+    return{res,level,matchedSlots,matchedConditions};
   });
 }
 let _resStateKey=null;
@@ -1469,11 +1468,14 @@ function applyResonationGlows(spread){
   _resStateKey=key;
   const slots=document.querySelectorAll('.slot');
   slots.forEach(s=>s.classList.remove('res-1','res-2','res-3'));
-  for(const{res,level,matchedSlots} of states){
+  for(const{res,level,matchedConditions} of states){
     if(!level)continue;
     const alreadyFired=state.resonationTriggeredThisReading&&state.resonationTriggeredThisReading['res_'+res.id];
     const displayLevel=alreadyFired?1:level;
-    for(const si of matchedSlots){if(slots[si])slots[si].classList.add('res-'+displayLevel);}
+    for(const{idx,cond} of matchedConditions){
+      const itemNamed=!cond.itemId||invPos[cond.itemId]?.named;
+      if(itemNamed&&slots[idx])slots[idx].classList.add('res-'+displayLevel);
+    }
   }
 }
 function checkResonationTriggers(){
@@ -1651,6 +1653,7 @@ function renderInventory(){
           el.classList.add('named');
           invPos[item.id].named=true;
           _saveInvPos();
+          _resStateKey=null;applyResonationGlows(state.spread);
         }
       }
       moved=false;
