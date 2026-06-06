@@ -332,18 +332,16 @@
 @keyframes hand-rot{0%{rotate:-1.4deg}100%{rotate:1.6deg}}
 @keyframes hand-drift{0%{translate:-3px 1px}22%{translate:1px 4px}47%{translate:3px 2px}73%{translate:-1px 5px}100%{translate:0px 0px}}
 .hand{animation:hand-rot 3.5s ease-in-out infinite alternate,hand-drift 6.1s ease-in-out infinite alternate;transform-origin:50% 140%;}
-.hand .card:not(.sel):not(.ability-picked):nth-child(1){animation:card-float-1 4.3s ease-in-out infinite alternate}
-.hand .card:not(.sel):not(.ability-picked):nth-child(2){animation:card-float-2 3.9s ease-in-out infinite alternate}
-.hand .card:not(.sel):not(.ability-picked):nth-child(3){animation:card-float-3 5.1s ease-in-out infinite alternate}
-.hand .card:not(.sel):not(.ability-picked):nth-child(4){animation:card-float-4 4.7s ease-in-out infinite alternate}
-.hand .card:not(.sel):not(.ability-picked):nth-child(5){animation:card-float-1 3.7s ease-in-out infinite alternate}
-.hand .card:not(.sel):not(.ability-picked):nth-child(6){animation:card-float-3 4.1s ease-in-out infinite alternate}
-.hand .card:not(.sel):not(.ability-picked):nth-child(7){animation:card-float-2 5.3s ease-in-out infinite alternate}
-.hand .card:not(.sel):not(.ability-picked):nth-child(8){animation:card-float-4 4.5s ease-in-out infinite alternate}
-@keyframes card-float-1{0%{translate:0 0px}100%{translate:0 4px}}
-@keyframes card-float-2{0%{translate:0 3px}100%{translate:0 0px}}
-@keyframes card-float-3{0%{translate:0 1px}100%{translate:0 5px}}
-@keyframes card-float-4{0%{translate:0 4px}100%{translate:0 1px}}
+@keyframes card-wave{0%{translate:0 0px}100%{translate:0 5px}}
+.hand .card:not(.sel):not(.ability-picked){animation:card-wave 4.4s ease-in-out infinite alternate}
+.hand .card:not(.sel):not(.ability-picked):nth-child(1){animation-delay:0ms}
+.hand .card:not(.sel):not(.ability-picked):nth-child(2){animation-delay:-110ms}
+.hand .card:not(.sel):not(.ability-picked):nth-child(3){animation-delay:-220ms}
+.hand .card:not(.sel):not(.ability-picked):nth-child(4){animation-delay:-330ms}
+.hand .card:not(.sel):not(.ability-picked):nth-child(5){animation-delay:-440ms}
+.hand .card:not(.sel):not(.ability-picked):nth-child(6){animation-delay:-550ms}
+.hand .card:not(.sel):not(.ability-picked):nth-child(7){animation-delay:-660ms}
+.hand .card:not(.sel):not(.ability-picked):nth-child(8){animation-delay:-770ms}
 /* ── Tactile feel ── */
 @keyframes card-land{0%{transform:scale(1.1) translateY(-6px);opacity:.85}55%{transform:scale(.97) translateY(1px)}75%{transform:scale(1.02)}100%{transform:scale(1) translateY(0);opacity:1}}
 .card.landing{animation:card-land .32s cubic-bezier(.2,.8,.3,1) forwards}
