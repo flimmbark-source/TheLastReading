@@ -1072,8 +1072,8 @@ const RELICS={
 };
 const RELIC_SPRITE={
   gilded_fool:[0,0],hermit_lantern:[1,0],mirror_shard:[2,0],arcana_codex:[3,0],threadbare_tarot:[4,0],merchants_scale:[5,0],
-  silver_chalice:[0,1],ember_wand:[1,1],iron_pentacle:[2,1],blades_edge:[3,1],still_pool:[4,1],loaded_die:[5,1],
-  cups_overflow:[0,2],court_favor:[1,2],hanged_coin:[2,2],buried_king:[3,2],miser:[4,2],gilded_discard:[5,2],
+  still_pool:[0,1],loaded_die:[1,1],
+  court_favor:[0,2],hanged_coin:[1,2],miser:[2,2],gilded_discard:[3,2],
   lovers_knot:[0,3],temperance_flask:[1,3],strengths_grip:[2,3],the_world:[3,3],fool_reversed:[4,3],watcher:[5,3],
 };
 function relicIconStyle(key,size){
@@ -1386,8 +1386,6 @@ function renderScoringSheet(){
   const u=persist.up;
   const rankBonus=(u.rank||0)*5;
   const rankMult=+(1+(u.rank_mult||0)*0.25).toFixed(2);
-  const flushChips=(u.flush_chips||0)*8;
-  const flushMult=+(1+(u.flush_mult||0)*0.25).toFixed(2);
   const courtChips=(u.court_chips||0)*8;
   const courtMult=+(1+(u.court_mult||0)*0.25).toFixed(2);
   const seqBonus=(u.sequence||0)*5;
@@ -1396,20 +1394,18 @@ function renderScoringSheet(){
   const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
   const rows=[
     ['Rank Match','Three/Four of a Rank',`+${10+rankBonus} / +${12+rankBonus}`,`×${rankMult}`],
-    ['Royal Court','3+ Courts, same suit',`+${20+flushChips+courtChips} / +${28+flushChips+courtChips}`,`×${flushMult} / ×${+(flushMult+0.25).toFixed(2)}`],
+    ['Royal Court','3+ Courts, same suit',`+${20+courtChips} / +${28+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
     ['Full Court','3+ Courts, any suit',`+${18+courtChips} / +${24+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
-    ['Flush','4+ cards, same suit',`+${15+flushChips}`,`×${flushMult}`],
     ['Sequence (3+)','Consecutive Arcana',`+${10+seqBonus} / +${15+seqBonus} / +${18+seqBonus}`,`×${seqMult}`],
     ['Path of the Magi','0·I·XXI in spread',`+${30+pathChips}`,`×${pathMult}`],
   ];
   const up=[];
   if(u.rank)up.push(`Rank +${rankBonus}chips ×${rankMult}`);
-  if(u.flush_chips)up.push(`Flush +${flushChips}chips ×${flushMult}`);
   if(u.court_chips)up.push(`Court +${courtChips}chips ×${courtMult}`);
   if(u.sequence)up.push(`Seq +${seqBonus}chips ×${seqMult}`);
   if(u.path_chips)up.push(`Path +${pathChips}chips ×${pathMult}`);
-  const minorRows=rows.slice(0,4);
-  const majorRows=rows.slice(4);
+  const minorRows=rows.slice(0,3);
+  const majorRows=rows.slice(3);
   let html='<table class="ref-table"><thead><tr><th>Pattern</th><th>Condition</th><th>Chips</th><th>Mult</th></tr></thead><tbody>';
   html+=`<tr class="ref-section-head"><td colspan="4">Minor Arcana</td></tr>`;
   for(const r of minorRows) html+=`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]||'—'}</td></tr>`;
