@@ -646,7 +646,7 @@ function computeScore(cards,spreadArr=null){
   } else if(fullCount>=3){
     // Full Court: 3 distinct ranks = base; each rank beyond 3 adds chips+mult
     const extra=Math.min(fullCount-3,1); // cap at 4 ranks for now
-    const x=Math.round(18+extra*6+courtChips);
+    const x=Math.round(14+extra*6+courtChips);
     const xm=+(courtMult+(extra*0.25)).toFixed(2);
     m.push(['Full Court'+(extra?' ×'+fullCount:''),x,xm]);chips+=x;mult*=xm;court=true;
   }
@@ -1410,8 +1410,8 @@ function renderScoringSheet(){
   const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
   const rows=[
     ['Rank Match','Three/Four of a Rank',`+${10+rankBonus} / +${12+rankBonus}`,`×${rankMult}`],
+    ['Full Court','3+ Courts, any suit',`+${14+courtChips} / +${20+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
     ['Royal Court','3+ Courts, same suit',`+${20+courtChips} / +${28+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
-    ['Full Court','3+ Courts, any suit',`+${18+courtChips} / +${24+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
     ['Sequence (3+)','Consecutive Arcana',`+${10+seqBonus} / +${15+seqBonus} / +${18+seqBonus}`,`×${seqMult}`],
     ['Path of the Magi','0·I·XXI in spread',`+${30+pathChips}`,`×${pathMult}`],
   ];
