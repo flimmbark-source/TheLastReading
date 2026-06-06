@@ -724,6 +724,7 @@ function seqRunStart(num,cards){
   const nums=new Set(cards.filter(c=>c.type==='major').map(c=>c.num));
   let s=num;while(nums.has(s-1))s--;return 'seq:'+s;
 }
+function majorName(id){const n=parseInt(id.split('_')[1]);const m=MAJORS.find(x=>x[0]===n);return m?m[1]:id;}
 let _hintsCache=new Map(),_hintsCacheKey='';
 function _hintsKey(){return state.spread.map(c=>c?c.uid:0).join(',');}
 function cardHints(card, poolCards=null){
@@ -775,6 +776,21 @@ function cardHints(card, poolCards=null){
     if(ranks.size>=3)add('near','Full Court');
   }
 
+  // Resonation hints — only for discovered patterns
+  if(!poolCards){
+    const unlocked=getUnlockedFragments();
+    for(const res of RESONATIONS){
+      if(!unlocked.includes(res.fragmentId))continue;
+      const myCondIdx=res.conditions.findIndex(cond=>(cond.anyOf||[cond.cardId]).includes(card.id));
+      if(myCondIdx===-1)continue;
+      const othersInSpread=res.conditions.filter((cond,ci)=>{
+        if(ci===myCondIdx)return false;
+        return spread.some(c=>(cond.anyOf||[cond.cardId]).includes(c.id));
+      }).length;
+      if(othersInSpread===res.conditions.length-1)add('complete','⚷ '+res.name);
+      else if(othersInSpread>0)add('near','⚷ '+res.name);
+    }
+  }
 
   if(!poolCards){const k=_hintsKey()+':'+card.uid;_hintsCache.set(k,hints);}
   return hints;
@@ -1411,6 +1427,14 @@ function renderScoringSheet(){
   for(const r of minorRows) html+=`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]||'—'}</td></tr>`;
   html+=`<tr class="ref-section-head"><td colspan="4">Major Arcana</td></tr>`;
   for(const r of majorRows) html+=`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]||'—'}</td></tr>`;
+  const discoveredRes=RESONATIONS.filter(r=>getUnlockedFragments().includes(r.fragmentId));
+  if(discoveredRes.length){
+    html+=`<tr class="ref-section-head"><td colspan="4">Hidden Patterns</td></tr>`;
+    for(const res of discoveredRes){
+      const condStr=res.conditions.map(c=>(c.anyOf||[c.cardId]).map(majorName).join('/')).join(' · ');
+      html+=`<tr><td><b>⚷ ${res.name}</b></td><td>${condStr}</td><td>+${res.chips}</td><td>×${res.mult}</td></tr>`;
+    }
+  }
   html+='</tbody></table>';
   if(up.length) html+=`<div class="ref-upgrades"><b>Your upgrades:</b> ${up.join(' · ')}</div>`;
   $('#ref').innerHTML=html;
