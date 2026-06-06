@@ -327,6 +327,20 @@
 .relic-rarity-badge.rare{color:#c4882a}
 .relic-art{display:flex;align-items:center;justify-content:center;height:64px;background:transparent}.relic-art-sprite{width:64px;height:64px;image-rendering:pixelated}
 @media(max-width:640px){.tarot-shop{width:calc(100vw - 20px);padding:20px 16px 18px!important;background-image:url("Pack_Background_Mobile.png")}.shop-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header p{font-size:10px;margin:8px 0 0}.shop-packs-row{gap:8px;flex-wrap:nowrap;justify-content:center}.shop-pack{flex:1;min-width:0;min-height:230px}.shop-pack-banner{min-height:74px;font-size:36px}.shop-items-row{gap:8px}.upg-card{width:110px}.upg-art{height:66px;font-size:30px}.upg-title-strip span{font-size:6.5px}.result-panel{padding:16px 16px 20px}.rscore .rsc,.rscore .rsm{font-size:22px}.rscore .rsf{font-size:32px}}
+#sophiaVeil{position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0}
+#sophiaVeil.active{animation:sophia-veil 4s ease forwards}
+@keyframes sophia-veil{
+  0%  {opacity:0;backdrop-filter:blur(0px);background:radial-gradient(ellipse at 50% 50%,transparent 60%,rgba(0,0,0,0) 100%)}
+  8%  {opacity:1;backdrop-filter:blur(0px);background:radial-gradient(ellipse at 50% 50%,transparent 40%,rgba(0,0,0,.55) 100%)}
+  18% {backdrop-filter:blur(4px);background:radial-gradient(ellipse at 50% 50%,transparent 30%,rgba(0,0,0,.72) 100%)}
+  26% {backdrop-filter:blur(0px);background:radial-gradient(ellipse at 50% 50%,transparent 38%,rgba(0,0,0,.6) 100%)}
+  38% {backdrop-filter:blur(5px);background:radial-gradient(ellipse at 50% 50%,transparent 28%,rgba(0,0,0,.78) 100%)}
+  48% {backdrop-filter:blur(0.5px);background:radial-gradient(ellipse at 50% 50%,transparent 40%,rgba(0,0,0,.55) 100%)}
+  60% {backdrop-filter:blur(3px);background:radial-gradient(ellipse at 50% 50%,transparent 35%,rgba(0,0,0,.65) 100%)}
+  74% {backdrop-filter:blur(0px);background:radial-gradient(ellipse at 50% 50%,transparent 45%,rgba(0,0,0,.45) 100%)}
+  88% {opacity:.6;backdrop-filter:blur(0px)}
+  100%{opacity:0;backdrop-filter:blur(0px)}
+}
 .meld-announce{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);font:900 28px Georgia,serif;color:#ffd978;text-shadow:0 0 18px rgba(255,200,80,.7),0 2px 8px rgba(0,0,0,.9);letter-spacing:.06em;text-align:center;white-space:nowrap;pointer-events:none;z-index:200;animation:meld-announce 2s forwards}.meld-announce.rare{color:#ffb36b;text-shadow:0 0 22px rgba(255,160,60,.8),0 2px 8px rgba(0,0,0,.9)}@keyframes meld-announce{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}10%{opacity:1;transform:translate(-50%,-50%) scale(1.18)}20%{transform:translate(-50%,-50%) scale(.96)}28%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}36%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-72%) scale(.88)}}
 /* ── Hand sway ── */
 .hand{transform-origin:50% 140%;}
@@ -404,6 +418,7 @@
 <h1>The Last Reading</h1>
 <div class="bar"></div>
 <div id="relicRack" class="relic-rack"></div>
+<div id="sophiaVeil"></div>
 <div class="score-stack"><div class="pill reserve-pill">Reserve <b id="pool">0</b></div><div class="pill score-pill">Score <b id="current">0</b></div><div class="th-pill-wrap"><div class="pill threshold-pill">Threshold <b id="threshold">30</b></div><span id="thNext"></span></div><div class="pill discards-pill">Discards <b id="discards">3</b></div></div>
 <div class="actions"><button id="scoringBtn" onclick="toggleRef(event)">Scoring</button><button id="abilitiesBtn" onclick="toggleAbilityRef(event)">Abilities</button><button id="mullBtn" onclick="mulligan()" style="display:none">Mulligan</button></div>
 <div class="refs-layer">
@@ -1569,6 +1584,7 @@ function triggerResonation(res){
   centerGhost(res.name,true);
   playSound('resonation');
   holdEffects(2000);
+  if(res.id==='sophias_fall'){const v=document.getElementById('sophiaVeil');if(v){v.classList.remove('active');void v.offsetWidth;v.classList.add('active');setTimeout(()=>v.classList.remove('active'),4100);}}
   if(!state.resonationBonus)state.resonationBonus={chips:0,mult:0,name:res.name};
   state.resonationBonus.chips+=res.chips;
   state.resonationBonus.mult+=res.mult;
