@@ -414,7 +414,7 @@
     <tr><td>Draw</td><td class="r">Draw that many cards.</td></tr>
     <tr><td>Peek</td><td class="r">Look at that many cards. Take 1. Put the rest on the bottom.</td></tr>
     <tr><td>Search</td><td class="r">Take any card from the deck, then shuffle.</td></tr>
-    <tr><td>Reshuffle</td><td class="r">Shuffle the discard pile into the deck, then draw 2.</td></tr>
+    <tr><td>Reshuffle</td><td class="r">Shuffle discard and hand into the deck, then redraw a full hand.</td></tr>
     <tr><td>Neighbor</td><td class="r">Choose a card. Reveal up to 2 adjacent cards from the deck. Take 1.</td></tr>
     <tr><td>Kin</td><td class="r">Choose a card. Reveal up to 2 cards of the same Arcana from the deck. Take 1.</td></tr>
     <tr><td>Mirror</td><td class="r">Choose a card. Take the card opposite it across centerline of its Arcana.</td></tr>
@@ -442,7 +442,7 @@
 const ROMAN=['0','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX','XXI'];
 const SUITS=['Cups','Wands','Swords','Pentacles'], GLYPH={Cups:'🍷',Wands:'🪄',Swords:'🗡️',Pentacles:'𖤐'};
 const RANKS=['Page','Knight','Queen','King'];
-const TXT={DRAW_1:'Draw 1',DRAW_2:'Draw 2',DRAW_3:'Draw 3',PEEK_3:'Peek 3',PEEK_5:'Peek 5',SEARCH:'Search',WORLD:'Reshuffle',NEIGHBOR_2:'',KIN_2:'Kin',MIRROR_1:'Mirror',BETWEEN_2:'Between'};
+const TXT={DRAW_1:'Draw 1',DRAW_2:'Draw 2',DRAW_3:'Draw 3',PEEK_3:'Peek 3',PEEK_5:'Peek 5',SEARCH:'Search',WORLD:'Full Reset',NEIGHBOR_2:'',KIN_2:'Kin',MIRROR_1:'Mirror',BETWEEN_2:'Between'};
 const MAJOR_G={0:'✦',1:'∞',2:'☾',3:'♀',4:'♛',5:'☥',6:'♡',7:'⚔',8:'∞',9:'☼',10:'⊛',11:'⚖',12:'✝',13:'✟',14:'⚱',15:'⛧',16:'⚡',17:'✧',18:'☽',19:'☉',20:'⚭',21:'○'};
 const MEAN={major_0:['Beginnings, innocence','Recklessness, naivety'],major_1:['Will, mastery','Manipulation, illusion'],major_2:['Intuition, mystery','Secrets withheld'],major_3:['Abundance, creation','Dependence, neglect'],major_4:['Authority, structure','Domination, rigidity'],major_5:['Tradition, doctrine','Rebellion, reform'],major_6:['Union, choice','Disharmony, betrayal'],major_7:['Resolve, victory','Loss of direction'],major_8:['Courage, patience','Self-doubt, weakness'],major_9:['Solitude, search','Isolation, lost'],major_10:['Cycles, fortune','Resistance, stagnation'],major_11:['Truth, fairness','Injustice, evasion'],major_12:['Surrender, suspension','Stalling, vain sacrifice'],major_13:['Endings, transformation','Resistance to change'],major_14:['Balance, patience','Excess, imbalance'],major_15:['Bondage, addiction','Release, awareness'],major_16:['Upheaval, ruin','Averting disaster'],major_17:['Hope, renewal','Despair, lost faith'],major_18:['Illusion, fear','Truth revealed'],major_19:['Joy, vitality','False optimism'],major_20:['Awakening, reckoning','Refused calling'],major_21:['Completion, wholeness','Unfinished, stagnation']};
 const COURT_MEAN={Page:['Curiosity, learning','Inexperience, gossip'],Knight:['Action, pursuit','Recklessness, haste'],Queen:['Compassion, intuition','Withdrawal, anxiety'],King:['Mastery, command','Cruelty, coldness']};
@@ -872,7 +872,7 @@ function resolveAbility(ab,done,sourceCard=null){
   else if(ab==='KIN_2')relation('Kin','Choose an anchor card. Kin finds cards of the same Arcana.',kin,2+lens,done);
   else if(ab==='MIRROR_1')relation('Mirror','Choose a card. Take the card opposite it across centerline of its Arcana.',mirror,1+lens,done);
   else if(ab==='BETWEEN_2')betweenAbility(done,sourceCard);
-  else if(ab==='WORLD'){state.deck.push(...state.discard.splice(0));shuffle(state.deck);drawN(2+rd);done()}
+  else if(ab==='WORLD'){state.deck.push(...state.discard.splice(0),...state.hand.splice(0));shuffle(state.deck);drawN(maxHand()+rd);done()}
   else done()
 }
 function peek(n,done){state.busy=true;let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){state.busy=false;done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{state.hand.push(p);cards.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));state.busy=false;done()})}
