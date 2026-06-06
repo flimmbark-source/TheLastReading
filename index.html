@@ -1470,12 +1470,11 @@ function applyResonationGlows(spread){
   slots.forEach(s=>s.classList.remove('res-1','res-2','res-3'));
   for(const{res,level,matchedConditions} of states){
     if(!level)continue;
+    const allItemsNamed=res.conditions.every(cond=>!cond.itemId||invPos[cond.itemId]?.named);
+    if(!allItemsNamed)continue;
     const alreadyFired=state.resonationTriggeredThisReading&&state.resonationTriggeredThisReading['res_'+res.id];
     const displayLevel=alreadyFired?1:level;
-    for(const{idx,cond} of matchedConditions){
-      const itemNamed=!cond.itemId||invPos[cond.itemId]?.named;
-      if(itemNamed&&slots[idx])slots[idx].classList.add('res-'+displayLevel);
-    }
+    for(const{idx} of matchedConditions){if(slots[idx])slots[idx].classList.add('res-'+displayLevel);}
   }
 }
 function checkResonationTriggers(){
