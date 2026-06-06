@@ -329,8 +329,21 @@
 @media(max-width:640px){.tarot-shop{width:calc(100vw - 20px);padding:20px 16px 18px!important;background-image:url("Pack_Background_Mobile.png")}.shop-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header p{font-size:10px;margin:8px 0 0}.shop-packs-row{gap:8px;flex-wrap:nowrap;justify-content:center}.shop-pack{flex:1;min-width:0;min-height:230px}.shop-pack-banner{min-height:74px;font-size:36px}.shop-items-row{gap:8px}.upg-card{width:110px}.upg-art{height:66px;font-size:30px}.upg-title-strip span{font-size:6.5px}.result-panel{padding:16px 16px 20px}.rscore .rsc,.rscore .rsm{font-size:22px}.rscore .rsf{font-size:32px}}
 .meld-announce{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);font:900 28px Georgia,serif;color:#ffd978;text-shadow:0 0 18px rgba(255,200,80,.7),0 2px 8px rgba(0,0,0,.9);letter-spacing:.06em;text-align:center;white-space:nowrap;pointer-events:none;z-index:200;animation:meld-announce 2s forwards}.meld-announce.rare{color:#ffb36b;text-shadow:0 0 22px rgba(255,160,60,.8),0 2px 8px rgba(0,0,0,.9)}@keyframes meld-announce{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}10%{opacity:1;transform:translate(-50%,-50%) scale(1.18)}20%{transform:translate(-50%,-50%) scale(.96)}28%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}36%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-72%) scale(.88)}}
 /* ── Hand sway ── */
-@keyframes hand-sway{0%{transform:rotate(-1.5deg)}100%{transform:rotate(1.5deg)}}
-.hand{animation:hand-sway 3.5s ease-in-out infinite alternate;transform-origin:50% 140%;}
+@keyframes hand-rot{0%{rotate:-1.4deg}100%{rotate:1.6deg}}
+@keyframes hand-drift{0%{translate:-3px 1px}22%{translate:1px 4px}47%{translate:3px 2px}73%{translate:-1px 5px}100%{translate:0px 0px}}
+.hand{animation:hand-rot 3.5s ease-in-out infinite alternate,hand-drift 6.1s ease-in-out infinite alternate;transform-origin:50% 140%;}
+.hand .card:not(.sel):not(.ability-picked):nth-child(1){animation:card-float-1 4.3s ease-in-out infinite alternate}
+.hand .card:not(.sel):not(.ability-picked):nth-child(2){animation:card-float-2 3.9s ease-in-out infinite alternate}
+.hand .card:not(.sel):not(.ability-picked):nth-child(3){animation:card-float-3 5.1s ease-in-out infinite alternate}
+.hand .card:not(.sel):not(.ability-picked):nth-child(4){animation:card-float-4 4.7s ease-in-out infinite alternate}
+.hand .card:not(.sel):not(.ability-picked):nth-child(5){animation:card-float-1 3.7s ease-in-out infinite alternate}
+.hand .card:not(.sel):not(.ability-picked):nth-child(6){animation:card-float-3 4.1s ease-in-out infinite alternate}
+.hand .card:not(.sel):not(.ability-picked):nth-child(7){animation:card-float-2 5.3s ease-in-out infinite alternate}
+.hand .card:not(.sel):not(.ability-picked):nth-child(8){animation:card-float-4 4.5s ease-in-out infinite alternate}
+@keyframes card-float-1{0%{translate:0 0px}100%{translate:0 4px}}
+@keyframes card-float-2{0%{translate:0 3px}100%{translate:0 0px}}
+@keyframes card-float-3{0%{translate:0 1px}100%{translate:0 5px}}
+@keyframes card-float-4{0%{translate:0 4px}100%{translate:0 1px}}
 /* ── Tactile feel ── */
 @keyframes card-land{0%{transform:scale(1.1) translateY(-6px);opacity:.85}55%{transform:scale(.97) translateY(1px)}75%{transform:scale(1.02)}100%{transform:scale(1) translateY(0);opacity:1}}
 .card.landing{animation:card-land .32s cubic-bezier(.2,.8,.3,1) forwards}
