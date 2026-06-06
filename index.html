@@ -339,6 +339,12 @@
 .inv-item-img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:1px;display:block;pointer-events:none;position:relative;z-index:1}
 .inv-detail-img{width:100%;max-height:220px;object-fit:cover;border-radius:3px;margin-bottom:14px;display:block}
 .inv-detail-fullart{max-width:min(92vw,560px);max-height:88vh;object-fit:contain;border-radius:4px;box-shadow:0 16px 60px rgba(0,0,0,.9);display:block;cursor:pointer}
+.inv-detail-fullart-wrap{position:relative;display:inline-block;cursor:pointer;line-height:0}
+.inv-detail-text-overlay{position:absolute;inset:8% 6%;display:flex;align-items:center;justify-content:center;background:rgba(20,12,5,.82);border-radius:4px;padding:18px 20px;opacity:0;pointer-events:none;transition:opacity .3s ease}
+.inv-detail-text-overlay.visible{opacity:1;pointer-events:auto}
+.inv-detail-text-overlay-inner{font-size:13px;line-height:1.7;color:#e8d8b8;font-family:Georgia,serif;text-align:left;overflow-y:auto;max-height:100%}
+.inv-detail-text-overlay-inner p{margin:0 0 10px}
+.inv-detail-text-overlay-inner p:last-child{margin-bottom:0}
 .inv-item-type{font-size:6.5px;letter-spacing:.11em;text-transform:uppercase;color:#7a5018;text-align:center;pointer-events:none;line-height:1.2;position:relative;z-index:1}
 .inv-item-name{font-size:7.5px;font-weight:700;text-align:center;color:#3a1a06;line-height:1.3;font-family:Georgia,serif;pointer-events:none;display:none;position:relative;z-index:1}
 .inv-item.named .inv-item-name{display:block}
@@ -1512,7 +1518,7 @@ const INV_ITEMS=[
     title:'Strange Obituary',
     emoji:'📰',
     image:'strange_obituary.png',
-    imageFull:'strange_obituary_full.png',
+    imageFull:'Obituary_Newspaper.png',
     content:'<p>Sophia Vael, 44, died at her residence on the evening of March 9th. She had lived at 14 Morrow Lane for eleven years, where she maintained a private practice of unspecified consultation.</p><p>She was discovered by a neighbor after three days. Police reported no signs of disturbance. Her appointment book was empty for the week. A candle on the work table had been allowed to burn completely down.</p><p>The neighbor who reported her absence described approaching the house after dark. The moon that night had been full. Two stone posts marked the entrance to the property, and she noted that the path between them felt longer than usual.</p><p>Ms. Vael had no local family and few recorded associations. One neighbor, asked not to be named, described her as "careful." Another said only that she always seemed to know when she was being watched.</p><p>No services are planned.</p>',
   },
   {
@@ -1530,8 +1536,8 @@ const INV_ITEMS=[
     title:'The Reading Room',
     emoji:'🖼️',
     image:'Reading_room.png',
-    imageFull:'Reading_room_full.png',
-    content:'<p>I found this when we were clearing the house. Nobody knew who to call so it fell to me.</p><p>She isn\'t in the picture — she must have been the one holding the camera. I don\'t recognise anyone at the table. They\'re all looking down at something laid out on the surface, but the photograph is too dark in the center to make it out. On the left edge of the frame you can see part of what looks like a card, face up. There\'s another on the right side. The middle of the table is just black.</p><p>In the background the room looks half-settled — like she\'d only recently moved in. A chair has been placed against the far wall with two tall bookcases on either side of it, each the same height. A dark curtain is partly drawn across the window behind.</p><p>I keep thinking the center will become clear if I look long enough. It hasn\'t.</p>',
+    imageFull:'Reading_Room_Poleroid.png',
+    content:'<p>I found this when we were clearing the house. Nobody knew who to call so it fell to me.</p><p>She isn\'t in the picture — she must have been the one holding the camera. I don\'t recognise anyone at the table. They\'re all looking down at something laid out on the surface, but the photograph is too dark in the center to make it out. On the left edge of the frame you can see part of what looks like a card, face up. There\'s another on the right side. The middle of the table is just black.</p><p>In the background the room looks half-settled — like she\'d only recently moved in. A chair has been placed against the far wall with two tall pillars on either side of it — the left one black, the right one white, each with a capital at the top. A dark curtain is partly drawn across the window behind.</p><p>I keep thinking the center will become clear if I look long enough. It hasn\'t.</p>',
   },
 ];
 let invOpen=false;
@@ -1657,12 +1663,23 @@ function openInvDetail(item){
   const bg=document.createElement('div');
   bg.className='inv-detail-bg';
   if(item.imageFull){
-    bg.innerHTML='<img class="inv-detail-fullart" src="'+item.imageFull+'" alt="'+item.title+'">';
+    const wrap=document.createElement('div');
+    wrap.className='inv-detail-fullart-wrap';
+    wrap.innerHTML='<img class="inv-detail-fullart" src="'+item.imageFull+'" alt="'+item.title+'">'
+      +(item.content?'<div class="inv-detail-text-overlay"><div class="inv-detail-text-overlay-inner">'+item.content+'</div></div>':'');
+    bg.appendChild(wrap);
+    if(item.content){
+      wrap.addEventListener('click',e=>{
+        e.stopPropagation();
+        const ov=wrap.querySelector('.inv-detail-text-overlay');
+        if(ov)ov.classList.toggle('visible');
+      });
+    }
   }else{
     bg.innerHTML='<div class="inv-detail-box"><button class="inv-detail-close" onclick="this.closest(\'.inv-detail-bg\').remove()">&#x2715;</button><div class="inv-detail-type">'+item.type+'</div><h2 class="inv-detail-title">'+item.title+'</h2><div class="inv-detail-content">'+item.content+'</div></div>';
   }
   const openedAt=Date.now();
-  bg.addEventListener('click',e=>{if(Date.now()-openedAt<350)return;if(e.target===bg||e.target.classList.contains('inv-detail-fullart'))bg.remove()});
+  bg.addEventListener('click',e=>{if(Date.now()-openedAt<350)return;if(e.target===bg)bg.remove()});
   document.body.appendChild(bg);
 }
 setTimeout(renderInventory,0);
