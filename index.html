@@ -501,7 +501,7 @@ const COURT_MEAN={Page:['Curiosity, learning','Inexperience, gossip'],Knight:['A
 const SUIT_MEAN={Cups:['Emotion, love','Hidden feelings'],Wands:['Will, creation','Burnout, delay'],Swords:['Truth, conflict','Deceit, anguish'],Pentacles:['Work, abundance','Greed, loss']};
 const MAJORS=[[0,'Fool',5,true,'PEEK_3'],[1,'Magician',5,true,'SEARCH'],[2,'High Priestess',1,false,'NEIGHBOR_2'],[3,'Empress',1,false,'DRAW_2'],[4,'Emperor',1,false,'DRAW_1'],[5,'Hierophant',1,false,'BETWEEN_2'],[6,'Lovers',1,false,'KIN_2'],[7,'Chariot',1,false,'DRAW_1'],[8,'Strength',1,false,'DRAW_1'],[9,'Hermit',1,false,'NEIGHBOR_2'],[10,'Wheel',1,false,'MIRROR_1'],[11,'Justice',1,false,'KIN_2'],[12,'Hanged Man',1,false,'BETWEEN_2'],[13,'Death',1,false,'DRAW_3'],[14,'Temperance',1,false,'BETWEEN_2'],[15,'Devil',1,false,'DRAW_2'],[16,'Tower',1,false,'DRAW_2'],[17,'Star',1,false,'KIN_2'],[18,'Moon',1,false,'MIRROR_1'],[19,'Sun',1,false,'DRAW_2'],[20,'Judgement',1,false,'MIRROR_1'],[21,'World',5,true,'WORLD']];
 const COURTS=[['Page',2,'DRAW_1'],['Knight',3,'PEEK_3'],['Queen',4,'DRAW_2'],['King',5,'PEEK_5']];
-const TH=Array.from({length:10},(_,i)=>(i+1)*20);
+const TH=[10,...Array.from({length:9},(_,i)=>(i+1)*20)];
 let persist={pool:0,up:{discards:0,hand:0,mulligan:0,lens_mastery:0,offering:0,ritual_depth:0,deep_current:0,omen:0,resonance:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,court_chips:0,court_mult:0,path_chips:0,path_mult:0,relicSlot:0},relics:[],relicUsed:{}};
 let hintSettings={patterns:true,relics:false};
 function toggleHintSetting(key,val){hintSettings[key]=val;_hintsCache.clear();render();}
@@ -579,7 +579,7 @@ function render(){
       e.dataset.uid=card.uid;
       e.innerHTML=cardHTML(card);
       applyCardPhoto(e,card);
-      if(ability)e.onclick=()=>handleAbilityHandClick(card);
+      if(ability){e.onclick=()=>handleAbilityHandClick(card);s.onclick=()=>handleAbilityHandClick(card);}
       s.appendChild(e);
     }else{
       s.innerHTML='<div class="num">'+(i+1)+'</div>';
@@ -855,7 +855,7 @@ function applyHint(el,card,poolCards=null){
   el.dataset.hint=hints.map(h=>h.label).join(' + ');
 }
 function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=computeScore([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
-function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;let before=new Set(computeScore(state.spread.filter(Boolean)).melds.map(x=>x[0]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();playSound('place');haptic(12);const _landEl=document.querySelectorAll('.slot')[i]?.querySelector('.card');if(_landEl){_landEl.classList.add('landing');_landEl.addEventListener('animationend',()=>_landEl.classList.remove('landing'),{once:true});}ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.filter(x=>!before.has(x[0]));let delay=420;let announceOffset=0;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;setTimeout(()=>ghost(anchor,meldStr(m),true),ghostDelay);setTimeout(()=>{centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5);playSound('meld');haptic([0,10,35,12]);},delay+announceOffset);if(m[2]>0){const multLabel=m[3]==='add'?'+'+m[2]+' Mult':'×'+m[2];setTimeout(()=>fireMultGhost(multLabel),ghostDelay+200);}holdEffects(ghostDelay+1700);delay+=slots.length*130+700;announceOffset+=600;});setCounterTarget(after.finalScore);setTimeout(()=>checkResonationTriggers(),750);checkEnd()}
+function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;const beforeMelds=new Map(computeScore(state.spread.filter(Boolean)).melds.map(x=>[x[0],x]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();playSound('place');haptic(12);const _landEl=document.querySelectorAll('.slot')[i]?.querySelector('.card');if(_landEl){_landEl.classList.add('landing');_landEl.addEventListener('animationend',()=>_landEl.classList.remove('landing'),{once:true});}ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.flatMap(x=>{if(!beforeMelds.has(x[0]))return[x];const bm=beforeMelds.get(x[0]);const dc=x[1]-bm[1],dm=x[2]-bm[2];if(dc>0||dm>0)return[[x[0],dc,dm,x[3]]];return[];});let delay=420;let announceOffset=0;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;setTimeout(()=>ghost(anchor,meldStr(m),true),ghostDelay);setTimeout(()=>{centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5);playSound('meld');haptic([0,10,35,12]);},delay+announceOffset);if(m[2]>0){const multLabel=m[3]==='add'?'+'+m[2]+' Mult':'×'+m[2];setTimeout(()=>fireMultGhost(multLabel),ghostDelay+200);}holdEffects(ghostDelay+1700);delay+=slots.length*130+700;announceOffset+=600;});setCounterTarget(after.finalScore);setTimeout(()=>checkResonationTriggers(),750);checkEnd()}
 let effectsUntil=0;
 function holdEffects(ms){effectsUntil=Math.max(effectsUntil,Date.now()+ms)}
 let _slotEls=null;function _slots(){return _slotEls||(_slotEls=Array.from(document.querySelectorAll('.slot')))}
@@ -2052,26 +2052,67 @@ const _music=(function(){
     'boopul-sitar-amp-tanpura-meditation-yoga-flow-ahir-bhairav-raga-538665.mp3',
     'boopul-dreamy-sitar-amp-tanpura-late-night-calm-music-538721.mp3',
   ];
-  let el=null,lastIdx=-1,started=false,targetVol=0.3;
+  const FADE=6; // crossfade seconds
+  let cur=null,nxt=null,lastIdx=-1,started=false,targetVol=0.3;
+  let fading=false,fadeStart=0,fadeTick=null;
+
   function pickIdx(){let i;do{i=Math.floor(Math.random()*TRACKS.length);}while(TRACKS.length>1&&i===lastIdx);return i;}
-  function start(e){
+
+  function beginFade(){
+    if(fading)return;
+    fading=true;
+    fadeStart=performance.now();
+    const fromVol=cur?cur.volume:targetVol;
+    const idx=pickIdx();lastIdx=idx;
+    nxt=document.createElement('audio');
+    nxt.volume=0;
+    nxt.preload='auto';
+    nxt.src=TRACKS[idx];
+    nxt.play().catch(()=>{});
+    attachHandlers(nxt);
+    function tick(){
+      const p=Math.min(1,(performance.now()-fadeStart)/1000/FADE);
+      if(cur)cur.volume=fromVol*(1-p);
+      if(nxt)nxt.volume=targetVol*p;
+      if(p<1){fadeTick=requestAnimationFrame(tick);}
+      else{
+        if(cur){cur.src='';cur=null;}
+        cur=nxt;nxt=null;fading=false;fadeTick=null;
+      }
+    }
+    fadeTick=requestAnimationFrame(tick);
+  }
+
+  function attachHandlers(el){
+    function onTime(){
+      if(!el.duration||el.duration-el.currentTime>FADE+0.5)return;
+      el.removeEventListener('timeupdate',onTime);
+      el.removeEventListener('ended',onEnd);
+      if(cur===el)beginFade();
+    }
+    function onEnd(){
+      el.removeEventListener('timeupdate',onTime);
+      el.removeEventListener('ended',onEnd);
+      if(cur===el)beginFade();
+    }
+    el.addEventListener('timeupdate',onTime);
+    el.addEventListener('ended',onEnd);
+  }
+
+  function start(){
     if(started)return;
     started=true;
-    el=document.createElement('audio');
-    el.volume=targetVol;
-    el.preload='none';
+    cur=document.createElement('audio');
+    cur.volume=targetVol;
+    cur.preload='none';
     const idx=pickIdx();lastIdx=idx;
-    el.src=TRACKS[idx];
-    el.addEventListener('ended',()=>{
-      const next=pickIdx();lastIdx=next;
-      el.src=TRACKS[next];
-      el.play().catch(()=>{});
-    });
-    el.play().catch(()=>{started=false;el=null;});
+    cur.src=TRACKS[idx];
+    attachHandlers(cur);
+    cur.play().catch(()=>{started=false;cur=null;});
   }
   document.addEventListener('touchstart',start,{capture:true,once:true});
   document.addEventListener('click',start,{capture:true,once:true});
-  return{setVol(v){targetVol=v;if(el)el.volume=v;}};
+  return{setVol(v){targetVol=v;if(cur&&!fading)cur.volume=v;}};
 })();
 function toggleMenu(){const p=document.getElementById('settingsPanel');if(p)p.classList.toggle('hidden');}
 document.addEventListener('click',e=>{const p=document.getElementById('settingsPanel');const b=document.getElementById('menuBtn');if(p&&!p.classList.contains('hidden')&&!p.contains(e.target)&&e.target!==b)p.classList.add('hidden');},{capture:false});
