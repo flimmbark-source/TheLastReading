@@ -708,8 +708,8 @@ function computeScore(cards,spreadArr=null,forHints=false){
   const omenTotal=omenBonus*cards.length;
   const resonanceTotal=resonanceBonus*cards.filter(c=>c.type==='major').length;
   let chips=cards.reduce((s,c)=>s+c.points,0),base=chips,mult=1,m=[];
-  if(omenTotal){m.push(['Omen',omenTotal,0]);chips+=omenTotal;}
-  if(resonanceTotal){m.push(['Resonance',resonanceTotal,0]);chips+=resonanceTotal;}
+  if(omenTotal&&!forHints){m.push(['Omen',omenTotal,0]);chips+=omenTotal;}
+  if(resonanceTotal&&!forHints){m.push(['Resonance',resonanceTotal,0]);chips+=resonanceTotal;}
   let rankBonus=(persist.up.rank||0)*5;
   let rankMult=1+(persist.up.rank_mult||0)*0.25;
   for(const rank of ['Page','Knight','Queen','King']){
