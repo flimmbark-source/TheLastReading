@@ -141,7 +141,7 @@ upsertBlock(
   'hand swipe-scroll CSS',
   '/* hand swipe-scroll patch */',
   '/* end hand swipe-scroll patch */',
-  `.handDock{overflow:hidden}
+  `.handDock{overflow-x:clip;overflow-y:visible}
 .hand{max-width:none;width:max-content;transform:translate3d(var(--hand-scroll-x,0px),0,0) rotate(var(--hand-scroll-tilt,0deg));transition:transform .42s cubic-bezier(.2,.85,.25,1)}
 .hand.hand-scroll-dragging{transition:none}
 .hand-swipe-zone{position:fixed;left:0;right:0;bottom:197px;height:88px;z-index:19;pointer-events:auto;touch-action:none;cursor:grab;background:transparent}
