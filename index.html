@@ -408,6 +408,15 @@
 .slot.res-1::before{box-shadow:0 0 14px 3px rgba(255,200,70,.55),inset 0 0 8px rgba(255,190,40,.08);border:1px solid rgba(255,200,70,.45);animation:res-fade 2.6s ease-in-out infinite}
 .slot.res-2::before{box-shadow:0 0 26px 6px rgba(255,208,60,.75),0 0 52px 10px rgba(255,190,30,.3),inset 0 0 14px rgba(255,195,40,.12);border:1px solid rgba(255,215,65,.7);animation:res-fade 1.9s ease-in-out infinite}
 .slot.res-3::before{box-shadow:0 0 40px 10px rgba(255,222,80,.9),0 0 80px 18px rgba(255,200,45,.5),0 0 130px 24px rgba(255,175,20,.25),inset 0 0 22px rgba(255,212,55,.18);border:2px solid rgba(255,232,92,.88);animation:res-fade 1.4s ease-in-out infinite}
+#titleWrap{position:relative;display:inline-block}
+#menuBtn{position:absolute;left:-44px;top:50%;transform:translateY(-50%);background:none;border:none;color:#d4b896;font-size:1.5rem;cursor:pointer;padding:4px 8px;line-height:1;z-index:200;opacity:.75;transition:opacity .2s}
+#menuBtn:hover{opacity:1}
+.settings-panel{position:absolute;top:calc(100% + 4px);left:-44px;background:rgba(20,14,10,.95);border:1px solid rgba(180,140,90,.35);border-radius:8px;padding:14px 18px;z-index:300;min-width:220px;display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.6)}
+.settings-panel.hidden{display:none}
+.settings-panel label{display:flex;flex-direction:column;gap:4px;font-size:.78rem;color:#c8a87a;letter-spacing:.04em;text-transform:uppercase}
+.settings-panel input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:rgba(180,140,90,.3);outline:none}
+.settings-panel input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#c8a87a;cursor:pointer}
+.settings-panel input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#c8a87a;cursor:pointer;border:none}
 </style>
 </head>
 <body>
@@ -415,7 +424,14 @@
   <div id="invDesk"></div>
   <button id="invTab">&#9660; Archives</button>
 </div>
-<h1>The Last Reading</h1>
+<div id="titleWrap">
+  <button id="menuBtn" onclick="toggleMenu()" aria-label="Settings">&#9776;</button>
+  <h1>The Last Reading</h1>
+  <div id="settingsPanel" class="settings-panel hidden">
+    <label>Music<input type="range" id="musicVol" min="0" max="1" step="0.05" value="0.3" oninput="setMusicVol(+this.value)"></label>
+    <label>Effects<input type="range" id="sfxVol" min="0" max="1" step="0.05" value="1" oninput="setSfxVol(+this.value)"></label>
+  </div>
+</div>
 <div class="bar"></div>
 <div id="relicRack" class="relic-rack"></div>
 <div id="sophiaVeil"></div>
@@ -835,18 +851,18 @@ function playSound(type){
       for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,2.5);
       const src=ctx.createBufferSource();src.buffer=buf;
       const f=ctx.createBiquadFilter();f.type='bandpass';f.frequency.value=700;f.Q.value=0.7;
-      const g=ctx.createGain();g.gain.setValueAtTime(0.22,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+.07);
+      const g=ctx.createGain();g.gain.setValueAtTime(0.22*_sfxVol,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+.07);
       src.connect(f);f.connect(g);g.connect(ctx.destination);src.start();src.onended=()=>{src.disconnect();f.disconnect();g.disconnect();};
     }else if(type==='meld'){
       [[523,0],[659,.05],[784,.11]].forEach(([freq,t])=>{
         const o=ctx.createOscillator(),g=ctx.createGain();
         o.type='sine';o.frequency.value=freq;
         const at=ctx.currentTime+t;
-        g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(0.18,at+.01);g.gain.exponentialRampToValueAtTime(0.001,at+.55);
+        g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(0.18*_sfxVol,at+.01);g.gain.exponentialRampToValueAtTime(0.001,at+.55);
         o.connect(g);g.connect(ctx.destination);o.start(at);o.stop(at+.6);o.onended=()=>{o.disconnect();g.disconnect();};
       });
     }else if(type==='resonation'){
-      [[220,0,.28],[440,.07,.2],[880,.14,.14],[330,.2,.1]].forEach(([freq,t,vol])=>{
+      [[220,0,.28],[440,.07,.2],[880,.14,.14],[330,.2,.1]].map(([f,t,v])=>[f,t,v*_sfxVol]).forEach(([freq,t,vol])=>{
         const o=ctx.createOscillator(),g=ctx.createGain();
         o.type='sine';o.frequency.value=freq;
         const at=ctx.currentTime+t;
@@ -1854,6 +1870,7 @@ if(!tutDone)setTimeout(()=>tutShow(0),400);
 // ── Background music ──
 // Single persistent Audio element — iOS requires the element to be
 // created and .play() called within the same user-gesture event.
+let _sfxVol=1.0;
 const _music=(function(){
   const TRACKS=[
     'boopul-misty-dawn-singing-bowls-amp-sitar-anxiety-relief-music-538675.mp3',
@@ -1861,13 +1878,13 @@ const _music=(function(){
     'boopul-sitar-amp-tanpura-meditation-yoga-flow-ahir-bhairav-raga-538665.mp3',
     'boopul-dreamy-sitar-amp-tanpura-late-night-calm-music-538721.mp3',
   ];
-  let el=null,lastIdx=-1,started=false;
+  let el=null,lastIdx=-1,started=false,targetVol=0.3;
   function pickIdx(){let i;do{i=Math.floor(Math.random()*TRACKS.length);}while(TRACKS.length>1&&i===lastIdx);return i;}
   function start(e){
     if(started)return;
     started=true;
     el=document.createElement('audio');
-    el.volume=0.3;
+    el.volume=targetVol;
     el.preload='none';
     const idx=pickIdx();lastIdx=idx;
     el.src=TRACKS[idx];
@@ -1880,7 +1897,12 @@ const _music=(function(){
   }
   document.addEventListener('touchstart',start,{capture:true,once:true});
   document.addEventListener('click',start,{capture:true,once:true});
+  return{setVol(v){targetVol=v;if(el)el.volume=v;}};
 })();
+function toggleMenu(){const p=document.getElementById('settingsPanel');if(p)p.classList.toggle('hidden');}
+document.addEventListener('click',e=>{const p=document.getElementById('settingsPanel');const b=document.getElementById('menuBtn');if(p&&!p.classList.contains('hidden')&&!p.contains(e.target)&&e.target!==b)p.classList.add('hidden');},{capture:false});
+function setMusicVol(v){_music.setVol(v);}
+function setSfxVol(v){_sfxVol=v;}
 
 (function handAnim(){
   const hand=document.querySelector('.hand');
