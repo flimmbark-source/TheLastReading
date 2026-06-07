@@ -458,6 +458,56 @@ body.mobile-drag-selecting .card.hint-complete.drag-select-preview{box-shadow:0 
 body.mobile-drag-selecting .card.hint-multi.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,var(--hint-shadow)!important}
 body.mobile-drag-selecting .card.drag-select-preview[data-hint]::after{opacity:1}
 /* end mobile drag-select touch patch */
+/* relic vision transition patch */
+.relic-vision-veil{position:fixed;inset:0;z-index:9997;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 45%,rgba(255,217,120,.55) 0%,rgba(146,90,28,.78) 28%,rgba(20,8,4,.96) 72%);animation:relic-vision-rise 1.65s cubic-bezier(.42,0,.28,1) forwards;mix-blend-mode:screen}
+.relic-vision-rays{position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:0;background:conic-gradient(from 90deg at 50% 45%,transparent 0deg,rgba(255,217,120,.42) 14deg,transparent 28deg,rgba(255,217,120,.32) 60deg,transparent 80deg,rgba(255,217,120,.45) 130deg,transparent 152deg,rgba(255,217,120,.35) 200deg,transparent 224deg,rgba(255,217,120,.5) 268deg,transparent 296deg,rgba(255,217,120,.38) 332deg,transparent 360deg);animation:relic-vision-rays 1.7s linear forwards}
+.relic-vision-mote{position:fixed;left:50%;top:46%;z-index:9998;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle,#ffe79a 0%,rgba(255,180,60,.6) 50%,transparent 70%);pointer-events:none;opacity:0;animation:relic-vision-mote 1.6s ease-out forwards}
+@keyframes relic-vision-rise{
+  0%   {opacity:0;transform:scale(.55);filter:blur(22px) brightness(1.4)}
+  20%  {opacity:.45}
+  44%  {opacity:.95;filter:blur(0) brightness(1.1)}
+  72%  {opacity:.85;transform:scale(1)}
+  100% {opacity:0;transform:scale(1.18);filter:blur(8px)}
+}
+@keyframes relic-vision-rays{
+  0%   {opacity:0;transform:rotate(0deg) scale(.6)}
+  30%  {opacity:.85}
+  70%  {opacity:.55;transform:rotate(34deg) scale(1.05)}
+  100% {opacity:0;transform:rotate(54deg) scale(1.3)}
+}
+@keyframes relic-vision-mote{
+  0%   {opacity:0;transform:translate(-50%,-50%) scale(.4)}
+  20%  {opacity:.9}
+  100% {opacity:0;transform:translate(calc(-50% + var(--mx,0px)),calc(-50% + var(--my,-180px))) scale(.2)}
+}
+.relic-vision-enter{animation:relic-vision-enter 1.05s cubic-bezier(.2,.85,.25,1) forwards}
+@keyframes relic-vision-enter{
+  0%   {opacity:0;transform:translateY(36px) scale(.92);filter:blur(8px)}
+  55%  {opacity:1;transform:translateY(-6px) scale(1.015);filter:blur(0)}
+  80%  {transform:translateY(2px) scale(1)}
+  100% {opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+}
+@media(prefers-reduced-motion:reduce){.relic-vision-veil,.relic-vision-rays,.relic-vision-mote{animation:none;opacity:0;display:none}.relic-vision-enter{animation:none}}
+/* end relic vision transition patch */
+/* relic rack mobile right-side patch */
+@media(max-width:640px){
+  .relic-rack{flex-direction:column;top:54px;right:4px;gap:5px;align-items:flex-end}
+  .relic-rack .relic-btn{width:34px;height:34px}
+  .relic-rack .relic-slot-empty{width:34px;height:34px}
+}
+/* end relic rack mobile right-side patch */
+/* hand swipe-scroll patch */
+.handDock{overflow:hidden}
+.hand{max-width:none;width:max-content;transform:translate3d(var(--hand-scroll-x,0px),0,0) rotate(var(--hand-scroll-tilt,0deg));transition:transform .42s cubic-bezier(.2,.85,.25,1)}
+.hand.hand-scroll-dragging{transition:none}
+.hand-swipe-zone{position:fixed;left:0;right:0;bottom:197px;height:88px;z-index:19;pointer-events:auto;touch-action:none;cursor:grab;background:transparent}
+.hand-swipe-zone.dragging{cursor:grabbing}
+@media(max-width:640px){.hand-swipe-zone{bottom:152px;height:74px}}
+.hand-swipe-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:14px;pointer-events:none;opacity:.0;transition:opacity .4s;font:600 10px system-ui,Segoe UI,sans-serif;color:rgba(232,196,96,.55);letter-spacing:.18em;text-transform:uppercase}
+.hand-swipe-zone.has-overflow .hand-swipe-hint{opacity:.5}
+.hand-swipe-zone.dragging .hand-swipe-hint{opacity:0}
+.hand-swipe-hint span{display:inline-block;width:30px;height:1px;background:linear-gradient(90deg,transparent,rgba(232,196,96,.6),transparent)}
+/* end hand swipe-scroll patch */
 </style>
 </head>
 <body>
@@ -509,6 +559,7 @@ body.mobile-drag-selecting .card.drag-select-preview[data-hint]::after{opacity:1
 <div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="sbtn sbtn-discard" aria-label="Discard" onclick="discardSelected()" disabled></button><button id="purgeBtn" class="sbtn sbtn-purge" aria-label="Purge" onclick="startPurge()" disabled></button></div><div id="spread" class="spread"></div></div>
 <div id="abilityPrompt" class="ability-prompt"><div><h3 id="abilityPromptTitle"></h3><p id="abilityPromptText"></p></div><button id="abilityConfirm" onclick="confirmAbilitySelection()" disabled>Choose</button></div>
 <div id="purgePrompt" class="ability-prompt"><div><h3>Purge</h3><p>Select 3 cards to sacrifice for 1 Discard. <b><span id="purgeCount">0</span>/3</b> selected.</p></div><button id="purgeConfirm" onclick="confirmPurge()" disabled>Sacrifice</button><button onclick="cancelPurge()">Cancel</button></div>
+<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div></div>
 <div class="handDock"><div id="hand" class="hand"></div></div>
 <div id="tutTip"><span class="tut-arrow"></span><p id="tutText"></p><div class="tut-foot"><button id="tutSkipBtn" onclick="tutSkip();event.stopPropagation()">Skip tutorial</button></div></div>
 <div id="packAnim" class="pack-anim-overlay" aria-hidden="true">
@@ -1367,8 +1418,30 @@ function openShop(){
   if(state.pendingPool){persist.pool+=state.pendingPool;state.pendingPool=0;render();}
   const options=relicPool(4);
   if(!options.length){openShopMain();return;}
+  playRelicVision();
+  setTimeout(()=>_openRelicVisionShop(options),520);
+}
+function playRelicVision(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  try{playSound('resonation');}catch(e){}
+  try{haptic([0,40,30,60,40,80]);}catch(e){}
+  const veil=document.createElement('div');veil.className='relic-vision-veil';document.body.appendChild(veil);
+  const rays=document.createElement('div');rays.className='relic-vision-rays';document.body.appendChild(rays);
+  for(let i=0;i<14;i++){
+    const m=document.createElement('div');m.className='relic-vision-mote';
+    const ang=Math.random()*Math.PI*2,r=140+Math.random()*180;
+    m.style.setProperty('--mx',Math.cos(ang)*r+'px');
+    m.style.setProperty('--my',(Math.sin(ang)*r-140)+'px');
+    m.style.animationDelay=(Math.random()*.35)+'s';
+    m.style.width=m.style.height=(6+Math.random()*8).toFixed(1)+'px';
+    document.body.appendChild(m);
+    setTimeout(()=>m.remove(),2100);
+  }
+  setTimeout(()=>{veil.remove();rays.remove();},1800);
+}
+function _openRelicVisionShop(options){
   const p=PACKS['relic'];
-  let html='<div class="summary tarot-shop">';
+  let html='<div class="summary tarot-shop relic-vision-enter">';
   html+=`<div class="pack-picker-header"><h3>A Vision Stirs</h3><p>A relic calls to you — choose one to carry, or pass it by</p></div>`;
   html+='<div class="shop-items-row relic-picker-row">';
   for(const k of options){
@@ -2350,6 +2423,91 @@ function setSfxVol(v){_sfxVol=v;}
   },true);
 })();
 /* end mobile drag-select pointer handler patch */
+/* hand swipe-scroll handler patch */
+(function(){
+  if(window.__handSwipeScrollInstalled)return;
+  window.__handSwipeScrollInstalled=true;
+  let zone=null,hand=null;
+  let scrollX=0,vel=0,startX=0,startScrollX=0,pointerId=null;
+  let lastT=0,lastX=0,momentumRaf=null,tiltRaf=null;
+  const handEl=()=>{if(hand&&hand.isConnected)return hand;hand=document.querySelector('.hand');return hand;};
+  const zoneEl=()=>{if(zone&&zone.isConnected)return zone;zone=document.getElementById('handSwipeZone');return zone;};
+  const dockW=()=>{const h=handEl();return h&&h.parentElement?h.parentElement.clientWidth:window.innerWidth;};
+  const handW=()=>{const h=handEl();return h?h.scrollWidth:0;};
+  const maxOffset=()=>{const o=(handW()-dockW())/2;return o>0?o:0;};
+  const clampScroll=x=>{const o=maxOffset();return Math.max(-o,Math.min(o,x));};
+  const applyScroll=x=>{const h=handEl();if(!h)return;scrollX=x;h.style.setProperty('--hand-scroll-x',x.toFixed(1)+'px');updateOverflowHint();};
+  const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;z.classList.toggle('has-overflow',maxOffset()>4);};
+  const setTilt=deg=>{const h=handEl();if(!h)return;h.style.setProperty('--hand-scroll-tilt',deg.toFixed(2)+'deg');};
+  const easeTiltTo=target=>{
+    if(tiltRaf)cancelAnimationFrame(tiltRaf);
+    const h=handEl();if(!h)return;
+    const start=parseFloat(getComputedStyle(h).getPropertyValue('--hand-scroll-tilt'))||0;
+    const t0=performance.now(),dur=420;
+    const step=t=>{
+      const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);
+      setTilt(start+(target-start)*e);
+      if(p<1)tiltRaf=requestAnimationFrame(step);else tiltRaf=null;
+    };
+    tiltRaf=requestAnimationFrame(step);
+  };
+  const cancelMomentum=()=>{if(momentumRaf){cancelAnimationFrame(momentumRaf);momentumRaf=null;}};
+  const runMomentum=()=>{
+    let v=vel*16;
+    if(Math.abs(v)<.4){easeTiltTo(0);return;}
+    const step=()=>{
+      const next=clampScroll(scrollX+v);
+      if(Math.abs(next-scrollX)<.2||Math.abs(v)<.25){momentumRaf=null;easeTiltTo(0);applyScroll(clampScroll(scrollX));return;}
+      applyScroll(next);
+      setTilt(Math.max(-3.5,Math.min(3.5,-v*.22)));
+      v*=.92;
+      momentumRaf=requestAnimationFrame(step);
+    };
+    momentumRaf=requestAnimationFrame(step);
+  };
+  document.addEventListener('pointerdown',ev=>{
+    const z=zoneEl();if(!z||ev.target!==z&&!z.contains(ev.target))return;
+    cancelMomentum();
+    pointerId=ev.pointerId;
+    startX=ev.clientX;startScrollX=scrollX;
+    lastT=performance.now();lastX=ev.clientX;vel=0;
+    try{z.setPointerCapture(ev.pointerId);}catch(e){}
+    z.classList.add('dragging');
+    handEl()?.classList.add('hand-scroll-dragging');
+  },true);
+  document.addEventListener('pointermove',ev=>{
+    if(ev.pointerId!==pointerId)return;
+    ev.preventDefault();
+    const dx=ev.clientX-startX;
+    const next=clampScroll(startScrollX+dx);
+    applyScroll(next);
+    const now=performance.now(),dt=now-lastT;
+    if(dt>0){const inst=(ev.clientX-lastX)/dt;vel=vel*.55+inst*.45;}
+    lastT=now;lastX=ev.clientX;
+    setTilt(Math.max(-4.5,Math.min(4.5,-vel*8)));
+  },{capture:true,passive:false});
+  const finish=ev=>{
+    if(ev.pointerId!==pointerId)return;
+    pointerId=null;
+    const z=zoneEl();if(z)z.classList.remove('dragging');
+    handEl()?.classList.remove('hand-scroll-dragging');
+    runMomentum();
+  };
+  document.addEventListener('pointerup',finish,true);
+  document.addEventListener('pointercancel',finish,true);
+  const recheck=()=>{applyScroll(clampScroll(scrollX));};
+  let ro=null;
+  const attachObserver=()=>{
+    const h=handEl();
+    if(!h){requestAnimationFrame(attachObserver);return;}
+    if(ro)return;
+    if('ResizeObserver' in window){ro=new ResizeObserver(recheck);ro.observe(h);ro.observe(h.parentElement);}
+    new MutationObserver(recheck).observe(h,{childList:true});
+  };
+  attachObserver();
+  window.addEventListener('resize',recheck);
+})();
+/* end hand swipe-scroll handler patch */
 </script>
 </body>
 </html>
