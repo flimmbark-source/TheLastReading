@@ -1534,7 +1534,8 @@ document.addEventListener('click',e=>{
 const TUT_KEY='tlr_tut_done';
 let tutStep=-1,tutTimer=null,tutDone=!!localStorage.getItem(TUT_KEY);
 const TUT_STEPS=[
-  {center:true, text:'Use the cards in your hand to complete a reading. Tap a card to select it, then tap an empty slot in the spread to score it.'},
+  {center:true, text:'Your relative passed away recently, leaving behind their tarot deck. You used to play this game with them using it.'},
+  {center:true, text:'Tap a card to select it, then tap an empty slot in the spread to score it.'},
   {sel:'.threshold-pill',arrow:'up',text:'Score enough points to beat the <b>Threshold</b>.'},
   {sel:'.handDock',arrow:'down',text:'Glowing cards form <b>potential</b> scoring patterns. Check <b>Scoring</b> to see what\'s possible, and use card <b>Abilities</b> to form a scoring pattern.'},
   {sel:'#abilitiesBtn',arrow:'up',text:'Discarding a card uses its <b>Ability</b> instead of scoring — a way to reshape your hand before placing.'},
@@ -1548,7 +1549,7 @@ const TUT_STEPS=[
 function tutSkip(){localStorage.setItem(TUT_KEY,'1');tutDone=true;tutHide()}
 function tutHide(){clearTimeout(tutTimer);tutTimer=null;tutStep=-1;const t=$('#tutTip');if(t){t.classList.remove('show','tut-center');t.style.cssText=''}}
 function tutShow(step){
-  if(tutDone&&step<8)return;
+  if(tutDone&&step<9)return;
   clearTimeout(tutTimer);tutTimer=null;
   tutStep=step;
   const s=TUT_STEPS[step];
@@ -1568,8 +1569,8 @@ function tutShow(step){
 }
 function tutNext(){
   if(tutStep<0)return;
-  if(tutStep===7){tutSkip();return}
-  if(tutStep===8||tutStep===9){tutHide();return}
+  if(tutStep===8){tutSkip();return}
+  if(tutStep===9||tutStep===10){tutHide();return}
   tutShow(tutStep+1);
 }
 function posTutTip(target,arrowDir){
