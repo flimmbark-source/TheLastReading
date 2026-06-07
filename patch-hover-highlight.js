@@ -30,8 +30,8 @@ replaceOne(
   'hand hover upright, press/selected glow',
   [
     `.hand .card:hover,.hand .card.sel{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important;box-shadow:${baseGlow}}`,
-    `.hand .card:hover,.hand .card.sel{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card.sel{box-shadow:${baseGlow}`,
-    `.hand .card:hover,.hand .card.sel{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel{box-shadow:${baseGlow}`
+    `.hand .card:hover,.hand .card.sel{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card.sel{box-shadow:${baseGlow}}`,
+    `.hand .card:hover,.hand .card:active,.hand .card.sel{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel{box-shadow:${baseGlow}}`
   ],
   `.hand .card:hover,.hand .card:active,.hand .card.sel{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel{box-shadow:${baseGlow}}`
 );
