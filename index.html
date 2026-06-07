@@ -579,7 +579,7 @@ function render(){
       e.dataset.uid=card.uid;
       e.innerHTML=cardHTML(card);
       applyCardPhoto(e,card);
-      if(ability){e.onclick=()=>handleAbilityHandClick(card);s.onclick=()=>handleAbilityHandClick(card);}
+      if(ability){e.onclick=(ev)=>{ev.stopPropagation();handleAbilityHandClick(card);};s.onclick=()=>handleAbilityHandClick(card);}
       s.appendChild(e);
     }else{
       s.innerHTML='<div class="num">'+(i+1)+'</div>';
