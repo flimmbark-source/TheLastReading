@@ -501,7 +501,7 @@ const COURT_MEAN={Page:['Curiosity, learning','Inexperience, gossip'],Knight:['A
 const SUIT_MEAN={Cups:['Emotion, love','Hidden feelings'],Wands:['Will, creation','Burnout, delay'],Swords:['Truth, conflict','Deceit, anguish'],Pentacles:['Work, abundance','Greed, loss']};
 const MAJORS=[[0,'Fool',5,true,'PEEK_3'],[1,'Magician',5,true,'SEARCH'],[2,'High Priestess',1,false,'NEIGHBOR_2'],[3,'Empress',1,false,'DRAW_2'],[4,'Emperor',1,false,'DRAW_1'],[5,'Hierophant',1,false,'BETWEEN_2'],[6,'Lovers',1,false,'KIN_2'],[7,'Chariot',1,false,'DRAW_1'],[8,'Strength',1,false,'DRAW_1'],[9,'Hermit',1,false,'NEIGHBOR_2'],[10,'Wheel',1,false,'MIRROR_1'],[11,'Justice',1,false,'KIN_2'],[12,'Hanged Man',1,false,'BETWEEN_2'],[13,'Death',1,false,'DRAW_3'],[14,'Temperance',1,false,'BETWEEN_2'],[15,'Devil',1,false,'DRAW_2'],[16,'Tower',1,false,'DRAW_2'],[17,'Star',1,false,'KIN_2'],[18,'Moon',1,false,'MIRROR_1'],[19,'Sun',1,false,'DRAW_2'],[20,'Judgement',1,false,'MIRROR_1'],[21,'World',5,true,'WORLD']];
 const COURTS=[['Page',2,'DRAW_1'],['Knight',3,'PEEK_3'],['Queen',4,'DRAW_2'],['King',5,'PEEK_5']];
-const TH=[10,...Array.from({length:9},(_,i)=>(i+2)*20)];
+const TH=[10,...Array.from({length:9},(_,i)=>(i+1)*20)];
 let persist={pool:0,up:{discards:0,hand:0,mulligan:0,lens_mastery:0,offering:0,ritual_depth:0,deep_current:0,omen:0,resonance:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,court_chips:0,court_mult:0,path_chips:0,path_mult:0,relicSlot:0},relics:[],relicUsed:{}};
 let hintSettings={patterns:true,relics:false};
 function toggleHintSetting(key,val){hintSettings[key]=val;_hintsCache.clear();render();}
