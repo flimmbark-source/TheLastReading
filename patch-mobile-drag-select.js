@@ -143,7 +143,6 @@ upsertScript(
     const target=ev.target instanceof Element?ev.target:null;
     if(!target||!target.closest('#hand,#spread'))return;
     drag={pointerId:ev.pointerId,startX:ev.clientX,startY:ev.clientY,lastUid:null,active:false,didSelect:false,pendingSelected:null,pendingAbility:state.abilitySelect?[...state.abilitySelect.picked]:[],pendingPurge:state.purgeSelect!==null?[...state.purgeSelect]:[]};
-    enterDragSelectMode();
   },true);
   document.addEventListener('pointermove',ev=>{
     if(!drag||ev.pointerId!==drag.pointerId)return;
@@ -152,6 +151,7 @@ upsertScript(
       if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
       drag.active=true;
       clearPressHighlight();
+      enterDragSelectMode();
     }
     ev.preventDefault();
     for(const cardEl of cardsAtPoint(ev.clientX,ev.clientY)){
@@ -159,11 +159,11 @@ upsertScript(
     }
   },{capture:true,passive:false});
   const finishDrag=()=>{
-    const hadDrag=!!drag;
+    const wasActive=!!drag&&drag.active;
     commitDrag();
     if(drag&&drag.didSelect)suppressClickUntil=performance.now()+550;
     drag=null;
-    if(hadDrag)leaveDragSelectMode();
+    if(wasActive)leaveDragSelectMode();
   };
   document.addEventListener('pointerup',finishDrag,true);
   document.addEventListener('pointercancel',finishDrag,true);
