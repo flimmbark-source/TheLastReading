@@ -412,10 +412,11 @@
 #roomAmbient{position:fixed;inset:0;pointer-events:none;z-index:1;mix-blend-mode:soft-light;background:radial-gradient(125% 95% at 50% 14%,rgba(255,178,92,.26),rgba(255,140,60,.07) 46%,transparent 72%);animation:candleFlicker 7.3s ease-in-out infinite;will-change:opacity,transform}
 @keyframes candleFlicker{0%{opacity:.86;transform:scale(1)}7%{opacity:.62}14%{opacity:.96}21%{opacity:.71}29%{opacity:1}36%{opacity:.57}44%{opacity:.9}52%{opacity:.67}60%{opacity:.98;transform:scale(1.014)}68%{opacity:.6}76%{opacity:.92}84%{opacity:.69}92%{opacity:.95}100%{opacity:.83;transform:scale(1)}}
 #ambientFX{position:fixed;inset:0;pointer-events:none;z-index:10000;overflow:hidden}
-#handBack{position:absolute;top:97px;left:50%;transform:translateX(-50%) rotate(45deg);width:clamp(280px,68vw,680px);pointer-events:none;animation:handBackDrift 8s ease-in-out infinite alternate;}
+#handBack{position:absolute;top:77px;left:50%;transform:translateX(-50%) rotate(45deg);width:clamp(280px,68vw,680px);pointer-events:none;animation:handBackDrift 8s ease-in-out infinite alternate;}
 @keyframes handBackDrift{0%{translate:0 0px}100%{translate:2px 2px}}
-#handThumb{position:fixed;bottom:0;left:50%;transform:translate(-50%,50%) rotate(25deg);transform-origin:right center;width:clamp(180px,40vw,420px);pointer-events:none;z-index:25;animation:thumbDrift 9s ease-in-out infinite alternate;}
+#handThumbWrap{position:fixed;bottom:0;left:50%;transform:translate(-50%,50%);width:clamp(100px,18vw,200px);pointer-events:none;z-index:25;animation:thumbDrift 9s ease-in-out infinite alternate;}
 @keyframes thumbDrift{0%{translate:0 0px}100%{translate:-1px 1.5px}}
+#handThumb{width:100%;display:block;transform:rotate(20deg);transform-origin:right center;}
 #breathVignette{position:fixed;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse 82% 78% at 50% 50%,transparent 48%,rgba(0,0,0,.22) 100%);opacity:0;will-change:opacity}
 .mote{position:absolute;bottom:-14px;width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,rgba(255,230,176,.95),rgba(255,208,138,.3) 58%,transparent 72%);filter:blur(.6px);opacity:0;will-change:transform,opacity;animation:moteRise var(--d) linear forwards}
 @keyframes moteRise{0%{opacity:0;transform:translate3d(0,0,0)}12%{opacity:var(--o)}50%{transform:translate3d(var(--x),-46vh,0)}88%{opacity:var(--o)}100%{opacity:0;transform:translate3d(calc(var(--x) * -.6),-94vh,0)}}
@@ -481,7 +482,7 @@
 <div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="sbtn sbtn-discard" aria-label="Discard" onclick="discardSelected()" disabled></button><button id="purgeBtn" class="sbtn sbtn-purge" aria-label="Purge" onclick="startPurge()" disabled></button></div><div id="spread" class="spread"></div></div>
 <div id="abilityPrompt" class="ability-prompt"><div><h3 id="abilityPromptTitle"></h3><p id="abilityPromptText"></p></div><button id="abilityConfirm" onclick="confirmAbilitySelection()" disabled>Choose</button></div>
 <div id="purgePrompt" class="ability-prompt"><div><h3>Purge</h3><p>Select 3 cards to sacrifice for 1 Discard. <b><span id="purgeCount">0</span>/3</b> selected.</p></div><button id="purgeConfirm" onclick="confirmPurge()" disabled>Sacrifice</button><button onclick="cancelPurge()">Cancel</button></div>
-<div class="handDock"><img id="handBack" src="Hand_Back.png" alt="" aria-hidden="true"><div id="hand" class="hand"></div></div><img id="handThumb" src="Thumb.png" alt="" aria-hidden="true">
+<div class="handDock"><img id="handBack" src="Hand_Back.png" alt="" aria-hidden="true"><div id="hand" class="hand"></div></div><div id="handThumbWrap"><img id="handThumb" src="Thumb.png" alt="" aria-hidden="true"></div>
 <div id="tutTip"><span class="tut-arrow"></span><p id="tutText"></p><div class="tut-foot"><button id="tutSkipBtn" onclick="tutSkip();event.stopPropagation()">Skip tutorial</button></div></div>
 <div id="packAnim" class="pack-anim-overlay" aria-hidden="true">
   <div class="pack-anim-rays" id="packAnimRays"></div>
@@ -1013,7 +1014,7 @@ function breathVisuals(){
     {translate:'0 -3px',offset:(inhaleMs+gapMs+exhaleMs*.55)/totalMs},
     {translate:'0 0px'}
   ];
-  ['handBack','handThumb'].forEach(id=>{
+  ['handBack','handThumbWrap'].forEach(id=>{
     const el=document.getElementById(id);
     if(el)el.animate(handSway,{duration:totalMs,easing:'ease-in-out',fill:'none'});
   });
