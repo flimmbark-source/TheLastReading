@@ -500,12 +500,16 @@ body.mobile-drag-selecting .card.drag-select-preview[data-hint]::after{opacity:1
 .handDock{overflow-x:clip;overflow-y:visible}
 .hand{max-width:none;width:max-content;transform:translate3d(var(--hand-slide-x,0px),0,0);transition:transform .45s cubic-bezier(.2,.85,.25,1)}
 .hand.hand-scroll-dragging{transition:none}
+.hand .card{margin-left:var(--hand-card-margin,-50px)!important}
+.hand .card:first-child{margin-left:0!important}
+@media(max-width:640px){.hand .card{margin-left:var(--hand-card-margin,-42px)!important}}
 .hand-swipe-zone{position:fixed;left:0;right:0;bottom:197px;height:88px;z-index:19;pointer-events:auto;touch-action:none;cursor:grab;background:transparent}
 .hand-swipe-zone.dragging{cursor:grabbing}
+.hand-swipe-zone.pinching{cursor:ew-resize}
 @media(max-width:640px){.hand-swipe-zone{bottom:152px;height:74px}}
 .hand-swipe-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:14px;pointer-events:none;opacity:.0;transition:opacity .4s;font:600 10px system-ui,Segoe UI,sans-serif;color:rgba(232,196,96,.55);letter-spacing:.18em;text-transform:uppercase}
 .hand-swipe-zone.has-overflow .hand-swipe-hint{opacity:.5}
-.hand-swipe-zone.dragging .hand-swipe-hint{opacity:0}
+.hand-swipe-zone.dragging .hand-swipe-hint,.hand-swipe-zone.pinching .hand-swipe-hint{opacity:0}
 .hand-swipe-hint span{display:inline-block;width:30px;height:1px;background:linear-gradient(90deg,transparent,rgba(232,196,96,.6),transparent)}
 /* end hand swipe-scroll patch */
 </style>
@@ -2428,12 +2432,20 @@ function setSfxVol(v){_sfxVol=v;}
   if(window.__handSwipeScrollInstalled)return;
   window.__handSwipeScrollInstalled=true;
   let zone=null,hand=null;
-  let slide=0,startSlide=0,startX=0,pointerId=null;  // slide/startSlide in px
-  let samples=[];                                    // {t,x} ring of recent pointer samples
-  const SAMPLE_WINDOW=90;          // ms window for swipe velocity sampling
-  const FRICTION=0.0028;           // exponential decay per ms during momentum
-  const MIN_VEL=0.012;             // px/ms threshold to stop momentum
-  const RUBBER=0.42;               // resistance past edge while dragging
+  let slide=0,startSlide=0,startX=0;                 // slide bookkeeping (px)
+  let samples=[];                                    // {t,x} ring for swipe velocity
+  let pointers=new Map();                            // active pointer id -> {x,y}
+  let mode=null;                                     // 'slide' | 'pinch' | null
+  let pinchStart=null;                               // {dist,margin}
+  let manualMargin=null;                             // user-set override (px)
+  let autoMargin=null;                               // last computed auto value (px)
+  let lastHandLen=-1;                                // re-fits when this changes
+  const SAMPLE_WINDOW=90;
+  const FRICTION=0.0028;
+  const MIN_VEL=0.012;
+  const RUBBER=0.42;
+  const MARGIN_MIN=-96;                              // most overlap allowed
+  const MARGIN_MAX=-6;                               // least overlap allowed
   let momentumRaf=null;
   const handEl=()=>{if(hand&&hand.isConnected)return hand;hand=document.querySelector('.hand');return hand;};
   const zoneEl=()=>{if(zone&&zone.isConnected)return zone;zone=document.getElementById('handSwipeZone');return zone;};
@@ -2443,12 +2455,36 @@ function setSfxVol(v){_sfxVol=v;}
   const clampSlide=x=>{const o=maxOffset();return Math.max(-o,Math.min(o,x));};
   const softClamp=x=>{const o=maxOffset();if(o===0)return 0;const ax=Math.abs(x);if(ax<=o)return x;return Math.sign(x)*(o+(ax-o)*RUBBER);};
   const applySlide=x=>{const h=handEl();if(!h)return;slide=x;h.style.setProperty('--hand-slide-x',x.toFixed(2)+'px');updateOverflowHint();};
+  const applyMargin=m=>{const h=handEl();if(!h)return;h.style.setProperty('--hand-card-margin',m.toFixed(1)+'px');};
   const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;z.classList.toggle('has-overflow',maxOffset()>4);};
   const cancelMomentum=()=>{if(momentumRaf){cancelAnimationFrame(momentumRaf);momentumRaf=null;}};
+  // ── Auto-fit: pick a margin that keeps every card visible in the dock. ──
+  const calcAutoMargin=()=>{
+    const h=handEl();if(!h||!h.parentElement)return null;
+    const cards=h.querySelectorAll('.card');
+    const n=cards.length;
+    if(n<=1)return null;
+    const cardW=cards[0].offsetWidth||(window.innerWidth<640?100:130);
+    const view=h.parentElement.clientWidth;
+    // Leave ~24px of breathing room on the sides.
+    const desired=Math.max(cardW,view-24);
+    const ideal=(desired-n*cardW)/(n-1);
+    return Math.max(MARGIN_MIN,Math.min(MARGIN_MAX,ideal));
+  };
+  const refreshAutoFit=()=>{
+    const h=handEl();if(!h)return;
+    const n=h.querySelectorAll('.card').length;
+    const handChanged=(n!==lastHandLen);
+    lastHandLen=n;
+    if(handChanged)manualMargin=null;                // new deal -> drop manual override
+    const auto=calcAutoMargin();
+    if(auto!=null)autoMargin=auto;
+    const m=manualMargin!=null?manualMargin:(autoMargin!=null?autoMargin:-50);
+    applyMargin(m);
+  };
+  // ── Swipe velocity sampling ──
   const pushSample=(t,x)=>{samples.push({t,x});while(samples.length&&samples[0].t<t-SAMPLE_WINDOW)samples.shift();};
   const releaseVel=()=>{
-    // Use only samples within the last SAMPLE_WINDOW ms so a pause before release
-    // doesn't bleed an older swipe's velocity into the momentum.
     const cutoff=performance.now()-SAMPLE_WINDOW;
     let i=0;while(i<samples.length&&samples[i].t<cutoff)i++;
     if(samples.length-i<2)return 0;
@@ -2487,35 +2523,89 @@ function setSfxVol(v){_sfxVol=v;}
     };
     momentumRaf=requestAnimationFrame(step);
   };
-  document.addEventListener('pointerdown',ev=>{
-    const z=zoneEl();if(!z||(ev.target!==z&&!z.contains(ev.target)))return;
+  // ── Pinch helpers ──
+  const pointerDist=()=>{
+    const a=[...pointers.values()];
+    if(a.length<2)return 0;
+    const dx=a[0].x-a[1].x,dy=a[0].y-a[1].y;
+    return Math.hypot(dx,dy);
+  };
+  const startPinch=()=>{
     cancelMomentum();
-    pointerId=ev.pointerId;
+    mode='pinch';
+    const m=manualMargin!=null?manualMargin:(autoMargin!=null?autoMargin:-50);
+    pinchStart={dist:pointerDist(),margin:m};
+    samples.length=0;
+    const z=zoneEl();if(z){z.classList.add('pinching');z.classList.remove('dragging');}
+    handEl()?.classList.add('hand-scroll-dragging');
+  };
+  const stepPinch=()=>{
+    if(!pinchStart)return;
+    const h=handEl();if(!h)return;
+    const n=h.querySelectorAll('.card').length;
+    if(n<2)return;
+    const delta=pointerDist()-pinchStart.dist;
+    // Each px of finger spread maps to dispersing the hand by that many px total,
+    // distributed across (n-1) gaps. So per-card margin shifts by delta/(n-1).
+    let next=pinchStart.margin+delta/(n-1);
+    next=Math.max(MARGIN_MIN,Math.min(MARGIN_MAX,next));
+    manualMargin=next;
+    applyMargin(next);
+    applySlide(clampSlide(slide));
+  };
+  // ── Slide helpers (single-pointer) ──
+  const startSlideMode=ev=>{
+    cancelMomentum();
+    mode='slide';
     startX=ev.clientX;startSlide=slide;
     samples.length=0;pushSample(performance.now(),ev.clientX);
-    try{z.setPointerCapture(ev.pointerId);}catch(e){}
-    z.classList.add('dragging');
+    const z=zoneEl();if(z){z.classList.add('dragging');z.classList.remove('pinching');}
     handEl()?.classList.add('hand-scroll-dragging');
-  },true);
-  document.addEventListener('pointermove',ev=>{
-    if(ev.pointerId!==pointerId)return;
-    ev.preventDefault();
-    const now=performance.now();
-    pushSample(now,ev.clientX);
+  };
+  const stepSlide=ev=>{
+    pushSample(performance.now(),ev.clientX);
     const dx=ev.clientX-startX;
     applySlide(softClamp(startSlide+dx));
-  },{capture:true,passive:false});
-  const finish=ev=>{
-    if(ev.pointerId!==pointerId)return;
-    pointerId=null;
-    const z=zoneEl();if(z)z.classList.remove('dragging');
+  };
+  const finishGesture=()=>{
+    const wasSlide=(mode==='slide');
+    const z=zoneEl();if(z){z.classList.remove('dragging','pinching');}
     handEl()?.classList.remove('hand-scroll-dragging');
-    runMomentum(releaseVel());
+    mode=null;pinchStart=null;
+    if(wasSlide){runMomentum(releaseVel());springBack();}
+    else{applySlide(clampSlide(slide));}
     samples.length=0;
   };
-  document.addEventListener('pointerup',finish,true);
-  document.addEventListener('pointercancel',finish,true);
-  const recheck=()=>{applySlide(clampSlide(slide));};
+  // ── Pointer event routing ──
+  document.addEventListener('pointerdown',ev=>{
+    const z=zoneEl();if(!z||(ev.target!==z&&!z.contains(ev.target)))return;
+    pointers.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+    try{z.setPointerCapture(ev.pointerId);}catch(e){}
+    if(pointers.size>=2){startPinch();}
+    else if(pointers.size===1){startSlideMode(ev);}
+  },true);
+  document.addEventListener('pointermove',ev=>{
+    if(!pointers.has(ev.pointerId))return;
+    pointers.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+    ev.preventDefault();
+    if(mode==='pinch'){stepPinch();}
+    else if(mode==='slide'){stepSlide(ev);}
+  },{capture:true,passive:false});
+  const onPointerEnd=ev=>{
+    if(!pointers.has(ev.pointerId))return;
+    pointers.delete(ev.pointerId);
+    if(pointers.size===0){
+      finishGesture();
+    } else if(mode==='pinch'&&pointers.size<2){
+      // Drop pinch when one finger lifts; don't transition into a slide mid-gesture.
+      mode=null;pinchStart=null;
+      const z=zoneEl();if(z)z.classList.remove('pinching');
+    }
+  };
+  document.addEventListener('pointerup',onPointerEnd,true);
+  document.addEventListener('pointercancel',onPointerEnd,true);
+  // ── React to hand changes & viewport changes ──
+  const recheck=()=>{refreshAutoFit();applySlide(clampSlide(slide));};
   let ro=null;
   const attachObserver=()=>{
     const h=handEl();
@@ -2523,6 +2613,7 @@ function setSfxVol(v){_sfxVol=v;}
     if(ro)return;
     if('ResizeObserver' in window){ro=new ResizeObserver(recheck);ro.observe(h);ro.observe(h.parentElement);}
     new MutationObserver(recheck).observe(h,{childList:true});
+    refreshAutoFit();
   };
   attachObserver();
   window.addEventListener('resize',recheck);
