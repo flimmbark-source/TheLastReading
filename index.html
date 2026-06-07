@@ -1851,6 +1851,29 @@ document.addEventListener('touchend',()=>{_pinch=null;});
 startReading();
 if(!tutDone)setTimeout(()=>tutShow(0),400);
 
+// ── Background music ──
+(function(){
+  const TRACKS=[
+    'boopul-misty-dawn-singing-bowls-amp-sitar-anxiety-relief-music-538675.mp3',
+    'boopul-singing-bowls-amp-sitar-bhairav-raga-for-deep-sleep-538666.mp3',
+    'boopul-sitar-amp-tanpura-meditation-yoga-flow-ahir-bhairav-raga-538665.mp3',
+    'boopul-dreamy-sitar-amp-tanpura-late-night-calm-music-538721.mp3',
+  ];
+  let current=null,lastIdx=-1,started=false;
+  function playNext(){
+    if(current){current.pause();current.src='';}
+    let idx;do{idx=Math.floor(Math.random()*TRACKS.length);}while(TRACKS.length>1&&idx===lastIdx);
+    lastIdx=idx;
+    const a=new Audio(TRACKS[idx]);
+    a.volume=0.18;
+    a.onended=playNext;
+    a.play().catch(()=>{});
+    current=a;
+  }
+  function start(){if(started)return;started=true;playNext();}
+  document.addEventListener('pointerdown',start,{once:true});
+})();
+
 (function handAnim(){
   const hand=document.querySelector('.hand');
   if(!hand)return;
