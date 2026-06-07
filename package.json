@@ -1,1 +1,1 @@
-{"scripts":{"build":"node patch-spread-targeting.js"},"dependencies":{},"devDependencies":{}}
+{"scripts":{"postinstall":"node patch-spread-targeting.js","build":"node patch-spread-targeting.js"},"dependencies":{},"devDependencies":{}}
