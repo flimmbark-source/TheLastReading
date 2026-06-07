@@ -935,7 +935,7 @@ function playSound(type){
     }else if(type==='breath'){
       // slow inhale (~1.6s) followed by exhale (~2.2s), very soft filtered noise
       const vol=0.055*_sfxVol;
-      const inhaleLen=1.6,exhaleLen=2.2,gap=0.25;
+      const inhaleLen=3.6,exhaleLen=2.2,gap=1.25;
       // inhale: noise through bandpass sweeping 180→320Hz, swell up then fade
       (()=>{
         const buf=ctx.createBuffer(1,Math.floor(ctx.sampleRate*inhaleLen),ctx.sampleRate);
@@ -991,7 +991,7 @@ function _scheduleBreath(){
 document.addEventListener('pointerdown',()=>{if(!_breathTimer)_scheduleBreath();},{once:true});
 
 function breathVisuals(){
-  const inhaleMs=1600,gapMs=250,exhaleMs=2200;
+  const inhaleMs=3600,gapMs=1250,exhaleMs=2200;
   const totalMs=inhaleMs+gapMs+exhaleMs;
 
   // vignette: edges darken on inhale, fade on exhale
@@ -1002,31 +1002,36 @@ function breathVisuals(){
     setTimeout(()=>{vig.style.transition=`opacity ${exhaleMs}ms ease-out`;vig.style.opacity='0';},inhaleMs+gapMs);
   }
 
-  // hand card sway: container drifts down on inhale, floats back up on exhale
-  const hand=document.getElementById('hand');
-  if(hand){
-    hand.style.transition=`transform ${inhaleMs}ms cubic-bezier(.4,0,.2,1)`;
-    hand.style.transform='translateY(5px)';
-    setTimeout(()=>{hand.style.transition=`transform ${exhaleMs*.55}ms ease-in-out`;hand.style.transform='translateY(-3px)';},inhaleMs+gapMs);
-    setTimeout(()=>{hand.style.transition=`transform ${exhaleMs*.45}ms ease-in-out`;hand.style.transform='';},inhaleMs+gapMs+exhaleMs*.6);
-  }
+  // hand card sway: WAAPI overrides card-wave on resting cards only, releases on finish
+  [...document.querySelectorAll('#hand .card:not(.sel):not(.ability-picked):not(.purge-picked)')].forEach(c=>{
+    const waveAnim=c.getAnimations().find(a=>a.animationName==='card-wave');
+    if(waveAnim)waveAnim.updatePlaybackRate(0);
+    const ba=c.animate([
+      {translate:'0 0px'},
+      {translate:'0 6px',offset:inhaleMs/totalMs},
+      {translate:'0 -3px',offset:(inhaleMs+gapMs+exhaleMs*.55)/totalMs},
+      {translate:'0 0px'}
+    ],{duration:totalMs,easing:'ease-in-out',fill:'none'});
+    ba.onfinish=()=>{const wa=c.getAnimations().find(a=>a.animationName==='card-wave');if(wa)wa.updatePlaybackRate(1);};
+  });
 
-  // motes: slow down on inhale, push away from center via --x, speed up on exhale
+  // motes: slow rise on inhale, push outward via margin-left (independent of transform),
+  // speed up briefly on exhale. margin-left on position:absolute offsets without
+  // touching the CSS animation's transform property.
   const motes=[...document.querySelectorAll('#ambientFX .mote')];
   motes.forEach(m=>{
-    // slow all animations on this element (CSS animation owns 'transform' entirely)
     m.getAnimations().forEach(a=>{try{a.updatePlaybackRate(.4);}catch(e){}});
-    // redirect drift direction strongly away from screen center
     const leftPct=parseFloat(m.style.left)||50;
-    const pushDir=(leftPct-50)/50; // -1=left edge, +1=right edge
-    m.dataset.origX=m.style.getPropertyValue('--x');
-    m.style.setProperty('--x',(pushDir*70).toFixed(0)+'px');
+    const pushDir=(leftPct-50)/50;
+    const pushAmt=pushDir*55;
+    m.animate(
+      [{marginLeft:'0px'},{marginLeft:`${pushAmt}px`,offset:inhaleMs/totalMs},{marginLeft:`${pushAmt*.25}px`,offset:(inhaleMs+gapMs+exhaleMs*.55)/totalMs},{marginLeft:'0px'}],
+      {duration:totalMs,easing:'ease-in-out',fill:'none'}
+    );
   });
-  // exhale: restore --x and briefly speed up
   setTimeout(()=>{
     document.querySelectorAll('#ambientFX .mote').forEach(m=>{
       m.getAnimations().forEach(a=>{try{a.updatePlaybackRate(1.5);}catch(e){}});
-      if(m.dataset.origX!==undefined)m.style.setProperty('--x',m.dataset.origX);
     });
   },inhaleMs+gapMs);
   setTimeout(()=>{
@@ -2098,11 +2103,9 @@ function setSfxVol(v){_sfxVol=v;}
     m.style.setProperty('--s',(2+Math.random()*4).toFixed(1)+'px');
     const leftPct=(Math.random()*100).toFixed(1);
     m.style.left=leftPct+'vw';
-    const breathing=window._breathActive;
-    const pushDir=(parseFloat(leftPct)-50)/50;
-    m.style.setProperty('--x',(breathing?(pushDir*50+Math.random()*10-5):(Math.random()*64-32)).toFixed(0)+'px');
+    m.style.setProperty('--x',(Math.random()*64-32).toFixed(0)+'px');
     m.style.setProperty('--o',(0.14+Math.random()*0.34).toFixed(2));
-    m.style.setProperty('--d',(breathing?(22+Math.random()*10):(12+Math.random()*8)).toFixed(1)+'s');
+    m.style.setProperty('--d',(12+Math.random()*8).toFixed(1)+'s');
     m.addEventListener('animationend',()=>m.remove());
     layer.appendChild(m);
   }
