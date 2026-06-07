@@ -367,7 +367,7 @@
 @media(max-width:640px){.card-zoom-inner{transform:scale(2)}}
 :root{--inv-h:300px}
 #invWrap{position:fixed;top:0;left:0;right:0;z-index:150;transform:translateY(calc(-1 * var(--inv-h)));transition:transform .45s cubic-bezier(.34,1.28,.64,1);pointer-events:none}
-#invWrap.open{transform:translateY(0);pointer-events:auto}
+#invWrap.open{transform:translateY(0);pointer-events:auto;z-index:400}
 #invDesk{height:var(--inv-h);background:linear-gradient(180deg,#0e0704 0%,#1c1008 55%,#150d06 100%);border-bottom:2px solid #6a4c24;position:relative;overflow:hidden;pointer-events:auto}
 #invDesk::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 110%,rgba(90,45,5,.35),transparent 65%);pointer-events:none;z-index:0}
 #invDesk::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px),repeating-linear-gradient(0deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px);pointer-events:none;z-index:0}
@@ -424,6 +424,9 @@
 .settings-panel input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:rgba(180,140,90,.3);outline:none}
 .settings-panel input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#c8a87a;cursor:pointer}
 .settings-panel input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#c8a87a;cursor:pointer;border:none}
+.settings-panel hr{border:none;border-top:1px solid rgba(180,140,90,.2);margin:2px 0}
+.settings-check{display:flex;flex-direction:row!important;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.settings-check input[type=checkbox]{accent-color:#c8a87a;width:14px;height:14px;cursor:pointer;flex:0 0 auto}
 </style>
 </head>
 <body>
@@ -439,6 +442,9 @@
   <div id="settingsPanel" class="settings-panel hidden">
     <label>Music<input type="range" id="musicVol" min="0" max="1" step="0.05" value="0.3" oninput="setMusicVol(+this.value)"></label>
     <label>Effects<input type="range" id="sfxVol" min="0" max="1" step="0.05" value="1" oninput="setSfxVol(+this.value)"></label>
+    <hr>
+    <label class="settings-check"><input type="checkbox" id="hintPatterns" checked onchange="toggleHintSetting('patterns',this.checked)">Pattern hints</label>
+    <label class="settings-check"><input type="checkbox" id="hintRelics" onchange="toggleHintSetting('relics',this.checked)">Relic hints</label>
   </div>
 </div>
 <div class="bar"></div>
@@ -489,8 +495,10 @@ const COURT_MEAN={Page:['Curiosity, learning','Inexperience, gossip'],Knight:['A
 const SUIT_MEAN={Cups:['Emotion, love','Hidden feelings'],Wands:['Will, creation','Burnout, delay'],Swords:['Truth, conflict','Deceit, anguish'],Pentacles:['Work, abundance','Greed, loss']};
 const MAJORS=[[0,'Fool',5,true,'PEEK_3'],[1,'Magician',5,true,'SEARCH'],[2,'High Priestess',1,false,'NEIGHBOR_2'],[3,'Empress',1,false,'DRAW_2'],[4,'Emperor',1,false,'DRAW_1'],[5,'Hierophant',1,false,'BETWEEN_2'],[6,'Lovers',1,false,'KIN_2'],[7,'Chariot',1,false,'DRAW_1'],[8,'Strength',1,false,'DRAW_1'],[9,'Hermit',1,false,'NEIGHBOR_2'],[10,'Wheel',1,false,'MIRROR_1'],[11,'Justice',1,false,'KIN_2'],[12,'Hanged Man',1,false,'BETWEEN_2'],[13,'Death',1,false,'DRAW_3'],[14,'Temperance',1,false,'BETWEEN_2'],[15,'Devil',1,false,'DRAW_2'],[16,'Tower',1,false,'DRAW_2'],[17,'Star',1,false,'KIN_2'],[18,'Moon',1,false,'MIRROR_1'],[19,'Sun',1,false,'DRAW_2'],[20,'Judgement',1,false,'MIRROR_1'],[21,'World',5,true,'WORLD']];
 const COURTS=[['Page',2,'DRAW_1'],['Knight',3,'PEEK_3'],['Queen',4,'DRAW_2'],['King',5,'PEEK_5']];
-const TH=Array.from({length:10},(_,i)=>(i+1)*10);
+const TH=Array.from({length:10},(_,i)=>(i+1)*20);
 let persist={pool:0,up:{discards:0,hand:0,mulligan:0,lens_mastery:0,offering:0,ritual_depth:0,deep_current:0,omen:0,resonance:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,court_chips:0,court_mult:0,path_chips:0,path_mult:0,relicSlot:0},relics:[],relicUsed:{}};
+let hintSettings={patterns:true,relics:false};
+function toggleHintSetting(key,val){hintSettings[key]=val;_hintsCache.clear();render();}
 let state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null};
 const $=s=>document.querySelector(s), shuffle=a=>{for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const cardHTMLCache=new Map();
@@ -639,7 +647,7 @@ function refreshHandState(){
   $('#discardBtn').disabled=state.selected===null||state.discards<=0||inPurge;
   $('#purgeBtn').disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
 }
-function computeScore(cards,spreadArr=null){
+function computeScore(cards,spreadArr=null,forHints=false){
   const omenBonus=(persist.up.omen||0);
   const resonanceBonus=(persist.up.resonance||0)*3;
   const omenTotal=omenBonus*cards.length;
@@ -686,8 +694,9 @@ function computeScore(cards,spreadArr=null){
   let pathMult=2+(persist.up.path_mult||0)*0.5;
   if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=30+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult*=pathMult}
   // ── Relic effects ──
+  if(!forHints){
   const rel=persist.relics;
-  if(rel.includes('gilded_fool')&&cards.length){chips+=10;}
+  if(rel.includes('gilded_fool')&&cards.length){m.push(['The Gilded Fool',10,0]);chips+=10;}
 
   if(rel.includes('hermit_lantern')){const n=cards.filter(c=>c.type==='major').length;if(n){m.push(["Hermit's Lantern",0,n*0.25,'add']);mult+=n*0.25;}}
   if(rel.includes('mirror_shard')){const rc={};cards.forEach(c=>{const r=c.rank||String(c.num);rc[r]=(rc[r]||0)+1;});const pairs=Object.values(rc).filter(v=>v>=2).reduce((s,v)=>s+Math.floor(v/2),0);if(pairs){m.push(['Mirror Shard',0,pairs,'add']);mult+=pairs;}}
@@ -702,6 +711,7 @@ function computeScore(cards,spreadArr=null){
   if(rel.includes('strengths_grip')){const n=cards.filter(c=>COURT_RANKS.includes(c.rank)).length;if(n>=3){m.push(['Strength',0,3,'add']);mult+=3;}}
   if(rel.includes('fool_reversed')){const bonus=cards.length*3;if(bonus){m.push(['The Fool Reversed',bonus,0]);chips+=bonus;}}
   if(rel.includes('the_world')&&state.worldCarry){m.push(['The World',state.worldCarry,0]);chips+=state.worldCarry;}
+  } // end !forHints
   // Resonation bonuses — accumulated in state.resonationBonus as they trigger during play
   if(state.resonationBonus&&(state.resonationBonus.chips||state.resonationBonus.mult)){const rb=state.resonationBonus;m.push(['⚷ '+(rb.name||'Resonation'),rb.chips,rb.mult,'add']);chips+=rb.chips;mult+=rb.mult;}
   return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}
@@ -762,10 +772,12 @@ function cardHints(card, poolCards=null){
   const seen=new Set();
   const add=(level,label,colorKey=null)=>{if(seen.has(label))return;seen.add(label);hints.push({level,label,group:hintGroup(label),colorKey})};
 
+  if(hintSettings.patterns){
   // Strong glow: every scoring pattern this exact card would create if placed now.
   const placed=[...spread,card];
-  const before=new Set(computeScore(spread).melds.map(m=>m[0]));
-  const after=computeScore(placed);
+  const skipRelics=!hintSettings.relics;
+  const before=new Set(computeScore(spread,null,skipRelics).melds.map(m=>m[0]));
+  const after=computeScore(placed,null,skipRelics);
   after.melds.filter(m=>!before.has(m[0])).forEach(m=>{
     const norm=normMeldName(m[0]);
     let ck=null;
@@ -801,6 +813,7 @@ function cardHints(card, poolCards=null){
     const ranks=new Set(all.filter(c=>c.type==='court').map(c=>c.rank));
     if(ranks.size>=3)add('near','Full Court');
   }
+  } // end hintSettings.patterns
 
   // Resonation hints — only for discovered patterns
   if(!poolCards){
