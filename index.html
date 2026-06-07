@@ -415,7 +415,7 @@
 .mote{position:absolute;bottom:-14px;width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,rgba(255,230,176,.95),rgba(255,208,138,.3) 58%,transparent 72%);filter:blur(.6px);opacity:0;will-change:transform,opacity;animation:moteRise var(--d) linear forwards}
 @keyframes moteRise{0%{opacity:0;transform:translate3d(0,0,0)}12%{opacity:var(--o)}50%{transform:translate3d(var(--x),-46vh,0)}88%{opacity:var(--o)}100%{opacity:0;transform:translate3d(calc(var(--x) * -.6),-94vh,0)}}
 @media(prefers-reduced-motion:reduce){#roomAmbient{animation:none;opacity:.7}#ambientFX{display:none}}
-#titleWrap{position:relative}#titleRow{display:flex;align-items:flex-start;gap:8px}#titleContent{display:flex;flex-direction:column;gap:4px}#titleContent .actions{justify-content:center;margin:0}
+#titleWrap{position:relative}#titleRow{display:flex;align-items:flex-start;gap:8px}#titleContent{display:flex;flex-direction:column;align-items:center;gap:4px}#titleContent .actions{justify-content:center;margin:0}
 #menuBtn{flex:0 0 auto;background:none;border:none;color:#d4b896;font-size:1.5rem;cursor:pointer;padding:4px 8px;line-height:1;z-index:200;opacity:.75;transition:opacity .2s}
 #menuBtn:hover{opacity:1}
 .settings-panel{position:absolute;top:calc(100% + 4px);left:0;background:rgba(20,14,10,.95);border:1px solid rgba(180,140,90,.35);border-radius:8px;padding:14px 18px;z-index:300;min-width:220px;display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.6)}
