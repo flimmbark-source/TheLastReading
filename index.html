@@ -1002,14 +1002,18 @@ function breathVisuals(){
     setTimeout(()=>{vig.style.transition=`opacity ${exhaleMs}ms ease-out`;vig.style.opacity='0';},inhaleMs+gapMs);
   }
 
-  // hand card sway: container drifts down on inhale, floats back up on exhale
-  const hand=document.getElementById('hand');
-  if(hand){
-    hand.style.transition=`transform ${inhaleMs}ms cubic-bezier(.4,0,.2,1)`;
-    hand.style.transform='translateY(5px)';
-    setTimeout(()=>{hand.style.transition=`transform ${exhaleMs*.55}ms ease-in-out`;hand.style.transform='translateY(-3px)';},inhaleMs+gapMs);
-    setTimeout(()=>{hand.style.transition=`transform ${exhaleMs*.45}ms ease-in-out`;hand.style.transform='';},inhaleMs+gapMs+exhaleMs*.6);
-  }
+  // hand card sway: WAAPI overrides card-wave on resting cards only, releases on finish
+  [...document.querySelectorAll('#hand .card:not(.sel):not(.ability-picked):not(.purge-picked)')].forEach(c=>{
+    const waveAnim=c.getAnimations().find(a=>a.animationName==='card-wave');
+    if(waveAnim)waveAnim.updatePlaybackRate(0);
+    const ba=c.animate([
+      {translate:'0 0px'},
+      {translate:'0 6px',offset:inhaleMs/totalMs},
+      {translate:'0 -3px',offset:(inhaleMs+gapMs+exhaleMs*.55)/totalMs},
+      {translate:'0 0px'}
+    ],{duration:totalMs,easing:'ease-in-out',fill:'none'});
+    ba.onfinish=()=>{const wa=c.getAnimations().find(a=>a.animationName==='card-wave');if(wa)wa.updatePlaybackRate(1);};
+  });
 
   // motes: slow down on inhale, push away from center via --x, speed up on exhale
   const motes=[...document.querySelectorAll('#ambientFX .mote')];
