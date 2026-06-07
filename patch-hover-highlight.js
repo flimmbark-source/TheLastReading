@@ -92,7 +92,7 @@ replaceOne(
     `.hand .card:hover,.hand .card:active,.hand .card.sel{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel{box-shadow:${baseGlow}}`,
     `.hand .card:hover,.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{box-shadow:${baseGlow}}`
   ],
-  `.hand .card:hover,.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{box-shadow:${baseGlow}}`
+  `.hand:not(.has-selected-card) .card:hover,.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{box-shadow:${baseGlow}}`
 );
 
 replaceOne(
@@ -181,9 +181,25 @@ upsertScript(
 })();`
 );
 
+upsertScript(
+  'hand hover lock while selected',
+  '/* hand hover selected-lock patch */',
+  '/* end hand hover selected-lock patch */',
+  `(function(){
+  if(window.__handHoverSelectedLockInstalled)return;
+  window.__handHoverSelectedLockInstalled=true;
+  const update=()=>{
+    const hasSelection=!!document.querySelector('.card.sel,.card.ability-picked');
+    document.querySelectorAll('.hand').forEach(hand=>hand.classList.toggle('has-selected-card',hasSelection));
+  };
+  update();
+  new MutationObserver(update).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+})();`
+);
+
 if (changed) {
   fs.writeFileSync(path, html);
-  console.log('Patched card highlighting so selected/pressed cards stack over hint glows without changing hint styles.');
+  console.log('Patched card highlighting so selected/pressed cards stack over hint glows and hover movement stops while a card is selected.');
 } else {
   console.log('No hover highlight patch changes needed.');
 }
