@@ -424,6 +424,9 @@
 .settings-panel input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:rgba(180,140,90,.3);outline:none}
 .settings-panel input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#c8a87a;cursor:pointer}
 .settings-panel input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#c8a87a;cursor:pointer;border:none}
+.settings-panel hr{border:none;border-top:1px solid rgba(180,140,90,.2);margin:2px 0}
+.settings-check{display:flex;flex-direction:row!important;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.settings-check input[type=checkbox]{accent-color:#c8a87a;width:14px;height:14px;cursor:pointer;flex:0 0 auto}
 </style>
 </head>
 <body>
@@ -439,6 +442,9 @@
   <div id="settingsPanel" class="settings-panel hidden">
     <label>Music<input type="range" id="musicVol" min="0" max="1" step="0.05" value="0.3" oninput="setMusicVol(+this.value)"></label>
     <label>Effects<input type="range" id="sfxVol" min="0" max="1" step="0.05" value="1" oninput="setSfxVol(+this.value)"></label>
+    <hr>
+    <label class="settings-check"><input type="checkbox" id="hintPatterns" checked onchange="toggleHintSetting('patterns',this.checked)">Pattern hints</label>
+    <label class="settings-check"><input type="checkbox" id="hintRelics" onchange="toggleHintSetting('relics',this.checked)">Relic hints</label>
   </div>
 </div>
 <div class="bar"></div>
@@ -491,6 +497,8 @@ const MAJORS=[[0,'Fool',5,true,'PEEK_3'],[1,'Magician',5,true,'SEARCH'],[2,'High
 const COURTS=[['Page',2,'DRAW_1'],['Knight',3,'PEEK_3'],['Queen',4,'DRAW_2'],['King',5,'PEEK_5']];
 const TH=Array.from({length:10},(_,i)=>(i+1)*20);
 let persist={pool:0,up:{discards:0,hand:0,mulligan:0,lens_mastery:0,offering:0,ritual_depth:0,deep_current:0,omen:0,resonance:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,court_chips:0,court_mult:0,path_chips:0,path_mult:0,relicSlot:0},relics:[],relicUsed:{}};
+let hintSettings={patterns:true,relics:false};
+function toggleHintSetting(key,val){hintSettings[key]=val;_hintsCache.clear();render();}
 let state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null};
 const $=s=>document.querySelector(s), shuffle=a=>{for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const cardHTMLCache=new Map();
@@ -764,10 +772,12 @@ function cardHints(card, poolCards=null){
   const seen=new Set();
   const add=(level,label,colorKey=null)=>{if(seen.has(label))return;seen.add(label);hints.push({level,label,group:hintGroup(label),colorKey})};
 
+  if(hintSettings.patterns){
   // Strong glow: every scoring pattern this exact card would create if placed now.
   const placed=[...spread,card];
-  const before=new Set(computeScore(spread,null,true).melds.map(m=>m[0]));
-  const after=computeScore(placed,null,true);
+  const skipRelics=!hintSettings.relics;
+  const before=new Set(computeScore(spread,null,skipRelics).melds.map(m=>m[0]));
+  const after=computeScore(placed,null,skipRelics);
   after.melds.filter(m=>!before.has(m[0])).forEach(m=>{
     const norm=normMeldName(m[0]);
     let ck=null;
@@ -803,6 +813,7 @@ function cardHints(card, poolCards=null){
     const ranks=new Set(all.filter(c=>c.type==='court').map(c=>c.rank));
     if(ranks.size>=3)add('near','Full Court');
   }
+  } // end hintSettings.patterns
 
   // Resonation hints — only for discovered patterns
   if(!poolCards){
