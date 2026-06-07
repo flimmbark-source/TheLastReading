@@ -2446,8 +2446,8 @@ function setSfxVol(v){_sfxVol=v;}
   const softClamp=x=>{const o=maxOffset();if(o===0)return 0;const ax=Math.abs(x);if(ax<=o)return x;return Math.sign(x)*(o+(ax-o)*RUBBER);};
   const applyScroll=x=>{const h=handEl();if(!h)return;scrollX=x;h.style.setProperty('--hand-scroll-x',x.toFixed(2)+'px');updateOverflowHint();};
   const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;z.classList.toggle('has-overflow',maxOffset()>4);};
-  // Chandelier-style inertial lag: tilt direction opposes the swipe.
-  const tiltFromVel=v=>{const s=v>=0?-1:1;return s*Math.min(TILT_MAX,Math.sqrt(Math.abs(v)*TILT_GAIN*5));};
+  // Rotation follows the swipe direction (swipe right -> hand rotates right).
+  const tiltFromVel=v=>{const s=v>=0?1:-1;return s*Math.min(TILT_MAX,Math.sqrt(Math.abs(v)*TILT_GAIN*5));};
   const setTilt=deg=>{const h=handEl();if(!h)return;h.style.setProperty('--hand-scroll-tilt',deg.toFixed(2)+'deg');};
   const easeTiltTo=target=>{
     if(tiltRaf)cancelAnimationFrame(tiltRaf);
