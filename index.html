@@ -498,7 +498,7 @@ body.mobile-drag-selecting .card.drag-select-preview[data-hint]::after{opacity:1
 /* end relic rack mobile right-side patch */
 /* hand swipe-scroll patch */
 .handDock{overflow-x:clip;overflow-y:visible}
-.hand{max-width:none;width:max-content;transform-origin:50% 240%;transform:rotate(var(--hand-rotate,0deg));transition:transform .45s cubic-bezier(.2,.85,.25,1)}
+.hand{max-width:none;width:max-content;transform:translate3d(var(--hand-slide-x,0px),0,0);transition:transform .45s cubic-bezier(.2,.85,.25,1)}
 .hand.hand-scroll-dragging{transition:none}
 .hand-swipe-zone{position:fixed;left:0;right:0;bottom:197px;height:88px;z-index:19;pointer-events:auto;touch-action:none;cursor:grab;background:transparent}
 .hand-swipe-zone.dragging{cursor:grabbing}
@@ -2428,23 +2428,24 @@ function setSfxVol(v){_sfxVol=v;}
   if(window.__handSwipeScrollInstalled)return;
   window.__handSwipeScrollInstalled=true;
   let zone=null,hand=null;
-  let rot=0,startRot=0,startX=0,pointerId=null;   // rot/startRot in degrees
-  let samples=[];                                 // {t,deg} ring of recent rotation samples
+  let slide=0,startSlide=0,startX=0,pointerId=null;  // slide/startSlide in px
+  let samples=[];                                    // {t,x} ring of recent pointer samples
   const SAMPLE_WINDOW=90;          // ms window for swipe velocity sampling
-  const DEG_PER_PX=0.15;           // how much swipe distance becomes arc rotation
-  const ROT_MAX=38;                // degrees the hand can travel along the arc either way
-  const FRICTION=0.0030;           // exponential decay per ms during momentum
-  const MIN_VEL=0.010;             // deg/ms threshold to stop momentum
-  const RUBBER=0.42;               // resistance past ROT_MAX while dragging
+  const FRICTION=0.0028;           // exponential decay per ms during momentum
+  const MIN_VEL=0.012;             // px/ms threshold to stop momentum
+  const RUBBER=0.42;               // resistance past edge while dragging
   let momentumRaf=null;
   const handEl=()=>{if(hand&&hand.isConnected)return hand;hand=document.querySelector('.hand');return hand;};
   const zoneEl=()=>{if(zone&&zone.isConnected)return zone;zone=document.getElementById('handSwipeZone');return zone;};
-  const clampRot=d=>Math.max(-ROT_MAX,Math.min(ROT_MAX,d));
-  const softClamp=d=>{const ad=Math.abs(d);if(ad<=ROT_MAX)return d;return Math.sign(d)*(ROT_MAX+(ad-ROT_MAX)*RUBBER);};
-  const applyRot=d=>{const h=handEl();if(!h)return;rot=d;h.style.setProperty('--hand-rotate',d.toFixed(2)+'deg');updateOverflowHint();};
-  const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;const h=handEl();const over=h&&h.parentElement?(h.scrollWidth>h.parentElement.clientWidth+4):false;z.classList.toggle('has-overflow',over);};
+  const dockW=()=>{const h=handEl();return h&&h.parentElement?h.parentElement.clientWidth:window.innerWidth;};
+  const handW=()=>{const h=handEl();return h?h.scrollWidth:0;};
+  const maxOffset=()=>{const o=(handW()-dockW())/2;return o>0?o:0;};
+  const clampSlide=x=>{const o=maxOffset();return Math.max(-o,Math.min(o,x));};
+  const softClamp=x=>{const o=maxOffset();if(o===0)return 0;const ax=Math.abs(x);if(ax<=o)return x;return Math.sign(x)*(o+(ax-o)*RUBBER);};
+  const applySlide=x=>{const h=handEl();if(!h)return;slide=x;h.style.setProperty('--hand-slide-x',x.toFixed(2)+'px');updateOverflowHint();};
+  const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;z.classList.toggle('has-overflow',maxOffset()>4);};
   const cancelMomentum=()=>{if(momentumRaf){cancelAnimationFrame(momentumRaf);momentumRaf=null;}};
-  const pushSample=(t,d)=>{samples.push({t,d});while(samples.length&&samples[0].t<t-SAMPLE_WINDOW)samples.shift();};
+  const pushSample=(t,x)=>{samples.push({t,x});while(samples.length&&samples[0].t<t-SAMPLE_WINDOW)samples.shift();};
   const releaseVel=()=>{
     // Use only samples within the last SAMPLE_WINDOW ms so a pause before release
     // doesn't bleed an older swipe's velocity into the momentum.
@@ -2454,21 +2455,21 @@ function setSfxVol(v){_sfxVol=v;}
     const first=samples[i],last=samples[samples.length-1];
     const dt=last.t-first.t;
     if(dt<8)return 0;
-    return (last.d-first.d)/dt; // deg/ms
+    return (last.x-first.x)/dt; // px/ms
   };
   const springBack=()=>{
-    const target=clampRot(rot);
-    if(Math.abs(target-rot)<.05){applyRot(target);return;}
-    const t0=performance.now(),from=rot,dur=340;
+    const target=clampSlide(slide);
+    if(Math.abs(target-slide)<.5){applySlide(target);return;}
+    const t0=performance.now(),from=slide,dur=340;
     const step=t=>{
       const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);
-      applyRot(from+(target-from)*e);
+      applySlide(from+(target-from)*e);
       if(p<1)momentumRaf=requestAnimationFrame(step);else momentumRaf=null;
     };
     momentumRaf=requestAnimationFrame(step);
   };
   const runMomentum=v0=>{
-    if(Math.abs(rot)>ROT_MAX+.05){springBack();return;}
+    if(Math.abs(slide)>maxOffset()+.5){springBack();return;}
     let v=v0;
     if(Math.abs(v)<MIN_VEL)return;
     let lastT=performance.now();
@@ -2476,11 +2477,12 @@ function setSfxVol(v){_sfxVol=v;}
       const dt=Math.min(48,now-lastT);
       lastT=now;
       v*=Math.exp(-FRICTION*dt);
-      let next=rot+v*dt;
-      if(next<-ROT_MAX){next=-ROT_MAX;v=0;}
-      else if(next>ROT_MAX){next=ROT_MAX;v=0;}
-      applyRot(next);
-      if(Math.abs(v)<MIN_VEL){applyRot(clampRot(rot));momentumRaf=null;return;}
+      let next=slide+v*dt;
+      const o=maxOffset();
+      if(next<-o){next=-o;v=0;}
+      else if(next>o){next=o;v=0;}
+      applySlide(next);
+      if(Math.abs(v)<MIN_VEL){applySlide(clampSlide(slide));momentumRaf=null;return;}
       momentumRaf=requestAnimationFrame(step);
     };
     momentumRaf=requestAnimationFrame(step);
@@ -2489,8 +2491,8 @@ function setSfxVol(v){_sfxVol=v;}
     const z=zoneEl();if(!z||(ev.target!==z&&!z.contains(ev.target)))return;
     cancelMomentum();
     pointerId=ev.pointerId;
-    startX=ev.clientX;startRot=rot;
-    samples.length=0;pushSample(performance.now(),rot);
+    startX=ev.clientX;startSlide=slide;
+    samples.length=0;pushSample(performance.now(),ev.clientX);
     try{z.setPointerCapture(ev.pointerId);}catch(e){}
     z.classList.add('dragging');
     handEl()?.classList.add('hand-scroll-dragging');
@@ -2498,10 +2500,10 @@ function setSfxVol(v){_sfxVol=v;}
   document.addEventListener('pointermove',ev=>{
     if(ev.pointerId!==pointerId)return;
     ev.preventDefault();
+    const now=performance.now();
+    pushSample(now,ev.clientX);
     const dx=ev.clientX-startX;
-    const target=softClamp(startRot+dx*DEG_PER_PX);
-    applyRot(target);
-    pushSample(performance.now(),target);
+    applySlide(softClamp(startSlide+dx));
   },{capture:true,passive:false});
   const finish=ev=>{
     if(ev.pointerId!==pointerId)return;
@@ -2513,7 +2515,7 @@ function setSfxVol(v){_sfxVol=v;}
   };
   document.addEventListener('pointerup',finish,true);
   document.addEventListener('pointercancel',finish,true);
-  const recheck=()=>{applyRot(clampRot(rot));};
+  const recheck=()=>{applySlide(clampSlide(slide));};
   let ro=null;
   const attachObserver=()=>{
     const h=handEl();
