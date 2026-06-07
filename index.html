@@ -415,7 +415,7 @@
 .mote{position:absolute;bottom:-14px;width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,rgba(255,230,176,.95),rgba(255,208,138,.3) 58%,transparent 72%);filter:blur(.6px);opacity:0;will-change:transform,opacity;animation:moteRise var(--d) linear forwards}
 @keyframes moteRise{0%{opacity:0;transform:translate3d(0,0,0)}12%{opacity:var(--o)}50%{transform:translate3d(var(--x),-46vh,0)}88%{opacity:var(--o)}100%{opacity:0;transform:translate3d(calc(var(--x) * -.6),-94vh,0)}}
 @media(prefers-reduced-motion:reduce){#roomAmbient{animation:none;opacity:.7}#ambientFX{display:none}}
-#titleWrap{position:relative;display:flex;align-items:center;gap:8px}
+#titleWrap{display:flex;flex-direction:column;gap:6px}#titleRow{position:relative;display:flex;align-items:center;gap:8px}#titleWrap .actions{justify-content:center;margin:0}
 #menuBtn{flex:0 0 auto;background:none;border:none;color:#d4b896;font-size:1.5rem;cursor:pointer;padding:4px 8px;line-height:1;z-index:200;opacity:.75;transition:opacity .2s}
 #menuBtn:hover{opacity:1}
 .settings-panel{position:absolute;top:calc(100% + 4px);left:0;background:rgba(20,14,10,.95);border:1px solid rgba(180,140,90,.35);border-radius:8px;padding:14px 18px;z-index:300;min-width:220px;display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.6)}
@@ -437,21 +437,23 @@
   <button id="invTab">&#9660; Archives</button>
 </div>
 <div id="titleWrap">
-  <button id="menuBtn" onclick="toggleMenu()" aria-label="Settings">&#9776;</button>
-  <h1>The Last Reading</h1>
-  <div id="settingsPanel" class="settings-panel hidden">
-    <label>Music<input type="range" id="musicVol" min="0" max="1" step="0.05" value="0.3" oninput="setMusicVol(+this.value)"></label>
-    <label>Effects<input type="range" id="sfxVol" min="0" max="1" step="0.05" value="1" oninput="setSfxVol(+this.value)"></label>
-    <hr>
-    <label class="settings-check"><input type="checkbox" id="hintPatterns" checked onchange="toggleHintSetting('patterns',this.checked)">Pattern hints</label>
-    <label class="settings-check"><input type="checkbox" id="hintRelics" onchange="toggleHintSetting('relics',this.checked)">Relic hints</label>
+  <div id="titleRow">
+    <button id="menuBtn" onclick="toggleMenu()" aria-label="Settings">&#9776;</button>
+    <h1>The Last Reading</h1>
+    <div id="settingsPanel" class="settings-panel hidden">
+      <label>Music<input type="range" id="musicVol" min="0" max="1" step="0.05" value="0.3" oninput="setMusicVol(+this.value)"></label>
+      <label>Effects<input type="range" id="sfxVol" min="0" max="1" step="0.05" value="1" oninput="setSfxVol(+this.value)"></label>
+      <hr>
+      <label class="settings-check"><input type="checkbox" id="hintPatterns" checked onchange="toggleHintSetting('patterns',this.checked)">Pattern hints</label>
+      <label class="settings-check"><input type="checkbox" id="hintRelics" onchange="toggleHintSetting('relics',this.checked)">Relic hints</label>
+    </div>
   </div>
+  <div class="actions"><button id="scoringBtn" onclick="toggleRef(event)">Scoring</button><button id="abilitiesBtn" onclick="toggleAbilityRef(event)">Abilities</button><button id="mullBtn" onclick="mulligan()" style="display:none">Mulligan</button></div>
 </div>
 <div class="bar"></div>
 <div id="relicRack" class="relic-rack"></div>
 <div id="sophiaVeil"></div>
 <div class="score-stack"><div class="pill reserve-pill">Reserve <b id="pool">0</b></div><div class="pill score-pill">Score <b id="current">0</b></div><div class="th-pill-wrap"><div class="pill threshold-pill">Threshold <b id="threshold">30</b></div><span id="thNext"></span></div><div class="pill discards-pill">Discards <b id="discards">3</b></div></div>
-<div class="actions"><button id="scoringBtn" onclick="toggleRef(event)">Scoring</button><button id="abilitiesBtn" onclick="toggleAbilityRef(event)">Abilities</button><button id="mullBtn" onclick="mulligan()" style="display:none">Mulligan</button></div>
 <div class="refs-layer">
 <div id="ref" class="ref hidden scoring-sheet"></div>
 <div id="abilityRef" class="ref hidden">
