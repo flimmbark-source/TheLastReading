@@ -412,8 +412,10 @@
 #roomAmbient{position:fixed;inset:0;pointer-events:none;z-index:1;mix-blend-mode:soft-light;background:radial-gradient(125% 95% at 50% 14%,rgba(255,178,92,.26),rgba(255,140,60,.07) 46%,transparent 72%);animation:candleFlicker 7.3s ease-in-out infinite;will-change:opacity,transform}
 @keyframes candleFlicker{0%{opacity:.86;transform:scale(1)}7%{opacity:.62}14%{opacity:.96}21%{opacity:.71}29%{opacity:1}36%{opacity:.57}44%{opacity:.9}52%{opacity:.67}60%{opacity:.98;transform:scale(1.014)}68%{opacity:.6}76%{opacity:.92}84%{opacity:.69}92%{opacity:.95}100%{opacity:.83;transform:scale(1)}}
 #ambientFX{position:fixed;inset:0;pointer-events:none;z-index:10000;overflow:hidden}
-#handBack{position:absolute;top:97px;left:50%;transform:translateX(-50%);width:clamp(280px,68vw,680px);pointer-events:none;}
-#handThumb{position:fixed;bottom:0;left:50%;transform:translate(-50%,50%);width:clamp(180px,40vw,420px);pointer-events:none;z-index:25;}
+#handBack{position:absolute;top:97px;left:50%;transform:translateX(-50%) rotate(45deg);width:clamp(280px,68vw,680px);pointer-events:none;animation:handBackDrift 8s ease-in-out infinite alternate;}
+@keyframes handBackDrift{0%{translate:0 0px}100%{translate:2px 2px}}
+#handThumb{position:fixed;bottom:0;left:50%;transform:translate(-50%,50%) rotate(25deg);transform-origin:right center;width:clamp(180px,40vw,420px);pointer-events:none;z-index:25;animation:thumbDrift 9s ease-in-out infinite alternate;}
+@keyframes thumbDrift{0%{translate:0 0px}100%{translate:-1px 1.5px}}
 #breathVignette{position:fixed;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse 82% 78% at 50% 50%,transparent 48%,rgba(0,0,0,.22) 100%);opacity:0;will-change:opacity}
 .mote{position:absolute;bottom:-14px;width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,rgba(255,230,176,.95),rgba(255,208,138,.3) 58%,transparent 72%);filter:blur(.6px);opacity:0;will-change:transform,opacity;animation:moteRise var(--d) linear forwards}
 @keyframes moteRise{0%{opacity:0;transform:translate3d(0,0,0)}12%{opacity:var(--o)}50%{transform:translate3d(var(--x),-46vh,0)}88%{opacity:var(--o)}100%{opacity:0;transform:translate3d(calc(var(--x) * -.6),-94vh,0)}}
@@ -1003,6 +1005,18 @@ function breathVisuals(){
     vig.style.opacity='1';
     setTimeout(()=>{vig.style.transition=`opacity ${exhaleMs}ms ease-out`;vig.style.opacity='0';},inhaleMs+gapMs);
   }
+
+  // hand back + thumb sway: animate translate (separate from transform) so rotation is unaffected
+  const handSway=[
+    {translate:'0 0px'},
+    {translate:'0 6px',offset:inhaleMs/totalMs},
+    {translate:'0 -3px',offset:(inhaleMs+gapMs+exhaleMs*.55)/totalMs},
+    {translate:'0 0px'}
+  ];
+  ['handBack','handThumb'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.animate(handSway,{duration:totalMs,easing:'ease-in-out',fill:'none'});
+  });
 
   // hand card sway: WAAPI overrides card-wave on resting cards only, releases on finish
   [...document.querySelectorAll('#hand .card:not(.sel):not(.ability-picked):not(.purge-picked)')].forEach(c=>{
