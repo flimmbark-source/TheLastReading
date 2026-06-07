@@ -412,6 +412,7 @@
 #roomAmbient{position:fixed;inset:0;pointer-events:none;z-index:1;mix-blend-mode:soft-light;background:radial-gradient(125% 95% at 50% 14%,rgba(255,178,92,.26),rgba(255,140,60,.07) 46%,transparent 72%);animation:candleFlicker 7.3s ease-in-out infinite;will-change:opacity,transform}
 @keyframes candleFlicker{0%{opacity:.86;transform:scale(1)}7%{opacity:.62}14%{opacity:.96}21%{opacity:.71}29%{opacity:1}36%{opacity:.57}44%{opacity:.9}52%{opacity:.67}60%{opacity:.98;transform:scale(1.014)}68%{opacity:.6}76%{opacity:.92}84%{opacity:.69}92%{opacity:.95}100%{opacity:.83;transform:scale(1)}}
 #ambientFX{position:fixed;inset:0;pointer-events:none;z-index:2;overflow:hidden}
+#breathVignette{position:fixed;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse 82% 78% at 50% 50%,transparent 48%,rgba(0,0,0,.22) 100%);opacity:0;will-change:opacity}
 .mote{position:absolute;bottom:-14px;width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,rgba(255,230,176,.95),rgba(255,208,138,.3) 58%,transparent 72%);filter:blur(.6px);opacity:0;will-change:transform,opacity;animation:moteRise var(--d) linear forwards}
 @keyframes moteRise{0%{opacity:0;transform:translate3d(0,0,0)}12%{opacity:var(--o)}50%{transform:translate3d(var(--x),-46vh,0)}88%{opacity:var(--o)}100%{opacity:0;transform:translate3d(calc(var(--x) * -.6),-94vh,0)}}
 @media(prefers-reduced-motion:reduce){#roomAmbient{animation:none;opacity:.7}#ambientFX{display:none}}
@@ -432,6 +433,7 @@
 <body>
 <div id="roomAmbient"></div>
 <div id="ambientFX"></div>
+<div id="breathVignette"></div>
 <div id="invWrap">
   <div id="invDesk"></div>
   <button id="invTab">&#9660; Archives</button>
@@ -930,8 +932,117 @@ function playSound(type){
         const g=ctx.createGain();g.gain.setValueAtTime(0.07,at);g.gain.exponentialRampToValueAtTime(0.001,at+cd);
         src.connect(f);f.connect(g);g.connect(ctx.destination);src.start(at);src.stop(at+cd+.01);src.onended=()=>{src.disconnect();f.disconnect();g.disconnect();};
       }
+    }else if(type==='breath'){
+      // slow inhale (~1.6s) followed by exhale (~2.2s), very soft filtered noise
+      const vol=0.055*_sfxVol;
+      const inhaleLen=1.6,exhaleLen=2.2,gap=0.25;
+      // inhale: noise through bandpass sweeping 180→320Hz, swell up then fade
+      (()=>{
+        const buf=ctx.createBuffer(1,Math.floor(ctx.sampleRate*inhaleLen),ctx.sampleRate);
+        const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+        const src=ctx.createBufferSource();src.buffer=buf;
+        const f=ctx.createBiquadFilter();f.type='bandpass';f.Q.value=1.4;
+        f.frequency.setValueAtTime(180,ctx.currentTime);
+        f.frequency.linearRampToValueAtTime(320,ctx.currentTime+inhaleLen);
+        const g=ctx.createGain();
+        g.gain.setValueAtTime(0,ctx.currentTime);
+        g.gain.linearRampToValueAtTime(vol,ctx.currentTime+inhaleLen*0.45);
+        g.gain.linearRampToValueAtTime(vol*0.6,ctx.currentTime+inhaleLen*0.8);
+        g.gain.linearRampToValueAtTime(0.0001,ctx.currentTime+inhaleLen);
+        src.connect(f);f.connect(g);g.connect(ctx.destination);
+        src.start(ctx.currentTime);src.stop(ctx.currentTime+inhaleLen+0.05);
+        src.onended=()=>{src.disconnect();f.disconnect();g.disconnect();};
+      })();
+      // exhale: noise through bandpass sweeping 300→160Hz, softer, longer
+      (()=>{
+        const at=ctx.currentTime+inhaleLen+gap;
+        const buf=ctx.createBuffer(1,Math.floor(ctx.sampleRate*exhaleLen),ctx.sampleRate);
+        const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+        const src=ctx.createBufferSource();src.buffer=buf;
+        const f=ctx.createBiquadFilter();f.type='bandpass';f.Q.value=1.8;
+        f.frequency.setValueAtTime(300,at);
+        f.frequency.linearRampToValueAtTime(160,at+exhaleLen);
+        const g=ctx.createGain();
+        g.gain.setValueAtTime(0,at);
+        g.gain.linearRampToValueAtTime(vol*0.75,at+exhaleLen*0.2);
+        g.gain.linearRampToValueAtTime(vol*0.4,at+exhaleLen*0.65);
+        g.gain.linearRampToValueAtTime(0.0001,at+exhaleLen);
+        src.connect(f);f.connect(g);g.connect(ctx.destination);
+        src.start(at);src.stop(at+exhaleLen+0.05);
+        src.onended=()=>{src.disconnect();f.disconnect();g.disconnect();};
+      })();
     }
   }catch(e){}
+}
+// occasional idle breath — plays every 35–75 seconds when game is not busy
+let _breathTimer=null;
+function _scheduleBreath(){
+  if(_breathTimer)clearTimeout(_breathTimer);
+  const delay=35000+Math.random()*40000;
+  _breathTimer=setTimeout(()=>{
+    if(typeof state!=='undefined'&&!state.busy&&!state.abilitySelect&&state.purgeSelect===null){
+      playSound('breath');
+      breathVisuals();
+    }
+    _scheduleBreath();
+  },delay);
+}
+// start the breath cycle once the user first interacts
+document.addEventListener('pointerdown',()=>{if(!_breathTimer)_scheduleBreath();},{once:true});
+
+function breathVisuals(){
+  const inhaleMs=1600,gapMs=250,exhaleMs=2200;
+  const totalMs=inhaleMs+gapMs+exhaleMs;
+
+  // vignette: edges darken on inhale, fade on exhale
+  const vig=document.getElementById('breathVignette');
+  if(vig){
+    vig.style.transition=`opacity ${inhaleMs}ms ease-in`;
+    vig.style.opacity='1';
+    setTimeout(()=>{vig.style.transition=`opacity ${exhaleMs}ms ease-out`;vig.style.opacity='0';},inhaleMs+gapMs);
+  }
+
+  // card sway: settle slightly on inhale, lift on exhale, return
+  const spread=document.getElementById('spread');
+  if(spread){
+    spread.style.transition=`transform ${inhaleMs}ms cubic-bezier(.4,0,.2,1)`;
+    spread.style.transform='translateY(5px)';
+    setTimeout(()=>{spread.style.transition=`transform ${exhaleMs*.55}ms ease-in-out`;spread.style.transform='translateY(-3px)';},inhaleMs+gapMs);
+    setTimeout(()=>{spread.style.transition=`transform ${exhaleMs*.45}ms ease-in-out`;spread.style.transform='';},inhaleMs+gapMs+exhaleMs*.6);
+  }
+
+  // motes: slow down on inhale, push away from center, speed up briefly on exhale
+  const motes=[...document.querySelectorAll('#ambientFX .mote')];
+  motes.forEach(m=>{
+    // slow rise animation
+    m.getAnimations().forEach(a=>{if(a.animationName==='moteRise')a.updatePlaybackRate(.4);});
+    // composite push away from center
+    const leftPct=parseFloat(m.style.left)||50;
+    const pushDir=(leftPct-50)/50;
+    const pushAmt=pushDir*32;
+    const mid=(inhaleMs+gapMs)/totalMs;
+    try{
+      m.animate(
+        [{transform:'translateX(0px)'},{transform:`translateX(${pushAmt}px)`},{transform:`translateX(${pushAmt*.4}px)`},{transform:'translateX(0px)'}],
+        {duration:totalMs,easing:'ease-in-out',composite:'add',offset:[0,mid,mid+exhaleMs*.5/totalMs,1]}
+      );
+    }catch(e){}
+  });
+  // exhale: briefly speed up then settle back
+  setTimeout(()=>{
+    document.querySelectorAll('#ambientFX .mote').forEach(m=>{
+      m.getAnimations().forEach(a=>{if(a.animationName==='moteRise')a.updatePlaybackRate(1.5);});
+    });
+  },inhaleMs+gapMs);
+  setTimeout(()=>{
+    document.querySelectorAll('#ambientFX .mote').forEach(m=>{
+      m.getAnimations().forEach(a=>{if(a.animationName==='moteRise')a.updatePlaybackRate(1.0);});
+    });
+  },totalMs);
+
+  // flag so new motes spawned during breath drift outward and rise slowly
+  window._breathActive=true;
+  setTimeout(()=>{window._breathActive=false;},totalMs);
 }
 function haptic(p){try{if(navigator.vibrate)navigator.vibrate(p)}catch(e){}}
 function fireScoreGhost(){const pill=document.querySelector('.score-stack .score-pill');if(!pill)return;const r=pill.getBoundingClientRect();const g=document.createElement('span');g.className='score-ghost';g.textContent='+1';g.style.left=(r.left+8+Math.random()*(r.width-16))+'px';g.style.top=(r.top+r.height*0.25)+'px';document.body.appendChild(g);setTimeout(()=>g.remove(),950)}
@@ -1990,10 +2101,13 @@ function setSfxVol(v){_sfxVol=v;}
     if(layer.childElementCount>=MAX)return;
     const m=document.createElement('div');m.className='mote';
     m.style.setProperty('--s',(2+Math.random()*4).toFixed(1)+'px');
-    m.style.left=(Math.random()*100).toFixed(1)+'vw';
-    m.style.setProperty('--x',(Math.random()*64-32).toFixed(0)+'px');
+    const leftPct=(Math.random()*100).toFixed(1);
+    m.style.left=leftPct+'vw';
+    const breathing=window._breathActive;
+    const pushDir=(parseFloat(leftPct)-50)/50;
+    m.style.setProperty('--x',(breathing?(pushDir*50+Math.random()*10-5):(Math.random()*64-32)).toFixed(0)+'px');
     m.style.setProperty('--o',(0.14+Math.random()*0.34).toFixed(2));
-    m.style.setProperty('--d',(12+Math.random()*8).toFixed(1)+'s');
+    m.style.setProperty('--d',(breathing?(22+Math.random()*10):(12+Math.random()*8)).toFixed(1)+'s');
     m.addEventListener('animationend',()=>m.remove());
     layer.appendChild(m);
   }
