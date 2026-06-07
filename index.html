@@ -1012,7 +1012,7 @@ function breathVisuals(){
       {translate:'0 -3px',offset:(inhaleMs+gapMs+exhaleMs*.55)/totalMs},
       {translate:'0 0px'}
     ],{duration:totalMs,easing:'ease-in-out',fill:'none'});
-    ba.onfinish=()=>{const wa=c.getAnimations().find(a=>a.animationName==='card-wave');if(wa)wa.updatePlaybackRate(1);};
+    ba.onfinish=()=>{const wa=c.getAnimations().find(a=>a.animationName==='card-wave');if(wa){wa.currentTime=0;wa.updatePlaybackRate(1);}};
   });
 
   // motes: slow rise on inhale, push outward via margin-left (independent of transform),
