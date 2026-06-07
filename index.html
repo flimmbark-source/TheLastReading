@@ -412,9 +412,9 @@
 #roomAmbient{position:fixed;inset:0;pointer-events:none;z-index:1;mix-blend-mode:soft-light;background:radial-gradient(125% 95% at 50% 14%,rgba(255,178,92,.26),rgba(255,140,60,.07) 46%,transparent 72%);animation:candleFlicker 7.3s ease-in-out infinite;will-change:opacity,transform}
 @keyframes candleFlicker{0%{opacity:.86;transform:scale(1)}7%{opacity:.62}14%{opacity:.96}21%{opacity:.71}29%{opacity:1}36%{opacity:.57}44%{opacity:.9}52%{opacity:.67}60%{opacity:.98;transform:scale(1.014)}68%{opacity:.6}76%{opacity:.92}84%{opacity:.69}92%{opacity:.95}100%{opacity:.83;transform:scale(1)}}
 #ambientFX{position:fixed;inset:0;pointer-events:none;z-index:10000;overflow:hidden}
-#handBack{position:absolute;top:97px;left:50%;transform:translateX(-50%) rotate(45deg);width:clamp(280px,68vw,680px);pointer-events:none;animation:handBackDrift 8s ease-in-out infinite alternate;}
+#handBack{position:absolute;top:77px;left:50%;transform:translateX(-50%) rotate(45deg);width:clamp(280px,68vw,680px);pointer-events:none;animation:handBackDrift 8s ease-in-out infinite alternate;}
 @keyframes handBackDrift{0%{translate:0 0px}100%{translate:2px 2px}}
-#handThumbWrap{position:fixed;bottom:0;left:50%;transform:translate(-50%,50%);width:clamp(180px,40vw,420px);pointer-events:none;z-index:25;animation:thumbDrift 9s ease-in-out infinite alternate;}
+#handThumbWrap{position:fixed;bottom:0;left:50%;transform:translate(-50%,50%);width:clamp(100px,18vw,200px);pointer-events:none;z-index:25;animation:thumbDrift 9s ease-in-out infinite alternate;}
 @keyframes thumbDrift{0%{translate:0 0px}100%{translate:-1px 1.5px}}
 #handThumb{width:100%;display:block;transform:rotate(20deg);transform-origin:right center;}
 #breathVignette{position:fixed;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse 82% 78% at 50% 50%,transparent 48%,rgba(0,0,0,.22) 100%);opacity:0;will-change:opacity}
