@@ -450,18 +450,11 @@
 /* end press highlight coverage patch */
 /* mobile drag-select touch patch */
 #hand .card,#spread .card[data-uid]{touch-action:none;-webkit-user-select:none;user-select:none}
-body.mobile-drag-selecting #hand .card,body.mobile-drag-selecting #spread .card[data-uid]{animation:none!important;transition:none!important;translate:0 0!important}
-body.mobile-drag-selecting #hand .card:not(.sel):not(.ability-picked):not(.purge-picked){transform:translate3d(0,0,0) rotate(var(--a))!important}
-body.mobile-drag-selecting .hand{transform:none!important;translate:0 0!important;rotate:0deg!important;transition:none!important}
-body.mobile-drag-selecting #hand .card.press-highlight,body.mobile-drag-selecting #hand .card:active{box-shadow:0 5px 14px rgba(0,0,0,.45)}
-body.mobile-drag-selecting #hand .card.hint-card.press-highlight,body.mobile-drag-selecting #hand .card.hint-card:active{box-shadow:0 0 0 0.75px rgba(var(--hint-rgb,232,196,96),.95),0 0 28px rgba(var(--hint-rgb,232,196,96),.78),0 0 54px rgba(var(--hint-rgb,232,196,96),.36),0 5px 14px rgba(0,0,0,.45)}
-body.mobile-drag-selecting #hand .card.hint-complete.press-highlight,body.mobile-drag-selecting #hand .card.hint-complete:active{box-shadow:0 0 0 1px rgba(var(--hint-rgb,255,217,120),1),0 0 36px rgba(var(--hint-rgb,255,217,120),.9),0 0 68px rgba(var(--hint-rgb,255,217,120),.48),0 5px 14px rgba(0,0,0,.45)}
-body.mobile-drag-selecting #hand .card.hint-multi.press-highlight,body.mobile-drag-selecting #hand .card.hint-multi:active{box-shadow:var(--hint-shadow)!important}
 body.mobile-drag-selecting .card.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 10px 28px rgba(0,0,0,.75)!important;z-index:999!important}
 body.mobile-drag-selecting .card.hint-card.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 0 0 .75px rgba(var(--hint-rgb,232,196,96),.98),0 0 32px rgba(var(--hint-rgb,232,196,96),.86),0 0 58px rgba(var(--hint-rgb,232,196,96),.42),0 10px 28px rgba(0,0,0,.75)!important}
 body.mobile-drag-selecting .card.hint-complete.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 0 0 1px rgba(var(--hint-rgb,255,217,120),1),0 0 42px rgba(var(--hint-rgb,255,217,120),.95),0 0 76px rgba(var(--hint-rgb,255,217,120),.55),0 10px 28px rgba(0,0,0,.75)!important}
 body.mobile-drag-selecting .card.hint-multi.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,var(--hint-shadow)!important}
-body.mobile-drag-selecting .card.drag-select-preview[data-hint]::after,body.mobile-drag-selecting .card.press-highlight[data-hint]::after{opacity:1}
+body.mobile-drag-selecting .card.drag-select-preview[data-hint]::after{opacity:1}
 /* end mobile drag-select touch patch */
 </style>
 </head>
