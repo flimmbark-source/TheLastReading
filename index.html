@@ -817,7 +817,7 @@ function seqRunStart(num,cards){
 function majorName(id){const n=parseInt(id.split('_')[1]);const m=MAJORS.find(x=>x[0]===n);return m?m[1]:id;}
 function majorNumeral(id){const n=parseInt(id.split('_')[1]);if(n===0)return'0';const v=[1000,'M',900,'CM',500,'D',400,'CD',100,'C',90,'XC',50,'L',40,'XL',10,'X',9,'IX',5,'V',4,'IV',1,'I'];let r='',x=n;for(let i=0;i<v.length;i+=2){while(x>=v[i]){r+=v[i+1];x-=v[i];}}return r;}
 let _hintsCache=new Map(),_hintsCacheKey='';
-function _hintsKey(){return state.spread.map(c=>c?c.uid:0).join(',');}
+function _hintsKey(){return state.spread.map(c=>c?c.uid:0).join(',')+'|'+state.hand.map(c=>c.uid).join(',');}
 function cardHints(card, poolCards=null){
   if(!poolCards){const k=_hintsKey()+':'+card.uid;if(_hintsCache.has(k))return _hintsCache.get(k);}
   const spread=state.spread.filter(Boolean);
