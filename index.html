@@ -2052,26 +2052,67 @@ const _music=(function(){
     'boopul-sitar-amp-tanpura-meditation-yoga-flow-ahir-bhairav-raga-538665.mp3',
     'boopul-dreamy-sitar-amp-tanpura-late-night-calm-music-538721.mp3',
   ];
-  let el=null,lastIdx=-1,started=false,targetVol=0.3;
+  const FADE=6; // crossfade seconds
+  let cur=null,nxt=null,lastIdx=-1,started=false,targetVol=0.3;
+  let fading=false,fadeStart=0,fadeTick=null;
+
   function pickIdx(){let i;do{i=Math.floor(Math.random()*TRACKS.length);}while(TRACKS.length>1&&i===lastIdx);return i;}
-  function start(e){
+
+  function beginFade(){
+    if(fading)return;
+    fading=true;
+    fadeStart=performance.now();
+    const fromVol=cur?cur.volume:targetVol;
+    const idx=pickIdx();lastIdx=idx;
+    nxt=document.createElement('audio');
+    nxt.volume=0;
+    nxt.preload='auto';
+    nxt.src=TRACKS[idx];
+    nxt.play().catch(()=>{});
+    attachHandlers(nxt);
+    function tick(){
+      const p=Math.min(1,(performance.now()-fadeStart)/1000/FADE);
+      if(cur)cur.volume=fromVol*(1-p);
+      if(nxt)nxt.volume=targetVol*p;
+      if(p<1){fadeTick=requestAnimationFrame(tick);}
+      else{
+        if(cur){cur.src='';cur=null;}
+        cur=nxt;nxt=null;fading=false;fadeTick=null;
+      }
+    }
+    fadeTick=requestAnimationFrame(tick);
+  }
+
+  function attachHandlers(el){
+    function onTime(){
+      if(!el.duration||el.duration-el.currentTime>FADE+0.5)return;
+      el.removeEventListener('timeupdate',onTime);
+      el.removeEventListener('ended',onEnd);
+      if(cur===el)beginFade();
+    }
+    function onEnd(){
+      el.removeEventListener('timeupdate',onTime);
+      el.removeEventListener('ended',onEnd);
+      if(cur===el)beginFade();
+    }
+    el.addEventListener('timeupdate',onTime);
+    el.addEventListener('ended',onEnd);
+  }
+
+  function start(){
     if(started)return;
     started=true;
-    el=document.createElement('audio');
-    el.volume=targetVol;
-    el.preload='none';
+    cur=document.createElement('audio');
+    cur.volume=targetVol;
+    cur.preload='none';
     const idx=pickIdx();lastIdx=idx;
-    el.src=TRACKS[idx];
-    el.addEventListener('ended',()=>{
-      const next=pickIdx();lastIdx=next;
-      el.src=TRACKS[next];
-      el.play().catch(()=>{});
-    });
-    el.play().catch(()=>{started=false;el=null;});
+    cur.src=TRACKS[idx];
+    attachHandlers(cur);
+    cur.play().catch(()=>{started=false;cur=null;});
   }
   document.addEventListener('touchstart',start,{capture:true,once:true});
   document.addEventListener('click',start,{capture:true,once:true});
-  return{setVol(v){targetVol=v;if(el)el.volume=v;}};
+  return{setVol(v){targetVol=v;if(cur&&!fading)cur.volume=v;}};
 })();
 function toggleMenu(){const p=document.getElementById('settingsPanel');if(p)p.classList.toggle('hidden');}
 document.addEventListener('click',e=>{const p=document.getElementById('settingsPanel');const b=document.getElementById('menuBtn');if(p&&!p.classList.contains('hidden')&&!p.contains(e.target)&&e.target!==b)p.classList.add('hidden');},{capture:false});
