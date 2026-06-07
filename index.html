@@ -1002,15 +1002,6 @@ function breathVisuals(){
     setTimeout(()=>{vig.style.transition=`opacity ${exhaleMs}ms ease-out`;vig.style.opacity='0';},inhaleMs+gapMs);
   }
 
-  // card sway: settle slightly on inhale, lift on exhale, return
-  const spread=document.getElementById('spread');
-  if(spread){
-    spread.style.transition=`transform ${inhaleMs}ms cubic-bezier(.4,0,.2,1)`;
-    spread.style.transform='translateY(5px)';
-    setTimeout(()=>{spread.style.transition=`transform ${exhaleMs*.55}ms ease-in-out`;spread.style.transform='translateY(-3px)';},inhaleMs+gapMs);
-    setTimeout(()=>{spread.style.transition=`transform ${exhaleMs*.45}ms ease-in-out`;spread.style.transform='';},inhaleMs+gapMs+exhaleMs*.6);
-  }
-
   // motes: slow down on inhale, push away from center, speed up briefly on exhale
   const motes=[...document.querySelectorAll('#ambientFX .mote')];
   motes.forEach(m=>{
