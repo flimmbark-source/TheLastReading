@@ -46,7 +46,7 @@ upsertStyle(
   '/* end mobile drag-select touch patch */',
   `#hand .card,#spread .card[data-uid]{touch-action:none;-webkit-user-select:none;user-select:none}
 body.mobile-drag-selecting #hand .card,body.mobile-drag-selecting #spread .card[data-uid]{animation:none!important;transition:none!important;translate:0 0!important}
-body.mobile-drag-selecting #hand .card,body.mobile-drag-selecting #hand .card:hover,body.mobile-drag-selecting #hand .card:active,body.mobile-drag-selecting #hand .card.sel,body.mobile-drag-selecting #hand .card.ability-picked,body.mobile-drag-selecting #hand .card.press-highlight,body.mobile-drag-selecting #hand .card.purge-picked{transform:translate3d(0,0,0) rotate(var(--a))!important;z-index:auto!important}
+body.mobile-drag-selecting #hand .card,body.mobile-drag-selecting #hand .card:hover,body.mobile-drag-selecting #hand .card:active,body.mobile-drag-selecting #hand .card.sel,body.mobile-drag-selecting #hand .card.ability-picked,body.mobile-drag-selecting #hand .card.press-highlight,body.mobile-drag-selecting #hand .card.purge-picked{transform:translate3d(0,0,0) rotate(var(--a))!important}
 body.mobile-drag-selecting .hand{transform:none!important;translate:0 0!important;rotate:0deg!important;transition:none!important}
 body.mobile-drag-selecting #hand .card.press-highlight,body.mobile-drag-selecting #hand .card:active{box-shadow:0 5px 14px rgba(0,0,0,.45)}
 body.mobile-drag-selecting #hand .card.hint-card.press-highlight,body.mobile-drag-selecting #hand .card.hint-card:active{box-shadow:0 0 0 0.75px rgba(var(--hint-rgb,232,196,96),.95),0 0 28px rgba(var(--hint-rgb,232,196,96),.78),0 0 54px rgba(var(--hint-rgb,232,196,96),.36),0 5px 14px rgba(0,0,0,.45)}
