@@ -90,9 +90,10 @@ replaceOne(
     `.hand .card:hover,.hand .card.sel{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important;box-shadow:${baseGlow}}`,
     `.hand .card:hover,.hand .card.sel{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card.sel{box-shadow:${baseGlow}}`,
     `.hand .card:hover,.hand .card:active,.hand .card.sel{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel{box-shadow:${baseGlow}}`,
-    `.hand .card:hover,.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{box-shadow:${baseGlow}}`
+    `.hand .card:hover,.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{box-shadow:${baseGlow}}`,
+    `.hand:not(.has-selected-card) .card:hover,.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{box-shadow:${baseGlow}}`
   ],
-  `.hand:not(.has-selected-card) .card:hover,.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{box-shadow:${baseGlow}}`
+  `.hand:not(.has-selected-card) .card:hover,.hand .card.sel,.hand .card.ability-picked{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{box-shadow:${baseGlow}}`
 );
 
 replaceOne(
