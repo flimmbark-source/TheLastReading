@@ -1002,32 +1002,36 @@ function breathVisuals(){
     setTimeout(()=>{vig.style.transition=`opacity ${exhaleMs}ms ease-out`;vig.style.opacity='0';},inhaleMs+gapMs);
   }
 
-  // motes: slow down on inhale, push away from center, speed up briefly on exhale
+  // hand card sway: container drifts down on inhale, floats back up on exhale
+  const hand=document.getElementById('hand');
+  if(hand){
+    hand.style.transition=`transform ${inhaleMs}ms cubic-bezier(.4,0,.2,1)`;
+    hand.style.transform='translateY(5px)';
+    setTimeout(()=>{hand.style.transition=`transform ${exhaleMs*.55}ms ease-in-out`;hand.style.transform='translateY(-3px)';},inhaleMs+gapMs);
+    setTimeout(()=>{hand.style.transition=`transform ${exhaleMs*.45}ms ease-in-out`;hand.style.transform='';},inhaleMs+gapMs+exhaleMs*.6);
+  }
+
+  // motes: slow down on inhale, push away from center via --x, speed up on exhale
   const motes=[...document.querySelectorAll('#ambientFX .mote')];
   motes.forEach(m=>{
-    // slow rise animation
-    m.getAnimations().forEach(a=>{if(a.animationName==='moteRise')a.updatePlaybackRate(.4);});
-    // composite push away from center
+    // slow all animations on this element (CSS animation owns 'transform' entirely)
+    m.getAnimations().forEach(a=>{try{a.updatePlaybackRate(.4);}catch(e){}});
+    // redirect drift direction strongly away from screen center
     const leftPct=parseFloat(m.style.left)||50;
-    const pushDir=(leftPct-50)/50;
-    const pushAmt=pushDir*32;
-    const mid=(inhaleMs+gapMs)/totalMs;
-    try{
-      m.animate(
-        [{transform:'translateX(0px)'},{transform:`translateX(${pushAmt}px)`},{transform:`translateX(${pushAmt*.4}px)`},{transform:'translateX(0px)'}],
-        {duration:totalMs,easing:'ease-in-out',composite:'add',offset:[0,mid,mid+exhaleMs*.5/totalMs,1]}
-      );
-    }catch(e){}
+    const pushDir=(leftPct-50)/50; // -1=left edge, +1=right edge
+    m.dataset.origX=m.style.getPropertyValue('--x');
+    m.style.setProperty('--x',(pushDir*70).toFixed(0)+'px');
   });
-  // exhale: briefly speed up then settle back
+  // exhale: restore --x and briefly speed up
   setTimeout(()=>{
     document.querySelectorAll('#ambientFX .mote').forEach(m=>{
-      m.getAnimations().forEach(a=>{if(a.animationName==='moteRise')a.updatePlaybackRate(1.5);});
+      m.getAnimations().forEach(a=>{try{a.updatePlaybackRate(1.5);}catch(e){}});
+      if(m.dataset.origX!==undefined)m.style.setProperty('--x',m.dataset.origX);
     });
   },inhaleMs+gapMs);
   setTimeout(()=>{
     document.querySelectorAll('#ambientFX .mote').forEach(m=>{
-      m.getAnimations().forEach(a=>{if(a.animationName==='moteRise')a.updatePlaybackRate(1.0);});
+      m.getAnimations().forEach(a=>{try{a.updatePlaybackRate(1.0);}catch(e){}});
     });
   },totalMs);
 
