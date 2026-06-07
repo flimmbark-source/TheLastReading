@@ -1002,6 +1002,15 @@ function breathVisuals(){
     setTimeout(()=>{vig.style.transition=`opacity ${exhaleMs}ms ease-out`;vig.style.opacity='0';},inhaleMs+gapMs);
   }
 
+  // hand card sway: container drifts down on inhale, floats back up on exhale
+  const hand=document.getElementById('hand');
+  if(hand){
+    hand.style.transition=`transform ${inhaleMs}ms cubic-bezier(.4,0,.2,1)`;
+    hand.style.transform='translateY(5px)';
+    setTimeout(()=>{hand.style.transition=`transform ${exhaleMs*.55}ms ease-in-out`;hand.style.transform='translateY(-3px)';},inhaleMs+gapMs);
+    setTimeout(()=>{hand.style.transition=`transform ${exhaleMs*.45}ms ease-in-out`;hand.style.transform='';},inhaleMs+gapMs+exhaleMs*.6);
+  }
+
   // motes: slow down on inhale, push away from center via --x, speed up on exhale
   const motes=[...document.querySelectorAll('#ambientFX .mote')];
   motes.forEach(m=>{
