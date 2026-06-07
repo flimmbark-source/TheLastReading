@@ -45,13 +45,18 @@ upsertStyle(
   '/* mobile drag-select touch patch */',
   '/* end mobile drag-select touch patch */',
   `#hand .card,#spread .card[data-uid]{touch-action:none;-webkit-user-select:none;user-select:none}
-body.mobile-drag-selecting #hand .card,body.mobile-drag-selecting #spread .card[data-uid]{transform:var(--drag-base-transform)!important;transition:none!important}
-body.mobile-drag-selecting #hand .card:hover,body.mobile-drag-selecting #hand .card:active,body.mobile-drag-selecting #hand .card.sel,body.mobile-drag-selecting #hand .card.ability-picked,body.mobile-drag-selecting #hand .card.press-highlight{transform:var(--drag-base-transform)!important}
-body.mobile-drag-selecting .card.press-highlight{box-shadow:inherit}
-body.mobile-drag-selecting .card.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 10px 28px rgba(0,0,0,.75)!important}
+body.mobile-drag-selecting #hand .card,body.mobile-drag-selecting #spread .card[data-uid]{animation:none!important;transition:none!important;translate:0 0!important}
+body.mobile-drag-selecting #hand .card,body.mobile-drag-selecting #hand .card:hover,body.mobile-drag-selecting #hand .card:active,body.mobile-drag-selecting #hand .card.sel,body.mobile-drag-selecting #hand .card.ability-picked,body.mobile-drag-selecting #hand .card.press-highlight,body.mobile-drag-selecting #hand .card.purge-picked{transform:translate3d(0,0,0) rotate(var(--a))!important;z-index:auto!important}
+body.mobile-drag-selecting .hand{transform:none!important;translate:0 0!important;rotate:0deg!important;transition:none!important}
+body.mobile-drag-selecting #hand .card.press-highlight,body.mobile-drag-selecting #hand .card:active{box-shadow:0 5px 14px rgba(0,0,0,.45)}
+body.mobile-drag-selecting #hand .card.hint-card.press-highlight,body.mobile-drag-selecting #hand .card.hint-card:active{box-shadow:0 0 0 0.75px rgba(var(--hint-rgb,232,196,96),.95),0 0 28px rgba(var(--hint-rgb,232,196,96),.78),0 0 54px rgba(var(--hint-rgb,232,196,96),.36),0 5px 14px rgba(0,0,0,.45)}
+body.mobile-drag-selecting #hand .card.hint-complete.press-highlight,body.mobile-drag-selecting #hand .card.hint-complete:active{box-shadow:0 0 0 1px rgba(var(--hint-rgb,255,217,120),1),0 0 36px rgba(var(--hint-rgb,255,217,120),.9),0 0 68px rgba(var(--hint-rgb,255,217,120),.48),0 5px 14px rgba(0,0,0,.45)}
+body.mobile-drag-selecting #hand .card.hint-multi.press-highlight,body.mobile-drag-selecting #hand .card.hint-multi:active{box-shadow:var(--hint-shadow)!important}
+body.mobile-drag-selecting .card.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 10px 28px rgba(0,0,0,.75)!important;z-index:999!important}
 body.mobile-drag-selecting .card.hint-card.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 0 0 .75px rgba(var(--hint-rgb,232,196,96),.98),0 0 32px rgba(var(--hint-rgb,232,196,96),.86),0 0 58px rgba(var(--hint-rgb,232,196,96),.42),0 10px 28px rgba(0,0,0,.75)!important}
 body.mobile-drag-selecting .card.hint-complete.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 0 0 1px rgba(var(--hint-rgb,255,217,120),1),0 0 42px rgba(var(--hint-rgb,255,217,120),.95),0 0 76px rgba(var(--hint-rgb,255,217,120),.55),0 10px 28px rgba(0,0,0,.75)!important}
-body.mobile-drag-selecting .card.hint-multi.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,var(--hint-shadow)!important}`
+body.mobile-drag-selecting .card.hint-multi.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,var(--hint-shadow)!important}
+body.mobile-drag-selecting .card.drag-select-preview[data-hint]::after,body.mobile-drag-selecting .card.press-highlight[data-hint]::after{opacity:1}`
 );
 
 upsertScript(
@@ -66,18 +71,10 @@ upsertScript(
   let suppressClickUntil=0;
   const isMobilePointer=ev=>ev.pointerType==='touch'||ev.pointerType==='pen';
   const clearPressHighlight=()=>document.querySelectorAll('.card.press-highlight').forEach(card=>card.classList.remove('press-highlight'));
-  const allLiveCards=()=>[...document.querySelectorAll('#hand .card[data-uid],#spread .card[data-uid]')];
-  const freezeCardTransforms=()=>{
-    allLiveCards().forEach(card=>{
-      const t=getComputedStyle(card).transform;
-      card.style.setProperty('--drag-base-transform',t&&t!=='none'?t:'none');
-    });
-    document.body.classList.add('mobile-drag-selecting');
-  };
-  const unfreezeCardTransforms=()=>{
+  const enterDragSelectMode=()=>{document.body.classList.add('mobile-drag-selecting');};
+  const leaveDragSelectMode=()=>{
     document.body.classList.remove('mobile-drag-selecting');
     document.querySelectorAll('.card.drag-select-preview').forEach(card=>card.classList.remove('drag-select-preview'));
-    allLiveCards().forEach(card=>card.style.removeProperty('--drag-base-transform'));
   };
   const cardsAtPoint=(x,y)=>{
     const els=(document.elementsFromPoint?document.elementsFromPoint(x,y):[document.elementFromPoint(x,y)]).filter(Boolean);
@@ -146,6 +143,7 @@ upsertScript(
     const target=ev.target instanceof Element?ev.target:null;
     if(!target||!target.closest('#hand,#spread'))return;
     drag={pointerId:ev.pointerId,startX:ev.clientX,startY:ev.clientY,lastUid:null,active:false,didSelect:false,pendingSelected:null,pendingAbility:state.abilitySelect?[...state.abilitySelect.picked]:[],pendingPurge:state.purgeSelect!==null?[...state.purgeSelect]:[]};
+    enterDragSelectMode();
   },true);
   document.addEventListener('pointermove',ev=>{
     if(!drag||ev.pointerId!==drag.pointerId)return;
@@ -154,7 +152,6 @@ upsertScript(
       if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
       drag.active=true;
       clearPressHighlight();
-      freezeCardTransforms();
     }
     ev.preventDefault();
     for(const cardEl of cardsAtPoint(ev.clientX,ev.clientY)){
@@ -162,11 +159,11 @@ upsertScript(
     }
   },{capture:true,passive:false});
   const finishDrag=()=>{
-    const hadDrag=!!drag&&drag.active;
+    const hadDrag=!!drag;
     commitDrag();
     if(drag&&drag.didSelect)suppressClickUntil=performance.now()+550;
     drag=null;
-    if(hadDrag)unfreezeCardTransforms();
+    if(hadDrag)leaveDragSelectMode();
   };
   document.addEventListener('pointerup',finishDrag,true);
   document.addEventListener('pointercancel',finishDrag,true);
