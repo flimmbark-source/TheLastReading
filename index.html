@@ -498,7 +498,7 @@ body.mobile-drag-selecting .card.drag-select-preview[data-hint]::after{opacity:1
 /* end relic rack mobile right-side patch */
 /* hand swipe-scroll patch */
 .handDock{overflow-x:clip;overflow-y:visible}
-.hand{max-width:none;width:max-content;transform:translate3d(var(--hand-scroll-x,0px),0,0) rotate(var(--hand-scroll-tilt,0deg));transition:transform .42s cubic-bezier(.2,.85,.25,1)}
+.hand{max-width:none;width:max-content;transform-origin:50% 50%;transform:rotate(var(--hand-rotate,0deg));transition:transform .45s cubic-bezier(.2,.85,.25,1)}
 .hand.hand-scroll-dragging{transition:none}
 .hand-swipe-zone{position:fixed;left:0;right:0;bottom:197px;height:88px;z-index:19;pointer-events:auto;touch-action:none;cursor:grab;background:transparent}
 .hand-swipe-zone.dragging{cursor:grabbing}
@@ -2428,82 +2428,59 @@ function setSfxVol(v){_sfxVol=v;}
   if(window.__handSwipeScrollInstalled)return;
   window.__handSwipeScrollInstalled=true;
   let zone=null,hand=null;
-  let scrollX=0,startX=0,startScrollX=0,pointerId=null;
-  let samples=[];                 // {t,x} ring of recent pointer samples for release velocity
-  const SAMPLE_WINDOW=90;         // ms window we look back over for swipe velocity
-  const FRICTION=0.0028;          // exponential decay per ms (lower -> longer glide)
-  const MIN_VEL=0.012;            // px/ms threshold to stop momentum
-  const TILT_GAIN=1.6;            // sqrt-mapped tilt strength
-  const TILT_MAX=5.2;             // deg
-  const RUBBER=0.42;              // resistance when over-scrolling (drag past edge)
-  let momentumRaf=null,tiltRaf=null;
+  let rot=0,startRot=0,startX=0,pointerId=null;   // rot/startRot in degrees
+  let samples=[];                                 // {t,deg} ring of recent rotation samples
+  const SAMPLE_WINDOW=90;          // ms window for swipe velocity sampling
+  const DEG_PER_PX=0.22;           // how much swipe distance becomes rotation
+  const ROT_MAX=55;                // degrees the hand can rotate either way
+  const FRICTION=0.0030;           // exponential decay per ms during momentum
+  const MIN_VEL=0.012;             // deg/ms threshold to stop momentum
+  const RUBBER=0.42;               // resistance past ROT_MAX while dragging
+  let momentumRaf=null;
   const handEl=()=>{if(hand&&hand.isConnected)return hand;hand=document.querySelector('.hand');return hand;};
   const zoneEl=()=>{if(zone&&zone.isConnected)return zone;zone=document.getElementById('handSwipeZone');return zone;};
-  const dockW=()=>{const h=handEl();return h&&h.parentElement?h.parentElement.clientWidth:window.innerWidth;};
-  const handW=()=>{const h=handEl();return h?h.scrollWidth:0;};
-  const maxOffset=()=>{const o=(handW()-dockW())/2;return o>0?o:0;};
-  const clampScroll=x=>{const o=maxOffset();return Math.max(-o,Math.min(o,x));};
-  const softClamp=x=>{const o=maxOffset();if(o===0)return 0;const ax=Math.abs(x);if(ax<=o)return x;return Math.sign(x)*(o+(ax-o)*RUBBER);};
-  const applyScroll=x=>{const h=handEl();if(!h)return;scrollX=x;h.style.setProperty('--hand-scroll-x',x.toFixed(2)+'px');updateOverflowHint();};
-  const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;z.classList.toggle('has-overflow',maxOffset()>4);};
-  // Rotation follows the swipe direction (swipe right -> hand rotates right).
-  const tiltFromVel=v=>{const s=v>=0?1:-1;return s*Math.min(TILT_MAX,Math.sqrt(Math.abs(v)*TILT_GAIN*5));};
-  const setTilt=deg=>{const h=handEl();if(!h)return;h.style.setProperty('--hand-scroll-tilt',deg.toFixed(2)+'deg');};
-  const easeTiltTo=target=>{
-    if(tiltRaf)cancelAnimationFrame(tiltRaf);
-    const h=handEl();if(!h)return;
-    const start=parseFloat(getComputedStyle(h).getPropertyValue('--hand-scroll-tilt'))||0;
-    if(Math.abs(start-target)<.01){setTilt(target);tiltRaf=null;return;}
-    const t0=performance.now(),dur=380;
-    const step=t=>{
-      const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);
-      setTilt(start+(target-start)*e);
-      if(p<1)tiltRaf=requestAnimationFrame(step);else tiltRaf=null;
-    };
-    tiltRaf=requestAnimationFrame(step);
-  };
+  const clampRot=d=>Math.max(-ROT_MAX,Math.min(ROT_MAX,d));
+  const softClamp=d=>{const ad=Math.abs(d);if(ad<=ROT_MAX)return d;return Math.sign(d)*(ROT_MAX+(ad-ROT_MAX)*RUBBER);};
+  const applyRot=d=>{const h=handEl();if(!h)return;rot=d;h.style.setProperty('--hand-rotate',d.toFixed(2)+'deg');updateOverflowHint();};
+  const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;const h=handEl();const over=h&&h.parentElement?(h.scrollWidth>h.parentElement.clientWidth+4):false;z.classList.toggle('has-overflow',over);};
   const cancelMomentum=()=>{if(momentumRaf){cancelAnimationFrame(momentumRaf);momentumRaf=null;}};
-  const pushSample=(t,x)=>{samples.push({t,x});while(samples.length&&samples[0].t<t-SAMPLE_WINDOW)samples.shift();};
+  const pushSample=(t,d)=>{samples.push({t,d});while(samples.length&&samples[0].t<t-SAMPLE_WINDOW)samples.shift();};
   const releaseVel=()=>{
     // Use only samples within the last SAMPLE_WINDOW ms so a pause before release
-    // doesn't bleed an old swipe's velocity into the momentum.
+    // doesn't bleed an older swipe's velocity into the momentum.
     const cutoff=performance.now()-SAMPLE_WINDOW;
     let i=0;while(i<samples.length&&samples[i].t<cutoff)i++;
     if(samples.length-i<2)return 0;
     const first=samples[i],last=samples[samples.length-1];
     const dt=last.t-first.t;
     if(dt<8)return 0;
-    return (last.x-first.x)/dt; // px/ms
+    return (last.d-first.d)/dt; // deg/ms
   };
   const springBack=()=>{
-    // Snap from any over-scroll to the clamped edge, smoothly.
-    const target=clampScroll(scrollX);
-    if(Math.abs(target-scrollX)<.5){applyScroll(target);easeTiltTo(0);return;}
-    const t0=performance.now(),from=scrollX,dur=340;
+    const target=clampRot(rot);
+    if(Math.abs(target-rot)<.05){applyRot(target);return;}
+    const t0=performance.now(),from=rot,dur=340;
     const step=t=>{
       const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);
-      applyScroll(from+(target-from)*e);
-      if(p<1)momentumRaf=requestAnimationFrame(step);else{momentumRaf=null;easeTiltTo(0);}
+      applyRot(from+(target-from)*e);
+      if(p<1)momentumRaf=requestAnimationFrame(step);else momentumRaf=null;
     };
     momentumRaf=requestAnimationFrame(step);
   };
   const runMomentum=v0=>{
-    // If we released past the edge, just spring back.
-    if(Math.abs(scrollX)>maxOffset()+.5){springBack();return;}
+    if(Math.abs(rot)>ROT_MAX+.05){springBack();return;}
     let v=v0;
-    if(Math.abs(v)<MIN_VEL){easeTiltTo(0);return;}
+    if(Math.abs(v)<MIN_VEL)return;
     let lastT=performance.now();
     const step=now=>{
       const dt=Math.min(48,now-lastT);
       lastT=now;
       v*=Math.exp(-FRICTION*dt);
-      let next=scrollX+v*dt;
-      const o=maxOffset();
-      if(next<-o){next=-o;v=0;}
-      else if(next>o){next=o;v=0;}
-      applyScroll(next);
-      setTilt(tiltFromVel(v));
-      if(Math.abs(v)<MIN_VEL){applyScroll(clampScroll(scrollX));easeTiltTo(0);momentumRaf=null;return;}
+      let next=rot+v*dt;
+      if(next<-ROT_MAX){next=-ROT_MAX;v=0;}
+      else if(next>ROT_MAX){next=ROT_MAX;v=0;}
+      applyRot(next);
+      if(Math.abs(v)<MIN_VEL){applyRot(clampRot(rot));momentumRaf=null;return;}
       momentumRaf=requestAnimationFrame(step);
     };
     momentumRaf=requestAnimationFrame(step);
@@ -2512,8 +2489,8 @@ function setSfxVol(v){_sfxVol=v;}
     const z=zoneEl();if(!z||(ev.target!==z&&!z.contains(ev.target)))return;
     cancelMomentum();
     pointerId=ev.pointerId;
-    startX=ev.clientX;startScrollX=scrollX;
-    samples.length=0;pushSample(performance.now(),ev.clientX);
+    startX=ev.clientX;startRot=rot;
+    samples.length=0;pushSample(performance.now(),rot);
     try{z.setPointerCapture(ev.pointerId);}catch(e){}
     z.classList.add('dragging');
     handEl()?.classList.add('hand-scroll-dragging');
@@ -2521,11 +2498,10 @@ function setSfxVol(v){_sfxVol=v;}
   document.addEventListener('pointermove',ev=>{
     if(ev.pointerId!==pointerId)return;
     ev.preventDefault();
-    const now=performance.now();
-    pushSample(now,ev.clientX);
     const dx=ev.clientX-startX;
-    applyScroll(softClamp(startScrollX+dx));
-    setTilt(tiltFromVel(releaseVel()));
+    const target=softClamp(startRot+dx*DEG_PER_PX);
+    applyRot(target);
+    pushSample(performance.now(),target);
   },{capture:true,passive:false});
   const finish=ev=>{
     if(ev.pointerId!==pointerId)return;
@@ -2537,7 +2513,7 @@ function setSfxVol(v){_sfxVol=v;}
   };
   document.addEventListener('pointerup',finish,true);
   document.addEventListener('pointercancel',finish,true);
-  const recheck=()=>{applyScroll(clampScroll(scrollX));};
+  const recheck=()=>{applyRot(clampRot(rot));};
   let ro=null;
   const attachObserver=()=>{
     const h=handEl();
