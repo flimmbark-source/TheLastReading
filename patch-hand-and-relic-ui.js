@@ -142,7 +142,7 @@ upsertBlock(
   '/* hand swipe-scroll patch */',
   '/* end hand swipe-scroll patch */',
   `.handDock{overflow-x:clip;overflow-y:visible}
-.hand{max-width:none;width:max-content;transform-origin:50% 50%;transform:rotate(var(--hand-rotate,0deg));transition:transform .45s cubic-bezier(.2,.85,.25,1)}
+.hand{max-width:none;width:max-content;transform-origin:50% 240%;transform:rotate(var(--hand-rotate,0deg));transition:transform .45s cubic-bezier(.2,.85,.25,1)}
 .hand.hand-scroll-dragging{transition:none}
 .hand-swipe-zone{position:fixed;left:0;right:0;bottom:197px;height:88px;z-index:19;pointer-events:auto;touch-action:none;cursor:grab;background:transparent}
 .hand-swipe-zone.dragging{cursor:grabbing}
@@ -171,10 +171,10 @@ upsertBlock(
   let rot=0,startRot=0,startX=0,pointerId=null;   // rot/startRot in degrees
   let samples=[];                                 // {t,deg} ring of recent rotation samples
   const SAMPLE_WINDOW=90;          // ms window for swipe velocity sampling
-  const DEG_PER_PX=0.22;           // how much swipe distance becomes rotation
-  const ROT_MAX=55;                // degrees the hand can rotate either way
+  const DEG_PER_PX=0.15;           // how much swipe distance becomes arc rotation
+  const ROT_MAX=38;                // degrees the hand can travel along the arc either way
   const FRICTION=0.0030;           // exponential decay per ms during momentum
-  const MIN_VEL=0.012;             // deg/ms threshold to stop momentum
+  const MIN_VEL=0.010;             // deg/ms threshold to stop momentum
   const RUBBER=0.42;               // resistance past ROT_MAX while dragging
   let momentumRaf=null;
   const handEl=()=>{if(hand&&hand.isConnected)return hand;hand=document.querySelector('.hand');return hand;};
