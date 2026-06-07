@@ -1852,26 +1852,34 @@ startReading();
 if(!tutDone)setTimeout(()=>tutShow(0),400);
 
 // ── Background music ──
-(function(){
+// Single persistent Audio element — iOS requires the element to be
+// created and .play() called within the same user-gesture event.
+const _music=(function(){
   const TRACKS=[
     'boopul-misty-dawn-singing-bowls-amp-sitar-anxiety-relief-music-538675.mp3',
     'boopul-singing-bowls-amp-sitar-bhairav-raga-for-deep-sleep-538666.mp3',
     'boopul-sitar-amp-tanpura-meditation-yoga-flow-ahir-bhairav-raga-538665.mp3',
     'boopul-dreamy-sitar-amp-tanpura-late-night-calm-music-538721.mp3',
   ];
-  let current=null,lastIdx=-1,started=false;
-  function playNext(){
-    if(current){current.pause();current.src='';}
-    let idx;do{idx=Math.floor(Math.random()*TRACKS.length);}while(TRACKS.length>1&&idx===lastIdx);
-    lastIdx=idx;
-    const a=new Audio(TRACKS[idx]);
-    a.volume=0.18;
-    a.onended=playNext;
-    a.play().catch(()=>{});
-    current=a;
+  let el=null,lastIdx=-1,started=false;
+  function pickIdx(){let i;do{i=Math.floor(Math.random()*TRACKS.length);}while(TRACKS.length>1&&i===lastIdx);return i;}
+  function start(e){
+    if(started)return;
+    started=true;
+    el=document.createElement('audio');
+    el.volume=0.3;
+    el.preload='none';
+    const idx=pickIdx();lastIdx=idx;
+    el.src=TRACKS[idx];
+    el.addEventListener('ended',()=>{
+      const next=pickIdx();lastIdx=next;
+      el.src=TRACKS[next];
+      el.play().catch(()=>{});
+    });
+    el.play().catch(()=>{started=false;el=null;});
   }
-  function start(){if(started)return;started=true;playNext();}
-  document.addEventListener('pointerdown',start,{once:true,capture:true});
+  document.addEventListener('touchstart',start,{capture:true,once:true});
+  document.addEventListener('click',start,{capture:true,once:true});
 })();
 
 (function handAnim(){
