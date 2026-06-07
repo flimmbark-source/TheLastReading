@@ -1871,7 +1871,7 @@ if(!tutDone)setTimeout(()=>tutShow(0),400);
     current=a;
   }
   function start(){if(started)return;started=true;playNext();}
-  document.addEventListener('pointerdown',start,{once:true});
+  document.addEventListener('pointerdown',start,{once:true,capture:true});
 })();
 
 (function handAnim(){
