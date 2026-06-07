@@ -79,6 +79,10 @@ function upsertScript(label, markerStart, markerEnd, script) {
 const baseGlow = `0 10px 28px rgba(0,0,0,.75),0 0 0 2px #d4af6a`;
 const hintCardGlow = `0 0 0 0.75px rgba(var(--hint-rgb,232,196,96),.98),0 0 32px rgba(var(--hint-rgb,232,196,96),.86),0 0 58px rgba(var(--hint-rgb,232,196,96),.42),0 10px 28px rgba(0,0,0,.75)`;
 const hintCompleteGlow = `0 0 0 1px rgba(var(--hint-rgb,255,217,120),1),0 0 42px rgba(var(--hint-rgb,255,217,120),.95),0 0 76px rgba(var(--hint-rgb,255,217,120),.55),0 10px 28px rgba(0,0,0,.75)`;
+const selectorRing = `0 0 0 2px #d4af6a`;
+const hintCardSelectorGlow = `${selectorRing},${hintCardGlow}`;
+const hintCompleteSelectorGlow = `${selectorRing},${hintCompleteGlow}`;
+const hintMultiSelectorGlow = `${selectorRing},var(--hint-shadow)`;
 
 replaceOne(
   'hand hover upright, press/selected glow',
@@ -92,36 +96,39 @@ replaceOne(
 );
 
 replaceOne(
-  'hand hint-card glow on press/selected only',
+  'hand hint-card glow with stacked selector highlight',
   [
     `.hand .card.hint-card:hover,.hand .card.hint-card.sel{box-shadow:${hintCardGlow}}`,
     `.hand .card.hint-card.sel{box-shadow:${hintCardGlow}}`,
     `.hand .card.hint-card:active,.hand .card.hint-card.sel{box-shadow:${hintCardGlow}}`,
-    `.hand .card.hint-card:active,.hand .card.hint-card.sel,.hand .card.hint-card.ability-picked,.hand .card.hint-card.press-highlight{box-shadow:${hintCardGlow}}`
+    `.hand .card.hint-card:active,.hand .card.hint-card.sel,.hand .card.hint-card.ability-picked,.hand .card.hint-card.press-highlight{box-shadow:${hintCardGlow}}`,
+    `.hand .card.hint-card:active,.hand .card.hint-card.sel,.hand .card.hint-card.ability-picked,.hand .card.hint-card.press-highlight{box-shadow:${hintCardSelectorGlow}}`
   ],
-  `.hand .card.hint-card:active,.hand .card.hint-card.sel,.hand .card.hint-card.ability-picked,.hand .card.hint-card.press-highlight{box-shadow:${hintCardGlow}}`
+  `.hand .card.hint-card:active,.hand .card.hint-card.sel,.hand .card.hint-card.ability-picked,.hand .card.hint-card.press-highlight{box-shadow:${hintCardSelectorGlow}}`
 );
 
 replaceOne(
-  'hand hint-complete glow on press/selected only',
+  'hand hint-complete glow with stacked selector highlight',
   [
     `.hand .card.hint-complete:hover,.hand .card.hint-complete.sel{box-shadow:${hintCompleteGlow}}`,
     `.hand .card.hint-complete.sel{box-shadow:${hintCompleteGlow}}`,
     `.hand .card.hint-complete:active,.hand .card.hint-complete.sel{box-shadow:${hintCompleteGlow}}`,
-    `.hand .card.hint-complete:active,.hand .card.hint-complete.sel,.hand .card.hint-complete.ability-picked,.hand .card.hint-complete.press-highlight{box-shadow:${hintCompleteGlow}}`
+    `.hand .card.hint-complete:active,.hand .card.hint-complete.sel,.hand .card.hint-complete.ability-picked,.hand .card.hint-complete.press-highlight{box-shadow:${hintCompleteGlow}}`,
+    `.hand .card.hint-complete:active,.hand .card.hint-complete.sel,.hand .card.hint-complete.ability-picked,.hand .card.hint-complete.press-highlight{box-shadow:${hintCompleteSelectorGlow}}`
   ],
-  `.hand .card.hint-complete:active,.hand .card.hint-complete.sel,.hand .card.hint-complete.ability-picked,.hand .card.hint-complete.press-highlight{box-shadow:${hintCompleteGlow}}`
+  `.hand .card.hint-complete:active,.hand .card.hint-complete.sel,.hand .card.hint-complete.ability-picked,.hand .card.hint-complete.press-highlight{box-shadow:${hintCompleteSelectorGlow}}`
 );
 
 replaceOne(
-  'hand hint-multi glow on press/selected only',
+  'hand hint-multi glow with stacked selector highlight',
   [
     `.hand .card.hint-multi:hover,.hand .card.hint-multi.sel,.hand .card.hint-multi.ability-picked,.choices .card.hint-multi:hover{box-shadow:var(--hint-shadow)!important}`,
     `.hand .card.hint-multi.sel,.hand .card.hint-multi.ability-picked,.choices .card.hint-multi:hover{box-shadow:var(--hint-shadow)!important}`,
     `.hand .card.hint-multi:active,.hand .card.hint-multi.sel,.hand .card.hint-multi.ability-picked,.choices .card.hint-multi:hover{box-shadow:var(--hint-shadow)!important}`,
-    `.hand .card.hint-multi:active,.hand .card.hint-multi.sel,.hand .card.hint-multi.ability-picked,.hand .card.hint-multi.press-highlight,.choices .card.hint-multi:active,.choices .card.hint-multi.press-highlight{box-shadow:var(--hint-shadow)!important}`
+    `.hand .card.hint-multi:active,.hand .card.hint-multi.sel,.hand .card.hint-multi.ability-picked,.hand .card.hint-multi.press-highlight,.choices .card.hint-multi:active,.choices .card.hint-multi.press-highlight{box-shadow:var(--hint-shadow)!important}`,
+    `.hand .card.hint-multi:active,.hand .card.hint-multi.sel,.hand .card.hint-multi.ability-picked,.hand .card.hint-multi.press-highlight,.choices .card.hint-multi:active,.choices .card.hint-multi.press-highlight{box-shadow:${hintMultiSelectorGlow}!important}`
   ],
-  `.hand .card.hint-multi:active,.hand .card.hint-multi.sel,.hand .card.hint-multi.ability-picked,.hand .card.hint-multi.press-highlight,.choices .card.hint-multi:active,.choices .card.hint-multi.press-highlight{box-shadow:var(--hint-shadow)!important}`
+  `.hand .card.hint-multi:active,.hand .card.hint-multi.sel,.hand .card.hint-multi.ability-picked,.hand .card.hint-multi.press-highlight,.choices .card.hint-multi:active,.choices .card.hint-multi.press-highlight{box-shadow:${hintMultiSelectorGlow}!important}`
 );
 
 replaceOne(
@@ -139,7 +146,8 @@ replaceOptional(
   'spread hint label on press/selected only',
   [
     `.spread .card[data-hint]:hover::after,.spread .card.ability-picked[data-hint]::after,.spread .card.ability-target[data-hint]:hover::after{opacity:1}`,
-    `.spread .card.press-highlight[data-hint]::after,.spread .card.ability-picked[data-hint]::after,.spread .card.ability-target.press-highlight[data-hint]::after{opacity:1}`
+    `.spread .card.press-highlight[data-hint]::after,.spread .card.ability-picked[data-hint]::after,.spread .card.ability-target.press-highlight[data-hint]::after{opacity:1}`,
+    `.spread .card:active[data-hint]::after,.spread .card.press-highlight[data-hint]::after,.spread .card.ability-picked[data-hint]::after,.spread .card.ability-target.press-highlight[data-hint]::after{opacity:1}`
   ],
   `.spread .card:active[data-hint]::after,.spread .card.press-highlight[data-hint]::after,.spread .card.ability-picked[data-hint]::after,.spread .card.ability-target.press-highlight[data-hint]::after{opacity:1}`
 );
@@ -149,9 +157,9 @@ upsertStyle(
   '/* press highlight coverage patch */',
   '/* end press highlight coverage patch */',
   `.card.press-highlight{box-shadow:${baseGlow}}
-.card.hint-card.press-highlight{box-shadow:${hintCardGlow}}
-.card.hint-complete.press-highlight{box-shadow:${hintCompleteGlow}}
-.card.hint-multi.press-highlight{box-shadow:var(--hint-shadow)!important}
+.card.hint-card.press-highlight,.card.hint-card.sel,.card.hint-card.ability-picked{box-shadow:${hintCardSelectorGlow}}
+.card.hint-complete.press-highlight,.card.hint-complete.sel,.card.hint-complete.ability-picked{box-shadow:${hintCompleteSelectorGlow}}
+.card.hint-multi.press-highlight,.card.hint-multi.sel,.card.hint-multi.ability-picked{box-shadow:${hintMultiSelectorGlow}!important}
 .card.press-highlight[data-hint]::after{opacity:1}`
 );
 
@@ -175,7 +183,7 @@ upsertScript(
 
 if (changed) {
   fs.writeFileSync(path, html);
-  console.log('Patched card highlighting to use press/selected states without changing highlight styles.');
+  console.log('Patched card highlighting so selected/pressed cards stack over hint glows without changing hint styles.');
 } else {
   console.log('No hover highlight patch changes needed.');
 }
