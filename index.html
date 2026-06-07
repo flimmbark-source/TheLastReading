@@ -935,7 +935,7 @@ function playSound(type){
     }else if(type==='breath'){
       // slow inhale (~1.6s) followed by exhale (~2.2s), very soft filtered noise
       const vol=0.055*_sfxVol;
-      const inhaleLen=1.6,exhaleLen=2.2,gap=0.25;
+      const inhaleLen=3.6,exhaleLen=2.2,gap=1.25;
       // inhale: noise through bandpass sweeping 180→320Hz, swell up then fade
       (()=>{
         const buf=ctx.createBuffer(1,Math.floor(ctx.sampleRate*inhaleLen),ctx.sampleRate);
@@ -991,7 +991,7 @@ function _scheduleBreath(){
 document.addEventListener('pointerdown',()=>{if(!_breathTimer)_scheduleBreath();},{once:true});
 
 function breathVisuals(){
-  const inhaleMs=1600,gapMs=250,exhaleMs=2200;
+  const inhaleMs=3600,gapMs=1250,exhaleMs=2200;
   const totalMs=inhaleMs+gapMs+exhaleMs;
 
   // vignette: edges darken on inhale, fade on exhale
