@@ -44,7 +44,14 @@ upsertStyle(
   'mobile drag-select touch handling CSS',
   '/* mobile drag-select touch patch */',
   '/* end mobile drag-select touch patch */',
-  `#hand .card,#spread .card[data-uid]{touch-action:none;-webkit-user-select:none;user-select:none}`
+  `#hand .card,#spread .card[data-uid]{touch-action:none;-webkit-user-select:none;user-select:none}
+body.mobile-drag-selecting #hand .card,body.mobile-drag-selecting #spread .card[data-uid]{transform:var(--drag-base-transform)!important;transition:none!important}
+body.mobile-drag-selecting #hand .card:hover,body.mobile-drag-selecting #hand .card:active,body.mobile-drag-selecting #hand .card.sel,body.mobile-drag-selecting #hand .card.ability-picked,body.mobile-drag-selecting #hand .card.press-highlight{transform:var(--drag-base-transform)!important}
+body.mobile-drag-selecting .card.press-highlight{box-shadow:inherit}
+body.mobile-drag-selecting .card.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 10px 28px rgba(0,0,0,.75)!important}
+body.mobile-drag-selecting .card.hint-card.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 0 0 .75px rgba(var(--hint-rgb,232,196,96),.98),0 0 32px rgba(var(--hint-rgb,232,196,96),.86),0 0 58px rgba(var(--hint-rgb,232,196,96),.42),0 10px 28px rgba(0,0,0,.75)!important}
+body.mobile-drag-selecting .card.hint-complete.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 0 0 1px rgba(var(--hint-rgb,255,217,120),1),0 0 42px rgba(var(--hint-rgb,255,217,120),.95),0 0 76px rgba(var(--hint-rgb,255,217,120),.55),0 10px 28px rgba(0,0,0,.75)!important}
+body.mobile-drag-selecting .card.hint-multi.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,var(--hint-shadow)!important}`
 );
 
 upsertScript(
@@ -58,6 +65,20 @@ upsertScript(
   let drag=null;
   let suppressClickUntil=0;
   const isMobilePointer=ev=>ev.pointerType==='touch'||ev.pointerType==='pen';
+  const clearPressHighlight=()=>document.querySelectorAll('.card.press-highlight').forEach(card=>card.classList.remove('press-highlight'));
+  const allLiveCards=()=>[...document.querySelectorAll('#hand .card[data-uid],#spread .card[data-uid]')];
+  const freezeCardTransforms=()=>{
+    allLiveCards().forEach(card=>{
+      const t=getComputedStyle(card).transform;
+      card.style.setProperty('--drag-base-transform',t&&t!=='none'?t:'none');
+    });
+    document.body.classList.add('mobile-drag-selecting');
+  };
+  const unfreezeCardTransforms=()=>{
+    document.body.classList.remove('mobile-drag-selecting');
+    document.querySelectorAll('.card.drag-select-preview').forEach(card=>card.classList.remove('drag-select-preview'));
+    allLiveCards().forEach(card=>card.style.removeProperty('--drag-base-transform'));
+  };
   const cardsAtPoint=(x,y)=>{
     const els=(document.elementsFromPoint?document.elementsFromPoint(x,y):[document.elementFromPoint(x,y)]).filter(Boolean);
     const cards=[];
@@ -68,7 +89,17 @@ upsertScript(
     return cards;
   };
   const cardByUid=uid=>[...state.hand,...state.spread.filter(Boolean)].find(c=>c.uid===uid)||null;
-  const selectCardFromDrag=cardEl=>{
+  const markPreview=cardEl=>{
+    document.querySelectorAll('.card.drag-select-preview').forEach(card=>{if(card!==cardEl)card.classList.remove('drag-select-preview')});
+    if(cardEl)cardEl.classList.add('drag-select-preview');
+  };
+  const queueUid=(arr,uid,max)=>{
+    const next=arr.filter(id=>id!==uid);
+    next.push(uid);
+    while(next.length>max)next.shift();
+    return next;
+  };
+  const queueCardFromDrag=cardEl=>{
     if(!drag||!cardEl)return false;
     const uid=Number(cardEl.dataset.uid);
     if(!Number.isFinite(uid)||uid===drag.lastUid)return false;
@@ -79,35 +110,42 @@ upsertScript(
     if(state.abilitySelect){
       const a=state.abilitySelect;
       if(!a.validIds.has(uid))return false;
-      if(a.picked.includes(uid)){drag.lastUid=uid;return false;}
-      if(a.picked.length>=a.count)a.picked.shift();
-      a.picked.push(uid);
+      drag.pendingAbility=queueUid(drag.pendingAbility,uid,a.count);
       drag.lastUid=uid;
-      refreshHandState();
+      markPreview(cardEl);
       return true;
     }
     if(state.purgeSelect!==null){
       if(!inHand)return false;
-      if(state.purgeSelect.includes(uid)||state.purgeSelect.length>=3){drag.lastUid=uid;return false;}
-      togglePurgeCard(uid);
+      drag.pendingPurge=queueUid(drag.pendingPurge,uid,3);
       drag.lastUid=uid;
+      markPreview(cardEl);
       return true;
     }
     if(!inHand||inSpread||state.busy)return false;
-    if(state.selected!==uid){
-      state.selected=uid;
-      drag.lastUid=uid;
-      refreshHandState();
-      return true;
-    }
+    drag.pendingSelected=uid;
     drag.lastUid=uid;
-    return false;
+    markPreview(cardEl);
+    return true;
+  };
+  const commitDrag=()=>{
+    if(!drag||!drag.didSelect)return;
+    if(state.abilitySelect&&drag.pendingAbility.length){
+      state.abilitySelect.picked=drag.pendingAbility.slice(-state.abilitySelect.count);
+      refreshHandState();
+    }else if(state.purgeSelect!==null&&drag.pendingPurge.length){
+      state.purgeSelect=drag.pendingPurge.slice(0,3);
+      render();
+    }else if(drag.pendingSelected!==null&&drag.pendingSelected!==undefined){
+      state.selected=drag.pendingSelected;
+      refreshHandState();
+    }
   };
   document.addEventListener('pointerdown',ev=>{
     if(!isMobilePointer(ev))return;
     const target=ev.target instanceof Element?ev.target:null;
     if(!target||!target.closest('#hand,#spread'))return;
-    drag={pointerId:ev.pointerId,startX:ev.clientX,startY:ev.clientY,lastUid:null,active:false,didSelect:false};
+    drag={pointerId:ev.pointerId,startX:ev.clientX,startY:ev.clientY,lastUid:null,active:false,didSelect:false,pendingSelected:null,pendingAbility:state.abilitySelect?[...state.abilitySelect.picked]:[],pendingPurge:state.purgeSelect!==null?[...state.purgeSelect]:[]};
   },true);
   document.addEventListener('pointermove',ev=>{
     if(!drag||ev.pointerId!==drag.pointerId)return;
@@ -115,15 +153,20 @@ upsertScript(
     if(!drag.active){
       if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
       drag.active=true;
+      clearPressHighlight();
+      freezeCardTransforms();
     }
     ev.preventDefault();
     for(const cardEl of cardsAtPoint(ev.clientX,ev.clientY)){
-      if(selectCardFromDrag(cardEl)){drag.didSelect=true;break;}
+      if(queueCardFromDrag(cardEl)){drag.didSelect=true;break;}
     }
   },{capture:true,passive:false});
   const finishDrag=()=>{
+    const hadDrag=!!drag&&drag.active;
+    commitDrag();
     if(drag&&drag.didSelect)suppressClickUntil=performance.now()+550;
     drag=null;
+    if(hadDrag)unfreezeCardTransforms();
   };
   document.addEventListener('pointerup',finishDrag,true);
   document.addEventListener('pointercancel',finishDrag,true);
@@ -140,7 +183,7 @@ upsertScript(
 
 if (changed) {
   fs.writeFileSync(path, html);
-  console.log('Patched mobile finger drag across cards to select cards under the touch point.');
+  console.log('Patched mobile finger drag selection to preview without re-render jitter and commit once on release.');
 } else {
   console.log('No mobile drag-select patch changes needed.');
 }
