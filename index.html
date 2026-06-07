@@ -930,9 +930,62 @@ function playSound(type){
         const g=ctx.createGain();g.gain.setValueAtTime(0.07,at);g.gain.exponentialRampToValueAtTime(0.001,at+cd);
         src.connect(f);f.connect(g);g.connect(ctx.destination);src.start(at);src.stop(at+cd+.01);src.onended=()=>{src.disconnect();f.disconnect();g.disconnect();};
       }
+    }else if(type==='breath'){
+      // slow inhale (~1.6s) followed by exhale (~2.2s), very soft filtered noise
+      const vol=0.055*_sfxVol;
+      const inhaleLen=1.6,exhaleLen=2.2,gap=0.25;
+      // inhale: noise through bandpass sweeping 180→320Hz, swell up then fade
+      (()=>{
+        const buf=ctx.createBuffer(1,Math.floor(ctx.sampleRate*inhaleLen),ctx.sampleRate);
+        const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+        const src=ctx.createBufferSource();src.buffer=buf;
+        const f=ctx.createBiquadFilter();f.type='bandpass';f.Q.value=1.4;
+        f.frequency.setValueAtTime(180,ctx.currentTime);
+        f.frequency.linearRampToValueAtTime(320,ctx.currentTime+inhaleLen);
+        const g=ctx.createGain();
+        g.gain.setValueAtTime(0,ctx.currentTime);
+        g.gain.linearRampToValueAtTime(vol,ctx.currentTime+inhaleLen*0.45);
+        g.gain.linearRampToValueAtTime(vol*0.6,ctx.currentTime+inhaleLen*0.8);
+        g.gain.linearRampToValueAtTime(0.0001,ctx.currentTime+inhaleLen);
+        src.connect(f);f.connect(g);g.connect(ctx.destination);
+        src.start(ctx.currentTime);src.stop(ctx.currentTime+inhaleLen+0.05);
+        src.onended=()=>{src.disconnect();f.disconnect();g.disconnect();};
+      })();
+      // exhale: noise through bandpass sweeping 300→160Hz, softer, longer
+      (()=>{
+        const at=ctx.currentTime+inhaleLen+gap;
+        const buf=ctx.createBuffer(1,Math.floor(ctx.sampleRate*exhaleLen),ctx.sampleRate);
+        const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+        const src=ctx.createBufferSource();src.buffer=buf;
+        const f=ctx.createBiquadFilter();f.type='bandpass';f.Q.value=1.8;
+        f.frequency.setValueAtTime(300,at);
+        f.frequency.linearRampToValueAtTime(160,at+exhaleLen);
+        const g=ctx.createGain();
+        g.gain.setValueAtTime(0,at);
+        g.gain.linearRampToValueAtTime(vol*0.75,at+exhaleLen*0.2);
+        g.gain.linearRampToValueAtTime(vol*0.4,at+exhaleLen*0.65);
+        g.gain.linearRampToValueAtTime(0.0001,at+exhaleLen);
+        src.connect(f);f.connect(g);g.connect(ctx.destination);
+        src.start(at);src.stop(at+exhaleLen+0.05);
+        src.onended=()=>{src.disconnect();f.disconnect();g.disconnect();};
+      })();
     }
   }catch(e){}
 }
+// occasional idle breath — plays every 35–75 seconds when game is not busy
+let _breathTimer=null;
+function _scheduleBreath(){
+  if(_breathTimer)clearTimeout(_breathTimer);
+  const delay=35000+Math.random()*40000;
+  _breathTimer=setTimeout(()=>{
+    if(typeof state!=='undefined'&&!state.busy&&!state.abilitySelect&&state.purgeSelect===null){
+      playSound('breath');
+    }
+    _scheduleBreath();
+  },delay);
+}
+// start the breath cycle once the user first interacts
+document.addEventListener('pointerdown',()=>{if(!_breathTimer)_scheduleBreath();},{once:true});
 function haptic(p){try{if(navigator.vibrate)navigator.vibrate(p)}catch(e){}}
 function fireScoreGhost(){const pill=document.querySelector('.score-stack .score-pill');if(!pill)return;const r=pill.getBoundingClientRect();const g=document.createElement('span');g.className='score-ghost';g.textContent='+1';g.style.left=(r.left+8+Math.random()*(r.width-16))+'px';g.style.top=(r.top+r.height*0.25)+'px';document.body.appendChild(g);setTimeout(()=>g.remove(),950)}
 function fireMultGhost(label){const pill=document.querySelector('.score-stack .score-pill');if(!pill)return;const r=pill.getBoundingClientRect();const g=document.createElement('span');g.className='score-ghost mult';g.textContent=label;g.style.left=(r.left+8+Math.random()*(r.width-16))+'px';g.style.top=(r.top+r.height*0.25)+'px';document.body.appendChild(g);setTimeout(()=>g.remove(),950)}
