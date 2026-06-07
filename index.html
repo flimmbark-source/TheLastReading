@@ -639,7 +639,7 @@ function refreshHandState(){
   $('#discardBtn').disabled=state.selected===null||state.discards<=0||inPurge;
   $('#purgeBtn').disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
 }
-function computeScore(cards,spreadArr=null){
+function computeScore(cards,spreadArr=null,forHints=false){
   const omenBonus=(persist.up.omen||0);
   const resonanceBonus=(persist.up.resonance||0)*3;
   const omenTotal=omenBonus*cards.length;
@@ -686,6 +686,7 @@ function computeScore(cards,spreadArr=null){
   let pathMult=2+(persist.up.path_mult||0)*0.5;
   if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=30+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult*=pathMult}
   // ── Relic effects ──
+  if(!forHints){
   const rel=persist.relics;
   if(rel.includes('gilded_fool')&&cards.length){m.push(['The Gilded Fool',10,0]);chips+=10;}
 
@@ -702,6 +703,7 @@ function computeScore(cards,spreadArr=null){
   if(rel.includes('strengths_grip')){const n=cards.filter(c=>COURT_RANKS.includes(c.rank)).length;if(n>=3){m.push(['Strength',0,3,'add']);mult+=3;}}
   if(rel.includes('fool_reversed')){const bonus=cards.length*3;if(bonus){m.push(['The Fool Reversed',bonus,0]);chips+=bonus;}}
   if(rel.includes('the_world')&&state.worldCarry){m.push(['The World',state.worldCarry,0]);chips+=state.worldCarry;}
+  } // end !forHints
   // Resonation bonuses — accumulated in state.resonationBonus as they trigger during play
   if(state.resonationBonus&&(state.resonationBonus.chips||state.resonationBonus.mult)){const rb=state.resonationBonus;m.push(['⚷ '+(rb.name||'Resonation'),rb.chips,rb.mult,'add']);chips+=rb.chips;mult+=rb.mult;}
   return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}
@@ -764,8 +766,8 @@ function cardHints(card, poolCards=null){
 
   // Strong glow: every scoring pattern this exact card would create if placed now.
   const placed=[...spread,card];
-  const before=new Set(computeScore(spread).melds.map(m=>m[0]));
-  const after=computeScore(placed);
+  const before=new Set(computeScore(spread,null,true).melds.map(m=>m[0]));
+  const after=computeScore(placed,null,true);
   after.melds.filter(m=>!before.has(m[0])).forEach(m=>{
     const norm=normMeldName(m[0]);
     let ck=null;
