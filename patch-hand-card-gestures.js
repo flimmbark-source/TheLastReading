@@ -77,6 +77,9 @@ upsertStyle(
   pointer-events:none;
   cursor:grabbing;
 }
+.hand .card.hand-card-landing{
+  transition:transform .3s cubic-bezier(.15,.85,.25,1)!important;
+}
 .hand.hand-parting .card:not(.hand-card-dragging){
   transition:transform .22s cubic-bezier(.2,.85,.25,1)!important;
 }
@@ -238,51 +241,81 @@ upsertScript(
     stepDrag(ev);
   };
 
-  // ── Core drag update — called on every pointermove while in drag mode ──
+  // ── Core drag update — scheduled via rAF to cap DOM work at one update/frame ──
   const stepDrag=ev=>{
     if(!g||g.mode!=='drag')return;
-    const x=ev.clientX,y=ev.clientY;
+    // Always update the pending event so the next rAF frame uses the latest position.
+    g.lastDragEv=ev;
+    if(g.dragRafId)return; // already a frame queued
+    g.dragRafId=requestAnimationFrame(()=>{
+      g.dragRafId=null;
+      if(!g||g.mode!=='drag')return;
+      const ev2=g.lastDragEv;
+      const x=ev2.clientX,y=ev2.clientY;
 
-    // Tilt: card leans in the direction of movement.
-    const deltaX=x-g.prevX;
-    const targetTilt=Math.max(-TILT_MAX,Math.min(TILT_MAX,deltaX*TILT_SCALE));
-    g.tiltDeg+=(targetTilt-g.tiltDeg)*TILT_LERP;
-    g.prevX=x;
+      // Tilt: card leans in the direction of movement.
+      const deltaX=x-g.prevX;
+      const targetTilt=Math.max(-TILT_MAX,Math.min(TILT_MAX,deltaX*TILT_SCALE));
+      g.tiltDeg+=(targetTilt-g.tiltDeg)*TILT_LERP;
+      g.prevX=x;
 
-    // Compute drag-to-hand-relative offsets.
-    // dx: how far the card centre should sit from the hand's horizontal centre.
-    // dy: how far the card top should be from the hand div's top edge.
-    const dx=(x-g.grabOffsetX)-g.handCenterX;
-    const dy=(y-g.grabOffsetY)-(g.handTop+g.cardHalfH);
+      const dx=(x-g.grabOffsetX)-g.handCenterX;
+      const dy=(y-g.grabOffsetY)-(g.handTop+g.cardHalfH);
 
-    g.cardEl.style.setProperty('--drag-x',dx.toFixed(1)+'px');
-    g.cardEl.style.setProperty('--drag-y',dy.toFixed(1)+'px');
-    g.cardEl.style.setProperty('--drag-rot',g.tiltDeg.toFixed(2)+'deg');
+      g.cardEl.style.setProperty('--drag-x',dx.toFixed(1)+'px');
+      g.cardEl.style.setProperty('--drag-y',dy.toFixed(1)+'px');
+      g.cardEl.style.setProperty('--drag-rot',g.tiltDeg.toFixed(2)+'deg');
 
-    // Card centre in viewport (needed for spread zone and slot hit-test).
-    const cardCX=g.handCenterX+dx;
-    const cardCY=g.handTop+dy+g.cardHalfH;
+      const cardCX=g.handCenterX+dx;
+      const cardCY=g.handTop+dy+g.cardHalfH;
 
-    // ── Drop-target logic ──────────────────────────────────────────
-    if(isInSpreadZone(cardCY)){
-      // Near or above spread: hit-test empty slots by expanded bounding rect.
-      // Also: restore hand to natural order so it doesn't thrash while aimed up.
-      const hit=hitTestSpreadSlots(cardCX,cardCY);
-      document.querySelectorAll('#spread .slot.drop-target').forEach(s=>s.classList.remove('drop-target'));
-      if(hit){hit.slotEl.classList.add('drop-target');}
-      g.dropSlot=hit||null;
-      // Stop parting when aimed at spread.
-      if(g.hoverIndex!==g.origIndex)applyNaturalSlots();
-    }else{
-      // In the hand zone: apply parting around the landing position.
-      document.querySelectorAll('#spread .slot.drop-target').forEach(s=>s.classList.remove('drop-target'));
-      g.dropSlot=null;
-      const cards=handCards();
-      const n=cards.length;
-      const frac=xToFracSlot(x);
-      const hover=Math.max(0,Math.min(n-1,Math.round(frac+(n-1)/2)));
-      if(hover!==g.hoverIndex)applyReorderSlots(hover);
-    }
+      // ── Drop-target logic ──────────────────────────────────────────
+      if(isInSpreadZone(cardCY)){
+        // Near or above spread: hit-test empty slots, update highlight only on change.
+        const hit=hitTestSpreadSlots(cardCX,cardCY);
+        const newIdx=hit?hit.idx:-1;
+        const oldIdx=g.dropSlot?g.dropSlot.idx:-1;
+        if(newIdx!==oldIdx){
+          if(g.dropSlot)g.dropSlot.slotEl.classList.remove('drop-target');
+          if(hit)hit.slotEl.classList.add('drop-target');
+          g.dropSlot=hit||null;
+        }
+        // Stop parting when aimed at spread.
+        if(g.hoverIndex!==g.origIndex)applyNaturalSlots();
+      }else{
+        // In the hand zone: clear any spread highlight and apply hand parting.
+        if(g.dropSlot){g.dropSlot.slotEl.classList.remove('drop-target');g.dropSlot=null;}
+        const cards=handCards();
+        const n=cards.length;
+        const frac=xToFracSlot(x);
+        const hover=Math.max(0,Math.min(n-1,Math.round(frac+(n-1)/2)));
+        if(hover!==g.hoverIndex)applyReorderSlots(hover);
+      }
+    });
+  };
+
+  // ── FLIP slide: animate card from drag position to its new resting position ──
+  // Captures the visual drag position before cleanup, then in the next rAF
+  // measures where the card landed, pins it at the drag position with an
+  // inline transform override, force-reflows, then removes the override so
+  // CSS transitions pull it smoothly home.
+  const slideToPlace=(cardEl,firstRect)=>{
+    if(!firstRect)return;
+    requestAnimationFrame(()=>{
+      const lastRect=cardEl.getBoundingClientRect();
+      const dx=firstRect.left-lastRect.left;
+      const dy=firstRect.top-lastRect.top;
+      if(Math.abs(dx)<1&&Math.abs(dy)<1)return;
+      // Pin card at drag position (no transition so it jumps there instantly).
+      cardEl.style.transition='none';
+      cardEl.style.transform='translate('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px)';
+      void cardEl.offsetWidth; // force reflow — commits the repositioned frame
+      // Remove pin; CSS transition pulls card home.
+      cardEl.classList.add('hand-card-landing');
+      cardEl.style.removeProperty('transition');
+      cardEl.style.removeProperty('transform');
+      setTimeout(()=>cardEl.classList.remove('hand-card-landing'),320);
+    });
   };
 
   // ── Commit or cancel a drag ──
@@ -292,12 +325,16 @@ upsertScript(
     const{uid,cardEl,origIndex,hoverIndex,dropSlot,mode,pendingUids=[]}=g;
     const wasDrag=mode==='drag';
     const wasSelectDrag=mode==='select-drag';
+    // Capture visual drag position before removing drag state (used for FLIP slide).
+    const firstRect=wasDrag?cardEl.getBoundingClientRect():null;
+    // Cancel any queued rAF frame so it doesn't fire after cleanup.
+    if(g.dragRafId){cancelAnimationFrame(g.dragRafId);g.dragRafId=null;}
     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
     cardEl.classList.remove('hand-card-dragging');
     cardEl.style.removeProperty('--drag-x');
     cardEl.style.removeProperty('--drag-y');
     cardEl.style.removeProperty('--drag-rot');
-    document.querySelectorAll('#spread .slot.drop-target').forEach(s=>s.classList.remove('drop-target'));
+    if(dropSlot)dropSlot.slotEl.classList.remove('drop-target');
     const h=handEl();if(h)h.classList.remove('hand-parting');
     window.__handReorderActive=false;
     g=null;
@@ -323,8 +360,9 @@ upsertScript(
     }
 
     if(!committed){
-      // pointercancel (e.g. pinch started) — snap back to original positions.
+      // pointercancel (e.g. pinch started) — slide back to original position.
       if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
+      slideToPlace(cardEl,firstRect);
       return;
     }
 
@@ -342,12 +380,14 @@ upsertScript(
         const card=state.hand.splice(idx,1)[0];
         state.hand.splice(hoverIndex,0,card);
         if(typeof render==='function')render();
+        slideToPlace(cardEl,firstRect);
         return;
       }
     }
 
-    // Dropped back to original position — just re-layout.
+    // Dropped back to original position — slide home.
     if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
+    slideToPlace(cardEl,firstRect);
   };
 
   // ── Pointer event handlers ──────────────────────────────────────
@@ -374,6 +414,8 @@ upsertScript(
       holdTimer:null,
       prevX:ev.clientX,
       tiltDeg:0,
+      dragRafId:null,
+      lastDragEv:null,
     };
     // Hold-to-expand: 400ms press selects the card and opens detail view (normal mode only).
     if(!inSelectionMode()){
@@ -404,7 +446,7 @@ upsertScript(
       startDrag(ev);
       return;
     }
-    if(g.mode==='drag'){ev.preventDefault();stepDrag(ev);}
+    if(g.mode==='drag'){ev.preventDefault();stepDrag(ev);return;}
     if(g.mode==='select-drag'){stepSelectDrag(ev);}
   },{capture:true,passive:false});
 
