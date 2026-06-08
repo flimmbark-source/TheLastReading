@@ -450,14 +450,6 @@
 .card.hint-multi.press-highlight,.card.hint-multi.sel,.card.hint-multi.ability-picked{box-shadow:0 0 0 2px #d4af6a,var(--hint-shadow)!important}
 .card.press-highlight[data-hint]::after{opacity:1}
 /* end press highlight coverage patch */
-/* mobile drag-select touch patch */
-#hand .card,#spread .card[data-uid]{touch-action:none;-webkit-user-select:none;user-select:none}
-body.mobile-drag-selecting .card.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 10px 28px rgba(0,0,0,.75)!important;z-index:999!important}
-body.mobile-drag-selecting .card.hint-card.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 0 0 .75px rgba(var(--hint-rgb,232,196,96),.98),0 0 32px rgba(var(--hint-rgb,232,196,96),.86),0 0 58px rgba(var(--hint-rgb,232,196,96),.42),0 10px 28px rgba(0,0,0,.75)!important}
-body.mobile-drag-selecting .card.hint-complete.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 0 0 1px rgba(var(--hint-rgb,255,217,120),1),0 0 42px rgba(var(--hint-rgb,255,217,120),.95),0 0 76px rgba(var(--hint-rgb,255,217,120),.55),0 10px 28px rgba(0,0,0,.75)!important}
-body.mobile-drag-selecting .card.hint-multi.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,var(--hint-shadow)!important}
-body.mobile-drag-selecting .card.drag-select-preview[data-hint]::after{opacity:1}
-/* end mobile drag-select touch patch */
 /* relic vision transition patch */
 .relic-vision-veil{position:fixed;inset:0;z-index:9997;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 45%,rgba(255,217,120,.55) 0%,rgba(146,90,28,.78) 28%,rgba(20,8,4,.96) 72%);animation:relic-vision-rise 1.65s cubic-bezier(.42,0,.28,1) forwards;mix-blend-mode:screen}
 .relic-vision-rays{position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:0;background:conic-gradient(from 90deg at 50% 45%,transparent 0deg,rgba(255,217,120,.42) 14deg,transparent 28deg,rgba(255,217,120,.32) 60deg,transparent 80deg,rgba(255,217,120,.45) 130deg,transparent 152deg,rgba(255,217,120,.35) 200deg,transparent 224deg,rgba(255,217,120,.5) 268deg,transparent 296deg,rgba(255,217,120,.38) 332deg,transparent 360deg);animation:relic-vision-rays 1.7s linear forwards}
@@ -536,6 +528,20 @@ body.mobile-drag-selecting .card.drag-select-preview[data-hint]::after{opacity:1
 .hand-swipe-zone.has-swiped .hand-swipe-hint{display:none!important}
 .hand-swipe-hint span{display:inline-block;width:30px;height:1px;background:linear-gradient(90deg,transparent,rgba(232,196,96,.6),transparent)}
 /* end hand swipe-scroll patch */
+/* hand card gestures patch */
+#hand .card[data-uid],#spread .card[data-uid]{touch-action:none;-webkit-user-select:none;user-select:none}
+.hand .card.hand-card-dragging{
+  transform:translate(calc(-50% + var(--drag-x,0px)), var(--drag-y,0px)) rotate(var(--drag-rot,0deg))!important;
+  transition:transform .07s linear, box-shadow .14s ease!important;
+  z-index:9999!important;
+  box-shadow:0 22px 52px rgba(0,0,0,.78),0 0 0 2px #d4af6a;
+  cursor:grabbing;
+}
+.hand.hand-parting .card:not(.hand-card-dragging){
+  transition:transform .22s cubic-bezier(.2,.85,.25,1)!important;
+}
+#spread .slot.drop-target{background:rgba(98,170,104,.28)!important;border-color:#79c778!important;box-shadow:0 0 0 2px rgba(121,199,120,.55),0 0 32px rgba(121,199,120,.45)!important}
+/* end hand card gestures patch */
 </style>
 </head>
 <body>
@@ -2394,120 +2400,6 @@ function setSfxVol(v){_sfxVol=v;}
   new MutationObserver(update).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
 })();
 /* end hand hover selected-lock patch */
-/* mobile drag-select pointer handler patch */
-(function(){
-  if(window.__mobileDragCardSelectInstalled)return;
-  window.__mobileDragCardSelectInstalled=true;
-  const DRAG_THRESHOLD=10;
-  let drag=null;
-  let suppressClickUntil=0;
-  const isMobilePointer=ev=>ev.pointerType==='touch'||ev.pointerType==='pen';
-  const clearPressHighlight=()=>document.querySelectorAll('.card.press-highlight').forEach(card=>card.classList.remove('press-highlight'));
-  const enterDragSelectMode=()=>{document.body.classList.add('mobile-drag-selecting');};
-  const leaveDragSelectMode=()=>{
-    document.body.classList.remove('mobile-drag-selecting');
-    document.querySelectorAll('.card.drag-select-preview').forEach(card=>card.classList.remove('drag-select-preview'));
-  };
-  const cardsAtPoint=(x,y)=>{
-    const els=(document.elementsFromPoint?document.elementsFromPoint(x,y):[document.elementFromPoint(x,y)]).filter(Boolean);
-    const cards=[];
-    for(const el of els){
-      const card=el instanceof Element?el.closest('#hand .card[data-uid],#spread .card[data-uid]'):null;
-      if(card&&!cards.includes(card))cards.push(card);
-    }
-    return cards;
-  };
-  const cardByUid=uid=>[...state.hand,...state.spread.filter(Boolean)].find(c=>c.uid===uid)||null;
-  const markPreview=cardEl=>{
-    document.querySelectorAll('.card.drag-select-preview').forEach(card=>{if(card!==cardEl)card.classList.remove('drag-select-preview')});
-    if(cardEl)cardEl.classList.add('drag-select-preview');
-  };
-  const queueUid=(arr,uid,max)=>{
-    const next=arr.filter(id=>id!==uid);
-    next.push(uid);
-    while(next.length>max)next.shift();
-    return next;
-  };
-  const queueCardFromDrag=cardEl=>{
-    if(!drag||!cardEl)return false;
-    const uid=Number(cardEl.dataset.uid);
-    if(!Number.isFinite(uid)||uid===drag.lastUid)return false;
-    const card=cardByUid(uid);
-    if(!card)return false;
-    const inHand=!!cardEl.closest('#hand');
-    const inSpread=!!cardEl.closest('#spread');
-    if(state.abilitySelect){
-      const a=state.abilitySelect;
-      if(!a.validIds.has(uid))return false;
-      drag.pendingAbility=queueUid(drag.pendingAbility,uid,a.count);
-      drag.lastUid=uid;
-      markPreview(cardEl);
-      return true;
-    }
-    if(state.purgeSelect!==null){
-      if(!inHand)return false;
-      drag.pendingPurge=queueUid(drag.pendingPurge,uid,3);
-      drag.lastUid=uid;
-      markPreview(cardEl);
-      return true;
-    }
-    if(!inHand||inSpread||state.busy)return false;
-    drag.pendingSelected=uid;
-    drag.lastUid=uid;
-    markPreview(cardEl);
-    return true;
-  };
-  const commitDrag=()=>{
-    if(!drag||!drag.didSelect)return;
-    if(state.abilitySelect&&drag.pendingAbility.length){
-      state.abilitySelect.picked=drag.pendingAbility.slice(-state.abilitySelect.count);
-      refreshHandState();
-    }else if(state.purgeSelect!==null&&drag.pendingPurge.length){
-      state.purgeSelect=drag.pendingPurge.slice(0,3);
-      render();
-    }else if(drag.pendingSelected!==null&&drag.pendingSelected!==undefined){
-      state.selected=drag.pendingSelected;
-      refreshHandState();
-    }
-  };
-  document.addEventListener('pointerdown',ev=>{
-    if(!isMobilePointer(ev))return;
-    const target=ev.target instanceof Element?ev.target:null;
-    if(!target||!target.closest('#hand,#spread'))return;
-    drag={pointerId:ev.pointerId,startX:ev.clientX,startY:ev.clientY,lastUid:null,active:false,didSelect:false,pendingSelected:null,pendingAbility:state.abilitySelect?[...state.abilitySelect.picked]:[],pendingPurge:state.purgeSelect!==null?[...state.purgeSelect]:[]};
-  },true);
-  document.addEventListener('pointermove',ev=>{
-    if(!drag||ev.pointerId!==drag.pointerId)return;
-    const dx=ev.clientX-drag.startX,dy=ev.clientY-drag.startY;
-    if(!drag.active){
-      if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
-      drag.active=true;
-      clearPressHighlight();
-      enterDragSelectMode();
-    }
-    ev.preventDefault();
-    const topCard=cardsAtPoint(ev.clientX,ev.clientY)[0];
-    if(topCard&&queueCardFromDrag(topCard))drag.didSelect=true;
-  },{capture:true,passive:false});
-  const finishDrag=()=>{
-    const wasActive=!!drag&&drag.active;
-    commitDrag();
-    if(drag&&drag.didSelect)suppressClickUntil=performance.now()+550;
-    drag=null;
-    if(wasActive)leaveDragSelectMode();
-  };
-  document.addEventListener('pointerup',finishDrag,true);
-  document.addEventListener('pointercancel',finishDrag,true);
-  document.addEventListener('click',ev=>{
-    if(performance.now()>suppressClickUntil)return;
-    const target=ev.target instanceof Element?ev.target:null;
-    if(target&&target.closest('#hand .card[data-uid],#spread .card[data-uid]')){
-      ev.preventDefault();
-      ev.stopPropagation();
-    }
-  },true);
-})();
-/* end mobile drag-select pointer handler patch */
 /* hand swipe-scroll handler patch */
 (function(){
   if(window.__handSwipeScrollInstalled)return;
@@ -2620,7 +2512,9 @@ function setSfxVol(v){_sfxVol=v;}
     const handChanged=(n!==lastHandLen);
     lastHandLen=n;
     if(handChanged)manualSpacing=null;
-    applySlots();
+    // Skip slot reassignment while a card is being dragged in-hand — the
+    // gesture handler is driving --slot per card and we'd stomp it.
+    if(!window.__handReorderActive)applySlots();
     const auto=calcAutoSpacing();
     if(auto!=null)autoSpacing=auto;
     const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
@@ -2852,10 +2746,247 @@ function setSfxVol(v){_sfxVol=v;}
     if(recheckRaf!=null){cancelAnimationFrame(recheckRaf);recheckRaf=null;}
     refreshLayout();
   };
+  // Expose the current arc track parameters so the gesture handler can
+  // map pointer X -> a fractional slot along the arc.
+  window.__handGetTrackState=()=>{
+    const h=handEl();if(!h)return null;
+    const r=h.getBoundingClientRect();
+    const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
+    return{
+      hand:h,
+      handRect:r,
+      cardCount:cardCount(),
+      offsetDeg:offset,
+      spacingDeg:s,
+      radius:trackRadius(),
+    };
+  };
   attachObserver();
   window.addEventListener('resize',scheduleRecheck);
 })();
 /* end hand swipe-scroll handler patch */
+/* hand card gestures handler patch */
+(function(){
+  if(window.__handCardGesturesInstalled)return;
+  window.__handCardGesturesInstalled=true;
+  const HOLD_MS=400;
+  const DRAG_THRESHOLD=10;
+  const TILT_SCALE=-26;        // px/ms -> degrees of tilt
+  const TILT_MAX=18;
+  const TILT_LERP=0.28;
+  let g=null;
+  const handEl=()=>document.querySelector('.hand');
+  const handCards=()=>{const h=handEl();return h?[...h.querySelectorAll(':scope > .card[data-uid]')]:[]};
+  const inSelectionMode=()=>!!(state.abilitySelect||state.purgeSelect!==null||state.busy);
+  const cancelHold=()=>{if(g&&g.holdTimer){clearTimeout(g.holdTimer);g.holdTimer=null;}};
+  // Map clientX -> fractional slot index along the arc (0 = center).
+  const xToFracSlot=cx=>{
+    const ts=typeof window.__handGetTrackState==='function'?window.__handGetTrackState():null;
+    if(!ts||!ts.spacingDeg)return 0;
+    const centerX=ts.handRect.left+ts.handRect.width/2;
+    const dx=cx-centerX;
+    const ratio=Math.max(-.95,Math.min(.95,dx/Math.max(1,ts.radius)));
+    const totalA=Math.asin(ratio)*180/Math.PI;
+    return (totalA-ts.offsetDeg)/ts.spacingDeg;
+  };
+  const findSpreadDropAt=(x,y)=>{
+    const els=document.elementsFromPoint?document.elementsFromPoint(x,y):[document.elementFromPoint(x,y)];
+    for(const el of els){
+      if(!(el instanceof Element))continue;
+      const s=el.closest('#spread .slot');
+      if(!s)continue;
+      const slots=[...document.querySelectorAll('#spread .slot')];
+      const idx=slots.indexOf(s);
+      if(idx>=0&&!state.spread[idx])return{slotEl:s,idx};
+      return null;
+    }
+    return null;
+  };
+  const applyReorderSlots=hoverIndex=>{
+    if(!g)return;
+    const cards=handCards();
+    const n=cards.length;
+    if(!n)return;
+    cards.forEach((el,i)=>{
+      let ni=i;
+      if(el===g.cardEl){
+        // Dragged card: park at hover index so neighbors stabilize there.
+        ni=hoverIndex;
+      }else if(i<g.origIndex){
+        if(i>=hoverIndex)ni=i+1;
+      }else if(i>g.origIndex){
+        if(i<=hoverIndex)ni=i-1;
+      }
+      el.style.setProperty('--slot',(ni-(n-1)/2).toString());
+    });
+    g.hoverIndex=hoverIndex;
+  };
+  const startDrag=ev=>{
+    if(!g||g.mode!=='pending')return;
+    cancelHold();
+    const rect=g.cardEl.getBoundingClientRect();
+    const cardCenterX=rect.left+rect.width/2;
+    const cardCenterY=rect.top+rect.height/2;
+    g.grabOffsetX=ev.clientX-cardCenterX;
+    g.grabOffsetY=ev.clientY-cardCenterY;
+    const h=handEl();
+    const hRect=h?h.getBoundingClientRect():{left:0,top:0,width:window.innerWidth,height:200};
+    g.handCenterX=hRect.left+hRect.width/2;
+    g.handTop=hRect.top;
+    g.cardHalfH=rect.height/2;
+    g.lastFX=ev.clientX;g.lastFY=ev.clientY;g.lastT=performance.now();
+    g.tiltDeg=0;
+    g.mode='drag';
+    window.__handReorderActive=true;
+    if(h)h.classList.add('hand-parting');
+    g.cardEl.classList.add('hand-card-dragging');
+    try{g.cardEl.setPointerCapture&&g.cardEl.setPointerCapture(g.pointerId);}catch(e){}
+    window.__handGestureSuppressClickUntil=performance.now()+800;
+    stepDrag(ev);
+  };
+  const stepDrag=ev=>{
+    if(!g||g.mode!=='drag')return;
+    const x=ev.clientX,y=ev.clientY,now=performance.now();
+    const dt=Math.max(8,now-g.lastT);
+    const vx=(x-g.lastFX)/dt;
+    const target=Math.max(-TILT_MAX,Math.min(TILT_MAX,vx*TILT_SCALE));
+    g.tiltDeg+=(target-g.tiltDeg)*TILT_LERP;
+    g.lastFX=x;g.lastFY=y;g.lastT=now;
+    const dx=(x-g.grabOffsetX)-g.handCenterX;
+    const dy=(y-g.grabOffsetY)-(g.handTop+g.cardHalfH);
+    g.cardEl.style.setProperty('--drag-x',dx.toFixed(1)+'px');
+    g.cardEl.style.setProperty('--drag-y',dy.toFixed(1)+'px');
+    g.cardEl.style.setProperty('--drag-rot',g.tiltDeg.toFixed(2)+'deg');
+    document.querySelectorAll('#spread .slot.drop-target').forEach(s=>s.classList.remove('drop-target'));
+    g.dropSlot=null;
+    if(!inSelectionMode()){
+      const hit=findSpreadDropAt(x,y);
+      if(hit){hit.slotEl.classList.add('drop-target');g.dropSlot=hit;}
+    }
+    if(!g.dropSlot){
+      const cards=handCards();
+      const n=cards.length;
+      const frac=xToFracSlot(x);
+      const hover=Math.max(0,Math.min(n-1,Math.round(frac+(n-1)/2)));
+      if(hover!==g.hoverIndex)applyReorderSlots(hover);
+    }
+  };
+  const endDrag=committed=>{
+    if(!g)return;
+    cancelHold();
+    const cardEl=g.cardEl;
+    const uid=g.uid;
+    const origIndex=g.origIndex;
+    const hoverIndex=g.hoverIndex;
+    const dropSlot=g.dropSlot;
+    const wasDrag=g.mode==='drag';
+    try{cardEl.releasePointerCapture&&cardEl.releasePointerCapture(g.pointerId);}catch(e){}
+    cardEl.classList.remove('hand-card-dragging');
+    cardEl.style.removeProperty('--drag-x');
+    cardEl.style.removeProperty('--drag-y');
+    cardEl.style.removeProperty('--drag-rot');
+    document.querySelectorAll('#spread .slot.drop-target').forEach(s=>s.classList.remove('drop-target'));
+    const h=handEl();if(h)h.classList.remove('hand-parting');
+    window.__handReorderActive=false;
+    g=null;
+    if(!wasDrag){
+      if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
+      return;
+    }
+    if(committed&&dropSlot&&!inSelectionMode()){
+      state.selected=uid;
+      if(typeof placeCard==='function')placeCard(dropSlot.idx);
+      return;
+    }
+    if(committed&&hoverIndex!=null&&hoverIndex!==origIndex&&!inSelectionMode()){
+      const idx=state.hand.findIndex(c=>c.uid===uid);
+      if(idx>=0){
+        const card=state.hand.splice(idx,1)[0];
+        state.hand.splice(hoverIndex,0,card);
+        if(typeof render==='function')render();
+        return;
+      }
+    }
+    if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
+  };
+  document.addEventListener('pointerdown',ev=>{
+    if(window.__handPinchSynthetic)return;
+    if(ev.pointerType!=='touch'&&ev.pointerType!=='pen'&&ev.pointerType!=='mouse')return;
+    const t=ev.target instanceof Element?ev.target:null;
+    if(!t)return;
+    if(t.closest('#spread'))return;
+    const cardEl=t.closest('#hand .card[data-uid]');
+    if(!cardEl)return;
+    if(g)endDrag(false);
+    const uid=Number(cardEl.dataset.uid);
+    if(!Number.isFinite(uid))return;
+    const cards=handCards();
+    const origIndex=cards.indexOf(cardEl);
+    if(origIndex<0)return;
+    g={
+      pointerId:ev.pointerId,
+      uid,cardEl,origIndex,
+      mode:'pending',
+      startX:ev.clientX,startY:ev.clientY,
+      hoverIndex:origIndex,
+      dropSlot:null,
+      holdTimer:null,
+    };
+    // Hold-to-expand: only when not already in a selection-driven mode.
+    if(!inSelectionMode()){
+      g.holdTimer=setTimeout(()=>{
+        if(!g||g.mode!=='pending')return;
+        const card=state.hand.find(c=>c.uid===uid);
+        g=null;
+        if(card&&typeof expandCard==='function'){
+          window.__handGestureSuppressClickUntil=performance.now()+800;
+          expandCard(card);
+        }
+      },HOLD_MS);
+    }
+  },true);
+  document.addEventListener('pointermove',ev=>{
+    if(!g||ev.pointerId!==g.pointerId)return;
+    if(g.mode==='pending'){
+      const dx=ev.clientX-g.startX,dy=ev.clientY-g.startY;
+      if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
+      if(inSelectionMode()){
+        // No reorder in selection modes — convert to a no-op until release.
+        cancelHold();
+        g=null;
+        return;
+      }
+      startDrag(ev);
+      return;
+    }
+    if(g.mode==='drag'){
+      ev.preventDefault();
+      stepDrag(ev);
+    }
+  },{capture:true,passive:false});
+  const onEnd=ev=>{
+    if(!g||ev.pointerId!==g.pointerId)return;
+    if(g.mode==='pending'){
+      // Tap (no drag, no hold) — let the card's onclick run as usual.
+      cancelHold();
+      g=null;
+      return;
+    }
+    endDrag(ev.type!=='pointercancel');
+  };
+  document.addEventListener('pointerup',onEnd,true);
+  document.addEventListener('pointercancel',onEnd,true);
+  // Suppress synthetic click after drag / long-press so it doesn't double-fire.
+  document.addEventListener('click',ev=>{
+    const until=window.__handGestureSuppressClickUntil||0;
+    if(performance.now()>until)return;
+    const t=ev.target instanceof Element?ev.target:null;
+    if(t&&t.closest('#hand .card[data-uid]')){
+      ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
+    }
+  },true);
+})();
+/* end hand card gestures handler patch */
 </script>
 </body>
 </html>

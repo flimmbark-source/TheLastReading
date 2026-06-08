@@ -303,7 +303,9 @@ upsertBlock(
     const handChanged=(n!==lastHandLen);
     lastHandLen=n;
     if(handChanged)manualSpacing=null;
-    applySlots();
+    // Skip slot reassignment while a card is being dragged in-hand — the
+    // gesture handler is driving --slot per card and we'd stomp it.
+    if(!window.__handReorderActive)applySlots();
     const auto=calcAutoSpacing();
     if(auto!=null)autoSpacing=auto;
     const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
@@ -534,6 +536,21 @@ upsertBlock(
   window.__handTriggerLayout=()=>{
     if(recheckRaf!=null){cancelAnimationFrame(recheckRaf);recheckRaf=null;}
     refreshLayout();
+  };
+  // Expose the current arc track parameters so the gesture handler can
+  // map pointer X -> a fractional slot along the arc.
+  window.__handGetTrackState=()=>{
+    const h=handEl();if(!h)return null;
+    const r=h.getBoundingClientRect();
+    const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
+    return{
+      hand:h,
+      handRect:r,
+      cardCount:cardCount(),
+      offsetDeg:offset,
+      spacingDeg:s,
+      radius:trackRadius(),
+    };
   };
   attachObserver();
   window.addEventListener('resize',scheduleRecheck);
