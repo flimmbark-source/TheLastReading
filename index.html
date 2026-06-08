@@ -567,7 +567,7 @@
   transition:transform .22s cubic-bezier(.2,.85,.25,1)!important;
 }
 #spread .slot.drop-target{background:rgba(98,170,104,.28)!important;border-color:#79c778!important;box-shadow:0 0 0 2px rgba(121,199,120,.55),0 0 32px rgba(121,199,120,.45)!important}
-#spread.drag-active .slot{transition:none!important}
+#spread.drag-active .slot{transition:none!important;will-change:transform}
 /* end hand card gestures patch */
 </style>
 </head>
@@ -2485,13 +2485,24 @@ function setSfxVol(v){_sfxVol=v;}
     const hasSelection=!!document.querySelector('.card.sel,.card.ability-picked');
     document.querySelectorAll('.hand').forEach(hand=>hand.classList.toggle('has-selected-card',hasSelection));
   };
+  // Only schedule work if the class change happened inside #hand — sel and
+  // ability-picked are exclusively set on hand cards, so spread/slot class
+  // changes (e.g. drop-target) never need to trigger this.
   const update=(mutations)=>{
     if(_rafPending)return;
     if(mutations&&mutations.length&&!mutations.some(m=>m.target instanceof Element&&!!m.target.closest('#hand')))return;
     _rafPending=true;requestAnimationFrame(flush);
   };
   flush();
-  new MutationObserver(update).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+  // Observe only #hand — sel/ability-picked are exclusively set on hand cards.
+  // Watching document.body would fire the callback for every drop-target and
+  // spread slot class change, adding unnecessary overhead during card drag.
+  const attachHandObserver=()=>{
+    const h=document.getElementById('hand')||document.querySelector('.hand');
+    if(!h){requestAnimationFrame(attachHandObserver);return;}
+    new MutationObserver(update).observe(h,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+  };
+  attachHandObserver();
 })();
 /* end hand hover selected-lock patch */
 /* hand swipe-scroll handler patch */
@@ -2520,6 +2531,8 @@ function setSfxVol(v){_sfxVol=v;}
   let momentumRaf=null;
   // ── Layout caches (busted by refreshLayout / stepPinch / resize) ──
   let cachedCap=null,cachedRadius=null,cachedView=null,cachedCount=-1;
+  // Card pixel width: determined purely by CSS so survives render-cycle cache busts;
+  // only cleared on resize (when the viewport breakpoint may change the card size).
   let cachedCardW=null;
   // ── rAF coalescing for pointermove + observer recheck ──
   let pendingMoveEv=null,moveRaf=null,recheckRaf=null;
@@ -2828,7 +2841,7 @@ function setSfxVol(v){_sfxVol=v;}
   // animations. render() sets window.__handRenderActive=true for the
   // duration and calls window.__handTriggerLayout() at the end instead.
   const onHandMutation=()=>{
-    if(window.__handRenderActive)return;
+    if(window.__handRenderActive||window.__handReorderActive)return;
     if(recheckRaf!=null){cancelAnimationFrame(recheckRaf);recheckRaf=null;}
     refreshLayout();
   };

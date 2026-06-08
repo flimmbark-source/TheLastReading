@@ -84,7 +84,7 @@ upsertStyle(
   transition:transform .22s cubic-bezier(.2,.85,.25,1)!important;
 }
 #spread .slot.drop-target{background:rgba(98,170,104,.28)!important;border-color:#79c778!important;box-shadow:0 0 0 2px rgba(121,199,120,.55),0 0 32px rgba(121,199,120,.45)!important}
-#spread.drag-active .slot{transition:none!important}`
+#spread.drag-active .slot{transition:none!important;will-change:transform}`
 );
 
 upsertScript(
