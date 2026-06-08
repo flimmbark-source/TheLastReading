@@ -475,6 +475,35 @@ upsertBlock(
   '</script>'
 );
 
+// ── Suppress the legacy two-finger pinch-out-to-zoom handler for hand cards.
+//    Our arc-track pinch handles spacing; the old handler was firing expandCard
+//    on the same gesture, opening the detail view right after a pinch.
+const legacyPinchOrig = `document.addEventListener('touchstart',e=>{
+  if(e.touches.length!==2)return;
+  const c=_cardFromTarget(e.target);
+  if(!c)return;
+  _pinch={dist:Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY),card:c};
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!_pinch||e.touches.length!==2)return;
+  const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+  if(d>_pinch.dist+28){expandCard(_pinch.card);_pinch=null;}
+},{passive:true});`;
+const legacyPinchPatched = `document.addEventListener('touchstart',e=>{
+  if(e.touches.length!==2)return;
+  const t=e.target instanceof Element?e.target:null;
+  if(t&&t.closest('#hand,.handDock,#handSwipeZone'))return;
+  const c=_cardFromTarget(e.target);
+  if(!c)return;
+  _pinch={dist:Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY),card:c};
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!_pinch||e.touches.length!==2)return;
+  const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+  if(d>_pinch.dist+28){expandCard(_pinch.card);_pinch=null;}
+},{passive:true});`;
+replaceOne('legacy pinch-zoom skip on hand cards', legacyPinchOrig, legacyPinchPatched);
+
 if (changed) {
   fs.writeFileSync(path, html);
   console.log('Applied mystical relic transition, mobile relic rack, and hand swipe-scroll.');

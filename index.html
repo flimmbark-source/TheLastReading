@@ -2184,6 +2184,8 @@ document.addEventListener('wheel',e=>{
 let _pinch=null;
 document.addEventListener('touchstart',e=>{
   if(e.touches.length!==2)return;
+  const t=e.target instanceof Element?e.target:null;
+  if(t&&t.closest('#hand,.handDock,#handSwipeZone'))return;
   const c=_cardFromTarget(e.target);
   if(!c)return;
   _pinch={dist:Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY),card:c};
