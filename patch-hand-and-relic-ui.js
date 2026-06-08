@@ -215,19 +215,40 @@ upsertBlock(
   const DEG_PER_PX_SWIPE=0.11;                       // swipe pixels -> degrees of slide
   const DEG_PER_PX_PINCH=0.013;                      // pinch pixels -> degrees of spacing
   let momentumRaf=null;
+  // ── Layout caches (busted by refreshLayout / stepPinch / resize) ──
+  let cachedCap=null,cachedRadius=null,cachedView=null,cachedCount=-1;
+  // ── rAF coalescing for pointermove + observer recheck ──
+  let pendingMoveEv=null,moveRaf=null,recheckRaf=null;
+  const invalidateCache=()=>{cachedCap=null;cachedRadius=null;cachedView=null;cachedCount=-1;};
   try{if(localStorage.getItem('tlr_hand_swiped'))window.__handHasBeenSwiped=true;}catch(e){}
   const handEl=()=>{if(hand&&hand.isConnected)return hand;hand=document.querySelector('.hand');return hand;};
   const zoneEl=()=>{if(zone&&zone.isConnected)return zone;zone=document.getElementById('handSwipeZone');return zone;};
-  const trackRadius=()=>{const h=handEl();return h?parseFloat(getComputedStyle(h).getPropertyValue('--track-radius'))||720:720;};
-  const cardCount=()=>{const h=handEl();return h?h.querySelectorAll('.card').length:0;};
-  const dockW=()=>{const h=handEl();return h&&h.parentElement?h.parentElement.clientWidth:window.innerWidth;};
+  const trackRadius=()=>{
+    if(cachedRadius!=null)return cachedRadius;
+    const h=handEl();
+    cachedRadius=h?parseFloat(getComputedStyle(h).getPropertyValue('--track-radius'))||720:720;
+    return cachedRadius;
+  };
+  const cardCount=()=>{
+    if(cachedCount>=0)return cachedCount;
+    const h=handEl();
+    cachedCount=h?h.querySelectorAll('.card').length:0;
+    return cachedCount;
+  };
+  const dockW=()=>{
+    if(cachedView!=null)return cachedView;
+    const h=handEl();
+    cachedView=h&&h.parentElement?h.parentElement.clientWidth:window.innerWidth;
+    return cachedView;
+  };
   // ── Slide bounds: cap by configured limit AND by how far cards extend off-screen. ──
+  // Memoized; busted whenever spacing, hand size, or viewport changes.
   const slideCap=()=>{
+    if(cachedCap!=null)return cachedCap;
     const n=cardCount();
-    if(n<=1)return 0;
+    if(n<=1){cachedCap=0;return 0;}
     const spacing=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
     const halfSpan=(n-1)/2*spacing;
-    // How many deg of the spread protrude past the viewport edge
     const R=trackRadius();
     const view=dockW();
     const cardW=window.innerWidth<640?100:130;
@@ -235,11 +256,20 @@ upsertBlock(
     const fitAngleRad=Math.asin(Math.min(.95,halfFit/R));
     const fitAngleDeg=fitAngleRad*180/Math.PI;
     const overhang=Math.max(0,halfSpan-fitAngleDeg);
-    return Math.min(OFFSET_LIMIT,overhang+4);
+    cachedCap=Math.min(OFFSET_LIMIT,overhang+4);
+    return cachedCap;
   };
   const clampOffset=d=>{const c=slideCap();return Math.max(-c,Math.min(c,d));};
   const softClamp=d=>{const c=slideCap();if(c===0)return 0;const ad=Math.abs(d);if(ad<=c)return d;return Math.sign(d)*(c+(ad-c)*RUBBER);};
-  const applyOffset=d=>{const h=handEl();if(!h)return;offset=d;h.style.setProperty('--track-offset',d.toFixed(3)+'deg');updateOverflowHint();};
+  // applyOffset is called every animation frame during slide/momentum, so
+  // keep it cheap: skip the overflow-hint work once the hint is permanently
+  // hidden (after the first swipe).
+  const applyOffset=d=>{
+    const h=handEl();if(!h)return;
+    offset=d;
+    h.style.setProperty('--track-offset',d.toFixed(3)+'deg');
+    if(!window.__handHasBeenSwiped)updateOverflowHint();
+  };
   const applySpacing=d=>{const h=handEl();if(!h)return;h.style.setProperty('--track-spacing',d.toFixed(3)+'deg');};
   const applySlots=()=>{
     const h=handEl();if(!h)return;
@@ -268,6 +298,7 @@ upsertBlock(
   };
   const refreshLayout=()=>{
     const h=handEl();if(!h)return;
+    invalidateCache();
     const n=cardCount();
     const handChanged=(n!==lastHandLen);
     lastHandLen=n;
@@ -277,6 +308,7 @@ upsertBlock(
     if(auto!=null)autoSpacing=auto;
     const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
     applySpacing(s);
+    cachedCap=null;
     applyOffset(clampOffset(offset));
   };
   // ── Swipe velocity sampling (sample stream is in offset-degrees) ──
@@ -359,7 +391,9 @@ upsertBlock(
     const delta=distOf(a,b)-pinchStart.dist;
     let next=pinchStart.spacing+delta*DEG_PER_PX_PINCH;
     next=Math.max(SPACING_MIN,Math.min(SPACING_MAX,next));
+    if(next===manualSpacing)return;
     manualSpacing=next;
+    cachedCap=null;
     applySpacing(next);
     applyOffset(clampOffset(offset));
   };
@@ -385,6 +419,7 @@ upsertBlock(
   };
   const endGesture=()=>{
     const wasSlide=(mode==='slide'),wasPinch=(mode==='pinch');
+    if(moveRaf!=null){cancelAnimationFrame(moveRaf);moveRaf=null;pendingMoveEv=null;}
     const z=zoneEl();if(z){z.classList.remove('dragging','pinching');}
     handEl()?.classList.remove('hand-scroll-dragging');
     mode=null;pinchStart=null;
@@ -413,12 +448,24 @@ upsertBlock(
       startSlideMode(ev);
     }
   },true);
+  // Pointermove fires up to 240Hz on modern touch hardware. Coalesce into
+  // one update per animation frame so we don't burn cycles on samples that
+  // will never be displayed.
+  const flushMove=()=>{
+    moveRaf=null;
+    const ev=pendingMoveEv;pendingMoveEv=null;
+    if(!ev)return;
+    if(mode==='pinch')stepPinch();
+    else if(mode==='slide')stepSlide(ev);
+  };
   document.addEventListener('pointermove',ev=>{
     if(window.__handPinchSynthetic)return;
     if(!pointers.has(ev.pointerId))return;
     pointers.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
-    if(mode==='pinch'){ev.preventDefault();stepPinch();}
-    else if(mode==='slide'){ev.preventDefault();stepSlide(ev);}
+    if(mode!=='pinch'&&mode!=='slide')return;
+    ev.preventDefault();
+    pendingMoveEv=ev;
+    if(moveRaf==null)moveRaf=requestAnimationFrame(flushMove);
   },{capture:true,passive:false});
   const onPointerEnd=ev=>{
     if(window.__handPinchSynthetic)return;
@@ -458,19 +505,31 @@ upsertBlock(
     }
   },true);
   // ── React to hand changes & viewport changes ──
-  const recheck=()=>{refreshLayout();};
+  // Resize events can pile up; coalesce them to rAF.
+  const scheduleRecheck=()=>{
+    if(recheckRaf!=null)return;
+    recheckRaf=requestAnimationFrame(()=>{recheckRaf=null;refreshLayout();});
+  };
+  // Mutation-driven refresh must be SYNC: new card DOM is added with
+  // --slot defaulting to 0 (centered), so we need to assign each card's
+  // real --slot before the browser paints. Otherwise every render flashes
+  // the hand through the center for one frame.
+  const onHandMutation=()=>{
+    if(recheckRaf!=null){cancelAnimationFrame(recheckRaf);recheckRaf=null;}
+    refreshLayout();
+  };
   let ro=null;
   const attachObserver=()=>{
     const h=handEl();
     if(!h){requestAnimationFrame(attachObserver);return;}
     if(ro)return;
-    if('ResizeObserver' in window){ro=new ResizeObserver(recheck);ro.observe(h);ro.observe(h.parentElement);}
-    new MutationObserver(recheck).observe(h,{childList:true});
+    if('ResizeObserver' in window){ro=new ResizeObserver(scheduleRecheck);ro.observe(h);ro.observe(h.parentElement);}
+    new MutationObserver(onHandMutation).observe(h,{childList:true});
     refreshLayout();
     if(window.__handHasBeenSwiped){const z2=zoneEl();if(z2){z2.classList.add('has-swiped');z2.classList.remove('has-overflow');}}
   };
   attachObserver();
-  window.addEventListener('resize',recheck);
+  window.addEventListener('resize',scheduleRecheck);
 })();`,
   '</script>'
 );
