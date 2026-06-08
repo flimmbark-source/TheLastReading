@@ -290,9 +290,7 @@ upsertScript(
       g.prevX=x;
       const dx=(x-g.grabOffsetX)-g.handCenterX;
       const dy=(y-g.grabOffsetY)-(g.handTop+g.cardHalfH);
-      g.cardEl.style.setProperty('--drag-x',dx.toFixed(1)+'px');
-      g.cardEl.style.setProperty('--drag-y',dy.toFixed(1)+'px');
-      g.cardEl.style.setProperty('--drag-rot',g.tiltDeg.toFixed(2)+'deg');
+      g.cardEl.style.setProperty('transform','translate(calc(-50% + '+dx.toFixed(1)+'px),'+dy.toFixed(1)+'px) rotate('+g.tiltDeg.toFixed(2)+'deg)','important');
     });
   };
 
@@ -337,9 +335,7 @@ upsertScript(
     if(g.dragRafId){cancelAnimationFrame(g.dragRafId);g.dragRafId=null;}
     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
     cardEl.classList.remove('hand-card-dragging');
-    cardEl.style.removeProperty('--drag-x');
-    cardEl.style.removeProperty('--drag-y');
-    cardEl.style.removeProperty('--drag-rot');
+    cardEl.style.removeProperty('transform');
     if(dropSlot)dropSlot.slotEl.classList.remove('drop-target');
     const h=handEl();if(h)h.classList.remove('hand-parting');
     const spEl3=document.querySelector('#spread');if(spEl3)spEl3.classList.remove('drag-active');
