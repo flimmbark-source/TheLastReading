@@ -77,6 +77,9 @@ upsertStyle(
   pointer-events:none;
   cursor:grabbing;
 }
+.hand .card.hand-card-landing{
+  transition:transform .3s cubic-bezier(.15,.85,.25,1)!important;
+}
 .hand.hand-parting .card:not(.hand-card-dragging){
   transition:transform .22s cubic-bezier(.2,.85,.25,1)!important;
 }
@@ -285,6 +288,30 @@ upsertScript(
     }
   };
 
+  // ── FLIP slide: animate card from drag position to its new resting position ──
+  // Captures the visual drag position before cleanup, then in the next rAF
+  // measures where the card landed, pins it at the drag position with an
+  // inline transform override, force-reflows, then removes the override so
+  // CSS transitions pull it smoothly home.
+  const slideToPlace=(cardEl,firstRect)=>{
+    if(!firstRect)return;
+    requestAnimationFrame(()=>{
+      const lastRect=cardEl.getBoundingClientRect();
+      const dx=firstRect.left-lastRect.left;
+      const dy=firstRect.top-lastRect.top;
+      if(Math.abs(dx)<1&&Math.abs(dy)<1)return;
+      // Pin card at drag position (no transition so it jumps there instantly).
+      cardEl.style.transition='none';
+      cardEl.style.transform='translate('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px)';
+      void cardEl.offsetWidth; // force reflow — commits the repositioned frame
+      // Remove pin; CSS transition pulls card home.
+      cardEl.classList.add('hand-card-landing');
+      cardEl.style.removeProperty('transition');
+      cardEl.style.removeProperty('transform');
+      setTimeout(()=>cardEl.classList.remove('hand-card-landing'),320);
+    });
+  };
+
   // ── Commit or cancel a drag ──
   const endDrag=committed=>{
     if(!g)return;
@@ -292,6 +319,8 @@ upsertScript(
     const{uid,cardEl,origIndex,hoverIndex,dropSlot,mode,pendingUids=[]}=g;
     const wasDrag=mode==='drag';
     const wasSelectDrag=mode==='select-drag';
+    // Capture visual drag position before removing drag state (used for FLIP slide).
+    const firstRect=wasDrag?cardEl.getBoundingClientRect():null;
     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
     cardEl.classList.remove('hand-card-dragging');
     cardEl.style.removeProperty('--drag-x');
@@ -323,8 +352,9 @@ upsertScript(
     }
 
     if(!committed){
-      // pointercancel (e.g. pinch started) — snap back to original positions.
+      // pointercancel (e.g. pinch started) — slide back to original position.
       if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
+      slideToPlace(cardEl,firstRect);
       return;
     }
 
@@ -342,12 +372,14 @@ upsertScript(
         const card=state.hand.splice(idx,1)[0];
         state.hand.splice(hoverIndex,0,card);
         if(typeof render==='function')render();
+        slideToPlace(cardEl,firstRect);
         return;
       }
     }
 
-    // Dropped back to original position — just re-layout.
+    // Dropped back to original position — slide home.
     if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
+    slideToPlace(cardEl,firstRect);
   };
 
   // ── Pointer event handlers ──────────────────────────────────────
