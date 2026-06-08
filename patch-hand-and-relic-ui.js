@@ -126,8 +126,9 @@ upsertBlock(
   'relic rack mobile CSS',
   '/* relic rack mobile right-side patch */',
   '/* end relic rack mobile right-side patch */',
-  `@media(max-width:640px){
-  .relic-rack{flex-direction:column;top:54px;right:4px;gap:5px;align-items:flex-end}
+  `.relic-rack{flex-direction:column!important;top:12px;right:12px;gap:6px;align-items:flex-end}
+@media(max-width:640px){
+  .relic-rack{top:54px;right:4px;gap:5px}
   .relic-rack .relic-btn{width:34px;height:34px}
   .relic-rack .relic-slot-empty{width:34px;height:34px}
 }`
@@ -303,7 +304,9 @@ upsertBlock(
     const handChanged=(n!==lastHandLen);
     lastHandLen=n;
     if(handChanged)manualSpacing=null;
-    applySlots();
+    // Skip slot reassignment while a card is being dragged in-hand — the
+    // gesture handler is driving --slot per card and we'd stomp it.
+    if(!window.__handReorderActive)applySlots();
     const auto=calcAutoSpacing();
     if(auto!=null)autoSpacing=auto;
     const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
@@ -510,11 +513,13 @@ upsertBlock(
     if(recheckRaf!=null)return;
     recheckRaf=requestAnimationFrame(()=>{recheckRaf=null;refreshLayout();});
   };
-  // Mutation-driven refresh must be SYNC: new card DOM is added with
-  // --slot defaulting to 0 (centered), so we need to assign each card's
-  // real --slot before the browser paints. Otherwise every render flashes
-  // the hand through the center for one frame.
+  // Mutation-driven refresh must be SYNC (so --slot is assigned before paint),
+  // but suppressed while render() is mid-loop: each insertBefore fires the
+  // observer with an intermediate card count, causing cascading bad-slot
+  // animations. render() sets window.__handRenderActive=true for the
+  // duration and calls window.__handTriggerLayout() at the end instead.
   const onHandMutation=()=>{
+    if(window.__handRenderActive)return;
     if(recheckRaf!=null){cancelAnimationFrame(recheckRaf);recheckRaf=null;}
     refreshLayout();
   };
@@ -527,6 +532,26 @@ upsertBlock(
     new MutationObserver(onHandMutation).observe(h,{childList:true});
     refreshLayout();
     if(window.__handHasBeenSwiped){const z2=zoneEl();if(z2){z2.classList.add('has-swiped');z2.classList.remove('has-overflow');}}
+  };
+  // Expose a direct layout trigger so render() can call it after the loop.
+  window.__handTriggerLayout=()=>{
+    if(recheckRaf!=null){cancelAnimationFrame(recheckRaf);recheckRaf=null;}
+    refreshLayout();
+  };
+  // Expose the current arc track parameters so the gesture handler can
+  // map pointer X -> a fractional slot along the arc.
+  window.__handGetTrackState=()=>{
+    const h=handEl();if(!h)return null;
+    const r=h.getBoundingClientRect();
+    const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
+    return{
+      hand:h,
+      handRect:r,
+      cardCount:cardCount(),
+      offsetDeg:offset,
+      spacingDeg:s,
+      radius:trackRadius(),
+    };
   };
   attachObserver();
   window.addEventListener('resize',scheduleRecheck);

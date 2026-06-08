@@ -450,14 +450,6 @@
 .card.hint-multi.press-highlight,.card.hint-multi.sel,.card.hint-multi.ability-picked{box-shadow:0 0 0 2px #d4af6a,var(--hint-shadow)!important}
 .card.press-highlight[data-hint]::after{opacity:1}
 /* end press highlight coverage patch */
-/* mobile drag-select touch patch */
-#hand .card,#spread .card[data-uid]{touch-action:none;-webkit-user-select:none;user-select:none}
-body.mobile-drag-selecting .card.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 10px 28px rgba(0,0,0,.75)!important;z-index:999!important}
-body.mobile-drag-selecting .card.hint-card.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 0 0 .75px rgba(var(--hint-rgb,232,196,96),.98),0 0 32px rgba(var(--hint-rgb,232,196,96),.86),0 0 58px rgba(var(--hint-rgb,232,196,96),.42),0 10px 28px rgba(0,0,0,.75)!important}
-body.mobile-drag-selecting .card.hint-complete.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,0 0 0 1px rgba(var(--hint-rgb,255,217,120),1),0 0 42px rgba(var(--hint-rgb,255,217,120),.95),0 0 76px rgba(var(--hint-rgb,255,217,120),.55),0 10px 28px rgba(0,0,0,.75)!important}
-body.mobile-drag-selecting .card.hint-multi.drag-select-preview{box-shadow:0 0 0 2px #d4af6a,var(--hint-shadow)!important}
-body.mobile-drag-selecting .card.drag-select-preview[data-hint]::after{opacity:1}
-/* end mobile drag-select touch patch */
 /* relic vision transition patch */
 .relic-vision-veil{position:fixed;inset:0;z-index:9997;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 45%,rgba(255,217,120,.55) 0%,rgba(146,90,28,.78) 28%,rgba(20,8,4,.96) 72%);animation:relic-vision-rise 1.65s cubic-bezier(.42,0,.28,1) forwards;mix-blend-mode:screen}
 .relic-vision-rays{position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:0;background:conic-gradient(from 90deg at 50% 45%,transparent 0deg,rgba(255,217,120,.42) 14deg,transparent 28deg,rgba(255,217,120,.32) 60deg,transparent 80deg,rgba(255,217,120,.45) 130deg,transparent 152deg,rgba(255,217,120,.35) 200deg,transparent 224deg,rgba(255,217,120,.5) 268deg,transparent 296deg,rgba(255,217,120,.38) 332deg,transparent 360deg);animation:relic-vision-rays 1.7s linear forwards}
@@ -490,8 +482,9 @@ body.mobile-drag-selecting .card.drag-select-preview[data-hint]::after{opacity:1
 @media(prefers-reduced-motion:reduce){.relic-vision-veil,.relic-vision-rays,.relic-vision-mote{animation:none;opacity:0;display:none}.relic-vision-enter{animation:none}}
 /* end relic vision transition patch */
 /* relic rack mobile right-side patch */
+.relic-rack{flex-direction:column!important;top:12px;right:12px;gap:6px;align-items:flex-end}
 @media(max-width:640px){
-  .relic-rack{flex-direction:column;top:54px;right:4px;gap:5px;align-items:flex-end}
+  .relic-rack{top:54px;right:4px;gap:5px}
   .relic-rack .relic-btn{width:34px;height:34px}
   .relic-rack .relic-slot-empty{width:34px;height:34px}
 }
@@ -536,6 +529,20 @@ body.mobile-drag-selecting .card.drag-select-preview[data-hint]::after{opacity:1
 .hand-swipe-zone.has-swiped .hand-swipe-hint{display:none!important}
 .hand-swipe-hint span{display:inline-block;width:30px;height:1px;background:linear-gradient(90deg,transparent,rgba(232,196,96,.6),transparent)}
 /* end hand swipe-scroll patch */
+/* hand card gestures patch */
+#hand .card[data-uid],#spread .card[data-uid]{touch-action:none;-webkit-user-select:none;user-select:none}
+.hand .card.hand-card-dragging{
+  transform:translate(calc(-50% + var(--drag-x,0px)), var(--drag-y,0px)) rotate(var(--drag-rot,0deg))!important;
+  transition:transform .07s linear, box-shadow .14s ease!important;
+  z-index:9999!important;
+  box-shadow:0 22px 52px rgba(0,0,0,.78),0 0 0 2px #d4af6a;
+  cursor:grabbing;
+}
+.hand.hand-parting .card:not(.hand-card-dragging){
+  transition:transform .22s cubic-bezier(.2,.85,.25,1)!important;
+}
+#spread .slot.drop-target{background:rgba(98,170,104,.28)!important;border-color:#79c778!important;box-shadow:0 0 0 2px rgba(121,199,120,.55),0 0 32px rgba(121,199,120,.45)!important}
+/* end hand card gestures patch */
 </style>
 </head>
 <body>
@@ -739,6 +746,11 @@ function render(){
   const h=$('#hand');
   const selectedId=state.selected;
   const handLen=state.hand.length;
+  // Suppress the swipe handler's MutationObserver during the loop.
+  // Each insertBefore fires it synchronously with an intermediate card count,
+  // causing applySlots() to assign wrong --slot values that then animate.
+  // We trigger one correct layout pass at the end instead.
+  window.__handRenderActive=true;
   // Build uid -> existing element map so we can reuse DOM that's still in hand.
   const _handExisting=new Map();
   h.querySelectorAll(':scope > .card[data-uid]').forEach(el=>_handExisting.set(Number(el.dataset.uid),el));
@@ -786,6 +798,10 @@ function render(){
   });
   // Drop cards that are no longer in hand.
   _handExisting.forEach(el=>el.remove());
+  // Lift the suppression flag and do one correct layout pass now that
+  // the final DOM shape is in place.
+  window.__handRenderActive=false;
+  if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
 
   renderAbilityPrompt();
   renderPurgePrompt();
@@ -831,14 +847,14 @@ function refreshHandState(){
   $('#discardBtn').disabled=state.selected===null||state.discards<=0||inPurge;
   $('#purgeBtn').disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
 }
-function computeScore(cards,spreadArr=null,forHints=false){
+function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skipRelics){
   const omenBonus=(persist.up.omen||0);
   const resonanceBonus=(persist.up.resonance||0)*3;
   const omenTotal=omenBonus*cards.length;
   const resonanceTotal=resonanceBonus*cards.filter(c=>c.type==='major').length;
   let chips=cards.reduce((s,c)=>s+c.points,0),base=chips,mult=1,m=[];
-  if(omenTotal&&!forHints){m.push(['Omen',omenTotal,0]);chips+=omenTotal;}
-  if(resonanceTotal){m.push(['Resonance',resonanceTotal,0]);chips+=resonanceTotal;}
+  if(omenTotal&&!skipFlatBonuses){m.push(['Omen',omenTotal,0]);chips+=omenTotal;}
+  if(resonanceTotal&&!skipFlatBonuses){m.push(['Resonance',resonanceTotal,0]);chips+=resonanceTotal;}
   let rankBonus=(persist.up.rank||0)*5;
   let rankMult=1+(persist.up.rank_mult||0)*0.25;
   for(const rank of ['Page','Knight','Queen','King']){
@@ -878,7 +894,7 @@ function computeScore(cards,spreadArr=null,forHints=false){
   let pathMult=2+(persist.up.path_mult||0)*0.5;
   if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=30+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult*=pathMult}
   // ── Relic effects ──
-  if(!forHints){
+  if(!skipRelics){
   const rel=persist.relics;
   if(rel.includes('gilded_fool')&&cards.length){m.push(['The Gilded Fool',10,0]);chips+=10;}
 
@@ -960,8 +976,8 @@ function cardHints(card, poolCards=null){
   // Strong glow: every scoring pattern this exact card would create if placed now.
   const placed=[...spread,card];
   const skipRelics=!hintSettings.relics;
-  const before=new Set(computeScore(spread,null,skipRelics).melds.map(m=>m[0]));
-  const after=computeScore(placed,null,skipRelics);
+  const before=new Set(computeScore(spread,null,skipRelics,true).melds.map(m=>m[0]));
+  const after=computeScore(placed,null,skipRelics,true);
   after.melds.filter(m=>!before.has(m[0])).forEach(m=>{
     const norm=normMeldName(m[0]);
     let ck=null;
@@ -1033,7 +1049,7 @@ function applyHint(el,card,poolCards=null){
   el.dataset.hint=hints.map(h=>h.label).join(' + ');
 }
 function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=computeScore([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
-function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;const beforeMelds=new Map(computeScore(state.spread.filter(Boolean)).melds.map(x=>[x[0],x]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();playSound('place');haptic(12);const _landEl=document.querySelectorAll('.slot')[i]?.querySelector('.card');if(_landEl){_landEl.classList.add('landing');_landEl.addEventListener('animationend',()=>_landEl.classList.remove('landing'),{once:true});}ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.flatMap(x=>{if(!beforeMelds.has(x[0]))return[x];const bm=beforeMelds.get(x[0]);const dc=x[1]-bm[1],dm=x[2]-bm[2];if(dc>0||dm>0)return[[x[0],dc,dm,x[3]]];return[];});let delay=420;let announceOffset=0;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;const _rk=_relicMeldNameToKey.get(m[0])||null;setTimeout(()=>ghost(anchor,meldStr(m),true,_rk),ghostDelay);if(!_relicMeldNames.has(m[0]))setTimeout(()=>{centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5);playSound('meld');haptic([0,10,35,12]);},delay+announceOffset);if(m[2]>0){const multLabel='×'+m[2];setTimeout(()=>fireMultGhost(multLabel),ghostDelay+200);}holdEffects(ghostDelay+1700);delay+=slots.length*130+700;announceOffset+=600;});setCounterTarget(after.finalScore);setTimeout(()=>checkResonationTriggers(),750);checkEnd()}
+function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;const beforeMelds=new Map(computeScore(state.spread.filter(Boolean)).melds.map(x=>[x[0],x]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();playSound('place');haptic(12);const _landEl=document.querySelectorAll('.slot')[i]?.querySelector('.card');if(_landEl){_landEl.classList.add('landing');_landEl.addEventListener('animationend',()=>_landEl.classList.remove('landing'),{once:true});}ghost(i,'+'+c.points);let after=computeScore(state.spread.filter(Boolean));let newMelds=after.melds.flatMap(x=>{if(!beforeMelds.has(x[0]))return[x];const bm=beforeMelds.get(x[0]);const dc=x[1]-bm[1],dm=x[2]-bm[2];if(dc>0||dm>0)return[[x[0],dc,dm,x[3]]];return[];});let delay=420;let announceOffset=0;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;const _rk=_relicMeldNameToKey.get(m[0])||null;setTimeout(()=>ghost(anchor,meldStr(m),true,_rk),ghostDelay);if(!_relicMeldNames.has(m[0])&&m[0]!=='Omen'&&m[0]!=='Resonance')setTimeout(()=>{centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5);playSound('meld');haptic([0,10,35,12]);},delay+announceOffset);if(m[2]>0){const multLabel='×'+m[2];setTimeout(()=>fireMultGhost(multLabel),ghostDelay+200);}holdEffects(ghostDelay+1700);delay+=slots.length*130+700;announceOffset+=600;});setCounterTarget(after.finalScore);setTimeout(()=>checkResonationTriggers(),750);checkEnd()}
 let effectsUntil=0;
 function holdEffects(ms){effectsUntil=Math.max(effectsUntil,Date.now()+ms)}
 let _slotEls=null;function _slots(){return _slotEls||(_slotEls=Array.from(document.querySelectorAll('.slot')))}
@@ -2385,120 +2401,6 @@ function setSfxVol(v){_sfxVol=v;}
   new MutationObserver(update).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
 })();
 /* end hand hover selected-lock patch */
-/* mobile drag-select pointer handler patch */
-(function(){
-  if(window.__mobileDragCardSelectInstalled)return;
-  window.__mobileDragCardSelectInstalled=true;
-  const DRAG_THRESHOLD=10;
-  let drag=null;
-  let suppressClickUntil=0;
-  const isMobilePointer=ev=>ev.pointerType==='touch'||ev.pointerType==='pen';
-  const clearPressHighlight=()=>document.querySelectorAll('.card.press-highlight').forEach(card=>card.classList.remove('press-highlight'));
-  const enterDragSelectMode=()=>{document.body.classList.add('mobile-drag-selecting');};
-  const leaveDragSelectMode=()=>{
-    document.body.classList.remove('mobile-drag-selecting');
-    document.querySelectorAll('.card.drag-select-preview').forEach(card=>card.classList.remove('drag-select-preview'));
-  };
-  const cardsAtPoint=(x,y)=>{
-    const els=(document.elementsFromPoint?document.elementsFromPoint(x,y):[document.elementFromPoint(x,y)]).filter(Boolean);
-    const cards=[];
-    for(const el of els){
-      const card=el instanceof Element?el.closest('#hand .card[data-uid],#spread .card[data-uid]'):null;
-      if(card&&!cards.includes(card))cards.push(card);
-    }
-    return cards;
-  };
-  const cardByUid=uid=>[...state.hand,...state.spread.filter(Boolean)].find(c=>c.uid===uid)||null;
-  const markPreview=cardEl=>{
-    document.querySelectorAll('.card.drag-select-preview').forEach(card=>{if(card!==cardEl)card.classList.remove('drag-select-preview')});
-    if(cardEl)cardEl.classList.add('drag-select-preview');
-  };
-  const queueUid=(arr,uid,max)=>{
-    const next=arr.filter(id=>id!==uid);
-    next.push(uid);
-    while(next.length>max)next.shift();
-    return next;
-  };
-  const queueCardFromDrag=cardEl=>{
-    if(!drag||!cardEl)return false;
-    const uid=Number(cardEl.dataset.uid);
-    if(!Number.isFinite(uid)||uid===drag.lastUid)return false;
-    const card=cardByUid(uid);
-    if(!card)return false;
-    const inHand=!!cardEl.closest('#hand');
-    const inSpread=!!cardEl.closest('#spread');
-    if(state.abilitySelect){
-      const a=state.abilitySelect;
-      if(!a.validIds.has(uid))return false;
-      drag.pendingAbility=queueUid(drag.pendingAbility,uid,a.count);
-      drag.lastUid=uid;
-      markPreview(cardEl);
-      return true;
-    }
-    if(state.purgeSelect!==null){
-      if(!inHand)return false;
-      drag.pendingPurge=queueUid(drag.pendingPurge,uid,3);
-      drag.lastUid=uid;
-      markPreview(cardEl);
-      return true;
-    }
-    if(!inHand||inSpread||state.busy)return false;
-    drag.pendingSelected=uid;
-    drag.lastUid=uid;
-    markPreview(cardEl);
-    return true;
-  };
-  const commitDrag=()=>{
-    if(!drag||!drag.didSelect)return;
-    if(state.abilitySelect&&drag.pendingAbility.length){
-      state.abilitySelect.picked=drag.pendingAbility.slice(-state.abilitySelect.count);
-      refreshHandState();
-    }else if(state.purgeSelect!==null&&drag.pendingPurge.length){
-      state.purgeSelect=drag.pendingPurge.slice(0,3);
-      render();
-    }else if(drag.pendingSelected!==null&&drag.pendingSelected!==undefined){
-      state.selected=drag.pendingSelected;
-      refreshHandState();
-    }
-  };
-  document.addEventListener('pointerdown',ev=>{
-    if(!isMobilePointer(ev))return;
-    const target=ev.target instanceof Element?ev.target:null;
-    if(!target||!target.closest('#hand,#spread'))return;
-    drag={pointerId:ev.pointerId,startX:ev.clientX,startY:ev.clientY,lastUid:null,active:false,didSelect:false,pendingSelected:null,pendingAbility:state.abilitySelect?[...state.abilitySelect.picked]:[],pendingPurge:state.purgeSelect!==null?[...state.purgeSelect]:[]};
-  },true);
-  document.addEventListener('pointermove',ev=>{
-    if(!drag||ev.pointerId!==drag.pointerId)return;
-    const dx=ev.clientX-drag.startX,dy=ev.clientY-drag.startY;
-    if(!drag.active){
-      if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
-      drag.active=true;
-      clearPressHighlight();
-      enterDragSelectMode();
-    }
-    ev.preventDefault();
-    const topCard=cardsAtPoint(ev.clientX,ev.clientY)[0];
-    if(topCard&&queueCardFromDrag(topCard))drag.didSelect=true;
-  },{capture:true,passive:false});
-  const finishDrag=()=>{
-    const wasActive=!!drag&&drag.active;
-    commitDrag();
-    if(drag&&drag.didSelect)suppressClickUntil=performance.now()+550;
-    drag=null;
-    if(wasActive)leaveDragSelectMode();
-  };
-  document.addEventListener('pointerup',finishDrag,true);
-  document.addEventListener('pointercancel',finishDrag,true);
-  document.addEventListener('click',ev=>{
-    if(performance.now()>suppressClickUntil)return;
-    const target=ev.target instanceof Element?ev.target:null;
-    if(target&&target.closest('#hand .card[data-uid],#spread .card[data-uid]')){
-      ev.preventDefault();
-      ev.stopPropagation();
-    }
-  },true);
-})();
-/* end mobile drag-select pointer handler patch */
 /* hand swipe-scroll handler patch */
 (function(){
   if(window.__handSwipeScrollInstalled)return;
@@ -2611,7 +2513,9 @@ function setSfxVol(v){_sfxVol=v;}
     const handChanged=(n!==lastHandLen);
     lastHandLen=n;
     if(handChanged)manualSpacing=null;
-    applySlots();
+    // Skip slot reassignment while a card is being dragged in-hand — the
+    // gesture handler is driving --slot per card and we'd stomp it.
+    if(!window.__handReorderActive)applySlots();
     const auto=calcAutoSpacing();
     if(auto!=null)autoSpacing=auto;
     const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
@@ -2818,11 +2722,13 @@ function setSfxVol(v){_sfxVol=v;}
     if(recheckRaf!=null)return;
     recheckRaf=requestAnimationFrame(()=>{recheckRaf=null;refreshLayout();});
   };
-  // Mutation-driven refresh must be SYNC: new card DOM is added with
-  // --slot defaulting to 0 (centered), so we need to assign each card's
-  // real --slot before the browser paints. Otherwise every render flashes
-  // the hand through the center for one frame.
+  // Mutation-driven refresh must be SYNC (so --slot is assigned before paint),
+  // but suppressed while render() is mid-loop: each insertBefore fires the
+  // observer with an intermediate card count, causing cascading bad-slot
+  // animations. render() sets window.__handRenderActive=true for the
+  // duration and calls window.__handTriggerLayout() at the end instead.
   const onHandMutation=()=>{
+    if(window.__handRenderActive)return;
     if(recheckRaf!=null){cancelAnimationFrame(recheckRaf);recheckRaf=null;}
     refreshLayout();
   };
@@ -2836,10 +2742,252 @@ function setSfxVol(v){_sfxVol=v;}
     refreshLayout();
     if(window.__handHasBeenSwiped){const z2=zoneEl();if(z2){z2.classList.add('has-swiped');z2.classList.remove('has-overflow');}}
   };
+  // Expose a direct layout trigger so render() can call it after the loop.
+  window.__handTriggerLayout=()=>{
+    if(recheckRaf!=null){cancelAnimationFrame(recheckRaf);recheckRaf=null;}
+    refreshLayout();
+  };
+  // Expose the current arc track parameters so the gesture handler can
+  // map pointer X -> a fractional slot along the arc.
+  window.__handGetTrackState=()=>{
+    const h=handEl();if(!h)return null;
+    const r=h.getBoundingClientRect();
+    const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
+    return{
+      hand:h,
+      handRect:r,
+      cardCount:cardCount(),
+      offsetDeg:offset,
+      spacingDeg:s,
+      radius:trackRadius(),
+    };
+  };
   attachObserver();
   window.addEventListener('resize',scheduleRecheck);
 })();
 /* end hand swipe-scroll handler patch */
+/* hand card gestures handler patch */
+(function(){
+  if(window.__handCardGesturesInstalled)return;
+  window.__handCardGesturesInstalled=true;
+  const HOLD_MS=400;
+  const DRAG_THRESHOLD=10;
+  const TILT_SCALE=-26;        // px/ms -> degrees of tilt
+  const TILT_MAX=18;
+  const TILT_LERP=0.28;
+  let g=null;
+  const handEl=()=>document.querySelector('.hand');
+  const handCards=()=>{const h=handEl();return h?[...h.querySelectorAll(':scope > .card[data-uid]')]:[]};
+  const inSelectionMode=()=>!!(state.abilitySelect||state.purgeSelect!==null||state.busy);
+  const cancelHold=()=>{if(g&&g.holdTimer){clearTimeout(g.holdTimer);g.holdTimer=null;}};
+  // Map clientX -> fractional slot index along the arc (0 = center).
+  const xToFracSlot=cx=>{
+    const ts=typeof window.__handGetTrackState==='function'?window.__handGetTrackState():null;
+    if(!ts||!ts.spacingDeg)return 0;
+    const centerX=ts.handRect.left+ts.handRect.width/2;
+    const dx=cx-centerX;
+    const ratio=Math.max(-.95,Math.min(.95,dx/Math.max(1,ts.radius)));
+    const totalA=Math.asin(ratio)*180/Math.PI;
+    return (totalA-ts.offsetDeg)/ts.spacingDeg;
+  };
+  const findSpreadDropAt=(x,y)=>{
+    const els=document.elementsFromPoint?document.elementsFromPoint(x,y):[document.elementFromPoint(x,y)];
+    for(const el of els){
+      if(!(el instanceof Element))continue;
+      const s=el.closest('#spread .slot');
+      if(!s)continue;
+      const slots=[...document.querySelectorAll('#spread .slot')];
+      const idx=slots.indexOf(s);
+      if(idx>=0&&!state.spread[idx])return{slotEl:s,idx};
+      return null;
+    }
+    return null;
+  };
+  const applyReorderSlots=hoverIndex=>{
+    if(!g)return;
+    const cards=handCards();
+    const n=cards.length;
+    if(!n)return;
+    cards.forEach((el,i)=>{
+      let ni=i;
+      if(el===g.cardEl){
+        // Dragged card: park at hover index so neighbors stabilize there.
+        ni=hoverIndex;
+      }else if(i<g.origIndex){
+        if(i>=hoverIndex)ni=i+1;
+      }else if(i>g.origIndex){
+        if(i<=hoverIndex)ni=i-1;
+      }
+      el.style.setProperty('--slot',(ni-(n-1)/2).toString());
+    });
+    g.hoverIndex=hoverIndex;
+  };
+  const startDrag=ev=>{
+    if(!g||g.mode!=='pending')return;
+    cancelHold();
+    const rect=g.cardEl.getBoundingClientRect();
+    const cardCenterX=rect.left+rect.width/2;
+    const cardCenterY=rect.top+rect.height/2;
+    g.grabOffsetX=ev.clientX-cardCenterX;
+    g.grabOffsetY=ev.clientY-cardCenterY;
+    const h=handEl();
+    const hRect=h?h.getBoundingClientRect():{left:0,top:0,width:window.innerWidth,height:200};
+    g.handCenterX=hRect.left+hRect.width/2;
+    g.handTop=hRect.top;
+    g.cardHalfH=rect.height/2;
+    g.lastFX=ev.clientX;g.lastFY=ev.clientY;g.lastT=performance.now();
+    g.tiltDeg=0;
+    g.mode='drag';
+    window.__handReorderActive=true;
+    if(h)h.classList.add('hand-parting');
+    g.cardEl.classList.add('hand-card-dragging');
+    try{g.cardEl.setPointerCapture&&g.cardEl.setPointerCapture(g.pointerId);}catch(e){}
+    window.__handGestureSuppressClickUntil=performance.now()+800;
+    stepDrag(ev);
+  };
+  const stepDrag=ev=>{
+    if(!g||g.mode!=='drag')return;
+    const x=ev.clientX,y=ev.clientY,now=performance.now();
+    const dt=Math.max(8,now-g.lastT);
+    const vx=(x-g.lastFX)/dt;
+    const target=Math.max(-TILT_MAX,Math.min(TILT_MAX,vx*TILT_SCALE));
+    g.tiltDeg+=(target-g.tiltDeg)*TILT_LERP;
+    g.lastFX=x;g.lastFY=y;g.lastT=now;
+    const dx=(x-g.grabOffsetX)-g.handCenterX;
+    const dy=(y-g.grabOffsetY)-(g.handTop+g.cardHalfH);
+    g.cardEl.style.setProperty('--drag-x',dx.toFixed(1)+'px');
+    g.cardEl.style.setProperty('--drag-y',dy.toFixed(1)+'px');
+    g.cardEl.style.setProperty('--drag-rot',g.tiltDeg.toFixed(2)+'deg');
+    document.querySelectorAll('#spread .slot.drop-target').forEach(s=>s.classList.remove('drop-target'));
+    g.dropSlot=null;
+    if(!inSelectionMode()){
+      const hit=findSpreadDropAt(x,y);
+      if(hit){hit.slotEl.classList.add('drop-target');g.dropSlot=hit;}
+    }
+    if(!g.dropSlot){
+      const cards=handCards();
+      const n=cards.length;
+      const frac=xToFracSlot(x);
+      const hover=Math.max(0,Math.min(n-1,Math.round(frac+(n-1)/2)));
+      if(hover!==g.hoverIndex)applyReorderSlots(hover);
+    }
+  };
+  const endDrag=committed=>{
+    if(!g)return;
+    cancelHold();
+    const cardEl=g.cardEl;
+    const uid=g.uid;
+    const origIndex=g.origIndex;
+    const hoverIndex=g.hoverIndex;
+    const dropSlot=g.dropSlot;
+    const wasDrag=g.mode==='drag';
+    try{cardEl.releasePointerCapture&&cardEl.releasePointerCapture(g.pointerId);}catch(e){}
+    cardEl.classList.remove('hand-card-dragging');
+    cardEl.style.removeProperty('--drag-x');
+    cardEl.style.removeProperty('--drag-y');
+    cardEl.style.removeProperty('--drag-rot');
+    document.querySelectorAll('#spread .slot.drop-target').forEach(s=>s.classList.remove('drop-target'));
+    const h=handEl();if(h)h.classList.remove('hand-parting');
+    window.__handReorderActive=false;
+    g=null;
+    if(!wasDrag){
+      if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
+      return;
+    }
+    if(committed&&dropSlot&&!inSelectionMode()){
+      state.selected=uid;
+      if(typeof placeCard==='function')placeCard(dropSlot.idx);
+      return;
+    }
+    if(committed&&hoverIndex!=null&&hoverIndex!==origIndex&&!inSelectionMode()){
+      const idx=state.hand.findIndex(c=>c.uid===uid);
+      if(idx>=0){
+        const card=state.hand.splice(idx,1)[0];
+        state.hand.splice(hoverIndex,0,card);
+        if(typeof render==='function')render();
+        return;
+      }
+    }
+    if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
+  };
+  document.addEventListener('pointerdown',ev=>{
+    if(window.__handPinchSynthetic)return;
+    if(ev.pointerType!=='touch'&&ev.pointerType!=='pen'&&ev.pointerType!=='mouse')return;
+    const t=ev.target instanceof Element?ev.target:null;
+    if(!t)return;
+    if(t.closest('#spread'))return;
+    const cardEl=t.closest('#hand .card[data-uid]');
+    if(!cardEl)return;
+    if(g)endDrag(false);
+    const uid=Number(cardEl.dataset.uid);
+    if(!Number.isFinite(uid))return;
+    const cards=handCards();
+    const origIndex=cards.indexOf(cardEl);
+    if(origIndex<0)return;
+    g={
+      pointerId:ev.pointerId,
+      uid,cardEl,origIndex,
+      mode:'pending',
+      startX:ev.clientX,startY:ev.clientY,
+      hoverIndex:origIndex,
+      dropSlot:null,
+      holdTimer:null,
+    };
+    // Hold-to-expand: only when not already in a selection-driven mode.
+    if(!inSelectionMode()){
+      g.holdTimer=setTimeout(()=>{
+        if(!g||g.mode!=='pending')return;
+        const card=state.hand.find(c=>c.uid===uid);
+        g=null;
+        if(card&&typeof expandCard==='function'){
+          window.__handGestureSuppressClickUntil=performance.now()+800;
+          expandCard(card);
+        }
+      },HOLD_MS);
+    }
+  },true);
+  document.addEventListener('pointermove',ev=>{
+    if(!g||ev.pointerId!==g.pointerId)return;
+    if(g.mode==='pending'){
+      const dx=ev.clientX-g.startX,dy=ev.clientY-g.startY;
+      if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
+      if(inSelectionMode()){
+        // No reorder in selection modes — convert to a no-op until release.
+        cancelHold();
+        g=null;
+        return;
+      }
+      startDrag(ev);
+      return;
+    }
+    if(g.mode==='drag'){
+      ev.preventDefault();
+      stepDrag(ev);
+    }
+  },{capture:true,passive:false});
+  const onEnd=ev=>{
+    if(!g||ev.pointerId!==g.pointerId)return;
+    if(g.mode==='pending'){
+      // Tap (no drag, no hold) — let the card's onclick run as usual.
+      cancelHold();
+      g=null;
+      return;
+    }
+    endDrag(ev.type!=='pointercancel');
+  };
+  document.addEventListener('pointerup',onEnd,true);
+  document.addEventListener('pointercancel',onEnd,true);
+  // Suppress synthetic click after drag / long-press so it doesn't double-fire.
+  document.addEventListener('click',ev=>{
+    const until=window.__handGestureSuppressClickUntil||0;
+    if(performance.now()>until)return;
+    const t=ev.target instanceof Element?ev.target:null;
+    if(t&&t.closest('#hand .card[data-uid]')){
+      ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
+    }
+  },true);
+})();
+/* end hand card gestures handler patch */
 </script>
 </body>
 </html>
