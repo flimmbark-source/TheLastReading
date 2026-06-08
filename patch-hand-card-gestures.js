@@ -109,6 +109,8 @@ upsertScript(
   const handCards=()=>{const h=handEl();return h?[...h.querySelectorAll(':scope > .card[data-uid]')]:[]};
   const inSelectionMode=()=>!!(state.abilitySelect||state.purgeSelect!==null||state.busy);
   const cancelHold=()=>{if(g&&g.holdTimer){clearTimeout(g.holdTimer);g.holdTimer=null;}};
+  // Add uid to end of arr (no duplicates), trim to last max items.
+  const queueUid=(arr,uid,max)=>{if(arr.includes(uid))return arr;const a=[...arr,uid];return a.length>max?a.slice(-max):a;};
 
   // ── Arc slot math: pointer X → fractional slot index along the arc ──
   const xToFracSlot=cx=>{
@@ -172,6 +174,37 @@ upsertScript(
     if(g)g.hoverIndex=g.origIndex;
   };
 
+  // ── Transition pending → select-drag (ability/purge multi-target sweep) ──
+  const startSelectDrag=ev=>{
+    if(!g||g.mode!=='pending')return;
+    cancelHold();
+    g.mode='select-drag';
+    g.pendingUids=[];
+    try{g.cardEl.setPointerCapture(g.pointerId);}catch(e){}
+    window.__handGestureSuppressClickUntil=performance.now()+800;
+    stepSelectDrag(ev);
+  };
+
+  // ── Track cards swept over during ability/purge drag ──
+  const stepSelectDrag=ev=>{
+    if(!g||g.mode!=='select-drag')return;
+    const els=document.elementsFromPoint(ev.clientX,ev.clientY);
+    for(const el of els){
+      if(!(el instanceof Element))continue;
+      const cardEl=el.closest('#hand .card[data-uid]');
+      if(!cardEl)continue;
+      const uid=Number(cardEl.dataset.uid);
+      if(!Number.isFinite(uid))break;
+      if(state.abilitySelect){
+        if(!state.abilitySelect.validIds.has(uid))break;
+        g.pendingUids=queueUid(g.pendingUids,uid,state.abilitySelect.count);
+      }else if(state.purgeSelect!==null){
+        g.pendingUids=queueUid(g.pendingUids,uid,3);
+      }
+      break;
+    }
+  };
+
   // ── Transition pending → drag ──
   const startDrag=ev=>{
     if(!g||g.mode!=='pending')return;
@@ -222,7 +255,7 @@ upsertScript(
     const cardCY=g.handTop+dy+g.cardHalfH;
 
     // ── Drop-target logic ──────────────────────────────────────────
-    if(!inSelectionMode()&&isInSpreadZone(cardCY)){
+    if(isInSpreadZone(cardCY)){
       // Near or above spread: hit-test empty slots by expanded bounding rect.
       // Also: restore hand to natural order so it doesn't thrash while aimed up.
       const hit=hitTestSpreadSlots(cardCX,cardCY);
@@ -235,13 +268,11 @@ upsertScript(
       // In the hand zone: apply parting around the landing position.
       document.querySelectorAll('#spread .slot.drop-target').forEach(s=>s.classList.remove('drop-target'));
       g.dropSlot=null;
-      if(!inSelectionMode()){
-        const cards=handCards();
-        const n=cards.length;
-        const frac=xToFracSlot(x);
-        const hover=Math.max(0,Math.min(n-1,Math.round(frac+(n-1)/2)));
-        if(hover!==g.hoverIndex)applyReorderSlots(hover);
-      }
+      const cards=handCards();
+      const n=cards.length;
+      const frac=xToFracSlot(x);
+      const hover=Math.max(0,Math.min(n-1,Math.round(frac+(n-1)/2)));
+      if(hover!==g.hoverIndex)applyReorderSlots(hover);
     }
   };
 
@@ -249,8 +280,9 @@ upsertScript(
   const endDrag=committed=>{
     if(!g)return;
     cancelHold();
-    const{uid,cardEl,origIndex,hoverIndex,dropSlot,mode}=g;
+    const{uid,cardEl,origIndex,hoverIndex,dropSlot,mode,pendingUids=[]}=g;
     const wasDrag=mode==='drag';
+    const wasSelectDrag=mode==='select-drag';
     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
     cardEl.classList.remove('hand-card-dragging');
     cardEl.style.removeProperty('--drag-x');
@@ -260,6 +292,19 @@ upsertScript(
     const h=handEl();if(h)h.classList.remove('hand-parting');
     window.__handReorderActive=false;
     g=null;
+
+    // ── Commit ability/purge selection from sweep ──
+    if(wasSelectDrag){
+      if(!committed)return;
+      if(state.abilitySelect&&pendingUids.length){
+        state.abilitySelect.picked=pendingUids.slice(-state.abilitySelect.count);
+        if(typeof refreshHandState==='function')refreshHandState();
+      }else if(state.purgeSelect!==null&&pendingUids.length){
+        state.purgeSelect=pendingUids.slice(0,3);
+        if(typeof render==='function')render();
+      }
+      return;
+    }
 
     if(!wasDrag){
       // Tap (pointerdown + pointerup without crossing drag threshold):
@@ -275,14 +320,14 @@ upsertScript(
     }
 
     // ── Drop onto spread slot ──
-    if(dropSlot&&!inSelectionMode()){
+    if(dropSlot){
       state.selected=uid;
       if(typeof placeCard==='function')placeCard(dropSlot.idx);
       return;
     }
 
     // ── Reorder within hand ──
-    if(hoverIndex!==origIndex&&!inSelectionMode()){
+    if(hoverIndex!==origIndex){
       const idx=state.hand.findIndex(c=>c.uid===uid);
       if(idx>=0){
         const card=state.hand.splice(idx,1)[0];
@@ -321,7 +366,7 @@ upsertScript(
       prevX:ev.clientX,
       tiltDeg:0,
     };
-    // Hold-to-expand: 400ms press opens detail view.
+    // Hold-to-expand: 400ms press opens detail view (normal mode only).
     if(!inSelectionMode()){
       g.holdTimer=setTimeout(()=>{
         if(!g||g.mode!=='pending')return;
@@ -340,24 +385,21 @@ upsertScript(
     if(g.mode==='pending'){
       const dx=ev.clientX-g.startX,dy=ev.clientY-g.startY;
       if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
-      if(inSelectionMode()){
-        // Don't reorder during ability/purge select — drop g and let swipe/onclick handle it.
-        cancelHold();g=null;return;
-      }
+      // busy: drop pointer tracking entirely.
+      if(state.busy){cancelHold();g=null;return;}
+      // ability/purge: sweep-to-select mode.
+      if(state.abilitySelect||state.purgeSelect!==null){startSelectDrag(ev);return;}
+      // normal: card drag-to-reorder / drag-to-place.
       startDrag(ev);
       return;
     }
-    if(g.mode==='drag'){
-      ev.preventDefault();
-      stepDrag(ev);
-    }
+    if(g.mode==='drag'){ev.preventDefault();stepDrag(ev);}
+    if(g.mode==='select-drag'){stepSelectDrag(ev);}
   },{capture:true,passive:false});
 
   const onEnd=ev=>{
     if(!g||ev.pointerId!==g.pointerId)return;
-    if(g.mode==='pending'){
-      cancelHold();g=null;return;
-    }
+    if(g.mode==='pending'){cancelHold();g=null;return;}
     endDrag(ev.type!=='pointercancel');
   };
   document.addEventListener('pointerup',onEnd,true);
