@@ -510,11 +510,13 @@ upsertBlock(
     if(recheckRaf!=null)return;
     recheckRaf=requestAnimationFrame(()=>{recheckRaf=null;refreshLayout();});
   };
-  // Mutation-driven refresh must be SYNC: new card DOM is added with
-  // --slot defaulting to 0 (centered), so we need to assign each card's
-  // real --slot before the browser paints. Otherwise every render flashes
-  // the hand through the center for one frame.
+  // Mutation-driven refresh must be SYNC (so --slot is assigned before paint),
+  // but suppressed while render() is mid-loop: each insertBefore fires the
+  // observer with an intermediate card count, causing cascading bad-slot
+  // animations. render() sets window.__handRenderActive=true for the
+  // duration and calls window.__handTriggerLayout() at the end instead.
   const onHandMutation=()=>{
+    if(window.__handRenderActive)return;
     if(recheckRaf!=null){cancelAnimationFrame(recheckRaf);recheckRaf=null;}
     refreshLayout();
   };
@@ -527,6 +529,11 @@ upsertBlock(
     new MutationObserver(onHandMutation).observe(h,{childList:true});
     refreshLayout();
     if(window.__handHasBeenSwiped){const z2=zoneEl();if(z2){z2.classList.add('has-swiped');z2.classList.remove('has-overflow');}}
+  };
+  // Expose a direct layout trigger so render() can call it after the loop.
+  window.__handTriggerLayout=()=>{
+    if(recheckRaf!=null){cancelAnimationFrame(recheckRaf);recheckRaf=null;}
+    refreshLayout();
   };
   attachObserver();
   window.addEventListener('resize',scheduleRecheck);
