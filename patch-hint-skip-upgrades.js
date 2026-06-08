@@ -62,13 +62,20 @@ patchOne(
 //   Previously both relics AND flat bonuses were controlled by a single flag,
 //   so enabling relic hints (skipRelics=false) accidentally re-enabled Omen too.
 
-patchOne(
-  'cardHints scoring calls always skip flat bonuses',
-  `  const before=new Set(computeScore(spread,null,skipRelics).melds.map(m=>m[0]));
+// The performance pass rewrote these lines to cache the spread score; accept
+// either the original form (for a fresh index.html) or the cached form.
+if (html.includes(`computeScore(spread,null,skipRelics,true)`) ||
+    html.includes(`_spreadScoreForHints=computeScore(spread,null,skipRelics,true)`)) {
+  console.log('cardHints scoring calls always skip flat bonuses already applied.');
+} else {
+  patchOne(
+    'cardHints scoring calls always skip flat bonuses',
+    `  const before=new Set(computeScore(spread,null,skipRelics).melds.map(m=>m[0]));
   const after=computeScore(placed,null,skipRelics);`,
-  `  const before=new Set(computeScore(spread,null,skipRelics,true).melds.map(m=>m[0]));
+    `  const before=new Set(computeScore(spread,null,skipRelics,true).melds.map(m=>m[0]));
   const after=computeScore(placed,null,skipRelics,true);`
-);
+  );
+}
 
 // ── Fix 3: placeCard announces every meld in newMelds via centerGhost.
 //   Omen and Resonance are flat per-card bonuses — they appear in newMelds whenever
