@@ -174,9 +174,10 @@ upsertBlock(
 .hand-swipe-zone.dragging{cursor:grabbing}
 .hand-swipe-zone.pinching{cursor:ew-resize}
 @media(max-width:640px){.hand-swipe-zone{bottom:152px;height:74px}}
-.hand-swipe-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:14px;pointer-events:none;opacity:.0;transition:opacity .4s;font:600 10px system-ui,Segoe UI,sans-serif;color:rgba(232,196,96,.55);letter-spacing:.18em;text-transform:uppercase}
+.hand-swipe-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:14px;pointer-events:none;opacity:.0;transition:opacity .4s;font:600 10px system-ui,Segoe UI,sans-serif;color:rgba(232,196,96,.55);letter-spacing:.18em;text-transform:uppercase;white-space:nowrap}
 .hand-swipe-zone.has-overflow .hand-swipe-hint{opacity:.5}
 .hand-swipe-zone.dragging .hand-swipe-hint,.hand-swipe-zone.pinching .hand-swipe-hint{opacity:0}
+.hand-swipe-zone.has-swiped .hand-swipe-hint{display:none!important}
 .hand-swipe-hint span{display:inline-block;width:30px;height:1px;background:linear-gradient(90deg,transparent,rgba(232,196,96,.6),transparent)}`
 );
 
@@ -214,6 +215,7 @@ upsertBlock(
   const DEG_PER_PX_SWIPE=0.11;                       // swipe pixels -> degrees of slide
   const DEG_PER_PX_PINCH=0.013;                      // pinch pixels -> degrees of spacing
   let momentumRaf=null;
+  try{if(localStorage.getItem('tlr_hand_swiped'))window.__handHasBeenSwiped=true;}catch(e){}
   const handEl=()=>{if(hand&&hand.isConnected)return hand;hand=document.querySelector('.hand');return hand;};
   const zoneEl=()=>{if(zone&&zone.isConnected)return zone;zone=document.getElementById('handSwipeZone');return zone;};
   const trackRadius=()=>{const h=handEl();return h?parseFloat(getComputedStyle(h).getPropertyValue('--track-radius'))||720:720;};
@@ -245,7 +247,7 @@ upsertBlock(
     const n=cards.length;
     cards.forEach((c,i)=>{c.style.setProperty('--slot',(i-(n-1)/2).toString());});
   };
-  const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;z.classList.toggle('has-overflow',slideCap()>1);};
+  const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;if(window.__handHasBeenSwiped){z.classList.remove('has-overflow');return;}z.classList.toggle('has-overflow',slideCap()>1);};
   const cancelMomentum=()=>{if(momentumRaf){cancelAnimationFrame(momentumRaf);momentumRaf=null;}};
   const inHandArea=el=>el instanceof Element&&!!el.closest('#hand,.handDock,#handSwipeZone');
   const inSwipeZone=el=>{const z=zoneEl();return!!z&&el instanceof Element&&(el===z||z.contains(el));};
@@ -369,6 +371,11 @@ upsertBlock(
     samples.length=0;pushSample(performance.now(),offset);
     const z=zoneEl();if(z){z.classList.add('dragging');z.classList.remove('pinching');}
     handEl()?.classList.add('hand-scroll-dragging');
+    if(!window.__handHasBeenSwiped){
+      window.__handHasBeenSwiped=true;
+      try{localStorage.setItem('tlr_hand_swiped','1');}catch(e){}
+      const z2=zoneEl();if(z2){z2.classList.add('has-swiped');z2.classList.remove('has-overflow');}
+    }
   };
   const stepSlide=ev=>{
     const dx=ev.clientX-startX;
@@ -419,19 +426,32 @@ upsertBlock(
     pointers.delete(ev.pointerId);
     if(pointers.size===0){endGesture();}
     else if(mode==='pinch'&&pointers.size<2){
-      // One finger lifted during a pinch — stop pinching but don't fall into a
-      // slide (the remaining finger was on a card, not a swipe gesture).
-      mode=null;pinchStart=null;
+      pinchStart=null;
       const z=zoneEl();if(z)z.classList.remove('pinching');
       handEl()?.classList.remove('hand-scroll-dragging');
       pinchSuppressClickUntil=performance.now()+550;
+      // If remaining pointer is already in the swipe zone, resume as a slide gesture.
+      const remId=[...pointers.keys()][0];
+      const rp=remId!=null?pointers.get(remId):null;
+      const z2=zoneEl();
+      let startedSlide=false;
+      if(rp&&z2){
+        const rect=z2.getBoundingClientRect();
+        if(rp.x>=rect.left&&rp.x<=rect.right&&rp.y>=rect.top&&rp.y<=rect.bottom){
+          try{z2.setPointerCapture(remId);}catch(e){}
+          startSlideMode({clientX:rp.x});
+          startedSlide=true;
+        }
+      }
+      if(!startedSlide)mode=null;
     }
   };
   document.addEventListener('pointerup',onPointerEnd,true);
   document.addEventListener('pointercancel',onPointerEnd,true);
-  // Block stray card clicks that follow a pinch.
+  // Block card clicks during an active pinch and for 550ms after it ends.
   document.addEventListener('click',ev=>{
-    if(performance.now()>pinchSuppressClickUntil)return;
+    const suppressed=mode==='pinch'||performance.now()<pinchSuppressClickUntil;
+    if(!suppressed)return;
     const t=ev.target instanceof Element?ev.target:null;
     if(t&&t.closest('#hand .card[data-uid],#spread .card[data-uid]')){
       ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
@@ -447,6 +467,7 @@ upsertBlock(
     if('ResizeObserver' in window){ro=new ResizeObserver(recheck);ro.observe(h);ro.observe(h.parentElement);}
     new MutationObserver(recheck).observe(h,{childList:true});
     refreshLayout();
+    if(window.__handHasBeenSwiped){const z2=zoneEl();if(z2){z2.classList.add('has-swiped');z2.classList.remove('has-overflow');}}
   };
   attachObserver();
   window.addEventListener('resize',recheck);
