@@ -142,11 +142,34 @@ upsertBlock(
   '/* hand swipe-scroll patch */',
   '/* end hand swipe-scroll patch */',
   `.handDock{overflow-x:clip;overflow-y:visible}
-.hand{max-width:none;width:max-content;transform:translate3d(var(--hand-slide-x,0px),0,0);transition:transform .45s cubic-bezier(.2,.85,.25,1)}
-.hand.hand-scroll-dragging{transition:none}
-.hand .card{margin-left:var(--hand-card-margin,-50px)!important}
-.hand .card:first-child{margin-left:0!important}
-@media(max-width:640px){.hand .card{margin-left:var(--hand-card-margin,-42px)!important}}
+.hand{position:relative;display:block;max-width:none;width:100%;height:235px;--track-offset:0deg;--track-spacing:5deg;--track-radius:780px}
+@media(max-width:640px){.hand{height:185px;--track-radius:560px}}
+.hand .card{
+  position:absolute!important;
+  left:50%;
+  top:0;
+  margin:0!important;
+  --slot:0;
+  --total-a:calc(var(--slot) * var(--track-spacing) + var(--track-offset));
+  --arc-x:calc(var(--track-radius) * sin(var(--total-a)));
+  --arc-y:calc(var(--track-radius) * (cos(var(--total-a)) - 1));
+  --lift-y:0px;
+  --total-rot:var(--total-a);
+  transform:translate(calc(-50% + var(--arc-x)),calc(var(--arc-y) + var(--lift-y))) rotate(var(--total-rot))!important;
+  transform-origin:50% 50%!important;
+  transition:transform .32s cubic-bezier(.2,.85,.25,1);
+}
+.hand.hand-scroll-dragging .card{transition:none}
+.hand:not(.has-selected-card) .card:hover,.hand .card.sel,.hand .card.ability-picked,.hand .card.purge-picked{
+  --lift-y:-92px;
+  --total-rot:0deg;
+  z-index:999!important;
+}
+@media(max-width:640px){
+  .hand:not(.has-selected-card) .card:hover,.hand .card.sel,.hand .card.ability-picked,.hand .card.purge-picked{--lift-y:-86px}
+}
+/* Stop the old swipe handler from also nudging the whole hand sideways. */
+.hand{--hand-slide-x:0px;--hand-card-margin:0px}
 .hand-swipe-zone{position:fixed;left:0;right:0;bottom:197px;height:88px;z-index:19;pointer-events:auto;touch-action:none;cursor:grab;background:transparent}
 .hand-swipe-zone.dragging{cursor:grabbing}
 .hand-swipe-zone.pinching{cursor:ew-resize}
@@ -163,7 +186,7 @@ const handDockPatched = `<div id="handSwipeZone" class="hand-swipe-zone"><div cl
 <div class="handDock">`;
 replaceOne('hand swipe zone element', handDockOrig, handDockPatched);
 
-// Slide along the track + pinch-to-spread + auto-fit card spacing.
+// Per-card arc track: swipe = slide each card along the curve, pinch = adjust spacing.
 upsertBlock(
   'hand swipe-scroll handler',
   '/* hand swipe-scroll handler patch */',
@@ -172,60 +195,90 @@ upsertBlock(
   if(window.__handSwipeScrollInstalled)return;
   window.__handSwipeScrollInstalled=true;
   let zone=null,hand=null;
-  let slide=0,startSlide=0,startX=0;                 // slide bookkeeping (px)
-  let samples=[];                                    // {t,x} ring for swipe velocity
+  let offset=0,startOffset=0,startX=0;               // track offset (degrees)
+  let samples=[];                                    // {t,deg} ring for swipe velocity
   let pointers=new Map();                            // active pointer id -> {x,y}
   let mode=null;                                     // 'slide' | 'pinch' | null
-  let pinchStart=null;                               // {dist,margin,ids:[a,b]}
+  let pinchStart=null;                               // {dist,spacing,ids}
   let pinchSuppressClickUntil=0;
-  let manualMargin=null;                             // user-set override (px)
-  let autoMargin=null;                               // last computed auto value (px)
-  let lastHandLen=-1;                                // re-fits when this changes
+  let manualSpacing=null;                            // user-set per-card spacing (deg)
+  let autoSpacing=null;                              // last computed auto value (deg)
+  let lastHandLen=-1;
   const SAMPLE_WINDOW=90;
-  const FRICTION=0.0028;
-  const MIN_VEL=0.012;
+  const FRICTION=0.0030;
+  const MIN_VEL=0.010;                               // deg/ms
   const RUBBER=0.42;
-  const MARGIN_MIN=-96;
-  const MARGIN_MAX=-6;
+  const SPACING_MIN=1.2;                             // deg / slot (closest together)
+  const SPACING_MAX=8;                               // deg / slot (most spread)
+  const OFFSET_LIMIT=30;                             // hard cap on slide deg
+  const DEG_PER_PX_SWIPE=0.11;                       // swipe pixels -> degrees of slide
+  const DEG_PER_PX_PINCH=0.013;                      // pinch pixels -> degrees of spacing
   let momentumRaf=null;
   const handEl=()=>{if(hand&&hand.isConnected)return hand;hand=document.querySelector('.hand');return hand;};
   const zoneEl=()=>{if(zone&&zone.isConnected)return zone;zone=document.getElementById('handSwipeZone');return zone;};
+  const trackRadius=()=>{const h=handEl();return h?parseFloat(getComputedStyle(h).getPropertyValue('--track-radius'))||720:720;};
+  const cardCount=()=>{const h=handEl();return h?h.querySelectorAll('.card').length:0;};
   const dockW=()=>{const h=handEl();return h&&h.parentElement?h.parentElement.clientWidth:window.innerWidth;};
-  const handW=()=>{const h=handEl();return h?h.scrollWidth:0;};
-  const maxOffset=()=>{const o=(handW()-dockW())/2;return o>0?o:0;};
-  const clampSlide=x=>{const o=maxOffset();return Math.max(-o,Math.min(o,x));};
-  const softClamp=x=>{const o=maxOffset();if(o===0)return 0;const ax=Math.abs(x);if(ax<=o)return x;return Math.sign(x)*(o+(ax-o)*RUBBER);};
-  const applySlide=x=>{const h=handEl();if(!h)return;slide=x;h.style.setProperty('--hand-slide-x',x.toFixed(2)+'px');updateOverflowHint();};
-  const applyMargin=m=>{const h=handEl();if(!h)return;h.style.setProperty('--hand-card-margin',m.toFixed(1)+'px');};
-  const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;z.classList.toggle('has-overflow',maxOffset()>4);};
+  // ── Slide bounds: cap by configured limit AND by how far cards extend off-screen. ──
+  const slideCap=()=>{
+    const n=cardCount();
+    if(n<=1)return 0;
+    const spacing=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
+    const halfSpan=(n-1)/2*spacing;
+    // How many deg of the spread protrude past the viewport edge
+    const R=trackRadius();
+    const view=dockW();
+    const cardW=window.innerWidth<640?100:130;
+    const halfFit=Math.max(0,(view-cardW)/2);
+    const fitAngleRad=Math.asin(Math.min(.95,halfFit/R));
+    const fitAngleDeg=fitAngleRad*180/Math.PI;
+    const overhang=Math.max(0,halfSpan-fitAngleDeg);
+    return Math.min(OFFSET_LIMIT,overhang+4);
+  };
+  const clampOffset=d=>{const c=slideCap();return Math.max(-c,Math.min(c,d));};
+  const softClamp=d=>{const c=slideCap();if(c===0)return 0;const ad=Math.abs(d);if(ad<=c)return d;return Math.sign(d)*(c+(ad-c)*RUBBER);};
+  const applyOffset=d=>{const h=handEl();if(!h)return;offset=d;h.style.setProperty('--track-offset',d.toFixed(3)+'deg');updateOverflowHint();};
+  const applySpacing=d=>{const h=handEl();if(!h)return;h.style.setProperty('--track-spacing',d.toFixed(3)+'deg');};
+  const applySlots=()=>{
+    const h=handEl();if(!h)return;
+    const cards=h.querySelectorAll('.card');
+    const n=cards.length;
+    cards.forEach((c,i)=>{c.style.setProperty('--slot',(i-(n-1)/2).toString());});
+  };
+  const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;z.classList.toggle('has-overflow',slideCap()>1);};
   const cancelMomentum=()=>{if(momentumRaf){cancelAnimationFrame(momentumRaf);momentumRaf=null;}};
   const inHandArea=el=>el instanceof Element&&!!el.closest('#hand,.handDock,#handSwipeZone');
   const inSwipeZone=el=>{const z=zoneEl();return!!z&&el instanceof Element&&(el===z||z.contains(el));};
-  // ── Auto-fit: pick a margin that keeps every card visible in the dock. ──
-  const calcAutoMargin=()=>{
+  // ── Auto-fit: choose a per-card spacing (in deg) so that all cards fit in the dock. ──
+  const calcAutoSpacing=()=>{
     const h=handEl();if(!h||!h.parentElement)return null;
-    const cards=h.querySelectorAll('.card');
-    const n=cards.length;
+    const n=cardCount();
     if(n<=1)return null;
-    const cardW=cards[0].offsetWidth||(window.innerWidth<640?100:130);
+    const R=trackRadius();
+    const cardW=h.querySelector('.card')?.offsetWidth||(window.innerWidth<640?100:130);
     const view=h.parentElement.clientWidth;
-    const desired=Math.max(cardW,view-24);
-    const ideal=(desired-n*cardW)/(n-1);
-    return Math.max(MARGIN_MIN,Math.min(MARGIN_MAX,ideal));
+    const halfWidth=(view-cardW-16)/2;
+    if(halfWidth<=0)return SPACING_MAX;
+    const maxAngleRad=Math.asin(Math.min(.95,halfWidth/R));
+    const maxAngleDeg=maxAngleRad*180/Math.PI;
+    const spacing=(maxAngleDeg*2)/(n-1);
+    return Math.max(SPACING_MIN,Math.min(SPACING_MAX,spacing));
   };
-  const refreshAutoFit=()=>{
+  const refreshLayout=()=>{
     const h=handEl();if(!h)return;
-    const n=h.querySelectorAll('.card').length;
+    const n=cardCount();
     const handChanged=(n!==lastHandLen);
     lastHandLen=n;
-    if(handChanged)manualMargin=null;
-    const auto=calcAutoMargin();
-    if(auto!=null)autoMargin=auto;
-    const m=manualMargin!=null?manualMargin:(autoMargin!=null?autoMargin:-50);
-    applyMargin(m);
+    if(handChanged)manualSpacing=null;
+    applySlots();
+    const auto=calcAutoSpacing();
+    if(auto!=null)autoSpacing=auto;
+    const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
+    applySpacing(s);
+    applyOffset(clampOffset(offset));
   };
-  // ── Swipe velocity sampling ──
-  const pushSample=(t,x)=>{samples.push({t,x});while(samples.length&&samples[0].t<t-SAMPLE_WINDOW)samples.shift();};
+  // ── Swipe velocity sampling (sample stream is in offset-degrees) ──
+  const pushSample=(t,d)=>{samples.push({t,d});while(samples.length&&samples[0].t<t-SAMPLE_WINDOW)samples.shift();};
   const releaseVel=()=>{
     const cutoff=performance.now()-SAMPLE_WINDOW;
     let i=0;while(i<samples.length&&samples[i].t<cutoff)i++;
@@ -233,21 +286,21 @@ upsertBlock(
     const first=samples[i],last=samples[samples.length-1];
     const dt=last.t-first.t;
     if(dt<8)return 0;
-    return (last.x-first.x)/dt;
+    return (last.d-first.d)/dt;  // deg / ms
   };
   const springBack=()=>{
-    const target=clampSlide(slide);
-    if(Math.abs(target-slide)<.5){applySlide(target);return;}
-    const t0=performance.now(),from=slide,dur=340;
+    const target=clampOffset(offset);
+    if(Math.abs(target-offset)<.05){applyOffset(target);return;}
+    const t0=performance.now(),from=offset,dur=340;
     const step=t=>{
       const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);
-      applySlide(from+(target-from)*e);
+      applyOffset(from+(target-from)*e);
       if(p<1)momentumRaf=requestAnimationFrame(step);else momentumRaf=null;
     };
     momentumRaf=requestAnimationFrame(step);
   };
   const runMomentum=v0=>{
-    if(Math.abs(slide)>maxOffset()+.5){springBack();return;}
+    if(Math.abs(offset)>slideCap()+.05){springBack();return;}
     let v=v0;
     if(Math.abs(v)<MIN_VEL)return;
     let lastT=performance.now();
@@ -255,12 +308,12 @@ upsertBlock(
       const dt=Math.min(48,now-lastT);
       lastT=now;
       v*=Math.exp(-FRICTION*dt);
-      let next=slide+v*dt;
-      const o=maxOffset();
-      if(next<-o){next=-o;v=0;}
-      else if(next>o){next=o;v=0;}
-      applySlide(next);
-      if(Math.abs(v)<MIN_VEL){applySlide(clampSlide(slide));momentumRaf=null;return;}
+      let next=offset+v*dt;
+      const c=slideCap();
+      if(next<-c){next=-c;v=0;}
+      else if(next>c){next=c;v=0;}
+      applyOffset(next);
+      if(Math.abs(v)<MIN_VEL){applyOffset(clampOffset(offset));momentumRaf=null;return;}
       momentumRaf=requestAnimationFrame(step);
     };
     momentumRaf=requestAnimationFrame(step);
@@ -291,8 +344,8 @@ upsertBlock(
     if(!a||!b)return;
     cancelExternalGestures();
     mode='pinch';
-    const m=manualMargin!=null?manualMargin:(autoMargin!=null?autoMargin:-50);
-    pinchStart={dist:distOf(a,b),margin:m,ids:[ids[0],ids[1]]};
+    const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
+    pinchStart={dist:distOf(a,b),spacing:s,ids:[ids[0],ids[1]]};
     samples.length=0;
     const z=zoneEl();if(z){z.classList.add('pinching');z.classList.remove('dragging');}
     handEl()?.classList.add('hand-scroll-dragging');
@@ -301,29 +354,27 @@ upsertBlock(
     if(!pinchStart)return;
     const a=pointers.get(pinchStart.ids[0]),b=pointers.get(pinchStart.ids[1]);
     if(!a||!b)return;
-    const h=handEl();if(!h)return;
-    const n=h.querySelectorAll('.card').length;
-    if(n<2)return;
     const delta=distOf(a,b)-pinchStart.dist;
-    let next=pinchStart.margin+delta/(n-1);
-    next=Math.max(MARGIN_MIN,Math.min(MARGIN_MAX,next));
-    manualMargin=next;
-    applyMargin(next);
-    applySlide(clampSlide(slide));
+    let next=pinchStart.spacing+delta*DEG_PER_PX_PINCH;
+    next=Math.max(SPACING_MIN,Math.min(SPACING_MAX,next));
+    manualSpacing=next;
+    applySpacing(next);
+    applyOffset(clampOffset(offset));
   };
   // ── Slide helpers (single-pointer, swipe zone only) ──
   const startSlideMode=ev=>{
     cancelMomentum();
     mode='slide';
-    startX=ev.clientX;startSlide=slide;
-    samples.length=0;pushSample(performance.now(),ev.clientX);
+    startX=ev.clientX;startOffset=offset;
+    samples.length=0;pushSample(performance.now(),offset);
     const z=zoneEl();if(z){z.classList.add('dragging');z.classList.remove('pinching');}
     handEl()?.classList.add('hand-scroll-dragging');
   };
   const stepSlide=ev=>{
-    pushSample(performance.now(),ev.clientX);
     const dx=ev.clientX-startX;
-    applySlide(softClamp(startSlide+dx));
+    const target=softClamp(startOffset+dx*DEG_PER_PX_SWIPE);
+    applyOffset(target);
+    pushSample(performance.now(),target);
   };
   const endGesture=()=>{
     const wasSlide=(mode==='slide'),wasPinch=(mode==='pinch');
@@ -332,11 +383,10 @@ upsertBlock(
     mode=null;pinchStart=null;
     if(wasSlide){runMomentum(releaseVel());springBack();}
     else if(wasPinch){
-      applySlide(clampSlide(slide));
-      // Keep stray taps after the pinch from firing on the cards.
+      applyOffset(clampOffset(offset));
       pinchSuppressClickUntil=performance.now()+550;
     } else {
-      applySlide(clampSlide(slide));
+      applyOffset(clampOffset(offset));
     }
     samples.length=0;
   };
@@ -388,7 +438,7 @@ upsertBlock(
     }
   },true);
   // ── React to hand changes & viewport changes ──
-  const recheck=()=>{refreshAutoFit();applySlide(clampSlide(slide));};
+  const recheck=()=>{refreshLayout();};
   let ro=null;
   const attachObserver=()=>{
     const h=handEl();
@@ -396,7 +446,7 @@ upsertBlock(
     if(ro)return;
     if('ResizeObserver' in window){ro=new ResizeObserver(recheck);ro.observe(h);ro.observe(h.parentElement);}
     new MutationObserver(recheck).observe(h,{childList:true});
-    refreshAutoFit();
+    refreshLayout();
   };
   attachObserver();
   window.addEventListener('resize',recheck);
