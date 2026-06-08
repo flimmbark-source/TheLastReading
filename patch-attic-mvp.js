@@ -5,6 +5,10 @@ let html = fs.readFileSync(path, 'utf8');
 const cssMarker = '/* ── Attic MVP outer loop patch ── */';
 const jsMarker = '// ── Attic MVP outer loop patch ──';
 
+// Asset folders are committed at repo root: backgrounds/, props/, ui/, fx/.
+// If an earlier run inserted the zip-root prefix, normalize it away.
+html = html.replace(/the_last_reading_attic_mvp_assets\//g, '');
+
 // 1) Light fiction/copy pass. Keep the working tarot loop intact.
 html = html.replace('<button id="invTab">&#9660; Archives</button>', '<button id="invTab">&#9660; Attic Drawer</button>');
 html = html.replace(/invOpen\?'&#9650; Archives':'&#9660; Archives'/g, "invOpen?'&#9650; Attic Drawer':'&#9660; Attic Drawer'");
@@ -15,9 +19,9 @@ html = html.replace('The <b>Archives</b> hold items discoved among the personal 
 if (!html.includes(cssMarker)) {
   const css = `
 ${cssMarker}
-#atticScene{position:fixed;inset:0;z-index:520;opacity:0;pointer-events:none;background:url('the_last_reading_attic_mvp_assets/backgrounds/attic_room_mvp_1080x1920.png') center center/cover no-repeat;transition:opacity .9s ease,filter .9s ease,transform 1.15s cubic-bezier(.22,.8,.22,1);transform:scale(1.04);filter:blur(2px);overflow:hidden;color:#ead9b5;font-family:Georgia,serif}
-#atticScene::before{content:'';position:absolute;inset:0;background:url('the_last_reading_attic_mvp_assets/fx/transition_dark_vignette_1080x1920.png') center center/cover no-repeat;pointer-events:none;opacity:.72;z-index:1}
-#atticScene::after{content:'';position:absolute;inset:0;background:url('the_last_reading_attic_mvp_assets/fx/table_to_attic_fog_overlay_1080x1920.png') center center/cover no-repeat;pointer-events:none;opacity:.36;z-index:2;mix-blend-mode:screen}
+#atticScene{position:fixed;inset:0;z-index:520;opacity:0;pointer-events:none;background:url('backgrounds/attic_room_mvp_1080x1920.png') center center/cover no-repeat;transition:opacity .9s ease,filter .9s ease,transform 1.15s cubic-bezier(.22,.8,.22,1);transform:scale(1.04);filter:blur(2px);overflow:hidden;color:#ead9b5;font-family:Georgia,serif}
+#atticScene::before{content:'';position:absolute;inset:0;background:url('fx/transition_dark_vignette_1080x1920.png') center center/cover no-repeat;pointer-events:none;opacity:.72;z-index:1}
+#atticScene::after{content:'';position:absolute;inset:0;background:url('fx/table_to_attic_fog_overlay_1080x1920.png') center center/cover no-repeat;pointer-events:none;opacity:.36;z-index:2;mix-blend-mode:screen}
 body.mode-to-attic #atticScene,body.mode-attic #atticScene{opacity:1;filter:none;transform:scale(1);pointer-events:auto}
 body.mode-to-table #atticScene{opacity:0;filter:blur(3px);transform:scale(1.04);pointer-events:none}
 body.mode-to-attic #titleWrap,body.mode-to-attic .score-stack,body.mode-to-attic .spread-wrap,body.mode-to-attic .handDock,body.mode-to-attic #relicRack,body.mode-to-attic #invWrap,body.mode-to-attic .refs-layer{opacity:0;transform:scale(.9) translateY(14vh);filter:blur(2px);pointer-events:none;transition:opacity .75s ease,transform 1.1s cubic-bezier(.22,.8,.22,1),filter .75s ease}
@@ -31,16 +35,16 @@ body.mode-to-table #titleWrap,body.mode-to-table .score-stack,body.mode-to-table
 @keyframes atticPropSpend{0%{transform:translateY(0) rotate(0deg)}35%{transform:translateY(-9px) rotate(-1.4deg)}100%{transform:translateY(0) rotate(0deg)}}
 #candlelightHud{position:absolute;left:max(14px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));z-index:14;display:flex;gap:6px;align-items:center;padding:7px 9px;border:1px solid rgba(155,111,55,.55);border-radius:999px;background:rgba(15,9,5,.54);box-shadow:0 10px 28px rgba(0,0,0,.45)}
 .candlelight-icon{width:34px;height:34px;background-size:contain;background-position:center;background-repeat:no-repeat;transition:opacity .25s ease,transform .25s ease}
-.candlelight-icon.on{background-image:url('the_last_reading_attic_mvp_assets/ui/candle_flame_on.png')}
-.candlelight-icon.off{background-image:url('the_last_reading_attic_mvp_assets/ui/candle_flame_off.png');opacity:.48;transform:scale(.92)}
-#atticWhisper{position:absolute;left:50%;bottom:max(22px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:16;min-width:min(82vw,420px);max-width:min(90vw,560px);min-height:62px;padding:18px 28px 20px;background:url('the_last_reading_attic_mvp_assets/ui/attic_whisper_plaque.png') center/100% 100% no-repeat;color:#ead9b5;text-align:center;font:700 14px Georgia,serif;text-shadow:0 2px 8px rgba(0,0,0,.9);opacity:0;pointer-events:none;transition:opacity .25s ease}
+.candlelight-icon.on{background-image:url('ui/candle_flame_on.png')}
+.candlelight-icon.off{background-image:url('ui/candle_flame_off.png');opacity:.48;transform:scale(.92)}
+#atticWhisper{position:absolute;left:50%;bottom:max(22px,env(safe-area-inset-bottom));transform:translateX(-50%);z-index:16;min-width:min(82vw,420px);max-width:min(90vw,560px);min-height:62px;padding:18px 28px 20px;background:url('ui/attic_whisper_plaque.png') center/100% 100% no-repeat;color:#ead9b5;text-align:center;font:700 14px Georgia,serif;text-shadow:0 2px 8px rgba(0,0,0,.9);opacity:0;pointer-events:none;transition:opacity .25s ease}
 #atticWhisper.show{opacity:1}
 #atticPickup{position:absolute;left:50%;top:55%;z-index:18;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 20px;background:rgba(18,11,6,.88);border:1px solid rgba(194,148,75,.65);border-radius:12px;box-shadow:0 22px 60px rgba(0,0,0,.75),0 0 24px rgba(255,202,101,.2);cursor:pointer;animation:atticPickupIn .34s ease forwards}
 #atticPickup img{width:112px;height:112px;object-fit:cover;border-radius:4px;box-shadow:0 8px 22px rgba(0,0,0,.6)}
 #atticPickup b{font-size:13px;color:#ffd978;text-align:center;line-height:1.25}
 #atticPickup span{font:800 10px system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#b99a5d}
 @keyframes atticPickupIn{0%{opacity:0;transform:translate(-50%,-45%) scale(.92);filter:blur(6px)}100%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:blur(0)}}
-.attic-action-hint{position:absolute;z-index:17;min-width:220px;max-width:280px;padding:14px 20px 18px;background:url('the_last_reading_attic_mvp_assets/ui/attic_action_plaque.png') center/100% 100% no-repeat;color:#ead9b5;text-align:center;font:700 12px Georgia,serif;text-shadow:0 2px 8px rgba(0,0,0,.9);pointer-events:none;opacity:0;transition:opacity .2s ease,transform .2s ease;transform:translate(-50%,-12px)}
+.attic-action-hint{position:absolute;z-index:17;min-width:220px;max-width:280px;padding:14px 20px 18px;background:url('ui/attic_action_plaque.png') center/100% 100% no-repeat;color:#ead9b5;text-align:center;font:700 12px Georgia,serif;text-shadow:0 2px 8px rgba(0,0,0,.9);pointer-events:none;opacity:0;transition:opacity .2s ease,transform .2s ease;transform:translate(-50%,-12px)}
 .attic-action-hint.show{opacity:1;transform:translate(-50%,-22px)}
 @media(max-width:640px){#candlelightHud{gap:3px;padding:5px 7px}.candlelight-icon{width:28px;height:28px}#atticWhisper{font-size:12px;min-height:52px;padding:14px 20px 17px}#atticPickup img{width:92px;height:92px}.attic-action-hint{min-width:190px;font-size:11px}}
 /* end Attic MVP outer loop patch */
@@ -88,7 +92,7 @@ if (html.includes(oldInventoryLine)) {
 if (!html.includes(jsMarker)) {
   const js = `
 ${jsMarker}
-const TLR_ATTIC_ASSET_ROOT='the_last_reading_attic_mvp_assets/';
+const TLR_ATTIC_ASSET_ROOT='';
 const TLR_SAVE_KEY='tlr_save_v1';
 let tlrAtticGame={mode:'reading',candlelight:0,pendingCandlelight:0,pendingFinds:[],awaitingPickup:null,returning:false};
 function tlrCreateDefaultSave(){return{foundItems:[],attic:{searchedObjects:{},movedObjects:{}},itemStates:{},expansions:{owned:[],subscriptionActive:false}}}
@@ -107,7 +111,7 @@ function tlrAtticAsset(p){return TLR_ATTIC_ASSET_ROOT+p}
 function beginTableToAtticTransition(){
   if(tlrAtticGame.mode==='attic'||tlrAtticGame.mode==='to_attic')return;
   clearOverlay();
-  closeRefs&&closeRefs();
+  if(typeof closeRefs==='function')closeRefs();
   tlrAtticGame.candlelight=tlrAtticGame.pendingCandlelight||1;
   tlrAtticGame.pendingFinds=[];
   tlrAtticGame.awaitingPickup=null;
