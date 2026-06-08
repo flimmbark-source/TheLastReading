@@ -23,7 +23,7 @@ const original = `  const sp=$('#spread');
         s.classList.add(pickedSpread?'ability-picked-slot':(validSpread?'ability-target-slot':'ability-disabled-slot'));
         if(validSpread)s.onclick=(ev)=>{ev.stopPropagation();handleAbilityHandClick(card);};
       }
-      e.className='card '+(card.type==='major'?'major ':'')+(validSpread&&!pickedSpread?'ability-target ':'')+(pickedSpread?'ability-picked ':'')+(ability&&!validSpread?'ability-disabled ':'');
+      e.className='card '+(card.type==='major'?'major ':'')+(CARD_SHEET[card.id]?'photo ':'')+(validSpread&&!pickedSpread?'ability-target ':'')+(pickedSpread?'ability-picked ':'')+(ability&&!validSpread?'ability-disabled ':'');
       if(!inPurge)applyHint(e,card);
       e.dataset.uid=card.uid;
       e.innerHTML=cardHTML(card);
@@ -79,7 +79,7 @@ const replacement = `  const sp=$('#spread');
         e.style.removeProperty('--hint-shadow');
         delete e.dataset.hint;
       }
-      e.className='card '+(card.type==='major'?'major ':'')+(validSpread&&!pickedSpread?'ability-target ':'')+(pickedSpread?'ability-picked ':'')+(ability&&!validSpread?'ability-disabled ':'');
+      e.className='card '+(card.type==='major'?'major ':'')+(CARD_SHEET[card.id]?'photo ':'')+(validSpread&&!pickedSpread?'ability-target ':'')+(pickedSpread?'ability-picked ':'')+(ability&&!validSpread?'ability-disabled ':'');
       if(!inPurge)applyHint(e,card);
       e.onclick=(ability&&validSpread)?(ev)=>{ev.stopPropagation();handleAbilityHandClick(card);}:null;
     }else{

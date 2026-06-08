@@ -722,7 +722,7 @@ function render(){
         e.style.removeProperty('--hint-shadow');
         delete e.dataset.hint;
       }
-      e.className='card '+(card.type==='major'?'major ':'')+(validSpread&&!pickedSpread?'ability-target ':'')+(pickedSpread?'ability-picked ':'')+(ability&&!validSpread?'ability-disabled ':'');
+      e.className='card '+(card.type==='major'?'major ':'')+(CARD_SHEET[card.id]?'photo ':'')+(validSpread&&!pickedSpread?'ability-target ':'')+(pickedSpread?'ability-picked ':'')+(ability&&!validSpread?'ability-disabled ':'');
       if(!inPurge)applyHint(e,card);
       e.onclick=(ability&&validSpread)?(ev)=>{ev.stopPropagation();handleAbilityHandClick(card);}:null;
     }else{
@@ -774,7 +774,7 @@ function render(){
       e.style.removeProperty('--hint-shadow');
       delete e.dataset.hint;
     }
-    e.className='card '+(c.type==='major'?'major ':'')
+    e.className='card '+(c.type==='major'?'major ':'')+(CARD_SHEET[c.id]?'photo ':'')
       +(inPurge?(purgePicked?'purge-picked ':'purge-target '):'')
       +(selectedId===c.uid&&!ability&&!inPurge?'sel ':'')
       +(valid&&!picked?'ability-target ':'')+(picked?'ability-picked ':'')
