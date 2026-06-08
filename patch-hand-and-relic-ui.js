@@ -539,7 +539,7 @@ upsertBlock(
   // animations. render() sets window.__handRenderActive=true for the
   // duration and calls window.__handTriggerLayout() at the end instead.
   const onHandMutation=()=>{
-    if(window.__handRenderActive)return;
+    if(window.__handRenderActive||window.__handReorderActive)return;
     if(recheckRaf!=null){cancelAnimationFrame(recheckRaf);recheckRaf=null;}
     refreshLayout();
   };

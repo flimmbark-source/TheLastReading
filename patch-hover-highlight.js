@@ -219,7 +219,15 @@ upsertScript(
     _rafPending=true;requestAnimationFrame(flush);
   };
   flush();
-  new MutationObserver(update).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+  // Observe only #hand — sel/ability-picked are exclusively set on hand cards.
+  // Watching document.body would fire the callback for every drop-target and
+  // spread slot class change, adding unnecessary overhead during card drag.
+  const attachHandObserver=()=>{
+    const h=document.getElementById('hand')||document.querySelector('.hand');
+    if(!h){requestAnimationFrame(attachHandObserver);return;}
+    new MutationObserver(update).observe(h,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+  };
+  attachHandObserver();
 })();`
 );
 
