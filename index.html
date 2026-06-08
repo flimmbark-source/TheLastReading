@@ -510,7 +510,7 @@ body.mobile-drag-selecting .card.drag-select-preview[data-hint]::after{opacity:1
   --arc-x:calc(var(--track-radius) * sin(var(--total-a)));
   --arc-y:calc(var(--track-radius) * (1 - cos(var(--total-a))));
   --lift-y:0px;
-  --total-rot:calc(-1 * var(--total-a));
+  --total-rot:var(--total-a);
   transform:translate(calc(-50% + var(--arc-x)),calc(var(--arc-y) + var(--lift-y))) rotate(var(--total-rot))!important;
   transform-origin:50% 50%!important;
   transition:transform .32s cubic-bezier(.2,.85,.25,1);
