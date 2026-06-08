@@ -152,9 +152,9 @@ upsertBlock(
   --slot:0;
   --total-a:calc(var(--slot) * var(--track-spacing) + var(--track-offset));
   --arc-x:calc(var(--track-radius) * sin(var(--total-a)));
-  --arc-y:calc(var(--track-radius) * (cos(var(--total-a)) - 1));
+  --arc-y:calc(var(--track-radius) * (1 - cos(var(--total-a))));
   --lift-y:0px;
-  --total-rot:var(--total-a);
+  --total-rot:calc(-1 * var(--total-a));
   transform:translate(calc(-50% + var(--arc-x)),calc(var(--arc-y) + var(--lift-y))) rotate(var(--total-rot))!important;
   transform-origin:50% 50%!important;
   transition:transform .32s cubic-bezier(.2,.85,.25,1);
@@ -212,7 +212,7 @@ upsertBlock(
   const SPACING_MIN=1.2;                             // deg / slot (closest together)
   const SPACING_MAX=8;                               // deg / slot (most spread)
   const OFFSET_LIMIT=30;                             // hard cap on slide deg
-  const DEG_PER_PX_SWIPE=-0.11;                      // swipe pixels -> degrees of slide (inverted)
+  const DEG_PER_PX_SWIPE=0.11;                       // swipe pixels -> degrees of slide
   const DEG_PER_PX_PINCH=0.013;                      // pinch pixels -> degrees of spacing
   let momentumRaf=null;
   try{if(localStorage.getItem('tlr_hand_swiped'))window.__handHasBeenSwiped=true;}catch(e){}
