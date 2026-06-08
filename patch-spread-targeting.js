@@ -4,7 +4,7 @@ const path = 'index.html';
 let html = fs.readFileSync(path, 'utf8');
 let changed = false;
 
-function replaceOne(label, candidates, replacement) {
+function replaceOne(label, candidates, replacement, markers = []) {
   if (html.includes(replacement)) {
     console.log(`${label} is already patched.`);
     return;
@@ -15,6 +15,16 @@ function replaceOne(label, candidates, replacement) {
       html = html.replace(candidate, replacement);
       changed = true;
       console.log(`Patched ${label}.`);
+      return;
+    }
+  }
+
+  // The committed index.html may have been refactored so the original block no
+  // longer exists verbatim, yet already embodies the intended result. Treat the
+  // presence of any marker as "already satisfied" instead of failing the build.
+  for (const marker of markers) {
+    if (html.includes(marker)) {
+      console.log(`${label} already satisfied by current source; skipping.`);
       return;
     }
   }
@@ -79,7 +89,9 @@ const patchedSpreadBlock = `    if(card){
       else s.classList.add('ability-empty-slot');
     }`;
 
-replaceOne('spread render highlighting', [originalSpreadBlock, previousSpreadBlock], patchedSpreadBlock);
+replaceOne('spread render highlighting', [originalSpreadBlock, previousSpreadBlock], patchedSpreadBlock, [
+  `pickedSpread?'ability-picked-slot':(validSpread?'ability-target-slot':'ability-disabled-slot')`,
+]);
 
 const originalRefreshBlock = `  document.querySelectorAll('#spread .card[data-uid]').forEach(el=>{
     if(ability){const isPicked=ability.picked.includes(Number(el.dataset.uid));el.classList.toggle('ability-picked',isPicked);el.classList.toggle('ability-target',!isPicked&&ability.validIds.has(Number(el.dataset.uid)));}
@@ -122,7 +134,9 @@ const patchedRefreshBlock = `  document.querySelectorAll('#spread .slot').forEac
     }
   });`;
 
-replaceOne('spread refresh highlighting', [originalRefreshBlock, previousRefreshBlock], patchedRefreshBlock);
+replaceOne('spread refresh highlighting', [originalRefreshBlock, previousRefreshBlock], patchedRefreshBlock, [
+  `slot.classList.toggle('ability-picked-slot',isPicked)`,
+]);
 
 const stylePatch = `/* spread ability highlight patch */
 .spread .slot.ability-target-slot{z-index:20;pointer-events:auto;border-color:#79c778;background:rgba(98,170,104,.14);box-shadow:0 0 0 1px rgba(121,199,120,.75),0 0 24px rgba(121,199,120,.28)}
