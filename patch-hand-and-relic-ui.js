@@ -229,6 +229,9 @@ upsertBlock(
   let momentumRaf=null;
   // ── Layout caches (busted by refreshLayout / stepPinch / resize) ──
   let cachedCap=null,cachedRadius=null,cachedView=null,cachedCount=-1;
+  // Card pixel width: determined purely by CSS so survives render-cycle cache busts;
+  // only cleared on resize (when the viewport breakpoint may change the card size).
+  let cachedCardW=null;
   // ── rAF coalescing for pointermove + observer recheck ──
   let pendingMoveEv=null,moveRaf=null,recheckRaf=null;
   const invalidateCache=()=>{cachedCap=null;cachedRadius=null;cachedView=null;cachedCount=-1;};
@@ -299,8 +302,9 @@ upsertBlock(
     const n=cardCount();
     if(n<=1)return null;
     const R=trackRadius();
-    const cardW=h.querySelector('.card')?.offsetWidth||(window.innerWidth<640?100:130);
-    const view=h.parentElement.clientWidth;
+    if(cachedCardW==null)cachedCardW=h.querySelector('.card')?.offsetWidth||(window.innerWidth<640?100:130);
+    const cardW=cachedCardW;
+    const view=dockW();
     const halfWidth=(view-cardW-16)/2;
     if(halfWidth<=0)return SPACING_MAX;
     const maxAngleRad=Math.asin(Math.min(.95,halfWidth/R));
@@ -524,6 +528,7 @@ upsertBlock(
   // ── React to hand changes & viewport changes ──
   // Resize events can pile up; coalesce them to rAF.
   const scheduleRecheck=()=>{
+    cachedCardW=null;
     if(recheckRaf!=null)return;
     recheckRaf=requestAnimationFrame(()=>{recheckRaf=null;refreshLayout();});
   };
