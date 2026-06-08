@@ -71,7 +71,7 @@ ${jsMarker}
     awaitingPickup=true;document.querySelectorAll('#atticPickup').forEach(function(p){p.remove();});
     const p=document.createElement('div');p.id='atticPickup';p.innerHTML='<img src="'+o.thumb+'" alt=""><b>'+o.itemTitle+'</b><span>Take</span>';p.addEventListener('click',function(e){e.stopPropagation();takePickup(o);});document.getElementById('atticScene').appendChild(p);
   }
-  function takePickup(o){document.querySelectorAll('#atticPickup').forEach(function(p){p.remove();});awaitingPickup=false;saveFound(o.itemId);whisper('You take '+o.itemTitle+' back to the table.');if(candleCount<=0)setTimeout(leave,900);}
+  function takePickup(o){document.querySelectorAll('#atticPickup').forEach(function(p){p.remove();});awaitingPickup=false;saveFound(o.itemId);if(typeof renderInventory==='function')renderInventory();whisper('You take '+o.itemTitle+' back to the table.');if(candleCount<=0)setTimeout(leave,900);}
   function rummage(id,el){
     const o=objects[id];if(!o||awaitingPickup)return;
     if(searched[id]){whisper('You already searched there.');return;}
@@ -102,6 +102,12 @@ ${jsMarker}
   html = html.replace('</script>', js + '\n</script>');
 }
 
+const inventoryOld = "const allItems=[...INV_ITEMS,...getUnlockedFragments().map(id=>INV_FRAGMENTS[id]).filter(Boolean)];";
+const inventoryNew = "const foundAtticItems=(()=>{try{return JSON.parse(localStorage.getItem('tlr_attic_found_items')||'[]')}catch(e){return []}})();const allItems=[...INV_ITEMS.filter(item=>foundAtticItems.includes(item.id)),...getUnlockedFragments().map(id=>INV_FRAGMENTS[id]).filter(Boolean)];";
+if (html.includes(inventoryOld)) {
+  html = html.replace(inventoryOld, inventoryNew);
+}
+
 const oldEnd = "function endSession(){showOverlay(`<div class=\"result-panel pass\"><div class=\"rhead\"><span class=\"rorn\">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class=\"pass\">The Session Ends</h3></div><div class=\"rscore\"><span class=\"rsf\">${persist.totalScore||0}</span></div><span class=\"rverdict pass\">Total Score</span><div class=\"rbtns\"><button class=\"btn-gold\" onclick=\"resetSession()\">Begin Again</button></div></div>`)}function resetSession(){";
 const newEnd = "function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToCandlelight?window.tlrScoreToCandlelight(total):1;showOverlay(`<div class=\"result-panel pass\"><div class=\"rhead\"><span class=\"rorn\">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class=\"pass\">The Reading Ends</h3></div><div class=\"rscore\"><span class=\"rsf\">${total}</span></div><span class=\"rverdict pass\">Total Score</span><div class=\"rscore\" style=\"margin-top:10px\"><span class=\"rsf\" style=\"font-size:32px\">${candles}</span></div><span class=\"rverdict pass\">Candlelight</span><p style=\"margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center\">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}function resetSession(){";
 if (html.includes(oldEnd)) {
@@ -111,4 +117,4 @@ if (html.includes(oldEnd)) {
 }
 
 fs.writeFileSync(file, html);
-console.log('Applied attic rummage object patch.');
+console.log('Applied attic drawer found-item filter patch.');
