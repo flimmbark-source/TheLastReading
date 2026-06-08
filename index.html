@@ -3019,40 +3019,27 @@ function setSfxVol(v){_sfxVol=v;}
     stepDrag(ev);
   };
 
-  // ── Slot highlight update — runs synchronously on every pointermove so the
-  //    drop-target highlight tracks the card with zero extra-frame lag. ──
-  const updateDropTarget=(x,y)=>{
-    if(!g||g.mode!=='drag')return;
+  // ── Slot highlight geometry — pure math, no DOM writes.
+  //    Returns {inSpread, hit, hover} for the rAF to apply.
+  const calcDropTarget=(x,y)=>{
     const dx=(x-g.grabOffsetX)-g.handCenterX;
     const dy=(y-g.grabOffsetY)-(g.handTop+g.cardHalfH);
     const cardCX=g.handCenterX+dx;
     const cardCY=g.handTop+dy+g.cardHalfH;
     if(isInSpreadZone(cardCY)){
-      const hit=hitTestSpreadSlots(cardCX,cardCY);
-      const newIdx=hit?hit.idx:-1;
-      const oldIdx=g.dropSlot?g.dropSlot.idx:-1;
-      if(newIdx!==oldIdx){
-        if(g.dropSlot)g.dropSlot.slotEl.classList.remove('drop-target');
-        if(hit)hit.slotEl.classList.add('drop-target');
-        g.dropSlot=hit||null;
-      }
-      if(g.hoverIndex!==g.origIndex)applyNaturalSlots();
+      return{inSpread:true,hit:hitTestSpreadSlots(cardCX,cardCY)};
     }else{
-      if(g.dropSlot){g.dropSlot.slotEl.classList.remove('drop-target');g.dropSlot=null;}
       const cards=handCards();
       const n=cards.length;
       const frac=xToFracSlot(x);
       const hover=Math.max(0,Math.min(n-1,Math.round(frac+(n-1)/2)));
-      if(hover!==g.hoverIndex)applyReorderSlots(hover);
+      return{inSpread:false,hover};
     }
   };
 
-  // ── Card transform update — rAF-throttled to cap CSS var writes at one/frame ──
+  // ── Card transform + slot highlight — all DOM writes batched in one rAF ──
   const stepDrag=ev=>{
     if(!g||g.mode!=='drag')return;
-    // Slot highlight is synchronous — no rAF delay.
-    updateDropTarget(ev.clientX,ev.clientY);
-    // Card position / tilt are CSS var writes; throttle to one update per frame.
     g.lastDragEv=ev;
     if(g.dragRafId)return;
     g.dragRafId=requestAnimationFrame(()=>{
@@ -3060,6 +3047,24 @@ function setSfxVol(v){_sfxVol=v;}
       if(!g||g.mode!=='drag')return;
       const ev2=g.lastDragEv;
       const x=ev2.clientX,y=ev2.clientY;
+
+      // Apply slot highlight (DOM writes batched here, not in pointermove).
+      const{inSpread,hit,hover}=calcDropTarget(x,y);
+      if(inSpread){
+        const newIdx=hit?hit.idx:-1;
+        const oldIdx=g.dropSlot?g.dropSlot.idx:-1;
+        if(newIdx!==oldIdx){
+          if(g.dropSlot)g.dropSlot.slotEl.classList.remove('drop-target');
+          if(hit)hit.slotEl.classList.add('drop-target');
+          g.dropSlot=hit||null;
+        }
+        if(g.hoverIndex!==g.origIndex)applyNaturalSlots();
+      }else{
+        if(g.dropSlot){g.dropSlot.slotEl.classList.remove('drop-target');g.dropSlot=null;}
+        if(hover!==g.hoverIndex)applyReorderSlots(hover);
+      }
+
+      // Card position / tilt.
       const deltaX=x-g.prevX;
       const targetTilt=Math.max(-TILT_MAX,Math.min(TILT_MAX,deltaX*TILT_SCALE));
       g.tiltDeg+=(targetTilt-g.tiltDeg)*TILT_LERP;
