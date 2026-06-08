@@ -183,16 +183,19 @@ upsertBlock(
 .hand-swipe-zone.dragging{cursor:grabbing}
 .hand-swipe-zone.pinching{cursor:ew-resize}
 @media(max-width:640px){.hand-swipe-zone{bottom:152px;height:74px}}
-.hand-swipe-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:14px;pointer-events:none;opacity:.0;transition:opacity .4s;font:600 10px system-ui,Segoe UI,sans-serif;color:rgba(232,196,96,.55);letter-spacing:.18em;text-transform:uppercase;white-space:nowrap}
-.hand-swipe-zone.has-overflow .hand-swipe-hint{opacity:.5}
+.hand-swipe-hint{position:absolute;left:50%;top:50%;pointer-events:none;opacity:0;transition:opacity .4s}
+.hand-swipe-zone.has-overflow .hand-swipe-hint{opacity:1}
 .hand-swipe-zone.dragging .hand-swipe-hint,.hand-swipe-zone.pinching .hand-swipe-hint{opacity:0}
 .hand-swipe-zone.has-swiped .hand-swipe-hint{display:none!important}
+.swipe-hint-line{position:absolute;left:0;top:0;transform:translate(-50%,-50%);display:flex;align-items:center;gap:14px;font:600 10px system-ui,Segoe UI,sans-serif;color:rgba(232,196,96,.55);letter-spacing:.18em;text-transform:uppercase;white-space:nowrap;opacity:0;animation:hint-cycle 9s ease-in-out infinite}
+.swipe-hint-line-2{animation-delay:3s}.swipe-hint-line-3{animation-delay:6s}
+@keyframes hint-cycle{0%{opacity:0}5%{opacity:1}28%{opacity:1}33%{opacity:0}100%{opacity:0}}
 .hand-swipe-hint span{display:inline-block;width:30px;height:1px;background:linear-gradient(90deg,transparent,rgba(232,196,96,.6),transparent)}`
 );
 
 // Insert the swipe zone in the DOM, above #handDock.
 const handDockOrig = `<div class="handDock">`;
-const handDockPatched = `<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div></div>
+const handDockPatched = `<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div class="handDock">`;
 replaceOne('hand swipe zone element', handDockOrig, handDockPatched);
 
@@ -226,6 +229,9 @@ upsertBlock(
   let momentumRaf=null;
   // ── Layout caches (busted by refreshLayout / stepPinch / resize) ──
   let cachedCap=null,cachedRadius=null,cachedView=null,cachedCount=-1;
+  // Card pixel width: determined purely by CSS so survives render-cycle cache busts;
+  // only cleared on resize (when the viewport breakpoint may change the card size).
+  let cachedCardW=null;
   // ── rAF coalescing for pointermove + observer recheck ──
   let pendingMoveEv=null,moveRaf=null,recheckRaf=null;
   const invalidateCache=()=>{cachedCap=null;cachedRadius=null;cachedView=null;cachedCount=-1;};
@@ -296,8 +302,9 @@ upsertBlock(
     const n=cardCount();
     if(n<=1)return null;
     const R=trackRadius();
-    const cardW=h.querySelector('.card')?.offsetWidth||(window.innerWidth<640?100:130);
-    const view=h.parentElement.clientWidth;
+    if(cachedCardW==null)cachedCardW=h.querySelector('.card')?.offsetWidth||(window.innerWidth<640?100:130);
+    const cardW=cachedCardW;
+    const view=dockW();
     const halfWidth=(view-cardW-16)/2;
     if(halfWidth<=0)return SPACING_MAX;
     const maxAngleRad=Math.asin(Math.min(.95,halfWidth/R));
@@ -389,6 +396,7 @@ upsertBlock(
     if(!a||!b)return;
     cancelExternalGestures();
     mode='pinch';
+    window.__handPinchActive=true;
     const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
     pinchStart={dist:distOf(a,b),spacing:s,ids:[ids[0],ids[1]]};
     samples.length=0;
@@ -433,6 +441,7 @@ upsertBlock(
     if(moveRaf!=null){cancelAnimationFrame(moveRaf);moveRaf=null;pendingMoveEv=null;}
     const z=zoneEl();if(z){z.classList.remove('dragging','pinching');}
     handEl()?.classList.remove('hand-scroll-dragging');
+    if(wasPinch)window.__handPinchActive=false;
     mode=null;pinchStart=null;
     if(wasSlide){runMomentum(releaseVel());springBack();}
     else if(wasPinch){
@@ -485,6 +494,7 @@ upsertBlock(
     if(pointers.size===0){endGesture();}
     else if(mode==='pinch'&&pointers.size<2){
       pinchStart=null;
+      window.__handPinchActive=false;
       const z=zoneEl();if(z)z.classList.remove('pinching');
       handEl()?.classList.remove('hand-scroll-dragging');
       pinchSuppressClickUntil=performance.now()+550;
@@ -518,6 +528,7 @@ upsertBlock(
   // ── React to hand changes & viewport changes ──
   // Resize events can pile up; coalesce them to rAF.
   const scheduleRecheck=()=>{
+    cachedCardW=null;
     if(recheckRaf!=null)return;
     recheckRaf=requestAnimationFrame(()=>{recheckRaf=null;refreshLayout();});
   };

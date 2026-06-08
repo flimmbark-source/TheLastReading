@@ -400,7 +400,7 @@ upsertScript(
   // ── Pointer event handlers ──────────────────────────────────────
 
   document.addEventListener('pointerdown',ev=>{
-    if(window.__handPinchSynthetic)return;
+    if(window.__handPinchSynthetic||window.__handPinchActive)return;
     const t=ev.target instanceof Element?ev.target:null;
     if(!t||t.closest('#spread'))return;
     const cardEl=t.closest('#hand .card[data-uid]');
