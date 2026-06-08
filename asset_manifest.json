@@ -1,0 +1,78 @@
+{
+  "pack": "The Last Reading - Attic MVP Asset Pack",
+  "generated": "2026-06-08",
+  "backgrounds": [
+    {
+      "file": "backgrounds/attic_room_mvp_1080x1920.png",
+      "usage": "Full-screen portrait attic room scene"
+    }
+  ],
+  "props": [
+    {
+      "file": "props/newspaper_stack_closed.png",
+      "state": "before",
+      "reveals": "clipping_01"
+    },
+    {
+      "file": "props/newspaper_stack_moved.png",
+      "state": "after",
+      "reveals": "clipping_01"
+    },
+    {
+      "file": "props/covered_frame_closed.png",
+      "state": "before",
+      "reveals": "photo_01"
+    },
+    {
+      "file": "props/covered_frame_uncovered.png",
+      "state": "after",
+      "reveals": "photo_01"
+    },
+    {
+      "file": "props/old_coat_closed.png",
+      "state": "before",
+      "reveals": "letter_01"
+    },
+    {
+      "file": "props/old_coat_searched.png",
+      "state": "after",
+      "reveals": "letter_01"
+    }
+  ],
+  "ui": [
+    {
+      "file": "ui/candle_flame_on.png",
+      "usage": "Available Candlelight"
+    },
+    {
+      "file": "ui/candle_flame_off.png",
+      "usage": "Spent Candlelight"
+    },
+    {
+      "file": "ui/attic_action_plaque.png",
+      "usage": "Action prompt background"
+    },
+    {
+      "file": "ui/attic_whisper_plaque.png",
+      "usage": "Atmospheric message background"
+    }
+  ],
+  "fx": [
+    {
+      "file": "fx/transition_dark_vignette_1080x1920.png",
+      "usage": "Darken transition overlay"
+    },
+    {
+      "file": "fx/table_to_attic_fog_overlay_1080x1920.png",
+      "usage": "Transition atmosphere overlay"
+    },
+    {
+      "file": "fx/dust_mote_particle.png",
+      "usage": "Single dust particle"
+    },
+    {
+      "file": "fx/dust_mote_sheet_4x4.png",
+      "usage": "Dust sprite sheet"
+    }
+  ]
+}

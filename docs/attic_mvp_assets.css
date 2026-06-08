@@ -1,0 +1,73 @@
+/* The Last Reading - Attic MVP asset CSS starter */
+#atticScene {
+  position: fixed;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  background: url('./backgrounds/attic_room_mvp_1080x1920.png') center center / cover no-repeat;
+  transition: opacity 900ms ease, filter 900ms ease, transform 1200ms cubic-bezier(.22,.8,.22,1);
+}
+
+body.mode-attic #atticScene {
+  opacity: 1;
+  pointer-events: auto;
+  filter: none;
+  transform: scale(1);
+}
+
+body.mode-to-attic #atticScene {
+  opacity: 1;
+  filter: blur(2px);
+  transform: scale(1.04);
+}
+
+.attic-prop {
+  position: absolute;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  touch-action: none;
+  user-select: none;
+  cursor: pointer;
+}
+
+.attic-prop.spend {
+  animation: attic-prop-bump 360ms ease;
+}
+
+@keyframes attic-prop-bump {
+  0% { transform: translateY(0) scale(1); }
+  45% { transform: translateY(-8px) scale(1.025); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+#candlelightHud {
+  position: fixed;
+  left: max(16px, env(safe-area-inset-left));
+  top: max(16px, env(safe-area-inset-top));
+  z-index: 20;
+  display: flex;
+  gap: 8px;
+}
+
+.candlelight-icon {
+  width: 42px;
+  height: 42px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.candlelight-icon.on { background-image: url('./ui/candle_flame_on.png'); }
+.candlelight-icon.off { background-image: url('./ui/candle_flame_off.png'); }
+
+.attic-action-plaque,
+.attic-whisper-plaque {
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  color: #ead9b5;
+  text-shadow: 0 2px 6px rgba(0,0,0,.75);
+}
+
+.attic-action-plaque { background-image: url('./ui/attic_action_plaque.png'); }
+.attic-whisper-plaque { background-image: url('./ui/attic_whisper_plaque.png'); }
