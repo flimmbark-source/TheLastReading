@@ -564,6 +564,7 @@
   transition:transform .22s cubic-bezier(.2,.85,.25,1)!important;
 }
 #spread .slot.drop-target{background:rgba(98,170,104,.28)!important;border-color:#79c778!important;box-shadow:0 0 0 2px rgba(121,199,120,.55),0 0 32px rgba(121,199,120,.45)!important}
+#spread.drag-active .slot{transition:none!important}
 /* end hand card gestures patch */
 </style>
 </head>
@@ -2990,6 +2991,7 @@ function setSfxVol(v){_sfxVol=v;}
     g.slotRects=[...document.querySelectorAll('#spread .slot')].map((el,i)=>({el,idx:i,r:el.getBoundingClientRect()}));
     window.__handReorderActive=true;
     if(h)h.classList.add('hand-parting');
+    const spEl2=document.querySelector('#spread');if(spEl2)spEl2.classList.add('drag-active');
     g.cardEl.classList.add('hand-card-dragging');
     try{g.cardEl.setPointerCapture(g.pointerId);}catch(e){}
     window.__handGestureSuppressClickUntil=performance.now()+800;
@@ -3049,23 +3051,26 @@ function setSfxVol(v){_sfxVol=v;}
     });
   };
 
-  // ── FLIP slide: animate card from drag position to its new resting position ──
-  // Captures the visual drag position before cleanup, then in the next rAF
-  // measures where the card landed, pins it at the drag position with an
-  // inline transform override, force-reflows, then removes the override so
-  // CSS transitions pull it smoothly home.
-  const slideToPlace=(cardEl,firstRect)=>{
+  // ── FLIP slide: pin card at its drag position then animate it home ──
+  // The inversion (setting the offset transform) happens synchronously in the
+  // same event-handler tick as endDrag, BEFORE the browser paints, so the user
+  // never sees the one-frame snap.  Only the "play" step (releasing the pin)
+  // goes into requestAnimationFrame so the browser transition fires cleanly.
+  const slideLanding=(cardEl,firstRect)=>{
     if(!firstRect)return;
+    // Measure final resting position (forces synchronous layout).
+    const finalRect=cardEl.getBoundingClientRect();
+    const dx=firstRect.left-finalRect.left;
+    const dy=firstRect.top-finalRect.top;
+    if(Math.abs(dx)<1&&Math.abs(dy)<1)return;
+    // Invert: pin card at drag position with no transition.
+    cardEl.style.transition='none';
+    cardEl.style.transform='translate('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px)';
+    // Commit this as the CSS "from" value before the next style change.
+    void cardEl.offsetWidth;
+    // Play: next rAF fires before the first paint — release the pin so the
+    // landing transition pulls the card to its natural resting position.
     requestAnimationFrame(()=>{
-      const lastRect=cardEl.getBoundingClientRect();
-      const dx=firstRect.left-lastRect.left;
-      const dy=firstRect.top-lastRect.top;
-      if(Math.abs(dx)<1&&Math.abs(dy)<1)return;
-      // Pin card at drag position (no transition so it jumps there instantly).
-      cardEl.style.transition='none';
-      cardEl.style.transform='translate('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px)';
-      void cardEl.offsetWidth; // force reflow — commits the repositioned frame
-      // Remove pin; CSS transition pulls card home.
       cardEl.classList.add('hand-card-landing');
       cardEl.style.removeProperty('transition');
       cardEl.style.removeProperty('transform');
@@ -3091,6 +3096,7 @@ function setSfxVol(v){_sfxVol=v;}
     cardEl.style.removeProperty('--drag-rot');
     if(dropSlot)dropSlot.slotEl.classList.remove('drop-target');
     const h=handEl();if(h)h.classList.remove('hand-parting');
+    const spEl3=document.querySelector('#spread');if(spEl3)spEl3.classList.remove('drag-active');
     window.__handReorderActive=false;
     g=null;
 
@@ -3117,7 +3123,7 @@ function setSfxVol(v){_sfxVol=v;}
     if(!committed){
       // pointercancel (e.g. pinch started) — slide back to original position.
       if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
-      slideToPlace(cardEl,firstRect);
+      slideLanding(cardEl,firstRect);
       return;
     }
 
@@ -3135,14 +3141,14 @@ function setSfxVol(v){_sfxVol=v;}
         const card=state.hand.splice(idx,1)[0];
         state.hand.splice(hoverIndex,0,card);
         if(typeof render==='function')render();
-        slideToPlace(cardEl,firstRect);
+        slideLanding(cardEl,firstRect);
         return;
       }
     }
 
     // Dropped back to original position — slide home.
     if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
-    slideToPlace(cardEl,firstRect);
+    slideLanding(cardEl,firstRect);
   };
 
   // ── Pointer event handlers ──────────────────────────────────────
