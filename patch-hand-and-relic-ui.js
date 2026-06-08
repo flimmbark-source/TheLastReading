@@ -126,8 +126,9 @@ upsertBlock(
   'relic rack mobile CSS',
   '/* relic rack mobile right-side patch */',
   '/* end relic rack mobile right-side patch */',
-  `@media(max-width:640px){
-  .relic-rack{flex-direction:column;top:54px;right:4px;gap:5px;align-items:flex-end}
+  `.relic-rack{flex-direction:column!important;top:12px;right:12px;gap:6px;align-items:flex-end}
+@media(max-width:640px){
+  .relic-rack{top:54px;right:4px;gap:5px}
   .relic-rack .relic-btn{width:34px;height:34px}
   .relic-rack .relic-slot-empty{width:34px;height:34px}
 }`
