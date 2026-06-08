@@ -355,7 +355,7 @@
 /* ── Hand sway ── */
 .hand{transform-origin:50% 140%;}
 @keyframes card-wave{0%{translate:0 0px}100%{translate:0 5px}}
-.hand .card:not(.sel):not(.ability-picked){animation:card-wave 4.4s ease-in-out infinite alternate}
+.hand .card:not(.sel):not(.ability-picked):not(.hand-card-dragging){animation:card-wave 4.4s ease-in-out infinite alternate}
 .hand .card:not(.sel):not(.ability-picked):nth-child(1){animation-delay:0ms}
 .hand .card:not(.sel):not(.ability-picked):nth-child(2){animation-delay:-400ms}
 .hand .card:not(.sel):not(.ability-picked):nth-child(3){animation-delay:-800ms}
@@ -2485,7 +2485,11 @@ function setSfxVol(v){_sfxVol=v;}
     const hasSelection=!!document.querySelector('.card.sel,.card.ability-picked');
     document.querySelectorAll('.hand').forEach(hand=>hand.classList.toggle('has-selected-card',hasSelection));
   };
-  const update=()=>{if(_rafPending)return;_rafPending=true;requestAnimationFrame(flush);};
+  const update=(mutations)=>{
+    if(_rafPending)return;
+    if(mutations&&mutations.length&&!mutations.some(m=>m.target instanceof Element&&!!m.target.closest('#hand')))return;
+    _rafPending=true;requestAnimationFrame(flush);
+  };
   flush();
   new MutationObserver(update).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
 })();
@@ -3062,9 +3066,7 @@ function setSfxVol(v){_sfxVol=v;}
       g.prevX=x;
       const dx=(x-g.grabOffsetX)-g.handCenterX;
       const dy=(y-g.grabOffsetY)-(g.handTop+g.cardHalfH);
-      g.cardEl.style.setProperty('--drag-x',dx.toFixed(1)+'px');
-      g.cardEl.style.setProperty('--drag-y',dy.toFixed(1)+'px');
-      g.cardEl.style.setProperty('--drag-rot',g.tiltDeg.toFixed(2)+'deg');
+      g.cardEl.style.setProperty('transform','translate(calc(-50% + '+dx.toFixed(1)+'px),'+dy.toFixed(1)+'px) rotate('+g.tiltDeg.toFixed(2)+'deg)','important');
     });
   };
 
@@ -3109,9 +3111,7 @@ function setSfxVol(v){_sfxVol=v;}
     if(g.dragRafId){cancelAnimationFrame(g.dragRafId);g.dragRafId=null;}
     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
     cardEl.classList.remove('hand-card-dragging');
-    cardEl.style.removeProperty('--drag-x');
-    cardEl.style.removeProperty('--drag-y');
-    cardEl.style.removeProperty('--drag-rot');
+    cardEl.style.removeProperty('transform');
     if(dropSlot)dropSlot.slotEl.classList.remove('drop-target');
     const h=handEl();if(h)h.classList.remove('hand-parting');
     const spEl3=document.querySelector('#spread');if(spEl3)spEl3.classList.remove('drag-active');

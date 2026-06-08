@@ -210,7 +210,14 @@ upsertScript(
     const hasSelection=!!document.querySelector('.card.sel,.card.ability-picked');
     document.querySelectorAll('.hand').forEach(hand=>hand.classList.toggle('has-selected-card',hasSelection));
   };
-  const update=()=>{if(_rafPending)return;_rafPending=true;requestAnimationFrame(flush);};
+  // Only schedule work if the class change happened inside #hand — sel and
+  // ability-picked are exclusively set on hand cards, so spread/slot class
+  // changes (e.g. drop-target) never need to trigger this.
+  const update=(mutations)=>{
+    if(_rafPending)return;
+    if(mutations&&mutations.length&&!mutations.some(m=>m.target instanceof Element&&!!m.target.closest('#hand')))return;
+    _rafPending=true;requestAnimationFrame(flush);
+  };
   flush();
   new MutationObserver(update).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
 })();`
