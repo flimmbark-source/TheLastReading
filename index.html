@@ -710,25 +710,40 @@ function render(){
   applyResonationGlows(state.spread);
 
   const h=$('#hand');
-  const hFrag=document.createDocumentFragment();
   const selectedId=state.selected;
   const handLen=state.hand.length;
+  // Build uid -> existing element map so we can reuse DOM that's still in hand.
+  const _handExisting=new Map();
+  h.querySelectorAll(':scope > .card[data-uid]').forEach(el=>_handExisting.set(Number(el.dataset.uid),el));
   state.hand.forEach((c,i)=>{
-    const e=document.createElement('div');
     const valid=ability&&ability.validIds.has(c.uid);
     const picked=ability&&ability.picked.includes(c.uid);
     const purgePicked=inPurge&&state.purgeSelect.includes(c.uid);
+    let e=_handExisting.get(c.uid);
+    const fresh=!e;
+    if(fresh){
+      e=document.createElement('div');
+      e.dataset.uid=c.uid;
+      e.innerHTML=cardHTML(c);
+      applyCardPhoto(e,c);
+    }else{
+      _handExisting.delete(c.uid);
+      // Clear hint inline styles so applyHint can re-apply (or leave clean
+      // if this card no longer has a hint this render).
+      e.style.removeProperty('--hint-rgb');
+      e.style.removeProperty('--hint-shadow');
+      delete e.dataset.hint;
+    }
     e.className='card '+(c.type==='major'?'major ':'')
       +(inPurge?(purgePicked?'purge-picked ':'purge-target '):'')
       +(selectedId===c.uid&&!ability&&!inPurge?'sel ':'')
       +(valid&&!picked?'ability-target ':'')+(picked?'ability-picked ':'')
       +(ability&&!valid?'ability-disabled ':'');
     if(!inPurge)applyHint(e,c);
-    e.dataset.uid=c.uid;
     e.style.zIndex=handLen-i;
     e.style.setProperty('--a',((i-(handLen-1)/2)*5)+'deg');
-    e.innerHTML=cardHTML(c);
-    applyCardPhoto(e,c);
+    // onclick captures the current render's ability/inPurge snapshot, so
+    // rebind every render even for reused nodes.
     e.onclick=()=>{
       if(ability){handleAbilityHandClick(c);return}
       if(inPurge){togglePurgeCard(c.uid);return}
@@ -737,9 +752,13 @@ function render(){
       state.selected=c.uid;
       refreshHandState();
     };
-    hFrag.appendChild(e);
+    // Move into correct position only if not already there (avoids needless
+    // DOM mutations that would trigger the swipe handler's MutationObserver).
+    const at=h.children[i];
+    if(at!==e)h.insertBefore(e,at||null);
   });
-  h.replaceChildren(hFrag);
+  // Drop cards that are no longer in hand.
+  _handExisting.forEach(el=>el.remove());
 
   renderAbilityPrompt();
   renderPurgePrompt();
