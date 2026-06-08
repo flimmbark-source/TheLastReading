@@ -519,13 +519,21 @@
   transition:transform .32s cubic-bezier(.2,.85,.25,1);
 }
 .hand.hand-scroll-dragging .card{transition:none}
-.hand:not(.has-selected-card) .card:hover,.hand .card.sel,.hand .card.ability-picked,.hand .card.purge-picked{
+.hand .card.sel,.hand .card.ability-picked,.hand .card.purge-picked{
   --lift-y:-92px;
   --total-rot:0deg;
   z-index:999!important;
 }
+@media(hover:hover){
+  .hand:not(.has-selected-card) .card:hover{
+    --lift-y:-92px;
+    --total-rot:0deg;
+    z-index:999!important;
+  }
+}
 @media(max-width:640px){
-  .hand:not(.has-selected-card) .card:hover,.hand .card.sel,.hand .card.ability-picked,.hand .card.purge-picked{--lift-y:-86px}
+  .hand .card.sel,.hand .card.ability-picked,.hand .card.purge-picked{--lift-y:-86px}
+  @media(hover:hover){.hand:not(.has-selected-card) .card:hover{--lift-y:-86px}}
 }
 /* Stop the old swipe handler from also nudging the whole hand sideways. */
 .hand{--hand-slide-x:0px;--hand-card-margin:0px}
