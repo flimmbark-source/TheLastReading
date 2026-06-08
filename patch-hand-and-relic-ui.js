@@ -183,16 +183,19 @@ upsertBlock(
 .hand-swipe-zone.dragging{cursor:grabbing}
 .hand-swipe-zone.pinching{cursor:ew-resize}
 @media(max-width:640px){.hand-swipe-zone{bottom:152px;height:74px}}
-.hand-swipe-hint{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:14px;pointer-events:none;opacity:.0;transition:opacity .4s;font:600 10px system-ui,Segoe UI,sans-serif;color:rgba(232,196,96,.55);letter-spacing:.18em;text-transform:uppercase;white-space:nowrap}
-.hand-swipe-zone.has-overflow .hand-swipe-hint{opacity:.5}
+.hand-swipe-hint{position:absolute;left:50%;top:50%;pointer-events:none;opacity:0;transition:opacity .4s}
+.hand-swipe-zone.has-overflow .hand-swipe-hint{opacity:1}
 .hand-swipe-zone.dragging .hand-swipe-hint,.hand-swipe-zone.pinching .hand-swipe-hint{opacity:0}
 .hand-swipe-zone.has-swiped .hand-swipe-hint{display:none!important}
+.swipe-hint-line{position:absolute;left:0;top:0;transform:translate(-50%,-50%);display:flex;align-items:center;gap:14px;font:600 10px system-ui,Segoe UI,sans-serif;color:rgba(232,196,96,.55);letter-spacing:.18em;text-transform:uppercase;white-space:nowrap;opacity:0;animation:hint-cycle 9s ease-in-out infinite}
+.swipe-hint-line-2{animation-delay:3s}.swipe-hint-line-3{animation-delay:6s}
+@keyframes hint-cycle{0%{opacity:0}5%{opacity:1}28%{opacity:1}33%{opacity:0}100%{opacity:0}}
 .hand-swipe-hint span{display:inline-block;width:30px;height:1px;background:linear-gradient(90deg,transparent,rgba(232,196,96,.6),transparent)}`
 );
 
 // Insert the swipe zone in the DOM, above #handDock.
 const handDockOrig = `<div class="handDock">`;
-const handDockPatched = `<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div></div>
+const handDockPatched = `<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div class="handDock">`;
 replaceOne('hand swipe zone element', handDockOrig, handDockPatched);
 
