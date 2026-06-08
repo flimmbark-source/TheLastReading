@@ -212,7 +212,7 @@ upsertBlock(
   const SPACING_MIN=1.2;                             // deg / slot (closest together)
   const SPACING_MAX=8;                               // deg / slot (most spread)
   const OFFSET_LIMIT=30;                             // hard cap on slide deg
-  const DEG_PER_PX_SWIPE=0.11;                       // swipe pixels -> degrees of slide
+  const DEG_PER_PX_SWIPE=-0.11;                      // swipe pixels -> degrees of slide (inverted)
   const DEG_PER_PX_PINCH=0.013;                      // pinch pixels -> degrees of spacing
   let momentumRaf=null;
   try{if(localStorage.getItem('tlr_hand_swiped'))window.__handHasBeenSwiped=true;}catch(e){}
@@ -474,6 +474,35 @@ upsertBlock(
 })();`,
   '</script>'
 );
+
+// ── Suppress the legacy two-finger pinch-out-to-zoom handler for hand cards.
+//    Our arc-track pinch handles spacing; the old handler was firing expandCard
+//    on the same gesture, opening the detail view right after a pinch.
+const legacyPinchOrig = `document.addEventListener('touchstart',e=>{
+  if(e.touches.length!==2)return;
+  const c=_cardFromTarget(e.target);
+  if(!c)return;
+  _pinch={dist:Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY),card:c};
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!_pinch||e.touches.length!==2)return;
+  const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+  if(d>_pinch.dist+28){expandCard(_pinch.card);_pinch=null;}
+},{passive:true});`;
+const legacyPinchPatched = `document.addEventListener('touchstart',e=>{
+  if(e.touches.length!==2)return;
+  const t=e.target instanceof Element?e.target:null;
+  if(t&&t.closest('#hand,.handDock,#handSwipeZone'))return;
+  const c=_cardFromTarget(e.target);
+  if(!c)return;
+  _pinch={dist:Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY),card:c};
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!_pinch||e.touches.length!==2)return;
+  const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+  if(d>_pinch.dist+28){expandCard(_pinch.card);_pinch=null;}
+},{passive:true});`;
+replaceOne('legacy pinch-zoom skip on hand cards', legacyPinchOrig, legacyPinchPatched);
 
 if (changed) {
   fs.writeFileSync(path, html);
