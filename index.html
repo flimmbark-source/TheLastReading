@@ -3064,8 +3064,9 @@ function setSfxVol(v){_sfxVol=v;}
     const dy=firstRect.top-finalRect.top;
     if(Math.abs(dx)<1&&Math.abs(dy)<1)return;
     // Invert: pin card at drag position with no transition.
-    cardEl.style.transition='none';
-    cardEl.style.transform='translate('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px)';
+    // .hand .card uses transform:…!important so we must match priority.
+    cardEl.style.setProperty('transition','none','important');
+    cardEl.style.setProperty('transform','translate('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px)','important');
     // Commit this as the CSS "from" value before the next style change.
     void cardEl.offsetWidth;
     // Play: next rAF fires before the first paint — release the pin so the
