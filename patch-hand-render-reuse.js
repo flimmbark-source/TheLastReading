@@ -45,7 +45,7 @@ const original = `  const h=$('#hand');
       if(ability){handleAbilityHandClick(c);return}
       if(inPurge){togglePurgeCard(c.uid);return}
       if(state.busy)return;
-      if(state.selected===c.uid){expandCard(c);return;}
+      if(state.selected===c.uid){state.selected=null;refreshHandState();return;}
       state.selected=c.uid;
       refreshHandState();
     };
@@ -101,7 +101,7 @@ const replacement = `  const h=$('#hand');
       if(ability){handleAbilityHandClick(c);return}
       if(inPurge){togglePurgeCard(c.uid);return}
       if(state.busy)return;
-      if(state.selected===c.uid){expandCard(c);return;}
+      if(state.selected===c.uid){state.selected=null;refreshHandState();return;}
       state.selected=c.uid;
       refreshHandState();
     };

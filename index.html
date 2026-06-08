@@ -788,7 +788,7 @@ function render(){
       if(ability){handleAbilityHandClick(c);return}
       if(inPurge){togglePurgeCard(c.uid);return}
       if(state.busy)return;
-      if(state.selected===c.uid){expandCard(c);return;}
+      if(state.selected===c.uid){state.selected=null;refreshHandState();return;}
       state.selected=c.uid;
       refreshHandState();
     };
@@ -2259,6 +2259,34 @@ document.addEventListener('touchmove',e=>{
   if(d>_pinch.dist+28){expandCard(_pinch.card);_pinch=null;}
 },{passive:true});
 document.addEventListener('touchend',()=>{_pinch=null;});
+
+// ── Spread card hold-to-expand ──
+{
+  let _sh=null;
+  document.addEventListener('pointerdown',ev=>{
+    const t=ev.target instanceof Element?ev.target:null;
+    if(!t)return;
+    const cardEl=t.closest('#spread .card[data-uid]');
+    if(!cardEl)return;
+    const uid=Number(cardEl.dataset.uid);
+    _sh={pointerId:ev.pointerId,uid,startX:ev.clientX,startY:ev.clientY,
+      timer:setTimeout(()=>{
+        _sh=null;
+        const card=state.spread.find(c=>c&&c.uid===uid);
+        if(card)expandCard(card);
+      },400)};
+  },true);
+  const _shCancel=ev=>{
+    if(!_sh||ev.pointerId!==_sh.pointerId)return;
+    clearTimeout(_sh.timer);_sh=null;
+  };
+  document.addEventListener('pointermove',ev=>{
+    if(!_sh||ev.pointerId!==_sh.pointerId)return;
+    if(Math.hypot(ev.clientX-_sh.startX,ev.clientY-_sh.startY)>8){clearTimeout(_sh.timer);_sh=null;}
+  },true);
+  document.addEventListener('pointerup',_shCancel,true);
+  document.addEventListener('pointercancel',_shCancel,true);
+}
 
 startReading();
 if(!tutDone)setTimeout(()=>tutShow(0),400);
