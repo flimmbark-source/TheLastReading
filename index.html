@@ -2479,11 +2479,14 @@ function setSfxVol(v){_sfxVol=v;}
 (function(){
   if(window.__handHoverSelectedLockInstalled)return;
   window.__handHoverSelectedLockInstalled=true;
-  const update=()=>{
+  let _rafPending=false;
+  const flush=()=>{
+    _rafPending=false;
     const hasSelection=!!document.querySelector('.card.sel,.card.ability-picked');
     document.querySelectorAll('.hand').forEach(hand=>hand.classList.toggle('has-selected-card',hasSelection));
   };
-  update();
+  const update=()=>{if(_rafPending)return;_rafPending=true;requestAnimationFrame(flush);};
+  flush();
   new MutationObserver(update).observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
 })();
 /* end hand hover selected-lock patch */
