@@ -176,7 +176,8 @@ upsertBlock(
   let samples=[];                                    // {t,x} ring for swipe velocity
   let pointers=new Map();                            // active pointer id -> {x,y}
   let mode=null;                                     // 'slide' | 'pinch' | null
-  let pinchStart=null;                               // {dist,margin}
+  let pinchStart=null;                               // {dist,margin,ids:[a,b]}
+  let pinchSuppressClickUntil=0;
   let manualMargin=null;                             // user-set override (px)
   let autoMargin=null;                               // last computed auto value (px)
   let lastHandLen=-1;                                // re-fits when this changes
@@ -184,8 +185,8 @@ upsertBlock(
   const FRICTION=0.0028;
   const MIN_VEL=0.012;
   const RUBBER=0.42;
-  const MARGIN_MIN=-96;                              // most overlap allowed
-  const MARGIN_MAX=-6;                               // least overlap allowed
+  const MARGIN_MIN=-96;
+  const MARGIN_MAX=-6;
   let momentumRaf=null;
   const handEl=()=>{if(hand&&hand.isConnected)return hand;hand=document.querySelector('.hand');return hand;};
   const zoneEl=()=>{if(zone&&zone.isConnected)return zone;zone=document.getElementById('handSwipeZone');return zone;};
@@ -198,6 +199,8 @@ upsertBlock(
   const applyMargin=m=>{const h=handEl();if(!h)return;h.style.setProperty('--hand-card-margin',m.toFixed(1)+'px');};
   const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;z.classList.toggle('has-overflow',maxOffset()>4);};
   const cancelMomentum=()=>{if(momentumRaf){cancelAnimationFrame(momentumRaf);momentumRaf=null;}};
+  const inHandArea=el=>el instanceof Element&&!!el.closest('#hand,.handDock,#handSwipeZone');
+  const inSwipeZone=el=>{const z=zoneEl();return!!z&&el instanceof Element&&(el===z||z.contains(el));};
   // ── Auto-fit: pick a margin that keeps every card visible in the dock. ──
   const calcAutoMargin=()=>{
     const h=handEl();if(!h||!h.parentElement)return null;
@@ -206,7 +209,6 @@ upsertBlock(
     if(n<=1)return null;
     const cardW=cards[0].offsetWidth||(window.innerWidth<640?100:130);
     const view=h.parentElement.clientWidth;
-    // Leave ~24px of breathing room on the sides.
     const desired=Math.max(cardW,view-24);
     const ideal=(desired-n*cardW)/(n-1);
     return Math.max(MARGIN_MIN,Math.min(MARGIN_MAX,ideal));
@@ -216,7 +218,7 @@ upsertBlock(
     const n=h.querySelectorAll('.card').length;
     const handChanged=(n!==lastHandLen);
     lastHandLen=n;
-    if(handChanged)manualMargin=null;                // new deal -> drop manual override
+    if(handChanged)manualMargin=null;
     const auto=calcAutoMargin();
     if(auto!=null)autoMargin=auto;
     const m=manualMargin!=null?manualMargin:(autoMargin!=null?autoMargin:-50);
@@ -231,7 +233,7 @@ upsertBlock(
     const first=samples[i],last=samples[samples.length-1];
     const dt=last.t-first.t;
     if(dt<8)return 0;
-    return (last.x-first.x)/dt; // px/ms
+    return (last.x-first.x)/dt;
   };
   const springBack=()=>{
     const target=clampSlide(slide);
@@ -264,36 +266,52 @@ upsertBlock(
     momentumRaf=requestAnimationFrame(step);
   };
   // ── Pinch helpers ──
-  const pointerDist=()=>{
-    const a=[...pointers.values()];
-    if(a.length<2)return 0;
-    const dx=a[0].x-a[1].x,dy=a[0].y-a[1].y;
-    return Math.hypot(dx,dy);
+  const distOf=(a,b)=>{const dx=a.x-b.x,dy=a.y-b.y;return Math.hypot(dx,dy);};
+  // Kick the other pointer listeners (press-highlight, drag-select) out of their
+  // in-flight gesture so they don't try to treat the pinch as a card press/drag.
+  const cancelExternalGestures=()=>{
+    document.querySelectorAll('.card.press-highlight,.card.drag-select-preview').forEach(el=>{
+      el.classList.remove('press-highlight');el.classList.remove('drag-select-preview');
+    });
+    document.body.classList.remove('mobile-drag-selecting');
+    window.__handPinchSynthetic=true;
+    try{
+      for(const[id,p]of pointers){
+        try{
+          const ev=new PointerEvent('pointercancel',{pointerId:id,pointerType:'touch',bubbles:true,cancelable:true,composed:true,clientX:p.x,clientY:p.y});
+          document.dispatchEvent(ev);
+        }catch(e){}
+      }
+    }finally{window.__handPinchSynthetic=false;}
   };
   const startPinch=()=>{
     cancelMomentum();
+    const ids=[...pointers.keys()];
+    const a=pointers.get(ids[0]),b=pointers.get(ids[1]);
+    if(!a||!b)return;
+    cancelExternalGestures();
     mode='pinch';
     const m=manualMargin!=null?manualMargin:(autoMargin!=null?autoMargin:-50);
-    pinchStart={dist:pointerDist(),margin:m};
+    pinchStart={dist:distOf(a,b),margin:m,ids:[ids[0],ids[1]]};
     samples.length=0;
     const z=zoneEl();if(z){z.classList.add('pinching');z.classList.remove('dragging');}
     handEl()?.classList.add('hand-scroll-dragging');
   };
   const stepPinch=()=>{
     if(!pinchStart)return;
+    const a=pointers.get(pinchStart.ids[0]),b=pointers.get(pinchStart.ids[1]);
+    if(!a||!b)return;
     const h=handEl();if(!h)return;
     const n=h.querySelectorAll('.card').length;
     if(n<2)return;
-    const delta=pointerDist()-pinchStart.dist;
-    // Each px of finger spread maps to dispersing the hand by that many px total,
-    // distributed across (n-1) gaps. So per-card margin shifts by delta/(n-1).
+    const delta=distOf(a,b)-pinchStart.dist;
     let next=pinchStart.margin+delta/(n-1);
     next=Math.max(MARGIN_MIN,Math.min(MARGIN_MAX,next));
     manualMargin=next;
     applyMargin(next);
     applySlide(clampSlide(slide));
   };
-  // ── Slide helpers (single-pointer) ──
+  // ── Slide helpers (single-pointer, swipe zone only) ──
   const startSlideMode=ev=>{
     cancelMomentum();
     mode='slide';
@@ -307,43 +325,68 @@ upsertBlock(
     const dx=ev.clientX-startX;
     applySlide(softClamp(startSlide+dx));
   };
-  const finishGesture=()=>{
-    const wasSlide=(mode==='slide');
+  const endGesture=()=>{
+    const wasSlide=(mode==='slide'),wasPinch=(mode==='pinch');
     const z=zoneEl();if(z){z.classList.remove('dragging','pinching');}
     handEl()?.classList.remove('hand-scroll-dragging');
     mode=null;pinchStart=null;
     if(wasSlide){runMomentum(releaseVel());springBack();}
-    else{applySlide(clampSlide(slide));}
+    else if(wasPinch){
+      applySlide(clampSlide(slide));
+      // Keep stray taps after the pinch from firing on the cards.
+      pinchSuppressClickUntil=performance.now()+550;
+    } else {
+      applySlide(clampSlide(slide));
+    }
     samples.length=0;
   };
   // ── Pointer event routing ──
   document.addEventListener('pointerdown',ev=>{
-    const z=zoneEl();if(!z||(ev.target!==z&&!z.contains(ev.target)))return;
+    if(window.__handPinchSynthetic)return;
+    if(!inHandArea(ev.target))return;
     pointers.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
-    try{z.setPointerCapture(ev.pointerId);}catch(e){}
-    if(pointers.size>=2){startPinch();}
-    else if(pointers.size===1){startSlideMode(ev);}
+    if(pointers.size>=2){
+      if(mode!=='pinch')startPinch();
+      return;
+    }
+    // Single-finger slide only kicks in inside the swipe strip; on the cards
+    // themselves we leave the existing card-press / drag-select handler alone.
+    if(inSwipeZone(ev.target)&&mode==null){
+      try{zoneEl()?.setPointerCapture(ev.pointerId);}catch(e){}
+      startSlideMode(ev);
+    }
   },true);
   document.addEventListener('pointermove',ev=>{
+    if(window.__handPinchSynthetic)return;
     if(!pointers.has(ev.pointerId))return;
     pointers.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
-    ev.preventDefault();
-    if(mode==='pinch'){stepPinch();}
-    else if(mode==='slide'){stepSlide(ev);}
+    if(mode==='pinch'){ev.preventDefault();stepPinch();}
+    else if(mode==='slide'){ev.preventDefault();stepSlide(ev);}
   },{capture:true,passive:false});
   const onPointerEnd=ev=>{
+    if(window.__handPinchSynthetic)return;
     if(!pointers.has(ev.pointerId))return;
     pointers.delete(ev.pointerId);
-    if(pointers.size===0){
-      finishGesture();
-    } else if(mode==='pinch'&&pointers.size<2){
-      // Drop pinch when one finger lifts; don't transition into a slide mid-gesture.
+    if(pointers.size===0){endGesture();}
+    else if(mode==='pinch'&&pointers.size<2){
+      // One finger lifted during a pinch — stop pinching but don't fall into a
+      // slide (the remaining finger was on a card, not a swipe gesture).
       mode=null;pinchStart=null;
       const z=zoneEl();if(z)z.classList.remove('pinching');
+      handEl()?.classList.remove('hand-scroll-dragging');
+      pinchSuppressClickUntil=performance.now()+550;
     }
   };
   document.addEventListener('pointerup',onPointerEnd,true);
   document.addEventListener('pointercancel',onPointerEnd,true);
+  // Block stray card clicks that follow a pinch.
+  document.addEventListener('click',ev=>{
+    if(performance.now()>pinchSuppressClickUntil)return;
+    const t=ev.target instanceof Element?ev.target:null;
+    if(t&&t.closest('#hand .card[data-uid],#spread .card[data-uid]')){
+      ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
+    }
+  },true);
   // ── React to hand changes & viewport changes ──
   const recheck=()=>{refreshAutoFit();applySlide(clampSlide(slide));};
   let ro=null;
