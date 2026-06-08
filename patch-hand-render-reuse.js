@@ -31,7 +31,7 @@ const original = `  const h=$('#hand');
       e.style.removeProperty('--hint-shadow');
       delete e.dataset.hint;
     }
-    e.className='card '+(c.type==='major'?'major ':'')
+    e.className='card '+(c.type==='major'?'major ':'')+(CARD_SHEET[c.id]?'photo ':'')
       +(inPurge?(purgePicked?'purge-picked ':'purge-target '):'')
       +(selectedId===c.uid&&!ability&&!inPurge?'sel ':'')
       +(valid&&!picked?'ability-target ':'')+(picked?'ability-picked ':'')
@@ -87,7 +87,7 @@ const replacement = `  const h=$('#hand');
       e.style.removeProperty('--hint-shadow');
       delete e.dataset.hint;
     }
-    e.className='card '+(c.type==='major'?'major ':'')
+    e.className='card '+(c.type==='major'?'major ':'')+(CARD_SHEET[c.id]?'photo ':'')
       +(inPurge?(purgePicked?'purge-picked ':'purge-target '):'')
       +(selectedId===c.uid&&!ability&&!inPurge?'sel ':'')
       +(valid&&!picked?'ability-target ':'')+(picked?'ability-picked ':'')
