@@ -392,6 +392,7 @@ upsertBlock(
     if(!a||!b)return;
     cancelExternalGestures();
     mode='pinch';
+    window.__handPinchActive=true;
     const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
     pinchStart={dist:distOf(a,b),spacing:s,ids:[ids[0],ids[1]]};
     samples.length=0;
@@ -436,6 +437,7 @@ upsertBlock(
     if(moveRaf!=null){cancelAnimationFrame(moveRaf);moveRaf=null;pendingMoveEv=null;}
     const z=zoneEl();if(z){z.classList.remove('dragging','pinching');}
     handEl()?.classList.remove('hand-scroll-dragging');
+    if(wasPinch)window.__handPinchActive=false;
     mode=null;pinchStart=null;
     if(wasSlide){runMomentum(releaseVel());springBack();}
     else if(wasPinch){
@@ -488,6 +490,7 @@ upsertBlock(
     if(pointers.size===0){endGesture();}
     else if(mode==='pinch'&&pointers.size<2){
       pinchStart=null;
+      window.__handPinchActive=false;
       const z=zoneEl();if(z)z.classList.remove('pinching');
       handEl()?.classList.remove('hand-scroll-dragging');
       pinchSuppressClickUntil=performance.now()+550;
