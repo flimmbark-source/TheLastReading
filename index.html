@@ -2878,16 +2878,16 @@ function setSfxVol(v){_sfxVol=v;}
     return (totalA-ts.offsetDeg)/ts.spacingDeg;
   };
 
-  // ── Spread slot hit-test using bounding rects (not elementsFromPoint,
-  //    which is unreliable because the dragging card is on top). ──
+  // ── Spread slot hit-test using cached bounding rects (cached at drag start
+  //    to avoid forced layout on every pointermove). ──
   const hitTestSpreadSlots=(cardCX,cardCY)=>{
-    const slots=[...document.querySelectorAll('#spread .slot')];
-    for(let i=0;i<slots.length;i++){
-      if(state.spread[i])continue;             // occupied
-      const r=slots[i].getBoundingClientRect();
+    const rects=g&&g.slotRects?g.slotRects:
+      [...document.querySelectorAll('#spread .slot')].map((el,i)=>({el,idx:i,r:el.getBoundingClientRect()}));
+    for(const{el,idx,r}of rects){
+      if(state.spread[idx])continue;           // occupied
       if(cardCX>=r.left-SLOT_HIT_PAD&&cardCX<=r.right+SLOT_HIT_PAD&&
          cardCY>=r.top-SLOT_HIT_PAD&&cardCY<=r.bottom+SLOT_HIT_PAD){
-        return{slotEl:slots[i],idx:i};
+        return{slotEl:el,idx};
       }
     }
     return null;
@@ -2895,10 +2895,10 @@ function setSfxVol(v){_sfxVol=v;}
 
   // ── Whether the card's centre is in the "spread zone" (near/above spread). ──
   const isInSpreadZone=cardCY=>{
+    if(g&&g.spreadRect)return cardCY<g.spreadRect.bottom+SPREAD_ZONE_SLACK;
     const sp=document.querySelector('#spread');
     if(!sp)return false;
-    const r=sp.getBoundingClientRect();
-    return cardCY<r.bottom+SPREAD_ZONE_SLACK;
+    return cardCY<sp.getBoundingClientRect().bottom+SPREAD_ZONE_SLACK;
   };
 
   // ── Reorder hand card slots with a "parting" gap at hoverIndex. ──
@@ -2964,6 +2964,11 @@ function setSfxVol(v){_sfxVol=v;}
   const startDrag=ev=>{
     if(!g||g.mode!=='pending')return;
     cancelHold();
+    // If another card was selected, deselect it so it drops back into the hand.
+    if(state.selected&&state.selected!==g.uid){
+      state.selected=null;
+      if(typeof refreshHandState==='function')refreshHandState();
+    }
     // Capture card centre and finger-to-centre offset at grab time.
     const rect=g.cardEl.getBoundingClientRect();
     g.grabOffsetX=ev.clientX-(rect.left+rect.width/2);
@@ -2976,6 +2981,10 @@ function setSfxVol(v){_sfxVol=v;}
     g.prevX=ev.clientX;
     g.tiltDeg=0;
     g.mode='drag';
+    // Cache spread geometry so hit-tests during drag don't force layout recalc.
+    const spEl=document.querySelector('#spread');
+    g.spreadRect=spEl?spEl.getBoundingClientRect():null;
+    g.slotRects=[...document.querySelectorAll('#spread .slot')].map((el,i)=>({el,idx:i,r:el.getBoundingClientRect()}));
     window.__handReorderActive=true;
     if(h)h.classList.add('hand-parting');
     g.cardEl.classList.add('hand-card-dragging');
@@ -3121,7 +3130,7 @@ function setSfxVol(v){_sfxVol=v;}
       prevX:ev.clientX,
       tiltDeg:0,
     };
-    // Hold-to-expand: 400ms press opens detail view (normal mode only).
+    // Hold-to-expand: 400ms press selects the card and opens detail view (normal mode only).
     if(!inSelectionMode()){
       g.holdTimer=setTimeout(()=>{
         if(!g||g.mode!=='pending')return;
@@ -3129,6 +3138,8 @@ function setSfxVol(v){_sfxVol=v;}
         g=null;
         if(card&&typeof expandCard==='function'){
           window.__handGestureSuppressClickUntil=performance.now()+800;
+          state.selected=uid;
+          if(typeof refreshHandState==='function')refreshHandState();
           expandCard(card);
         }
       },HOLD_MS);
