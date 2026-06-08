@@ -243,56 +243,56 @@ upsertScript(
     stepDrag(ev);
   };
 
-  // ── Core drag update — scheduled via rAF to cap DOM work at one update/frame ──
+  // ── Slot highlight update — runs synchronously on every pointermove so the
+  //    drop-target highlight tracks the card with zero extra-frame lag. ──
+  const updateDropTarget=(x,y)=>{
+    if(!g||g.mode!=='drag')return;
+    const dx=(x-g.grabOffsetX)-g.handCenterX;
+    const dy=(y-g.grabOffsetY)-(g.handTop+g.cardHalfH);
+    const cardCX=g.handCenterX+dx;
+    const cardCY=g.handTop+dy+g.cardHalfH;
+    if(isInSpreadZone(cardCY)){
+      const hit=hitTestSpreadSlots(cardCX,cardCY);
+      const newIdx=hit?hit.idx:-1;
+      const oldIdx=g.dropSlot?g.dropSlot.idx:-1;
+      if(newIdx!==oldIdx){
+        if(g.dropSlot)g.dropSlot.slotEl.classList.remove('drop-target');
+        if(hit)hit.slotEl.classList.add('drop-target');
+        g.dropSlot=hit||null;
+      }
+      if(g.hoverIndex!==g.origIndex)applyNaturalSlots();
+    }else{
+      if(g.dropSlot){g.dropSlot.slotEl.classList.remove('drop-target');g.dropSlot=null;}
+      const cards=handCards();
+      const n=cards.length;
+      const frac=xToFracSlot(x);
+      const hover=Math.max(0,Math.min(n-1,Math.round(frac+(n-1)/2)));
+      if(hover!==g.hoverIndex)applyReorderSlots(hover);
+    }
+  };
+
+  // ── Card transform update — rAF-throttled to cap CSS var writes at one/frame ──
   const stepDrag=ev=>{
     if(!g||g.mode!=='drag')return;
-    // Always update the pending event so the next rAF frame uses the latest position.
+    // Slot highlight is synchronous — no rAF delay.
+    updateDropTarget(ev.clientX,ev.clientY);
+    // Card position / tilt are CSS var writes; throttle to one update per frame.
     g.lastDragEv=ev;
-    if(g.dragRafId)return; // already a frame queued
+    if(g.dragRafId)return;
     g.dragRafId=requestAnimationFrame(()=>{
       g.dragRafId=null;
       if(!g||g.mode!=='drag')return;
       const ev2=g.lastDragEv;
       const x=ev2.clientX,y=ev2.clientY;
-
-      // Tilt: card leans in the direction of movement.
       const deltaX=x-g.prevX;
       const targetTilt=Math.max(-TILT_MAX,Math.min(TILT_MAX,deltaX*TILT_SCALE));
       g.tiltDeg+=(targetTilt-g.tiltDeg)*TILT_LERP;
       g.prevX=x;
-
       const dx=(x-g.grabOffsetX)-g.handCenterX;
       const dy=(y-g.grabOffsetY)-(g.handTop+g.cardHalfH);
-
       g.cardEl.style.setProperty('--drag-x',dx.toFixed(1)+'px');
       g.cardEl.style.setProperty('--drag-y',dy.toFixed(1)+'px');
       g.cardEl.style.setProperty('--drag-rot',g.tiltDeg.toFixed(2)+'deg');
-
-      const cardCX=g.handCenterX+dx;
-      const cardCY=g.handTop+dy+g.cardHalfH;
-
-      // ── Drop-target logic ──────────────────────────────────────────
-      if(isInSpreadZone(cardCY)){
-        // Near or above spread: hit-test empty slots, update highlight only on change.
-        const hit=hitTestSpreadSlots(cardCX,cardCY);
-        const newIdx=hit?hit.idx:-1;
-        const oldIdx=g.dropSlot?g.dropSlot.idx:-1;
-        if(newIdx!==oldIdx){
-          if(g.dropSlot)g.dropSlot.slotEl.classList.remove('drop-target');
-          if(hit)hit.slotEl.classList.add('drop-target');
-          g.dropSlot=hit||null;
-        }
-        // Stop parting when aimed at spread.
-        if(g.hoverIndex!==g.origIndex)applyNaturalSlots();
-      }else{
-        // In the hand zone: clear any spread highlight and apply hand parting.
-        if(g.dropSlot){g.dropSlot.slotEl.classList.remove('drop-target');g.dropSlot=null;}
-        const cards=handCards();
-        const n=cards.length;
-        const frac=xToFracSlot(x);
-        const hover=Math.max(0,Math.min(n-1,Math.round(frac+(n-1)/2)));
-        if(hover!==g.hoverIndex)applyReorderSlots(hover);
-      }
     });
   };
 
