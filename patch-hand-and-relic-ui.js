@@ -234,7 +234,8 @@ upsertBlock(
   let cachedCardW=null;
   // ── rAF coalescing for pointermove + observer recheck ──
   let pendingMoveEv=null,moveRaf=null,recheckRaf=null;
-  const invalidateCache=()=>{cachedCap=null;cachedRadius=null;cachedView=null;cachedCount=-1;};
+  // cachedView and cachedCardW survive per-render busts — they only change on resize.
+  const invalidateCache=()=>{cachedCap=null;cachedRadius=null;cachedCount=-1;};
   try{if(localStorage.getItem('tlr_hand_swiped'))window.__handHasBeenSwiped=true;}catch(e){}
   const handEl=()=>{if(hand&&hand.isConnected)return hand;hand=document.querySelector('.hand');return hand;};
   const zoneEl=()=>{if(zone&&zone.isConnected)return zone;zone=document.getElementById('handSwipeZone');return zone;};
@@ -528,7 +529,7 @@ upsertBlock(
   // ── React to hand changes & viewport changes ──
   // Resize events can pile up; coalesce them to rAF.
   const scheduleRecheck=()=>{
-    cachedCardW=null;
+    cachedCardW=null;cachedView=null;
     if(recheckRaf!=null)return;
     recheckRaf=requestAnimationFrame(()=>{recheckRaf=null;refreshLayout();});
   };
