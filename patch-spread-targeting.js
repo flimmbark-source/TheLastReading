@@ -134,7 +134,9 @@ const patchedRefreshBlock = `  document.querySelectorAll('#spread .slot').forEac
     }
   });`;
 
-replaceOne('spread refresh highlighting', [originalRefreshBlock, previousRefreshBlock], patchedRefreshBlock);
+replaceOne('spread refresh highlighting', [originalRefreshBlock, previousRefreshBlock], patchedRefreshBlock, [
+  `slot.classList.toggle('ability-picked-slot',isPicked)`,
+]);
 
 const stylePatch = `/* spread ability highlight patch */
 .spread .slot.ability-target-slot{z-index:20;pointer-events:auto;border-color:#79c778;background:rgba(98,170,104,.14);box-shadow:0 0 0 1px rgba(121,199,120,.75),0 0 24px rgba(121,199,120,.28)}
