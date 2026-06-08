@@ -126,13 +126,13 @@ upsertScript(
   // ── Spread slot hit-test using bounding rects (not elementsFromPoint,
   //    which is unreliable because the dragging card is on top). ──
   const hitTestSpreadSlots=(cardCX,cardCY)=>{
-    const slots=[...document.querySelectorAll('#spread .slot')];
-    for(let i=0;i<slots.length;i++){
-      if(state.spread[i])continue;             // occupied
-      const r=slots[i].getBoundingClientRect();
+    if(!g||!g.slotRects)return null;
+    for(const sr of g.slotRects){
+      if(state.spread[sr.idx])continue;             // occupied
+      const r=sr.rect;
       if(cardCX>=r.left-SLOT_HIT_PAD&&cardCX<=r.right+SLOT_HIT_PAD&&
          cardCY>=r.top-SLOT_HIT_PAD&&cardCY<=r.bottom+SLOT_HIT_PAD){
-        return{slotEl:slots[i],idx:i};
+        return{slotEl:sr.el,idx:sr.idx};
       }
     }
     return null;
@@ -140,10 +140,7 @@ upsertScript(
 
   // ── Whether the card's centre is in the "spread zone" (near/above spread). ──
   const isInSpreadZone=cardCY=>{
-    const sp=document.querySelector('#spread');
-    if(!sp)return false;
-    const r=sp.getBoundingClientRect();
-    return cardCY<r.bottom+SPREAD_ZONE_SLACK;
+    return g&&g.spreadBottom!=null?cardCY<g.spreadBottom+SPREAD_ZONE_SLACK:false;
   };
 
   // ── Reorder hand card slots with a "parting" gap at hoverIndex. ──
@@ -209,6 +206,11 @@ upsertScript(
   const startDrag=ev=>{
     if(!g||g.mode!=='pending')return;
     cancelHold();
+    // Deselect any other selected card so it drops back into the hand.
+    if(state.selected!==null&&state.selected!==g.uid){
+      state.selected=null;
+      if(typeof refreshHandState==='function')refreshHandState();
+    }
     // Capture card centre and finger-to-centre offset at grab time.
     const rect=g.cardEl.getBoundingClientRect();
     g.grabOffsetX=ev.clientX-(rect.left+rect.width/2);
@@ -220,6 +222,13 @@ upsertScript(
     g.cardHalfH=rect.height/2;
     g.prevX=ev.clientX;
     g.tiltDeg=0;
+    // Cache spread geometry once at drag start to avoid repeated getBoundingClientRect calls.
+    const sp=document.querySelector('#spread');
+    const spRect=sp?sp.getBoundingClientRect():null;
+    g.spreadBottom=spRect?spRect.bottom:0;
+    const slotEls=[...document.querySelectorAll('#spread .slot')];
+    g.slotRects=slotEls.map((el,idx)=>({el,idx,rect:el.getBoundingClientRect()}));
+    g.dropSlotEl=null;
     g.mode='drag';
     window.__handReorderActive=true;
     if(h)h.classList.add('hand-parting');
@@ -259,14 +268,18 @@ upsertScript(
       // Near or above spread: hit-test empty slots by expanded bounding rect.
       // Also: restore hand to natural order so it doesn't thrash while aimed up.
       const hit=hitTestSpreadSlots(cardCX,cardCY);
-      document.querySelectorAll('#spread .slot.drop-target').forEach(s=>s.classList.remove('drop-target'));
-      if(hit){hit.slotEl.classList.add('drop-target');}
+      const newSlotEl=hit?hit.slotEl:null;
+      if(newSlotEl!==g.dropSlotEl){
+        if(g.dropSlotEl)g.dropSlotEl.classList.remove('drop-target');
+        if(newSlotEl)newSlotEl.classList.add('drop-target');
+        g.dropSlotEl=newSlotEl;
+      }
       g.dropSlot=hit||null;
       // Stop parting when aimed at spread.
       if(g.hoverIndex!==g.origIndex)applyNaturalSlots();
     }else{
       // In the hand zone: apply parting around the landing position.
-      document.querySelectorAll('#spread .slot.drop-target').forEach(s=>s.classList.remove('drop-target'));
+      if(g.dropSlotEl){g.dropSlotEl.classList.remove('drop-target');g.dropSlotEl=null;}
       g.dropSlot=null;
       const cards=handCards();
       const n=cards.length;
@@ -280,7 +293,7 @@ upsertScript(
   const endDrag=committed=>{
     if(!g)return;
     cancelHold();
-    const{uid,cardEl,origIndex,hoverIndex,dropSlot,mode,pendingUids=[]}=g;
+    const{uid,cardEl,origIndex,hoverIndex,dropSlot,dropSlotEl,mode,pendingUids=[]}=g;
     const wasDrag=mode==='drag';
     const wasSelectDrag=mode==='select-drag';
     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
@@ -288,7 +301,7 @@ upsertScript(
     cardEl.style.removeProperty('--drag-x');
     cardEl.style.removeProperty('--drag-y');
     cardEl.style.removeProperty('--drag-rot');
-    document.querySelectorAll('#spread .slot.drop-target').forEach(s=>s.classList.remove('drop-target'));
+    if(dropSlotEl)dropSlotEl.classList.remove('drop-target');
     const h=handEl();if(h)h.classList.remove('hand-parting');
     window.__handReorderActive=false;
     g=null;
@@ -374,6 +387,9 @@ upsertScript(
         g=null;
         if(card&&typeof expandCard==='function'){
           window.__handGestureSuppressClickUntil=performance.now()+800;
+          // Select the held card so it stays raised in the background.
+          state.selected=uid;
+          if(typeof refreshHandState==='function')refreshHandState();
           expandCard(card);
         }
       },HOLD_MS);
