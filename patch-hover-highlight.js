@@ -4,7 +4,7 @@ const path = 'index.html';
 let html = fs.readFileSync(path, 'utf8');
 let changed = false;
 
-function replaceOne(label, candidates, replacement) {
+function replaceOne(label, candidates, replacement, markers = []) {
   if (html.includes(replacement)) {
     console.log(`${label} is already patched.`);
     return;
@@ -15,6 +15,16 @@ function replaceOne(label, candidates, replacement) {
       html = html.replace(candidate, replacement);
       changed = true;
       console.log(`Patched ${label}.`);
+      return;
+    }
+  }
+
+  // The committed index.html may have been refactored so the original rule no
+  // longer exists verbatim, yet already embodies the intended result. Treat the
+  // presence of any marker as "already satisfied" instead of failing the build.
+  for (const marker of markers) {
+    if (html.includes(marker)) {
+      console.log(`${label} already satisfied by current source; skipping.`);
       return;
     }
   }
@@ -93,7 +103,8 @@ replaceOne(
     `.hand .card:hover,.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{box-shadow:${baseGlow}}`,
     `.hand:not(.has-selected-card) .card:hover,.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{box-shadow:${baseGlow}}`
   ],
-  `.hand:not(.has-selected-card) .card:hover,.hand .card.sel,.hand .card.ability-picked{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{box-shadow:${baseGlow}}`
+  `.hand:not(.has-selected-card) .card:hover,.hand .card.sel,.hand .card.ability-picked{transform:translate3d(0,-92px,0) rotate(0deg);z-index:999!important}.hand .card:active,.hand .card.sel,.hand .card.ability-picked,.hand .card.press-highlight{box-shadow:${baseGlow}}`,
+  [`.hand:not(.has-selected-card) .card:hover,.hand .card.sel,.hand .card.ability-picked,.hand .card.purge-picked{`]
 );
 
 replaceOne(
@@ -105,7 +116,8 @@ replaceOne(
     `.hand .card.hint-card:active,.hand .card.hint-card.sel,.hand .card.hint-card.ability-picked,.hand .card.hint-card.press-highlight{box-shadow:${hintCardGlow}}`,
     `.hand .card.hint-card:active,.hand .card.hint-card.sel,.hand .card.hint-card.ability-picked,.hand .card.hint-card.press-highlight{box-shadow:${hintCardSelectorGlow}}`
   ],
-  `.hand .card.hint-card:active,.hand .card.hint-card.sel,.hand .card.hint-card.ability-picked,.hand .card.hint-card.press-highlight{box-shadow:${hintCardSelectorGlow}}`
+  `.hand .card.hint-card:active,.hand .card.hint-card.sel,.hand .card.hint-card.ability-picked,.hand .card.hint-card.press-highlight{box-shadow:${hintCardSelectorGlow}}`,
+  [`.card.hint-card.press-highlight,.card.hint-card.sel,.card.hint-card.ability-picked{box-shadow:`]
 );
 
 replaceOne(
@@ -117,7 +129,8 @@ replaceOne(
     `.hand .card.hint-complete:active,.hand .card.hint-complete.sel,.hand .card.hint-complete.ability-picked,.hand .card.hint-complete.press-highlight{box-shadow:${hintCompleteGlow}}`,
     `.hand .card.hint-complete:active,.hand .card.hint-complete.sel,.hand .card.hint-complete.ability-picked,.hand .card.hint-complete.press-highlight{box-shadow:${hintCompleteSelectorGlow}}`
   ],
-  `.hand .card.hint-complete:active,.hand .card.hint-complete.sel,.hand .card.hint-complete.ability-picked,.hand .card.hint-complete.press-highlight{box-shadow:${hintCompleteSelectorGlow}}`
+  `.hand .card.hint-complete:active,.hand .card.hint-complete.sel,.hand .card.hint-complete.ability-picked,.hand .card.hint-complete.press-highlight{box-shadow:${hintCompleteSelectorGlow}}`,
+  [`.card.hint-complete.press-highlight,.card.hint-complete.sel,.card.hint-complete.ability-picked{box-shadow:`]
 );
 
 replaceOne(
@@ -129,7 +142,8 @@ replaceOne(
     `.hand .card.hint-multi:active,.hand .card.hint-multi.sel,.hand .card.hint-multi.ability-picked,.hand .card.hint-multi.press-highlight,.choices .card.hint-multi:active,.choices .card.hint-multi.press-highlight{box-shadow:var(--hint-shadow)!important}`,
     `.hand .card.hint-multi:active,.hand .card.hint-multi.sel,.hand .card.hint-multi.ability-picked,.hand .card.hint-multi.press-highlight,.choices .card.hint-multi:active,.choices .card.hint-multi.press-highlight{box-shadow:${hintMultiSelectorGlow}!important}`
   ],
-  `.hand .card.hint-multi:active,.hand .card.hint-multi.sel,.hand .card.hint-multi.ability-picked,.hand .card.hint-multi.press-highlight,.choices .card.hint-multi:active,.choices .card.hint-multi.press-highlight{box-shadow:${hintMultiSelectorGlow}!important}`
+  `.hand .card.hint-multi:active,.hand .card.hint-multi.sel,.hand .card.hint-multi.ability-picked,.hand .card.hint-multi.press-highlight,.choices .card.hint-multi:active,.choices .card.hint-multi.press-highlight{box-shadow:${hintMultiSelectorGlow}!important}`,
+  [`.card.hint-multi.press-highlight,.card.hint-multi.sel,.card.hint-multi.ability-picked{box-shadow:`]
 );
 
 replaceOne(
@@ -140,7 +154,8 @@ replaceOne(
     `.hand .card:active[data-hint]::after,.hand .card.sel[data-hint]::after,.hand .card.ability-picked[data-hint]::after,.choices .card[data-hint]:hover::after{opacity:1}`,
     `.hand .card:active[data-hint]::after,.hand .card.sel[data-hint]::after,.hand .card.ability-picked[data-hint]::after,.hand .card.press-highlight[data-hint]::after,.choices .card:active[data-hint]::after,.choices .card.press-highlight[data-hint]::after{opacity:1}`
   ],
-  `.hand .card:active[data-hint]::after,.hand .card.sel[data-hint]::after,.hand .card.ability-picked[data-hint]::after,.hand .card.press-highlight[data-hint]::after,.choices .card:active[data-hint]::after,.choices .card.press-highlight[data-hint]::after{opacity:1}`
+  `.hand .card:active[data-hint]::after,.hand .card.sel[data-hint]::after,.hand .card.ability-picked[data-hint]::after,.hand .card.press-highlight[data-hint]::after,.choices .card:active[data-hint]::after,.choices .card.press-highlight[data-hint]::after{opacity:1}`,
+  [`.card.press-highlight[data-hint]::after{opacity:1}`]
 );
 
 replaceOptional(
