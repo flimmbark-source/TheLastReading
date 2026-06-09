@@ -1871,10 +1871,7 @@ function openShopMain(){
   html+='<div class="shop-section-title"></div><div class="shop-packs-row">';
   const packDiscount=persist.relics.includes('merchants_scale')?3:0;
   for(const pk of _shopPacks){
-    if(pk===null){
-      html+='<div class="shop-pack-empty"><span class="shop-pack-empty-x">✕</span></div>';
-      continue;
-    }
+    if(pk===null) continue;
     const p=PACKS[pk];
     const cost=Math.max(0,p.cost+(_packBuys[pk]||0)*8-packDiscount);
     const ok=persist.pool>=cost;
