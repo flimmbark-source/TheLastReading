@@ -78,7 +78,9 @@ const tutFns = `${fnMarker}
       +'<button id="atticTutDismiss">I understand</button>';
     const btn=t.querySelector('#atticTutDismiss');
     if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
-    t.addEventListener('click',function(){dismissAtticTutorial();});
+    function _tutBlock(e){e.stopPropagation();e.preventDefault();dismissAtticTutorial();}
+    t.addEventListener('click',_tutBlock);
+    t.addEventListener('touchstart',_tutBlock,{passive:false});
     t.classList.add('show');
   }
   function dismissAtticTutorial(){
