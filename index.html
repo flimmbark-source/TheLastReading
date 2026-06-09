@@ -1386,18 +1386,6 @@ function breathVisuals(){
     setTimeout(()=>{vig.style.transition=`opacity ${exhaleMs}ms ease-out`;vig.style.opacity='0';},inhaleMs+gapMs);
   }
 
-  // hand card sway: WAAPI overrides card-wave on resting cards only, releases on finish
-  [...document.querySelectorAll('#hand .card:not(.sel):not(.ability-picked):not(.purge-picked)')].forEach(c=>{
-    const waveAnim=c.getAnimations().find(a=>a.animationName==='card-wave');
-    if(waveAnim)waveAnim.updatePlaybackRate(0);
-    const ba=c.animate([
-      {translate:'0 0px'},
-      {translate:'0 6px',offset:inhaleMs/totalMs},
-      {translate:'0 -3px',offset:(inhaleMs+gapMs+exhaleMs*.55)/totalMs},
-      {translate:'0 0px'}
-    ],{duration:totalMs,easing:'ease-in-out',fill:'none'});
-    ba.onfinish=()=>{const wa=c.getAnimations().find(a=>a.animationName==='card-wave');if(wa){wa.currentTime=0;wa.updatePlaybackRate(1);}};
-  });
 
   // motes: slow rise on inhale, push outward via margin-left (independent of transform),
   // speed up briefly on exhale. margin-left on position:absolute offsets without
