@@ -14,29 +14,55 @@ console.log('Drawer content fit patch:');
 
 html = html.replace('</style>', `
 ${marker}
-/* Give the pull drawers enough visible room, while keeping Archives-style movement. */
-.tlr-pull-wrap{--tlr-drawer-h:min(76dvh,560px);transform:translateY(calc(-1 * var(--tlr-drawer-h)))!important}
+/* Pull drawers now size themselves to the content instead of dropping a fixed tall panel. */
+.tlr-pull-wrap{--tlr-drawer-h:220px;transform:translateY(calc(-1 * var(--tlr-drawer-h)))!important}
 .tlr-pull-wrap.open{transform:translateY(0)!important}
-.tlr-pull-desk{height:var(--tlr-drawer-h)!important;padding:14px 16px 18px!important;overflow:auto!important}
+.tlr-pull-desk{height:var(--tlr-drawer-h)!important;padding:10px 14px 12px!important;overflow:visible!important}
 .tlr-pull-tab{top:var(--tlr-drawer-h)!important}
-@media(max-width:640px){.tlr-pull-wrap{--tlr-drawer-h:min(72dvh,520px)}.tlr-pull-desk{padding:12px 8px 16px!important}}
+@media(max-width:640px){.tlr-pull-desk{padding:9px 7px 11px!important}}
 #scoringPullDesk .scoring-sheet{display:block!important;width:fit-content!important;max-width:100%!important;margin:0 auto!important;padding:0!important}
 #scoringPullDesk .scoring-sheet table{width:auto!important;max-width:100%!important;border-collapse:collapse!important}
-#scoringPullDesk .scoring-sheet td{font-size:12px!important;line-height:1.24!important;padding:2px 5px!important;white-space:nowrap!important}
-#scoringPullDesk .scoring-sheet .m{padding-left:8px!important;color:#6b4b20!important}
-#scoringPullDesk .scoring-sheet .r .chips{width:48px!important}
-#scoringPullDesk .scoring-sheet .r .mult{width:38px!important;margin-left:6px!important}
+#scoringPullDesk .scoring-sheet td{font-size:10.5px!important;line-height:1.08!important;padding:1px 4px!important;white-space:nowrap!important}
+#scoringPullDesk .scoring-sheet .m{padding-left:6px!important;color:#6b4b20!important;font-size:9.6px!important}
+#scoringPullDesk .scoring-sheet .score-head{font-size:8.5px!important;letter-spacing:.06em!important}
+#scoringPullDesk .scoring-sheet .arcana-row td{font-size:9px!important;letter-spacing:.08em!important;padding-top:5px!important;padding-bottom:1px!important}
+#scoringPullDesk .scoring-sheet .r .chips{width:42px!important}
+#scoringPullDesk .scoring-sheet .r .mult{width:32px!important;margin-left:4px!important}
 #abilitiesPullDesk .ref{max-width:min(94vw,720px)!important;padding:0!important}
-#abilitiesPullDesk table{width:100%!important;border-collapse:collapse!important;font-size:12px!important;line-height:1.28!important}
-#abilitiesPullDesk td{padding:4px 6px!important;vertical-align:top!important;white-space:normal!important}
-#abilitiesPullDesk td:first-child{width:92px!important;font-weight:700!important;white-space:nowrap!important;color:#3a1a06!important}
-#menuPullDesk #settingsPanel{max-width:min(92vw,300px)!important;gap:10px!important}
+#abilitiesPullDesk table{width:100%!important;border-collapse:collapse!important;font-size:11.5px!important;line-height:1.2!important}
+#abilitiesPullDesk td{padding:3px 5px!important;vertical-align:top!important;white-space:normal!important}
+#abilitiesPullDesk td:first-child{width:86px!important;font-weight:700!important;white-space:nowrap!important;color:#3a1a06!important}
+#menuPullDesk #settingsPanel{max-width:min(92vw,300px)!important;gap:9px!important}
 </style>`);
 changed++;
 
 html = html.replace('</script>', `
 (function(){
   function fmtBonus(v){return '+'+Number(v).toFixed(2).replace(/\\.?0+$/,'');}
+  function fitDrawerHeights(){
+    const defs=[
+      {id:'scoring',min:92,max:260},
+      {id:'abilities',min:112,max:360},
+      {id:'menu',min:150,max:380}
+    ];
+    for(const d of defs){
+      const wrap=document.getElementById(d.id+'PullWrap');
+      const desk=document.getElementById(d.id+'PullDesk');
+      if(!wrap||!desk)continue;
+      const maxByViewport=Math.max(d.min,Math.floor(window.innerHeight*(window.innerWidth<641?.72:.62)));
+      const max=Math.min(d.max,maxByViewport);
+      const oldHeight=desk.style.getPropertyValue('height');
+      const oldOverflow=desk.style.getPropertyValue('overflow');
+      desk.style.setProperty('height','auto','important');
+      desk.style.setProperty('overflow','visible','important');
+      const measured=Math.ceil(desk.scrollHeight)+2;
+      if(oldHeight)desk.style.setProperty('height',oldHeight);else desk.style.removeProperty('height');
+      if(oldOverflow)desk.style.setProperty('overflow',oldOverflow);else desk.style.removeProperty('overflow');
+      const target=Math.max(d.min,Math.min(max,measured));
+      wrap.style.setProperty('--tlr-drawer-h',target+'px');
+      desk.style.setProperty('overflow',measured>max?'auto':'visible','important');
+    }
+  }
   function renderDrawerScoringSheet(){
     const el=document.getElementById('ref');
     if(!el)return;
@@ -68,21 +94,26 @@ html = html.replace('</script>', `
     out+='</tbody></table>';
     el.className='ref scoring-sheet';
     el.innerHTML=out;
+    requestAnimationFrame(fitDrawerHeights);
   }
 
   // Fill immediately and again whenever the Scoring drawer opens, so upgrades are reflected.
   renderDrawerScoringSheet();
+  requestAnimationFrame(fitDrawerHeights);
+  window.addEventListener('resize',()=>setTimeout(fitDrawerHeights,40));
   const oldToggle=window.toggleRef;
   window.toggleRef=function(e){
     renderDrawerScoringSheet();
     if(typeof oldToggle==='function')return oldToggle.apply(this,arguments);
   };
 
-  const tab=document.getElementById('scoringPullTab');
-  if(tab&&!tab.__scoreFillHooked){
-    tab.__scoreFillHooked=true;
-    tab.addEventListener('pointerup',()=>setTimeout(renderDrawerScoringSheet,0),true);
-    tab.addEventListener('click',()=>setTimeout(renderDrawerScoringSheet,0),true);
+  for(const id of ['scoring','abilities','menu']){
+    const tab=document.getElementById(id+'PullTab');
+    if(tab&&!tab.__drawerFitHooked){
+      tab.__drawerFitHooked=true;
+      tab.addEventListener('pointerup',()=>setTimeout(()=>{if(id==='scoring')renderDrawerScoringSheet();fitDrawerHeights();},0),true);
+      tab.addEventListener('click',()=>setTimeout(()=>{if(id==='scoring')renderDrawerScoringSheet();fitDrawerHeights();},0),true);
+    }
   }
 })();
 </script>`);
