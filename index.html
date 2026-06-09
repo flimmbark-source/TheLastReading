@@ -32,7 +32,7 @@
 
 @media (max-width: 640px){
   body{padding:8px 8px 157px;min-height:100dvh;overflow-x:hidden;background-size:auto;background-position:center top;background-attachment:scroll}
-  h1{font-size:17px;margin-bottom:6px;padding-right:132px}#titleContent h1{padding-right:0}
+  h1{font-size:17px;margin-bottom:6px;padding-right:132px}#titleContent h1{padding-right:0}#titleContent{padding-bottom:0}
   .bar{gap:6px;margin:6px 0 10px;padding-right:0;max-width:calc(100vw - 140px)}
   .pill{font-size:11px;padding:5px 8px 5px 14px}
   .threshold-pill{}
@@ -426,7 +426,7 @@
 .mote{position:absolute;bottom:-14px;width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,rgba(255,230,176,.95),rgba(255,208,138,.3) 58%,transparent 72%);filter:blur(.6px);opacity:0;will-change:transform,opacity;animation:moteRise var(--d) linear forwards}
 @keyframes moteRise{0%{opacity:0;transform:translate3d(0,0,0)}12%{opacity:var(--o)}50%{transform:translate3d(var(--x),-46vh,0)}88%{opacity:var(--o)}100%{opacity:0;transform:translate3d(calc(var(--x) * -.6),-94vh,0)}}
 @media(prefers-reduced-motion:reduce){#roomAmbient{animation:none;opacity:.7}#ambientFX{display:none}}
-#titleWrap{position:relative}#titleRow{display:flex;align-items:flex-start;gap:8px}#titleContent{display:flex;flex-direction:column;align-items:center;gap:4px}#titleContent .actions{justify-content:center;margin:0}
+#titleWrap{position:relative}#titleRow{display:flex;align-items:flex-start;gap:8px}#titleContent{display:flex;flex-direction:column;align-items:center;gap:4px;padding-bottom:30px}#titleContent .actions{justify-content:center;margin:0}
 .settings-title{margin:0 0 8px;font:700 16px Georgia,serif;color:#f0d58a;letter-spacing:.02em;text-align:center;border-bottom:1px solid rgba(180,140,90,.2);padding-bottom:8px}
 #menuBtn{flex:0 0 auto;background:none;border:none;color:#d4b896;font-size:1.5rem;cursor:pointer;padding:4px 8px;line-height:1;z-index:200;opacity:.75;transition:opacity .2s}
 #menuBtn:hover{opacity:1}
@@ -2267,15 +2267,17 @@ function showInvTut(text){
 function initTabDrag(){
   const tab=document.getElementById('invTab');
   if(!tab)return;
-  // Restore saved position, or default to 10px right of the h1 title
+  // Default: anchor right of the Abilities button; restore saved drag position if set
+  function _defaultTabLeft(){
+    const btn=document.getElementById('abilitiesBtn');
+    if(btn){const r=btn.getBoundingClientRect();return Math.min(window.innerWidth-80,r.right+10);}
+    return window.innerWidth/2-40;
+  }
   const savedX=localStorage.getItem('tlr_tab_x');
-  // Ignore the old centered default (near 50% of viewport) so new placement takes effect
-  const midGuard=savedX!==null&&Math.abs(parseFloat(savedX)-(window.innerWidth/2-40))<60;
-  if(savedX!==null&&!midGuard){
+  if(savedX!==null){
     tab.style.left=Math.max(0,Math.min(window.innerWidth-80,parseFloat(savedX)))+'px';
   }else{
-    const h1=document.querySelector('h1');
-    if(h1){const r=h1.getBoundingClientRect();tab.style.left=Math.min(window.innerWidth-80,r.right+10)+'px';}
+    requestAnimationFrame(()=>{tab.style.left=_defaultTabLeft()+'px';});
   }
   let psx,tabStartX,moved=false,active=false;
   tab.addEventListener('pointerdown',e=>{
