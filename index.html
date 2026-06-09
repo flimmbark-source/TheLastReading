@@ -43,7 +43,7 @@
   .reserve-pill{order:1}.discards-pill{order:2}.score-pill{order:3;transform:translateX(3px)}.threshold-pill{order:4}.th-pill-wrap{order:4;flex:0 0 110px;width:110px}
   .actions{gap:6px;margin-bottom:8px}
   button{font-size:12px;padding:6px 9px}
-  .refs-layer{top:86px;left:8px;right:8px;display:block}
+  .refs-layer{left:8px;right:8px;display:block}
   .ref{max-width:calc(100vw - 16px);font-size:11px;padding:8px;overflow:auto}
   .scoring-sheet td{font-size:11px;padding:2px 4px;line-height:1.35}
   .scoring-sheet .m{padding-left:5px}
@@ -2039,8 +2039,9 @@ function renderScoringSheet(){
   if(up.length) html+=`<div class="ref-upgrades"><b>Your upgrades:</b> ${up.join(' · ')}</div>`;
   $('#ref').innerHTML=html;
 }
-function toggleRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ref.classList.contains('hidden'); closeRefs(); if(wasHidden){renderScoringSheet();ref.classList.remove('hidden')} }
-function toggleAbilityRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ability.classList.contains('hidden'); closeRefs(); if(wasHidden)ability.classList.remove('hidden') }
+function _positionRefsLayer(btn){const rl=document.querySelector('.refs-layer');if(!rl)return;if(btn){const r=btn.getBoundingClientRect();rl.style.top=(r.bottom+4)+'px';}else{rl.style.top='';}}
+function toggleRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ref.classList.contains('hidden'); closeRefs(); if(wasHidden){renderScoringSheet();_positionRefsLayer(e&&e.currentTarget);ref.classList.remove('hidden')} }
+function toggleAbilityRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ability.classList.contains('hidden'); closeRefs(); if(wasHidden){_positionRefsLayer(e&&e.currentTarget);ability.classList.remove('hidden')} }
 document.addEventListener('click',e=>{
   let insideRefs=e.target.closest('.refs-layer')||e.target.closest('#scoringBtn')||e.target.closest('#abilitiesBtn');
   if(!insideRefs)closeRefs();
