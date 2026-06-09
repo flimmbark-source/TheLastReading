@@ -1909,6 +1909,7 @@ function buyPack(pk,cost){
   const p=PACKS[pk];
   const c=cost!==undefined?cost:p.cost;
   if(persist.pool<c)return;
+  if(_shopPacks){const i=_shopPacks.indexOf(pk);if(i>=0)_shopPacks.splice(i,1);}
   persist.pool-=c;
   _packBuys[pk]=(_packBuys[pk]||0)+1;
   animatePackOpen(pk,()=>{
