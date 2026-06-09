@@ -1,0 +1,14 @@
+/* Suggested CSS direction for mobile: keep the attic art landscape-sized and pan horizontally.
+   This is documentation only; the current game code still references the asset path normally. */
+#atticScene{
+  background-size:auto 100%;
+  background-position:center center;
+}
+@media (max-width:640px){
+  #atticScene{
+    overflow-x:auto;
+    overflow-y:hidden;
+    background-size:auto 100%;
+    background-position:left center;
+  }
+}
