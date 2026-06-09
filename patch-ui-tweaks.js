@@ -18,6 +18,21 @@ function replaceOne(label, candidate, replacement) {
   return true;
 }
 
+function replaceOneSoft(label, candidate, replacement, alreadyAppliedNeedle) {
+  if (html.includes(replacement) || (alreadyAppliedNeedle && html.includes(alreadyAppliedNeedle))) {
+    console.log(`${label} already applied.`);
+    return false;
+  }
+  if (!html.includes(candidate)) {
+    console.warn(`WARN: ${label}: could not find candidate to replace.`);
+    return false;
+  }
+  html = html.replace(candidate, replacement);
+  changed = true;
+  console.log(`Patched ${label}.`);
+  return true;
+}
+
 function replaceAllOccurrences(label, candidate, replacement) {
   if (!html.includes(candidate)) {
     console.log(`${label} already applied (no more occurrences).`);
@@ -69,10 +84,11 @@ const settingsHtmlPatched = `      <label class="settings-check"><input type="ch
       <hr>
       <button type="button" class="settings-action" onclick="replayTutorial()">Replay Tutorial</button>
     </div>`;
-replaceOne(
+replaceOneSoft(
   'settings panel "Replay Tutorial" button',
   settingsHtmlOriginal,
-  settingsHtmlPatched
+  settingsHtmlPatched,
+  'onclick="replayTutorial()"'
 );
 
 // Insert button CSS just after the existing settings-check rule.
