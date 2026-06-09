@@ -30,11 +30,11 @@ function reg(pattern, newText, label) {
 
 console.log('Get up/swipe hint patch:');
 
-// Larger swipe strip: same bottom edge, more height upward.
+// Larger swipe strip, but pulled back down from the first oversized version.
 html = html.replace('</style>', `
 ${marker}
-#handSwipeZone.hand-swipe-zone{height:156px!important;bottom:197px!important}
-@media(max-width:640px){#handSwipeZone.hand-swipe-zone{height:132px!important;bottom:152px!important}}
+#handSwipeZone.hand-swipe-zone{height:121px!important;bottom:197px!important}
+@media(max-width:640px){#handSwipeZone.hand-swipe-zone{height:97px!important;bottom:152px!important}}
 /* Do not cycle swipe-help text. Show one stable drift hint until an actual drift happens. */
 #handSwipeZone .hand-swipe-hint{display:flex!important;align-items:center;justify-content:center;transform:translate(-50%,-50%)!important}
 #handSwipeZone .swipe-hint-line{position:static!important;transform:none!important;animation:none!important;opacity:1!important}
@@ -47,17 +47,20 @@ changed++;
 html = html.split('tlr_hand_swiped').join('tlr_hand_drifted');
 changed++;
 
-// Add Get Up to the hamburger menu.
+// Remove any existing Get Up buttons first, then insert exactly one after Replay Tutorial.
+html = html.replace(/<button type="button" class="settings-action get-up-action" onclick="getUpFromTable\(\)">Get Up<\/button>/g, '');
+changed++;
 rep(
   '<button type="button" class="settings-action" onclick="replayTutorial()">Replay Tutorial</button>',
   '<button type="button" class="settings-action" onclick="replayTutorial()">Replay Tutorial</button><button type="button" class="settings-action get-up-action" onclick="getUpFromTable()">Get Up</button>',
-  'Add Get Up button to settings menu'
+  'Add exactly one Get Up button to settings menu'
 );
 
 // Expose Get Up as a small wrapper around the existing endSession result/attic path.
-rep(
-  'function startReading(){\n  if(window.tlrCloseArchives)window.tlrCloseArchives();',
-  `function getUpFromTable(){
+if (!html.includes('function getUpFromTable(){')) {
+  rep(
+    'function startReading(){\n  if(window.tlrCloseArchives)window.tlrCloseArchives();',
+    `function getUpFromTable(){
   if(state&&state.busy)return;
   if(window.tlrCloseArchives)window.tlrCloseArchives();
   const panel=document.getElementById('settingsPanel');if(panel)panel.classList.add('hidden');
@@ -65,8 +68,11 @@ rep(
 }
 function startReading(){
   if(window.tlrCloseArchives)window.tlrCloseArchives();`,
-  'Add getUpFromTable() wrapper'
-);
+    'Add getUpFromTable() wrapper'
+  );
+} else {
+  console.log('  • getUpFromTable() wrapper already present');
+}
 
 // The old handler dismissed the hint on pointerdown. Remove that block.
 reg(
