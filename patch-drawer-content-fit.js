@@ -49,7 +49,8 @@ html = html.replace('</script>', `
       const wrap=document.getElementById(d.id+'PullWrap');
       const desk=document.getElementById(d.id+'PullDesk');
       if(!wrap||!desk)continue;
-      const maxByViewport=Math.max(d.min,Math.floor(window.innerHeight*(window.innerWidth<641?.72:.62)));
+      const viewportScale=window.innerWidth<641?0.72:0.62;
+      const maxByViewport=Math.max(d.min,Math.floor(window.innerHeight*viewportScale));
       const max=Math.min(d.max,maxByViewport);
       const oldHeight=desk.style.getPropertyValue('height');
       const oldOverflow=desk.style.getPropertyValue('overflow');
