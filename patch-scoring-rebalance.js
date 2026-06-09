@@ -34,28 +34,46 @@ rep(
   'Three of a Kind chips 10 → 5'
 );
 
-// Full/Royal Court: chips and mult base
+// Full/Royal Court: flatten to fixed chips+mult (no extra scaling per card)
 rep(
   `let courtMult=1+(persist.up.court_mult||0)*0.25;`,
   `let courtMult=1.25+(persist.up.court_mult||0)*0.25;`,
   'Court mult base 1.0 → 1.25'
 );
 rep(
-  `const x=Math.round(20+extra*8+courtChips);`,
-  `const x=Math.round(15+extra*8+courtChips);`,
-  'Royal Court chips base 20 → 15'
-);
-rep(
-  `const x=Math.round(14+extra*6+courtChips);`,
-  `const x=Math.round(10+extra*6+courtChips);`,
-  'Full Court chips base 14 → 10'
+  `  if(same){
+    // Royal Court: 3 same-suit courts = base; each extra rank in that suit adds chips+mult
+    const extra=sameCount-3; // 0, 1
+    const x=Math.round(15+extra*8+courtChips);
+    const xm=+(courtMult+(extra*0.25)).toFixed(2);
+    m.push(['Royal Court ('+same+')'+( extra?' ×'+(sameCount):'' ),x,xm]);chips+=x;mult*=xm;court=true;
+  } else if(fullCount>=3){
+    // Full Court: 3 distinct ranks = base; each rank beyond 3 adds chips+mult
+    const extra=Math.min(fullCount-3,1); // cap at 4 ranks for now
+    const x=Math.round(10+extra*6+courtChips);
+    const xm=+(courtMult+(extra*0.25)).toFixed(2);
+    m.push(['Full Court'+(extra?' ×'+fullCount:''),x,xm]);chips+=x;mult*=xm;court=true;
+  }`,
+  `  if(same){
+    m.push(['Royal Court ('+same+')',15+courtChips,courtMult]);chips+=15+courtChips;mult*=courtMult;court=true;
+  } else if(fullCount>=3){
+    m.push(['Full Court',10+courtChips,courtMult]);chips+=10+courtChips;mult*=courtMult;court=true;
+  }`,
+  'Court scoring — flat chips/mult, no extra-card scaling'
 );
 
-// Sequence: mult base 2.0 → 1.25
+// Sequence: flat chips regardless of length, mult base 2.0 → 1.25
 rep(
   `let seqMult=2+(persist.up.seq_mult||0)*0.5;`,
   `let seqMult=1.25+(persist.up.seq_mult||0)*0.5;`,
   'Sequence mult base 2.0 → 1.25'
+);
+rep(
+  `  if(best>=5){let x=18+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
+  else if(best>=4){let x=15+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
+  else if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}`,
+  `  if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}`,
+  'Sequence scoring — flat chips for any length 3+'
 );
 
 // Path of the Magi: chips base 30 → 10, mult base 2.0 → 1.5
@@ -92,25 +110,30 @@ rep(
   `const pathMult=+(1.5+(u.path_mult||0)*0.5).toFixed(2);`,
   '[ref] Magi mult base'
 );
+// Rewrite the rows array: per-pattern increments, mult as +N not ×N
 rep(
-  '`+${10+rankBonus} / +${12+rankBonus}`',
-  '`+${5+rankBonus} / +${7+rankBonus}`',
-  '[ref] Rank Match chips display'
+  `  const rows=[
+    ['Rank Match','Three/Four of a Kind',\`+\${5+rankBonus} / +\${7+rankBonus}\`,\`×\${rankMult}\`],
+    ['Full Court (3+)','Consecutive Ranks',\`+\${10+courtChips} / +\${16+courtChips}\`,\`×\${courtMult} / ×\${+(courtMult+0.25).toFixed(2)}\`],
+    ['Royal Court (3+)','Consecutive Ranks, same suit',\`+\${15+courtChips} / +\${23+courtChips}\`,\`×\${courtMult} / ×\${+(courtMult+0.25).toFixed(2)}\`],
+    ['Sequence (3+)','Consecutive Arcana',\`+\${10+seqBonus} / +\${15+seqBonus} / +\${18+seqBonus}\`,\`×\${seqMult}\`],
+    ['Path of the Magi','0·I·XXI in spread',\`+\${10+pathChips}\`,\`×\${pathMult}\`],
+  ];`,
+  `  const fmt=v=>'+'++(v-1).toFixed(2).replace(/\\.?0+$/,'');
+  const rows=[
+    ['Three of a Kind','3 matching court ranks',\`+\${5+rankBonus}\`,fmt(rankMult)],
+    ['Four of a Kind','4 matching court ranks',\`+\${7+rankBonus}\`,fmt(rankMult)],
+    ['Full Court (3+)','Consecutive ranks',\`+\${10+courtChips}\`,fmt(courtMult)],
+    ['Royal Court (3+)','Consecutive ranks, same suit',\`+\${15+courtChips}\`,fmt(courtMult)],
+    ['Sequence (3+)','Consecutive major arcana',\`+\${10+seqBonus}\`,fmt(seqMult)],
+    ['Path of the Magi','0·I·XXI in spread',\`+\${10+pathChips}\`,fmt(pathMult)],
+  ];`,
+  '[ref] rows array — per-pattern increments, mult as +N'
 );
 rep(
-  '`+${14+courtChips} / +${20+courtChips}`',
-  '`+${10+courtChips} / +${16+courtChips}`',
-  '[ref] Full Court chips display'
-);
-rep(
-  '`+${20+courtChips} / +${28+courtChips}`',
-  '`+${15+courtChips} / +${23+courtChips}`',
-  '[ref] Royal Court chips display'
-);
-rep(
-  '`+${30+pathChips}`',
-  '`+${10+pathChips}`',
-  '[ref] Magi chips display'
+  '  const minorRows=rows.slice(0,3);\n  const majorRows=rows.slice(3);',
+  '  const minorRows=rows.slice(0,4);\n  const majorRows=rows.slice(4);',
+  '[ref] minor/major row split (4 minor now)'
 );
 
 fs.writeFileSync(file, html);

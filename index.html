@@ -32,7 +32,7 @@
 
 @media (max-width: 640px){
   body{padding:8px 8px 157px;min-height:100dvh;overflow-x:hidden;background-size:auto;background-position:center top;background-attachment:scroll}
-  h1{font-size:17px;margin-bottom:6px;padding-right:132px}#titleContent h1{padding-right:0}
+  h1{font-size:17px;margin-bottom:6px}
   .bar{gap:6px;margin:6px 0 10px;padding-right:0;max-width:calc(100vw - 140px)}
   .pill{font-size:11px;padding:5px 8px 5px 14px}
   .threshold-pill{}
@@ -426,7 +426,8 @@
 .mote{position:absolute;bottom:-14px;width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,rgba(255,230,176,.95),rgba(255,208,138,.3) 58%,transparent 72%);filter:blur(.6px);opacity:0;will-change:transform,opacity;animation:moteRise var(--d) linear forwards}
 @keyframes moteRise{0%{opacity:0;transform:translate3d(0,0,0)}12%{opacity:var(--o)}50%{transform:translate3d(var(--x),-46vh,0)}88%{opacity:var(--o)}100%{opacity:0;transform:translate3d(calc(var(--x) * -.6),-94vh,0)}}
 @media(prefers-reduced-motion:reduce){#roomAmbient{animation:none;opacity:.7}#ambientFX{display:none}}
-#titleWrap{position:relative}#titleRow{display:flex;align-items:flex-start;gap:8px}#titleContent{display:flex;flex-direction:column;align-items:center;gap:4px}#titleContent .actions{justify-content:center;margin:0}
+#titleWrap{position:relative}#titleRow{display:flex;align-items:center;gap:8px}#titleContent{flex:1;display:flex;justify-content:center}#titleContent .actions{justify-content:center;margin:0}
+.settings-title{margin:0 0 4px;font:700 16px Georgia,serif;color:#f0d58a;letter-spacing:.02em;text-align:center;border-bottom:1px solid rgba(180,140,90,.2);padding-bottom:8px}
 #menuBtn{flex:0 0 auto;background:none;border:none;color:#d4b896;font-size:1.5rem;cursor:pointer;padding:4px 8px;line-height:1;z-index:200;opacity:.75;transition:opacity .2s}
 #menuBtn:hover{opacity:1}
 .settings-panel{position:absolute;top:calc(100% + 4px);left:0;background:rgba(20,14,10,.95);border:1px solid rgba(180,140,90,.35);border-radius:8px;padding:14px 18px;z-index:300;min-width:220px;display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.6)}
@@ -693,11 +694,10 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 
 /* relic rack below-spread mobile patch */
 @media (max-width: 640px) {
-  .relic-rack{position:static!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;width:100%!important;top:auto!important;right:auto!important;left:auto!important;transform:none!important;margin:8px 0 4px!important;gap:8px!important}
+  .relic-rack{position:fixed!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;width:100%!important;left:0!important;right:0!important;top:calc(46vh + 122px)!important;bottom:auto!important;transform:none!important;margin:0!important;gap:8px!important;z-index:24!important}
   .relic-rack .relic-btn{width:38px!important;height:38px!important}
   .relic-rack .relic-slot-empty{width:38px!important;height:38px!important}
 }
-
 </style>
 </head>
 <body>
@@ -712,10 +712,10 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
   <div id="titleRow">
     <button id="menuBtn" onclick="toggleMenu()" aria-label="Settings">&#9776;</button>
     <div id="titleContent">
-      <h1>The Last Reading</h1>
       <div class="actions"><button id="scoringBtn" onclick="toggleRef(event)">Scoring</button><button id="abilitiesBtn" onclick="toggleAbilityRef(event)">Abilities</button><button id="mullBtn" onclick="mulligan()" style="display:none">Mulligan</button></div>
     </div>
     <div id="settingsPanel" class="settings-panel hidden">
+      <h2 class="settings-title">The Last Reading</h2>
       <label>Music<input type="range" id="musicVol" min="0" max="1" step="0.05" value="0.3" oninput="setMusicVol(+this.value)"></label>
       <label>Effects<input type="range" id="sfxVol" min="0" max="1" step="0.05" value="1" oninput="setSfxVol(+this.value)"></label>
       <hr>
@@ -1050,25 +1050,15 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
   let courtMult=1.25+(persist.up.court_mult||0)*0.25;
   let court=false;
   if(same){
-    // Royal Court: 3 same-suit courts = base; each extra rank in that suit adds chips+mult
-    const extra=sameCount-3; // 0, 1
-    const x=Math.round(15+extra*8+courtChips);
-    const xm=+(courtMult+(extra*0.25)).toFixed(2);
-    m.push(['Royal Court ('+same+')'+( extra?' ×'+(sameCount):'' ),x,xm]);chips+=x;mult*=xm;court=true;
+    m.push(['Royal Court ('+same+')',15+courtChips,courtMult]);chips+=15+courtChips;mult*=courtMult;court=true;
   } else if(fullCount>=3){
-    // Full Court: 3 distinct ranks = base; each rank beyond 3 adds chips+mult
-    const extra=Math.min(fullCount-3,1); // cap at 4 ranks for now
-    const x=Math.round(10+extra*6+courtChips);
-    const xm=+(courtMult+(extra*0.25)).toFixed(2);
-    m.push(['Full Court'+(extra?' ×'+fullCount:''),x,xm]);chips+=x;mult*=xm;court=true;
+    m.push(['Full Court',10+courtChips,courtMult]);chips+=10+courtChips;mult*=courtMult;court=true;
   }
   let nums=[...new Set(cards.filter(c=>c.type==='major').map(c=>c.num))].sort((a,b)=>a-b),best=1,cur=1;
   for(let i=1;i<nums.length;i++){if(nums[i]===nums[i-1]+1){cur++;best=Math.max(best,cur)}else cur=1}
   let seqBonus=(persist.up.sequence||0)*5;
   let seqMult=1.25+(persist.up.seq_mult||0)*0.5;
-  if(best>=5){let x=18+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
-  else if(best>=4){let x=15+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
-  else if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
+  if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
   let pathChips=(persist.up.path_chips||0)*15;
   let pathMult=1.5+(persist.up.path_mult||0)*0.5;
   if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=10+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult*=pathMult}
@@ -1350,6 +1340,21 @@ function playSound(type){
         src.start(at);src.stop(at+exhaleLen+0.05);
         src.onended=()=>{src.disconnect();f.disconnect();g.disconnect();};
       })();
+    }else if(type==='scratch'){
+      // three quick paper-scratch bursts with rising pitch
+      [0,.045,.09].forEach((dt,i)=>{
+        const dur=.055+i*.015;
+        const buf=ctx.createBuffer(1,Math.floor(ctx.sampleRate*dur),ctx.sampleRate);
+        const d=buf.getChannelData(0);
+        for(let j=0;j<d.length;j++){const t=j/d.length;d[j]=(Math.random()*2-1)*(Math.pow(1-t,1.2)*Math.min(1,t*9));}
+        const src=ctx.createBufferSource();src.buffer=buf;
+        const f=ctx.createBiquadFilter();f.type='bandpass';f.Q.value=1.4;
+        f.frequency.setValueAtTime(1800+i*600,ctx.currentTime+dt);
+        f.frequency.exponentialRampToValueAtTime(3200+i*400,ctx.currentTime+dt+dur);
+        const g=ctx.createGain();g.gain.setValueAtTime(0.18*_sfxVol,ctx.currentTime+dt);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dt+dur);
+        src.connect(f);f.connect(g);g.connect(ctx.destination);src.start(ctx.currentTime+dt);src.stop(ctx.currentTime+dt+dur+.01);
+        src.onended=()=>{src.disconnect();f.disconnect();g.disconnect();};
+      });
     }
   }catch(e){}
 }
@@ -2005,20 +2010,22 @@ function renderScoringSheet(){
   const seqMult=+(1.25+(u.seq_mult||0)*0.5).toFixed(2);
   const pathChips=(u.path_chips||0)*15;
   const pathMult=+(1.5+(u.path_mult||0)*0.5).toFixed(2);
+  const fmt=v=>'+'++(v-1).toFixed(2).replace(/\.?0+$/,'');
   const rows=[
-    ['Rank Match','Three/Four of a Kind',`+${5+rankBonus} / +${7+rankBonus}`,`×${rankMult}`],
-    ['Full Court (3+)','Consecutive Ranks',`+${10+courtChips} / +${16+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
-    ['Royal Court (3+)','Consecutive Ranks, same suit',`+${15+courtChips} / +${23+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
-    ['Sequence (3+)','Consecutive Arcana',`+${10+seqBonus} / +${15+seqBonus} / +${18+seqBonus}`,`×${seqMult}`],
-    ['Path of the Magi','0·I·XXI in spread',`+${10+pathChips}`,`×${pathMult}`],
+    ['Three of a Kind','3 matching court ranks',`+${5+rankBonus}`,fmt(rankMult)],
+    ['Four of a Kind','4 matching court ranks',`+${7+rankBonus}`,fmt(rankMult)],
+    ['Full Court (3+)','Consecutive ranks',`+${10+courtChips}`,fmt(courtMult)],
+    ['Royal Court (3+)','Consecutive ranks, same suit',`+${15+courtChips}`,fmt(courtMult)],
+    ['Sequence (3+)','Consecutive major arcana',`+${10+seqBonus}`,fmt(seqMult)],
+    ['Path of the Magi','0·I·XXI in spread',`+${10+pathChips}`,fmt(pathMult)],
   ];
   const up=[];
-  if(u.rank)up.push(`Rank +${rankBonus}chips ×${rankMult}`);
-  if(u.court_chips)up.push(`Court +${courtChips}chips ×${courtMult}`);
-  if(u.sequence)up.push(`Seq +${seqBonus}chips ×${seqMult}`);
-  if(u.path_chips)up.push(`Path +${pathChips}chips ×${pathMult}`);
-  const minorRows=rows.slice(0,3);
-  const majorRows=rows.slice(3);
+  if(u.rank)up.push(`Rank +${rankBonus}chips ${fmt(rankMult)}mult`);
+  if(u.court_chips)up.push(`Court +${courtChips}chips ${fmt(courtMult)}mult`);
+  if(u.sequence)up.push(`Seq +${seqBonus}chips ${fmt(seqMult)}mult`);
+  if(u.path_chips)up.push(`Path +${pathChips}chips ${fmt(pathMult)}mult`);
+  const minorRows=rows.slice(0,4);
+  const majorRows=rows.slice(4);
   let html='<table class="ref-table"><thead><tr><th>Pattern</th><th>Condition</th><th>Chips</th><th>Mult</th></tr></thead><tbody>';
   html+=`<tr class="ref-section-head"><td colspan="4">Minor Arcana</td></tr>`;
   for(const r of minorRows) html+=`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]||'—'}</td></tr>`;
@@ -2029,7 +2036,7 @@ function renderScoringSheet(){
     html+=`<tr class="ref-section-head"><td colspan="4">Hidden Patterns</td></tr>`;
     for(const res of discoveredRes){
       const condStr=res.conditions.map(c=>(c.anyOf||[c.cardId]).map(majorNumeral).join('/')).join(' · ');
-      html+=`<tr><td><b>⚷ ${res.name}</b></td><td>${condStr}</td><td>+${res.chips}</td><td>×${res.mult}</td></tr>`;
+      html+=`<tr><td><b>⚷ ${res.name}</b></td><td>${condStr}</td><td>+${res.chips}</td><td>${fmt(res.mult)}</td></tr>`;
     }
   }
   html+='</tbody></table>';
@@ -2358,6 +2365,7 @@ function renderInventory(){
         if(el.classList.contains('named')){
           openInvDetail(item);
         } else {
+          playSound('scratch');
           el.classList.add('named');
           invPos[item.id].named=true;
           _saveInvPos();
@@ -3508,7 +3516,7 @@ function setSfxVol(v){_sfxVol=v;}
     const o=objects[id];if(!o||awaitingPickup)return;
     if(searched[id]){whisper('You already searched there.');return;}
     if(candleCount<o.cost){whisper('The candle is almost gone.');return;}
-    dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();candleCount-=o.cost;searched[id]=true;renderCandles();candleSpend();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);whisper('You find '+o.itemTitle+'.');},430);
+    dismissAtticTutorial();candleCount-=o.cost;searched[id]=true;renderCandles();candleSpend();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);whisper('You find '+o.itemTitle+'.');},430);
   }
   function enter(candles,shouldReset){
     if(window.tlrCloseArchives)window.tlrCloseArchives();
@@ -3516,13 +3524,6 @@ function setSfxVol(v){_sfxVol=v;}
     document.body.classList.remove('mode-reading','mode-to-table','mode-table-return');document.body.classList.add('mode-to-attic');
     const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','false');
     setTimeout(function(){document.body.classList.remove('mode-to-attic');document.body.classList.add('mode-attic');whisper('You get up from the table. Spend Candlelight to search.');},900);
-    setTimeout(function(){showAtticTutorial();},1400);
-    setTimeout(function(){showAtticTutorial();},1400);
-    setTimeout(function(){showAtticTutorial();},1400);
-    setTimeout(function(){showAtticTutorial();},1400);
-    setTimeout(function(){showAtticTutorial();},1400);
-    setTimeout(function(){showAtticTutorial();},1400);
-    setTimeout(function(){showAtticTutorial();},1400);
     setTimeout(function(){showAtticTutorial();},1400);
   }
   function leave(){
@@ -3533,6 +3534,7 @@ function setSfxVol(v){_sfxVol=v;}
     setTimeout(function(){document.body.classList.remove('mode-attic','mode-to-attic','mode-reading');document.body.classList.add('mode-to-table');const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','true');},60);
     setTimeout(function(){document.body.classList.remove('mode-to-table','mode-table-return','mode-return-hard-hide');document.body.classList.add('mode-reading');},1080);
   }
+  /* attic-tutorial-fns */
   function showAtticTutorial(){
     try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
     const t=document.getElementById('atticTutorial');if(!t)return;
@@ -3548,160 +3550,14 @@ function setSfxVol(v){_sfxVol=v;}
       +'<button id="atticTutDismiss">I understand</button>';
     const btn=t.querySelector('#atticTutDismiss');
     if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
+    t.addEventListener('click',function(){dismissAtticTutorial();});
     t.classList.add('show');
   }
   function dismissAtticTutorial(){
     const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
     try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
   }
-    function showAtticTutorial(){
-    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
-    const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=window.matchMedia('(pointer:fine)').matches;
-    const searchLine=isDesktop
-      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
-      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
-    const scrollLine=isDesktop
-      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
-      :'';
-    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
-      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
-      +'<button id="atticTutDismiss">I understand</button>';
-    const btn=t.querySelector('#atticTutDismiss');
-    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
-    t.classList.add('show');
-  }
-  function dismissAtticTutorial(){
-    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
-    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
-  }
-    function showAtticTutorial(){
-    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
-    const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=window.matchMedia('(pointer:fine)').matches;
-    const searchLine=isDesktop
-      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
-      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
-    const scrollLine=isDesktop
-      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
-      :'';
-    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
-      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
-      +'<button id="atticTutDismiss">I understand</button>';
-    const btn=t.querySelector('#atticTutDismiss');
-    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
-    t.classList.add('show');
-  }
-  function dismissAtticTutorial(){
-    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
-    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
-  }
-    function showAtticTutorial(){
-    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
-    const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=window.matchMedia('(pointer:fine)').matches;
-    const searchLine=isDesktop
-      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
-      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
-    const scrollLine=isDesktop
-      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
-      :'';
-    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
-      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
-      +'<button id="atticTutDismiss">I understand</button>';
-    const btn=t.querySelector('#atticTutDismiss');
-    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
-    t.classList.add('show');
-  }
-  function dismissAtticTutorial(){
-    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
-    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
-  }
-    function showAtticTutorial(){
-    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
-    const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=window.matchMedia('(pointer:fine)').matches;
-    const searchLine=isDesktop
-      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
-      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
-    const scrollLine=isDesktop
-      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
-      :'';
-    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
-      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
-      +'<button id="atticTutDismiss">I understand</button>';
-    const btn=t.querySelector('#atticTutDismiss');
-    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
-    t.classList.add('show');
-  }
-  function dismissAtticTutorial(){
-    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
-    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
-  }
-    function showAtticTutorial(){
-    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
-    const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=window.matchMedia('(pointer:fine)').matches;
-    const searchLine=isDesktop
-      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
-      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
-    const scrollLine=isDesktop
-      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
-      :'';
-    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
-      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
-      +'<button id="atticTutDismiss">I understand</button>';
-    const btn=t.querySelector('#atticTutDismiss');
-    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
-    t.classList.add('show');
-  }
-  function dismissAtticTutorial(){
-    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
-    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
-  }
-    function showAtticTutorial(){
-    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
-    const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=window.matchMedia('(pointer:fine)').matches;
-    const searchLine=isDesktop
-      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
-      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
-    const scrollLine=isDesktop
-      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
-      :'';
-    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
-      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
-      +'<button id="atticTutDismiss">I understand</button>';
-    const btn=t.querySelector('#atticTutDismiss');
-    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
-    t.classList.add('show');
-  }
-  function dismissAtticTutorial(){
-    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
-    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
-  }
-    function showAtticTutorial(){
-    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
-    const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=window.matchMedia('(pointer:fine)').matches;
-    const searchLine=isDesktop
-      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
-      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
-    const scrollLine=isDesktop
-      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
-      :'';
-    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
-      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
-      +'<button id="atticTutDismiss">I understand</button>';
-    const btn=t.querySelector('#atticTutDismiss');
-    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
-    t.classList.add('show');
-  }
-  function dismissAtticTutorial(){
-    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
-    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
-  }
-    window.tlrScoreToCandlelight=candlesFromScore;
+      window.tlrScoreToCandlelight=candlesFromScore;
   window.tlrDebugEnterAttic=enter;
   window.tlrDebugLeaveAttic=leave;
   window.tlrEnterAtticAfterReading=function(score){enter(candlesFromScore(Number(score)||0),true);};
