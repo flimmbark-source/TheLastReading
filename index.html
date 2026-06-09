@@ -774,15 +774,15 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 <div id="breathVignette"></div>
 <div id="scoringPullWrap" class="tlr-pull-wrap parchment">
   <div id="scoringPullDesk" class="tlr-pull-desk"></div>
-  <button id="scoringPullTab" type="button" class="tlr-pull-tab">&#9660; Scoring</button>
+  <button id="scoringPullTab" type="button" class="tlr-pull-tab" onclick="tlrTogglePullTab('scoring')">&#9660; Scoring</button>
 </div>
 <div id="abilitiesPullWrap" class="tlr-pull-wrap parchment">
   <div id="abilitiesPullDesk" class="tlr-pull-desk"></div>
-  <button id="abilitiesPullTab" type="button" class="tlr-pull-tab">&#9660; Abilities</button>
+  <button id="abilitiesPullTab" type="button" class="tlr-pull-tab" onclick="tlrTogglePullTab('abilities')">&#9660; Abilities</button>
 </div>
 <div id="menuPullWrap" class="tlr-pull-wrap menu-brown">
   <div id="menuPullDesk" class="tlr-pull-desk"></div>
-  <button id="menuPullTab" type="button" class="tlr-pull-tab">&#9660; Menu</button>
+  <button id="menuPullTab" type="button" class="tlr-pull-tab" onclick="tlrTogglePullTab('menu')">&#9660; Menu</button>
 </div>
 <div id="invWrap">
   <div id="invDesk"></div>
@@ -3792,106 +3792,78 @@ function setSfxVol(v){_sfxVol=v;}
   window.addEventListener('DOMContentLoaded',installDragPan);window.addEventListener('resize',function(){if(document.body.classList.contains('mode-attic')||document.body.classList.contains('mode-to-attic'))positionAtticView();});
 })();
 
+// Pull-tab drawer system
 (function(){
-  if(window.__tlrArchivesStylePullTabsInstalled)return;
-  window.__tlrArchivesStylePullTabsInstalled=true;
+  const LABELS={scoring:'Scoring',abilities:'Abilities',menu:'Menu'};
+  const CONTENT={scoring:'ref',abilities:'abilityRef',menu:'settingsPanel'};
+  const DEFAULT_X={scoring:()=>Math.max(0,window.innerWidth/2-142),abilities:()=>Math.max(0,window.innerWidth/2-40),menu:()=>14};
 
-  const defs=[
-    {id:'scoring',label:'Scoring',content:'ref',kind:'parchment',x:()=>Math.max(0,window.innerWidth/2-142)},
-    {id:'abilities',label:'Abilities',content:'abilityRef',kind:'parchment',x:()=>Math.max(0,window.innerWidth/2-40)},
-    {id:'menu',label:'Menu',content:'settingsPanel',kind:'menu-brown',x:()=>14}
-  ];
-
-  const closeOtherPullTabs=id=>{
-    for(const d of defs){
-      if(d.id===id)continue;
-      const w=document.getElementById(d.id+'PullWrap');
-      const t=document.getElementById(d.id+'PullTab');
+  function closeOthers(id){
+    for(const k of Object.keys(LABELS)){
+      if(k===id)continue;
+      const w=document.getElementById(k+'PullWrap');
+      const t=document.getElementById(k+'PullTab');
       if(w)w.classList.remove('open');
-      if(t)t.innerHTML='&#9660; '+d.label;
+      if(t)t.innerHTML='&#9660; '+LABELS[k];
     }
+  }
+
+  window.tlrTogglePullTab=function(id){
+    const w=document.getElementById(id+'PullWrap');
+    const t=document.getElementById(id+'PullTab');
+    if(!w||!t)return;
+    const opening=!w.classList.contains('open');
+    w.classList.toggle('open',opening);
+    t.innerHTML=(opening?'&#9650; ':'&#9660; ')+LABELS[id];
+    if(opening)closeOthers(id);
   };
 
-  function makePullTab(def){
-    const content=document.getElementById(def.content);
-    if(!content)return;
-    let wrap=document.getElementById(def.id+'PullWrap');
-    if(!wrap){
-      wrap=document.createElement('div');
-      wrap.id=def.id+'PullWrap';
-      wrap.className='tlr-pull-wrap '+def.kind;
-      const desk=document.createElement('div');
-      desk.id=def.id+'PullDesk';
-      desk.className='tlr-pull-desk';
-      const tab=document.createElement('button');
-      tab.id=def.id+'PullTab';
-      tab.type='button';
-      tab.className='tlr-pull-tab';
-      tab.innerHTML='&#9660; '+def.label;
-      wrap.appendChild(desk);
-      wrap.appendChild(tab);
-      wrap.style.transition='none';
-      document.body.insertBefore(wrap,document.getElementById('invWrap')||document.body.firstChild);
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{wrap.style.transition='';}));
+  // Move content into desks and set initial tab positions
+  for(const id of Object.keys(LABELS)){
+    const desk=document.getElementById(id+'PullDesk');
+    const tab=document.getElementById(id+'PullTab');
+    const content=document.getElementById(CONTENT[id]);
+    if(desk&&content&&!desk.contains(content))desk.appendChild(content);
+    if(content)content.classList.remove('hidden');
+    if(tab){
+      const savedX=localStorage.getItem('tlr_'+id+'_pull_tab_x');
+      tab.style.left=(savedX!==null?Math.max(0,Math.min(window.innerWidth-86,parseFloat(savedX))):DEFAULT_X[id]())+'px';
     }
-    const desk=document.getElementById(def.id+'PullDesk');
-    const tab=document.getElementById(def.id+'PullTab');
-    if(desk&&!desk.contains(content))desk.appendChild(content);
-    content.classList.remove('hidden');
-    if(def.id==='menu')content.classList.remove('hidden');
+  }
 
-    function setOpen(open){
-      wrap.classList.toggle('open',open);
-      tab.innerHTML=(open?'&#9650; ':'&#9660; ')+def.label;
-      if(open)closeOtherPullTabs(def.id);
-    }
-
-    const savedX=localStorage.getItem('tlr_'+def.id+'_pull_tab_x');
-    if(savedX!==null){
-      tab.style.left=Math.max(0,Math.min(window.innerWidth-86,parseFloat(savedX)))+'px';
-    }else{
-      requestAnimationFrame(()=>{tab.style.left=Math.max(0,Math.min(window.innerWidth-86,def.x()))+'px';});
-    }
-
-    let psx=0,tabStartX=0,moved=false,active=false;
+  // Drag tabs to reposition
+  for(const id of Object.keys(LABELS)){
+    const tab=document.getElementById(id+'PullTab');
+    if(!tab)continue;
+    let psx=0,startLeft=0,moved=false,active=false;
     tab.addEventListener('pointerdown',e=>{
-      e.stopPropagation();
       tab.setPointerCapture(e.pointerId);
-      psx=e.clientX;
-      tabStartX=parseFloat(tab.style.left)||tab.getBoundingClientRect().left;
-      moved=false;active=true;
-    });
+      psx=e.clientX;startLeft=parseFloat(tab.style.left)||0;moved=false;active=true;
+    },{passive:true});
     tab.addEventListener('pointermove',e=>{
       if(!active)return;
       const dx=e.clientX-psx;
-      if(Math.abs(dx)>5)moved=true;
-      if(!moved)return;
-      const nx=Math.max(0,Math.min(window.innerWidth-86,tabStartX+dx));
-      tab.style.left=nx+'px';
-    });
+      if(Math.abs(dx)>5){moved=true;tab.style.left=Math.max(0,Math.min(window.innerWidth-86,startLeft+dx))+'px';}
+    },{passive:true});
     tab.addEventListener('pointerup',e=>{
-      if(!active)return;
-      active=false;
-      if(moved){
-        const nx=parseFloat(tab.style.left)||0;
-        try{localStorage.setItem('tlr_'+def.id+'_pull_tab_x',nx)}catch(e){}
-      }else{
-        setOpen(!wrap.classList.contains('open'));
-      }
-      moved=false;
-    });
-    window.addEventListener('resize',()=>{
-      const cur=parseFloat(tab.style.left)||0;
-      const clamped=Math.max(0,Math.min(window.innerWidth-86,cur));
-      if(clamped!==cur)tab.style.left=clamped+'px';
-    });
+      if(!active)return;active=false;
+      if(moved)try{localStorage.setItem('tlr_'+id+'_pull_tab_x',parseFloat(tab.style.left)||0);}catch(e){}
+    },{passive:true});
   }
+  window.addEventListener('resize',()=>{
+    for(const id of Object.keys(LABELS)){
+      const tab=document.getElementById(id+'PullTab');
+      if(!tab)continue;
+      const cur=parseFloat(tab.style.left)||0;
+      const c=Math.max(0,Math.min(window.innerWidth-86,cur));
+      if(c!==cur)tab.style.left=c+'px';
+    }
+  });
 
-  defs.forEach(makePullTab);
-
-  window.toggleRef=function(e){if(e)e.stopPropagation();const w=document.getElementById('scoringPullWrap');const t=document.getElementById('scoringPullTab');if(!w||!t)return;const open=!w.classList.contains('open');w.classList.toggle('open',open);t.innerHTML=(open?'&#9650; ':'&#9660; ')+'Scoring';if(open)closeOtherPullTabs('scoring');};
-  window.toggleAbilityRef=function(e){if(e)e.stopPropagation();const w=document.getElementById('abilitiesPullWrap');const t=document.getElementById('abilitiesPullTab');if(!w||!t)return;const open=!w.classList.contains('open');w.classList.toggle('open',open);t.innerHTML=(open?'&#9650; ':'&#9660; ')+'Abilities';if(open)closeOtherPullTabs('abilities');};
-  window.toggleMenu=function(){const w=document.getElementById('menuPullWrap');const t=document.getElementById('menuPullTab');if(!w||!t)return;const open=!w.classList.contains('open');w.classList.toggle('open',open);t.innerHTML=(open?'&#9650; ':'&#9660; ')+'Menu';if(open)closeOtherPullTabs('menu');};
+  // Wire legacy toggleRef/toggleAbilityRef/toggleMenu to the new system
+  window.toggleRef=function(e){if(e)e.stopPropagation();tlrTogglePullTab('scoring');};
+  window.toggleAbilityRef=function(e){if(e)e.stopPropagation();tlrTogglePullTab('abilities');};
+  window.toggleMenu=function(){tlrTogglePullTab('menu');};
 })();
 
 (function(){
