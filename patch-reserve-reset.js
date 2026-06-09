@@ -15,3 +15,6 @@ if (html.includes(next)) {
 } else {
   console.warn('reserve-reset: WARN — resetSession signature not found, skipping.');
 }
+
+// Keep the final visual/UI override last without extending the already-long package script.
+require('./patch-drawer-tabs-and-desktop-drift.js');
