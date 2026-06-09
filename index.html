@@ -1964,7 +1964,15 @@ function toggleRelicCallout(key,btn){
   document.body.appendChild(callout);
   const rect=btn.getBoundingClientRect();
   callout.style.top=(rect.bottom+6)+'px';
-  callout.style.right=(window.innerWidth-rect.right)+'px';
+  callout.style.left='0px';
+  requestAnimationFrame(function(){
+    const cw=callout.offsetWidth,ch=callout.offsetHeight,mg=8;
+    let left=rect.right-cw;
+    left=Math.max(mg,Math.min(window.innerWidth-cw-mg,left));
+    let top=rect.bottom+6;
+    if(top+ch>window.innerHeight-mg)top=Math.max(mg,rect.top-ch-6);
+    callout.style.left=left+'px';callout.style.top=top+'px';
+  });
 }
 function activateRelic(key){
   if(persist.relicUsed[key])return;
