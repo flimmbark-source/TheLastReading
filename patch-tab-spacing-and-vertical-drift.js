@@ -128,14 +128,14 @@ html = html.replace('</script>', `
     }
   }
 
-  // Layout v2: reseed because v1 centered every tab and could overlap with the new desktop layout request.
+  // Layout v2: reseed once because v1 centered every tab and could overlap with the new desktop layout request.
   try{
     if(localStorage.getItem('tlr_pull_tabs_fanned_v2')!=='1'){
       seedDefaultPositions();
       localStorage.setItem('tlr_pull_tabs_fanned_v2','1');
     }
   }catch(e){seedDefaultPositions();}
-  requestAnimationFrame(()=>{seedDefaultPositions();fanTabs();});
+  requestAnimationFrame(fanTabs);
 
   // Re-fan after any tab drag release. This includes the existing Archives tab.
   document.addEventListener('pointerup',()=>setTimeout(fanTabs,0),true);
