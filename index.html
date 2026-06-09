@@ -2005,10 +2005,11 @@ function renderScoringSheet(){
   const pathChips=(u.path_chips||0)*15;
   const pathMult=+(1.5+(u.path_mult||0)*0.5).toFixed(2);
   const rows=[
-    ['Rank Match','Three/Four of a Kind',`+${5+rankBonus} / +${7+rankBonus}`,`×${rankMult}`],
-    ['Full Court (3+)','Consecutive Ranks',`+${10+courtChips} / +${16+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
-    ['Royal Court (3+)','Consecutive Ranks, same suit',`+${15+courtChips} / +${23+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
-    ['Sequence (3+)','Consecutive Arcana',`+${10+seqBonus} / +${15+seqBonus} / +${18+seqBonus}`,`×${seqMult}`],
+    ['Three of a Kind','3 matching court ranks',`+${5+rankBonus}`,`×${rankMult}`],
+    ['Four of a Kind','4 matching court ranks',`+${7+rankBonus}`,`×${rankMult}`],
+    ['Full Court (3+)','Consecutive ranks',`+${10+courtChips}`,`×${courtMult}`],
+    ['Royal Court (3+)','Consecutive ranks, same suit',`+${15+courtChips}`,`×${courtMult}`],
+    ['Sequence (3+)','Consecutive major arcana',`+${10+seqBonus}`,`×${seqMult}`],
     ['Path of the Magi','0·I·XXI in spread',`+${10+pathChips}`,`×${pathMult}`],
   ];
   const up=[];
@@ -2016,8 +2017,8 @@ function renderScoringSheet(){
   if(u.court_chips)up.push(`Court +${courtChips}chips ×${courtMult}`);
   if(u.sequence)up.push(`Seq +${seqBonus}chips ×${seqMult}`);
   if(u.path_chips)up.push(`Path +${pathChips}chips ×${pathMult}`);
-  const minorRows=rows.slice(0,3);
-  const majorRows=rows.slice(3);
+  const minorRows=rows.slice(0,4);
+  const majorRows=rows.slice(4);
   let html='<table class="ref-table"><thead><tr><th>Pattern</th><th>Condition</th><th>Chips</th><th>Mult</th></tr></thead><tbody>';
   html+=`<tr class="ref-section-head"><td colspan="4">Minor Arcana</td></tr>`;
   for(const r of minorRows) html+=`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]||'—'}</td></tr>`;

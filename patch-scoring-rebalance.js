@@ -92,25 +92,29 @@ rep(
   `const pathMult=+(1.5+(u.path_mult||0)*0.5).toFixed(2);`,
   '[ref] Magi mult base'
 );
+// Rewrite the rows array to show per-pattern increments (no slash ranges)
 rep(
-  '`+${10+rankBonus} / +${12+rankBonus}`',
-  '`+${5+rankBonus} / +${7+rankBonus}`',
-  '[ref] Rank Match chips display'
+  `  const rows=[
+    ['Rank Match','Three/Four of a Kind',\`+\${5+rankBonus} / +\${7+rankBonus}\`,\`×\${rankMult}\`],
+    ['Full Court (3+)','Consecutive Ranks',\`+\${10+courtChips} / +\${16+courtChips}\`,\`×\${courtMult} / ×\${+(courtMult+0.25).toFixed(2)}\`],
+    ['Royal Court (3+)','Consecutive Ranks, same suit',\`+\${15+courtChips} / +\${23+courtChips}\`,\`×\${courtMult} / ×\${+(courtMult+0.25).toFixed(2)}\`],
+    ['Sequence (3+)','Consecutive Arcana',\`+\${10+seqBonus} / +\${15+seqBonus} / +\${18+seqBonus}\`,\`×\${seqMult}\`],
+    ['Path of the Magi','0·I·XXI in spread',\`+\${10+pathChips}\`,\`×\${pathMult}\`],
+  ];`,
+  `  const rows=[
+    ['Three of a Kind','3 matching court ranks',\`+\${5+rankBonus}\`,\`×\${rankMult}\`],
+    ['Four of a Kind','4 matching court ranks',\`+\${7+rankBonus}\`,\`×\${rankMult}\`],
+    ['Full Court (3+)','Consecutive ranks',\`+\${10+courtChips}\`,\`×\${courtMult}\`],
+    ['Royal Court (3+)','Consecutive ranks, same suit',\`+\${15+courtChips}\`,\`×\${courtMult}\`],
+    ['Sequence (3+)','Consecutive major arcana',\`+\${10+seqBonus}\`,\`×\${seqMult}\`],
+    ['Path of the Magi','0·I·XXI in spread',\`+\${10+pathChips}\`,\`×\${pathMult}\`],
+  ];`,
+  '[ref] rows array — per-pattern increments, no slash ranges'
 );
 rep(
-  '`+${14+courtChips} / +${20+courtChips}`',
-  '`+${10+courtChips} / +${16+courtChips}`',
-  '[ref] Full Court chips display'
-);
-rep(
-  '`+${20+courtChips} / +${28+courtChips}`',
-  '`+${15+courtChips} / +${23+courtChips}`',
-  '[ref] Royal Court chips display'
-);
-rep(
-  '`+${30+pathChips}`',
-  '`+${10+pathChips}`',
-  '[ref] Magi chips display'
+  '  const minorRows=rows.slice(0,3);\n  const majorRows=rows.slice(3);',
+  '  const minorRows=rows.slice(0,4);\n  const majorRows=rows.slice(4);',
+  '[ref] minor/major row split (4 minor now)'
 );
 
 fs.writeFileSync(file, html);
