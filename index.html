@@ -2267,15 +2267,17 @@ function showInvTut(text){
 function initTabDrag(){
   const tab=document.getElementById('invTab');
   if(!tab)return;
-  // Restore saved position, or default to 10px right of the h1 title
+  // Default: anchor right of the Abilities button; restore saved drag position if set
+  function _defaultTabLeft(){
+    const btn=document.getElementById('abilitiesBtn');
+    if(btn){const r=btn.getBoundingClientRect();return Math.min(window.innerWidth-80,r.right+10);}
+    return window.innerWidth/2-40;
+  }
   const savedX=localStorage.getItem('tlr_tab_x');
-  // Ignore the old centered default (near 50% of viewport) so new placement takes effect
-  const midGuard=savedX!==null&&Math.abs(parseFloat(savedX)-(window.innerWidth/2-40))<60;
-  if(savedX!==null&&!midGuard){
+  if(savedX!==null){
     tab.style.left=Math.max(0,Math.min(window.innerWidth-80,parseFloat(savedX)))+'px';
   }else{
-    const h1=document.querySelector('h1');
-    if(h1){const r=h1.getBoundingClientRect();tab.style.left=Math.min(window.innerWidth-80,r.right+10)+'px';}
+    requestAnimationFrame(()=>{tab.style.left=_defaultTabLeft()+'px';});
   }
   let psx,tabStartX,moved=false,active=false;
   tab.addEventListener('pointerdown',e=>{
