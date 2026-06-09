@@ -538,6 +538,9 @@
 /* Stop the old swipe handler from also nudging the whole hand sideways. */
 .hand{--hand-slide-x:0px;--hand-card-margin:0px}
 .hand-swipe-zone{position:fixed;left:0;right:0;bottom:197px;height:88px;z-index:19;pointer-events:auto;touch-action:none;cursor:grab;background:transparent}
+.hand-scroll-dragging~* .card,.hand-scroll-dragging .card{pointer-events:none!important}
+body:has(.hand-scroll-dragging){cursor:grabbing!important}
+body:has(.hand-scroll-dragging) .handDock *{cursor:grabbing!important}
 .hand-swipe-zone.dragging{cursor:grabbing}
 .hand-swipe-zone.pinching{cursor:ew-resize}
 @media(max-width:640px){.hand-swipe-zone{bottom:152px;height:74px}}
@@ -648,6 +651,8 @@ body.mode-table-return #invTab{
 
 
 
+
+
 /* Attic mobile pan patch v4 */
 #atticScene{background:#0f0905!important;overflow:hidden!important}
 #atticScene::before,#atticScene::after{z-index:9!important;pointer-events:none!important}
@@ -732,6 +737,7 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 <div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="sbtn sbtn-discard" aria-label="Discard" onclick="discardSelected()" disabled></button><button id="purgeBtn" class="sbtn sbtn-purge" aria-label="Purge" onclick="startPurge()" disabled></button></div><div id="spread" class="spread"></div></div>
 <div id="abilityPrompt" class="ability-prompt"><div><h3 id="abilityPromptTitle"></h3><p id="abilityPromptText"></p></div><button id="abilityConfirm" onclick="confirmAbilitySelection()" disabled>Choose</button></div>
 <div id="purgePrompt" class="ability-prompt"><div><h3>Purge</h3><p>Select 3 cards to sacrifice for 1 Discard. <b><span id="purgeCount">0</span>/3</b> selected.</p></div><button id="purgeConfirm" onclick="confirmPurge()" disabled>Sacrifice</button><button onclick="cancelPurge()">Cancel</button></div>
+<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
@@ -2882,10 +2888,13 @@ function setSfxVol(v){_sfxVol=v;}
       if(mode!=='pinch')startPinch();
       return;
     }
-    // Single-finger slide only kicks in inside the swipe strip; on the cards
-    // themselves we leave the existing card-press / drag-select handler alone.
-    if(inSwipeZone(ev.target)&&mode==null){
-      try{zoneEl()?.setPointerCapture(ev.pointerId);}catch(e){}
+    // Single-finger slide: touch must start in the dedicated swipe strip.
+    // Mouse can start anywhere in the hand dock that isn't a card itself,
+    // so desktop users don't need to find the invisible 88px strip.
+    const isMouse=ev.pointerType==='mouse';
+    const mouseInHand=isMouse&&ev.target instanceof Element&&ev.target.closest('.handDock,#handSwipeZone')&&!ev.target.closest('.card[data-uid]');
+    if((inSwipeZone(ev.target)||mouseInHand)&&mode==null){
+      try{(isMouse?ev.target.closest('.handDock,#handSwipeZone'):zoneEl())?.setPointerCapture(ev.pointerId);}catch(e){}
       startSlideMode(ev);
     }
   },true);
@@ -3492,7 +3501,7 @@ function setSfxVol(v){_sfxVol=v;}
     const o=objects[id];if(!o||awaitingPickup)return;
     if(searched[id]){whisper('You already searched there.');return;}
     if(candleCount<o.cost){whisper('The candle is almost gone.');return;}
-    dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();candleCount-=o.cost;searched[id]=true;renderCandles();candleSpend();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);whisper('You find '+o.itemTitle+'.');},430);
+    dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();candleCount-=o.cost;searched[id]=true;renderCandles();candleSpend();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);whisper('You find '+o.itemTitle+'.');},430);
   }
   function enter(candles,shouldReset){
     if(window.tlrCloseArchives)window.tlrCloseArchives();
@@ -3500,6 +3509,7 @@ function setSfxVol(v){_sfxVol=v;}
     document.body.classList.remove('mode-reading','mode-to-table','mode-table-return');document.body.classList.add('mode-to-attic');
     const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','false');
     setTimeout(function(){document.body.classList.remove('mode-to-attic');document.body.classList.add('mode-attic');whisper('You get up from the table. Spend Candlelight to search.');},900);
+    setTimeout(function(){showAtticTutorial();},1400);
     setTimeout(function(){showAtticTutorial();},1400);
     setTimeout(function(){showAtticTutorial();},1400);
     setTimeout(function(){showAtticTutorial();},1400);
@@ -3515,6 +3525,27 @@ function setSfxVol(v){_sfxVol=v;}
     setTimeout(function(){document.body.classList.remove('mode-to-table','mode-table-return','mode-return-hard-hide');document.body.classList.add('mode-reading');},1080);
   }
   function showAtticTutorial(){
+    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
+    const t=document.getElementById('atticTutorial');if(!t)return;
+    const isDesktop=window.matchMedia('(pointer:fine)').matches;
+    const searchLine=isDesktop
+      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
+      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
+    const scrollLine=isDesktop
+      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
+      :'';
+    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
+      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
+      +'<button id="atticTutDismiss">I understand</button>';
+    const btn=t.querySelector('#atticTutDismiss');
+    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
+    t.classList.add('show');
+  }
+  function dismissAtticTutorial(){
+    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
+    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
+  }
+    function showAtticTutorial(){
     try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
     const t=document.getElementById('atticTutorial');if(!t)return;
     const isDesktop=window.matchMedia('(pointer:fine)').matches;
