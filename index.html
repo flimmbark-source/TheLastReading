@@ -32,7 +32,7 @@
 
 @media (max-width: 640px){
   body{padding:8px 8px 157px;min-height:100dvh;overflow-x:hidden;background-size:auto;background-position:center top;background-attachment:scroll}
-  h1{font-size:17px;margin-bottom:6px}
+  h1{font-size:17px;margin-bottom:6px;padding-right:132px}#titleContent h1{padding-right:0}
   .bar{gap:6px;margin:6px 0 10px;padding-right:0;max-width:calc(100vw - 140px)}
   .pill{font-size:11px;padding:5px 8px 5px 14px}
   .threshold-pill{}
@@ -426,8 +426,8 @@
 .mote{position:absolute;bottom:-14px;width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle,rgba(255,230,176,.95),rgba(255,208,138,.3) 58%,transparent 72%);filter:blur(.6px);opacity:0;will-change:transform,opacity;animation:moteRise var(--d) linear forwards}
 @keyframes moteRise{0%{opacity:0;transform:translate3d(0,0,0)}12%{opacity:var(--o)}50%{transform:translate3d(var(--x),-46vh,0)}88%{opacity:var(--o)}100%{opacity:0;transform:translate3d(calc(var(--x) * -.6),-94vh,0)}}
 @media(prefers-reduced-motion:reduce){#roomAmbient{animation:none;opacity:.7}#ambientFX{display:none}}
-#titleWrap{position:relative}#titleRow{display:flex;align-items:center;gap:8px}#titleContent{flex:1;display:flex;justify-content:center}#titleContent .actions{justify-content:center;margin:0}
-.settings-title{margin:0 0 4px;font:700 16px Georgia,serif;color:#f0d58a;letter-spacing:.02em;text-align:center;border-bottom:1px solid rgba(180,140,90,.2);padding-bottom:8px}
+#titleWrap{position:relative}#titleRow{display:flex;align-items:flex-start;gap:8px}#titleContent{display:flex;flex-direction:column;align-items:center;gap:4px}#titleContent .actions{justify-content:center;margin:0}
+.settings-title{margin:0 0 8px;font:700 16px Georgia,serif;color:#f0d58a;letter-spacing:.02em;text-align:center;border-bottom:1px solid rgba(180,140,90,.2);padding-bottom:8px}
 #menuBtn{flex:0 0 auto;background:none;border:none;color:#d4b896;font-size:1.5rem;cursor:pointer;padding:4px 8px;line-height:1;z-index:200;opacity:.75;transition:opacity .2s}
 #menuBtn:hover{opacity:1}
 .settings-panel{position:absolute;top:calc(100% + 4px);left:0;background:rgba(20,14,10,.95);border:1px solid rgba(180,140,90,.35);border-radius:8px;padding:14px 18px;z-index:300;min-width:220px;display:flex;flex-direction:column;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,.6)}
