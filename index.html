@@ -638,6 +638,8 @@ body.mode-table-return #invTab{
 
 
 
+
+
 /* Attic mobile pan patch v4 */
 #atticScene{background:#0f0905!important;overflow:hidden!important}
 #atticScene::before,#atticScene::after{z-index:9!important;pointer-events:none!important}
@@ -653,6 +655,17 @@ body.mode-return-hard-hide #titleWrap,body.mode-return-hard-hide .score-stack,bo
 body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:translateY(calc(-1 * var(--inv-h)))!important;pointer-events:none!important}
 @media (min-width:981px){#atticPan{overflow:hidden;display:flex;justify-content:center;align-items:flex-start}#atticRoom{margin:0 auto}}
 @media (max-width:980px){#atticPan{display:block;cursor:grab}#atticPan.dragging{cursor:grabbing}#atticRoom{margin:0}.attic-pan-hint{position:absolute;left:50%;top:86px;z-index:20;transform:translateX(-50%);padding:8px 12px;border:1px solid rgba(197,149,74,.55);border-radius:999px;background:rgba(20,12,7,.78);color:#f0d99b;font:800 10px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;pointer-events:none;box-shadow:0 10px 28px rgba(0,0,0,.5);opacity:0;animation:atticPanHint 3.4s ease forwards}@keyframes atticPanHint{0%{opacity:0;transform:translateX(-50%) translateY(-8px)}14%{opacity:1;transform:translateX(-50%) translateY(0)}78%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-8px)}}}
+
+/* Attic tutorial callout patch */
+#atticTutorial{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:0 0 120px;pointer-events:none;opacity:0;transition:opacity .45s ease}
+#atticTutorial.show{opacity:1;pointer-events:auto}
+.attic-tut-card{background:rgba(14,8,4,.90);border:1px solid rgba(194,148,75,.6);border-radius:12px;padding:18px 24px;max-width:min(86vw,420px);width:100%;box-shadow:0 18px 52px rgba(0,0,0,.72),0 0 24px rgba(255,196,80,.12);text-align:center;margin-bottom:14px}
+.attic-tut-card h4{margin:0 0 8px;font:700 15px Georgia,serif;color:#ffd978;text-shadow:0 2px 8px rgba(0,0,0,.8);letter-spacing:.02em}
+.attic-tut-card p{margin:0;font:400 13px Georgia,serif;color:#c8ae82;line-height:1.55}
+.attic-tut-card em{color:#ffd978;font-style:normal;font-weight:700}
+#atticTutDismiss{margin-top:6px;padding:11px 36px;border:1px solid rgba(194,148,75,.7);border-radius:999px;background:rgba(194,148,75,.18);color:#ffd978;font:700 11px system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.5);transition:background .18s ease}
+#atticTutDismiss:hover,#atticTutDismiss:active{background:rgba(194,148,75,.32)}
+
 </style>
 </head>
 <body>
@@ -704,7 +717,7 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 <div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="sbtn sbtn-discard" aria-label="Discard" onclick="discardSelected()" disabled></button><button id="purgeBtn" class="sbtn sbtn-purge" aria-label="Purge" onclick="startPurge()" disabled></button></div><div id="spread" class="spread"></div></div>
 <div id="abilityPrompt" class="ability-prompt"><div><h3 id="abilityPromptTitle"></h3><p id="abilityPromptText"></p></div><button id="abilityConfirm" onclick="confirmAbilitySelection()" disabled>Choose</button></div>
 <div id="purgePrompt" class="ability-prompt"><div><h3>Purge</h3><p>Select 3 cards to sacrifice for 1 Discard. <b><span id="purgeCount">0</span>/3</b> selected.</p></div><button id="purgeConfirm" onclick="confirmPurge()" disabled>Sacrifice</button><button onclick="cancelPurge()">Cancel</button></div>
-<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
+<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div class="handDock"><div id="hand" class="hand"></div></div>
 <div id="tutTip"><span class="tut-arrow"></span><p id="tutText"></p><div class="tut-foot"><button id="tutSkipBtn" onclick="tutSkip();event.stopPropagation()">Skip tutorial</button></div></div>
 <div id="packAnim" class="pack-anim-overlay" aria-hidden="true">
@@ -716,7 +729,7 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
   </div>
   <div class="pack-anim-burst" id="packAnimBurst"></div>
 </div>
-<div id="atticScene" aria-hidden="true"><div id="atticPan"><div id="atticRoom"><div id="atticObjects"></div></div></div><div id="candlelightHud"></div><div id="atticWhisper"></div></div>
+<div id="atticScene" aria-hidden="true"><div id="atticTutorial"></div><div id="atticPan"><div id="atticRoom"><div id="atticObjects"></div></div></div><div id="candlelightHud"></div><div id="atticWhisper"></div></div>
 <div id="summary"></div>
 <div id="modal" class="modal"><div class="box"><div class="modalHead"><h2 id="modalTitle"></h2><button id="modalToggle" onclick="toggleModalCollapse()">Hide</button></div><p id="modalPrompt"></p><div id="choices" class="choices"></div></div></div>
 <script>
@@ -2961,6 +2974,59 @@ function setSfxVol(v){_sfxVol=v;}
       radius:trackRadius(),
     };
   };
+  // ── Desktop scroll-wheel: scroll down = constrict, scroll up = expand ──
+  (function(){
+    const isDesktop=()=>window.matchMedia('(pointer:fine)').matches;
+    // Swap hint text for desktop on first opportunity
+    const setHintText=()=>{
+      const l2=document.getElementById('handHintLine2');
+      const l3=document.getElementById('handHintLine3');
+      if(!l2||!l3)return;
+      if(isDesktop()){
+        l2.innerHTML='<span></span>&#x2724; scroll down to constrict &#x2724;<span></span>';
+        l3.innerHTML='<span></span>&#x2724; scroll up to expand &#x2724;<span></span>';
+      } else {
+        l2.innerHTML='<span></span>&#x2724; pinch to constrict &#x2724;<span></span>';
+        l3.innerHTML='<span></span>&#x2724; pull open to expand &#x2724;<span></span>';
+      }
+    };
+    if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',setHintText);}
+    else{setHintText();}
+    window.matchMedia('(pointer:fine)').addEventListener('change',setHintText);
+
+    // Scroll to adjust spacing — desktop only
+    const DEG_PER_SCROLL=0.012;  // degrees of spacing per pixel of scroll delta
+    let scrollRaf=null;
+    let pendingDelta=0;
+    const applyScroll=()=>{
+      scrollRaf=null;
+      if(!pendingDelta)return;
+      const delta=pendingDelta;pendingDelta=0;
+      // deltaY > 0 = scroll down = constrict (reduce spacing)
+      const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
+      let next=s - delta*DEG_PER_SCROLL;
+      next=Math.max(SPACING_MIN,Math.min(SPACING_MAX,next));
+      if(next===manualSpacing)return;
+      manualSpacing=next;
+      cachedCap=null;
+      applySpacing(next);
+      applyOffset(clampOffset(offset));
+    };
+    const onWheel=ev=>{
+      if(!isDesktop())return;
+      const z=zoneEl();if(!z)return;
+      // Only activate when hovering the swipe zone or the hand area
+      if(!ev.target.closest('#handSwipeZone,.handDock'))return;
+      ev.preventDefault();
+      // Normalise delta across different wheel modes
+      let dy=ev.deltaY;
+      if(ev.deltaMode===1)dy*=20;   // line mode
+      if(ev.deltaMode===2)dy*=400;  // page mode
+      pendingDelta+=dy;
+      if(scrollRaf==null)scrollRaf=requestAnimationFrame(applyScroll);
+    };
+    window.addEventListener('wheel',onWheel,{passive:false});
+  })();
   attachObserver();
   window.addEventListener('resize',scheduleRecheck);
 })();
@@ -3407,7 +3473,7 @@ function setSfxVol(v){_sfxVol=v;}
     const o=objects[id];if(!o||awaitingPickup)return;
     if(searched[id]){whisper('You already searched there.');return;}
     if(candleCount<o.cost){whisper('The candle is almost gone.');return;}
-    candleCount-=o.cost;searched[id]=true;renderCandles();candleSpend();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);whisper('You find '+o.itemTitle+'.');},430);
+    dismissAtticTutorial();candleCount-=o.cost;searched[id]=true;renderCandles();candleSpend();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);whisper('You find '+o.itemTitle+'.');},430);
   }
   function enter(candles,shouldReset){
     if(window.tlrCloseArchives)window.tlrCloseArchives();
@@ -3415,6 +3481,7 @@ function setSfxVol(v){_sfxVol=v;}
     document.body.classList.remove('mode-reading','mode-to-table','mode-table-return');document.body.classList.add('mode-to-attic');
     const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','false');
     setTimeout(function(){document.body.classList.remove('mode-to-attic');document.body.classList.add('mode-attic');whisper('You get up from the table. Spend Candlelight to search.');},900);
+    setTimeout(function(){showAtticTutorial();},1400);
   }
   function leave(){
     if(window.tlrCloseArchives)window.tlrCloseArchives();
@@ -3424,7 +3491,28 @@ function setSfxVol(v){_sfxVol=v;}
     setTimeout(function(){document.body.classList.remove('mode-attic','mode-to-attic','mode-reading');document.body.classList.add('mode-to-table');const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','true');},60);
     setTimeout(function(){document.body.classList.remove('mode-to-table','mode-table-return','mode-return-hard-hide');document.body.classList.add('mode-reading');},1080);
   }
-  window.tlrScoreToCandlelight=candlesFromScore;
+  function showAtticTutorial(){
+    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
+    const t=document.getElementById('atticTutorial');if(!t)return;
+    const isDesktop=window.matchMedia('(pointer:fine)').matches;
+    const searchLine=isDesktop
+      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
+      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
+    const scrollLine=isDesktop
+      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
+      :'';
+    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
+      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
+      +'<button id="atticTutDismiss">I understand</button>';
+    const btn=t.querySelector('#atticTutDismiss');
+    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
+    t.classList.add('show');
+  }
+  function dismissAtticTutorial(){
+    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
+    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
+  }
+    window.tlrScoreToCandlelight=candlesFromScore;
   window.tlrDebugEnterAttic=enter;
   window.tlrDebugLeaveAttic=leave;
   window.tlrEnterAtticAfterReading=function(score){enter(candlesFromScore(Number(score)||0),true);};
