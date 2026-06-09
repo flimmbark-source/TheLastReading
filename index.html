@@ -227,6 +227,7 @@
 .isp-32.isp-draw{background-position:-12px -32px}.isp-32.isp-peek{background-position:-50px -32px}.isp-32.isp-mirror{background-position:-89px -32px}.isp-32.isp-neighbor{background-position:-127px -32px}.isp-32.isp-between{background-position:-165px -32px}.isp-32.isp-kin{background-position:-203px -32px}
 .isp-32.isp-search{background-position:-12px -75px}.isp-32.isp-reshuffle{background-position:-50px -75px}.isp-32.isp-scoring{background-position:-89px -75px}.isp-32.isp-abilities{background-position:-127px -75px}.isp-32.isp-disc{background-position:-165px -75px}.isp-32.isp-purge-ic{background-position:-203px -75px}
 .shop-pack-banner .isp,.upg-art .isp{position:relative;z-index:1}
+.shop-pack-banner .isp{display:block;margin:0 auto}
 /* ── Pack icon sprites (Card_packs1.png 612×408, tiles 204×204, display 56×56) ── */
 .isp-56.isp-foundation,.isp-56.isp-ritual,.isp-56.isp-pattern,.isp-56.isp-innate,.isp-56.isp-restless,.isp-56.isp-relic-cache{background-image:url(Card_packs1.png);background-size:168px 112px}
 .isp-56.isp-foundation{background-position:0px 0px}.isp-56.isp-ritual{background-position:-56px 0px}.isp-56.isp-pattern{background-position:-112px 0px}
@@ -292,7 +293,7 @@
 /* ── Pack cards redesign ── */
 .shop-pack{width:130px;min-height:260px;background:transparent;border:none;border-radius:0;display:flex;flex-direction:column;align-items:stretch;overflow:visible;transition:filter .15s,box-shadow .15s}
 .shop-pack.affordable{filter:brightness(1.06);box-shadow:0 0 22px rgba(212,175,106,.28)}
-.shop-pack-banner{flex:1;background:transparent;border-bottom:none;display:flex;align-items:flex-end;justify-content:center;position:relative;padding-bottom:2px}
+.shop-pack-banner{flex:1;background:transparent;border-bottom:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;position:relative;padding-bottom:2px}
 .shop-pack-banner::before{display:none}
 .shop-pack-banner::after{display:none}
 .shop-pack-desc{font-size:8.5px;color:#d4c090;text-align:center;line-height:1.3;padding:4px 8px 6px;background:transparent;text-shadow:0 1px 2px rgba(0,0,0,.85)}
