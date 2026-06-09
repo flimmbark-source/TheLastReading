@@ -368,9 +368,8 @@ upsertScript(
     }
 
     if(!committed){
-      // pointercancel (e.g. pinch started) — slide back to original position.
+      // pointercancel (e.g. pinch started) — let CSS transition settle naturally.
       if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
-      slideLanding(cardEl,firstRect);
       return;
     }
 
@@ -389,15 +388,13 @@ upsertScript(
         state.hand.splice(hoverIndex,0,card);
         if(state.selected===uid){state.selected=null;}
         if(typeof render==='function')render();
-        slideLanding(cardEl,firstRect);
         return;
       }
     }
 
-    // Dropped back to original position — slide home. Clear selection so slots don't stay green.
+    // Dropped back to original position — let CSS transition settle naturally.
     if(state.selected===uid){state.selected=null;if(typeof refreshHandState==='function')refreshHandState();}
     if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
-    slideLanding(cardEl,firstRect);
   };
 
   // ── Pointer event handlers ──────────────────────────────────────
