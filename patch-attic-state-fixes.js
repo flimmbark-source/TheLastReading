@@ -48,14 +48,21 @@ if (html.includes(helperNeedle) && !html.includes('function foundItems(){try{ret
   html = html.replace(helperNeedle, helperReplacement);
 }
 
-// Once an attic item has been found, its associated rummage prop should no longer appear.
-const renderNeedle = "Object.keys(objects).forEach(function(k){const o=objects[k];const done=!!searched[o.id];const el=document.createElement('div');";
-const renderReplacement = "Object.keys(objects).forEach(function(k){const o=objects[k];if(foundItems().includes(o.itemId))return;const done=!!searched[o.id];const el=document.createElement('div');";
-if (html.includes(renderNeedle)) {
-  html = html.replace(renderNeedle, renderReplacement);
-}
+// Found attic items should stay visible in their opened state, but become inactive.
+// Replace the older behavior that removed found props from the scene.
+const oldRemoveFound = "Object.keys(objects).forEach(function(k){const o=objects[k];if(foundItems().includes(o.itemId))return;const done=!!searched[o.id];const el=document.createElement('div');";
+const keepFound = "Object.keys(objects).forEach(function(k){const o=objects[k];const alreadyFound=foundItems().includes(o.itemId);const done=!!searched[o.id]||alreadyFound;const el=document.createElement('div');";
+if (html.includes(oldRemoveFound)) html = html.replace(oldRemoveFound, keepFound);
 
-// If the player takes an item, immediately re-render props so that prop vanishes from the scene.
+const oldBaseRender = "Object.keys(objects).forEach(function(k){const o=objects[k];const done=!!searched[o.id];const el=document.createElement('div');";
+if (html.includes(oldBaseRender)) html = html.replace(oldBaseRender, keepFound);
+
+// Disable click handlers on opened/found props.
+const oldClickAttach = "el.addEventListener('click',function(e){e.stopPropagation();rummage(o.id,el);});root.appendChild(el);";
+const newClickAttach = "if(!done)el.addEventListener('click',function(e){e.stopPropagation();rummage(o.id,el);});else el.style.pointerEvents='none';root.appendChild(el);";
+if (html.includes(oldClickAttach)) html = html.replace(oldClickAttach, newClickAttach);
+
+// If the player takes an item, immediately re-render props so it remains as its opened, inactive sprite.
 const takeNeedle = "saveFound(o.itemId);if(typeof renderInventory==='function')renderInventory();whisper('You take '+o.itemTitle+' back to the table.');";
 const takeReplacement = "saveFound(o.itemId);renderObjects();if(typeof renderInventory==='function')renderInventory();whisper('You take '+o.itemTitle+' back to the table.');";
 if (html.includes(takeNeedle)) {
