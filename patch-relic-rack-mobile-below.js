@@ -8,7 +8,7 @@ if (html.includes(marker)) {
   const re = /\/\* relic rack below-spread mobile patch \*\/[\s\S]*?(?=\n<\/style>)/;
   const css = `${marker}
 @media (max-width: 640px) {
-  .relic-rack{position:fixed!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;width:100%!important;left:0!important;right:0!important;top:calc(46vh + 104px)!important;bottom:auto!important;transform:none!important;margin:0!important;gap:8px!important;z-index:11!important}
+  .relic-rack{position:fixed!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;width:100%!important;left:0!important;right:0!important;top:calc(46vh + 72px)!important;bottom:auto!important;transform:none!important;margin:0!important;gap:8px!important;z-index:11!important}
   .relic-rack .relic-btn{width:38px!important;height:38px!important}
   .relic-rack .relic-slot-empty{width:38px!important;height:38px!important}
 }`;
@@ -41,7 +41,7 @@ if (html.includes(rackEl) && html.includes(spreadWrapEnd)) {
 const css = `
 ${marker}
 @media (max-width: 640px) {
-  .relic-rack{position:fixed!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;width:100%!important;left:0!important;right:0!important;top:calc(46vh + 104px)!important;bottom:auto!important;transform:none!important;margin:0!important;gap:8px!important;z-index:11!important}
+  .relic-rack{position:fixed!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;width:100%!important;left:0!important;right:0!important;top:calc(46vh + 72px)!important;bottom:auto!important;transform:none!important;margin:0!important;gap:8px!important;z-index:11!important}
   .relic-rack .relic-btn{width:38px!important;height:38px!important}
   .relic-rack .relic-slot-empty{width:38px!important;height:38px!important}
 }
