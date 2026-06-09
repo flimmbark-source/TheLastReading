@@ -171,6 +171,10 @@
 .shop-leave{width:100%;margin-top:4px}
 /* Pack cards */
 .shop-packs-row{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+.shop-refresh-row{display:flex;justify-content:center;margin-bottom:10px}
+.shop-refresh-btn{background:rgba(30,16,8,.82);border:1px solid #6a4c24;border-radius:20px;color:#c0ac80;font:700 10px system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:5px 16px;cursor:pointer;transition:color .15s,border-color .15s}
+.shop-refresh-btn:hover:not(:disabled){color:#ffd978;border-color:#d4af6a}
+.shop-refresh-btn:disabled{opacity:.35;cursor:not-allowed}
 .shop-pack.affordable{border-color:#d4af6a;box-shadow:0 0 16px rgba(212,175,106,.28)}
 .shop-pack-banner{width:100%;height:90px;background:linear-gradient(#1e1008,#2a1810);border-bottom:2px solid #4a3820;display:flex;align-items:center;justify-content:center;font-size:40px;position:relative}
 .shop-pack-banner::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(212,175,106,.035) 0,rgba(212,175,106,.035) 2px,transparent 2px,transparent 8px)}
@@ -1647,7 +1651,7 @@ function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;wa
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
 function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards,state.spread),total=res.finalScore,curTH=TH[state.th]+(state.thBonus||0),pass=total>=curTH;let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+curTH+' Cleared':'Below Threshold '+curTH}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;const _regMelds=res.melds.filter(m=>!m[0].startsWith('⚷'));const _resMelds=res.melds.filter(m=>m[0].startsWith('⚷'));if(_regMelds.length||_resMelds.length){_regMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);_resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){const miserBonus=persist.relics.includes('miser')?5:0;const threshold=curTH;const worldCarry=persist.relics.includes('the_world')?Math.floor((total-threshold)*0.1):0;state.worldCarry=worldCarry||0;state.pendingPool=(state.pendingPool||0)+total+miserBonus;persist.totalScore=(persist.totalScore||0)+total;state.relicEarned=total>=curTH*2;state.th++;html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render();}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML=''}
-function continueReading(){_packBuys={};const firstShop=!localStorage.getItem('tlr_tut_shop');const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}else if(pendingRelic){setTimeout(()=>tutShow(9),400)}}function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToCandlelight?window.tlrScoreToCandlelight(total):1;showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Candlelight</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;persist.totalScore=0;persist.pool=0;startReading()}
+function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount=0;const firstShop=!localStorage.getItem('tlr_tut_shop');const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}else if(pendingRelic){setTimeout(()=>tutShow(9),400)}}function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToCandlelight?window.tlrScoreToCandlelight(total):1;showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Candlelight</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;persist.totalScore=0;persist.pool=0;startReading()}
 // [name, desc, baseCost, scale, icon, category, pairedKey?]
 const SHOP={
   // ── Foundation Pack (foundation) ──
@@ -1746,13 +1750,27 @@ function relicIconStyle(key,size){
   return`background-image:url('relic%20icons.png');background-size:${size*6}px ${size*4}px;background-position:${-p[0]*size}px ${-p[1]*size}px;background-repeat:no-repeat;`;
 }
 let _packBuys={};
+let _shopPacks=null;
+let _shopRefreshCount=0;
+const _REFRESH_COSTS=[5,8,12,17,23];
+function _nextRefreshCost(){return _REFRESH_COSTS[Math.min(_shopRefreshCount,_REFRESH_COSTS.length-1)];}
+function refreshShopPacks(){
+  const cost=_nextRefreshCost();
+  if(persist.pool<cost)return;
+  persist.pool-=cost;
+  _shopRefreshCount++;
+  _shopPacks=shuffle(Object.keys(PACKS)).slice(0,3);
+  openShopMain();
+}
 function openShopMain(){
   if(state.pendingPool){persist.pool+=state.pendingPool;state.pendingPool=0;render();}
+  if(!_shopPacks)_shopPacks=shuffle(Object.keys(PACKS)).slice(0,3);
   let html='<div class="summary tarot-shop">';
   html+='<div class="shop-header"><span class="shop-orn">✦ &nbsp; ✦ &nbsp; ✦</span><h3>The Oracle\'s Market</h3><p class="shop-reserve-display">Reserve <b>'+persist.pool+'</b></p></div>';
   html+='<div class="shop-section-title"></div><div class="shop-packs-row">';
   const packDiscount=persist.relics.includes('merchants_scale')?3:0;
-  for(const[pk,p]of Object.entries(PACKS)){
+  for(const pk of _shopPacks){
+    const p=PACKS[pk];
     const cost=Math.max(0,p.cost+(_packBuys[pk]||0)*8-packDiscount);
     const ok=persist.pool>=cost;
     html+=`<div class="shop-pack ${ok?'affordable':''}">
@@ -1763,7 +1781,9 @@ function openShopMain(){
       <button class="sbtn sbtn-open" ${ok?'':'disabled'} aria-label="Open" onclick="buyPack('${pk}',${cost})"></button></div>
     </div>`;
   }
-  html+='</div><button class="sbtn sbtn-leave" aria-label="Leave Market" onclick="continueReading()"></button></div>';
+  const rc=_nextRefreshCost(),canRefresh=persist.pool>=rc;
+  html+=`</div><div class="shop-refresh-row"><button class="shop-refresh-btn" ${canRefresh?'':'disabled'} onclick="refreshShopPacks()">↺ Refresh &nbsp;✦ ${rc}</button></div>`;
+  html+='<button class="sbtn sbtn-leave" aria-label="Leave Market" onclick="continueReading()"></button></div>';
   showOverlay(html);
 }
 function openShop(){
