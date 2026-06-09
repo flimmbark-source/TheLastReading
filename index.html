@@ -772,15 +772,15 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 <div id="roomAmbient"></div>
 <div id="ambientFX"></div>
 <div id="breathVignette"></div>
-<div id="scoringPullWrap" class="tlr-pull-wrap parchment">
+<div id="scoringPullWrap" class="tlr-pull-wrap parchment" style="transition:none">
   <div id="scoringPullDesk" class="tlr-pull-desk"></div>
   <button id="scoringPullTab" type="button" class="tlr-pull-tab" onclick="tlrTogglePullTab('scoring')">&#9660; Scoring</button>
 </div>
-<div id="abilitiesPullWrap" class="tlr-pull-wrap parchment">
+<div id="abilitiesPullWrap" class="tlr-pull-wrap parchment" style="transition:none">
   <div id="abilitiesPullDesk" class="tlr-pull-desk"></div>
   <button id="abilitiesPullTab" type="button" class="tlr-pull-tab" onclick="tlrTogglePullTab('abilities')">&#9660; Abilities</button>
 </div>
-<div id="menuPullWrap" class="tlr-pull-wrap menu-brown">
+<div id="menuPullWrap" class="tlr-pull-wrap menu-brown" style="transition:none">
   <div id="menuPullDesk" class="tlr-pull-desk"></div>
   <button id="menuPullTab" type="button" class="tlr-pull-tab" onclick="tlrTogglePullTab('menu')">&#9660; Menu</button>
 </div>
@@ -3928,7 +3928,16 @@ function setSfxVol(v){_sfxVol=v;}
   }
 
   renderDrawerScoringSheet();
-  requestAnimationFrame(fitDrawerHeights);
+  requestAnimationFrame(()=>{
+    fitDrawerHeights();
+    // Re-enable transitions after the initial height is set, with no visible jump
+    requestAnimationFrame(()=>{
+      ['scoring','abilities','menu'].forEach(id=>{
+        const w=document.getElementById(id+'PullWrap');
+        if(w)w.style.transition='';
+      });
+    });
+  });
   window.addEventListener('resize',()=>setTimeout(fitDrawerHeights,40));
   const oldToggle=window.toggleRef;
   window.toggleRef=function(e){
