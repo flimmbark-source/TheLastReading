@@ -3507,7 +3507,7 @@ function setSfxVol(v){_sfxVol=v;}
     const o=objects[id];if(!o||awaitingPickup)return;
     if(searched[id]){whisper('You already searched there.');return;}
     if(candleCount<o.cost){whisper('The candle is almost gone.');return;}
-    dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();candleCount-=o.cost;searched[id]=true;renderCandles();candleSpend();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);whisper('You find '+o.itemTitle+'.');},430);
+    dismissAtticTutorial();candleCount-=o.cost;searched[id]=true;renderCandles();candleSpend();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);whisper('You find '+o.itemTitle+'.');},430);
   }
   function enter(candles,shouldReset){
     if(window.tlrCloseArchives)window.tlrCloseArchives();
@@ -3515,13 +3515,6 @@ function setSfxVol(v){_sfxVol=v;}
     document.body.classList.remove('mode-reading','mode-to-table','mode-table-return');document.body.classList.add('mode-to-attic');
     const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','false');
     setTimeout(function(){document.body.classList.remove('mode-to-attic');document.body.classList.add('mode-attic');whisper('You get up from the table. Spend Candlelight to search.');},900);
-    setTimeout(function(){showAtticTutorial();},1400);
-    setTimeout(function(){showAtticTutorial();},1400);
-    setTimeout(function(){showAtticTutorial();},1400);
-    setTimeout(function(){showAtticTutorial();},1400);
-    setTimeout(function(){showAtticTutorial();},1400);
-    setTimeout(function(){showAtticTutorial();},1400);
-    setTimeout(function(){showAtticTutorial();},1400);
     setTimeout(function(){showAtticTutorial();},1400);
   }
   function leave(){
@@ -3532,6 +3525,7 @@ function setSfxVol(v){_sfxVol=v;}
     setTimeout(function(){document.body.classList.remove('mode-attic','mode-to-attic','mode-reading');document.body.classList.add('mode-to-table');const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','true');},60);
     setTimeout(function(){document.body.classList.remove('mode-to-table','mode-table-return','mode-return-hard-hide');document.body.classList.add('mode-reading');},1080);
   }
+  /* attic-tutorial-fns */
   function showAtticTutorial(){
     try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
     const t=document.getElementById('atticTutorial');if(!t)return;
@@ -3547,160 +3541,14 @@ function setSfxVol(v){_sfxVol=v;}
       +'<button id="atticTutDismiss">I understand</button>';
     const btn=t.querySelector('#atticTutDismiss');
     if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
+    t.addEventListener('click',function(){dismissAtticTutorial();});
     t.classList.add('show');
   }
   function dismissAtticTutorial(){
     const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
     try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
   }
-    function showAtticTutorial(){
-    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
-    const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=window.matchMedia('(pointer:fine)').matches;
-    const searchLine=isDesktop
-      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
-      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
-    const scrollLine=isDesktop
-      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
-      :'';
-    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
-      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
-      +'<button id="atticTutDismiss">I understand</button>';
-    const btn=t.querySelector('#atticTutDismiss');
-    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
-    t.classList.add('show');
-  }
-  function dismissAtticTutorial(){
-    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
-    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
-  }
-    function showAtticTutorial(){
-    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
-    const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=window.matchMedia('(pointer:fine)').matches;
-    const searchLine=isDesktop
-      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
-      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
-    const scrollLine=isDesktop
-      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
-      :'';
-    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
-      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
-      +'<button id="atticTutDismiss">I understand</button>';
-    const btn=t.querySelector('#atticTutDismiss');
-    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
-    t.classList.add('show');
-  }
-  function dismissAtticTutorial(){
-    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
-    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
-  }
-    function showAtticTutorial(){
-    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
-    const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=window.matchMedia('(pointer:fine)').matches;
-    const searchLine=isDesktop
-      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
-      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
-    const scrollLine=isDesktop
-      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
-      :'';
-    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
-      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
-      +'<button id="atticTutDismiss">I understand</button>';
-    const btn=t.querySelector('#atticTutDismiss');
-    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
-    t.classList.add('show');
-  }
-  function dismissAtticTutorial(){
-    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
-    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
-  }
-    function showAtticTutorial(){
-    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
-    const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=window.matchMedia('(pointer:fine)').matches;
-    const searchLine=isDesktop
-      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
-      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
-    const scrollLine=isDesktop
-      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
-      :'';
-    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
-      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
-      +'<button id="atticTutDismiss">I understand</button>';
-    const btn=t.querySelector('#atticTutDismiss');
-    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
-    t.classList.add('show');
-  }
-  function dismissAtticTutorial(){
-    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
-    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
-  }
-    function showAtticTutorial(){
-    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
-    const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=window.matchMedia('(pointer:fine)').matches;
-    const searchLine=isDesktop
-      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
-      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
-    const scrollLine=isDesktop
-      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
-      :'';
-    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
-      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
-      +'<button id="atticTutDismiss">I understand</button>';
-    const btn=t.querySelector('#atticTutDismiss');
-    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
-    t.classList.add('show');
-  }
-  function dismissAtticTutorial(){
-    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
-    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
-  }
-    function showAtticTutorial(){
-    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
-    const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=window.matchMedia('(pointer:fine)').matches;
-    const searchLine=isDesktop
-      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
-      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
-    const scrollLine=isDesktop
-      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
-      :'';
-    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
-      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
-      +'<button id="atticTutDismiss">I understand</button>';
-    const btn=t.querySelector('#atticTutDismiss');
-    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
-    t.classList.add('show');
-  }
-  function dismissAtticTutorial(){
-    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
-    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
-  }
-    function showAtticTutorial(){
-    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
-    const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=window.matchMedia('(pointer:fine)').matches;
-    const searchLine=isDesktop
-      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
-      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
-    const scrollLine=isDesktop
-      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
-      :'';
-    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
-      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
-      +'<button id="atticTutDismiss">I understand</button>';
-    const btn=t.querySelector('#atticTutDismiss');
-    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
-    t.classList.add('show');
-  }
-  function dismissAtticTutorial(){
-    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
-    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
-  }
-    window.tlrScoreToCandlelight=candlesFromScore;
+      window.tlrScoreToCandlelight=candlesFromScore;
   window.tlrDebugEnterAttic=enter;
   window.tlrDebugLeaveAttic=leave;
   window.tlrEnterAtticAfterReading=function(score){enter(candlesFromScore(Number(score)||0),true);};
