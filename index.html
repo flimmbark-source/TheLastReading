@@ -387,6 +387,7 @@
 .card-zoom-inner{transform:scale(2.4);transform-origin:center;pointer-events:none;box-shadow:0 24px 70px rgba(0,0,0,.95),0 0 0 1px rgba(212,175,106,.18)!important;animation:none!important;transition:none!important}
 @media(max-width:640px){.card-zoom-inner{transform:scale(2)}}
 :root{--inv-h:300px}
+body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!important}
 #invWrap{position:fixed;top:0;left:0;right:0;z-index:150;transform:translateY(calc(-1 * var(--inv-h)));transition:transform .45s cubic-bezier(.34,1.28,.64,1);pointer-events:none}
 #invWrap.open{transform:translateY(0);pointer-events:auto;z-index:400}
 #invDesk{height:var(--inv-h);background:linear-gradient(180deg,#0e0704 0%,#1c1008 55%,#150d06 100%);border-bottom:2px solid #6a4c24;position:relative;overflow:hidden;pointer-events:auto}
@@ -711,7 +712,8 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 }
 </style>
 </head>
-<body>
+<body class="tlr-loading">
+<script>requestAnimationFrame(function(){requestAnimationFrame(function(){document.body.classList.remove('tlr-loading');});});</script>
 <div id="roomAmbient"></div>
 <div id="ambientFX"></div>
 <div id="breathVignette"></div>
