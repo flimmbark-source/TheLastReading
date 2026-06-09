@@ -30,12 +30,19 @@ rep('mult*=courtMult', 'mult+=courtMult-1', 'Court pattern mult adds instead of 
 rep('mult*=seqMult', 'mult+=seqMult-1', 'Sequence pattern mult adds instead of compounds');
 rep('mult*=pathMult', 'mult+=pathMult-1', 'Path pattern mult adds instead of compounds');
 
-// Make ghost/summary text match the additive model. Relics already pass mode==='add'
+// Make score text match the additive model. Relics already pass mode==='add'
 // with their additive amount, while pattern entries store total values like 1.25.
+// Keep ghosts compact: +0.25 instead of +0.25 Mult.
 rep(
   `function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';if(chips&&mult)return\`+\${chips} ×\${mult}\`;if(chips)return\`+\${chips}\`;if(mult)return\`×\${mult}\`;return'';}`,
-  `function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';const fmt=v=>('+'+Number(v).toFixed(2)).replace(/\\.?0+$/,'');const shown=additive?mult:mult-1;if(chips&&mult)return\`+\${chips} \${fmt(shown)} Mult\`;if(chips)return\`+\${chips}\`;if(mult)return\`\${fmt(shown)} Mult\`;return'';}`,
-  'Meld text shows additive mult gains'
+  `function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';const fmt=v=>('+'+Number(v).toFixed(2)).replace(/\\.?0+$/,'');const shown=additive?mult:mult-1;if(chips&&mult)return\`+\${chips} \${fmt(shown)}\`;if(chips)return\`+\${chips}\`;if(mult)return\`\${fmt(shown)}\`;return'';}`,
+  'Meld text shows compact additive mult gains'
+);
+
+rep(
+  `if(m[2]>0){const multLabel='×'+m[2];setTimeout(()=>fireMultGhost(multLabel),ghostDelay+200);}`,
+  `if(m[2]>0){const _mg=m[3]==='add'?m[2]:m[2]-1;const multLabel=('+'+Number(_mg).toFixed(2)).replace(/\\.?0+$/,'');setTimeout(()=>fireMultGhost(multLabel),ghostDelay+200);}`,
+  'Colored mult ghost uses compact additive gain label'
 );
 
 html = html.replace('</script>', `${marker}\n</script>`);
