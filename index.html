@@ -731,7 +731,7 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
     <tr><td>Reshuffle</td><td class="r">Shuffle discard and hand into the deck, then redraw a full hand.</td></tr>
     <tr><td>Neighbor</td><td class="r">Choose a card. Reveal up to 2 adjacent cards from the deck. Take 1.</td></tr>
     <tr><td>Kin</td><td class="r">Choose a card. Reveal up to 2 cards of the same Arcana from the deck. Take 1.</td></tr>
-    <tr><td>Mirror</td><td class="r">Choose a card. Take the card opposite it across centerline of its Arcana.</td></tr>
+    <tr><td>Mirror</td><td class="r">Choose a card. Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)</td></tr>
     <tr><td>Between</td><td class="r">Choose two cards. Reveal up to 2 cards between them from the deck. Take 1.</td></tr>
   </table>
 </div>
@@ -1453,7 +1453,7 @@ function resolveAbility(ab,done,sourceCard=null){
   else if(ab==='SEARCH')search(done);
   else if(ab==='NEIGHBOR_2')relation('Neighbor','Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers or court ranks in the same suit.',neighbor,2+lens,done);
   else if(ab==='KIN_2')relation('Kin','Choose an anchor card. Kin finds cards of the same Arcana.',kin,2+lens,done);
-  else if(ab==='MIRROR_1')relation('Mirror','Choose a card. Take the card opposite it across centerline of its Arcana.',mirror,1+lens,done);
+  else if(ab==='MIRROR_1')relation('Mirror','Choose a card. Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)',mirror,1+lens,done);
   else if(ab==='BETWEEN_2')betweenAbility(done,sourceCard);
   else if(ab==='WORLD'){state.deck.push(...state.discard.splice(0),...state.hand.splice(0));shuffle(state.deck);playSound('shuffle');drawN(maxHand()+rd);done()}
   else done()

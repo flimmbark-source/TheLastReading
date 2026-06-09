@@ -115,3 +115,15 @@ rep(
 
 fs.writeFileSync(file, html);
 console.log(`Done — ${changed} replacements applied.`);
+
+// Mirror ability description (both reference table and ability prompt)
+const oldMirrorDesc = 'Take the card opposite it across centerline of its Arcana.';
+const newMirrorDesc = 'Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)';
+if (html.includes(oldMirrorDesc)) {
+  html = html.split(oldMirrorDesc).join(newMirrorDesc);
+  console.log('  ✓ Mirror description updated');
+} else {
+  console.log('  (Mirror description already updated)');
+}
+
+fs.writeFileSync(file, html);
