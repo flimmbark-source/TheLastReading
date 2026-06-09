@@ -197,7 +197,12 @@ upsertBlock(
 const handDockOrig = `<div class="handDock">`;
 const handDockPatched = `<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div class="handDock">`;
-replaceOne('hand swipe zone element', handDockOrig, handDockPatched);
+// Use id presence as idempotency guard — downstream patches may modify zone contents
+if (html.includes('id="handSwipeZone"')) {
+  console.log('hand swipe zone element already applied.');
+} else {
+  replaceOne('hand swipe zone element', handDockOrig, handDockPatched);
+}
 
 // Per-card arc track: swipe = slide each card along the curve, pinch = adjust spacing.
 upsertBlock(
