@@ -10,7 +10,7 @@ const oldScene = '<div id="atticScene" aria-hidden="true"><div id="candlelightHu
 const newScene = '<div id="atticScene" aria-hidden="true"><div id="atticPan"><div id="atticRoom"><div id="atticObjects"></div></div></div><div id="candlelightHud"></div><div id="atticWhisper"></div></div>';
 if (html.includes(oldScene)) html = html.replace(oldScene, newScene);
 
-const cssMarker = '/* Attic mobile pan patch v3 */';
+const cssMarker = '/* Attic mobile pan patch v4 */';
 if (!html.includes(cssMarker)) {
   html = html.replace('</style>', `
 ${cssMarker}
@@ -20,10 +20,10 @@ ${cssMarker}
 #atticPan::-webkit-scrollbar{display:none}
 #atticRoom{position:relative;height:100dvh;width:177.7778dvh;min-height:100dvh;min-width:177.7778dvh;background:url('backgrounds/attic_room_mvp_1080x1920.png') left top/100% 100% no-repeat}
 #atticObjects{position:absolute!important;inset:0!important;z-index:6!important}
-.attic-prop{background-color:transparent!important;background-repeat:no-repeat!important;background-size:contain!important;background-position:center!important;filter:none!important;box-shadow:none!important;border:0!important;outline:0!important;overflow:visible!important}
-.attic-prop.searched{cursor:default!important;pointer-events:none!important;opacity:1!important}
-.attic-prop::before,.attic-prop::after,.attic-dust{display:none!important;background:none!important;box-shadow:none!important}
-.attic-prop.spend{animation:none!important}
+#atticObjects .attic-prop{background-color:transparent!important;background-repeat:no-repeat!important;background-size:contain!important;background-position:center!important;filter:none!important;box-shadow:none!important;border:0!important;outline:0!important;overflow:visible!important}
+#atticObjects .attic-prop.searched{cursor:default!important;pointer-events:none!important;opacity:1!important}
+#atticObjects .attic-prop::before,#atticObjects .attic-prop::after,#atticObjects .attic-dust{display:none!important;background:none!important;box-shadow:none!important}
+#atticObjects .attic-prop.spend{animation:none!important}
 body.mode-return-hard-hide #titleWrap,body.mode-return-hard-hide .score-stack,body.mode-return-hard-hide .spread-wrap,body.mode-return-hard-hide .handDock,body.mode-return-hard-hide #relicRack,body.mode-to-table #titleWrap,body.mode-to-table .score-stack,body.mode-to-table .spread-wrap,body.mode-to-table .handDock,body.mode-to-table #relicRack{opacity:0!important;transition:none!important;pointer-events:none!important}
 body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:translateY(calc(-1 * var(--inv-h)))!important;pointer-events:none!important}
 @media (min-width:981px){#atticPan{overflow:hidden;display:flex;justify-content:center;align-items:flex-start}#atticRoom{margin:0 auto}}
@@ -36,13 +36,15 @@ html = html.replace(/newspaper_stack_01:\{[^\n]*?itemTitle:'Strange Obituary',th
 html = html.replace(/covered_frame_01:\{[^\n]*?itemTitle:'The Reading Room',thumb:'Reading_room\.png'\}/g, "covered_frame_01:{id:'covered_frame_01',label:'Covered Frame',verb:'Lift cloth',motion:'lift',cost:1,before:'props/covered_frame_uncovered.png',after:'props/covered_frame_closed.png',left:'66%',top:'16%',width:'27%',height:'44%',itemId:'photo_01',itemTitle:'The Reading Room',thumb:'Reading_room.png'}");
 html = html.replace(/coat_01:\{[^\n]*?itemTitle:'Unsigned Letter',thumb:'handwritten_note\.png'\}/g, "coat_01:{id:'coat_01',label:'Old Coat',verb:'Check pocket',motion:'search',cost:1,before:'props/old_coat_searched.png',after:'props/old_coat_closed.png',left:'5%',top:'13%',width:'22%',height:'67%',itemId:'letter_01',itemTitle:'Unsigned Letter',thumb:'handwritten_note.png'}");
 
-// Always render the full PNG for the current state. Never use left/right cropping.
-html = html.replace(/el\.style\.backgroundImage='url\([^;]+;/g, "el.style.backgroundImage='url(\"'+(done?o.after:o.before)+'\")';");
-html = html.replace(/el\.style\.backgroundSize=[^;]+;/g, "el.style.backgroundSize='contain';");
-html = html.replace(/el\.style\.backgroundPosition=[^;]+;/g, "el.style.backgroundPosition='center';");
+// Only repair the attic prop render line. Do not touch any tarot-card rendering code.
+const oldAtticRender = "el.style.backgroundImage='url(\"'+(done?o.after:o.before)+'\")';el.setAttribute('role','button');";
+const newAtticRender = "el.style.backgroundImage='url(\"'+(done?o.after:o.before)+'\")';el.style.backgroundSize='contain';el.style.backgroundPosition='center';el.style.backgroundRepeat='no-repeat';el.setAttribute('role','button');";
+if (html.includes(oldAtticRender)) html = html.replace(oldAtticRender, newAtticRender);
+
+// Remove the dust puffs; they were creating occasional dark artifacts under props.
 html = html.replace(/function dustNear\(el\)\{[\s\S]*?\n  function showPickup\(o\)\{/g, "function dustNear(el){return;}\n  function showPickup(o){");
 
-const jsMarker = '// Attic mobile pan patch v3';
+const jsMarker = '// Attic mobile pan patch v4';
 if (!html.includes(jsMarker)) {
   html = html.replace('</script>', `
 ${jsMarker}
@@ -57,8 +59,10 @@ ${jsMarker}
 </script>`);
 }
 
+// Replace only the known attic leave transition, not arbitrary functions.
+const oldLeave = "function leave(){\n    if(window.tlrCloseArchives)window.tlrCloseArchives();\n    if(!inAttic)return;inAttic=false;document.querySelectorAll('#atticPickup,.attic-action-tag,.attic-dust').forEach(function(p){p.remove();});\n    document.body.classList.remove('mode-attic','mode-to-attic','mode-reading');document.body.classList.add('mode-to-table');\n    const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','true');\n    setTimeout(function(){if(resetOnLeave&&typeof resetSession==='function'){resetOnLeave=false;resetSession();}document.body.classList.remove('mode-to-table');document.body.classList.add('mode-reading','mode-table-return');},720);\n    setTimeout(function(){document.body.classList.remove('mode-table-return');},1650);\n  }";
 const newLeave = "function leave(){\n    if(window.tlrCloseArchives)window.tlrCloseArchives();\n    if(!inAttic)return;inAttic=false;document.querySelectorAll('#atticPickup,.attic-action-tag,.attic-dust').forEach(function(p){p.remove();});\n    document.body.classList.add('mode-return-hard-hide');\n    if(resetOnLeave&&typeof resetSession==='function'){resetOnLeave=false;resetSession();}\n    setTimeout(function(){document.body.classList.remove('mode-attic','mode-to-attic','mode-reading');document.body.classList.add('mode-to-table');const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','true');},60);\n    setTimeout(function(){document.body.classList.remove('mode-to-table','mode-table-return','mode-return-hard-hide');document.body.classList.add('mode-reading');},1080);\n  }";
-html = html.replace(/function leave\(\)\{[\s\S]*?\n  \}/, newLeave);
+if (html.includes(oldLeave)) html = html.replace(oldLeave, newLeave);
 
 fs.writeFileSync(file, html);
-console.log('Applied attic stable return and mobile pan patch v3.');
+console.log('Applied attic stable return and mobile pan patch v4.');
