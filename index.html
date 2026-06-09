@@ -234,13 +234,13 @@
 /* ── Pack icon sprites (Card_packs2.png 707×353, tiles 353×353, display 56×56) ── */
 .isp-56.isp-second-sight,.isp-56.isp-thread{background-image:url(Card_packs2.png);background-size:112px 56px}
 .isp-56.isp-second-sight{background-position:0px 0px}.isp-56.isp-thread{background-position:-56px 0px}
-/* ── Pack icon sprites at 90px (used in shop banner) ── */
-.isp-90{width:90px;height:90px}
-.isp-90.isp-foundation,.isp-90.isp-ritual,.isp-90.isp-pattern,.isp-90.isp-innate,.isp-90.isp-restless,.isp-90.isp-relic-cache{background-image:url(Card_packs1.png);background-size:270px 180px}
-.isp-90.isp-foundation{background-position:0px 0px}.isp-90.isp-ritual{background-position:-90px 0px}.isp-90.isp-pattern{background-position:-180px 0px}
-.isp-90.isp-innate{background-position:0px -90px}.isp-90.isp-restless{background-position:-90px -90px}.isp-90.isp-relic-cache{background-position:-180px -90px}
-.isp-90.isp-second-sight,.isp-90.isp-thread{background-image:url(Card_packs2.png);background-size:180px 90px}
-.isp-90.isp-second-sight{background-position:0px 0px}.isp-90.isp-thread{background-position:-90px 0px}
+/* ── Pack icon sprites at 108px (used in shop banner) ── */
+.isp-108{width:108px;height:108px}
+.isp-108.isp-foundation,.isp-108.isp-ritual,.isp-108.isp-pattern,.isp-108.isp-innate,.isp-108.isp-restless,.isp-108.isp-relic-cache{background-image:url(Card_packs1.png);background-size:324px 216px}
+.isp-108.isp-foundation{background-position:0px 0px}.isp-108.isp-ritual{background-position:-108px 0px}.isp-108.isp-pattern{background-position:-216px 0px}
+.isp-108.isp-innate{background-position:0px -108px}.isp-108.isp-restless{background-position:-108px -108px}.isp-108.isp-relic-cache{background-position:-216px -108px}
+.isp-108.isp-second-sight,.isp-108.isp-thread{background-image:url(Card_packs2.png);background-size:216px 108px}
+.isp-108.isp-second-sight{background-position:0px 0px}.isp-108.isp-thread{background-position:-108px 0px}
 @media(max-width:640px){
   .sbtn-discard,.sbtn-purge{width:94px;height:30px;background-size:310px 233px}
   .sbtn-discard{background-position:-31px -9px}
@@ -292,13 +292,13 @@
 /* ── Pack cards redesign ── */
 .shop-pack{width:130px;min-height:260px;background-image:url("Pack_Background.png");background-size:100% 100%;background-repeat:no-repeat;border:none;border-radius:0;display:flex;flex-direction:column;align-items:stretch;overflow:visible;transition:filter .15s,box-shadow .15s}
 .shop-pack.affordable{filter:brightness(1.06);box-shadow:0 0 22px rgba(212,175,106,.38)}
-.shop-pack-banner{flex:1;background:transparent;border-bottom:none;display:flex;align-items:flex-end;justify-content:center;font-size:44px;position:relative;min-height:120px;padding-bottom:6px}
+.shop-pack-banner{flex:1;background:transparent;border-bottom:none;display:flex;align-items:flex-end;justify-content:center;font-size:44px;position:relative;min-height:130px;padding-bottom:4px}
 .shop-pack-banner::before{display:none}
 .shop-pack-banner::after{display:none}
-.shop-pack-desc{font-size:9px;color:#d4c090;text-align:center;line-height:1.35;padding:10px 10px 0;flex:1;background:transparent;text-shadow:0 1px 2px rgba(0,0,0,.85)}
-.shop-pack-footer{width:100%;display:flex;flex-direction:column;align-items:center;gap:5px;padding:6px 8px 12px;background:transparent}
+.shop-pack-desc{font-size:8.5px;color:#d4c090;text-align:center;line-height:1.3;padding:5px 8px 0;flex:1;background:transparent;text-shadow:0 1px 2px rgba(0,0,0,.85)}
+.shop-pack-footer{width:100%;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 8px 9px;background:transparent}
 .shop-pack-cost{color:#ffd978;font-weight:800;font-size:12px;text-shadow:0 1px 3px rgba(0,0,0,.9)}
-.shop-pack-buy{padding:4px 10px;font-size:11px}
+.shop-pack-buy{padding:3px 9px;font-size:11px}
 .shop-pack-empty{width:130px;min-height:260px;display:flex;align-items:center;justify-content:center;opacity:.28;pointer-events:none}
 .shop-pack-empty-x{font-size:52px;color:#888;line-height:1;font-weight:300;font-family:system-ui,sans-serif}
 .shop-leave{width:100%;margin-top:6px;background:transparent;border-color:#5f4c29;color:#a09060;font-size:12px;letter-spacing:.03em}
@@ -1847,7 +1847,7 @@ function openShopMain(){
     const cost=Math.max(0,p.cost+(_packBuys[pk]||0)*8-packDiscount);
     const ok=persist.pool>=cost;
     html+=`<div class="shop-pack ${ok?'affordable':''}">
-      <div class="shop-pack-banner"><span class="isp isp-90 ${p.icon}"></span></div>
+      <div class="shop-pack-banner"><span class="isp isp-108 ${p.icon}"></span></div>
       <div class="shop-pack-desc">${p.desc}</div>
       <div class="shop-pack-footer"><span class="shop-pack-cost">✦ ${cost}</span>
       <button class="sbtn sbtn-open" ${ok?'':'disabled'} aria-label="Open" onclick="buyPack('${pk}',${cost})"></button></div>
