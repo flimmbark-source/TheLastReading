@@ -109,7 +109,9 @@ html = html.replace('</script>', `
       tab.innerHTML='&#9660; '+def.label;
       wrap.appendChild(desk);
       wrap.appendChild(tab);
+      wrap.style.transition='none';
       document.body.insertBefore(wrap,document.getElementById('invWrap')||document.body.firstChild);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{wrap.style.transition='';}));
     }
     const desk=document.getElementById(def.id+'PullDesk');
     const tab=document.getElementById(def.id+'PullTab');
