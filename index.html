@@ -1994,19 +1994,20 @@ function renderScoringSheet(){
   const seqMult=+(1.25+(u.seq_mult||0)*0.5).toFixed(2);
   const pathChips=(u.path_chips||0)*15;
   const pathMult=+(1.5+(u.path_mult||0)*0.5).toFixed(2);
+  const fmt=v=>'+'++(v-1).toFixed(2).replace(/\.?0+$/,'');
   const rows=[
-    ['Three of a Kind','3 matching court ranks',`+${5+rankBonus}`,`×${rankMult}`],
-    ['Four of a Kind','4 matching court ranks',`+${7+rankBonus}`,`×${rankMult}`],
-    ['Full Court (3+)','Consecutive ranks',`+${10+courtChips}`,`×${courtMult}`],
-    ['Royal Court (3+)','Consecutive ranks, same suit',`+${15+courtChips}`,`×${courtMult}`],
-    ['Sequence (3+)','Consecutive major arcana',`+${10+seqBonus}`,`×${seqMult}`],
-    ['Path of the Magi','0·I·XXI in spread',`+${10+pathChips}`,`×${pathMult}`],
+    ['Three of a Kind','3 matching court ranks',`+${5+rankBonus}`,fmt(rankMult)],
+    ['Four of a Kind','4 matching court ranks',`+${7+rankBonus}`,fmt(rankMult)],
+    ['Full Court (3+)','Consecutive ranks',`+${10+courtChips}`,fmt(courtMult)],
+    ['Royal Court (3+)','Consecutive ranks, same suit',`+${15+courtChips}`,fmt(courtMult)],
+    ['Sequence (3+)','Consecutive major arcana',`+${10+seqBonus}`,fmt(seqMult)],
+    ['Path of the Magi','0·I·XXI in spread',`+${10+pathChips}`,fmt(pathMult)],
   ];
   const up=[];
-  if(u.rank)up.push(`Rank +${rankBonus}chips ×${rankMult}`);
-  if(u.court_chips)up.push(`Court +${courtChips}chips ×${courtMult}`);
-  if(u.sequence)up.push(`Seq +${seqBonus}chips ×${seqMult}`);
-  if(u.path_chips)up.push(`Path +${pathChips}chips ×${pathMult}`);
+  if(u.rank)up.push(`Rank +${rankBonus}chips ${fmt(rankMult)}mult`);
+  if(u.court_chips)up.push(`Court +${courtChips}chips ${fmt(courtMult)}mult`);
+  if(u.sequence)up.push(`Seq +${seqBonus}chips ${fmt(seqMult)}mult`);
+  if(u.path_chips)up.push(`Path +${pathChips}chips ${fmt(pathMult)}mult`);
   const minorRows=rows.slice(0,4);
   const majorRows=rows.slice(4);
   let html='<table class="ref-table"><thead><tr><th>Pattern</th><th>Condition</th><th>Chips</th><th>Mult</th></tr></thead><tbody>';
@@ -2019,7 +2020,7 @@ function renderScoringSheet(){
     html+=`<tr class="ref-section-head"><td colspan="4">Hidden Patterns</td></tr>`;
     for(const res of discoveredRes){
       const condStr=res.conditions.map(c=>(c.anyOf||[c.cardId]).map(majorNumeral).join('/')).join(' · ');
-      html+=`<tr><td><b>⚷ ${res.name}</b></td><td>${condStr}</td><td>+${res.chips}</td><td>×${res.mult}</td></tr>`;
+      html+=`<tr><td><b>⚷ ${res.name}</b></td><td>${condStr}</td><td>+${res.chips}</td><td>${fmt(res.mult)}</td></tr>`;
     }
   }
   html+='</tbody></table>';

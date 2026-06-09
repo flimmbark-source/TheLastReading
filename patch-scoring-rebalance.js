@@ -110,7 +110,7 @@ rep(
   `const pathMult=+(1.5+(u.path_mult||0)*0.5).toFixed(2);`,
   '[ref] Magi mult base'
 );
-// Rewrite the rows array to show per-pattern increments (no slash ranges)
+// Rewrite the rows array: per-pattern increments, mult as +N not ×N
 rep(
   `  const rows=[
     ['Rank Match','Three/Four of a Kind',\`+\${5+rankBonus} / +\${7+rankBonus}\`,\`×\${rankMult}\`],
@@ -119,15 +119,16 @@ rep(
     ['Sequence (3+)','Consecutive Arcana',\`+\${10+seqBonus} / +\${15+seqBonus} / +\${18+seqBonus}\`,\`×\${seqMult}\`],
     ['Path of the Magi','0·I·XXI in spread',\`+\${10+pathChips}\`,\`×\${pathMult}\`],
   ];`,
-  `  const rows=[
-    ['Three of a Kind','3 matching court ranks',\`+\${5+rankBonus}\`,\`×\${rankMult}\`],
-    ['Four of a Kind','4 matching court ranks',\`+\${7+rankBonus}\`,\`×\${rankMult}\`],
-    ['Full Court (3+)','Consecutive ranks',\`+\${10+courtChips}\`,\`×\${courtMult}\`],
-    ['Royal Court (3+)','Consecutive ranks, same suit',\`+\${15+courtChips}\`,\`×\${courtMult}\`],
-    ['Sequence (3+)','Consecutive major arcana',\`+\${10+seqBonus}\`,\`×\${seqMult}\`],
-    ['Path of the Magi','0·I·XXI in spread',\`+\${10+pathChips}\`,\`×\${pathMult}\`],
+  `  const fmt=v=>'+'++(v-1).toFixed(2).replace(/\\.?0+$/,'');
+  const rows=[
+    ['Three of a Kind','3 matching court ranks',\`+\${5+rankBonus}\`,fmt(rankMult)],
+    ['Four of a Kind','4 matching court ranks',\`+\${7+rankBonus}\`,fmt(rankMult)],
+    ['Full Court (3+)','Consecutive ranks',\`+\${10+courtChips}\`,fmt(courtMult)],
+    ['Royal Court (3+)','Consecutive ranks, same suit',\`+\${15+courtChips}\`,fmt(courtMult)],
+    ['Sequence (3+)','Consecutive major arcana',\`+\${10+seqBonus}\`,fmt(seqMult)],
+    ['Path of the Magi','0·I·XXI in spread',\`+\${10+pathChips}\`,fmt(pathMult)],
   ];`,
-  '[ref] rows array — per-pattern increments, no slash ranges'
+  '[ref] rows array — per-pattern increments, mult as +N'
 );
 rep(
   '  const minorRows=rows.slice(0,3);\n  const majorRows=rows.slice(3);',
