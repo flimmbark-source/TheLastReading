@@ -1339,6 +1339,21 @@ function playSound(type){
         src.start(at);src.stop(at+exhaleLen+0.05);
         src.onended=()=>{src.disconnect();f.disconnect();g.disconnect();};
       })();
+    }else if(type==='scratch'){
+      // three quick paper-scratch bursts with rising pitch
+      [0,.045,.09].forEach((dt,i)=>{
+        const dur=.055+i*.015;
+        const buf=ctx.createBuffer(1,Math.floor(ctx.sampleRate*dur),ctx.sampleRate);
+        const d=buf.getChannelData(0);
+        for(let j=0;j<d.length;j++){const t=j/d.length;d[j]=(Math.random()*2-1)*(Math.pow(1-t,1.2)*Math.min(1,t*9));}
+        const src=ctx.createBufferSource();src.buffer=buf;
+        const f=ctx.createBiquadFilter();f.type='bandpass';f.Q.value=1.4;
+        f.frequency.setValueAtTime(1800+i*600,ctx.currentTime+dt);
+        f.frequency.exponentialRampToValueAtTime(3200+i*400,ctx.currentTime+dt+dur);
+        const g=ctx.createGain();g.gain.setValueAtTime(0.18*_sfxVol,ctx.currentTime+dt);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dt+dur);
+        src.connect(f);f.connect(g);g.connect(ctx.destination);src.start(ctx.currentTime+dt);src.stop(ctx.currentTime+dt+dur+.01);
+        src.onended=()=>{src.disconnect();f.disconnect();g.disconnect();};
+      });
     }
   }catch(e){}
 }
@@ -2349,6 +2364,7 @@ function renderInventory(){
         if(el.classList.contains('named')){
           openInvDetail(item);
         } else {
+          playSound('scratch');
           el.classList.add('named');
           invPos[item.id].named=true;
           _saveInvPos();
