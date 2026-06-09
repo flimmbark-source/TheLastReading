@@ -1049,25 +1049,15 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
   let courtMult=1.25+(persist.up.court_mult||0)*0.25;
   let court=false;
   if(same){
-    // Royal Court: 3 same-suit courts = base; each extra rank in that suit adds chips+mult
-    const extra=sameCount-3; // 0, 1
-    const x=Math.round(15+extra*8+courtChips);
-    const xm=+(courtMult+(extra*0.25)).toFixed(2);
-    m.push(['Royal Court ('+same+')'+( extra?' ×'+(sameCount):'' ),x,xm]);chips+=x;mult*=xm;court=true;
+    m.push(['Royal Court ('+same+')',15+courtChips,courtMult]);chips+=15+courtChips;mult*=courtMult;court=true;
   } else if(fullCount>=3){
-    // Full Court: 3 distinct ranks = base; each rank beyond 3 adds chips+mult
-    const extra=Math.min(fullCount-3,1); // cap at 4 ranks for now
-    const x=Math.round(10+extra*6+courtChips);
-    const xm=+(courtMult+(extra*0.25)).toFixed(2);
-    m.push(['Full Court'+(extra?' ×'+fullCount:''),x,xm]);chips+=x;mult*=xm;court=true;
+    m.push(['Full Court',10+courtChips,courtMult]);chips+=10+courtChips;mult*=courtMult;court=true;
   }
   let nums=[...new Set(cards.filter(c=>c.type==='major').map(c=>c.num))].sort((a,b)=>a-b),best=1,cur=1;
   for(let i=1;i<nums.length;i++){if(nums[i]===nums[i-1]+1){cur++;best=Math.max(best,cur)}else cur=1}
   let seqBonus=(persist.up.sequence||0)*5;
   let seqMult=1.25+(persist.up.seq_mult||0)*0.5;
-  if(best>=5){let x=18+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
-  else if(best>=4){let x=15+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
-  else if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
+  if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
   let pathChips=(persist.up.path_chips||0)*15;
   let pathMult=1.5+(persist.up.path_mult||0)*0.5;
   if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=10+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult*=pathMult}
