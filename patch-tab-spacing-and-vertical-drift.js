@@ -31,6 +31,8 @@ rep(
 html = html.replace('</style>', `
 ${marker}
 #invTab,.tlr-pull-tab{will-change:left}
+/* Restore the desktop space that Scoring/Abilities buttons used to occupy before becoming drawer tabs. */
+@media(min-width:641px){#titleContent .actions{height:37px!important;min-height:37px!important;margin-bottom:10px!important}}
 </style>`);
 changed++;
 
@@ -50,10 +52,40 @@ html = html.replace('</script>', `
     return tabs.map(t=>Object.assign({},t,{el:document.getElementById(t.id)})).filter(t=>t.el);
   }
 
+  function discardsAnchorX(){
+    const disc=document.querySelector('.discards-pill');
+    if(disc){
+      const r=disc.getBoundingClientRect();
+      if(r.width)return Math.round(r.right+10);
+    }
+    return Math.round(window.innerWidth-98);
+  }
+
   function seedDefaultPositions(){
+    const gap=window.innerWidth<390?6:10;
     const found=existing();
     if(found.length<2)return;
-    const gap=window.innerWidth<390?6:10;
+    const byId={};found.forEach(t=>byId[t.id]=t);
+    const isDesktop=window.matchMedia('(min-width:641px)').matches;
+
+    if(isDesktop){
+      let x=14;
+      for(const id of ['menuPullTab','scoringPullTab','abilitiesPullTab']){
+        const t=byId[id];if(!t)continue;
+        const nx=Math.max(0,Math.min(window.innerWidth-t.w,x));
+        t.el.style.left=nx+'px';
+        try{localStorage.setItem(t.key,String(nx));}catch(e){}
+        x=nx+t.w+gap;
+      }
+      const a=byId.invTab;
+      if(a){
+        const nx=Math.max(0,Math.min(window.innerWidth-a.w,discardsAnchorX()));
+        a.el.style.left=nx+'px';
+        try{localStorage.setItem(a.key,String(nx));}catch(e){}
+      }
+      return;
+    }
+
     const total=found.reduce((s,t)=>s+t.w,0)+gap*(found.length-1);
     let x=Math.max(6,Math.round((window.innerWidth-total)/2));
     for(const t of found){
@@ -96,18 +128,18 @@ html = html.replace('</script>', `
     }
   }
 
-  // New layout version: start all drawer tabs spaced apart once, even if older saved tab positions overlapped.
+  // Layout v2: reseed because v1 centered every tab and could overlap with the new desktop layout request.
   try{
-    if(localStorage.getItem('tlr_pull_tabs_fanned_v1')!=='1'){
+    if(localStorage.getItem('tlr_pull_tabs_fanned_v2')!=='1'){
       seedDefaultPositions();
-      localStorage.setItem('tlr_pull_tabs_fanned_v1','1');
+      localStorage.setItem('tlr_pull_tabs_fanned_v2','1');
     }
   }catch(e){seedDefaultPositions();}
-  requestAnimationFrame(fanTabs);
+  requestAnimationFrame(()=>{seedDefaultPositions();fanTabs();});
 
   // Re-fan after any tab drag release. This includes the existing Archives tab.
   document.addEventListener('pointerup',()=>setTimeout(fanTabs,0),true);
-  window.addEventListener('resize',()=>setTimeout(fanTabs,30));
+  window.addEventListener('resize',()=>setTimeout(()=>{seedDefaultPositions();fanTabs();},30));
 })();
 </script>`);
 changed++;
