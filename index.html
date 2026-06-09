@@ -227,6 +227,9 @@
 .isp-56.isp-foundation,.isp-56.isp-ritual,.isp-56.isp-pattern,.isp-56.isp-innate,.isp-56.isp-restless,.isp-56.isp-relic-cache{background-image:url(Card_packs1.png);background-size:168px 112px}
 .isp-56.isp-foundation{background-position:0px 0px}.isp-56.isp-ritual{background-position:-56px 0px}.isp-56.isp-pattern{background-position:-112px 0px}
 .isp-56.isp-innate{background-position:0px -56px}.isp-56.isp-restless{background-position:-56px -56px}.isp-56.isp-relic-cache{background-position:-112px -56px}
+/* ── Pack icon sprites (Card_packs2.png 707×353, tiles 353×353, display 56×56) ── */
+.isp-56.isp-second-sight,.isp-56.isp-thread{background-image:url(Card_packs2.png);background-size:112px 56px}
+.isp-56.isp-second-sight{background-position:0px 0px}.isp-56.isp-thread{background-position:-56px 0px}
 @media(max-width:640px){
   .sbtn-discard,.sbtn-purge{width:94px;height:30px;background-size:310px 233px}
   .sbtn-discard{background-position:-31px -9px}
@@ -1699,8 +1702,8 @@ const PACKS={
   innate:    {name:'Innate Force Pack',  desc:'Improve your starting resources.',                     icon:'isp-innate',      cost:20, pool:'hand'},
   restless:  {name:'Restless Hands Pack',desc:'Improve your draw and discard abilities.',             icon:'isp-restless',    cost:18, pool:'draw'},
   relic:       {name:'Relic Cache',        desc:'Choose a relic to carry through your session.',        icon:'isp-relic-cache', cost:24},
-  second_sight:{name:'Second Sight Pack', desc:'Improve your information and sight abilities.',        icon:'isp-peek',        cost:18, pool:'sight'},
-  thread:      {name:'Thread Pack',       desc:'Enhance your relational abilities.',                   icon:'isp-kin',         cost:18, pool:'thread'},
+  second_sight:{name:'Second Sight Pack', desc:'Improve your information and sight abilities.',        icon:'isp-second-sight',cost:18, pool:'sight'},
+  thread:      {name:'Thread Pack',       desc:'Enhance your relational abilities.',                   icon:'isp-thread',      cost:18, pool:'thread'},
 };
 const SHOP_ICON={
   discards:'isp-disc',hand:'isp-draw',mulligan:'isp-reshuffle',lens_mastery:'isp-peek',offering:'isp-scoring',ritual_depth:'isp-kin',deep_current:'isp-draw',
