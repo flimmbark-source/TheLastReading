@@ -118,8 +118,8 @@ rep(
   'Add vertical release velocity'
 );
 
-// Use a bounded spring animation instead of a live physics loop. This gives weight and sway
-// without risking runaway values that can break layout.
+// Release now preserves the current floating position, with a little momentum and sway.
+// It no longer chooses between snapping to the top or snapping to the bottom.
 rep(
   `const runMomentum=v0=>{
     if(Math.abs(offset)>slideCap()+.05){springBack();return;}
@@ -161,23 +161,21 @@ rep(
   };
   const runLiftMomentum=v0=>{
     cancelLiftMomentum();
-    const c=liftCap();
-    const projected=lift+v0*170;
-    const target=projected<-c*.5?-c:0;
     const from=lift;
-    const sway=Math.max(-8,Math.min(8,v0*95));
-    const start=performance.now(),dur=360;
+    const target=clampLift(lift+v0*210);
+    const sway=Math.max(-7,Math.min(7,v0*80));
+    const start=performance.now(),dur=420;
     const step=t=>{
       const p=Math.min(1,(t-start)/dur);
       const e=1-Math.pow(1-p,3);
-      const wobble=Math.sin(p*Math.PI*2.15)*sway*(1-p);
+      const wobble=Math.sin(p*Math.PI*2.35)*sway*(1-p);
       applyLift(clampLift(from+(target-from)*e+wobble));
       if(p<1)liftMomentumRaf=requestAnimationFrame(step);
       else{applyLift(target);liftMomentumRaf=null;}
     };
     liftMomentumRaf=requestAnimationFrame(step);
   };`,
-  'Add bounded vertical release with sway'
+  'Add floating vertical release with damped sway'
 );
 
 rep(
@@ -194,6 +192,8 @@ rep(
   'Start slide tracks vertical lift origin'
 );
 
+// Move both axes at once. This removes the jerky horizontal/vertical axis switch and makes
+// diagonal drag feel like guiding an object through space.
 rep(
   `const stepSlide=ev=>{
     const dx=ev.clientX-startX;
@@ -204,23 +204,21 @@ rep(
   `const stepSlide=ev=>{
     const dx=ev.clientX-startX;
     const dy=(ev.clientY||startY)-startY;
-    if(Math.abs(dy)>Math.abs(dx)*1.15){
-      const y=softClampLift(startLift+dy);
-      applyLift(y);
-      pushLiftSample(performance.now(),y);
-      return;
-    }
     const target=softClamp(startOffset+dx*DEG_PER_PX_SWIPE);
+    const y=softClampLift(startLift+dy);
     applyOffset(target);
-    pushSample(performance.now(),target);
+    applyLift(y);
+    const now=performance.now();
+    pushSample(now,target);
+    pushLiftSample(now,y);
   };`,
-  'Swipe handler follows vertical drag continuously'
+  'Swipe handler follows x/y drag continuously'
 );
 
 rep(
   `if(wasSlide){runMomentum(releaseVel());springBack();}`, 
   `if(wasSlide){runMomentum(releaseVel());springBack();runLiftMomentum(releaseLiftVel());}`,
-  'Release applies vertical momentum and settle'
+  'Release applies vertical momentum and float settle'
 );
 
 rep(
