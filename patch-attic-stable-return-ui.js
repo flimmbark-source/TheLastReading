@@ -64,21 +64,24 @@ ${panMarker}
 #atticPan::-webkit-scrollbar{display:none}
 #atticRoom{position:relative;height:100vh;height:100dvh;width:177.7778vh;width:177.7778dvh;min-height:100vh;min-height:100dvh;min-width:177.7778vh;min-width:177.7778dvh;background:url('backgrounds/attic_room_mvp_1080x1920.png') left top / 100% 100% no-repeat}
 #atticObjects{position:absolute!important;inset:0!important;z-index:6!important}
-.attic-prop{background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important}
+.attic-prop{background-color:transparent!important;background-repeat:no-repeat!important;background-size:200% 100%!important}
+.attic-prop:not(.searched){background-position:0% 50%!important}
+.attic-prop.searched{background-position:100% 50%!important;cursor:default!important;pointer-events:none!important}
+.attic-prop.searched::after{display:none!important}
 @media (min-width:981px){#atticPan{overflow:hidden;display:flex;justify-content:center;align-items:flex-start}#atticRoom{margin:0 auto}}
 @media (max-width:980px){#atticPan{display:block;cursor:grab}#atticPan.dragging{cursor:grabbing}#atticRoom{margin:0}.attic-pan-hint{position:absolute;left:50%;top:86px;z-index:20;transform:translateX(-50%);padding:8px 12px;border:1px solid rgba(197,149,74,.55);border-radius:999px;background:rgba(20,12,7,.78);color:#f0d99b;font:800 10px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;pointer-events:none;box-shadow:0 10px 28px rgba(0,0,0,.5);opacity:0;animation:atticPanHint 3.4s ease forwards}@keyframes atticPanHint{0%{opacity:0;transform:translateX(-50%) translateY(-8px)}14%{opacity:1;transform:translateX(-50%) translateY(0)}78%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-8px)}}}
 `;
   html = html.replace('</style>', css + '\n</style>');
 }
 
-// Reposition the three rummage props for the wide attic art. Use full before/after images, not cropped sprite halves.
-html = html.replace(/newspaper_stack_01:\{[^\n]*?itemTitle:'Strange Obituary',thumb:'strange_obituary\.png'\}/g, "newspaper_stack_01:{id:'newspaper_stack_01',label:'Stack of Newspapers',verb:'Move aside',motion:'move',cost:1,before:'props/newspaper_stack_closed.png',after:'props/newspaper_stack_moved.png',left:'14%',top:'71%',width:'25%',height:'20%',itemId:'clipping_01',itemTitle:'Strange Obituary',thumb:'strange_obituary.png'}");
-html = html.replace(/covered_frame_01:\{[^\n]*?itemTitle:'The Reading Room',thumb:'Reading_room\.png'\}/g, "covered_frame_01:{id:'covered_frame_01',label:'Covered Frame',verb:'Lift cloth',motion:'lift',cost:1,before:'props/covered_frame_closed.png',after:'props/covered_frame_uncovered.png',left:'67%',top:'16%',width:'25%',height:'44%',itemId:'photo_01',itemTitle:'The Reading Room',thumb:'Reading_room.png'}");
-html = html.replace(/coat_01:\{[^\n]*?itemTitle:'Unsigned Letter',thumb:'handwritten_note\.png'\}/g, "coat_01:{id:'coat_01',label:'Old Coat',verb:'Check pocket',motion:'search',cost:1,before:'props/old_coat_closed.png',after:'props/old_coat_searched.png',left:'4%',top:'14%',width:'24%',height:'67%',itemId:'letter_01',itemTitle:'Unsigned Letter',thumb:'handwritten_note.png'}");
+// Reposition the three rummage props for the wide attic art. Each file is a two-frame sprite sheet: closed/default on the left, opened/rummaged on the right.
+html = html.replace(/newspaper_stack_01:\{[^\n]*?itemTitle:'Strange Obituary',thumb:'strange_obituary\.png'\}/g, "newspaper_stack_01:{id:'newspaper_stack_01',label:'Stack of Newspapers',verb:'Move aside',motion:'move',cost:1,before:'props/newspaper_stack_closed.png',after:'props/newspaper_stack_closed.png',left:'14%',top:'71%',width:'25%',height:'20%',itemId:'clipping_01',itemTitle:'Strange Obituary',thumb:'strange_obituary.png'}");
+html = html.replace(/covered_frame_01:\{[^\n]*?itemTitle:'The Reading Room',thumb:'Reading_room\.png'\}/g, "covered_frame_01:{id:'covered_frame_01',label:'Covered Frame',verb:'Lift cloth',motion:'lift',cost:1,before:'props/covered_frame_closed.png',after:'props/covered_frame_closed.png',left:'67%',top:'16%',width:'25%',height:'44%',itemId:'photo_01',itemTitle:'The Reading Room',thumb:'Reading_room.png'}");
+html = html.replace(/coat_01:\{[^\n]*?itemTitle:'Unsigned Letter',thumb:'handwritten_note\.png'\}/g, "coat_01:{id:'coat_01',label:'Old Coat',verb:'Check pocket',motion:'search',cost:1,before:'props/old_coat_closed.png',after:'props/old_coat_closed.png',left:'4%',top:'14%',width:'24%',height:'67%',itemId:'letter_01',itemTitle:'Unsigned Letter',thumb:'handwritten_note.png'}");
 
-// Undo the sprite-sheet renderer. The current asset zip has separate before/after files, so cropping them in half breaks the art.
-html = html.replace(/el\.className='attic-prop motion-'\+o\.motion\+\(o\.sheet\?' sprite-sheet':''\)\+\(done\?' searched':''\);/g, "el.className='attic-prop motion-'+o.motion+(done?' searched':'');");
-html = html.replace(/el\.style\.backgroundImage='url\("'\+\(o\.sheet\|\|\(done\?o\.after:o\.before\)\)\+'"\)';el\.style\.backgroundSize=o\.sheet\?'200% 100%':'contain';el\.style\.backgroundPosition=o\.sheet\?\(done\?'100% 50%':'0% 50%'\):'center';/g, "el.style.backgroundImage='url(\"'+(done?o.after:o.before)+'\")';el.style.backgroundSize='contain';el.style.backgroundPosition='center';");
+// Use the left/right sprite sheet frame by toggling the searched class. Do not crop via separate images or remove opened props.
+html = html.replace(/el\.style\.backgroundImage='url\("'\+\(done\?o\.after:o\.before\)\+'"\)';el\.style\.backgroundSize='contain';el\.style\.backgroundPosition='center';/g, "el.style.backgroundImage='url(\"'+o.before+'\")';el.style.backgroundSize='200% 100%';el.style.backgroundPosition=done?'100% 50%':'0% 50%';");
+html = html.replace(/el\.style\.backgroundImage='url\("'\+\(done\?o\.after:o\.before\)\+'"\)';/g, "el.style.backgroundImage='url(\"'+o.before+'\")';el.style.backgroundSize='200% 100%';el.style.backgroundPosition=done?'100% 50%':'0% 50%';");
 
 if (!html.includes(panJsMarker)) {
   const js = `
