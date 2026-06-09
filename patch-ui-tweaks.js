@@ -37,17 +37,23 @@ replaceAllOccurrences(
 );
 
 // ── 2. Score sheet Full Court / Royal Court rename + condition ──
-replaceOne(
-  'Full Court score-sheet row',
-  `['Full Court','3+ Courts, any suit',\`+${'${14+courtChips}'} / +${'${20+courtChips}'}\`,\`×${'${courtMult}'} / ×${'${+(courtMult+0.25).toFixed(2)}'}\`],`,
-  `['Full Court (3+)','Consecutive Ranks',\`+${'${14+courtChips}'} / +${'${20+courtChips}'}\`,\`×${'${courtMult}'} / ×${'${+(courtMult+0.25).toFixed(2)}'}\`],`
-);
-
-replaceOne(
-  'Royal Court score-sheet row',
-  `['Royal Court','3+ Courts, same suit',\`+${'${20+courtChips}'} / +${'${28+courtChips}'}\`,\`×${'${courtMult}'} / ×${'${+(courtMult+0.25).toFixed(2)}'}\`],`,
-  `['Royal Court (3+)','Consecutive Ranks, same suit',\`+${'${20+courtChips}'} / +${'${28+courtChips}'}\`,\`×${'${courtMult}'} / ×${'${+(courtMult+0.25).toFixed(2)}'}\`],`
-);
+// Full Court / Royal Court score-sheet row rename — search for both old chip values
+// and new chip values (post scoring-rebalance) so the patch is idempotent.
+function renameRow(label, oldName, newName, condOld, condNew, chipsA, chipsB) {
+  const variants = [
+    [`['${oldName}','${condOld}',\`+${'${'+chipsA+'+courtChips}'} / +${'${'+chipsB+'+courtChips}'}\`,\`×${'${courtMult}'} / ×${'${+(courtMult+0.25).toFixed(2)}'}\`],`,
+     `['${newName}','${condNew}',\`+${'${'+chipsA+'+courtChips}'} / +${'${'+chipsB+'+courtChips}'}\`,\`×${'${courtMult}'} / ×${'${+(courtMult+0.25).toFixed(2)}'}\`],`],
+  ];
+  for (const [from, to] of variants) {
+    if (html.includes(from)) { html = html.replace(from, to); console.log(label+' already applied'); return; }
+  }
+  // Already renamed — check with new name, noop if present
+  const newNameCheck = `['${newName}','${condNew}'`;
+  if (html.includes(newNameCheck)) { console.log(label+' already applied'); return; }
+  console.warn('WARN: '+label+' — target not found');
+}
+renameRow('Full Court score-sheet row','Full Court','Full Court (3+)','3+ Courts, any suit','Consecutive Ranks','14','20');
+renameRow('Royal Court score-sheet row','Royal Court','Royal Court (3+)','3+ Courts, same suit','Consecutive Ranks, same suit','20','28');
 
 // ── 3. Last tutorial step (currently threshold-pill) → spread ──
 replaceOne(

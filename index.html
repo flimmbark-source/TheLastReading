@@ -538,6 +538,9 @@
 /* Stop the old swipe handler from also nudging the whole hand sideways. */
 .hand{--hand-slide-x:0px;--hand-card-margin:0px}
 .hand-swipe-zone{position:fixed;left:0;right:0;bottom:197px;height:88px;z-index:19;pointer-events:auto;touch-action:none;cursor:grab;background:transparent}
+.hand-scroll-dragging~* .card,.hand-scroll-dragging .card{pointer-events:none!important}
+body:has(.hand-scroll-dragging){cursor:grabbing!important}
+body:has(.hand-scroll-dragging) .handDock *{cursor:grabbing!important}
 .hand-swipe-zone.dragging{cursor:grabbing}
 .hand-swipe-zone.pinching{cursor:ew-resize}
 @media(max-width:640px){.hand-swipe-zone{bottom:152px;height:74px}}
@@ -648,6 +651,12 @@ body.mode-table-return #invTab{
 
 
 
+
+
+
+
+
+
 /* Attic mobile pan patch v4 */
 #atticScene{background:#0f0905!important;overflow:hidden!important}
 #atticScene::before,#atticScene::after{z-index:9!important;pointer-events:none!important}
@@ -681,6 +690,14 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
   .discards-pill{transform:translateX(calc(25vw - 57px))}
 }
 
+
+/* relic rack below-spread mobile patch */
+@media (max-width: 640px) {
+  .relic-rack{position:static!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;width:100%!important;top:auto!important;right:auto!important;left:auto!important;transform:none!important;margin:8px 0 4px!important;gap:8px!important}
+  .relic-rack .relic-btn{width:38px!important;height:38px!important}
+  .relic-rack .relic-slot-empty{width:38px!important;height:38px!important}
+}
+
 </style>
 </head>
 <body>
@@ -710,7 +727,6 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
   </div>
 </div>
 <div class="bar"></div>
-<div id="relicRack" class="relic-rack"></div>
 <div id="sophiaVeil"></div>
 <div class="score-stack"><div class="pill reserve-pill">Reserve <b id="pool">0</b></div><div class="pill score-pill">Score <b id="current">0</b></div><div class="th-pill-wrap"><div class="pill threshold-pill">Threshold <b id="threshold">30</b></div><span id="thNext"></span></div><div class="pill discards-pill">Discards <b id="discards">3</b></div></div>
 <div class="refs-layer">
@@ -724,18 +740,15 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
     <tr><td>Reshuffle</td><td class="r">Shuffle discard and hand into the deck, then redraw a full hand.</td></tr>
     <tr><td>Neighbor</td><td class="r">Choose a card. Reveal up to 2 adjacent cards from the deck. Take 1.</td></tr>
     <tr><td>Kin</td><td class="r">Choose a card. Reveal up to 2 cards of the same Arcana from the deck. Take 1.</td></tr>
-    <tr><td>Mirror</td><td class="r">Choose a card. Take the card opposite it across centerline of its Arcana.</td></tr>
+    <tr><td>Mirror</td><td class="r">Choose a card. Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)</td></tr>
     <tr><td>Between</td><td class="r">Choose two cards. Reveal up to 2 cards between them from the deck. Take 1.</td></tr>
   </table>
 </div>
 </div>
 <div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="sbtn sbtn-discard" aria-label="Discard" onclick="discardSelected()" disabled></button><button id="purgeBtn" class="sbtn sbtn-purge" aria-label="Purge" onclick="startPurge()" disabled></button></div><div id="spread" class="spread"></div></div>
+<div id="relicRack" class="relic-rack"></div>
 <div id="abilityPrompt" class="ability-prompt"><div><h3 id="abilityPromptTitle"></h3><p id="abilityPromptText"></p></div><button id="abilityConfirm" onclick="confirmAbilitySelection()" disabled>Choose</button></div>
 <div id="purgePrompt" class="ability-prompt"><div><h3>Purge</h3><p>Select 3 cards to sacrifice for 1 Discard. <b><span id="purgeCount">0</span>/3</b> selected.</p></div><button id="purgeConfirm" onclick="confirmPurge()" disabled>Sacrifice</button><button onclick="cancelPurge()">Cancel</button></div>
-<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
-<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
-<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
-<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div class="handDock"><div id="hand" class="hand"></div></div>
 <div id="tutTip"><span class="tut-arrow"></span><p id="tutText"></p><div class="tut-foot"><button id="tutSkipBtn" onclick="tutSkip();event.stopPropagation()">Skip tutorial</button></div></div>
@@ -1022,11 +1035,11 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
   if(omenTotal&&!skipFlatBonuses){m.push(['Omen',omenTotal,0]);chips+=omenTotal;}
   if(resonanceTotal&&!skipFlatBonuses){m.push(['Resonance',resonanceTotal,0]);chips+=resonanceTotal;}
   let rankBonus=(persist.up.rank||0)*5;
-  let rankMult=1+(persist.up.rank_mult||0)*0.25;
+  let rankMult=1.25+(persist.up.rank_mult||0)*0.25;
   for(const rank of ['Page','Knight','Queen','King']){
     let a=cards.filter(c=>c.type==='court'&&c.rank===rank);
-    if(a.length===4){let x=12+rankBonus;m.push(['Four of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
-    else if(a.length===3){let x=10+rankBonus;m.push(['Three of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
+    if(a.length===4){let x=7+rankBonus;m.push(['Four of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
+    else if(a.length===3){let x=5+rankBonus;m.push(['Three of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
   }
   const courtElig=cards.filter(c=>c.type==='court');
   let ranks=new Set(courtElig.map(c=>c.rank));
@@ -1034,31 +1047,31 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
   let same=null,sameCount=0;
   if(fullCount>=3)for(const suit of SUITS){let rs=new Set(courtElig.filter(c=>c.suit===suit).map(c=>c.rank));if(rs.size>=3){same=suit;sameCount=rs.size;break}}
   let courtChips=(persist.up.court_chips||0)*8;
-  let courtMult=1+(persist.up.court_mult||0)*0.25;
+  let courtMult=1.25+(persist.up.court_mult||0)*0.25;
   let court=false;
   if(same){
     // Royal Court: 3 same-suit courts = base; each extra rank in that suit adds chips+mult
     const extra=sameCount-3; // 0, 1
-    const x=Math.round(20+extra*8+courtChips);
+    const x=Math.round(15+extra*8+courtChips);
     const xm=+(courtMult+(extra*0.25)).toFixed(2);
     m.push(['Royal Court ('+same+')'+( extra?' ×'+(sameCount):'' ),x,xm]);chips+=x;mult*=xm;court=true;
   } else if(fullCount>=3){
     // Full Court: 3 distinct ranks = base; each rank beyond 3 adds chips+mult
     const extra=Math.min(fullCount-3,1); // cap at 4 ranks for now
-    const x=Math.round(14+extra*6+courtChips);
+    const x=Math.round(10+extra*6+courtChips);
     const xm=+(courtMult+(extra*0.25)).toFixed(2);
     m.push(['Full Court'+(extra?' ×'+fullCount:''),x,xm]);chips+=x;mult*=xm;court=true;
   }
   let nums=[...new Set(cards.filter(c=>c.type==='major').map(c=>c.num))].sort((a,b)=>a-b),best=1,cur=1;
   for(let i=1;i<nums.length;i++){if(nums[i]===nums[i-1]+1){cur++;best=Math.max(best,cur)}else cur=1}
   let seqBonus=(persist.up.sequence||0)*5;
-  let seqMult=2+(persist.up.seq_mult||0)*0.5;
+  let seqMult=1.25+(persist.up.seq_mult||0)*0.5;
   if(best>=5){let x=18+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
   else if(best>=4){let x=15+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
   else if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
   let pathChips=(persist.up.path_chips||0)*15;
-  let pathMult=2+(persist.up.path_mult||0)*0.5;
-  if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=30+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult*=pathMult}
+  let pathMult=1.5+(persist.up.path_mult||0)*0.5;
+  if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=10+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult*=pathMult}
   // ── Relic effects ──
   if(!skipRelics){
   const rel=persist.relics;
@@ -1444,7 +1457,7 @@ function resolveAbility(ab,done,sourceCard=null){
   else if(ab==='SEARCH')search(done);
   else if(ab==='NEIGHBOR_2')relation('Neighbor','Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers or court ranks in the same suit.',neighbor,2+lens,done);
   else if(ab==='KIN_2')relation('Kin','Choose an anchor card. Kin finds cards of the same Arcana.',kin,2+lens,done);
-  else if(ab==='MIRROR_1')relation('Mirror','Choose a card. Take the card opposite it across centerline of its Arcana.',mirror,1+lens,done);
+  else if(ab==='MIRROR_1')relation('Mirror','Choose a card. Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)',mirror,1+lens,done);
   else if(ab==='BETWEEN_2')betweenAbility(done,sourceCard);
   else if(ab==='WORLD'){state.deck.push(...state.discard.splice(0),...state.hand.splice(0));shuffle(state.deck);playSound('shuffle');drawN(maxHand()+rd);done()}
   else done()
@@ -1597,7 +1610,7 @@ function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;wa
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
 function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards,state.spread),total=res.finalScore,curTH=TH[state.th]+(state.thBonus||0),pass=total>=curTH;let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+curTH+' Cleared':'Below Threshold '+curTH}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;const _regMelds=res.melds.filter(m=>!m[0].startsWith('⚷'));const _resMelds=res.melds.filter(m=>m[0].startsWith('⚷'));if(_regMelds.length||_resMelds.length){_regMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);_resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){const miserBonus=persist.relics.includes('miser')?5:0;const threshold=curTH;const worldCarry=persist.relics.includes('the_world')?Math.floor((total-threshold)*0.1):0;state.worldCarry=worldCarry||0;state.pendingPool=(state.pendingPool||0)+total+miserBonus;persist.totalScore=(persist.totalScore||0)+total;state.relicEarned=total>=curTH*2;state.th++;html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render();}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML=''}
-function continueReading(){_packBuys={};const firstShop=!localStorage.getItem('tlr_tut_shop');state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}}function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToCandlelight?window.tlrScoreToCandlelight(total):1;showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Candlelight</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;persist.totalScore=0;startReading()}
+function continueReading(){_packBuys={};const firstShop=!localStorage.getItem('tlr_tut_shop');const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}else if(pendingRelic){setTimeout(()=>tutShow(9),400)}}function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToCandlelight?window.tlrScoreToCandlelight(total):1;showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Candlelight</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;persist.totalScore=0;startReading()}
 // [name, desc, baseCost, scale, icon, category, pairedKey?]
 const SHOP={
   discards:   ['Extra Discard',   '+1 Discard each reading',                                                                                                              15,1.75,'🃏','utility'],
@@ -1853,8 +1866,8 @@ function _doAcquireRelic(key,afterFn){
     setTimeout(()=>showToast('Relic slots full — your next relic will replace one you already carry.'),600);
   }
   const firstRelic=!localStorage.getItem('tlr_tut_relic');
-  if(firstRelic){localStorage.setItem('tlr_tut_relic','1');afterFn();setTimeout(()=>tutShow(9),400);}
-  else{afterFn();}
+  if(firstRelic){localStorage.setItem('tlr_tut_relic','1');window._pendingRelicTut=true;}
+  afterFn();
 }
 function acquireRelicFree(key){
   if(persist.relics.length<relicSlots()){_doAcquireRelic(key,openShopMain);}
@@ -1896,8 +1909,8 @@ function selectRelicReplace(oldKey,newKey){
     _replaceSelectedKey=null;
     const afterFn=window._relicReplaceAfter||openShopMain;
     const firstRelic=!localStorage.getItem('tlr_tut_relic');
-    if(firstRelic){localStorage.setItem('tlr_tut_relic','1');afterFn();setTimeout(()=>tutShow(9),400);}
-    else{afterFn();}
+    if(firstRelic){localStorage.setItem('tlr_tut_relic','1');window._pendingRelicTut=true;}
+    afterFn();
     return;
   }
   // first tap — highlight and show confirm button
@@ -1985,19 +1998,19 @@ function closeRefs(){ $('#ref').classList.add('hidden'); $('#abilityRef').classL
 function renderScoringSheet(){
   const u=persist.up;
   const rankBonus=(u.rank||0)*5;
-  const rankMult=+(1+(u.rank_mult||0)*0.25).toFixed(2);
+  const rankMult=+(1.25+(u.rank_mult||0)*0.25).toFixed(2);
   const courtChips=(u.court_chips||0)*8;
-  const courtMult=+(1+(u.court_mult||0)*0.25).toFixed(2);
+  const courtMult=+(1.25+(u.court_mult||0)*0.25).toFixed(2);
   const seqBonus=(u.sequence||0)*5;
-  const seqMult=+(2+(u.seq_mult||0)*0.5).toFixed(2);
+  const seqMult=+(1.25+(u.seq_mult||0)*0.5).toFixed(2);
   const pathChips=(u.path_chips||0)*15;
-  const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
+  const pathMult=+(1.5+(u.path_mult||0)*0.5).toFixed(2);
   const rows=[
-    ['Rank Match','Three/Four of a Kind',`+${10+rankBonus} / +${12+rankBonus}`,`×${rankMult}`],
-    ['Full Court (3+)','Consecutive Ranks',`+${14+courtChips} / +${20+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
-    ['Royal Court (3+)','Consecutive Ranks, same suit',`+${20+courtChips} / +${28+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
+    ['Rank Match','Three/Four of a Kind',`+${5+rankBonus} / +${7+rankBonus}`,`×${rankMult}`],
+    ['Full Court (3+)','Consecutive Ranks',`+${10+courtChips} / +${16+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
+    ['Royal Court (3+)','Consecutive Ranks, same suit',`+${15+courtChips} / +${23+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
     ['Sequence (3+)','Consecutive Arcana',`+${10+seqBonus} / +${15+seqBonus} / +${18+seqBonus}`,`×${seqMult}`],
-    ['Path of the Magi','0·I·XXI in spread',`+${30+pathChips}`,`×${pathMult}`],
+    ['Path of the Magi','0·I·XXI in spread',`+${10+pathChips}`,`×${pathMult}`],
   ];
   const up=[];
   if(u.rank)up.push(`Rank +${rankBonus}chips ×${rankMult}`);
@@ -2882,10 +2895,13 @@ function setSfxVol(v){_sfxVol=v;}
       if(mode!=='pinch')startPinch();
       return;
     }
-    // Single-finger slide only kicks in inside the swipe strip; on the cards
-    // themselves we leave the existing card-press / drag-select handler alone.
-    if(inSwipeZone(ev.target)&&mode==null){
-      try{zoneEl()?.setPointerCapture(ev.pointerId);}catch(e){}
+    // Single-finger slide: touch must start in the dedicated swipe strip.
+    // Mouse can start anywhere in the hand dock that isn't a card itself,
+    // so desktop users don't need to find the invisible 88px strip.
+    const isMouse=ev.pointerType==='mouse';
+    const mouseInHand=isMouse&&ev.target instanceof Element&&ev.target.closest('.handDock,#handSwipeZone')&&!ev.target.closest('.card[data-uid]');
+    if((inSwipeZone(ev.target)||mouseInHand)&&mode==null){
+      try{(isMouse?ev.target.closest('.handDock,#handSwipeZone'):zoneEl())?.setPointerCapture(ev.pointerId);}catch(e){}
       startSlideMode(ev);
     }
   },true);
@@ -3492,7 +3508,7 @@ function setSfxVol(v){_sfxVol=v;}
     const o=objects[id];if(!o||awaitingPickup)return;
     if(searched[id]){whisper('You already searched there.');return;}
     if(candleCount<o.cost){whisper('The candle is almost gone.');return;}
-    dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();candleCount-=o.cost;searched[id]=true;renderCandles();candleSpend();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);whisper('You find '+o.itemTitle+'.');},430);
+    dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();candleCount-=o.cost;searched[id]=true;renderCandles();candleSpend();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);whisper('You find '+o.itemTitle+'.');},430);
   }
   function enter(candles,shouldReset){
     if(window.tlrCloseArchives)window.tlrCloseArchives();
@@ -3500,6 +3516,9 @@ function setSfxVol(v){_sfxVol=v;}
     document.body.classList.remove('mode-reading','mode-to-table','mode-table-return');document.body.classList.add('mode-to-attic');
     const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','false');
     setTimeout(function(){document.body.classList.remove('mode-to-attic');document.body.classList.add('mode-attic');whisper('You get up from the table. Spend Candlelight to search.');},900);
+    setTimeout(function(){showAtticTutorial();},1400);
+    setTimeout(function(){showAtticTutorial();},1400);
+    setTimeout(function(){showAtticTutorial();},1400);
     setTimeout(function(){showAtticTutorial();},1400);
     setTimeout(function(){showAtticTutorial();},1400);
     setTimeout(function(){showAtticTutorial();},1400);
@@ -3515,6 +3534,69 @@ function setSfxVol(v){_sfxVol=v;}
     setTimeout(function(){document.body.classList.remove('mode-to-table','mode-table-return','mode-return-hard-hide');document.body.classList.add('mode-reading');},1080);
   }
   function showAtticTutorial(){
+    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
+    const t=document.getElementById('atticTutorial');if(!t)return;
+    const isDesktop=window.matchMedia('(pointer:fine)').matches;
+    const searchLine=isDesktop
+      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
+      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
+    const scrollLine=isDesktop
+      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
+      :'';
+    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
+      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
+      +'<button id="atticTutDismiss">I understand</button>';
+    const btn=t.querySelector('#atticTutDismiss');
+    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
+    t.classList.add('show');
+  }
+  function dismissAtticTutorial(){
+    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
+    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
+  }
+    function showAtticTutorial(){
+    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
+    const t=document.getElementById('atticTutorial');if(!t)return;
+    const isDesktop=window.matchMedia('(pointer:fine)').matches;
+    const searchLine=isDesktop
+      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
+      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
+    const scrollLine=isDesktop
+      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
+      :'';
+    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
+      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
+      +'<button id="atticTutDismiss">I understand</button>';
+    const btn=t.querySelector('#atticTutDismiss');
+    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
+    t.classList.add('show');
+  }
+  function dismissAtticTutorial(){
+    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
+    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
+  }
+    function showAtticTutorial(){
+    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
+    const t=document.getElementById('atticTutorial');if(!t)return;
+    const isDesktop=window.matchMedia('(pointer:fine)').matches;
+    const searchLine=isDesktop
+      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
+      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
+    const scrollLine=isDesktop
+      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
+      :'';
+    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
+      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
+      +'<button id="atticTutDismiss">I understand</button>';
+    const btn=t.querySelector('#atticTutDismiss');
+    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
+    t.classList.add('show');
+  }
+  function dismissAtticTutorial(){
+    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
+    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
+  }
+    function showAtticTutorial(){
     try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
     const t=document.getElementById('atticTutorial');if(!t)return;
     const isDesktop=window.matchMedia('(pointer:fine)').matches;
