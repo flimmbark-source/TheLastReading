@@ -2010,7 +2010,7 @@ function renderScoringSheet(){
   const seqMult=+(1.25+(u.seq_mult||0)*0.5).toFixed(2);
   const pathChips=(u.path_chips||0)*15;
   const pathMult=+(1.5+(u.path_mult||0)*0.5).toFixed(2);
-  const fmt=v=>'+'++(v-1).toFixed(2).replace(/\.?0+$/,'');
+  const fmt=v=>'+'+(v-1).toFixed(2).replace(/\.?0+$/,'');
   const rows=[
     ['Three of a Kind','3 matching court ranks',`+${5+rankBonus}`,fmt(rankMult)],
     ['Four of a Kind','4 matching court ranks',`+${7+rankBonus}`,fmt(rankMult)],

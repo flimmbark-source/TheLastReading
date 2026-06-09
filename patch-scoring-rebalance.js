@@ -119,7 +119,7 @@ rep(
     ['Sequence (3+)','Consecutive Arcana',\`+\${10+seqBonus} / +\${15+seqBonus} / +\${18+seqBonus}\`,\`×\${seqMult}\`],
     ['Path of the Magi','0·I·XXI in spread',\`+\${10+pathChips}\`,\`×\${pathMult}\`],
   ];`,
-  `  const fmt=v=>'+'++(v-1).toFixed(2).replace(/\\.?0+$/,'');
+  `  const fmt=v=>'+'+(v-1).toFixed(2).replace(/\\.?0+$/,'');
   const rows=[
     ['Three of a Kind','3 matching court ranks',\`+\${5+rankBonus}\`,fmt(rankMult)],
     ['Four of a Kind','4 matching court ranks',\`+\${7+rankBonus}\`,fmt(rankMult)],
