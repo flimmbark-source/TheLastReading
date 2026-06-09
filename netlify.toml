@@ -1,11 +1,3 @@
 [build]
   command = "npm run build"
   publish = "."
-
-[[edge_functions]]
-  path = "/"
-  function = "table-controls-and-scoring-patch"
-
-[[edge_functions]]
-  path = "/index.html"
-  function = "table-controls-and-scoring-patch"
