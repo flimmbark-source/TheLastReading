@@ -3,18 +3,20 @@ const file = 'index.html';
 let html = fs.readFileSync(file, 'utf8');
 
 const marker = '/* Pill mobile spread patch */';
-// Remove old version of this block so it can be reinjected with fixes
-html = html.replace(/\/\* Pill mobile spread patch \*\/[\s\S]*?}\n/,'');
+// Strip any previous version of this block before reinserting
+html = html.replace(/\/\* Pill mobile spread patch \*\/[\s\S]*?(?=\n<\/style>)/,'');
 if (!html.includes(marker)) {
-  // On mobile, pull reserve and discards out of the flex stack and anchor them
-  // independently: reserve halfway to the left edge (~25vw), discards halfway
-  // to the right edge (~75vw). The score + threshold pills stay centered.
+  // Switch the score-stack to CSS Grid on mobile so we can place reserve and
+  // discards at specific columns without fighting the flex layout or the
+  // transform:translateX(-50%) that would corrupt position:fixed children.
   const css = `
 ${marker}
 @media (max-width: 640px) {
-  .reserve-pill,.discards-pill{position:fixed;top:calc(46% - 215px);transform:translateX(-50%);width:110px;min-width:110px;height:36px;flex:none;display:grid;grid-template-columns:50px 1fr;column-gap:6px;align-items:center;align-content:center;font-size:11px}
-  .reserve-pill{left:25vw}
-  .discards-pill{left:75vw}
+  .score-stack{left:5vw!important;right:5vw!important;width:90vw!important;transform:none!important;top:8px!important;display:grid!important;grid-template-columns:110px 1fr 1fr 110px;grid-template-rows:36px 50px;gap:4px 0;align-items:center;justify-items:center}
+  .reserve-pill{grid-column:1!important;grid-row:1!important;justify-self:start!important;width:110px!important;height:36px!important;display:grid!important;grid-template-columns:50px 1fr;column-gap:6px;align-items:center;align-content:center;font-size:11px;transform:none!important}
+  .discards-pill{grid-column:4!important;grid-row:1!important;justify-self:end!important;width:110px!important;height:36px!important;display:grid!important;grid-template-columns:50px 1fr;column-gap:6px;align-items:center;align-content:center;font-size:11px;transform:none!important}
+  .score-stack .score-pill{grid-column:2!important;grid-row:2!important;width:110px!important;height:50px!important;transform:none!important}
+  .score-stack .th-pill-wrap{grid-column:3!important;grid-row:2!important;width:110px!important;height:50px!important}
 }
 `;
   html = html.replace('</style>', css + '\n</style>');
