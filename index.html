@@ -43,7 +43,7 @@
   .reserve-pill{order:1}.discards-pill{order:2}.score-pill{order:3;transform:translateX(3px)}.threshold-pill{order:4}.th-pill-wrap{order:4;flex:0 0 110px;width:110px}
   .actions{gap:6px;margin-bottom:8px}
   button{font-size:12px;padding:6px 9px}
-  .refs-layer{top:86px;left:8px;right:8px;display:block}
+  .refs-layer{left:8px;right:8px;display:block}
   .ref{max-width:calc(100vw - 16px);font-size:11px;padding:8px;overflow:auto}
   .scoring-sheet td{font-size:11px;padding:2px 4px;line-height:1.35}
   .scoring-sheet .m{padding-left:5px}
@@ -1047,10 +1047,10 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
   let same=null,sameCount=0;
   if(fullCount>=3)for(const suit of SUITS){let rs=new Set(courtElig.filter(c=>c.suit===suit).map(c=>c.rank));if(rs.size>=3){same=suit;sameCount=rs.size;break}}
   let courtChips=(persist.up.court_chips||0)*8;
-  let courtMult=1.25+(persist.up.court_mult||0)*0.25;
+  let courtMult=1.5+(persist.up.court_mult||0)*0.25;
   let court=false;
   if(same){
-    m.push(['Royal Court ('+same+')',15+courtChips,courtMult]);chips+=15+courtChips;mult*=courtMult;court=true;
+    m.push(['Royal Court ('+same+')',10+courtChips,courtMult]);chips+=10+courtChips;mult*=courtMult;court=true;
   } else if(fullCount>=3){
     m.push(['Full Court',10+courtChips,courtMult]);chips+=10+courtChips;mult*=courtMult;court=true;
   }
@@ -1060,8 +1060,8 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
   let seqMult=1.25+(persist.up.seq_mult||0)*0.5;
   if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
   let pathChips=(persist.up.path_chips||0)*15;
-  let pathMult=1.5+(persist.up.path_mult||0)*0.5;
-  if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=10+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult*=pathMult}
+  let pathMult=2+(persist.up.path_mult||0)*0.5;
+  if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=30+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult*=pathMult}
   // ── Relic effects ──
   if(!skipRelics){
   const rel=persist.relics;
@@ -1386,18 +1386,6 @@ function breathVisuals(){
     setTimeout(()=>{vig.style.transition=`opacity ${exhaleMs}ms ease-out`;vig.style.opacity='0';},inhaleMs+gapMs);
   }
 
-  // hand card sway: WAAPI overrides card-wave on resting cards only, releases on finish
-  [...document.querySelectorAll('#hand .card:not(.sel):not(.ability-picked):not(.purge-picked)')].forEach(c=>{
-    const waveAnim=c.getAnimations().find(a=>a.animationName==='card-wave');
-    if(waveAnim)waveAnim.updatePlaybackRate(0);
-    const ba=c.animate([
-      {translate:'0 0px'},
-      {translate:'0 6px',offset:inhaleMs/totalMs},
-      {translate:'0 -3px',offset:(inhaleMs+gapMs+exhaleMs*.55)/totalMs},
-      {translate:'0 0px'}
-    ],{duration:totalMs,easing:'ease-in-out',fill:'none'});
-    ba.onfinish=()=>{const wa=c.getAnimations().find(a=>a.animationName==='card-wave');if(wa){wa.currentTime=0;wa.updatePlaybackRate(1);}};
-  });
 
   // motes: slow rise on inhale, push outward via margin-left (independent of transform),
   // speed up briefly on exhale. margin-left on position:absolute offsets without
@@ -2013,19 +2001,19 @@ function renderScoringSheet(){
   const rankBonus=(u.rank||0)*5;
   const rankMult=+(1.25+(u.rank_mult||0)*0.25).toFixed(2);
   const courtChips=(u.court_chips||0)*8;
-  const courtMult=+(1.25+(u.court_mult||0)*0.25).toFixed(2);
+  const courtMult=+(1.5+(u.court_mult||0)*0.25).toFixed(2);
   const seqBonus=(u.sequence||0)*5;
   const seqMult=+(1.25+(u.seq_mult||0)*0.5).toFixed(2);
   const pathChips=(u.path_chips||0)*15;
-  const pathMult=+(1.5+(u.path_mult||0)*0.5).toFixed(2);
+  const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
   const fmt=v=>'+'+(v-1).toFixed(2).replace(/\.?0+$/,'');
   const rows=[
     ['Three of a Kind','3 matching court ranks',`+${5+rankBonus}`,fmt(rankMult)],
     ['Four of a Kind','4 matching court ranks',`+${7+rankBonus}`,fmt(rankMult)],
     ['Full Court (3+)','Consecutive ranks',`+${10+courtChips}`,fmt(courtMult)],
-    ['Royal Court (3+)','Consecutive ranks, same suit',`+${15+courtChips}`,fmt(courtMult)],
+    ['Royal Court (3+)','Consecutive ranks, same suit',`+${10+courtChips}`,fmt(courtMult)],
     ['Sequence (3+)','Consecutive major arcana',`+${10+seqBonus}`,fmt(seqMult)],
-    ['Path of the Magi','0·I·XXI in spread',`+${10+pathChips}`,fmt(pathMult)],
+    ['Path of the Magi','0·I·XXI in spread',`+${30+pathChips}`,fmt(pathMult)],
   ];
   const up=[];
   if(u.rank)up.push(`Rank +${rankBonus}chips ${fmt(rankMult)}mult`);
@@ -2051,8 +2039,9 @@ function renderScoringSheet(){
   if(up.length) html+=`<div class="ref-upgrades"><b>Your upgrades:</b> ${up.join(' · ')}</div>`;
   $('#ref').innerHTML=html;
 }
-function toggleRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ref.classList.contains('hidden'); closeRefs(); if(wasHidden){renderScoringSheet();ref.classList.remove('hidden')} }
-function toggleAbilityRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ability.classList.contains('hidden'); closeRefs(); if(wasHidden)ability.classList.remove('hidden') }
+function _positionRefsLayer(btn){const rl=document.querySelector('.refs-layer');if(!rl)return;if(btn){const r=btn.getBoundingClientRect();rl.style.top=(r.bottom+4)+'px';}else{rl.style.top='';}}
+function toggleRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ref.classList.contains('hidden'); closeRefs(); if(wasHidden){renderScoringSheet();_positionRefsLayer(e&&e.currentTarget);ref.classList.remove('hidden')} }
+function toggleAbilityRef(e){ if(e)e.stopPropagation(); let ref=$('#ref'), ability=$('#abilityRef'); let wasHidden=ability.classList.contains('hidden'); closeRefs(); if(wasHidden){_positionRefsLayer(e&&e.currentTarget);ability.classList.remove('hidden')} }
 document.addEventListener('click',e=>{
   let insideRefs=e.target.closest('.refs-layer')||e.target.closest('#scoringBtn')||e.target.closest('#abilitiesBtn');
   if(!insideRefs)closeRefs();
@@ -3362,9 +3351,8 @@ function setSfxVol(v){_sfxVol=v;}
     }
 
     if(!committed){
-      // pointercancel (e.g. pinch started) — slide back to original position.
+      // pointercancel (e.g. pinch started) — let CSS transition settle naturally.
       if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
-      slideLanding(cardEl,firstRect);
       return;
     }
 
@@ -3381,15 +3369,15 @@ function setSfxVol(v){_sfxVol=v;}
       if(idx>=0){
         const card=state.hand.splice(idx,1)[0];
         state.hand.splice(hoverIndex,0,card);
+        if(state.selected===uid){state.selected=null;}
         if(typeof render==='function')render();
-        slideLanding(cardEl,firstRect);
         return;
       }
     }
 
-    // Dropped back to original position — slide home.
+    // Dropped back to original position — let CSS transition settle naturally.
+    if(state.selected===uid){state.selected=null;if(typeof refreshHandState==='function')refreshHandState();}
     if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
-    slideLanding(cardEl,firstRect);
   };
 
   // ── Pointer event handlers ──────────────────────────────────────
