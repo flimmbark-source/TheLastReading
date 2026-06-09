@@ -4,7 +4,20 @@ let html = fs.readFileSync(file, 'utf8');
 
 const marker = '/* relic rack below-spread mobile patch */';
 if (html.includes(marker)) {
-  console.log('Relic rack below-spread patch already present, skipping.');
+  // Re-apply with updated CSS (replace old block)
+  const re = /\/\* relic rack below-spread mobile patch \*\/[\s\S]*?(?=\n<\/style>)/;
+  const css = `${marker}
+@media (max-width: 640px) {
+  .relic-rack{position:fixed!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;width:100%!important;left:0!important;right:0!important;top:calc(46vh + 122px)!important;bottom:auto!important;transform:none!important;margin:0!important;gap:8px!important;z-index:24!important}
+  .relic-rack .relic-btn{width:38px!important;height:38px!important}
+  .relic-rack .relic-slot-empty{width:38px!important;height:38px!important}
+}`;
+  if (re.test(html)) {
+    html = html.replace(re, css);
+    console.log('Updated relic rack below-spread mobile CSS.');
+  } else {
+    console.log('Relic rack below-spread patch already present (no update needed).');
+  }
   fs.writeFileSync(file, html);
   process.exit(0);
 }
@@ -22,11 +35,13 @@ if (html.includes(rackEl) && html.includes(spreadWrapEnd)) {
   console.warn('WARN: could not relocate #relicRack — expected elements not found');
 }
 
-// 2. Override relic rack CSS on mobile: drop fixed positioning, go horizontal, centered.
+// 2. Override relic rack CSS on mobile: fixed, horizontal, centered below the spread.
+// The spread-wrap is positioned at top:46% translateY(-50%); spread content is ~241px tall.
+// So the spread bottom edge is approximately calc(46vh + 120px). We anchor the rack just below.
 const css = `
 ${marker}
 @media (max-width: 640px) {
-  .relic-rack{position:static!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;width:100%!important;top:auto!important;right:auto!important;left:auto!important;transform:none!important;margin:8px 0 4px!important;gap:8px!important}
+  .relic-rack{position:fixed!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;width:100%!important;left:0!important;right:0!important;top:calc(46vh + 122px)!important;bottom:auto!important;transform:none!important;margin:0!important;gap:8px!important;z-index:24!important}
   .relic-rack .relic-btn{width:38px!important;height:38px!important}
   .relic-rack .relic-slot-empty{width:38px!important;height:38px!important}
 }
