@@ -36,7 +36,7 @@ changed++;
 
 html = html.replace('</script>', `
 (function(){
-  function fmtBonus(v){return '+'+Number(v).toFixed(2).replace(/\.?0+$/,'');}
+  function fmtBonus(v){return '+'+Number(v).toFixed(2).replace(/\\.?0+$/,'');}
   function renderDrawerScoringSheet(){
     const el=document.getElementById('ref');
     if(!el)return;
@@ -51,23 +51,23 @@ html = html.replace('</script>', `
     const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
     const rows=[
       ['arc','Minor Arcana','',''],
-      ['Three of a Kind','3 matching court ranks',`+${5+rankBonus}`,fmtBonus(rankMult-1)],
-      ['Four of a Kind','4 matching court ranks',`+${7+rankBonus}`,fmtBonus(rankMult-1)],
-      ['Full Court (3/4)','Consecutive ranks',`+${10+courtChips}`,fmtBonus(courtMult-1)],
-      ['Royal Court (3/4)','Consecutive ranks, same suit',`+${10+courtChips}`,fmtBonus(courtMult-1)],
+      ['Three of a Kind','3 matching court ranks','+'+(5+rankBonus),fmtBonus(rankMult-1)],
+      ['Four of a Kind','4 matching court ranks','+'+(7+rankBonus),fmtBonus(rankMult-1)],
+      ['Full Court (3/4)','Consecutive ranks','+'+(10+courtChips),fmtBonus(courtMult-1)],
+      ['Royal Court (3/4)','Consecutive ranks, same suit','+'+(10+courtChips),fmtBonus(courtMult-1)],
       ['arc','Major Arcana','',''],
-      ['Sequence (3/4/5)','Consecutive major arcana',`+${10+seqBonus}`,fmtBonus(seqMult-1)],
-      ['Path of the Magi','0·I·XXI in spread',`+${30+pathChips}`,fmtBonus(pathMult-1)]
+      ['Sequence (3/4/5)','Consecutive major arcana','+'+(10+seqBonus),fmtBonus(seqMult-1)],
+      ['Path of the Magi','0·I·XXI in spread','+'+(30+pathChips),fmtBonus(pathMult-1)]
     ];
-    let html='<table><tbody>';
-    html+='<tr><td></td><td></td><td class="score-head r"><span class="chips">Bonus</span><span class="mult">Mult</span></td></tr>';
+    let out='<table><tbody>';
+    out+='<tr><td></td><td></td><td class="score-head r"><span class="chips">Bonus</span><span class="mult">Mult</span></td></tr>';
     for(const r of rows){
-      if(r[0]==='arc'){html+=`<tr class="arcana-row"><td colspan="3">${r[1]}</td></tr>`;continue;}
-      html+=`<tr><td>${r[0]}</td><td class="m">${r[1]}</td><td class="r"><span class="chips">${r[2]}</span><span class="mult">${r[3]}</span></td></tr>`;
+      if(r[0]==='arc'){out+='<tr class="arcana-row"><td colspan="3">'+r[1]+'</td></tr>';continue;}
+      out+='<tr><td>'+r[0]+'</td><td class="m">'+r[1]+'</td><td class="r"><span class="chips">'+r[2]+'</span><span class="mult">'+r[3]+'</span></td></tr>';
     }
-    html+='</tbody></table>';
+    out+='</tbody></table>';
     el.className='ref scoring-sheet';
-    el.innerHTML=html;
+    el.innerHTML=out;
   }
 
   // Fill immediately and again whenever the Scoring drawer opens, so upgrades are reflected.
