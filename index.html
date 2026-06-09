@@ -1047,10 +1047,10 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
   let same=null,sameCount=0;
   if(fullCount>=3)for(const suit of SUITS){let rs=new Set(courtElig.filter(c=>c.suit===suit).map(c=>c.rank));if(rs.size>=3){same=suit;sameCount=rs.size;break}}
   let courtChips=(persist.up.court_chips||0)*8;
-  let courtMult=1.25+(persist.up.court_mult||0)*0.25;
+  let courtMult=1.5+(persist.up.court_mult||0)*0.25;
   let court=false;
   if(same){
-    m.push(['Royal Court ('+same+')',15+courtChips,courtMult]);chips+=15+courtChips;mult*=courtMult;court=true;
+    m.push(['Royal Court ('+same+')',10+courtChips,courtMult]);chips+=10+courtChips;mult*=courtMult;court=true;
   } else if(fullCount>=3){
     m.push(['Full Court',10+courtChips,courtMult]);chips+=10+courtChips;mult*=courtMult;court=true;
   }
@@ -1060,8 +1060,8 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
   let seqMult=1.25+(persist.up.seq_mult||0)*0.5;
   if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
   let pathChips=(persist.up.path_chips||0)*15;
-  let pathMult=1.5+(persist.up.path_mult||0)*0.5;
-  if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=10+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult*=pathMult}
+  let pathMult=2+(persist.up.path_mult||0)*0.5;
+  if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=30+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult*=pathMult}
   // ── Relic effects ──
   if(!skipRelics){
   const rel=persist.relics;
@@ -2001,19 +2001,19 @@ function renderScoringSheet(){
   const rankBonus=(u.rank||0)*5;
   const rankMult=+(1.25+(u.rank_mult||0)*0.25).toFixed(2);
   const courtChips=(u.court_chips||0)*8;
-  const courtMult=+(1.25+(u.court_mult||0)*0.25).toFixed(2);
+  const courtMult=+(1.5+(u.court_mult||0)*0.25).toFixed(2);
   const seqBonus=(u.sequence||0)*5;
   const seqMult=+(1.25+(u.seq_mult||0)*0.5).toFixed(2);
   const pathChips=(u.path_chips||0)*15;
-  const pathMult=+(1.5+(u.path_mult||0)*0.5).toFixed(2);
+  const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
   const fmt=v=>'+'+(v-1).toFixed(2).replace(/\.?0+$/,'');
   const rows=[
     ['Three of a Kind','3 matching court ranks',`+${5+rankBonus}`,fmt(rankMult)],
     ['Four of a Kind','4 matching court ranks',`+${7+rankBonus}`,fmt(rankMult)],
     ['Full Court (3+)','Consecutive ranks',`+${10+courtChips}`,fmt(courtMult)],
-    ['Royal Court (3+)','Consecutive ranks, same suit',`+${15+courtChips}`,fmt(courtMult)],
+    ['Royal Court (3+)','Consecutive ranks, same suit',`+${10+courtChips}`,fmt(courtMult)],
     ['Sequence (3+)','Consecutive major arcana',`+${10+seqBonus}`,fmt(seqMult)],
-    ['Path of the Magi','0·I·XXI in spread',`+${10+pathChips}`,fmt(pathMult)],
+    ['Path of the Magi','0·I·XXI in spread',`+${30+pathChips}`,fmt(pathMult)],
   ];
   const up=[];
   if(u.rank)up.push(`Rank +${rankBonus}chips ${fmt(rankMult)}mult`);

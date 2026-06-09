@@ -37,8 +37,8 @@ rep(
 // Full/Royal Court: flatten to fixed chips+mult (no extra scaling per card)
 rep(
   `let courtMult=1+(persist.up.court_mult||0)*0.25;`,
-  `let courtMult=1.25+(persist.up.court_mult||0)*0.25;`,
-  'Court mult base 1.0 → 1.25'
+  `let courtMult=1.5+(persist.up.court_mult||0)*0.25;`,
+  'Court mult base 1.0 → 1.5'
 );
 rep(
   `  if(same){
@@ -55,7 +55,7 @@ rep(
     m.push(['Full Court'+(extra?' ×'+fullCount:''),x,xm]);chips+=x;mult*=xm;court=true;
   }`,
   `  if(same){
-    m.push(['Royal Court ('+same+')',15+courtChips,courtMult]);chips+=15+courtChips;mult*=courtMult;court=true;
+    m.push(['Royal Court ('+same+')',10+courtChips,courtMult]);chips+=10+courtChips;mult*=courtMult;court=true;
   } else if(fullCount>=3){
     m.push(['Full Court',10+courtChips,courtMult]);chips+=10+courtChips;mult*=courtMult;court=true;
   }`,
@@ -76,16 +76,16 @@ rep(
   'Sequence scoring — flat chips for any length 3+'
 );
 
-// Path of the Magi: chips base 30 → 10, mult base 2.0 → 1.5
+// Path of the Magi: chips 30, mult base 2.0
 rep(
   `let pathMult=2+(persist.up.path_mult||0)*0.5;`,
-  `let pathMult=1.5+(persist.up.path_mult||0)*0.5;`,
-  'Magi mult base 2.0 → 1.5'
+  `let pathMult=2+(persist.up.path_mult||0)*0.5;`,
+  'Magi mult base 2.0 (no change)'
 );
 rep(
-  `{let x=30+pathChips;m.push(['Path of the Magi',x,pathMult]);`,
   `{let x=10+pathChips;m.push(['Path of the Magi',x,pathMult]);`,
-  'Magi chips base 30 → 10'
+  `{let x=30+pathChips;m.push(['Path of the Magi',x,pathMult]);`,
+  'Magi chips base 10 → 30'
 );
 
 // ── Scoring reference sheet (renderScoringSheet) ───────────────────────────
@@ -97,7 +97,7 @@ rep(
 );
 rep(
   `const courtMult=+(1+(u.court_mult||0)*0.25).toFixed(2);`,
-  `const courtMult=+(1.25+(u.court_mult||0)*0.25).toFixed(2);`,
+  `const courtMult=+(1.5+(u.court_mult||0)*0.25).toFixed(2);`,
   '[ref] Court mult base'
 );
 rep(
@@ -107,8 +107,8 @@ rep(
 );
 rep(
   `const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);`,
-  `const pathMult=+(1.5+(u.path_mult||0)*0.5).toFixed(2);`,
-  '[ref] Magi mult base'
+  `const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);`,
+  '[ref] Magi mult base (no change)'
 );
 // Rewrite the rows array: per-pattern increments, mult as +N not ×N
 rep(
@@ -124,9 +124,9 @@ rep(
     ['Three of a Kind','3 matching court ranks',\`+\${5+rankBonus}\`,fmt(rankMult)],
     ['Four of a Kind','4 matching court ranks',\`+\${7+rankBonus}\`,fmt(rankMult)],
     ['Full Court (3+)','Consecutive ranks',\`+\${10+courtChips}\`,fmt(courtMult)],
-    ['Royal Court (3+)','Consecutive ranks, same suit',\`+\${15+courtChips}\`,fmt(courtMult)],
+    ['Royal Court (3+)','Consecutive ranks, same suit',\`+\${10+courtChips}\`,fmt(courtMult)],
     ['Sequence (3+)','Consecutive major arcana',\`+\${10+seqBonus}\`,fmt(seqMult)],
-    ['Path of the Magi','0·I·XXI in spread',\`+\${10+pathChips}\`,fmt(pathMult)],
+    ['Path of the Magi','0·I·XXI in spread',\`+\${30+pathChips}\`,fmt(pathMult)],
   ];`,
   '[ref] rows array — per-pattern increments, mult as +N'
 );
