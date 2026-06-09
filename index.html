@@ -653,6 +653,8 @@ body.mode-table-return #invTab{
 
 
 
+
+
 /* Attic mobile pan patch v4 */
 #atticScene{background:#0f0905!important;overflow:hidden!important}
 #atticScene::before,#atticScene::after{z-index:9!important;pointer-events:none!important}
@@ -737,6 +739,7 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 <div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="sbtn sbtn-discard" aria-label="Discard" onclick="discardSelected()" disabled></button><button id="purgeBtn" class="sbtn sbtn-purge" aria-label="Purge" onclick="startPurge()" disabled></button></div><div id="spread" class="spread"></div></div>
 <div id="abilityPrompt" class="ability-prompt"><div><h3 id="abilityPromptTitle"></h3><p id="abilityPromptText"></p></div><button id="abilityConfirm" onclick="confirmAbilitySelection()" disabled>Choose</button></div>
 <div id="purgePrompt" class="ability-prompt"><div><h3>Purge</h3><p>Select 3 cards to sacrifice for 1 Discard. <b><span id="purgeCount">0</span>/3</b> selected.</p></div><button id="purgeConfirm" onclick="confirmPurge()" disabled>Sacrifice</button><button onclick="cancelPurge()">Cancel</button></div>
+<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
@@ -1028,11 +1031,11 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
   if(omenTotal&&!skipFlatBonuses){m.push(['Omen',omenTotal,0]);chips+=omenTotal;}
   if(resonanceTotal&&!skipFlatBonuses){m.push(['Resonance',resonanceTotal,0]);chips+=resonanceTotal;}
   let rankBonus=(persist.up.rank||0)*5;
-  let rankMult=1+(persist.up.rank_mult||0)*0.25;
+  let rankMult=1.25+(persist.up.rank_mult||0)*0.25;
   for(const rank of ['Page','Knight','Queen','King']){
     let a=cards.filter(c=>c.type==='court'&&c.rank===rank);
-    if(a.length===4){let x=12+rankBonus;m.push(['Four of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
-    else if(a.length===3){let x=10+rankBonus;m.push(['Three of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
+    if(a.length===4){let x=7+rankBonus;m.push(['Four of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
+    else if(a.length===3){let x=5+rankBonus;m.push(['Three of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
   }
   const courtElig=cards.filter(c=>c.type==='court');
   let ranks=new Set(courtElig.map(c=>c.rank));
@@ -1040,31 +1043,31 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
   let same=null,sameCount=0;
   if(fullCount>=3)for(const suit of SUITS){let rs=new Set(courtElig.filter(c=>c.suit===suit).map(c=>c.rank));if(rs.size>=3){same=suit;sameCount=rs.size;break}}
   let courtChips=(persist.up.court_chips||0)*8;
-  let courtMult=1+(persist.up.court_mult||0)*0.25;
+  let courtMult=1.25+(persist.up.court_mult||0)*0.25;
   let court=false;
   if(same){
     // Royal Court: 3 same-suit courts = base; each extra rank in that suit adds chips+mult
     const extra=sameCount-3; // 0, 1
-    const x=Math.round(20+extra*8+courtChips);
+    const x=Math.round(15+extra*8+courtChips);
     const xm=+(courtMult+(extra*0.25)).toFixed(2);
     m.push(['Royal Court ('+same+')'+( extra?' ×'+(sameCount):'' ),x,xm]);chips+=x;mult*=xm;court=true;
   } else if(fullCount>=3){
     // Full Court: 3 distinct ranks = base; each rank beyond 3 adds chips+mult
     const extra=Math.min(fullCount-3,1); // cap at 4 ranks for now
-    const x=Math.round(14+extra*6+courtChips);
+    const x=Math.round(10+extra*6+courtChips);
     const xm=+(courtMult+(extra*0.25)).toFixed(2);
     m.push(['Full Court'+(extra?' ×'+fullCount:''),x,xm]);chips+=x;mult*=xm;court=true;
   }
   let nums=[...new Set(cards.filter(c=>c.type==='major').map(c=>c.num))].sort((a,b)=>a-b),best=1,cur=1;
   for(let i=1;i<nums.length;i++){if(nums[i]===nums[i-1]+1){cur++;best=Math.max(best,cur)}else cur=1}
   let seqBonus=(persist.up.sequence||0)*5;
-  let seqMult=2+(persist.up.seq_mult||0)*0.5;
+  let seqMult=1.25+(persist.up.seq_mult||0)*0.5;
   if(best>=5){let x=18+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
   else if(best>=4){let x=15+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
   else if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
   let pathChips=(persist.up.path_chips||0)*15;
-  let pathMult=2+(persist.up.path_mult||0)*0.5;
-  if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=30+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult*=pathMult}
+  let pathMult=1.5+(persist.up.path_mult||0)*0.5;
+  if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=10+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult*=pathMult}
   // ── Relic effects ──
   if(!skipRelics){
   const rel=persist.relics;
@@ -1991,19 +1994,19 @@ function closeRefs(){ $('#ref').classList.add('hidden'); $('#abilityRef').classL
 function renderScoringSheet(){
   const u=persist.up;
   const rankBonus=(u.rank||0)*5;
-  const rankMult=+(1+(u.rank_mult||0)*0.25).toFixed(2);
+  const rankMult=+(1.25+(u.rank_mult||0)*0.25).toFixed(2);
   const courtChips=(u.court_chips||0)*8;
-  const courtMult=+(1+(u.court_mult||0)*0.25).toFixed(2);
+  const courtMult=+(1.25+(u.court_mult||0)*0.25).toFixed(2);
   const seqBonus=(u.sequence||0)*5;
-  const seqMult=+(2+(u.seq_mult||0)*0.5).toFixed(2);
+  const seqMult=+(1.25+(u.seq_mult||0)*0.5).toFixed(2);
   const pathChips=(u.path_chips||0)*15;
-  const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
+  const pathMult=+(1.5+(u.path_mult||0)*0.5).toFixed(2);
   const rows=[
-    ['Rank Match','Three/Four of a Kind',`+${10+rankBonus} / +${12+rankBonus}`,`×${rankMult}`],
-    ['Full Court (3+)','Consecutive Ranks',`+${14+courtChips} / +${20+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
-    ['Royal Court (3+)','Consecutive Ranks, same suit',`+${20+courtChips} / +${28+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
+    ['Rank Match','Three/Four of a Kind',`+${5+rankBonus} / +${7+rankBonus}`,`×${rankMult}`],
+    ['Full Court (3+)','Consecutive Ranks',`+${10+courtChips} / +${16+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
+    ['Royal Court (3+)','Consecutive Ranks, same suit',`+${15+courtChips} / +${23+courtChips}`,`×${courtMult} / ×${+(courtMult+0.25).toFixed(2)}`],
     ['Sequence (3+)','Consecutive Arcana',`+${10+seqBonus} / +${15+seqBonus} / +${18+seqBonus}`,`×${seqMult}`],
-    ['Path of the Magi','0·I·XXI in spread',`+${30+pathChips}`,`×${pathMult}`],
+    ['Path of the Magi','0·I·XXI in spread',`+${10+pathChips}`,`×${pathMult}`],
   ];
   const up=[];
   if(u.rank)up.push(`Rank +${rankBonus}chips ×${rankMult}`);
@@ -3501,7 +3504,7 @@ function setSfxVol(v){_sfxVol=v;}
     const o=objects[id];if(!o||awaitingPickup)return;
     if(searched[id]){whisper('You already searched there.');return;}
     if(candleCount<o.cost){whisper('The candle is almost gone.');return;}
-    dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();candleCount-=o.cost;searched[id]=true;renderCandles();candleSpend();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);whisper('You find '+o.itemTitle+'.');},430);
+    dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();candleCount-=o.cost;searched[id]=true;renderCandles();candleSpend();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);whisper('You find '+o.itemTitle+'.');},430);
   }
   function enter(candles,shouldReset){
     if(window.tlrCloseArchives)window.tlrCloseArchives();
@@ -3509,6 +3512,7 @@ function setSfxVol(v){_sfxVol=v;}
     document.body.classList.remove('mode-reading','mode-to-table','mode-table-return');document.body.classList.add('mode-to-attic');
     const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','false');
     setTimeout(function(){document.body.classList.remove('mode-to-attic');document.body.classList.add('mode-attic');whisper('You get up from the table. Spend Candlelight to search.');},900);
+    setTimeout(function(){showAtticTutorial();},1400);
     setTimeout(function(){showAtticTutorial();},1400);
     setTimeout(function(){showAtticTutorial();},1400);
     setTimeout(function(){showAtticTutorial();},1400);
@@ -3525,6 +3529,27 @@ function setSfxVol(v){_sfxVol=v;}
     setTimeout(function(){document.body.classList.remove('mode-to-table','mode-table-return','mode-return-hard-hide');document.body.classList.add('mode-reading');},1080);
   }
   function showAtticTutorial(){
+    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
+    const t=document.getElementById('atticTutorial');if(!t)return;
+    const isDesktop=window.matchMedia('(pointer:fine)').matches;
+    const searchLine=isDesktop
+      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
+      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
+    const scrollLine=isDesktop
+      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
+      :'';
+    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
+      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
+      +'<button id="atticTutDismiss">I understand</button>';
+    const btn=t.querySelector('#atticTutDismiss');
+    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
+    t.classList.add('show');
+  }
+  function dismissAtticTutorial(){
+    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
+    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
+  }
+    function showAtticTutorial(){
     try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
     const t=document.getElementById('atticTutorial');if(!t)return;
     const isDesktop=window.matchMedia('(pointer:fine)').matches;
