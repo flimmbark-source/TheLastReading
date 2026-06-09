@@ -70,6 +70,7 @@ if (!html.includes('function getUpFromTable(){')) {
   if(state&&state.busy)return;
   if(window.tlrCloseArchives)window.tlrCloseArchives();
   const panel=document.getElementById('settingsPanel');if(panel)panel.classList.add('hidden');
+  const mw=document.getElementById('menuPullWrap');if(mw&&mw.classList.contains('open')){mw.classList.remove('open');const mt=document.getElementById('menuPullTab');if(mt)mt.innerHTML='&#9660; Menu';}
   if(typeof endSession==='function')endSession();
 }
 function startReading(){

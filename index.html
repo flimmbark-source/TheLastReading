@@ -2177,7 +2177,7 @@ const TUT_STEPS=[
   {sel:'#relicRack',arrow:'up', text:'You\'ve found a <b>Relic</b>! Relics carry powerful passive effects across every reading until you lose. Tap a relic icon to see what it does.'},
 ];
 function tutSkip(){localStorage.setItem(TUT_KEY,'1');tutDone=true;tutHide()}
-function replayTutorial(){['tlr_tut_done','tlr_tut_relic','tlr_tut_shop','tlr_tut_inv_open','tlr_tut_inv_name','tlr_tut_inv_detail'].forEach(k=>localStorage.removeItem(k));tutDone=false;const p=document.getElementById('settingsPanel');if(p)p.classList.add('hidden');tutShow(0);}
+function replayTutorial(){['tlr_tut_done','tlr_tut_relic','tlr_tut_shop','tlr_tut_inv_open','tlr_tut_inv_name','tlr_tut_inv_detail'].forEach(k=>localStorage.removeItem(k));tutDone=false;const p=document.getElementById('settingsPanel');if(p)p.classList.add('hidden');const mw=document.getElementById('menuPullWrap');if(mw&&mw.classList.contains('open')){mw.classList.remove('open');const mt=document.getElementById('menuPullTab');if(mt)mt.innerHTML='&#9660; Menu';}tutShow(0);}
 function tutHide(){clearTimeout(tutTimer);tutTimer=null;tutStep=-1;const t=$('#tutTip');if(t){t.classList.remove('show','tut-center');t.style.cssText=''}}
 function tutShow(step){
   if(tutDone&&step<9)return;
