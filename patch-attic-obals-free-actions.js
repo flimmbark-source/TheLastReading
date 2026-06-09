@@ -38,10 +38,11 @@ ${marker}
 #atticScene #candlelightHud .candlelight-icon{display:none!important}
 .attic-obal-label{font:800 10px system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#b99a5d}
 .attic-obal-count{font:900 18px Georgia,serif;color:#ffd978;text-shadow:0 2px 8px rgba(0,0,0,.85);font-variant-numeric:tabular-nums}
-#atticTableReturn{position:absolute;left:50%;bottom:-10px;z-index:28;width:min(84vw,560px);height:76px;transform:translateX(-50%);border:1px solid rgba(117,70,33,.9);border-bottom:0;border-radius:52% 52% 0 0/78% 78% 0 0;background:radial-gradient(ellipse at center top,rgba(139,83,42,.96),rgba(73,38,18,.98) 62%,rgba(28,14,8,1));box-shadow:0 -9px 30px rgba(0,0,0,.62),inset 0 8px 18px rgba(255,196,105,.12),inset 0 -14px 22px rgba(0,0,0,.42);color:#f3d79a;cursor:pointer;font:900 11px system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;text-shadow:0 2px 8px rgba(0,0,0,.9)}
+#atticTableReturn{position:absolute;left:50%;bottom:-10px;z-index:28;width:min(84vw,560px);height:76px;transform:translateX(-50%);border:1px solid rgba(117,70,33,.9);border-bottom:0;border-radius:52% 52% 0 0/78% 78% 0 0;background:radial-gradient(ellipse at center top,rgba(139,83,42,.96),rgba(73,38,18,.98) 62%,rgba(28,14,8,1));box-shadow:0 -9px 30px rgba(0,0,0,.62),inset 0 8px 18px rgba(255,196,105,.12),inset 0 -14px 22px rgba(0,0,0,.42);color:#f3d79a;cursor:pointer;font:900 11px system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;text-shadow:0 2px 8px rgba(0,0,0,.9);-webkit-tap-highlight-color:transparent;outline:none;appearance:none;-webkit-appearance:none;user-select:none;touch-action:manipulation}
 #atticTableReturn::before{content:'';position:absolute;left:8%;right:8%;top:14px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,210,130,.34),transparent)}
 #atticTableReturn span{position:relative;top:-4px}
-#atticTableReturn:hover,#atticTableReturn:active{filter:brightness(1.08)}
+#atticTableReturn:hover,#atticTableReturn:active{filter:brightness(1.08);background:radial-gradient(ellipse at center top,rgba(139,83,42,.96),rgba(73,38,18,.98) 62%,rgba(28,14,8,1))}
+#atticTableReturn:focus,#atticTableReturn:focus-visible{outline:none;background:radial-gradient(ellipse at center top,rgba(139,83,42,.96),rgba(73,38,18,.98) 62%,rgba(28,14,8,1))}
 </style>`);
 changed++;
 
