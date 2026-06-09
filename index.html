@@ -655,6 +655,8 @@ body.mode-table-return #invTab{
 
 
 
+
+
 /* Attic mobile pan patch v4 */
 #atticScene{background:#0f0905!important;overflow:hidden!important}
 #atticScene::before,#atticScene::after{z-index:9!important;pointer-events:none!important}
@@ -688,6 +690,14 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
   .discards-pill{transform:translateX(calc(25vw - 57px))}
 }
 
+
+/* relic rack below-spread mobile patch */
+@media (max-width: 640px) {
+  .relic-rack{position:static!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;width:100%!important;top:auto!important;right:auto!important;left:auto!important;transform:none!important;margin:8px 0 4px!important;gap:8px!important}
+  .relic-rack .relic-btn{width:38px!important;height:38px!important}
+  .relic-rack .relic-slot-empty{width:38px!important;height:38px!important}
+}
+
 </style>
 </head>
 <body>
@@ -717,7 +727,6 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
   </div>
 </div>
 <div class="bar"></div>
-<div id="relicRack" class="relic-rack"></div>
 <div id="sophiaVeil"></div>
 <div class="score-stack"><div class="pill reserve-pill">Reserve <b id="pool">0</b></div><div class="pill score-pill">Score <b id="current">0</b></div><div class="th-pill-wrap"><div class="pill threshold-pill">Threshold <b id="threshold">30</b></div><span id="thNext"></span></div><div class="pill discards-pill">Discards <b id="discards">3</b></div></div>
 <div class="refs-layer">
@@ -737,8 +746,10 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 </div>
 </div>
 <div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="sbtn sbtn-discard" aria-label="Discard" onclick="discardSelected()" disabled></button><button id="purgeBtn" class="sbtn sbtn-purge" aria-label="Purge" onclick="startPurge()" disabled></button></div><div id="spread" class="spread"></div></div>
+<div id="relicRack" class="relic-rack"></div>
 <div id="abilityPrompt" class="ability-prompt"><div><h3 id="abilityPromptTitle"></h3><p id="abilityPromptText"></p></div><button id="abilityConfirm" onclick="confirmAbilitySelection()" disabled>Choose</button></div>
 <div id="purgePrompt" class="ability-prompt"><div><h3>Purge</h3><p>Select 3 cards to sacrifice for 1 Discard. <b><span id="purgeCount">0</span>/3</b> selected.</p></div><button id="purgeConfirm" onclick="confirmPurge()" disabled>Sacrifice</button><button onclick="cancelPurge()">Cancel</button></div>
+<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
@@ -3504,7 +3515,7 @@ function setSfxVol(v){_sfxVol=v;}
     const o=objects[id];if(!o||awaitingPickup)return;
     if(searched[id]){whisper('You already searched there.');return;}
     if(candleCount<o.cost){whisper('The candle is almost gone.');return;}
-    dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();candleCount-=o.cost;searched[id]=true;renderCandles();candleSpend();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);whisper('You find '+o.itemTitle+'.');},430);
+    dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();dismissAtticTutorial();candleCount-=o.cost;searched[id]=true;renderCandles();candleSpend();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);whisper('You find '+o.itemTitle+'.');},430);
   }
   function enter(candles,shouldReset){
     if(window.tlrCloseArchives)window.tlrCloseArchives();
@@ -3512,6 +3523,7 @@ function setSfxVol(v){_sfxVol=v;}
     document.body.classList.remove('mode-reading','mode-to-table','mode-table-return');document.body.classList.add('mode-to-attic');
     const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','false');
     setTimeout(function(){document.body.classList.remove('mode-to-attic');document.body.classList.add('mode-attic');whisper('You get up from the table. Spend Candlelight to search.');},900);
+    setTimeout(function(){showAtticTutorial();},1400);
     setTimeout(function(){showAtticTutorial();},1400);
     setTimeout(function(){showAtticTutorial();},1400);
     setTimeout(function(){showAtticTutorial();},1400);
@@ -3529,6 +3541,27 @@ function setSfxVol(v){_sfxVol=v;}
     setTimeout(function(){document.body.classList.remove('mode-to-table','mode-table-return','mode-return-hard-hide');document.body.classList.add('mode-reading');},1080);
   }
   function showAtticTutorial(){
+    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
+    const t=document.getElementById('atticTutorial');if(!t)return;
+    const isDesktop=window.matchMedia('(pointer:fine)').matches;
+    const searchLine=isDesktop
+      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
+      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
+    const scrollLine=isDesktop
+      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
+      :'';
+    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
+      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
+      +'<button id="atticTutDismiss">I understand</button>';
+    const btn=t.querySelector('#atticTutDismiss');
+    if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
+    t.classList.add('show');
+  }
+  function dismissAtticTutorial(){
+    const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
+    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
+  }
+    function showAtticTutorial(){
     try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
     const t=document.getElementById('atticTutorial');if(!t)return;
     const isDesktop=window.matchMedia('(pointer:fine)').matches;
