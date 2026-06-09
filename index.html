@@ -309,8 +309,8 @@
 .pack-picker-header h3{margin:0 0 3px;font:700 18px Georgia,serif;color:#f0d58a;letter-spacing:.04em}
 .pack-picker-header p{margin:8px 0 0;color:#8a7848;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
 .upg-card{width:130px;background:linear-gradient(165deg,#2a1810,#140907);border:2px solid #6b4f25;border-radius:6px;display:flex;flex-direction:column;overflow:hidden;font-family:Georgia,serif}
-.upg-card.scoring{border-color:#7a6030}
-.upg-card.utility{border-color:#4a6840}
+.upg-card.pool-scoring{border-color:#7a6030}
+.upg-card.pool-utility{border-color:#4a6840}
 .upg-title-strip{background:#160b07;border-bottom:1px solid #4a3018;height:17px;display:flex;align-items:center;justify-content:center;padding:0 8px}
 .upg-title-strip span{font:900 7px system-ui,sans-serif;color:#d4af6a;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .upg-art{height:80px;background:radial-gradient(circle,#3b2917,#160b07 80%);display:flex;align-items:center;justify-content:center;font-size:38px;position:relative;border-bottom:1px solid #3a2810}
@@ -2039,7 +2039,7 @@ function buyPack(pk,cost){
   html+='<div class="shop-items-row">';
   for(const k of options){
     const s=SHOP[k],lvl=persist.up[k]||0,ic=SHOP_ICON[k]||'isp-scoring';
-    html+=`<div class="upg-card ${s[5]}">
+    html+=`<div class="upg-card pool-${s[5]}">
       <div class="upg-title-strip"><span>${s[0]}</span></div>
       <div class="upg-art"><span class="isp isp-40 ${ic}"></span></div>
       <div class="upg-body"><div class="upg-desc">${s[1]}</div></div>
