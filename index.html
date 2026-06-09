@@ -824,7 +824,7 @@ function startReading(){
   if(window.tlrCloseArchives)window.tlrCloseArchives();
   state.deck=shuffle(buildDeck());playSound('shuffle');state.hand=[];state.discard=[];state.spread=Array(5).fill(null);
   state.selected=null;state.purgeSelect=null;state.discards=maxDiscards();state.mullCharges=maxMull();
-  state.freeDiscardUsed=false;state.discardedCards=[];state.resonationTriggeredThisReading={};state.resonationBonus={chips:0,mult:0};state.thBonus=(state.thBonus||0)+(state.thBonusPending||0);state.thBonusPending=0;_resStateKey=null;_relicGhostFired=false;
+  state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];state.resonationTriggeredThisReading={};state.resonationBonus={chips:0,mult:0};state.thBonus=(state.thBonus||0)+(state.thBonusPending||0);state.thBonusPending=0;_resStateKey=null;_relicGhostFired=false;
   if(persist.up.offering){persist.pool+=(persist.up.offering*5);render();}
   const extra=(persist.relics.includes('threadbare_tarot')?1:0)+(persist.up.deep_current||0);
   drawTo(maxHand()+extra);
@@ -1473,7 +1473,9 @@ function discardSelected(){
   state.discard.push(c);playSound('discard');haptic(16);
   if(persist.relics.includes('hanged_coin'))state.discardedCards.push(c);
   state.selected=null;
-  if(free){state.freeDiscardUsed=true;}else{state.discards--;}
+  const _sightAbs=['PEEK_3','PEEK_5','SEARCH','MIRROR_1'];
+  const _sightFree=c.ability&&_sightAbs.includes(c.ability)&&(state.sightChargesUsed||0)<(persist.up.sight_cost||0);
+  if(free){state.freeDiscardUsed=true;}else if(_sightFree){state.sightChargesUsed=(state.sightChargesUsed||0)+1;}else{state.discards--;}
   resolveAbility(c.ability,()=>{render();checkEnd()},c);
 }
 function resolveAbility(ab,done,sourceCard=null){
@@ -1482,11 +1484,11 @@ function resolveAbility(ab,done,sourceCard=null){
   if(ab==='DRAW_1'){drawN(1+rd);done()}
   else if(ab==='DRAW_2'){drawN(2+rd);done()}
   else if(ab==='DRAW_3'){drawN(3+rd);done()}
-  else if(ab==='PEEK_3')peek(3+lens,done);
-  else if(ab==='PEEK_5')peek(5+lens,done);
+  else if(ab==='PEEK_3')peek(3+lens+(persist.up.peek_plus||0),done);
+  else if(ab==='PEEK_5')peek(5+lens+(persist.up.peek_plus||0),done);
   else if(ab==='SEARCH')search(done);
-  else if(ab==='NEIGHBOR_2')relation('Neighbor','Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers or court ranks in the same suit.',neighbor,2+lens,done);
-  else if(ab==='KIN_2')relation('Kin','Choose an anchor card. Kin finds cards of the same Arcana.',kin,2+lens,done);
+  else if(ab==='NEIGHBOR_2')relation('Neighbor','Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers or court ranks in the same suit.',neighbor,2+lens+(persist.up.neighbor_plus||0),done);
+  else if(ab==='KIN_2')relation('Kin','Choose an anchor card. Kin finds cards of the same Arcana.',kin,2+lens+(persist.up.kin_plus||0),done);
   else if(ab==='MIRROR_1')relation('Mirror','Choose a card. Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)',mirror,1+lens,done);
   else if(ab==='BETWEEN_2')betweenAbility(done,sourceCard);
   else if(ab==='WORLD'){state.deck.push(...state.discard.splice(0),...state.hand.splice(0));shuffle(state.deck);playSound('shuffle');drawN(maxHand()+rd);done()}
@@ -1585,7 +1587,7 @@ function betweenAbility(done,sourceCard=null){
   };
 
   selectFromHand('Between','Choose 2 cards to draw between. Valid cards are highlighted.',validAnchors,2,(a,b)=>{
-    const n=2+(persist.up.lens_mastery||0);
+    const n=2+(persist.up.lens_mastery||0)+(persist.up.between_plus||0);
     const found=sortCards(shuffle(uniqueCards([...betweenPool(a,b)])).slice(0,n));
     if(!found.length){fallbackAbility(done,'Between — no cards found');return}
 
@@ -1596,6 +1598,7 @@ function betweenAbility(done,sourceCard=null){
       }
       state.hand.push(p);
       found.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
+      const _rc=persist.up.relation_chips||0;if(_rc){state.resonationBonus.chips+=_rc;state.resonationBonus.name='Thread Bond';}
       state.busy=false;
       done();
     });
@@ -1629,6 +1632,7 @@ function relation(title,prompt,fn,n,done){
       for(const c of found){let i=state.deck.findIndex(d=>d.uid===c.uid);if(i>=0)state.deck.splice(i,1)}
       state.hand.push(p);
       found.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
+      if((title==='Kin'||title==='Neighbor')&&(persist.up.relation_chips||0)){state.resonationBonus.chips+=(persist.up.relation_chips||0);state.resonationBonus.name='Thread Bond';}
       state.busy=false;
       done();
     });
@@ -1677,8 +1681,15 @@ const SHOP={
   ritual_depth:    ['Ritual Depth',      'Whenever an ability draws cards, draw +1 extra',                                                                                    28,1.8, '🧬','draw'],
   // ── Relic Cache (relic) ──
   relicSlot:       ['Relic Vessel',      'Gain +1 Relic Slot (max 5).',                                                                                                      35,2,   '🎁','relic'],
-  // ── Deferred (Second Sight — phase 2) ──
+  // ── Second Sight Pack (sight) ──
   lens_mastery:    ['Lens Mastery',      'All abilities reveal +1 extra card',                                                                                                30,1.8, '🔭','sight'],
+  peek_plus:       ['Deeper Peek',       'Peek reveals +1 additional card',                                                                                                   22,1.75,'🔭','sight'],
+  sight_cost:      ['Sight Discount',    'Peek, Search, and Mirror abilities cost no Discard charge once per reading',                                                        28,1.8, '🔭','sight'],
+  // ── Thread Pack (thread) ──
+  kin_plus:        ['Kin',               'Kin reveals +1 card',                                                                                                               22,1.75,'🧬','thread'],
+  between_plus:    ['Between',           'Between reveals +1 card',                                                                                                           22,1.75,'🧬','thread'],
+  neighbor_plus:   ['Neighbor',          'Neighbor reveals +1 card',                                                                                                          22,1.75,'🧬','thread'],
+  relation_chips:  ['Thread Bond',       'Cards taken via Kin, Between, or Neighbor each gain +1 Chips',                                                                      26,1.8, '🧬','thread'],
 };
 function shopCost(k){let s=SHOP[k],lvl=persist.up[k]||0;return Math.floor(s[2]*Math.pow(s[3],lvl))}
 const PACKS={
@@ -1687,13 +1698,17 @@ const PACKS={
   pattern:   {name:'Pattern Pack',       desc:'Choose a scoring pattern upgrade.',                    icon:'isp-pattern',     cost:16, pool:'pattern'},
   innate:    {name:'Innate Force Pack',  desc:'Improve your starting resources.',                     icon:'isp-innate',      cost:20, pool:'hand'},
   restless:  {name:'Restless Hands Pack',desc:'Improve your draw and discard abilities.',             icon:'isp-restless',    cost:18, pool:'draw'},
-  relic:     {name:'Relic Cache',        desc:'Choose a relic to carry through your session.',        icon:'isp-relic-cache', cost:24},
+  relic:       {name:'Relic Cache',        desc:'Choose a relic to carry through your session.',        icon:'isp-relic-cache', cost:24},
+  second_sight:{name:'Second Sight Pack', desc:'Improve your information and sight abilities.',        icon:'isp-peek',        cost:18, pool:'sight'},
+  thread:      {name:'Thread Pack',       desc:'Enhance your relational abilities.',                   icon:'isp-kin',         cost:18, pool:'thread'},
 };
 const SHOP_ICON={
   discards:'isp-disc',hand:'isp-draw',mulligan:'isp-reshuffle',lens_mastery:'isp-peek',offering:'isp-scoring',ritual_depth:'isp-kin',deep_current:'isp-draw',
   omen:'isp-scoring',resonance:'isp-scoring',rank:'isp-scoring',sequence:'isp-scoring',court_chips:'isp-kin',path_chips:'isp-scoring',relicSlot:'isp-abilities',
   minor_chips:'isp-scoring',major_chips:'isp-scoring',number_chips:'isp-scoring',cups_chips:'isp-scoring',wands_chips:'isp-scoring',swords_chips:'isp-scoring',pentacles_chips:'isp-scoring',
   flat_mult:'isp-scoring',major_mult:'isp-scoring',minor_mult:'isp-scoring',court_mult_base:'isp-kin',cups_mult:'isp-scoring',wands_mult:'isp-scoring',swords_mult:'isp-scoring',pentacles_mult:'isp-scoring',
+  peek_plus:'isp-peek',sight_cost:'isp-peek',
+  kin_plus:'isp-kin',between_plus:'isp-between',neighbor_plus:'isp-neighbor',relation_chips:'isp-kin',
 };
 const RELICS={
   gilded_fool:    {name:'The Gilded Fool',      desc:'The first card in the spread each reading gains +10 Chips.',                             rarity:'common',icon:'🃏'},
