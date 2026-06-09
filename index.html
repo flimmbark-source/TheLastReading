@@ -857,7 +857,7 @@ const SUIT_MEAN={Cups:['Emotion, love','Hidden feelings'],Wands:['Will, creation
 const MAJORS=[[0,'Fool',5,true,'PEEK_3'],[1,'Magician',5,true,'SEARCH'],[2,'High Priestess',1,false,'NEIGHBOR_2'],[3,'Empress',1,false,'DRAW_2'],[4,'Emperor',1,false,'DRAW_1'],[5,'Hierophant',1,false,'BETWEEN_2'],[6,'Lovers',1,false,'KIN_2'],[7,'Chariot',1,false,'DRAW_1'],[8,'Strength',1,false,'DRAW_1'],[9,'Hermit',1,false,'NEIGHBOR_2'],[10,'Wheel',1,false,'MIRROR_1'],[11,'Justice',1,false,'KIN_2'],[12,'Hanged Man',1,false,'BETWEEN_2'],[13,'Death',1,false,'DRAW_3'],[14,'Temperance',1,false,'BETWEEN_2'],[15,'Devil',1,false,'DRAW_2'],[16,'Tower',1,false,'DRAW_2'],[17,'Star',1,false,'KIN_2'],[18,'Moon',1,false,'MIRROR_1'],[19,'Sun',1,false,'DRAW_2'],[20,'Judgement',1,false,'MIRROR_1'],[21,'World',5,true,'WORLD']];
 const COURTS=[['Page',2,'DRAW_1'],['Knight',3,'PEEK_3'],['Queen',4,'DRAW_2'],['King',5,'PEEK_5']];
 const TH=[10,20,35,50,70,90,115,140,175,200];
-let persist={pool:0,up:{discards:0,hand:0,mulligan:0,lens_mastery:0,offering:0,ritual_depth:0,deep_current:0,omen:0,resonance:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,court_chips:0,court_mult:0,path_chips:0,path_mult:0,relicSlot:0},relics:[],relicUsed:{}};
+let persist={pool:0,up:{discards:0,hand:0,mulligan:0,lens_mastery:0,offering:0,ritual_depth:0,deep_current:0,omen:0,resonance:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,court_chips:0,court_mult:0,path_chips:0,path_mult:0,relicSlot:0,blessed_start:0,first_light:0,deep_reserve:0,nimble_fingers:0,quick_release:0,chosen:0,balanced_reading:0,balanced_reading_mult:0,elemental_harmony:0,elemental_harmony_mult:0},relics:[],relicUsed:{}};
 let hintSettings={patterns:true,relics:false};
 function toggleHintSetting(key,val){hintSettings[key]=val;_hintsCache.clear();render();}
 let state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null};
@@ -901,7 +901,7 @@ function startReading(){
   if(window.tlrCloseArchives)window.tlrCloseArchives();
   state.deck=shuffle(buildDeck());playSound('shuffle');state.hand=[];state.discard=[];state.spread=Array(5).fill(null);
   state.selected=null;state.purgeSelect=null;state.discards=maxDiscards();state.mullCharges=maxMull();
-  state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];state.resonationTriggeredThisReading={};state.resonationBonus={chips:0,mult:0};state.thBonus=(state.thBonus||0)+(state.thBonusPending||0);state.thBonusPending=0;_resStateKey=null;_relicGhostFired=false;
+  state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};state.resonationBonus={chips:0,mult:0};state.thBonus=(state.thBonus||0)+(state.thBonusPending||0);state.thBonusPending=0;_resStateKey=null;_relicGhostFired=false;
   if(persist.up.offering){persist.pool+=(persist.up.offering*5);render();}
   const extra=(persist.relics.includes('threadbare_tarot')?1:0)+(persist.up.deep_current||0);
   drawTo(maxHand()+extra);
@@ -1132,9 +1132,18 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
       const sc=cards.filter(c=>c.suit===suit);if(sc.length){const b=sc.length*lvl;m.push([suit,b,0]);chips+=b;}
     }
   }
+  // ── Innate Force upgrades ──
+  if(!skipFlatBonuses){
+    const firstLightLvl=(persist.up.first_light||0);
+    if(firstLightLvl&&cards.length){const b=firstLightLvl*3;m.push(['First Light',b,0]);chips+=b;}
+    const deepReserveLvl=(persist.up.deep_reserve||0);
+    if(deepReserveLvl&&state.hand?.length){const b=state.hand.length*deepReserveLvl*2;m.push(['Deep Reserve',b,0]);chips+=b;}
+  }
   // ── Ritual mult bonuses ──
   const flatMultLvl=(persist.up.flat_mult||0);
   if(flatMultLvl){const b=+(flatMultLvl*0.25).toFixed(2);m.push(['Ritual Mult',0,b,'add']);mult+=b;}
+  const blessedLvl=(persist.up.blessed_start||0);
+  if(blessedLvl){const b=+(blessedLvl*0.25).toFixed(2);m.push(['Blessed Start',0,b,'add']);mult+=b;}
   {
     const majorMult=(persist.up.major_mult||0)*0.10;
     const minorMult=(persist.up.minor_mult||0)*0.05;
@@ -1176,6 +1185,14 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
   let pathChips=(persist.up.path_chips||0)*15;
   let pathMult=2+(persist.up.path_mult||0)*0.5;
   if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=30+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult*=pathMult}
+  const brLvl=(persist.up.balanced_reading||0);
+  if(brLvl){const hasMajor=cards.some(c=>c.type==='major');const hasMinor=cards.some(c=>c.type!=='major');if(hasMajor&&hasMinor){const bc=brLvl*5;const bm=+(1.25+(persist.up.balanced_reading_mult||0)*0.25).toFixed(2);m.push(['Balanced Reading',bc,bm]);chips+=bc;mult*=bm;}}
+  const ehLvl=(persist.up.elemental_harmony||0);
+  if(ehLvl){const suits=new Set(cards.filter(c=>c.type!=='major').map(c=>c.suit));if(suits.size>=4){const bc=ehLvl*10;const bm=+(1.25+(persist.up.elemental_harmony_mult||0)*0.5).toFixed(2);m.push(['Elemental Harmony',bc,bm]);chips+=bc;mult*=bm;}}
+  const chosenLvl=(persist.up.chosen||0);
+  if(chosenLvl&&state.abilityTakenUids?.size){const n=cards.filter(c=>state.abilityTakenUids.has(c.uid)).length;if(n){const b=n*chosenLvl*5;m.push(['Chosen',b,0]);chips+=b;}}
+  const quickReleaseLvl=(persist.up.quick_release||0);
+  if(quickReleaseLvl&&state.discardedCards?.length){const b=state.discardedCards.length*quickReleaseLvl*3;m.push(['Quick Release',b,0]);chips+=b;}
   // ── Relic effects ──
   if(!skipRelics){
   const rel=persist.relics;
@@ -1548,12 +1565,12 @@ function discardSelected(){
   let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;
   let c=state.hand.splice(idx,1)[0];
   state.discard.push(c);playSound('discard');haptic(16);
-  if(persist.relics.includes('hanged_coin'))state.discardedCards.push(c);
+  if(persist.relics.includes('hanged_coin')||(persist.up.quick_release||0))state.discardedCards.push(c);
   state.selected=null;
   const _sightAbs=['PEEK_3','PEEK_5','SEARCH','MIRROR_1'];
   const _sightFree=c.ability&&_sightAbs.includes(c.ability)&&(state.sightChargesUsed||0)<(persist.up.sight_cost||0);
   if(free){state.freeDiscardUsed=true;}else if(_sightFree){state.sightChargesUsed=(state.sightChargesUsed||0)+1;}else{state.discards--;}
-  resolveAbility(c.ability,()=>{render();checkEnd()},c);
+  resolveAbility(c.ability,()=>{if(persist.up.nimble_fingers)drawN(persist.up.nimble_fingers);render();checkEnd()},c);
 }
 function resolveAbility(ab,done,sourceCard=null){
   const lens=persist.up.lens_mastery||0;
@@ -1571,8 +1588,8 @@ function resolveAbility(ab,done,sourceCard=null){
   else if(ab==='WORLD'){state.deck.push(...state.discard.splice(0),...state.hand.splice(0));shuffle(state.deck);playSound('shuffle');drawN(maxHand()+rd);done()}
   else done()
 }
-function peek(n,done){state.busy=true;let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){state.busy=false;done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{state.hand.push(p);cards.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));state.busy=false;done()})}
-function search(done){state.busy=true;if(!state.deck.length){state.busy=false;done();return}choice('Search deck','Pick any card. The deck reshuffles.',sortCards(state.deck),p=>{let i=state.deck.findIndex(c=>c.uid===p.uid);if(i>=0)state.deck.splice(i,1);state.hand.push(p);shuffle(state.deck);playSound('shuffle');state.busy=false;done()})}
+function peek(n,done){state.busy=true;let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){state.busy=false;done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{state.hand.push(p);if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);cards.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));state.busy=false;done()})}
+function search(done){state.busy=true;if(!state.deck.length){state.busy=false;done();return}choice('Search deck','Pick any card. The deck reshuffles.',sortCards(state.deck),p=>{let i=state.deck.findIndex(c=>c.uid===p.uid);if(i>=0)state.deck.splice(i,1);state.hand.push(p);if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);shuffle(state.deck);playSound('shuffle');state.busy=false;done()})}
 function inPlay(){return[...state.hand,...state.spread.filter(Boolean)]}
 function neighbor(t){if(t.type==='major')return state.deck.filter(c=>c.type==='major'&&(c.num===t.num-1||c.num===t.num+1));if(t.type==='court'){let i=RANKS.indexOf(t.rank),r=[RANKS[i-1],RANKS[i+1]].filter(Boolean);return state.deck.filter(c=>c.suit===t.suit&&r.includes(c.rank))}return[]}
 function kin(t){if(t.type==='major')return state.deck.filter(c=>c.type==='major'&&c.uid!==t.uid);if(t.type==='court')return state.deck.filter(c=>c.type==='court'&&c.uid!==t.uid);return[]}
@@ -1674,6 +1691,7 @@ function betweenAbility(done,sourceCard=null){
         if(i>=0)state.deck.splice(i,1);
       }
       state.hand.push(p);
+      if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);
       found.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
       const _rc=persist.up.relation_chips||0;if(_rc){state.resonationBonus.chips+=_rc;state.resonationBonus.name='Thread Bond';}
       state.busy=false;
@@ -1700,6 +1718,7 @@ function relation(title,prompt,fn,n,done){
       let i=state.deck.findIndex(d=>d.uid===p.uid);
       if(i>=0)state.deck.splice(i,1);
       state.hand.push(p);
+      if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);
       state.busy=false;
       done();
       return;
@@ -1708,6 +1727,7 @@ function relation(title,prompt,fn,n,done){
     choice(title+' — '+cleanName(t),'Cards found from '+cleanName(t)+'. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
       for(const c of found){let i=state.deck.findIndex(d=>d.uid===c.uid);if(i>=0)state.deck.splice(i,1)}
       state.hand.push(p);
+      if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);
       found.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
       if((title==='Kin'||title==='Neighbor')&&(persist.up.relation_chips||0)){state.resonationBonus.chips+=(persist.up.relation_chips||0);state.resonationBonus.name='Thread Bond';}
       state.busy=false;
@@ -1749,19 +1769,27 @@ const SHOP={
   sequence:        ['Sequence',          'All Sequences gain <span class="up-chips">+5 Chips</span> and <span class="up-mult">+0.5 Mult</span>',                              30,1.85,'🌙','pattern','seq_mult'],
   court_chips:     ['Full Court',        'Full &amp; Royal Court gain <span class="up-chips">+8 Chips</span> and <span class="up-mult">+0.25 Mult</span>',                    20,1.6, '👑','pattern','court_mult'],
   path_chips:      ['Path of the Magi',  '<span class="up-chips">+15 Chips</span> and <span class="up-mult">+0.5 Mult</span>',                                                30,1.9, '✨','pattern','path_mult'],
+  balanced_reading:['Balanced Reading',  'If the spread has both Major and Minor Arcana, gain <span class="up-chips">+5 Chips</span> and <span class="up-mult">+0.25 Mult</span>',24,1.8,'🌙','pattern','balanced_reading_mult'],
+  elemental_harmony:['Elemental Harmony','If the spread contains all 4 suits, gain <span class="up-chips">+10 Chips</span> and <span class="up-mult">+0.5 Mult</span>',        28,1.85,'⚜','pattern','elemental_harmony_mult'],
   // ── Innate Force Pack (hand) ──
   hand:            ['Wider Hand',        '+1 starting hand size',                                                                                                             40,2,   '✋','hand'],
   deep_current:    ['Deep Current',      'Draw +1 card at the start of each reading',                                                                                         25,1.75,'🌊','hand'],
+  blessed_start:   ['Blessed Start',     '<span class="up-mult">+0.25 Mult</span> at the start of each reading',                                                              22,1.8, '🌙','hand'],
+  first_light:     ['First Light',       'The first card placed in the spread gains <span class="up-chips">+3 Chips</span>',                                                   18,1.75,'✨','hand'],
+  deep_reserve:    ['Deep Reserve',      'Cards remaining in hand when scoring each contribute <span class="up-chips">+2 Chips</span>',                                        20,1.75,'✋','hand'],
   // ── Restless Hands Pack (draw) ──
   discards:        ['Extra Discard',     '+1 Discard each reading',                                                                                                           15,1.75,'🃏','draw'],
   mulligan:        ['Mulligan',          '+1 Mulligan charge per reading',                                                                                                    20,1.75,'🔄','draw'],
   ritual_depth:    ['Ritual Depth',      'Whenever an ability draws cards, draw +1 extra',                                                                                    28,1.8, '🧬','draw'],
+  nimble_fingers:  ['Nimble Fingers',    'After each Discard, draw 1 card',                                                                                                   22,1.75,'🃏','draw'],
+  quick_release:   ['Quick Release',     'Each discarded card adds <span class="up-chips">+3 Chips</span> to the score',                                                       18,1.75,'🃏','draw'],
   // ── Relic Cache (relic) ──
   relicSlot:       ['Relic Vessel',      'Gain +1 Relic Slot (max 5).',                                                                                                      35,2,   '🎁','relic'],
   // ── Second Sight Pack (sight) ──
   lens_mastery:    ['Lens Mastery',      'All abilities reveal +1 extra card',                                                                                                30,1.8, '🔭','sight'],
   peek_plus:       ['Deeper Peek',       'Peek reveals +1 additional card',                                                                                                   22,1.75,'🔭','sight'],
   sight_cost:      ['Sight Discount',    'Peek, Search, and Mirror abilities cost no Discard charge once per reading',                                                        28,1.8, '🔭','sight'],
+  chosen:          ['Chosen',            'Cards taken via abilities each gain <span class="up-chips">+5 Chips</span> in the spread',                                           26,1.8, '🔭','sight'],
   // ── Thread Pack (thread) ──
   kin_plus:        ['Kin',               'Kin reveals +1 card',                                                                                                               22,1.75,'🧬','thread'],
   between_plus:    ['Between',           'Between reveals +1 card',                                                                                                           22,1.75,'🧬','thread'],
@@ -1784,8 +1812,11 @@ const SHOP_ICON={
   omen:'isp-scoring',resonance:'isp-scoring',rank:'isp-scoring',sequence:'isp-scoring',court_chips:'isp-kin',path_chips:'isp-scoring',relicSlot:'isp-abilities',
   minor_chips:'isp-scoring',major_chips:'isp-scoring',number_chips:'isp-scoring',cups_chips:'isp-scoring',wands_chips:'isp-scoring',swords_chips:'isp-scoring',pentacles_chips:'isp-scoring',
   flat_mult:'isp-scoring',major_mult:'isp-scoring',minor_mult:'isp-scoring',court_mult_base:'isp-kin',cups_mult:'isp-scoring',wands_mult:'isp-scoring',swords_mult:'isp-scoring',pentacles_mult:'isp-scoring',
-  peek_plus:'isp-peek',sight_cost:'isp-peek',
+  peek_plus:'isp-peek',sight_cost:'isp-peek',chosen:'isp-peek',
   kin_plus:'isp-kin',between_plus:'isp-between',neighbor_plus:'isp-neighbor',relation_chips:'isp-kin',
+  blessed_start:'isp-scoring',first_light:'isp-scoring',deep_reserve:'isp-draw',
+  nimble_fingers:'isp-draw',quick_release:'isp-disc',
+  balanced_reading:'isp-scoring',elemental_harmony:'isp-scoring',
 };
 const RELICS={
   gilded_fool:    {name:'The Gilded Fool',      desc:'The first card in the spread each reading gains +10 Chips.',                             rarity:'common',icon:'🃏'},
