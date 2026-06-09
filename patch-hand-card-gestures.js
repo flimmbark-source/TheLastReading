@@ -387,13 +387,15 @@ upsertScript(
       if(idx>=0){
         const card=state.hand.splice(idx,1)[0];
         state.hand.splice(hoverIndex,0,card);
+        if(state.selected===uid){state.selected=null;}
         if(typeof render==='function')render();
         slideLanding(cardEl,firstRect);
         return;
       }
     }
 
-    // Dropped back to original position — slide home.
+    // Dropped back to original position — slide home. Clear selection so slots don't stay green.
+    if(state.selected===uid){state.selected=null;if(typeof refreshHandState==='function')refreshHandState();}
     if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
     slideLanding(cardEl,firstRect);
   };

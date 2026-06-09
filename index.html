@@ -879,7 +879,7 @@ function render(){
     const s=_slotEls[i];
     let cls='slot '+(card?'filled':'empty')+(state.selected!==null&&!card?' target':'');
     if(card){
-      const validSpread=ability&&ability.validIds.has(card.uid);
+      const validSpread=ability&&(ability.spreadTargetIds?ability.spreadTargetIds.has(card.uid):ability.validIds.has(card.uid));
       const pickedSpread=ability&&validSpread&&ability.picked.includes(card.uid);
       if(ability)cls+=' '+(pickedSpread?'ability-picked-slot':(validSpread?'ability-target-slot':'ability-disabled-slot'));
       s.className=cls;
@@ -1494,7 +1494,9 @@ function betweenPool(a,b){
 function uniqueCards(cards){let seen=new Set();return cards.filter(c=>{if(seen.has(c.uid))return false;seen.add(c.uid);return true})}
 function fallbackAbility(done,title='No valid ability result'){drawN(1);choice(title,'No valid target was available. Draw 1 instead.',state.hand.slice(-1),()=>{state.busy=false;done()})}
 function selectFromHand(title,prompt,cards,count,cb,previewFn=null){
-  state.abilitySelect={title,prompt,validIds:new Set(cards.map(c=>c.uid)),picked:[],count,cb,previewFn};
+  const spreadUids=new Set(state.spread.filter(Boolean).map(c=>c.uid));
+  const spreadTargetIds=new Set(cards.map(c=>c.uid).filter(id=>spreadUids.has(id)));
+  state.abilitySelect={title,prompt,validIds:new Set(cards.map(c=>c.uid)),spreadTargetIds,picked:[],count,cb,previewFn};
   render();
 }
 function handleAbilityHandClick(card){
@@ -3370,13 +3372,15 @@ function setSfxVol(v){_sfxVol=v;}
       if(idx>=0){
         const card=state.hand.splice(idx,1)[0];
         state.hand.splice(hoverIndex,0,card);
+        if(state.selected===uid){state.selected=null;}
         if(typeof render==='function')render();
         slideLanding(cardEl,firstRect);
         return;
       }
     }
 
-    // Dropped back to original position — slide home.
+    // Dropped back to original position — slide home. Clear selection so slots don't stay green.
+    if(state.selected===uid){state.selected=null;if(typeof refreshHandState==='function')refreshHandState();}
     if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
     slideLanding(cardEl,firstRect);
   };
