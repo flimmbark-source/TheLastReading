@@ -19,3 +19,4 @@ if (html.includes(next)) {
 // Keep the final visual/UI overrides last without extending the already-long package script.
 require('./patch-drawer-tabs-and-desktop-drift.js');
 require('./patch-tab-spacing-and-vertical-drift.js');
+require('./patch-drawer-content-fit.js');
