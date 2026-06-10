@@ -6195,12 +6195,31 @@ function getUpFromTable(){
 }
 function startReading(){
   if(window.tlrCloseArchives)window.tlrCloseArchives();
-  state.deck=shuffle(buildDeck());playSound('shuffle');state.hand=[];state.discard=[];state.spread=Array(5).fill(null);
-  state.selected=null;state.purgeSelect=null;state.discards=maxDiscards();state.mullCharges=maxMull();
-  state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};state.resonationBonus={chips:0,mult:0};state.thBonus=(state.thBonus||0)+(state.thBonusPending||0);state.thBonusPending=0;_resStateKey=null;_relicGhostFired=false;
-  if(persist.up.offering){persist.pool+=(persist.up.offering*5);render();}
-  const extra=(persist.relics.includes('threadbare_tarot')?1:0)+(persist.up.deep_current||0);
-  drawTo(maxHand()+extra);
+  // Phase 13: the reducer owns the reading reset (deal, discards, threshold
+  // bonus rollover, offering income). Legacy supplies the shuffled deck so
+  // card object shape and RNG stay identical, then reads the run back.
+  if(tlrStoreReady()){
+    tlrSyncRunToStore();
+    window.tlrStore.dispatch({type:window.tlrActions.START_READING,deck:shuffle(buildDeck())});
+    const _st=window.tlrStore.getState(),_run=_st.run;
+    state.deck=_run.deck.slice();state.hand=_run.hand.slice();state.discard=[];
+    state.spread=_run.spread.slice();state.purgeSelect=null;
+    state.discards=_run.discards;state.mullCharges=_run.mulliganCharges;
+    state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];
+    state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
+    state.resonationBonus={chips:0,mult:0};
+    state.thBonus=_run.thresholdBonus;state.thBonusPending=0;
+    persist.pool=_st.persist.reserve;
+    playSound('shuffle');
+    _resStateKey=null;_relicGhostFired=false;
+  }else{
+    state.deck=shuffle(buildDeck());playSound('shuffle');state.hand=[];state.discard=[];state.spread=Array(5).fill(null);
+    state.selected=null;state.purgeSelect=null;state.discards=maxDiscards();state.mullCharges=maxMull();
+    state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};state.resonationBonus={chips:0,mult:0};state.thBonus=(state.thBonus||0)+(state.thBonusPending||0);state.thBonusPending=0;_resStateKey=null;_relicGhostFired=false;
+    if(persist.up.offering){persist.pool+=(persist.up.offering*5);render();}
+    const extra=(persist.relics.includes('threadbare_tarot')?1:0)+(persist.up.deep_current||0);
+    drawTo(maxHand()+extra);
+  }
   clearOverlay();snapCounter(0);render();
 }
 // Cached score for the current spread — reused by refreshHandState and updateScorePreview.
@@ -6278,7 +6297,7 @@ function tlrSyncRunToStore(){
     deck:state.deck,hand:state.hand,discard:state.discard,spread:state.spread,
     discards:state.discards,discardedCards:state.discardedCards||[],
     freeDiscardUsed:!!state.freeDiscardUsed,sightChargesUsed:state.sightChargesUsed||0,
-    thresholdIndex:state.th,thresholdBonus:state.thBonus||0,reading:state.reading,
+    thresholdIndex:state.th,thresholdBonus:state.thBonus||0,thresholdBonusPending:state.thBonusPending||0,reading:state.reading,
     pendingReserve:state.pendingPool||0,worldCarry:state.worldCarry||0,
     abilityTakenCardIds:state.abilityTakenUids?[...state.abilityTakenUids]:[],
     resonationBonus:state.resonationBonus||null,
@@ -7244,7 +7263,20 @@ function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount=0;cons
 // Phase 12: the reducer owns the market -> next reading transition.
 if(tlrStoreReady()){tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});state.reading=window.tlrStore.getState().run.reading;}
 else{state.reading++;}
-startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}else if(pendingRelic){setTimeout(()=>tutShow(9),400)}}function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Obals</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};tlrBindSelectionToStore();persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;persist.totalScore=0;persist.pool=0;startReading()}
+startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}else if(pendingRelic){setTimeout(()=>tutShow(9),400)}}function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;
+// Phase 13: the reducer owns the session-end state.
+if(tlrStoreReady()){tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.END_SESSION,totalScore:total,obals:candles});}
+showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Obals</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};tlrBindSelectionToStore();
+// Phase 13: the reducer owns the session reset — session-scoped persist
+// clears, permanent progress survives. Legacy reads persist back.
+if(tlrStoreReady()){
+  window.tlrStore.dispatch({type:window.tlrActions.SYNC_LEGACY_PERSIST,persist:{reserve:persist.pool,totalScore:persist.totalScore||0,upgrades:persist.up,relics:persist.relics,relicUsed:persist.relicUsed}});
+  window.tlrStore.dispatch({type:window.tlrActions.RESET_SESSION});
+  const _p=window.tlrStore.getState().persist;
+  persist.relics=_p.relics.slice();persist.relicUsed=Object.assign({},_p.relicUsed);
+  persist.up=Object.assign({},_p.upgrades);persist.totalScore=_p.totalScore;persist.pool=_p.reserve;
+}else{persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;persist.totalScore=0;persist.pool=0;}
+startReading()}
 // [name, desc, baseCost, scale, icon, category, pairedKey?]
 const SHOP={
   // ── Foundation Pack (foundation) ──

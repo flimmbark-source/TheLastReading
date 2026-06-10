@@ -3,12 +3,12 @@ import { createGameState, GAME_PHASES } from './state.mjs';
 import { buildDeck, drawCards, shuffleDeck } from '../systems/deck.mjs';
 import { computeScore } from '../systems/scoring.mjs';
 import { buyShopItem, maxRelicSlots } from '../systems/shop.mjs';
-import { firstDiscardIsFree, hasRelic, thresholdClearBonusFromRelics, worldCarryFromRelics } from '../systems/relics.mjs';
+import { firstDiscardIsFree, hasRelic, startingHandBonusFromRelics, thresholdClearBonusFromRelics, worldCarryFromRelics } from '../systems/relics.mjs';
 import { applyAbilityTake, applySearchTake, applyWorldReset, drawWithReshuffle, isSightAbility } from '../systems/abilities.mjs';
 import { currentThreshold } from '../data/thresholds.mjs';
 
 function maxHand(persist) {
-  return 5 + (persist.upgrades.hand || 0);
+  return 5 + (persist.upgrades.hand || 0) - (hasRelic(persist.relics, 'fool_reversed') ? 1 : 0);
 }
 
 function startingDiscards(persist) {
@@ -255,7 +255,8 @@ function syncLegacySnapshot(state, snapshot) {
 const LEGACY_RUN_FIELDS = [
   'deck', 'hand', 'discard', 'spread', 'discards', 'discardedCards',
   'freeDiscardUsed', 'sightChargesUsed', 'thresholdIndex', 'thresholdBonus',
-  'reading', 'pendingReserve', 'worldCarry', 'abilityTakenCardIds', 'resonationBonus',
+  'thresholdBonusPending', 'reading', 'pendingReserve', 'worldCarry',
+  'abilityTakenCardIds', 'resonationBonus',
 ];
 
 function syncLegacyRun(state, run = {}) {
@@ -267,7 +268,10 @@ function syncLegacyRun(state, run = {}) {
   return replaceRun(state, patch);
 }
 
-const LEGACY_PERSIST_FIELDS = ['reserve', 'totalScore', 'upgrades', 'relics', 'relicUsed', 'obals'];
+const LEGACY_PERSIST_FIELDS = [
+  'reserve', 'totalScore', 'upgrades', 'relics', 'relicUsed', 'obals',
+  'unlockedFragments', 'discoveredArchiveItems', 'seenTutorials',
+];
 
 function syncLegacyPersist(state, persist = {}) {
   const patch = {};
@@ -284,23 +288,38 @@ function syncLegacyPersist(state, persist = {}) {
 export function reducer(state = createGameState(), action = {}) {
   switch (action.type) {
     case ACTIONS.START_READING: {
-      const deck = shuffleDeck(buildDeck(), action.rng);
-      const { drawn, deck: remainingDeck } = drawCards(deck, maxHand(state.persist));
-      return replaceRun(state, {
+      // The deck may be supplied by the legacy app (its card objects and RNG)
+      // during the transition; otherwise it is built from the data layer.
+      const { persist } = state;
+      const baseDeck = action.deck ? [...action.deck] : shuffleDeck(buildDeck(), action.rng);
+      const extraDraws = startingHandBonusFromRelics(persist.relics) + (persist.upgrades.deep_current || 0);
+      const { drawn, deck: remainingDeck } = drawCards(baseDeck, maxHand(persist) + extraDraws);
+      const offering = (persist.upgrades.offering || 0) * 5;
+      const next = replaceRun(state, {
         phase: GAME_PHASES.TABLE,
         deck: remainingDeck,
         hand: drawn,
         discard: [],
         spread: Array(5).fill(null),
         selectedCardId: null,
-        discards: startingDiscards(state.persist),
+        discards: startingDiscards(persist),
+        mulliganCharges: persist.upgrades.mulligan || 0,
+        freeDiscardUsed: false,
+        sightChargesUsed: 0,
+        lastDiscardedCard: null,
         discardedCards: [],
+        abilityTakenCardIds: [],
+        resonationBonus: { chips: 0, mult: 0 },
+        thresholdBonus: (state.run.thresholdBonus || 0) + (state.run.thresholdBonusPending || 0),
+        thresholdBonusPending: 0,
         ability: null,
         purge: null,
+        busy: false,
         lastScore: null,
         lastThreshold: null,
         lastPassed: null,
       });
+      return offering ? replacePersist(next, { reserve: next.persist.reserve + offering }) : next;
     }
 
     case ACTIONS.SELECT_CARD:
@@ -346,8 +365,26 @@ export function reducer(state = createGameState(), action = {}) {
     case ACTIONS.LEAVE_ATTIC:
       return replaceRun(state, { phase: GAME_PHASES.TABLE });
 
+    case ACTIONS.END_SESSION:
+      return replaceRun(state, {
+        phase: GAME_PHASES.SESSION_END,
+        lastSessionScore: action.totalScore ?? state.persist.totalScore,
+        lastSessionObals: action.obals ?? null,
+      });
+
     case ACTIONS.RESET_SESSION:
-      return createGameState({ persist: state.persist });
+      // Session-scoped persist resets (reserve, score, relics, relic slots);
+      // permanent progress (upgrades, obals, fragments, archives) survives.
+      return createGameState({
+        persist: {
+          ...state.persist,
+          reserve: 0,
+          totalScore: 0,
+          relics: [],
+          relicUsed: {},
+          upgrades: { ...state.persist.upgrades, relicSlot: 0 },
+        },
+      });
 
     case ACTIONS.SYNC_LEGACY_SNAPSHOT:
       return syncLegacySnapshot(state, action.snapshot);

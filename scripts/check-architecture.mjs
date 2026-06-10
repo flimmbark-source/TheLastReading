@@ -343,4 +343,44 @@ assert.equal(continuousTarget.tlrMirrorLiveState({ quiet: true }).ok, true, 'mir
   assert.equal(m.run.phase, 'table', 'leaving the market should return to the table');
 }
 
+// Phase 13: reading/session flow — start reset, session end, session reset.
+{
+  // START_READING deals 5+hand-fool_reversed +threadbare+deep_current, banks
+  // offering income, rolls pending threshold bonus, resets per-reading state.
+  let s = reducer(createGameState(), { type: ACTIONS.SYNC_LEGACY_PERSIST, persist: { reserve: 10, relics: ['threadbare_tarot', 'fool_reversed'], upgrades: { hand: 1, discards: 2, mulligan: 1, offering: 2, deep_current: 1 } } });
+  s = reducer(s, { type: ACTIONS.SYNC_LEGACY_RUN, run: { thresholdBonus: 3, thresholdBonusPending: 4, worldCarry: 7 } });
+  s = reducer(s, { type: ACTIONS.START_READING });
+  assert.equal(s.run.hand.length, 7, 'start should deal 5+1(hand)-1(fool) +1(threadbare)+1(deep_current)');
+  assert.equal(s.run.discards, 5, 'start should grant 3+2 discards');
+  assert.equal(s.run.mulliganCharges, 1, 'start should grant mulligan charges');
+  assert.equal(s.persist.reserve, 20, 'offering should bank +5 per level at reading start');
+  assert.equal(s.run.thresholdBonus, 7, 'pending threshold bonus should roll over');
+  assert.equal(s.run.thresholdBonusPending, 0, 'pending threshold bonus should clear');
+  assert.equal(s.run.worldCarry, 7, 'world carry should survive into the next reading');
+  assert.equal(s.run.deck.length + s.run.hand.length, 38, 'deal should conserve the deck');
+
+  // A legacy-supplied deck is used as-is.
+  const suppliedDeck = buildDeck();
+  let l = reducer(createGameState(), { type: ACTIONS.START_READING, deck: suppliedDeck });
+  assert.equal(l.run.hand[0].uid, suppliedDeck[0].uid, 'supplied deck should deal from the top');
+
+  // END_SESSION records the end screen state.
+  let e = reducer(createGameState(), { type: ACTIONS.END_SESSION, totalScore: 123, obals: 3 });
+  assert.equal(e.run.phase, 'sessionEnd', 'end session should set the phase');
+  assert.equal(e.run.lastSessionScore, 123, 'end session should record the score');
+  assert.equal(e.run.lastSessionObals, 3, 'end session should record the obals');
+
+  // RESET_SESSION clears session-scoped persist, keeps permanent progress.
+  let r = reducer(createGameState(), { type: ACTIONS.SYNC_LEGACY_PERSIST, persist: { reserve: 50, totalScore: 200, relics: ['miser'], relicUsed: { miser: true }, upgrades: { hand: 2, relicSlot: 2 }, obals: 9, unlockedFragments: ['f1'] } });
+  r = reducer(r, { type: ACTIONS.RESET_SESSION });
+  assert.equal(r.persist.reserve, 0, 'reset should clear reserve');
+  assert.equal(r.persist.totalScore, 0, 'reset should clear total score');
+  assert.deepEqual(r.persist.relics, [], 'reset should clear relics');
+  assert.equal(r.persist.upgrades.relicSlot, 0, 'reset should clear relic slots');
+  assert.equal(r.persist.upgrades.hand, 2, 'reset should keep permanent upgrades');
+  assert.equal(r.persist.obals, 9, 'reset should keep obals');
+  assert.deepEqual(r.persist.unlockedFragments, ['f1'], 'reset should keep unlocked fragments');
+  assert.equal(r.run.reading, 1, 'reset should start a fresh run');
+}
+
 console.log('Architecture smoke checks passed.');
