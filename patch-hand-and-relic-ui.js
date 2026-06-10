@@ -256,8 +256,8 @@ upsertBlock(
   // the deviation is --lag, which feeds arc angle so position AND rotation trail.
   // Center cards are stiff, edge cards soft and underdamped — center-out wave.
   let springRaf=null,springLastT=0,springState=new WeakMap();
-  const OMEGA_CENTER=0.028,OMEGA_EDGE=0.013;
-  const ZETA_CENTER=0.82,ZETA_EDGE=0.45;
+  const OMEGA_CENTER=0.030,OMEGA_EDGE=0.016;
+  const ZETA_CENTER=0.88,ZETA_EDGE=0.70;
   const LAG_EPS=0.02,VEL_EPS=0.0005;
   const clearUndulation=()=>{
     if(springRaf){cancelAnimationFrame(springRaf);springRaf=null;}
@@ -293,8 +293,8 @@ upsertBlock(
       }else{
         active=true;
         el.style.setProperty('--lag',lag.toFixed(3)+'deg');
-        el.style.setProperty('--drift-x',((-st.v)*400*edge).toFixed(1)+'px');
-        el.style.setProperty('--drift-y',((-Math.abs(st.v))*250*edge).toFixed(1)+'px');
+        el.style.setProperty('--drift-x',((-st.v)*220*edge).toFixed(1)+'px');
+        el.style.setProperty('--drift-y',((-Math.abs(st.v))*130*edge).toFixed(1)+'px');
       }
     }
     if(active||mode==='slide'||momentumRaf!=null)springRaf=requestAnimationFrame(undulationStep);
