@@ -1,5 +1,6 @@
 import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
 import { ALL_CARD_DEFINITIONS } from '../data/cards.mjs';
+import { shuffleDeck } from './deck.mjs';
 
 function majorDefinition(number) {
   return ALL_CARD_DEFINITIONS.find(card => card.type === 'major' && card.number === number) || null;
@@ -175,4 +176,54 @@ export function resolveAbilityRevealIds(abilityId, pickedCards, state) {
 
 export function resolveAbilityReveals(abilityId, pickedCards, state) {
   return cardsInDeckByIds(state.deck || [], resolveAbilityRevealIds(abilityId, pickedCards, state));
+}
+
+// ── Pure ability resolution (Phase 11) ──
+// These compute the run mutations that abilities commit. Each returns new
+// arrays; the caller decides how to apply them.
+
+// Draw one card at a time, reshuffling the discard pile into the deck when it
+// runs dry (matches the live drawN behavior).
+export function drawWithReshuffle(run, count, rng) {
+  let deck = [...run.deck];
+  let discard = [...run.discard];
+  const drawn = [];
+  for (let i = 0; i < count; i += 1) {
+    if (!deck.length && discard.length) {
+      deck = shuffleDeck(discard, rng);
+      discard = [];
+    }
+    if (!deck.length) break;
+    drawn.push(deck.shift());
+  }
+  return { deck, discard, hand: [...run.hand, ...drawn], drawnCount: drawn.length };
+}
+
+// Take one of a set of revealed/held cards into hand; the rest go to the
+// bottom of the deck. Held cards may or may not still be in the deck (peek
+// pulls them out before the modal, relation reveals leave them in).
+export function applyAbilityTake(run, heldCards, takenCardId) {
+  const taken = heldCards.find(card => card.uid === takenCardId);
+  if (!taken) return null;
+  const heldIds = new Set(heldCards.map(card => card.uid));
+  const deck = run.deck.filter(card => !heldIds.has(card.uid));
+  for (const card of heldCards) {
+    if (card.uid !== takenCardId) deck.push(card);
+  }
+  return { deck, hand: [...run.hand, taken], taken };
+}
+
+// Take any card from the deck, then reshuffle the deck.
+export function applySearchTake(run, takenCardId, rng) {
+  const index = run.deck.findIndex(card => card.uid === takenCardId);
+  if (index < 0) return null;
+  const deck = [...run.deck];
+  const [taken] = deck.splice(index, 1);
+  return { deck: shuffleDeck(deck, rng), hand: [...run.hand, taken], taken };
+}
+
+// Full Reset (The World): everything back into the deck, shuffle, redraw.
+export function applyWorldReset(run, handSize, rng) {
+  const deck = shuffleDeck([...run.deck, ...run.discard, ...run.hand], rng);
+  return { deck: deck.slice(handSize), discard: [], hand: deck.slice(0, handSize) };
 }

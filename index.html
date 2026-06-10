@@ -6290,6 +6290,28 @@ function tlrSyncRunToStore(){
 }
 // Whether store-owned gameplay actions are available.
 function tlrStoreReady(){return !!(window.tlrStore&&window.tlrActions);}
+// Phase 11: commit an ability result through the reducer and read the run
+// back. Returns false when the store is unavailable so callers can fall back
+// to the original inline mutations.
+function tlrResolveAbilityThroughStore(result){
+  if(!tlrStoreReady())return false;
+  tlrSyncRunToStore();
+  window.tlrStore.dispatch({type:window.tlrActions.RESOLVE_ABILITY,result});
+  const _run=window.tlrStore.getState().run;
+  state.deck=_run.deck.slice();
+  state.hand=_run.hand.slice();
+  state.discard=_run.discard.slice();
+  state.abilityTakenUids=new Set(_run.abilityTakenCardIds||[]);
+  if(_run.resonationBonus)state.resonationBonus=Object.assign({},_run.resonationBonus);
+  return true;
+}
+// Ability draw through the reducer (falls back to legacy drawN).
+function tlrAbilityDraw(n){
+  const _before=state.hand.length;
+  if(tlrResolveAbilityThroughStore({kind:'draw',count:n})){
+    if(state.hand.length>_before)playSound('draw');
+  }else drawN(n);
+}
 function render(){
   _cachedPlacedScore=null; // invalidate on every render
   const _newHintsKey=_hintsKey();if(_newHintsKey!==_hintsCacheKey){_hintsCache.clear();_hintsCacheKey=_newHintsKey;_unlockedFragmentsCache=null;_spreadScoreForHints=null;}
@@ -6969,9 +6991,11 @@ function discardSelected(){
 function resolveAbility(ab,done,sourceCard=null){
   const lens=persist.up.lens_mastery||0;
   const rd=persist.up.ritual_depth||0;
-  if(ab==='DRAW_1'){drawN(1+rd);done()}
-  else if(ab==='DRAW_2'){drawN(2+rd);done()}
-  else if(ab==='DRAW_3'){drawN(3+rd);done()}
+  // Phase 11: record the ability in the store; commits dispatch RESOLVE_ABILITY.
+  if(ab&&tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.START_ABILITY,abilityId:ab,sourceCardId:sourceCard?sourceCard.uid:null});
+  if(ab==='DRAW_1'){tlrAbilityDraw(1+rd);done()}
+  else if(ab==='DRAW_2'){tlrAbilityDraw(2+rd);done()}
+  else if(ab==='DRAW_3'){tlrAbilityDraw(3+rd);done()}
   else if(ab==='PEEK_3')peek(3+lens+(persist.up.peek_plus||0),done);
   else if(ab==='PEEK_5')peek(5+lens+(persist.up.peek_plus||0),done);
   else if(ab==='SEARCH')search(done);
@@ -6979,11 +7003,23 @@ function resolveAbility(ab,done,sourceCard=null){
   else if(ab==='KIN_2')relation('Kin','Choose an anchor card. Kin finds cards of the same Arcana.',kin,2+lens+(persist.up.relation_plus||0),done);
   else if(ab==='MIRROR_1')relation('Mirror','Choose a card. Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)',mirror,1+lens,done);
   else if(ab==='BETWEEN_2')betweenAbility(done,sourceCard);
-  else if(ab==='WORLD'){state.deck.push(...state.discard.splice(0),...state.hand.splice(0));shuffle(state.deck);playSound('shuffle');drawN(maxHand()+rd);done()}
-  else done()
+  else if(ab==='WORLD'){
+    if(!tlrResolveAbilityThroughStore({kind:'world',handSize:maxHand()+rd})){state.deck.push(...state.discard.splice(0),...state.hand.splice(0));shuffle(state.deck);drawN(maxHand()+rd);}
+    playSound('shuffle');done()}
+  else{if(ab&&tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.CANCEL_ABILITY});done()}
 }
-function peek(n,done){state.busy=true;let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){state.busy=false;done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{state.hand.push(p);if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);cards.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));state.busy=false;done()})}
-function search(done){state.busy=true;if(!state.deck.length){state.busy=false;done();return}choice('Search deck','Pick any card. The deck reshuffles.',sortCards(state.deck),p=>{let i=state.deck.findIndex(c=>c.uid===p.uid);if(i>=0)state.deck.splice(i,1);state.hand.push(p);if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);shuffle(state.deck);playSound('shuffle');state.busy=false;done()})}
+function peek(n,done){state.busy=true;let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){state.busy=false;done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{
+  // Phase 11: the reducer commits the take (held cards were pulled out of the deck above).
+  if(!tlrResolveAbilityThroughStore({kind:'take',heldCards:cards,takenCardId:p.uid})){
+    state.hand.push(p);if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);cards.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
+  }
+  state.busy=false;done()})}
+function search(done){state.busy=true;if(!state.deck.length){state.busy=false;done();return}choice('Search deck','Pick any card. The deck reshuffles.',sortCards(state.deck),p=>{
+  // Phase 11: the reducer removes the card and reshuffles the deck.
+  if(!tlrResolveAbilityThroughStore({kind:'search',takenCardId:p.uid})){
+    let i=state.deck.findIndex(c=>c.uid===p.uid);if(i>=0)state.deck.splice(i,1);state.hand.push(p);if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);shuffle(state.deck);
+  }
+  playSound('shuffle');state.busy=false;done()})}
 function inPlay(){return[...state.hand,...state.spread.filter(Boolean)]}
 // Phase 10: targeting goes through src/systems/abilities.mjs when the
 // architecture bridge is mounted; the originals remain as fallback.
@@ -7029,7 +7065,7 @@ function betweenPool(a,b){
   return[];
 }
 function uniqueCards(cards){let seen=new Set();return cards.filter(c=>{if(seen.has(c.uid))return false;seen.add(c.uid);return true})}
-function fallbackAbility(done,title='No valid ability result'){drawN(1);choice(title,'No valid target was available. Draw 1 instead.',state.hand.slice(-1),()=>{state.busy=false;done()})}
+function fallbackAbility(done,title='No valid ability result'){tlrAbilityDraw(1);choice(title,'No valid target was available. Draw 1 instead.',state.hand.slice(-1),()=>{state.busy=false;done()})}
 function selectFromHand(title,prompt,cards,count,cb,previewFn=null){
   state.abilitySelect={title,prompt,validIds:new Set(cards.map(c=>c.uid)),picked:[],count,cb,previewFn};
   render();
@@ -7090,14 +7126,17 @@ function betweenAbility(done,sourceCard=null){
     if(!found.length){fallbackAbility(done,'Between — no cards found');return}
 
     choice('Between — '+cleanName(a)+' + '+cleanName(b),'These cards are between your two anchors. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
-      for(const c of found){
-        let i=state.deck.findIndex(d=>d.uid===c.uid);
-        if(i>=0)state.deck.splice(i,1);
+      // Phase 11: the reducer commits the take and the Thread Bond bonus.
+      if(!tlrResolveAbilityThroughStore({kind:'take',heldCards:found,takenCardId:p.uid,threadBond:true})){
+        for(const c of found){
+          let i=state.deck.findIndex(d=>d.uid===c.uid);
+          if(i>=0)state.deck.splice(i,1);
+        }
+        state.hand.push(p);
+        if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);
+        found.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
+        const _rc=persist.up.relation_chips||0;if(_rc){state.resonationBonus.chips+=_rc;state.resonationBonus.name='Thread Bond';}
       }
-      state.hand.push(p);
-      if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);
-      found.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
-      const _rc=persist.up.relation_chips||0;if(_rc){state.resonationBonus.chips+=_rc;state.resonationBonus.name='Thread Bond';}
       state.busy=false;
       done();
     });
@@ -7119,21 +7158,27 @@ function relation(title,prompt,fn,n,done){
     // take the reflected card immediately instead of opening a second modal.
     if(title==='Mirror'&&found.length){
       let p=found[0];
-      let i=state.deck.findIndex(d=>d.uid===p.uid);
-      if(i>=0)state.deck.splice(i,1);
-      state.hand.push(p);
-      if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);
+      // Phase 11: the reducer commits the take.
+      if(!tlrResolveAbilityThroughStore({kind:'take',heldCards:[p],takenCardId:p.uid})){
+        let i=state.deck.findIndex(d=>d.uid===p.uid);
+        if(i>=0)state.deck.splice(i,1);
+        state.hand.push(p);
+        if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);
+      }
       state.busy=false;
       done();
       return;
     }
 
     choice(title+' — '+cleanName(t),'Cards found from '+cleanName(t)+'. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
-      for(const c of found){let i=state.deck.findIndex(d=>d.uid===c.uid);if(i>=0)state.deck.splice(i,1)}
-      state.hand.push(p);
-      if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);
-      found.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
-      if((title==='Kin'||title==='Neighbor')&&(persist.up.relation_chips||0)){state.resonationBonus.chips+=(persist.up.relation_chips||0);state.resonationBonus.name='Thread Bond';}
+      // Phase 11: the reducer commits the take and the Thread Bond bonus.
+      if(!tlrResolveAbilityThroughStore({kind:'take',heldCards:found,takenCardId:p.uid,threadBond:title==='Kin'||title==='Neighbor'})){
+        for(const c of found){let i=state.deck.findIndex(d=>d.uid===c.uid);if(i>=0)state.deck.splice(i,1)}
+        state.hand.push(p);
+        if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);
+        found.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
+        if((title==='Kin'||title==='Neighbor')&&(persist.up.relation_chips||0)){state.resonationBonus.chips+=(persist.up.relation_chips||0);state.resonationBonus.name='Thread Bond';}
+      }
       state.busy=false;
       done();
     });

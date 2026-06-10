@@ -241,4 +241,53 @@ assert.equal(continuousTarget.tlrMirrorLiveState({ quiet: true }).ok, true, 'mir
   assert.equal(f.persist.totalScore, 0, 'fail should not bank score');
 }
 
+// Phase 11: ability resolution — draw/take/search/world commits.
+{
+  const [c1, c2, c3, c4, c5] = [byId.get('major_0'), byId.get('major_1'), byId.get('major_2'), byId.get('major_3'), byId.get('major_4')];
+  const seed = (run = {}, persistPatch = {}) => {
+    let s = reducer(createGameState(), { type: ACTIONS.SYNC_LEGACY_RUN, run: { deck: [c1, c2, c3], hand: [c4], discard: [c5], spread: Array(5).fill(null), discardedCards: [], abilityTakenCardIds: [], ...run } });
+    return reducer(s, { type: ACTIONS.SYNC_LEGACY_PERSIST, persist: persistPatch });
+  };
+
+  // START records the ability; draw resolves with reshuffle when deck dries up.
+  let s = seed({ deck: [c1], discard: [c2, c3] });
+  s = reducer(s, { type: ACTIONS.START_ABILITY, abilityId: 'DRAW_3', sourceCardId: c4.uid });
+  assert.equal(s.run.ability.id, 'DRAW_3', 'START_ABILITY should record the ability');
+  s = reducer(s, { type: ACTIONS.RESOLVE_ABILITY, result: { kind: 'draw', count: 3 } });
+  assert.equal(s.run.hand.length, 4, 'draw 3 should add exactly 3 cards');
+  assert.equal(s.run.deck.length, 0, 'draw should exhaust deck and reshuffled discard');
+  assert.equal(s.run.discard.length, 0, 'reshuffle should consume the discard pile');
+  assert.equal(s.run.ability, null, 'resolution should clear the ability');
+
+  // take: picked goes to hand, others to the bottom of the deck.
+  s = seed();
+  s = reducer(s, { type: ACTIONS.RESOLVE_ABILITY, result: { kind: 'take', heldCards: [c1, c2], takenCardId: c2.uid } });
+  assert.equal(s.run.hand.some(card => card.uid === c2.uid), true, 'taken card should join hand');
+  assert.deepEqual(s.run.deck.map(card => card.uid), [c3.uid, c1.uid], 'unchosen held card should go to the bottom');
+  assert.deepEqual(s.run.abilityTakenCardIds, [c2.uid], 'taken card should be tracked for Chosen');
+
+  // take with thread bond and relation_chips banks resonation chips.
+  s = seed({}, { upgrades: { relation_chips: 2 } });
+  s = reducer(s, { type: ACTIONS.RESOLVE_ABILITY, result: { kind: 'take', heldCards: [c1], takenCardId: c1.uid, threadBond: true } });
+  assert.equal(s.run.resonationBonus.chips, 2, 'thread bond should bank relation chips');
+
+  // search: takes from anywhere in the deck and reshuffles the rest.
+  s = seed();
+  s = reducer(s, { type: ACTIONS.RESOLVE_ABILITY, result: { kind: 'search', takenCardId: c3.uid } });
+  assert.equal(s.run.hand.some(card => card.uid === c3.uid), true, 'searched card should join hand');
+  assert.equal(s.run.deck.length, 2, 'search should leave the rest of the deck');
+
+  // world: everything reshuffles into the deck and a fresh hand is drawn.
+  s = seed();
+  s = reducer(s, { type: ACTIONS.RESOLVE_ABILITY, result: { kind: 'world', handSize: 2 } });
+  assert.equal(s.run.hand.length, 2, 'world should draw a fresh hand');
+  assert.equal(s.run.deck.length, 3, 'world should return everything else to the deck');
+  assert.equal(s.run.discard.length, 0, 'world should clear the discard');
+
+  // cancel clears the pending ability.
+  s = reducer(seed(), { type: ACTIONS.START_ABILITY, abilityId: 'PEEK_3' });
+  s = reducer(s, { type: ACTIONS.CANCEL_ABILITY });
+  assert.equal(s.run.ability, null, 'cancel should clear the ability');
+}
+
 console.log('Architecture smoke checks passed.');

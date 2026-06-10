@@ -4,7 +4,7 @@ import { buildDeck, drawCards, shuffleDeck } from '../systems/deck.mjs';
 import { computeScore } from '../systems/scoring.mjs';
 import { buyShopItem } from '../systems/shop.mjs';
 import { firstDiscardIsFree, hasRelic, thresholdClearBonusFromRelics, worldCarryFromRelics } from '../systems/relics.mjs';
-import { isSightAbility } from '../systems/abilities.mjs';
+import { applyAbilityTake, applySearchTake, applyWorldReset, drawWithReshuffle, isSightAbility } from '../systems/abilities.mjs';
 import { currentThreshold } from '../data/thresholds.mjs';
 
 function maxHand(persist) {
@@ -138,6 +138,58 @@ function buyMarketItem(state, itemId) {
   };
 }
 
+// Abilities resolve atomically at their commit point. The modal flow (which
+// cards are shown) is still legacy-driven; the result of the ability — cards
+// moving between deck/hand/discard, taken-card tracking, Thread Bond chips —
+// is owned here. result.kind is one of: draw, take, search, world.
+function resolveAbilityAction(state, action) {
+  const { run, persist } = state;
+  const result = action.result || {};
+  const base = { ability: null, busy: false };
+
+  switch (result.kind) {
+    case 'draw': {
+      const next = drawWithReshuffle(run, result.count || 0, action.rng);
+      return replaceRun(state, { ...base, deck: next.deck, discard: next.discard, hand: next.hand });
+    }
+
+    case 'take': {
+      const applied = applyAbilityTake(run, result.heldCards || [], result.takenCardId);
+      if (!applied) return replaceRun(state, base);
+      const patch = {
+        ...base,
+        deck: applied.deck,
+        hand: applied.hand,
+        abilityTakenCardIds: [...(run.abilityTakenCardIds || []), applied.taken.uid],
+      };
+      if (result.threadBond && (persist.upgrades.relation_chips || 0)) {
+        const bonus = run.resonationBonus || { chips: 0, mult: 0 };
+        patch.resonationBonus = { ...bonus, chips: (bonus.chips || 0) + persist.upgrades.relation_chips, name: 'Thread Bond' };
+      }
+      return replaceRun(state, patch);
+    }
+
+    case 'search': {
+      const applied = applySearchTake(run, result.takenCardId, action.rng);
+      if (!applied) return replaceRun(state, base);
+      return replaceRun(state, {
+        ...base,
+        deck: applied.deck,
+        hand: applied.hand,
+        abilityTakenCardIds: [...(run.abilityTakenCardIds || []), applied.taken.uid],
+      });
+    }
+
+    case 'world': {
+      const next = applyWorldReset(run, result.handSize || 0, action.rng);
+      return replaceRun(state, { ...base, deck: next.deck, discard: next.discard, hand: next.hand });
+    }
+
+    default:
+      return replaceRun(state, base);
+  }
+}
+
 function syncLegacySnapshot(state, snapshot) {
   return replaceRun(state, {
     legacySnapshot: snapshot || {},
@@ -210,6 +262,18 @@ export function reducer(state = createGameState(), action = {}) {
 
     case ACTIONS.DISCARD_SELECTED:
       return discardSelected(state);
+
+    case ACTIONS.START_ABILITY:
+      return replaceRun(state, {
+        ability: { id: action.abilityId, sourceCardId: action.sourceCardId ?? null },
+        busy: true,
+      });
+
+    case ACTIONS.RESOLVE_ABILITY:
+      return resolveAbilityAction(state, action);
+
+    case ACTIONS.CANCEL_ABILITY:
+      return replaceRun(state, { ability: null, busy: false });
 
     case ACTIONS.SCORE_READING:
       return scoreReading(state);
