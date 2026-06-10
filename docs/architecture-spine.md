@@ -45,6 +45,12 @@ Done:
 - Lightweight store added in `src/app/store.mjs`.
 - Save serialization helpers added in `src/app/save.mjs`.
 - Migration bridge bootstrap added in `src/app/bootstrap.mjs`.
+- Live mirror diagnostics added in `src/app/liveMirror.mjs`.
+- The live mirror is mounted from `index.html` as a module script (Phase 4).
+- `index.html` installs `window.tlrReadLiveSnapshot` to read legacy globals.
+- Legacy code re-syncs the architecture store after every player action via
+  `tlrArchitectureSync()` hooks in `render()`, `refreshHandState()`,
+  `showOverlay()`, `clearOverlay()`, and the ability `choice()` modal (Phase 5).
 - Smoke checks added in `scripts/check-architecture.mjs`.
 - Validation scripts added:
   - `scripts/validate-scoring-cases.mjs`
@@ -60,10 +66,9 @@ node scripts/validate-all.mjs
 
 Not done yet:
 
-- The new modules are not wired into the live DOM UI.
+- The new modules observe the live DOM UI but do not control it yet.
 - The old patch chain still exists.
 - Attic/archive data is not fully extracted.
-- The live browser bootstrap is not mounted from `index.html` yet.
 - CSS is still embedded in `index.html`.
 
 ## Proposed app modules
@@ -101,12 +106,19 @@ src/
 
 ## Next phase
 
-The next safe step is a live bridge mount, not full UI migration:
+The bridge is mounted and the mirror is continuous. Verify in the browser console:
 
-1. Load `src/app/bootstrap.mjs` from `index.html`.
-2. Confirm `window.tlrStore.getState()` works in the browser console.
-3. Mirror current live `index.html` state into the new store for diagnostics only.
-4. Do not let the new store control gameplay until the mirrored snapshot is accurate.
+```js
+window.tlrStore.getState();                   // architecture state
+window.tlrMirrorLiveState();                  // ok: true after any player action
+window.tlrMirrorLiveState({ sync: true });    // force a re-sync, ok: true
+```
+
+The next safe step is Phase 6: migrate card selection. Replace legacy
+`state.selected` writes with `ACTIONS.SELECT_CARD` / `ACTIONS.CLEAR_SELECTION`
+dispatches and read the selected card from `tlrStore`, while keeping the old
+`render()` and DOM structure unchanged. Do not let the new store control any
+other gameplay until selection is proven.
 
 ## Important boundary
 

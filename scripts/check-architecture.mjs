@@ -113,4 +113,23 @@ const syncedReport = mirrorTarget.tlrMirrorLiveState({ sync: true });
 assert.equal(syncedReport.ok, true, 'syncing the legacy snapshot should make the diagnostic mirror match');
 assert.deepEqual(mirrorTarget.tlrStore.getState().run.legacySnapshot, syncedReport.live, 'sync should store the normalized legacy snapshot');
 
+// Phase 5: continuous mirroring. The legacy app mutates its state after each
+// player action, then re-syncs quietly; the mirror must track every change.
+const liveState = { phase: 'table', reading: 1, threshold: 10, reserve: 0, totalScore: 0, handCount: 5, deckCount: 33, discardCount: 0, spreadCount: 0, discards: 3, selectedCardId: null };
+const continuousTarget = {
+  console: { info() { throw new Error('quiet sync/mirror should not log'); } },
+  tlrReadLiveSnapshot: () => ({ ...liveState }),
+};
+installLiveMirror(continuousTarget, { storage: null });
+continuousTarget.tlrSyncArchitectureToLiveSnapshot({ quiet: true });
+assert.equal(continuousTarget.tlrMirrorLiveState({ quiet: true }).ok, true, 'mirror should match after initial quiet sync');
+liveState.selectedCardId = 12;
+assert.equal(continuousTarget.tlrMirrorLiveState({ quiet: true }).ok, false, 'mirror should detect legacy drift before the next sync');
+continuousTarget.tlrSyncArchitectureToLiveSnapshot({ quiet: true });
+liveState.selectedCardId = null;
+liveState.handCount = 4;
+liveState.spreadCount = 1;
+continuousTarget.tlrSyncArchitectureToLiveSnapshot({ quiet: true });
+assert.equal(continuousTarget.tlrMirrorLiveState({ quiet: true }).ok, true, 'mirror should match again after each action re-sync');
+
 console.log('Architecture smoke checks passed.');

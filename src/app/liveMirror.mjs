@@ -44,16 +44,18 @@ export function installLiveMirror(target = globalThis, options = {}) {
     return { error: 'No legacy live snapshot reader has been installed yet.' };
   };
 
-  target.tlrSyncArchitectureToLiveSnapshot = function tlrSyncArchitectureToLiveSnapshot() {
+  target.tlrSyncArchitectureToLiveSnapshot = function tlrSyncArchitectureToLiveSnapshot(syncOptions = {}) {
     const live = normalizeLiveSnapshot(target.tlrReadLiveSnapshot());
     runtime.store.dispatch(syncLegacySnapshot(live));
     target.tlrLastSyncedLegacySnapshot = live;
-    if (target.console) target.console.info('[TLR architecture] Synced legacy snapshot for diagnostics', live);
+    if (target.console && !syncOptions.quiet) {
+      target.console.info('[TLR architecture] Synced legacy snapshot for diagnostics', live);
+    }
     return live;
   };
 
   target.tlrMirrorLiveState = function tlrMirrorLiveState(options = {}) {
-    if (options.sync) target.tlrSyncArchitectureToLiveSnapshot();
+    if (options.sync) target.tlrSyncArchitectureToLiveSnapshot({ quiet: options.quiet });
 
     const live = normalizeLiveSnapshot(target.tlrReadLiveSnapshot());
     const architecture = normalizeLiveSnapshot(target.tlrReadArchitectureSnapshot());
@@ -67,7 +69,7 @@ export function installLiveMirror(target = globalThis, options = {}) {
 
     target.tlrLastMirrorReport = report;
 
-    if (target.console) {
+    if (target.console && !options.quiet) {
       if (report.ok) target.console.info('[TLR architecture] Live state mirror: OK', report);
       else target.console.info('[TLR architecture] Live state mirror mismatches', report);
     }
