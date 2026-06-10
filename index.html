@@ -7266,18 +7266,31 @@ function animatePackOpen(pk,callback){
     wrapper.appendChild(inner);
     rays.appendChild(wrapper);
   }
-  // reset
-  card.style.cssText='';
+  // find the source icon in the shop banner and compute offset from viewport centre
+  const srcEl=document.querySelector('.shop-pack-banner .isp.'+p.icon);
+  let dx=0,dy=0;
+  if(srcEl){
+    const r=srcEl.getBoundingClientRect();
+    dx=(r.left+r.width/2)-window.innerWidth/2;
+    dy=(r.top+r.height/2)-window.innerHeight/2;
+    srcEl.style.opacity='0';
+  }
+  // reset burst/rays, show overlay
   burst.style.opacity='0';burst.style.transform='scale(0)';
+  rays.style.opacity='0';
   overlay.classList.remove('pa-dim');
   overlay.style.opacity='1';
-  // phase 1 — backdrop dims, card lifts (0–450ms)
-  requestAnimationFrame(()=>{
+  // place card at source position, small and visible, no transition yet
+  card.style.cssText=`opacity:1;transform:translate(${dx}px,${dy}px) scale(0.52);transition:none`;
+  // phase 1 — backdrop dims, icon flies to centre (0–450ms)
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
     overlay.classList.add('pa-dim');
-    card.style.animation='paLift .45s cubic-bezier(.2,.8,.2,1) forwards';
-  });
+    card.style.transition='transform .45s cubic-bezier(.2,.8,.2,1),opacity .15s';
+    card.style.transform='translate(0,0) scale(1)';
+  }));
   // phase 2 — glow pulse (450–800ms)
   setTimeout(()=>{
+    card.style.transition='';
     glow.style.animation='paGlow .35s ease-in-out forwards';
   },450);
   // phase 3 — shake (500–1000ms)
@@ -7297,6 +7310,7 @@ function animatePackOpen(pk,callback){
     glow.style.animation='';
     burst.style.animation='';
     rays.style.opacity='0';
+    if(srcEl)srcEl.style.opacity='';
     callback();
   },1280);
 }
