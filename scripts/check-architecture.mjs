@@ -7,6 +7,9 @@ import { betweenCardIds, mirrorCardId, neighborCardIds, validHandTargetsForAbili
 import { reducer } from '../src/game/reducer.mjs';
 import { createGameState } from '../src/game/state.mjs';
 import { ACTIONS } from '../src/game/actions.mjs';
+import { canDiscardSelected, publicRunSnapshot, scorePreview } from '../src/game/selectors.mjs';
+import { createStore } from '../src/app/store.mjs';
+import { deserializePersistState, serializePersistState } from '../src/app/save.mjs';
 
 const deck = buildDeck();
 assert.equal(deck.length, 38, 'deck should contain 22 majors and 16 court cards');
@@ -66,8 +69,23 @@ assert.equal(state.run.hand.length, 5, 'starting hand should draw 5 cards');
 assert.equal(state.run.spread.length, 5, 'spread should have 5 slots');
 
 state = reducer(state, { type: ACTIONS.SELECT_CARD, cardId: state.run.hand[0].uid });
+assert.equal(canDiscardSelected(state), true, 'selected card should be discardable at reading start');
+assert.ok(scorePreview(state), 'selected card should produce a score preview');
 state = reducer(state, { type: ACTIONS.PLACE_CARD, slotIndex: 0 });
 assert.equal(state.run.spread.filter(Boolean).length, 1, 'placing should move one card into the spread');
 assert.equal(state.run.hand.length, 4, 'placing should remove one card from hand');
+assert.equal(publicRunSnapshot(state).spreadCount, 1, 'public snapshot should expose spread count');
+
+const store = createStore(createGameState(), reducer);
+let listenerCalled = false;
+const unsubscribe = store.subscribe(() => { listenerCalled = true; });
+store.dispatch({ type: ACTIONS.START_READING, rng: () => 0.25 });
+assert.equal(listenerCalled, true, 'store listeners should fire after state changes');
+unsubscribe();
+
+const saved = serializePersistState({ ...state.persist, reserve: 12, obals: 3 });
+const loaded = deserializePersistState(saved);
+assert.equal(loaded.reserve, 12, 'save helper should preserve reserve');
+assert.equal(loaded.obals, 3, 'save helper should preserve obals');
 
 console.log('Architecture smoke checks passed.');
