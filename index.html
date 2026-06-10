@@ -175,7 +175,7 @@
 .shop-refresh-btn{background:rgba(30,16,8,.82);border:1px solid #6a4c24;border-radius:20px;color:#c0ac80;font:700 10px system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:5px 16px;cursor:pointer;transition:color .15s,border-color .15s}
 .shop-refresh-btn:hover:not(:disabled){color:#ffd978;border-color:#d4af6a}
 .shop-refresh-btn:disabled{opacity:.35;cursor:not-allowed}
-.shop-pack.affordable{border-color:#d4af6a;box-shadow:0 0 16px rgba(212,175,106,.28)}
+.shop-pack.affordable{border-color:transparent;box-shadow:none}
 .shop-pack-banner{width:100%;height:90px;background:linear-gradient(#1e1008,#2a1810);border-bottom:2px solid #4a3820;display:flex;align-items:center;justify-content:center;font-size:40px;position:relative}
 .shop-pack-banner::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(212,175,106,.035) 0,rgba(212,175,106,.035) 2px,transparent 2px,transparent 8px)}
 .shop-pack-name{font:700 12px Georgia,serif;color:#f0d58a;text-align:center;margin:8px 6px 3px}
@@ -292,11 +292,11 @@
 .shop-reserve-display b{color:#ffd978;font-size:16px}
 /* ── Pack cards redesign ── */
 .shop-pack{width:130px;min-height:260px;background:transparent;border:none;border-radius:0;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-end;overflow:visible;transition:filter .15s,box-shadow .15s}
-.shop-pack.affordable{filter:brightness(1.06);box-shadow:0 0 22px rgba(212,175,106,.28)}
+.shop-pack.affordable{filter:none;box-shadow:none}
 .shop-pack-banner{background:transparent;border-bottom:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;position:relative;padding-bottom:2px}
 .shop-pack-banner::before{display:none}
 .shop-pack-banner::after{display:none}
-.shop-pack-desc{font-size:8.5px;color:#d4c090;text-align:center;line-height:1.3;padding:4px 8px 6px;background:transparent;text-shadow:0 1px 2px rgba(0,0,0,.85)}
+.shop-pack-desc{flex:0 0 auto;font-size:8.5px;color:#d4c090;text-align:center;line-height:1.3;padding:4px 8px 6px;background:transparent;text-shadow:0 1px 2px rgba(0,0,0,.85)}
 .shop-pack-footer{width:100%;display:flex;flex-direction:column;align-items:center;gap:3px;padding:0 8px 8px;background:transparent}
 .shop-pack-cost{color:#ffd978;font-weight:800;font-size:12px;text-shadow:0 1px 3px rgba(0,0,0,.9)}
 .shop-pack-buy{padding:3px 9px;font-size:11px}
@@ -522,7 +522,7 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
 /* end relic rack mobile right-side patch */
 /* hand swipe-scroll patch */
 .handDock{overflow-x:clip;overflow-y:visible}
-.hand{position:relative;display:block;max-width:none;width:100%;height:235px;--track-offset:0deg;--track-spacing:5deg;--track-radius:780px}
+.hand{position:relative;display:block;max-width:none;width:100%;height:235px;--track-offset:0deg;--track-spacing:5deg;--track-radius:780px;--hand-lift-y:0px;transform:translateY(var(--hand-lift-y));transition:transform .22s cubic-bezier(.2,.85,.25,1)}
 @media(max-width:640px){.hand{height:185px;--track-radius:560px}}
 .hand .card{
   position:absolute!important;
@@ -531,24 +531,20 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
   margin:0!important;
   --slot:0;
   --lag:0deg;
-  --bob-y:0px;
   --total-a:calc(var(--slot) * var(--track-spacing) + var(--track-offset) + var(--lag));
   --arc-x:calc(var(--track-radius) * sin(var(--total-a)));
   --arc-y:calc(var(--track-radius) * (1 - cos(var(--total-a))));
   --lift-y:0px;
-  /* Rotation gets extra lag (--lag is already in --total-a once) so trailing
-     cards visibly tilt into the motion — follow-through exaggeration. */
-  --total-rot:calc(var(--total-a) + var(--lag) * 1.8);
-  transform:translate(calc(-50% + var(--arc-x)),calc(var(--arc-y) + var(--lift-y) + var(--bob-y))) rotate(var(--total-rot))!important;
+  --total-rot:calc(var(--total-a) + var(--lag) * 1.5);
+  transform:translate(calc(-50% + var(--arc-x)),calc(var(--arc-y) + var(--lift-y))) rotate(var(--total-rot))!important;
   transform-origin:50% 50%!important;
   transition:transform .32s cubic-bezier(.2,.85,.25,1);
 }
-.hand.hand-scroll-dragging .card{transition:none}
+.hand.hand-scroll-dragging{transition:none}.hand.hand-scroll-dragging .card{transition:none}
 .hand .card.sel,.hand .card.ability-picked,.hand .card.purge-picked{
   --lift-y:-92px;
   --total-rot:0deg;
   --lag:0deg!important;
-  --bob-y:0px!important;
   z-index:999!important;
 }
 @media(hover:hover){
@@ -556,7 +552,6 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
     --lift-y:-92px;
     --total-rot:0deg;
     --lag:0deg!important;
-    --bob-y:0px!important;
     z-index:999!important;
   }
 }
@@ -632,12 +627,12 @@ body.mode-table-return #titleWrap,body.mode-table-return .score-stack,body.mode-
 @keyframes atticMoveAside{0%{transform:translateX(0) rotate(0)}42%{transform:translateX(-22px) rotate(-3deg)}100%{transform:translateX(0) rotate(0)}}
 @keyframes atticLiftCloth{0%{transform:translateY(0) scale(1)}38%{transform:translateY(-20px) scale(1.03)}100%{transform:translateY(0) scale(1)}}
 @keyframes atticSearchPocket{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px) rotate(-1deg)}42%{transform:translateX(8px) rotate(1deg)}65%{transform:translateX(-5px) rotate(-.5deg)}}
-#candlelightHud{position:absolute;left:14px;top:12px;z-index:14;display:flex;gap:6px;align-items:center;padding:7px 9px;border:1px solid rgba(155,111,55,.55);border-radius:999px;background:rgba(15,9,5,.54);box-shadow:0 10px 28px rgba(0,0,0,.45)}
-#candlelightHud.spend{animation:atticCandleSpend .42s ease}
+#obalsHud{position:absolute;left:14px;top:12px;z-index:14;display:flex;gap:6px;align-items:center;padding:7px 9px;border:1px solid rgba(155,111,55,.55);border-radius:999px;background:rgba(15,9,5,.54);box-shadow:0 10px 28px rgba(0,0,0,.45)}
+#obalsHud.spend{animation:atticCandleSpend .42s ease}
 @keyframes atticCandleSpend{0%{transform:scale(1)}35%{transform:scale(1.08);filter:brightness(1.25)}100%{transform:scale(1);filter:none}}
-.candlelight-icon{width:34px;height:34px;background-size:contain;background-position:center;background-repeat:no-repeat;transition:opacity .25s ease,transform .25s ease}
-.candlelight-icon.on{background-image:url('ui/candle_flame_on.png')}
-.candlelight-icon.off{background-image:url('ui/candle_flame_off.png');opacity:.48;transform:scale(.92)}
+.obals-icon{width:34px;height:34px;background-size:contain;background-position:center;background-repeat:no-repeat;transition:opacity .25s ease,transform .25s ease}
+.obals-icon.on{background-image:url('ui/candle_flame_on.png')}
+.obals-icon.off{background-image:url('ui/candle_flame_off.png');opacity:.48;transform:scale(.92)}
 #atticWhisper{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:16;min-width:min(82vw,420px);max-width:min(90vw,560px);min-height:62px;padding:18px 28px 20px;background:url('ui/attic_whisper_plaque.png') center/100% 100% no-repeat;color:#ead9b5;text-align:center;font:700 14px Georgia,serif;text-shadow:0 2px 8px rgba(0,0,0,.9);opacity:0;pointer-events:none;transition:opacity .25s ease}
 #atticWhisper.show{opacity:1}
 #atticPickup{position:absolute;left:50%;top:55%;z-index:18;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 20px;background:rgba(18,11,6,.88);border:1px solid rgba(194,148,75,.65);border-radius:12px;box-shadow:0 22px 60px rgba(0,0,0,.75),0 0 24px rgba(255,202,101,.2);cursor:pointer;animation:atticPickupIn .34s ease forwards}
@@ -686,6 +681,10 @@ body.mode-table-return #invTab{
 
 
 
+
+
+
+
 /* Attic mobile pan patch v4 */
 #atticScene{background:#0f0905!important;overflow:hidden!important}
 #atticScene::before,#atticScene::after{z-index:9!important;pointer-events:none!important}
@@ -713,12 +712,37 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 #atticTutDismiss:hover,#atticTutDismiss:active{background:rgba(194,148,75,.32)}
 
 
+/* Attic obals free-actions patch */
+#atticScene #obalsHud{left:14px;top:12px;min-width:108px;justify-content:center;gap:8px;padding:8px 13px;border-color:rgba(198,150,77,.7);background:rgba(17,10,5,.68);box-shadow:0 10px 28px rgba(0,0,0,.48),0 0 18px rgba(220,166,75,.12)}
+#atticScene #obalsHud::before{content:'⚱';font-size:20px;line-height:1;color:#ffd978;text-shadow:0 0 12px rgba(255,205,105,.32)}
+#atticScene #obalsHud .obals-icon{display:none!important}
+.attic-obal-label{font:800 10px system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#b99a5d}
+.attic-obal-count{font:900 18px Georgia,serif;color:#ffd978;text-shadow:0 2px 8px rgba(0,0,0,.85);font-variant-numeric:tabular-nums}
+#atticTableReturn{position:absolute;left:50%;bottom:-10px;z-index:28;width:min(84vw,560px);height:76px;transform:translateX(-50%);border:1px solid rgba(117,70,33,.9);border-bottom:0;border-radius:52% 52% 0 0/78% 78% 0 0;background:radial-gradient(ellipse at center top,rgba(139,83,42,.96),rgba(73,38,18,.98) 62%,rgba(28,14,8,1));box-shadow:0 -9px 30px rgba(0,0,0,.62),inset 0 8px 18px rgba(255,196,105,.12),inset 0 -14px 22px rgba(0,0,0,.42);color:#f3d79a;cursor:pointer;font:900 11px system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;text-shadow:0 2px 8px rgba(0,0,0,.9);-webkit-tap-highlight-color:transparent;outline:none;appearance:none;-webkit-appearance:none;user-select:none;touch-action:manipulation}
+#atticTableReturn::before{content:'';position:absolute;left:8%;right:8%;top:14px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,210,130,.34),transparent)}
+#atticTableReturn span{position:relative;top:-4px}
+#atticTableReturn:hover,#atticTableReturn:active{filter:brightness(1.08);background:radial-gradient(ellipse at center top,rgba(139,83,42,.96),rgba(73,38,18,.98) 62%,rgba(28,14,8,1))}
+#atticTableReturn:focus,#atticTableReturn:focus-visible{outline:none;background:radial-gradient(ellipse at center top,rgba(139,83,42,.96),rgba(73,38,18,.98) 62%,rgba(28,14,8,1))}
+/* Attic tutorial copy cleanup patch */
+
 /* Pill mobile spread patch */
 @media (max-width: 640px) {
   .reserve-pill{transform:translateX(calc(-25vw + 57px))}
   .discards-pill{transform:translateX(calc(25vw - 57px))}
 }
 
+/* physical hand controls patch */
+/* hand float release patch */
+
+/* Get up and swipe hint patch */
+#handSwipeZone.hand-swipe-zone{height:121px!important;bottom:197px!important}
+@media(max-width:640px){#handSwipeZone.hand-swipe-zone{height:97px!important;bottom:152px!important}}
+/* Show one swipe-help step at a time. Each one advances only after its matching gesture. */
+#handSwipeZone .hand-swipe-hint{display:flex!important;align-items:center;justify-content:center;transform:translate(-50%,-50%)!important}
+#handSwipeZone .swipe-hint-line{position:static!important;transform:none!important;animation:none!important;opacity:1!important;display:none!important}
+#handSwipeZone[data-hint-step="1"] .swipe-hint-line-1,#handSwipeZone[data-hint-step="2"] .swipe-hint-line-2,#handSwipeZone[data-hint-step="3"] .swipe-hint-line-3{display:flex!important}
+#handSwipeZone.hints-complete .hand-swipe-hint{display:none!important}
+#settingsPanel .settings-action.get-up-action{margin-top:6px;background:rgba(194,148,75,.18);color:#ffd978;border-color:rgba(194,148,75,.7)}
 
 /* relic rack below-spread mobile patch */
 @media (max-width: 640px) {
@@ -726,14 +750,17 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
   .relic-rack .relic-btn{width:38px!important;height:38px!important}
   .relic-rack .relic-slot-empty{width:38px!important;height:38px!important}
 }
+
+
 /* drawer tabs and desktop drift patch */
+/* Archives-style pull drawers for Scoring / Abilities / Menu */
 #scoringBtn,#abilitiesBtn,#menuBtn{display:none!important}
-.tlr-pull-wrap{position:fixed;top:0;left:0;right:0;z-index:500;transform:translateY(calc(-1 * var(--inv-h)));transition:transform .45s cubic-bezier(.34,1.28,.64,1);pointer-events:none}
-.tlr-pull-wrap.open{transform:translateY(0);pointer-events:auto;z-index:600}
+.tlr-pull-wrap{position:fixed;top:0;left:0;right:0;z-index:150;transform:translateY(calc(-1 * var(--inv-h)));transition:transform .45s cubic-bezier(.34,1.28,.64,1);pointer-events:none}
+.tlr-pull-wrap.open{transform:translateY(0);pointer-events:auto;z-index:400}
 .tlr-pull-desk{height:var(--inv-h);border-bottom:2px solid #6a4c24;position:relative;overflow:auto;pointer-events:auto;padding:18px 18px 24px;box-shadow:0 16px 38px rgba(0,0,0,.45)}
 .tlr-pull-desk::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 90% 70% at 50% 110%,rgba(90,45,5,.22),transparent 65%)}
 .tlr-pull-desk>*{position:relative;z-index:1}
-.tlr-pull-tab{position:absolute;top:var(--inv-h);left:calc(50% - 40px);width:86px;height:28px;background:linear-gradient(180deg,#2e1e0e,#1e1208);border:1px solid #6a4c24;border-top:none;border-radius:0 0 10px 10px;cursor:grab;color:#a07838;font-size:10px;font-weight:700;letter-spacing:.07em;text-align:center;line-height:28px;pointer-events:auto;transition:background .15s,color .15s,box-shadow .15s;padding:0;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.5);touch-action:none;user-select:none;font-family:system-ui,Segoe UI,sans-serif;z-index:2}
+.tlr-pull-tab{position:absolute;top:var(--inv-h);left:calc(50% - 40px);width:86px;height:28px;background:linear-gradient(180deg,#2e1e0e,#1e1208);border:1px solid #6a4c24;border-top:none;border-radius:0 0 10px 10px;cursor:grab;color:#a07838;font-size:10px;font-weight:700;letter-spacing:.07em;text-align:center;line-height:28px;pointer-events:auto;transition:background .15s,color .15s,box-shadow .15s;padding:0;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.5);touch-action:none;user-select:none;font-family:system-ui,Segoe UI,sans-serif}
 .tlr-pull-tab:hover{background:linear-gradient(180deg,#3e2814,#281810);color:#ffd978;box-shadow:0 4px 14px rgba(0,0,0,.6)}
 .tlr-pull-tab:active{cursor:grabbing}
 .tlr-pull-wrap.parchment .tlr-pull-desk{background:linear-gradient(180deg,#eadbb7 0%,#cfb57d 55%,#ad8d52 100%);color:#2a160a;border-bottom-color:#8a6533}
@@ -751,11 +778,19 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 #menuPullDesk #settingsPanel .settings-title{color:#f0d58a!important;border-bottom-color:rgba(228,193,137,.22)!important}
 #menuPullDesk #settingsPanel .settings-action{background:rgba(180,140,90,.18)!important;border-color:rgba(180,140,90,.45)!important;color:#e6c89a!important}
 .refs-layer{display:none!important}
+/* Restore a subtle hand cycle without fighting the swipe transform. */
 @keyframes handCardIdleCycle{0%,100%{translate:0 0;rotate:0deg;filter:brightness(1)}50%{translate:0 -2px;rotate:.35deg;filter:brightness(1.035)}}
 .hand:not(.hand-scroll-dragging):not(.has-selected-card) .card:not(.sel):not(.ability-picked):not(.purge-picked):not(.hand-card-dragging){animation:handCardIdleCycle 4.8s ease-in-out infinite}
 .hand:not(.hand-scroll-dragging) .card:nth-child(2){animation-delay:-.8s}.hand:not(.hand-scroll-dragging) .card:nth-child(3){animation-delay:-1.6s}.hand:not(.hand-scroll-dragging) .card:nth-child(4){animation-delay:-2.4s}.hand:not(.hand-scroll-dragging) .card:nth-child(5){animation-delay:-3.2s}.hand:not(.hand-scroll-dragging) .card:nth-child(6){animation-delay:-4s}.hand:not(.hand-scroll-dragging) .card:nth-child(7){animation-delay:-4.8s}.hand:not(.hand-scroll-dragging) .card:nth-child(8){animation-delay:-5.6s}
 @media(prefers-reduced-motion:reduce){.hand .card{animation:none!important}}
+
+/* tab spacing and desktop vertical drift patch */
+#invTab,.tlr-pull-tab{will-change:left}
+/* Restore the desktop space that Scoring/Abilities buttons used to occupy before becoming drawer tabs. */
+@media(min-width:641px){#titleContent .actions{height:37px!important;min-height:37px!important;margin-bottom:10px!important}}
+
 /* drawer content fit patch */
+/* Pull drawers now size themselves to the content instead of dropping a fixed tall panel. */
 .tlr-pull-wrap{--tlr-drawer-h:220px;transform:translateY(calc(-1 * var(--tlr-drawer-h)))!important}
 .tlr-pull-wrap.open{transform:translateY(0)!important}
 .tlr-pull-desk{height:var(--tlr-drawer-h)!important;padding:10px 14px 12px!important;overflow:visible!important}
@@ -777,7 +812,587 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 </style>
 </head>
 <body class="tlr-loading">
-<script>requestAnimationFrame(function(){requestAnimationFrame(function(){document.body.classList.remove('tlr-loading');});});</script>
+<script>requestAnimationFrame(function(){requestAnimationFrame(function(){document.body.classList.remove('tlr-loading');});});/* tiered scoring patch */
+/* additive pattern mult patch */
+
+(function(){
+  if(window.__tlrArchivesStylePullTabsInstalled)return;
+  window.__tlrArchivesStylePullTabsInstalled=true;
+
+  const defs=[
+    {id:'scoring',label:'Scoring',content:'ref',kind:'parchment',x:()=>Math.max(0,window.innerWidth/2-142)},
+    {id:'abilities',label:'Abilities',content:'abilityRef',kind:'parchment',x:()=>Math.max(0,window.innerWidth/2-40)},
+    {id:'menu',label:'Menu',content:'settingsPanel',kind:'menu-brown',x:()=>14}
+  ];
+
+  const closeOtherPullTabs=id=>{
+    for(const d of defs){
+      if(d.id===id)continue;
+      const w=document.getElementById(d.id+'PullWrap');
+      const t=document.getElementById(d.id+'PullTab');
+      if(w)w.classList.remove('open');
+      if(t)t.innerHTML='&#9660; '+d.label;
+    }
+  };
+
+  function makePullTab(def){
+    const content=document.getElementById(def.content);
+    if(!content)return;
+    let wrap=document.getElementById(def.id+'PullWrap');
+    if(!wrap){
+      wrap=document.createElement('div');
+      wrap.id=def.id+'PullWrap';
+      wrap.className='tlr-pull-wrap '+def.kind;
+      const desk=document.createElement('div');
+      desk.id=def.id+'PullDesk';
+      desk.className='tlr-pull-desk';
+      const tab=document.createElement('button');
+      tab.id=def.id+'PullTab';
+      tab.type='button';
+      tab.className='tlr-pull-tab';
+      tab.innerHTML='&#9660; '+def.label;
+      wrap.appendChild(desk);
+      wrap.appendChild(tab);
+      wrap.style.transition='none';
+      document.body.insertBefore(wrap,document.getElementById('invWrap')||document.body.firstChild);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{wrap.style.transition='';}));
+    }
+    const desk=document.getElementById(def.id+'PullDesk');
+    const tab=document.getElementById(def.id+'PullTab');
+    if(desk&&!desk.contains(content))desk.appendChild(content);
+    content.classList.remove('hidden');
+    if(def.id==='menu')content.classList.remove('hidden');
+
+    function setOpen(open){
+      wrap.classList.toggle('open',open);
+      tab.innerHTML=(open?'&#9650; ':'&#9660; ')+def.label;
+      if(open)closeOtherPullTabs(def.id);
+    }
+
+    const savedX=localStorage.getItem('tlr_'+def.id+'_pull_tab_x');
+    if(savedX!==null){
+      tab.style.left=Math.max(0,Math.min(window.innerWidth-86,parseFloat(savedX)))+'px';
+    }else{
+      requestAnimationFrame(()=>{tab.style.left=Math.max(0,Math.min(window.innerWidth-86,def.x()))+'px';});
+    }
+
+    let psx=0,tabStartX=0,moved=false,active=false;
+    tab.addEventListener('pointerdown',e=>{
+      e.stopPropagation();
+      tab.setPointerCapture(e.pointerId);
+      psx=e.clientX;
+      tabStartX=parseFloat(tab.style.left)||tab.getBoundingClientRect().left;
+      moved=false;active=true;
+    });
+    tab.addEventListener('pointermove',e=>{
+      if(!active)return;
+      const dx=e.clientX-psx;
+      if(Math.abs(dx)>5)moved=true;
+      if(!moved)return;
+      const nx=Math.max(0,Math.min(window.innerWidth-86,tabStartX+dx));
+      tab.style.left=nx+'px';
+    });
+    tab.addEventListener('pointerup',e=>{
+      if(!active)return;
+      active=false;
+      if(moved){
+        const nx=parseFloat(tab.style.left)||0;
+        try{localStorage.setItem('tlr_'+def.id+'_pull_tab_x',nx)}catch(e){}
+      }else{
+        setOpen(!wrap.classList.contains('open'));
+      }
+      moved=false;
+    });
+    window.addEventListener('resize',()=>{
+      const cur=parseFloat(tab.style.left)||0;
+      const clamped=Math.max(0,Math.min(window.innerWidth-86,cur));
+      if(clamped!==cur)tab.style.left=clamped+'px';
+    });
+  }
+
+  defs.forEach(makePullTab);
+
+  // Keep old button APIs useful for tutorial/legacy calls, but route them into the drawers.
+  window.toggleRef=function(e){if(e)e.stopPropagation();const w=document.getElementById('scoringPullWrap');const t=document.getElementById('scoringPullTab');if(!w||!t)return;const open=!w.classList.contains('open');w.classList.toggle('open',open);t.innerHTML=(open?'&#9650; ':'&#9660; ')+'Scoring';if(open)closeOtherPullTabs('scoring');};
+  window.toggleAbilityRef=function(e){if(e)e.stopPropagation();const w=document.getElementById('abilitiesPullWrap');const t=document.getElementById('abilitiesPullTab');if(!w||!t)return;const open=!w.classList.contains('open');w.classList.toggle('open',open);t.innerHTML=(open?'&#9650; ':'&#9660; ')+'Abilities';if(open)closeOtherPullTabs('abilities');};
+  window.toggleMenu=function(){const w=document.getElementById('menuPullWrap');const t=document.getElementById('menuPullTab');if(!w||!t)return;const open=!w.classList.contains('open');w.classList.toggle('open',open);t.innerHTML=(open?'&#9650; ':'&#9660; ')+'Menu';if(open)closeOtherPullTabs('menu');};
+})();
+
+(function(){
+  if(window.__tlrPullTabFanInstalled)return;
+  window.__tlrPullTabFanInstalled=true;
+
+  const tabs=[
+    {id:'menuPullTab',key:'tlr_menu_pull_tab_x',w:86,label:'Menu'},
+    {id:'scoringPullTab',key:'tlr_scoring_pull_tab_x',w:86,label:'Scoring'},
+    {id:'abilitiesPullTab',key:'tlr_abilities_pull_tab_x',w:86,label:'Abilities'},
+    {id:'invTab',key:'tlr_tab_x',w:80,label:'Archives'}
+  ];
+
+  function existing(){
+    return tabs.map(t=>Object.assign({},t,{el:document.getElementById(t.id)})).filter(t=>t.el);
+  }
+
+  function discardsAnchorX(){
+    const disc=document.querySelector('.discards-pill');
+    if(disc){
+      const r=disc.getBoundingClientRect();
+      if(r.width)return Math.round(r.right+10);
+    }
+    return Math.round(window.innerWidth-98);
+  }
+
+  function seedDefaultPositions(){
+    const gap=window.innerWidth<390?6:10;
+    const found=existing();
+    if(found.length<2)return;
+    const byId={};found.forEach(t=>byId[t.id]=t);
+    const isDesktop=window.matchMedia('(min-width:641px)').matches;
+
+    if(isDesktop){
+      let x=14;
+      for(const id of ['menuPullTab','scoringPullTab','abilitiesPullTab']){
+        const t=byId[id];if(!t)continue;
+        const nx=Math.max(0,Math.min(window.innerWidth-t.w,x));
+        t.el.style.left=nx+'px';
+        try{localStorage.setItem(t.key,String(nx));}catch(e){}
+        x=nx+t.w+gap;
+      }
+      const a=byId.invTab;
+      if(a){
+        const nx=Math.max(0,Math.min(window.innerWidth-a.w,discardsAnchorX()));
+        a.el.style.left=nx+'px';
+        try{localStorage.setItem(a.key,String(nx));}catch(e){}
+      }
+      return;
+    }
+
+    const total=found.reduce((s,t)=>s+t.w,0)+gap*(found.length-1);
+    let x=Math.max(6,Math.round((window.innerWidth-total)/2));
+    for(const t of found){
+      const nx=Math.max(0,Math.min(window.innerWidth-t.w,x));
+      t.el.style.left=nx+'px';
+      try{localStorage.setItem(t.key,String(nx));}catch(e){}
+      x+=t.w+gap;
+    }
+  }
+
+  function fanTabs(){
+    const found=existing().map(t=>{
+      const r=t.el.getBoundingClientRect();
+      const left=parseFloat(t.el.style.left);
+      return Object.assign(t,{x:Number.isFinite(left)?left:r.left});
+    });
+    if(found.length<2)return;
+    const gap=window.innerWidth<390?6:10;
+    found.sort((a,b)=>a.x-b.x);
+
+    for(let i=0;i<found.length;i++){
+      const min=i?found[i-1].x+found[i-1].w+gap:6;
+      found[i].x=Math.max(found[i].x,min);
+    }
+
+    const last=found[found.length-1];
+    const overflow=(last.x+last.w+6)-window.innerWidth;
+    if(overflow>0){
+      for(let i=found.length-1;i>=0;i--)found[i].x-=overflow;
+      for(let i=0;i<found.length;i++){
+        const min=i?found[i-1].x+found[i-1].w+gap:6;
+        found[i].x=Math.max(found[i].x,min);
+      }
+    }
+
+    for(const t of found){
+      const nx=Math.max(0,Math.min(window.innerWidth-t.w,Math.round(t.x)));
+      t.el.style.left=nx+'px';
+      try{localStorage.setItem(t.key,String(nx));}catch(e){}
+    }
+  }
+
+  // Layout v2: reseed once because v1 centered every tab and could overlap with the new desktop layout request.
+  try{
+    if(localStorage.getItem('tlr_pull_tabs_fanned_v2')!=='1'){
+      seedDefaultPositions();
+      localStorage.setItem('tlr_pull_tabs_fanned_v2','1');
+    }
+  }catch(e){seedDefaultPositions();}
+  requestAnimationFrame(fanTabs);
+
+  // Re-fan after any tab drag release. This includes the existing Archives tab.
+  document.addEventListener('pointerup',()=>setTimeout(fanTabs,0),true);
+  window.addEventListener('resize',()=>setTimeout(()=>{seedDefaultPositions();fanTabs();},30));
+})();
+
+(function(){
+  function fmtBonus(v){return '+'+Number(v).toFixed(2).replace(/\.?0+$/,'');}
+  function fitDrawerHeights(){
+    const defs=[
+      {id:'scoring',min:92,max:260},
+      {id:'abilities',min:112,max:360},
+      {id:'menu',min:150,max:380}
+    ];
+    for(const d of defs){
+      const wrap=document.getElementById(d.id+'PullWrap');
+      const desk=document.getElementById(d.id+'PullDesk');
+      if(!wrap||!desk)continue;
+      const viewportScale=window.innerWidth<641?0.72:0.62;
+      const maxByViewport=Math.max(d.min,Math.floor(window.innerHeight*viewportScale));
+      const max=Math.min(d.max,maxByViewport);
+      const oldHeight=desk.style.getPropertyValue('height');
+      const oldOverflow=desk.style.getPropertyValue('overflow');
+      desk.style.setProperty('height','auto','important');
+      desk.style.setProperty('overflow','visible','important');
+      const measured=Math.ceil(desk.scrollHeight)+2;
+      if(oldHeight)desk.style.setProperty('height',oldHeight);else desk.style.removeProperty('height');
+      if(oldOverflow)desk.style.setProperty('overflow',oldOverflow);else desk.style.removeProperty('overflow');
+      const target=Math.max(d.min,Math.min(max,measured));
+      wrap.style.setProperty('--tlr-drawer-h',target+'px');
+      desk.style.setProperty('overflow',measured>max?'auto':'visible','important');
+    }
+  }
+  function renderDrawerScoringSheet(){
+    const el=document.getElementById('ref');
+    if(!el)return;
+    const u=(window.persist&&persist.up)||{};
+    const rankBonus=(u.rank||0)*5;
+    const rankMult=+(1.25+(u.rank_mult||0)*0.25).toFixed(2);
+    const courtChips=(u.court_chips||0)*8;
+    const courtMult=+(1.5+(u.court_mult||0)*0.25).toFixed(2);
+    const seqBonus=(u.sequence||0)*5;
+    const seqMult=+(1.25+(u.seq_mult||0)*0.5).toFixed(2);
+    const pathChips=(u.path_chips||0)*15;
+    const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
+    const rows=[
+      ['arc','Minor Arcana','',''],
+      ['Three of a Kind','3 matching court ranks','+'+(5+rankBonus),fmtBonus(rankMult-1)],
+      ['Four of a Kind','4 matching court ranks','+'+(7+rankBonus),fmtBonus(rankMult-1)],
+      ['Full Court (3/4)','Consecutive ranks','+'+(10+courtChips),fmtBonus(courtMult-1)],
+      ['Royal Court (3/4)','Consecutive ranks, same suit','+'+(10+courtChips),fmtBonus(courtMult-1)],
+      ['arc','Major Arcana','',''],
+      ['Sequence (3/4/5)','Consecutive major arcana','+'+(10+seqBonus),fmtBonus(seqMult-1)],
+      ['Path of the Magi','0·I·XXI in spread','+'+(30+pathChips),fmtBonus(pathMult-1)]
+    ];
+    let out='<table><tbody>';
+    out+='<tr><td></td><td></td><td class="score-head r"><span class="chips">Bonus</span><span class="mult">Mult</span></td></tr>';
+    for(const r of rows){
+      if(r[0]==='arc'){out+='<tr class="arcana-row"><td colspan="3">'+r[1]+'</td></tr>';continue;}
+      out+='<tr><td>'+r[0]+'</td><td class="m">'+r[1]+'</td><td class="r"><span class="chips">'+r[2]+'</span><span class="mult">'+r[3]+'</span></td></tr>';
+    }
+    out+='</tbody></table>';
+    el.className='ref scoring-sheet';
+    el.innerHTML=out;
+    requestAnimationFrame(fitDrawerHeights);
+  }
+
+  // Fill immediately and again whenever the Scoring drawer opens, so upgrades are reflected.
+  renderDrawerScoringSheet();
+  requestAnimationFrame(fitDrawerHeights);
+  window.addEventListener('resize',()=>setTimeout(fitDrawerHeights,40));
+  const oldToggle=window.toggleRef;
+  window.toggleRef=function(e){
+    renderDrawerScoringSheet();
+    if(typeof oldToggle==='function')return oldToggle.apply(this,arguments);
+  };
+
+  for(const id of ['scoring','abilities','menu']){
+    const tab=document.getElementById(id+'PullTab');
+    if(tab&&!tab.__drawerFitHooked){
+      tab.__drawerFitHooked=true;
+      tab.addEventListener('pointerup',()=>setTimeout(()=>{if(id==='scoring')renderDrawerScoringSheet();fitDrawerHeights();},0),true);
+      tab.addEventListener('click',()=>setTimeout(()=>{if(id==='scoring')renderDrawerScoringSheet();fitDrawerHeights();},0),true);
+    }
+  }
+})();
+
+(function(){
+  if(window.__tlrArchivesStylePullTabsInstalled)return;
+  window.__tlrArchivesStylePullTabsInstalled=true;
+
+  const defs=[
+    {id:'scoring',label:'Scoring',content:'ref',kind:'parchment',x:()=>Math.max(0,window.innerWidth/2-142)},
+    {id:'abilities',label:'Abilities',content:'abilityRef',kind:'parchment',x:()=>Math.max(0,window.innerWidth/2-40)},
+    {id:'menu',label:'Menu',content:'settingsPanel',kind:'menu-brown',x:()=>14}
+  ];
+
+  const closeOtherPullTabs=id=>{
+    for(const d of defs){
+      if(d.id===id)continue;
+      const w=document.getElementById(d.id+'PullWrap');
+      const t=document.getElementById(d.id+'PullTab');
+      if(w)w.classList.remove('open');
+      if(t)t.innerHTML='&#9660; '+d.label;
+    }
+  };
+
+  function makePullTab(def){
+    const content=document.getElementById(def.content);
+    if(!content)return;
+    let wrap=document.getElementById(def.id+'PullWrap');
+    if(!wrap){
+      wrap=document.createElement('div');
+      wrap.id=def.id+'PullWrap';
+      wrap.className='tlr-pull-wrap '+def.kind;
+      const desk=document.createElement('div');
+      desk.id=def.id+'PullDesk';
+      desk.className='tlr-pull-desk';
+      const tab=document.createElement('button');
+      tab.id=def.id+'PullTab';
+      tab.type='button';
+      tab.className='tlr-pull-tab';
+      tab.innerHTML='&#9660; '+def.label;
+      wrap.appendChild(desk);
+      wrap.appendChild(tab);
+      wrap.style.transition='none';
+      document.body.insertBefore(wrap,document.getElementById('invWrap')||document.body.firstChild);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{wrap.style.transition='';}));
+    }
+    const desk=document.getElementById(def.id+'PullDesk');
+    const tab=document.getElementById(def.id+'PullTab');
+    if(desk&&!desk.contains(content))desk.appendChild(content);
+    content.classList.remove('hidden');
+    if(def.id==='menu')content.classList.remove('hidden');
+
+    function setOpen(open){
+      wrap.classList.toggle('open',open);
+      tab.innerHTML=(open?'&#9650; ':'&#9660; ')+def.label;
+      if(open)closeOtherPullTabs(def.id);
+    }
+
+    const savedX=localStorage.getItem('tlr_'+def.id+'_pull_tab_x');
+    if(savedX!==null){
+      tab.style.left=Math.max(0,Math.min(window.innerWidth-86,parseFloat(savedX)))+'px';
+    }else{
+      requestAnimationFrame(()=>{tab.style.left=Math.max(0,Math.min(window.innerWidth-86,def.x()))+'px';});
+    }
+
+    let psx=0,tabStartX=0,moved=false,active=false;
+    tab.addEventListener('pointerdown',e=>{
+      e.stopPropagation();
+      tab.setPointerCapture(e.pointerId);
+      psx=e.clientX;
+      tabStartX=parseFloat(tab.style.left)||tab.getBoundingClientRect().left;
+      moved=false;active=true;
+    });
+    tab.addEventListener('pointermove',e=>{
+      if(!active)return;
+      const dx=e.clientX-psx;
+      if(Math.abs(dx)>5)moved=true;
+      if(!moved)return;
+      const nx=Math.max(0,Math.min(window.innerWidth-86,tabStartX+dx));
+      tab.style.left=nx+'px';
+    });
+    tab.addEventListener('pointerup',e=>{
+      if(!active)return;
+      active=false;
+      if(moved){
+        const nx=parseFloat(tab.style.left)||0;
+        try{localStorage.setItem('tlr_'+def.id+'_pull_tab_x',nx)}catch(e){}
+      }else{
+        setOpen(!wrap.classList.contains('open'));
+      }
+      moved=false;
+    });
+    window.addEventListener('resize',()=>{
+      const cur=parseFloat(tab.style.left)||0;
+      const clamped=Math.max(0,Math.min(window.innerWidth-86,cur));
+      if(clamped!==cur)tab.style.left=clamped+'px';
+    });
+  }
+
+  defs.forEach(makePullTab);
+
+  // Keep old button APIs useful for tutorial/legacy calls, but route them into the drawers.
+  window.toggleRef=function(e){if(e)e.stopPropagation();const w=document.getElementById('scoringPullWrap');const t=document.getElementById('scoringPullTab');if(!w||!t)return;const open=!w.classList.contains('open');w.classList.toggle('open',open);t.innerHTML=(open?'&#9650; ':'&#9660; ')+'Scoring';if(open)closeOtherPullTabs('scoring');};
+  window.toggleAbilityRef=function(e){if(e)e.stopPropagation();const w=document.getElementById('abilitiesPullWrap');const t=document.getElementById('abilitiesPullTab');if(!w||!t)return;const open=!w.classList.contains('open');w.classList.toggle('open',open);t.innerHTML=(open?'&#9650; ':'&#9660; ')+'Abilities';if(open)closeOtherPullTabs('abilities');};
+  window.toggleMenu=function(){const w=document.getElementById('menuPullWrap');const t=document.getElementById('menuPullTab');if(!w||!t)return;const open=!w.classList.contains('open');w.classList.toggle('open',open);t.innerHTML=(open?'&#9650; ':'&#9660; ')+'Menu';if(open)closeOtherPullTabs('menu');};
+})();
+
+(function(){
+  if(window.__tlrPullTabFanInstalled)return;
+  window.__tlrPullTabFanInstalled=true;
+
+  const tabs=[
+    {id:'menuPullTab',key:'tlr_menu_pull_tab_x',w:86,label:'Menu'},
+    {id:'scoringPullTab',key:'tlr_scoring_pull_tab_x',w:86,label:'Scoring'},
+    {id:'abilitiesPullTab',key:'tlr_abilities_pull_tab_x',w:86,label:'Abilities'},
+    {id:'invTab',key:'tlr_tab_x',w:80,label:'Archives'}
+  ];
+
+  function existing(){
+    return tabs.map(t=>Object.assign({},t,{el:document.getElementById(t.id)})).filter(t=>t.el);
+  }
+
+  function discardsAnchorX(){
+    const disc=document.querySelector('.discards-pill');
+    if(disc){
+      const r=disc.getBoundingClientRect();
+      if(r.width)return Math.round(r.right+10);
+    }
+    return Math.round(window.innerWidth-98);
+  }
+
+  function seedDefaultPositions(){
+    const gap=window.innerWidth<390?6:10;
+    const found=existing();
+    if(found.length<2)return;
+    const byId={};found.forEach(t=>byId[t.id]=t);
+    const isDesktop=window.matchMedia('(min-width:641px)').matches;
+
+    if(isDesktop){
+      let x=14;
+      for(const id of ['menuPullTab','scoringPullTab','abilitiesPullTab']){
+        const t=byId[id];if(!t)continue;
+        const nx=Math.max(0,Math.min(window.innerWidth-t.w,x));
+        t.el.style.left=nx+'px';
+        try{localStorage.setItem(t.key,String(nx));}catch(e){}
+        x=nx+t.w+gap;
+      }
+      const a=byId.invTab;
+      if(a){
+        const nx=Math.max(0,Math.min(window.innerWidth-a.w,discardsAnchorX()));
+        a.el.style.left=nx+'px';
+        try{localStorage.setItem(a.key,String(nx));}catch(e){}
+      }
+      return;
+    }
+
+    const total=found.reduce((s,t)=>s+t.w,0)+gap*(found.length-1);
+    let x=Math.max(6,Math.round((window.innerWidth-total)/2));
+    for(const t of found){
+      const nx=Math.max(0,Math.min(window.innerWidth-t.w,x));
+      t.el.style.left=nx+'px';
+      try{localStorage.setItem(t.key,String(nx));}catch(e){}
+      x+=t.w+gap;
+    }
+  }
+
+  function fanTabs(){
+    const found=existing().map(t=>{
+      const r=t.el.getBoundingClientRect();
+      const left=parseFloat(t.el.style.left);
+      return Object.assign(t,{x:Number.isFinite(left)?left:r.left});
+    });
+    if(found.length<2)return;
+    const gap=window.innerWidth<390?6:10;
+    found.sort((a,b)=>a.x-b.x);
+
+    for(let i=0;i<found.length;i++){
+      const min=i?found[i-1].x+found[i-1].w+gap:6;
+      found[i].x=Math.max(found[i].x,min);
+    }
+
+    const last=found[found.length-1];
+    const overflow=(last.x+last.w+6)-window.innerWidth;
+    if(overflow>0){
+      for(let i=found.length-1;i>=0;i--)found[i].x-=overflow;
+      for(let i=0;i<found.length;i++){
+        const min=i?found[i-1].x+found[i-1].w+gap:6;
+        found[i].x=Math.max(found[i].x,min);
+      }
+    }
+
+    for(const t of found){
+      const nx=Math.max(0,Math.min(window.innerWidth-t.w,Math.round(t.x)));
+      t.el.style.left=nx+'px';
+      try{localStorage.setItem(t.key,String(nx));}catch(e){}
+    }
+  }
+
+  // Layout v2: reseed once because v1 centered every tab and could overlap with the new desktop layout request.
+  try{
+    if(localStorage.getItem('tlr_pull_tabs_fanned_v2')!=='1'){
+      seedDefaultPositions();
+      localStorage.setItem('tlr_pull_tabs_fanned_v2','1');
+    }
+  }catch(e){seedDefaultPositions();}
+  requestAnimationFrame(fanTabs);
+
+  // Re-fan after any tab drag release. This includes the existing Archives tab.
+  document.addEventListener('pointerup',()=>setTimeout(fanTabs,0),true);
+  window.addEventListener('resize',()=>setTimeout(()=>{seedDefaultPositions();fanTabs();},30));
+})();
+
+(function(){
+  function fmtBonus(v){return '+'+Number(v).toFixed(2).replace(/\.?0+$/,'');}
+  function fitDrawerHeights(){
+    const defs=[
+      {id:'scoring',min:92,max:260},
+      {id:'abilities',min:112,max:360},
+      {id:'menu',min:150,max:380}
+    ];
+    for(const d of defs){
+      const wrap=document.getElementById(d.id+'PullWrap');
+      const desk=document.getElementById(d.id+'PullDesk');
+      if(!wrap||!desk)continue;
+      const viewportScale=window.innerWidth<641?0.72:0.62;
+      const maxByViewport=Math.max(d.min,Math.floor(window.innerHeight*viewportScale));
+      const max=Math.min(d.max,maxByViewport);
+      const oldHeight=desk.style.getPropertyValue('height');
+      const oldOverflow=desk.style.getPropertyValue('overflow');
+      desk.style.setProperty('height','auto','important');
+      desk.style.setProperty('overflow','visible','important');
+      const measured=Math.ceil(desk.scrollHeight)+2;
+      if(oldHeight)desk.style.setProperty('height',oldHeight);else desk.style.removeProperty('height');
+      if(oldOverflow)desk.style.setProperty('overflow',oldOverflow);else desk.style.removeProperty('overflow');
+      const target=Math.max(d.min,Math.min(max,measured));
+      wrap.style.setProperty('--tlr-drawer-h',target+'px');
+      desk.style.setProperty('overflow',measured>max?'auto':'visible','important');
+    }
+  }
+  function renderDrawerScoringSheet(){
+    const el=document.getElementById('ref');
+    if(!el)return;
+    const u=(window.persist&&persist.up)||{};
+    const rankBonus=(u.rank||0)*5;
+    const rankMult=+(1.25+(u.rank_mult||0)*0.25).toFixed(2);
+    const courtChips=(u.court_chips||0)*8;
+    const courtMult=+(1.5+(u.court_mult||0)*0.25).toFixed(2);
+    const seqBonus=(u.sequence||0)*5;
+    const seqMult=+(1.25+(u.seq_mult||0)*0.5).toFixed(2);
+    const pathChips=(u.path_chips||0)*15;
+    const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
+    const rows=[
+      ['arc','Minor Arcana','',''],
+      ['Three of a Kind','3 matching court ranks','+'+(5+rankBonus),fmtBonus(rankMult-1)],
+      ['Four of a Kind','4 matching court ranks','+'+(7+rankBonus),fmtBonus(rankMult-1)],
+      ['Full Court (3/4)','Consecutive ranks','+'+(10+courtChips),fmtBonus(courtMult-1)],
+      ['Royal Court (3/4)','Consecutive ranks, same suit','+'+(10+courtChips),fmtBonus(courtMult-1)],
+      ['arc','Major Arcana','',''],
+      ['Sequence (3/4/5)','Consecutive major arcana','+'+(10+seqBonus),fmtBonus(seqMult-1)],
+      ['Path of the Magi','0·I·XXI in spread','+'+(30+pathChips),fmtBonus(pathMult-1)]
+    ];
+    let out='<table><tbody>';
+    out+='<tr><td></td><td></td><td class="score-head r"><span class="chips">Bonus</span><span class="mult">Mult</span></td></tr>';
+    for(const r of rows){
+      if(r[0]==='arc'){out+='<tr class="arcana-row"><td colspan="3">'+r[1]+'</td></tr>';continue;}
+      out+='<tr><td>'+r[0]+'</td><td class="m">'+r[1]+'</td><td class="r"><span class="chips">'+r[2]+'</span><span class="mult">'+r[3]+'</span></td></tr>';
+    }
+    out+='</tbody></table>';
+    el.className='ref scoring-sheet';
+    el.innerHTML=out;
+    requestAnimationFrame(fitDrawerHeights);
+  }
+
+  // Fill immediately and again whenever the Scoring drawer opens, so upgrades are reflected.
+  renderDrawerScoringSheet();
+  requestAnimationFrame(fitDrawerHeights);
+  window.addEventListener('resize',()=>setTimeout(fitDrawerHeights,40));
+  const oldToggle=window.toggleRef;
+  window.toggleRef=function(e){
+    renderDrawerScoringSheet();
+    if(typeof oldToggle==='function')return oldToggle.apply(this,arguments);
+  };
+
+  for(const id of ['scoring','abilities','menu']){
+    const tab=document.getElementById(id+'PullTab');
+    if(tab&&!tab.__drawerFitHooked){
+      tab.__drawerFitHooked=true;
+      tab.addEventListener('pointerup',()=>setTimeout(()=>{if(id==='scoring')renderDrawerScoringSheet();fitDrawerHeights();},0),true);
+      tab.addEventListener('click',()=>setTimeout(()=>{if(id==='scoring')renderDrawerScoringSheet();fitDrawerHeights();},0),true);
+    }
+  }
+})();
+</script>
 <div id="roomAmbient"></div>
 <div id="ambientFX"></div>
 <div id="breathVignette"></div>
@@ -811,7 +1426,7 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
       <label class="settings-check"><input type="checkbox" id="hintPatterns" checked onchange="toggleHintSetting('patterns',this.checked)">Pattern hints</label>
       <label class="settings-check"><input type="checkbox" id="hintRelics" onchange="toggleHintSetting('relics',this.checked)">Relic hints</label>
       <hr>
-      <button type="button" class="settings-action" onclick="replayTutorial()">Replay Tutorial</button>
+      <button type="button" class="settings-action" onclick="replayTutorial()">Replay Tutorial</button><button type="button" class="settings-action get-up-action" onclick="getUpFromTable()">Get Up</button>
     </div>
   </div>
 </div>
@@ -850,7 +1465,7 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
   </div>
   <div class="pack-anim-burst" id="packAnimBurst"></div>
 </div>
-<div id="atticScene" aria-hidden="true"><div id="atticTutorial"></div><div id="atticPan"><div id="atticRoom"><div id="atticObjects"></div></div></div><div id="candlelightHud"></div><div id="atticWhisper"></div></div>
+<div id="atticScene" aria-hidden="true"><div id="atticTutorial"></div><div id="atticPan"><div id="atticRoom"><div id="atticObjects"></div></div></div><div id="obalsHud"></div><button id="atticTableReturn" type="button" aria-label="Return to the table"><span>Return to Table</span></button><div id="atticWhisper"></div></div>
 <div id="summary"></div>
 <div id="modal" class="modal"><div class="box"><div class="modalHead"><h2 id="modalTitle"></h2><button id="modalToggle" onclick="toggleModalCollapse()">Hide</button></div><p id="modalPrompt"></p><div id="choices" class="choices"></div></div></div>
 <script>
@@ -905,6 +1520,13 @@ function cardHTML(c){
 function sortCards(cards){return [...cards].sort((a,b)=>{let o={major:0,court:1};if(o[a.type]!==o[b.type])return o[a.type]-o[b.type];if(a.type==='major')return a.num-b.num;return(a.suit||'').localeCompare(b.suit||'')||RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank)})}
 function maxHand(){return 5+persist.up.hand-(persist.relics.includes('fool_reversed')?1:0)}function maxDiscards(){return 3+persist.up.discards}function hasMull(){return persist.up.mulligan>0}function maxMull(){return persist.up.mulligan||0}
 function drawN(n){let drew=0;for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;state.hand.push(state.deck.shift());drew++}if(drew)playSound('draw')}function drawTo(n){let drew=0;while(state.hand.length<n&&state.deck.length){state.hand.push(state.deck.shift());drew++}if(drew)playSound('draw')}
+function getUpFromTable(){
+  if(state&&state.busy)return;
+  if(window.tlrCloseArchives)window.tlrCloseArchives();
+  const panel=document.getElementById('settingsPanel');if(panel)panel.classList.add('hidden');
+  const mw=document.getElementById('menuPullWrap');if(mw&&mw.classList.contains('open')){mw.classList.remove('open');const mt=document.getElementById('menuPullTab');if(mt)mt.innerHTML='&#9660; Menu';}
+  if(typeof endSession==='function')endSession();
+}
 function startReading(){
   if(window.tlrCloseArchives)window.tlrCloseArchives();
   state.deck=shuffle(buildDeck());playSound('shuffle');state.hand=[];state.discard=[];state.spread=Array(5).fill(null);
@@ -1169,8 +1791,8 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
   let rankMult=1.25+(persist.up.rank_mult||0)*0.25;
   for(const rank of ['Page','Knight','Queen','King']){
     let a=cards.filter(c=>c.type==='court'&&c.rank===rank);
-    if(a.length===4){let x=7+rankBonus;m.push(['Four of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
-    else if(a.length===3){let x=5+rankBonus;m.push(['Three of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult*=rankMult}
+    if(a.length>=3){let x=5+rankBonus;m.push(['Three of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult+=rankMult-1}
+    if(a.length>=4){let x=7+rankBonus;m.push(['Four of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult+=rankMult-1}
   }
   const courtElig=cards.filter(c=>c.type==='court');
   let ranks=new Set(courtElig.map(c=>c.rank));
@@ -1181,18 +1803,18 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
   let courtMult=1.5+(persist.up.court_mult||0)*0.25;
   let court=false;
   if(same){
-    m.push(['Royal Court ('+same+')',10+courtChips,courtMult]);chips+=10+courtChips;mult*=courtMult;court=true;
+    for(let tier=3;tier<=Math.min(4,sameCount);tier++){m.push(['Royal Court ('+tier+', '+same+')',10+courtChips,courtMult]);chips+=10+courtChips;mult+=courtMult-1;court=true;}
   } else if(fullCount>=3){
-    m.push(['Full Court',10+courtChips,courtMult]);chips+=10+courtChips;mult*=courtMult;court=true;
+    for(let tier=3;tier<=Math.min(4,fullCount);tier++){m.push(['Full Court ('+tier+')',10+courtChips,courtMult]);chips+=10+courtChips;mult+=courtMult-1;court=true;}
   }
   let nums=[...new Set(cards.filter(c=>c.type==='major').map(c=>c.num))].sort((a,b)=>a-b),best=1,cur=1;
   for(let i=1;i<nums.length;i++){if(nums[i]===nums[i-1]+1){cur++;best=Math.max(best,cur)}else cur=1}
   let seqBonus=(persist.up.sequence||0)*5;
   let seqMult=1.25+(persist.up.seq_mult||0)*0.5;
-  if(best>=3){let x=10+seqBonus;m.push(['Sequence of '+best,x,seqMult]);chips+=x;mult*=seqMult}
+  if(best>=3){for(let tier=3;tier<=best;tier++){let x=10+seqBonus;m.push(['Sequence of '+tier,x,seqMult]);chips+=x;mult+=seqMult-1}}
   let pathChips=(persist.up.path_chips||0)*15;
   let pathMult=2+(persist.up.path_mult||0)*0.5;
-  if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=30+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult*=pathMult}
+  if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=30+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult+=pathMult-1}
   const brLvl=(persist.up.balanced_reading||0);
   if(brLvl){const hasMajor=cards.some(c=>c.type==='major');const hasMinor=cards.some(c=>c.type!=='major');if(hasMajor&&hasMinor){const bc=brLvl*5;const bm=+(1.25+(persist.up.balanced_reading_mult||0)*0.25).toFixed(2);m.push(['Balanced Reading',bc,bm]);chips+=bc;mult*=bm;}}
   const ehLvl=(persist.up.elemental_harmony||0);
@@ -1224,7 +1846,7 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
   if(state.resonationBonus&&(state.resonationBonus.chips||state.resonationBonus.mult)){const rb=state.resonationBonus;m.push(['⚷ '+(rb.name||'Resonation'),rb.chips,rb.mult,'add']);chips+=rb.chips;mult+=rb.mult;}
   return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}
 }
-function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';if(chips&&mult)return`+${chips} ×${mult}`;if(chips)return`+${chips}`;if(mult)return`×${mult}`;return'';}
+function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';const fmt=v=>('+'+Number(v).toFixed(2)).replace(/\.?0+$/,'');const shown=additive?mult:mult-1;if(chips&&mult)return`+${chips} ${fmt(shown)}`;if(chips)return`+${chips}`;if(mult)return`${fmt(shown)}`;return'';}
 function cleanName(c){return c.type==='major'?c.name.split(' ').slice(1).join(' '):c.name}
 function normMeldName(name){if(name.startsWith('Sequence'))return 'Sequence';if(name.startsWith('Royal Court'))return 'Royal Court';if(name.startsWith('Full Court'))return 'Full Court';if(name.startsWith('Three of a Kind'))return 'Three of a Kind';if(name.startsWith('Four of a Kind'))return 'Four of a Kind';return name}
 function hintGroup(label){if(label==='Sequence'||label==='Path of the Magi')return 'hint-major';if(label==='Royal Court')return 'hint-suit';if(label==='Three of a Kind'||label==='Four of a Kind')return 'hint-rank';if(label==='Full Court')return 'hint-court';return 'hint-gold'}
@@ -1363,14 +1985,14 @@ function applyHint(el,card,poolCards=null){
   el.dataset.hint=hints.map(h=>h.label).join(' + ');
 }
 function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=computeScore([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
-function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;const beforeMelds=new Map(computeScore(state.spread.filter(Boolean)).melds.map(x=>[x[0],x]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();playSound('place');haptic(12);requestAnimationFrame(()=>{const _landEl=_slotEls?.[i]?.querySelector('.card');if(_landEl){_landEl.classList.add('landing');_landEl.addEventListener('animationend',()=>_landEl.classList.remove('landing'),{once:true});}ghost(i,'+'+c.points);});let after=_getPlacedScore();let newMelds=after.melds.flatMap(x=>{if(!beforeMelds.has(x[0]))return[x];const bm=beforeMelds.get(x[0]);const dc=x[1]-bm[1],dm=x[2]-bm[2];if(dc>0||dm>0)return[[x[0],dc,dm,x[3]]];return[];});let delay=420;let announceOffset=0;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;const _rk=_relicMeldNameToKey.get(m[0])||null;setTimeout(()=>ghost(anchor,meldStr(m),true,_rk),ghostDelay);if(!_relicMeldNames.has(m[0])&&m[0]!=='Omen'&&m[0]!=='Resonance')setTimeout(()=>{centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5);playSound('meld');haptic([0,10,35,12]);},delay+announceOffset);if(m[2]>0){const multLabel='×'+m[2];setTimeout(()=>fireMultGhost(multLabel),ghostDelay+200);}holdEffects(ghostDelay+1700);delay+=slots.length*130+700;announceOffset+=600;});setCounterTarget(after.finalScore);setTimeout(()=>checkResonationTriggers(),750);checkEnd()}
+function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;const beforeMelds=new Map(computeScore(state.spread.filter(Boolean)).melds.map(x=>[x[0],x]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();playSound('place');haptic(12);requestAnimationFrame(()=>{const _landEl=_slotEls?.[i]?.querySelector('.card');if(_landEl){_landEl.classList.add('landing');_landEl.addEventListener('animationend',()=>_landEl.classList.remove('landing'),{once:true});}ghost(i,'+'+c.points);});let after=_getPlacedScore();let newMelds=after.melds.flatMap(x=>{if(!beforeMelds.has(x[0]))return[x];const bm=beforeMelds.get(x[0]);const dc=x[1]-bm[1],dm=x[2]-bm[2];if(dc>0||dm>0)return[[x[0],dc,dm,x[3]]];return[];});let delay=420;let announceOffset=0;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;const _rk=_relicMeldNameToKey.get(m[0])||null;setTimeout(()=>ghost(anchor,meldStr(m),true,_rk),ghostDelay);if(!_relicMeldNames.has(m[0])&&m[0]!=='Omen'&&m[0]!=='Resonance')setTimeout(()=>{centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5);playSound('meld');haptic([0,10,35,12]);},delay+announceOffset);if(m[2]>0){const _mg=m[3]==='add'?m[2]:m[2]-1;const multLabel=('+'+Number(_mg).toFixed(2)).replace(/\.?0+$/,'');setTimeout(()=>fireMultGhost(multLabel),ghostDelay+200);}holdEffects(ghostDelay+1700);delay+=slots.length*130+700;announceOffset+=600;});setCounterTarget(after.finalScore);setTimeout(()=>checkResonationTriggers(),750);checkEnd()}
 let effectsUntil=0;
 function holdEffects(ms){effectsUntil=Math.max(effectsUntil,Date.now()+ms)}
 let _slotEls=null;function _slots(){return _slotEls||(_slotEls=Array.from(document.querySelectorAll('.slot')))}
 function ghost(i,t,big=false,relicKey=null){const s=_slots()[i];if(!s)return;holdEffects(1700);let g=document.createElement('div');g.className='ghost '+(big?'big':'');if(relicKey){const ic=document.createElement('span');ic.style.cssText=`display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px;${relicIconStyle(relicKey,14)}`;g.appendChild(ic);g.appendChild(document.createTextNode(t));}else{g.textContent=t;}const r=s.getBoundingClientRect();g.style.position='fixed';g.style.left=(r.left+r.width/2)+'px';g.style.top=(r.top-10)+'px';g.style.zIndex='99999';document.body.appendChild(g);setTimeout(()=>g.remove(),1700)}
 function centerGhost(name,rare=false){const g=document.createElement('div');g.className='meld-announce'+(rare?' rare':'');g.textContent=name;document.body.appendChild(g);setTimeout(()=>g.remove(),1900)}
 function bump(i){const s=_slots()[i];if(!s)return;s.classList.remove('bump');void s.offsetWidth;s.classList.add('bump')}
-function slotsForMeld(name){let filled=state.spread.map((c,i)=>c?{c,i}:null).filter(Boolean);if(name.startsWith('Three of a Kind')||name.startsWith('Four of a Kind')){let rank=['Page','Knight','Queen','King'].find(r=>name.includes(r+'s'));return rank?filled.filter(x=>x.c.type==='court'&&x.c.rank===rank).map(x=>x.i):[]}if(name==='Full Court'){const ELIG=['Page','Knight','Queen','King'];let seen=new Set(),out=[];for(const x of filled){if(x.c.type==='court'&&!seen.has(x.c.rank)&&ELIG.includes(x.c.rank)){seen.add(x.c.rank);out.push(x.i)}}return out}if(name.startsWith('Royal Court')||name.startsWith('Flush')){let suit=SUITS.find(s=>name.includes(s));return suit?filled.filter(x=>x.c.suit===suit).map(x=>x.i):[]}if(name.startsWith('Sequence')){let tr=filled.filter(x=>x.c.type==='major').sort((a,b)=>a.c.num-b.c.num);let bs=0,bl=1,cs=0,cl=1;for(let j=1;j<tr.length;j++){if(tr[j].c.num===tr[j-1].c.num+1){cl++;if(cl>bl){bl=cl;bs=cs}}else{cs=j;cl=1}}return tr.slice(bs,bs+bl).map(x=>x.i)}if(name==='Path of the Magi')return filled.filter(x=>['major_0','major_1','major_21'].includes(x.c.id)).map(x=>x.i);return[]}
+function slotsForMeld(name){let filled=state.spread.map((c,i)=>c?{c,i}:null).filter(Boolean);const tierFrom=()=>{let m=name.match(/\((\d+)/)||name.match(/of (\d+)/);return m?parseInt(m[1]):0};if(name.startsWith('Three of a Kind')||name.startsWith('Four of a Kind')){let rank=['Page','Knight','Queen','King'].find(r=>name.includes(r+'s'));let lim=name.startsWith('Three')?3:4;return rank?filled.filter(x=>x.c.type==='court'&&x.c.rank===rank).slice(0,lim).map(x=>x.i):[]}if(name.startsWith('Full Court')){const ELIG=['Page','Knight','Queen','King'];let seen=new Set(),out=[],lim=tierFrom()||4;for(const x of filled){if(out.length>=lim)break;if(x.c.type==='court'&&!seen.has(x.c.rank)&&ELIG.includes(x.c.rank)){seen.add(x.c.rank);out.push(x.i)}}return out}if(name.startsWith('Royal Court')||name.startsWith('Flush')){let suit=SUITS.find(s=>name.includes(s));let lim=tierFrom()||4;return suit?filled.filter(x=>x.c.suit===suit).slice(0,lim).map(x=>x.i):[]}if(name.startsWith('Sequence')){let tr=filled.filter(x=>x.c.type==='major').sort((a,b)=>a.c.num-b.c.num);let bs=0,bl=1,cs=0,cl=1;for(let j=1;j<tr.length;j++){if(tr[j].c.num===tr[j-1].c.num+1){cl++;if(cl>bl){bl=cl;bs=cs}}else{cs=j;cl=1}}let want=tierFrom()||bl;return tr.slice(bs,bs+Math.min(want,bl)).map(x=>x.i)}if(name==='Path of the Magi')return filled.filter(x=>['major_0','major_1','major_21'].includes(x.c.id)).map(x=>x.i);return[]}
 let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 function setCounterTarget(v){counterTarget=v;if(counterTimer)clearTimeout(counterTimer);counterTimer=setTimeout(()=>{if(counterCancel)counterCancel();counterCancel=rollCounter(counterShown,counterTarget,650);counterShown=counterTarget;counterTimer=null},700)}
 function snapCounter(v){if(counterTimer){clearTimeout(counterTimer);counterTimer=null}if(counterCancel){counterCancel();counterCancel=null}counterShown=counterTarget=v;_cacheEls();_elCurrent.textContent=v;_elCurrent.style.color=''}
@@ -1749,7 +2371,7 @@ function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;wa
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
 function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards,state.spread),total=res.finalScore,curTH=TH[state.th]+(state.thBonus||0),pass=total>=curTH;let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+curTH+' Cleared':'Below Threshold '+curTH}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;const _regMelds=res.melds.filter(m=>!m[0].startsWith('⚷'));const _resMelds=res.melds.filter(m=>m[0].startsWith('⚷'));if(_regMelds.length||_resMelds.length){_regMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);_resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){const miserBonus=persist.relics.includes('miser')?5:0;const threshold=curTH;const worldCarry=persist.relics.includes('the_world')?Math.floor((total-threshold)*0.1):0;state.worldCarry=worldCarry||0;state.pendingPool=(state.pendingPool||0)+total+miserBonus;persist.totalScore=(persist.totalScore||0)+total;state.relicEarned=total>=curTH*2;state.th++;html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render();}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML=''}
-function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount=0;const firstShop=!localStorage.getItem('tlr_tut_shop');const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}else if(pendingRelic){setTimeout(()=>tutShow(9),400)}}function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToCandlelight?window.tlrScoreToCandlelight(total):1;showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Candlelight</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;persist.totalScore=0;persist.pool=0;startReading()}
+function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount=0;const firstShop=!localStorage.getItem('tlr_tut_shop');const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}else if(pendingRelic){setTimeout(()=>tutShow(9),400)}}function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Obals</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;persist.totalScore=0;persist.pool=0;startReading()}
 // [name, desc, baseCost, scale, icon, category, pairedKey?]
 const SHOP={
   // ── Foundation Pack (foundation) ──
@@ -2225,9 +2847,9 @@ function renderScoringSheet(){
   const rows=[
     ['Three of a Kind','3 matching court ranks',`+${5+rankBonus}`,fmt(rankMult)],
     ['Four of a Kind','4 matching court ranks',`+${7+rankBonus}`,fmt(rankMult)],
-    ['Full Court (3+)','Consecutive ranks',`+${10+courtChips}`,fmt(courtMult)],
-    ['Royal Court (3+)','Consecutive ranks, same suit',`+${10+courtChips}`,fmt(courtMult)],
-    ['Sequence (3+)','Consecutive major arcana',`+${10+seqBonus}`,fmt(seqMult)],
+    ['Full Court (3/4)','Consecutive ranks',`+${10+courtChips}`,fmt(courtMult)],
+    ['Royal Court (3/4)','Consecutive ranks, same suit',`+${10+courtChips}`,fmt(courtMult)],
+    ['Sequence (3/4/5)','Consecutive major arcana',`+${10+seqBonus}`,fmt(seqMult)],
     ['Path of the Magi','0·I·XXI in spread',`+${30+pathChips}`,fmt(pathMult)],
   ];
   const up=[];
@@ -2284,6 +2906,7 @@ const TUT_STEPS=[
   {sel:'#relicRack',arrow:'up', text:'You\'ve found a <b>Relic</b>! Relics carry powerful passive effects across every reading until you lose. Tap a relic icon to see what it does.'},
 ];
 function tutSkip(){localStorage.setItem(TUT_KEY,'1');tutDone=true;tutHide()}
+function replayTutorial(){['tlr_tut_done','tlr_tut_relic','tlr_tut_shop','tlr_tut_inv_open','tlr_tut_inv_name','tlr_tut_inv_detail'].forEach(k=>localStorage.removeItem(k));tutDone=false;const p=document.getElementById('settingsPanel');if(p)p.classList.add('hidden');tutShow(0);}
 function replayTutorial(){['tlr_tut_done','tlr_tut_relic','tlr_tut_shop','tlr_tut_inv_open','tlr_tut_inv_name','tlr_tut_inv_detail'].forEach(k=>localStorage.removeItem(k));tutDone=false;const p=document.getElementById('settingsPanel');if(p)p.classList.add('hidden');const mw=document.getElementById('menuPullWrap');if(mw&&mw.classList.contains('open')){mw.classList.remove('open');const mt=document.getElementById('menuPullTab');if(mt)mt.innerHTML='&#9660; Menu';}tutShow(0);}
 function tutHide(){clearTimeout(tutTimer);tutTimer=null;tutStep=-1;const t=$('#tutTip');if(t){t.classList.remove('show','tut-center');t.style.cssText=''}}
 function tutShow(step){
@@ -2863,8 +3486,9 @@ function setSfxVol(v){_sfxVol=v;}
   if(window.__handSwipeScrollInstalled)return;
   window.__handSwipeScrollInstalled=true;
   let zone=null,hand=null;
-  let offset=0,startOffset=0,startX=0;               // track offset (degrees)
-  let samples=[];                                    // {t,deg} ring for swipe velocity
+  let offset=0,startOffset=0,startX=0,startY=0,startLift=0,lift=0; // track offset (degrees), plus vertical lift
+  let samples=[];                                    // {t,deg} ring for horizontal swipe velocity
+  let liftSamples=[];                                // {t,y} ring for vertical swipe velocity
   let pointers=new Map();                            // active pointer id -> {x,y}
   let mode=null;                                     // 'slide' | 'pinch' | null
   let pinchStart=null;                               // {dist,spacing,ids}
@@ -2881,7 +3505,10 @@ function setSfxVol(v){_sfxVol=v;}
   const OFFSET_LIMIT=30;                             // hard cap on slide deg
   const DEG_PER_PX_SWIPE=0.11;                       // swipe pixels -> degrees of slide
   const DEG_PER_PX_PINCH=0.013;                      // pinch pixels -> degrees of spacing
-  let momentumRaf=null;
+  const HAND_LIFT_PX=38;
+  const HAND_LIFT_PX_MOBILE=30;
+  const DEG_PER_SIDE_SCROLL=0.08;
+  let momentumRaf=null,liftMomentumRaf=null;
   // ── Layout caches (busted by refreshLayout / stepPinch / resize) ──
   let cachedCap=null,cachedRadius=null,cachedView=null,cachedCount=-1;
   // Card pixel width: determined purely by CSS so survives render-cycle cache busts;
@@ -2890,8 +3517,30 @@ function setSfxVol(v){_sfxVol=v;}
   // ── rAF coalescing for pointermove + observer recheck ──
   let pendingMoveEv=null,moveRaf=null,recheckRaf=null;
   // cachedView and cachedCardW survive per-render busts — they only change on resize.
+  let cachedCards=null;
   const invalidateCache=()=>{cachedCap=null;cachedRadius=null;cachedCount=-1;cachedCards=null;};
-  try{if(localStorage.getItem('tlr_hand_swiped'))window.__handHasBeenSwiped=true;}catch(e){}
+  const cardsList=()=>{if(cachedCards)return cachedCards;const h=handEl();cachedCards=h?[...h.querySelectorAll('.card')]:[];return cachedCards;};
+  const LAG_SCALE=150;
+  const applyLag=v=>{
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const cards=cardsList();const n=cards.length;if(!n)return;
+    const maxSlot=Math.max(1,(n-1)/2);
+    for(let i=0;i<n;i++){
+      const edge=Math.abs(i-(n-1)/2)/maxSlot;
+      cards[i].style.setProperty('--lag',(-v*LAG_SCALE*edge).toFixed(2)+'deg');
+    }
+  };
+  const clearLag=()=>{
+    const cards=cardsList();const n=cards.length;if(!n)return;
+    const maxSlot=Math.max(1,(n-1)/2);
+    for(let i=0;i<n;i++){
+      const edge=Math.abs(i-(n-1)/2)/maxSlot;
+      cards[i].style.transitionDelay=(edge*180).toFixed(0)+'ms';
+      cards[i].style.setProperty('--lag','0deg');
+    }
+    setTimeout(()=>cardsList().forEach(el=>{el.style.transitionDelay='';}),800);
+  };
+  try{window.__handHintStep=Number(localStorage.getItem('tlr_hand_hint_step')||'1');if(window.__handHintStep>=4)window.__handHasBeenSwiped=true;}catch(e){window.__handHintStep=1;}
   const handEl=()=>{if(hand&&hand.isConnected)return hand;hand=document.querySelector('.hand');return hand;};
   const zoneEl=()=>{if(zone&&zone.isConnected)return zone;zone=document.getElementById('handSwipeZone');return zone;};
   const trackRadius=()=>{
@@ -2942,44 +3591,19 @@ function setSfxVol(v){_sfxVol=v;}
     if(!window.__handHasBeenSwiped)updateOverflowHint();
   };
   const applySpacing=d=>{const h=handEl();if(!h)return;h.style.setProperty('--track-spacing',d.toFixed(3)+'deg');};
+  const liftCap=()=>window.innerWidth<640?HAND_LIFT_PX_MOBILE:HAND_LIFT_PX;
+  const clampLift=y=>Math.max(-liftCap(),Math.min(0,y));
+  const softClampLift=y=>{const c=liftCap();if(y>0)return y*RUBBER;if(y<-c)return -c+(y+c)*RUBBER;return y;};
+  const applyLift=y=>{const h=handEl();if(!h)return;lift=y;h.style.setProperty('--hand-lift-y',y.toFixed(1)+'px');};
   const applySlots=()=>{
     const h=handEl();if(!h)return;
     const cards=h.querySelectorAll('.card');
     const n=cards.length;
     cards.forEach((c,i)=>{c.style.setProperty('--slot',(i-(n-1)/2).toString());});
   };
-  const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;if(window.__handHasBeenSwiped){z.classList.remove('has-overflow');return;}z.classList.toggle('has-overflow',slideCap()>1);};
+  const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;const step=window.__handHintStep||1;z.dataset.hintStep=String(Math.max(1,Math.min(3,step)));if(window.__handHasBeenSwiped||step>=4){z.classList.add('hints-complete');z.classList.remove('has-overflow');return;}z.classList.remove('hints-complete','has-swiped');z.classList.toggle('has-overflow',slideCap()>1);};
   const cancelMomentum=()=>{if(momentumRaf){cancelAnimationFrame(momentumRaf);momentumRaf=null;}};
-  let cachedCards=null;
-  const cardsList=()=>{
-    if(cachedCards)return cachedCards;
-    const h=handEl();
-    cachedCards=h?[...h.querySelectorAll('.card')]:[];
-    return cachedCards;
-  };
-  // Edge cards get more lag than the center, so the fan bends into the swipe.
-  // On release each card transitions back to 0 with a stagger (center first),
-  // producing a ripple-settle rather than a uniform snap back.
-  const LAG_SCALE=150;
-  const applyLag=v=>{
-    if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-    const cards=cardsList();const n=cards.length;if(!n)return;
-    const maxSlot=Math.max(1,(n-1)/2);
-    for(let i=0;i<n;i++){
-      const edge=Math.abs(i-(n-1)/2)/maxSlot;
-      cards[i].style.setProperty('--lag',(-v*LAG_SCALE*edge).toFixed(2)+'deg');
-    }
-  };
-  const clearLag=()=>{
-    const cards=cardsList();const n=cards.length;if(!n)return;
-    const maxSlot=Math.max(1,(n-1)/2);
-    for(let i=0;i<n;i++){
-      const edge=Math.abs(i-(n-1)/2)/maxSlot;
-      cards[i].style.transitionDelay=(edge*180).toFixed(0)+'ms';
-      cards[i].style.setProperty('--lag','0deg');
-    }
-    setTimeout(()=>cardsList().forEach(el=>{el.style.transitionDelay='';}),800);
-  };
+  const cancelLiftMomentum=()=>{if(liftMomentumRaf){cancelAnimationFrame(liftMomentumRaf);liftMomentumRaf=null;}};
   const inHandArea=el=>el instanceof Element&&!!el.closest('#hand,.handDock,#handSwipeZone');
   const inSwipeZone=el=>{const z=zoneEl();return!!z&&el instanceof Element&&(el===z||z.contains(el));};
   // ── Auto-fit: choose a per-card spacing (in deg) so that all cards fit in the dock. ──
@@ -3017,6 +3641,7 @@ function setSfxVol(v){_sfxVol=v;}
   };
   // ── Swipe velocity sampling (sample stream is in offset-degrees) ──
   const pushSample=(t,d)=>{samples.push({t,d});while(samples.length&&samples[0].t<t-SAMPLE_WINDOW)samples.shift();};
+  const pushLiftSample=(t,y)=>{liftSamples.push({t,y});while(liftSamples.length&&liftSamples[0].t<t-SAMPLE_WINDOW)liftSamples.shift();};
   const releaseVel=()=>{
     const cutoff=performance.now()-SAMPLE_WINDOW;
     let i=0;while(i<samples.length&&samples[i].t<cutoff)i++;
@@ -3025,6 +3650,15 @@ function setSfxVol(v){_sfxVol=v;}
     const dt=last.t-first.t;
     if(dt<8)return 0;
     return (last.d-first.d)/dt;  // deg / ms
+  };
+  const releaseLiftVel=()=>{
+    const cutoff=performance.now()-SAMPLE_WINDOW;
+    let i=0;while(i<liftSamples.length&&liftSamples[i].t<cutoff)i++;
+    if(liftSamples.length-i<2)return 0;
+    const first=liftSamples[i],last=liftSamples[liftSamples.length-1];
+    const dt=last.t-first.t;
+    if(dt<8)return 0;
+    return (last.y-first.y)/dt;  // px / ms
   };
   const springBack=()=>{
     const target=clampOffset(offset);
@@ -3055,6 +3689,23 @@ function setSfxVol(v){_sfxVol=v;}
       momentumRaf=requestAnimationFrame(step);
     };
     momentumRaf=requestAnimationFrame(step);
+  };
+  const runLiftMomentum=v0=>{
+    cancelLiftMomentum();
+    // Leave the hand floating where the player released it.
+    // Only correct back into bounds if the player let go while rubber-banding past the allowance.
+    const target=clampLift(lift);
+    if(Math.abs(target-lift)<.25){applyLift(target);return;}
+    const from=lift;
+    const start=performance.now(),dur=180;
+    const step=t=>{
+      const p=Math.min(1,(t-start)/dur);
+      const e=1-Math.pow(1-p,3);
+      applyLift(from+(target-from)*e);
+      if(p<1)liftMomentumRaf=requestAnimationFrame(step);
+      else{applyLift(target);liftMomentumRaf=null;}
+    };
+    liftMomentumRaf=requestAnimationFrame(step);
   };
   // ── Pinch helpers ──
   const distOf=(a,b)=>{const dx=a.x-b.x,dy=a.y-b.y;return Math.hypot(dx,dy);};
@@ -3097,6 +3748,8 @@ function setSfxVol(v){_sfxVol=v;}
     let next=pinchStart.spacing+delta*DEG_PER_PX_PINCH;
     next=Math.max(SPACING_MIN,Math.min(SPACING_MAX,next));
     if(next===manualSpacing)return;
+    if(next<pinchStart.spacing-.15)completeHandHintStep(2);
+    if(next>pinchStart.spacing+.15)completeHandHintStep(3);
     manualSpacing=next;
     cachedCap=null;
     applySpacing(next);
@@ -3104,17 +3757,12 @@ function setSfxVol(v){_sfxVol=v;}
   };
   // ── Slide helpers (single-pointer, swipe zone only) ──
   const startSlideMode=ev=>{
-    cancelMomentum();
+    cancelMomentum();cancelLiftMomentum();
     mode='slide';
-    startX=ev.clientX;startOffset=offset;
-    samples.length=0;pushSample(performance.now(),offset);
+    startX=ev.clientX;startY=ev.clientY||0;startOffset=offset;startLift=lift;
+    samples.length=0;liftSamples.length=0;pushSample(performance.now(),offset);pushLiftSample(performance.now(),lift);
     const z=zoneEl();if(z){z.classList.add('dragging');z.classList.remove('pinching');}
     handEl()?.classList.add('hand-scroll-dragging');
-    if(!window.__handHasBeenSwiped){
-      window.__handHasBeenSwiped=true;
-      try{localStorage.setItem('tlr_hand_swiped','1');}catch(e){}
-      const z2=zoneEl();if(z2){z2.classList.add('has-swiped');z2.classList.remove('has-overflow');}
-    }
   };
   const stepSlide=ev=>{
     const dx=ev.clientX-startX;
@@ -3131,7 +3779,7 @@ function setSfxVol(v){_sfxVol=v;}
     if(wasSlide)clearLag();
     if(wasPinch)window.__handPinchActive=false;
     mode=null;pinchStart=null;
-    if(wasSlide){runMomentum(releaseVel());springBack();}
+    if(wasSlide){runMomentum(releaseVel());springBack();runLiftMomentum(releaseLiftVel());}
     else if(wasPinch){
       applyOffset(clampOffset(offset));
       pinchSuppressClickUntil=performance.now()+550;
@@ -3153,8 +3801,10 @@ function setSfxVol(v){_sfxVol=v;}
     // Mouse can start anywhere in the hand dock that isn't a card itself,
     // so desktop users don't need to find the invisible 88px strip.
     const isMouse=ev.pointerType==='mouse';
-    const mouseInHand=isMouse&&ev.target instanceof Element&&ev.target.closest('.handDock,#handSwipeZone')&&!ev.target.closest('.card[data-uid]');
-    if((inSwipeZone(ev.target)||mouseInHand)&&mode==null){
+    const isMiddleMouse=isMouse&&ev.button===1;
+    const mouseInHand=isMiddleMouse&&ev.target instanceof Element&&ev.target.closest('.handDock,#handSwipeZone')&&!ev.target.closest('.card[data-uid]');
+    if(((inSwipeZone(ev.target)&&!isMouse)||mouseInHand)&&mode==null){
+      if(isMiddleMouse)ev.preventDefault();
       try{(isMouse?ev.target.closest('.handDock,#handSwipeZone'):zoneEl())?.setPointerCapture(ev.pointerId);}catch(e){}
       startSlideMode(ev);
     }
@@ -3198,7 +3848,7 @@ function setSfxVol(v){_sfxVol=v;}
         const rect=z2.getBoundingClientRect();
         if(rp.x>=rect.left&&rp.x<=rect.right&&rp.y>=rect.top&&rp.y<=rect.bottom){
           try{z2.setPointerCapture(remId);}catch(e){}
-          startSlideMode({clientX:rp.x});
+          startSlideMode({clientX:rp.x,clientY:rp.y});
           startedSlide=true;
         }
       }
@@ -3283,23 +3933,34 @@ function setSfxVol(v){_sfxVol=v;}
     else{setHintText();}
     window.matchMedia('(pointer:fine)').addEventListener('change',setHintText);
 
-    // Scroll to adjust spacing — desktop only
-    const DEG_PER_SCROLL=0.012;  // degrees of spacing per pixel of scroll delta
+    // Scroll to adjust spacing; horizontal scroll drifts the hand side-to-side.
+    const DEG_PER_SCROLL=0.012;  // degrees of spacing per pixel of vertical scroll delta
     let scrollRaf=null;
-    let pendingDelta=0;
+    let pendingSpacingDelta=0;
+    let pendingSideDelta=0;
+    const markHandScrolled=()=>{completeHandHintStep(1);};
     const applyScroll=()=>{
       scrollRaf=null;
-      if(!pendingDelta)return;
-      const delta=pendingDelta;pendingDelta=0;
-      // deltaY > 0 = scroll down = constrict (reduce spacing)
-      const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
-      let next=s - delta*DEG_PER_SCROLL;
-      next=Math.max(SPACING_MIN,Math.min(SPACING_MAX,next));
-      if(next===manualSpacing)return;
-      manualSpacing=next;
-      cachedCap=null;
-      applySpacing(next);
-      applyOffset(clampOffset(offset));
+      if(pendingSideDelta){
+        const dx=pendingSideDelta;pendingSideDelta=0;
+        markHandScrolled();
+        applyOffset(softClamp(offset-dx*DEG_PER_SIDE_SCROLL));
+      }
+      if(pendingSpacingDelta){
+        const delta=pendingSpacingDelta;pendingSpacingDelta=0;
+        if(delta>0)completeHandHintStep(2);
+        if(delta<0)completeHandHintStep(3);
+        // deltaY > 0 = scroll down = constrict (reduce spacing)
+        const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
+        let next=s - delta*DEG_PER_SCROLL;
+        next=Math.max(SPACING_MIN,Math.min(SPACING_MAX,next));
+        if(next!==manualSpacing){
+          manualSpacing=next;
+          cachedCap=null;
+          applySpacing(next);
+          applyOffset(clampOffset(offset));
+        }
+      }
     };
     const onWheel=ev=>{
       if(!isDesktop())return;
@@ -3308,10 +3969,11 @@ function setSfxVol(v){_sfxVol=v;}
       if(!ev.target.closest('#handSwipeZone,.handDock'))return;
       ev.preventDefault();
       // Normalise delta across different wheel modes
-      let dy=ev.deltaY;
-      if(ev.deltaMode===1)dy*=20;   // line mode
-      if(ev.deltaMode===2)dy*=400;  // page mode
-      pendingDelta+=dy;
+      let dx=ev.deltaX,dy=ev.deltaY;
+      if(ev.deltaMode===1){dx*=20;dy*=20;}   // line mode
+      if(ev.deltaMode===2){dx*=400;dy*=400;} // page mode
+      if(Math.abs(dx)>Math.abs(dy))pendingSideDelta+=dx;
+      else pendingSpacingDelta+=dy;
       if(scrollRaf==null)scrollRaf=requestAnimationFrame(applyScroll);
     };
     window.addEventListener('wheel',onWheel,{passive:false});
@@ -3716,14 +4378,14 @@ function setSfxVol(v){_sfxVol=v;}
   let searched={};
   let awaitingPickup=false;
   const objects={
-    newspaper_stack_01:{id:'newspaper_stack_01',label:'Stack of Newspapers',verb:'Move aside',motion:'move',cost:1,before:'props/newspaper_stack_closed.png',after:'props/newspaper_stack_moved.png',left:'14%',top:'72%',width:'21%',height:'18%',itemId:'clipping_01',itemTitle:'Strange Obituary',thumb:'strange_obituary.png'},
-    covered_frame_01:{id:'covered_frame_01',label:'Covered Frame',verb:'Lift cloth',motion:'lift',cost:1,before:'props/covered_frame_closed.png',after:'props/covered_frame_uncovered.png',left:'66%',top:'16%',width:'27%',height:'44%',itemId:'photo_01',itemTitle:'The Reading Room',thumb:'Reading_room.png'},
-    coat_01:{id:'coat_01',label:'Old Coat',verb:'Check pocket',motion:'search',cost:1,before:'props/old_coat_closed.png',after:'props/old_coat_searched.png',left:'5%',top:'13%',width:'22%',height:'67%',itemId:'letter_01',itemTitle:'Unsigned Letter',thumb:'handwritten_note.png'}
+    newspaper_stack_01:{id:'newspaper_stack_01',label:'Stack of Newspapers',verb:'Move aside',motion:'move',cost:1,before:'props/newspaper_stack_closed.png',after:'props/newspaper_stack_moved.png',left:'25%',top:'73%',width:'22%',height:'17%',itemId:'clipping_01',itemTitle:'Strange Obituary',thumb:'strange_obituary.png'},
+    covered_frame_01:{id:'covered_frame_01',label:'Covered Frame',verb:'Lift cloth',motion:'lift',cost:1,before:'props/covered_frame_closed.png',after:'props/covered_frame_uncovered.png',left:'68%',top:'15%',width:'25%',height:'42%',itemId:'photo_01',itemTitle:'The Reading Room',thumb:'Reading_room.png'},
+    coat_01:{id:'coat_01',label:'Old Coat',verb:'Check pocket',motion:'search',cost:1,before:'props/old_coat_closed.png',after:'props/old_coat_searched.png',left:'2%',top:'13%',width:'18%',height:'54%',itemId:'letter_01',itemTitle:'Unsigned Letter',thumb:'handwritten_note.png'}
   };
   function foundItems(){try{return JSON.parse(localStorage.getItem('tlr_attic_found_items')||'[]')}catch(e){return []}}
   function candlesFromScore(score){if(score>=1000)return 7;if(score>=700)return 6;if(score>=450)return 5;if(score>=250)return 4;if(score>=100)return 3;if(score>=50)return 2;return 1;}
-  function renderCandles(){const h=document.getElementById('candlelightHud');if(!h)return;let out='';const n=Math.max(1,maxCandles||candleCount||1);for(let i=0;i<n;i++)out+='<span class="candlelight-icon '+(i<candleCount?'on':'off')+'"></span>';h.innerHTML=out;}
-  function candleSpend(){const h=document.getElementById('candlelightHud');if(!h)return;h.classList.remove('spend');void h.offsetWidth;h.classList.add('spend');setTimeout(function(){h.classList.remove('spend')},460);}
+  function renderCandles(){const h=document.getElementById('obalsHud');if(!h)return;h.innerHTML='<span class="attic-obal-label">Obals</span><b class="attic-obal-count">'+candleCount+'</b>';}
+  function candleSpend(){const h=document.getElementById('obalsHud');if(!h)return;h.classList.remove('spend');void h.offsetWidth;h.classList.add('spend');setTimeout(function(){h.classList.remove('spend')},460);}
   function whisper(text,duration){const w=document.getElementById('atticWhisper');if(!w)return;w.textContent=text;w.classList.add('show');clearTimeout(whisper.t);whisper.t=setTimeout(function(){w.classList.remove('show')},duration||2600);}
   function renderObjects(){
     const root=document.getElementById('atticObjects');if(!root)return;
@@ -3750,25 +4412,24 @@ function setSfxVol(v){_sfxVol=v;}
     });
   }
   function saveFound(itemId){try{const key='tlr_attic_found_items';const arr=JSON.parse(localStorage.getItem(key)||'[]');if(!arr.includes(itemId)){arr.push(itemId);localStorage.setItem(key,JSON.stringify(arr));}}catch(e){}}
-  function tagNear(el,text){const scene=document.getElementById('atticScene');if(!scene||!el)return;const r=el.getBoundingClientRect();const sr=scene.getBoundingClientRect();const t=document.createElement('div');t.className='attic-action-tag';t.textContent=text+' -1';t.style.left=(r.left-sr.left+r.width/2)+'px';t.style.top=(r.top-sr.top+Math.max(18,r.height*.22))+'px';scene.appendChild(t);setTimeout(function(){t.remove()},920);}
+  function tagNear(el,text){const scene=document.getElementById('atticScene');if(!scene||!el)return;const r=el.getBoundingClientRect();const sr=scene.getBoundingClientRect();const t=document.createElement('div');t.className='attic-action-tag';t.textContent=text;t.style.left=(r.left-sr.left+r.width/2)+'px';t.style.top=(r.top-sr.top+Math.max(18,r.height*.22))+'px';scene.appendChild(t);setTimeout(function(){t.remove()},920);}
   function dustNear(el){return;}
   function showPickup(o){
     awaitingPickup=true;document.querySelectorAll('#atticPickup').forEach(function(p){p.remove();});
     const p=document.createElement('div');p.id='atticPickup';p.innerHTML='<img src="'+o.thumb+'" alt=""><b>'+o.itemTitle+'</b><span>Take</span>';p.addEventListener('click',function(e){e.stopPropagation();takePickup(o);});document.getElementById('atticScene').appendChild(p);
   }
-  function takePickup(o){document.querySelectorAll('#atticPickup').forEach(function(p){p.remove();});awaitingPickup=false;saveFound(o.itemId);renderObjects();if(typeof renderInventory==='function')renderInventory();whisper('You take '+o.itemTitle+' back to the table.');if(candleCount<=0)setTimeout(leave,900);}
+  function takePickup(o){document.querySelectorAll('#atticPickup').forEach(function(p){p.remove();});awaitingPickup=false;saveFound(o.itemId);renderObjects();if(typeof renderInventory==='function')renderInventory();}
   function rummage(id,el){
     const o=objects[id];if(!o||awaitingPickup)return;
     if(searched[id]){whisper('You already searched there.');return;}
-    if(candleCount<o.cost){whisper('The candle is almost gone.');return;}
-    dismissAtticTutorial();candleCount-=o.cost;searched[id]=true;renderCandles();candleSpend();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);whisper('You find '+o.itemTitle+'.');},430);
+    dismissAtticTutorial();searched[id]=true;renderCandles();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);},430);
   }
   function enter(candles,shouldReset){
     if(window.tlrCloseArchives)window.tlrCloseArchives();
     inAttic=true;resetOnLeave=!!shouldReset;maxCandles=Math.max(1,Number(candles)||1);candleCount=maxCandles;searched={};awaitingPickup=false;renderCandles();renderObjects();
     document.body.classList.remove('mode-reading','mode-to-table','mode-table-return');document.body.classList.add('mode-to-attic');
     const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','false');
-    setTimeout(function(){document.body.classList.remove('mode-to-attic');document.body.classList.add('mode-attic');whisper('You get up from the table. Spend Candlelight to search.');},900);
+    setTimeout(function(){document.body.classList.remove('mode-to-attic');document.body.classList.add('mode-attic');},900);
     setTimeout(function(){showAtticTutorial();},1400);
   }
   function leave(){
@@ -3781,17 +4442,17 @@ function setSfxVol(v){_sfxVol=v;}
   }
   /* attic-tutorial-fns */
   function showAtticTutorial(){
-    try{if(localStorage.getItem('tlr_attic_tutored'))return;}catch(e){}
+    try{if(localStorage.getItem('tlr_attic_tutored_obals'))return;}catch(e){}
     const t=document.getElementById('atticTutorial');if(!t)return;
     const isDesktop=window.matchMedia('(pointer:fine)').matches;
     const searchLine=isDesktop
-      ?'<em>Click</em> a glowing object to spend a Candlelight and search it.'
-      :'<em>Tap</em> a glowing object to spend a Candlelight and search it.';
-    const scrollLine=isDesktop
-      ?'<p>Use the <em>hand area scroll wheel</em> to spread or constrict your cards.</p>'
-      :'';
-    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+'</p>'+scrollLine+'</div>'
-      +'<div class="attic-tut-card"><h4>Candlelight</h4><p>You have <em>'+candleCount+'</em> candle'+(candleCount===1?'':'s')+' — each search costs one. When they run out, you return to the table.</p></div>'
+      ?'<em>Click</em> glowing objects to search them.'
+      :'<em>Tap</em> glowing objects to search them.';
+    const lookLine=isDesktop
+      ?'<p>Use the attic view to look around for anything that can be searched.</p>'
+      :'<p>Swipe the attic view to look around for anything that can be searched.</p>';
+    t.innerHTML='<div class="attic-tut-card"><h4>The Attic</h4><p>'+searchLine+' Actions here do not spend Obals.</p>'+lookLine+'</div>'
+      +'<div class="attic-tut-card"><h4>Return to the Table</h4><p>When you are done, press the <em>Return to Table</em> tabletop button at the bottom of the screen.</p></div>'
       +'<button id="atticTutDismiss">I understand</button>';
     const btn=t.querySelector('#atticTutDismiss');
     if(btn)btn.addEventListener('click',function(e){e.stopPropagation();dismissAtticTutorial();});
@@ -3802,14 +4463,14 @@ function setSfxVol(v){_sfxVol=v;}
   }
   function dismissAtticTutorial(){
     const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
-    try{localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
+    try{localStorage.setItem('tlr_attic_tutored_obals','1');localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
   }
-      window.tlrScoreToCandlelight=candlesFromScore;
+      window.tlrScoreToObals=candlesFromScore;
   window.tlrDebugEnterAttic=enter;
   window.tlrDebugLeaveAttic=leave;
   window.tlrEnterAtticAfterReading=function(score){enter(candlesFromScore(Number(score)||0),true);};
   document.addEventListener('keydown',function(e){if(e.shiftKey&&e.key==='A'){inAttic?leave():enter(3,false);}});
-  window.addEventListener('DOMContentLoaded',function(){const scene=document.getElementById('atticScene');if(scene)scene.addEventListener('click',function(){if(inAttic&&!awaitingPickup)leave();});});
+  window.addEventListener('DOMContentLoaded',function(){const btn=document.getElementById('atticTableReturn');if(btn)btn.addEventListener('click',function(e){e.stopPropagation();leave();});});
 })();
 
 
