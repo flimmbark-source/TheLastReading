@@ -13,6 +13,14 @@ function rep(oldText, newText, label) {
     console.warn('  WARN: not found —', label);
   }
 }
+function repSoft(oldText, newText, label) {
+  const count = html.split(oldText).length - 1;
+  if (count > 0) {
+    html = html.split(oldText).join(newText);
+    console.log('  ✓', label, `(${count})`);
+    changed += count;
+  }
+}
 
 function applyAdditivePatternMultPatch() {
   const marker = '/* additive pattern mult patch */';
@@ -50,7 +58,7 @@ function applyAdditivePatternMultPatch() {
 }
 
 function applyFullCourtKindPatch() {
-  const marker = '/* full court mult and combined kind patch */';
+  const marker = '/* full court mult and combined kind patch v2 */';
   if (html.includes(marker)) {
     console.log('Full Court / combined Kind patch already present, skipping.');
     return;
@@ -58,11 +66,18 @@ function applyFullCourtKindPatch() {
 
   console.log('Full Court / combined Kind patch:');
 
-  // 3 and 4 of a Kind should be one pattern family, not two independently-stacking melds.
+  // 3 and 4 of a Kind should be one pattern family with a flat bonus each time it activates.
+  // A 4-card match triggers the same (3/4) of a Kind pattern twice, instead of using a larger +7 tier.
+  const flatKindScoring = `if(a.length>=3){let x=5+rankBonus;m.push(['(3/4) of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult+=rankMult-1}\n    if(a.length>=4){let x=5+rankBonus;m.push(['(3/4) of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult+=rankMult-1}`;
   rep(
     `if(a.length>=3){let x=5+rankBonus;m.push(['Three of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult+=rankMult-1}\n    if(a.length>=4){let x=7+rankBonus;m.push(['Four of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult+=rankMult-1}`,
+    flatKindScoring,
+    'Combine 3/4 of a Kind into one flat per-activation meld'
+  );
+  repSoft(
     `if(a.length>=3){let isFour=a.length>=4;let x=(isFour?7:5)+rankBonus;m.push(['(3/4) of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult+=rankMult-1}`,
-    'Combine 3/4 of a Kind into a single exclusive meld'
+    flatKindScoring,
+    'Convert older combined Kind tier to flat repeat activation'
   );
 
   // Full Court should use +0.25 Mult while Royal Court keeps the current court multiplier.
@@ -89,7 +104,7 @@ function applyFullCourtKindPatch() {
     'Combined Kind meld slot highlighting'
   );
 
-  // Score sheet: one row for (3/4) of a Kind and a lower Full Court mult.
+  // Score sheet: one row for (3/4) of a Kind, one flat bonus, and a lower Full Court mult.
   rep(
     `const courtMult=+(1.5+(u.court_mult||0)*0.25).toFixed(2);`,
     `const fullCourtMult=+(1.25+(u.court_mult||0)*0.25).toFixed(2);\n    const royalCourtMult=+(1.5+(u.court_mult||0)*0.25).toFixed(2);`,
@@ -97,8 +112,13 @@ function applyFullCourtKindPatch() {
   );
   rep(
     `      ['Three of a Kind','3 matching court ranks','+'+(5+rankBonus),fmtBonus(rankMult-1)],\n      ['Four of a Kind','4 matching court ranks','+'+(7+rankBonus),fmtBonus(rankMult-1)],\n      ['Full Court (3/4)','Consecutive ranks','+'+(10+courtChips),fmtBonus(courtMult-1)],\n      ['Royal Court (3/4)','Consecutive ranks, same suit','+'+(10+courtChips),fmtBonus(courtMult-1)],`,
-    `      ['(3/4) of a Kind','3 or 4 matching court ranks','+'+(5+rankBonus)+' / +'+(7+rankBonus),fmtBonus(rankMult-1)],\n      ['Full Court (3/4)','Consecutive ranks','+'+(10+courtChips),fmtBonus(fullCourtMult-1)],\n      ['Royal Court (3/4)','Consecutive ranks, same suit','+'+(10+courtChips),fmtBonus(royalCourtMult-1)],`,
+    `      ['(3/4) of a Kind','3 or 4 matching court ranks','+'+(5+rankBonus),fmtBonus(rankMult-1)],\n      ['Full Court (3/4)','Consecutive ranks','+'+(10+courtChips),fmtBonus(fullCourtMult-1)],\n      ['Royal Court (3/4)','Consecutive ranks, same suit','+'+(10+courtChips),fmtBonus(royalCourtMult-1)],`,
     'Score sheet rows for combined Kind and Full Court +0.25 Mult'
+  );
+  repSoft(
+    `      ['(3/4) of a Kind','3 or 4 matching court ranks','+'+(5+rankBonus)+' / +'+(7+rankBonus),fmtBonus(rankMult-1)],`,
+    `      ['(3/4) of a Kind','3 or 4 matching court ranks','+'+(5+rankBonus),fmtBonus(rankMult-1)],`,
+    'Remove obsolete +7 display from combined Kind row'
   );
 
   html = html.replace('</script>', `${marker}\n</script>`);
