@@ -466,7 +466,6 @@ upsertBlock(
     const target=softClamp(startOffset+dx*DEG_PER_PX_SWIPE);
     applyOffset(target);
     pushSample(performance.now(),target);
-    applyLag(releaseVel());
   };
   const endGesture=()=>{
     const wasSlide=(mode==='slide'),wasPinch=(mode==='pinch');

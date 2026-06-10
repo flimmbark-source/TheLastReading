@@ -211,6 +211,7 @@ rep(
     const now=performance.now();
     pushSample(now,target);
     pushLiftSample(now,y);
+    applyLag(releaseVel());
   };`,
   'Swipe handler follows x/y drag continuously'
 );
