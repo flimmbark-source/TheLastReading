@@ -7433,8 +7433,17 @@ document.addEventListener('touchend',()=>{_pinch=null;});
   document.addEventListener('pointercancel',_shCancel,true);
 }
 
-startReading();
-if(!tutDone)setTimeout(()=>tutShow(0),400);
+// Phase 16: startup lives in src/app/main.mjs (loaded as a module below).
+// The fallback timer keeps the game playable if module loading fails.
+window.tlrLegacyBoot=function(){
+  startReading();
+  if(!tutDone)setTimeout(()=>tutShow(0),400);
+};
+window.__tlrBootFallback=setTimeout(function(){
+  if(window.__tlrBooted)return;
+  window.__tlrBooted=true;
+  window.tlrLegacyBoot();
+},1500);
 
 // ── Background music ──
 // Single persistent Audio element — iOS requires the element to be
@@ -8860,34 +8869,6 @@ function setSfxVol(v){_sfxVol=v;}
   }
 })();
 </script>
-<script type="module">
-// Architecture diagnostics bridge (Phase 4). Mounts the new store beside the
-// live game without controlling it. If module loading fails (e.g. file://),
-// the legacy game is unaffected and tlrArchitectureSync() stays a no-op.
-import { installLiveMirror } from './src/app/liveMirror.mjs';
-import * as abilitySystem from './src/systems/abilities.mjs';
-import * as shopSystem from './src/systems/shop.mjs';
-try {
-  installLiveMirror(window);
-  // Phase 10: the ability modal targets through the pure ability system.
-  window.tlrAbilities = abilitySystem;
-  // Phase 12: the market generates offers and costs through the shop system.
-  window.tlrShop = shopSystem;
-  // Phase 6: hand selection ownership to the reducer.
-  window.tlrBindSelectionToStore();
-  // Phase 14: seed archive save state from the live storage keys.
-  try {
-    window.tlrStore.dispatch({ type: window.tlrActions.SYNC_LEGACY_PERSIST, persist: {
-      unlockedFragments: JSON.parse(localStorage.getItem('tlr_inv_unlocked') || '[]'),
-      discoveredArchiveItems: JSON.parse(localStorage.getItem('tlr_attic_found_items') || '[]'),
-    } });
-  } catch (seedError) { /* corrupted local keys fall back to empty archive state */ }
-  // Seed the store with the current legacy state so the mirror starts in sync.
-  window.tlrSyncArchitectureToLiveSnapshot({ quiet: true });
-  window.dispatchEvent(new Event('tlr-architecture-bridge-ready'));
-} catch (err) {
-  console.warn('[TLR architecture] Live mirror failed to mount', err);
-}
-</script>
+<script type="module" src="src/app/main.mjs"></script>
 </body>
 </html>
