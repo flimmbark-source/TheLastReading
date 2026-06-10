@@ -2,6 +2,25 @@ const fs = require('fs');
 const file = 'index.html';
 let html = fs.readFileSync(file, 'utf8');
 
+function removeEarlyArchivesTutorialStep(){
+  const before=html;
+  // Remove any opening-tutorial step object that contains the old Archives copy.
+  // This catches single-line tutorial arrays and multiline object literals.
+  const patterns=[
+    /,?\s*\{[^{}]*(?:sel|target)\s*:\s*['\"][^'\"]*(?:invTab|invWrap|Archives)[^'\"]*['\"][^{}]*(?:The\s+Archives\s+hold\s+items\s+discovered)[^{}]*\}\s*,?/gi,
+    /,?\s*\{[^{}]*(?:The\s+Archives\s+hold\s+items\s+discovered)[^{}]*(?:sel|target)\s*:\s*['\"][^'\"]*(?:invTab|invWrap|Archives)[^'\"]*['\"][^{}]*\}\s*,?/gi,
+    /,?\s*\{[^{}]*(?:The\s+Archives\s+hold\s+items\s+discovered)[^{}]*\}\s*,?/gi
+  ];
+  for(const p of patterns)html=html.replace(p,function(m){
+    const startsComma=/^\s*,/.test(m),endsComma=/,\s*$/.test(m);
+    // If the removed object sat between two entries, leave one comma behind.
+    return startsComma&&endsComma?',':'';
+  });
+  if(html!==before)console.log('Removed old Archives tutorial step from opening tutorial.');
+}
+
+removeEarlyArchivesTutorialStep();
+
 const cssMarker = '/* Archives transition force-close patch */';
 if (!html.includes(cssMarker)) {
   const css = `
@@ -45,7 +64,7 @@ if (html.includes(leaveNeedle)) html = html.replace(leaveNeedle, leaveReplacemen
 // The old tutorial used tlr_tut_inv_* keys. Those are now suppressed and the moved hint
 // uses tlr_tut_archives_after_attic instead.
 const helperNeedle = "  function candlesFromScore(score){if(score>=1000)return 7;";
-const helpers = "  function suppressOldArchivesTutorial(){try{['tlr_tut_inv_open','tlr_tut_inv_name','tlr_tut_inv_detail'].forEach(function(k){localStorage.setItem(k,'1')})}catch(e){}}\n  suppressOldArchivesTutorial();\n  function foundItems(){try{return JSON.parse(localStorage.getItem('tlr_attic_found_items')||'[]')}catch(e){return []}}\n  function atticItemType(o){try{const items=[...(typeof INV_ITEMS!=='undefined'?INV_ITEMS:[]),...(typeof INV_FRAGMENTS!=='undefined'?Object.values(INV_FRAGMENTS):[])];const hit=items.find(function(item){return item&&item.id===o.itemId});return (hit&&(hit.type||hit.kind||hit.category))||o.itemType||'Item';}catch(e){return o.itemType||'Item'}}\n  function showArchivesHintAfterAttic(){let should=false;try{should=localStorage.getItem('tlr_pending_archives_hint_after_attic')==='1'&&!localStorage.getItem('tlr_tut_archives_after_attic');localStorage.removeItem('tlr_pending_archives_hint_after_attic');if(should){localStorage.setItem('tlr_tut_archives_after_attic','1');suppressOldArchivesTutorial();}}catch(e){}if(!should)return;const root=document.getElementById('invWrap')||document.body;document.querySelectorAll('.inv-tut.archives-return-hint').forEach(function(el){el.remove()});const h=document.createElement('div');h.className='inv-tut archives-return-hint';h.innerHTML='Your discovery was added to the <b>Archives</b>. Pull this tab open to inspect it.';root.appendChild(h);setTimeout(function(){h.remove()},6800)}\n  function candlesFromScore(score){if(score>=1000)return 7;";
+const helpers = "  function suppressOldArchivesTutorial(){try{['tlr_tut_inv_open','tlr_tut_inv_name','tlr_tut_inv_detail'].forEach(function(k){localStorage.setItem(k,'1')})}catch(e){}}\n  suppressOldArchivesTutorial();\n  function foundItems(){try{return JSON.parse(localStorage.getItem('tlr_attic_found_items')||'[]')}catch(e){return []}}\n  function atticItemType(o){try{const items=[...(typeof INV_ITEMS!=='undefined'?INV_ITEMS:[]),...(typeof INV_FRAGMENTS!=='undefined'?Object.values(INV_FRAGMENTS):[])];const hit=items.find(function(item){return item&&item.id===o.itemId});return (hit&&(hit.type||hit.kind||hit.category))||o.itemType||'Item';}catch(e){return o.itemType||'Item'}}\n  function showArchivesHintAfterAttic(){let should=false;try{should=localStorage.getItem('tlr_pending_archives_hint_after_attic')==='1'&&!localStorage.getItem('tlr_tut_archives_after_attic');localStorage.removeItem('tlr_pending_archives_hint_after_attic');if(should){localStorage.setItem('tlr_tut_archives_after_attic','1');suppressOldArchivesTutorial();}}catch(e){}if(!should)return;const root=document.getElementById('invWrap')||document.body;document.querySelectorAll('.inv-tut.archives-return-hint').forEach(function(el){el.remove()});const h=document.createElement('div');h.className='inv-tut archives-return-hint';h.innerHTML='The <b>Archives</b> hold items discovered in the attic. Pull this tab open to inspect them.';root.appendChild(h);setTimeout(function(){h.remove()},6800)}\n  function candlesFromScore(score){if(score>=1000)return 7;";
 if (html.includes(helperNeedle) && !html.includes('function atticItemType(o)')) {
   html = html.replace(helperNeedle, helpers);
 }
@@ -68,6 +87,11 @@ if (html.includes('function foundItems(){try{return JSON.parse(localStorage.getI
     "  function suppressOldArchivesTutorial(){try{['tlr_tut_inv_open','tlr_tut_inv_name','tlr_tut_inv_detail'].forEach(function(k){localStorage.setItem(k,'1')})}catch(e){}}\n  suppressOldArchivesTutorial();\n  function foundItems(){try{return JSON.parse(localStorage.getItem"
   );
 }
+// Upgrade the previous post-attic hint text to the moved Archives copy.
+html = html.replace(
+  "Your discovery was added to the <b>Archives</b>. Pull this tab open to inspect it.",
+  "The <b>Archives</b> hold items discovered in the attic. Pull this tab open to inspect them."
+);
 
 // Found attic items should stay visible in their opened state, but become inactive.
 // Replace the older behavior that removed found props from the scene.
