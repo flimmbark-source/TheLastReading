@@ -259,11 +259,6 @@ upsertBlock(
   const OMEGA_CENTER=0.030,OMEGA_EDGE=0.016;
   const ZETA_CENTER=0.88,ZETA_EDGE=0.70;
   const LAG_EPS=0.02,VEL_EPS=0.0005;
-  // Idle oscillation: slow sine wave per card, phase-shifted by slot so the
-  // fan gets a gentle ripple during the hand breathing animation.
-  const IDLE_AMP=0.18;       // degrees — subtle nudge, springs amplify the drift
-  const IDLE_FREQ=0.000095;  // rad/ms — ~66s full period, unhurried
-  const IDLE_SLOT_PHASE=0.9; // radians between adjacent card phases
   const clearUndulation=()=>{
     if(springRaf){cancelAnimationFrame(springRaf);springRaf=null;}
     const h=handEl();if(!h)return;
@@ -279,7 +274,6 @@ upsertBlock(
     const cards=cardsList();const n=cards.length;if(!n){clearUndulation();return;}
     const maxSlot=Math.max(1,(n-1)/2);
     const steps=Math.ceil(dt/12),sdt=dt/steps;
-    const isSwiping=mode==='slide'||momentumRaf!=null;
     let active=false;
     for(let i=0;i<n;i++){
       const el=cards[i];
@@ -289,11 +283,9 @@ upsertBlock(
       const omega=OMEGA_CENTER+(OMEGA_EDGE-OMEGA_CENTER)*edge;
       const zeta=ZETA_CENTER+(ZETA_EDGE-ZETA_CENTER)*edge;
       const k=omega*omega,c=2*zeta*omega;
-      // During idle, each spring chases a slowly oscillating per-card target.
-      const target=isSwiping?offset:offset+Math.sin(now*IDLE_FREQ+i*IDLE_SLOT_PHASE)*IDLE_AMP;
-      for(let s=0;s<steps;s++){st.v+=(k*(target-st.p)-c*st.v)*sdt;st.p+=st.v*sdt;}
+      for(let s=0;s<steps;s++){st.v+=(k*(offset-st.p)-c*st.v)*sdt;st.p+=st.v*sdt;}
       const lag=st.p-offset;
-      const settled=!isSwiping&&Math.abs(st.p-target)<LAG_EPS&&Math.abs(st.v)<VEL_EPS;
+      const settled=Math.abs(lag)<LAG_EPS&&Math.abs(st.v)<VEL_EPS;
       if(settled){
         el.style.setProperty('--lag','0deg');
         el.style.setProperty('--drift-x','0px');
@@ -305,11 +297,8 @@ upsertBlock(
         el.style.setProperty('--drift-y',((-Math.abs(st.v))*130*edge).toFixed(1)+'px');
       }
     }
-    // hand-undulating disables transitions — only keep it on during swipe/momentum
-    // so card-selection lift animations still work during idle.
-    if(!isSwiping)h.classList.remove('hand-undulating');
-    // Always keep loop running so the idle wave ticks continuously.
-    springRaf=requestAnimationFrame(undulationStep);
+    if(isSwiping||active)springRaf=requestAnimationFrame(undulationStep);
+    else h.classList.remove('hand-undulating');
   };
   const kickUndulation=()=>{
     if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
@@ -322,15 +311,6 @@ upsertBlock(
     }
     if(springRaf){cancelAnimationFrame(springRaf);springRaf=null;}
     h.classList.add('hand-undulating');
-    springLastT=performance.now();
-    springRaf=requestAnimationFrame(undulationStep);
-  };
-  const startIdleUndulation=()=>{
-    if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-    if(springRaf)return;
-    const h=handEl();if(!h)return;
-    // No hand-undulating class here — idle runs with transitions enabled
-    // so card selections still animate normally.
     springLastT=performance.now();
     springRaf=requestAnimationFrame(undulationStep);
   };
@@ -427,7 +407,6 @@ upsertBlock(
     applySpacing(s);
     cachedCap=null;
     applyOffset(clampOffset(offset));
-    if(n>0)startIdleUndulation();
   };
   // ── Swipe velocity sampling (sample stream is in offset-degrees) ──
   const pushSample=(t,d)=>{samples.push({t,d});while(samples.length&&samples[0].t<t-SAMPLE_WINDOW)samples.shift();};
