@@ -530,25 +530,31 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
   top:0;
   margin:0!important;
   --slot:0;
-  --total-a:calc(var(--slot) * var(--track-spacing) + var(--track-offset));
+  --lag:0deg;
+  --bob-y:0px;
+  --total-a:calc(var(--slot) * var(--track-spacing) + var(--track-offset) + var(--lag));
   --arc-x:calc(var(--track-radius) * sin(var(--total-a)));
   --arc-y:calc(var(--track-radius) * (1 - cos(var(--total-a))));
   --lift-y:0px;
   --total-rot:var(--total-a);
-  transform:translate(calc(-50% + var(--arc-x)),calc(var(--arc-y) + var(--lift-y))) rotate(var(--total-rot))!important;
+  transform:translate(calc(-50% + var(--arc-x)),calc(var(--arc-y) + var(--lift-y) + var(--bob-y))) rotate(var(--total-rot))!important;
   transform-origin:50% 50%!important;
   transition:transform .32s cubic-bezier(.2,.85,.25,1);
 }
-.hand.hand-scroll-dragging .card{transition:none}
+.hand.hand-scroll-dragging .card,.hand.hand-undulating .card{transition:none}
 .hand .card.sel,.hand .card.ability-picked,.hand .card.purge-picked{
   --lift-y:-92px;
   --total-rot:0deg;
+  --lag:0deg!important;
+  --bob-y:0px!important;
   z-index:999!important;
 }
 @media(hover:hover){
   .hand:not(.has-selected-card) .card:hover{
     --lift-y:-92px;
     --total-rot:0deg;
+    --lag:0deg!important;
+    --bob-y:0px!important;
     z-index:999!important;
   }
 }
@@ -2882,7 +2888,7 @@ function setSfxVol(v){_sfxVol=v;}
   // ── rAF coalescing for pointermove + observer recheck ──
   let pendingMoveEv=null,moveRaf=null,recheckRaf=null;
   // cachedView and cachedCardW survive per-render busts — they only change on resize.
-  const invalidateCache=()=>{cachedCap=null;cachedRadius=null;cachedCount=-1;};
+  const invalidateCache=()=>{cachedCap=null;cachedRadius=null;cachedCount=-1;cachedCards=null;};
   try{if(localStorage.getItem('tlr_hand_swiped'))window.__handHasBeenSwiped=true;}catch(e){}
   const handEl=()=>{if(hand&&hand.isConnected)return hand;hand=document.querySelector('.hand');return hand;};
   const zoneEl=()=>{if(zone&&zone.isConnected)return zone;zone=document.getElementById('handSwipeZone');return zone;};
@@ -2942,6 +2948,79 @@ function setSfxVol(v){_sfxVol=v;}
   };
   const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;if(window.__handHasBeenSwiped){z.classList.remove('has-overflow');return;}z.classList.toggle('has-overflow',slideCap()>1);};
   const cancelMomentum=()=>{if(momentumRaf){cancelAnimationFrame(momentumRaf);momentumRaf=null;}};
+  // ── Undulation: per-card underdamped springs trail the master offset, so the
+  // fan ripples instead of sliding as a rigid block. Each card's spring chases
+  // `offset`; its deviation is written as --lag, which feeds the card's arc
+  // angle — so position AND rotation trail together and the fan visibly
+  // ruffles. Center cards are stiff, edge cards softer and underdamped,
+  // giving a center-out wave with slight overshoot at the tips. Springs may
+  // overshoot the slide cap by design (rubber-band edge). --bob-y adds a small
+  // lift proportional to each card's angular speed.
+  let springRaf=null,springLastT=0,springState=new WeakMap(),cachedCards=null;
+  const OMEGA_CENTER=0.045,OMEGA_EDGE=0.022;   // spring frequency (rad/ms)
+  const ZETA_CENTER=0.92,ZETA_EDGE=0.55;       // damping ratio (1 = no overshoot)
+  const LAG_EPS=0.02,SPRING_VEL_EPS=0.0005;    // settle thresholds (deg, deg/ms)
+  const BOB_PER_VEL=80,BOB_MAX=6;              // px of lift per deg/ms of card speed
+  const cardsList=()=>{
+    if(cachedCards)return cachedCards;
+    const h=handEl();
+    cachedCards=h?[...h.querySelectorAll('.card')]:[];
+    return cachedCards;
+  };
+  const clearUndulation=()=>{
+    const h=handEl();if(!h)return;
+    h.classList.remove('hand-undulating');
+    h.querySelectorAll('.card').forEach(el=>{el.style.setProperty('--lag','0deg');el.style.setProperty('--bob-y','0px');});
+  };
+  const undulationStep=now=>{
+    springRaf=null;
+    const h=handEl();
+    // Card reorder-drag owns per-card transforms (and FLIP measurements) — bail out.
+    if(!h||window.__handReorderActive){clearUndulation();return;}
+    const dt=Math.min(40,Math.max(1,now-springLastT));
+    springLastT=now;
+    const cards=cardsList();
+    const n=cards.length;
+    if(!n){clearUndulation();return;}
+    const maxSlot=Math.max(1,(n-1)/2);
+    // Substep large frames so omega*dt stays well inside Euler stability.
+    const steps=dt>20?2:1,sdt=dt/steps;
+    const bobBlend=1-Math.exp(-dt*0.012);
+    let active=false;
+    for(let i=0;i<n;i++){
+      const el=cards[i];
+      let st=springState.get(el);
+      if(!st){st={p:offset,v:0,bob:0};springState.set(el,st);}
+      const edge=Math.abs(i-(n-1)/2)/maxSlot;  // 0 at center, 1 at fan tips
+      const omega=OMEGA_CENTER+(OMEGA_EDGE-OMEGA_CENTER)*edge;
+      const zeta=ZETA_CENTER+(ZETA_EDGE-ZETA_CENTER)*edge;
+      const k=omega*omega,c=2*zeta*omega;
+      for(let s=0;s<steps;s++){
+        st.v+=(k*(offset-st.p)-c*st.v)*sdt;
+        st.p+=st.v*sdt;
+      }
+      st.bob+=(Math.min(BOB_MAX,Math.abs(st.v)*BOB_PER_VEL)-st.bob)*bobBlend;
+      let lag=st.p-offset;
+      if(Math.abs(lag)<LAG_EPS&&Math.abs(st.v)<SPRING_VEL_EPS&&st.bob<0.1){
+        st.p=offset;st.v=0;st.bob=0;lag=0;
+      }else active=true;
+      el.style.setProperty('--lag',lag?lag.toFixed(3)+'deg':'0deg');
+      el.style.setProperty('--bob-y',st.bob>0.05?(-st.bob).toFixed(2)+'px':'0px');
+    }
+    if(active||mode==='slide'||momentumRaf!=null)springRaf=requestAnimationFrame(undulationStep);
+    else h.classList.remove('hand-undulating');
+  };
+  const kickUndulation=()=>{
+    if(springRaf!=null)return;
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const h=handEl();if(!h)return;
+    // Loop only exits with all lags at 0, so re-seed springs at the current
+    // offset — guards against offset shifts (layout clamps) while idle.
+    springState=new WeakMap();
+    h.classList.add('hand-undulating');
+    springLastT=performance.now();
+    springRaf=requestAnimationFrame(undulationStep);
+  };
   const inHandArea=el=>el instanceof Element&&!!el.closest('#hand,.handDock,#handSwipeZone');
   const inSwipeZone=el=>{const z=zoneEl();return!!z&&el instanceof Element&&(el===z||z.contains(el));};
   // ── Auto-fit: choose a per-card spacing (in deg) so that all cards fit in the dock. ──
@@ -3068,6 +3147,7 @@ function setSfxVol(v){_sfxVol=v;}
   const startSlideMode=ev=>{
     cancelMomentum();
     mode='slide';
+    kickUndulation();
     startX=ev.clientX;startOffset=offset;
     samples.length=0;pushSample(performance.now(),offset);
     const z=zoneEl();if(z){z.classList.add('dragging');z.classList.remove('pinching');}
