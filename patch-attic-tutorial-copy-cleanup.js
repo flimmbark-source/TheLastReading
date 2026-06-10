@@ -27,6 +27,29 @@ function reg(pattern, newText, label) {
     console.warn('  WARN: not found —', label);
   }
 }
+function removeOpeningArchivesTutorialStep(){
+  const archiveCopy = String.raw`The\s*(?:<b>)?\s*Archives\s*(?:<\/b>)?\s+hold\s+items\s+discovered`;
+  const before = html;
+  const patterns = [
+    new RegExp(String.raw`,?\s*\{[^{}]*(?:sel|target)\s*:\s*['"][^'"]*(?:invTab|invWrap|Archives)[^'"]*['"][^{}]*` + archiveCopy + String.raw`[^{}]*\}\s*,?`, 'gi'),
+    new RegExp(String.raw`,?\s*\{[^{}]*` + archiveCopy + String.raw`[^{}]*(?:sel|target)\s*:\s*['"][^'"]*(?:invTab|invWrap|Archives)[^'"]*['"][^{}]*\}\s*,?`, 'gi'),
+    new RegExp(String.raw`,?\s*\{[^{}]*` + archiveCopy + String.raw`[^{}]*\}\s*,?`, 'gi')
+  ];
+  for (const p of patterns) {
+    html = html.replace(p, function(m){
+      const startsComma = /^\s*,/.test(m);
+      const endsComma = /,\s*$/.test(m);
+      return startsComma && endsComma ? ',' : '';
+    });
+  }
+  // If the copy was generated outside an object, neutralize it in the opening-tutorial layer.
+  // The post-attic-return hint is reinserted by patch-attic-state-fixes, so this text is not lost.
+  html = html.replace(/The\s*(?:<b>)?\s*Archives\s*(?:<\/b>)?\s+hold\s+items\s+discovered[^'"`<]*/gi, '');
+  if (html !== before) {
+    console.log('  ✓ Removed Archives copy from opening tutorial');
+    changed++;
+  }
+}
 
 console.log('Attic tutorial/copy cleanup:');
 
@@ -107,6 +130,8 @@ html = html.split('spend a Obals and search it.').join('search it.');
 html = html.split('Spend Candlelight to search.').join('Search freely, then return to the table.');
 html = html.split('Spend Obals to search.').join('Search freely, then return to the table.');
 html = html.split('The candle is almost gone.').join('');
+
+removeOpeningArchivesTutorialStep();
 
 html = html.replace('</style>', `${marker}\n</style>`);
 fs.writeFileSync(file, html);
