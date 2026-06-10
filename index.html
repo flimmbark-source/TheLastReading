@@ -5322,39 +5322,8 @@ let hintSettings={patterns:true,relics:false};
 function toggleHintSetting(key,val){hintSettings[key]=val;_hintsCache.clear();render();}
 let state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mull:false,busy:false,abilitySelect:null,purgeSelect:null};
 const $=s=>document.querySelector(s), shuffle=a=>{for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
-const cardHTMLCache=new Map();
 function buildDeck(){let id=0,d=[];for(const [num,name,pts,trull,ab] of MAJORS)d.push({uid:id++,type:'major',id:'major_'+num,num,number:num,name:ROMAN[num]+' '+name,points:pts,trull,ability:ab});for(const suit of SUITS)for(const [rank,pts,ab]of COURTS)d.push({uid:id++,type:'court',id:'court_'+suit+'_'+rank,suit,rank,name:rank+' of '+suit,points:pts,ability:ab});return d}
-function title(c){if(c.type==='major')return ROMAN[c.num]+' · '+c.name.replace(/^[IVXLCDM\d]+\s+/,'');if(c.type==='court')return c.rank+' of '+GLYPH[c.suit];return c.name}
-function meanings(c){if(c.type==='major')return MEAN[c.id]||['',''];if(c.type==='court')return COURT_MEAN[c.rank]||['',''];return SUIT_MEAN[c.suit]||['','']}
-function symbol(c){return c.type==='major'?(MAJOR_G[c.num]||'✦'):GLYPH[c.suit]}
-const CARD_SHEET={
-  major_0:[1,0],major_1:[1,1],major_2:[1,2],major_3:[1,3],
-  major_4:[2,0],major_5:[2,1],major_6:[2,2],major_7:[2,3],
-  major_8:[3,0],major_9:[3,1],major_10:[3,2],major_11:[3,3],
-  major_12:[4,0],major_13:[4,1],major_14:[4,2],major_15:[4,3],
-  major_16:[5,0],major_17:[5,1],major_18:[5,2],major_19:[5,3],
-  major_20:[6,0],major_21:[6,1],
-  court_Wands_Page:[7,0],court_Cups_Page:[7,1],court_Swords_Page:[7,2],court_Pentacles_Page:[7,3],
-  court_Wands_Knight:[8,0],court_Cups_Knight:[8,1],court_Swords_Knight:[8,2],court_Pentacles_Knight:[8,3],
-  court_Wands_Queen:[9,0],court_Cups_Queen:[9,1],court_Swords_Queen:[9,2],court_Pentacles_Queen:[9,3],
-  court_Wands_King:[10,0],court_Cups_King:[10,1],court_Swords_King:[10,2],court_Pentacles_King:[10,3],
-};
-function applyCardPhoto(el,card){
-  const s=CARD_SHEET[card.id];
-  if(!s)return;
-  const[sheet,pos]=s;
-  const col=pos%2,row=Math.floor(pos/2);
-  el.classList.add('photo');
-  el.style.backgroundImage=`url(sheet${String(sheet).padStart(2,'0')}.png)`;
-  el.style.backgroundPosition=`${col*100}% ${row*100}%`;
-}
-function cardHTML(c){
-  if(cardHTMLCache.has(c.uid))return cardHTMLCache.get(c.uid);
-  const html=`<div class="title">${title(c)}</div><div class="art"><div class="sym">${symbol(c)}</div><div class="plaque">${TXT[c.ability]}</div><div class="seal tr">${c.points}</div></div>`;
-  cardHTMLCache.set(c.uid,html);
-  return html;
-}
-function sortCards(cards){return [...cards].sort((a,b)=>{let o={major:0,court:1};if(o[a.type]!==o[b.type])return o[a.type]-o[b.type];if(a.type==='major')return a.num-b.num;return(a.suit||'').localeCompare(b.suit||'')||RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank)})}
+// Card renderer moved to src/ui/renderCard.mjs (Phase 15).
 function maxHand(){return 5+persist.up.hand-(persist.relics.includes('fool_reversed')?1:0)}function maxDiscards(){return 3+persist.up.discards}function hasMull(){return persist.up.mulligan>0}function maxMull(){return persist.up.mulligan||0}
 function drawN(n){let drew=0;for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;state.hand.push(state.deck.shift());drew++}if(drew)playSound('draw')}function drawTo(n){let drew=0;while(state.hand.length<n&&state.deck.length){state.hand.push(state.deck.shift());drew++}if(drew)playSound('draw')}
 function getUpFromTable(){
@@ -5815,32 +5784,9 @@ function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skip
   if(state.resonationBonus&&(state.resonationBonus.chips||state.resonationBonus.mult)){const rb=state.resonationBonus;m.push(['⚷ '+(rb.name||'Resonation'),rb.chips,rb.mult,'add']);chips+=rb.chips;mult+=rb.mult;}
   return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}
 }
-function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';const fmt=v=>('+'+Number(v).toFixed(2)).replace(/\.?0+$/,'');const shown=additive?mult:mult-1;if(chips&&mult)return`+${chips} ${fmt(shown)}`;if(chips)return`+${chips}`;if(mult)return`${fmt(shown)}`;return'';}
-function cleanName(c){return c.type==='major'?c.name.split(' ').slice(1).join(' '):c.name}
-function normMeldName(name){if(name.startsWith('Sequence'))return 'Sequence';if(name.startsWith('Royal Court'))return 'Royal Court';if(name.startsWith('Full Court'))return 'Full Court';if(name.startsWith('Three of a Kind'))return 'Three of a Kind';if(name.startsWith('Four of a Kind'))return 'Four of a Kind';return name}
-function hintGroup(label){if(label==='Sequence'||label==='Path of the Magi')return 'hint-major';if(label==='Royal Court')return 'hint-suit';if(label==='Three of a Kind'||label==='Four of a Kind')return 'hint-rank';if(label==='Full Court')return 'hint-court';return 'hint-gold'}
+// Meld/ghost text renderer moved to src/ui/renderGhost.mjs (Phase 15).
+// Hint renderer moved to src/ui/renderHints.mjs (Phase 15).
 function runLengthContaining(nums,n){let set=new Set(nums),best=0;for(let x of set){if(!set.has(x-1)){let y=x,len=0,has=false;while(set.has(y)){if(y===n)has=true;len++;y++}if(has)best=Math.max(best,len)}}return best}
-function hintRGB(group){
-  const map={
-    'hint-major':'142,112,255',
-    'hint-suit':'94,214,136',
-    'hint-rank':'255,121,78',
-    'hint-court':'245,218,164',
-    'hint-gold':'255,217,120'
-  };
-  return map[group]||map['hint-gold'];
-}
-function colorKeyRGB(key){
-  if(!key)return null;
-  const SUIT={Cups:'80,220,180',Wands:'255,155,70',Swords:'100,185,255',Pentacles:'185,240,90'};
-  const RANK={Page:'255,121,78',Knight:'220,90,220',Queen:'255,190,70',King:'80,215,215'};
-  const SEQ=['142,112,255','200,90,255','100,150,255','220,130,255'];
-  if(key.startsWith('flush:'))return SUIT[key.slice(6)]||'94,214,136';
-  if(key.startsWith('rank:'))return RANK[key.slice(5)]||'255,121,78';
-  if(key.startsWith('seq:')){const s=parseInt(key.slice(4));return SEQ[s%SEQ.length]}
-  return null;
-}
-function hintColor(h){return colorKeyRGB(h.colorKey)||hintRGB(h.group||hintGroup(h.label))}
 function multiHintShadow(hints,level){
   const ring=level==='complete'?'1px':'0.75px';
   const parts=[];
@@ -5940,19 +5886,6 @@ function cardHints(card, poolCards=null){
   return hints;
 }
 function cardHint(card,poolCards=null){return cardHints(card,poolCards)[0]||null}
-function applyHint(el,card,poolCards=null){
-  let hints=cardHints(card,poolCards);
-  if(!hints.length)return;
-  const hasComplete=hints.some(h=>h.level==='complete');
-  const primary=hints.find(h=>h.level==='complete')||hints[0];
-  el.classList.add(hasComplete?'hint-complete':'hint-card',primary.group||hintGroup(primary.label));
-  el.style.setProperty('--hint-rgb',hintColor(primary));
-  if(hints.length>1){
-    el.classList.add('hint-multi');
-    el.style.setProperty('--hint-shadow',multiHintShadow(hints,hasComplete?'complete':'near'));
-  }
-  el.dataset.hint=hints.map(h=>h.label).join(' + ');
-}
 function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=computeScore([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
 function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;const beforeMelds=new Map(computeScore(state.spread.filter(Boolean)).melds.map(x=>[x[0],x]));let c=state.hand[idx];
 // Phase 7: the reducer owns hand -> spread movement.
@@ -5967,11 +5900,7 @@ if(tlrStoreReady()){
 }
 render();playSound('place');haptic(12);requestAnimationFrame(()=>{const _landEl=_slotEls?.[i]?.querySelector('.card');if(_landEl){_landEl.classList.add('landing');_landEl.addEventListener('animationend',()=>_landEl.classList.remove('landing'),{once:true});}ghost(i,'+'+c.points);});let after=_getPlacedScore();let newMelds=after.melds.flatMap(x=>{if(!beforeMelds.has(x[0]))return[x];const bm=beforeMelds.get(x[0]);const dc=x[1]-bm[1],dm=x[2]-bm[2];if(dc>0||dm>0)return[[x[0],dc,dm,x[3]]];return[];});let delay=420;let announceOffset=0;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;const _rk=_relicMeldNameToKey.get(m[0])||null;setTimeout(()=>ghost(anchor,meldStr(m),true,_rk),ghostDelay);if(!_relicMeldNames.has(m[0])&&m[0]!=='Omen'&&m[0]!=='Resonance')setTimeout(()=>{centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5);playSound('meld');haptic([0,10,35,12]);},delay+announceOffset);if(m[2]>0){const _mg=m[3]==='add'?m[2]:m[2]-1;const multLabel=('+'+Number(_mg).toFixed(2)).replace(/\.?0+$/,'');setTimeout(()=>fireMultGhost(multLabel),ghostDelay+200);}holdEffects(ghostDelay+1700);delay+=slots.length*130+700;announceOffset+=600;});setCounterTarget(after.finalScore);setTimeout(()=>checkResonationTriggers(),750);checkEnd()}
 let effectsUntil=0;
-function holdEffects(ms){effectsUntil=Math.max(effectsUntil,Date.now()+ms)}
 let _slotEls=null;function _slots(){return _slotEls||(_slotEls=Array.from(document.querySelectorAll('.slot')))}
-function ghost(i,t,big=false,relicKey=null){const s=_slots()[i];if(!s)return;holdEffects(1700);let g=document.createElement('div');g.className='ghost '+(big?'big':'');if(relicKey){const ic=document.createElement('span');ic.style.cssText=`display:inline-block;width:14px;height:14px;vertical-align:middle;margin-right:3px;${relicIconStyle(relicKey,14)}`;g.appendChild(ic);g.appendChild(document.createTextNode(t));}else{g.textContent=t;}const r=s.getBoundingClientRect();g.style.position='fixed';g.style.left=(r.left+r.width/2)+'px';g.style.top=(r.top-10)+'px';g.style.zIndex='99999';document.body.appendChild(g);setTimeout(()=>g.remove(),1700)}
-function centerGhost(name,rare=false){const g=document.createElement('div');g.className='meld-announce'+(rare?' rare':'');g.textContent=name;document.body.appendChild(g);setTimeout(()=>g.remove(),1900)}
-function bump(i){const s=_slots()[i];if(!s)return;s.classList.remove('bump');void s.offsetWidth;s.classList.add('bump')}
 function slotsForMeld(name){let filled=state.spread.map((c,i)=>c?{c,i}:null).filter(Boolean);const tierFrom=()=>{let m=name.match(/\((\d+)/)||name.match(/of (\d+)/);return m?parseInt(m[1]):0};if(name.startsWith('Three of a Kind')||name.startsWith('Four of a Kind')){let rank=['Page','Knight','Queen','King'].find(r=>name.includes(r+'s'));let lim=name.startsWith('Three')?3:4;return rank?filled.filter(x=>x.c.type==='court'&&x.c.rank===rank).slice(0,lim).map(x=>x.i):[]}if(name.startsWith('Full Court')){const ELIG=['Page','Knight','Queen','King'];let seen=new Set(),out=[],lim=tierFrom()||4;for(const x of filled){if(out.length>=lim)break;if(x.c.type==='court'&&!seen.has(x.c.rank)&&ELIG.includes(x.c.rank)){seen.add(x.c.rank);out.push(x.i)}}return out}if(name.startsWith('Royal Court')||name.startsWith('Flush')){let suit=SUITS.find(s=>name.includes(s));let lim=tierFrom()||4;return suit?filled.filter(x=>x.c.suit===suit).slice(0,lim).map(x=>x.i):[]}if(name.startsWith('Sequence')){let tr=filled.filter(x=>x.c.type==='major').sort((a,b)=>a.c.num-b.c.num);let bs=0,bl=1,cs=0,cl=1;for(let j=1;j<tr.length;j++){if(tr[j].c.num===tr[j-1].c.num+1){cl++;if(cl>bl){bl=cl;bs=cs}}else{cs=j;cl=1}}let want=tierFrom()||bl;return tr.slice(bs,bs+Math.min(want,bl)).map(x=>x.i)}if(name==='Path of the Magi')return filled.filter(x=>['major_0','major_1','major_21'].includes(x.c.id)).map(x=>x.i);return[]}
 let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 function setCounterTarget(v){counterTarget=v;if(counterTimer)clearTimeout(counterTimer);counterTimer=setTimeout(()=>{if(counterCancel)counterCancel();counterCancel=rollCounter(counterShown,counterTarget,650);counterShown=counterTarget;counterTimer=null},700)}
@@ -6158,8 +6087,6 @@ function breathVisuals(){
   setTimeout(()=>{window._breathActive=false;},totalMs);
 }
 function haptic(p){try{if(navigator.vibrate)navigator.vibrate(p)}catch(e){}}
-function fireScoreGhost(){const pill=document.querySelector('.score-stack .score-pill');if(!pill)return;const r=pill.getBoundingClientRect();const g=document.createElement('span');g.className='score-ghost';g.textContent='+1';g.style.left=(r.left+8+Math.random()*(r.width-16))+'px';g.style.top=(r.top+r.height*0.25)+'px';document.body.appendChild(g);setTimeout(()=>g.remove(),950)}
-function fireMultGhost(label){const pill=document.querySelector('.score-stack .score-pill');if(!pill)return;const r=pill.getBoundingClientRect();const g=document.createElement('span');g.className='score-ghost mult';g.textContent=label;g.style.left=(r.left+8+Math.random()*(r.width-16))+'px';g.style.top=(r.top+r.height*0.25)+'px';document.body.appendChild(g);setTimeout(()=>g.remove(),950)}
 function fireRelicGhost(){const pill=document.querySelector('.score-stack .threshold-pill');if(!pill)return;const r=pill.getBoundingClientRect();const g=document.createElement('span');g.className='score-ghost mult';g.textContent='+Relic';g.style.left=(r.left+r.width/2)+'px';g.style.top=(r.top+r.height*0.25)+'px';document.body.appendChild(g);setTimeout(()=>g.remove(),950);}
 let _relicGhostFired=false;
 function rollCounter(from,to,dur){_cacheEls();let el=_elCurrent,start=performance.now(),dead=false,lastVal=from,popAnim=null;const doubleTH=()=>(TH[state.th]+(state.thBonus||0))*2;function step(now){if(dead)return;let t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++){fireScoreGhost();if(!_relicGhostFired&&v>=doubleTH()){_relicGhostFired=true;fireRelicGhost();}}if(val!==lastVal){if(popAnim)popAnim.cancel();popAnim=el.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});}lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color='';holdEffects(1000);}}requestAnimationFrame(step);return()=>{dead=true;if(popAnim)popAnim.cancel();el.style.color=''}}
@@ -6353,7 +6280,6 @@ function betweenAbility(done,sourceCard=null){
     });
   });
 }
-function cardDisplayName(c){return c.type==='major'?ROMAN[c.num]+' - '+cleanName(c):cleanName(c)}
 function relation(title,prompt,fn,n,done){
   state.busy=true;
   let targets=sortCards([...state.hand,...state.spread.filter(Boolean)]).filter(t=>fn(t).length);

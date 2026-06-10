@@ -4,8 +4,15 @@
 import { installLiveMirror } from './liveMirror.mjs';
 import * as abilitySystem from '../systems/abilities.mjs';
 import * as shopSystem from '../systems/shop.mjs';
+import * as cardRenderer from '../ui/renderCard.mjs';
+import * as ghostRenderer from '../ui/renderGhost.mjs';
+import * as hintRenderer from '../ui/renderHints.mjs';
 
 export function startApp(target = window) {
+  // Phase 15: the UI modules own the shared renderers. The legacy script and
+  // markup still call them as globals, so install them on the target first.
+  Object.assign(target, cardRenderer, ghostRenderer, hintRenderer);
+
   try {
     installLiveMirror(target);
     // Phase 10: the ability modal targets through the pure ability system.
