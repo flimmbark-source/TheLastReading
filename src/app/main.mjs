@@ -7,11 +7,13 @@ import * as shopSystem from '../systems/shop.mjs';
 import * as cardRenderer from '../ui/renderCard.mjs';
 import * as ghostRenderer from '../ui/renderGhost.mjs';
 import * as hintRenderer from '../ui/renderHints.mjs';
+import * as abilityRenderer from '../ui/renderAbility.mjs';
+import * as marketRenderer from '../ui/renderMarket.mjs';
 
 export function startApp(target = window) {
-  // Phase 15: the UI modules own the shared renderers. The legacy script and
+  // Phase 15: the UI modules own the renderers. The legacy script and
   // markup still call them as globals, so install them on the target first.
-  Object.assign(target, cardRenderer, ghostRenderer, hintRenderer);
+  Object.assign(target, cardRenderer, ghostRenderer, hintRenderer, abilityRenderer, marketRenderer);
 
   try {
     installLiveMirror(target);
