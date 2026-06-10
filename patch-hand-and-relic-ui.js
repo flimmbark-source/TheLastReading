@@ -297,7 +297,7 @@ upsertBlock(
         el.style.setProperty('--drift-y',((-Math.abs(st.v))*130*edge).toFixed(1)+'px');
       }
     }
-    if(isSwiping||active)springRaf=requestAnimationFrame(undulationStep);
+    if(mode==='slide'||active)springRaf=requestAnimationFrame(undulationStep);
     else h.classList.remove('hand-undulating');
   };
   const kickUndulation=()=>{
@@ -685,6 +685,7 @@ document.addEventListener('touchmove',e=>{
   if(d>_pinch.dist+28){expandCard(_pinch.card);_pinch=null;}
 },{passive:true});`;
 replaceOne('legacy pinch-zoom skip on hand cards', legacyPinchOrig, legacyPinchPatched);
+
 
 if (changed) {
   fs.writeFileSync(path, html);
