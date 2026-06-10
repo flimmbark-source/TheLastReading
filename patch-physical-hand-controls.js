@@ -186,6 +186,7 @@ rep(
     samples.length=0;pushSample(performance.now(),offset);`,
   `const startSlideMode=ev=>{
     cancelMomentum();cancelLiftMomentum();
+    kickUndulation();
     mode='slide';
     startX=ev.clientX;startY=ev.clientY||0;startOffset=offset;startLift=lift;
     samples.length=0;liftSamples.length=0;pushSample(performance.now(),offset);pushLiftSample(performance.now(),lift);`,
@@ -211,7 +212,6 @@ rep(
     const now=performance.now();
     pushSample(now,target);
     pushLiftSample(now,y);
-    applyLag(releaseVel());
   };`,
   'Swipe handler follows x/y drag continuously'
 );
