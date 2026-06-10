@@ -6877,8 +6877,8 @@ function resolveAbility(ab,done,sourceCard=null){
   else if(ab==='PEEK_3')peek(3+lens+(persist.up.peek_plus||0),done);
   else if(ab==='PEEK_5')peek(5+lens+(persist.up.peek_plus||0),done);
   else if(ab==='SEARCH')search(done);
-  else if(ab==='NEIGHBOR_2')relation('Neighbor','Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers or court ranks in the same suit.',neighbor,2+lens+(persist.up.neighbor_plus||0),done);
-  else if(ab==='KIN_2')relation('Kin','Choose an anchor card. Kin finds cards of the same Arcana.',kin,2+lens+(persist.up.kin_plus||0),done);
+  else if(ab==='NEIGHBOR_2')relation('Neighbor','Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers or court ranks in the same suit.',neighbor,2+lens+(persist.up.relation_plus||0),done);
+  else if(ab==='KIN_2')relation('Kin','Choose an anchor card. Kin finds cards of the same Arcana.',kin,2+lens+(persist.up.relation_plus||0),done);
   else if(ab==='MIRROR_1')relation('Mirror','Choose a card. Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)',mirror,1+lens,done);
   else if(ab==='BETWEEN_2')betweenAbility(done,sourceCard);
   else if(ab==='WORLD'){state.deck.push(...state.discard.splice(0),...state.hand.splice(0));shuffle(state.deck);playSound('shuffle');drawN(maxHand()+rd);done()}
@@ -6977,7 +6977,7 @@ function betweenAbility(done,sourceCard=null){
   };
 
   selectFromHand('Between','Choose 2 cards to draw between. Valid cards are highlighted.',validAnchors,2,(a,b)=>{
-    const n=2+(persist.up.lens_mastery||0)+(persist.up.between_plus||0);
+    const n=2+(persist.up.lens_mastery||0)+(persist.up.relation_plus||0);
     const found=sortCards(shuffle(uniqueCards([...betweenPool(a,b)])).slice(0,n));
     if(!found.length){fallbackAbility(done,'Between — no cards found');return}
 
@@ -7087,9 +7087,7 @@ const SHOP={
   sight_cost:      ['Sight Discount',    'Peek, Search, and Mirror abilities cost no Discard charge once per reading',                                                        28,1.8, '🔭','sight'],
   chosen:          ['Chosen',            'Cards taken via abilities each gain +5 Chips in the spread',                                                                       26,1.8, '🔭','sight'],
   // ── Thread Pack (thread) ──
-  kin_plus:        ['Kin',               'Kin reveals +1 card',                                                                                                               22,1.75,'🧬','thread'],
-  between_plus:    ['Between',           'Between reveals +1 card',                                                                                                           22,1.75,'🧬','thread'],
-  neighbor_plus:   ['Neighbor',          'Neighbor reveals +1 card',                                                                                                          22,1.75,'🧬','thread'],
+  relation_plus:   ['Deeper Threads',    'Kin, Between, and Neighbor each reveal +1 card',                                                                                        22,1.75,'🧬','thread'],
   relation_chips:  ['Thread Bond',       'Cards taken via Kin, Between, or Neighbor each gain +1 Chips',                                                                      26,1.8, '🧬','thread'],
 };
 function shopCost(k){let s=SHOP[k],lvl=persist.up[k]||0;return Math.floor(s[2]*Math.pow(s[3],lvl))}
@@ -7109,7 +7107,7 @@ const SHOP_ICON={
   minor_chips:'isp-scoring',major_chips:'isp-scoring',number_chips:'isp-scoring',cups_chips:'isp-scoring',wands_chips:'isp-scoring',swords_chips:'isp-scoring',pentacles_chips:'isp-scoring',
   flat_mult:'isp-scoring',major_mult:'isp-scoring',minor_mult:'isp-scoring',court_mult_base:'isp-kin',cups_mult:'isp-scoring',wands_mult:'isp-scoring',swords_mult:'isp-scoring',pentacles_mult:'isp-scoring',
   peek_plus:'isp-peek',sight_cost:'isp-peek',chosen:'isp-peek',
-  kin_plus:'isp-kin',between_plus:'isp-between',neighbor_plus:'isp-neighbor',relation_chips:'isp-kin',
+  relation_plus:'isp-kin',relation_chips:'isp-kin',
   blessed_start:'isp-scoring',first_light:'isp-scoring',deep_reserve:'isp-draw',
   nimble_fingers:'isp-draw',quick_release:'isp-disc',
   balanced_reading:'isp-scoring',elemental_harmony:'isp-scoring',
