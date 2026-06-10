@@ -5370,17 +5370,7 @@ function _getPlacedScore(){
 }
 // Lazily-cached hot DOM elements (set on first render).
 let _elThreshold=null,_elPool=null,_elDiscards=null,_elDiscardBtn=null,_elPurgeBtn=null,_elMullBtn=null,_elHand=null,_elCurrent=null;
-function _cacheEls(){
-  if(_elThreshold)return;
-  _elThreshold=document.getElementById('threshold');
-  _elPool=document.getElementById('pool');
-  _elDiscards=document.getElementById('discards');
-  _elDiscardBtn=document.getElementById('discardBtn');
-  _elPurgeBtn=document.getElementById('purgeBtn');
-  _elMullBtn=document.getElementById('mullBtn');
-  _elHand=document.getElementById('hand');
-  _elCurrent=document.getElementById('current');
-}
+// Table/hand/spread renderers moved to src/ui/renderTable.mjs, renderHand.mjs, renderSpread.mjs (Phase 15).
 // --- Architecture live-mirror bridge (Phase 4/5) ---
 // Reads the legacy globals into the normalized snapshot shape that
 // src/app/liveMirror.mjs diffs against the architecture store.
@@ -5491,189 +5481,6 @@ function tlrMarketPurchase(purchase){
 // Phase 12: pack offers through the shop system (legacy shuffle fallback).
 function tlrShopPacks(){
   return window.tlrShop?window.tlrShop.buildPackOffer(Object.keys(PACKS)):shuffle(Object.keys(PACKS)).slice(0,3);
-}
-function render(){
-  _cachedPlacedScore=null; // invalidate on every render
-  const _newHintsKey=_hintsKey();if(_newHintsKey!==_hintsCacheKey){_hintsCache.clear();_hintsCacheKey=_newHintsKey;_unlockedFragmentsCache=null;_spreadScoreForHints=null;}
-  _cacheEls();
-  _elThreshold.textContent=TH[state.th]+(state.thBonus||0);
-  const _thNext=document.getElementById('thNext');if(_thNext){const _p=state.thBonusPending||0;_thNext.style.display=_p?'':'none';if(_p)_thNext.textContent='+'+_p+' next';}
-  _elPool.textContent=persist.pool;
-  _elDiscards.textContent=state.discards;
-  renderRelicRack();
-
-  const placed=state.spread.filter(Boolean);
-  const now=_getPlacedScore();
-  const ability=state.abilitySelect;
-  const inPurge=state.purgeSelect!==null;
-
-  const sp=$('#spread');
-  // Lazily create the 5 stable slot elements; reuse them across renders so
-  // CSS transitions on slot tilt / card transforms stay continuous and no
-  // DOM allocation happens on every state change.
-  if(!_slotEls||_slotEls.length!==5||!sp.contains(_slotEls[0])){
-    _slotEls=[];
-    sp.replaceChildren();
-    for(let i=0;i<5;i++){
-      const s=document.createElement('div');
-      s.style.setProperty('--a',((i-2)*4)+'deg');
-      sp.appendChild(s);
-      _slotEls.push(s);
-    }
-  }
-  for(let i=0;i<5;i++){
-    const card=state.spread[i];
-    const s=_slotEls[i];
-    let cls='slot '+(card?'filled':'empty')+(state.selected!==null&&!card?' target':'');
-    if(card){
-      const validSpread=ability&&ability.validIds.has(card.uid);
-      const pickedSpread=ability&&validSpread&&ability.picked.includes(card.uid);
-      if(ability)cls+=' '+(pickedSpread?'ability-picked-slot':(validSpread?'ability-target-slot':'ability-disabled-slot'));
-      s.className=cls;
-      s.onclick=(ability&&validSpread)?(ev)=>{ev.stopPropagation();handleAbilityHandClick(card);}:null;
-      // Diff the card child by uid: reuse if same uid, otherwise replace.
-      let e=s.firstElementChild;
-      const sameCard=e&&e.classList&&e.classList.contains('card')&&Number(e.dataset.uid)===card.uid;
-      if(!sameCard){
-        s.replaceChildren();
-        e=document.createElement('div');
-        e.dataset.uid=card.uid;
-        e.innerHTML=cardHTML(card);
-        applyCardPhoto(e,card);
-        s.appendChild(e);
-      }else{
-        e.style.removeProperty('--hint-rgb');
-        e.style.removeProperty('--hint-shadow');
-        delete e.dataset.hint;
-      }
-      e.className='card '+(card.type==='major'?'major ':'')+(CARD_SHEET[card.id]?'photo ':'')+(validSpread&&!pickedSpread?'ability-target ':'')+(pickedSpread?'ability-picked ':'')+(ability&&!validSpread?'ability-disabled ':'');
-      if(!inPurge)applyHint(e,card);
-      e.onclick=(ability&&validSpread)?(ev)=>{ev.stopPropagation();handleAbilityHandClick(card);}:null;
-    }else{
-      if(ability)cls+=' ability-empty-slot';
-      s.className=cls;
-      // Reuse the .num child if it's already there.
-      let nm=s.firstElementChild;
-      const sameEmpty=nm&&nm.classList&&nm.classList.contains('num');
-      if(!sameEmpty){
-        s.replaceChildren();
-        nm=document.createElement('div');
-        nm.className='num';
-        s.appendChild(nm);
-      }
-      nm.textContent=String(i+1);
-      s.onclick=ability?null:()=>placeCard(i);
-    }
-  }
-  _resStateKey=null;
-  applyResonationGlows(state.spread);
-
-  const h=$('#hand');
-  const selectedId=state.selected;
-  const handLen=state.hand.length;
-  // Suppress the swipe handler's MutationObserver during the loop.
-  // Each insertBefore fires it synchronously with an intermediate card count,
-  // causing applySlots() to assign wrong --slot values that then animate.
-  // We trigger one correct layout pass at the end instead.
-  window.__handRenderActive=true;
-  // Build uid -> existing element map so we can reuse DOM that's still in hand.
-  const _handExisting=new Map();
-  h.querySelectorAll(':scope > .card[data-uid]').forEach(el=>_handExisting.set(Number(el.dataset.uid),el));
-  state.hand.forEach((c,i)=>{
-    const valid=ability&&ability.validIds.has(c.uid);
-    const picked=ability&&ability.picked.includes(c.uid);
-    const purgePicked=inPurge&&state.purgeSelect.includes(c.uid);
-    let e=_handExisting.get(c.uid);
-    const fresh=!e;
-    if(fresh){
-      e=document.createElement('div');
-      e.dataset.uid=c.uid;
-      e.innerHTML=cardHTML(c);
-      applyCardPhoto(e,c);
-    }else{
-      _handExisting.delete(c.uid);
-      // Clear hint inline styles so applyHint can re-apply (or leave clean
-      // if this card no longer has a hint this render).
-      e.style.removeProperty('--hint-rgb');
-      e.style.removeProperty('--hint-shadow');
-      delete e.dataset.hint;
-    }
-    e.className='card '+(c.type==='major'?'major ':'')+(CARD_SHEET[c.id]?'photo ':'')
-      +(inPurge?(purgePicked?'purge-picked ':'purge-target '):'')
-      +(selectedId===c.uid&&!ability&&!inPurge?'sel ':'')
-      +(valid&&!picked?'ability-target ':'')+(picked?'ability-picked ':'')
-      +(ability&&!valid?'ability-disabled ':'');
-    if(!inPurge)applyHint(e,c);
-    e.style.zIndex=handLen-i;
-    e.style.setProperty('--a',((i-(handLen-1)/2)*5)+'deg');
-    // onclick captures the current render's ability/inPurge snapshot, so
-    // rebind every render even for reused nodes.
-    e.onclick=()=>{
-      if(ability){handleAbilityHandClick(c);return}
-      if(inPurge){togglePurgeCard(c.uid);return}
-      if(state.busy)return;
-      if(state.selected===c.uid){state.selected=null;refreshHandState();return;}
-      state.selected=c.uid;
-      refreshHandState();
-    };
-    // Move into correct position only if not already there (avoids needless
-    // DOM mutations that would trigger the swipe handler's MutationObserver).
-    const at=h.children[i];
-    if(at!==e)h.insertBefore(e,at||null);
-  });
-  // Drop cards that are no longer in hand.
-  _handExisting.forEach(el=>el.remove());
-  // Lift the suppression flag and do one correct layout pass now that
-  // the final DOM shape is in place.
-  window.__handRenderActive=false;
-  if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
-
-  renderAbilityPrompt();
-  renderPurgePrompt();
-  updateScorePreview(now);
-  _elDiscardBtn.disabled=state.selected===null||state.discards<=0||inPurge;
-  _elPurgeBtn.disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
-  _elMullBtn.style.display=hasMull()?'inline-block':'none';
-  _elMullBtn.disabled=!(state.mullCharges>0)||!state.spread.every(x=>!x)||state.hand.length!==maxHand();
-  tlrArchitectureSync();
-}
-function refreshHandState(){
-  _cacheEls();
-  const ability=state.abilitySelect;
-  const inPurge=state.purgeSelect!==null;
-  document.querySelectorAll('#hand .card').forEach(el=>{
-    const uid=Number(el.dataset.uid);
-    el.classList.toggle('sel',!ability&&!inPurge&&state.selected===uid);
-    if(ability){const isPicked=ability.picked.includes(uid);el.classList.toggle('ability-picked',isPicked);el.classList.toggle('ability-target',!isPicked&&ability.validIds.has(uid));}
-    if(inPurge){
-      el.classList.toggle('purge-picked',state.purgeSelect.includes(uid));
-      el.classList.toggle('purge-target',!state.purgeSelect.includes(uid));
-    }
-  });
-  document.querySelectorAll('#spread .slot').forEach(slot=>{
-    const el=slot.querySelector('.card[data-uid]');
-    if(!el)return;
-    const uid=Number(el.dataset.uid);
-    if(ability){
-      const isValid=ability.validIds.has(uid);
-      const isPicked=isValid&&ability.picked.includes(uid);
-      el.classList.toggle('ability-picked',isPicked);
-      el.classList.toggle('ability-target',isValid&&!isPicked);
-      el.classList.toggle('ability-disabled',!isValid);
-      slot.classList.toggle('ability-target-slot',isValid&&!isPicked);
-      slot.classList.toggle('ability-picked-slot',isPicked);
-      slot.classList.toggle('ability-disabled-slot',!isValid);
-    }else{
-      el.classList.remove('ability-picked','ability-target','ability-disabled');
-      slot.classList.remove('ability-target-slot','ability-picked-slot','ability-disabled-slot','ability-empty-slot');
-    }
-  });
-  renderAbilityPrompt();
-  renderPurgePrompt();
-  updateScorePreview(_getPlacedScore());
-  _elDiscardBtn.disabled=state.selected===null||state.discards<=0||inPurge;
-  _elPurgeBtn.disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
-  tlrArchitectureSync();
 }
 function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skipRelics){
   const omenBonus=(persist.up.omen||0);
@@ -5886,7 +5693,6 @@ function cardHints(card, poolCards=null){
   return hints;
 }
 function cardHint(card,poolCards=null){return cardHints(card,poolCards)[0]||null}
-function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=computeScore([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
 function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;const beforeMelds=new Map(computeScore(state.spread.filter(Boolean)).melds.map(x=>[x[0],x]));let c=state.hand[idx];
 // Phase 7: the reducer owns hand -> spread movement.
 if(tlrStoreReady()){
