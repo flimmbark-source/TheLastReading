@@ -14,13 +14,13 @@ assert.equal(firstDiscardIsFree(['gilded_discard']), true, 'Gilded Discard shoul
 assert.equal(firstDiscardIsFree([]), false, 'No relic should mean no free discard');
 assert.equal(startingHandBonusFromRelics(['threadbare_tarot']), 1, 'Threadbare Tarot should add one starting card');
 assert.equal(startingHandBonusFromRelics([]), 0, 'No relic should mean no starting hand bonus');
-assert.equal(marketCostAfterRelics(30, ['merchant_scale']), 27, "Merchant's Scale should discount by 3");
-assert.equal(marketCostAfterRelics(2, ['merchant_scale']), 0, 'Market costs should not go below zero');
+assert.equal(marketCostAfterRelics(30, ['merchants_scale']), 27, "Merchant's Scale should discount by 3");
+assert.equal(marketCostAfterRelics(2, ['merchants_scale']), 0, 'Market costs should not go below zero');
 
 const rankItem = getShopItem('upgrade_rank');
 assert.equal(rankItem.upgradeKey, 'rank');
 assert.equal(shopItemCost(rankItem, { relics: [] }), 18);
-assert.equal(shopItemCost(rankItem, { relics: ['merchant_scale'] }), 15);
+assert.equal(shopItemCost(rankItem, { relics: ['merchants_scale'] }), 15);
 
 let persist = createGameState({ persist: { reserve: 20 } }).persist;
 let purchase = buyShopItem(persist, 'upgrade_rank');

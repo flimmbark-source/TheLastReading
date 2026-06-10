@@ -15,14 +15,22 @@ export function thresholdValue(state) {
   return currentThreshold(state.run.thresholdIndex, state.run.thresholdBonus);
 }
 
+export function scoringContext(state) {
+  return {
+    handCount: state.run.hand.length,
+    discardedCount: state.run.discardedCards.length,
+    discardedCards: state.run.discardedCards,
+    abilityTakenCardIds: state.run.abilityTakenCardIds,
+    resonationBonus: state.run.resonationBonus,
+    worldCarry: state.run.worldCarry,
+  };
+}
+
 export function scorePlacedCards(state, options = {}) {
   return computeScore(placedCards(state), {
     upgrades: state.persist.upgrades,
     relics: state.persist.relics,
-    context: {
-      handCount: state.run.hand.length,
-      discardedCount: state.run.discardedCards.length,
-    },
+    context: scoringContext(state),
     ...options,
   });
 }
@@ -33,10 +41,7 @@ export function scoreIfSelectedPlaced(state, options = {}) {
   return computeScore([...placedCards(state), card], {
     upgrades: state.persist.upgrades,
     relics: state.persist.relics,
-    context: {
-      handCount: state.run.hand.length - 1,
-      discardedCount: state.run.discardedCards.length,
-    },
+    context: { ...scoringContext(state), handCount: state.run.hand.length - 1 },
     ...options,
   });
 }

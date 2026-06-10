@@ -21,6 +21,14 @@ function addPatternMeld(result, name, chips, patternMult) {
   result.mult += patternMult - 1;
 }
 
+// Balanced Reading and Elemental Harmony multiply the running mult instead of
+// adding to it (matches the live game).
+function addMultiplicativePatternMeld(result, name, chips, patternMult) {
+  result.melds.push({ name, chips, mult: patternMult, mode: 'pattern' });
+  result.chips += chips;
+  result.mult *= patternMult;
+}
+
 function courtCards(cards) {
   return cards.filter(card => card.type === 'court');
 }
@@ -104,7 +112,7 @@ function applyCourtPatterns(result, cards, upgrades) {
 }
 
 export function bestMajorRunLength(cards) {
-  const nums = [...new Set(majorCards(cards).map(card => card.number))].sort((a, b) => a - b);
+  const nums = [...new Set(majorCards(cards).map(card => card.number ?? card.num))].sort((a, b) => a - b);
   let best = nums.length ? 1 : 0;
   let current = nums.length ? 1 : 0;
 
@@ -142,8 +150,8 @@ function applySpecialUpgradePatterns(result, cards, upgrades) {
     const hasMinor = cards.some(card => card.type !== 'major');
     if (hasMajor && hasMinor) {
       const chips = upgrades.balanced_reading * 5;
-      const mult = 1.25 + (upgrades.balanced_reading_mult || 0) * 0.25;
-      addPatternMeld(result, 'Balanced Reading', chips, mult);
+      const mult = Number((1.25 + (upgrades.balanced_reading_mult || 0) * 0.25).toFixed(2));
+      addMultiplicativePatternMeld(result, 'Balanced Reading', chips, mult);
     }
   }
 
@@ -151,9 +159,28 @@ function applySpecialUpgradePatterns(result, cards, upgrades) {
     const suitCount = new Set(cards.filter(card => card.type !== 'major').map(card => card.suit)).size;
     if (suitCount >= 4) {
       const chips = upgrades.elemental_harmony * 10;
-      const mult = 1.25 + (upgrades.elemental_harmony_mult || 0) * 0.5;
-      addPatternMeld(result, 'Elemental Harmony', chips, mult);
+      const mult = Number((1.25 + (upgrades.elemental_harmony_mult || 0) * 0.5).toFixed(2));
+      addMultiplicativePatternMeld(result, 'Elemental Harmony', chips, mult);
     }
+  }
+}
+
+function applyContextBonuses(result, cards, upgrades, context) {
+  // Chosen: cards taken into hand by abilities score bonus chips.
+  if (upgrades.chosen) {
+    const taken = new Set(context.abilityTakenCardIds || []);
+    if (taken.size) {
+      const count = cards.filter(card => taken.has(card.uid)).length;
+      addChipMeld(result, 'Chosen', count * upgrades.chosen * 5);
+    }
+  }
+
+  // Resonation bonuses accumulate during play and join the final score.
+  const resonation = context.resonationBonus;
+  if (resonation && (resonation.chips || resonation.mult)) {
+    result.melds.push({ name: `⚷ ${resonation.name || 'Resonation'}`, chips: resonation.chips || 0, mult: resonation.mult || 0, mode: 'add' });
+    result.chips += resonation.chips || 0;
+    result.mult += resonation.mult || 0;
   }
 }
 
@@ -173,7 +200,8 @@ export function computeScore(cards, options = {}) {
   applyCourtPatterns(result, cards, upgrades);
   applyMajorPatterns(result, cards, upgrades);
   applySpecialUpgradePatterns(result, cards, upgrades);
-  if (!options.skipRelics) applyRelicMeldsToScore(result, getScoringRelicMelds(cards, options.relics || [], context));
+  applyContextBonuses(result, cards, upgrades, context);
+  if (!options.skipRelics) applyRelicMeldsToScore(result, getScoringRelicMelds(cards, options.relics || [], { ...context, upgrades }));
 
   result.finalScore = Math.floor(result.chips * result.mult);
   return result;

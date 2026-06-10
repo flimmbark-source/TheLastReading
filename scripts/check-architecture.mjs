@@ -202,4 +202,43 @@ assert.equal(continuousTarget.tlrMirrorLiveState({ quiet: true }).ok, true, 'mir
   assert.equal(blocked.run.hand.length, 2, 'discard with no charges should be a no-op');
 }
 
+// Phase 9: SCORE_READING owns pass/fail, carry, market open, miser/world/relic-earned.
+{
+  const spread = [byId.get('major_17'), byId.get('major_18'), byId.get('major_19'), null, null];
+  const seed = (relics = []) => {
+    let s = reducer(createGameState(), { type: ACTIONS.SYNC_LEGACY_RUN, run: { deck: [], hand: [], discard: [], spread, discards: 3, discardedCards: [], thresholdIndex: 0, thresholdBonus: 0, pendingReserve: 0, worldCarry: 0 } });
+    return reducer(s, { type: ACTIONS.SYNC_LEGACY_PERSIST, persist: { relics, totalScore: 0 } });
+  };
+
+  // 17/18/19 = 3 chips + Sequence(+10) = 13 chips x 1.25 = 16 vs threshold 10: pass.
+  let s = reducer(seed(), { type: ACTIONS.SCORE_READING });
+  assert.equal(s.run.lastPassed, true, 'sequence spread should clear threshold 10');
+  assert.equal(s.run.lastThreshold, 10, 'first threshold should be 10');
+  assert.equal(s.run.phase, 'market', 'pass should open the market');
+  assert.equal(s.run.thresholdIndex, 1, 'pass should advance the threshold');
+  assert.equal(s.run.pendingReserve, s.run.lastScore.finalScore, 'score should bank into pending reserve');
+  assert.equal(s.persist.totalScore, s.run.lastScore.finalScore, 'score should accumulate into totalScore');
+
+  // Miser adds +5 to the banked reserve but not totalScore.
+  s = reducer(seed(['miser']), { type: ACTIONS.SCORE_READING });
+  assert.equal(s.run.pendingReserve, s.run.lastScore.finalScore + 5, 'miser should add +5 to banked reserve');
+  assert.equal(s.persist.totalScore, s.run.lastScore.finalScore, 'miser bonus should not join totalScore');
+
+  // The World carries 10% of the overage.
+  s = reducer(seed(['the_world']), { type: ACTIONS.SCORE_READING });
+  assert.equal(s.run.worldCarry, Math.floor((s.run.lastScore.finalScore - 10) * 0.1), 'world carry should be 10% of overage');
+
+  // relicEarned when score doubles the threshold (16 >= 20 is false here).
+  assert.equal(s.run.relicEarned, s.run.lastScore.finalScore >= 20, 'relicEarned should require double threshold');
+
+  // Failing spread ends the session.
+  let f = seed();
+  f = reducer(f, { type: ACTIONS.SYNC_LEGACY_RUN, run: { spread: [byId.get('major_4'), null, null, null, null] } });
+  f = reducer(f, { type: ACTIONS.SCORE_READING });
+  assert.equal(f.run.lastPassed, false, '1-chip spread should fail threshold 10');
+  assert.equal(f.run.phase, 'sessionEnd', 'fail should end the session');
+  assert.equal(f.run.thresholdIndex, 0, 'fail should not advance the threshold');
+  assert.equal(f.persist.totalScore, 0, 'fail should not bank score');
+}
+
 console.log('Architecture smoke checks passed.');

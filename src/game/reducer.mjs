@@ -3,7 +3,7 @@ import { createGameState, GAME_PHASES } from './state.mjs';
 import { buildDeck, drawCards, shuffleDeck } from '../systems/deck.mjs';
 import { computeScore } from '../systems/scoring.mjs';
 import { buyShopItem } from '../systems/shop.mjs';
-import { firstDiscardIsFree, hasRelic } from '../systems/relics.mjs';
+import { firstDiscardIsFree, hasRelic, thresholdClearBonusFromRelics, worldCarryFromRelics } from '../systems/relics.mjs';
 import { isSightAbility } from '../systems/abilities.mjs';
 import { currentThreshold } from '../data/thresholds.mjs';
 
@@ -76,17 +76,22 @@ function discardSelected(state) {
 }
 
 function scoreReading(state) {
-  const cards = state.run.spread.filter(Boolean);
+  const { run, persist } = state;
+  const cards = run.spread.filter(Boolean);
   const score = computeScore(cards, {
-    upgrades: state.persist.upgrades,
-    relics: state.persist.relics,
+    upgrades: persist.upgrades,
+    relics: persist.relics,
     context: {
-      handCount: state.run.hand.length,
-      discardedCount: state.run.discardedCards.length,
+      handCount: run.hand.length,
+      discardedCount: run.discardedCards.length,
+      discardedCards: run.discardedCards,
+      abilityTakenCardIds: run.abilityTakenCardIds,
+      resonationBonus: run.resonationBonus,
+      worldCarry: run.worldCarry,
     },
   });
 
-  const threshold = currentThreshold(state.run.thresholdIndex, state.run.thresholdBonus);
+  const threshold = currentThreshold(run.thresholdIndex, run.thresholdBonus);
   const passed = score.finalScore >= threshold;
 
   if (!passed) {
@@ -98,17 +103,21 @@ function scoreReading(state) {
     });
   }
 
+  const miserBonus = thresholdClearBonusFromRelics(persist.relics);
+
   return replacePersist(
     replaceRun(state, {
       phase: GAME_PHASES.MARKET,
-      thresholdIndex: state.run.thresholdIndex + 1,
+      thresholdIndex: run.thresholdIndex + 1,
       lastScore: score,
       lastThreshold: threshold,
       lastPassed: true,
-      pendingReserve: (state.run.pendingReserve || 0) + score.finalScore,
+      pendingReserve: (run.pendingReserve || 0) + score.finalScore + miserBonus,
+      worldCarry: worldCarryFromRelics(persist.relics, score.finalScore, threshold),
+      relicEarned: score.finalScore >= threshold * 2,
     }),
     {
-      totalScore: state.persist.totalScore + score.finalScore,
+      totalScore: persist.totalScore + score.finalScore,
     }
   );
 }
@@ -142,7 +151,7 @@ function syncLegacySnapshot(state, snapshot) {
 const LEGACY_RUN_FIELDS = [
   'deck', 'hand', 'discard', 'spread', 'discards', 'discardedCards',
   'freeDiscardUsed', 'sightChargesUsed', 'thresholdIndex', 'thresholdBonus',
-  'reading', 'pendingReserve', 'worldCarry',
+  'reading', 'pendingReserve', 'worldCarry', 'abilityTakenCardIds', 'resonationBonus',
 ];
 
 function syncLegacyRun(state, run = {}) {

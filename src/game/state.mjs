@@ -50,6 +50,7 @@ export function createInitialRunState(overrides = {}) {
     lastDiscardedCard: null,
     discardedCards: [],
     worldCarry: 0,
+    relicEarned: false,
     abilityTakenCardIds: [],
     resonationBonus: null,
     ...overrides,
