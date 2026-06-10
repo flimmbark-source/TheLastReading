@@ -1,5 +1,6 @@
 import { RANKS, SUITS } from '../data/cards.mjs';
 import { DEFAULT_UPGRADES, SCORING_PATTERNS, upgradedChips, upgradedMult } from '../data/scoringPatterns.mjs';
+import { applyRelicMeldsToScore, getScoringRelicMelds } from './relics.mjs';
 
 function addChipMeld(result, name, chips) {
   if (!chips) return;
@@ -156,25 +157,6 @@ function applySpecialUpgradePatterns(result, cards, upgrades) {
   }
 }
 
-function applyRelicBonuses(result, cards, relics, context) {
-  const relicSet = new Set(relics || []);
-  if (relicSet.has('gilded_fool') && cards.length) addChipMeld(result, 'The Gilded Fool', 10);
-  if (relicSet.has('hermit_lantern')) addAdditiveMultMeld(result, "Hermit's Lantern", majorCards(cards).length * 0.25);
-
-  if (relicSet.has('mirror_shard')) {
-    const counts = new Map();
-    for (const card of cards) {
-      const key = card.rank || String(card.number);
-      counts.set(key, (counts.get(key) || 0) + 1);
-    }
-    const pairs = [...counts.values()].reduce((sum, count) => sum + Math.floor(count / 2), 0);
-    addAdditiveMultMeld(result, 'Mirror Shard', pairs);
-  }
-
-  if (relicSet.has('still_pool') && !(context.discardedCount || 0)) addAdditiveMultMeld(result, 'The Still Pool', 1);
-  if (relicSet.has('loaded_die')) addChipMeld(result, 'Loaded Die', courtCards(cards).reduce((sum, card) => sum + card.points, 0));
-}
-
 export function computeScore(cards, options = {}) {
   const upgrades = { ...DEFAULT_UPGRADES, ...(options.upgrades || {}) };
   const context = options.context || {};
@@ -191,7 +173,7 @@ export function computeScore(cards, options = {}) {
   applyCourtPatterns(result, cards, upgrades);
   applyMajorPatterns(result, cards, upgrades);
   applySpecialUpgradePatterns(result, cards, upgrades);
-  if (!options.skipRelics) applyRelicBonuses(result, cards, options.relics || [], context);
+  if (!options.skipRelics) applyRelicMeldsToScore(result, getScoringRelicMelds(cards, options.relics || [], context));
 
   result.finalScore = Math.floor(result.chips * result.mult);
   return result;
