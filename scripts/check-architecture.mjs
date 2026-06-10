@@ -101,7 +101,7 @@ assert.equal(bridgeTarget.tlrStore, undefined, 'bridge uninstall should remove t
 const mirrorTarget = {
   console: { info() {} },
   tlrReadLiveSnapshot() {
-    return { phase: 'table', reading: 1, threshold: 10, reserve: 0, totalScore: 0, handCount: 0, deckCount: 0, discardCount: 0, spreadCount: 0, discards: 3 };
+    return { phase: 'table', reading: 1, threshold: 10, reserve: 0, totalScore: 0, handCount: 0, deckCount: 0, discardCount: 0, spreadCount: 0, discards: 3, selectedCardId: null };
   },
 };
 installLiveMirror(mirrorTarget, { storage: null });
@@ -109,5 +109,8 @@ assert.equal(typeof mirrorTarget.tlrMirrorLiveState, 'function', 'live mirror sh
 const mirrorReport = mirrorTarget.tlrMirrorLiveState();
 assert.equal(Array.isArray(mirrorReport.mismatches), true, 'live mirror report should include mismatches');
 assert.equal(mirrorTarget.tlrLastMirrorReport, mirrorReport, 'live mirror should store last report');
+const syncedReport = mirrorTarget.tlrMirrorLiveState({ sync: true });
+assert.equal(syncedReport.ok, true, 'syncing the legacy snapshot should make the diagnostic mirror match');
+assert.deepEqual(mirrorTarget.tlrStore.getState().run.legacySnapshot, syncedReport.live, 'sync should store the normalized legacy snapshot');
 
 console.log('Architecture smoke checks passed.');
