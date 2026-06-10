@@ -2,6 +2,7 @@ import { ACTIONS } from './actions.mjs';
 import { createGameState, GAME_PHASES } from './state.mjs';
 import { buildDeck, drawCards, shuffleDeck } from '../systems/deck.mjs';
 import { computeScore } from '../systems/scoring.mjs';
+import { buyShopItem } from '../systems/shop.mjs';
 import { currentThreshold } from '../data/thresholds.mjs';
 
 function maxHand(persist) {
@@ -99,6 +100,22 @@ function scoreReading(state) {
   );
 }
 
+function buyMarketItem(state, itemId) {
+  const purchase = buyShopItem(state.persist, itemId);
+  if (!purchase.purchased) {
+    return replaceRun(state, { lastPurchase: purchase });
+  }
+
+  return {
+    ...state,
+    persist: purchase.persist,
+    run: {
+      ...state.run,
+      lastPurchase: purchase,
+    },
+  };
+}
+
 export function reducer(state = createGameState(), action = {}) {
   switch (action.type) {
     case ACTIONS.START_READING: {
@@ -138,6 +155,9 @@ export function reducer(state = createGameState(), action = {}) {
 
     case ACTIONS.OPEN_MARKET:
       return replaceRun(state, { phase: GAME_PHASES.MARKET });
+
+    case ACTIONS.BUY_MARKET_ITEM:
+      return buyMarketItem(state, action.itemId);
 
     case ACTIONS.LEAVE_MARKET:
       return replaceRun(state, { phase: GAME_PHASES.TABLE, reading: state.run.reading + 1 });
