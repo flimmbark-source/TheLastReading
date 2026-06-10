@@ -14,6 +14,14 @@ export function isSameArcana(a, b) {
   return a.type === b.type;
 }
 
+// "Sight" abilities can discount discards via the sight_cost upgrade.
+const SIGHT_ABILITY_TYPES = new Set([ABILITY_TYPES.PEEK, ABILITY_TYPES.SEARCH, ABILITY_TYPES.MIRROR]);
+
+export function isSightAbility(abilityId) {
+  const ability = getAbility(abilityId);
+  return Boolean(ability) && SIGHT_ABILITY_TYPES.has(ability.type);
+}
+
 export function mirrorCardId(card) {
   if (!card) return null;
   if (card.type === 'major') {

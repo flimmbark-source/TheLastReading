@@ -46,6 +46,8 @@ export function createInitialRunState(overrides = {}) {
     purge: null,
     pendingReserve: 0,
     freeDiscardUsed: false,
+    sightChargesUsed: 0,
+    lastDiscardedCard: null,
     discardedCards: [],
     worldCarry: 0,
     abilityTakenCardIds: [],

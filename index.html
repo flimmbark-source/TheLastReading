@@ -6938,13 +6938,30 @@ function discardSelected(){
   const free=persist.relics.includes('gilded_discard')&&!state.freeDiscardUsed;
   if(!free&&state.discards<=0)return;
   let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;
-  let c=state.hand.splice(idx,1)[0];
-  state.discard.push(c);playSound('discard');haptic(16);
-  if(persist.relics.includes('hanged_coin')||(persist.up.quick_release||0))state.discardedCards.push(c);
-  state.selected=null;
-  const _sightAbs=['PEEK_3','PEEK_5','SEARCH','MIRROR_1'];
-  const _sightFree=c.ability&&_sightAbs.includes(c.ability)&&(state.sightChargesUsed||0)<(persist.up.sight_cost||0);
-  if(free){state.freeDiscardUsed=true;}else if(_sightFree){state.sightChargesUsed=(state.sightChargesUsed||0)+1;}else{state.discards--;}
+  let c=state.hand[idx];
+  // Phase 8: the reducer owns discard (hand removal, pile, charge spend,
+  // Gilded Discard and sight_cost rules). Ability resolution stays legacy
+  // until Phase 11.
+  if(tlrStoreReady()){
+    tlrSyncRunToStore();
+    window.tlrStore.dispatch({type:window.tlrActions.DISCARD_SELECTED});
+    const _run=window.tlrStore.getState().run;
+    state.hand=_run.hand.slice();
+    state.discard=_run.discard.slice();
+    state.discardedCards=_run.discardedCards.slice();
+    state.discards=_run.discards;
+    state.freeDiscardUsed=_run.freeDiscardUsed;
+    state.sightChargesUsed=_run.sightChargesUsed;
+  }else{
+    state.hand.splice(idx,1);
+    state.discard.push(c);
+    if(persist.relics.includes('hanged_coin')||(persist.up.quick_release||0))state.discardedCards.push(c);
+    state.selected=null;
+    const _sightAbs=['PEEK_3','PEEK_5','SEARCH','MIRROR_1'];
+    const _sightFree=c.ability&&_sightAbs.includes(c.ability)&&(state.sightChargesUsed||0)<(persist.up.sight_cost||0);
+    if(free){state.freeDiscardUsed=true;}else if(_sightFree){state.sightChargesUsed=(state.sightChargesUsed||0)+1;}else{state.discards--;}
+  }
+  playSound('discard');haptic(16);
   resolveAbility(c.ability,()=>{if(persist.up.nimble_fingers)drawN(persist.up.nimble_fingers);render();checkEnd()},c);
 }
 function resolveAbility(ab,done,sourceCard=null){

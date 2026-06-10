@@ -8,7 +8,7 @@ function courtCards(cards) {
   return cards.filter(card => card.type === 'court');
 }
 
-function hasRelic(relics, id) {
+export function hasRelic(relics, id) {
   return new Set(relics || []).has(id);
 }
 

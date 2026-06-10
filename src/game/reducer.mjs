@@ -3,6 +3,8 @@ import { createGameState, GAME_PHASES } from './state.mjs';
 import { buildDeck, drawCards, shuffleDeck } from '../systems/deck.mjs';
 import { computeScore } from '../systems/scoring.mjs';
 import { buyShopItem } from '../systems/shop.mjs';
+import { firstDiscardIsFree, hasRelic } from '../systems/relics.mjs';
+import { isSightAbility } from '../systems/abilities.mjs';
 import { currentThreshold } from '../data/thresholds.mjs';
 
 function maxHand(persist) {
@@ -40,25 +42,36 @@ function placeCard(state, slotIndex) {
   });
 }
 
+// Discarding a card removes it from hand, banks it, and spends a discard
+// charge unless the Gilded Discard relic (first discard free) or a sight_cost
+// upgrade charge (peek/search/mirror abilities) covers it. The discarded
+// card's ability then fires — that resolution is still legacy-owned and the
+// card is exposed as run.lastDiscardedCard until Phase 11 moves it here.
 function discardSelected(state) {
-  const { run } = state;
-  if (run.selectedCardId == null || run.discards <= 0) return state;
+  const { run, persist } = state;
+  if (run.selectedCardId == null) return state;
+
+  const free = firstDiscardIsFree(persist.relics) && !run.freeDiscardUsed;
+  if (!free && run.discards <= 0) return state;
 
   const hand = [...run.hand];
   const cardIndex = hand.findIndex(card => card.uid === run.selectedCardId);
   if (cardIndex < 0) return state;
 
   const [card] = hand.splice(cardIndex, 1);
-  const discard = [...run.discard, card];
-  const { drawn, deck } = drawCards(run.deck, 1);
+  const tracksDiscarded = hasRelic(persist.relics, 'hanged_coin') || (persist.upgrades.quick_release || 0) > 0;
+  const sightFree = !free && Boolean(card.ability) && isSightAbility(card.ability)
+    && (run.sightChargesUsed || 0) < (persist.upgrades.sight_cost || 0);
 
   return replaceRun(state, {
-    deck,
-    hand: [...hand, ...drawn],
-    discard,
-    discardedCards: [...run.discardedCards, card],
+    hand,
+    discard: [...run.discard, card],
+    discardedCards: tracksDiscarded ? [...run.discardedCards, card] : run.discardedCards,
     selectedCardId: null,
-    discards: run.discards - 1,
+    freeDiscardUsed: run.freeDiscardUsed || free,
+    sightChargesUsed: (run.sightChargesUsed || 0) + (sightFree ? 1 : 0),
+    discards: free || sightFree ? run.discards : run.discards - 1,
+    lastDiscardedCard: card,
   });
 }
 

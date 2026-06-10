@@ -147,4 +147,59 @@ assert.equal(continuousTarget.tlrMirrorLiveState({ quiet: true }).ok, true, 'mir
   assert.deepEqual(persist7.persist.relics, ['gilded_discard'], 'persist check-in should set relics');
 }
 
+// Phase 8: discard rules — charge spend, Gilded Discard, sight_cost.
+{
+  const draw1 = byId.get('major_4'); // DRAW_1
+  const peek3 = byId.get('major_0'); // PEEK_3 (sight ability)
+  const seed = (relics = [], upgrades = {}) => {
+    let s = reducer(createGameState(), { type: ACTIONS.SYNC_LEGACY_RUN, run: { deck: [byId.get('major_2')], hand: [draw1, peek3], discard: [], spread: Array(5).fill(null), discards: 3, discardedCards: [], freeDiscardUsed: false, sightChargesUsed: 0 } });
+    return reducer(s, { type: ACTIONS.SYNC_LEGACY_PERSIST, persist: { relics, upgrades: { ...s.persist.upgrades, ...upgrades } } });
+  };
+
+  // Plain discard: spends a charge, no replacement draw by the reducer (the
+  // discarded card's ability draws — still legacy-owned).
+  let s = seed();
+  s = reducer(s, { type: ACTIONS.SELECT_CARD, cardId: draw1.uid });
+  s = reducer(s, { type: ACTIONS.DISCARD_SELECTED });
+  assert.equal(s.run.discards, 2, 'plain discard should spend a charge');
+  assert.equal(s.run.hand.length, 1, 'discard should remove exactly one card');
+  assert.equal(s.run.deck.length, 1, 'reducer discard should not draw');
+  assert.equal(s.run.discard.length, 1, 'discard pile should gain the card');
+  assert.equal(s.run.lastDiscardedCard, draw1, 'reducer should expose the discarded card for legacy ability resolution');
+  assert.equal(s.run.discardedCards.length, 0, 'discardedCards should not be tracked without hanged_coin/quick_release');
+
+  // Gilded Discard: first discard is free, second spends.
+  s = seed(['gilded_discard']);
+  s = reducer(s, { type: ACTIONS.SELECT_CARD, cardId: draw1.uid });
+  s = reducer(s, { type: ACTIONS.DISCARD_SELECTED });
+  assert.equal(s.run.discards, 3, 'gilded discard should make the first discard free');
+  assert.equal(s.run.freeDiscardUsed, true, 'free discard should be marked used');
+  s = reducer(s, { type: ACTIONS.SELECT_CARD, cardId: peek3.uid });
+  s = reducer(s, { type: ACTIONS.DISCARD_SELECTED });
+  assert.equal(s.run.discards, 2, 'second discard should spend a charge');
+
+  // sight_cost: discarding a peek/search/mirror card uses a sight charge.
+  s = seed([], { sight_cost: 1 });
+  s = reducer(s, { type: ACTIONS.SELECT_CARD, cardId: peek3.uid });
+  s = reducer(s, { type: ACTIONS.DISCARD_SELECTED });
+  assert.equal(s.run.discards, 3, 'sight ability discard should not spend a charge while sight charges remain');
+  assert.equal(s.run.sightChargesUsed, 1, 'sight charge should be consumed');
+  s = reducer(s, { type: ACTIONS.SELECT_CARD, cardId: draw1.uid });
+  s = reducer(s, { type: ACTIONS.DISCARD_SELECTED });
+  assert.equal(s.run.discards, 2, 'non-sight discard should spend a charge');
+
+  // hanged_coin tracks discarded cards.
+  s = seed(['hanged_coin']);
+  s = reducer(s, { type: ACTIONS.SELECT_CARD, cardId: draw1.uid });
+  s = reducer(s, { type: ACTIONS.DISCARD_SELECTED });
+  assert.equal(s.run.discardedCards.length, 1, 'hanged_coin should track discarded cards');
+
+  // No charges left: discard is rejected.
+  s = seed();
+  s = reducer(s, { type: ACTIONS.SYNC_LEGACY_RUN, run: { discards: 0 } });
+  s = reducer(s, { type: ACTIONS.SELECT_CARD, cardId: draw1.uid });
+  const blocked = reducer(s, { type: ACTIONS.DISCARD_SELECTED });
+  assert.equal(blocked.run.hand.length, 2, 'discard with no charges should be a no-op');
+}
+
 console.log('Architecture smoke checks passed.');
