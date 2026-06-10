@@ -297,7 +297,7 @@ upsertBlock(
         el.style.setProperty('--drift-y',((-Math.abs(st.v))*130*edge).toFixed(1)+'px');
       }
     }
-    if(isSwiping||active)springRaf=requestAnimationFrame(undulationStep);
+    if(mode==='slide'||active)springRaf=requestAnimationFrame(undulationStep);
     else h.classList.remove('hand-undulating');
   };
   const kickUndulation=()=>{
