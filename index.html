@@ -6985,11 +6985,21 @@ function resolveAbility(ab,done,sourceCard=null){
 function peek(n,done){state.busy=true;let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){state.busy=false;done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{state.hand.push(p);if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);cards.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));state.busy=false;done()})}
 function search(done){state.busy=true;if(!state.deck.length){state.busy=false;done();return}choice('Search deck','Pick any card. The deck reshuffles.',sortCards(state.deck),p=>{let i=state.deck.findIndex(c=>c.uid===p.uid);if(i>=0)state.deck.splice(i,1);state.hand.push(p);if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);shuffle(state.deck);playSound('shuffle');state.busy=false;done()})}
 function inPlay(){return[...state.hand,...state.spread.filter(Boolean)]}
-function neighbor(t){if(t.type==='major')return state.deck.filter(c=>c.type==='major'&&(c.num===t.num-1||c.num===t.num+1));if(t.type==='court'){let i=RANKS.indexOf(t.rank),r=[RANKS[i-1],RANKS[i+1]].filter(Boolean);return state.deck.filter(c=>c.suit===t.suit&&r.includes(c.rank))}return[]}
-function kin(t){if(t.type==='major')return state.deck.filter(c=>c.type==='major'&&c.uid!==t.uid);if(t.type==='court')return state.deck.filter(c=>c.type==='court'&&c.uid!==t.uid);return[]}
-function mirror(t){if(t.type==='major'){let n=21-t.num;return state.deck.filter(c=>c.type==='major'&&c.num===n)}if(t.type==='court'){let pair={Page:'King',King:'Page',Knight:'Queen',Queen:'Knight'}[t.rank];return state.deck.filter(c=>c.type==='court'&&c.suit===t.suit&&c.rank===pair)}return[]}
+// Phase 10: targeting goes through src/systems/abilities.mjs when the
+// architecture bridge is mounted; the originals remain as fallback.
+function neighbor(t){
+  if(window.tlrAbilities)return window.tlrAbilities.cardsInDeckByIds(state.deck,window.tlrAbilities.neighborCardIds(t));
+  if(t.type==='major')return state.deck.filter(c=>c.type==='major'&&(c.num===t.num-1||c.num===t.num+1));if(t.type==='court'){let i=RANKS.indexOf(t.rank),r=[RANKS[i-1],RANKS[i+1]].filter(Boolean);return state.deck.filter(c=>c.suit===t.suit&&r.includes(c.rank))}return[]}
+function kin(t){
+  if(window.tlrAbilities)return state.deck.filter(c=>c.uid!==t.uid&&window.tlrAbilities.isSameArcana(c,t));
+  if(t.type==='major')return state.deck.filter(c=>c.type==='major'&&c.uid!==t.uid);if(t.type==='court')return state.deck.filter(c=>c.type==='court'&&c.uid!==t.uid);return[]}
+function mirror(t){
+  if(window.tlrAbilities)return window.tlrAbilities.cardsInDeckByIds(state.deck,[window.tlrAbilities.mirrorCardId(t)].filter(Boolean));
+  if(t.type==='major'){let n=21-t.num;return state.deck.filter(c=>c.type==='major'&&c.num===n)}if(t.type==='court'){let pair={Page:'King',King:'Page',Knight:'Queen',Queen:'Knight'}[t.rank];return state.deck.filter(c=>c.type==='court'&&c.suit===t.suit&&c.rank===pair)}return[]}
 function betweenPool(a,b){
   if(!a||!b||a.uid===b.uid)return[];
+  // Phase 10: Between targeting through the pure ability system.
+  if(window.tlrAbilities)return window.tlrAbilities.cardsInDeckByIds(state.deck,window.tlrAbilities.betweenCardIds(a,b));
 
   // Major Arcana: cards numerically between two Major Arcana anchors (majors and minors).
   if(a.type==='major'&&b.type==='major'){
@@ -9552,8 +9562,11 @@ function setSfxVol(v){_sfxVol=v;}
 // live game without controlling it. If module loading fails (e.g. file://),
 // the legacy game is unaffected and tlrArchitectureSync() stays a no-op.
 import { installLiveMirror } from './src/app/liveMirror.mjs';
+import * as abilitySystem from './src/systems/abilities.mjs';
 try {
   installLiveMirror(window);
+  // Phase 10: the ability modal targets through the pure ability system.
+  window.tlrAbilities = abilitySystem;
   // Phase 6: hand selection ownership to the reducer.
   window.tlrBindSelectionToStore();
   // Seed the store with the current legacy state so the mirror starts in sync.

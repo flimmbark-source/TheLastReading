@@ -25,16 +25,14 @@ export function isSightAbility(abilityId) {
 export function mirrorCardId(card) {
   if (!card) return null;
   if (card.type === 'major') {
-    const mirrored = majorDefinition(21 - card.number);
+    const mirrored = majorDefinition(21 - (card.number ?? card.num));
     return mirrored?.id || null;
   }
 
   if (card.type === 'court') {
-    const rankOrder = ['Page', 'Knight', 'Queen', 'King'];
-    const suitOrder = ['Cups', 'Wands', 'Swords', 'Pentacles'];
-    const mirroredRank = rankOrder[rankOrder.length - 1 - rankOrder.indexOf(card.rank)];
-    const mirroredSuit = suitOrder[suitOrder.length - 1 - suitOrder.indexOf(card.suit)];
-    return courtDefinition(mirroredSuit, mirroredRank)?.id || null;
+    // Courts mirror within their own suit: Page<->King, Knight<->Queen.
+    const mirroredRank = { Page: 'King', King: 'Page', Knight: 'Queen', Queen: 'Knight' }[card.rank];
+    return courtDefinition(card.suit, mirroredRank)?.id || null;
   }
 
   return null;
@@ -43,7 +41,8 @@ export function mirrorCardId(card) {
 export function neighborCardIds(card, distance = 1) {
   if (!card) return [];
   if (card.type === 'major') {
-    return [card.number - distance, card.number + distance]
+    const cardNumber = card.number ?? card.num;
+    return [cardNumber - distance, cardNumber + distance]
       .map(number => majorDefinition(number)?.id)
       .filter(Boolean);
   }
@@ -61,32 +60,53 @@ export function neighborCardIds(card, distance = 1) {
   return [];
 }
 
+const RANK_ORDER = ['Page', 'Knight', 'Queen', 'King'];
+const SUIT_ORDER = ['Cups', 'Wands', 'Swords', 'Pentacles'];
+// Court ranks mapped onto the 0-21 major ladder for Between with major anchors.
+const COURT_LADDER_POSITIONS = [0, 5, 10, 15];
+
 export function betweenCardIds(a, b) {
   if (!a || !b || a.type !== b.type) return [];
+  if (a.uid != null && b.uid != null && a.uid === b.uid) return [];
 
+  // Major anchors: majors numerically between, plus courts whose ladder
+  // position falls strictly inside the window (any suit).
   if (a.type === 'major') {
-    const low = Math.min(a.number, b.number);
-    const high = Math.max(a.number, b.number);
+    const aNum = a.number ?? a.num;
+    const bNum = b.number ?? b.num;
+    const low = Math.min(aNum, bNum);
+    const high = Math.max(aNum, bNum);
     if (high - low <= 1) return [];
     const out = [];
     for (let number = low + 1; number < high; number += 1) {
       const card = majorDefinition(number);
       if (card) out.push(card.id);
     }
+    RANK_ORDER.forEach((rank, index) => {
+      const position = COURT_LADDER_POSITIONS[index];
+      if (position <= low || position >= high) return;
+      for (const suit of SUIT_ORDER) {
+        const card = courtDefinition(suit, rank);
+        if (card) out.push(card.id);
+      }
+    });
     return out;
   }
 
-  if (a.type === 'court' && a.suit === b.suit) {
-    const rankOrder = ['Page', 'Knight', 'Queen', 'King'];
-    const ai = rankOrder.indexOf(a.rank);
-    const bi = rankOrder.indexOf(b.rank);
+  // Court anchors: ranks strictly between on the rank ladder, any suit.
+  if (a.type === 'court') {
+    const ai = RANK_ORDER.indexOf(a.rank);
+    const bi = RANK_ORDER.indexOf(b.rank);
+    if (ai < 0 || bi < 0) return [];
     const low = Math.min(ai, bi);
     const high = Math.max(ai, bi);
     if (high - low <= 1) return [];
     const out = [];
     for (let index = low + 1; index < high; index += 1) {
-      const card = courtDefinition(a.suit, rankOrder[index]);
-      if (card) out.push(card.id);
+      for (const suit of SUIT_ORDER) {
+        const card = courtDefinition(suit, RANK_ORDER[index]);
+        if (card) out.push(card.id);
+      }
     }
     return out;
   }
