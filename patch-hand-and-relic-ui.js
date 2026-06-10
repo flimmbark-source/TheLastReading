@@ -151,11 +151,12 @@ upsertBlock(
   top:0;
   margin:0!important;
   --slot:0;
-  --total-a:calc(var(--slot) * var(--track-spacing) + var(--track-offset));
+  --lag:0deg;
+  --total-a:calc(var(--slot) * var(--track-spacing) + var(--track-offset) + var(--lag));
   --arc-x:calc(var(--track-radius) * sin(var(--total-a)));
   --arc-y:calc(var(--track-radius) * (1 - cos(var(--total-a))));
   --lift-y:0px;
-  --total-rot:var(--total-a);
+  --total-rot:calc(var(--total-a) + var(--lag) * 1.5);
   transform:translate(calc(-50% + var(--arc-x)),calc(var(--arc-y) + var(--lift-y))) rotate(var(--total-rot))!important;
   transform-origin:50% 50%!important;
   transition:transform .32s cubic-bezier(.2,.85,.25,1);
@@ -164,12 +165,14 @@ upsertBlock(
 .hand .card.sel,.hand .card.ability-picked,.hand .card.purge-picked{
   --lift-y:-92px;
   --total-rot:0deg;
+  --lag:0deg!important;
   z-index:999!important;
 }
 @media(hover:hover){
   .hand:not(.has-selected-card) .card:hover{
     --lift-y:-92px;
     --total-rot:0deg;
+    --lag:0deg!important;
     z-index:999!important;
   }
 }
@@ -240,7 +243,29 @@ upsertBlock(
   // ── rAF coalescing for pointermove + observer recheck ──
   let pendingMoveEv=null,moveRaf=null,recheckRaf=null;
   // cachedView and cachedCardW survive per-render busts — they only change on resize.
-  const invalidateCache=()=>{cachedCap=null;cachedRadius=null;cachedCount=-1;};
+  let cachedCards=null;
+  const invalidateCache=()=>{cachedCap=null;cachedRadius=null;cachedCount=-1;cachedCards=null;};
+  const cardsList=()=>{if(cachedCards)return cachedCards;const h=handEl();cachedCards=h?[...h.querySelectorAll('.card')]:[];return cachedCards;};
+  const LAG_SCALE=150;
+  const applyLag=v=>{
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const cards=cardsList();const n=cards.length;if(!n)return;
+    const maxSlot=Math.max(1,(n-1)/2);
+    for(let i=0;i<n;i++){
+      const edge=Math.abs(i-(n-1)/2)/maxSlot;
+      cards[i].style.setProperty('--lag',(-v*LAG_SCALE*edge).toFixed(2)+'deg');
+    }
+  };
+  const clearLag=()=>{
+    const cards=cardsList();const n=cards.length;if(!n)return;
+    const maxSlot=Math.max(1,(n-1)/2);
+    for(let i=0;i<n;i++){
+      const edge=Math.abs(i-(n-1)/2)/maxSlot;
+      cards[i].style.transitionDelay=(edge*180).toFixed(0)+'ms';
+      cards[i].style.setProperty('--lag','0deg');
+    }
+    setTimeout(()=>cardsList().forEach(el=>{el.style.transitionDelay='';}),800);
+  };
   try{if(localStorage.getItem('tlr_hand_swiped'))window.__handHasBeenSwiped=true;}catch(e){}
   const handEl=()=>{if(hand&&hand.isConnected)return hand;hand=document.querySelector('.hand');return hand;};
   const zoneEl=()=>{if(zone&&zone.isConnected)return zone;zone=document.getElementById('handSwipeZone');return zone;};
@@ -441,12 +466,14 @@ upsertBlock(
     const target=softClamp(startOffset+dx*DEG_PER_PX_SWIPE);
     applyOffset(target);
     pushSample(performance.now(),target);
+    applyLag(releaseVel());
   };
   const endGesture=()=>{
     const wasSlide=(mode==='slide'),wasPinch=(mode==='pinch');
     if(moveRaf!=null){cancelAnimationFrame(moveRaf);moveRaf=null;pendingMoveEv=null;}
     const z=zoneEl();if(z){z.classList.remove('dragging','pinching');}
     handEl()?.classList.remove('hand-scroll-dragging');
+    if(wasSlide)clearLag();
     if(wasPinch)window.__handPinchActive=false;
     mode=null;pinchStart=null;
     if(wasSlide){runMomentum(releaseVel());springBack();}
