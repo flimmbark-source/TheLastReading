@@ -42,9 +42,6 @@ function removeOpeningArchivesTutorialStep(){
       return startsComma && endsComma ? ',' : '';
     });
   }
-  // If the copy was generated outside an object, neutralize it in the opening-tutorial layer.
-  // The post-attic-return hint is reinserted by patch-attic-state-fixes, so this text is not lost.
-  html = html.replace(/The\s*(?:<b>)?\s*Archives\s*(?:<\/b>)?\s+hold\s+items\s+discovered[^'"`<]*/gi, '');
   if (html !== before) {
     console.log('  ✓ Removed Archives copy from opening tutorial');
     changed++;
