@@ -29,24 +29,41 @@ Done:
 - Ability definitions extracted to `src/data/abilities.mjs`.
 - Thresholds extracted to `src/data/thresholds.mjs`.
 - Scoring-pattern constants extracted to `src/data/scoringPatterns.mjs`.
+- Relic catalog extracted to `src/data/relics.mjs`.
+- Shop catalog extracted to `src/data/shopItems.mjs`.
 - Deck construction/draw/shuffle helpers added in `src/systems/deck.mjs`.
 - Pure scoring added in `src/systems/scoring.mjs`.
+- Scoring now delegates relic effects to `src/systems/relics.mjs`.
 - Pure scoring hints added in `src/systems/hints.mjs`.
 - Pure ability targeting/reveal helpers added in `src/systems/abilities.mjs`.
+- Pure shop offer/purchase helpers added in `src/systems/shop.mjs`.
 - Central state factories added in `src/game/state.mjs`.
 - Action names added in `src/game/actions.mjs`.
 - Initial immutable reducer added in `src/game/reducer.mjs`.
+- Shop purchase can now route through the reducer.
 - Derived selectors added in `src/game/selectors.mjs`.
 - Lightweight store added in `src/app/store.mjs`.
 - Save serialization helpers added in `src/app/save.mjs`.
+- Migration bridge bootstrap added in `src/app/bootstrap.mjs`.
 - Smoke checks added in `scripts/check-architecture.mjs`.
+- Validation scripts added:
+  - `scripts/validate-scoring-cases.mjs`
+  - `scripts/validate-modifier-cases.mjs`
+  - `scripts/validate-economy-cases.mjs`
+  - `scripts/validate-all.mjs`
+
+Run all current checks with:
+
+```sh
+node scripts/validate-all.mjs
+```
 
 Not done yet:
 
 - The new modules are not wired into the live DOM UI.
 - The old patch chain still exists.
-- Shop items and relic catalog are not fully extracted.
 - Attic/archive data is not fully extracted.
+- The live browser bootstrap is not mounted from `index.html` yet.
 - CSS is still embedded in `index.html`.
 
 ## Proposed app modules
@@ -54,11 +71,14 @@ Not done yet:
 ```txt
 src/
   app/
+    bootstrap.mjs
     store.mjs
     save.mjs
   data/
     abilities.mjs
     cards.mjs
+    relics.mjs
+    shopItems.mjs
     thresholds.mjs
     scoringPatterns.mjs
   game/
@@ -72,44 +92,25 @@ src/
     hints.mjs
     abilities.mjs
     relics.mjs
+    shop.mjs
   ui/
     render.mjs
     components/
   styles/
 ```
 
-## Phase order
+## Next phase
 
-### Phase 1: safe extraction
+The next safe step is a live bridge mount, not full UI migration:
 
-- Add architecture docs.
-- Extract card data into modules.
-- Extract thresholds and scoring-pattern constants.
-- Add pure deck and scoring functions.
-- Add smoke checks that do not affect the live app.
-
-### Phase 2: parallel validation
-
-- Run the extracted scoring system beside the existing `computeScore` during development.
-- Compare outputs for known spreads.
-- Add regression cases for the bugs we have already seen: sequence hints, 17/18 adjacency, 5/6 adjacency, Between targeting, Mirror targeting, reserve reset.
-
-### Phase 3: state consolidation
-
-- Introduce a central reducer.
-- Convert direct mutations like `state.hand.splice(...)` into actions.
-- Route UI events through `dispatch(action)`.
-- Keep old render functions until the reducer is trusted.
-
-### Phase 4: UI split
-
-- Extract CSS from `index.html`.
-- Split UI into screen-level render modules: table, market, attic, archives.
-- Remove patch scripts after their behavior exists in real source files.
+1. Load `src/app/bootstrap.mjs` from `index.html`.
+2. Confirm `window.tlrStore.getState()` works in the browser console.
+3. Mirror current live `index.html` state into the new store for diagnostics only.
+4. Do not let the new store control gameplay until the mirrored snapshot is accurate.
 
 ## Important boundary
 
-The attic and the reading table should communicate through save state, not DOM hooks or `window.tlr*` bridges.
+The attic and the reading table should communicate through save state, not DOM hooks or scattered `window.tlr*` bridges.
 
 ```js
 save.discoveredArchiveItems.push(itemId);
