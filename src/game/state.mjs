@@ -9,17 +9,21 @@ export const GAME_PHASES = Object.freeze({
   SESSION_END: 'sessionEnd',
 });
 
+function numberOr(defaultValue, value) {
+  return Number.isFinite(value) ? value : defaultValue;
+}
+
 export function createInitialPersistState(overrides = {}) {
   return {
-    reserve: 0,
-    totalScore: 0,
+    reserve: numberOr(0, overrides.reserve),
+    totalScore: numberOr(0, overrides.totalScore),
     upgrades: { ...DEFAULT_UPGRADES, ...(overrides.upgrades || {}) },
     relics: [...(overrides.relics || [])],
     relicUsed: { ...(overrides.relicUsed || {}) },
     discoveredArchiveItems: [...(overrides.discoveredArchiveItems || [])],
     unlockedFragments: [...(overrides.unlockedFragments || [])],
     seenTutorials: { ...(overrides.seenTutorials || {}) },
-    obals: overrides.obals || 0,
+    obals: numberOr(0, overrides.obals),
   };
 }
 
