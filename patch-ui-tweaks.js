@@ -103,14 +103,23 @@ replaceOne(
 );
 
 // Insert replayTutorial() function near other tutorial helpers.
+// Archives is no longer part of the opening tutorial; it is shown after the first attic discovery return.
 const tutSkipFn = `function tutSkip(){localStorage.setItem(TUT_KEY,'1');tutDone=true;tutHide()}`;
 const tutSkipFnWithReplay = `function tutSkip(){localStorage.setItem(TUT_KEY,'1');tutDone=true;tutHide()}
-function replayTutorial(){['tlr_tut_done','tlr_tut_relic','tlr_tut_shop','tlr_tut_inv_open','tlr_tut_inv_name','tlr_tut_inv_detail'].forEach(k=>localStorage.removeItem(k));tutDone=false;const p=document.getElementById('settingsPanel');if(p)p.classList.add('hidden');tutShow(0);}`;
+function replayTutorial(){['tlr_tut_done','tlr_tut_relic','tlr_tut_shop'].forEach(k=>localStorage.removeItem(k));['tlr_tut_inv_open','tlr_tut_inv_name','tlr_tut_inv_detail'].forEach(k=>localStorage.setItem(k,'1'));tutDone=false;const p=document.getElementById('settingsPanel');if(p)p.classList.add('hidden');tutShow(0);}`;
 replaceOne(
   'replayTutorial() helper',
   tutSkipFn,
   tutSkipFnWithReplay
 );
+
+// Upgrade the previous replayTutorial that still cleared Archives tutorial keys.
+const replayClearsArchives = `function replayTutorial(){['tlr_tut_done','tlr_tut_relic','tlr_tut_shop','tlr_tut_inv_open','tlr_tut_inv_name','tlr_tut_inv_detail'].forEach(k=>localStorage.removeItem(k));tutDone=false;const p=document.getElementById('settingsPanel');if(p)p.classList.add('hidden');tutShow(0);}`;
+if (html.includes(replayClearsArchives)) {
+  html = html.replace(replayClearsArchives, tutSkipFnWithReplay.split('\n').slice(1).join('\n'));
+  changed = true;
+  console.log('Patched replayTutorial() to suppress old Archives tutorial.');
+}
 
 if (changed) {
   fs.writeFileSync(path, html);
