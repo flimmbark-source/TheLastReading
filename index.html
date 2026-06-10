@@ -6270,6 +6270,24 @@ function tlrBindSelectionToStore(){
     set(v){window.tlrStore.dispatch(v==null?{type:window.tlrActions.CLEAR_SELECTION}:{type:window.tlrActions.SELECT_CARD,cardId:v});},
   });
 }
+// Phase 7+: check the current legacy run/persist into the store right before
+// dispatching a store-owned gameplay action, so the reducer operates on real
+// data. Legacy reads the resulting run back after the dispatch.
+function tlrSyncRunToStore(){
+  window.tlrStore.dispatch({type:window.tlrActions.SYNC_LEGACY_RUN,run:{
+    deck:state.deck,hand:state.hand,discard:state.discard,spread:state.spread,
+    discards:state.discards,discardedCards:state.discardedCards||[],
+    freeDiscardUsed:!!state.freeDiscardUsed,sightChargesUsed:state.sightChargesUsed||0,
+    thresholdIndex:state.th,thresholdBonus:state.thBonus||0,reading:state.reading,
+    pendingReserve:state.pendingPool||0,worldCarry:state.worldCarry||0,
+  }});
+  window.tlrStore.dispatch({type:window.tlrActions.SYNC_LEGACY_PERSIST,persist:{
+    reserve:persist.pool,totalScore:persist.totalScore||0,
+    upgrades:persist.up,relics:persist.relics,relicUsed:persist.relicUsed,
+  }});
+}
+// Whether store-owned gameplay actions are available.
+function tlrStoreReady(){return !!(window.tlrStore&&window.tlrActions);}
 function render(){
   _cachedPlacedScore=null; // invalidate on every render
   const _newHintsKey=_hintsKey();if(_newHintsKey!==_hintsCacheKey){_hintsCache.clear();_hintsCacheKey=_newHintsKey;_unlockedFragmentsCache=null;_spreadScoreForHints=null;}
@@ -6701,7 +6719,18 @@ function applyHint(el,card,poolCards=null){
   el.dataset.hint=hints.map(h=>h.label).join(' + ');
 }
 function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=computeScore([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
-function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;const beforeMelds=new Map(computeScore(state.spread.filter(Boolean)).melds.map(x=>[x[0],x]));let c=state.hand.splice(idx,1)[0];state.spread[i]=c;state.selected=null;render();playSound('place');haptic(12);requestAnimationFrame(()=>{const _landEl=_slotEls?.[i]?.querySelector('.card');if(_landEl){_landEl.classList.add('landing');_landEl.addEventListener('animationend',()=>_landEl.classList.remove('landing'),{once:true});}ghost(i,'+'+c.points);});let after=_getPlacedScore();let newMelds=after.melds.flatMap(x=>{if(!beforeMelds.has(x[0]))return[x];const bm=beforeMelds.get(x[0]);const dc=x[1]-bm[1],dm=x[2]-bm[2];if(dc>0||dm>0)return[[x[0],dc,dm,x[3]]];return[];});let delay=420;let announceOffset=0;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;const _rk=_relicMeldNameToKey.get(m[0])||null;setTimeout(()=>ghost(anchor,meldStr(m),true,_rk),ghostDelay);if(!_relicMeldNames.has(m[0])&&m[0]!=='Omen'&&m[0]!=='Resonance')setTimeout(()=>{centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5);playSound('meld');haptic([0,10,35,12]);},delay+announceOffset);if(m[2]>0){const _mg=m[3]==='add'?m[2]:m[2]-1;const multLabel=('+'+Number(_mg).toFixed(2)).replace(/\.?0+$/,'');setTimeout(()=>fireMultGhost(multLabel),ghostDelay+200);}holdEffects(ghostDelay+1700);delay+=slots.length*130+700;announceOffset+=600;});setCounterTarget(after.finalScore);setTimeout(()=>checkResonationTriggers(),750);checkEnd()}
+function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;const beforeMelds=new Map(computeScore(state.spread.filter(Boolean)).melds.map(x=>[x[0],x]));let c=state.hand[idx];
+// Phase 7: the reducer owns hand -> spread movement.
+if(tlrStoreReady()){
+  tlrSyncRunToStore();
+  window.tlrStore.dispatch({type:window.tlrActions.PLACE_CARD,slotIndex:i});
+  const _run=window.tlrStore.getState().run;
+  state.hand=_run.hand.slice();
+  state.spread=_run.spread.slice();
+}else{
+  state.hand.splice(idx,1);state.spread[i]=c;state.selected=null;
+}
+render();playSound('place');haptic(12);requestAnimationFrame(()=>{const _landEl=_slotEls?.[i]?.querySelector('.card');if(_landEl){_landEl.classList.add('landing');_landEl.addEventListener('animationend',()=>_landEl.classList.remove('landing'),{once:true});}ghost(i,'+'+c.points);});let after=_getPlacedScore();let newMelds=after.melds.flatMap(x=>{if(!beforeMelds.has(x[0]))return[x];const bm=beforeMelds.get(x[0]);const dc=x[1]-bm[1],dm=x[2]-bm[2];if(dc>0||dm>0)return[[x[0],dc,dm,x[3]]];return[];});let delay=420;let announceOffset=0;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;const _rk=_relicMeldNameToKey.get(m[0])||null;setTimeout(()=>ghost(anchor,meldStr(m),true,_rk),ghostDelay);if(!_relicMeldNames.has(m[0])&&m[0]!=='Omen'&&m[0]!=='Resonance')setTimeout(()=>{centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5);playSound('meld');haptic([0,10,35,12]);},delay+announceOffset);if(m[2]>0){const _mg=m[3]==='add'?m[2]:m[2]-1;const multLabel=('+'+Number(_mg).toFixed(2)).replace(/\.?0+$/,'');setTimeout(()=>fireMultGhost(multLabel),ghostDelay+200);}holdEffects(ghostDelay+1700);delay+=slots.length*130+700;announceOffset+=600;});setCounterTarget(after.finalScore);setTimeout(()=>checkResonationTriggers(),750);checkEnd()}
 let effectsUntil=0;
 function holdEffects(ms){effectsUntil=Math.max(effectsUntil,Date.now()+ms)}
 let _slotEls=null;function _slots(){return _slotEls||(_slotEls=Array.from(document.querySelectorAll('.slot')))}

@@ -132,4 +132,19 @@ liveState.spreadCount = 1;
 continuousTarget.tlrSyncArchitectureToLiveSnapshot({ quiet: true });
 assert.equal(continuousTarget.tlrMirrorLiveState({ quiet: true }).ok, true, 'mirror should match again after each action re-sync');
 
+// Phase 7: legacy check-in followed by a store-owned PLACE_CARD.
+{
+  const legacyHand = [byId.get('major_0'), byId.get('major_1'), byId.get('court_Cups_Page')];
+  let state7 = reducer(createGameState(), { type: ACTIONS.SYNC_LEGACY_RUN, run: { deck: [byId.get('major_2')], hand: legacyHand, discard: [], spread: Array(5).fill(null), discards: 3 } });
+  state7 = reducer(state7, { type: ACTIONS.SELECT_CARD, cardId: legacyHand[1].uid });
+  state7 = reducer(state7, { type: ACTIONS.PLACE_CARD, slotIndex: 2 });
+  assert.equal(state7.run.hand.length, 2, 'check-in + place should remove exactly one card from hand');
+  assert.equal(state7.run.spread[2], legacyHand[1], 'placed card should land in the chosen slot');
+  assert.equal(state7.run.selectedCardId, null, 'placement should clear selection');
+  assert.equal(state7.run.deck.length, 1, 'placement should not touch the deck');
+  const persist7 = reducer(state7, { type: ACTIONS.SYNC_LEGACY_PERSIST, persist: { reserve: 12, relics: ['gilded_discard'] } });
+  assert.equal(persist7.persist.reserve, 12, 'persist check-in should set reserve');
+  assert.deepEqual(persist7.persist.relics, ['gilded_discard'], 'persist check-in should set relics');
+}
+
 console.log('Architecture smoke checks passed.');

@@ -123,6 +123,38 @@ function syncLegacySnapshot(state, snapshot) {
   });
 }
 
+// Transition-period check-in: while the legacy app still mutates parts of the
+// run outside the reducer, it pushes the affected fields here before
+// dispatching a store-owned action, and reads the result back afterwards.
+const LEGACY_RUN_FIELDS = [
+  'deck', 'hand', 'discard', 'spread', 'discards', 'discardedCards',
+  'freeDiscardUsed', 'sightChargesUsed', 'thresholdIndex', 'thresholdBonus',
+  'reading', 'pendingReserve', 'worldCarry',
+];
+
+function syncLegacyRun(state, run = {}) {
+  const patch = {};
+  for (const key of LEGACY_RUN_FIELDS) {
+    if (!(key in run)) continue;
+    patch[key] = Array.isArray(run[key]) ? [...run[key]] : run[key];
+  }
+  return replaceRun(state, patch);
+}
+
+const LEGACY_PERSIST_FIELDS = ['reserve', 'totalScore', 'upgrades', 'relics', 'relicUsed', 'obals'];
+
+function syncLegacyPersist(state, persist = {}) {
+  const patch = {};
+  for (const key of LEGACY_PERSIST_FIELDS) {
+    if (!(key in persist)) continue;
+    const value = persist[key];
+    if (Array.isArray(value)) patch[key] = [...value];
+    else if (value && typeof value === 'object') patch[key] = { ...value };
+    else patch[key] = value;
+  }
+  return replacePersist(state, patch);
+}
+
 export function reducer(state = createGameState(), action = {}) {
   switch (action.type) {
     case ACTIONS.START_READING: {
@@ -180,6 +212,12 @@ export function reducer(state = createGameState(), action = {}) {
 
     case ACTIONS.SYNC_LEGACY_SNAPSHOT:
       return syncLegacySnapshot(state, action.snapshot);
+
+    case ACTIONS.SYNC_LEGACY_RUN:
+      return syncLegacyRun(state, action.run);
+
+    case ACTIONS.SYNC_LEGACY_PERSIST:
+      return syncLegacyPersist(state, action.persist);
 
     default:
       return state;

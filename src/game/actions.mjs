@@ -20,6 +20,8 @@ export const ACTIONS = Object.freeze({
   END_SESSION: 'END_SESSION',
   RESET_SESSION: 'RESET_SESSION',
   SYNC_LEGACY_SNAPSHOT: 'SYNC_LEGACY_SNAPSHOT',
+  SYNC_LEGACY_RUN: 'SYNC_LEGACY_RUN',
+  SYNC_LEGACY_PERSIST: 'SYNC_LEGACY_PERSIST',
 });
 
 export const startReading = () => ({ type: ACTIONS.START_READING });
@@ -29,3 +31,5 @@ export const placeCard = slotIndex => ({ type: ACTIONS.PLACE_CARD, slotIndex });
 export const discardSelected = () => ({ type: ACTIONS.DISCARD_SELECTED });
 export const scoreReading = () => ({ type: ACTIONS.SCORE_READING });
 export const syncLegacySnapshot = snapshot => ({ type: ACTIONS.SYNC_LEGACY_SNAPSHOT, snapshot });
+export const syncLegacyRun = run => ({ type: ACTIONS.SYNC_LEGACY_RUN, run });
+export const syncLegacyPersist = persist => ({ type: ACTIONS.SYNC_LEGACY_PERSIST, persist });
