@@ -42,8 +42,10 @@ const leaveReplacement = "function leave(){\n    if(window.tlrCloseArchives)wind
 if (html.includes(leaveNeedle)) html = html.replace(leaveNeedle, leaveReplacement);
 
 // Add helpers for found attic items, item type lookup, and the delayed Archives tutorial hint.
+// The old tutorial used tlr_tut_inv_* keys. Those are now suppressed and the moved hint
+// uses tlr_tut_archives_after_attic instead.
 const helperNeedle = "  function candlesFromScore(score){if(score>=1000)return 7;";
-const helpers = "  function foundItems(){try{return JSON.parse(localStorage.getItem('tlr_attic_found_items')||'[]')}catch(e){return []}}\n  function atticItemType(o){try{const items=[...(typeof INV_ITEMS!=='undefined'?INV_ITEMS:[]),...(typeof INV_FRAGMENTS!=='undefined'?Object.values(INV_FRAGMENTS):[])];const hit=items.find(function(item){return item&&item.id===o.itemId});return (hit&&(hit.type||hit.kind||hit.category))||o.itemType||'Item';}catch(e){return o.itemType||'Item'}}\n  function showArchivesHintAfterAttic(){let should=false;try{should=localStorage.getItem('tlr_pending_archives_hint_after_attic')==='1'&&!localStorage.getItem('tlr_tut_inv_open');localStorage.removeItem('tlr_pending_archives_hint_after_attic');if(should)localStorage.setItem('tlr_tut_inv_open','1');}catch(e){}if(!should)return;const root=document.getElementById('invWrap')||document.body;document.querySelectorAll('.inv-tut.archives-return-hint').forEach(function(el){el.remove()});const h=document.createElement('div');h.className='inv-tut archives-return-hint';h.innerHTML='Your discovery was added to the <b>Archives</b>. Pull this tab open to inspect it.';root.appendChild(h);setTimeout(function(){h.remove()},6800)}\n  function candlesFromScore(score){if(score>=1000)return 7;";
+const helpers = "  function suppressOldArchivesTutorial(){try{['tlr_tut_inv_open','tlr_tut_inv_name','tlr_tut_inv_detail'].forEach(function(k){localStorage.setItem(k,'1')})}catch(e){}}\n  suppressOldArchivesTutorial();\n  function foundItems(){try{return JSON.parse(localStorage.getItem('tlr_attic_found_items')||'[]')}catch(e){return []}}\n  function atticItemType(o){try{const items=[...(typeof INV_ITEMS!=='undefined'?INV_ITEMS:[]),...(typeof INV_FRAGMENTS!=='undefined'?Object.values(INV_FRAGMENTS):[])];const hit=items.find(function(item){return item&&item.id===o.itemId});return (hit&&(hit.type||hit.kind||hit.category))||o.itemType||'Item';}catch(e){return o.itemType||'Item'}}\n  function showArchivesHintAfterAttic(){let should=false;try{should=localStorage.getItem('tlr_pending_archives_hint_after_attic')==='1'&&!localStorage.getItem('tlr_tut_archives_after_attic');localStorage.removeItem('tlr_pending_archives_hint_after_attic');if(should){localStorage.setItem('tlr_tut_archives_after_attic','1');suppressOldArchivesTutorial();}}catch(e){}if(!should)return;const root=document.getElementById('invWrap')||document.body;document.querySelectorAll('.inv-tut.archives-return-hint').forEach(function(el){el.remove()});const h=document.createElement('div');h.className='inv-tut archives-return-hint';h.innerHTML='Your discovery was added to the <b>Archives</b>. Pull this tab open to inspect it.';root.appendChild(h);setTimeout(function(){h.remove()},6800)}\n  function candlesFromScore(score){if(score>=1000)return 7;";
 if (html.includes(helperNeedle) && !html.includes('function atticItemType(o)')) {
   html = html.replace(helperNeedle, helpers);
 }
@@ -51,6 +53,20 @@ if (html.includes(helperNeedle) && !html.includes('function atticItemType(o)')) 
 const foundOnlyNeedle = "  function foundItems(){try{return JSON.parse(localStorage.getItem('tlr_attic_found_items')||'[]')}catch(e){return []}}\n  function candlesFromScore(score){if(score>=1000)return 7;";
 if (html.includes(foundOnlyNeedle) && !html.includes('function atticItemType(o)')) {
   html = html.replace(foundOnlyNeedle, helpers);
+}
+
+// Upgrade the previous version of this helper if it already exists from an earlier patch run.
+if (html.includes("function showArchivesHintAfterAttic(){let should=false;try{should=localStorage.getItem('tlr_pending_archives_hint_after_attic')==='1'&&!localStorage.getItem('tlr_tut_inv_open');")) {
+  html = html.replace(
+    "function showArchivesHintAfterAttic(){let should=false;try{should=localStorage.getItem('tlr_pending_archives_hint_after_attic')==='1'&&!localStorage.getItem('tlr_tut_inv_open');localStorage.removeItem('tlr_pending_archives_hint_after_attic');if(should)localStorage.setItem('tlr_tut_inv_open','1');}",
+    "function showArchivesHintAfterAttic(){let should=false;try{should=localStorage.getItem('tlr_pending_archives_hint_after_attic')==='1'&&!localStorage.getItem('tlr_tut_archives_after_attic');localStorage.removeItem('tlr_pending_archives_hint_after_attic');if(should){localStorage.setItem('tlr_tut_archives_after_attic','1');suppressOldArchivesTutorial();}}"
+  );
+}
+if (html.includes('function foundItems(){try{return JSON.parse(localStorage.getItem')) && !html.includes('function suppressOldArchivesTutorial(){')) {
+  html = html.replace(
+    '  function foundItems(){try{return JSON.parse(localStorage.getItem',
+    "  function suppressOldArchivesTutorial(){try{['tlr_tut_inv_open','tlr_tut_inv_name','tlr_tut_inv_detail'].forEach(function(k){localStorage.setItem(k,'1')})}catch(e){}}\n  suppressOldArchivesTutorial();\n  function foundItems(){try{return JSON.parse(localStorage.getItem"
+  );
 }
 
 // Found attic items should stay visible in their opened state, but become inactive.
@@ -79,7 +95,7 @@ if (html.includes(findTitleWhisper)) html = html.replace(findTitleWhisper, findT
 // If the player takes an item, immediately re-render props so it remains as its opened, inactive sprite.
 // Also arm the Archives tutorial hint for the return to the table, but only the first time.
 const takeNeedle = "saveFound(o.itemId);if(typeof renderInventory==='function')renderInventory();whisper('You take '+o.itemTitle+' back to the table.');";
-const takeReplacement = "saveFound(o.itemId);try{if(!localStorage.getItem('tlr_tut_inv_open'))localStorage.setItem('tlr_pending_archives_hint_after_attic','1')}catch(e){}renderObjects();if(typeof renderInventory==='function')renderInventory();whisper('You take the '+atticItemType(o)+' back to the table.');";
+const takeReplacement = "saveFound(o.itemId);try{if(!localStorage.getItem('tlr_tut_archives_after_attic'))localStorage.setItem('tlr_pending_archives_hint_after_attic','1')}catch(e){}renderObjects();if(typeof renderInventory==='function')renderInventory();whisper('You take the '+atticItemType(o)+' back to the table.');";
 if (html.includes(takeNeedle)) {
   html = html.replace(takeNeedle, takeReplacement);
 }
@@ -87,6 +103,10 @@ if (html.includes(takeNeedle)) {
 const takeNeedleRendered = "saveFound(o.itemId);renderObjects();if(typeof renderInventory==='function')renderInventory();whisper('You take '+o.itemTitle+' back to the table.');";
 if (html.includes(takeNeedleRendered)) {
   html = html.replace(takeNeedleRendered, takeReplacement);
+}
+const takeNeedleOldPending = "saveFound(o.itemId);try{if(!localStorage.getItem('tlr_tut_inv_open'))localStorage.setItem('tlr_pending_archives_hint_after_attic','1')}catch(e){}renderObjects();if(typeof renderInventory==='function')renderInventory();whisper('You take the '+atticItemType(o)+' back to the table.');";
+if (html.includes(takeNeedleOldPending)) {
+  html = html.replace(takeNeedleOldPending, takeReplacement);
 }
 
 // Fire the Archives hint only after the attic return finishes, not during the initial table tutorial.
