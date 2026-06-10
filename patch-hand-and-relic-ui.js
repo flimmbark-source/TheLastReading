@@ -161,7 +161,7 @@ upsertBlock(
   transform-origin:50% 50%!important;
   transition:transform .32s cubic-bezier(.2,.85,.25,1);
 }
-.hand.hand-scroll-dragging .card{transition:none}
+.hand.hand-scroll-dragging .card,.hand.hand-undulating .card{transition:none}
 .hand .card.sel,.hand .card.ability-picked,.hand .card.purge-picked{
   --lift-y:-92px;
   --total-rot:0deg;
@@ -246,25 +246,58 @@ upsertBlock(
   let cachedCards=null;
   const invalidateCache=()=>{cachedCap=null;cachedRadius=null;cachedCount=-1;cachedCards=null;};
   const cardsList=()=>{if(cachedCards)return cachedCards;const h=handEl();cachedCards=h?[...h.querySelectorAll('.card')]:[];return cachedCards;};
-  const LAG_SCALE=150;
-  const applyLag=v=>{
-    if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-    const cards=cardsList();const n=cards.length;if(!n)return;
-    const maxSlot=Math.max(1,(n-1)/2);
-    for(let i=0;i<n;i++){
-      const edge=Math.abs(i-(n-1)/2)/maxSlot;
-      cards[i].style.setProperty('--lag',(-v*LAG_SCALE*edge).toFixed(2)+'deg');
-    }
+  // Per-card underdamped spring engine. Each spring chases the master offset;
+  // the deviation is --lag, which feeds arc angle so position AND rotation trail.
+  // Center cards are stiff, edge cards soft and underdamped — center-out wave.
+  let springRaf=null,springLastT=0,springState=new WeakMap();
+  const OMEGA_CENTER=0.028,OMEGA_EDGE=0.013;
+  const ZETA_CENTER=0.82,ZETA_EDGE=0.45;
+  const LAG_EPS=0.02,VEL_EPS=0.0005;
+  const clearUndulation=()=>{
+    if(springRaf){cancelAnimationFrame(springRaf);springRaf=null;}
+    const h=handEl();if(!h)return;
+    h.classList.remove('hand-undulating');
+    cardsList().forEach(el=>{el.style.setProperty('--lag','0deg');});
   };
-  const clearLag=()=>{
-    const cards=cardsList();const n=cards.length;if(!n)return;
+  const undulationStep=now=>{
+    springRaf=null;
+    const h=handEl();
+    if(!h||window.__handReorderActive){clearUndulation();return;}
+    const dt=Math.min(40,Math.max(1,now-springLastT));
+    springLastT=now;
+    const cards=cardsList();const n=cards.length;if(!n){clearUndulation();return;}
     const maxSlot=Math.max(1,(n-1)/2);
+    const steps=Math.ceil(dt/12),sdt=dt/steps;
+    let active=false;
     for(let i=0;i<n;i++){
+      const el=cards[i];
+      let st=springState.get(el);
+      if(!st){st={p:offset,v:0};springState.set(el,st);}
       const edge=Math.abs(i-(n-1)/2)/maxSlot;
-      cards[i].style.transitionDelay=(edge*180).toFixed(0)+'ms';
-      cards[i].style.setProperty('--lag','0deg');
+      const omega=OMEGA_CENTER+(OMEGA_EDGE-OMEGA_CENTER)*edge;
+      const zeta=ZETA_CENTER+(ZETA_EDGE-ZETA_CENTER)*edge;
+      const k=omega*omega,c=2*zeta*omega;
+      for(let s=0;s<steps;s++){st.v+=(k*(offset-st.p)-c*st.v)*sdt;st.p+=st.v*sdt;}
+      const lag=st.p-offset;
+      if(Math.abs(lag)<LAG_EPS&&Math.abs(st.v)<VEL_EPS){st.p=offset;st.v=0;el.style.setProperty('--lag','0deg');}
+      else{active=true;el.style.setProperty('--lag',lag.toFixed(3)+'deg');}
     }
-    setTimeout(()=>cardsList().forEach(el=>{el.style.transitionDelay='';}),800);
+    if(active||mode==='slide'||momentumRaf!=null)springRaf=requestAnimationFrame(undulationStep);
+    else h.classList.remove('hand-undulating');
+  };
+  const kickUndulation=()=>{
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const h=handEl();if(!h)return;
+    // Re-seed every spring at current offset so stale state cannot cause jumps.
+    const cards=cardsList();
+    for(let i=0;i<cards.length;i++){
+      const st=springState.get(cards[i]);
+      if(st){st.p=offset;st.v=0;}else springState.set(cards[i],{p:offset,v:0});
+    }
+    if(springRaf){cancelAnimationFrame(springRaf);springRaf=null;}
+    h.classList.add('hand-undulating');
+    springLastT=performance.now();
+    springRaf=requestAnimationFrame(undulationStep);
   };
   try{if(localStorage.getItem('tlr_hand_swiped'))window.__handHasBeenSwiped=true;}catch(e){}
   const handEl=()=>{if(hand&&hand.isConnected)return hand;hand=document.querySelector('.hand');return hand;};
@@ -472,7 +505,6 @@ upsertBlock(
     if(moveRaf!=null){cancelAnimationFrame(moveRaf);moveRaf=null;pendingMoveEv=null;}
     const z=zoneEl();if(z){z.classList.remove('dragging','pinching');}
     handEl()?.classList.remove('hand-scroll-dragging');
-    if(wasSlide)clearLag();
     if(wasPinch)window.__handPinchActive=false;
     mode=null;pinchStart=null;
     if(wasSlide){runMomentum(releaseVel());springBack();}
