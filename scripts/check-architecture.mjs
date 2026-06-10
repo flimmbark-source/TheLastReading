@@ -11,6 +11,7 @@ import { canDiscardSelected, publicRunSnapshot, scorePreview } from '../src/game
 import { createStore } from '../src/app/store.mjs';
 import { deserializePersistState, serializePersistState } from '../src/app/save.mjs';
 import { installArchitectureBridge, uninstallArchitectureBridge } from '../src/app/bootstrap.mjs';
+import { installLiveMirror } from '../src/app/liveMirror.mjs';
 
 const deck = buildDeck();
 assert.equal(deck.length, 38, 'deck should contain 22 majors and 16 court cards');
@@ -96,5 +97,17 @@ assert.equal(bridgeTarget.tlrActions.START_READING, ACTIONS.START_READING, 'brid
 assert.equal(bridgeTarget.tlrStore.getState().persist.reserve, 7, 'bridge should preserve supplied persist state');
 uninstallArchitectureBridge(bridgeTarget);
 assert.equal(bridgeTarget.tlrStore, undefined, 'bridge uninstall should remove tlrStore');
+
+const mirrorTarget = {
+  console: { info() {} },
+  tlrReadLiveSnapshot() {
+    return { phase: 'table', reading: 1, threshold: 10, reserve: 0, totalScore: 0, handCount: 0, deckCount: 0, discardCount: 0, spreadCount: 0, discards: 3 };
+  },
+};
+installLiveMirror(mirrorTarget, { storage: null });
+assert.equal(typeof mirrorTarget.tlrMirrorLiveState, 'function', 'live mirror should install mirror function');
+const mirrorReport = mirrorTarget.tlrMirrorLiveState();
+assert.equal(Array.isArray(mirrorReport.mismatches), true, 'live mirror report should include mismatches');
+assert.equal(mirrorTarget.tlrLastMirrorReport, mirrorReport, 'live mirror should store last report');
 
 console.log('Architecture smoke checks passed.');
