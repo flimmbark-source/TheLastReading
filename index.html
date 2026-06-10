@@ -536,7 +536,9 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
   --arc-x:calc(var(--track-radius) * sin(var(--total-a)));
   --arc-y:calc(var(--track-radius) * (1 - cos(var(--total-a))));
   --lift-y:0px;
-  --total-rot:var(--total-a);
+  /* Rotation gets extra lag (--lag is already in --total-a once) so trailing
+     cards visibly tilt into the motion — follow-through exaggeration. */
+  --total-rot:calc(var(--total-a) + var(--lag) * 1.8);
   transform:translate(calc(-50% + var(--arc-x)),calc(var(--arc-y) + var(--lift-y) + var(--bob-y))) rotate(var(--total-rot))!important;
   transform-origin:50% 50%!important;
   transition:transform .32s cubic-bezier(.2,.85,.25,1);
@@ -2957,10 +2959,10 @@ function setSfxVol(v){_sfxVol=v;}
   // overshoot the slide cap by design (rubber-band edge). --bob-y adds a small
   // lift proportional to each card's angular speed.
   let springRaf=null,springLastT=0,springState=new WeakMap(),cachedCards=null;
-  const OMEGA_CENTER=0.045,OMEGA_EDGE=0.022;   // spring frequency (rad/ms)
-  const ZETA_CENTER=0.92,ZETA_EDGE=0.55;       // damping ratio (1 = no overshoot)
+  const OMEGA_CENTER=0.028,OMEGA_EDGE=0.013;   // spring frequency (rad/ms)
+  const ZETA_CENTER=0.85,ZETA_EDGE=0.45;       // damping ratio (1 = no overshoot)
   const LAG_EPS=0.02,SPRING_VEL_EPS=0.0005;    // settle thresholds (deg, deg/ms)
-  const BOB_PER_VEL=80,BOB_MAX=6;              // px of lift per deg/ms of card speed
+  const BOB_PER_VEL=140,BOB_MAX=10;            // px of lift per deg/ms of card speed
   const cardsList=()=>{
     if(cachedCards)return cachedCards;
     const h=handEl();
