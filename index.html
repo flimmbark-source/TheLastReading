@@ -2959,10 +2959,14 @@ function setSfxVol(v){_sfxVol=v;}
   // overshoot the slide cap by design (rubber-band edge). --bob-y adds a small
   // lift proportional to each card's angular speed.
   let springRaf=null,springLastT=0,springState=new WeakMap(),cachedCards=null;
-  const OMEGA_CENTER=0.028,OMEGA_EDGE=0.013;   // spring frequency (rad/ms)
-  const ZETA_CENTER=0.85,ZETA_EDGE=0.45;       // damping ratio (1 = no overshoot)
+  // During a steady drag a spring trails its target by velocity * (2*zeta/omega),
+  // so what makes the wave VISIBLE is the spread of that trail constant across
+  // the fan, not absolute softness: center ~30ms vs edge ~110ms means the tips
+  // sustain ~4x the lag of the center for the whole drag.
+  const OMEGA_CENTER=0.06,OMEGA_EDGE=0.009;    // spring frequency (rad/ms)
+  const ZETA_CENTER=0.9,ZETA_EDGE=0.5;         // damping ratio (1 = no overshoot)
   const LAG_EPS=0.02,SPRING_VEL_EPS=0.0005;    // settle thresholds (deg, deg/ms)
-  const BOB_PER_VEL=140,BOB_MAX=10;            // px of lift per deg/ms of card speed
+  const BOB_PER_LAG=1.8,BOB_MAX=10;            // px of lift per deg of lag
   const cardsList=()=>{
     if(cachedCards)return cachedCards;
     const h=handEl();
@@ -2986,7 +2990,7 @@ function setSfxVol(v){_sfxVol=v;}
     if(!n){clearUndulation();return;}
     const maxSlot=Math.max(1,(n-1)/2);
     // Substep large frames so omega*dt stays well inside Euler stability.
-    const steps=dt>20?2:1,sdt=dt/steps;
+    const steps=Math.ceil(dt/12),sdt=dt/steps;
     const bobBlend=1-Math.exp(-dt*0.012);
     let active=false;
     for(let i=0;i<n;i++){
@@ -3001,8 +3005,10 @@ function setSfxVol(v){_sfxVol=v;}
         st.v+=(k*(offset-st.p)-c*st.v)*sdt;
         st.p+=st.v*sdt;
       }
-      st.bob+=(Math.min(BOB_MAX,Math.abs(st.v)*BOB_PER_VEL)-st.bob)*bobBlend;
       let lag=st.p-offset;
+      // Bob from lag, not velocity: velocity is the same on every card during
+      // a steady drag (uniform lift = invisible), lag actually differs per card.
+      st.bob+=(Math.min(BOB_MAX,Math.abs(lag)*BOB_PER_LAG)-st.bob)*bobBlend;
       if(Math.abs(lag)<LAG_EPS&&Math.abs(st.v)<SPRING_VEL_EPS&&st.bob<0.1){
         st.p=offset;st.v=0;st.bob=0;lag=0;
       }else active=true;
