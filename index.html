@@ -705,6 +705,10 @@ body.mode-table-return #invTab{
 
 
 
+
+
+
+
 /* Attic mobile pan patch v4 */
 #atticScene{background:#0f0905!important;overflow:hidden!important}
 #atticScene::before,#atticScene::after{z-index:9!important;pointer-events:none!important}
@@ -834,6 +838,584 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 <body class="tlr-loading">
 <script>requestAnimationFrame(function(){requestAnimationFrame(function(){document.body.classList.remove('tlr-loading');});});/* tiered scoring patch */
 /* additive pattern mult patch */
+
+(function(){
+  if(window.__tlrArchivesStylePullTabsInstalled)return;
+  window.__tlrArchivesStylePullTabsInstalled=true;
+
+  const defs=[
+    {id:'scoring',label:'Scoring',content:'ref',kind:'parchment',x:()=>Math.max(0,window.innerWidth/2-142)},
+    {id:'abilities',label:'Abilities',content:'abilityRef',kind:'parchment',x:()=>Math.max(0,window.innerWidth/2-40)},
+    {id:'menu',label:'Menu',content:'settingsPanel',kind:'menu-brown',x:()=>14}
+  ];
+
+  const closeOtherPullTabs=id=>{
+    for(const d of defs){
+      if(d.id===id)continue;
+      const w=document.getElementById(d.id+'PullWrap');
+      const t=document.getElementById(d.id+'PullTab');
+      if(w)w.classList.remove('open');
+      if(t)t.innerHTML='&#9660; '+d.label;
+    }
+  };
+
+  function makePullTab(def){
+    const content=document.getElementById(def.content);
+    if(!content)return;
+    let wrap=document.getElementById(def.id+'PullWrap');
+    if(!wrap){
+      wrap=document.createElement('div');
+      wrap.id=def.id+'PullWrap';
+      wrap.className='tlr-pull-wrap '+def.kind;
+      const desk=document.createElement('div');
+      desk.id=def.id+'PullDesk';
+      desk.className='tlr-pull-desk';
+      const tab=document.createElement('button');
+      tab.id=def.id+'PullTab';
+      tab.type='button';
+      tab.className='tlr-pull-tab';
+      tab.innerHTML='&#9660; '+def.label;
+      wrap.appendChild(desk);
+      wrap.appendChild(tab);
+      wrap.style.transition='none';
+      document.body.insertBefore(wrap,document.getElementById('invWrap')||document.body.firstChild);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{wrap.style.transition='';}));
+    }
+    const desk=document.getElementById(def.id+'PullDesk');
+    const tab=document.getElementById(def.id+'PullTab');
+    if(desk&&!desk.contains(content))desk.appendChild(content);
+    content.classList.remove('hidden');
+    if(def.id==='menu')content.classList.remove('hidden');
+
+    function setOpen(open){
+      wrap.classList.toggle('open',open);
+      tab.innerHTML=(open?'&#9650; ':'&#9660; ')+def.label;
+      if(open)closeOtherPullTabs(def.id);
+    }
+
+    const savedX=localStorage.getItem('tlr_'+def.id+'_pull_tab_x');
+    if(savedX!==null){
+      tab.style.left=Math.max(0,Math.min(window.innerWidth-86,parseFloat(savedX)))+'px';
+    }else{
+      requestAnimationFrame(()=>{tab.style.left=Math.max(0,Math.min(window.innerWidth-86,def.x()))+'px';});
+    }
+
+    let psx=0,tabStartX=0,moved=false,active=false;
+    tab.addEventListener('pointerdown',e=>{
+      e.stopPropagation();
+      tab.setPointerCapture(e.pointerId);
+      psx=e.clientX;
+      tabStartX=parseFloat(tab.style.left)||tab.getBoundingClientRect().left;
+      moved=false;active=true;
+    });
+    tab.addEventListener('pointermove',e=>{
+      if(!active)return;
+      const dx=e.clientX-psx;
+      if(Math.abs(dx)>5)moved=true;
+      if(!moved)return;
+      const nx=Math.max(0,Math.min(window.innerWidth-86,tabStartX+dx));
+      tab.style.left=nx+'px';
+    });
+    tab.addEventListener('pointerup',e=>{
+      if(!active)return;
+      active=false;
+      if(moved){
+        const nx=parseFloat(tab.style.left)||0;
+        try{localStorage.setItem('tlr_'+def.id+'_pull_tab_x',nx)}catch(e){}
+      }else{
+        setOpen(!wrap.classList.contains('open'));
+      }
+      moved=false;
+    });
+    window.addEventListener('resize',()=>{
+      const cur=parseFloat(tab.style.left)||0;
+      const clamped=Math.max(0,Math.min(window.innerWidth-86,cur));
+      if(clamped!==cur)tab.style.left=clamped+'px';
+    });
+  }
+
+  defs.forEach(makePullTab);
+
+  // Keep old button APIs useful for tutorial/legacy calls, but route them into the drawers.
+  window.toggleRef=function(e){if(e)e.stopPropagation();const w=document.getElementById('scoringPullWrap');const t=document.getElementById('scoringPullTab');if(!w||!t)return;const open=!w.classList.contains('open');w.classList.toggle('open',open);t.innerHTML=(open?'&#9650; ':'&#9660; ')+'Scoring';if(open)closeOtherPullTabs('scoring');};
+  window.toggleAbilityRef=function(e){if(e)e.stopPropagation();const w=document.getElementById('abilitiesPullWrap');const t=document.getElementById('abilitiesPullTab');if(!w||!t)return;const open=!w.classList.contains('open');w.classList.toggle('open',open);t.innerHTML=(open?'&#9650; ':'&#9660; ')+'Abilities';if(open)closeOtherPullTabs('abilities');};
+  window.toggleMenu=function(){const w=document.getElementById('menuPullWrap');const t=document.getElementById('menuPullTab');if(!w||!t)return;const open=!w.classList.contains('open');w.classList.toggle('open',open);t.innerHTML=(open?'&#9650; ':'&#9660; ')+'Menu';if(open)closeOtherPullTabs('menu');};
+})();
+
+(function(){
+  if(window.__tlrPullTabFanInstalled)return;
+  window.__tlrPullTabFanInstalled=true;
+
+  const tabs=[
+    {id:'menuPullTab',key:'tlr_menu_pull_tab_x',w:86,label:'Menu'},
+    {id:'scoringPullTab',key:'tlr_scoring_pull_tab_x',w:86,label:'Scoring'},
+    {id:'abilitiesPullTab',key:'tlr_abilities_pull_tab_x',w:86,label:'Abilities'},
+    {id:'invTab',key:'tlr_tab_x',w:80,label:'Archives'}
+  ];
+
+  function existing(){
+    return tabs.map(t=>Object.assign({},t,{el:document.getElementById(t.id)})).filter(t=>t.el);
+  }
+
+  function discardsAnchorX(){
+    const disc=document.querySelector('.discards-pill');
+    if(disc){
+      const r=disc.getBoundingClientRect();
+      if(r.width)return Math.round(r.right+10);
+    }
+    return Math.round(window.innerWidth-98);
+  }
+
+  function seedDefaultPositions(){
+    const gap=window.innerWidth<390?6:10;
+    const found=existing();
+    if(found.length<2)return;
+    const byId={};found.forEach(t=>byId[t.id]=t);
+    const isDesktop=window.matchMedia('(min-width:641px)').matches;
+
+    if(isDesktop){
+      let x=14;
+      for(const id of ['menuPullTab','scoringPullTab','abilitiesPullTab']){
+        const t=byId[id];if(!t)continue;
+        const nx=Math.max(0,Math.min(window.innerWidth-t.w,x));
+        t.el.style.left=nx+'px';
+        try{localStorage.setItem(t.key,String(nx));}catch(e){}
+        x=nx+t.w+gap;
+      }
+      const a=byId.invTab;
+      if(a){
+        const nx=Math.max(0,Math.min(window.innerWidth-a.w,discardsAnchorX()));
+        a.el.style.left=nx+'px';
+        try{localStorage.setItem(a.key,String(nx));}catch(e){}
+      }
+      return;
+    }
+
+    const total=found.reduce((s,t)=>s+t.w,0)+gap*(found.length-1);
+    let x=Math.max(6,Math.round((window.innerWidth-total)/2));
+    for(const t of found){
+      const nx=Math.max(0,Math.min(window.innerWidth-t.w,x));
+      t.el.style.left=nx+'px';
+      try{localStorage.setItem(t.key,String(nx));}catch(e){}
+      x+=t.w+gap;
+    }
+  }
+
+  function fanTabs(){
+    const found=existing().map(t=>{
+      const r=t.el.getBoundingClientRect();
+      const left=parseFloat(t.el.style.left);
+      return Object.assign(t,{x:Number.isFinite(left)?left:r.left});
+    });
+    if(found.length<2)return;
+    const gap=window.innerWidth<390?6:10;
+    found.sort((a,b)=>a.x-b.x);
+
+    for(let i=0;i<found.length;i++){
+      const min=i?found[i-1].x+found[i-1].w+gap:6;
+      found[i].x=Math.max(found[i].x,min);
+    }
+
+    const last=found[found.length-1];
+    const overflow=(last.x+last.w+6)-window.innerWidth;
+    if(overflow>0){
+      for(let i=found.length-1;i>=0;i--)found[i].x-=overflow;
+      for(let i=0;i<found.length;i++){
+        const min=i?found[i-1].x+found[i-1].w+gap:6;
+        found[i].x=Math.max(found[i].x,min);
+      }
+    }
+
+    for(const t of found){
+      const nx=Math.max(0,Math.min(window.innerWidth-t.w,Math.round(t.x)));
+      t.el.style.left=nx+'px';
+      try{localStorage.setItem(t.key,String(nx));}catch(e){}
+    }
+  }
+
+  // Layout v2: reseed once because v1 centered every tab and could overlap with the new desktop layout request.
+  try{
+    if(localStorage.getItem('tlr_pull_tabs_fanned_v2')!=='1'){
+      seedDefaultPositions();
+      localStorage.setItem('tlr_pull_tabs_fanned_v2','1');
+    }
+  }catch(e){seedDefaultPositions();}
+  requestAnimationFrame(fanTabs);
+
+  // Re-fan after any tab drag release. This includes the existing Archives tab.
+  document.addEventListener('pointerup',()=>setTimeout(fanTabs,0),true);
+  window.addEventListener('resize',()=>setTimeout(()=>{seedDefaultPositions();fanTabs();},30));
+})();
+
+(function(){
+  function fmtBonus(v){return '+'+Number(v).toFixed(2).replace(/\.?0+$/,'');}
+  function fitDrawerHeights(){
+    const defs=[
+      {id:'scoring',min:92,max:260},
+      {id:'abilities',min:112,max:360},
+      {id:'menu',min:150,max:380}
+    ];
+    for(const d of defs){
+      const wrap=document.getElementById(d.id+'PullWrap');
+      const desk=document.getElementById(d.id+'PullDesk');
+      if(!wrap||!desk)continue;
+      const viewportScale=window.innerWidth<641?0.72:0.62;
+      const maxByViewport=Math.max(d.min,Math.floor(window.innerHeight*viewportScale));
+      const max=Math.min(d.max,maxByViewport);
+      const oldHeight=desk.style.getPropertyValue('height');
+      const oldOverflow=desk.style.getPropertyValue('overflow');
+      desk.style.setProperty('height','auto','important');
+      desk.style.setProperty('overflow','visible','important');
+      const measured=Math.ceil(desk.scrollHeight)+2;
+      if(oldHeight)desk.style.setProperty('height',oldHeight);else desk.style.removeProperty('height');
+      if(oldOverflow)desk.style.setProperty('overflow',oldOverflow);else desk.style.removeProperty('overflow');
+      const target=Math.max(d.min,Math.min(max,measured));
+      wrap.style.setProperty('--tlr-drawer-h',target+'px');
+      desk.style.setProperty('overflow',measured>max?'auto':'visible','important');
+    }
+  }
+  function renderDrawerScoringSheet(){
+    const el=document.getElementById('ref');
+    if(!el)return;
+    const u=(window.persist&&persist.up)||{};
+    const rankBonus=(u.rank||0)*5;
+    const rankMult=+(1.25+(u.rank_mult||0)*0.25).toFixed(2);
+    const courtChips=(u.court_chips||0)*8;
+    const courtMult=+(1.5+(u.court_mult||0)*0.25).toFixed(2);
+    const seqBonus=(u.sequence||0)*5;
+    const seqMult=+(1.25+(u.seq_mult||0)*0.5).toFixed(2);
+    const pathChips=(u.path_chips||0)*15;
+    const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
+    const rows=[
+      ['arc','Minor Arcana','',''],
+      ['Three of a Kind','3 matching court ranks','+'+(5+rankBonus),fmtBonus(rankMult-1)],
+      ['Four of a Kind','4 matching court ranks','+'+(7+rankBonus),fmtBonus(rankMult-1)],
+      ['Full Court (3/4)','Consecutive ranks','+'+(10+courtChips),fmtBonus(courtMult-1)],
+      ['Royal Court (3/4)','Consecutive ranks, same suit','+'+(10+courtChips),fmtBonus(courtMult-1)],
+      ['arc','Major Arcana','',''],
+      ['Sequence (3/4/5)','Consecutive major arcana','+'+(10+seqBonus),fmtBonus(seqMult-1)],
+      ['Path of the Magi','0·I·XXI in spread','+'+(30+pathChips),fmtBonus(pathMult-1)]
+    ];
+    let out='<table><tbody>';
+    out+='<tr><td></td><td></td><td class="score-head r"><span class="chips">Bonus</span><span class="mult">Mult</span></td></tr>';
+    for(const r of rows){
+      if(r[0]==='arc'){out+='<tr class="arcana-row"><td colspan="3">'+r[1]+'</td></tr>';continue;}
+      out+='<tr><td>'+r[0]+'</td><td class="m">'+r[1]+'</td><td class="r"><span class="chips">'+r[2]+'</span><span class="mult">'+r[3]+'</span></td></tr>';
+    }
+    out+='</tbody></table>';
+    el.className='ref scoring-sheet';
+    el.innerHTML=out;
+    requestAnimationFrame(fitDrawerHeights);
+  }
+
+  // Fill immediately and again whenever the Scoring drawer opens, so upgrades are reflected.
+  renderDrawerScoringSheet();
+  requestAnimationFrame(fitDrawerHeights);
+  window.addEventListener('resize',()=>setTimeout(fitDrawerHeights,40));
+  const oldToggle=window.toggleRef;
+  window.toggleRef=function(e){
+    renderDrawerScoringSheet();
+    if(typeof oldToggle==='function')return oldToggle.apply(this,arguments);
+  };
+
+  for(const id of ['scoring','abilities','menu']){
+    const tab=document.getElementById(id+'PullTab');
+    if(tab&&!tab.__drawerFitHooked){
+      tab.__drawerFitHooked=true;
+      tab.addEventListener('pointerup',()=>setTimeout(()=>{if(id==='scoring')renderDrawerScoringSheet();fitDrawerHeights();},0),true);
+      tab.addEventListener('click',()=>setTimeout(()=>{if(id==='scoring')renderDrawerScoringSheet();fitDrawerHeights();},0),true);
+    }
+  }
+})();
+
+(function(){
+  if(window.__tlrArchivesStylePullTabsInstalled)return;
+  window.__tlrArchivesStylePullTabsInstalled=true;
+
+  const defs=[
+    {id:'scoring',label:'Scoring',content:'ref',kind:'parchment',x:()=>Math.max(0,window.innerWidth/2-142)},
+    {id:'abilities',label:'Abilities',content:'abilityRef',kind:'parchment',x:()=>Math.max(0,window.innerWidth/2-40)},
+    {id:'menu',label:'Menu',content:'settingsPanel',kind:'menu-brown',x:()=>14}
+  ];
+
+  const closeOtherPullTabs=id=>{
+    for(const d of defs){
+      if(d.id===id)continue;
+      const w=document.getElementById(d.id+'PullWrap');
+      const t=document.getElementById(d.id+'PullTab');
+      if(w)w.classList.remove('open');
+      if(t)t.innerHTML='&#9660; '+d.label;
+    }
+  };
+
+  function makePullTab(def){
+    const content=document.getElementById(def.content);
+    if(!content)return;
+    let wrap=document.getElementById(def.id+'PullWrap');
+    if(!wrap){
+      wrap=document.createElement('div');
+      wrap.id=def.id+'PullWrap';
+      wrap.className='tlr-pull-wrap '+def.kind;
+      const desk=document.createElement('div');
+      desk.id=def.id+'PullDesk';
+      desk.className='tlr-pull-desk';
+      const tab=document.createElement('button');
+      tab.id=def.id+'PullTab';
+      tab.type='button';
+      tab.className='tlr-pull-tab';
+      tab.innerHTML='&#9660; '+def.label;
+      wrap.appendChild(desk);
+      wrap.appendChild(tab);
+      wrap.style.transition='none';
+      document.body.insertBefore(wrap,document.getElementById('invWrap')||document.body.firstChild);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{wrap.style.transition='';}));
+    }
+    const desk=document.getElementById(def.id+'PullDesk');
+    const tab=document.getElementById(def.id+'PullTab');
+    if(desk&&!desk.contains(content))desk.appendChild(content);
+    content.classList.remove('hidden');
+    if(def.id==='menu')content.classList.remove('hidden');
+
+    function setOpen(open){
+      wrap.classList.toggle('open',open);
+      tab.innerHTML=(open?'&#9650; ':'&#9660; ')+def.label;
+      if(open)closeOtherPullTabs(def.id);
+    }
+
+    const savedX=localStorage.getItem('tlr_'+def.id+'_pull_tab_x');
+    if(savedX!==null){
+      tab.style.left=Math.max(0,Math.min(window.innerWidth-86,parseFloat(savedX)))+'px';
+    }else{
+      requestAnimationFrame(()=>{tab.style.left=Math.max(0,Math.min(window.innerWidth-86,def.x()))+'px';});
+    }
+
+    let psx=0,tabStartX=0,moved=false,active=false;
+    tab.addEventListener('pointerdown',e=>{
+      e.stopPropagation();
+      tab.setPointerCapture(e.pointerId);
+      psx=e.clientX;
+      tabStartX=parseFloat(tab.style.left)||tab.getBoundingClientRect().left;
+      moved=false;active=true;
+    });
+    tab.addEventListener('pointermove',e=>{
+      if(!active)return;
+      const dx=e.clientX-psx;
+      if(Math.abs(dx)>5)moved=true;
+      if(!moved)return;
+      const nx=Math.max(0,Math.min(window.innerWidth-86,tabStartX+dx));
+      tab.style.left=nx+'px';
+    });
+    tab.addEventListener('pointerup',e=>{
+      if(!active)return;
+      active=false;
+      if(moved){
+        const nx=parseFloat(tab.style.left)||0;
+        try{localStorage.setItem('tlr_'+def.id+'_pull_tab_x',nx)}catch(e){}
+      }else{
+        setOpen(!wrap.classList.contains('open'));
+      }
+      moved=false;
+    });
+    window.addEventListener('resize',()=>{
+      const cur=parseFloat(tab.style.left)||0;
+      const clamped=Math.max(0,Math.min(window.innerWidth-86,cur));
+      if(clamped!==cur)tab.style.left=clamped+'px';
+    });
+  }
+
+  defs.forEach(makePullTab);
+
+  // Keep old button APIs useful for tutorial/legacy calls, but route them into the drawers.
+  window.toggleRef=function(e){if(e)e.stopPropagation();const w=document.getElementById('scoringPullWrap');const t=document.getElementById('scoringPullTab');if(!w||!t)return;const open=!w.classList.contains('open');w.classList.toggle('open',open);t.innerHTML=(open?'&#9650; ':'&#9660; ')+'Scoring';if(open)closeOtherPullTabs('scoring');};
+  window.toggleAbilityRef=function(e){if(e)e.stopPropagation();const w=document.getElementById('abilitiesPullWrap');const t=document.getElementById('abilitiesPullTab');if(!w||!t)return;const open=!w.classList.contains('open');w.classList.toggle('open',open);t.innerHTML=(open?'&#9650; ':'&#9660; ')+'Abilities';if(open)closeOtherPullTabs('abilities');};
+  window.toggleMenu=function(){const w=document.getElementById('menuPullWrap');const t=document.getElementById('menuPullTab');if(!w||!t)return;const open=!w.classList.contains('open');w.classList.toggle('open',open);t.innerHTML=(open?'&#9650; ':'&#9660; ')+'Menu';if(open)closeOtherPullTabs('menu');};
+})();
+
+(function(){
+  if(window.__tlrPullTabFanInstalled)return;
+  window.__tlrPullTabFanInstalled=true;
+
+  const tabs=[
+    {id:'menuPullTab',key:'tlr_menu_pull_tab_x',w:86,label:'Menu'},
+    {id:'scoringPullTab',key:'tlr_scoring_pull_tab_x',w:86,label:'Scoring'},
+    {id:'abilitiesPullTab',key:'tlr_abilities_pull_tab_x',w:86,label:'Abilities'},
+    {id:'invTab',key:'tlr_tab_x',w:80,label:'Archives'}
+  ];
+
+  function existing(){
+    return tabs.map(t=>Object.assign({},t,{el:document.getElementById(t.id)})).filter(t=>t.el);
+  }
+
+  function discardsAnchorX(){
+    const disc=document.querySelector('.discards-pill');
+    if(disc){
+      const r=disc.getBoundingClientRect();
+      if(r.width)return Math.round(r.right+10);
+    }
+    return Math.round(window.innerWidth-98);
+  }
+
+  function seedDefaultPositions(){
+    const gap=window.innerWidth<390?6:10;
+    const found=existing();
+    if(found.length<2)return;
+    const byId={};found.forEach(t=>byId[t.id]=t);
+    const isDesktop=window.matchMedia('(min-width:641px)').matches;
+
+    if(isDesktop){
+      let x=14;
+      for(const id of ['menuPullTab','scoringPullTab','abilitiesPullTab']){
+        const t=byId[id];if(!t)continue;
+        const nx=Math.max(0,Math.min(window.innerWidth-t.w,x));
+        t.el.style.left=nx+'px';
+        try{localStorage.setItem(t.key,String(nx));}catch(e){}
+        x=nx+t.w+gap;
+      }
+      const a=byId.invTab;
+      if(a){
+        const nx=Math.max(0,Math.min(window.innerWidth-a.w,discardsAnchorX()));
+        a.el.style.left=nx+'px';
+        try{localStorage.setItem(a.key,String(nx));}catch(e){}
+      }
+      return;
+    }
+
+    const total=found.reduce((s,t)=>s+t.w,0)+gap*(found.length-1);
+    let x=Math.max(6,Math.round((window.innerWidth-total)/2));
+    for(const t of found){
+      const nx=Math.max(0,Math.min(window.innerWidth-t.w,x));
+      t.el.style.left=nx+'px';
+      try{localStorage.setItem(t.key,String(nx));}catch(e){}
+      x+=t.w+gap;
+    }
+  }
+
+  function fanTabs(){
+    const found=existing().map(t=>{
+      const r=t.el.getBoundingClientRect();
+      const left=parseFloat(t.el.style.left);
+      return Object.assign(t,{x:Number.isFinite(left)?left:r.left});
+    });
+    if(found.length<2)return;
+    const gap=window.innerWidth<390?6:10;
+    found.sort((a,b)=>a.x-b.x);
+
+    for(let i=0;i<found.length;i++){
+      const min=i?found[i-1].x+found[i-1].w+gap:6;
+      found[i].x=Math.max(found[i].x,min);
+    }
+
+    const last=found[found.length-1];
+    const overflow=(last.x+last.w+6)-window.innerWidth;
+    if(overflow>0){
+      for(let i=found.length-1;i>=0;i--)found[i].x-=overflow;
+      for(let i=0;i<found.length;i++){
+        const min=i?found[i-1].x+found[i-1].w+gap:6;
+        found[i].x=Math.max(found[i].x,min);
+      }
+    }
+
+    for(const t of found){
+      const nx=Math.max(0,Math.min(window.innerWidth-t.w,Math.round(t.x)));
+      t.el.style.left=nx+'px';
+      try{localStorage.setItem(t.key,String(nx));}catch(e){}
+    }
+  }
+
+  // Layout v2: reseed once because v1 centered every tab and could overlap with the new desktop layout request.
+  try{
+    if(localStorage.getItem('tlr_pull_tabs_fanned_v2')!=='1'){
+      seedDefaultPositions();
+      localStorage.setItem('tlr_pull_tabs_fanned_v2','1');
+    }
+  }catch(e){seedDefaultPositions();}
+  requestAnimationFrame(fanTabs);
+
+  // Re-fan after any tab drag release. This includes the existing Archives tab.
+  document.addEventListener('pointerup',()=>setTimeout(fanTabs,0),true);
+  window.addEventListener('resize',()=>setTimeout(()=>{seedDefaultPositions();fanTabs();},30));
+})();
+
+(function(){
+  function fmtBonus(v){return '+'+Number(v).toFixed(2).replace(/\.?0+$/,'');}
+  function fitDrawerHeights(){
+    const defs=[
+      {id:'scoring',min:92,max:260},
+      {id:'abilities',min:112,max:360},
+      {id:'menu',min:150,max:380}
+    ];
+    for(const d of defs){
+      const wrap=document.getElementById(d.id+'PullWrap');
+      const desk=document.getElementById(d.id+'PullDesk');
+      if(!wrap||!desk)continue;
+      const viewportScale=window.innerWidth<641?0.72:0.62;
+      const maxByViewport=Math.max(d.min,Math.floor(window.innerHeight*viewportScale));
+      const max=Math.min(d.max,maxByViewport);
+      const oldHeight=desk.style.getPropertyValue('height');
+      const oldOverflow=desk.style.getPropertyValue('overflow');
+      desk.style.setProperty('height','auto','important');
+      desk.style.setProperty('overflow','visible','important');
+      const measured=Math.ceil(desk.scrollHeight)+2;
+      if(oldHeight)desk.style.setProperty('height',oldHeight);else desk.style.removeProperty('height');
+      if(oldOverflow)desk.style.setProperty('overflow',oldOverflow);else desk.style.removeProperty('overflow');
+      const target=Math.max(d.min,Math.min(max,measured));
+      wrap.style.setProperty('--tlr-drawer-h',target+'px');
+      desk.style.setProperty('overflow',measured>max?'auto':'visible','important');
+    }
+  }
+  function renderDrawerScoringSheet(){
+    const el=document.getElementById('ref');
+    if(!el)return;
+    const u=(window.persist&&persist.up)||{};
+    const rankBonus=(u.rank||0)*5;
+    const rankMult=+(1.25+(u.rank_mult||0)*0.25).toFixed(2);
+    const courtChips=(u.court_chips||0)*8;
+    const courtMult=+(1.5+(u.court_mult||0)*0.25).toFixed(2);
+    const seqBonus=(u.sequence||0)*5;
+    const seqMult=+(1.25+(u.seq_mult||0)*0.5).toFixed(2);
+    const pathChips=(u.path_chips||0)*15;
+    const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
+    const rows=[
+      ['arc','Minor Arcana','',''],
+      ['Three of a Kind','3 matching court ranks','+'+(5+rankBonus),fmtBonus(rankMult-1)],
+      ['Four of a Kind','4 matching court ranks','+'+(7+rankBonus),fmtBonus(rankMult-1)],
+      ['Full Court (3/4)','Consecutive ranks','+'+(10+courtChips),fmtBonus(courtMult-1)],
+      ['Royal Court (3/4)','Consecutive ranks, same suit','+'+(10+courtChips),fmtBonus(courtMult-1)],
+      ['arc','Major Arcana','',''],
+      ['Sequence (3/4/5)','Consecutive major arcana','+'+(10+seqBonus),fmtBonus(seqMult-1)],
+      ['Path of the Magi','0·I·XXI in spread','+'+(30+pathChips),fmtBonus(pathMult-1)]
+    ];
+    let out='<table><tbody>';
+    out+='<tr><td></td><td></td><td class="score-head r"><span class="chips">Bonus</span><span class="mult">Mult</span></td></tr>';
+    for(const r of rows){
+      if(r[0]==='arc'){out+='<tr class="arcana-row"><td colspan="3">'+r[1]+'</td></tr>';continue;}
+      out+='<tr><td>'+r[0]+'</td><td class="m">'+r[1]+'</td><td class="r"><span class="chips">'+r[2]+'</span><span class="mult">'+r[3]+'</span></td></tr>';
+    }
+    out+='</tbody></table>';
+    el.className='ref scoring-sheet';
+    el.innerHTML=out;
+    requestAnimationFrame(fitDrawerHeights);
+  }
+
+  // Fill immediately and again whenever the Scoring drawer opens, so upgrades are reflected.
+  renderDrawerScoringSheet();
+  requestAnimationFrame(fitDrawerHeights);
+  window.addEventListener('resize',()=>setTimeout(fitDrawerHeights,40));
+  const oldToggle=window.toggleRef;
+  window.toggleRef=function(e){
+    renderDrawerScoringSheet();
+    if(typeof oldToggle==='function')return oldToggle.apply(this,arguments);
+  };
+
+  for(const id of ['scoring','abilities','menu']){
+    const tab=document.getElementById(id+'PullTab');
+    if(tab&&!tab.__drawerFitHooked){
+      tab.__drawerFitHooked=true;
+      tab.addEventListener('pointerup',()=>setTimeout(()=>{if(id==='scoring')renderDrawerScoringSheet();fitDrawerHeights();},0),true);
+      tab.addEventListener('click',()=>setTimeout(()=>{if(id==='scoring')renderDrawerScoringSheet();fitDrawerHeights();},0),true);
+    }
+  }
+})();
 
 (function(){
   if(window.__tlrArchivesStylePullTabsInstalled)return;
@@ -5570,6 +6152,11 @@ function setSfxVol(v){_sfxVol=v;}
   const OMEGA_CENTER=0.030,OMEGA_EDGE=0.016;
   const ZETA_CENTER=0.88,ZETA_EDGE=0.70;
   const LAG_EPS=0.02,VEL_EPS=0.0005;
+  // Idle oscillation: slow sine wave per card, phase-shifted by slot so the
+  // fan gets a gentle ripple during the hand breathing animation.
+  const IDLE_AMP=0.18;       // degrees — subtle nudge, springs amplify the drift
+  const IDLE_FREQ=0.000095;  // rad/ms — ~66s full period, unhurried
+  const IDLE_SLOT_PHASE=0.9; // radians between adjacent card phases
   const clearUndulation=()=>{
     if(springRaf){cancelAnimationFrame(springRaf);springRaf=null;}
     const h=handEl();if(!h)return;
@@ -5585,6 +6172,7 @@ function setSfxVol(v){_sfxVol=v;}
     const cards=cardsList();const n=cards.length;if(!n){clearUndulation();return;}
     const maxSlot=Math.max(1,(n-1)/2);
     const steps=Math.ceil(dt/12),sdt=dt/steps;
+    const isSwiping=mode==='slide'||momentumRaf!=null;
     let active=false;
     for(let i=0;i<n;i++){
       const el=cards[i];
@@ -5594,10 +6182,12 @@ function setSfxVol(v){_sfxVol=v;}
       const omega=OMEGA_CENTER+(OMEGA_EDGE-OMEGA_CENTER)*edge;
       const zeta=ZETA_CENTER+(ZETA_EDGE-ZETA_CENTER)*edge;
       const k=omega*omega,c=2*zeta*omega;
-      for(let s=0;s<steps;s++){st.v+=(k*(offset-st.p)-c*st.v)*sdt;st.p+=st.v*sdt;}
+      // During idle, each spring chases a slowly oscillating per-card target.
+      const target=isSwiping?offset:offset+Math.sin(now*IDLE_FREQ+i*IDLE_SLOT_PHASE)*IDLE_AMP;
+      for(let s=0;s<steps;s++){st.v+=(k*(target-st.p)-c*st.v)*sdt;st.p+=st.v*sdt;}
       const lag=st.p-offset;
-      if(Math.abs(lag)<LAG_EPS&&Math.abs(st.v)<VEL_EPS){
-        st.p=offset;st.v=0;
+      const settled=!isSwiping&&Math.abs(st.p-target)<LAG_EPS&&Math.abs(st.v)<VEL_EPS;
+      if(settled){
         el.style.setProperty('--lag','0deg');
         el.style.setProperty('--drift-x','0px');
         el.style.setProperty('--drift-y','0px');
@@ -5608,8 +6198,11 @@ function setSfxVol(v){_sfxVol=v;}
         el.style.setProperty('--drift-y',((-Math.abs(st.v))*130*edge).toFixed(1)+'px');
       }
     }
-    if(active||mode==='slide'||momentumRaf!=null)springRaf=requestAnimationFrame(undulationStep);
-    else h.classList.remove('hand-undulating');
+    // hand-undulating disables transitions — only keep it on during swipe/momentum
+    // so card-selection lift animations still work during idle.
+    if(!isSwiping)h.classList.remove('hand-undulating');
+    // Always keep loop running so the idle wave ticks continuously.
+    springRaf=requestAnimationFrame(undulationStep);
   };
   const kickUndulation=()=>{
     if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
@@ -5622,6 +6215,15 @@ function setSfxVol(v){_sfxVol=v;}
     }
     if(springRaf){cancelAnimationFrame(springRaf);springRaf=null;}
     h.classList.add('hand-undulating');
+    springLastT=performance.now();
+    springRaf=requestAnimationFrame(undulationStep);
+  };
+  const startIdleUndulation=()=>{
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    if(springRaf)return;
+    const h=handEl();if(!h)return;
+    // No hand-undulating class here — idle runs with transitions enabled
+    // so card selections still animate normally.
     springLastT=performance.now();
     springRaf=requestAnimationFrame(undulationStep);
   };
@@ -5723,6 +6325,7 @@ function setSfxVol(v){_sfxVol=v;}
     applySpacing(s);
     cachedCap=null;
     applyOffset(clampOffset(offset));
+    if(n>0)startIdleUndulation();
   };
   // ── Swipe velocity sampling (sample stream is in offset-degrees) ──
   const pushSample=(t,d)=>{samples.push({t,d});while(samples.length&&samples[0].t<t-SAMPLE_WINDOW)samples.shift();};
