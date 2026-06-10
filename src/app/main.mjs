@@ -12,12 +12,13 @@ import * as marketRenderer from '../ui/renderMarket.mjs';
 import * as spreadRenderer from '../ui/renderSpread.mjs';
 import * as handRenderer from '../ui/renderHand.mjs';
 import * as tableRenderer from '../ui/renderTable.mjs';
+import * as atticRenderer from '../ui/renderAttic.mjs';
 
 export function startApp(target = window) {
   // Phase 15: the UI modules own the renderers. The legacy script and
   // markup still call them as globals, so install them on the target first.
   Object.assign(target, cardRenderer, ghostRenderer, hintRenderer, abilityRenderer, marketRenderer,
-    spreadRenderer, handRenderer, tableRenderer);
+    spreadRenderer, handRenderer, tableRenderer, atticRenderer);
 
   try {
     installLiveMirror(target);

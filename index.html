@@ -8203,33 +8203,11 @@ function setSfxVol(v){_sfxVol=v;}
   };
   function foundItems(){try{return JSON.parse(localStorage.getItem('tlr_attic_found_items')||'[]')}catch(e){return []}}
   function candlesFromScore(score){if(score>=1000)return 7;if(score>=700)return 6;if(score>=450)return 5;if(score>=250)return 4;if(score>=100)return 3;if(score>=50)return 2;return 1;}
-  function renderCandles(){const h=document.getElementById('obalsHud');if(!h)return;h.innerHTML='<span class="attic-obal-label">Obals</span><b class="attic-obal-count">'+candleCount+'</b>';}
+  /* Phase 15: attic DOM rendering moved to src/ui/renderAttic.mjs. */
+  function renderCandles(){if(window.renderAtticObals)window.renderAtticObals(candleCount);}
   function candleSpend(){const h=document.getElementById('obalsHud');if(!h)return;h.classList.remove('spend');void h.offsetWidth;h.classList.add('spend');setTimeout(function(){h.classList.remove('spend')},460);}
   function whisper(text,duration){const w=document.getElementById('atticWhisper');if(!w)return;w.textContent=text;w.classList.add('show');clearTimeout(whisper.t);whisper.t=setTimeout(function(){w.classList.remove('show')},duration||2600);}
-  function renderObjects(){
-    const root=document.getElementById('atticObjects');if(!root)return;
-    Object.keys(objects).forEach(function(k){
-      const o=objects[k];const alreadyFound=foundItems().includes(o.itemId);const done=!!searched[o.id]||alreadyFound;
-      let el=root.querySelector('[data-prop-id="'+o.id+'"]');
-      if(!el){
-        el=document.createElement('div');
-        el.className='attic-prop motion-'+o.motion;
-        el.dataset.propId=o.id;
-        el.style.left=o.left;el.style.top=o.top;el.style.width=o.width;el.style.height=o.height;
-        const bef=document.createElement('div');bef.className='prop-img prop-img-before';bef.style.backgroundImage='url("'+o.before+'")';
-        const aft=document.createElement('div');aft.className='prop-img prop-img-after';aft.style.backgroundImage='url("'+o.after+'")';
-        el.appendChild(bef);el.appendChild(aft);
-        el.setAttribute('role','button');el.setAttribute('aria-label',o.verb+' '+o.label);
-        if(!done)el.addEventListener('click',function(e){e.stopPropagation();rummage(o.id,el);});
-        root.appendChild(el);
-      }
-      if(done&&!el.classList.contains('searched')){
-        el.classList.add('searched');
-        el.setAttribute('aria-label',o.label+' already searched');
-        el.style.pointerEvents='none';
-      }
-    });
-  }
+  function renderObjects(){if(window.renderAtticObjects)window.renderAtticObjects({objects:objects,searchedMap:searched,foundItemIds:foundItems(),onRummage:rummage});}
   function saveFound(itemId){try{const key='tlr_attic_found_items';const arr=JSON.parse(localStorage.getItem(key)||'[]');if(!arr.includes(itemId)){arr.push(itemId);localStorage.setItem(key,JSON.stringify(arr));}}catch(e){}
     /* Phase 14: discoveries live in the store's save state too. */
     if(window.tlrStore&&window.tlrActions)window.tlrStore.dispatch({type:window.tlrActions.DISCOVER_ARCHIVE_ITEM,itemId:itemId});}
