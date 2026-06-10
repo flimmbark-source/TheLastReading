@@ -14,12 +14,11 @@ export function openShopMain(){
   let html='<div class="summary tarot-shop">';
   html+='<div class="shop-header"><span class="shop-orn">✦ &nbsp; ✦ &nbsp; ✦</span><h3>The Oracle\'s Market</h3><p class="shop-reserve-display">Reserve <b>'+persist.pool+'</b></p></div>';
   html+='<div class="shop-section-title"></div><div class="shop-packs-row">';
-  const packDiscount=persist.relics.includes('merchants_scale')?3:0;
   for(const pk of _shopPacks){
     if(pk===null) continue;
     const p=PACKS[pk];
     // Phase 12: pack pricing through the shop system (incl. Merchant's Scale).
-    const cost=window.tlrShop?window.tlrShop.packCost(p.cost,_packBuys[pk]||0,persist.relics):Math.max(0,p.cost+(_packBuys[pk]||0)*8-packDiscount);
+    const cost=window.tlrShop.packCost(p.cost,_packBuys[pk]||0,persist.relics);
     const ok=persist.pool>=cost;
     html+=`<div class="shop-pack ${ok?'affordable':''}">
       <div class="shop-pack-banner"><span class="isp isp-108 ${p.icon}"></span></div>

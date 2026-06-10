@@ -5338,28 +5338,19 @@ function startReading(){
   // Phase 13: the reducer owns the reading reset (deal, discards, threshold
   // bonus rollover, offering income). Legacy supplies the shuffled deck so
   // card object shape and RNG stay identical, then reads the run back.
-  if(tlrStoreReady()){
-    tlrSyncRunToStore();
-    window.tlrStore.dispatch({type:window.tlrActions.START_READING,deck:shuffle(buildDeck())});
-    const _st=window.tlrStore.getState(),_run=_st.run;
-    state.deck=_run.deck.slice();state.hand=_run.hand.slice();state.discard=[];
-    state.spread=_run.spread.slice();state.purgeSelect=null;
-    state.discards=_run.discards;state.mullCharges=_run.mulliganCharges;
-    state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];
-    state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
-    state.resonationBonus={chips:0,mult:0};
-    state.thBonus=_run.thresholdBonus;state.thBonusPending=0;
-    persist.pool=_st.persist.reserve;
-    playSound('shuffle');
-    _resStateKey=null;_relicGhostFired=false;
-  }else{
-    state.deck=shuffle(buildDeck());playSound('shuffle');state.hand=[];state.discard=[];state.spread=Array(5).fill(null);
-    state.selected=null;state.purgeSelect=null;state.discards=maxDiscards();state.mullCharges=maxMull();
-    state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};state.resonationBonus={chips:0,mult:0};state.thBonus=(state.thBonus||0)+(state.thBonusPending||0);state.thBonusPending=0;_resStateKey=null;_relicGhostFired=false;
-    if(persist.up.offering){persist.pool+=(persist.up.offering*5);render();}
-    const extra=(persist.relics.includes('threadbare_tarot')?1:0)+(persist.up.deep_current||0);
-    drawTo(maxHand()+extra);
-  }
+  tlrSyncRunToStore();
+  window.tlrStore.dispatch({type:window.tlrActions.START_READING,deck:shuffle(buildDeck())});
+  const _st=window.tlrStore.getState(),_run=_st.run;
+  state.deck=_run.deck.slice();state.hand=_run.hand.slice();state.discard=[];
+  state.spread=_run.spread.slice();state.purgeSelect=null;
+  state.discards=_run.discards;state.mullCharges=_run.mulliganCharges;
+  state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];
+  state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
+  state.resonationBonus={chips:0,mult:0};
+  state.thBonus=_run.thresholdBonus;state.thBonusPending=0;
+  persist.pool=_st.persist.reserve;
+  playSound('shuffle');
+  _resStateKey=null;_relicGhostFired=false;
   clearOverlay();snapCounter(0);render();
 }
 // Cached score for the current spread — reused by refreshHandState and updateScorePreview.
@@ -5457,9 +5448,8 @@ function tlrResolveAbilityThroughStore(result){
 // Ability draw through the reducer (falls back to legacy drawN).
 function tlrAbilityDraw(n){
   const _before=state.hand.length;
-  if(tlrResolveAbilityThroughStore({kind:'draw',count:n})){
-    if(state.hand.length>_before)playSound('draw');
-  }else drawN(n);
+  tlrResolveAbilityThroughStore({kind:'draw',count:n});
+  if(state.hand.length>_before)playSound('draw');
 }
 // Phase 12: route a market purchase through the reducer and read persist
 // back. Returns true (purchased), 'rejected' (reducer refused), or false
@@ -5480,7 +5470,7 @@ function tlrMarketPurchase(purchase){
 }
 // Phase 12: pack offers through the shop system (legacy shuffle fallback).
 function tlrShopPacks(){
-  return window.tlrShop?window.tlrShop.buildPackOffer(Object.keys(PACKS)):shuffle(Object.keys(PACKS)).slice(0,3);
+  return window.tlrShop.buildPackOffer(Object.keys(PACKS));
 }
 function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skipRelics){
   const omenBonus=(persist.up.omen||0);
@@ -5695,15 +5685,11 @@ function cardHints(card, poolCards=null){
 function cardHint(card,poolCards=null){return cardHints(card,poolCards)[0]||null}
 function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;const beforeMelds=new Map(computeScore(state.spread.filter(Boolean)).melds.map(x=>[x[0],x]));let c=state.hand[idx];
 // Phase 7: the reducer owns hand -> spread movement.
-if(tlrStoreReady()){
-  tlrSyncRunToStore();
-  window.tlrStore.dispatch({type:window.tlrActions.PLACE_CARD,slotIndex:i});
-  const _run=window.tlrStore.getState().run;
-  state.hand=_run.hand.slice();
-  state.spread=_run.spread.slice();
-}else{
-  state.hand.splice(idx,1);state.spread[i]=c;state.selected=null;
-}
+tlrSyncRunToStore();
+window.tlrStore.dispatch({type:window.tlrActions.PLACE_CARD,slotIndex:i});
+const _run=window.tlrStore.getState().run;
+state.hand=_run.hand.slice();
+state.spread=_run.spread.slice();
 render();playSound('place');haptic(12);requestAnimationFrame(()=>{const _landEl=_slotEls?.[i]?.querySelector('.card');if(_landEl){_landEl.classList.add('landing');_landEl.addEventListener('animationend',()=>_landEl.classList.remove('landing'),{once:true});}ghost(i,'+'+c.points);});let after=_getPlacedScore();let newMelds=after.melds.flatMap(x=>{if(!beforeMelds.has(x[0]))return[x];const bm=beforeMelds.get(x[0]);const dc=x[1]-bm[1],dm=x[2]-bm[2];if(dc>0||dm>0)return[[x[0],dc,dm,x[3]]];return[];});let delay=420;let announceOffset=0;newMelds.forEach(m=>{let slots=slotsForMeld(m[0]);slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));let anchor=slots.length?slots[slots.length-1]:i;let ghostDelay=delay+slots.length*130+120;const _rk=_relicMeldNameToKey.get(m[0])||null;setTimeout(()=>ghost(anchor,meldStr(m),true,_rk),ghostDelay);if(!_relicMeldNames.has(m[0])&&m[0]!=='Omen'&&m[0]!=='Resonance')setTimeout(()=>{centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5);playSound('meld');haptic([0,10,35,12]);},delay+announceOffset);if(m[2]>0){const _mg=m[3]==='add'?m[2]:m[2]-1;const multLabel=('+'+Number(_mg).toFixed(2)).replace(/\.?0+$/,'');setTimeout(()=>fireMultGhost(multLabel),ghostDelay+200);}holdEffects(ghostDelay+1700);delay+=slots.length*130+700;announceOffset+=600;});setCounterTarget(after.finalScore);setTimeout(()=>checkResonationTriggers(),750);checkEnd()}
 let effectsUntil=0;
 let _slotEls=null;function _slots(){return _slotEls||(_slotEls=Array.from(document.querySelectorAll('.slot')))}
@@ -5910,25 +5896,15 @@ function discardSelected(){
   // Phase 8: the reducer owns discard (hand removal, pile, charge spend,
   // Gilded Discard and sight_cost rules). Ability resolution stays legacy
   // until Phase 11.
-  if(tlrStoreReady()){
-    tlrSyncRunToStore();
-    window.tlrStore.dispatch({type:window.tlrActions.DISCARD_SELECTED});
-    const _run=window.tlrStore.getState().run;
-    state.hand=_run.hand.slice();
-    state.discard=_run.discard.slice();
-    state.discardedCards=_run.discardedCards.slice();
-    state.discards=_run.discards;
-    state.freeDiscardUsed=_run.freeDiscardUsed;
-    state.sightChargesUsed=_run.sightChargesUsed;
-  }else{
-    state.hand.splice(idx,1);
-    state.discard.push(c);
-    if(persist.relics.includes('hanged_coin')||(persist.up.quick_release||0))state.discardedCards.push(c);
-    state.selected=null;
-    const _sightAbs=['PEEK_3','PEEK_5','SEARCH','MIRROR_1'];
-    const _sightFree=c.ability&&_sightAbs.includes(c.ability)&&(state.sightChargesUsed||0)<(persist.up.sight_cost||0);
-    if(free){state.freeDiscardUsed=true;}else if(_sightFree){state.sightChargesUsed=(state.sightChargesUsed||0)+1;}else{state.discards--;}
-  }
+  tlrSyncRunToStore();
+  window.tlrStore.dispatch({type:window.tlrActions.DISCARD_SELECTED});
+  const _run=window.tlrStore.getState().run;
+  state.hand=_run.hand.slice();
+  state.discard=_run.discard.slice();
+  state.discardedCards=_run.discardedCards.slice();
+  state.discards=_run.discards;
+  state.freeDiscardUsed=_run.freeDiscardUsed;
+  state.sightChargesUsed=_run.sightChargesUsed;
   playSound('discard');haptic(16);
   resolveAbility(c.ability,()=>{if(persist.up.nimble_fingers)drawN(persist.up.nimble_fingers);render();checkEnd()},c);
 }
@@ -5948,65 +5924,28 @@ function resolveAbility(ab,done,sourceCard=null){
   else if(ab==='MIRROR_1')relation('Mirror','Choose a card. Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)',mirror,1+lens,done);
   else if(ab==='BETWEEN_2')betweenAbility(done,sourceCard);
   else if(ab==='WORLD'){
-    if(!tlrResolveAbilityThroughStore({kind:'world',handSize:maxHand()+rd})){state.deck.push(...state.discard.splice(0),...state.hand.splice(0));shuffle(state.deck);drawN(maxHand()+rd);}
+    tlrResolveAbilityThroughStore({kind:'world',handSize:maxHand()+rd});
     playSound('shuffle');done()}
   else{if(ab&&tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.CANCEL_ABILITY});done()}
 }
 function peek(n,done){state.busy=true;let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){state.busy=false;done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{
   // Phase 11: the reducer commits the take (held cards were pulled out of the deck above).
-  if(!tlrResolveAbilityThroughStore({kind:'take',heldCards:cards,takenCardId:p.uid})){
-    state.hand.push(p);if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);cards.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
-  }
+  tlrResolveAbilityThroughStore({kind:'take',heldCards:cards,takenCardId:p.uid});
   state.busy=false;done()})}
 function search(done){state.busy=true;if(!state.deck.length){state.busy=false;done();return}choice('Search deck','Pick any card. The deck reshuffles.',sortCards(state.deck),p=>{
   // Phase 11: the reducer removes the card and reshuffles the deck.
-  if(!tlrResolveAbilityThroughStore({kind:'search',takenCardId:p.uid})){
-    let i=state.deck.findIndex(c=>c.uid===p.uid);if(i>=0)state.deck.splice(i,1);state.hand.push(p);if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);shuffle(state.deck);
-  }
+  tlrResolveAbilityThroughStore({kind:'search',takenCardId:p.uid});
   playSound('shuffle');state.busy=false;done()})}
 function inPlay(){return[...state.hand,...state.spread.filter(Boolean)]}
 // Phase 10: targeting goes through src/systems/abilities.mjs when the
 // architecture bridge is mounted; the originals remain as fallback.
-function neighbor(t){
-  if(window.tlrAbilities)return window.tlrAbilities.cardsInDeckByIds(state.deck,window.tlrAbilities.neighborCardIds(t));
-  if(t.type==='major')return state.deck.filter(c=>c.type==='major'&&(c.num===t.num-1||c.num===t.num+1));if(t.type==='court'){let i=RANKS.indexOf(t.rank),r=[RANKS[i-1],RANKS[i+1]].filter(Boolean);return state.deck.filter(c=>c.suit===t.suit&&r.includes(c.rank))}return[]}
-function kin(t){
-  if(window.tlrAbilities)return state.deck.filter(c=>c.uid!==t.uid&&window.tlrAbilities.isSameArcana(c,t));
-  if(t.type==='major')return state.deck.filter(c=>c.type==='major'&&c.uid!==t.uid);if(t.type==='court')return state.deck.filter(c=>c.type==='court'&&c.uid!==t.uid);return[]}
-function mirror(t){
-  if(window.tlrAbilities)return window.tlrAbilities.cardsInDeckByIds(state.deck,[window.tlrAbilities.mirrorCardId(t)].filter(Boolean));
-  if(t.type==='major'){let n=21-t.num;return state.deck.filter(c=>c.type==='major'&&c.num===n)}if(t.type==='court'){let pair={Page:'King',King:'Page',Knight:'Queen',Queen:'Knight'}[t.rank];return state.deck.filter(c=>c.type==='court'&&c.suit===t.suit&&c.rank===pair)}return[]}
+function neighbor(t){return window.tlrAbilities.cardsInDeckByIds(state.deck,window.tlrAbilities.neighborCardIds(t))}
+function kin(t){return state.deck.filter(c=>c.uid!==t.uid&&window.tlrAbilities.isSameArcana(c,t))}
+function mirror(t){return window.tlrAbilities.cardsInDeckByIds(state.deck,[window.tlrAbilities.mirrorCardId(t)].filter(Boolean))}
 function betweenPool(a,b){
   if(!a||!b||a.uid===b.uid)return[];
   // Phase 10: Between targeting through the pure ability system.
-  if(window.tlrAbilities)return window.tlrAbilities.cardsInDeckByIds(state.deck,window.tlrAbilities.betweenCardIds(a,b));
-
-  // Major Arcana: cards numerically between two Major Arcana anchors (majors and minors).
-  if(a.type==='major'&&b.type==='major'){
-    let lo=Math.min(a.num,b.num),hi=Math.max(a.num,b.num);
-    if(hi-lo<=1)return[];
-    const minorRankPos=[0,5,10,15,20]; // Page,Knight,Queen,King,Ace mapped onto 0-21
-    return state.deck.filter(c=>{
-      if(c.type==='major')return c.num>lo&&c.num<hi;
-      let ri=RANKS.indexOf(c.rank);
-      if(ri<0)return false;
-      let pos=minorRankPos[ri];
-      return pos>lo&&pos<hi;
-    });
-  }
-
-  // Minor Arcana: cards between two anchors in the rank ladder (any suit).
-  // Ladder: Page -> Knight -> Queen -> King -> Ace
-  let aMinor=a.type==='court', bMinor=b.type==='court';
-  if(aMinor&&bMinor){
-    let ia=RANKS.indexOf(a.rank),ib=RANKS.indexOf(b.rank);
-    if(ia<0||ib<0)return[];
-    let lo=Math.min(ia,ib),hi=Math.max(ia,ib);
-    if(hi-lo<=1)return[];
-    return state.deck.filter(c=>c.type==='court'&&RANKS.indexOf(c.rank)>lo&&RANKS.indexOf(c.rank)<hi);
-  }
-
-  return[];
+  return window.tlrAbilities.cardsInDeckByIds(state.deck,window.tlrAbilities.betweenCardIds(a,b));
 }
 function uniqueCards(cards){let seen=new Set();return cards.filter(c=>{if(seen.has(c.uid))return false;seen.add(c.uid);return true})}
 function fallbackAbility(done,title='No valid ability result'){tlrAbilityDraw(1);choice(title,'No valid target was available. Draw 1 instead.',state.hand.slice(-1),()=>{state.busy=false;done()})}
@@ -6055,16 +5994,7 @@ function betweenAbility(done,sourceCard=null){
 
     choice('Between — '+cleanName(a)+' + '+cleanName(b),'These cards are between your two anchors. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
       // Phase 11: the reducer commits the take and the Thread Bond bonus.
-      if(!tlrResolveAbilityThroughStore({kind:'take',heldCards:found,takenCardId:p.uid,threadBond:true})){
-        for(const c of found){
-          let i=state.deck.findIndex(d=>d.uid===c.uid);
-          if(i>=0)state.deck.splice(i,1);
-        }
-        state.hand.push(p);
-        if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);
-        found.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
-        const _rc=persist.up.relation_chips||0;if(_rc){state.resonationBonus.chips+=_rc;state.resonationBonus.name='Thread Bond';}
-      }
+      tlrResolveAbilityThroughStore({kind:'take',heldCards:found,takenCardId:p.uid,threadBond:true});
       state.busy=false;
       done();
     });
@@ -6086,12 +6016,7 @@ function relation(title,prompt,fn,n,done){
     if(title==='Mirror'&&found.length){
       let p=found[0];
       // Phase 11: the reducer commits the take.
-      if(!tlrResolveAbilityThroughStore({kind:'take',heldCards:[p],takenCardId:p.uid})){
-        let i=state.deck.findIndex(d=>d.uid===p.uid);
-        if(i>=0)state.deck.splice(i,1);
-        state.hand.push(p);
-        if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);
-      }
+      tlrResolveAbilityThroughStore({kind:'take',heldCards:[p],takenCardId:p.uid});
       state.busy=false;
       done();
       return;
@@ -6099,13 +6024,7 @@ function relation(title,prompt,fn,n,done){
 
     choice(title+' — '+cleanName(t),'Cards found from '+cleanName(t)+'. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
       // Phase 11: the reducer commits the take and the Thread Bond bonus.
-      if(!tlrResolveAbilityThroughStore({kind:'take',heldCards:found,takenCardId:p.uid,threadBond:title==='Kin'||title==='Neighbor'})){
-        for(const c of found){let i=state.deck.findIndex(d=>d.uid===c.uid);if(i>=0)state.deck.splice(i,1)}
-        state.hand.push(p);
-        if(state.abilityTakenUids)state.abilityTakenUids.add(p.uid);
-        found.filter(c=>c.uid!==p.uid).forEach(c=>state.deck.push(c));
-        if((title==='Kin'||title==='Neighbor')&&(persist.up.relation_chips||0)){state.resonationBonus.chips+=(persist.up.relation_chips||0);state.resonationBonus.name='Thread Bond';}
-      }
+      tlrResolveAbilityThroughStore({kind:'take',heldCards:found,takenCardId:p.uid,threadBond:title==='Kin'||title==='Neighbor'});
       state.busy=false;
       done();
     });
@@ -6116,51 +6035,41 @@ function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTime
 function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards,state.spread),total=res.finalScore,curTH=TH[state.th]+(state.thBonus||0),pass=total>=curTH;
 // Phase 9: the reducer resolves scoring through src/systems/scoring.mjs.
 // The inline computeScore result is kept only to render the overlay table.
-if(tlrStoreReady()){
-  tlrSyncRunToStore();
-  window.tlrStore.dispatch({type:window.tlrActions.SCORE_READING});
-  const _run=window.tlrStore.getState().run;
-  if(_run.lastScore){
-    if(_run.lastScore.finalScore!==total)console.warn('[TLR architecture] Scoring parity mismatch',{legacy:total,architecture:_run.lastScore.finalScore,legacyMelds:res.melds,architectureMelds:_run.lastScore.melds});
-    total=_run.lastScore.finalScore;
-    curTH=_run.lastThreshold;
-    pass=!!_run.lastPassed;
-  }
-}
+tlrSyncRunToStore();
+window.tlrStore.dispatch({type:window.tlrActions.SCORE_READING});
+{const _run=window.tlrStore.getState().run;
+if(_run.lastScore){
+  if(_run.lastScore.finalScore!==total)console.warn('[TLR architecture] Scoring parity mismatch',{legacy:total,architecture:_run.lastScore.finalScore,legacyMelds:res.melds,architectureMelds:_run.lastScore.melds});
+  total=_run.lastScore.finalScore;
+  curTH=_run.lastThreshold;
+  pass=!!_run.lastPassed;
+}}
 let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${pass?'The Cards Reveal':'The Reading Fails'}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${pass?'Threshold '+curTH+' Cleared':'Below Threshold '+curTH}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;const _regMelds=res.melds.filter(m=>!m[0].startsWith('⚷'));const _resMelds=res.melds.filter(m=>m[0].startsWith('⚷'));if(_regMelds.length||_resMelds.length){_regMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);_resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}if(pass){const miserBonus=persist.relics.includes('miser')?5:0;
 // Phase 9: on pass the reducer owns score carry, threshold advance, reserve
 // banking, world carry, and the relic-earned flag; legacy reads them back.
-if(tlrStoreReady()){
-  const _st=window.tlrStore.getState();
-  state.worldCarry=_st.run.worldCarry||0;
-  state.pendingPool=_st.run.pendingReserve||0;
-  persist.totalScore=_st.persist.totalScore||0;
-  state.relicEarned=!!_st.run.relicEarned;
-  state.th=_st.run.thresholdIndex;
-}else{
-  const threshold=curTH;const wc=persist.relics.includes('the_world')?Math.floor((total-threshold)*0.1):0;
-  state.worldCarry=wc||0;state.pendingPool=(state.pendingPool||0)+total+miserBonus;persist.totalScore=(persist.totalScore||0)+total;state.relicEarned=total>=curTH*2;state.th++;
-}
+{const _st=window.tlrStore.getState();
+state.worldCarry=_st.run.worldCarry||0;
+state.pendingPool=_st.run.pendingReserve||0;
+persist.totalScore=_st.persist.totalScore||0;
+state.relicEarned=!!_st.run.relicEarned;
+state.th=_st.run.thresholdIndex;}
 const worldCarry=state.worldCarry;
 html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render();}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html;tlrArchitectureSync()}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML='';tlrArchitectureSync()}
 function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount=0;const firstShop=!localStorage.getItem('tlr_tut_shop');const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;
 // Phase 12: the reducer owns the market -> next reading transition.
-if(tlrStoreReady()){tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});state.reading=window.tlrStore.getState().run.reading;}
-else{state.reading++;}
+tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});state.reading=window.tlrStore.getState().run.reading;
 startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}else if(pendingRelic){setTimeout(()=>tutShow(9),400)}}function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;
 // Phase 13: the reducer owns the session-end state.
-if(tlrStoreReady()){tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.END_SESSION,totalScore:total,obals:candles});}
+tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.END_SESSION,totalScore:total,obals:candles});
 showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Obals</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};tlrBindSelectionToStore();
 // Phase 13: the reducer owns the session reset — session-scoped persist
 // clears, permanent progress survives. Legacy reads persist back.
-if(tlrStoreReady()){
-  window.tlrStore.dispatch({type:window.tlrActions.SYNC_LEGACY_PERSIST,persist:{reserve:persist.pool,totalScore:persist.totalScore||0,upgrades:persist.up,relics:persist.relics,relicUsed:persist.relicUsed}});
-  window.tlrStore.dispatch({type:window.tlrActions.RESET_SESSION});
-  const _p=window.tlrStore.getState().persist;
-  persist.relics=_p.relics.slice();persist.relicUsed=Object.assign({},_p.relicUsed);
-  persist.up=Object.assign({},_p.upgrades);persist.totalScore=_p.totalScore;persist.pool=_p.reserve;
-}else{persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;persist.totalScore=0;persist.pool=0;}
+window.tlrStore.dispatch({type:window.tlrActions.SYNC_LEGACY_PERSIST,persist:{reserve:persist.pool,totalScore:persist.totalScore||0,upgrades:persist.up,relics:persist.relics,relicUsed:persist.relicUsed}});
+window.tlrStore.dispatch({type:window.tlrActions.RESET_SESSION});
+const _p=window.tlrStore.getState().persist;
+persist.relics=_p.relics.slice();persist.relicUsed=Object.assign({},_p.relicUsed);
+persist.up=Object.assign({},_p.upgrades);persist.totalScore=_p.totalScore;persist.pool=_p.reserve;
 startReading()}
 // [name, desc, baseCost, scale, icon, category, pairedKey?]
 const SHOP={
@@ -6269,14 +6178,12 @@ let _packBuys={};
 let _shopPacks=null;
 let _shopRefreshCount=0;
 const _REFRESH_COSTS=[5,8,12,17,23];
-function _nextRefreshCost(){return window.tlrShop?window.tlrShop.packRefreshCost(_shopRefreshCount):_REFRESH_COSTS[Math.min(_shopRefreshCount,_REFRESH_COSTS.length-1)];}
+function _nextRefreshCost(){return window.tlrShop.packRefreshCost(_shopRefreshCount);}
 function refreshShopPacks(){
   const cost=_nextRefreshCost();
   if(persist.pool<cost)return;
   // Phase 12: the reducer owns the reserve spend.
-  const _r=tlrMarketPurchase({kind:'pack',packId:'refresh',cost});
-  if(_r==='rejected')return;
-  if(_r===false)persist.pool-=cost;
+  if(tlrMarketPurchase({kind:'pack',packId:'refresh',cost})!==true)return;
   _shopRefreshCount++;
   _shopPacks=tlrShopPacks();
   openShopMain();
@@ -6327,16 +6234,7 @@ function _openRelicVisionShop(options){
 function relicSlots(){return 3+Math.min(persist.up.relicSlot||0,2);}
 function relicPool(n=4){
   // Phase 12: relic offers through the shop system (rarity-weighted).
-  if(window.tlrShop)return window.tlrShop.buildRelicOffer(Object.keys(RELICS).map(k=>({id:k,rarity:RELICS[k].rarity})),persist.relics,{count:n});
-  const owned=new Set(persist.relics);
-  const avail=Object.keys(RELICS).filter(k=>!owned.has(k));
-  const common=shuffle(avail.filter(k=>RELICS[k].rarity==='common'));
-  const rare=shuffle(avail.filter(k=>RELICS[k].rarity==='rare'));
-  const picks=[];
-  if(rare.length)picks.push(rare.shift());
-  while(picks.length<n&&common.length)picks.push(common.shift());
-  while(picks.length<n&&rare.length)picks.push(rare.shift());
-  return shuffle(picks);
+  return window.tlrShop.buildRelicOffer(Object.keys(RELICS).map(k=>({id:k,rarity:RELICS[k].rarity})),persist.relics,{count:n});
 }
 function animatePackOpen(pk,callback){
   const p=PACKS[pk];
@@ -6421,10 +6319,8 @@ function buyPack(pk,cost){
   const c=cost!==undefined?cost:p.cost;
   if(persist.pool<c)return;
   // Phase 12: the reducer owns the reserve spend.
-  const _r=tlrMarketPurchase({kind:'pack',packId:pk,cost:c});
-  if(_r==='rejected')return;
+  if(tlrMarketPurchase({kind:'pack',packId:pk,cost:c})!==true)return;
   if(_shopPacks){const i=_shopPacks.indexOf(pk);if(i>=0)_shopPacks[i]=null;}
-  if(_r===false)persist.pool-=c;
   _packBuys[pk]=(_packBuys[pk]||0)+1;
   animatePackOpen(pk,()=>{
   if(pk==='relic'){
@@ -6466,10 +6362,7 @@ function buyPack(pk,cost){
 }
 function pickPackUpgrade(k){
   // Phase 12: the reducer owns upgrade levels (including paired keys).
-  const paired=SHOP[k][6]||null;
-  if(tlrMarketPurchase({kind:'upgrade',upgradeKey:k,pairedKey:paired})!==true){
-    persist.up[k]=(persist.up[k]||0)+1;if(paired)persist.up[paired]=(persist.up[paired]||0)+1;
-  }
+  tlrMarketPurchase({kind:'upgrade',upgradeKey:k,pairedKey:SHOP[k][6]||null});
   openShopMain()}
 function showToast(msg,duration=3200){
   document.querySelectorAll('.game-toast').forEach(el=>el.remove());
@@ -6481,9 +6374,7 @@ function showToast(msg,duration=3200){
 }
 function _doAcquireRelic(key,afterFn){
   // Phase 12: the reducer owns relic acquisition (duplicates blocked).
-  const _r=tlrMarketPurchase({kind:'relic',relicId:key});
-  if(_r===false&&!persist.relics.includes(key))persist.relics.push(key);
-  if(_r==='rejected'){afterFn();return;}
+  if(tlrMarketPurchase({kind:'relic',relicId:key})!==true){afterFn();return;}
   renderRelicRack();
   if(persist.relics.length>=relicSlots()){
     setTimeout(()=>showToast('Relic slots full — your next relic will replace one you already carry.'),600);
@@ -6527,10 +6418,7 @@ function selectRelicReplace(oldKey,newKey){
   if(_replaceSelectedKey===oldKey){
     // second tap — confirm replace
     // Phase 12: the reducer owns the relic swap.
-    if(tlrMarketPurchase({kind:'relic',relicId:newKey,replaceRelicId:oldKey})!==true){
-      const idx=persist.relics.indexOf(oldKey);
-      if(idx>=0)persist.relics.splice(idx,1,newKey);
-    }
+    tlrMarketPurchase({kind:'relic',relicId:newKey,replaceRelicId:oldKey});
     renderRelicRack();
     _replaceSelectedKey=null;
     const afterFn=window._relicReplaceAfter||openShopMain;
