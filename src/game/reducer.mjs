@@ -5,6 +5,8 @@ import { computeScore } from '../systems/scoring.mjs';
 import { buyShopItem } from '../systems/shop.mjs';
 import { currentThreshold } from '../data/thresholds.mjs';
 
+export const SYNC_LIVE_SNAPSHOT = 'SYNC_LIVE_SNAPSHOT';
+
 function maxHand(persist) {
   return 5 + (persist.upgrades.hand || 0);
 }
@@ -116,6 +118,13 @@ function buyMarketItem(state, itemId) {
   };
 }
 
+function syncLiveSnapshot(state, snapshot) {
+  return replaceRun(state, {
+    liveMirrorSnapshot: snapshot || {},
+    liveMirrorSyncedAt: Date.now(),
+  });
+}
+
 export function reducer(state = createGameState(), action = {}) {
   switch (action.type) {
     case ACTIONS.START_READING: {
@@ -170,6 +179,9 @@ export function reducer(state = createGameState(), action = {}) {
 
     case ACTIONS.RESET_SESSION:
       return createGameState({ persist: state.persist });
+
+    case SYNC_LIVE_SNAPSHOT:
+      return syncLiveSnapshot(state, action.snapshot);
 
     default:
       return state;
