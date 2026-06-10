@@ -21,11 +21,43 @@ The UI should render state and dispatch actions. It should not own scoring rules
 5. Move mutable flow last: reducer/actions, screen phases, save-state bridges.
 6. Only after those are stable, replace DOM rendering in chunks.
 
+## Current status on this branch
+
+Done:
+
+- Card definitions extracted to `src/data/cards.mjs`.
+- Ability definitions extracted to `src/data/abilities.mjs`.
+- Thresholds extracted to `src/data/thresholds.mjs`.
+- Scoring-pattern constants extracted to `src/data/scoringPatterns.mjs`.
+- Deck construction/draw/shuffle helpers added in `src/systems/deck.mjs`.
+- Pure scoring added in `src/systems/scoring.mjs`.
+- Pure scoring hints added in `src/systems/hints.mjs`.
+- Pure ability targeting/reveal helpers added in `src/systems/abilities.mjs`.
+- Central state factories added in `src/game/state.mjs`.
+- Action names added in `src/game/actions.mjs`.
+- Initial immutable reducer added in `src/game/reducer.mjs`.
+- Derived selectors added in `src/game/selectors.mjs`.
+- Lightweight store added in `src/app/store.mjs`.
+- Save serialization helpers added in `src/app/save.mjs`.
+- Smoke checks added in `scripts/check-architecture.mjs`.
+
+Not done yet:
+
+- The new modules are not wired into the live DOM UI.
+- The old patch chain still exists.
+- Shop items and relic catalog are not fully extracted.
+- Attic/archive data is not fully extracted.
+- CSS is still embedded in `index.html`.
+
 ## Proposed app modules
 
 ```txt
 src/
+  app/
+    store.mjs
+    save.mjs
   data/
+    abilities.mjs
     cards.mjs
     thresholds.mjs
     scoringPatterns.mjs
@@ -33,6 +65,7 @@ src/
     state.mjs
     actions.mjs
     reducer.mjs
+    selectors.mjs
   systems/
     deck.mjs
     scoring.mjs
