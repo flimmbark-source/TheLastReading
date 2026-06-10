@@ -2,7 +2,7 @@ import { ACTIONS } from './actions.mjs';
 import { createGameState, GAME_PHASES } from './state.mjs';
 import { buildDeck, drawCards, shuffleDeck } from '../systems/deck.mjs';
 import { computeScore } from '../systems/scoring.mjs';
-import { buyShopItem } from '../systems/shop.mjs';
+import { buyShopItem, maxRelicSlots } from '../systems/shop.mjs';
 import { firstDiscardIsFree, hasRelic, thresholdClearBonusFromRelics, worldCarryFromRelics } from '../systems/relics.mjs';
 import { applyAbilityTake, applySearchTake, applyWorldReset, drawWithReshuffle, isSightAbility } from '../systems/abilities.mjs';
 import { currentThreshold } from '../data/thresholds.mjs';
@@ -136,6 +136,58 @@ function buyMarketItem(state, itemId) {
       lastPurchase: purchase,
     },
   };
+}
+
+// Live pack-market purchases. kind is one of:
+//   pack    — spend reserve on a pack or a shop refresh
+//   upgrade — free pick from an opened pack (+1 level, plus paired key)
+//   relic   — add a relic (or replace one when slots are full)
+function buyMarketPurchase(state, purchase) {
+  const { persist } = state;
+  const reject = reason => replaceRun(state, { lastPurchase: { purchased: false, reason, purchase } });
+
+  switch (purchase.kind) {
+    case 'pack': {
+      const cost = purchase.cost || 0;
+      if ((persist.reserve || 0) < cost) return reject('too_expensive');
+      return replaceRun(
+        replacePersist(state, { reserve: persist.reserve - cost }),
+        { lastPurchase: { purchased: true, kind: 'pack', packId: purchase.packId ?? null, cost } }
+      );
+    }
+
+    case 'upgrade': {
+      if (!purchase.upgradeKey) return reject('missing_upgrade');
+      const upgrades = { ...persist.upgrades };
+      upgrades[purchase.upgradeKey] = (upgrades[purchase.upgradeKey] || 0) + 1;
+      if (purchase.pairedKey) upgrades[purchase.pairedKey] = (upgrades[purchase.pairedKey] || 0) + 1;
+      return replaceRun(
+        replacePersist(state, { upgrades }),
+        { lastPurchase: { purchased: true, kind: 'upgrade', upgradeKey: purchase.upgradeKey, cost: 0 } }
+      );
+    }
+
+    case 'relic': {
+      if (persist.relics.includes(purchase.relicId)) return reject('duplicate_relic');
+      let relics;
+      if (purchase.replaceRelicId != null) {
+        const index = persist.relics.indexOf(purchase.replaceRelicId);
+        if (index < 0) return reject('missing_replaced_relic');
+        relics = [...persist.relics];
+        relics.splice(index, 1, purchase.relicId);
+      } else {
+        if (persist.relics.length >= maxRelicSlots(persist.upgrades)) return reject('relic_slots_full');
+        relics = [...persist.relics, purchase.relicId];
+      }
+      return replaceRun(
+        replacePersist(state, { relics }),
+        { lastPurchase: { purchased: true, kind: 'relic', relicId: purchase.relicId, cost: 0 } }
+      );
+    }
+
+    default:
+      return reject('unknown_purchase');
+  }
 }
 
 // Abilities resolve atomically at their commit point. The modal flow (which
@@ -282,6 +334,7 @@ export function reducer(state = createGameState(), action = {}) {
       return replaceRun(state, { phase: GAME_PHASES.MARKET });
 
     case ACTIONS.BUY_MARKET_ITEM:
+      if (action.purchase) return buyMarketPurchase(state, action.purchase);
       return buyMarketItem(state, action.itemId);
 
     case ACTIONS.LEAVE_MARKET:

@@ -290,4 +290,57 @@ assert.equal(continuousTarget.tlrMirrorLiveState({ quiet: true }).ok, true, 'mir
   assert.equal(s.run.ability, null, 'cancel should clear the ability');
 }
 
+// Phase 12: market economy — pack spend, upgrade picks, relic rules.
+{
+  const seed = (persistPatch = {}) => reducer(createGameState(), { type: ACTIONS.SYNC_LEGACY_PERSIST, persist: { reserve: 30, relics: [], ...persistPatch } });
+
+  // Pack purchase deducts reserve exactly once; can't overspend.
+  let s = reducer(seed(), { type: ACTIONS.BUY_MARKET_ITEM, purchase: { kind: 'pack', packId: 'ritual', cost: 18 } });
+  assert.equal(s.persist.reserve, 12, 'pack purchase should deduct the cost once');
+  assert.equal(s.run.lastPurchase.purchased, true, 'pack purchase should succeed');
+  s = reducer(s, { type: ACTIONS.BUY_MARKET_ITEM, purchase: { kind: 'pack', packId: 'ritual', cost: 26 } });
+  assert.equal(s.persist.reserve, 12, 'unaffordable pack should not deduct');
+  assert.equal(s.run.lastPurchase.purchased, false, 'unaffordable pack should be rejected');
+
+  // Upgrade pick applies the level and the paired key.
+  s = reducer(seed(), { type: ACTIONS.BUY_MARKET_ITEM, purchase: { kind: 'upgrade', upgradeKey: 'balanced_reading', pairedKey: 'balanced_reading_mult' } });
+  assert.equal(s.persist.upgrades.balanced_reading, 1, 'upgrade pick should apply');
+  assert.equal(s.persist.upgrades.balanced_reading_mult, 1, 'paired upgrade should apply');
+
+  // Relics: added once, duplicates blocked, slots enforced, replace works.
+  s = reducer(seed(), { type: ACTIONS.BUY_MARKET_ITEM, purchase: { kind: 'relic', relicId: 'miser' } });
+  assert.deepEqual(s.persist.relics, ['miser'], 'relic should be added once');
+  s = reducer(s, { type: ACTIONS.BUY_MARKET_ITEM, purchase: { kind: 'relic', relicId: 'miser' } });
+  assert.equal(s.run.lastPurchase.reason, 'duplicate_relic', 'duplicate relic should be blocked');
+  s = reducer(seed({ relics: ['a', 'b', 'c'] }), { type: ACTIONS.BUY_MARKET_ITEM, purchase: { kind: 'relic', relicId: 'miser' } });
+  assert.equal(s.run.lastPurchase.reason, 'relic_slots_full', 'full slots should block a plain add');
+  s = reducer(seed({ relics: ['a', 'b', 'c'] }), { type: ACTIONS.BUY_MARKET_ITEM, purchase: { kind: 'relic', relicId: 'miser', replaceRelicId: 'b' } });
+  assert.deepEqual(s.persist.relics, ['a', 'miser', 'c'], 'replace should swap in place');
+
+  // Shop system: costs, refresh ladder, offers.
+  const { packCost, packRefreshCost, buildPackOffer, buildRelicOffer, maxRelicSlots } = await import('../src/systems/shop.mjs');
+  assert.equal(packCost(14, 0, []), 14, 'base pack cost');
+  assert.equal(packCost(14, 2, []), 30, 'rebuy escalation should add 8 per purchase');
+  assert.equal(packCost(14, 0, ['merchants_scale']), 11, "Merchant's Scale should discount packs by 3");
+  assert.equal(packRefreshCost(0), 5, 'first refresh costs 5');
+  assert.equal(packRefreshCost(99), 23, 'refresh cost should clamp at the ladder top');
+  assert.equal(buildPackOffer(['a', 'b', 'c', 'd', 'e']).length, 3, 'pack offer should contain 3 packs');
+  const relicCatalog = [
+    { id: 'c1', rarity: 'common' }, { id: 'c2', rarity: 'common' }, { id: 'c3', rarity: 'common' },
+    { id: 'r1', rarity: 'rare' }, { id: 'r2', rarity: 'rare' },
+  ];
+  const offer = buildRelicOffer(relicCatalog, ['c1']);
+  assert.equal(offer.length, 4, 'relic offer should contain 4 relics');
+  assert.equal(offer.includes('c1'), false, 'owned relics should be filtered from the offer');
+  assert.equal(offer.some(id => id.startsWith('r')), true, 'a rare should be guaranteed when available');
+  assert.equal(maxRelicSlots({}), 3, 'base relic slots');
+  assert.equal(maxRelicSlots({ relicSlot: 5 }), 5, 'relic slots cap at 3+2');
+
+  // LEAVE_MARKET advances the reading.
+  let m = reducer(createGameState(), { type: ACTIONS.SYNC_LEGACY_RUN, run: { reading: 2 } });
+  m = reducer(m, { type: ACTIONS.LEAVE_MARKET });
+  assert.equal(m.run.reading, 3, 'leaving the market should advance the reading');
+  assert.equal(m.run.phase, 'table', 'leaving the market should return to the table');
+}
+
 console.log('Architecture smoke checks passed.');

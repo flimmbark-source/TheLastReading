@@ -6312,6 +6312,27 @@ function tlrAbilityDraw(n){
     if(state.hand.length>_before)playSound('draw');
   }else drawN(n);
 }
+// Phase 12: route a market purchase through the reducer and read persist
+// back. Returns true (purchased), 'rejected' (reducer refused), or false
+// (store unavailable — caller falls back to inline mutations).
+function tlrMarketPurchase(purchase){
+  if(!tlrStoreReady())return false;
+  window.tlrStore.dispatch({type:window.tlrActions.SYNC_LEGACY_PERSIST,persist:{
+    reserve:persist.pool,totalScore:persist.totalScore||0,
+    upgrades:persist.up,relics:persist.relics,relicUsed:persist.relicUsed,
+  }});
+  window.tlrStore.dispatch({type:window.tlrActions.BUY_MARKET_ITEM,purchase});
+  const _st=window.tlrStore.getState();
+  if(!_st.run.lastPurchase||!_st.run.lastPurchase.purchased)return 'rejected';
+  persist.pool=_st.persist.reserve;
+  persist.up=Object.assign({},_st.persist.upgrades);
+  persist.relics=_st.persist.relics.slice();
+  return true;
+}
+// Phase 12: pack offers through the shop system (legacy shuffle fallback).
+function tlrShopPacks(){
+  return window.tlrShop?window.tlrShop.buildPackOffer(Object.keys(PACKS)):shuffle(Object.keys(PACKS)).slice(0,3);
+}
 function render(){
   _cachedPlacedScore=null; // invalidate on every render
   const _newHintsKey=_hintsKey();if(_newHintsKey!==_hintsCacheKey){_hintsCache.clear();_hintsCacheKey=_newHintsKey;_unlockedFragmentsCache=null;_spreadScoreForHints=null;}
@@ -7219,7 +7240,11 @@ if(tlrStoreReady()){
 const worldCarry=state.worldCarry;
 html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${total}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${total}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render();}
 function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html;tlrArchitectureSync()}function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML='';tlrArchitectureSync()}
-function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount=0;const firstShop=!localStorage.getItem('tlr_tut_shop');const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;state.reading++;startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}else if(pendingRelic){setTimeout(()=>tutShow(9),400)}}function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Obals</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};tlrBindSelectionToStore();persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;persist.totalScore=0;persist.pool=0;startReading()}
+function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount=0;const firstShop=!localStorage.getItem('tlr_tut_shop');const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;
+// Phase 12: the reducer owns the market -> next reading transition.
+if(tlrStoreReady()){tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});state.reading=window.tlrStore.getState().run.reading;}
+else{state.reading++;}
+startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}else if(pendingRelic){setTimeout(()=>tutShow(9),400)}}function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Obals</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0};tlrBindSelectionToStore();persist.relics=[];persist.relicUsed={};persist.up.relicSlot=0;persist.totalScore=0;persist.pool=0;startReading()}
 // [name, desc, baseCost, scale, icon, category, pairedKey?]
 const SHOP={
   // ── Foundation Pack (foundation) ──
@@ -7330,18 +7355,21 @@ let _packBuys={};
 let _shopPacks=null;
 let _shopRefreshCount=0;
 const _REFRESH_COSTS=[5,8,12,17,23];
-function _nextRefreshCost(){return _REFRESH_COSTS[Math.min(_shopRefreshCount,_REFRESH_COSTS.length-1)];}
+function _nextRefreshCost(){return window.tlrShop?window.tlrShop.packRefreshCost(_shopRefreshCount):_REFRESH_COSTS[Math.min(_shopRefreshCount,_REFRESH_COSTS.length-1)];}
 function refreshShopPacks(){
   const cost=_nextRefreshCost();
   if(persist.pool<cost)return;
-  persist.pool-=cost;
+  // Phase 12: the reducer owns the reserve spend.
+  const _r=tlrMarketPurchase({kind:'pack',packId:'refresh',cost});
+  if(_r==='rejected')return;
+  if(_r===false)persist.pool-=cost;
   _shopRefreshCount++;
-  _shopPacks=shuffle(Object.keys(PACKS)).slice(0,3);
+  _shopPacks=tlrShopPacks();
   openShopMain();
 }
 function openShopMain(){
   if(state.pendingPool){persist.pool+=state.pendingPool;state.pendingPool=0;render();}
-  if(!_shopPacks)_shopPacks=shuffle(Object.keys(PACKS)).slice(0,3);
+  if(!_shopPacks)_shopPacks=tlrShopPacks();
   let html='<div class="summary tarot-shop">';
   html+='<div class="shop-header"><span class="shop-orn">✦ &nbsp; ✦ &nbsp; ✦</span><h3>The Oracle\'s Market</h3><p class="shop-reserve-display">Reserve <b>'+persist.pool+'</b></p></div>';
   html+='<div class="shop-section-title"></div><div class="shop-packs-row">';
@@ -7349,7 +7377,8 @@ function openShopMain(){
   for(const pk of _shopPacks){
     if(pk===null) continue;
     const p=PACKS[pk];
-    const cost=Math.max(0,p.cost+(_packBuys[pk]||0)*8-packDiscount);
+    // Phase 12: pack pricing through the shop system (incl. Merchant's Scale).
+    const cost=window.tlrShop?window.tlrShop.packCost(p.cost,_packBuys[pk]||0,persist.relics):Math.max(0,p.cost+(_packBuys[pk]||0)*8-packDiscount);
     const ok=persist.pool>=cost;
     html+=`<div class="shop-pack ${ok?'affordable':''}">
       <div class="shop-pack-banner"><span class="isp isp-108 ${p.icon}"></span></div>
@@ -7408,6 +7437,8 @@ function _openRelicVisionShop(options){
 }
 function relicSlots(){return 3+Math.min(persist.up.relicSlot||0,2);}
 function relicPool(n=4){
+  // Phase 12: relic offers through the shop system (rarity-weighted).
+  if(window.tlrShop)return window.tlrShop.buildRelicOffer(Object.keys(RELICS).map(k=>({id:k,rarity:RELICS[k].rarity})),persist.relics,{count:n});
   const owned=new Set(persist.relics);
   const avail=Object.keys(RELICS).filter(k=>!owned.has(k));
   const common=shuffle(avail.filter(k=>RELICS[k].rarity==='common'));
@@ -7500,8 +7531,11 @@ function buyPack(pk,cost){
   const p=PACKS[pk];
   const c=cost!==undefined?cost:p.cost;
   if(persist.pool<c)return;
+  // Phase 12: the reducer owns the reserve spend.
+  const _r=tlrMarketPurchase({kind:'pack',packId:pk,cost:c});
+  if(_r==='rejected')return;
   if(_shopPacks){const i=_shopPacks.indexOf(pk);if(i>=0)_shopPacks[i]=null;}
-  persist.pool-=c;
+  if(_r===false)persist.pool-=c;
   _packBuys[pk]=(_packBuys[pk]||0)+1;
   animatePackOpen(pk,()=>{
   if(pk==='relic'){
@@ -7541,7 +7575,13 @@ function buyPack(pk,cost){
   showOverlay(html);
   }); // end animatePackOpen
 }
-function pickPackUpgrade(k){persist.up[k]=(persist.up[k]||0)+1;const paired=SHOP[k][6];if(paired)persist.up[paired]=(persist.up[paired]||0)+1;openShopMain()}
+function pickPackUpgrade(k){
+  // Phase 12: the reducer owns upgrade levels (including paired keys).
+  const paired=SHOP[k][6]||null;
+  if(tlrMarketPurchase({kind:'upgrade',upgradeKey:k,pairedKey:paired})!==true){
+    persist.up[k]=(persist.up[k]||0)+1;if(paired)persist.up[paired]=(persist.up[paired]||0)+1;
+  }
+  openShopMain()}
 function showToast(msg,duration=3200){
   document.querySelectorAll('.game-toast').forEach(el=>el.remove());
   const t=document.createElement('div');
@@ -7551,7 +7591,11 @@ function showToast(msg,duration=3200){
   setTimeout(()=>{t.classList.remove('game-toast-show');setTimeout(()=>t.remove(),400);},duration);
 }
 function _doAcquireRelic(key,afterFn){
-  persist.relics.push(key);renderRelicRack();
+  // Phase 12: the reducer owns relic acquisition (duplicates blocked).
+  const _r=tlrMarketPurchase({kind:'relic',relicId:key});
+  if(_r===false&&!persist.relics.includes(key))persist.relics.push(key);
+  if(_r==='rejected'){afterFn();return;}
+  renderRelicRack();
   if(persist.relics.length>=relicSlots()){
     setTimeout(()=>showToast('Relic slots full — your next relic will replace one you already carry.'),600);
   }
@@ -7593,8 +7637,11 @@ function showRelicReplace(newKey,afterFn){
 function selectRelicReplace(oldKey,newKey){
   if(_replaceSelectedKey===oldKey){
     // second tap — confirm replace
-    const idx=persist.relics.indexOf(oldKey);
-    if(idx>=0)persist.relics.splice(idx,1,newKey);
+    // Phase 12: the reducer owns the relic swap.
+    if(tlrMarketPurchase({kind:'relic',relicId:newKey,replaceRelicId:oldKey})!==true){
+      const idx=persist.relics.indexOf(oldKey);
+      if(idx>=0)persist.relics.splice(idx,1,newKey);
+    }
     renderRelicRack();
     _replaceSelectedKey=null;
     const afterFn=window._relicReplaceAfter||openShopMain;
@@ -9608,10 +9655,13 @@ function setSfxVol(v){_sfxVol=v;}
 // the legacy game is unaffected and tlrArchitectureSync() stays a no-op.
 import { installLiveMirror } from './src/app/liveMirror.mjs';
 import * as abilitySystem from './src/systems/abilities.mjs';
+import * as shopSystem from './src/systems/shop.mjs';
 try {
   installLiveMirror(window);
   // Phase 10: the ability modal targets through the pure ability system.
   window.tlrAbilities = abilitySystem;
+  // Phase 12: the market generates offers and costs through the shop system.
+  window.tlrShop = shopSystem;
   // Phase 6: hand selection ownership to the reducer.
   window.tlrBindSelectionToStore();
   // Seed the store with the current legacy state so the mirror starts in sync.

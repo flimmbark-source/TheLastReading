@@ -11,6 +11,7 @@ export const RELIC_EVENT_TYPES = Object.freeze({
 export const RELICS = Object.freeze({
   gilded_fool: {
     id: 'gilded_fool',
+    rarity: 'common',
     name: 'The Gilded Fool',
     icon: '🃏',
     event: RELIC_EVENT_TYPES.SCORING,
@@ -18,6 +19,7 @@ export const RELICS = Object.freeze({
   },
   hermit_lantern: {
     id: 'hermit_lantern',
+    rarity: 'common',
     name: "Hermit's Lantern",
     icon: '🔦',
     event: RELIC_EVENT_TYPES.SCORING,
@@ -25,6 +27,7 @@ export const RELICS = Object.freeze({
   },
   mirror_shard: {
     id: 'mirror_shard',
+    rarity: 'common',
     name: 'Mirror Shard',
     icon: '🪞',
     event: RELIC_EVENT_TYPES.SCORING,
@@ -32,6 +35,7 @@ export const RELICS = Object.freeze({
   },
   still_pool: {
     id: 'still_pool',
+    rarity: 'common',
     name: 'The Still Pool',
     icon: '🪷',
     event: RELIC_EVENT_TYPES.SCORING,
@@ -39,6 +43,7 @@ export const RELICS = Object.freeze({
   },
   loaded_die: {
     id: 'loaded_die',
+    rarity: 'common',
     name: 'Loaded Die',
     icon: '🎲',
     event: RELIC_EVENT_TYPES.SCORING,
@@ -46,6 +51,7 @@ export const RELICS = Object.freeze({
   },
   gilded_discard: {
     id: 'gilded_discard',
+    rarity: 'common',
     name: 'Gilded Discard',
     icon: '✨',
     event: RELIC_EVENT_TYPES.DISCARD_USED,
@@ -53,6 +59,7 @@ export const RELICS = Object.freeze({
   },
   threadbare_tarot: {
     id: 'threadbare_tarot',
+    rarity: 'common',
     name: 'Threadbare Tarot',
     icon: '🎴',
     event: RELIC_EVENT_TYPES.READING_START,
@@ -60,6 +67,7 @@ export const RELICS = Object.freeze({
   },
   merchants_scale: {
     id: 'merchants_scale',
+    rarity: 'common',
     name: "Merchant's Scale",
     icon: '⚖',
     event: RELIC_EVENT_TYPES.MARKET,
@@ -67,6 +75,7 @@ export const RELICS = Object.freeze({
   },
   court_favor: {
     id: 'court_favor',
+    rarity: 'rare',
     name: 'Court Favor',
     icon: '👑',
     event: RELIC_EVENT_TYPES.SCORING,
@@ -74,6 +83,7 @@ export const RELICS = Object.freeze({
   },
   hanged_coin: {
     id: 'hanged_coin',
+    rarity: 'rare',
     name: "Hanged Man's Coin",
     icon: '🪙',
     event: RELIC_EVENT_TYPES.SCORING,
@@ -81,6 +91,7 @@ export const RELICS = Object.freeze({
   },
   miser: {
     id: 'miser',
+    rarity: 'rare',
     name: 'The Miser',
     icon: '💰',
     event: RELIC_EVENT_TYPES.SESSION_END,
@@ -88,6 +99,7 @@ export const RELICS = Object.freeze({
   },
   arcana_codex: {
     id: 'arcana_codex',
+    rarity: 'rare',
     name: 'Arcana Codex',
     icon: '📖',
     event: RELIC_EVENT_TYPES.SCORING,
@@ -95,6 +107,7 @@ export const RELICS = Object.freeze({
   },
   lovers_knot: {
     id: 'lovers_knot',
+    rarity: 'rare',
     name: "The Lovers' Knot",
     icon: '🔗',
     event: RELIC_EVENT_TYPES.SCORING,
@@ -102,6 +115,7 @@ export const RELICS = Object.freeze({
   },
   temperance_flask: {
     id: 'temperance_flask',
+    rarity: 'rare',
     name: 'Temperance Flask',
     icon: '⚗',
     event: RELIC_EVENT_TYPES.SCORING,
@@ -109,6 +123,7 @@ export const RELICS = Object.freeze({
   },
   strengths_grip: {
     id: 'strengths_grip',
+    rarity: 'rare',
     name: 'Strength',
     icon: '💪',
     event: RELIC_EVENT_TYPES.SCORING,
@@ -116,6 +131,7 @@ export const RELICS = Object.freeze({
   },
   the_world: {
     id: 'the_world',
+    rarity: 'rare',
     name: 'The World',
     icon: '🌍',
     event: RELIC_EVENT_TYPES.SCORING,
@@ -123,6 +139,7 @@ export const RELICS = Object.freeze({
   },
   fool_reversed: {
     id: 'fool_reversed',
+    rarity: 'rare',
     name: 'The Fool Reversed',
     icon: '🙃',
     event: RELIC_EVENT_TYPES.SCORING,
@@ -130,6 +147,7 @@ export const RELICS = Object.freeze({
   },
   watcher: {
     id: 'watcher',
+    rarity: 'rare',
     name: 'The Watcher',
     icon: '👁',
     event: RELIC_EVENT_TYPES.READING_START,
