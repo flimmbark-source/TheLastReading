@@ -7981,6 +7981,8 @@ function triggerResonation(res){
     const unlocked=getUnlockedFragments();
     unlocked.push(res.fragmentId);
     try{localStorage.setItem('tlr_inv_unlocked',JSON.stringify(unlocked))}catch(e){}
+    // Phase 14: archive unlocks live in the store's save state too.
+    if(tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.UNLOCK_FRAGMENT,fragmentId:res.fragmentId});
     renderInventory();
     setTimeout(()=>{
       showToast('Something stirs in the Archives…',4200);
@@ -9407,7 +9409,9 @@ function setSfxVol(v){_sfxVol=v;}
       }
     });
   }
-  function saveFound(itemId){try{const key='tlr_attic_found_items';const arr=JSON.parse(localStorage.getItem(key)||'[]');if(!arr.includes(itemId)){arr.push(itemId);localStorage.setItem(key,JSON.stringify(arr));}}catch(e){}}
+  function saveFound(itemId){try{const key='tlr_attic_found_items';const arr=JSON.parse(localStorage.getItem(key)||'[]');if(!arr.includes(itemId)){arr.push(itemId);localStorage.setItem(key,JSON.stringify(arr));}}catch(e){}
+    /* Phase 14: discoveries live in the store's save state too. */
+    if(window.tlrStore&&window.tlrActions)window.tlrStore.dispatch({type:window.tlrActions.DISCOVER_ARCHIVE_ITEM,itemId:itemId});}
   function tagNear(el,text){const scene=document.getElementById('atticScene');if(!scene||!el)return;const r=el.getBoundingClientRect();const sr=scene.getBoundingClientRect();const t=document.createElement('div');t.className='attic-action-tag';t.textContent=text;t.style.left=(r.left-sr.left+r.width/2)+'px';t.style.top=(r.top-sr.top+Math.max(18,r.height*.22))+'px';scene.appendChild(t);setTimeout(function(){t.remove()},920);}
   function dustNear(el){return;}
   function showPickup(o){
@@ -9423,18 +9427,22 @@ function setSfxVol(v){_sfxVol=v;}
   function enter(candles,shouldReset){
     if(window.tlrCloseArchives)window.tlrCloseArchives();
     inAttic=true;resetOnLeave=!!shouldReset;maxCandles=Math.max(1,Number(candles)||1);candleCount=maxCandles;searched={};awaitingPickup=false;renderCandles();renderObjects();
+    /* Phase 14: attic entry and the obal grant go through the reducer. */
+    if(window.tlrStore&&window.tlrActions)window.tlrStore.dispatch({type:window.tlrActions.ENTER_ATTIC,obals:maxCandles});
     document.body.classList.remove('mode-reading','mode-to-table','mode-table-return');document.body.classList.add('mode-to-attic');
     const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','false');
-    setTimeout(function(){document.body.classList.remove('mode-to-attic');document.body.classList.add('mode-attic');},900);
+    setTimeout(function(){document.body.classList.remove('mode-to-attic');document.body.classList.add('mode-attic');if(typeof tlrArchitectureSync==='function')tlrArchitectureSync();},900);
     setTimeout(function(){showAtticTutorial();},1400);
   }
   function leave(){
     if(window.tlrCloseArchives)window.tlrCloseArchives();
     if(!inAttic)return;inAttic=false;document.querySelectorAll('#atticPickup,.attic-action-tag,.attic-dust').forEach(function(p){p.remove();});
+    /* Phase 14: attic exit goes through the reducer. */
+    if(window.tlrStore&&window.tlrActions)window.tlrStore.dispatch({type:window.tlrActions.LEAVE_ATTIC});
     document.body.classList.add('mode-return-hard-hide');
     if(resetOnLeave&&typeof resetSession==='function'){resetOnLeave=false;resetSession();}
     setTimeout(function(){document.body.classList.remove('mode-attic','mode-to-attic','mode-reading');document.body.classList.add('mode-to-table');const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','true');},60);
-    setTimeout(function(){document.body.classList.remove('mode-to-table','mode-table-return','mode-return-hard-hide');document.body.classList.add('mode-reading');},1080);
+    setTimeout(function(){document.body.classList.remove('mode-to-table','mode-table-return','mode-return-hard-hide');document.body.classList.add('mode-reading');if(typeof tlrArchitectureSync==='function')tlrArchitectureSync();},1080);
   }
   /* attic-tutorial-fns */
   function showAtticTutorial(){
@@ -9696,6 +9704,13 @@ try {
   window.tlrShop = shopSystem;
   // Phase 6: hand selection ownership to the reducer.
   window.tlrBindSelectionToStore();
+  // Phase 14: seed archive save state from the live storage keys.
+  try {
+    window.tlrStore.dispatch({ type: window.tlrActions.SYNC_LEGACY_PERSIST, persist: {
+      unlockedFragments: JSON.parse(localStorage.getItem('tlr_inv_unlocked') || '[]'),
+      discoveredArchiveItems: JSON.parse(localStorage.getItem('tlr_attic_found_items') || '[]'),
+    } });
+  } catch (seedError) { /* corrupted local keys fall back to empty archive state */ }
   // Seed the store with the current legacy state so the mirror starts in sync.
   window.tlrSyncArchitectureToLiveSnapshot({ quiet: true });
   window.dispatchEvent(new Event('tlr-architecture-bridge-ready'));

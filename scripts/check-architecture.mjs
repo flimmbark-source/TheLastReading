@@ -383,4 +383,45 @@ assert.equal(continuousTarget.tlrMirrorLiveState({ quiet: true }).ok, true, 'mir
   assert.equal(r.run.reading, 1, 'reset should start a fresh run');
 }
 
+// Phase 14: attic/archive data, unlock rules, obals.
+{
+  const { obalsFromScore, canSearchAtticObject, searchAtticObject } = await import('../src/systems/attic.mjs');
+  const { ATTIC_OBJECTS } = await import('../src/data/atticObjects.mjs');
+  const { ARCHIVE_FRAGMENTS, RESONATIONS } = await import('../src/data/archiveFragments.mjs');
+  const { archiveEntries, unlockedFragments, obals } = await import('../src/game/selectors.mjs');
+
+  // Live obal ladder: 50->2, 100->3, 250->4, 450->5, 700->6, 1000->7, else 1.
+  for (const [score, expected] of [[0, 1], [49, 1], [50, 2], [99, 2], [100, 3], [250, 4], [450, 5], [700, 6], [1000, 7], [5000, 7]]) {
+    assert.equal(obalsFromScore(score), expected, `score ${score} should grant ${expected} obals`);
+  }
+
+  // Search rules: blocked when already searched or already found.
+  const someObjectId = Object.keys(ATTIC_OBJECTS)[0];
+  const itemId = ATTIC_OBJECTS[someObjectId].itemId;
+  assert.equal(canSearchAtticObject(someObjectId), true, 'fresh object should be searchable');
+  assert.equal(canSearchAtticObject(someObjectId, { [someObjectId]: true }), false, 'searched object should be blocked');
+  assert.equal(canSearchAtticObject(someObjectId, {}, [itemId]), false, 'already-found item should be blocked');
+  const searchResult = searchAtticObject(someObjectId);
+  assert.equal(searchResult.foundItemId, itemId, 'search should find the object item');
+
+  // Resonation fragments resolve in the catalog.
+  assert.ok(ARCHIVE_FRAGMENTS[RESONATIONS[0].fragmentId], 'resonation fragment should exist in the catalog');
+
+  // Unlocks are idempotent; attic entry banks obals; selectors read them.
+  let a = reducer(createGameState(), { type: ACTIONS.UNLOCK_FRAGMENT, fragmentId: RESONATIONS[0].fragmentId });
+  a = reducer(a, { type: ACTIONS.UNLOCK_FRAGMENT, fragmentId: RESONATIONS[0].fragmentId });
+  assert.equal(a.persist.unlockedFragments.length, 1, 'fragment unlock should not duplicate');
+  assert.equal(unlockedFragments(a).length, 1, 'unlocked fragment selector should resolve content');
+  a = reducer(a, { type: ACTIONS.DISCOVER_ARCHIVE_ITEM, itemId: 'clipping_01' });
+  a = reducer(a, { type: ACTIONS.DISCOVER_ARCHIVE_ITEM, itemId: 'clipping_01' });
+  assert.equal(a.persist.discoveredArchiveItems.length, 1, 'item discovery should not duplicate');
+  assert.equal(archiveEntries(a).length, 2, 'archive should render discovered item + unlocked fragment');
+  a = reducer(a, { type: ACTIONS.ENTER_ATTIC, obals: 4 });
+  assert.equal(a.run.phase, 'attic', 'attic entry should set the phase');
+  assert.equal(obals(a), 4, 'attic entry should bank the obal grant');
+  a = reducer(a, { type: ACTIONS.LEAVE_ATTIC });
+  assert.equal(a.run.phase, 'table', 'leaving the attic should return to the table');
+  assert.equal(obals(a), 4, 'obals should persist after leaving the attic');
+}
+
 console.log('Architecture smoke checks passed.');

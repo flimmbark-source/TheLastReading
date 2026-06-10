@@ -1,6 +1,7 @@
 import { computeScore } from '../systems/scoring.mjs';
 import { currentThreshold } from '../data/thresholds.mjs';
 import { getCardHints, getHandHints } from '../systems/hints.mjs';
+import { ARCHIVE_FRAGMENTS, ARCHIVE_ITEMS } from '../data/archiveFragments.mjs';
 
 export function placedCards(state) {
   return state.run.spread.filter(Boolean);
@@ -92,6 +93,36 @@ export function scorePreview(state) {
     delta: after.finalScore - before.finalScore,
     newMelds,
   };
+}
+
+// ── Archive selectors (Phase 14) ──
+
+export function unlockedFragmentIds(state) {
+  return state.persist.unlockedFragments || [];
+}
+
+export function discoveredArchiveItemIds(state) {
+  return state.persist.discoveredArchiveItems || [];
+}
+
+export function unlockedFragments(state) {
+  return unlockedFragmentIds(state)
+    .map(id => ARCHIVE_FRAGMENTS[id])
+    .filter(Boolean);
+}
+
+// Everything that renders in the Archives drawer: discovered attic items
+// first, then unlocked fragments.
+export function archiveEntries(state) {
+  const discovered = new Set(discoveredArchiveItemIds(state));
+  return [
+    ...ARCHIVE_ITEMS.filter(item => discovered.has(item.id)),
+    ...unlockedFragments(state),
+  ];
+}
+
+export function obals(state) {
+  return state.persist.obals || 0;
 }
 
 export function publicRunSnapshot(state) {

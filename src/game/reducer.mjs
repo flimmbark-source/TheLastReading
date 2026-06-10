@@ -359,11 +359,31 @@ export function reducer(state = createGameState(), action = {}) {
     case ACTIONS.LEAVE_MARKET:
       return replaceRun(state, { phase: GAME_PHASES.TABLE, reading: state.run.reading + 1 });
 
-    case ACTIONS.ENTER_ATTIC:
-      return replaceRun(state, { phase: GAME_PHASES.ATTIC });
+    case ACTIONS.ENTER_ATTIC: {
+      const next = replaceRun(state, { phase: GAME_PHASES.ATTIC });
+      if (action.obals == null) return next;
+      return replacePersist(next, { obals: action.obals });
+    }
 
     case ACTIONS.LEAVE_ATTIC:
       return replaceRun(state, { phase: GAME_PHASES.TABLE });
+
+    case ACTIONS.UNLOCK_FRAGMENT: {
+      if (!action.fragmentId || state.persist.unlockedFragments.includes(action.fragmentId)) return state;
+      return replacePersist(state, {
+        unlockedFragments: [...state.persist.unlockedFragments, action.fragmentId],
+      });
+    }
+
+    case ACTIONS.DISCOVER_ARCHIVE_ITEM: {
+      if (!action.itemId || state.persist.discoveredArchiveItems.includes(action.itemId)) return state;
+      return replacePersist(state, {
+        discoveredArchiveItems: [...state.persist.discoveredArchiveItems, action.itemId],
+      });
+    }
+
+    case ACTIONS.SET_OBALS:
+      return replacePersist(state, { obals: Math.max(0, action.obals || 0) });
 
     case ACTIONS.END_SESSION:
       return replaceRun(state, {
