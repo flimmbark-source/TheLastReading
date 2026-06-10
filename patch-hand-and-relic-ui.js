@@ -686,6 +686,7 @@ document.addEventListener('touchmove',e=>{
 },{passive:true});`;
 replaceOne('legacy pinch-zoom skip on hand cards', legacyPinchOrig, legacyPinchPatched);
 
+
 if (changed) {
   fs.writeFileSync(path, html);
   console.log('Applied mystical relic transition, mobile relic rack, and hand swipe-scroll.');
