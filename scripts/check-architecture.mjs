@@ -10,6 +10,7 @@ import { ACTIONS } from '../src/game/actions.mjs';
 import { canDiscardSelected, publicRunSnapshot, scorePreview } from '../src/game/selectors.mjs';
 import { createStore } from '../src/app/store.mjs';
 import { deserializePersistState, serializePersistState } from '../src/app/save.mjs';
+import { installArchitectureBridge, uninstallArchitectureBridge } from '../src/app/bootstrap.mjs';
 
 const deck = buildDeck();
 assert.equal(deck.length, 38, 'deck should contain 22 majors and 16 court cards');
@@ -87,5 +88,13 @@ const saved = serializePersistState({ ...state.persist, reserve: 12, obals: 3 })
 const loaded = deserializePersistState(saved);
 assert.equal(loaded.reserve, 12, 'save helper should preserve reserve');
 assert.equal(loaded.obals, 3, 'save helper should preserve obals');
+
+const bridgeTarget = {};
+const runtime = installArchitectureBridge(bridgeTarget, { storage: null, persist: { reserve: 7 } });
+assert.equal(bridgeTarget.tlrStore, runtime.store, 'bridge should expose tlrStore');
+assert.equal(bridgeTarget.tlrActions.START_READING, ACTIONS.START_READING, 'bridge should expose actions');
+assert.equal(bridgeTarget.tlrStore.getState().persist.reserve, 7, 'bridge should preserve supplied persist state');
+uninstallArchitectureBridge(bridgeTarget);
+assert.equal(bridgeTarget.tlrStore, undefined, 'bridge uninstall should remove tlrStore');
 
 console.log('Architecture smoke checks passed.');
