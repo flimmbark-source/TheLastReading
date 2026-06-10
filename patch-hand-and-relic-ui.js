@@ -152,12 +152,14 @@ upsertBlock(
   margin:0!important;
   --slot:0;
   --lag:0deg;
+  --drift-x:0px;
+  --drift-y:0px;
   --total-a:calc(var(--slot) * var(--track-spacing) + var(--track-offset) + var(--lag));
   --arc-x:calc(var(--track-radius) * sin(var(--total-a)));
   --arc-y:calc(var(--track-radius) * (1 - cos(var(--total-a))));
   --lift-y:0px;
   --total-rot:calc(var(--total-a) + var(--lag) * 1.5);
-  transform:translate(calc(-50% + var(--arc-x)),calc(var(--arc-y) + var(--lift-y))) rotate(var(--total-rot))!important;
+  transform:translate(calc(-50% + var(--arc-x) + var(--drift-x)),calc(var(--arc-y) + var(--lift-y) + var(--drift-y))) rotate(var(--total-rot))!important;
   transform-origin:50% 50%!important;
   transition:transform .32s cubic-bezier(.2,.85,.25,1);
 }
@@ -166,6 +168,8 @@ upsertBlock(
   --lift-y:-92px;
   --total-rot:0deg;
   --lag:0deg!important;
+  --drift-x:0px!important;
+  --drift-y:0px!important;
   z-index:999!important;
 }
 @media(hover:hover){
@@ -173,6 +177,8 @@ upsertBlock(
     --lift-y:-92px;
     --total-rot:0deg;
     --lag:0deg!important;
+    --drift-x:0px!important;
+    --drift-y:0px!important;
     z-index:999!important;
   }
 }
@@ -257,7 +263,7 @@ upsertBlock(
     if(springRaf){cancelAnimationFrame(springRaf);springRaf=null;}
     const h=handEl();if(!h)return;
     h.classList.remove('hand-undulating');
-    cardsList().forEach(el=>{el.style.setProperty('--lag','0deg');});
+    cardsList().forEach(el=>{el.style.setProperty('--lag','0deg');el.style.setProperty('--drift-x','0px');el.style.setProperty('--drift-y','0px');});
   };
   const undulationStep=now=>{
     springRaf=null;
@@ -279,8 +285,17 @@ upsertBlock(
       const k=omega*omega,c=2*zeta*omega;
       for(let s=0;s<steps;s++){st.v+=(k*(offset-st.p)-c*st.v)*sdt;st.p+=st.v*sdt;}
       const lag=st.p-offset;
-      if(Math.abs(lag)<LAG_EPS&&Math.abs(st.v)<VEL_EPS){st.p=offset;st.v=0;el.style.setProperty('--lag','0deg');}
-      else{active=true;el.style.setProperty('--lag',lag.toFixed(3)+'deg');}
+      if(Math.abs(lag)<LAG_EPS&&Math.abs(st.v)<VEL_EPS){
+        st.p=offset;st.v=0;
+        el.style.setProperty('--lag','0deg');
+        el.style.setProperty('--drift-x','0px');
+        el.style.setProperty('--drift-y','0px');
+      }else{
+        active=true;
+        el.style.setProperty('--lag',lag.toFixed(3)+'deg');
+        el.style.setProperty('--drift-x',((-st.v)*400*edge).toFixed(1)+'px');
+        el.style.setProperty('--drift-y',((-Math.abs(st.v))*250*edge).toFixed(1)+'px');
+      }
     }
     if(active||mode==='slide'||momentumRaf!=null)springRaf=requestAnimationFrame(undulationStep);
     else h.classList.remove('hand-undulating');
