@@ -1,4 +1,5 @@
 import { installArchitectureBridge } from './bootstrap.mjs';
+import { syncLegacySnapshot } from '../game/actions.mjs';
 import { publicRunSnapshot } from '../game/selectors.mjs';
 
 function normalizeLiveSnapshot(raw = {}) {
@@ -24,6 +25,10 @@ function diffSnapshots(live, architecture) {
     .map(key => ({ key, live: live[key], architecture: architecture[key] }));
 }
 
+function diagnosticSnapshot(state) {
+  return state.run.legacySnapshot || publicRunSnapshot(state);
+}
+
 export function installLiveMirror(target = globalThis, options = {}) {
   const runtime = target.tlrArchitecture || installArchitectureBridge(target, {
     autosave: false,
@@ -32,14 +37,24 @@ export function installLiveMirror(target = globalThis, options = {}) {
   });
 
   target.tlrReadArchitectureSnapshot = function tlrReadArchitectureSnapshot() {
-    return publicRunSnapshot(runtime.store.getState());
+    return diagnosticSnapshot(runtime.store.getState());
   };
 
   target.tlrReadLiveSnapshot = target.tlrReadLiveSnapshot || function missingLiveSnapshotReader() {
     return { error: 'No legacy live snapshot reader has been installed yet.' };
   };
 
-  target.tlrMirrorLiveState = function tlrMirrorLiveState() {
+  target.tlrSyncArchitectureToLiveSnapshot = function tlrSyncArchitectureToLiveSnapshot() {
+    const live = normalizeLiveSnapshot(target.tlrReadLiveSnapshot());
+    runtime.store.dispatch(syncLegacySnapshot(live));
+    target.tlrLastSyncedLegacySnapshot = live;
+    if (target.console) target.console.info('[TLR architecture] Synced legacy snapshot for diagnostics', live);
+    return live;
+  };
+
+  target.tlrMirrorLiveState = function tlrMirrorLiveState(options = {}) {
+    if (options.sync) target.tlrSyncArchitectureToLiveSnapshot();
+
     const live = normalizeLiveSnapshot(target.tlrReadLiveSnapshot());
     const architecture = normalizeLiveSnapshot(target.tlrReadArchitectureSnapshot());
     const mismatches = diffSnapshots(live, architecture);
