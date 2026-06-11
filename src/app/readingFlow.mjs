@@ -21,6 +21,7 @@ let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 
 function legacyScore(score){return {...score,melds:(score.melds||[]).map(m=>Array.isArray(m)?m:[m.name,m.chips,m.mult,m.mode])}}
 function syncRoundFields(_run){
+  state.th=_run.thresholdIndex??state.th??0;
   state.setIndex=_run.setIndex||0;
   state.setsPerRound=_run.setsPerRound||2;
   state.roundScore=_run.roundScore||0;
@@ -282,10 +283,12 @@ if(_run.lastScore){
   setsPerRound=_run.setsPerRound||setsPerRound;
   syncRoundFields(_run);
 }}
+const previousRoundScore=Math.max(0,roundTotal-total);
+snapCounter(roundTotal);
 if(needsNext){continueSet();return;}
 let title=pass?'The Round Opens':'The Reading Fails';
 let verdict=pass?('Threshold '+curTH+' Cleared'):('Below Threshold '+curTH);
-let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${title}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${verdict}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;const _regMelds=res.melds.filter(m=>!m[0].startsWith('⚷'));const _resMelds=res.melds.filter(m=>m[0].startsWith('⚷'));if(_regMelds.length||_resMelds.length){_regMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);_resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}html+=`<tr class="totrow"><td>Round total</td><td class="r">${roundTotal} / ${curTH}</td></tr>`;if(pass){const miserBonus=persist.relics.includes('miser')?5:0;
+let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${title}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${previousRoundScore}</span><span class="rop">+</span><span class="rsm">${total}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${roundTotal}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">Set ${setNumber} added to Round · ${verdict}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Set ${setNumber} score</td><td class="r">${res.chips} × ${res.mult} = ${total}</td></tr>`;html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;const _regMelds=res.melds.filter(m=>!m[0].startsWith('⚷'));const _resMelds=res.melds.filter(m=>m[0].startsWith('⚷'));if(_regMelds.length||_resMelds.length){_regMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);_resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}html+=`<tr class="totrow"><td>Round total</td><td class="r">${roundTotal} / ${curTH}</td></tr>`;if(pass){const miserBonus=persist.relics.includes('miser')?5:0;
 {const _st=window.tlrStore.getState();
 state.worldCarry=_st.run.worldCarry||0;
 state.pendingPool=_st.run.pendingReserve||0;
