@@ -66,6 +66,19 @@ function applyFlatUpgradeBonuses(result, cards, upgrades, context) {
   }
 }
 
+function applyConstellationScoreAdjustments(result, cards, context) {
+  if (context.constellationId !== 'ashen_hand') return;
+  const taken = new Set(context.abilityTakenCardIds || []);
+  if (!taken.size) return;
+  const lost = cards
+    .filter(card => taken.has(card.uid))
+    .reduce((sum, card) => sum + (card.points || 0), 0);
+  if (!lost) return;
+  result.baseChips -= lost;
+  result.chips -= lost;
+  result.melds.push({ name: 'The Ashen Hand', chips: -lost, mult: 0, mode: 'chips' });
+}
+
 function applyRankPatterns(result, cards, upgrades) {
   const three = SCORING_PATTERNS.THREE_OF_A_KIND;
   const four = SCORING_PATTERNS.FOUR_OF_A_KIND;
@@ -187,14 +200,16 @@ function applyContextBonuses(result, cards, upgrades, context) {
 export function computeScore(cards, options = {}) {
   const upgrades = { ...DEFAULT_UPGRADES, ...(options.upgrades || {}) };
   const context = options.context || {};
+  const baseChips = cards.reduce((sum, card) => sum + card.points, 0);
   const result = {
-    baseChips: cards.reduce((sum, card) => sum + card.points, 0),
-    chips: cards.reduce((sum, card) => sum + card.points, 0),
+    baseChips,
+    chips: baseChips,
     mult: 1,
     melds: [],
     finalScore: 0,
   };
 
+  applyConstellationScoreAdjustments(result, cards, context);
   if (!options.skipFlatBonuses) applyFlatUpgradeBonuses(result, cards, upgrades, context);
   applyRankPatterns(result, cards, upgrades);
   applyCourtPatterns(result, cards, upgrades);
