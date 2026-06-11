@@ -34,6 +34,7 @@ let tutTimer = null;
 let tutDone = !!localStorage.getItem(TUT_KEY);
 let tutIgnoreClicksUntil = 0;
 let queuedTipStep = null;
+let queuedTipTimer = null;
 
 const TUT_STEPS = [
   {center:true, text:'Your relative left behind their tarot deck. You used to play this game together.'},
@@ -77,12 +78,17 @@ function finishIntro() {
 }
 
 function queueTip(step, delay = 180) {
-  if (tutStep >= 0 || queuedTipStep !== null || !canShowStep(step)) return;
+  if (!canShowStep(step)) return;
+  if (queuedTipStep !== null && queuedTipStep !== step) return;
   queuedTipStep = step;
-  setTimeout(() => {
+  clearTimeout(queuedTipTimer);
+  queuedTipTimer = setTimeout(() => {
+    queuedTipTimer = null;
     const next = queuedTipStep;
+    if (next == null) return;
+    if (!canShowStep(next)) { queuedTipStep = null; return; }
+    if (tutStep >= 0) { queueTip(next, 450); return; }
     queuedTipStep = null;
-    if (next == null || tutStep >= 0 || !canShowStep(next)) return;
     tutShow(next);
   }, delay);
 }
@@ -199,7 +205,7 @@ export function maybeShowPurgeTutorial(){
 }
 
 export function maybeShowArchivesTutorial(){
-  if(!tutDone || tutStep>=0 || localStorage.getItem(TUT_ARCHIVES_KEY))return;
+  if(localStorage.getItem(TUT_ARCHIVES_KEY))return;
   queueTip(TUT_STEP.ARCHIVES, 260);
 }
 
