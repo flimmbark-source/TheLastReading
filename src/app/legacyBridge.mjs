@@ -7,6 +7,7 @@ import { constellationThreshold } from '../systems/constellations.mjs';
 function runtime(target){return target.tlrRuntime || {};}
 function stateOf(target){return runtime(target).state;}
 function persistOf(target){return runtime(target).persist;}
+function liveConstellationId(state){return Number(state?.th||0)>0 ? (state.constellationId||null) : null;}
 
 export function readLiveSnapshot(target = window){
   const state=stateOf(target);
@@ -19,10 +20,11 @@ export function readLiveSnapshot(target = window){
     if(summary&&summary.classList.contains('show')&&summary.querySelector('.tarot-shop'))phase='market';
   }
   const baseThreshold=target.TH&&target.TH[state.th]!==undefined?target.TH[state.th]+(state.thBonus||0):null;
+  const thresholdRun={...state,constellationId:liveConstellationId(state)};
   return{
     phase,
     reading:state.reading,
-    threshold:baseThreshold==null?null:constellationThreshold(baseThreshold,state),
+    threshold:baseThreshold==null?null:constellationThreshold(baseThreshold,thresholdRun),
     reserve:persist.pool,
     totalScore:persist.totalScore||0,
     handCount:state.hand.length,
@@ -71,7 +73,7 @@ export function syncRunToStore(target = window){
     resonationBonus:state.resonationBonus||null,
     setIndex:state.setIndex||0,setsPerRound:state.setsPerRound||2,roundScore:state.roundScore||0,
     setScores:state.setScores||[],roundDiscardCount:state.roundDiscardCount||0,roundPatternCount:state.roundPatternCount||0,
-    constellationId:state.constellationId||null,untargetableCardIds:state.untargetableCardUids||[],
+    constellationId:liveConstellationId(state),untargetableCardIds:Number(state.th||0)>0?(state.untargetableCardUids||[]):[],
     awaitingNextSet:!!state.awaitingNextSet,lastOutcome:state.lastOutcome||null,
   }});
   target.tlrStore.dispatch({type:target.tlrActions.SYNC_LEGACY_PERSIST,persist:{
