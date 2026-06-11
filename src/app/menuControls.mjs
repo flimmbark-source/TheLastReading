@@ -15,6 +15,21 @@ export function installMenuControls(target = window){
   }
 
   target.__tlrMenuControlsInstalled=true;
+
+  if(typeof target.tlrTogglePullTab==='function'){
+    target.toggleMenu=function(){target.tlrTogglePullTab('menu');};
+    document.addEventListener('click',e=>{
+      const menuWrap=document.getElementById('menuPullWrap');
+      const menuTab=document.getElementById('menuPullTab');
+      if(!menuWrap||!menuWrap.classList.contains('open'))return;
+      const t=e.target instanceof Element?e.target:null;
+      if(t&&(menuWrap.contains(t)||t.closest('#menuBtn,#menuPullTab')))return;
+      menuWrap.classList.remove('open');
+      if(menuTab)menuTab.innerHTML='&#9660; Menu';
+    },{capture:false});
+    return;
+  }
+
   target.toggleMenu=function(){
     const p=document.getElementById('settingsPanel');
     if(p)p.classList.toggle('hidden');
