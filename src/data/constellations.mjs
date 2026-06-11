@@ -9,6 +9,15 @@ const EFFECTS = Object.freeze({
   NARROW_GATE: 'narrow_gate',
 });
 
+export const NO_CONSTELLATION = Object.freeze({
+  id: null,
+  name: '',
+  label: '',
+  effect: '',
+  shortRule: '',
+  rule: '',
+});
+
 const ZODIAC_SIGNS = [
   ['closed_palm', 'Aries', 0, 0, EFFECTS.BLOCK_EARLY_DISCARD, 'Place 2 cards before discarding.', 'You may not discard until at least 2 cards are placed each Set.'],
   ['unasked_question', 'Taurus', 1, 0, EFFECTS.UNTARGETABLE_FIRST, 'First placed card cannot be targeted.', 'The first card placed each Set cannot be targeted by abilities or effects this Round.'],
@@ -45,6 +54,8 @@ export function getConstellation(id) {
 }
 
 export function constellationForRound(roundIndex = 0) {
-  const index = ((roundIndex % CONSTELLATIONS.length) + CONSTELLATIONS.length) % CONSTELLATIONS.length;
+  if (roundIndex <= 0) return NO_CONSTELLATION;
+  const shiftedIndex = roundIndex - 1;
+  const index = ((shiftedIndex % CONSTELLATIONS.length) + CONSTELLATIONS.length) % CONSTELLATIONS.length;
   return CONSTELLATIONS[index];
 }
