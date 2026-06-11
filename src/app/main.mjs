@@ -25,6 +25,7 @@ import { installHintRuntime } from './hintRuntime.mjs';
 import { installAmbientEffects } from '../ui/ambientEffects.mjs';
 import { installHandSwipeScroll } from '../ui/gestureHand.mjs';
 import { installHandCardGestures } from '../ui/gestureCard.mjs';
+import { installCardDetailGestures } from '../ui/cardDetailGestures.mjs';
 import { installGestureDrawers } from '../ui/gestureDrawers.mjs';
 import { installPressHighlight } from '../ui/gesturePressHighlight.mjs';
 import { installHandSelectionVisuals } from '../ui/handSelectionVisuals.mjs';
@@ -115,6 +116,21 @@ function installStoreFrontTuning(target = window) {
   }, true);
 }
 
+function installMarketTutorialTrigger(target = window) {
+  const doc = target.document;
+  if (!doc || target.__marketTutorialTriggerInstalled) return;
+  target.__marketTutorialTriggerInstalled = true;
+  let wasOpen = false;
+  const check = () => {
+    const isOpen = !!doc.querySelector('.store-front-shell .store-front');
+    if (isOpen && !wasOpen && typeof target.maybeShowMarketTutorial === 'function') {
+      target.setTimeout(() => target.maybeShowMarketTutorial(), 120);
+    }
+    wasOpen = isOpen;
+  };
+  new MutationObserver(check).observe(doc.body, { childList: true, subtree: true });
+}
+
 export function startApp(target = window) {
   target.requestAnimationFrame(()=>target.requestAnimationFrame(()=>document.body.classList.remove('tlr-loading')));
 
@@ -128,6 +144,7 @@ export function startApp(target = window) {
 
   installHandSwipeScroll(target);
   installHandCardGestures(target);
+  installCardDetailGestures(target);
   installGestureDrawers(target);
   installPressHighlight(target);
   installHandSelectionVisuals(target);
@@ -135,6 +152,7 @@ export function startApp(target = window) {
   installAudioControls(target);
   installMenuControls(target);
   installStoreFrontTuning(target);
+  installMarketTutorialTrigger(target);
 
   installDataGlobals(target);
   target.tlrAbilities = abilitySystem;
