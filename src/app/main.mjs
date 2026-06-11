@@ -25,6 +25,7 @@ import { installHintRuntime } from './hintRuntime.mjs';
 import { installAmbientEffects } from '../ui/ambientEffects.mjs';
 import { installHandSwipeScroll } from '../ui/gestureHand.mjs';
 import { installHandCardGestures } from '../ui/gestureCard.mjs';
+import { installCardDetailGestures } from '../ui/cardDetailGestures.mjs';
 import { installGestureDrawers } from '../ui/gestureDrawers.mjs';
 import { installPressHighlight } from '../ui/gesturePressHighlight.mjs';
 import { installHandSelectionVisuals } from '../ui/handSelectionVisuals.mjs';
@@ -128,6 +129,7 @@ export function startApp(target = window) {
 
   installHandSwipeScroll(target);
   installHandCardGestures(target);
+  installCardDetailGestures(target);
   installGestureDrawers(target);
   installPressHighlight(target);
   installHandSelectionVisuals(target);
