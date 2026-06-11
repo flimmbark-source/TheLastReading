@@ -5,6 +5,9 @@ import { installLiveMirror } from './liveMirror.mjs';
 import { installDataGlobals } from './dataGlobals.mjs';
 import { installRuntimeState } from './runtimeState.mjs';
 import { installLegacyBridge } from './legacyBridge.mjs';
+import { installDeckRuntime } from './deckRuntime.mjs';
+import { installMarketFlow } from './marketFlow.mjs';
+import { installControlBindings } from './controlBindings.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
 import { bootGame } from './boot.mjs';
@@ -56,9 +59,12 @@ export function startApp(target = window) {
   installMenuControls(target);
 
   installDataGlobals(target);
+  installDeckRuntime(target);
   installLegacyBridge(target);
+  installMarketFlow(target);
   installResonationFlow(target);
   installHintRuntime(target);
+  installControlBindings(target);
 
   try {
     installLiveMirror(target);
