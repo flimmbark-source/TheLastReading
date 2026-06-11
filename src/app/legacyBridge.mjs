@@ -60,6 +60,7 @@ export function syncRunToStore(target = window){
   const persist=persistOf(target);
   target.tlrStore.dispatch({type:target.tlrActions.SYNC_LEGACY_RUN,run:{
     deck:state.deck,hand:state.hand,discard:state.discard,spread:state.spread,
+    selectedCardId:state.selected,
     discards:state.discards,discardedCards:state.discardedCards||[],
     freeDiscardUsed:!!state.freeDiscardUsed,sightChargesUsed:state.sightChargesUsed||0,
     thresholdIndex:state.th,thresholdBonus:state.thBonus||0,thresholdBonusPending:state.thBonusPending||0,reading:state.reading,
