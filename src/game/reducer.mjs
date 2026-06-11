@@ -291,41 +291,48 @@ function syncLegacyPersist(state, persist = {}) {
   if ('relics' in persist) next.relics = [...persist.relics];
   if ('relicUsed' in persist) next.relicUsed = { ...persist.relicUsed };
   if ('obals' in persist) next.obals = persist.obals;
-  if ('unlockedFragments' in persist) next.unlockedFragments = persist.unlockedFragments;
-  if ('discoveredArchiveItems' in persist) next.discoveredArchiveItems = { ...persist.discoveredArchiveItems };
+  if ('unlockedFragments' in persist) next.unlockedFragments = [...persist.unlockedFragments];
+  if ('discoveredArchiveItems' in persist) next.discoveredArchiveItems = [...persist.discoveredArchiveItems];
   if ('seenTutorials' in persist) next.seenTutorials = { ...persist.seenTutorials };
   return replacePersist(state, next);
 }
 
 function startReading(state, deck) {
-  const { persist } = state;
-  const nextDeck = shuffleDeck(deck, Math.random);
+  const { persist, run } = state;
+  const nextDeck = deck ? [...deck] : shuffleDeck(buildDeck(), Math.random);
   const handSize = maxHand(persist) + startingHandBonusFromRelics(persist.relics) + (persist.upgrades.deep_current || 0);
   const { drawn: hand, deck: remainingDeck } = drawCards(nextDeck, handSize);
-  return replaceRun(state, {
-    phase: GAME_PHASES.READING,
-    deck: remainingDeck,
-    hand,
-    discard: [],
-    spread: Array(5).fill(null),
-    selectedCardId: null,
-    discards: startingDiscards(persist),
-    mulliganCharges: persist.upgrades.mulligan || 0,
-    ability: null,
-    sourceCardId: null,
-    busy: false,
-    freeDiscardUsed: false,
-    sightChargesUsed: 0,
-    discardedCards: [],
-    abilityTakenCardIds: [],
-    resonationBonus: null,
-    relicEarned: false,
-  });
+  const offeringReserve = (persist.upgrades.offering || 0) * 5;
+  return replacePersist(
+    replaceRun(state, {
+      phase: GAME_PHASES.TABLE,
+      deck: remainingDeck,
+      hand,
+      discard: [],
+      spread: Array(5).fill(null),
+      selectedCardId: null,
+      discards: startingDiscards(persist),
+      mulliganCharges: persist.upgrades.mulligan || 0,
+      ability: null,
+      sourceCardId: null,
+      busy: false,
+      freeDiscardUsed: false,
+      sightChargesUsed: 0,
+      discardedCards: [],
+      abilityTakenCardIds: [],
+      resonationBonus: null,
+      thresholdBonus: (run.thresholdBonus || 0) + (run.thresholdBonusPending || 0),
+      thresholdBonusPending: 0,
+      worldCarry: run.worldCarry || 0,
+      relicEarned: false,
+    }),
+    { reserve: (persist.reserve || 0) + offeringReserve }
+  );
 }
 
 function leaveMarket(state) {
   return replaceRun(state, {
-    phase: GAME_PHASES.READING,
+    phase: GAME_PHASES.TABLE,
     pendingReserve: 0,
     worldCarry: runWorldCarry(state.run),
     reading: state.run.reading + 1,
@@ -337,10 +344,20 @@ function runWorldCarry(run) {
   return run.worldCarry || 0;
 }
 
+function unlockFragment(state, fragmentId) {
+  if (!fragmentId || state.persist.unlockedFragments.includes(fragmentId)) return state;
+  return replacePersist(state, { unlockedFragments: [...state.persist.unlockedFragments, fragmentId] });
+}
+
+function discoverArchiveItem(state, itemId) {
+  if (!itemId || state.persist.discoveredArchiveItems.includes(itemId)) return state;
+  return replacePersist(state, { discoveredArchiveItems: [...state.persist.discoveredArchiveItems, itemId] });
+}
+
 export function reducer(state, action) {
   switch (action.type) {
     case ACTIONS.START_READING:
-      return startReading(state, action.deck || buildDeck());
+      return startReading(state, action.deck || null);
     case ACTIONS.SELECT_CARD:
       return replaceRun(state, { selectedCardId: action.cardId });
     case ACTIONS.CLEAR_SELECTION:
@@ -362,6 +379,14 @@ export function reducer(state, action) {
       return buyMarketPurchase(state, action.purchase || {});
     case ACTIONS.LEAVE_MARKET:
       return leaveMarket(state);
+    case ACTIONS.ENTER_ATTIC:
+      return replacePersist(replaceRun(state, { phase: GAME_PHASES.ATTIC }), { obals: action.obals ?? state.persist.obals });
+    case ACTIONS.LEAVE_ATTIC:
+      return replaceRun(state, { phase: GAME_PHASES.TABLE });
+    case ACTIONS.UNLOCK_FRAGMENT:
+      return unlockFragment(state, action.fragmentId);
+    case ACTIONS.DISCOVER_ARCHIVE_ITEM:
+      return discoverArchiveItem(state, action.itemId);
     case ACTIONS.SYNC_LEGACY_RUN:
       return syncLegacyRun(state, action.run);
     case ACTIONS.SYNC_LEGACY_PERSIST:
@@ -370,7 +395,7 @@ export function reducer(state, action) {
       return syncLegacySnapshot(state, action.snapshot);
     case ACTIONS.END_SESSION:
       return replacePersist(
-        replaceRun(state, { phase: GAME_PHASES.SESSION_END }),
+        replaceRun(state, { phase: GAME_PHASES.SESSION_END, lastSessionScore: action.totalScore ?? state.persist.totalScore, lastSessionObals: action.obals ?? state.persist.obals }),
         { totalScore: action.totalScore ?? state.persist.totalScore, obals: action.obals ?? state.persist.obals }
       );
     case ACTIONS.RESET_SESSION:
