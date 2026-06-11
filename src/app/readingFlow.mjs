@@ -133,14 +133,15 @@ export function cancelPurge(){state.purgeSelect=null;render()}
 
 export function discardSelected(){
   if(state.busy||state.selected===null)return;
+  const selectedBefore=state.selected;
   const free=persist.relics.includes('gilded_discard')&&!state.freeDiscardUsed;
   if(!free&&state.discards<=0)return;
-  let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;
+  let idx=state.hand.findIndex(c=>c.uid===selectedBefore);if(idx<0)return;
   let c=state.hand[idx];
   tlrSyncRunToStore();
   window.tlrStore.dispatch({type:window.tlrActions.DISCARD_SELECTED});
   const _run=window.tlrStore.getState().run;
-  if(_run.selectedCardId===state.selected)return;
+  if(_run.selectedCardId===selectedBefore)return;
   state.hand=_run.hand.slice();
   state.discard=_run.discard.slice();
   state.discardedCards=_run.discardedCards.slice();
