@@ -6,37 +6,113 @@
 /* global $ */
 
 const TUT_KEY = 'tlr_tut_done';
-let tutStep = -1, tutTimer = null, tutDone = !!localStorage.getItem(TUT_KEY);
+const TUT_PATTERN_KEY = 'tlr_tut_pattern';
+const TUT_READING_KEY = 'tlr_tut_reading_complete';
+const TUT_PURGE_KEY = 'tlr_tut_purge';
+const INTRO_LAST_STEP = 5;
+
+export const TUT_STEP = Object.freeze({
+  INTRO: 0,
+  SELECT_CARD: 1,
+  PLACE_CARD: 2,
+  SCORE_ADDED: 3,
+  THRESHOLD: 4,
+  DISCARD_ABILITY: 5,
+  PATTERN_NOTICE: 6,
+  PATTERN_SCORING: 7,
+  READING_COMPLETE: 8,
+  THRESHOLD_PROGRESS: 9,
+  RELIC: 10,
+  PURGE: 11,
+});
+
+let tutStep = -1;
+let tutTimer = null;
+let tutDone = !!localStorage.getItem(TUT_KEY);
+let tutIgnoreClicksUntil = 0;
+let queuedTipStep = null;
 
 const TUT_STEPS = [
-  {center:true, text:'Your relative passed away recently, leaving behind their tarot deck. You used to play this game with them using it.'},
-  {center:true, text:'Tap a card to select it, then tap an empty slot in the spread to score it.'},
-  {sel:'.threshold-pill',arrow:'up',text:'Score enough points to beat the <b>Threshold</b>.'},
-  {sel:'.handDock',arrow:'down',text:'Glowing cards form <b>potential</b> scoring patterns. Check <b>Scoring</b> to see what\'s possible, and use card <b>Abilities</b> to form a scoring pattern.'},
-  {sel:'#discardBtn',arrow:'up',text:'<b>Discard</b> a card to use its <b>Ability</b> instead of scoring it, a way to reshape your hand before placing.'},
-  {sel:'#purgeBtn',arrow:'up',text:'<b>Purge</b> lets you sacrifice 3 cards from your hand in exchange for 1 Discard, useful for clearing cards that don\'t fit your pattern.'},
-  {sel:'.handDock',arrow:'down',text:'The red circle shows how much a card scores for. Tap a card to see potential scoring patterns for it.'},
-  {sel:'#invTab',arrow:'up',text:'The <b>Archives</b> hold items discoved among the personal effects of your deceased relative. Tap to open and investigate.'},
-  {sel:'#spread',arrow:'up',text:'Fill all 5 slots to complete a reading. Beat the <b>Threshold</b> to clear it. Fall short and the reading fails.'},
-  {center:true, text:'Each time you reach a Threshold, it increases in difficulty. Beat the 10th Threshold to win.'},
-  {sel:'#relicRack',arrow:'up', text:'You\'ve found a <b>Relic</b>! Relics carry powerful passive effects across every reading until you lose. Tap a relic icon to see what it does.'},
+  {center:true, text:'Your relative left behind their tarot deck. You used to play this game together.'},
+  {sel:'.handDock', arrow:'down', waitFor:'cardSelected', text:'Tap a card to select it.'},
+  {sel:'#spread', arrow:'up', waitFor:'cardPlaced', text:'Tap an empty slot to place it.'},
+  {sel:'.score-pill', arrow:'up', text:'That card added points to your total. The red circle on each card shows how many points it adds.'},
+  {sel:'.threshold-pill', arrow:'up', text:'When the reading ends, your total is checked against the <b>Threshold</b>.'},
+  {sel:'#discardBtn', arrow:'up', text:'<b>Discard</b> a card to use its <b>Ability</b> instead of placing it.'},
+  {sel:'.handDock', arrow:'down', key:TUT_PATTERN_KEY, text:'Some of your cards may work together.'},
+  {sel:'#scoringBtn', arrow:'up', key:TUT_PATTERN_KEY, text:'Check <b>Scoring</b> to see if you can complete a pattern.'},
+  {sel:'#spread', arrow:'up', key:TUT_READING_KEY, text:'One more card completes the reading.'},
+  {center:true, key:'tlr_tut_shop', text:'Each cleared Threshold makes the next one harder. Clear the 10th Threshold to win.'},
+  {sel:'#relicRack', arrow:'up', key:'tlr_tut_relic', text:'You\'ve found a <b>Relic</b>! Relics carry passive effects across every reading until you lose. Tap a relic icon to see what it does.'},
+  {sel:'#purgeBtn', arrow:'up', key:TUT_PURGE_KEY, text:'Remove 3 cards from your hand to gain 1 Discard.'},
 ];
 
-export function tutSkip(){localStorage.setItem(TUT_KEY,'1');tutDone=true;tutHide()}
+function stepKey(step) {
+  return TUT_STEPS[step]?.key || null;
+}
+
+function markStepSeen(step) {
+  const key = stepKey(step);
+  if (key) localStorage.setItem(key, '1');
+}
+
+function canShowStep(step, force = false) {
+  const s = TUT_STEPS[step];
+  if (!s) return false;
+  if (!force && step <= INTRO_LAST_STEP && tutDone) return false;
+  const key = stepKey(step);
+  if (!force && key && localStorage.getItem(key)) return false;
+  return true;
+}
+
+function finishIntro() {
+  localStorage.setItem(TUT_KEY, '1');
+  tutDone = true;
+  tutHide();
+}
+
+function queueTip(step) {
+  if (tutStep >= 0 || queuedTipStep !== null || !canShowStep(step)) return;
+  queuedTipStep = step;
+  setTimeout(() => {
+    const next = queuedTipStep;
+    queuedTipStep = null;
+    if (next == null || tutStep >= 0 || !canShowStep(next)) return;
+    tutShow(next);
+  }, 180);
+}
+
+export function tutSkip(){
+  markStepSeen(tutStep);
+  localStorage.setItem(TUT_KEY,'1');
+  tutDone=true;
+  tutHide();
+}
 
 export function replayTutorial(){
-  ['tlr_tut_done','tlr_tut_relic','tlr_tut_shop','tlr_tut_inv_open','tlr_tut_inv_name','tlr_tut_inv_detail'].forEach(k=>localStorage.removeItem(k));
+  [
+    'tlr_tut_done',
+    'tlr_tut_relic',
+    'tlr_tut_shop',
+    'tlr_tut_inv_open',
+    'tlr_tut_inv_name',
+    'tlr_tut_inv_detail',
+    TUT_PATTERN_KEY,
+    TUT_READING_KEY,
+    TUT_PURGE_KEY,
+  ].forEach(k=>localStorage.removeItem(k));
   tutDone=false;
   const p=document.getElementById('settingsPanel');if(p)p.classList.add('hidden');
   const mw=document.getElementById('menuPullWrap');
   if(mw&&mw.classList.contains('open')){mw.classList.remove('open');const mt=document.getElementById('menuPullTab');if(mt)mt.innerHTML='&#9660; Menu';}
-  tutShow(0);
+  tutShow(TUT_STEP.INTRO, {force:true});
 }
 
 export function tutHide(){clearTimeout(tutTimer);tutTimer=null;tutStep=-1;const t=$('#tutTip');if(t){t.classList.remove('show','tut-center');t.style.cssText=''}}
 
-export function tutShow(step){
-  if(tutDone&&step<9)return;
+export function tutShow(step, options = {}){
+  const force = !!options.force;
+  if(!canShowStep(step, force))return;
   clearTimeout(tutTimer);tutTimer=null;
   tutStep=step;
   const s=TUT_STEPS[step];
@@ -49,7 +125,7 @@ export function tutShow(step){
     tip.classList.add('show','tut-center');
   } else {
     const target=document.querySelector(s.sel);
-    if(!target)return;
+    if(!target){tutHide();return;}
     tip.classList.add('show');
     requestAnimationFrame(()=>posTutTip(target,s.arrow));
   }
@@ -57,9 +133,63 @@ export function tutShow(step){
 
 export function tutNext(){
   if(tutStep<0)return;
-  if(tutStep===8){tutSkip();return}
-  if(tutStep===9||tutStep===10){tutHide();return}
-  tutShow(tutStep+1);
+  const s=TUT_STEPS[tutStep];
+  if(!s)return;
+  if(s.waitFor)return;
+
+  if(tutStep<TUT_STEP.DISCARD_ABILITY){
+    tutShow(tutStep+1);
+    return;
+  }
+
+  if(tutStep===TUT_STEP.DISCARD_ABILITY){
+    finishIntro();
+    return;
+  }
+
+  if(tutStep===TUT_STEP.PATTERN_NOTICE){
+    tutShow(TUT_STEP.PATTERN_SCORING);
+    return;
+  }
+
+  markStepSeen(tutStep);
+  tutHide();
+}
+
+export function tutSignal(eventName){
+  if(tutStep<0)return;
+  const s=TUT_STEPS[tutStep];
+  if(!s || s.waitFor!==eventName)return;
+  tutIgnoreClicksUntil=Date.now()+180;
+  if(tutStep<TUT_STEP.DISCARD_ABILITY)tutShow(tutStep+1);
+  else finishIntro();
+}
+
+function hasPatternOpportunity() {
+  const st = window.state;
+  if (!st || !Array.isArray(st.hand) || !st.hand.length || typeof window.cardHints !== 'function') return false;
+  return st.hand.some(card => (window.cardHints(card) || []).some(h => h && (h.level === 'near' || h.level === 'complete')));
+}
+
+export function maybeShowPatternTutorial(){
+  if(!tutDone || tutStep>=0 || localStorage.getItem(TUT_PATTERN_KEY))return;
+  if(hasPatternOpportunity())queueTip(TUT_STEP.PATTERN_NOTICE);
+}
+
+export function maybeShowReadingCompletionTutorial(){
+  const st = window.state;
+  if(!tutDone || tutStep>=0 || localStorage.getItem(TUT_READING_KEY) || !st || !Array.isArray(st.spread))return;
+  const placed = st.spread.filter(Boolean).length;
+  if(placed===4)queueTip(TUT_STEP.READING_COMPLETE);
+}
+
+export function maybeShowPurgeTutorial(){
+  const st = window.state;
+  if(!tutDone || tutStep>=0 || localStorage.getItem(TUT_PURGE_KEY) || !st)return;
+  if(st.discards!==0 || !Array.isArray(st.hand) || st.hand.length<4 || st.busy || st.abilitySelect || st.purgeSelect!==null)return;
+  const btn=document.querySelector('#purgeBtn');
+  if(!btn || btn.disabled)return;
+  queueTip(TUT_STEP.PURGE);
 }
 
 function posTutTip(target,arrowDir){
@@ -81,4 +211,7 @@ function posTutTip(target,arrowDir){
   arrow.style.transform='translateX(-50%)';
 }
 
-document.addEventListener('click', () => tutNext());
+document.addEventListener('click', () => {
+  if(Date.now()<tutIgnoreClicksUntil)return;
+  tutNext();
+});
