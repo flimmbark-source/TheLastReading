@@ -8,6 +8,9 @@ function runtime(target){return target.tlrRuntime || {};}
 function stateOf(target){return runtime(target).state;}
 function persistOf(target){return runtime(target).persist;}
 function liveConstellationId(state){return Number(state?.th||0)>0 ? (state.constellationId||null) : null;}
+function storeRun(target){return target.tlrStore?.getState?.().run || {};}
+function preservedRoundScore(target,state){const run=storeRun(target);const live=Number(state?.roundScore||0);const stored=Number(run.roundScore||0);if((state?.setIndex||0)>0||stored>0)return Math.max(live,stored);return live;}
+function preservedSetScores(target,state){const run=storeRun(target);const live=state?.setScores||[];const stored=run.setScores||[];return stored.length>live.length?stored:live;}
 
 export function readLiveSnapshot(target = window){
   const state=stateOf(target);
@@ -71,8 +74,8 @@ export function syncRunToStore(target = window){
     pendingReserve:state.pendingPool||0,worldCarry:state.worldCarry||0,
     abilityTakenCardIds:state.abilityTakenUids?[...state.abilityTakenUids]:[],
     resonationBonus:state.resonationBonus||null,
-    setIndex:state.setIndex||0,setsPerRound:state.setsPerRound||2,roundScore:state.roundScore||0,
-    setScores:state.setScores||[],roundDiscardCount:state.roundDiscardCount||0,roundPatternCount:state.roundPatternCount||0,
+    setIndex:state.setIndex||0,setsPerRound:state.setsPerRound||2,roundScore:preservedRoundScore(target,state),
+    setScores:preservedSetScores(target,state),roundDiscardCount:state.roundDiscardCount||0,roundPatternCount:state.roundPatternCount||0,
     constellationId:liveConstellationId(state),untargetableCardIds:Number(state.th||0)>0?(state.untargetableCardUids||[]):[],
     awaitingNextSet:!!state.awaitingNextSet,lastOutcome:state.lastOutcome||null,
   }});
@@ -136,6 +139,6 @@ export function installLegacyBridge(target = window){
   if(typeof target.tlrSyncRunToStore!=='function')target.tlrSyncRunToStore=()=>syncRunToStore(target);
   if(typeof target.tlrResolveAbilityThroughStore!=='function')target.tlrResolveAbilityThroughStore=result=>resolveAbilityThroughStore(result,target);
   if(typeof target.tlrAbilityDraw!=='function')target.tlrAbilityDraw=count=>abilityDraw(count,target);
-  if(typeof target.tlrMarketPurchase!=='function')target.tlrMarketPurchase=purchase=>marketPurchase(purchase,target);
+  if(typeof target.tlrMarketPurchase!=='function')target.tlrMarketPurchase=purchase=>marketPurchase(target);
   if(typeof target.tlrShopPacks!=='function')target.tlrShopPacks=()=>shopPacks(target);
 }
