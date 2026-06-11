@@ -236,6 +236,19 @@ function syncLegacySnapshot(state, snapshot) {
   });
 }
 
+function resetSession(state) {
+  const keepUpgrades = { hand: state.persist.upgrades.hand || 0 };
+  return createGameState({
+    persist: {
+      upgrades: keepUpgrades,
+      obals: state.persist.obals,
+      unlockedFragments: state.persist.unlockedFragments,
+      discoveredArchiveItems: state.persist.discoveredArchiveItems,
+      seenTutorials: state.persist.seenTutorials,
+    },
+  });
+}
+
 const LEGACY_RUN_FIELDS = [
   'deck', 'hand', 'discard', 'spread', 'selectedCardId', 'discards', 'discardedCards',
   'freeDiscardUsed', 'sightChargesUsed', 'thresholdIndex', 'thresholdBonus',
@@ -345,7 +358,9 @@ export function reducer(state = createGameState(), action = {}) {
       });
 
     case ACTIONS.ENTER_ATTIC:
-      return replaceRun(state, { phase: GAME_PHASES.ATTIC });
+      return replacePersist(replaceRun(state, { phase: GAME_PHASES.ATTIC }), {
+        obals: state.persist.obals + (action.obals || 0),
+      });
 
     case ACTIONS.LEAVE_ATTIC:
       return replaceRun(state, { phase: GAME_PHASES.TABLE });
@@ -367,17 +382,17 @@ export function reducer(state = createGameState(), action = {}) {
     case ACTIONS.SET_OBALS:
       return replacePersist(state, { obals: Math.max(0, action.amount || 0) });
 
-    case ACTIONS.END_SESSION:
+    case ACTIONS.END_SESSION: {
+      const totalScore = action.totalScore ?? state.persist.totalScore;
+      const obals = action.obals ?? state.persist.obals;
       return replaceRun(
-        replacePersist(state, {
-          totalScore: action.totalScore ?? state.persist.totalScore,
-          obals: action.obals ?? state.persist.obals,
-        }),
-        { phase: GAME_PHASES.SESSION_END }
+        replacePersist(state, { totalScore, obals }),
+        { phase: GAME_PHASES.SESSION_END, lastSessionScore: totalScore, lastSessionObals: obals }
       );
+    }
 
     case ACTIONS.RESET_SESSION:
-      return createGameState({ persist: state.persist });
+      return resetSession(state);
 
     case ACTIONS.SYNC_LEGACY_SNAPSHOT:
       return syncLegacySnapshot(state, action.snapshot);
