@@ -31,15 +31,29 @@ export function _cacheEls(){
 function activeThreshold(){return constellationThreshold(TH[state.th]+(state.thBonus||0),state)}
 function discardBlocked(){return blocksDiscard(state)}
 
+function ensureConstellationPill(){
+  let el=document.getElementById('constellationPill');
+  if(el)return el;
+  el=document.createElement('div');
+  el.id='constellationPill';
+  el.className='constellation-pill hidden';
+  const stack=document.querySelector('.score-stack');
+  if(stack)stack.appendChild(el);
+  else document.body.appendChild(el);
+  return el;
+}
+
+function escapeHTML(value){return String(value??'').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]))}
+
 function renderConstellationPill(){
-  const el=document.getElementById('constellationPill');
-  if(!el)return;
+  const el=ensureConstellationPill();
   const constellation=getConstellation(state.constellationId);
   if(!constellation){el.classList.add('hidden');el.innerHTML='';return;}
   const setText='Set '+((state.setIndex||0)+1)+'/'+(state.setsPerRound||2);
   const scoreText='Round '+(state.roundScore||0)+'/'+activeThreshold();
+  const sigil=(constellation.sigil||['✦ ✦ ✦']).map(line=>`<div>${escapeHTML(line)}</div>`).join('');
   el.classList.remove('hidden');
-  el.innerHTML=`<div class="constellation-kicker">Constellation · ${setText} · ${scoreText}</div><div class="constellation-name">${constellation.name}</div><div class="constellation-rule">${constellation.rule}</div>`;
+  el.innerHTML=`<div class="constellation-sigil" aria-hidden="true">${sigil}</div><div class="constellation-copy"><div class="constellation-kicker">${setText} · ${scoreText}</div><div class="constellation-name">${escapeHTML(constellation.name)}</div><div class="constellation-rule"><span class="constellation-rule-full">${escapeHTML(constellation.rule)}</span><span class="constellation-rule-short">${escapeHTML(constellation.shortRule||constellation.rule)}</span></div></div>`;
 }
 
 export function render(){
