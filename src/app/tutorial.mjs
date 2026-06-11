@@ -9,21 +9,22 @@ const TUT_KEY = 'tlr_tut_done';
 const TUT_PATTERN_KEY = 'tlr_tut_pattern';
 const TUT_READING_KEY = 'tlr_tut_reading_complete';
 const TUT_PURGE_KEY = 'tlr_tut_purge';
-const INTRO_LAST_STEP = 5;
+const INTRO_LAST_STEP = 6;
 
 export const TUT_STEP = Object.freeze({
   INTRO: 0,
   SELECT_CARD: 1,
   PLACE_CARD: 2,
   SCORE_ADDED: 3,
-  THRESHOLD: 4,
-  DISCARD_ABILITY: 5,
-  PATTERN_NOTICE: 6,
-  PATTERN_SCORING: 7,
+  CARD_POINTS: 4,
+  THRESHOLD: 5,
+  DISCARD_ABILITY: 6,
+  PATTERN_NOTICE: 7,
   THRESHOLD_PROGRESS: 8,
   RELIC: 9,
-  PURGE: 10,
-  READING_COMPLETE: 11,
+  PATTERN_SCORING: 10,
+  PURGE: 11,
+  READING_COMPLETE: 12,
 });
 
 let tutStep = -1;
@@ -36,13 +37,14 @@ const TUT_STEPS = [
   {center:true, text:'Your relative left behind their tarot deck. You used to play this game together.'},
   {sel:'.handDock', arrow:'down', waitFor:'cardSelected', text:'Tap a card to select it.'},
   {sel:'#spread', arrow:'up', waitFor:'cardPlaced', text:'Tap an empty slot to place it.'},
-  {sel:'.score-pill', arrow:'up', text:'That card added points to your total. The red circle on each card shows how many points it adds.'},
-  {sel:'.threshold-pill', arrow:'up', text:'When the reading ends, your total is checked against the <b>Threshold</b>.'},
+  {sel:'.score-pill', arrow:'up', text:'That card added points to your total.'},
+  {sel:'#hand .card[data-uid]', arrow:'down', text:'The red circle on each card shows how many points it adds.'},
+  {sel:'.threshold-pill', arrow:'up', text:'Try to beat the <b>Threshold</b> with your <b>Score</b> by the time you place 5 cards.'},
   {sel:'#discardBtn', arrow:'up', text:'<b>Discard</b> a card to use its <b>Ability</b> instead of placing it.'},
   {sel:'.handDock', arrow:'down', key:TUT_PATTERN_KEY, text:'Some of your cards may work together.'},
-  {sel:'#scoringBtn', arrow:'up', key:TUT_PATTERN_KEY, text:'Check <b>Scoring</b> to see if you can complete a pattern.'},
   {center:true, text:'Each cleared Threshold makes the next one harder. Clear the 10th Threshold to win.'},
   {sel:'#relicRack', arrow:'up', text:'You\'ve found a <b>Relic</b>! Relics carry passive effects across every reading until you lose. Tap a relic icon to see what it does.'},
+  {sel:'#scoringPullTab', arrow:'up', key:TUT_PATTERN_KEY, text:'Check <b>Scoring</b> to see if you can complete a pattern.'},
   {sel:'#purgeBtn', arrow:'up', key:TUT_PURGE_KEY, text:'Remove 3 cards from your hand to gain 1 Discard.'},
   {sel:'#spread', arrow:'up', key:TUT_READING_KEY, text:'One more card completes the reading.'},
 ];
