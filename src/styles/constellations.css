@@ -81,9 +81,7 @@
 }
 @media(max-width:640px){
   .constellation-pill{
-    right:10px;
-    top:78px;
-    transform:none;
+    right:auto;
     width:34px;
     height:34px;
     min-width:34px;
