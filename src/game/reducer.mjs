@@ -6,6 +6,7 @@ import { buyShopItem, maxRelicSlots } from '../systems/shop.mjs';
 import { firstDiscardIsFree, hasRelic, startingHandBonusFromRelics, thresholdClearBonusFromRelics, worldCarryFromRelics } from '../systems/relics.mjs';
 import { applyAbilityTake, applySearchTake, applyWorldReset, drawWithReshuffle, isSightAbility } from '../systems/abilities.mjs';
 import { currentThreshold } from '../data/thresholds.mjs';
+import { SETS_PER_ROUND, constellationForRound, activeConstellation, blocksDiscard, constellationThreshold, gateSatisfied, setHasScoringPattern } from '../systems/constellations.mjs';
 
 function maxHand(persist) {
   return 5 + (persist.upgrades.hand || 0) - (hasRelic(persist.relics, 'fool_reversed') ? 1 : 0);
@@ -15,12 +16,34 @@ function startingDiscards(persist) {
   return 3 + (persist.upgrades.discards || 0);
 }
 
+function handSizeForSet(persist) {
+  return maxHand(persist) + startingHandBonusFromRelics(persist.relics) + (persist.upgrades.deep_current || 0);
+}
+
 function replaceRun(state, patch) {
   return { ...state, run: { ...state.run, ...patch } };
 }
 
 function replacePersist(state, patch) {
   return { ...state, persist: { ...state.persist, ...patch } };
+}
+
+function drawFreshSetHand(run, persist, rng = Math.random, sourceDeck = null) {
+  let deck = sourceDeck ? [...sourceDeck] : [...(run.deck || [])];
+  let discard = [...(run.discard || []), ...(run.hand || []), ...(run.spread || []).filter(Boolean)];
+  const hand = [];
+  const target = handSizeForSet(persist);
+
+  while (hand.length < target) {
+    if (!deck.length) {
+      if (!discard.length) break;
+      deck = shuffleDeck(discard, rng || Math.random);
+      discard = [];
+    }
+    hand.push(deck.shift());
+  }
+
+  return { hand, deck, discard };
 }
 
 function placeCard(state, slotIndex) {
@@ -33,18 +56,26 @@ function placeCard(state, slotIndex) {
   const hand = [...run.hand];
   const [card] = hand.splice(cardIndex, 1);
   const spread = [...run.spread];
+  const firstCardInSet = spread.every(slot => !slot);
   spread[slotIndex] = card;
 
-  return replaceRun(state, {
+  const patch = {
     hand,
     spread,
     selectedCardId: null,
-  });
+  };
+
+  if (firstCardInSet && activeConstellation(run).id === 'unasked_question') {
+    patch.untargetableCardIds = [...new Set([...(run.untargetableCardIds || []), card.uid])];
+  }
+
+  return replaceRun(state, patch);
 }
 
 function discardSelected(state) {
   const { run, persist } = state;
   if (run.selectedCardId == null) return state;
+  if (blocksDiscard(run)) return state;
 
   const free = firstDiscardIsFree(persist.relics) && !run.freeDiscardUsed;
   if (!free && run.discards <= 0) return state;
@@ -66,8 +97,21 @@ function discardSelected(state) {
     freeDiscardUsed: run.freeDiscardUsed || free,
     sightChargesUsed: (run.sightChargesUsed || 0) + (sightFree ? 1 : 0),
     discards: free || sightFree ? run.discards : run.discards - 1,
+    roundDiscardCount: (run.roundDiscardCount || 0) + 1,
     lastDiscardedCard: card,
   });
+}
+
+function scoringContext(run) {
+  return {
+    handCount: run.hand.length,
+    discardedCount: run.discardedCards.length,
+    discardedCards: run.discardedCards,
+    abilityTakenCardIds: run.abilityTakenCardIds,
+    resonationBonus: run.resonationBonus,
+    worldCarry: run.worldCarry,
+    constellationId: run.constellationId,
+  };
 }
 
 function scoreReading(state) {
@@ -76,45 +120,86 @@ function scoreReading(state) {
   const score = computeScore(cards, {
     upgrades: persist.upgrades,
     relics: persist.relics,
-    context: {
-      handCount: run.hand.length,
-      discardedCount: run.discardedCards.length,
-      discardedCards: run.discardedCards,
-      abilityTakenCardIds: run.abilityTakenCardIds,
-      resonationBonus: run.resonationBonus,
-      worldCarry: run.worldCarry,
-    },
+    context: scoringContext(run),
   });
 
-  const threshold = currentThreshold(run.thresholdIndex, run.thresholdBonus);
-  const passed = score.finalScore >= threshold;
+  const threshold = constellationThreshold(currentThreshold(run.thresholdIndex, run.thresholdBonus), run);
+  const roundScore = (run.roundScore || 0) + score.finalScore;
+  const setScores = [...(run.setScores || []), score.finalScore];
+  const roundPatternCount = (run.roundPatternCount || 0) + (setHasScoringPattern(score) ? 1 : 0);
+  const passed = roundScore >= threshold && gateSatisfied(run, roundPatternCount);
+  const setNumber = (run.setIndex || 0) + 1;
+  const setsPerRound = run.setsPerRound || SETS_PER_ROUND;
 
-  if (!passed) {
+  const common = {
+    lastScore: score,
+    lastSetScore: score,
+    lastThreshold: threshold,
+    roundScore,
+    setScores,
+    roundPatternCount,
+  };
+
+  if (passed) {
+    const miserBonus = thresholdClearBonusFromRelics(persist.relics);
+    return replacePersist(
+      replaceRun(state, {
+        ...common,
+        phase: GAME_PHASES.MARKET,
+        thresholdIndex: run.thresholdIndex + 1,
+        lastPassed: true,
+        lastOutcome: 'pass',
+        awaitingNextSet: false,
+        pendingReserve: (run.pendingReserve || 0) + roundScore + miserBonus,
+        worldCarry: worldCarryFromRelics(persist.relics, roundScore, threshold),
+        relicEarned: false,
+      }),
+      {
+        totalScore: persist.totalScore + roundScore,
+      }
+    );
+  }
+
+  if (setNumber < setsPerRound) {
     return replaceRun(state, {
-      phase: GAME_PHASES.SESSION_END,
-      lastScore: score,
-      lastThreshold: threshold,
+      ...common,
+      phase: GAME_PHASES.SCORING,
       lastPassed: false,
+      lastOutcome: 'nextSet',
+      awaitingNextSet: true,
     });
   }
 
-  const miserBonus = thresholdClearBonusFromRelics(persist.relics);
+  return replaceRun(state, {
+    ...common,
+    phase: GAME_PHASES.SESSION_END,
+    lastPassed: false,
+    lastOutcome: 'fail',
+    awaitingNextSet: false,
+  });
+}
 
-  return replacePersist(
-    replaceRun(state, {
-      phase: GAME_PHASES.MARKET,
-      thresholdIndex: run.thresholdIndex + 1,
-      lastScore: score,
-      lastThreshold: threshold,
-      lastPassed: true,
-      pendingReserve: (run.pendingReserve || 0) + score.finalScore + miserBonus,
-      worldCarry: worldCarryFromRelics(persist.relics, score.finalScore, threshold),
-      relicEarned: false,
-    }),
-    {
-      totalScore: persist.totalScore + score.finalScore,
-    }
-  );
+function startNextSet(state, rng = Math.random) {
+  const { run, persist } = state;
+  if (!run.awaitingNextSet) return state;
+  const next = drawFreshSetHand(run, persist, rng);
+  return replaceRun(state, {
+    phase: GAME_PHASES.TABLE,
+    deck: next.deck,
+    hand: next.hand,
+    discard: next.discard,
+    spread: Array(5).fill(null),
+    selectedCardId: null,
+    setIndex: (run.setIndex || 0) + 1,
+    awaitingNextSet: false,
+    lastOutcome: null,
+    ability: null,
+    sourceCardId: null,
+    busy: false,
+    purge: null,
+    abilityTakenCardIds: [],
+    resonationBonus: null,
+  });
 }
 
 function buyMarketItem(state, itemId) {
@@ -268,7 +353,9 @@ const LEGACY_RUN_FIELDS = [
   'deck', 'hand', 'discard', 'spread', 'selectedCardId', 'discards', 'discardedCards',
   'freeDiscardUsed', 'sightChargesUsed', 'thresholdIndex', 'thresholdBonus',
   'thresholdBonusPending', 'reading', 'pendingReserve', 'worldCarry',
-  'abilityTakenCardIds', 'resonationBonus',
+  'abilityTakenCardIds', 'resonationBonus', 'setIndex', 'setsPerRound', 'roundScore',
+  'setScores', 'roundDiscardCount', 'roundPatternCount', 'constellationId',
+  'untargetableCardIds', 'awaitingNextSet', 'lastOutcome',
 ];
 
 function syncLegacyRun(state, run = {}) {
@@ -277,6 +364,7 @@ function syncLegacyRun(state, run = {}) {
     if (field in run) patch[field] = run[field];
   }
   if (run.lastScore) patch.lastScore = run.lastScore;
+  if (run.lastSetScore) patch.lastSetScore = run.lastSetScore;
   if ('lastThreshold' in run) patch.lastThreshold = run.lastThreshold;
   if ('lastPassed' in run) patch.lastPassed = run.lastPassed;
   if ('relicEarned' in run) patch.relicEarned = run.relicEarned;
@@ -297,12 +385,13 @@ function syncLegacyPersist(state, persist = {}) {
   return replacePersist(state, next);
 }
 
-function startReading(state, deck) {
+function startReading(state, deck, rng = Math.random) {
   const { persist, run } = state;
-  const nextDeck = deck ? [...deck] : shuffleDeck(buildDeck(), Math.random);
-  const handSize = maxHand(persist) + startingHandBonusFromRelics(persist.relics) + (persist.upgrades.deep_current || 0);
+  const nextDeck = deck ? [...deck] : shuffleDeck(buildDeck(), rng);
+  const handSize = handSizeForSet(persist);
   const { drawn: hand, deck: remainingDeck } = drawCards(nextDeck, handSize);
   const offeringReserve = (persist.upgrades.offering || 0) * 5;
+  const constellation = constellationForRound(run.thresholdIndex || 0);
   return replacePersist(
     replaceRun(state, {
       phase: GAME_PHASES.TABLE,
@@ -311,6 +400,16 @@ function startReading(state, deck) {
       discard: [],
       spread: Array(5).fill(null),
       selectedCardId: null,
+      setIndex: 0,
+      setsPerRound: SETS_PER_ROUND,
+      roundScore: 0,
+      setScores: [],
+      roundDiscardCount: 0,
+      roundPatternCount: 0,
+      constellationId: constellation.id,
+      untargetableCardIds: [],
+      awaitingNextSet: false,
+      lastOutcome: null,
       discards: startingDiscards(persist),
       mulliganCharges: persist.upgrades.mulligan || 0,
       ability: null,
@@ -357,7 +456,9 @@ function discoverArchiveItem(state, itemId) {
 export function reducer(state, action) {
   switch (action.type) {
     case ACTIONS.START_READING:
-      return startReading(state, action.deck || null);
+      return startReading(state, action.deck || null, action.rng || Math.random);
+    case ACTIONS.START_NEXT_SET:
+      return startNextSet(state, action.rng || Math.random);
     case ACTIONS.SELECT_CARD:
       return replaceRun(state, { selectedCardId: action.cardId });
     case ACTIONS.CLEAR_SELECTION:
