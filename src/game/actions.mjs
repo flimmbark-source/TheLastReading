@@ -1,5 +1,6 @@
 export const ACTIONS = Object.freeze({
   START_READING: 'START_READING',
+  START_NEXT_SET: 'START_NEXT_SET',
   SELECT_CARD: 'SELECT_CARD',
   CLEAR_SELECTION: 'CLEAR_SELECTION',
   PLACE_CARD: 'PLACE_CARD',
@@ -28,6 +29,7 @@ export const ACTIONS = Object.freeze({
 });
 
 export const startReading = () => ({ type: ACTIONS.START_READING });
+export const startNextSet = () => ({ type: ACTIONS.START_NEXT_SET });
 export const selectCard = cardId => ({ type: ACTIONS.SELECT_CARD, cardId });
 export const clearSelection = () => ({ type: ACTIONS.CLEAR_SELECTION });
 export const placeCard = slotIndex => ({ type: ACTIONS.PLACE_CARD, slotIndex });
