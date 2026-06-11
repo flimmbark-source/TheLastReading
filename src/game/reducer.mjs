@@ -253,7 +253,7 @@ function syncLegacySnapshot(state, snapshot) {
 // run outside the reducer, it pushes the affected fields here before
 // dispatching a store-owned action, and reads the result back afterwards.
 const LEGACY_RUN_FIELDS = [
-  'deck', 'hand', 'discard', 'spread', 'discards', 'discardedCards',
+  'deck', 'hand', 'discard', 'spread', 'selectedCardId', 'discards', 'discardedCards',
   'freeDiscardUsed', 'sightChargesUsed', 'thresholdIndex', 'thresholdBonus',
   'thresholdBonusPending', 'reading', 'pendingReserve', 'worldCarry',
   'abilityTakenCardIds', 'resonationBonus',
@@ -335,10 +335,7 @@ export function reducer(state = createGameState(), action = {}) {
       return discardSelected(state);
 
     case ACTIONS.START_ABILITY:
-      return replaceRun(state, {
-        ability: { id: action.abilityId, sourceCardId: action.sourceCardId ?? null },
-        busy: true,
-      });
+      return replaceRun(state, { ability: { id: action.abilityId, sourceCardId: action.sourceCardId ?? null }, busy: true });
 
     case ACTIONS.RESOLVE_ABILITY:
       return resolveAbilityAction(state, action);
@@ -352,59 +349,52 @@ export function reducer(state = createGameState(), action = {}) {
     case ACTIONS.OPEN_MARKET:
       return replaceRun(state, { phase: GAME_PHASES.MARKET });
 
-    case ACTIONS.BUY_MARKET_ITEM:
+    case ACTIONS.BUY_MARKET_ITEM: {
       if (action.purchase) return buyMarketPurchase(state, action.purchase);
       return buyMarketItem(state, action.itemId);
+    }
 
     case ACTIONS.LEAVE_MARKET:
-      return replaceRun(state, { phase: GAME_PHASES.TABLE, reading: state.run.reading + 1 });
+      return replaceRun(state, {
+        phase: GAME_PHASES.TABLE,
+        pendingReserve: 0,
+        relicEarned: false,
+      });
 
-    case ACTIONS.ENTER_ATTIC: {
-      const next = replaceRun(state, { phase: GAME_PHASES.ATTIC });
-      if (action.obals == null) return next;
-      return replacePersist(next, { obals: action.obals });
-    }
+    case ACTIONS.ENTER_ATTIC:
+      return replaceRun(state, { phase: GAME_PHASES.ATTIC });
 
     case ACTIONS.LEAVE_ATTIC:
       return replaceRun(state, { phase: GAME_PHASES.TABLE });
 
-    case ACTIONS.UNLOCK_FRAGMENT: {
-      if (!action.fragmentId || state.persist.unlockedFragments.includes(action.fragmentId)) return state;
+    case ACTIONS.UNLOCK_FRAGMENT:
       return replacePersist(state, {
-        unlockedFragments: [...state.persist.unlockedFragments, action.fragmentId],
+        unlockedFragments: state.persist.unlockedFragments.includes(action.fragmentId)
+          ? state.persist.unlockedFragments
+          : [...state.persist.unlockedFragments, action.fragmentId],
       });
-    }
 
-    case ACTIONS.DISCOVER_ARCHIVE_ITEM: {
-      if (!action.itemId || state.persist.discoveredArchiveItems.includes(action.itemId)) return state;
+    case ACTIONS.DISCOVER_ARCHIVE_ITEM:
       return replacePersist(state, {
-        discoveredArchiveItems: [...state.persist.discoveredArchiveItems, action.itemId],
+        discoveredArchiveItems: state.persist.discoveredArchiveItems.includes(action.itemId)
+          ? state.persist.discoveredArchiveItems
+          : [...state.persist.discoveredArchiveItems, action.itemId],
       });
-    }
 
     case ACTIONS.SET_OBALS:
-      return replacePersist(state, { obals: Math.max(0, action.obals || 0) });
+      return replacePersist(state, { obals: Math.max(0, action.amount || 0) });
 
     case ACTIONS.END_SESSION:
-      return replaceRun(state, {
-        phase: GAME_PHASES.SESSION_END,
-        lastSessionScore: action.totalScore ?? state.persist.totalScore,
-        lastSessionObals: action.obals ?? null,
-      });
+      return replaceRun(
+        replacePersist(state, {
+          totalScore: action.totalScore ?? state.persist.totalScore,
+          obals: action.obals ?? state.persist.obals,
+        }),
+        { phase: GAME_PHASES.SESSION_END }
+      );
 
     case ACTIONS.RESET_SESSION:
-      // Session-scoped persist resets (reserve, score, relics, relic slots);
-      // permanent progress (upgrades, obals, fragments, archives) survives.
-      return createGameState({
-        persist: {
-          ...state.persist,
-          reserve: 0,
-          totalScore: 0,
-          relics: [],
-          relicUsed: {},
-          upgrades: { ...state.persist.upgrades, relicSlot: 0 },
-        },
-      });
+      return createGameState({ persist: state.persist });
 
     case ACTIONS.SYNC_LEGACY_SNAPSHOT:
       return syncLegacySnapshot(state, action.snapshot);
