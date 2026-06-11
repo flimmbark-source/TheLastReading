@@ -100,6 +100,7 @@ export function installHintRuntime(target = window){
   target.__tlrHintRuntimeInstalled=true;
   target.tlrHintRuntime={majorNumeral,hintsKey,cardHints,cardHint,slotsForMeld};
   if(typeof target.majorNumeral!=='function')target.majorNumeral=majorNumeral;
+  if(typeof target._hintsKey!=='function')target._hintsKey=()=>hintsKey(target);
   if(typeof target.cardHints!=='function')target.cardHints=(card,poolCards=null)=>cardHints(card,poolCards,target);
   if(typeof target.cardHint!=='function')target.cardHint=(card,poolCards=null)=>cardHint(card,poolCards,target);
   if(typeof target.slotsForMeld!=='function')target.slotsForMeld=name=>slotsForMeld(name,target);
