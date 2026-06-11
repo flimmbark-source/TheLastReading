@@ -33,7 +33,7 @@ let tutStep = -1;
 let tutTimer = null;
 let tutDone = !!localStorage.getItem(TUT_KEY);
 let tutIgnoreClicksUntil = 0;
-let queuedTipStep = null;
+let queuedTipSteps = [];
 let queuedTipTimer = null;
 
 const TUT_STEPS = [
@@ -77,20 +77,25 @@ function finishIntro() {
   tutHide();
 }
 
-function queueTip(step, delay = 180) {
-  if (!canShowStep(step)) return;
-  if (queuedTipStep !== null && queuedTipStep !== step) return;
-  queuedTipStep = step;
+function scheduleQueuedTips(delay = 180) {
   clearTimeout(queuedTipTimer);
   queuedTipTimer = setTimeout(() => {
     queuedTipTimer = null;
-    const next = queuedTipStep;
-    if (next == null) return;
-    if (!canShowStep(next)) { queuedTipStep = null; return; }
-    if (tutStep >= 0) { queueTip(next, 450); return; }
-    queuedTipStep = null;
-    tutShow(next);
+    if (tutStep >= 0) { scheduleQueuedTips(450); return; }
+
+    while (queuedTipSteps.length) {
+      const next = queuedTipSteps.shift();
+      if (!canShowStep(next)) continue;
+      tutShow(next);
+      return;
+    }
   }, delay);
+}
+
+function queueTip(step, delay = 180) {
+  if (!canShowStep(step)) return;
+  if (!queuedTipSteps.includes(step)) queuedTipSteps.push(step);
+  scheduleQueuedTips(delay);
 }
 
 export function tutSkip(){
@@ -113,6 +118,9 @@ export function replayTutorial(){
     TUT_PURGE_KEY,
     TUT_ARCHIVES_KEY,
   ].forEach(k=>localStorage.removeItem(k));
+  queuedTipSteps = [];
+  clearTimeout(queuedTipTimer);
+  queuedTipTimer = null;
   tutDone=false;
   const p=document.getElementById('settingsPanel');if(p)p.classList.add('hidden');
   const mw=document.getElementById('menuPullWrap');
@@ -137,7 +145,7 @@ export function tutShow(step, options = {}){
     tip.classList.add('show','tut-center');
   } else {
     const target=document.querySelector(s.sel);
-    if(!target){tutHide();return;}
+    if(!target){tutHide();scheduleQueuedTips(300);return;}
     tip.classList.add('show');
     requestAnimationFrame(()=>posTutTip(target,s.arrow));
   }
@@ -156,6 +164,7 @@ export function tutNext(){
 
   if(tutStep===TUT_STEP.DISCARD_ABILITY){
     finishIntro();
+    scheduleQueuedTips(260);
     return;
   }
 
@@ -166,6 +175,7 @@ export function tutNext(){
 
   markStepSeen(tutStep);
   tutHide();
+  scheduleQueuedTips(260);
 }
 
 export function tutSignal(eventName){
@@ -174,7 +184,10 @@ export function tutSignal(eventName){
   if(!s || s.waitFor!==eventName)return;
   tutIgnoreClicksUntil=Date.now()+180;
   if(tutStep<TUT_STEP.DISCARD_ABILITY)tutShow(tutStep+1);
-  else finishIntro();
+  else {
+    finishIntro();
+    scheduleQueuedTips(260);
+  }
 }
 
 function hasPatternOpportunity() {
