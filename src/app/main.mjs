@@ -11,6 +11,7 @@ import { installShopOverlayFlow } from './shopOverlayFlow.mjs';
 import { installRelicFlow } from './relicFlow.mjs';
 import { installReferenceControls } from './referenceControls.mjs';
 import { installControlBindings } from './controlBindings.mjs';
+import { installScoringRuntime } from './scoringRuntime.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
 import { bootGame } from './boot.mjs';
@@ -62,6 +63,12 @@ export function startApp(target = window) {
   installMenuControls(target);
 
   installDataGlobals(target);
+  target.tlrAbilities = abilitySystem;
+  target.tlrShop = shopSystem;
+  target.tlrHints = hintsSystem;
+  target.tlrScoring = scoringSystem;
+  target.tlrResonationSystem = resonationSystem;
+  installScoringRuntime(target);
   installDeckRuntime(target);
   installLegacyBridge(target);
   installMarketFlow(target);
@@ -74,11 +81,6 @@ export function startApp(target = window) {
 
   try {
     installLiveMirror(target);
-    target.tlrAbilities = abilitySystem;
-    target.tlrShop = shopSystem;
-    target.tlrHints = hintsSystem;
-    target.tlrScoring = scoringSystem;
-    target.tlrResonationSystem = resonationSystem;
     bootGame(target);
   } catch (err) {
     console.error('The Last Reading module boot failed', err);
