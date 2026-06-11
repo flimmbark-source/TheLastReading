@@ -1,5 +1,5 @@
 // Pull-tab drawer gesture/controller module (Step 4).
-// Owns tab drag persistence, drawer height fitting, and scoring sheet refresh.
+// Owns tab drag persistence, drawer height fitting, scoring sheet refresh, and tab fan layout.
 
 const LABELS={scoring:'Scoring',abilities:'Abilities',menu:'Menu'};
 const CONTENT={scoring:'ref',abilities:'abilityRef',menu:'settingsPanel'};
@@ -8,6 +8,12 @@ const DRAWER_HEIGHTS=[
   {id:'scoring',min:92,max:260},
   {id:'abilities',min:112,max:360},
   {id:'menu',min:150,max:380}
+];
+const FAN_TABS=[
+  {id:'menuPullTab',key:'tlr_menu_pull_tab_x',w:86,label:'Menu'},
+  {id:'scoringPullTab',key:'tlr_scoring_pull_tab_x',w:86,label:'Scoring'},
+  {id:'abilitiesPullTab',key:'tlr_abilities_pull_tab_x',w:86,label:'Abilities'},
+  {id:'invTab',key:'tlr_tab_x',w:80,label:'Archives'}
 ];
 
 function fmtBonus(v){return '+'+Number(v).toFixed(2).replace(/\.?0+$/,'');}
@@ -149,15 +155,106 @@ export function installGestureDrawers(target = window){
     target.requestAnimationFrame(fitDrawerHeights);
   }
 
+  function existingFanTabs(){
+    return FAN_TABS.map(t=>Object.assign({},t,{el:document.getElementById(t.id)})).filter(t=>t.el);
+  }
+
+  function discardsAnchorX(){
+    const disc=document.querySelector('.discards-pill');
+    if(disc){
+      const r=disc.getBoundingClientRect();
+      if(r.width)return Math.round(r.right+10);
+    }
+    return Math.round(target.innerWidth-98);
+  }
+
+  function seedDefaultPositions(){
+    const gap=target.innerWidth<390?6:10;
+    const found=existingFanTabs();
+    if(found.length<2)return;
+    const byId={};found.forEach(t=>byId[t.id]=t);
+    const isDesktop=target.matchMedia('(min-width:641px)').matches;
+    if(isDesktop){
+      let x=14;
+      for(const id of ['menuPullTab','scoringPullTab','abilitiesPullTab']){
+        const t=byId[id];if(!t)continue;
+        const nx=Math.max(0,Math.min(target.innerWidth-t.w,x));
+        t.el.style.left=nx+'px';
+        try{target.localStorage.setItem(t.key,String(nx));}catch(e){}
+        x=nx+t.w+gap;
+      }
+      const a=byId.invTab;
+      if(a){
+        const nx=Math.max(0,Math.min(target.innerWidth-a.w,discardsAnchorX()));
+        a.el.style.left=nx+'px';
+        try{target.localStorage.setItem(a.key,String(nx));}catch(e){}
+      }
+      return;
+    }
+    const total=found.reduce((s,t)=>s+t.w,0)+gap*(found.length-1);
+    let x=Math.max(6,Math.round((target.innerWidth-total)/2));
+    for(const t of found){
+      const nx=Math.max(0,Math.min(target.innerWidth-t.w,x));
+      t.el.style.left=nx+'px';
+      try{target.localStorage.setItem(t.key,String(nx));}catch(e){}
+      x+=t.w+gap;
+    }
+  }
+
+  function fanTabs(){
+    const found=existingFanTabs().map(t=>{
+      const r=t.el.getBoundingClientRect();
+      const left=parseFloat(t.el.style.left);
+      return Object.assign(t,{x:Number.isFinite(left)?left:r.left});
+    });
+    if(found.length<2)return;
+    const gap=target.innerWidth<390?6:10;
+    found.sort((a,b)=>a.x-b.x);
+    for(let i=0;i<found.length;i++){
+      const min=i?found[i-1].x+found[i-1].w+gap:6;
+      found[i].x=Math.max(found[i].x,min);
+    }
+    const last=found[found.length-1];
+    const overflow=(last.x+last.w+6)-target.innerWidth;
+    if(overflow>0){
+      for(let i=found.length-1;i>=0;i--)found[i].x-=overflow;
+      for(let i=0;i<found.length;i++){
+        const min=i?found[i-1].x+found[i-1].w+gap:6;
+        found[i].x=Math.max(found[i].x,min);
+      }
+    }
+    for(const t of found){
+      const nx=Math.max(0,Math.min(target.innerWidth-t.w,Math.round(t.x)));
+      t.el.style.left=nx+'px';
+      try{target.localStorage.setItem(t.key,String(nx));}catch(e){}
+    }
+  }
+
+  function installPullTabFan(){
+    if(target.__tlrPullTabFanInstalled)return;
+    target.__tlrPullTabFanInstalled=true;
+    try{
+      if(target.localStorage.getItem('tlr_pull_tabs_fanned_v2')!=='1'){
+        seedDefaultPositions();
+        target.localStorage.setItem('tlr_pull_tabs_fanned_v2','1');
+      }
+    }catch(e){seedDefaultPositions();}
+    target.requestAnimationFrame(fanTabs);
+    document.addEventListener('pointerup',()=>setTimeout(fanTabs,0),true);
+    target.addEventListener('resize',()=>setTimeout(()=>{seedDefaultPositions();fanTabs();},30));
+  }
+
   target.tlrTogglePullTab=togglePullTab;
   target.toggleRef=function(e){if(e)e.stopPropagation();renderDrawerScoringSheet();togglePullTab('scoring');};
   target.toggleAbilityRef=function(e){if(e)e.stopPropagation();togglePullTab('abilities');};
   target.toggleMenu=function(){togglePullTab('menu');};
   target.tlrFitDrawerHeights=fitDrawerHeights;
   target.tlrRenderDrawerScoringSheet=renderDrawerScoringSheet;
+  target.tlrFanPullTabs=fanTabs;
 
   moveContentIntoDesks();
   installTabDrag();
+  installPullTabFan();
   renderDrawerScoringSheet();
   target.requestAnimationFrame(()=>{
     fitDrawerHeights();
