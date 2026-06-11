@@ -9,6 +9,12 @@ import { renderAbilityPrompt, renderPurgePrompt } from './renderAbility.mjs';
 import { renderRelicRack } from './renderMarket.mjs';
 import { cleanName } from './renderCard.mjs';
 
+function maybeShowContextualTutorials(){
+  if(typeof window.maybeShowPatternTutorial==='function')window.maybeShowPatternTutorial();
+  if(typeof window.maybeShowReadingCompletionTutorial==='function')window.maybeShowReadingCompletionTutorial();
+  if(typeof window.maybeShowPurgeTutorial==='function')window.maybeShowPurgeTutorial();
+}
+
 export function _cacheEls(){
   if(_elThreshold)return;
   _elThreshold=document.getElementById('threshold');
@@ -49,6 +55,7 @@ export function render(){
   _elMullBtn.style.display=hasMull()?'inline-block':'none';
   _elMullBtn.disabled=!(state.mullCharges>0)||!state.spread.every(x=>!x)||state.hand.length!==maxHand();
   tlrArchitectureSync();
+  maybeShowContextualTutorials();
 }
 
 export function refreshHandState(){
@@ -88,6 +95,7 @@ export function refreshHandState(){
   _elDiscardBtn.disabled=state.selected===null||state.discards<=0||inPurge;
   _elPurgeBtn.disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
   tlrArchitectureSync();
+  maybeShowContextualTutorials();
 }
 
 export function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=_scoreLegacy([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
