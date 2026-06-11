@@ -5459,6 +5459,7 @@ function tlrShopPacks(){
 // computeScore, runLengthContaining, seqRunStart retired (Step 2 16.4); use _scoreLegacy.
 function majorNumeral(id){const n=parseInt(id.split('_')[1]);if(n===0)return'0';const v=[1000,'M',900,'CM',500,'D',400,'CD',100,'C',90,'XC',50,'L',40,'XL',10,'X',9,'IX',5,'V',4,'IV',1,'I'];let r='',x=n;for(let i=0;i<v.length;i+=2){while(x>=v[i]){r+=v[i+1];x-=v[i];}}return r;}
 let _hintsCache=new Map();
+let _hintsCacheKey=null;
 let _unlockedFragmentsCache=null;
 function _hintsKey(){return state.spread.map(c=>c?c.uid:0).join(',')+'|'+state.hand.map(c=>c.uid).join(',');}
 function cardHints(card, poolCards=null){
@@ -6179,7 +6180,8 @@ function openInvDetail(item){
   bg.addEventListener('click',e=>{if(Date.now()-openedAt<350)return;if(e.target===bg)bg.remove()});
   document.body.appendChild(bg);
 }
-setTimeout(renderInventory,0);
+// Defer until dataGlobals.mjs has installed INV_ITEMS on window.
+document.addEventListener('tlr-architecture-bridge-ready',()=>renderInventory(),{once:true});
 
 // ── Card zoom (scroll up or pinch-expand on any card) ──
 function expandCard(card){
