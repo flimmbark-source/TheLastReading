@@ -10,6 +10,7 @@ const TUT_PATTERN_KEY = 'tlr_tut_pattern';
 const TUT_READING_KEY = 'tlr_tut_reading_complete';
 const TUT_PURGE_KEY = 'tlr_tut_purge';
 const TUT_ARCHIVES_KEY = 'tlr_tut_archives_found';
+const TUT_MARKET_KEY = 'tlr_tut_oracle_market';
 const INTRO_LAST_STEP = 6;
 
 export const TUT_STEP = Object.freeze({
@@ -27,6 +28,12 @@ export const TUT_STEP = Object.freeze({
   PURGE: 11,
   READING_COMPLETE: 12,
   ARCHIVES: 13,
+  MARKET_RESERVE: 14,
+  MARKET_SCORING: 15,
+  MARKET_ABILITIES: 16,
+  MARKET_RELICS: 17,
+  MARKET_REFRESH: 18,
+  MARKET_NEXT: 19,
 });
 
 let tutStep = -1;
@@ -51,6 +58,21 @@ const TUT_STEPS = [
   {sel:'#purgeBtn', arrow:'up', key:TUT_PURGE_KEY, text:'Remove 3 cards from your hand to gain 1 Discard.'},
   {sel:'#spread', arrow:'up', key:TUT_READING_KEY, text:'One more card completes the reading.'},
   {sel:'#invTab', arrow:'up', key:TUT_ARCHIVES_KEY, text:'The <b>Archives</b> hold items discovered among your relative\'s personal effects. Tap to open and investigate.'},
+  {sel:'.store-reserve', arrow:'down', key:TUT_MARKET_KEY, text:'<b>Reserve</b><br>Your currency for upgrades in the Market.'},
+  {sel:'.store-section.scoring', arrow:'down', key:TUT_MARKET_KEY, text:'<b>Scoring</b><br>Buy pattern upgrades. Chips and Mult increase by the amount shown.'},
+  {sel:'.store-section.abilities', arrow:'down', key:TUT_MARKET_KEY, text:'<b>Draw &amp; Abilities</b><br>Open packs for hand, discard, draw, and ability upgrades.'},
+  {sel:'.store-section.relics', arrow:'up', key:TUT_MARKET_KEY, text:'<b>Relics</b><br>Buy a relic to add its rule to your relic row.'},
+  {sel:'.store-refresh', arrow:'up', key:TUT_MARKET_KEY, text:'<b>Refresh</b><br>Spend Reserve to replace the Market’s offers.'},
+  {sel:'.store-proceed', arrow:'up', key:TUT_MARKET_KEY, text:'<b>Next Reading</b><br>Leave the Market and start the next reading.'},
+];
+
+const MARKET_TUT_STEPS = [
+  TUT_STEP.MARKET_RESERVE,
+  TUT_STEP.MARKET_SCORING,
+  TUT_STEP.MARKET_ABILITIES,
+  TUT_STEP.MARKET_RELICS,
+  TUT_STEP.MARKET_REFRESH,
+  TUT_STEP.MARKET_NEXT,
 ];
 
 function stepKey(step) {
@@ -117,6 +139,7 @@ export function replayTutorial(){
     TUT_READING_KEY,
     TUT_PURGE_KEY,
     TUT_ARCHIVES_KEY,
+    TUT_MARKET_KEY,
   ].forEach(k=>localStorage.removeItem(k));
   queuedTipSteps = [];
   clearTimeout(queuedTipTimer);
@@ -173,6 +196,12 @@ export function tutNext(){
     return;
   }
 
+  const marketIndex = MARKET_TUT_STEPS.indexOf(tutStep);
+  if(marketIndex >= 0 && marketIndex < MARKET_TUT_STEPS.length - 1){
+    tutShow(MARKET_TUT_STEPS[marketIndex + 1]);
+    return;
+  }
+
   markStepSeen(tutStep);
   tutHide();
   scheduleQueuedTips(260);
@@ -220,6 +249,11 @@ export function maybeShowPurgeTutorial(){
 export function maybeShowArchivesTutorial(){
   if(localStorage.getItem(TUT_ARCHIVES_KEY))return;
   queueTip(TUT_STEP.ARCHIVES, 260);
+}
+
+export function maybeShowMarketTutorial(){
+  if(localStorage.getItem(TUT_MARKET_KEY) || tutStep>=0)return;
+  queueTip(TUT_STEP.MARKET_RESERVE, 260);
 }
 
 function posTutTip(target,arrowDir){
