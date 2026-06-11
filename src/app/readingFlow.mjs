@@ -18,6 +18,7 @@
 import { isCardUntargetable, hasActiveConstellation } from '../systems/constellations.mjs';
 
 let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
+let scorePillSetBase=0;
 
 function legacyScore(score){return {...score,melds:(score.melds||[]).map(m=>Array.isArray(m)?m:[m.name,m.chips,m.mult,m.mode])}}
 function syncRoundFields(_run){
@@ -36,6 +37,7 @@ function syncRoundFields(_run){
 function isTargetBlocked(card){return isCardUntargetable({th:state.th,constellationId:state.constellationId,untargetableCardIds:state.untargetableCardUids},card)}
 function targetable(cards){return cards.filter(c=>!isTargetBlocked(c))}
 function visibleCounterValue(){_cacheEls();const n=Number(_elCurrent?.textContent||0);return Number.isFinite(n)?n:counterShown}
+function recordScorePillBase(value){scorePillSetBase=Number(value||0);snapCounter(scorePillSetBase)}
 
 export function getUpFromTable(){
   if(state&&state.busy)return;
@@ -61,11 +63,12 @@ export function startReading(){
   persist.pool=_st.persist.reserve;
   playSound('shuffle');
   _resStateKey=null;
-  clearOverlay();snapCounter(state.roundScore||0);render();
+  clearOverlay();recordScorePillBase(0);render();
 }
 
 export function continueSet(){
   if(!state.awaitingNextSet)return;
+  const recordedBase=Math.max(visibleCounterValue(),state.roundScore||0,scorePillSetBase||0);
   tlrSyncRunToStore();
   window.tlrStore.dispatch({type:window.tlrActions.START_NEXT_SET});
   const _run=window.tlrStore.getState().run;
@@ -77,7 +80,7 @@ export function continueSet(){
   syncRoundFields(_run);
   playSound('shuffle');
   _resStateKey=null;
-  clearOverlay();snapCounter(state.roundScore||0);render();
+  clearOverlay();recordScorePillBase(Math.max(recordedBase,state.roundScore||0,_run.roundScore||0));render();
 }
 
 export function placeCard(i){
@@ -119,7 +122,7 @@ export function placeCard(i){
     holdEffects(ghostDelay+1700);
     delay+=slots.length*130+700;announceOffset+=600;
   });
-  setCounterTarget((state.roundScore||0)+after.finalScore);
+  setCounterTarget(scorePillSetBase+after.finalScore);
   setTimeout(()=>checkResonationTriggers(),750);
   checkEnd();
 }
@@ -285,8 +288,8 @@ if(_run.lastScore){
   syncRoundFields(_run);
 }}
 const previousRoundScore=Math.max(0,roundTotal-total);
+if(needsNext){recordScorePillBase(roundTotal);continueSet();return;}
 snapCounter(roundTotal);
-if(needsNext){continueSet();return;}
 let title=pass?'The Round Opens':'The Reading Fails';
 let verdict=pass?('Threshold '+curTH+' Cleared'):('Below Threshold '+curTH);
 let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${title}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${previousRoundScore}</span><span class="rop">+</span><span class="rsm">${total}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${roundTotal}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">Set ${setNumber} added to Round · ${verdict}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Set ${setNumber} score</td><td class="r">${res.chips} × ${res.mult} = ${total}</td></tr>`;html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;const _regMelds=res.melds.filter(m=>!m[0].startsWith('⚷'));const _resMelds=res.melds.filter(m=>m[0].startsWith('⚷'));if(_regMelds.length||_resMelds.length){_regMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);_resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}html+=`<tr class="totrow"><td>Round total</td><td class="r">${roundTotal} / ${curTH}</td></tr>`;if(pass){const miserBonus=persist.relics.includes('miser')?5:0;
