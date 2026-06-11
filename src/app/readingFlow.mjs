@@ -15,7 +15,7 @@
    tlrSyncRunToStore, tlrStoreReady, tlrResolveAbilityThroughStore,
    tlrAbilityDraw, tlrBindSelectionToStore, openShop,
    maxHand, hasMull, tlrArchitectureSync, tlrScoreToObals */
-import { isCardUntargetable } from '../systems/constellations.mjs';
+import { isCardUntargetable, hasActiveConstellation } from '../systems/constellations.mjs';
 
 let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 
@@ -27,12 +27,12 @@ function syncRoundFields(_run){
   state.setScores=(_run.setScores||[]).slice();
   state.roundDiscardCount=_run.roundDiscardCount||0;
   state.roundPatternCount=_run.roundPatternCount||0;
-  state.constellationId=_run.constellationId||null;
-  state.untargetableCardUids=(_run.untargetableCardIds||[]).slice();
+  state.constellationId=hasActiveConstellation(_run)?(_run.constellationId||null):null;
+  state.untargetableCardUids=hasActiveConstellation(_run)?((_run.untargetableCardIds||[]).slice()):[];
   state.awaitingNextSet=!!_run.awaitingNextSet;
   state.lastOutcome=_run.lastOutcome||null;
 }
-function isTargetBlocked(card){return isCardUntargetable({constellationId:state.constellationId,untargetableCardIds:state.untargetableCardUids},card)}
+function isTargetBlocked(card){return isCardUntargetable({th:state.th,constellationId:state.constellationId,untargetableCardIds:state.untargetableCardUids},card)}
 function targetable(cards){return cards.filter(c=>!isTargetBlocked(c))}
 
 export function getUpFromTable(){
@@ -282,9 +282,10 @@ if(_run.lastScore){
   setsPerRound=_run.setsPerRound||setsPerRound;
   syncRoundFields(_run);
 }}
-let title=pass?'The Round Opens':(needsNext?'Set '+setNumber+' Ends':'The Reading Fails');
-let verdict=pass?('Threshold '+curTH+' Cleared'):(needsNext?('Round '+roundTotal+'/'+curTH+' · Set '+(setNumber+1)+' remains'):('Below Threshold '+curTH));
-let html=`<div class="result-panel ${pass?'pass':(needsNext?'pass':'fail')}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass||needsNext?'pass':'fail'}">${title}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass||needsNext?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass||needsNext?'pass':'fail'}">${verdict}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;const _regMelds=res.melds.filter(m=>!m[0].startsWith('⚷'));const _resMelds=res.melds.filter(m=>m[0].startsWith('⚷'));if(_regMelds.length||_resMelds.length){_regMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);_resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}html+=`<tr class="totrow"><td>Round total</td><td class="r">${roundTotal} / ${curTH}</td></tr>`;if(pass){const miserBonus=persist.relics.includes('miser')?5:0;
+if(needsNext){continueSet();return;}
+let title=pass?'The Round Opens':'The Reading Fails';
+let verdict=pass?('Threshold '+curTH+' Cleared'):('Below Threshold '+curTH);
+let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${title}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${res.chips}</span><span class="rop">×</span><span class="rsm">${res.mult}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${res.finalScore}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">${verdict}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;const _regMelds=res.melds.filter(m=>!m[0].startsWith('⚷'));const _resMelds=res.melds.filter(m=>m[0].startsWith('⚷'));if(_regMelds.length||_resMelds.length){_regMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);_resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}html+=`<tr class="totrow"><td>Round total</td><td class="r">${roundTotal} / ${curTH}</td></tr>`;if(pass){const miserBonus=persist.relics.includes('miser')?5:0;
 {const _st=window.tlrStore.getState();
 state.worldCarry=_st.run.worldCarry||0;
 state.pendingPool=_st.run.pendingReserve||0;
@@ -292,7 +293,7 @@ persist.totalScore=_st.persist.totalScore||0;
 state.relicEarned=!!_st.run.relicEarned;
 state.th=_st.run.thresholdIndex;}
 const worldCarry=state.worldCarry;
-html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${roundTotal}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else if(!needsNext){html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${roundTotal}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else if(needsNext){html+=`<button class="btn-gold" onclick="continueSet()">Begin Set ${setNumber+1} →</button>`;}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render();}
+html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${roundTotal}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${roundTotal}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render();}
 function tlSyncBeforeScore(){tlrSyncRunToStore()}
 
 export function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html;tlrArchitectureSync()}
