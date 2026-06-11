@@ -69,21 +69,27 @@ let state = createGameState();
 state = reducer(state, { type: ACTIONS.START_READING, rng: () => 0.5 });
 assert.equal(state.run.hand.length, 5, 'starting hand should draw 5 cards');
 assert.equal(state.run.spread.length, 5, 'spread should have 5 slots');
-assert.equal(state.run.constellationId, 'closed_palm', 'first round should start under The Closed Palm');
+assert.equal(state.run.constellationId, null, 'first round should not have a constellation');
 
 state = reducer(state, { type: ACTIONS.SELECT_CARD, cardId: state.run.hand[0].uid });
-assert.equal(canDiscardSelected(state), false, 'Closed Palm should block discards at reading start');
+assert.equal(canDiscardSelected(state), true, 'selected card should be discardable in the first round');
 assert.ok(scorePreview(state), 'selected card should produce a score preview');
 state = reducer(state, { type: ACTIONS.PLACE_CARD, slotIndex: 0 });
 assert.equal(state.run.spread.filter(Boolean).length, 1, 'placing should move one card into the spread');
 assert.equal(state.run.hand.length, 4, 'placing should remove one card from hand');
 assert.equal(publicRunSnapshot(state).spreadCount, 1, 'public snapshot should expose spread count');
 
-state = reducer(state, { type: ACTIONS.SELECT_CARD, cardId: state.run.hand[0].uid });
-assert.equal(canDiscardSelected(state), false, 'Closed Palm should still block discards after only 1 placed card');
-state = reducer(state, { type: ACTIONS.PLACE_CARD, slotIndex: 1 });
-state = reducer(state, { type: ACTIONS.SELECT_CARD, cardId: state.run.hand[0].uid });
-assert.equal(canDiscardSelected(state), true, 'Closed Palm should allow discards after 2 placed cards');
+let constellationState = reducer(createGameState(), { type: ACTIONS.SYNC_LEGACY_RUN, run: { thresholdIndex: 1 } });
+constellationState = reducer(constellationState, { type: ACTIONS.START_READING, rng: () => 0.5 });
+assert.equal(constellationState.run.constellationId, 'closed_palm', 'second round should start under Aries');
+constellationState = reducer(constellationState, { type: ACTIONS.SELECT_CARD, cardId: constellationState.run.hand[0].uid });
+assert.equal(canDiscardSelected(constellationState), false, 'Aries should block discards at reading start');
+constellationState = reducer(constellationState, { type: ACTIONS.PLACE_CARD, slotIndex: 0 });
+constellationState = reducer(constellationState, { type: ACTIONS.SELECT_CARD, cardId: constellationState.run.hand[0].uid });
+assert.equal(canDiscardSelected(constellationState), false, 'Aries should still block discards after only 1 placed card');
+constellationState = reducer(constellationState, { type: ACTIONS.PLACE_CARD, slotIndex: 1 });
+constellationState = reducer(constellationState, { type: ACTIONS.SELECT_CARD, cardId: constellationState.run.hand[0].uid });
+assert.equal(canDiscardSelected(constellationState), true, 'Aries should allow discards after 2 placed cards');
 
 const store = createStore(createGameState(), reducer);
 let listenerCalled = false;
