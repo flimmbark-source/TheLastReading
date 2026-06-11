@@ -109,7 +109,7 @@ function scoreReading(state) {
       lastPassed: true,
       pendingReserve: (run.pendingReserve || 0) + score.finalScore + miserBonus,
       worldCarry: worldCarryFromRelics(persist.relics, score.finalScore, threshold),
-      relicEarned: score.finalScore >= threshold * 2,
+      relicEarned: false,
     }),
     {
       totalScore: persist.totalScore + score.finalScore,
@@ -258,151 +258,108 @@ const LEGACY_RUN_FIELDS = [
 
 function syncLegacyRun(state, run = {}) {
   const patch = {};
-  for (const key of LEGACY_RUN_FIELDS) {
-    if (!(key in run)) continue;
-    patch[key] = Array.isArray(run[key]) ? [...run[key]] : run[key];
+  for (const field of LEGACY_RUN_FIELDS) {
+    if (field in run) patch[field] = run[field];
   }
+  if (run.lastScore) patch.lastScore = run.lastScore;
+  if ('lastThreshold' in run) patch.lastThreshold = run.lastThreshold;
+  if ('lastPassed' in run) patch.lastPassed = run.lastPassed;
+  if ('relicEarned' in run) patch.relicEarned = run.relicEarned;
   return replaceRun(state, patch);
 }
 
-const LEGACY_PERSIST_FIELDS = [
-  'reserve', 'totalScore', 'upgrades', 'relics', 'relicUsed', 'obals',
-  'unlockedFragments', 'discoveredArchiveItems', 'seenTutorials',
-];
-
 function syncLegacyPersist(state, persist = {}) {
-  const patch = {};
-  for (const key of LEGACY_PERSIST_FIELDS) {
-    if (!(key in persist)) continue;
-    const value = persist[key];
-    if (Array.isArray(value)) patch[key] = [...value];
-    else if (value && typeof value === 'object') patch[key] = { ...value };
-    else patch[key] = value;
-  }
-  return replacePersist(state, patch);
+  const next = {};
+  if ('reserve' in persist) next.reserve = persist.reserve;
+  if ('totalScore' in persist) next.totalScore = persist.totalScore;
+  if ('upgrades' in persist) next.upgrades = { ...persist.upgrades };
+  if ('relics' in persist) next.relics = [...persist.relics];
+  if ('relicUsed' in persist) next.relicUsed = { ...persist.relicUsed };
+  if ('obals' in persist) next.obals = persist.obals;
+  if ('unlockedFragments' in persist) next.unlockedFragments = persist.unlockedFragments;
+  if ('discoveredArchiveItems' in persist) next.discoveredArchiveItems = { ...persist.discoveredArchiveItems };
+  if ('seenTutorials' in persist) next.seenTutorials = { ...persist.seenTutorials };
+  return replacePersist(state, next);
 }
 
-export function reducer(state = createGameState(), action = {}) {
-  switch (action.type) {
-    case ACTIONS.START_READING: {
-      const { persist } = state;
-      const baseDeck = action.deck ? [...action.deck] : shuffleDeck(buildDeck(), action.rng);
-      const extraDraws = startingHandBonusFromRelics(persist.relics) + (persist.upgrades.deep_current || 0);
-      const { drawn, deck: remainingDeck } = drawCards(baseDeck, maxHand(persist) + extraDraws);
-      const offering = (persist.upgrades.offering || 0) * 5;
-      const next = replaceRun(state, {
-        phase: GAME_PHASES.TABLE,
-        deck: remainingDeck,
-        hand: drawn,
-        discard: [],
-        spread: Array(5).fill(null),
-        selectedCardId: null,
-        discards: startingDiscards(persist),
-        mulliganCharges: persist.upgrades.mulligan || 0,
-        freeDiscardUsed: false,
-        sightChargesUsed: 0,
-        lastDiscardedCard: null,
-        discardedCards: [],
-        abilityTakenCardIds: [],
-        resonationBonus: { chips: 0, mult: 0 },
-        thresholdBonus: (state.run.thresholdBonus || 0) + (state.run.thresholdBonusPending || 0),
-        thresholdBonusPending: 0,
-        ability: null,
-        purge: null,
-        busy: false,
-        lastScore: null,
-        lastThreshold: null,
-        lastPassed: null,
-      });
-      return offering ? replacePersist(next, { reserve: next.persist.reserve + offering }) : next;
-    }
+function startReading(state, deck) {
+  const { persist, run } = state;
+  const nextDeck = shuffleDeck(deck, Math.random);
+  const handSize = maxHand(persist) + startingHandBonusFromRelics(persist.relics) + (persist.upgrades.deep_current || 0);
+  const { hand, deck: remainingDeck } = drawCards(nextDeck, handSize);
+  return replaceRun(state, {
+    phase: GAME_PHASES.READING,
+    deck: remainingDeck,
+    hand,
+    discard: [],
+    spread: Array(5).fill(null),
+    selectedCardId: null,
+    discards: startingDiscards(persist),
+    mulliganCharges: persist.upgrades.mulligan || 0,
+    ability: null,
+    busy: false,
+    freeDiscardUsed: false,
+    sightChargesUsed: 0,
+    discardedCards: [],
+    abilityTakenCardIds: [],
+    resonationBonus: null,
+    relicEarned: false,
+  });
+}
 
+function leaveMarket(state) {
+  return replaceRun(state, {
+    phase: GAME_PHASES.READING,
+    pendingReserve: 0,
+    worldCarry: runWorldCarry(state.run),
+    reading: state.run.reading + 1,
+    relicEarned: false,
+  });
+}
+
+function runWorldCarry(run) {
+  return run.worldCarry || 0;
+}
+
+export function reducer(state, action) {
+  switch (action.type) {
+    case ACTIONS.START_READING:
+      return startReading(state, action.deck || buildDeck());
     case ACTIONS.SELECT_CARD:
       return replaceRun(state, { selectedCardId: action.cardId });
-
     case ACTIONS.CLEAR_SELECTION:
       return replaceRun(state, { selectedCardId: null });
-
     case ACTIONS.PLACE_CARD:
       return placeCard(state, action.slotIndex);
-
     case ACTIONS.DISCARD_SELECTED:
       return discardSelected(state);
-
-    case ACTIONS.START_ABILITY:
-      return replaceRun(state, { ability: { id: action.abilityId, sourceCardId: action.sourceCardId ?? null }, busy: true });
-
     case ACTIONS.RESOLVE_ABILITY:
       return resolveAbilityAction(state, action);
-
+    case ACTIONS.START_ABILITY:
+      return replaceRun(state, { ability: action.abilityId, sourceCardId: action.sourceCardId ?? null, busy: true });
     case ACTIONS.CANCEL_ABILITY:
-      return replaceRun(state, { ability: null, busy: false });
-
+      return replaceRun(state, { ability: null, sourceCardId: null, busy: false });
     case ACTIONS.SCORE_READING:
       return scoreReading(state);
-
-    case ACTIONS.OPEN_MARKET:
-      return replaceRun(state, { phase: GAME_PHASES.MARKET });
-
-    case ACTIONS.BUY_MARKET_ITEM: {
-      if (action.purchase) return buyMarketPurchase(state, action.purchase);
+    case ACTIONS.BUY_SHOP_ITEM:
       return buyMarketItem(state, action.itemId);
-    }
-
+    case ACTIONS.BUY_MARKET_ITEM:
+      return buyMarketPurchase(state, action.purchase || {});
     case ACTIONS.LEAVE_MARKET:
-      return replaceRun(state, {
-        phase: GAME_PHASES.TABLE,
-        reading: state.run.reading + 1,
-        pendingReserve: 0,
-        relicEarned: false,
-      });
-
-    case ACTIONS.ENTER_ATTIC:
-      return replacePersist(replaceRun(state, { phase: GAME_PHASES.ATTIC }), {
-        obals: state.persist.obals + (action.obals || 0),
-      });
-
-    case ACTIONS.LEAVE_ATTIC:
-      return replaceRun(state, { phase: GAME_PHASES.TABLE });
-
-    case ACTIONS.UNLOCK_FRAGMENT:
-      return replacePersist(state, {
-        unlockedFragments: state.persist.unlockedFragments.includes(action.fragmentId)
-          ? state.persist.unlockedFragments
-          : [...state.persist.unlockedFragments, action.fragmentId],
-      });
-
-    case ACTIONS.DISCOVER_ARCHIVE_ITEM:
-      return replacePersist(state, {
-        discoveredArchiveItems: state.persist.discoveredArchiveItems.includes(action.itemId)
-          ? state.persist.discoveredArchiveItems
-          : [...state.persist.discoveredArchiveItems, action.itemId],
-      });
-
-    case ACTIONS.SET_OBALS:
-      return replacePersist(state, { obals: Math.max(0, action.amount || 0) });
-
-    case ACTIONS.END_SESSION: {
-      const totalScore = action.totalScore ?? state.persist.totalScore;
-      const obals = action.obals ?? state.persist.obals;
-      return replaceRun(
-        replacePersist(state, { totalScore, obals }),
-        { phase: GAME_PHASES.SESSION_END, lastSessionScore: totalScore, lastSessionObals: obals }
-      );
-    }
-
-    case ACTIONS.RESET_SESSION:
-      return resetSession(state);
-
-    case ACTIONS.SYNC_LEGACY_SNAPSHOT:
-      return syncLegacySnapshot(state, action.snapshot);
-
+      return leaveMarket(state);
     case ACTIONS.SYNC_LEGACY_RUN:
       return syncLegacyRun(state, action.run);
-
     case ACTIONS.SYNC_LEGACY_PERSIST:
       return syncLegacyPersist(state, action.persist);
-
+    case ACTIONS.SYNC_LEGACY_SNAPSHOT:
+      return syncLegacySnapshot(state, action.snapshot);
+    case ACTIONS.END_SESSION:
+      return replacePersist(
+        replaceRun(state, { phase: GAME_PHASES.SESSION_END }),
+        { totalScore: action.totalScore ?? state.persist.totalScore, obals: action.obals ?? state.persist.obals }
+      );
+    case ACTIONS.RESET_SESSION:
+      return resetSession(state);
     default:
       return state;
   }
