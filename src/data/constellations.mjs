@@ -1,5 +1,5 @@
 export const SETS_PER_ROUND = 2;
-export const ZODIAC_SPRITE = './star_signs.png';
+export const ZODIAC_SPRITE = './Star_signs.png';
 
 const EFFECTS = Object.freeze({
   BLOCK_EARLY_DISCARD: 'block_early_discard',
