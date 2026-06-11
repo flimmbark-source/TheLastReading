@@ -1,4 +1,5 @@
 import { DEFAULT_UPGRADES } from '../data/scoringPatterns.mjs';
+import { SETS_PER_ROUND } from '../data/constellations.mjs';
 
 export const GAME_PHASES = Object.freeze({
   TABLE: 'table',
@@ -39,6 +40,16 @@ export function createInitialRunState(overrides = {}) {
     thresholdIndex: 0,
     thresholdBonus: 0,
     thresholdBonusPending: 0,
+    setIndex: 0,
+    setsPerRound: SETS_PER_ROUND,
+    roundScore: 0,
+    setScores: [],
+    roundDiscardCount: 0,
+    roundPatternCount: 0,
+    constellationId: null,
+    untargetableCardIds: [],
+    awaitingNextSet: false,
+    lastOutcome: null,
     discards: 3,
     mulliganCharges: 0,
     busy: false,
