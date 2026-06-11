@@ -55,6 +55,34 @@ function closeConstellationCallout(){
   if(callout)callout.remove();
 }
 
+function positionConstellationIcon(el){
+  if(window.innerWidth>640){
+    el.style.left='';
+    el.style.top='';
+    el.style.right='';
+    el.style.transform='';
+    return;
+  }
+  requestAnimationFrame(()=>{
+    const reserve=document.querySelector('.reserve-pill');
+    const discards=document.querySelector('.discards-pill');
+    if(!reserve||!discards)return;
+    const a=reserve.getBoundingClientRect();
+    const b=discards.getBoundingClientRect();
+    const leftPill=a.left<=b.left?a:b;
+    const rightPill=a.left<=b.left?b:a;
+    const gapCenter=(leftPill.right+rightPill.left)/2;
+    const sameRow=Math.abs((a.top+a.height/2)-(b.top+b.height/2))<18;
+    const fallbackX=(a.left+a.width/2+b.left+b.width/2)/2;
+    const x=sameRow&&rightPill.left>leftPill.right?gapCenter:fallbackX;
+    const y=(a.top+a.height/2+b.top+b.height/2)/2;
+    el.style.left=Math.round(x)+'px';
+    el.style.top=Math.round(y)+'px';
+    el.style.right='auto';
+    el.style.transform='translate(-50%,-50%)';
+  });
+}
+
 function positionConstellationCallout(callout, anchor){
   const rect=anchor.getBoundingClientRect();
   const margin=8;
@@ -101,7 +129,7 @@ function installConstellationOutsideHandler(){
     if(callout&&callout.contains(event.target))return;
     closeConstellationCallout();
   },true);
-  window.addEventListener('resize',()=>closeConstellationCallout());
+  window.addEventListener('resize',()=>{closeConstellationCallout();const el=document.getElementById('constellationPill');if(el&&!el.classList.contains('hidden'))positionConstellationIcon(el);});
 }
 
 function renderConstellationPill(){
@@ -114,6 +142,7 @@ function renderConstellationPill(){
   el.classList.remove('hidden');
   el.setAttribute('aria-label',`${constellation.name}. ${constellation.shortRule||constellation.rule}`);
   el.innerHTML=`<span class="constellation-icon" aria-hidden="true">${escapeHTML(constellation.icon||'✦')}</span>`;
+  positionConstellationIcon(el);
   el.onclick=event=>{event.stopPropagation();if(constellationCalloutOpen)closeConstellationCallout();else showConstellationCallout(el,constellation,setText,scoreText);};
 }
 
