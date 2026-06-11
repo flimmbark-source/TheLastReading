@@ -54,6 +54,7 @@ function installStoreFrontTuning(target = window) {
   const style = doc.createElement('style');
   style.id = 'store-front-tuning-style';
   style.textContent = `
+    #summary.modal.show:has(.store-front-shell){background:transparent!important}
     .store-front .store-relic-row{left:10.6%!important;right:9.9%!important}
     @media(max-width:640px){.store-front .store-relic-row{left:9.8%!important;right:8.8%!important}}
   `;
