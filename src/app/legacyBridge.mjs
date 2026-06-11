@@ -1,7 +1,7 @@
 // Store/live-state bridge extracted as module utilities.
-// This module is intentionally conservative: while index.html still defines the
-// live bridge functions, we expose module-owned copies under target.tlrLegacyBridge
-// and only install global fallbacks when no legacy function exists.
+// This module owns the global bridge functions while the legacy script is still
+// present. The globals are intentionally overwritten on install so stale inline
+// helpers cannot push old state back into the reducer.
 import { constellationThreshold } from '../systems/constellations.mjs';
 
 function runtime(target){return target.tlrRuntime || {};}
@@ -132,13 +132,13 @@ export function installLegacyBridge(target = window){
   const api={readLiveSnapshot,architectureSync,storeReady,bindSelectionToStore,syncRunToStore,resolveAbilityThroughStore,abilityDraw,marketPurchase,shopPacks};
   target.tlrLegacyBridge=api;
 
-  if(typeof target.tlrReadLiveSnapshot!=='function')target.tlrReadLiveSnapshot=()=>readLiveSnapshot(target);
-  if(typeof target.tlrArchitectureSync!=='function')target.tlrArchitectureSync=()=>architectureSync(target);
-  if(typeof target.tlrStoreReady!=='function')target.tlrStoreReady=()=>storeReady(target);
-  if(typeof target.tlrBindSelectionToStore!=='function')target.tlrBindSelectionToStore=()=>bindSelectionToStore(target);
-  if(typeof target.tlrSyncRunToStore!=='function')target.tlrSyncRunToStore=()=>syncRunToStore(target);
-  if(typeof target.tlrResolveAbilityThroughStore!=='function')target.tlrResolveAbilityThroughStore=result=>resolveAbilityThroughStore(result,target);
-  if(typeof target.tlrAbilityDraw!=='function')target.tlrAbilityDraw=count=>abilityDraw(count,target);
-  if(typeof target.tlrMarketPurchase!=='function')target.tlrMarketPurchase=purchase=>marketPurchase(target);
-  if(typeof target.tlrShopPacks!=='function')target.tlrShopPacks=()=>shopPacks(target);
+  target.tlrReadLiveSnapshot=()=>readLiveSnapshot(target);
+  target.tlrArchitectureSync=()=>architectureSync(target);
+  target.tlrStoreReady=()=>storeReady(target);
+  target.tlrBindSelectionToStore=()=>bindSelectionToStore(target);
+  target.tlrSyncRunToStore=()=>syncRunToStore(target);
+  target.tlrResolveAbilityThroughStore=result=>resolveAbilityThroughStore(result,target);
+  target.tlrAbilityDraw=count=>abilityDraw(count,target);
+  target.tlrMarketPurchase=purchase=>marketPurchase(purchase,target);
+  target.tlrShopPacks=()=>shopPacks(target);
 }
