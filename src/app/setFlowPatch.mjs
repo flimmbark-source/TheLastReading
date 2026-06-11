@@ -46,7 +46,7 @@ function closeConstellationTutorial() {
 function showConstellationTutorial() {
   if (localStorage.getItem(CONSTELLATION_TUTORIAL_KEY)) return;
   const st = window.state;
-  if (!st || !st.constellationId) return;
+  if (!st || Number(st.th || 0) <= 0 || !st.constellationId) return;
   const summary = document.getElementById('summary');
   if (summary && summary.classList.contains('show')) return;
   const icon = document.getElementById('constellationPill');
