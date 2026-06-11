@@ -4,6 +4,8 @@
 import { installLiveMirror } from './liveMirror.mjs';
 import { installDataGlobals } from './dataGlobals.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
+import { installAudioControls } from './audio.mjs';
+import { installMenuControls } from './menuControls.mjs';
 import { installAmbientEffects } from '../ui/ambientEffects.mjs';
 import { installHandSwipeScroll } from '../ui/gestureHand.mjs';
 import { installHandCardGestures } from '../ui/gestureCard.mjs';
@@ -41,6 +43,8 @@ export function startApp(target = window) {
   installPressHighlight(target);
   installHandSelectionVisuals(target);
   installAmbientEffects(target);
+  installAudioControls(target);
+  installMenuControls(target);
 
   installDataGlobals(target);
 
