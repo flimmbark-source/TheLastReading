@@ -4,6 +4,9 @@
 import { installLiveMirror } from './liveMirror.mjs';
 import { installDataGlobals } from './dataGlobals.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
+import { installHandSwipeScroll } from '../ui/gestureHand.mjs';
+import { installHandCardGestures } from '../ui/gestureCard.mjs';
+import { installGestureDrawers } from '../ui/gestureDrawers.mjs';
 import * as abilitySystem from '../systems/abilities.mjs';
 import * as shopSystem from '../systems/shop.mjs';
 import * as scoringSystem from '../systems/scoring.mjs';
@@ -31,6 +34,13 @@ export function startApp(target = window) {
 
   // Step 3e (16.4): attic visit orchestration is owned by src/app/atticFlow.mjs.
   installAtticFlow(target);
+
+  // Step 4: gesture handlers are owned by src/ui gesture modules. Each installer
+  // uses the legacy install flags, so it does not double-mount while the inline
+  // copies remain during the migration.
+  installHandSwipeScroll(target);
+  installHandCardGestures(target);
+  installGestureDrawers(target);
 
   // Step 1 (16.4): install data module exports under legacy global names so
   // gameplay functions resolve them without inline const declarations.
