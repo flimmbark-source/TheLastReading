@@ -37,12 +37,11 @@ function discardBlocked(){return blocksDiscard(state)}
 function ensureConstellationPill(){
   let el=document.getElementById('constellationPill');
   if(el)return el;
-  el=document.createElement('div');
+  el=document.createElement('button');
+  el.type='button';
   el.id='constellationPill';
   el.className='constellation-pill hidden';
-  const stack=document.querySelector('.score-stack');
-  if(stack)stack.appendChild(el);
-  else document.body.appendChild(el);
+  document.body.appendChild(el);
   return el;
 }
 
@@ -113,12 +112,9 @@ function renderConstellationPill(){
   const setText='Set '+((state.setIndex||0)+1)+'/'+(state.setsPerRound||2);
   const scoreText='Round '+(state.roundScore||0)+'/'+activeThreshold();
   el.classList.remove('hidden');
-  el.setAttribute('role','button');
-  el.setAttribute('tabindex','0');
   el.setAttribute('aria-label',`${constellation.name}. ${constellation.shortRule||constellation.rule}`);
   el.innerHTML=`<span class="constellation-icon" aria-hidden="true">${escapeHTML(constellation.icon||'✦')}</span>`;
   el.onclick=event=>{event.stopPropagation();if(constellationCalloutOpen)closeConstellationCallout();else showConstellationCallout(el,constellation,setText,scoreText);};
-  el.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();el.click();}};
 }
 
 export function render(){
