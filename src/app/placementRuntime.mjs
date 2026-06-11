@@ -12,6 +12,13 @@ function call(target,name,...args){
   return undefined;
 }
 
+function scorePillBase(target,state){
+  const explicit=Number(target.tlrScorePillSetBase||0);
+  if(Number.isFinite(explicit)&&explicit>0)return explicit;
+  const round=Number(state?.roundScore||0);
+  return Number.isFinite(round)?round:0;
+}
+
 export function placeCard(slotIndex,target = window){
   const state=stateOf(target);
   if(!state || state.selected===null || state.spread[slotIndex])return false;
@@ -80,7 +87,7 @@ export function placeCard(slotIndex,target = window){
     announceOffset+=600;
   }
 
-  call(target,'setCounterTarget',after.finalScore||0);
+  call(target,'setCounterTarget',scorePillBase(target,state)+(after.finalScore||0));
   setTimeout(()=>call(target,'checkResonationTriggers'),750);
   call(target,'checkEnd');
   return true;
