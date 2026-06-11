@@ -12,12 +12,14 @@ import { RELICS as RELICS_MODULE, RELIC_SPRITE } from '../data/relics.mjs';
 import { RESONATIONS, ARCHIVE_FRAGMENTS, ARCHIVE_ITEMS } from '../data/archiveFragments.mjs';
 import { SHOP, PACKS, SHOP_ICON, REFRESH_COSTS, shopCost } from '../data/legacyMarket.mjs';
 
+const ROUND_THRESHOLDS = Object.freeze([30, 60, 90, 120, 150, 180, 210, 240, 270, 300]);
+
 export function installDataGlobals(target) {
   // Direct matches
   target.ROMAN  = ROMAN;
   target.SUITS  = SUITS;
   target.RANKS  = RANKS;
-  target.TH     = THRESHOLDS;
+  target.TH     = THRESHOLDS[0] === 30 ? THRESHOLDS : ROUND_THRESHOLDS;
   target.CONSTELLATIONS = CONSTELLATIONS;
   target.CONSTELLATION_BY_ID = CONSTELLATION_BY_ID;
   target.SETS_PER_ROUND = SETS_PER_ROUND;
