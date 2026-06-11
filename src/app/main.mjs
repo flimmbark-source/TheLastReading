@@ -55,12 +55,14 @@ function installStoreFrontTuning(target = window) {
   style.id = 'store-front-tuning-style';
   style.textContent = `
     #summary.modal.show:has(.store-front-shell){background:transparent!important}
+    .store-front .store-offer-row .store-pack-offer:first-child{transform:translateX(-2.4%)!important}
+    .store-front .store-offer-row .store-pack-offer:first-child:hover{transform:translateX(-2.4%) translateY(-1px)!important}
     .store-front .store-relic-row{left:10.6%!important;right:9.9%!important}
     .store-front .store-relic-row .store-relic-offer:first-child{transform:translateX(-2.2%)!important}
     .store-front .store-relic-row .store-relic-offer:last-child{transform:translateX(2.2%)!important}
     .store-front .store-relic-row .store-relic-offer:first-child:hover{transform:translateX(-2.2%) translateY(-1px)!important}
     .store-front .store-relic-row .store-relic-offer:last-child:hover{transform:translateX(2.2%) translateY(-1px)!important}
-    @media(max-width:640px){.store-front .store-relic-row{left:9.8%!important;right:8.8%!important}.store-front .store-relic-row .store-relic-offer:first-child{transform:translateX(-1.8%)!important}.store-front .store-relic-row .store-relic-offer:last-child{transform:translateX(1.8%)!important}.store-front .store-relic-row .store-relic-offer:first-child:hover{transform:translateX(-1.8%) translateY(-1px)!important}.store-front .store-relic-row .store-relic-offer:last-child:hover{transform:translateX(1.8%) translateY(-1px)!important}}
+    @media(max-width:640px){.store-front .store-offer-row .store-pack-offer:first-child{transform:translateX(-1.8%)!important}.store-front .store-offer-row .store-pack-offer:first-child:hover{transform:translateX(-1.8%) translateY(-1px)!important}.store-front .store-relic-row{left:9.8%!important;right:8.8%!important}.store-front .store-relic-row .store-relic-offer:first-child{transform:translateX(-1.8%)!important}.store-front .store-relic-row .store-relic-offer:last-child{transform:translateX(1.8%)!important}.store-front .store-relic-row .store-relic-offer:first-child:hover{transform:translateX(-1.8%) translateY(-1px)!important}.store-front .store-relic-row .store-relic-offer:last-child:hover{transform:translateX(1.8%) translateY(-1px)!important}}
   `;
   doc.head.appendChild(style);
 
