@@ -7,6 +7,9 @@ import { installRuntimeState } from './runtimeState.mjs';
 import { installLegacyBridge } from './legacyBridge.mjs';
 import { installDeckRuntime } from './deckRuntime.mjs';
 import { installMarketFlow } from './marketFlow.mjs';
+import { installShopOverlayFlow } from './shopOverlayFlow.mjs';
+import { installRelicFlow } from './relicFlow.mjs';
+import { installReferenceControls } from './referenceControls.mjs';
 import { installControlBindings } from './controlBindings.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
@@ -62,7 +65,10 @@ export function startApp(target = window) {
   installDeckRuntime(target);
   installLegacyBridge(target);
   installMarketFlow(target);
+  installShopOverlayFlow(target);
+  installRelicFlow(target);
   installResonationFlow(target);
+  installReferenceControls(target);
   installHintRuntime(target);
   installControlBindings(target);
 
