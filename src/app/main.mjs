@@ -3,6 +3,7 @@
 // globals the legacy markup/script still calls, and then boots the game.
 import { installLiveMirror } from './liveMirror.mjs';
 import { installDataGlobals } from './dataGlobals.mjs';
+import { installAtticFlow } from './atticFlow.mjs';
 import * as abilitySystem from '../systems/abilities.mjs';
 import * as shopSystem from '../systems/shop.mjs';
 import * as scoringSystem from '../systems/scoring.mjs';
@@ -27,6 +28,9 @@ export function startApp(target = window) {
   Object.assign(target, cardRenderer, ghostRenderer, hintRenderer, abilityRenderer, marketRenderer,
     spreadRenderer, handRenderer, tableRenderer, atticRenderer, effectsModule, tutorialModule,
     readingFlowModule, archivesModule);
+
+  // Step 3e (16.4): attic visit orchestration is owned by src/app/atticFlow.mjs.
+  installAtticFlow(target);
 
   // Step 1 (16.4): install data module exports under legacy global names so
   // gameplay functions resolve them without inline const declarations.
