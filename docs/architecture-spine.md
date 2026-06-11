@@ -101,28 +101,59 @@ Run all current checks with:
 node scripts/validate-all.mjs
 ```
 
-Not done yet:
+Presentation migration (Phases 15-18, complete):
 
-- Rendering still lives in `index.html` (Phase 15: split into `src/ui/`).
-- `index.html` is still the app rather than a shell (Phase 16).
-- CSS is still embedded in `index.html` (Phase 17).
-- The old patch chain still exists and the inline fallback copies of
-  migrated logic are still present; both go away in Phase 18 once the UI
-  modules are live.
-- Archive/attic rendering still reads the inline data literals; the
-  extracted data modules are verified byte-identical and become the only
-  source when rendering moves to `src/ui/`.
+- Phase 17: the embedded stylesheet is extracted to `src/styles/` as 8
+  linked files (base, spread, hand, cards, market, mobile, attic, drawers)
+  split in original rule order, so the cascade is byte-identical; relative
+  asset urls rewritten. Verified pixel-identical on desktop and mobile.
+- Phase 18: all 37 `patch-*.js` build-time appliers are deleted and
+  `npm run build`/`npm test` run the validation suite instead. The patches'
+  baked output (UI behavior, drawers, gestures) remains in `index.html` as
+  the single live copy; the deploy loop that re-applied patches on every
+  Netlify build (duplicating code each time) is gone.
+- Phase 16.2/16.3: startup lives in `src/app/main.mjs`, which mounts the
+  bridge, installs the UI/system modules as the globals the legacy markup
+  still calls, and boots the game (`tlrLegacyBoot`).
+- Phase 15 (all of 15.1-15.9): rendering lives in `src/ui/` —
+  `renderTable.mjs` (render orchestrator, refreshHandState, score preview,
+  element cache), `renderHand.mjs`, `renderSpread.mjs`, `renderMarket.mjs`
+  (shop, relic rack, relic callouts), `renderAbility.mjs` (choice modal,
+  ability/purge prompts), `renderAttic.mjs` (parameterized prop/obal
+  renderers), plus the shared `renderCard.mjs`, `renderGhost.mjs`, and
+  `renderHints.mjs`. Moved verbatim and verified pixel-identical.
+- Phase 16.5: the inline no-store fallback copies of all reducer-owned
+  gameplay (placement, discard, scoring, targeting, ability commits, market,
+  session flow) are deleted — each behavior exists exactly once. The game
+  now requires module loading.
 
-## Proposed app modules
+Still inline in `index.html` (the remaining Phase 16.4 work):
+
+- The legacy data tables (cards, abilities text, relic/shop/pack catalogs,
+  meanings, resonations, archive items) — the `src/data/` modules are
+  verified identical and are the source of truth for systems, but the
+  legacy script still reads its own copies for display.
+- Game-flow glue and animation orchestration (startReading/discard/score
+  sequencing, counters, sounds, haptics), hint detection (`cardHints`,
+  `multiHintShadow`), the display-only inline `computeScore` (parity-checked
+  against the systems engine on every scoring), tutorials, audio, the
+  archives inventory UI, the attic visit flow, and the baked drawer/gesture
+  handlers.
+
+## App modules
 
 ```txt
 src/
   app/
+    main.mjs          entry point: bridge mount, UI install, boot
     bootstrap.mjs
+    liveMirror.mjs
     store.mjs
     save.mjs
   data/
     abilities.mjs
+    archiveFragments.mjs
+    atticObjects.mjs
     cards.mjs
     relics.mjs
     shopItems.mjs
@@ -138,18 +169,30 @@ src/
     scoring.mjs
     hints.mjs
     abilities.mjs
+    attic.mjs
     relics.mjs
     shop.mjs
   ui/
-    render.mjs
-    components/
+    renderTable.mjs   render() orchestrator + refreshHandState + preview
+    renderHand.mjs
+    renderSpread.mjs
+    renderMarket.mjs
+    renderAbility.mjs
+    renderAttic.mjs
+    renderCard.mjs    shared card renderer
+    renderGhost.mjs   shared ghost/meld text renderer
+    renderHints.mjs   shared hint glow renderer
   styles/
+    base.css spread.css hand.css cards.css market.css mobile.css attic.css drawers.css
 ```
 
 ## Next phase
 
-Gameplay state and rules are reducer/system-owned (Phases 6-14 complete).
-Verify in the browser console:
+The migration plan's phases are complete except the tail of Phase 16.4
+(moving the remaining inline glue listed above into modules). Rules, state,
+scoring, abilities, the market, session flow, and rendering are owned by
+`src/`; `index.html` carries the markup shell, style links, the legacy
+data/glue script, and the module import. Verify in the browser console:
 
 ```js
 window.tlrStore.getState();                   // architecture state
@@ -157,11 +200,12 @@ window.tlrMirrorLiveState();                  // ok: true after any player actio
 window.tlrMirrorLiveState({ sync: true });    // force a re-sync, ok: true
 ```
 
-The next safe step is Phase 15: split rendering into `src/ui/` modules
-(renderTable/renderHand/renderSpread/renderMarket/renderAbility/renderAttic
-plus shared card/ghost/hint renderers) with the DOM structure and visuals
-unchanged. Only after the UI modules are live should the inline functions,
-fallback copies, and patch chain be deleted (Phases 16-18).
+Safe next steps, in order: (1) point the legacy display tables at the
+`src/data/` modules and delete the inline copies; (2) move hint detection
+(`cardHints`) into `src/systems/hints.mjs` and retire the display-only
+inline `computeScore`; (3) extract the game-flow orchestration into
+`src/app/` controllers; (4) rewrite the baked drawer/gesture handlers as
+modules. Keep every step pixel-verified like Phases 15-17.
 
 ## Important boundary
 
