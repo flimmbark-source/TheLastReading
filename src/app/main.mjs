@@ -4,6 +4,7 @@
 import { installLiveMirror } from './liveMirror.mjs';
 import { installDataGlobals } from './dataGlobals.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
+import { installDrawers } from './drawers.mjs';
 import * as abilitySystem from '../systems/abilities.mjs';
 import * as shopSystem from '../systems/shop.mjs';
 import * as scoringSystem from '../systems/scoring.mjs';
@@ -32,6 +33,9 @@ export function startApp(target = window) {
   // Step 3e (16.4): attic visit orchestration is owned by src/app/atticFlow.mjs.
   installAtticFlow(target);
 
+  // Step 3f (16.4): pull-tab drawers are owned by src/app/drawers.mjs.
+  installDrawers(target);
+
   // Step 1 (16.4): install data module exports under legacy global names so
   // gameplay functions resolve them without inline const declarations.
   installDataGlobals(target);
@@ -43,31 +47,11 @@ export function startApp(target = window) {
     // Phase 12: the market generates offers and costs through the shop system.
     target.tlrShop = shopSystem;
     // Step 2 (16.4): hint detection and scoring engine available for display bridge.
-    target.tlrScoring = scoringSystem;
     target.tlrHints = hintsSystem;
-    // Phase 6: hand selection ownership to the reducer.
-    target.tlrBindSelectionToStore();
-    // Phase 14: seed archive save state from the live storage keys.
-    try {
-      target.tlrStore.dispatch({ type: target.tlrActions.SYNC_LEGACY_PERSIST, persist: {
-        unlockedFragments: JSON.parse(target.localStorage.getItem('tlr_inv_unlocked') || '[]'),
-        discoveredArchiveItems: JSON.parse(target.localStorage.getItem('tlr_attic_found_items') || '[]'),
-      } });
-    } catch (seedError) { /* corrupted local keys fall back to empty archive state */ }
-    // Seed the store with the current legacy state so the mirror starts in sync.
-    target.tlrSyncArchitectureToLiveSnapshot({ quiet: true });
-    target.dispatchEvent(new Event('tlr-architecture-bridge-ready'));
+    target.tlrScoring = scoringSystem;
   } catch (err) {
-    console.warn('[TLR architecture] Live mirror failed to mount', err);
-  }
-
-  // Phase 16: boot the game. The legacy script defines tlrLegacyBoot() and a
-  // fallback timer in case this module never runs (e.g. file://).
-  if (!target.__tlrBooted && typeof target.tlrLegacyBoot === 'function') {
-    target.__tlrBooted = true;
-    clearTimeout(target.__tlrBootFallback);
-    target.tlrLegacyBoot();
+    console.error('The Last Reading module boot failed', err);
   }
 }
 
-if (typeof window !== 'undefined') startApp(window);
+startApp();
