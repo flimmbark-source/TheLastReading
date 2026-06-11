@@ -252,7 +252,7 @@ export function maybeShowArchivesTutorial(){
 }
 
 export function maybeShowMarketTutorial(){
-  if(localStorage.getItem(TUT_MARKET_KEY) || tutStep>=0)return;
+  if(localStorage.getItem(TUT_MARKET_KEY))return;
   queueTip(TUT_STEP.MARKET_RESERVE, 260);
 }
 
