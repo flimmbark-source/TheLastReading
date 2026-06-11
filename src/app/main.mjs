@@ -5,8 +5,10 @@ import { installLiveMirror } from './liveMirror.mjs';
 import { installDataGlobals } from './dataGlobals.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
+import { bootGame } from './boot.mjs';
 import { installMenuControls } from './menuControls.mjs';
 import { installAmbientEffects } from '../ui/ambientEffects.mjs';
+import { installCardZoom } from '../ui/cardZoom.mjs';
 import { installHandSwipeScroll } from '../ui/gestureHand.mjs';
 import { installHandCardGestures } from '../ui/gestureCard.mjs';
 import { installGestureDrawers } from '../ui/gestureDrawers.mjs';
@@ -44,6 +46,7 @@ export function startApp(target = window) {
   installGestureDrawers(target);
   installPressHighlight(target);
   installHandSelectionVisuals(target);
+  installCardZoom(target);
   installAmbientEffects(target);
   installAudioControls(target);
   installMenuControls(target);
@@ -56,6 +59,7 @@ export function startApp(target = window) {
     target.tlrShop = shopSystem;
     target.tlrHints = hintsSystem;
     target.tlrScoring = scoringSystem;
+    bootGame(target);
   } catch (err) {
     console.error('The Last Reading module boot failed', err);
   }
