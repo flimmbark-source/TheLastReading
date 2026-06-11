@@ -3,7 +3,9 @@
 // effectsUntil timer that score sequencing waits on.
 /* global _slots, relicIconStyle, effectsUntil */
 
-export function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';const fmt=v=>('+'+Number(v).toFixed(2)).replace(/\.?0+$/,'');const shown=additive?mult:mult-1;if(chips&&mult)return`+${chips} ${fmt(shown)}`;if(chips)return`+${chips}`;if(mult)return`${fmt(shown)}`;return'';}
+function signed(v){const n=Number(v);return (n>=0?'+':'')+n.toFixed(2).replace(/\.?0+$/,'')}
+
+export function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';const fmt=v=>signed(v);const shown=additive?mult:mult-1;if(chips&&mult)return`${signed(chips)} ${fmt(shown)}`;if(chips)return signed(chips);if(mult)return`${fmt(shown)}`;return'';}
 
 export function normMeldName(name){if(name.startsWith('Sequence'))return 'Sequence';if(name.startsWith('Royal Court'))return 'Royal Court';if(name.startsWith('Full Court'))return 'Full Court';if(name.startsWith('Three of a Kind'))return 'Three of a Kind';if(name.startsWith('Four of a Kind'))return 'Four of a Kind';return name}
 
