@@ -42,11 +42,6 @@ function placeCard(state, slotIndex) {
   });
 }
 
-// Discarding a card removes it from hand, banks it, and spends a discard
-// charge unless the Gilded Discard relic (first discard free) or a sight_cost
-// upgrade charge (peek/search/mirror abilities) covers it. The discarded
-// card's ability then fires — that resolution is still legacy-owned and the
-// card is exposed as run.lastDiscardedCard until Phase 11 moves it here.
 function discardSelected(state) {
   const { run, persist } = state;
   if (run.selectedCardId == null) return state;
@@ -138,10 +133,6 @@ function buyMarketItem(state, itemId) {
   };
 }
 
-// Live pack-market purchases. kind is one of:
-//   pack    — spend reserve on a pack or a shop refresh
-//   upgrade — free pick from an opened pack (+1 level, plus paired key)
-//   relic   — add a relic (or replace one when slots are full)
 function buyMarketPurchase(state, purchase) {
   const { persist } = state;
   const reject = reason => replaceRun(state, { lastPurchase: { purchased: false, reason, purchase } });
@@ -190,10 +181,6 @@ function buyMarketPurchase(state, purchase) {
   }
 }
 
-// Abilities resolve atomically at their commit point. The modal flow (which
-// cards are shown) is still legacy-driven; the result of the ability — cards
-// moving between deck/hand/discard, taken-card tracking, Thread Bond chips —
-// is owned here. result.kind is one of: draw, take, search, world.
 function resolveAbilityAction(state, action) {
   const { run, persist } = state;
   const result = action.result || {};
@@ -249,9 +236,6 @@ function syncLegacySnapshot(state, snapshot) {
   });
 }
 
-// Transition-period check-in: while the legacy app still mutates parts of the
-// run outside the reducer, it pushes the affected fields here before
-// dispatching a store-owned action, and reads the result back afterwards.
 const LEGACY_RUN_FIELDS = [
   'deck', 'hand', 'discard', 'spread', 'selectedCardId', 'discards', 'discardedCards',
   'freeDiscardUsed', 'sightChargesUsed', 'thresholdIndex', 'thresholdBonus',
@@ -288,8 +272,6 @@ function syncLegacyPersist(state, persist = {}) {
 export function reducer(state = createGameState(), action = {}) {
   switch (action.type) {
     case ACTIONS.START_READING: {
-      // The deck may be supplied by the legacy app (its card objects and RNG)
-      // during the transition; otherwise it is built from the data layer.
       const { persist } = state;
       const baseDeck = action.deck ? [...action.deck] : shuffleDeck(buildDeck(), action.rng);
       const extraDraws = startingHandBonusFromRelics(persist.relics) + (persist.upgrades.deep_current || 0);
@@ -357,6 +339,7 @@ export function reducer(state = createGameState(), action = {}) {
     case ACTIONS.LEAVE_MARKET:
       return replaceRun(state, {
         phase: GAME_PHASES.TABLE,
+        reading: state.run.reading + 1,
         pendingReserve: 0,
         relicEarned: false,
       });
