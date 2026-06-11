@@ -130,10 +130,6 @@ function currentStoreFrontOffers(target = window) {
   if (!target._storeFrontOffers) target._storeFrontOffers = buildStoreFrontOffers(target);
   const offers = target._storeFrontOffers;
   offers.scoring = Array.isArray(offers.scoring) ? offers.scoring.slice(0, 3) : [];
-  if (offers.scoring.length < 3) {
-    const fill = pickScoringUpgrades(6, target).filter(key => !offers.scoring.includes(key));
-    while (offers.scoring.length < 3 && fill.length) offers.scoring.push(fill.shift());
-  }
   offers.abilities = Array.isArray(offers.abilities) ? offers.abilities.slice(0, 2) : [];
   offers.relics = (Array.isArray(offers.relics) ? offers.relics : []).filter(key => key && !owned.has(key)).slice(0, 2);
   if (offers.relics.length < 2) {
