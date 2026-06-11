@@ -10,11 +10,11 @@ const EFFECTS = Object.freeze({
 });
 
 const ZODIAC_SIGNS = [
-  ['aries', 'Aries', 0, 0, EFFECTS.BLOCK_EARLY_DISCARD, 'Place 2 cards before discarding.', 'You may not discard until at least 2 cards are placed each Set.'],
-  ['taurus', 'Taurus', 1, 0, EFFECTS.UNTARGETABLE_FIRST, 'First placed card cannot be targeted.', 'The first card placed each Set cannot be targeted by abilities or effects this Round.'],
-  ['gemini', 'Gemini', 2, 0, EFFECTS.ASHEN_HAND, 'Ability-taken cards lose base points.', 'Cards taken by abilities score no base points, but still count for patterns.'],
-  ['cancer', 'Cancer', 3, 0, EFFECTS.HUNGRY_THRESHOLD, 'Each discard raises the Threshold by 5.', 'The Round Threshold rises by 5 each time you discard.'],
-  ['leo', 'Leo', 0, 1, EFFECTS.NARROW_GATE, 'Clear requires at least one pattern.', 'The Round cannot be cleared unless at least one Set forms a scoring pattern.'],
+  ['closed_palm', 'Aries', 0, 0, EFFECTS.BLOCK_EARLY_DISCARD, 'Place 2 cards before discarding.', 'You may not discard until at least 2 cards are placed each Set.'],
+  ['unasked_question', 'Taurus', 1, 0, EFFECTS.UNTARGETABLE_FIRST, 'First placed card cannot be targeted.', 'The first card placed each Set cannot be targeted by abilities or effects this Round.'],
+  ['ashen_hand', 'Gemini', 2, 0, EFFECTS.ASHEN_HAND, 'Ability-taken cards lose base points.', 'Cards taken by abilities score no base points, but still count for patterns.'],
+  ['hungry_threshold', 'Cancer', 3, 0, EFFECTS.HUNGRY_THRESHOLD, 'Each discard raises the Threshold by 5.', 'The Round Threshold rises by 5 each time you discard.'],
+  ['narrow_gate', 'Leo', 0, 1, EFFECTS.NARROW_GATE, 'Clear requires at least one pattern.', 'The Round cannot be cleared unless at least one Set forms a scoring pattern.'],
   ['virgo', 'Virgo', 1, 1, EFFECTS.BLOCK_EARLY_DISCARD, 'Place 2 cards before discarding.', 'You may not discard until at least 2 cards are placed each Set.'],
   ['libra', 'Libra', 2, 1, EFFECTS.UNTARGETABLE_FIRST, 'First placed card cannot be targeted.', 'The first card placed each Set cannot be targeted by abilities or effects this Round.'],
   ['scorpio', 'Scorpio', 3, 1, EFFECTS.ASHEN_HAND, 'Ability-taken cards lose base points.', 'Cards taken by abilities score no base points, but still count for patterns.'],
