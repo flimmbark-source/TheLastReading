@@ -2,6 +2,7 @@
 // This module is intentionally conservative: while index.html still defines the
 // live bridge functions, we expose module-owned copies under target.tlrLegacyBridge
 // and only install global fallbacks when no legacy function exists.
+import { constellationThreshold } from '../systems/constellations.mjs';
 
 function runtime(target){return target.tlrRuntime || {};}
 function stateOf(target){return runtime(target).state;}
@@ -17,10 +18,11 @@ export function readLiveSnapshot(target = window){
     const summary=document.getElementById('summary');
     if(summary&&summary.classList.contains('show')&&summary.querySelector('.tarot-shop'))phase='market';
   }
+  const baseThreshold=target.TH&&target.TH[state.th]!==undefined?target.TH[state.th]+(state.thBonus||0):null;
   return{
     phase,
     reading:state.reading,
-    threshold:target.TH&&target.TH[state.th]!==undefined?target.TH[state.th]+(state.thBonus||0):null,
+    threshold:baseThreshold==null?null:constellationThreshold(baseThreshold,state),
     reserve:persist.pool,
     totalScore:persist.totalScore||0,
     handCount:state.hand.length,
@@ -67,6 +69,10 @@ export function syncRunToStore(target = window){
     pendingReserve:state.pendingPool||0,worldCarry:state.worldCarry||0,
     abilityTakenCardIds:state.abilityTakenUids?[...state.abilityTakenUids]:[],
     resonationBonus:state.resonationBonus||null,
+    setIndex:state.setIndex||0,setsPerRound:state.setsPerRound||2,roundScore:state.roundScore||0,
+    setScores:state.setScores||[],roundDiscardCount:state.roundDiscardCount||0,roundPatternCount:state.roundPatternCount||0,
+    constellationId:state.constellationId||null,untargetableCardIds:state.untargetableCardUids||[],
+    awaitingNextSet:!!state.awaitingNextSet,lastOutcome:state.lastOutcome||null,
   }});
   target.tlrStore.dispatch({type:target.tlrActions.SYNC_LEGACY_PERSIST,persist:{
     reserve:persist.pool,totalScore:persist.totalScore||0,
