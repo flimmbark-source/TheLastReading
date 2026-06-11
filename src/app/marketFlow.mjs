@@ -116,9 +116,14 @@ function clearSpreadForMarket(target = window){
   if(typeof target.render==='function')target.render();
 }
 
+function refreshStorefrontOnEntry(target = window){
+  target._storeFrontOffers=null;
+}
+
 export function openShop(target = window){
   const state=stateOf(target),persist=persistOf(target);
   clearSpreadForMarket(target);
+  refreshStorefrontOnEntry(target);
   if(!state.relicEarned){if(typeof target.openShopMain==='function')target.openShopMain();return;}
   if(state.pendingPool){persist.pool+=state.pendingPool;state.pendingPool=0;if(typeof target.render==='function')target.render();}
   const options=relicPool(4,target);

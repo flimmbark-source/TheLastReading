@@ -6,6 +6,29 @@ function runtime(target){return target.tlrRuntime || {};}
 function persistOf(target){return runtime(target).persist || {};}
 function market(target){return target.tlrMarketFlow || {};}
 
+const SHORT_UPGRADE_COPY = Object.freeze({
+  hand: '+1 starting hand size.',
+  deep_current: '+1 card at reading start.',
+  blessed_start: '+0.25 starting Mult.',
+  first_light: 'First placed card: +3 Chips.',
+  deep_reserve: 'Cards left in hand add Chips.',
+  discards: '+1 Discard each reading.',
+  mulligan: '+1 Mulligan each reading.',
+  ritual_depth: '+1 card from draw abilities.',
+  nimble_fingers: 'Discarding draws 1 card.',
+  quick_release: 'Discarded cards add Chips.',
+  lens_mastery: '+1 card reveal for abilities.',
+  peek_plus: '+1 card reveal for Peek.',
+  sight_cost: 'One sight Discard is free.',
+  chosen: 'Taken cards gain +5 Chips.',
+  relation_plus: '+1 card reveal for abilities.',
+  relation_chips: 'Taken relation cards gain Chips.',
+});
+
+function upgradeCopy(key, fallback = ''){
+  return SHORT_UPGRADE_COPY[key] || fallback;
+}
+
 export function packAccent(packId){
   return packId==='relic'?'180,80,220':packId==='ritual'?'220,80,80':packId==='pattern'?'255,200,80':packId==='innate'?'255,150,60':packId==='restless'?'80,180,220':'180,160,100';
 }
@@ -83,7 +106,7 @@ export function buildUpgradePicker(packId,target = window){
   const shuffle=target.shuffle || (a=>a.sort(()=>Math.random()-.5));
   const options=shuffle([...pool]).slice(0,3);
   let html='<div class="summary tarot-shop">';
-  html+=`<div class="pack-picker-header"><h3>${pack.name}</h3><p>Pick one upgrade to keep</p></div>`;
+  html+=`<div class="pack-picker-header"><h3>${pack.name}</h3><p>Pick one upgrade.</p></div>`;
   html+='<div class="shop-items-row">';
   const persist=persistOf(target);
   for(const k of options){
@@ -91,7 +114,7 @@ export function buildUpgradePicker(packId,target = window){
     html+=`<div class="upg-card pool-${s[5]}">
       <div class="upg-title-strip"><span>${s[0]}</span></div>
       <div class="upg-art"><span class="isp isp-40 ${ic}"></span></div>
-      <div class="upg-body"><div class="upg-desc">${s[1]}</div></div>
+      <div class="upg-body"><div class="upg-desc">${upgradeCopy(k, s[1])}</div></div>
       <div class="upg-footer"><span class="upg-lv">Lv <b>${lvl}</b></span>
       <button class="sbtn sbtn-pick" aria-label="Pick" onclick="pickPackUpgrade('${k}')"></button></div>
     </div>`;
@@ -123,7 +146,7 @@ export function buyPack(packId,cost,target = window){
     if(packId==='relic'){
       const options=target.tlrMarketFlow?.relicPool?target.tlrMarketFlow.relicPool(4,target):[];
       let html='<div class="summary tarot-shop">';
-      html+=`<div class="pack-picker-header"><h3>${pack.name}</h3><p>Choose one relic to carry</p></div>`;
+      html+=`<div class="pack-picker-header"><h3>${pack.name}</h3><p>Choose one relic.</p></div>`;
       html+='<div class="shop-items-row relic-picker-row">';
       for(const k of options){
         const r=target.RELICS[k];
