@@ -2,6 +2,7 @@ import { computeScore } from '../systems/scoring.mjs';
 import { currentThreshold } from '../data/thresholds.mjs';
 import { getCardHints, getHandHints } from '../systems/hints.mjs';
 import { ARCHIVE_FRAGMENTS, ARCHIVE_ITEMS } from '../data/archiveFragments.mjs';
+import { constellationThreshold } from '../systems/constellations.mjs';
 
 export function placedCards(state) {
   return state.run.spread.filter(Boolean);
@@ -13,7 +14,7 @@ export function selectedCard(state) {
 }
 
 export function thresholdValue(state) {
-  return currentThreshold(state.run.thresholdIndex, state.run.thresholdBonus);
+  return constellationThreshold(currentThreshold(state.run.thresholdIndex, state.run.thresholdBonus), state.run);
 }
 
 export function scoringContext(state) {
@@ -24,6 +25,7 @@ export function scoringContext(state) {
     abilityTakenCardIds: state.run.abilityTakenCardIds,
     resonationBonus: state.run.resonationBonus,
     worldCarry: state.run.worldCarry,
+    constellationId: state.run.constellationId,
   };
 }
 
@@ -137,6 +139,10 @@ export function publicRunSnapshot(state) {
     discardCount: state.run.discard.length,
     spreadCount: placedCards(state).length,
     discards: state.run.discards,
+    setIndex: state.run.setIndex,
+    setsPerRound: state.run.setsPerRound,
+    roundScore: state.run.roundScore,
+    constellationId: state.run.constellationId,
     canDiscard: canDiscardSelected(state),
     canScore: canScoreReading(state),
   };
