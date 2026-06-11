@@ -78,43 +78,8 @@ src/
     renderAttic.mjs     attic obal counter and prop grid
     renderCard.mjs      shared card HTML builder
     renderGhost.mjs     meld ghost and score-ghost animations
-    renderHints.mjs     hint glow renderer
-
-  styles/
-    base.css            reset, layout, typography, overlays
-    spread.css          reading spread slots
-    hand.css            hand rack and card drag/swipe
-    cards.css           card face, back, states (selected, placed, ability-target)
-    market.css          shop overlay, packs, relic rack
-    mobile.css          responsive overrides
-    attic.css           attic scene, props, obal display
-    drawers.css         side-drawer panels and gestures
 ```
 
-## Architecture
+## Deploy note
 
-The codebase follows a strict data-flow boundary:
-
-```
-Data → Systems → State → UI
-```
-
-`src/data/` is the single source of truth for all catalog data. `src/systems/` contains pure functions with no side effects. `src/game/reducer.mjs` owns all game logic (scoring, discard rules, ability resolution, market purchases, session flow). `src/ui/` renders state and dispatches actions — it does not own rules.
-
-`index.html` carries the markup shell, `<link>` tags for the 8 style files, the legacy display script (still used for inline data tables, hint display, audio, and animation orchestration), and `<script type="module" src="src/app/main.mjs">` which wires everything together at boot.
-
-The legacy script and the architecture store stay in sync through:
-
-- **`tlrArchitectureSync()`** — called after every player action; pushes legacy globals into the store via `SYNC_LEGACY_RUN` / `SYNC_LEGACY_PERSIST`.
-- **`tlrMirrorLiveState()`** — continuous parity checker; readable from the browser console.
-
-```js
-// Browser console diagnostics
-window.tlrStore.getState();               // architecture store snapshot
-window.tlrMirrorLiveState();             // { ok: true } after any player action
-window.tlrMirrorLiveState({ sync: true }); // force re-sync
-```
-
-## Deployment
-
-The game deploys as a static site. `netlify.toml` configures the build. There is no server-side component.
+Latest deploy trigger: constellation and Set-flow cleanup.
