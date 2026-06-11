@@ -5306,17 +5306,6 @@
 <div id="summary"></div>
 <div id="modal" class="modal"><div class="box"><div class="modalHead"><h2 id="modalTitle"></h2><button id="modalToggle" onclick="toggleModalCollapse()">Hide</button></div><p id="modalPrompt"></p><div id="choices" class="choices"></div></div></div>
 <script>
-const ROMAN=['0','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX','XXI'];
-const SUITS=['Cups','Wands','Swords','Pentacles'], GLYPH={Cups:'🍷',Wands:'🪄',Swords:'🗡️',Pentacles:'𖤐'};
-const RANKS=['Page','Knight','Queen','King'];
-const TXT={DRAW_1:'Draw 1',DRAW_2:'Draw 2',DRAW_3:'Draw 3',PEEK_3:'Peek 3',PEEK_5:'Peek 5',SEARCH:'Search',WORLD:'Full Reset',NEIGHBOR_2:'',KIN_2:'Kin',MIRROR_1:'Mirror',BETWEEN_2:'Between'};
-const MAJOR_G={0:'✦',1:'∞',2:'☾',3:'♀',4:'♛',5:'☥',6:'♡',7:'⚔',8:'∞',9:'☼',10:'⊛',11:'⚖',12:'✝',13:'✟',14:'⚱',15:'⛧',16:'⚡',17:'✧',18:'☽',19:'☉',20:'⚭',21:'○'};
-const MEAN={major_0:['Beginnings, innocence','Recklessness, naivety'],major_1:['Will, mastery','Manipulation, illusion'],major_2:['Intuition, mystery','Secrets withheld'],major_3:['Abundance, creation','Dependence, neglect'],major_4:['Authority, structure','Domination, rigidity'],major_5:['Tradition, doctrine','Rebellion, reform'],major_6:['Union, choice','Disharmony, betrayal'],major_7:['Resolve, victory','Loss of direction'],major_8:['Courage, patience','Self-doubt, weakness'],major_9:['Solitude, search','Isolation, lost'],major_10:['Cycles, fortune','Resistance, stagnation'],major_11:['Truth, fairness','Injustice, evasion'],major_12:['Surrender, suspension','Stalling, vain sacrifice'],major_13:['Endings, transformation','Resistance to change'],major_14:['Balance, patience','Excess, imbalance'],major_15:['Bondage, addiction','Release, awareness'],major_16:['Upheaval, ruin','Averting disaster'],major_17:['Hope, renewal','Despair, lost faith'],major_18:['Illusion, fear','Truth revealed'],major_19:['Joy, vitality','False optimism'],major_20:['Awakening, reckoning','Refused calling'],major_21:['Completion, wholeness','Unfinished, stagnation']};
-const COURT_MEAN={Page:['Curiosity, learning','Inexperience, gossip'],Knight:['Action, pursuit','Recklessness, haste'],Queen:['Compassion, intuition','Withdrawal, anxiety'],King:['Mastery, command','Cruelty, coldness']};
-const SUIT_MEAN={Cups:['Emotion, love','Hidden feelings'],Wands:['Will, creation','Burnout, delay'],Swords:['Truth, conflict','Deceit, anguish'],Pentacles:['Work, abundance','Greed, loss']};
-const MAJORS=[[0,'Fool',5,true,'PEEK_3'],[1,'Magician',5,true,'SEARCH'],[2,'High Priestess',1,false,'NEIGHBOR_2'],[3,'Empress',1,false,'DRAW_2'],[4,'Emperor',1,false,'DRAW_1'],[5,'Hierophant',1,false,'BETWEEN_2'],[6,'Lovers',1,false,'KIN_2'],[7,'Chariot',1,false,'DRAW_1'],[8,'Strength',1,false,'DRAW_1'],[9,'Hermit',1,false,'NEIGHBOR_2'],[10,'Wheel',1,false,'MIRROR_1'],[11,'Justice',1,false,'KIN_2'],[12,'Hanged Man',1,false,'BETWEEN_2'],[13,'Death',1,false,'DRAW_3'],[14,'Temperance',1,false,'BETWEEN_2'],[15,'Devil',1,false,'DRAW_2'],[16,'Tower',1,false,'DRAW_2'],[17,'Star',1,false,'KIN_2'],[18,'Moon',1,false,'MIRROR_1'],[19,'Sun',1,false,'DRAW_2'],[20,'Judgement',1,false,'MIRROR_1'],[21,'World',5,true,'WORLD']];
-const COURTS=[['Page',2,'DRAW_1'],['Knight',3,'PEEK_3'],['Queen',4,'DRAW_2'],['King',5,'PEEK_5']];
-const TH=[10,20,35,50,70,90,115,140,175,200];
 let persist={pool:0,up:{discards:0,hand:0,mulligan:0,lens_mastery:0,offering:0,ritual_depth:0,deep_current:0,omen:0,resonance:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,court_chips:0,court_mult:0,path_chips:0,path_mult:0,relicSlot:0,blessed_start:0,first_light:0,deep_reserve:0,nimble_fingers:0,quick_release:0,chosen:0,balanced_reading:0,balanced_reading_mult:0,elemental_harmony:0,elemental_harmony_mult:0},relics:[],relicUsed:{}};
 let hintSettings={patterns:true,relics:false};
 function toggleHintSetting(key,val){hintSettings[key]=val;_hintsCache.clear();render();}
@@ -5353,10 +5342,29 @@ function startReading(){
   _resStateKey=null;_relicGhostFired=false;
   clearOverlay();snapCounter(0);render();
 }
+// Thin bridge: calls src/systems/scoring.mjs and converts object melds to
+// legacy tuple format [name, chips, mult, mode?] so existing display/animation
+// code (placeCard, scoreReading overlay, meldStr) works without changes.
+function _scoreLegacy(cards,{skipRelics=false,skipFlatBonuses=false}={}){
+  const r=window.tlrScoring.computeScore(cards,{
+    upgrades:persist.up,
+    relics:skipRelics?[]:persist.relics,
+    skipRelics,skipFlatBonuses,
+    context:{
+      handCount:state.hand?.length||0,
+      discardedCount:state.discardedCards?.length||0,
+      discardedCards:state.discardedCards||[],
+      worldCarry:state.worldCarry||0,
+      abilityTakenCardIds:state.abilityTakenUids?[...state.abilityTakenUids]:[],
+      resonationBonus:state.resonationBonus||null,
+    },
+  });
+  return{...r,melds:r.melds.map(m=>[m.name,m.chips,m.mult,m.mode])};
+}
 // Cached score for the current spread — reused by refreshHandState and updateScorePreview.
 let _cachedPlacedScore=null;
 function _getPlacedScore(){
-  if(!_cachedPlacedScore)_cachedPlacedScore=computeScore(state.spread.filter(Boolean));
+  if(!_cachedPlacedScore)_cachedPlacedScore=_scoreLegacy(state.spread.filter(Boolean));
   return _cachedPlacedScore;
 }
 // Lazily-cached hot DOM elements (set on first render).
@@ -5472,200 +5480,28 @@ function tlrMarketPurchase(purchase){
 function tlrShopPacks(){
   return window.tlrShop.buildPackOffer(Object.keys(PACKS));
 }
-function computeScore(cards,spreadArr=null,skipRelics=false,skipFlatBonuses=skipRelics){
-  const omenBonus=(persist.up.omen||0);
-  const resonanceBonus=(persist.up.resonance||0)*3;
-  const omenTotal=omenBonus*cards.length;
-  const resonanceTotal=resonanceBonus*cards.filter(c=>c.type==='major').length;
-  let chips=cards.reduce((s,c)=>s+c.points,0),base=chips,mult=1,m=[];
-  if(omenTotal&&!skipFlatBonuses){m.push(['Omen',omenTotal,0]);chips+=omenTotal;}
-  if(resonanceTotal&&!skipFlatBonuses){m.push(['Resonance',resonanceTotal,0]);chips+=resonanceTotal;}
-  // ── Foundation chip bonuses ──
-  if(!skipFlatBonuses){
-    const COURT_RANKS_LOCAL=['Page','Knight','Queen','King'];
-    const minorCards=cards.filter(c=>c.type!=='major');
-    const majorCards=cards.filter(c=>c.type==='major');
-    const numberCards=minorCards.filter(c=>!COURT_RANKS_LOCAL.includes(c.rank));
-    const minorChipsLvl=(persist.up.minor_chips||0);
-    const majorChipsLvl=(persist.up.major_chips||0);
-    const numberChipsLvl=(persist.up.number_chips||0);
-    if(minorChipsLvl&&minorCards.length){const b=minorCards.length*minorChipsLvl;m.push(['Minor Arcana',b,0]);chips+=b;}
-    if(majorChipsLvl&&majorCards.length){const b=majorCards.length*majorChipsLvl*2;m.push(['Major Arcana',b,0]);chips+=b;}
-    if(numberChipsLvl&&numberCards.length){const b=numberCards.length*numberChipsLvl;m.push(['Numbered Cards',b,0]);chips+=b;}
-    for(const [suit,key] of [['Cups','cups_chips'],['Wands','wands_chips'],['Swords','swords_chips'],['Pentacles','pentacles_chips']]){
-      const lvl=persist.up[key]||0;if(!lvl)continue;
-      const sc=cards.filter(c=>c.suit===suit);if(sc.length){const b=sc.length*lvl;m.push([suit,b,0]);chips+=b;}
-    }
-  }
-  // ── Innate Force upgrades ──
-  if(!skipFlatBonuses){
-    const firstLightLvl=(persist.up.first_light||0);
-    if(firstLightLvl&&cards.length){const b=firstLightLvl*3;m.push(['First Light',b,0]);chips+=b;}
-    const deepReserveLvl=(persist.up.deep_reserve||0);
-    if(deepReserveLvl&&state.hand?.length){const b=state.hand.length*deepReserveLvl*2;m.push(['Deep Reserve',b,0]);chips+=b;}
-  }
-  // ── Ritual mult bonuses ──
-  const flatMultLvl=(persist.up.flat_mult||0);
-  if(flatMultLvl){const b=+(flatMultLvl*0.25).toFixed(2);m.push(['Ritual Mult',0,b,'add']);mult+=b;}
-  const blessedLvl=(persist.up.blessed_start||0);
-  if(blessedLvl){const b=+(blessedLvl*0.25).toFixed(2);m.push(['Blessed Start',0,b,'add']);mult+=b;}
-  {
-    const majorMult=(persist.up.major_mult||0)*0.10;
-    const minorMult=(persist.up.minor_mult||0)*0.05;
-    const courtMult=(persist.up.court_mult_base||0)*0.10;
-    const COURT_RANKS_LOCAL=['Page','Knight','Queen','King'];
-    if(majorMult){const n=cards.filter(c=>c.type==='major').length;if(n){const b=+(n*majorMult).toFixed(2);m.push(['Major Arcana Mult',0,b,'add']);mult+=b;}}
-    if(minorMult){const n=cards.filter(c=>c.type!=='major').length;if(n){const b=+(n*minorMult).toFixed(2);m.push(['Minor Arcana Mult',0,b,'add']);mult+=b;}}
-    if(courtMult){const n=cards.filter(c=>COURT_RANKS_LOCAL.includes(c.rank)).length;if(n){const b=+(n*courtMult).toFixed(2);m.push(['Court Mult',0,b,'add']);mult+=b;}}
-    for(const [suit,key] of [['Cups','cups_mult'],['Wands','wands_mult'],['Swords','swords_mult'],['Pentacles','pentacles_mult']]){
-      const lvl=persist.up[key]||0;if(!lvl)continue;
-      const n=cards.filter(c=>c.suit===suit).length;if(n){const b=+(n*lvl*0.05).toFixed(2);m.push([suit+' Mult',0,b,'add']);mult+=b;}
-    }
-  }
-  let rankBonus=(persist.up.rank||0)*5;
-  let rankMult=1.25+(persist.up.rank_mult||0)*0.25;
-  for(const rank of ['Page','Knight','Queen','King']){
-    let a=cards.filter(c=>c.type==='court'&&c.rank===rank);
-    if(a.length>=3){let x=5+rankBonus;m.push(['Three of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult+=rankMult-1}
-    if(a.length>=4){let x=7+rankBonus;m.push(['Four of a Kind ('+rank+'s)',x,rankMult]);chips+=x;mult+=rankMult-1}
-  }
-  const courtElig=cards.filter(c=>c.type==='court');
-  let ranks=new Set(courtElig.map(c=>c.rank));
-  let fullCount=ranks.size; // distinct ranks in spread
-  let same=null,sameCount=0;
-  if(fullCount>=3)for(const suit of SUITS){let rs=new Set(courtElig.filter(c=>c.suit===suit).map(c=>c.rank));if(rs.size>=3){same=suit;sameCount=rs.size;break}}
-  let courtChips=(persist.up.court_chips||0)*8;
-  let courtMult=1.5+(persist.up.court_mult||0)*0.25;
-  let court=false;
-  if(same){
-    for(let tier=3;tier<=Math.min(4,sameCount);tier++){m.push(['Royal Court ('+tier+', '+same+')',10+courtChips,courtMult]);chips+=10+courtChips;mult+=courtMult-1;court=true;}
-  } else if(fullCount>=3){
-    for(let tier=3;tier<=Math.min(4,fullCount);tier++){m.push(['Full Court ('+tier+')',10+courtChips,courtMult]);chips+=10+courtChips;mult+=courtMult-1;court=true;}
-  }
-  let nums=[...new Set(cards.filter(c=>c.type==='major').map(c=>c.num))].sort((a,b)=>a-b),best=1,cur=1;
-  for(let i=1;i<nums.length;i++){if(nums[i]===nums[i-1]+1){cur++;best=Math.max(best,cur)}else cur=1}
-  let seqBonus=(persist.up.sequence||0)*5;
-  let seqMult=1.25+(persist.up.seq_mult||0)*0.5;
-  if(best>=3){for(let tier=3;tier<=best;tier++){let x=10+seqBonus;m.push(['Sequence of '+tier,x,seqMult]);chips+=x;mult+=seqMult-1}}
-  let pathChips=(persist.up.path_chips||0)*15;
-  let pathMult=2+(persist.up.path_mult||0)*0.5;
-  if(['major_0','major_1','major_21'].every(id=>cards.some(c=>c.id===id))){let x=10+pathChips;m.push(['Path of the Magi',x,pathMult]);chips+=x;mult+=pathMult-1}
-  const brLvl=(persist.up.balanced_reading||0);
-  if(brLvl){const hasMajor=cards.some(c=>c.type==='major');const hasMinor=cards.some(c=>c.type!=='major');if(hasMajor&&hasMinor){const bc=brLvl*5;const bm=+(1.25+(persist.up.balanced_reading_mult||0)*0.25).toFixed(2);m.push(['Balanced Reading',bc,bm]);chips+=bc;mult*=bm;}}
-  const ehLvl=(persist.up.elemental_harmony||0);
-  if(ehLvl){const suits=new Set(cards.filter(c=>c.type!=='major').map(c=>c.suit));if(suits.size>=4){const bc=ehLvl*10;const bm=+(1.25+(persist.up.elemental_harmony_mult||0)*0.5).toFixed(2);m.push(['Elemental Harmony',bc,bm]);chips+=bc;mult*=bm;}}
-  const chosenLvl=(persist.up.chosen||0);
-  if(chosenLvl&&state.abilityTakenUids?.size){const n=cards.filter(c=>state.abilityTakenUids.has(c.uid)).length;if(n){const b=n*chosenLvl*5;m.push(['Chosen',b,0]);chips+=b;}}
-  const quickReleaseLvl=(persist.up.quick_release||0);
-  if(quickReleaseLvl&&state.discardedCards?.length){const b=state.discardedCards.length*quickReleaseLvl*3;m.push(['Quick Release',b,0]);chips+=b;}
-  // ── Relic effects ──
-  if(!skipRelics){
-  const rel=persist.relics;
-  if(rel.includes('gilded_fool')&&cards.length){m.push(['The Gilded Fool',10,0]);chips+=10;}
-
-  if(rel.includes('hermit_lantern')){const n=cards.filter(c=>c.type==='major').length;if(n){m.push(["Hermit's Lantern",0,n*0.25,'add']);mult+=n*0.25;}}
-  if(rel.includes('mirror_shard')){const rc={};cards.forEach(c=>{const r=c.rank||String(c.num);rc[r]=(rc[r]||0)+1;});const pairs=Object.values(rc).filter(v=>v>=2).reduce((s,v)=>s+Math.floor(v/2),0);if(pairs){m.push(['Mirror Shard',0,pairs,'add']);mult+=pairs;}}
-  if(rel.includes('court_favor')){const n=cards.filter(c=>['Page','Knight','Queen','King'].includes(c.rank)).length;if(n){m.push(['Court Favor',0,n,'add']);mult+=n;}}
-  if(rel.includes('arcana_codex')){const scoringKeys=['rank','rank_mult','sequence','seq_mult','court_chips','court_mult','path_chips','path_mult','omen','resonance','minor_chips','major_chips','number_chips','cups_chips','wands_chips','swords_chips','pentacles_chips','flat_mult','major_mult','minor_mult','court_mult_base','cups_mult','wands_mult','swords_mult','pentacles_mult'];const n=scoringKeys.filter(k=>(persist.up[k]||0)>0).length;if(n){m.push(['Arcana Codex',0,+(n*0.1).toFixed(2),'add']);mult+=n*0.1;}}
-  if(rel.includes('hanged_coin')&&state.discardedCards&&state.discardedCards.length){const bonus=Math.floor(state.discardedCards.reduce((s,c)=>s+c.points,0)/2);if(bonus){m.push(["Hanged Man's Coin",bonus,0]);chips+=bonus;}}
-  const COURT_RANKS=['Page','Knight','Queen','King'];
-  if(rel.includes('still_pool')&&!state.discardedCards?.length){m.push(['The Still Pool',0,1,'add']);mult+=1;}
-  if(rel.includes('loaded_die')){const bonus=cards.filter(c=>COURT_RANKS.includes(c.rank)).reduce((s,c)=>s+c.points,0);if(bonus){m.push(['Loaded Die',bonus,0]);chips+=bonus;}}
-  if(rel.includes('lovers_knot')){const rc={};cards.forEach(c=>{const r=c.rank||String(c.num);rc[r]=(rc[r]||0)+1;});const groups=Object.values(rc).filter(v=>v>=2).length;if(groups){m.push(["The Lovers' Knot",0,+(groups*1.5).toFixed(1),'add']);mult+=groups*1.5;}}
-  if(rel.includes('temperance_flask')&&state.discardedCards?.length===1){m.push(['Temperance Flask',0,1.5,'add']);mult+=1.5;}
-  if(rel.includes('strengths_grip')){const n=cards.filter(c=>COURT_RANKS.includes(c.rank)).length;if(n>=3){m.push(['Strength',0,3,'add']);mult+=3;}}
-  if(rel.includes('fool_reversed')){const bonus=cards.length*3;if(bonus){m.push(['The Fool Reversed',bonus,0]);chips+=bonus;}}
-  if(rel.includes('the_world')&&state.worldCarry){m.push(['The World',state.worldCarry,0]);chips+=state.worldCarry;}
-  } // end !forHints
-  // Resonation bonuses — accumulated in state.resonationBonus as they trigger during play
-  if(state.resonationBonus&&(state.resonationBonus.chips||state.resonationBonus.mult)){const rb=state.resonationBonus;m.push(['⚷ '+(rb.name||'Resonation'),rb.chips,rb.mult,'add']);chips+=rb.chips;mult+=rb.mult;}
-  return{baseChips:base,chips,mult,melds:m,finalScore:Math.floor(chips*mult)}
-}
 // Meld/ghost text renderer moved to src/ui/renderGhost.mjs (Phase 15).
-// Hint renderer moved to src/ui/renderHints.mjs (Phase 15).
-function runLengthContaining(nums,n){let set=new Set(nums),best=0;for(let x of set){if(!set.has(x-1)){let y=x,len=0,has=false;while(set.has(y)){if(y===n)has=true;len++;y++}if(has)best=Math.max(best,len)}}return best}
-function multiHintShadow(hints,level){
-  const ring=level==='complete'?'1px':'0.75px';
-  const parts=[];
-  const colors=hints.slice(0,4).map(hintColor);
-  if(colors.length)parts.push(`0 0 0 ${ring} rgba(${colors[0]},.98)`);
-  colors.forEach((rgb,i)=>{
-    const blur=26+i*16;
-    const alpha=Math.max(.36,.82-i*.12);
-    parts.push(`0 0 ${blur}px rgba(${rgb},${alpha})`);
-  });
-  parts.push('0 5px 14px rgba(0,0,0,.45)');
-  return parts.join(',');
-}
-function seqRunStart(num,cards){
-  const nums=new Set(cards.filter(c=>c.type==='major').map(c=>c.num));
-  let s=num;while(nums.has(s-1))s--;return 'seq:'+s;
-}
-function majorName(id){const n=parseInt(id.split('_')[1]);const m=MAJORS.find(x=>x[0]===n);return m?m[1]:id;}
+// Hint renderer (incl. multiHintShadow) moved to src/ui/renderHints.mjs (Step 2 16.4).
+// computeScore, runLengthContaining, seqRunStart retired (Step 2 16.4); use _scoreLegacy.
 function majorNumeral(id){const n=parseInt(id.split('_')[1]);if(n===0)return'0';const v=[1000,'M',900,'CM',500,'D',400,'CD',100,'C',90,'XC',50,'L',40,'XL',10,'X',9,'IX',5,'V',4,'IV',1,'I'];let r='',x=n;for(let i=0;i<v.length;i+=2){while(x>=v[i]){r+=v[i+1];x-=v[i];}}return r;}
-let _hintsCache=new Map(),_hintsCacheKey='';
-// Per-render caches for cardHints hot paths.
-let _unlockedFragmentsCache=null,_spreadScoreForHints=null,_spreadScoreHintsKey='';
+let _hintsCache=new Map();
+let _unlockedFragmentsCache=null;
 function _hintsKey(){return state.spread.map(c=>c?c.uid:0).join(',')+'|'+state.hand.map(c=>c.uid).join(',');}
 function cardHints(card, poolCards=null){
   if(!poolCards){const k=_hintsKey()+':'+card.uid;if(_hintsCache.has(k))return _hintsCache.get(k);}
-  const spread=state.spread.filter(Boolean);
-  const base=poolCards||uniqueCards([...spread,...state.hand,card]);
-  const all=uniqueCards([...base,card]);
-  const hints=[];
-  const seen=new Set();
-  const add=(level,label,colorKey=null)=>{if(seen.has(label))return;seen.add(label);hints.push({level,label,group:hintGroup(label),colorKey})};
-
-  if(hintSettings.patterns){
-  // Strong glow: every scoring pattern this exact card would create if placed now.
-  const placed=[...spread,card];
-  const skipRelics=!hintSettings.relics;
-  // Cache the spread baseline score — same for every card hinted in this render.
-  const _ssk=_hintsCacheKey+':'+skipRelics;
-  if(_spreadScoreHintsKey!==_ssk){_spreadScoreForHints=computeScore(spread,null,skipRelics,true);_spreadScoreHintsKey=_ssk;}
-  const before=new Set(_spreadScoreForHints.melds.map(m=>m[0]));
-  const after=computeScore(placed,null,skipRelics,true);
-  after.melds.filter(m=>!before.has(m[0])).forEach(m=>{
-    const norm=normMeldName(m[0]);
-    let ck=null;
-    if(norm==='Sequence')ck=seqRunStart(card.num,placed);
-    else if(norm==='Royal Court'){const mt=m[0].match(/\((\w+)\)/);if(mt)ck='flush:'+mt[1];}
-    else if(norm==='Three of a Kind'||norm==='Four of a Kind'){const mt=m[0].match(/\((\w+)s\)/);if(mt)ck='rank:'+mt[1];}
-    add('complete',norm,ck);
+  const hints=window.tlrHints.getCardHints(card,{spread:state.spread,hand:state.hand},{
+    poolCards:poolCards||undefined,
+    patterns:hintSettings.patterns,
+    relics:persist.relics,
+    includeRelics:hintSettings.relics,
+    upgrades:persist.up,
   });
-
-  // Soft glow: this card is part of promising scoring shapes across hand + spread.
-  if(card.type==='major'){
-    const majorNums=new Set(all.filter(c=>c.type==='major'&&c.uid!==card.uid).map(c=>c.num));
-    if(majorNums.has(card.num-1)||majorNums.has(card.num+1))add('near','Sequence',seqRunStart(card.num,all));
-  }
-
-  if(['major_0','major_1','major_21'].includes(card.id)){
-    const pathIds=new Set(all.filter(c=>['major_0','major_1','major_21'].includes(c.id)).map(c=>c.id));
-    if(pathIds.size>=2)add('near','Path of the Magi');
-  }
-
-  if(card.type==='court'){
-    const sameRank=all.filter(c=>c.type==='court'&&c.rank===card.rank);
-    if(sameRank.length>=4)add('near','Four of a Kind','rank:'+card.rank);
-    else if(sameRank.length>=2)add('near','Three of a Kind','rank:'+card.rank);
-  }
-
-  if(card.type==='court'){
-    const sameSuitRanks=new Set(all.filter(c=>c.type==='court'&&c.suit===card.suit).map(c=>c.rank));
-    if(sameSuitRanks.size>=3)add('near','Royal Court','flush:'+card.suit);
-  }
-
-  if(card.type==='court'){
-    const ranks=new Set(all.filter(c=>c.type==='court').map(c=>c.rank));
-    if(ranks.size>=3)add('near','Full Court');
-  }
-  } // end hintSettings.patterns
-
-  // Resonation hints — only for discovered patterns
+  // Resonation hints — only added for the default pool (hand + spread).
   if(!poolCards){
     if(!_unlockedFragmentsCache)_unlockedFragmentsCache=getUnlockedFragments();
     const unlocked=_unlockedFragmentsCache;
+    const spread=state.spread.filter(Boolean);
+    const seen=new Set(hints.map(h=>h.label));
     for(const res of RESONATIONS){
       if(!unlocked.includes(res.fragmentId))continue;
       const myCondIdx=res.conditions.findIndex(cond=>(cond.anyOf||[cond.cardId]).includes(card.id));
@@ -5674,16 +5510,19 @@ function cardHints(card, poolCards=null){
         if(ci===myCondIdx)return false;
         return spread.some(c=>(cond.anyOf||[cond.cardId]).includes(c.id));
       }).length;
-      if(othersInSpread===res.conditions.length-1)add('complete','⚷ '+res.name);
-      else if(othersInSpread>0)add('near','⚷ '+res.name);
+      const label='⚷ '+res.name;
+      if(!seen.has(label)){
+        seen.add(label);
+        if(othersInSpread===res.conditions.length-1)hints.push({level:'complete',label,group:'hint-gold',colorKey:null});
+        else if(othersInSpread>0)hints.push({level:'near',label,group:'hint-gold',colorKey:null});
+      }
     }
+    _hintsCache.set(_hintsKey()+':'+card.uid,hints);
   }
-
-  if(!poolCards){const k=_hintsKey()+':'+card.uid;_hintsCache.set(k,hints);}
   return hints;
 }
 function cardHint(card,poolCards=null){return cardHints(card,poolCards)[0]||null}
-function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;const beforeMelds=new Map(computeScore(state.spread.filter(Boolean)).melds.map(x=>[x[0],x]));let c=state.hand[idx];
+function placeCard(i){if(state.selected===null||state.spread[i])return;let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;const beforeMelds=new Map(_scoreLegacy(state.spread.filter(Boolean)).melds.map(x=>[x[0],x]));let c=state.hand[idx];
 // Phase 7: the reducer owns hand -> spread movement.
 tlrSyncRunToStore();
 window.tlrStore.dispatch({type:window.tlrActions.PLACE_CARD,slotIndex:i});
@@ -6032,14 +5871,12 @@ function relation(title,prompt,fn,n,done){
 }
 function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;waitForCounterThenScore()}
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
-function scoreReading(){let cards=state.spread.filter(Boolean),res=computeScore(cards,state.spread),total=res.finalScore,curTH=TH[state.th]+(state.thBonus||0),pass=total>=curTH;
+function scoreReading(){let cards=state.spread.filter(Boolean),res=_scoreLegacy(cards),total=res.finalScore,curTH=TH[state.th]+(state.thBonus||0),pass=total>=curTH;
 // Phase 9: the reducer resolves scoring through src/systems/scoring.mjs.
-// The inline computeScore result is kept only to render the overlay table.
 tlrSyncRunToStore();
 window.tlrStore.dispatch({type:window.tlrActions.SCORE_READING});
 {const _run=window.tlrStore.getState().run;
 if(_run.lastScore){
-  if(_run.lastScore.finalScore!==total)console.warn('[TLR architecture] Scoring parity mismatch',{legacy:total,architecture:_run.lastScore.finalScore,legacyMelds:res.melds,architectureMelds:_run.lastScore.melds});
   total=_run.lastScore.finalScore;
   curTH=_run.lastThreshold;
   pass=!!_run.lastPassed;
@@ -6145,35 +5982,8 @@ const SHOP_ICON={
   nimble_fingers:'isp-draw',quick_release:'isp-disc',
   balanced_reading:'isp-scoring',elemental_harmony:'isp-scoring',
 };
-const RELICS={
-  gilded_fool:    {name:'The Gilded Fool',      desc:'The first card in the spread each reading gains +10 Chips.',                             rarity:'common',icon:'🃏'},
-  hermit_lantern: {name:"Hermit's Lantern",     desc:'Each Major Arcana in the spread adds +0.25 Mult when scoring.',                         rarity:'common',icon:'🔦'},
-  mirror_shard:   {name:'Mirror Shard',          desc:'Each pair of matching ranks in the spread adds +1 Mult.',                               rarity:'common',icon:'🪞'},
-  threadbare_tarot:{name:'Threadbare Tarot',     desc:'Draw 1 extra card at the start of each reading.',                                      rarity:'common',icon:'🎴'},
-  gilded_discard: {name:'Gilded Discard',        desc:'Your first Discard each reading costs no Discard charge.',                             rarity:'common',icon:'✨'},
-  merchants_scale:{name:"Merchant's Scale",      desc:'All packs cost 3 fewer Reserve.',                                                      rarity:'common',icon:'⚖'},
-  still_pool:     {name:'The Still Pool',        desc:'If you use no Discards in a reading, gain +1 Mult when scoring.',                      rarity:'common',icon:'🪷'},
-  loaded_die:     {name:'Loaded Die',            desc:'Court cards (P, J, Q, K) in the spread contribute double their base Chips.',        rarity:'common',icon:'🎲'},
-  court_favor:    {name:'Court Favor',           desc:'Each Court card in the spread adds +1 Mult.',                                          rarity:'rare',  icon:'👑'},
-  hanged_coin:    {name:"Hanged Man's Coin",     desc:'Discarded cards contribute half their base Chips to the score.',                       rarity:'rare',  icon:'🪙'},
-  miser:          {name:'The Miser',             desc:'Gain +5 bonus Reserve each time you clear a threshold.',                               rarity:'rare',  icon:'💰'},
-  arcana_codex:   {name:'Arcana Codex',          desc:'Each distinct scoring upgrade you own adds +0.1 Mult.',                                rarity:'rare',  icon:'📖'},
-  lovers_knot:    {name:"The Lovers' Knot",      desc:'For each rank that appears 2 or more times in the spread, gain +1.5 Mult.',            rarity:'rare',  icon:'🔗'},
-  temperance_flask:{name:'Temperance Flask',     desc:'Using exactly 1 Discard per reading grants +1.5 Mult when scoring.',                  rarity:'rare',  icon:'⚗'},
-  strengths_grip: {name:'Strength',              desc:'If the spread contains 3 or more Court cards, gain +3 Mult.',                          rarity:'rare',  icon:'💪'},
-  the_world:      {name:'The World',             desc:'10% of chips scored above the threshold carry over as bonus chips next reading.',       rarity:'rare',  icon:'🌍'},
-  fool_reversed:  {name:'The Fool Reversed',     desc:'Your hand size is reduced by 1, but all cards in the spread gain +3 Chips.',           rarity:'rare',  icon:'🙃'},
-  watcher:        {name:'The Watcher',           desc:'Once per session: reveal the top 3 cards of your deck, take 1, return the rest to the bottom.',rarity:'rare',icon:'👁',active:true},
-};
-const _relicMeldNames=new Set(Object.values(RELICS).map(r=>r.name));
-const _relicMeldNameToKey=new Map(Object.entries(RELICS).map(([k,r])=>[r.name,k]));
-const RELIC_SPRITE={
-  gilded_fool:[0,0],hermit_lantern:[1,0],mirror_shard:[2,0],arcana_codex:[3,0],threadbare_tarot:[4,0],merchants_scale:[5,0],
-  still_pool:[0,1],loaded_die:[1,1],
-  court_favor:[0,2],hanged_coin:[1,2],miser:[2,2],gilded_discard:[3,2],
-  lovers_knot:[0,3],temperance_flask:[1,3],strengths_grip:[2,3],the_world:[3,3],fool_reversed:[4,3],watcher:[5,3],
-};
 // Market/relic-rack renderer moved to src/ui/renderMarket.mjs (Phase 15).
+// RELICS, RELIC_SPRITE, _relicMeldNames, _relicMeldNameToKey installed by src/app/dataGlobals.mjs.
 let _packBuys={};
 let _shopPacks=null;
 let _shopRefreshCount=0;
@@ -6593,32 +6403,7 @@ function posTutTip(target,arrowDir){
 }
 document.addEventListener('click',()=>tutNext());
 // ── Resonation System ──
-// Condition: resonation cards must appear in the spread in left-to-right slot order
-// matching their listed sequence. No fixed zones — position is relative.
-const RESONATIONS=[
-  {
-    id:'sophias_fall',
-    name:"Sophia's Fall",
-    conditions:[
-      {cardId:'major_2',  itemId:'photo_01'},                              // II High Priestess — The Reading Room
-      {cardId:'major_17', itemId:'letter_01', anyOf:['major_17','major_14']}, // XVII The Star or XIV Temperance — Unsigned Letter
-      {cardId:'major_18', itemId:'clipping_01'},                           // XVIII The Moon — Strange Obituary
-    ],
-    fragmentId:'frag_sophias_fall_1',
-    chips:25,
-    mult:1,
-  },
-];
-// Fragment definitions — unlocked by resonation triggers
-const INV_FRAGMENTS={
-  frag_sophias_fall_1:{
-    id:'frag_sophias_fall_1',
-    type:'Handwritten Note',
-    title:"She Signs It 'S'",
-    emoji:'🖋️',
-    content:'<p>The paper is thin, almost translucent. The handwriting is careful and very small.</p><p style="font-style:italic">"I have placed the three of them together four times now. The first time was an accident — I didn\'t understand what I had done until it was already done. The second time I was trying to prove something to myself. The third time I knew exactly what I was doing and I did it anyway.</p><p style="font-style:italic">"The fourth time I sat with the cards for a long time before I placed the last one. I am not sure I will do it again."</p><p>At the bottom of the page, in a different ink: <em>S.</em></p>',
-  },
-};
+// RESONATIONS and INV_FRAGMENTS installed by src/app/dataGlobals.mjs.
 function getUnlockedFragments(){try{return JSON.parse(localStorage.getItem('tlr_inv_unlocked')||'[]')}catch(e){return[]}}
 function checkResonationState(spread){
   return RESONATIONS.map(res=>{
@@ -6675,7 +6460,7 @@ function triggerResonation(res){
   render();
   setTimeout(()=>{_resStateKey=null;applyResonationGlows(state.spread);},2100);
   setTimeout(()=>{if(res.chips)fireScoreGhost();if(res.mult)fireMultGhost('×'+res.mult);},400);
-  setCounterTarget(computeScore(state.spread.filter(Boolean)).finalScore);
+  setCounterTarget(_scoreLegacy(state.spread.filter(Boolean)).finalScore);
   const alreadyUnlocked=getUnlockedFragments().includes(res.fragmentId);
   if(!alreadyUnlocked&&INV_FRAGMENTS[res.fragmentId]){
     const unlocked=getUnlockedFragments();
@@ -6692,35 +6477,7 @@ function triggerResonation(res){
 }
 
 // ── Inventory / Archives System ──
-const INV_ITEMS=[
-  {
-    id:'clipping_01',
-    type:'Newspaper Clipping',
-    title:'Strange Obituary',
-    emoji:'📰',
-    image:'strange_obituary.png',
-    imageFull:'Obituary_Newspaper.png',
-    content:'<p>Sophia Vael, 44, was found dead at her home at 14 Morrow Lane on March 12, after a neighbor asked police to check on her.</p><p>Ms. Vael had lived alone at the address for eleven years. She was known to see clients privately, though she kept no sign outside the house and did not advertise. Police reported no signs of forced entry and said the death was not being treated as suspicious.</p><p>The neighbor said she became concerned when Ms. Vael\'s curtains remained drawn for several days. She went to the house after dark, when the porch light was out and the moon was bright enough to see by.</p><p>"I was almost spooked away by her wolf statues," she said. "But I knew I needed to check on her so I made myself keep going."</p><p>Ms. Vael had no immediate family in the area. No services are planned.</p>',
-  },
-  {
-    id:'letter_01',
-    type:'Correspondence',
-    title:'Unsigned Letter',
-    emoji:'✉️',
-    image:'handwritten_note.png',
-    imageFull:'handwritten_note_full.png',
-    content:'<p>I\'ve been thinking about the woman from the Lorne referral. The one with the practice on Morrow Lane. I\'d been going for a few years by then — long enough that she no longer felt the need to explain herself.</p><p>She worked with three of them set apart from the rest. Not in a row. She was very deliberate about which side each one sat on. The one she placed last, she held for a moment before putting it down. I remember thinking she seemed almost reluctant.</p><p>What I remember most is her hands. She kept both of them moving even when she was still — one always seemed to be giving something, the other receiving. It made me think of someone pouring water carefully, though there was nothing to pour.</p><p>She never explained what she was doing. I think she assumed I would understand.</p>',
-  },
-  {
-    id:'photo_01',
-    type:'Photograph',
-    title:'The Reading Room',
-    emoji:'🖼️',
-    image:'Reading_room.png',
-    imageFull:'Reading_Room_Poleroid.png',
-    content:'<p>I found this when we were clearing the house. Nobody knew who to call so it fell to me.</p><p>She isn\'t in the picture — she must have been the one holding the camera. I don\'t recognise anyone at the table. They\'re all looking down at something laid out on the surface, but the photograph is too dark in the center to make it out. On the left edge of the frame you can see part of what looks like a card, face up. There\'s another on the right side. The middle of the table is just black.</p><p>In the background the room looks half-settled — like she\'d only recently moved in. A chair has been placed against the far wall with two tall pillars on either side of it — the left one black, the right one white, each with a capital at the top. A dark curtain is partly drawn across the window behind.</p><p>I keep thinking the center will become clear if I look long enough. It hasn\'t.</p>',
-  },
-];
+// INV_ITEMS installed by src/app/dataGlobals.mjs.
 let invOpen=false;
 let invPos=JSON.parse(localStorage.getItem('tlr_inv_pos')||'{}');
 let _saveInvTimer=null;function _saveInvPos(){clearTimeout(_saveInvTimer);_saveInvTimer=setTimeout(()=>{try{localStorage.setItem('tlr_inv_pos',JSON.stringify(invPos))}catch(e){}},300);}

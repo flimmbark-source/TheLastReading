@@ -158,6 +158,14 @@ export const RELICS = Object.freeze({
 
 export const RELIC_LIST = Object.freeze(Object.values(RELICS));
 
+// Sprite-sheet grid coordinates [col, row] for relic icons (relic icons.png, 6×4 grid).
+export const RELIC_SPRITE = Object.freeze({
+  gilded_fool:[0,0],hermit_lantern:[1,0],mirror_shard:[2,0],arcana_codex:[3,0],threadbare_tarot:[4,0],merchants_scale:[5,0],
+  still_pool:[0,1],loaded_die:[1,1],
+  court_favor:[0,2],hanged_coin:[1,2],miser:[2,2],gilded_discard:[3,2],
+  lovers_knot:[0,3],temperance_flask:[1,3],strengths_grip:[2,3],the_world:[3,3],fool_reversed:[4,3],watcher:[5,3],
+});
+
 export function getRelic(id) {
   return RELICS[id] || null;
 }

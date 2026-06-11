@@ -1,8 +1,22 @@
 // Shared hint renderer (Phase 15.9). Moved verbatim from index.html.
-// Card hint detection (cardHints) and the multi-hint shadow builder stay
-// legacy for now; this module owns the color mapping and DOM application,
-// so the hand glow and the ability-modal glow share one renderer.
-/* global cardHints, multiHintShadow */
+// Card hint detection delegates to src/systems/hints.mjs; this module owns
+// the color mapping, multi-shadow builder, and DOM application so the hand
+// glow and ability-modal glow share one renderer.
+/* global cardHints */
+
+export function multiHintShadow(hints, level){
+  const ring=level==='complete'?'1px':'0.75px';
+  const parts=[];
+  const colors=hints.slice(0,4).map(hintColor);
+  if(colors.length)parts.push(`0 0 0 ${ring} rgba(${colors[0]},.98)`);
+  colors.forEach((rgb,i)=>{
+    const blur=26+i*16;
+    const alpha=Math.max(.36,.82-i*.12);
+    parts.push(`0 0 ${blur}px rgba(${rgb},${alpha})`);
+  });
+  parts.push('0 5px 14px rgba(0,0,0,.45)');
+  return parts.join(',');
+}
 
 export function hintGroup(label){if(label==='Sequence'||label==='Path of the Magi')return 'hint-major';if(label==='Royal Court')return 'hint-suit';if(label==='Three of a Kind'||label==='Four of a Kind')return 'hint-rank';if(label==='Full Court')return 'hint-court';return 'hint-gold'}
 
