@@ -47,6 +47,30 @@ import * as tutorialModule from './tutorial.mjs';
 import * as readingFlowModule from './readingFlow.mjs';
 import * as archivesModule from './archives.mjs';
 
+function installStoreFrontTuning(target = window) {
+  const doc = target.document;
+  if (!doc || doc.getElementById('store-front-tuning-style')) return;
+
+  const style = doc.createElement('style');
+  style.id = 'store-front-tuning-style';
+  style.textContent = `
+    .store-front .store-relic-row{left:10.6%!important;right:9.9%!important}
+    @media(max-width:640px){.store-front .store-relic-row{left:9.8%!important;right:8.8%!important}}
+  `;
+  doc.head.appendChild(style);
+
+  doc.addEventListener('pointerdown', event => {
+    const callout = doc.querySelector('.store-relic-callout');
+    if (!callout) return;
+    const storeOpen = doc.querySelector('.store-front-shell');
+    if (!storeOpen) return;
+    if (callout.contains(event.target)) return;
+    callout.remove();
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
+}
+
 export function startApp(target = window) {
   target.requestAnimationFrame(()=>target.requestAnimationFrame(()=>document.body.classList.remove('tlr-loading')));
 
@@ -66,6 +90,7 @@ export function startApp(target = window) {
   installAmbientEffects(target);
   installAudioControls(target);
   installMenuControls(target);
+  installStoreFrontTuning(target);
 
   installDataGlobals(target);
   target.tlrAbilities = abilitySystem;
