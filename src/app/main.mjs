@@ -12,6 +12,7 @@ import { installRelicFlow } from './relicFlow.mjs';
 import { installReferenceControls } from './referenceControls.mjs';
 import { installControlBindings } from './controlBindings.mjs';
 import { installScoringRuntime } from './scoringRuntime.mjs';
+import { installPlacementRuntime } from './placementRuntime.mjs';
 import { installSpreadPlacementBridge } from './spreadPlacementBridge.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
@@ -78,6 +79,7 @@ export function startApp(target = window) {
   installResonationFlow(target);
   installReferenceControls(target);
   installHintRuntime(target);
+  installPlacementRuntime(target);
   installSpreadPlacementBridge(target);
   installControlBindings(target);
 
