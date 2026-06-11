@@ -33,7 +33,7 @@ function openTip(datasetKey, storageKey, html) {
 function showSetTutorial() {
   const st = window.state;
   if (!st || st.setIndex !== 1) return;
-  openTip('setTutorial', SET_TUTORIAL_KEY, '<b>Set 2 begins.</b><br>A Round gives you 2 Sets. Each Set is 5 cards. Your Set 1 score stays in the Round total. Clear the Threshold before this Set ends.');
+  openTip('setTutorial', SET_TUTORIAL_KEY, '<b>Set 2 begins.</b><br>There are typically 2 Sets in a Round. Clear the Threshold before this Set ends.');
 }
 
 function showConstellationTutorial() {
