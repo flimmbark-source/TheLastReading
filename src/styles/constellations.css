@@ -1,0 +1,66 @@
+/* Round-level Constellation HUD */
+.score-stack .constellation-pill{
+  position:fixed;
+  right:18px;
+  top:50vh;
+  transform:translateY(-50%);
+  z-index:26;
+  width:218px;
+  min-height:92px;
+  padding:12px 14px 13px;
+  border:1px solid rgba(190,150,86,.48);
+  border-radius:10px;
+  background:linear-gradient(160deg,rgba(22,14,9,.94),rgba(45,27,13,.88));
+  box-shadow:0 16px 42px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,225,160,.11);
+  color:#e9d3a5;
+  pointer-events:auto;
+}
+.score-stack .constellation-pill.hidden{display:none}
+.constellation-kicker{
+  color:#a88954;
+  font:800 9px/1.25 system-ui,Segoe UI,sans-serif;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+  margin-bottom:5px;
+}
+.constellation-name{
+  color:#ffd978;
+  font:700 16px/1.15 Georgia,serif;
+  letter-spacing:.02em;
+  margin-bottom:6px;
+  text-shadow:0 2px 6px rgba(0,0,0,.65);
+}
+.constellation-rule{
+  color:#d9c49a;
+  font:500 11.5px/1.42 system-ui,Segoe UI,sans-serif;
+}
+@media(max-width:640px){
+  .score-stack{
+    width:calc(100vw - 16px);
+    left:8px;
+    right:8px;
+    top:8px;
+    transform:none;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:5px 6px;
+  }
+  .score-stack .reserve-pill{order:1}
+  .score-stack .constellation-pill{
+    position:static;
+    order:2;
+    transform:none;
+    flex:1 1 100%;
+    width:auto;
+    min-height:0;
+    padding:7px 10px 8px;
+    border-radius:8px;
+    text-align:center;
+  }
+  .score-stack .discards-pill{order:3}
+  .score-stack .score-pill{order:4}
+  .score-stack .th-pill-wrap{order:5}
+  .constellation-kicker{font-size:8px;margin-bottom:2px}
+  .constellation-name{font-size:13px;margin-bottom:3px}
+  .constellation-rule{font-size:10.5px;line-height:1.32}
+}
