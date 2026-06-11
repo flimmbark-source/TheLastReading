@@ -56,6 +56,7 @@ function installStoreFrontTuning(target = window) {
   style.id = 'store-front-tuning-style';
   style.textContent = `
     #summary.modal.show:has(.store-front-shell){background:transparent!important}
+    #tutTip{z-index:2147483000!important}
     .store-front .store-offer-row .store-pack-offer:first-child{transform:translateX(-2.4%)!important}
     .store-front .store-offer-row .store-pack-offer:first-child:hover{transform:translateX(-2.4%) translateY(-1px)!important}
     .store-front .store-relic-row{left:10.6%!important;right:9.9%!important}
@@ -121,11 +122,48 @@ function installMarketTutorialTrigger(target = window) {
   if (!doc || target.__marketTutorialTriggerInstalled) return;
   target.__marketTutorialTriggerInstalled = true;
   let wasOpen = false;
+  let storeFrontReadyPromise = null;
+
+  const afterPaint = () => new Promise(resolve => {
+    target.requestAnimationFrame(() => target.requestAnimationFrame(resolve));
+  });
+
+  const waitForStoreFrontArt = () => {
+    if (!doc.querySelector('.store-front-shell .store-front')) return Promise.resolve(false);
+    if (!storeFrontReadyPromise) {
+      storeFrontReadyPromise = new Promise(resolve => {
+        const ImageCtor = target.Image || Image;
+        const img = new ImageCtor();
+        let settled = false;
+        const done = () => {
+          if (settled) return;
+          settled = true;
+          afterPaint().then(() => resolve(true));
+        };
+        img.onload = () => {
+          if (typeof img.decode === 'function') img.decode().catch(() => {}).then(done);
+          else done();
+        };
+        img.onerror = done;
+        img.src = './Store_Front.png';
+        if (img.complete) {
+          if (typeof img.decode === 'function') img.decode().catch(() => {}).then(done);
+          else done();
+        }
+        target.setTimeout(done, 1200);
+      });
+    }
+    return storeFrontReadyPromise;
+  };
+
   const check = () => {
     const isOpen = !!doc.querySelector('.store-front-shell .store-front');
     if (isOpen && !wasOpen && typeof target.maybeShowMarketTutorial === 'function') {
-      target.setTimeout(() => target.maybeShowMarketTutorial(), 120);
+      waitForStoreFrontArt().then(() => {
+        if (doc.querySelector('.store-front-shell .store-front')) target.maybeShowMarketTutorial();
+      });
     }
+    if (!isOpen) storeFrontReadyPromise = null;
     wasOpen = isOpen;
   };
   new MutationObserver(check).observe(doc.body, { childList: true, subtree: true });
