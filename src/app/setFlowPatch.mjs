@@ -1,6 +1,10 @@
 const SET_TUTORIAL_KEY = 'tlr_tut_sets_explained';
 const CONSTELLATION_TUTORIAL_KEY = 'tlr_tut_constellation_first_seen';
 
+function currentRun() {
+  return window.tlrStore?.getState?.().run || window.state || {};
+}
+
 function closeTip(datasetKey, storageKey) {
   const tip = document.getElementById('tutTip');
   if (!tip || tip.dataset[datasetKey] !== '1') return;
@@ -31,14 +35,14 @@ function openTip(datasetKey, storageKey, html) {
 }
 
 function showSetTutorial() {
-  const st = window.state;
-  if (!st || st.setIndex !== 1) return;
+  const run = currentRun();
+  if (run.setIndex !== 1) return;
   openTip('setTutorial', SET_TUTORIAL_KEY, '<b>Set 2 begins.</b><br>There are typically 2 Sets in a Round. Clear the Threshold before this Set ends.');
 }
 
 function showConstellationTutorial() {
-  const st = window.state;
-  if (!st || Number(st.th || 0) <= 0 || !st.constellationId) return;
+  const run = currentRun();
+  if (Number(run.thresholdIndex ?? run.th ?? 0) <= 0 || !run.constellationId) return;
   const icon = document.getElementById('constellationPill');
   if (!icon || icon.classList.contains('hidden')) return;
   openTip('constellationTutorial', CONSTELLATION_TUTORIAL_KEY, '<b>A Constellation has appeared.</b><br>Each Round after the first can change one rule. Tap the star sign to see what it changes.');
