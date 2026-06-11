@@ -2,9 +2,21 @@ import { SETS_PER_ROUND, CONSTELLATIONS, getConstellation, constellationForRound
 
 export { SETS_PER_ROUND, CONSTELLATIONS, getConstellation, constellationForRound };
 
+const EMPTY_CONSTELLATION = { id: '', name: '', label: '', rule: '', effect: '' };
+
+function roundIndexOf(run = {}) {
+  const value = run.thresholdIndex ?? run.th ?? 0;
+  const index = Number(value || 0);
+  return Number.isFinite(index) ? index : 0;
+}
+
+export function hasActiveConstellation(run = {}) {
+  return roundIndexOf(run) > 0 && Boolean(run.constellationId);
+}
+
 export function activeConstellation(run = {}) {
-  if (!run.constellationId) return { id: '', name: '', label: '', rule: '', effect: '' };
-  return getConstellation(run.constellationId) || { id: '', name: '', label: '', rule: '', effect: '' };
+  if (!hasActiveConstellation(run)) return EMPTY_CONSTELLATION;
+  return getConstellation(run.constellationId) || EMPTY_CONSTELLATION;
 }
 
 function ruleKey(run = {}) {
