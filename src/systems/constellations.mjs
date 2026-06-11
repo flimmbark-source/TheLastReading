@@ -3,12 +3,12 @@ import { SETS_PER_ROUND, CONSTELLATIONS, getConstellation, constellationForRound
 export { SETS_PER_ROUND, CONSTELLATIONS, getConstellation, constellationForRound };
 
 export function activeConstellation(run = {}) {
-  return getConstellation(run.constellationId) || constellationForRound(run.thresholdIndex || 0);
+  return run.constellationId ? getConstellation(run.constellationId) : null;
 }
 
 export function constellationThreshold(baseThreshold, run = {}) {
   const constellation = activeConstellation(run);
-  if (constellation.id === 'hungry_threshold') {
+  if (constellation?.id === 'hungry_threshold') {
     return baseThreshold + (run.roundDiscardCount || 0) * 5;
   }
   return baseThreshold;
@@ -16,13 +16,13 @@ export function constellationThreshold(baseThreshold, run = {}) {
 
 export function blocksDiscard(run = {}) {
   const constellation = activeConstellation(run);
-  return constellation.id === 'closed_palm' && (run.spread || []).filter(Boolean).length < 2;
+  return constellation?.id === 'closed_palm' && (run.spread || []).filter(Boolean).length < 2;
 }
 
 export function isCardUntargetable(run = {}, card = null) {
   if (!card) return false;
   const constellation = activeConstellation(run);
-  if (constellation.id !== 'unasked_question') return false;
+  if (constellation?.id !== 'unasked_question') return false;
   return (run.untargetableCardIds || []).includes(card.uid);
 }
 
@@ -32,5 +32,5 @@ export function setHasScoringPattern(score = {}) {
 
 export function gateSatisfied(run = {}, patternCount = 0) {
   const constellation = activeConstellation(run);
-  return constellation.id !== 'narrow_gate' || patternCount > 0;
+  return constellation?.id !== 'narrow_gate' || patternCount > 0;
 }
