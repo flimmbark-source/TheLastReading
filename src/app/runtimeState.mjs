@@ -22,6 +22,8 @@ export function createInitialState(){
     deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,
     thBonus:0,thBonusPending:0,discards:3,mull:false,mullCharges:0,busy:false,
     abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0,
+    setIndex:0,setsPerRound:2,roundScore:0,setScores:[],roundDiscardCount:0,roundPatternCount:0,
+    constellationId:null,untargetableCardUids:[],awaitingNextSet:false,lastOutcome:null,
   };
 }
 
