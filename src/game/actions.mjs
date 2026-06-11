@@ -1,0 +1,38 @@
+export const ACTIONS = Object.freeze({
+  START_READING: 'START_READING',
+  SELECT_CARD: 'SELECT_CARD',
+  CLEAR_SELECTION: 'CLEAR_SELECTION',
+  PLACE_CARD: 'PLACE_CARD',
+  DISCARD_SELECTED: 'DISCARD_SELECTED',
+  START_ABILITY: 'START_ABILITY',
+  RESOLVE_ABILITY: 'RESOLVE_ABILITY',
+  CANCEL_ABILITY: 'CANCEL_ABILITY',
+  START_PURGE: 'START_PURGE',
+  TOGGLE_PURGE_CARD: 'TOGGLE_PURGE_CARD',
+  CONFIRM_PURGE: 'CONFIRM_PURGE',
+  CANCEL_PURGE: 'CANCEL_PURGE',
+  SCORE_READING: 'SCORE_READING',
+  OPEN_MARKET: 'OPEN_MARKET',
+  BUY_MARKET_ITEM: 'BUY_MARKET_ITEM',
+  LEAVE_MARKET: 'LEAVE_MARKET',
+  ENTER_ATTIC: 'ENTER_ATTIC',
+  LEAVE_ATTIC: 'LEAVE_ATTIC',
+  UNLOCK_FRAGMENT: 'UNLOCK_FRAGMENT',
+  DISCOVER_ARCHIVE_ITEM: 'DISCOVER_ARCHIVE_ITEM',
+  SET_OBALS: 'SET_OBALS',
+  END_SESSION: 'END_SESSION',
+  RESET_SESSION: 'RESET_SESSION',
+  SYNC_LEGACY_SNAPSHOT: 'SYNC_LEGACY_SNAPSHOT',
+  SYNC_LEGACY_RUN: 'SYNC_LEGACY_RUN',
+  SYNC_LEGACY_PERSIST: 'SYNC_LEGACY_PERSIST',
+});
+
+export const startReading = () => ({ type: ACTIONS.START_READING });
+export const selectCard = cardId => ({ type: ACTIONS.SELECT_CARD, cardId });
+export const clearSelection = () => ({ type: ACTIONS.CLEAR_SELECTION });
+export const placeCard = slotIndex => ({ type: ACTIONS.PLACE_CARD, slotIndex });
+export const discardSelected = () => ({ type: ACTIONS.DISCARD_SELECTED });
+export const scoreReading = () => ({ type: ACTIONS.SCORE_READING });
+export const syncLegacySnapshot = snapshot => ({ type: ACTIONS.SYNC_LEGACY_SNAPSHOT, snapshot });
+export const syncLegacyRun = run => ({ type: ACTIONS.SYNC_LEGACY_RUN, run });
+export const syncLegacyPersist = persist => ({ type: ACTIONS.SYNC_LEGACY_PERSIST, persist });
