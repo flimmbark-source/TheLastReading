@@ -2,6 +2,7 @@
 // module mounts the architecture bridge, installs the UI modules as the
 // globals the legacy markup/script still calls, and then boots the game.
 import { installLiveMirror } from './liveMirror.mjs';
+import { installArchitectureBridge } from './bootstrap.mjs';
 import { installDataGlobals } from './dataGlobals.mjs';
 import { installRuntimeState } from './runtimeState.mjs';
 import { installLegacyBridge } from './legacyBridge.mjs';
@@ -54,6 +55,7 @@ export function startApp(target = window) {
     readingFlowModule, archivesModule);
 
   installRuntimeState(target);
+  installArchitectureBridge(target);
   installAtticFlow(target);
 
   installHandSwipeScroll(target);
