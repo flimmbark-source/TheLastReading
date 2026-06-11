@@ -13,6 +13,7 @@ import { installReferenceControls } from './referenceControls.mjs';
 import { installControlBindings } from './controlBindings.mjs';
 import { installScoringRuntime } from './scoringRuntime.mjs';
 import { installPlacementRuntime } from './placementRuntime.mjs';
+import { installDiscardRuntime } from './discardRuntime.mjs';
 import { installSpreadPlacementBridge } from './spreadPlacementBridge.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
@@ -80,6 +81,7 @@ export function startApp(target = window) {
   installReferenceControls(target);
   installHintRuntime(target);
   installPlacementRuntime(target);
+  installDiscardRuntime(target);
   installSpreadPlacementBridge(target);
   installControlBindings(target);
 
