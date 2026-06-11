@@ -31,6 +31,8 @@ import * as readingFlowModule from './readingFlow.mjs';
 import * as archivesModule from './archives.mjs';
 
 export function startApp(target = window) {
+  target.requestAnimationFrame(()=>target.requestAnimationFrame(()=>document.body.classList.remove('tlr-loading')));
+
   Object.assign(target, cardRenderer, ghostRenderer, hintRenderer, abilityRenderer, marketRenderer,
     spreadRenderer, handRenderer, tableRenderer, atticRenderer, effectsModule, tutorialModule,
     readingFlowModule, archivesModule);
