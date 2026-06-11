@@ -7,6 +7,7 @@ import {
   CARD_MEANINGS, COURT_MEANINGS, SUIT_MEANINGS,
 } from '../data/cards.mjs';
 import { THRESHOLDS } from '../data/thresholds.mjs';
+import { CONSTELLATIONS, CONSTELLATION_BY_ID, SETS_PER_ROUND } from '../data/constellations.mjs';
 import { RELICS as RELICS_MODULE, RELIC_SPRITE } from '../data/relics.mjs';
 import { RESONATIONS, ARCHIVE_FRAGMENTS, ARCHIVE_ITEMS } from '../data/archiveFragments.mjs';
 import { SHOP, PACKS, SHOP_ICON, REFRESH_COSTS, shopCost } from '../data/legacyMarket.mjs';
@@ -17,6 +18,9 @@ export function installDataGlobals(target) {
   target.SUITS  = SUITS;
   target.RANKS  = RANKS;
   target.TH     = THRESHOLDS;
+  target.CONSTELLATIONS = CONSTELLATIONS;
+  target.CONSTELLATION_BY_ID = CONSTELLATION_BY_ID;
+  target.SETS_PER_ROUND = SETS_PER_ROUND;
   target.RELIC_SPRITE = RELIC_SPRITE;
 
   // Same format, different legacy name
