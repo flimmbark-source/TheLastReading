@@ -23,6 +23,7 @@ export function scoreLegacy(cards,{skipRelics=false,skipFlatBonuses=false}={},ta
       worldCarry:state.worldCarry||0,
       abilityTakenCardIds:state.abilityTakenUids?[...state.abilityTakenUids]:[],
       resonationBonus:state.resonationBonus||null,
+      constellationId:state.constellationId||null,
     },
   });
   return {...result,melds:result.melds.map(m=>[m.name,m.chips,m.mult,m.mode])};
