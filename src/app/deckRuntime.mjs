@@ -10,6 +10,7 @@ import {
   maxMulliganCount,
   drawNIntoRun,
   drawToHandSize,
+  uniqueCards as uniqueCardsPure,
 } from '../systems/deck.mjs';
 
 function runtime(target){return target.tlrRuntime || {};}
@@ -29,6 +30,7 @@ export function maxHand(target = window){return maxHandSize(persistOf(target));}
 export function maxDiscards(target = window){return maxDiscardCount(persistOf(target));}
 export function hasMull(target = window){return hasMulligan(persistOf(target));}
 export function maxMull(target = window){return maxMulliganCount(persistOf(target));}
+export function uniqueCards(cards){return uniqueCardsPure(cards);}
 
 export function drawN(count,target = window){
   return drawNIntoRun(stateOf(target),count,{
@@ -46,7 +48,7 @@ export function drawTo(count,target = window){
 export function installDeckRuntime(target = window){
   if(!target || target.__tlrDeckRuntimeInstalled)return;
   target.__tlrDeckRuntimeInstalled=true;
-  const api={buildDeck,maxHand,maxDiscards,hasMull,maxMull,drawN,drawTo};
+  const api={buildDeck,maxHand,maxDiscards,hasMull,maxMull,drawN,drawTo,uniqueCards};
   target.tlrDeckRuntime=api;
 
   // Only fill gaps. The inline script still owns these names until final cleanup.
@@ -57,4 +59,5 @@ export function installDeckRuntime(target = window){
   if(typeof target.maxMull!=='function')target.maxMull=()=>maxMull(target);
   if(typeof target.drawN!=='function')target.drawN=count=>drawN(count,target);
   if(typeof target.drawTo!=='function')target.drawTo=count=>drawTo(count,target);
+  if(typeof target.uniqueCards!=='function')target.uniqueCards=uniqueCards;
 }
