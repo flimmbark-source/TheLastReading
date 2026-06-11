@@ -13,6 +13,7 @@ export function installAtticFlow(target = window){
   let maxCandles=0;
   let searched={};
   let awaitingPickup=false;
+  let pendingArchivesTutorial=false;
 
   const objects={
     newspaper_stack_01:{id:'newspaper_stack_01',label:'Stack of Newspapers',verb:'Move aside',motion:'move',cost:1,before:'props/newspaper_stack_closed.png',after:'props/newspaper_stack_moved.png',left:'25%',top:'73%',width:'22%',height:'17%',itemId:'clipping_01',itemTitle:'Strange Obituary',thumb:'strange_obituary.png'},
@@ -26,7 +27,18 @@ export function installAtticFlow(target = window){
   function candleSpend(){const h=document.getElementById('obalsHud');if(!h)return;h.classList.remove('spend');void h.offsetWidth;h.classList.add('spend');setTimeout(function(){h.classList.remove('spend')},460);}
   function whisper(text,duration){const w=document.getElementById('atticWhisper');if(!w)return;w.textContent=text;w.classList.add('show');clearTimeout(whisper.t);whisper.t=setTimeout(function(){w.classList.remove('show')},duration||2600);}
   function renderObjects(){if(target.renderAtticObjects)target.renderAtticObjects({objects:objects,searchedMap:searched,foundItemIds:foundItems(),onRummage:rummage});}
-  function saveFound(itemId){try{const key='tlr_attic_found_items';const arr=JSON.parse(target.localStorage.getItem(key)||'[]');if(!arr.includes(itemId)){arr.push(itemId);target.localStorage.setItem(key,JSON.stringify(arr));}}catch(e){}
+  function saveFound(itemId){
+    try{
+      const key='tlr_attic_found_items';
+      const arr=JSON.parse(target.localStorage.getItem(key)||'[]');
+      const isNew=!arr.includes(itemId);
+      const isFirst=isNew&&arr.length===0;
+      if(isNew){
+        arr.push(itemId);
+        target.localStorage.setItem(key,JSON.stringify(arr));
+        if(isFirst&&!target.localStorage.getItem('tlr_tut_archives_found'))pendingArchivesTutorial=true;
+      }
+    }catch(e){}
     if(target.tlrStore&&target.tlrActions)target.tlrStore.dispatch({type:target.tlrActions.DISCOVER_ARCHIVE_ITEM,itemId:itemId});}
   function tagNear(el,text){const scene=document.getElementById('atticScene');if(!scene||!el)return;const r=el.getBoundingClientRect();const sr=scene.getBoundingClientRect();const t=document.createElement('div');t.className='attic-action-tag';t.textContent=text;t.style.left=(r.left-sr.left+r.width/2)+'px';t.style.top=(r.top-sr.top+Math.max(18,r.height*.22))+'px';scene.appendChild(t);setTimeout(function(){t.remove()},920);}
   function dustNear(el){return;}
@@ -52,11 +64,16 @@ export function installAtticFlow(target = window){
   function leave(){
     if(target.tlrCloseArchives)target.tlrCloseArchives();
     if(!inAttic)return;inAttic=false;document.querySelectorAll('#atticPickup,.attic-action-tag,.attic-dust').forEach(function(p){p.remove();});
+    const showArchivesAfterReturn=pendingArchivesTutorial;
+    pendingArchivesTutorial=false;
     if(target.tlrStore&&target.tlrActions)target.tlrStore.dispatch({type:target.tlrActions.LEAVE_ATTIC});
     document.body.classList.add('mode-return-hard-hide');
     if(resetOnLeave&&typeof target.resetSession==='function'){resetOnLeave=false;target.resetSession();}else if(resetOnLeave&&typeof resetSession==='function'){resetOnLeave=false;resetSession();}
     setTimeout(function(){document.body.classList.remove('mode-attic','mode-to-attic','mode-reading');document.body.classList.add('mode-to-table');const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','true');},60);
-    setTimeout(function(){document.body.classList.remove('mode-to-table','mode-table-return','mode-return-hard-hide');document.body.classList.add('mode-reading');if(typeof tlrArchitectureSync==='function')tlrArchitectureSync();},1080);
+    setTimeout(function(){
+      document.body.classList.remove('mode-to-table','mode-table-return','mode-return-hard-hide');document.body.classList.add('mode-reading');if(typeof tlrArchitectureSync==='function')tlrArchitectureSync();
+      if(showArchivesAfterReturn&&typeof target.maybeShowArchivesTutorial==='function')target.maybeShowArchivesTutorial();
+    },1080);
   }
 
   function showAtticTutorial(){
