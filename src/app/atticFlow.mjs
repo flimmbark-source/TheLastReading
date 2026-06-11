@@ -138,7 +138,13 @@ export function installAtticFlow(target = window){
     target.tlrDebugEnterAttic=wrapped;
   }
 
-  document.addEventListener('keydown',function(e){if(e.shiftKey&&e.key==='A'){inAttic?leave():enter(3,false);}});
+  document.addEventListener('keydown',function(e){
+    if(e.shiftKey&&e.key==='A'){
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      inAttic?leave():enter(3,false);
+    }
+  },true);
   function bindReturnButton(){const btn=document.getElementById('atticTableReturn');if(btn&&!btn.__tlrAtticReturnBound){btn.__tlrAtticReturnBound=true;btn.addEventListener('click',function(e){e.stopPropagation();leave();});}}
   target.addEventListener('DOMContentLoaded',bindReturnButton);
   bindReturnButton();
