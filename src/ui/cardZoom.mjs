@@ -2,6 +2,15 @@
 
 export function installCardZoom(target = window){
   if(!target || target.__tlrCardZoomInstalled)return;
+
+  // While the inline expandCard block remains in index.html, do not bind a
+  // second set of wheel/touch/hold listeners. Once the block is deleted, this
+  // module owns the behavior.
+  if(typeof target.expandCard==='function' && !target.expandCard.__tlrCardZoomOwned){
+    target.__tlrLegacyInlineCardZoomDetected=true;
+    return;
+  }
+
   target.__tlrCardZoomInstalled=true;
 
   function expandCard(card){
@@ -16,6 +25,7 @@ export function installCardZoom(target = window){
     bg.addEventListener('click',()=>bg.remove());
     document.body.appendChild(bg);
   }
+  expandCard.__tlrCardZoomOwned=true;
 
   function cardFromTarget(t){
     if(!(t instanceof Element))return null;
