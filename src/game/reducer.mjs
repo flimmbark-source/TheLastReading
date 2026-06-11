@@ -283,10 +283,10 @@ function syncLegacyPersist(state, persist = {}) {
 }
 
 function startReading(state, deck) {
-  const { persist, run } = state;
+  const { persist } = state;
   const nextDeck = shuffleDeck(deck, Math.random);
   const handSize = maxHand(persist) + startingHandBonusFromRelics(persist.relics) + (persist.upgrades.deep_current || 0);
-  const { hand, deck: remainingDeck } = drawCards(nextDeck, handSize);
+  const { drawn: hand, deck: remainingDeck } = drawCards(nextDeck, handSize);
   return replaceRun(state, {
     phase: GAME_PHASES.READING,
     deck: remainingDeck,
