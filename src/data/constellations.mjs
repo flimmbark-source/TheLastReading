@@ -1,13 +1,50 @@
 export const SETS_PER_ROUND = 2;
+export const ZODIAC_SPRITE = './star_signs.png';
 
-export const CONSTELLATIONS = Object.freeze([]);
+const EFFECTS = Object.freeze({
+  BLOCK_EARLY_DISCARD: 'block_early_discard',
+  UNTARGETABLE_FIRST: 'untargetable_first',
+  ASHEN_HAND: 'ashen_hand',
+  HUNGRY_THRESHOLD: 'hungry_threshold',
+  NARROW_GATE: 'narrow_gate',
+});
 
-export const CONSTELLATION_BY_ID = Object.freeze({});
+const ZODIAC_SIGNS = [
+  ['aries', 'Aries', 0, 0, EFFECTS.BLOCK_EARLY_DISCARD, 'Place 2 cards before discarding.', 'You may not discard until at least 2 cards are placed each Set.'],
+  ['taurus', 'Taurus', 1, 0, EFFECTS.UNTARGETABLE_FIRST, 'First placed card cannot be targeted.', 'The first card placed each Set cannot be targeted by abilities or effects this Round.'],
+  ['gemini', 'Gemini', 2, 0, EFFECTS.ASHEN_HAND, 'Ability-taken cards lose base points.', 'Cards taken by abilities score no base points, but still count for patterns.'],
+  ['cancer', 'Cancer', 3, 0, EFFECTS.HUNGRY_THRESHOLD, 'Each discard raises the Threshold by 5.', 'The Round Threshold rises by 5 each time you discard.'],
+  ['leo', 'Leo', 0, 1, EFFECTS.NARROW_GATE, 'Clear requires at least one pattern.', 'The Round cannot be cleared unless at least one Set forms a scoring pattern.'],
+  ['virgo', 'Virgo', 1, 1, EFFECTS.BLOCK_EARLY_DISCARD, 'Place 2 cards before discarding.', 'You may not discard until at least 2 cards are placed each Set.'],
+  ['libra', 'Libra', 2, 1, EFFECTS.UNTARGETABLE_FIRST, 'First placed card cannot be targeted.', 'The first card placed each Set cannot be targeted by abilities or effects this Round.'],
+  ['scorpio', 'Scorpio', 3, 1, EFFECTS.ASHEN_HAND, 'Ability-taken cards lose base points.', 'Cards taken by abilities score no base points, but still count for patterns.'],
+  ['sagittarius', 'Sagittarius', 0, 2, EFFECTS.HUNGRY_THRESHOLD, 'Each discard raises the Threshold by 5.', 'The Round Threshold rises by 5 each time you discard.'],
+  ['capricorn', 'Capricorn', 1, 2, EFFECTS.NARROW_GATE, 'Clear requires at least one pattern.', 'The Round cannot be cleared unless at least one Set forms a scoring pattern.'],
+  ['aquarius', 'Aquarius', 2, 2, EFFECTS.BLOCK_EARLY_DISCARD, 'Place 2 cards before discarding.', 'You may not discard until at least 2 cards are placed each Set.'],
+  ['pisces', 'Pisces', 3, 2, EFFECTS.UNTARGETABLE_FIRST, 'First placed card cannot be targeted.', 'The first card placed each Set cannot be targeted by abilities or effects this Round.'],
+];
+
+export const CONSTELLATIONS = Object.freeze(
+  ZODIAC_SIGNS.map(([id, label, col, row, effect, shortRule, rule]) => Object.freeze({
+    id,
+    name: label,
+    label,
+    effect,
+    sprite: { image: ZODIAC_SPRITE, col, row, cols: 4, rows: 3 },
+    shortRule,
+    rule,
+  }))
+);
+
+export const CONSTELLATION_BY_ID = Object.freeze(
+  Object.fromEntries(CONSTELLATIONS.map(constellation => [constellation.id, constellation]))
+);
 
 export function getConstellation(id) {
   return CONSTELLATION_BY_ID[id] || null;
 }
 
 export function constellationForRound(roundIndex = 0) {
-  return null;
+  const index = ((roundIndex % CONSTELLATIONS.length) + CONSTELLATIONS.length) % CONSTELLATIONS.length;
+  return CONSTELLATIONS[index];
 }
