@@ -53,6 +53,7 @@ export function renderHand(ability, inPurge) {
       if(state.selected===c.uid){state.selected=null;refreshHandState();return;}
       state.selected=c.uid;
       refreshHandState();
+      if(typeof window.tutSignal==='function')window.tutSignal('cardSelected');
     };
     // Move into correct position only if not already there (avoids needless
     // DOM mutations that would trigger the swipe handler's MutationObserver).
