@@ -14,15 +14,15 @@
 <link rel="preload" as="image" href="sheet08.png">
 <link rel="preload" as="image" href="sheet09.png">
 <link rel="preload" as="image" href="sheet10.png">
-<link rel="stylesheet" href="src/styles/base.css?v=rounds-constellations-3">
-<link rel="stylesheet" href="src/styles/spread.css?v=rounds-constellations-3">
-<link rel="stylesheet" href="src/styles/hand.css?v=rounds-constellations-3">
-<link rel="stylesheet" href="src/styles/cards.css?v=rounds-constellations-3">
-<link rel="stylesheet" href="src/styles/market.css?v=rounds-constellations-3">
-<link rel="stylesheet" href="src/styles/constellations.css?v=rounds-constellations-3">
-<link rel="stylesheet" href="src/styles/mobile.css?v=rounds-constellations-3">
-<link rel="stylesheet" href="src/styles/attic.css?v=rounds-constellations-3">
-<link rel="stylesheet" href="src/styles/drawers.css?v=rounds-constellations-3">
+<link rel="stylesheet" href="src/styles/base.css?v=rounds-constellations-4">
+<link rel="stylesheet" href="src/styles/spread.css?v=rounds-constellations-4">
+<link rel="stylesheet" href="src/styles/hand.css?v=rounds-constellations-4">
+<link rel="stylesheet" href="src/styles/cards.css?v=rounds-constellations-4">
+<link rel="stylesheet" href="src/styles/market.css?v=rounds-constellations-4">
+<link rel="stylesheet" href="src/styles/constellations.css?v=rounds-constellations-4">
+<link rel="stylesheet" href="src/styles/mobile.css?v=rounds-constellations-4">
+<link rel="stylesheet" href="src/styles/attic.css?v=rounds-constellations-4">
+<link rel="stylesheet" href="src/styles/drawers.css?v=rounds-constellations-4">
 </head>
 <body class="tlr-loading">
 <div id="roomAmbient"></div>
@@ -35,7 +35,8 @@
 <div id="titleWrap"><div id="titleRow"><button id="menuBtn" onclick="toggleMenu()" aria-label="Settings">&#9776;</button><div id="titleContent"><div class="actions"><button id="scoringBtn" onclick="toggleRef(event)">Scoring</button><button id="abilitiesBtn" onclick="toggleAbilityRef(event)">Abilities</button><button id="mullBtn" onclick="mulligan()" style="display:none">Mulligan</button></div></div><div id="settingsPanel" class="settings-panel hidden"><h2 class="settings-title">The Last Reading</h2><label>Music<input type="range" id="musicVol" min="0" max="1" step="0.05" value="0.3" oninput="setMusicVol(+this.value)"></label><label>Effects<input type="range" id="sfxVol" min="0" max="1" step="0.05" value="1" oninput="setSfxVol(+this.value)"></label><hr><label class="settings-check"><input type="checkbox" id="hintPatterns" checked onchange="toggleHintSetting('patterns',this.checked)">Pattern hints</label><label class="settings-check"><input type="checkbox" id="hintRelics" onchange="toggleHintSetting('relics',this.checked)">Relic hints</label><hr><button id="replayTutorialBtn" type="button" class="settings-action" onclick="replayTutorial()">Replay Tutorial</button><button id="getUpBtn" type="button" class="settings-action get-up-action" onclick="getUpFromTable()">Get Up</button></div></div></div>
 <div class="bar"></div>
 <div id="sophiaVeil"></div>
-<div class="score-stack"><div class="pill reserve-pill">Reserve <b id="pool">0</b></div><div class="pill score-pill">Score <b id="current">0</b></div><div class="th-pill-wrap"><div class="pill threshold-pill">Threshold <b id="threshold">30</b></div><span id="thNext"></span></div><div class="pill discards-pill">Discards <b id="discards">3</b></div><div id="constellationPill" class="constellation-pill hidden"></div></div>
+<div class="score-stack"><div class="pill reserve-pill">Reserve <b id="pool">0</b></div><div class="pill score-pill">Score <b id="current">0</b></div><div class="th-pill-wrap"><div class="pill threshold-pill">Threshold <b id="threshold">30</b></div><span id="thNext"></span></div><div class="pill discards-pill">Discards <b id="discards">3</b></div></div>
+<button type="button" id="constellationPill" class="constellation-pill hidden" aria-label="Constellation"></button>
 <div class="refs-layer"><div id="ref" class="ref hidden scoring-sheet"></div><div id="abilityRef" class="ref hidden"><table><tr><td><b>Ability</b></td><td class="r"><b>What it does</b></td></tr><tr><td>Draw</td><td class="r">Draw that many cards.</td></tr><tr><td>Peek</td><td class="r">Look at that many cards. Take 1. Put the rest on the bottom.</td></tr><tr><td>Search</td><td class="r">Take any card from the deck, then shuffle.</td></tr><tr><td>Reshuffle</td><td class="r">Shuffle discard and hand into the deck, then redraw a full hand.</td></tr><tr><td>Neighbor</td><td class="r">Choose a card. Reveal up to 2 adjacent cards from the deck. Take 1.</td></tr><tr><td>Kin</td><td class="r">Choose a card. Reveal up to 2 cards of the same Arcana from the deck. Take 1.</td></tr><tr><td>Mirror</td><td class="r">Choose a card. Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)</td></tr><tr><td>Between</td><td class="r">Choose two cards. Reveal up to 2 cards between them from the deck. Take 1.</td></tr></table></div></div>
 <div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="sbtn sbtn-discard" aria-label="Discard" onclick="discardSelected()" disabled></button><button id="purgeBtn" class="sbtn sbtn-purge" aria-label="Remove" onclick="startPurge()" disabled></button></div><div id="spread" class="spread"></div></div>
 <div id="relicRack" class="relic-rack"></div>
@@ -48,6 +49,6 @@
 <div id="atticScene" aria-hidden="true"><div id="atticTutorial"></div><div id="atticPan"><div id="atticRoom"><div id="atticObjects"></div></div></div><div id="obalsHud"></div><button id="atticTableReturn" type="button" aria-label="Return to the table"><span>Return to Table</span></button><div id="atticWhisper"></div></div>
 <div id="summary"></div>
 <div id="modal" class="modal"><div class="box"><div class="modalHead"><h2 id="modalTitle"></h2><button id="modalToggle" onclick="toggleModalCollapse()">Hide</button></div><p id="modalPrompt"></p><div id="choices" class="choices"></div></div></div>
-<script type="module" src="src/app/main.mjs?v=rounds-constellations-3"></script>
+<script type="module" src="src/app/main.mjs?v=rounds-constellations-4"></script>
 </body>
 </html>
