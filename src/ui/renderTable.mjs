@@ -2,7 +2,7 @@
 // index.html: render() drives the bars, spread, hand, prompts, and preview;
 // refreshHandState() is the cheap selection-only repaint. Hot DOM elements
 // are cached in the legacy global _el* bindings (snapCounter shares them).
-/* global state, persist, TH, $, _cachedPlacedScore, _hintsKey, _hintsCacheKey, _hintsCache, _unlockedFragmentsCache, _spreadScoreForHints, _resStateKey, _getPlacedScore, applyResonationGlows, computeScore, hasMull, maxHand, tlrArchitectureSync, _elThreshold, _elPool, _elDiscards, _elDiscardBtn, _elPurgeBtn, _elMullBtn, _elHand, _elCurrent */
+/* global state, persist, TH, $, _cachedPlacedScore, _hintsKey, _hintsCacheKey, _hintsCache, _unlockedFragmentsCache, _spreadScoreForHints, _resStateKey, _getPlacedScore, applyResonationGlows, _scoreLegacy, hasMull, maxHand, tlrArchitectureSync, _elThreshold, _elPool, _elDiscards, _elDiscardBtn, _elPurgeBtn, _elMullBtn, _elHand, _elCurrent */
 import { renderSpread } from './renderSpread.mjs';
 import { renderHand } from './renderHand.mjs';
 import { renderAbilityPrompt, renderPurgePrompt } from './renderAbility.mjs';
@@ -90,4 +90,4 @@ export function refreshHandState(){
   tlrArchitectureSync();
 }
 
-export function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=computeScore([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
+export function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=_scoreLegacy([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}

@@ -16,12 +16,14 @@ import * as spreadRenderer from '../ui/renderSpread.mjs';
 import * as handRenderer from '../ui/renderHand.mjs';
 import * as tableRenderer from '../ui/renderTable.mjs';
 import * as atticRenderer from '../ui/renderAttic.mjs';
+import * as effectsModule from './effects.mjs';
+import * as tutorialModule from './tutorial.mjs';
 
 export function startApp(target = window) {
   // Phase 15: the UI modules own the renderers. The legacy script and
   // markup still call them as globals, so install them on the target first.
   Object.assign(target, cardRenderer, ghostRenderer, hintRenderer, abilityRenderer, marketRenderer,
-    spreadRenderer, handRenderer, tableRenderer, atticRenderer);
+    spreadRenderer, handRenderer, tableRenderer, atticRenderer, effectsModule, tutorialModule);
 
   // Step 1 (16.4): install data module exports under legacy global names so
   // gameplay functions resolve them without inline const declarations.
