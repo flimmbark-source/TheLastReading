@@ -6,7 +6,15 @@ function stateOf(target){return runtime(target).state || target.state || {};}
 
 export function marketRuntime(target = window){
   if(!target.__tlrMarketRuntime){
-    target.__tlrMarketRuntime={packBuys:{},shopPacks:null,shopRefreshCount:0,replaceSelectedKey:null,relicRackKey:'',openRelicKey:null};
+    target.__tlrMarketRuntime={};
+    Object.defineProperties(target.__tlrMarketRuntime,{
+      packBuys:{get(){return target._packBuys;},set(v){target._packBuys=v;}},
+      shopPacks:{get(){return target._shopPacks;},set(v){target._shopPacks=v;}},
+      shopRefreshCount:{get(){return target._shopRefreshCount;},set(v){target._shopRefreshCount=v;}},
+      replaceSelectedKey:{get(){return target._replaceSelectedKey;},set(v){target._replaceSelectedKey=v;}},
+      relicRackKey:{get(){return target._relicRackKey;},set(v){target._relicRackKey=v;}},
+      openRelicKey:{get(){return target._openRelicKey;},set(v){target._openRelicKey=v;}},
+    });
   }
   return target.__tlrMarketRuntime;
 }
@@ -113,6 +121,7 @@ export function installMarketFlow(target = window){
   target.__tlrMarketFlowInstalled=true;
   const api={marketRuntime,nextRefreshCost,relicSlots,relicPool,shopPacks,refreshShopPacks,packCost,markPackBought,playRelicVision,openRelicVisionShop,openShop};
   target.tlrMarketFlow=api;
+  marketRuntime(target);
   if(typeof target._nextRefreshCost!=='function')target._nextRefreshCost=()=>nextRefreshCost(target);
   if(typeof target.relicSlots!=='function')target.relicSlots=()=>relicSlots(target);
   if(typeof target.relicPool!=='function')target.relicPool=(count=4)=>relicPool(count,target);
