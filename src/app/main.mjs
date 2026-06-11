@@ -4,9 +4,12 @@
 import { installLiveMirror } from './liveMirror.mjs';
 import { installDataGlobals } from './dataGlobals.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
+import { installAmbientEffects } from '../ui/ambientEffects.mjs';
 import { installHandSwipeScroll } from '../ui/gestureHand.mjs';
 import { installHandCardGestures } from '../ui/gestureCard.mjs';
 import { installGestureDrawers } from '../ui/gestureDrawers.mjs';
+import { installPressHighlight } from '../ui/gesturePressHighlight.mjs';
+import { installHandSelectionVisuals } from '../ui/handSelectionVisuals.mjs';
 import * as abilitySystem from '../systems/abilities.mjs';
 import * as shopSystem from '../systems/shop.mjs';
 import * as scoringSystem from '../systems/scoring.mjs';
@@ -26,33 +29,25 @@ import * as readingFlowModule from './readingFlow.mjs';
 import * as archivesModule from './archives.mjs';
 
 export function startApp(target = window) {
-  // Phase 15: the UI modules own the renderers. The legacy script and
-  // markup still call them as globals, so install them on the target first.
   Object.assign(target, cardRenderer, ghostRenderer, hintRenderer, abilityRenderer, marketRenderer,
     spreadRenderer, handRenderer, tableRenderer, atticRenderer, effectsModule, tutorialModule,
     readingFlowModule, archivesModule);
 
-  // Step 3e (16.4): attic visit orchestration is owned by src/app/atticFlow.mjs.
   installAtticFlow(target);
 
-  // Step 4: gesture handlers are owned by src/ui gesture modules. Each installer
-  // uses the legacy install flags, so it does not double-mount while the inline
-  // copies remain during the migration.
   installHandSwipeScroll(target);
   installHandCardGestures(target);
   installGestureDrawers(target);
+  installPressHighlight(target);
+  installHandSelectionVisuals(target);
+  installAmbientEffects(target);
 
-  // Step 1 (16.4): install data module exports under legacy global names so
-  // gameplay functions resolve them without inline const declarations.
   installDataGlobals(target);
 
   try {
     installLiveMirror(target);
-    // Phase 10: the ability modal targets through the pure ability system.
     target.tlrAbilities = abilitySystem;
-    // Phase 12: the market generates offers and costs through the shop system.
     target.tlrShop = shopSystem;
-    // Step 2 (16.4): hint detection and scoring engine available for display bridge.
     target.tlrHints = hintsSystem;
     target.tlrScoring = scoringSystem;
   } catch (err) {
