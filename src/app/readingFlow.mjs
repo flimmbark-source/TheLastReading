@@ -17,7 +17,6 @@
    maxHand, hasMull, tlrArchitectureSync, tlrScoreToObals */
 
 let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
-let _relicGhostFired=false;
 
 export function getUpFromTable(){
   if(state&&state.busy)return;
@@ -41,7 +40,7 @@ export function startReading(){
   state.thBonus=_run.thresholdBonus;state.thBonusPending=0;
   persist.pool=_st.persist.reserve;
   playSound('shuffle');
-  _resStateKey=null;_relicGhostFired=false;
+  _resStateKey=null;
   clearOverlay();snapCounter(0);render();
 }
 
@@ -90,7 +89,7 @@ export function placeCard(i){
 
 export function setCounterTarget(v){counterTarget=v;if(counterTimer)clearTimeout(counterTimer);counterTimer=setTimeout(()=>{if(counterCancel)counterCancel();counterCancel=rollCounter(counterShown,counterTarget,650);counterShown=counterTarget;counterTimer=null},700)}
 export function snapCounter(v){if(counterTimer){clearTimeout(counterTimer);counterTimer=null}if(counterCancel){counterCancel();counterCancel=null}counterShown=counterTarget=v;_cacheEls();_elCurrent.textContent=v;_elCurrent.style.color=''}
-export function rollCounter(from,to,dur){_cacheEls();let el=_elCurrent,start=performance.now(),dead=false,lastVal=from,popAnim=null;const doubleTH=()=>(TH[state.th]+(state.thBonus||0))*2;function step(now){if(dead)return;let t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++){fireScoreGhost();if(!_relicGhostFired&&v>=doubleTH()){_relicGhostFired=true;fireRelicGhost();}}if(val!==lastVal){if(popAnim)popAnim.cancel();popAnim=el.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});}lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color='';holdEffects(1000);}}requestAnimationFrame(step);return()=>{dead=true;if(popAnim)popAnim.cancel();el.style.color=''}}
+export function rollCounter(from,to,dur){_cacheEls();let el=_elCurrent,start=performance.now(),dead=false,lastVal=from,popAnim=null;function step(now){if(dead)return;let t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++){fireScoreGhost();}if(val!==lastVal){if(popAnim)popAnim.cancel();popAnim=el.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});}lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color='';holdEffects(1000);}}requestAnimationFrame(step);return()=>{dead=true;if(popAnim)popAnim.cancel();el.style.color=''}}
 
 export function startPurge(){if(state.busy||state.hand.length<3||state.abilitySelect||state.purgeSelect!==null)return;state.purgeSelect=[];state.selected=null;render()}
 export function togglePurgeCard(uid){if(state.purgeSelect===null)return;const idx=state.purgeSelect.indexOf(uid);if(idx>=0)state.purgeSelect.splice(idx,1);else if(state.purgeSelect.length<3)state.purgeSelect.push(uid);refreshHandState()}
@@ -193,30 +192,30 @@ function betweenAbility(done,sourceCard=null){
     const total=betweenPool(a,b).length;
     return total?('Between these anchors: '+total+' card'+(total===1?'':'s')):'No cards between these anchors.';
   };
-  selectFromHand('Between','Choose 2 cards to draw between. Valid cards are highlighted.',validAnchors,2,(a,b)=>{
-    const n=2+(persist.up.lens_mastery||0)+(persist.up.relation_plus||0);
-    const found=sortCards(shuffle(uniqueCards([...betweenPool(a,b)])).slice(0,n));
-    if(!found.length){fallbackAbility(done,'Between — no cards found');return}
-    choice('Between — '+cleanName(a)+' + '+cleanName(b),'These cards are between your two anchors. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
+  selectFromHand('Between','Choose 2 cards. Between finds cards whose values fall between them in sequence.',validAnchors,2,(a,b)=>{
+    const found=uniqueCards(betweenPool(a,b));
+    if(!found.length){
+      state.busy=false;done();return;
+    }
+    choice('Between — '+cleanName(a)+' / '+cleanName(b),'Cards found between them. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
       tlrResolveAbilityThroughStore({kind:'take',heldCards:found,takenCardId:p.uid,threadBond:true});
       state.busy=false;done();
     });
-  });
+  },previewFn);
 }
 
-function relation(title,prompt,fn,n,done){
+function relation(title,prompt,poolFn,n,done){
   state.busy=true;
-  let targets=sortCards([...state.hand,...state.spread.filter(Boolean)]).filter(t=>fn(t).length);
-  if(!targets.length){fallbackAbility(done);return}
-  const previewFn=title==='Mirror'?t=>{
-    let reflected=sortCards([...fn(t)]);
-    return reflected.length?cardDisplayName(reflected[0]):'';
-  }:null;
-  selectFromHand(title+' — choose anchor',prompt+' Valid cards are highlighted.',targets,1,t=>{
-    let found=sortCards(shuffle([...fn(t)]).slice(0,n));
-    if(title==='Mirror'&&found.length){
-      let p=found[0];
-      tlrResolveAbilityThroughStore({kind:'take',heldCards:[p],takenCardId:p.uid});
+  const candidates=inPlay().filter(c=>poolFn(c).length>0);
+  if(!candidates.length){fallbackAbility(done,title+' — no matching cards');return}
+  const previewFn=(t)=>{
+    if(!t)return'';
+    const total=poolFn(t).length;
+    return total?(cleanName(t)+': '+total+' card'+(total===1?'':'s')+' found'):'No matching cards.';
+  };
+  selectFromHand(title,prompt,candidates,1,(t)=>{
+    const found=sortCards(poolFn(t)).slice(0,n);
+    if(!found.length){
       state.busy=false;done();return;
     }
     choice(title+' — '+cleanName(t),'Cards found from '+cleanName(t)+'. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{

@@ -2,6 +2,7 @@
 // module mounts the architecture bridge, installs the UI modules as the
 // globals the legacy markup/script still calls, and then boots the game.
 import { installLiveMirror } from './liveMirror.mjs';
+import { installArchitectureBridge } from './bootstrap.mjs';
 import { installDataGlobals } from './dataGlobals.mjs';
 import { installRuntimeState } from './runtimeState.mjs';
 import { installLegacyBridge } from './legacyBridge.mjs';
@@ -46,6 +47,74 @@ import * as tutorialModule from './tutorial.mjs';
 import * as readingFlowModule from './readingFlow.mjs';
 import * as archivesModule from './archives.mjs';
 
+function installStoreFrontTuning(target = window) {
+  const doc = target.document;
+  if (!doc || doc.getElementById('store-front-tuning-style')) return;
+
+  const style = doc.createElement('style');
+  style.id = 'store-front-tuning-style';
+  style.textContent = `
+    #summary.modal.show:has(.store-front-shell){background:transparent!important}
+    .store-front .store-offer-row .store-pack-offer:first-child{transform:translateX(-2.4%)!important}
+    .store-front .store-offer-row .store-pack-offer:first-child:hover{transform:translateX(-2.4%) translateY(-1px)!important}
+    .store-front .store-relic-row{left:10.6%!important;right:9.9%!important}
+    .store-front .store-relic-row .store-relic-offer:first-child{transform:translateX(-3.2%)!important}
+    .store-front .store-relic-row .store-relic-offer:last-child{transform:translateX(3.2%)!important}
+    .store-front .store-relic-row .store-relic-offer:first-child:hover{transform:translateX(-3.2%) translateY(-1px)!important}
+    .store-front .store-relic-row .store-relic-offer:last-child:hover{transform:translateX(3.2%) translateY(-1px)!important}
+    @media(max-width:640px){.store-front .store-offer-row .store-pack-offer:first-child{transform:translateX(-1.8%)!important}.store-front .store-offer-row .store-pack-offer:first-child:hover{transform:translateX(-1.8%) translateY(-1px)!important}.store-front .store-relic-row{left:9.8%!important;right:8.8%!important}.store-front .store-relic-row .store-relic-offer:first-child{transform:translateX(-2.6%)!important}.store-front .store-relic-row .store-relic-offer:last-child{transform:translateX(2.6%)!important}.store-front .store-relic-row .store-relic-offer:first-child:hover{transform:translateX(-2.6%) translateY(-1px)!important}.store-front .store-relic-row .store-relic-offer:last-child:hover{transform:translateX(2.6%) translateY(-1px)!important}}
+  `;
+  doc.head.appendChild(style);
+
+  const placeStoreCallout = (callout, anchor) => {
+    doc.body.appendChild(callout);
+    const rect = anchor.getBoundingClientRect();
+    callout.style.top = `${rect.bottom + 6}px`;
+    callout.style.left = '0px';
+    target.requestAnimationFrame(() => {
+      const cw = callout.offsetWidth;
+      const ch = callout.offsetHeight;
+      const mg = 8;
+      let left = rect.left + rect.width / 2 - cw / 2;
+      left = Math.max(mg, Math.min(target.innerWidth - cw - mg, left));
+      let top = rect.bottom + 6;
+      if (top + ch > target.innerHeight - mg) top = Math.max(mg, rect.top - ch - 6);
+      callout.style.left = `${left}px`;
+      callout.style.top = `${top}px`;
+    });
+  };
+
+  const showVesselCallout = anchor => {
+    doc.querySelectorAll('.relic-callout,.store-relic-callout').forEach(el => el.remove());
+    const vesselLevel = (target.persist?.up || {}).relicSlot || 0;
+    const maxed = vesselLevel >= 2;
+    const callout = doc.createElement('div');
+    callout.className = 'relic-callout store-relic-callout';
+    callout.innerHTML = `<div class="relic-callout-name"><span style="display:inline-block;width:24px;height:24px;vertical-align:middle;text-align:center;font:800 23px/24px Georgia,serif;color:#f1d196;text-shadow:0 2px 5px #000">＋</span> Relic Vessel</div><div class="relic-callout-desc">${maxed ? 'Relic Slots maxed.' : 'Gain +1 Relic Slot. Max 5.'}</div>`;
+    placeStoreCallout(callout, anchor);
+  };
+
+  doc.addEventListener('pointerdown', event => {
+    const storeOpen = doc.querySelector('.store-front-shell');
+    if (!storeOpen) return;
+
+    const vesselIcon = event.target.closest?.('.store-relic-offer.vessel .store-relic-art');
+    if (vesselIcon) {
+      showVesselCallout(vesselIcon);
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    const callout = doc.querySelector('.store-relic-callout');
+    if (!callout) return;
+    if (callout.contains(event.target)) return;
+    callout.remove();
+    event.preventDefault();
+    event.stopPropagation();
+  }, true);
+}
+
 export function startApp(target = window) {
   target.requestAnimationFrame(()=>target.requestAnimationFrame(()=>document.body.classList.remove('tlr-loading')));
 
@@ -54,6 +123,7 @@ export function startApp(target = window) {
     readingFlowModule, archivesModule);
 
   installRuntimeState(target);
+  installArchitectureBridge(target);
   installAtticFlow(target);
 
   installHandSwipeScroll(target);
@@ -64,6 +134,7 @@ export function startApp(target = window) {
   installAmbientEffects(target);
   installAudioControls(target);
   installMenuControls(target);
+  installStoreFrontTuning(target);
 
   installDataGlobals(target);
   target.tlrAbilities = abilitySystem;

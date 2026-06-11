@@ -81,7 +81,7 @@ export function buildUpgradePicker(packId,target = window){
   if(!pack)return '';
   const pool=Object.keys(target.SHOP||{}).filter(k=>pack.pool==='all'||target.SHOP[k][5]===pack.pool);
   const shuffle=target.shuffle || (a=>a.sort(()=>Math.random()-.5));
-  const options=shuffle([...pool]).slice(0,4);
+  const options=shuffle([...pool]).slice(0,3);
   let html='<div class="summary tarot-shop">';
   html+=`<div class="pack-picker-header"><h3>${pack.name}</h3><p>Pick one upgrade to keep</p></div>`;
   html+='<div class="shop-items-row">';
@@ -98,6 +98,17 @@ export function buildUpgradePicker(packId,target = window){
   }
   html+='</div></div>';
   return html;
+}
+
+export function pickPackUpgrade(upgradeKey,target = window){
+  if(!upgradeKey || !(target.SHOP||{})[upgradeKey])return false;
+  const purchased=typeof target.tlrMarketPurchase==='function'
+    ? target.tlrMarketPurchase({kind:'upgrade',upgradeKey})
+    : false;
+  if(purchased!==true)return purchased;
+  if(typeof target.render==='function')target.render();
+  if(typeof target.openShopMain==='function')target.openShopMain();
+  return true;
 }
 
 export function buyPack(packId,cost,target = window){
@@ -120,7 +131,7 @@ export function buyPack(packId,cost,target = window){
         html+=`<div class="upg-card relic-option ${r.rarity}" onclick="acquireRelic('${k}')">
           <div class="upg-title-strip relic-title-strip"><span>${r.name}</span></div>
           <div class="upg-art relic-art"><div class="relic-art-sprite" style="${style}"></div></div>
-          <div class="upg-body"><div class="upg-desc">${r.desc}</div></div>
+          <div class="upg-body"><div class="upg-desc">${r.desc||r.description||''}</div></div>
           <div class="upg-footer"><button class="sbtn sbtn-pick" aria-label="Pick" onclick="acquireRelic('${k}');event.stopPropagation()"></button></div>
         </div>`;
       }
@@ -137,8 +148,9 @@ export function buyPack(packId,cost,target = window){
 export function installShopOverlayFlow(target = window){
   if(!target || target.__tlrShopOverlayFlowInstalled)return;
   target.__tlrShopOverlayFlowInstalled=true;
-  const api={packAccent,animatePackOpen,buildUpgradePicker,buyPack};
+  const api={packAccent,animatePackOpen,buildUpgradePicker,pickPackUpgrade,buyPack};
   target.tlrShopOverlayFlow=api;
   if(typeof target.animatePackOpen!=='function')target.animatePackOpen=(packId,callback)=>animatePackOpen(packId,callback,target);
   if(typeof target.buyPack!=='function')target.buyPack=(packId,cost)=>buyPack(packId,cost,target);
+  if(typeof target.pickPackUpgrade!=='function')target.pickPackUpgrade=upgradeKey=>pickPackUpgrade(upgradeKey,target);
 }

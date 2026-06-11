@@ -140,6 +140,7 @@ export function installRelicFlow(target = window){
   const api={relicSlots,doAcquireRelic,acquireRelicFree,acquireRelic,showRelicReplace,selectRelicReplace,activateRelic,watcherPick};
   target.tlrRelicFlow=api;
   if(typeof target.relicSlots!=='function')target.relicSlots=()=>relicSlots(target);
+  if(typeof target.doAcquireRelic!=='function')target.doAcquireRelic=(key,afterFn)=>doAcquireRelic(key,afterFn,target);
   if(typeof target.acquireRelicFree!=='function')target.acquireRelicFree=key=>acquireRelicFree(key,target);
   if(typeof target.acquireRelic!=='function')target.acquireRelic=key=>acquireRelic(key,target);
   if(typeof target.showRelicReplace!=='function')target.showRelicReplace=(newKey,afterFn)=>showRelicReplace(newKey,afterFn,target);
