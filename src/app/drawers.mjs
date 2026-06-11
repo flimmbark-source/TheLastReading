@@ -14,6 +14,16 @@ function fmtBonus(v){return '+'+Number(v).toFixed(2).replace(/\.?0+$/,'');}
 
 export function installDrawers(target = window){
   if(!target || target.__tlrDrawersInstalled)return;
+
+  // Temporary migration guard: while the legacy inline drawer IIFEs still run
+  // before src/app/main.mjs, they define tlrTogglePullTab and bind their own
+  // pointer listeners. Do not double-bind. Once the inline block is deleted,
+  // this module becomes the active owner automatically.
+  if(typeof target.tlrTogglePullTab === 'function' && !target.tlrTogglePullTab.__tlrDrawerModuleOwned){
+    target.__tlrLegacyInlineDrawersDetected=true;
+    return;
+  }
+
   target.__tlrDrawersInstalled=true;
 
   function closeOthers(id){
@@ -35,6 +45,7 @@ export function installDrawers(target = window){
     t.innerHTML=(opening?'&#9650; ':'&#9660; ')+LABELS[id];
     if(opening)closeOthers(id);
   }
+  togglePullTab.__tlrDrawerModuleOwned=true;
 
   function placeDrawerContent(){
     for(const id of Object.keys(LABELS)){
@@ -137,11 +148,6 @@ export function installDrawers(target = window){
     el.className='ref scoring-sheet';
     el.innerHTML=out;
     target.requestAnimationFrame(fitDrawerHeights);
-  }
-
-  function renderAndFit(){
-    renderDrawerScoringSheet();
-    fitDrawerHeights();
   }
 
   function installFitHooks(){
