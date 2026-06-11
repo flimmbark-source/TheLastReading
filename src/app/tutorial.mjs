@@ -41,8 +41,8 @@ const TUT_STEPS = [
   {sel:'#discardBtn', arrow:'up', text:'<b>Discard</b> a card to use its <b>Ability</b> instead of placing it.'},
   {sel:'.handDock', arrow:'down', key:TUT_PATTERN_KEY, text:'Some of your cards may work together.'},
   {sel:'#scoringBtn', arrow:'up', key:TUT_PATTERN_KEY, text:'Check <b>Scoring</b> to see if you can complete a pattern.'},
-  {center:true, key:'tlr_tut_shop', text:'Each cleared Threshold makes the next one harder. Clear the 10th Threshold to win.'},
-  {sel:'#relicRack', arrow:'up', key:'tlr_tut_relic', text:'You\'ve found a <b>Relic</b>! Relics carry passive effects across every reading until you lose. Tap a relic icon to see what it does.'},
+  {center:true, text:'Each cleared Threshold makes the next one harder. Clear the 10th Threshold to win.'},
+  {sel:'#relicRack', arrow:'up', text:'You\'ve found a <b>Relic</b>! Relics carry passive effects across every reading until you lose. Tap a relic icon to see what it does.'},
   {sel:'#purgeBtn', arrow:'up', key:TUT_PURGE_KEY, text:'Remove 3 cards from your hand to gain 1 Discard.'},
   {sel:'#spread', arrow:'up', key:TUT_READING_KEY, text:'One more card completes the reading.'},
 ];
