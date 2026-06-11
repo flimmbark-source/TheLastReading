@@ -37,7 +37,7 @@ function syncRoundFields(_run){
 function isTargetBlocked(card){return isCardUntargetable({th:state.th,constellationId:state.constellationId,untargetableCardIds:state.untargetableCardUids},card)}
 function targetable(cards){return cards.filter(c=>!isTargetBlocked(c))}
 function visibleCounterValue(){_cacheEls();const n=Number(_elCurrent?.textContent||0);return Number.isFinite(n)?n:counterShown}
-function recordScorePillBase(value){scorePillSetBase=Number(value||0);snapCounter(scorePillSetBase)}
+function recordScorePillBase(value){scorePillSetBase=Number(value||0);window.tlrScorePillSetBase=scorePillSetBase;snapCounter(scorePillSetBase)}
 
 export function getUpFromTable(){
   if(state&&state.busy)return;
