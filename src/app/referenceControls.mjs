@@ -7,6 +7,12 @@ function persistOf(target){return runtime(target).persist || {};}
 
 function fmtBonus(value){return '+'+(value-1).toFixed(2).replace(/\.?0+$/,'');}
 
+function scoreCardIcon(){
+  return '<span aria-hidden="true" style="display:inline-block;width:13px;height:17px;margin-right:7px;vertical-align:-3px;border:1px solid rgba(243,207,118,.82);border-radius:3px;background:linear-gradient(160deg,#ead9b5,#b98243 54%,#352012);box-shadow:inset 0 0 0 2px rgba(45,22,8,.55),0 0 8px rgba(243,207,118,.28)"></span>';
+}
+
+function patternLabel(label){return scoreCardIcon()+'<b>'+label+'</b>';}
+
 export function closeRefs(){
   const ref=document.getElementById('ref');
   const ability=document.getElementById('abilityRef');
@@ -43,9 +49,9 @@ export function renderScoringSheet(target = window){
   const majorRows=rows.slice(4);
   let html='<table class="ref-table"><thead><tr><th>Pattern</th><th>Condition</th><th>Chips</th><th>Mult</th></tr></thead><tbody>';
   html+='<tr class="ref-section-head"><td colspan="4">Minor Arcana</td></tr>';
-  for(const row of minorRows)html+=`<tr><td><b>${row[0]}</b></td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]||'—'}</td></tr>`;
+  for(const row of minorRows)html+=`<tr><td>${patternLabel(row[0])}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]||'—'}</td></tr>`;
   html+='<tr class="ref-section-head"><td colspan="4">Major Arcana</td></tr>';
-  for(const row of majorRows)html+=`<tr><td><b>${row[0]}</b></td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]||'—'}</td></tr>`;
+  for(const row of majorRows)html+=`<tr><td>${patternLabel(row[0])}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]||'—'}</td></tr>`;
   const getUnlocked=target.tlrResonations?.getUnlockedFragments || target.getUnlockedFragments;
   const unlocked=typeof getUnlocked==='function'?getUnlocked(target):[];
   const discovered=(target.RESONATIONS||[]).filter(r=>unlocked.includes(r.fragmentId));
@@ -54,7 +60,7 @@ export function renderScoringSheet(target = window){
     const majorNumeral=target.tlrHintRuntime?.majorNumeral || target.majorNumeral;
     for(const res of discovered){
       const condStr=res.conditions.map(c=>(c.anyOf||[c.cardId]).map(id=>typeof majorNumeral==='function'?majorNumeral(id):id).join('/')).join(' · ');
-      html+=`<tr><td><b>⚷ ${res.name}</b></td><td>${condStr}</td><td>+${res.chips}</td><td>${fmtBonus(res.mult)}</td></tr>`;
+      html+=`<tr><td>${scoreCardIcon()}<b>⚷ ${res.name}</b></td><td>${condStr}</td><td>+${res.chips}</td><td>${fmtBonus(res.mult)}</td></tr>`;
     }
   }
   html+='</tbody></table>';
