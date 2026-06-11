@@ -30,6 +30,7 @@ export function placeCard(slotIndex,target = window){
 
   call(target,'tlrSyncRunToStore');
   call(target,'render');
+  call(target,'tutSignal','cardPlaced');
   call(target,'playSound','place');
   call(target,'haptic',12);
 
