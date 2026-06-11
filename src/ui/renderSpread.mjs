@@ -1,8 +1,12 @@
 // Spread renderer (Phase 15.3). Moved verbatim from index.html's render().
 // Reuses the 5 stable slot elements via the global _slotEls cache.
-/* global state, $, _slotEls, handleAbilityHandClick, placeCard */
+/* global state, $, _slotEls, handleAbilityHandClick */
 import { cardHTML, applyCardPhoto, CARD_SHEET } from './renderCard.mjs';
 import { applyHint } from './renderHints.mjs';
+
+function placeIntoSlot(index){
+  if(typeof window.placeCard==='function')window.placeCard(index);
+}
 
 export function renderSpread(ability, inPurge) {
   const sp=$('#spread');
@@ -60,7 +64,7 @@ export function renderSpread(ability, inPurge) {
         s.appendChild(nm);
       }
       nm.textContent=String(i+1);
-      s.onclick=ability?null:()=>placeCard(i);
+      s.onclick=ability?null:()=>placeIntoSlot(i);
     }
   }
 }
