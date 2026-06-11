@@ -2,7 +2,7 @@ import { computeScore } from '../systems/scoring.mjs';
 import { currentThreshold } from '../data/thresholds.mjs';
 import { getCardHints, getHandHints } from '../systems/hints.mjs';
 import { ARCHIVE_FRAGMENTS, ARCHIVE_ITEMS } from '../data/archiveFragments.mjs';
-import { constellationThreshold } from '../systems/constellations.mjs';
+import { blocksDiscard, constellationThreshold } from '../systems/constellations.mjs';
 
 export function placedCards(state) {
   return state.run.spread.filter(Boolean);
@@ -54,7 +54,7 @@ export function canPlaceSelectedInSlot(state, slotIndex) {
 }
 
 export function canDiscardSelected(state) {
-  return Boolean(selectedCard(state)) && state.run.discards > 0 && !state.run.busy && !state.run.ability && !state.run.purge;
+  return Boolean(selectedCard(state)) && state.run.discards > 0 && !blocksDiscard(state.run) && !state.run.busy && !state.run.ability && !state.run.purge;
 }
 
 export function canScoreReading(state) {
