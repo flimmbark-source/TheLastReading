@@ -8,6 +8,7 @@ import { renderHand } from './renderHand.mjs';
 import { renderAbilityPrompt, renderPurgePrompt } from './renderAbility.mjs';
 import { renderRelicRack } from './renderMarket.mjs';
 import { cleanName } from './renderCard.mjs';
+import { getConstellation, constellationThreshold, blocksDiscard } from '../systems/constellations.mjs';
 
 function maybeShowContextualTutorials(){
   if(typeof window.maybeShowPatternTutorial==='function')window.maybeShowPatternTutorial();
@@ -27,14 +28,29 @@ export function _cacheEls(){
   _elCurrent=document.getElementById('current');
 }
 
+function activeThreshold(){return constellationThreshold(TH[state.th]+(state.thBonus||0),state)}
+function discardBlocked(){return blocksDiscard(state)}
+
+function renderConstellationPill(){
+  const el=document.getElementById('constellationPill');
+  if(!el)return;
+  const constellation=getConstellation(state.constellationId);
+  if(!constellation){el.classList.add('hidden');el.innerHTML='';return;}
+  const setText='Set '+((state.setIndex||0)+1)+'/'+(state.setsPerRound||2);
+  const scoreText='Round '+(state.roundScore||0)+'/'+activeThreshold();
+  el.classList.remove('hidden');
+  el.innerHTML=`<div class="constellation-kicker">Constellation · ${setText} · ${scoreText}</div><div class="constellation-name">${constellation.name}</div><div class="constellation-rule">${constellation.rule}</div>`;
+}
+
 export function render(){
   _cachedPlacedScore=null; // invalidate on every render
   const _newHintsKey=_hintsKey();if(_newHintsKey!==_hintsCacheKey){_hintsCache.clear();_hintsCacheKey=_newHintsKey;_unlockedFragmentsCache=null;_spreadScoreForHints=null;}
   _cacheEls();
-  _elThreshold.textContent=TH[state.th]+(state.thBonus||0);
+  _elThreshold.textContent=activeThreshold();
   const _thNext=document.getElementById('thNext');if(_thNext){const _p=state.thBonusPending||0;_thNext.style.display=_p?'':'none';if(_p)_thNext.textContent='+'+_p+' next';}
   _elPool.textContent=persist.pool;
   _elDiscards.textContent=state.discards;
+  renderConstellationPill();
   renderRelicRack();
 
   const now=_getPlacedScore();
@@ -50,7 +66,8 @@ export function render(){
   renderAbilityPrompt();
   renderPurgePrompt();
   updateScorePreview(now);
-  _elDiscardBtn.disabled=state.selected===null||state.discards<=0||inPurge;
+  _elDiscardBtn.disabled=state.selected===null||state.discards<=0||inPurge||discardBlocked();
+  _elDiscardBtn.title=discardBlocked()?'The Closed Palm: place 2 cards before discarding.':'';
   _elPurgeBtn.disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
   _elMullBtn.style.display=hasMull()?'inline-block':'none';
   _elMullBtn.disabled=!(state.mullCharges>0)||!state.spread.every(x=>!x)||state.hand.length!==maxHand();
@@ -92,7 +109,8 @@ export function refreshHandState(){
   renderAbilityPrompt();
   renderPurgePrompt();
   updateScorePreview(_getPlacedScore());
-  _elDiscardBtn.disabled=state.selected===null||state.discards<=0||inPurge;
+  _elDiscardBtn.disabled=state.selected===null||state.discards<=0||inPurge||discardBlocked();
+  _elDiscardBtn.title=discardBlocked()?'The Closed Palm: place 2 cards before discarding.':'';
   _elPurgeBtn.disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
   tlrArchitectureSync();
   maybeShowContextualTutorials();
