@@ -7,6 +7,7 @@ const STORE_SCORING_PACKS = Object.freeze(['foundation', 'ritual', 'pattern']);
 const STORE_ABILITY_PACKS = Object.freeze(['innate', 'restless', 'second_sight', 'thread']);
 const RELIC_CACHE_PACK_ID = 'relic';
 const STORE_ASSET_PATH = './';
+const STORE_FADE_MS = 260;
 
 const STORE_PACK_COPY = Object.freeze({
   foundation: 'Chip bonuses.',
@@ -57,9 +58,16 @@ function ensureStoreFrontStyles(target = window) {
   const style = doc.createElement('style');
   style.id = 'store-front-style';
   style.textContent = `
-    .summary.store-front-shell{background:transparent;border:0;box-shadow:none;padding:0;max-width:none;width:auto;overflow:visible}
+    .summary.store-front-shell{background:transparent;border:0;box-shadow:none;padding:0;max-width:none;width:auto;overflow:visible;animation:storeShellFadeIn ${STORE_FADE_MS}ms ease-out both}
+    .summary.store-front-shell.store-exiting{animation:storeShellFadeOut ${STORE_FADE_MS}ms ease-in both;pointer-events:none}
+    .summary.store-front-shell.store-exiting .store-front{animation:storeFrontFadeOut ${STORE_FADE_MS}ms ease-in both}
     .modal:has(.store-front-shell){padding:8px;align-items:center;justify-content:center;overflow:auto}
-    .store-front{position:relative;width:min(94vw,calc(96dvh * .6667),620px);aspect-ratio:2/3;margin:0 auto;color:#eadbb9;background:url('${STORE_ASSET_PATH}Store_Front.png') center/100% 100% no-repeat;border-radius:18px;filter:drop-shadow(0 22px 46px rgba(0,0,0,.76));font-family:Georgia,serif;isolation:isolate}
+    .store-front{position:relative;width:min(94vw,calc(96dvh * .6667),620px);aspect-ratio:2/3;margin:0 auto;color:#eadbb9;background:url('${STORE_ASSET_PATH}Store_Front.png') center/100% 100% no-repeat;border-radius:18px;filter:drop-shadow(0 22px 46px rgba(0,0,0,.76));font-family:Georgia,serif;isolation:isolate;animation:storeFrontFadeIn ${STORE_FADE_MS}ms cubic-bezier(.2,.75,.2,1) both}
+    @keyframes storeShellFadeIn{from{opacity:0}to{opacity:1}}
+    @keyframes storeShellFadeOut{from{opacity:1}to{opacity:0}}
+    @keyframes storeFrontFadeIn{from{opacity:0;transform:translateY(14px) scale(.985);filter:drop-shadow(0 14px 30px rgba(0,0,0,.55)) blur(1px)}to{opacity:1;transform:translateY(0) scale(1);filter:drop-shadow(0 22px 46px rgba(0,0,0,.76)) blur(0)}}
+    @keyframes storeFrontFadeOut{from{opacity:1;transform:translateY(0) scale(1);filter:drop-shadow(0 22px 46px rgba(0,0,0,.76)) blur(0)}to{opacity:0;transform:translateY(10px) scale(.985);filter:drop-shadow(0 14px 30px rgba(0,0,0,.45)) blur(1px)}}
+    @media(prefers-reduced-motion:reduce){.summary.store-front-shell,.summary.store-front-shell.store-exiting,.store-front,.summary.store-front-shell.store-exiting .store-front{animation:none!important}}
     .store-front button{font-family:Georgia,serif;cursor:pointer;-webkit-tap-highlight-color:transparent}.store-front button:disabled{cursor:not-allowed;filter:grayscale(.45);opacity:.45}
     .store-title{position:absolute;left:20%;right:20%;top:3.55%;text-align:center;letter-spacing:.075em;text-transform:uppercase;font-weight:800;font-size:28px;line-height:.94;text-shadow:0 2px 4px #000}.store-title small{display:block;font-size:12px;letter-spacing:.18em;margin-bottom:0}.store-subtitle{position:absolute;left:19%;right:19%;top:10.55%;text-align:center;color:#d1a15e;font:600 13px system-ui,Segoe UI,sans-serif;white-space:nowrap;text-shadow:0 1px 2px #000}.store-reserve{position:absolute;right:6%;top:3.1%;width:14.9%;height:7.2%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:0;background:transparent;box-shadow:none}.store-reserve-label{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#c7944f}.store-reserve-value{font-size:34px;line-height:.9;color:#f1d196;text-shadow:0 1px 3px #000}.store-reserve-value .coin{font-size:.38em;margin-left:.08em;color:#c89445}
     .store-section{position:absolute;left:5.3%;right:5.3%}.store-section.scoring{top:16.1%;height:21.7%}.store-section.abilities{top:38.7%;height:23.2%}.store-section.relics{top:65.7%;height:20.5%}
@@ -224,6 +232,22 @@ export function showStoreRelicCallout(relicKey, anchor, target = window) {
   return true;
 }
 
+export function storeExitToNextReading(target = window) {
+  const shell = target.document.querySelector('.store-front-shell');
+  if (!shell) {
+    if (typeof target.continueReading === 'function') target.continueReading();
+    return true;
+  }
+  if (shell.classList.contains('store-exiting')) return true;
+  shell.classList.add('store-exiting');
+  target.document.querySelectorAll('.relic-callout,.store-relic-callout').forEach(el => el.remove());
+  const reduce = target.matchMedia && target.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  target.setTimeout(() => {
+    if (typeof target.continueReading === 'function') target.continueReading();
+  }, reduce ? 0 : STORE_FADE_MS);
+  return true;
+}
+
 export function openShopMain(){
   ensureStoreFrontStyles(window);
   if(state.pendingPool){persist.pool+=state.pendingPool;state.pendingPool=0;render();}
@@ -236,7 +260,7 @@ export function openShopMain(){
     ${renderStoreSection('scoring','Scoring','✦','Improve Chips, Mult, or scoring patterns.',offers.scoring,window)}
     ${renderStoreSection('abilities','Draw & Abilities','✋','Improve your hand, Discards, and card abilities.',offers.abilities,window)}
     ${renderRelicStoreSection(offers.relics,window)}
-    <div class="store-actions"><button class="store-refresh" ${canRefresh?'':'disabled'} onclick="refreshStoreFront()"><span class="store-refresh-icon">↻</span><span>Refresh Offers <span class="store-refresh-cost">✦ ${rc}</span></span></button><button class="store-proceed" onclick="continueReading()">Next Reading</button></div>
+    <div class="store-actions"><button class="store-refresh" ${canRefresh?'':'disabled'} onclick="refreshStoreFront()"><span class="store-refresh-icon">↻</span><span>Refresh Offers <span class="store-refresh-cost">✦ ${rc}</span></span></button><button class="store-proceed" onclick="storeExitToNextReading()">Next Reading</button></div>
   </div></div>`;
   showOverlay(html);
 }
