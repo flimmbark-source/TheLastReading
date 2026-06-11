@@ -51,6 +51,6 @@ export function installDataGlobals(target) {
   target.SHOP_ICON = SHOP_ICON;
   target._REFRESH_COSTS = REFRESH_COSTS;
   target.shopCost = function legacyShopCost(key) {
-    return shopCost(key, target.persist);
+    return shopCost(key, target.tlrRuntime?.persist || target.persist);
   };
 }
