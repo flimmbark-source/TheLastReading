@@ -81,7 +81,7 @@ export function buildUpgradePicker(packId,target = window){
   if(!pack)return '';
   const pool=Object.keys(target.SHOP||{}).filter(k=>pack.pool==='all'||target.SHOP[k][5]===pack.pool);
   const shuffle=target.shuffle || (a=>a.sort(()=>Math.random()-.5));
-  const options=shuffle([...pool]).slice(0,4);
+  const options=shuffle([...pool]).slice(0,3);
   let html='<div class="summary tarot-shop">';
   html+=`<div class="pack-picker-header"><h3>${pack.name}</h3><p>Pick one upgrade to keep</p></div>`;
   html+='<div class="shop-items-row">';
