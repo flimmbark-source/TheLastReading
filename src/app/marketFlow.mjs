@@ -106,8 +106,19 @@ export function openRelicVisionShop(options,target = window){
   if(typeof target.showOverlay==='function')target.showOverlay(html);
 }
 
+function clearSpreadForMarket(target = window){
+  const state=stateOf(target);
+  if(!state||!Array.isArray(state.spread))return;
+  state.spread=Array(5).fill(null);
+  state.selected=null;
+  state.abilitySelect=null;
+  state.purgeSelect=null;
+  if(typeof target.render==='function')target.render();
+}
+
 export function openShop(target = window){
   const state=stateOf(target),persist=persistOf(target);
+  clearSpreadForMarket(target);
   if(!state.relicEarned){if(typeof target.openShopMain==='function')target.openShopMain();return;}
   if(state.pendingPool){persist.pool+=state.pendingPool;state.pendingPool=0;if(typeof target.render==='function')target.render();}
   const options=relicPool(4,target);
