@@ -181,10 +181,25 @@ function buyMarketPurchase(state, purchase) {
   }
 }
 
+function startAbilityAction(state, action) {
+  const rawAbility = action.ability ?? action.abilityId;
+  const baseAbility = rawAbility && typeof rawAbility === 'object'
+    ? { ...rawAbility }
+    : { id: rawAbility };
+  const abilityId = baseAbility.id ?? action.abilityId;
+  if (!abilityId) return state;
+  const sourceCardId = action.sourceCardId ?? baseAbility.sourceCardId ?? null;
+  return replaceRun(state, {
+    ability: { ...baseAbility, id: abilityId, sourceCardId },
+    sourceCardId,
+    busy: true,
+  });
+}
+
 function resolveAbilityAction(state, action) {
   const { run, persist } = state;
   const result = action.result || {};
-  const base = { ability: null, busy: false };
+  const base = { ability: null, sourceCardId: null, busy: false };
 
   switch (result.kind) {
     case 'draw': {
@@ -297,6 +312,7 @@ function startReading(state, deck) {
     discards: startingDiscards(persist),
     mulliganCharges: persist.upgrades.mulligan || 0,
     ability: null,
+    sourceCardId: null,
     busy: false,
     freeDiscardUsed: false,
     sightChargesUsed: 0,
@@ -336,7 +352,7 @@ export function reducer(state, action) {
     case ACTIONS.RESOLVE_ABILITY:
       return resolveAbilityAction(state, action);
     case ACTIONS.START_ABILITY:
-      return replaceRun(state, { ability: action.abilityId, sourceCardId: action.sourceCardId ?? null, busy: true });
+      return startAbilityAction(state, action);
     case ACTIONS.CANCEL_ABILITY:
       return replaceRun(state, { ability: null, sourceCardId: null, busy: false });
     case ACTIONS.SCORE_READING:
