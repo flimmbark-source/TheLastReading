@@ -9,6 +9,7 @@ import {
 import { THRESHOLDS } from '../data/thresholds.mjs';
 import { RELICS as RELICS_MODULE, RELIC_SPRITE } from '../data/relics.mjs';
 import { RESONATIONS, ARCHIVE_FRAGMENTS, ARCHIVE_ITEMS } from '../data/archiveFragments.mjs';
+import { SHOP, PACKS, SHOP_ICON, REFRESH_COSTS, shopCost } from '../data/legacyMarket.mjs';
 
 export function installDataGlobals(target) {
   // Direct matches
@@ -41,4 +42,15 @@ export function installDataGlobals(target) {
   target.RESONATIONS   = RESONATIONS;
   target.INV_FRAGMENTS = ARCHIVE_FRAGMENTS;
   target.INV_ITEMS     = ARCHIVE_ITEMS;
+
+  // Live legacy market data. These mirror the remaining inline SHOP/PACKS data
+  // and are installed so the inline block can be deleted later without changing
+  // runtime behavior.
+  target.SHOP = SHOP;
+  target.PACKS = PACKS;
+  target.SHOP_ICON = SHOP_ICON;
+  target._REFRESH_COSTS = REFRESH_COSTS;
+  target.shopCost = function legacyShopCost(key) {
+    return shopCost(key, target.persist);
+  };
 }
