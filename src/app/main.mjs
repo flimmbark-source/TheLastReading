@@ -3,10 +3,14 @@
 // globals the legacy markup/script still calls, and then boots the game.
 import { installLiveMirror } from './liveMirror.mjs';
 import { installDataGlobals } from './dataGlobals.mjs';
+import { installRuntimeState } from './runtimeState.mjs';
+import { installLegacyBridge } from './legacyBridge.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
 import { bootGame } from './boot.mjs';
 import { installMenuControls } from './menuControls.mjs';
+import { installResonationFlow } from './resonationFlow.mjs';
+import { installHintRuntime } from './hintRuntime.mjs';
 import { installAmbientEffects } from '../ui/ambientEffects.mjs';
 import { installHandSwipeScroll } from '../ui/gestureHand.mjs';
 import { installHandCardGestures } from '../ui/gestureCard.mjs';
@@ -17,6 +21,7 @@ import * as abilitySystem from '../systems/abilities.mjs';
 import * as shopSystem from '../systems/shop.mjs';
 import * as scoringSystem from '../systems/scoring.mjs';
 import * as hintsSystem from '../systems/hints.mjs';
+import * as resonationSystem from '../systems/resonations.mjs';
 import * as cardRenderer from '../ui/renderCard.mjs';
 import * as ghostRenderer from '../ui/renderGhost.mjs';
 import * as hintRenderer from '../ui/renderHints.mjs';
@@ -38,6 +43,7 @@ export function startApp(target = window) {
     spreadRenderer, handRenderer, tableRenderer, atticRenderer, effectsModule, tutorialModule,
     readingFlowModule, archivesModule);
 
+  installRuntimeState(target);
   installAtticFlow(target);
 
   installHandSwipeScroll(target);
@@ -50,6 +56,9 @@ export function startApp(target = window) {
   installMenuControls(target);
 
   installDataGlobals(target);
+  installLegacyBridge(target);
+  installResonationFlow(target);
+  installHintRuntime(target);
 
   try {
     installLiveMirror(target);
@@ -57,6 +66,7 @@ export function startApp(target = window) {
     target.tlrShop = shopSystem;
     target.tlrHints = hintsSystem;
     target.tlrScoring = scoringSystem;
+    target.tlrResonationSystem = resonationSystem;
     bootGame(target);
   } catch (err) {
     console.error('The Last Reading module boot failed', err);
