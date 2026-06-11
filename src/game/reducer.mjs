@@ -341,9 +341,8 @@ export function reducer(state, action) {
       return replaceRun(state, { ability: null, sourceCardId: null, busy: false });
     case ACTIONS.SCORE_READING:
       return scoreReading(state);
-    case ACTIONS.BUY_SHOP_ITEM:
-      return buyMarketItem(state, action.itemId);
     case ACTIONS.BUY_MARKET_ITEM:
+      if (action.itemId) return buyMarketItem(state, action.itemId);
       return buyMarketPurchase(state, action.purchase || {});
     case ACTIONS.LEAVE_MARKET:
       return leaveMarket(state);
