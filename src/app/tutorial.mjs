@@ -9,6 +9,7 @@ const TUT_KEY = 'tlr_tut_done';
 const TUT_PATTERN_KEY = 'tlr_tut_pattern';
 const TUT_READING_KEY = 'tlr_tut_reading_complete';
 const TUT_PURGE_KEY = 'tlr_tut_purge';
+const TUT_ARCHIVES_KEY = 'tlr_tut_archives_found';
 const INTRO_LAST_STEP = 6;
 
 export const TUT_STEP = Object.freeze({
@@ -25,6 +26,7 @@ export const TUT_STEP = Object.freeze({
   PATTERN_SCORING: 10,
   PURGE: 11,
   READING_COMPLETE: 12,
+  ARCHIVES: 13,
 });
 
 let tutStep = -1;
@@ -47,6 +49,7 @@ const TUT_STEPS = [
   {sel:'#scoringPullTab', arrow:'up', key:TUT_PATTERN_KEY, text:'Check <b>Scoring</b> to see if you can complete a pattern. Place the cards down to activate a pattern.'},
   {sel:'#purgeBtn', arrow:'up', key:TUT_PURGE_KEY, text:'Remove 3 cards from your hand to gain 1 Discard.'},
   {sel:'#spread', arrow:'up', key:TUT_READING_KEY, text:'One more card completes the reading.'},
+  {sel:'#invTab', arrow:'up', key:TUT_ARCHIVES_KEY, text:'The <b>Archives</b> hold items discovered among your relative\'s personal effects. Tap to open and investigate.'},
 ];
 
 function stepKey(step) {
@@ -73,7 +76,7 @@ function finishIntro() {
   tutHide();
 }
 
-function queueTip(step) {
+function queueTip(step, delay = 180) {
   if (tutStep >= 0 || queuedTipStep !== null || !canShowStep(step)) return;
   queuedTipStep = step;
   setTimeout(() => {
@@ -81,7 +84,7 @@ function queueTip(step) {
     queuedTipStep = null;
     if (next == null || tutStep >= 0 || !canShowStep(next)) return;
     tutShow(next);
-  }, 180);
+  }, delay);
 }
 
 export function tutSkip(){
@@ -102,6 +105,7 @@ export function replayTutorial(){
     TUT_PATTERN_KEY,
     TUT_READING_KEY,
     TUT_PURGE_KEY,
+    TUT_ARCHIVES_KEY,
   ].forEach(k=>localStorage.removeItem(k));
   tutDone=false;
   const p=document.getElementById('settingsPanel');if(p)p.classList.add('hidden');
@@ -192,6 +196,11 @@ export function maybeShowPurgeTutorial(){
   const btn=document.querySelector('#purgeBtn');
   if(!btn || btn.disabled)return;
   queueTip(TUT_STEP.PURGE);
+}
+
+export function maybeShowArchivesTutorial(){
+  if(!tutDone || tutStep>=0 || localStorage.getItem(TUT_ARCHIVES_KEY))return;
+  queueTip(TUT_STEP.ARCHIVES, 260);
 }
 
 function posTutTip(target,arrowDir){
