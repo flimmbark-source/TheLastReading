@@ -73,8 +73,8 @@ export function installMpGame(target = window) {
         <div class="mp-pills-band mp-pills-actions">
           <button class="sbtn sbtn-discard" id="mpDiscardBtn" type="button" disabled aria-label="Discard"></button>
           <button class="sbtn sbtn-purge"   id="mpPurgeBtn"   type="button" disabled aria-label="Remove"></button>
-          <div class="mp-action-panel" id="mpActionPanel"></div>
         </div>
+        <div class="mp-action-panel" id="mpActionPanel"></div>
       </div>
 
       <div class="mp-overlay mp-ov-hidden" id="mpOverlay">
