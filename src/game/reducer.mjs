@@ -336,7 +336,8 @@ function syncLegacySnapshot(state, snapshot) {
   });
 }
 
-function resetSession(state) {
+function resetSession(state, fresh = false) {
+  if (fresh) return createGameState();
   const keepUpgrades = { hand: state.persist.upgrades.hand || 0 };
   return createGameState({
     persist: {
@@ -500,7 +501,7 @@ export function reducer(state, action) {
         { totalScore: action.totalScore ?? state.persist.totalScore, obals: action.obals ?? state.persist.obals }
       );
     case ACTIONS.RESET_SESSION:
-      return resetSession(state);
+      return resetSession(state, !!action.fresh);
     default:
       return state;
   }
