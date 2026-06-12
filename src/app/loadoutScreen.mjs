@@ -33,8 +33,6 @@ export function installLoadoutScreen(target = window) {
   target.__tlrLoadoutInstalled = true;
 
   let profile = loadProfile(target.localStorage);
-  let inLobby = false;
-
   // --- Render helpers ---
 
   function renderPersonaGrid() {
@@ -75,53 +73,12 @@ export function installLoadoutScreen(target = window) {
     renderReady();
   }
 
-  function showLobby() {
-    inLobby = true;
-    const personas = allPersonas();
-    const persona = personas.find(p => p.id === profile.personaId);
-    const targetLabel = {
-      [SCORE_TARGETS.QUICK]: 'Quick — 100 pts',
-      [SCORE_TARGETS.STANDARD]: 'Standard — 200 pts',
-      [SCORE_TARGETS.LONG]: 'Long — 300 pts',
-    }[profile.scoreTarget] ?? `${profile.scoreTarget} pts`;
-
-    const screen = el('loadoutScreen');
-    if (!screen) return;
-    screen.innerHTML = `
-      <div class="loadout-inner" style="justify-content:center;min-height:100vh">
-        <div class="loadout-header">
-          <button class="loadout-back" onclick="tlrLoadoutLobbyBack()" type="button">← Back</button>
-          <h2 class="loadout-title">Ready</h2>
-        </div>
-        <div class="loadout-lobby">
-          <div class="loadout-lobby-profile">
-            <div class="loadout-lobby-profile-persona">${persona ? persona.name : '—'}</div>
-            <div class="loadout-lobby-profile-target">${targetLabel}</div>
-          </div>
-          <h3 class="loadout-lobby-title">Waiting for opponent</h3>
-          <p class="loadout-lobby-sub">Host and Connect are coming soon.<br>Your loadout has been saved.</p>
-        </div>
-      </div>
-    `;
-  }
-
-  function rebuildLoadout() {
-    inLobby = false;
-    const screen = el('loadoutScreen');
-    if (!screen) return;
-    screen.innerHTML = LOADOUT_HTML;
-    renderAll();
-  }
-
   // --- Public API ---
 
   target.tlrShowLoadout = function () {
     profile = loadProfile(target.localStorage);
-    const screen = el('loadoutScreen');
-    if (!screen) return;
-    if (inLobby) rebuildLoadout();
-    else renderAll();
-    screen.classList.remove('loadout-hidden');
+    renderAll();
+    el('loadoutScreen')?.classList.remove('loadout-hidden');
   };
 
   target.tlrHideLoadout = function () {
@@ -132,10 +89,6 @@ export function installLoadoutScreen(target = window) {
   target.tlrLoadoutBack = function () {
     target.tlrHideLoadout();
     if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu();
-  };
-
-  target.tlrLoadoutLobbyBack = function () {
-    rebuildLoadout();
   };
 
   target.tlrLoadoutSelectPersona = function (personaId) {
@@ -154,7 +107,11 @@ export function installLoadoutScreen(target = window) {
   target.tlrLoadoutReady = function () {
     if (!profile.personaId) return;
     saveProfile(target.localStorage, profile);
-    showLobby();
+    // Hide loadout, open matchmaking with the saved profile
+    target.tlrHideLoadout();
+    if (typeof target.tlrShowMatchmaking === 'function') {
+      target.tlrShowMatchmaking({ ...profile });
+    }
   };
 
   // Expose profile for use by the match init system

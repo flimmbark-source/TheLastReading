@@ -5,6 +5,7 @@ import { shuffleDeck } from '../systems/deck.mjs';
 import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
 import { MP_ABILITY_TYPES } from './interactionCards.mjs';
 import { getPersona } from './personas.mjs';
+import { mulberry32 } from './mpRng.mjs';
 
 // --- Helpers ---
 
@@ -195,7 +196,9 @@ export function mpReducer(state, action) {
   switch (action.type) {
 
     case MP_ACTIONS.MP_INIT: {
-      const rng = action.rng || Math.random;
+      // Prefer a seeded RNG derived from action.seed so both peers produce
+      // identical shuffles. Fall back to action.rng or Math.random for tests.
+      const rng = action.seed != null ? mulberry32(action.seed) : (action.rng || Math.random);
       const personas = action.personas ?? [null, null];
       let next = {
         ...createMatchState({ scoreTarget: action.scoreTarget ?? state.scoreTarget, rng, personas }),

@@ -21,6 +21,7 @@ import { installAudioControls } from './audio.mjs';
 import { bootGame } from './boot.mjs';
 import { installMainMenu } from './mainMenu.mjs';
 import { installLoadoutScreen } from './loadoutScreen.mjs';
+import { installMatchmakingScreen } from './matchmakingScreen.mjs';
 import { installMenuControls } from './menuControls.mjs';
 import { installResonationFlow } from './resonationFlow.mjs';
 import { installHintRuntime } from './hintRuntime.mjs';
@@ -195,6 +196,7 @@ export function startApp(target = window) {
   installMenuControls(target);
   installMainMenu(target);
   installLoadoutScreen(target);
+  installMatchmakingScreen(target);
   installStoreFrontTuning(target);
   installMarketTutorialTrigger(target);
 
