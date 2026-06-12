@@ -11,22 +11,27 @@
 /* ── Lift the existing SP hand + spread above the MP overlay ── */
 body.mp-game-active .handDock   { z-index: 9400 !important; }
 
-/* Reposition the player spread to sit tight above the hand dock */
+/* Reposition the player spread above the hand dock at normal spread size */
 body.mp-game-active .spread-wrap {
   position: fixed !important;
   top: auto !important;
-  bottom: 197px !important;
+  bottom: 212px !important;
   left: 0 !important; right: 0 !important;
-  height: 195px !important;
+  height: 241px !important;
   transform: none !important;
   z-index: 9400 !important;
   padding: 0 !important;
 }
-/* The spread itself: strip the 36px top padding and min-height so the
-   fanned cards sit tight — rotation/transform-origin stays intact */
+/* Keep the player spread at the same dimensions as the singleplayer table. */
 body.mp-game-active #spread {
-  padding: 0 6px !important;
-  min-height: 0 !important;
+  padding: 36px 6px 0 !important;
+  min-height: 205px !important;
+  align-items: flex-start !important;
+}
+body.mp-game-active #spread .slot {
+  flex: 0 0 130px !important;
+  width: 130px !important;
+  height: 195px !important;
 }
 
 /* Hide SP UI chrome that would bleed through */
@@ -126,9 +131,9 @@ body.mp-game-active #purgePrompt { display: none !important; }
 .mp-progress-fill.p1 { right: 0; background: linear-gradient(to left, rgba(120,100,180,.6), rgba(150,120,200,.85)); }
 .mp-target-label { font: 400 10px/1 system-ui,sans-serif; color: #4a3820; white-space: nowrap; }
 
-/* ── Middle section (fixed between the two spreads) ── */
+/* ── Middle section (fixed just above the player spread) ── */
 .mp-mid-wrap {
-  position: fixed; bottom: 401px; left: 0; right: 0; z-index: 9401;
+  position: fixed; bottom: 424px; left: 0; right: 0; z-index: 9401;
   display: flex; flex-direction: column; align-items: center; gap: 5px;
   padding: 0 14px; pointer-events: none;
 }
