@@ -241,11 +241,32 @@ export function installMatchmakingScreen(target = window) {
 
   // --- DataChannel messages (in-match) ---
 
+  function enterMatchView() {
+    hide('matchmakingScreen');
+    el('loadoutScreen')?.classList.add('loadout-hidden');
+    const mainMenu = el('mainMenu');
+    if (mainMenu) {
+      mainMenu.classList.add('mm-hidden');
+      mainMenu.setAttribute('aria-hidden', 'true');
+      if ('inert' in mainMenu) mainMenu.inert = true;
+      mainMenu.hidden = true;
+    }
+  }
+
   function handleDataMessage(msg) {
     if (msg.type === 'mp-action') {
+      const isMatchStart = msg.action?.type === MP_ACTIONS.MP_INIT;
+      const alreadyStarted = !!_matchState;
+
       // Apply action from peer to local match state
       _matchState = mpReducer(_matchState, msg.action);
-      target.tlrMpOnPeerAction?.(msg.action, _matchState);
+
+      if (isMatchStart && !alreadyStarted) {
+        enterMatchView();
+        target.tlrMpOnMatchStart?.(_matchState, { role: _role, peer: _peer });
+      } else {
+        target.tlrMpOnPeerAction?.(msg.action, _matchState);
+      }
     }
   }
 
@@ -276,6 +297,7 @@ export function installMatchmakingScreen(target = window) {
       personas,
     };
 
+    enterMatchView();
     dispatchMatchAction(initAction);
     target.tlrMpOnMatchStart?.(_matchState, { role: _role, peer: _peer });
   }
