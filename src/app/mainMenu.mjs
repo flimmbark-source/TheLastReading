@@ -42,6 +42,33 @@ export function installMainMenu(target = window) {
     syncContinueBtn();
   }
 
+  function forceSingleplayerTable() {
+    const doc = target.document;
+    if (!doc) return;
+
+    doc.body.classList.remove(
+      'mp-game-active',
+      'mode-attic',
+      'mode-to-attic',
+      'mode-to-table',
+      'mode-table-return',
+      'mode-return-hard-hide'
+    );
+    doc.body.classList.add('mode-reading');
+
+    const mp = doc.getElementById('mpGame');
+    if (mp) mp.classList.add('mp-hidden');
+
+    const loadout = doc.getElementById('loadoutScreen');
+    if (loadout) loadout.classList.add('loadout-hidden');
+
+    const matchmaking = doc.getElementById('matchmakingScreen');
+    if (matchmaking) matchmaking.classList.add('mm-screen-hidden');
+
+    const attic = doc.getElementById('atticScene');
+    if (attic) attic.setAttribute('aria-hidden', 'true');
+  }
+
   function syncContinueBtn() {
     const btn = target.document.getElementById('mainMenuContinue');
     if (!btn) return;
@@ -71,32 +98,36 @@ export function installMainMenu(target = window) {
     gameStarted = false;
   }
 
-  target.tlrShowMainMenu = show;
-
-  target.tlrMainMenuNewGame = function () {
-    hide();
-    startFresh();
-    if (typeof target.startReading === 'function') {
-      target.startReading();
-      if (!target.localStorage.getItem('tlr_tut_done') && typeof target.tutShow === 'function') {
-        target.setTimeout(() => target.tutShow(0), 400);
-      }
-    }
-    gameStarted = true;
-  };
-
-  target.tlrMainMenuContinue = function () {
-    hide();
-    if (!gameStarted) {
+  function startSingleplayer({ fresh = false } = {}) {
+    try {
+      if (fresh) startFresh();
+      forceSingleplayerTable();
       if (typeof target.startReading === 'function') {
-        target.startReading();
+        if (!gameStarted || fresh) target.startReading();
+        gameStarted = true;
+        forceSingleplayerTable();
+        hide();
         if (!target.localStorage.getItem('tlr_tut_done') && typeof target.tutShow === 'function') {
           target.setTimeout(() => target.tutShow(0), 400);
         }
-        gameStarted = true;
+      } else {
+        console.error('The Last Reading: startReading is not available from the main menu.');
+        show();
       }
+    } catch (err) {
+      console.error('The Last Reading: failed to start singleplayer from the main menu.', err);
+      show();
     }
-    // If gameStarted, we're just returning to the game already in progress — no action needed.
+  }
+
+  target.tlrShowMainMenu = show;
+
+  target.tlrMainMenuNewGame = function () {
+    startSingleplayer({ fresh: true });
+  };
+
+  target.tlrMainMenuContinue = function () {
+    startSingleplayer({ fresh: false });
   };
 
   target.tlrMainMenuMultiplayer = function () {
