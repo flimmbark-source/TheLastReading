@@ -19,9 +19,8 @@ const STORE_SCORING_COPY = Object.freeze({
   rank: { name: 'Rank of a Kind', desc: '+5 Chips / +0.25 Mult', icon: 'isp-scoring' },
   sequence: { name: 'Sequence', desc: '+5 Chips / +0.5 Mult', icon: 'isp-scoring' },
   court_chips: { name: 'Full Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin' },
+  royal_court_chips: { name: 'Royal Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin' },
   path_chips: { name: 'Path of the Magi', desc: '+15 Chips / +0.5 Mult', icon: 'isp-scoring' },
-  balanced_reading: { name: 'Major & Minor', desc: '+5 Chips / +0.25 Mult', icon: 'isp-scoring' },
-  elemental_harmony: { name: 'Elemental Harmony', desc: '+10 Chips / +0.5 Mult', icon: 'isp-scoring' },
 });
 
 const STORE_RELIC_COPY = Object.freeze({
@@ -98,10 +97,11 @@ function shuffleValues(values, target = window) {
   return copy.map(value => ({ value, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ value }) => value);
 }
 
+const STORE_SCORING_UPGRADES = Object.freeze(['rank', 'sequence', 'court_chips', 'royal_court_chips', 'path_chips']);
+
 function pickScoringUpgrades(count, target = window) {
   const shop = target.SHOP || {};
-  const patternKeys = Object.keys(shop).filter(key => shop[key][5] === 'pattern');
-  return shuffleValues(patternKeys, target).slice(0, count);
+  return shuffleValues(STORE_SCORING_UPGRADES, target).filter(key => shop[key]).slice(0, count);
 }
 
 function pickPacks(packIds, count, target = window) {

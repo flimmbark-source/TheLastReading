@@ -25,7 +25,8 @@ export const SHOP = Object.freeze({
   // ── Pattern Pack (pattern) ──
   rank:            ['Rank of a Kind',    'Three/Four of a Kind gain <span class="up-chips">+5 Chips</span> and <span class="up-mult">+0.25 Mult</span>',                      26,1.8, '⚜','pattern','rank_mult'],
   sequence:        ['Sequence',          'All Sequences gain <span class="up-chips">+5 Chips</span> and <span class="up-mult">+0.5 Mult</span>',                              30,1.85,'🌙','pattern','seq_mult'],
-  court_chips:     ['Full Court',        'Full &amp; Royal Court gain <span class="up-chips">+8 Chips</span> and <span class="up-mult">+0.25 Mult</span>',                    20,1.6, '👑','pattern','court_mult'],
+  court_chips:     ['Full Court',        'Full Court gains <span class="up-chips">+8 Chips</span> and <span class="up-mult">+0.25 Mult</span>',                          20,1.6, '👑','pattern','court_mult'],
+  royal_court_chips:['Royal Court',      'Royal Court gains <span class="up-chips">+8 Chips</span> and <span class="up-mult">+0.25 Mult</span>',                         20,1.6, '👑','pattern','royal_court_mult'],
   path_chips:      ['Path of the Magi',  '<span class="up-chips">+15 Chips</span> and <span class="up-mult">+0.5 Mult</span>',                                                30,1.9, '✨','pattern','path_mult'],
   balanced_reading:['Balanced Reading',  'Major &amp; Minor Arcana both present: <span class="up-chips">+5 Chips</span> and <span class="up-mult">+0.25 Mult</span>',           24,1.8, '🌙','pattern','balanced_reading_mult'],
   elemental_harmony:['Elemental Harmony','All 4 suits present: <span class="up-chips">+10 Chips</span> and <span class="up-mult">+0.5 Mult</span>',                            28,1.85,'⚜','pattern','elemental_harmony_mult'],
@@ -66,7 +67,7 @@ export const PACKS = Object.freeze({
 
 export const SHOP_ICON = Object.freeze({
   discards:'isp-disc',hand:'isp-draw',mulligan:'isp-reshuffle',lens_mastery:'isp-peek',offering:'isp-scoring',ritual_depth:'isp-kin',deep_current:'isp-draw',
-  omen:'isp-scoring',resonance:'isp-scoring',rank:'isp-scoring',sequence:'isp-scoring',court_chips:'isp-kin',path_chips:'isp-scoring',relicSlot:'isp-abilities',
+  omen:'isp-scoring',resonance:'isp-scoring',rank:'isp-scoring',sequence:'isp-scoring',court_chips:'isp-kin',royal_court_chips:'isp-kin',path_chips:'isp-scoring',relicSlot:'isp-abilities',
   minor_chips:'isp-scoring',major_chips:'isp-scoring',number_chips:'isp-scoring',cups_chips:'isp-scoring',wands_chips:'isp-scoring',swords_chips:'isp-scoring',pentacles_chips:'isp-scoring',
   flat_mult:'isp-scoring',major_mult:'isp-scoring',minor_mult:'isp-scoring',court_mult_base:'isp-kin',cups_mult:'isp-scoring',wands_mult:'isp-scoring',swords_mult:'isp-scoring',pentacles_mult:'isp-scoring',
   peek_plus:'isp-peek',sight_cost:'isp-peek',chosen:'isp-peek',

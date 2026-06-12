@@ -7,7 +7,7 @@ export function createInitialPersist(){
     pool:0,
     up:{
       discards:0,hand:0,mulligan:0,lens_mastery:0,offering:0,ritual_depth:0,deep_current:0,
-      omen:0,resonance:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,court_chips:0,court_mult:0,
+      omen:0,resonance:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,court_chips:0,court_mult:0,royal_court_chips:0,royal_court_mult:0,
       path_chips:0,path_mult:0,relicSlot:0,blessed_start:0,first_light:0,deep_reserve:0,
       nimble_fingers:0,quick_release:0,chosen:0,balanced_reading:0,balanced_reading_mult:0,
       elemental_harmony:0,elemental_harmony_mult:0,
