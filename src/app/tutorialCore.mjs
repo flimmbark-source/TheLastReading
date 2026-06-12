@@ -244,10 +244,10 @@ export function maybeShowMarketTutorial() {
 }
 
 export function maybeShowConstellationTutorial() {
-  if (!tutDone || hasPendingTip() || localStorage.getItem(TUT_CONSTELLATION_KEY)) return;
+  if (!tutDone || localStorage.getItem(TUT_CONSTELLATION_KEY)) return;
   const pill = document.querySelector('#constellationPill:not(.hidden)');
   if (!pill) return;
-  queueTip(TUT_STEP.CONSTELLATION, 500);
+  queueTip(TUT_STEP.CONSTELLATION, hasPendingTip() ? 650 : 500);
 }
 
 function posTutTip(target, arrowDir) {
