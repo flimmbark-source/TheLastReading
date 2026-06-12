@@ -118,9 +118,13 @@ function clearSpreadForMarket(target = window){
   const state=stateOf(target);
   if(!state||!Array.isArray(state.spread))return;
   state.spread=Array(5).fill(null);
+  state.hand=[];
+  state.discard=[];
   state.selected=null;
   state.abilitySelect=null;
   state.purgeSelect=null;
+  state.busy=false;
+  if(typeof target.snapCounter==='function')target.snapCounter(0);
   if(typeof target.render==='function')target.render();
 }
 

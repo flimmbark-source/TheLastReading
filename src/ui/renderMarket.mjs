@@ -164,6 +164,39 @@ function ensureStoreFrontStyles(target = window) {
   `;
 }
 
+function updateStoreReserveDisplay(target = window) {
+  const display = target.document && target.document.querySelector('.store-reserve-amount');
+  if (display) display.textContent = (persistOf(target).pool || 0) + display.innerHTML.match(/<span[^>]*>.*<\/span>/)?.[0] || '';
+  if (display) {
+    const amt = persistOf(target).pool || 0;
+    const coin = display.querySelector('.coin');
+    display.textContent = amt;
+    if (coin) display.appendChild(coin);
+  }
+}
+
+function markCardPurchased(slotIndex, target = window) {
+  const row = target.document && target.document.querySelector('.store-offer-row');
+  if (!row) return;
+  const cards = row.querySelectorAll('.store-card');
+  const card = cards[slotIndex];
+  if (!card) return;
+  card.style.transition = 'opacity 220ms ease-out';
+  card.style.opacity = '0';
+  setTimeout(() => {
+    card.innerHTML = '<div class="store-card-tag" style="opacity:.4">Purchased</div><div style="flex:1;display:flex;align-items:center;justify-content:center;color:rgba(200,160,80,.35);font-size:22px">✦</div>';
+    card.style.opacity = '1';
+    card.style.pointerEvents = 'none';
+    updateStoreReserveDisplay(target);
+    // also update refresh button
+    const rc = target._nextRefreshCost ? target._nextRefreshCost() : 5;
+    const refreshBtn = target.document.querySelector('.store-refresh');
+    if (refreshBtn) refreshBtn.disabled = (persistOf(target).pool || 0) < rc;
+    const refreshCost = target.document.querySelector('.store-refresh-cost');
+    if (refreshCost) refreshCost.textContent = `✦ ${rc}`;
+  }, 230);
+}
+
 function shuffleValues(values, target = window) {
   const copy = [...values];
   const shuffle = target.shuffle;
@@ -511,6 +544,7 @@ export function refreshStoreFront(target = window){
 
 export function buyStorePack(sectionKey,index,packId,cost,target = window){
   if(target._storeFrontOffers)target._storeFrontOffers.pack=[null];
+  markCardPurchased(1,target);
   if(typeof target.buyPack==='function')return target.buyPack(packId,cost);
   return false;
 }
@@ -525,7 +559,7 @@ export function buyStoreScoringUpgrade(index,upgradeKey,cost,target = window){
   if(upgraded!==true)return upgraded;
   if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.scoring))target._storeFrontOffers.scoring[index]=null;
   if(typeof target.render==='function')target.render();
-  if(typeof target.openShopMain==='function')target.openShopMain();
+  markCardPurchased(0,target);
   return true;
 }
 
@@ -548,7 +582,7 @@ export function buyStoreRelic(index,relicKey,cost,target = window){
   if(charged!==true)return charged;
   const acquired=typeof target.doAcquireRelic==='function'?target.doAcquireRelic(relicKey,()=>{
     if(target._storeFrontOffers)target._storeFrontOffers.relics=[];
-    if(typeof target.openShopMain==='function')target.openShopMain();
+    markCardPurchased(2,target);
   },target):false;
   return acquired;
 }
