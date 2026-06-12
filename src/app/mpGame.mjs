@@ -17,7 +17,8 @@ export function installMpGame(target = window) {
   let _myIndex    = 0;
   let _invokeCard = null;  // uid awaiting spread target (Banish/Seal)
   let _swapFirst  = null;  // null | -1 | slotIndex (Surgeon swap)
-  let _origPlaceCard = null;
+  let _origPlaceCard    = null;
+  let _origRenderSpread = null;
 
   const doc = target.document;
   function el(id) { return doc.getElementById(id); }
@@ -434,6 +435,22 @@ export function installMpGame(target = window) {
     }
   }
 
+  // ── Block SP renderSpread from overwriting MP slots ───────────────────────
+  function installRenderSpreadOverride() {
+    _origRenderSpread = target.renderSpread;
+    target.renderSpread = function () {
+      if (_state) return;
+      _origRenderSpread?.apply(target, arguments);
+    };
+  }
+
+  function restoreRenderSpread() {
+    if (_origRenderSpread !== null) {
+      target.renderSpread = _origRenderSpread;
+      _origRenderSpread = null;
+    }
+  }
+
   // ── Public API ────────────────────────────────────────────────────────────
   target.tlrMpOnMatchStart = function (state, { role }) {
     _state      = state;
@@ -444,6 +461,7 @@ export function installMpGame(target = window) {
     el('mpGame')?.classList.remove('mp-hidden');
     doc.body.classList.add('mp-game-active');
     installPlaceCardOverride();
+    installRenderSpreadOverride();
     render();
     scheduleAutoScore();
   };
@@ -503,6 +521,7 @@ export function installMpGame(target = window) {
     if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; }
     _state = null; _invokeCard = null; _swapFirst = null;
     restorePlaceCard();
+    restoreRenderSpread();
     doc.body.classList.remove('mp-game-active');
     el('mpGame')?.classList.add('mp-hidden');
     // Reset singleplayer spread so it re-inits on next SP game
