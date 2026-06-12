@@ -59,16 +59,16 @@ export function installMpGame(target = window) {
 
       <div class="mp-mid-wrap" id="mpMidWrap">
         <div class="mp-pills-band mp-pills-opp">
-          <div class="pill score-pill mp-pill-score">Score <b id="mpOppScore">0</b></div>
           <div class="pill reserve-pill mp-pill-disc">Discards <b id="mpOppDisc">0</b></div>
+          <div class="pill score-pill mp-pill-score">Score <b id="mpOppScore">0</b></div>
         </div>
         <div class="mp-pills-band mp-pills-mid">
           <div class="pill threshold-pill mp-pill-thresh">Threshold <b id="mpThresh">200</b></div>
           <button class="constellation-pill mp-constellation hidden" id="mpConstellation" type="button"></button>
         </div>
         <div class="mp-pills-band mp-pills-self">
-          <div class="pill score-pill mp-pill-score">Score <b id="mpMyScore">0</b></div>
           <div class="pill reserve-pill mp-pill-disc">Discards <b id="mpMyDisc">0</b></div>
+          <div class="pill score-pill mp-pill-score">Score <b id="mpMyScore">0</b></div>
         </div>
         <div class="mp-pills-band mp-pills-actions">
           <button class="sbtn sbtn-discard" id="mpDiscardBtn" type="button" disabled aria-label="Discard"></button>

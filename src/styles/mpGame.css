@@ -133,9 +133,9 @@ body.mp-game-active #purgePrompt { display: none !important; }
 }
 .mp-mid-wrap > * { pointer-events: auto; }
 
-/* Each band: score on left, discards on right */
+/* Each band: pills grouped together, centered */
 .mp-pills-band {
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
 }
 /* Override SP .pill sizing to be compact */
 .mp-pill-score {
