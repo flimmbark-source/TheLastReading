@@ -3,7 +3,7 @@
 // (src/systems/shop.mjs); purchase logic stays with the game flow.
 /* global state, persist, render, _nextRefreshCost, showOverlay, $, relicSlots, _relicRackKey, RELICS, _openRelicKey, RELIC_SPRITE */
 
-const STORE_ABILITY_PACKS = Object.freeze(['innate', 'restless', 'second_sight', 'thread', 'foundation', 'ritual']);
+const STORE_ABILITY_PACKS = Object.freeze(['innate', 'restless', 'second_sight', 'thread', 'foundation']);
 const RELIC_CACHE_PACK_ID = 'relic';
 const STORE_ASSET_PATH = './';
 const STORE_FADE_MS = 260;
@@ -12,7 +12,16 @@ const STORE_PACK_COPY = Object.freeze({
   innate: 'Starting resources.',
   restless: 'Draw and Discard.',
   second_sight: 'Ability reveals.',
-  thread: 'Ability reveals.',
+  thread: 'Relational abilities.',
+  foundation: 'Chip bonuses.',
+});
+
+const STORE_PACK_CALLOUT = Object.freeze({
+  foundation: { desc: 'Choose one chip bonus for your spread cards.', upgrades: ['Omen — all cards +1 Chip', 'Resonance — Majors +3 Chips', 'Suit bonuses — +1 Chip per matching card', 'Offering — +5 Reserve per reading'] },
+  innate:     { desc: 'Choose one starting-hand improvement.', upgrades: ['Wider Hand — +1 hand size', 'Deep Current — draw +1 per reading', 'Blessed Start — +0.25 Mult on entry', 'First Light — first placed card +3 Chips', 'Deep Reserve — held cards +2 Chips'] },
+  restless:   { desc: 'Choose one draw or discard enhancement.', upgrades: ['Extra Discard — +1 discard/reading', 'Mulligan — +1 mulligan charge', 'Nimble Fingers — draw after each discard', 'Quick Release — discards add +3 Chips', 'Ritual Depth — ability draws +1 extra'] },
+  second_sight:{ desc: 'Choose one ability or reveal upgrade.', upgrades: ['Lens Mastery — abilities reveal +1 extra', 'Deeper Peek — Peek shows +1 more', 'Sight Discount — sight abilities free once/reading', 'Chosen — ability-taken cards +5 Chips'] },
+  thread:     { desc: 'Choose one relational ability upgrade.', upgrades: ['Deeper Threads — Kin/Between/Neighbor reveal +1 more', 'Thread Bond — thread-taken cards +1 Chip each'] },
 });
 
 const STORE_SCORING_COPY = Object.freeze({
@@ -125,6 +134,10 @@ function ensureStoreFrontStyles(target = window) {
     .store-replace-card button{margin-top:8px}
     .store-relic-callout{z-index:10010;max-width:220px}
     .store-relic-callout .relic-callout-desc{font-size:12px;line-height:1.35}
+    .store-pack-callout{z-index:10010;max-width:240px}
+    .store-pack-callout .relic-callout-desc{font-size:12px;line-height:1.35;margin-bottom:6px}
+    .store-pack-callout-list{margin:0;padding:0 0 0 16px;list-style:disc}
+    .store-pack-callout-list li{font-size:11px;line-height:1.4;color:#c8b888;margin-bottom:2px}
 
     @media(prefers-reduced-motion:reduce){
       .store-dim{animation:none}
@@ -259,7 +272,7 @@ function renderPackCard(index, packId, target = window) {
   const desc = STORE_PACK_COPY[packId] || pack.desc || '';
   return `<div class="store-card ${ok ? '' : 'disabled'}">
     <div class="store-card-tag">Pack</div>
-    <div class="store-card-art"><span class="isp isp-108 ${pack.icon}"></span></div>
+    <button type="button" class="store-relic-art-btn" onclick="showStorePackCallout('${packId}',this);event.stopPropagation()" aria-label="Show ${escapeHtml(pack.name)} details"><div class="store-card-art" style="pointer-events:none"><span class="isp isp-108 ${pack.icon}"></span></div></button>
     <div class="store-card-name">${escapeHtml(pack.name)}</div>
     <div class="store-card-desc">${escapeHtml(desc)}</div>
     <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStorePack('pack',${index},'${packId}',${cost})">Open <span class="coin">✦</span> ${cost}</button>
@@ -297,10 +310,35 @@ function renderVesselCard(target = window) {
   </div>`;
 }
 
+export function showStorePackCallout(packId, anchor, target = window) {
+  const pack = (target.PACKS || {})[packId];
+  const info = STORE_PACK_CALLOUT[packId];
+  if (!pack || !info) return false;
+  target.document.querySelectorAll('.relic-callout,.store-relic-callout,.store-pack-callout').forEach(el => el.remove());
+  const callout = target.document.createElement('div');
+  callout.className = 'relic-callout store-pack-callout';
+  const upgradesList = info.upgrades.map(u => `<li>${escapeHtml(u)}</li>`).join('');
+  callout.innerHTML = `<div class="relic-callout-name">${escapeHtml(pack.name)}</div><div class="relic-callout-desc">${escapeHtml(info.desc)}</div><ul class="store-pack-callout-list">${upgradesList}</ul>`;
+  target.document.body.appendChild(callout);
+  const rect = anchor.getBoundingClientRect();
+  callout.style.top = `${rect.bottom + 6}px`;
+  callout.style.left = '0px';
+  target.requestAnimationFrame(() => {
+    const cw = callout.offsetWidth, ch = callout.offsetHeight, mg = 8;
+    let left = rect.left + rect.width / 2 - cw / 2;
+    left = Math.max(mg, Math.min(target.innerWidth - cw - mg, left));
+    let top = rect.bottom + 6;
+    if (top + ch > target.innerHeight - mg) top = Math.max(mg, rect.top - ch - 6);
+    callout.style.left = `${left}px`;
+    callout.style.top = `${top}px`;
+  });
+  return true;
+}
+
 export function showStoreRelicCallout(relicKey, anchor, target = window) {
   const relic = (target.RELICS || {})[relicKey];
   if (!relic) return false;
-  target.document.querySelectorAll('.relic-callout,.store-relic-callout').forEach(el => el.remove());
+  target.document.querySelectorAll('.relic-callout,.store-relic-callout,.store-pack-callout').forEach(el => el.remove());
   const style = typeof target.relicIconStyle === 'function' ? target.relicIconStyle(relicKey, 24) : '';
   const desc = relic.desc || relic.description || STORE_RELIC_COPY[relicKey] || '';
   const callout = target.document.createElement('div');
@@ -352,7 +390,7 @@ export function storeExitToNextReading(target = window) {
     return true;
   }
   if (shell.classList.contains('store-exiting')) return true;
-  target.document.querySelectorAll('.relic-callout,.store-relic-callout').forEach(el => el.remove());
+  target.document.querySelectorAll('.relic-callout,.store-relic-callout,.store-pack-callout').forEach(el => el.remove());
   const reduce = target.matchMedia && target.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduce) {
     shell.classList.add('store-exiting');

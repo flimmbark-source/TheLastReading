@@ -58,12 +58,12 @@ const TUT_STEPS = [
   {sel:'#purgeBtn', arrow:'up', key:TUT_PURGE_KEY, text:'Remove 3 cards from your hand to gain 1 Discard.'},
   {sel:'#spread', arrow:'up', key:TUT_READING_KEY, text:'One more card completes the reading.'},
   {sel:'#invTab', arrow:'up', key:TUT_ARCHIVES_KEY, text:'The <b>Archives</b> hold items discovered among your relative\'s personal effects. Tap to open and investigate.'},
-  {sel:'.store-reserve', arrow:'down', key:TUT_MARKET_KEY, text:'<b>Reserve</b><br>Your currency for upgrades in the Market.'},
-  {sel:'.store-section.scoring', arrow:'down', key:TUT_MARKET_KEY, text:'<b>Scoring</b><br>Buy pattern upgrades. Chips and Mult increase by the amount shown.'},
-  {sel:'.store-section.abilities', arrow:'down', key:TUT_MARKET_KEY, text:'<b>Draw &amp; Abilities</b><br>Open packs for hand, discard, draw, and ability upgrades.'},
-  {sel:'.store-section.relics', arrow:'up', key:TUT_MARKET_KEY, text:'<b>Relics</b><br>Buy a relic to add its rule to your relic row.'},
-  {sel:'.store-refresh', arrow:'up', key:TUT_MARKET_KEY, text:'<b>Refresh</b><br>Spend Reserve to replace the Market’s offers.'},
-  {sel:'.store-proceed', arrow:'up', key:TUT_MARKET_KEY, text:'<b>Next Reading</b><br>Leave the Market and start the next reading.'},
+  {sel:’.store-reserve-display’, arrow:’down’, key:TUT_MARKET_KEY, text:’<b>Reserve</b><br>Your currency for upgrades in the Market.’},
+  {sel:’.store-offer-row .store-card:nth-child(1)’, arrow:’down’, key:TUT_MARKET_KEY, text:’<b>Scoring</b><br>Buy pattern upgrades. Chips and Mult increase by the amount shown.’},
+  {sel:’.store-offer-row .store-card:nth-child(2)’, arrow:’down’, key:TUT_MARKET_KEY, text:’<b>Pack</b><br>Open a pack to choose a hand, discard, draw, or ability upgrade.’},
+  {sel:’.store-offer-row .store-card:nth-child(3)’, arrow:’up’, key:TUT_MARKET_KEY, text:’<b>Relic</b><br>Buy a relic to add its passive effect to your relic row.’},
+  {sel:’.store-refresh’, arrow:’up’, key:TUT_MARKET_KEY, text:’<b>Refresh</b><br>Spend Reserve to replace the Market\’s offers.’},
+  {sel:’.store-proceed’, arrow:’up’, key:TUT_MARKET_KEY, text:’<b>Next Reading</b><br>Leave the Market and start the next reading.’},
 ];
 
 const MARKET_TUT_STEPS = [
@@ -164,6 +164,8 @@ export function tutShow(step, options = {}){
   tip.classList.remove('show','tut-center');
   tip.style.cssText='';
   $('#tutText').innerHTML=s.text;
+  const tapPrompt = tip.querySelector('.tut-tap-prompt');
+  if(tapPrompt) tapPrompt.style.display = s.waitFor ? 'none' : '';
   if(s.center){
     tip.classList.add('show','tut-center');
   } else {
@@ -227,7 +229,7 @@ function hasPatternOpportunity() {
 
 export function maybeShowPatternTutorial(){
   if(!tutDone || tutStep>=0 || localStorage.getItem(TUT_PATTERN_KEY))return;
-  if(hasPatternOpportunity())queueTip(TUT_STEP.PATTERN_NOTICE);
+  if(hasPatternOpportunity())tutShow(TUT_STEP.PATTERN_NOTICE);
 }
 
 export function maybeShowReadingCompletionTutorial(){
