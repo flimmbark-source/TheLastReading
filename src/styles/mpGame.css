@@ -165,7 +165,38 @@ body.mp-game-active #purgePrompt { display: none !important; }
 .mp-pills-mid { gap: 10px; }
 
 /* Actions band: discard/purge buttons centered under the pills */
-.mp-pills-actions { gap: 10px; margin-top: 3px; }
+.mp-pills-actions { gap: 10px; margin-top: 3px; min-height: 38px; overflow: visible; }
+.mp-pills-actions .sbtn {
+  width: 94px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 10px !important;
+  overflow: visible !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(28,18,10,.78) !important;
+  border: 1px solid rgba(180,140,90,.38) !important;
+  box-shadow: 0 6px 16px rgba(0,0,0,.34) !important;
+  color: #d4b37a !important;
+  font: 800 10px/1 system-ui,sans-serif !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+}
+#mpDiscardBtn::before { content: 'Discard'; }
+#mpPurgeBtn::before { content: 'Purge'; }
+.mp-pills-actions .sbtn:not(:disabled),
+.mp-pills-actions .sbtn.mp-active-action {
+  cursor: pointer !important;
+  color: #f0d58a !important;
+  border-color: rgba(220,176,92,.68) !important;
+  background: rgba(70,44,18,.86) !important;
+}
+.mp-pills-actions .sbtn:disabled {
+  opacity: .38 !important;
+  cursor: default !important;
+}
 
 /* Action panel: contextual hint/buttons, kept subtle */
 .mp-action-panel {
