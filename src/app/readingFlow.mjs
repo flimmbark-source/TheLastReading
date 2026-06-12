@@ -53,7 +53,7 @@ export function startReading(){
   window.tlrStore.dispatch({type:window.tlrActions.START_READING,deck:shuffle(buildDeck())});
   const _st=window.tlrStore.getState(),_run=_st.run;
   state.deck=_run.deck.slice();state.hand=_run.hand.slice();state.discard=[];
-  state.spread=_run.spread.slice();state.purgeSelect=null;
+  state.spread=_run.spread.slice();state.purgeSelect=null;state.abilitySelect=null;state.selected=null;
   state.discards=_run.discards;state.mullCharges=_run.mulliganCharges;
   state.busy=false;state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];
   state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
@@ -73,7 +73,7 @@ export function continueSet(){
   window.tlrStore.dispatch({type:window.tlrActions.START_NEXT_SET});
   const _run=window.tlrStore.getState().run;
   state.deck=_run.deck.slice();state.hand=_run.hand.slice();state.discard=_run.discard.slice();
-  state.spread=_run.spread.slice();state.purgeSelect=null;state.selected=null;
+  state.spread=_run.spread.slice();state.purgeSelect=null;state.abilitySelect=null;state.selected=null;
   state.discards=_run.discards;state.mullCharges=_run.mulliganCharges;
   state.busy=false;state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
   state.resonationBonus={chips:0,mult:0};
