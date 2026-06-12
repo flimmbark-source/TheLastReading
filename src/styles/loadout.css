@@ -38,13 +38,13 @@
 .loadout-empty{margin:0;color:#8a7551;text-align:center;font:400 12px/1.4 system-ui,sans-serif}
 
 /* Wide description panel */
-.loadout-description-section{flex:0 0 auto;width:100%;margin-top:0}
+.loadout-description-section{flex:0 0 auto;width:100%;margin-top:auto}
 .loadout-persona-desc-box{width:100%;box-sizing:border-box;padding:16px 18px;background:linear-gradient(165deg,rgba(25,16,10,.94),rgba(10,7,5,.96));border:1px solid rgba(180,140,70,.42);border-radius:10px;box-shadow:0 7px 18px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,217,120,.05)}
 .loadout-desc-heading{font:800 11px/1 system-ui,sans-serif;color:#d4af6a;letter-spacing:.16em;text-transform:uppercase;margin-bottom:8px;text-align:center}
 .loadout-desc-text{font:500 14px/1.45 system-ui,sans-serif;color:#d8bf86;margin:0;text-align:left;text-wrap:pretty}
 
 /* Score target row */
-.loadout-match-section{margin-top:auto}
+.loadout-match-section{margin-top:0}
 .loadout-targets{display:flex;gap:10px;flex-wrap:wrap}
 .loadout-target-btn{flex:1;min-width:90px;height:62px;padding:0 10px;background:url(../../pill_dark_medium.png) center/100% 100% no-repeat;border:none;border-radius:0;color:#b09060;font:600 12px/1 Georgia,serif;cursor:pointer;transition:transform .12s,filter .15s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
 .loadout-target-btn span{font:700 18px/1 Georgia,serif;color:#ddc98a}
@@ -86,10 +86,11 @@
   .loadout-persona-check{top:8px;right:8px;width:14px;height:14px;font-size:8px;border-width:1px}
   .loadout-persona-dots{margin-top:6px;gap:5px}
   .loadout-persona-dot{width:5px;height:5px}
+  .loadout-description-section{margin-top:auto}
   .loadout-persona-desc-box{padding:12px 13px;border-radius:9px}
   .loadout-desc-heading{font-size:9px;margin-bottom:6px;letter-spacing:.14em}
   .loadout-desc-text{font-size:13px;line-height:1.36;color:#e1ca92}
-  .loadout-match-section{margin-top:auto}
+  .loadout-match-section{margin-top:0}
   .loadout-targets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;flex-wrap:nowrap}
   .loadout-target-btn{min-width:0;height:31px;padding:0 5px;font-size:8.5px;gap:1px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.45))}
   .loadout-target-btn span{font-size:12px}
@@ -125,6 +126,7 @@
   .loadout-persona-name{font-size:16px}
   .loadout-persona-tagline{font-size:8px;line-height:1.15}
   .loadout-persona-dots{display:none}
+  .loadout-description-section{margin-top:auto}
   .loadout-persona-desc-box{padding:9px 11px}
   .loadout-desc-heading{display:none}
   .loadout-desc-text{font-size:11.6px;line-height:1.27}
