@@ -19,15 +19,11 @@ body.mp-game-active .spread-wrap {
   z-index: 9400 !important;
   padding: 0 !important;
 }
-/* The spread itself: flat row, no fan rotation, tight above the hand */
+/* The spread itself: strip the 36px top padding and min-height so the
+   fanned cards sit tight — rotation/transform-origin stays intact */
 body.mp-game-active #spread {
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
+  padding: 0 6px !important;
   min-height: 0 !important;
-}
-body.mp-game-active #spread .slot {
-  transform: none !important;
-  transform-origin: center !important;
 }
 
 /* Hide SP UI chrome that would bleed through */
