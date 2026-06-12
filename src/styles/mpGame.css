@@ -14,8 +14,11 @@ body.mp-game-active .handDock   { z-index: 9400 !important; }
 /* Reposition the player spread to sit tight above the hand dock */
 body.mp-game-active .spread-wrap {
   position: fixed !important;
+  top: auto !important;
   bottom: 197px !important;
   left: 0 !important; right: 0 !important;
+  height: 195px !important;
+  transform: none !important;
   z-index: 9400 !important;
   padding: 0 !important;
 }
@@ -124,7 +127,7 @@ body.mp-game-active #purgePrompt { display: none !important; }
 
 /* ── My player row + action panel float above spread ── */
 .mp-self-row-wrap {
-  position: fixed; bottom: 400px; left: 0; right: 0; z-index: 9401;
+  position: fixed; bottom: 325px; left: 0; right: 0; z-index: 9401;
   display: flex; flex-direction: column; pointer-events: none;
 }
 .mp-self-row-wrap > * { pointer-events: auto; }
