@@ -58,15 +58,23 @@ export function installMpGame(target = window) {
       </div>
 
       <div class="mp-mid-wrap" id="mpMidWrap">
-        <div class="mp-pills-row" id="mpPillsRow"></div>
-        <div class="mp-progress-row">
-          <div class="mp-progress-bar">
-            <div class="mp-progress-fill p0" id="mpFillP0" style="width:0%"></div>
-            <div class="mp-progress-fill p1" id="mpFillP1" style="width:0%"></div>
-          </div>
-          <span class="mp-target-label" id="mpTargetLabel"></span>
+        <div class="mp-pills-band mp-pills-opp">
+          <div class="pill score-pill mp-pill-score">Score <b id="mpOppScore">0</b></div>
+          <div class="pill reserve-pill mp-pill-disc">Discards <b id="mpOppDisc">0</b></div>
         </div>
-        <div class="mp-action-panel" id="mpActionPanel"></div>
+        <div class="mp-pills-band mp-pills-mid">
+          <div class="pill threshold-pill mp-pill-thresh">Threshold <b id="mpThresh">200</b></div>
+          <button class="constellation-pill mp-constellation hidden" id="mpConstellation" type="button"></button>
+        </div>
+        <div class="mp-pills-band mp-pills-self">
+          <div class="pill score-pill mp-pill-score">Score <b id="mpMyScore">0</b></div>
+          <div class="pill reserve-pill mp-pill-disc">Discards <b id="mpMyDisc">0</b></div>
+        </div>
+        <div class="mp-pills-band mp-pills-actions">
+          <button class="sbtn sbtn-discard" id="mpDiscardBtn" type="button" disabled aria-label="Discard"></button>
+          <button class="sbtn sbtn-purge"   id="mpPurgeBtn"   type="button" disabled aria-label="Remove"></button>
+          <div class="mp-action-panel" id="mpActionPanel"></div>
+        </div>
       </div>
 
       <div class="mp-overlay mp-ov-hidden" id="mpOverlay">
@@ -286,31 +294,16 @@ export function installMpGame(target = window) {
     }
   }
 
-  // ── Middle pills (scores + discards) ────────────────────────────────────
+  // ── Middle pills ─────────────────────────────────────────────────────────
   function renderPills(s, my) {
-    const row = el('mpPillsRow');
-    if (!row) return;
     const opp = 1 - my;
-    const mp = s.players[my],  op = s.players[opp];
-    const myName  = personaOf(s, my)?.name  ?? mp?.persona ?? '?';
-    const oppName = personaOf(s, opp)?.name ?? op?.persona ?? '?';
-    const myScore  = mp?.totalScore ?? 0;
-    const oppScore = op?.totalScore ?? 0;
-    const myDisc   = mp?.discards   ?? 0;
-    const tgt      = s.scoreTarget  ?? 200;
-    let myBadge = '';
-    if (mp?.swapAvailable) myBadge = `<span class="mp-badge mp-badge-swap">Swap</span>`;
-    row.innerHTML = `
-      <div class="mp-pill-group">
-        <div class="pill score-pill mp-score-pill"><span class="mp-pill-label">${esc(myName)}</span> <b>${myScore}</b></div>
-        <div class="pill reserve-pill mp-disc-pill">Discards <b>${myDisc}</b></div>
-      </div>
-      <div class="mp-pill-vs">
-        <span class="mp-pill-target">/ ${tgt}</span>
-      </div>
-      <div class="mp-pill-group mp-pill-group-opp">
-        <div class="pill score-pill mp-score-pill mp-score-pill-opp"><span class="mp-pill-label">${esc(oppName)}</span> <b>${oppScore}</b></div>
-      </div>`;
+    const mp  = s.players[my], op = s.players[opp];
+    const e = (id, val) => { const n = el(id); if (n) n.textContent = val; };
+    e('mpOppScore', op?.totalScore  ?? 0);
+    e('mpOppDisc',  op?.discards    ?? 0);
+    e('mpMyScore',  mp?.totalScore  ?? 0);
+    e('mpMyDisc',   mp?.discards    ?? 0);
+    e('mpThresh',   s.scoreTarget   ?? 200);
   }
 
   // ── Progress bar ─────────────────────────────────────────────────────────
