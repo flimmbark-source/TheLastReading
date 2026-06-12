@@ -1,8 +1,10 @@
 import { MP_ACTIONS } from './mpActions.mjs';
-import { MP_PHASES, MP_HAND_SIZE, MP_SPREAD_SIZE, createMatchState } from './mpState.mjs';
+import { MP_PHASES, MP_SPREAD_SIZE, createMatchState, startingDiscardsForPersona, applyRoundStartPassives, handSizeForPersona } from './mpState.mjs';
 import { computeScore } from '../systems/scoring.mjs';
 import { shuffleDeck } from '../systems/deck.mjs';
 import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
+import { MP_ABILITY_TYPES } from './interactionCards.mjs';
+import { getPersona } from './personas.mjs';
 
 // --- Helpers ---
 
@@ -45,43 +47,116 @@ function drawCards(player, count) {
   return { ...player, deck, discard, hand };
 }
 
-// Draw hand back up to MP_HAND_SIZE.
+// Draw hand back up to the player's persona-adjusted hand size.
 function drawToHandSize(player) {
-  const needed = MP_HAND_SIZE - player.hand.length;
+  const target = handSizeForPersona(player.persona);
+  const needed = target - player.hand.length;
   return needed > 0 ? drawCards(player, needed) : player;
 }
 
-// Apply an Invoke: remove the card from hand, spend a discard, apply ability effect.
-// Returns updated player or null on validation failure.
-function applyInvoke(player, cardUid) {
+// Apply a standard singleplayer-style ability (DRAW etc.).
+// Returns updated player state.
+function applyStandardAbility(player, ability) {
+  if (ability?.type === ABILITY_TYPES.DRAW) {
+    return drawCards(player, ability.count ?? 1);
+  }
+  // All other standard ability types need targeting/selection and are stubbed for now.
+  return player;
+}
+
+// Apply an MP interaction ability. Returns { nextState } or null on validation failure.
+function applyInteractionAbility(state, playerIndex, card, target) {
+  const { abilityType } = card;
+
+  if (abilityType === MP_ABILITY_TYPES.MP_BANISH) {
+    if (!target) return { error: 'Banish requires a target.' };
+    const { playerIndex: targetPlayerIdx, slotIndex: targetSlot } = target;
+
+    if (targetPlayerIdx === playerIndex) return { error: 'Cannot Banish your own spread.' };
+    const targetPlayer = state.players[targetPlayerIdx];
+    if (!targetPlayer) return { error: 'Invalid target player.' };
+    if (targetSlot < 0 || targetSlot >= MP_SPREAD_SIZE) return { error: 'Invalid target slot.' };
+    if (targetPlayer.spread[targetSlot] === null) return { error: 'Target slot is empty.' };
+
+    // Anchor: protect the first-placed slot
+    if (targetPlayer.anchoredSlotIndex === targetSlot) {
+      return { error: 'That card is anchored and cannot be removed.' };
+    }
+
+    const removedCard = targetPlayer.spread[targetSlot];
+    const newSpread = targetPlayer.spread.map((c, i) => i === targetSlot ? null : c);
+    // Removed card goes to the target player's discard
+    const newDiscard = [...targetPlayer.discard, removedCard];
+    const nextState = updatePlayer(state, targetPlayerIdx, { spread: newSpread, discard: newDiscard });
+    return { nextState };
+  }
+
+  if (abilityType === MP_ABILITY_TYPES.MP_SEAL) {
+    if (!target) return { error: 'Seal requires a target.' };
+    const { playerIndex: targetPlayerIdx, slotIndex: targetSlot } = target;
+
+    if (targetPlayerIdx === playerIndex) return { error: 'Cannot Seal your own spread.' };
+    const targetPlayer = state.players[targetPlayerIdx];
+    if (!targetPlayer) return { error: 'Invalid target player.' };
+    if (targetSlot < 0 || targetSlot >= MP_SPREAD_SIZE) return { error: 'Invalid target slot.' };
+
+    const targetCard = targetPlayer.spread[targetSlot];
+    if (!targetCard) return { error: 'Target slot is empty.' };
+
+    // Anchor: protect the first-placed slot
+    if (targetPlayer.anchoredSlotIndex === targetSlot) {
+      return { error: 'That card is anchored and cannot be silenced.' };
+    }
+
+    const silenced = [...targetPlayer.silencedCardUids, targetCard.uid];
+    const nextState = updatePlayer(state, targetPlayerIdx, { silencedCardUids: silenced });
+    return { nextState };
+  }
+
+  return { error: 'Unknown interaction ability: ' + abilityType };
+}
+
+// Apply an Invoke: remove card from hand, spend a discard, apply ability.
+// Returns { player, interactionResult } or { error }.
+function applyInvoke(state, playerIndex, cardUid, target) {
+  const player = state.players[playerIndex];
   const cardIndex = player.hand.findIndex(c => c.uid === cardUid);
-  if (cardIndex < 0) return null;
-  if (player.discards <= 0) return null;
+  if (cardIndex < 0) return { error: 'Card not in hand.' };
+  if (player.discards <= 0) return { error: 'No discards remaining.' };
 
   const card = player.hand[cardIndex];
   const hand = player.hand.filter((_, i) => i !== cardIndex);
   const discard = [...player.discard, card];
-  let updated = { ...player, hand, discard, discards: player.discards - 1 };
+  let updatedPlayer = { ...player, hand, discard, discards: player.discards - 1 };
 
-  const ability = card.ability ? getAbility(card.ability) : null;
-  if (ability?.type === ABILITY_TYPES.DRAW) {
-    updated = drawCards(updated, ability.count ?? 1);
+  // Interaction card (Banish, Seal)?
+  if (card.abilityType) {
+    const result = applyInteractionAbility(
+      updatePlayer(state, playerIndex, updatedPlayer),
+      playerIndex,
+      card,
+      target,
+    );
+    if (result.error) return { error: result.error };
+    return { state: result.nextState };
   }
-  // PEEK, SEARCH, NEIGHBOR, KIN, MIRROR, BETWEEN, WORLD — these need targeting
-  // and will be handled by a future MP_RESOLVE_ABILITY action. For now the discard
-  // is spent and the card is discarded; no secondary effect fires.
 
-  return updated;
+  // Standard singleplayer-style ability
+  const ability = card.ability ? getAbility(card.ability) : null;
+  updatedPlayer = applyStandardAbility(updatedPlayer, ability);
+  return { player: updatedPlayer };
 }
 
-// Score a player's spread using the base scoring system (no singleplayer upgrades).
-function scoreSpread(spread) {
-  const cards = spread.filter(Boolean);
+// Score a player's spread, excluding silenced cards.
+function scoreSpread(player) {
+  const cards = player.spread.filter(
+    c => c !== null && !player.silencedCardUids.includes(c.uid)
+  );
   if (!cards.length) return 0;
   return computeScore(cards, { skipFlatBonuses: true, skipRelics: true }).finalScore;
 }
 
-// After scoring, determine the winner (or null if match continues).
+// After scoring, determine the winner (or null if the match continues).
 function resolveVictory(state) {
   const [p0, p1] = state.players;
   if (p0.totalScore < state.scoreTarget && p1.totalScore < state.scoreTarget) return null;
@@ -92,24 +167,22 @@ function resolveVictory(state) {
 // --- Turn advance ---
 
 // After a player's action, advance the turn or phase.
-// `playerIndex` = who just acted, `filledSpread` = whether their spread is now full.
-function advanceTurn(state, playerIndex, filledSpread) {
+// `playerIndex` = who just acted.
+// `filledSpread` = whether their spread is now full.
+// `isBonusConsumed` = whether a Gambit bonus action was just consumed (so don't check again).
+function advanceTurn(state, playerIndex, filledSpread, isBonusConsumed = false) {
   if (state.phase === MP_PHASES.FINAL_TURN) {
-    // Final turn taken — move to scoring.
     return { ...state, phase: MP_PHASES.SCORING };
   }
 
   if (filledSpread) {
-    // This player filled their spread. The other player gets one final turn.
     const other = otherPlayerIndex(playerIndex);
-    // If the other player's spread is also full, go straight to scoring.
     if (spreadFull(state.players[other].spread)) {
       return { ...state, phase: MP_PHASES.SCORING };
     }
     return { ...state, phase: MP_PHASES.FINAL_TURN, finalTurnForIndex: other, activePlayerIndex: other };
   }
 
-  // Normal turn pass.
   return { ...state, activePlayerIndex: otherPlayerIndex(playerIndex) };
 }
 
@@ -123,11 +196,20 @@ export function mpReducer(state, action) {
 
     case MP_ACTIONS.MP_INIT: {
       const rng = action.rng || Math.random;
-      return {
-        ...createMatchState({ scoreTarget: action.scoreTarget ?? state.scoreTarget, rng }),
+      const personas = action.personas ?? [null, null];
+      let next = {
+        ...createMatchState({ scoreTarget: action.scoreTarget ?? state.scoreTarget, rng, personas }),
         phase: MP_PHASES.PLACEMENT,
         round: 1,
       };
+      // Apply round-start persona passives for round 1
+      let uid = next.nextInjectedUid;
+      for (let i = 0; i < 2; i++) {
+        const result = applyRoundStartPassives(next.players[i], uid);
+        next = updatePlayer(next, i, result.player);
+        uid = result.nextUid;
+      }
+      return { ...next, nextInjectedUid: uid };
     }
 
     case MP_ACTIONS.MP_PLACE_CARD: {
@@ -153,26 +235,74 @@ export function mpReducer(state, action) {
       const card = player.hand[cardIdx];
       const hand = player.hand.filter((_, i) => i !== cardIdx);
       const spread = player.spread.map((s, i) => i === slotIndex ? card : s);
-      let next = updatePlayer(state, playerIndex, { hand, spread });
 
+      // Anchor: record the first placed card's slot
+      const wasEmpty = player.spread.every(s => s === null);
+      const anchoredSlotIndex =
+        wasEmpty && getPersona(player.persona)?.passives?.anchoredFirstCard
+          ? slotIndex
+          : player.anchoredSlotIndex;
+
+      let next = updatePlayer(state, playerIndex, { hand, spread, anchoredSlotIndex });
       return advanceTurn(next, playerIndex, spreadFull(spread));
     }
 
     case MP_ACTIONS.MP_INVOKE_ABILITY: {
-      const { playerIndex, cardUid } = action;
+      const { playerIndex, cardUid, target } = action;
       if (state.phase !== MP_PHASES.PLACEMENT && state.phase !== MP_PHASES.FINAL_TURN) {
         return err(state, 'Cannot invoke in phase: ' + state.phase);
       }
       if (playerIndex !== state.activePlayerIndex) {
         return err(state, 'Not your turn.');
       }
-      const player = state.players[playerIndex];
-      const updated = applyInvoke(player, cardUid);
-      if (!updated) {
-        return err(state, 'Cannot invoke: card not in hand or no discards remaining.');
+
+      const result = applyInvoke(state, playerIndex, cardUid, target);
+      if (result.error) return err(state, result.error);
+
+      // result.state is set when an interaction ability ran (it already has all player updates)
+      // result.player is set when a standard ability ran (only the acting player changed)
+      let next = result.state ?? updatePlayer(state, playerIndex, result.player);
+
+      // Gambit: if bonus action is available, spend it and keep the turn.
+      const actingPlayer = next.players[playerIndex];
+      if (actingPlayer.bonusActionAvailable) {
+        next = updatePlayer(next, playerIndex, { bonusActionAvailable: false });
+        // Stay on this player's turn (don't call advanceTurn).
+        return next;
       }
-      let next = updatePlayer(state, playerIndex, updated);
+
       return advanceTurn(next, playerIndex, false);
+    }
+
+    case MP_ACTIONS.MP_SWAP_SPREAD: {
+      const { playerIndex, slotA, slotB } = action;
+      if (state.phase !== MP_PHASES.PLACEMENT && state.phase !== MP_PHASES.FINAL_TURN) {
+        return err(state, 'Cannot swap in phase: ' + state.phase);
+      }
+      if (playerIndex !== state.activePlayerIndex) {
+        return err(state, 'Not your turn.');
+      }
+      const player = state.players[playerIndex];
+      if (!player.swapAvailable) {
+        return err(state, 'No swap available. Surgeon persona required once per round.');
+      }
+      if (slotA < 0 || slotA >= MP_SPREAD_SIZE || slotB < 0 || slotB >= MP_SPREAD_SIZE) {
+        return err(state, 'Invalid slot index for swap.');
+      }
+      if (slotA === slotB) {
+        return err(state, 'Cannot swap a slot with itself.');
+      }
+
+      const spread = [...player.spread];
+      [spread[slotA], spread[slotB]] = [spread[slotB], spread[slotA]];
+
+      // If the anchored slot was swapped, update its index
+      let { anchoredSlotIndex } = player;
+      if (anchoredSlotIndex === slotA) anchoredSlotIndex = slotB;
+      else if (anchoredSlotIndex === slotB) anchoredSlotIndex = slotA;
+
+      // Free action: does NOT advance the turn
+      return updatePlayer(state, playerIndex, { spread, anchoredSlotIndex, swapAvailable: false });
     }
 
     case MP_ACTIONS.MP_SCORE_ROUND: {
@@ -180,8 +310,8 @@ export function mpReducer(state, action) {
         return err(state, 'Cannot score in phase: ' + state.phase);
       }
 
-      const p0Score = scoreSpread(state.players[0].spread);
-      const p1Score = scoreSpread(state.players[1].spread);
+      const p0Score = scoreSpread(state.players[0]);
+      const p1Score = scoreSpread(state.players[1]);
 
       let next = updatePlayer(state, 0, {
         roundScore: p0Score,
@@ -213,22 +343,38 @@ export function mpReducer(state, action) {
         return err(state, 'Cannot start a new round in phase: ' + state.phase);
       }
 
-      // Clear spreads; return spread cards to discard, then draw back up.
       let next = state;
+      let uid = state.nextInjectedUid;
+
       for (let i = 0; i < 2; i++) {
         const p = next.players[i];
-        const discard = [...p.discard, ...p.spread.filter(Boolean)];
+        // Interaction cards don't persist between rounds — return them (and spread cards) to discard.
+        const spreadCards = p.spread.filter(Boolean);
+        const handInteraction = p.hand.filter(c => c.type === 'interaction');
+        const handNormal = p.hand.filter(c => c.type !== 'interaction');
+        const discard = [...p.discard, ...spreadCards, ...handInteraction];
+
         const resetPlayer = {
           ...p,
+          hand: handNormal,
           spread: Array(MP_SPREAD_SIZE).fill(null),
           discard,
-          discards: 3,
+          discards: startingDiscardsForPersona(p.persona),
           roundScore: 0,
+          anchoredSlotIndex: null,
+          silencedCardUids: [],
+          bonusActionAvailable: false,
+          swapAvailable: false,
         };
-        next = updatePlayer(next, i, drawToHandSize(resetPlayer));
+        // Draw back up to persona hand size, then inject round-start cards (e.g. Cleaner's Banish)
+        const target = handSizeForPersona(p.persona);
+        const needed = target - resetPlayer.hand.length;
+        const filled = needed > 0 ? drawCards(resetPlayer, needed) : resetPlayer;
+        const passiveResult = applyRoundStartPassives(filled, uid);
+        next = updatePlayer(next, i, passiveResult.player);
+        uid = passiveResult.nextUid;
       }
 
-      // Alternate who goes first each round.
       const firstPlayer = (state.round % 2 === 0) ? 0 : 1;
 
       return {
@@ -237,6 +383,7 @@ export function mpReducer(state, action) {
         round: state.round + 1,
         activePlayerIndex: firstPlayer,
         finalTurnForIndex: null,
+        nextInjectedUid: uid,
       };
     }
 

@@ -1,4 +1,6 @@
 import { buildDeck, shuffleDeck } from '../systems/deck.mjs';
+import { getPersona } from './personas.mjs';
+import { makeInteractionCard } from './interactionCards.mjs';
 
 export const MP_PHASES = Object.freeze({
   IDLE: 'idle',
@@ -20,7 +22,7 @@ export const MP_HAND_SIZE = 7;
 export const MP_STARTING_DISCARDS = 3;
 
 // UIDs for player 0 are 0–77, player 1 are 1000–1077.
-// This keeps cards distinguishable across both spreads/hands.
+// Injected interaction cards use 9000+ (via nextInjectedUid counter in match state).
 const UID_OFFSETS = [0, 1000];
 
 export function buildPlayerDeck(playerIndex, rng = Math.random) {
@@ -33,23 +35,42 @@ function drawHand(deck, handSize) {
   return { hand: deck.slice(0, handSize), deck: deck.slice(handSize) };
 }
 
-export function createPlayerState(playerIndex, rng = Math.random) {
+// Compute the hand size and starting discards for a player given their persona.
+export function handSizeForPersona(personaId) {
+  const persona = getPersona(personaId);
+  return MP_HAND_SIZE + (persona?.passives?.handSizeBonus ?? 0);
+}
+
+export function startingDiscardsForPersona(personaId) {
+  const persona = getPersona(personaId);
+  return Math.max(0, MP_STARTING_DISCARDS + (persona?.passives?.startingDiscardsBonus ?? 0));
+}
+
+export function createPlayerState(playerIndex, personaId = null, rng = Math.random) {
+  const handSize = handSizeForPersona(personaId);
   const shuffled = buildPlayerDeck(playerIndex, rng);
-  const { hand, deck } = drawHand(shuffled, MP_HAND_SIZE);
+  const { hand, deck } = drawHand(shuffled, handSize);
   return {
     index: playerIndex,
+    persona: personaId,
     deck,
     hand,
     discard: [],
     spread: Array(MP_SPREAD_SIZE).fill(null),
-    discards: MP_STARTING_DISCARDS,
+    discards: startingDiscardsForPersona(personaId),
     totalScore: 0,
     roundScore: 0,
+    // --- Persona state (reset each round) ---
+    anchoredSlotIndex: null, // Anchor: index of the first-placed card's slot
+    silencedCardUids: [],    // Seal: UIDs excluded from scoring this round
+    bonusActionAvailable: false, // Gambit: can place immediately after next invoke
+    swapAvailable: false,    // Surgeon: free spread swap available this round
   };
 }
 
 export function createMatchState(options = {}) {
   const rng = options.rng || Math.random;
+  const personas = options.personas ?? [null, null];
   return {
     phase: MP_PHASES.IDLE,
     scoreTarget: options.scoreTarget ?? SCORE_TARGETS.STANDARD,
@@ -57,11 +78,42 @@ export function createMatchState(options = {}) {
     activePlayerIndex: 0,
     finalTurnForIndex: null,
     players: [
-      createPlayerState(0, rng),
-      createPlayerState(1, rng),
+      createPlayerState(0, personas[0], rng),
+      createPlayerState(1, personas[1], rng),
     ],
-    winner: null,        // null | 0 | 1 | 'draw'
-    roundHistory: [],    // [{ scores: [p0score, p1score], totals: [p0total, p1total] }]
+    winner: null,
+    roundHistory: [],
+    nextInjectedUid: 9000, // counter for injected interaction card UIDs
     error: null,
+  };
+}
+
+// Apply round-start persona passives to a player, returning updated player state
+// and the next injected UID counter.
+export function applyRoundStartPassives(player, nextUid) {
+  let hand = [...player.hand];
+  let uid = nextUid;
+
+  const persona = getPersona(player.persona);
+  if (persona?.passives?.roundStartCards) {
+    for (const { defId, count } of persona.passives.roundStartCards) {
+      for (let i = 0; i < count; i++) {
+        hand = [makeInteractionCard(defId, uid, player.index), ...hand];
+        uid++;
+      }
+    }
+  }
+
+  const swapAvailable = !!(persona?.passives?.freeSpreadSwap);
+  const bonusActionAvailable = !!(persona?.passives?.bonusPlaceAfterInvoke);
+
+  return {
+    player: {
+      ...player,
+      hand,
+      swapAvailable,
+      bonusActionAvailable,
+    },
+    nextUid: uid,
   };
 }
