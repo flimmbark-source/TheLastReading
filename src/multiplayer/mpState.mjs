@@ -62,6 +62,7 @@ export function createPlayerState(playerIndex, personaId = null, rng = Math.rand
     roundScore: 0,
     // --- Persona state (reset each round) ---
     anchoredSlotIndex: null, // Anchor: index of the first-placed card's slot
+    playedSlotHistory: [],   // most recent spread placements, used by Banish
     silencedCardUids: [],    // Seal: UIDs excluded from scoring this round
     bonusActionAvailable: false, // Gambit: can place immediately after next invoke
     swapAvailable: false,    // Surgeon: free spread swap available this round
@@ -85,6 +86,30 @@ export function createMatchState(options = {}) {
     roundHistory: [],
     nextInjectedUid: 9000, // counter for injected interaction card UIDs
     error: null,
+  };
+}
+
+// Apply game-start persona passives to a player's deck, returning updated player
+// state and the next injected UID counter. These cards are added once per match.
+export function applyGameStartPassives(player, nextUid, rng = Math.random) {
+  let deck = [...player.deck];
+  let uid = nextUid;
+
+  const persona = getPersona(player.persona);
+  if (persona?.passives?.gameStartDeckCards) {
+    const injected = [];
+    for (const { defId, count } of persona.passives.gameStartDeckCards) {
+      for (let i = 0; i < count; i++) {
+        injected.push(makeInteractionCard(defId, uid, player.index));
+        uid++;
+      }
+    }
+    if (injected.length) deck = shuffleDeck([...deck, ...injected], rng);
+  }
+
+  return {
+    player: { ...player, deck },
+    nextUid: uid,
   };
 }
 
