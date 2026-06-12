@@ -3,7 +3,6 @@
 // (src/systems/shop.mjs); purchase logic stays with the game flow.
 /* global state, persist, render, _nextRefreshCost, showOverlay, $, relicSlots, _relicRackKey, RELICS, _openRelicKey, RELIC_SPRITE */
 
-const STORE_SCORING_UPGRADES = Object.freeze(['rank', 'sequence', 'court_chips', 'path_chips', 'elemental_harmony']);
 const STORE_ABILITY_PACKS = Object.freeze(['innate', 'restless', 'second_sight', 'thread']);
 const RELIC_CACHE_PACK_ID = 'relic';
 const STORE_ASSET_PATH = './';
@@ -101,7 +100,8 @@ function shuffleValues(values, target = window) {
 
 function pickScoringUpgrades(count, target = window) {
   const shop = target.SHOP || {};
-  return shuffleValues(STORE_SCORING_UPGRADES, target).filter(key => shop[key]).slice(0, count);
+  const patternKeys = Object.keys(shop).filter(key => shop[key][5] === 'pattern');
+  return shuffleValues(patternKeys, target).slice(0, count);
 }
 
 function pickPacks(packIds, count, target = window) {
