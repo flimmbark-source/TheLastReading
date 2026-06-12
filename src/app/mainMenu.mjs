@@ -1,4 +1,5 @@
 // Main menu overlay. Shown on first load and via "Return to Menu" in-game.
+import { createInitialPersist, createInitialState } from './runtimeState.mjs';
 
 function hasSavedProgress(storage) {
   try {
@@ -11,6 +12,74 @@ function hasSavedProgress(storage) {
   } catch (_) {
     return false;
   }
+}
+
+function syncInitialRunToStore(target, initialState) {
+  if (!target.tlrStore || !target.tlrActions) return;
+  target.tlrStore.dispatch({
+    type: target.tlrActions.SYNC_LEGACY_RUN,
+    run: {
+      deck: initialState.deck,
+      hand: initialState.hand,
+      discard: initialState.discard,
+      spread: initialState.spread,
+      selectedCardId: initialState.selected,
+      discards: initialState.discards,
+      discardedCards: initialState.discardedCards,
+      freeDiscardUsed: initialState.freeDiscardUsed,
+      sightChargesUsed: 0,
+      thresholdIndex: initialState.th,
+      thresholdBonus: initialState.thBonus,
+      thresholdBonusPending: initialState.thBonusPending,
+      reading: initialState.reading,
+      pendingReserve: initialState.pendingPool,
+      worldCarry: initialState.worldCarry,
+      abilityTakenCardIds: [],
+      resonationBonus: null,
+      setIndex: initialState.setIndex,
+      setsPerRound: initialState.setsPerRound,
+      roundScore: initialState.roundScore,
+      setScores: initialState.setScores,
+      roundDiscardCount: initialState.roundDiscardCount,
+      roundPatternCount: initialState.roundPatternCount,
+      constellationId: null,
+      untargetableCardIds: [],
+      awaitingNextSet: false,
+      lastOutcome: null,
+    },
+  });
+}
+
+function syncInitialPersistToStore(target, initialPersist) {
+  if (!target.tlrStore || !target.tlrActions) return;
+  target.tlrStore.dispatch({
+    type: target.tlrActions.SYNC_LEGACY_PERSIST,
+    persist: {
+      reserve: initialPersist.pool,
+      totalScore: 0,
+      upgrades: initialPersist.up,
+      relics: initialPersist.relics,
+      relicUsed: initialPersist.relicUsed,
+      obals: 0,
+      unlockedFragments: [],
+      discoveredArchiveItems: [],
+      seenTutorials: {},
+    },
+  });
+}
+
+function clearRuntimeCaches(target) {
+  target._cachedPlacedScore = null;
+  target._hintsCacheKey = null;
+  target._spreadScoreForHints = null;
+  target._unlockedFragmentsCache = null;
+  target._resStateKey = null;
+  target._shopPacks = null;
+  target._shopRefreshCount = 0;
+  target._packBuys = {};
+  target._openRelicKey = null;
+  target._replaceSelectedKey = null;
+  if (target._hintsCache && typeof target._hintsCache.clear === 'function') target._hintsCache.clear();
 }
 
 export function installMainMenu(target = window) {
@@ -77,24 +146,26 @@ export function installMainMenu(target = window) {
   }
 
   function startFresh() {
-    // Reset persist and clear save
     try { target.localStorage.removeItem('tlr_save'); } catch (_) {}
-    const initial = typeof target.createInitialPersist === 'function'
-      ? target.createInitialPersist()
-      : { pool: 0, up: {}, relics: [], relicUsed: {} };
-    target.persist = initial;
-    if (target.tlrStore) {
-      target.tlrStore.dispatch({
-        type: target.tlrActions.SYNC_LEGACY_PERSIST,
-        persist: { reserve: 0, totalScore: 0, upgrades: initial.up, relics: [], relicUsed: {} },
-      });
-      target.tlrStore.dispatch({ type: target.tlrActions.RESET_SESSION });
-      const _p = target.tlrStore.getState().persist;
-      target.persist.relics = _p.relics.slice();
-      target.persist.relicUsed = Object.assign({}, _p.relicUsed);
-      target.persist.up = Object.assign({}, _p.upgrades);
-      target.persist.pool = _p.reserve;
+
+    const initialPersist = createInitialPersist();
+    const initialState = createInitialState();
+
+    target.persist = initialPersist;
+    target.state = initialState;
+    if (target.tlrRuntime) {
+      target.tlrRuntime.persist = initialPersist;
+      target.tlrRuntime.state = initialState;
     }
+
+    clearRuntimeCaches(target);
+
+    if (target.tlrStore && target.tlrActions) {
+      target.tlrStore.dispatch({ type: target.tlrActions.RESET_SESSION, fresh: true });
+      syncInitialPersistToStore(target, initialPersist);
+      syncInitialRunToStore(target, initialState);
+    }
+
     gameStarted = false;
   }
 
