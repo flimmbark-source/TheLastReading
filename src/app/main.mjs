@@ -108,12 +108,16 @@ function installStoreFrontTuning(target = window) {
       return;
     }
 
-    const callout = doc.querySelector('.store-relic-callout');
+    const callout = doc.querySelector('.relic-callout,.store-relic-callout,.store-pack-callout');
     if (!callout) return;
     if (callout.contains(event.target)) return;
     callout.remove();
-    event.preventDefault();
-    event.stopPropagation();
+    // Only swallow the event if the tap was on a non-interactive area.
+    // Don't block button/link clicks — those should still fire normally.
+    if (!event.target.closest('button,a,[role="button"]')) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
   }, true);
 }
 

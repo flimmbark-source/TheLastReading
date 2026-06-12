@@ -176,6 +176,8 @@ function updateStoreReserveDisplay(target = window) {
 }
 
 function markCardPurchased(slotIndex, target = window) {
+  // Remove any open callouts so they don't block subsequent button clicks
+  if (target.document) target.document.querySelectorAll('.relic-callout,.store-relic-callout,.store-pack-callout').forEach(el => el.remove());
   const row = target.document && target.document.querySelector('.store-offer-row');
   if (!row) return;
   const cards = row.querySelectorAll('.store-card');

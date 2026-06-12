@@ -118,8 +118,6 @@ function clearSpreadForMarket(target = window){
   const state=stateOf(target);
   if(!state||!Array.isArray(state.spread))return;
   state.spread=Array(5).fill(null);
-  state.hand=[];
-  state.discard=[];
   state.selected=null;
   state.abilitySelect=null;
   state.purgeSelect=null;
