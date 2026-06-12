@@ -59,8 +59,8 @@ export function installMpGame(target = window) {
 
       <div class="mp-mid-wrap" id="mpMidWrap">
         <div class="mp-pills-band mp-pills-opp">
-          <div class="pill reserve-pill mp-pill-disc"><b id="mpOppDisc">0</b> Discards</div>
           <div class="pill score-pill mp-pill-score"><b id="mpOppScore">0</b> Score</div>
+          <div class="pill reserve-pill mp-pill-disc"><b id="mpOppDisc">0</b> Discards</div>
         </div>
         <div class="mp-pills-band mp-pills-mid">
           <div class="pill threshold-pill mp-pill-thresh">Threshold <b id="mpThresh">200</b></div>
