@@ -58,21 +58,21 @@ export function installMpGame(target = window) {
       </div>
 
       <div class="mp-mid-wrap" id="mpMidWrap">
-        <div class="mp-pills-band mp-pills-opp">
-          <div class="pill score-pill mp-pill-score"><b id="mpOppScore">0</b> Score</div>
-          <div class="pill reserve-pill mp-pill-disc"><b id="mpOppDisc">0</b> Discards</div>
-        </div>
-        <div class="mp-pills-band mp-pills-mid">
+        <div class="mp-mid-thresh-row">
           <div class="pill threshold-pill mp-pill-thresh">Threshold <b id="mpThresh">200</b></div>
           <button class="constellation-pill mp-constellation hidden" id="mpConstellation" type="button"></button>
         </div>
-        <div class="mp-pills-band mp-pills-self">
-          <div class="pill score-pill mp-pill-score"><b id="mpMyScore">0</b> Score</div>
-          <div class="pill reserve-pill mp-pill-disc"><b id="mpMyDisc">0</b> Discards</div>
-        </div>
-        <div class="mp-pills-band mp-pills-actions">
-          <button class="sbtn sbtn-discard" id="mpDiscardBtn" type="button" disabled aria-label="Discard"></button>
-          <button class="sbtn sbtn-purge"   id="mpPurgeBtn"   type="button" disabled aria-label="Remove"></button>
+        <div class="mp-mid-cols">
+          <div class="mp-mid-col">
+            <div class="pill score-pill mp-pill-score"><b id="mpOppScore">0</b> Score</div>
+            <div class="pill score-pill mp-pill-score"><b id="mpMyScore">0</b> Score</div>
+            <button class="sbtn sbtn-discard" id="mpDiscardBtn" type="button" disabled aria-label="Discard"></button>
+          </div>
+          <div class="mp-mid-col">
+            <div class="pill reserve-pill mp-pill-disc"><b id="mpOppDisc">0</b> Discards</div>
+            <div class="pill reserve-pill mp-pill-disc"><b id="mpMyDisc">0</b> Discards</div>
+            <button class="sbtn sbtn-purge" id="mpPurgeBtn" type="button" disabled aria-label="Remove"></button>
+          </div>
         </div>
         <div class="mp-action-panel" id="mpActionPanel"></div>
       </div>
