@@ -1,3 +1,5 @@
+import './endSessionFailPatch.mjs';
+
 const CARD_SHEETS = Object.freeze([
   'sheet01.png',
   'sheet02.png',
