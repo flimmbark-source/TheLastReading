@@ -4,6 +4,7 @@ const TUT_READING_KEY = 'tlr_tut_reading_complete';
 const TUT_PURGE_KEY = 'tlr_tut_purge';
 const TUT_ARCHIVES_KEY = 'tlr_tut_archives_found';
 const TUT_MARKET_KEY = 'tlr_tut_oracle_market';
+const TUT_CONSTELLATION_KEY = 'tlr_tut_constellation';
 const INTRO_LAST_STEP = 6;
 
 export const TUT_STEP = Object.freeze({
@@ -27,6 +28,7 @@ export const TUT_STEP = Object.freeze({
   MARKET_RELICS: 17,
   MARKET_REFRESH: 18,
   MARKET_NEXT: 19,
+  CONSTELLATION: 20,
 });
 
 let tutStep = -1;
@@ -57,6 +59,7 @@ const TUT_STEPS = [
   { sel: '.store-offer-row .store-card:nth-child(3)', arrow: 'up', key: TUT_MARKET_KEY, text: '<b>Relic</b><br>Buy a relic to add its passive effect to your relic row.' },
   { sel: '.store-refresh', arrow: 'up', key: TUT_MARKET_KEY, text: '<b>Refresh</b><br>Spend Reserve to replace the Market offers.' },
   { sel: '.store-proceed', arrow: 'up', key: TUT_MARKET_KEY, text: '<b>Next Reading</b><br>Leave the Market and start the next reading.' },
+  { sel: '#constellationPill:not(.hidden)', arrow: 'up', key: TUT_CONSTELLATION_KEY, text: '<b>Constellation</b><br>A constellation changes this reading. Tap its sign to see the rule.' },
 ];
 
 const MARKET_TUT_STEPS = [
@@ -128,6 +131,7 @@ export function replayTutorial() {
     TUT_PURGE_KEY,
     TUT_ARCHIVES_KEY,
     TUT_MARKET_KEY,
+    TUT_CONSTELLATION_KEY,
   ].forEach(k => localStorage.removeItem(k));
   queuedTipSteps = [];
   clearTimeout(queuedTipTimer);
@@ -235,6 +239,13 @@ export function maybeShowMarketTutorial() {
   queueTip(TUT_STEP.MARKET_RESERVE, 260);
 }
 
+export function maybeShowConstellationTutorial() {
+  if (localStorage.getItem(TUT_CONSTELLATION_KEY)) return;
+  const pill = document.querySelector('#constellationPill:not(.hidden)');
+  if (!pill) return;
+  queueTip(TUT_STEP.CONSTELLATION, 260);
+}
+
 function posTutTip(target, arrowDir) {
   const tip = q('#tutTip');
   if (!tip) return;
@@ -258,7 +269,6 @@ function posTutTip(target, arrowDir) {
   arrow.className = 'tut-arrow ' + arrowDir;
   const arrowX = anchorX - left;
   arrow.style.left = Math.max(16, Math.min(arrowX, tipW - 16)) + 'px';
-  arrow.style.transform = 'translateX(-50%)';
 }
 
 document.addEventListener('click', () => {
