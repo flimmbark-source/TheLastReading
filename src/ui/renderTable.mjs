@@ -46,9 +46,18 @@ function discardBlocked(){return blocksDiscard(currentRun())}
 function ensureConstellationPill(){let el=document.getElementById('constellationPill');if(el)return el;el=document.createElement('button');el.type='button';el.id='constellationPill';el.className='constellation-pill hidden';document.body.appendChild(el);return el}
 function escapeHTML(value){return String(value??'').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]))}
 function activeConstellationId(){const run=currentRun();return runHasActiveConstellation(run)?run.constellationId:null}
-function constellationGlyph(c){const key=String(c?.id||c?.name||c?.label||'').toLowerCase();return CONSTELLATION_GLYPHS[key]||'✦'}
+function constellationGlyph(c){const key=String(c?.id||c?.name||c?.label||'').toLowerCase();return CONSTELLATION_GLYPHS[key]||'★'}
 function constellationSpriteStyle(c){const s=c?.sprite;if(!s)return'';const cols=s.cols||4,rows=s.rows||3;const x=cols<=1?0:(s.col/(cols-1))*100;const y=rows<=1?0:(s.row/(rows-1))*100;return`background-image:url('${s.image}');--constellation-bg-size:${cols*100}% ${rows*100}%;--constellation-bg-x:${x}%;--constellation-bg-y:${y}%;`}
-function constellationIconHTML(c,extraClass=''){return`<span class="constellation-sprite ${extraClass}" aria-hidden="true" style="${constellationSpriteStyle(c)}">${constellationGlyph(c)}</span>`}
+function constellationGlyphStyle(large=false){const size=large?72:30;const font=large?46:23;return`display:inline-flex!important;align-items:center!important;justify-content:center!important;width:${size}px!important;height:${size}px!important;min-width:${size}px!important;min-height:${size}px!important;color:#ffe09a!important;font:800 ${font}px/1 Georgia,serif!important;text-shadow:0 0 12px rgba(255,217,120,.9),0 2px 8px #000!important;opacity:1!important;visibility:visible!important;position:relative!important;z-index:3!important;background:radial-gradient(circle,rgba(255,217,120,.13),rgba(255,217,120,.02) 58%,transparent 72%)!important;border-radius:50%!important;`}
+function constellationIconHTML(c,extraClass=''){
+  const large=String(extraClass).split(/\s+/).includes('large');
+  const spriteStyle=constellationSpriteStyle(c);
+  const glyph=constellationGlyph(c);
+  return `<span class="constellation-icon-wrap ${extraClass}" aria-hidden="true" style="display:inline-grid!important;place-items:center!important;width:${large?72:30}px!important;height:${large?72:30}px!important;min-width:${large?72:30}px!important;min-height:${large?72:30}px!important;position:relative!important;opacity:1!important;visibility:visible!important;">
+    <span class="constellation-sprite-bg" style="position:absolute!important;inset:0!important;display:block!important;opacity:.95!important;visibility:visible!important;${spriteStyle}background-size:var(--constellation-bg-size)!important;background-position:var(--constellation-bg-x) var(--constellation-bg-y)!important;background-repeat:no-repeat!important;filter:drop-shadow(0 0 7px rgba(255,217,120,.7))!important;"></span>
+    <span class="constellation-fallback-glyph" style="${constellationGlyphStyle(large)}">${glyph}</span>
+  </span>`;
+}
 function closeConstellationCallout(){constellationCalloutOpen=false;const el=document.getElementById('constellationPill');if(el)el.classList.remove('open');const callout=document.getElementById('constellationCallout');if(callout)callout.remove()}
 function hideConstellationPill(el){el.classList.add('hidden');el.innerHTML='';closeConstellationCallout()}
 function positionConstellationIcon(el){if(window.innerWidth>640){el.style.left='';el.style.top='';el.style.right='';el.style.transform='';return}requestAnimationFrame(()=>{const reserve=document.querySelector('.reserve-pill');const discards=document.querySelector('.discards-pill');if(!reserve||!discards)return;const a=reserve.getBoundingClientRect();const b=discards.getBoundingClientRect();const leftPill=a.left<=b.left?a:b;const rightPill=a.left<=b.left?b:a;const gapCenter=(leftPill.right+rightPill.left)/2;const sameRow=Math.abs((a.top+a.height/2)-(b.top+b.height/2))<18;const fallbackX=(a.left+a.width/2+b.left+b.width/2)/2;const x=sameRow&&rightPill.left>leftPill.right?gapCenter:fallbackX;const y=(a.top+a.height/2+b.top+b.height/2)/2;el.style.left=Math.round(x)+'px';el.style.top=Math.round(y)+'px';el.style.right='auto';el.style.transform='translate(-50%,-50%)'})}
@@ -59,7 +68,7 @@ function renderConstellationPill(){installConstellationOutsideHandler();const el
 
 export function render(){
   _cachedPlacedScore=null; // invalidate on every render
-  const _newHintsKey=_hintsKey();if(_newHintsKey!==_hintsCacheKey){_hintsCache.clear();_hintsCacheKey=_newHintsKey;_unlockedFragmentsCache=null;_spreadScoreForHints=null;}
+  const _newHintsKey=_hintsKey();if(_newHintsKey!==_hintsCacheKey){_hintsCache.clear();_hintsCacheKey=_hintsCacheKey=_newHintsKey;_unlockedFragmentsCache=null;_spreadScoreForHints=null;}
   _cacheEls();
   _elThreshold.textContent=activeThreshold();
   const _thNext=document.getElementById('thNext');if(_thNext){const _p=state.thBonusPending||0;_thNext.style.display=_p?'':'none';if(_p)_thNext.textContent='+'+_p+' next';}
