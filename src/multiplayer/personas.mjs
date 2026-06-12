@@ -7,12 +7,12 @@ export const PERSONAS = Object.freeze({
   cleaner: {
     id: 'cleaner',
     name: 'The Cleaner',
-    tagline: 'Start each round with 2 Banish.',
+    tagline: 'Start with 3 Banish in your deck.',
     description:
-      'At the start of each round, 2 Banish cards are added to your hand. ' +
-      'Banish removes a card from a chosen slot in the opponent\'s spread.',
+      'At the start of the game, 3 Banish cards are added to your deck. ' +
+      'Banish removes the last played card from your opponent\'s spread.',
     passives: {
-      roundStartCards: [{ defId: 'mp_banish', count: 2 }],
+      gameStartDeckCards: [{ defId: 'mp_banish', count: 3 }],
     },
   },
 
