@@ -7,9 +7,16 @@
 const cardHTMLCache = new Map();
 let detailStyleInstalled = false;
 
-export function title(c){if(c.type==='major')return ROMAN[c.num]+' · '+c.name.replace(/^[IVXLCDM\d]+\s+/,'');if(c.type==='court')return c.rank+' of '+GLYPH[c.suit];return c.name}
-export function meanings(c){if(c.type==='major')return MEAN[c.id]||['',''];if(c.type==='court')return COURT_MEAN[c.rank]||['',''];return SUIT_MEAN[c.suit]||['','']}
-export function symbol(c){return c.type==='major'?(MAJOR_G[c.num]||'✦'):GLYPH[c.suit]}
+function isInteraction(c){return c?.type==='interaction'}
+function interactionSymbol(c){return c?.abilityType==='mp_banish'?'⚔':'🔇'}
+function interactionLabel(c){return c?.abilityType==='mp_banish'?'Last Card':'Silence'}
+function interactionMeaning(c){return c?.abilityType==='mp_banish'
+  ? ['Remove the opponent\'s last played card from their spread.','']
+  : ['Silence a card in the opponent\'s spread.',''];}
+
+export function title(c){if(isInteraction(c))return c.name;if(c.type==='major')return ROMAN[c.num]+' · '+c.name.replace(/^[IVXLCDM\d]+\s+/,'');if(c.type==='court')return c.rank+' of '+GLYPH[c.suit];return c.name}
+export function meanings(c){if(isInteraction(c))return interactionMeaning(c);if(c.type==='major')return MEAN[c.id]||['',''];if(c.type==='court')return COURT_MEAN[c.rank]||['',''];return SUIT_MEAN[c.suit]||['','']}
+export function symbol(c){if(isInteraction(c))return interactionSymbol(c);return c.type==='major'?(MAJOR_G[c.num]||'✦'):GLYPH[c.suit]}
 
 export const CARD_SHEET={
   major_0:[1,0],major_1:[1,1],major_2:[1,2],major_3:[1,3],
@@ -36,12 +43,13 @@ export function applyCardPhoto(el,card){
 
 export function cardHTML(c){
   if(cardHTMLCache.has(c.uid))return cardHTMLCache.get(c.uid);
-  const html=`<div class="title">${title(c)}</div><div class="art"><div class="sym">${symbol(c)}</div><div class="plaque">${TXT[c.ability]}</div><div class="seal tr">${c.points}</div></div>`;
+  const plaque=isInteraction(c)?interactionLabel(c):(TXT[c.ability]||'');
+  const html=`<div class="title">${title(c)}</div><div class="art"><div class="sym">${symbol(c)}</div><div class="plaque">${plaque}</div><div class="seal tr">${c.points}</div></div>`;
   cardHTMLCache.set(c.uid,html);
   return html;
 }
 
-export function sortCards(cards){return [...cards].sort((a,b)=>{let o={major:0,court:1};if(o[a.type]!==o[b.type])return o[a.type]-o[b.type];if(a.type==='major')return a.num-b.num;return(a.suit||'').localeCompare(b.suit)||RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank)})}
+export function sortCards(cards){return [...cards].sort((a,b)=>{let o={major:0,court:1,interaction:2};if(o[a.type]!==o[b.type])return o[a.type]-o[b.type];if(a.type==='major')return a.num-b.num;if(a.type==='interaction')return String(a.name).localeCompare(String(b.name));return(a.suit||'').localeCompare(b.suit)||RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank)})}
 
 export function cleanName(c){return c.type==='major'?c.name.split(' ').slice(1).join(' '):c.name}
 
@@ -88,8 +96,8 @@ export function expandCard(card,target=window){
   const [upright,reversed]=meanings(card);
   const backdrop=target.document.createElement('div');
   backdrop.className='card-detail-backdrop';
-  const cardClass='card '+(card.type==='major'?'major ':'')+(CARD_SHEET[card.id]?'photo ':'');
-  const ability=TXT[card.ability]||card.ability||'—';
+  const cardClass='card '+(card.type==='major'?'major ':'')+(CARD_SHEET[card.id]?'photo ':'')+(isInteraction(card)?'mp-interaction ':'');
+  const ability=isInteraction(card)?interactionLabel(card):(TXT[card.ability]||card.ability||'—');
   backdrop.innerHTML=`<div class="card-detail-panel" role="dialog" aria-modal="true" aria-label="${escapeHtml(title(card))}">
     <button class="card-detail-close" type="button" aria-label="Close">×</button>
     <div class="card-detail-card"><div class="${cardClass}" data-uid="${card.uid}">${cardHTML(card)}</div></div>
