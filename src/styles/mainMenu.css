@@ -1,14 +1,24 @@
-#mainMenu{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:rgba(10,6,3,.88);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);transition:opacity .35s ease}
+/* Main menu — styled to match the in-game starfield + parchment look */
+#mainMenu{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:url(../../background.png) center top/cover no-repeat;transition:opacity .35s ease}
+#mainMenu::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center 40%,transparent 0%,rgba(8,5,3,.55) 100%);pointer-events:none}
 #mainMenu.mm-hidden{opacity:0;pointer-events:none}
-.main-menu-inner{display:flex;flex-direction:column;align-items:center;gap:32px;padding:40px 28px 36px;min-width:min(320px,90vw)}
-.main-menu-title{font:700 28px/1.1 Georgia,serif;color:#f0d58a;text-shadow:0 2px 14px rgba(240,213,138,.4);margin:0;letter-spacing:.04em;text-align:center}
-.main-menu-subtitle{font:400 13px/1.4 system-ui,sans-serif;color:#8a7551;margin:0;text-align:center;letter-spacing:.06em;text-transform:uppercase}
-.main-menu-section{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
-.main-menu-section-label{font:700 10px/1 system-ui,sans-serif;color:#6a5535;letter-spacing:.14em;text-transform:uppercase;margin:0 0 2px;text-align:center}
-.main-menu-divider{width:100%;height:1px;background:linear-gradient(to right,transparent,rgba(180,140,70,.25),transparent);margin:0}
-.main-menu-btn{width:100%;max-width:220px;padding:11px 18px;font:700 14px/1 system-ui,sans-serif;letter-spacing:.04em;background:rgba(180,140,90,.12);border:1px solid rgba(180,140,90,.35);border-radius:7px;color:#ddc98a;cursor:pointer;transition:background .15s,border-color .15s,transform .1s}
-.main-menu-btn:hover:not(:disabled){background:rgba(180,140,90,.22);border-color:rgba(180,140,90,.55);transform:translateY(-1px)}
-.main-menu-btn:disabled{opacity:.35;cursor:not-allowed}
-.main-menu-btn-primary{background:rgba(200,160,80,.2);border-color:rgba(200,160,80,.55);color:#f0d58a}
-.main-menu-btn-primary:hover:not(:disabled){background:rgba(200,160,80,.32);border-color:rgba(200,160,80,.8)}
+
+.main-menu-inner{position:relative;display:flex;flex-direction:column;align-items:center;gap:26px;padding:40px 28px 36px;min-width:min(340px,92vw)}
+
+.main-menu-title{font:700 34px/1.1 Georgia,serif;color:#f0d58a;text-shadow:0 0 24px rgba(240,213,138,.55),0 2px 6px rgba(0,0,0,.8);margin:0;letter-spacing:.05em;text-align:center}
+.main-menu-subtitle{font:400 12px/1.4 system-ui,sans-serif;color:#b09060;margin:-14px 0 0;text-align:center;letter-spacing:.22em;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+
+.main-menu-section{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+.main-menu-section-label{font:700 10px/1 system-ui,sans-serif;color:#8a7551;letter-spacing:.2em;text-transform:uppercase;margin:0 0 2px;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+
+/* Ornate sunburst divider art between sections */
+.main-menu-divider{width:min(300px,80vw);height:30px;background:url(../../divider_sunburst.png) center/contain no-repeat;margin:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
+
+/* Buttons: parchment plaque for the primary action, dark pill for the rest */
+.main-menu-btn{width:100%;max-width:240px;height:54px;padding:0 22px;font:700 15px/1 Georgia,serif;letter-spacing:.05em;background:url(../../pill_dark_medium.png) center/100% 100% no-repeat;border:none;border-radius:0;color:#ddc98a;cursor:pointer;transition:transform .12s,filter .15s;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
+.main-menu-btn:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.15)}
+.main-menu-btn:disabled{opacity:.4;cursor:not-allowed}
+.main-menu-btn-primary{background-image:url(../../parchment_plaque_large_center.png);color:#3a1a06;height:58px}
+.main-menu-btn-primary:hover:not(:disabled){filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
+
 .main-menu-coming-soon{font:400 11px/1 system-ui,sans-serif;color:#5a4828;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}

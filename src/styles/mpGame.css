@@ -88,6 +88,7 @@ body.mp-game-active #purgePrompt { display: none !important; }
 /* ── Opponent spread (full size, arcing opposite to the player's) ── */
 .mp-opp-spread-clip {
   height: 205px; overflow: visible; position: relative; width: 100%; flex-shrink: 0;
+  margin-top: 30px;
 }
 .mp-opp-spread-transform {
   position: absolute; top: 0; left: 0; right: 0;
