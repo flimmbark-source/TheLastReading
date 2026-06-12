@@ -89,11 +89,11 @@ export function installMainMenu(target = window) {
   };
 
   target.tlrMainMenuMultiplayer = function () {
-    const note = target.document.getElementById('mainMenuMpNote');
-    if (note) {
-      note.style.opacity = '1';
-      target.clearTimeout(note._fadeTimer);
-      note._fadeTimer = target.setTimeout(() => { note.style.opacity = ''; }, 2400);
+    // Hide main menu, show loadout screen
+    const el = target.document.getElementById('mainMenu');
+    if (el) el.classList.add('mm-hidden');
+    if (typeof target.tlrShowLoadout === 'function') {
+      target.tlrShowLoadout();
     }
   };
 

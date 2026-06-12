@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="src/styles/drawers.css?v=mobile-load-fix-1">
 <link rel="stylesheet" href="src/styles/performance.css?v=mobile-load-fix-1">
 <link rel="stylesheet" href="src/styles/mainMenu.css?v=1">
+<link rel="stylesheet" href="src/styles/loadout.css?v=1">
 </head>
 <body class="tlr-loading">
 <div id="roomAmbient"></div>
@@ -41,6 +42,30 @@
 <div id="atticScene" aria-hidden="true"><div id="atticTutorial"></div><div id="atticPan"><div id="atticRoom"><div id="atticObjects"></div></div></div><div id="obalsHud"></div><button id="atticTableReturn" type="button" aria-label="Return to the table"><span>Return to Table</span></button><div id="atticWhisper"></div></div>
 <div id="summary"></div>
 <div id="modal" class="modal"><div class="box"><div class="modalHead"><h2 id="modalTitle"></h2><button id="modalToggle" onclick="toggleModalCollapse()">Hide</button></div><p id="modalPrompt"></p><div id="choices" class="choices"></div></div></div>
+<div id="loadoutScreen" class="loadout-hidden">
+  <div class="loadout-inner">
+    <div class="loadout-header">
+      <button class="loadout-back" onclick="tlrLoadoutBack()" type="button">&#8592; Back</button>
+      <h2 class="loadout-title">Loadout</h2>
+    </div>
+    <section class="loadout-section">
+      <h3 class="loadout-section-label">Persona</h3>
+      <div id="loadoutPersonaGrid" class="loadout-persona-grid"></div>
+    </section>
+    <section class="loadout-section">
+      <h3 class="loadout-section-label">Match Length</h3>
+      <div class="loadout-targets">
+        <button class="loadout-target-btn" data-target="100" onclick="tlrLoadoutSetTarget(100)" type="button">Quick <span>100</span></button>
+        <button class="loadout-target-btn" data-target="200" onclick="tlrLoadoutSetTarget(200)" type="button">Standard <span>200</span></button>
+        <button class="loadout-target-btn" data-target="300" onclick="tlrLoadoutSetTarget(300)" type="button">Long <span>300</span></button>
+      </div>
+    </section>
+    <div class="loadout-footer">
+      <button class="loadout-ready-btn" id="loadoutReadyBtn" onclick="tlrLoadoutReady()" type="button" disabled>Ready</button>
+      <p class="loadout-ready-note">Select a Persona to continue.</p>
+    </div>
+  </div>
+</div>
 <div id="mainMenu" class="main-menu-overlay">
   <div class="main-menu-inner">
     <h1 class="main-menu-title">The Last Reading</h1>
@@ -55,7 +80,6 @@
     <div class="main-menu-section">
       <span class="main-menu-section-label">Multiplayer</span>
       <button class="main-menu-btn" onclick="tlrMainMenuMultiplayer()">Duel</button>
-      <span id="mainMenuMpNote" class="main-menu-coming-soon" style="opacity:0;transition:opacity .3s">Coming soon</span>
     </div>
   </div>
 </div>
