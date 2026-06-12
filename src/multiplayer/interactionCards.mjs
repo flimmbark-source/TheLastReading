@@ -1,9 +1,9 @@
 // Multiplayer-only interaction cards. These are never part of the main 78-card
-// deck — they are injected into a player's hand by persona passives or future
+// deck — they are injected into a player's deck by persona passives or future
 // card-package loadout items.
 
 export const MP_ABILITY_TYPES = Object.freeze({
-  MP_BANISH: 'mp_banish', // hard: remove a card from target slot in opponent spread
+  MP_BANISH: 'mp_banish', // hard: remove the opponent's last played spread card
   MP_SEAL:   'mp_seal',   // soft: silence a card in opponent spread (excluded from scoring)
 });
 
@@ -22,8 +22,8 @@ export const INTERACTION_CARD_DEFS = Object.freeze({
     ability: 'MP_BANISH',
     abilityType: MP_ABILITY_TYPES.MP_BANISH,
     tier: INTERACTION_TIER.HARD,
-    prompt: 'Remove a card from a slot in the opponent\'s spread.',
-    // Requires action.target = { playerIndex, slotIndex }
+    prompt: 'Remove the last played card from the opponent\'s spread.',
+    // Requires no target. The reducer finds the opponent's most recent live placement.
   },
   mp_seal: {
     id: 'mp_seal',
