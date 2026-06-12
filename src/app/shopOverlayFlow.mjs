@@ -29,6 +29,23 @@ function upgradeCopy(key, fallback = ''){
   return SHORT_UPGRADE_COPY[key] || fallback;
 }
 
+function markReturningToMarket(target = window){
+  const doc = target.document;
+  if(!doc || doc.querySelector('.store-front-shell:not(.store-exiting)'))return;
+  const summary = doc.getElementById('summary');
+  if(!summary)return;
+  const marker = doc.createElement('div');
+  marker.className = 'store-front-shell';
+  marker.style.display = 'none';
+  marker.innerHTML = '<div class="store-front"></div>';
+  summary.appendChild(marker);
+}
+
+function returnToMarket(target = window){
+  markReturningToMarket(target);
+  if(typeof target.openShopMain==='function')target.openShopMain();
+}
+
 export function packAccent(packId){
   return packId==='relic'?'180,80,220':packId==='ritual'?'220,80,80':packId==='pattern'?'255,200,80':packId==='innate'?'255,150,60':packId==='restless'?'80,180,220':'180,160,100';
 }
@@ -130,7 +147,7 @@ export function pickPackUpgrade(upgradeKey,target = window){
     : false;
   if(purchased!==true)return purchased;
   if(typeof target.render==='function')target.render();
-  if(typeof target.openShopMain==='function')target.openShopMain();
+  returnToMarket(target);
   return true;
 }
 
