@@ -1,5 +1,8 @@
 {
   "scripts": {
+    "start": "node scripts/serve.mjs",
+    "dev": "node scripts/serve.mjs",
+    "serve": "node scripts/serve.mjs",
     "build": "node scripts/validate-all.mjs",
     "test": "node scripts/validate-all.mjs"
   },
