@@ -1,0 +1,247 @@
+/* ── MP Game overlay (background + opponent area) ── */
+#mpGame {
+  position: fixed; inset: 0; z-index: 9300;
+  display: flex; flex-direction: column;
+  background: url(../../background.png) center top/cover no-repeat;
+  transition: opacity .3s;
+  overflow: hidden;
+}
+#mpGame.mp-hidden { opacity: 0; pointer-events: none; }
+
+/* ── Lift the existing SP hand + spread above the MP overlay ── */
+body.mp-game-active .handDock   { z-index: 9400 !important; }
+
+/* Reposition the player spread to sit tight above the hand dock */
+body.mp-game-active .spread-wrap {
+  position: fixed !important;
+  top: auto !important;
+  bottom: 197px !important;
+  left: 0 !important; right: 0 !important;
+  height: 195px !important;
+  transform: none !important;
+  z-index: 9400 !important;
+  padding: 0 !important;
+}
+/* The spread itself: strip the 36px top padding and min-height so the
+   fanned cards sit tight — rotation/transform-origin stays intact */
+body.mp-game-active #spread {
+  padding: 0 6px !important;
+  min-height: 0 !important;
+}
+
+/* Hide SP UI chrome that would bleed through */
+body.mp-game-active .score-stack,
+body.mp-game-active #relicRack,
+body.mp-game-active #abilitiesPullWrap,
+body.mp-game-active #scoringPullWrap,
+body.mp-game-active #menuPullWrap,
+body.mp-game-active #titleWrap,
+body.mp-game-active #tutTip,
+body.mp-game-active .spread-actions,
+body.mp-game-active #abilityPrompt,
+body.mp-game-active #purgePrompt { display: none !important; }
+
+/* ── Top bar ── */
+.mp-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px 6px; flex-shrink: 0;
+  border-bottom: 1px solid rgba(180,140,70,.15);
+}
+.mp-leave-btn {
+  background: none; border: none; color: #6a5535;
+  font: 600 11px/1 system-ui,sans-serif; letter-spacing: .06em;
+  cursor: pointer; padding: 4px 2px; transition: color .15s; flex-shrink: 0;
+}
+.mp-leave-btn:hover { color: #b09060; filter: none; }
+.mp-turn-badge {
+  flex: 1; text-align: center;
+  font: 700 12px/1 system-ui,sans-serif; letter-spacing: .08em; text-transform: uppercase;
+  transition: color .25s;
+}
+.mp-turn-badge.my-turn    { color: #ffd978; animation: mp-pulse 2s ease-in-out infinite; }
+.mp-turn-badge.opp-turn   { color: #5a4828; }
+.mp-turn-badge.final-turn { color: #e8a060; }
+.mp-turn-badge.scoring    { color: #79c778; }
+@keyframes mp-pulse { 0%,100%{opacity:1} 50%{opacity:.65} }
+.mp-round-label { font: 400 11px/1 system-ui,sans-serif; color: #4a3820; letter-spacing: .06em; flex-shrink: 0; }
+
+/* ── Player info rows ── */
+.mp-player-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 3px 14px; flex-shrink: 0;
+}
+.mp-persona  { font: 700 12px/1 Georgia,serif; color: #b09060; }
+.mp-score    { font: 700 13px/1 system-ui,sans-serif; color: #ffd978; margin-left: auto; }
+.mp-discards { font: 400 11px/1 system-ui,sans-serif; color: #5a4828; }
+.mp-badge {
+  font: 600 9px/1 system-ui,sans-serif; letter-spacing: .1em; text-transform: uppercase;
+  padding: 2px 5px; border-radius: 8px; border: 1px solid;
+}
+.mp-badge-swap  { color: #79c778; border-color: rgba(120,200,120,.4); background: rgba(50,100,50,.25); }
+.mp-badge-bonus { color: #e8a060; border-color: rgba(230,160,90,.4); background: rgba(80,40,10,.25); }
+
+/* ── Opponent hand count (face-down card backs) ── */
+.mp-opp-hand { display: flex; align-items: center; gap: 5px; padding: 2px 14px; flex-shrink: 0; }
+.mp-opp-pip  { width: 14px; height: 20px; border-radius: 3px; background: rgba(40,28,16,.8); border: 1px solid rgba(100,72,36,.4); display: inline-block; }
+.mp-opp-hand-label { font: 400 10px/1 system-ui,sans-serif; color: #4a3820; }
+
+/* ── Opponent spread (full size, arcing opposite to the player's) ── */
+.mp-opp-spread-clip {
+  height: 205px; overflow: visible; position: relative; width: 100%; flex-shrink: 0;
+  margin-top: 30px;
+}
+.mp-opp-spread-transform {
+  position: absolute; top: 0; left: 0; right: 0;
+}
+.mp-opp-spread-transform .spread { padding: 0 6px; min-height: 0; }
+/* Mirror the player fan: negated --a angles (set in JS) + pivot below */
+.mp-opp-spread-transform .slot { transform-origin: 50% 280%; }
+.mp-opp-spread-transform .slot .num { display: none !important; }
+.mp-opp-spread-transform .slot.mp-targetable {
+  border-color: rgba(200,80,80,.75) !important;
+  box-shadow: 0 0 14px rgba(200,80,80,.4) !important;
+  cursor: pointer;
+}
+.mp-opp-spread-transform .slot.mp-anchored::after {
+  content: '⚓'; position: absolute; bottom: 4px; right: 5px;
+  font-size: 10px; opacity: .7; pointer-events: none;
+}
+.mp-opp-spread-transform .slot.mp-silenced::after {
+  content: ''; position: absolute; inset: 0;
+  background: rgba(0,0,0,.5); border-radius: 5px; pointer-events: none;
+}
+
+/* ── Progress bar ── */
+.mp-progress-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 14px; flex-shrink: 0;
+  border-top: 1px solid rgba(180,140,70,.1);
+  border-bottom: 1px solid rgba(180,140,70,.1);
+}
+.mp-progress-score { font: 700 12px/1 Georgia,serif; color: #ddc98a; min-width: 28px; }
+.mp-progress-score.right { text-align: right; }
+.mp-progress-bar   { flex: 1; height: 5px; background: rgba(40,28,16,.8); border-radius: 3px; overflow: hidden; position: relative; }
+.mp-progress-fill  { height: 100%; border-radius: 3px; transition: width .4s ease; position: absolute; top: 0; }
+.mp-progress-fill.p0 { left: 0;  background: linear-gradient(to right, rgba(180,140,70,.6), rgba(220,180,80,.85)); }
+.mp-progress-fill.p1 { right: 0; background: linear-gradient(to left, rgba(120,100,180,.6), rgba(150,120,200,.85)); }
+.mp-target-label { font: 400 10px/1 system-ui,sans-serif; color: #4a3820; white-space: nowrap; }
+
+/* ── Middle section (fixed between the two spreads) ── */
+.mp-mid-wrap {
+  position: fixed; bottom: 401px; left: 0; right: 0; z-index: 9401;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  padding: 0 14px; pointer-events: none;
+}
+.mp-mid-wrap > * { pointer-events: auto; }
+
+/* Each band: two equal-width pills side by side, so the rows line up
+   into tidy columns. */
+.mp-pills-band {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+
+/* market.css reorders pills with flex `order` at mobile widths — neutralize
+   so DOM order is what renders */
+.mp-pill-score, .mp-pill-disc, .mp-pill-thresh { order: 0 !important; transform: none !important; }
+
+/* Uniform compact pill sizing — equal widths keep rows aligned */
+.mp-pill-score, .mp-pill-disc, .mp-pill-thresh {
+  min-width: 0 !important; width: 118px !important; box-sizing: border-box !important;
+  height: 32px !important; padding: 0 10px !important;
+  display: flex !important; align-items: center !important;
+  justify-content: center !important; gap: 5px !important;
+  font-size: 11px !important; letter-spacing: .03em;
+  white-space: nowrap;
+}
+.mp-pill-score b, .mp-pill-disc b, .mp-pill-thresh b { font-size: 13px; }
+.mp-pill-thresh { width: 142px !important; }
+
+/* Middle band: threshold centered; constellation beside it when shown */
+.mp-pills-mid { gap: 10px; }
+
+/* Actions band: discard/purge buttons centered under the pills */
+.mp-pills-actions { gap: 10px; margin-top: 3px; }
+
+/* Action panel: contextual hint/buttons, kept subtle */
+.mp-action-panel {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  flex-wrap: wrap; min-height: 16px;
+  pointer-events: auto;
+}
+.mp-action-hint {
+  font: 400 10px/1.3 system-ui,sans-serif;
+  color: #6a5535; text-align: center; width: 100%;
+}
+
+/* ── Player spread slot state overrides (for MP-specific states) ── */
+body.mp-game-active #spread .slot.mp-targetable {
+  border-color: rgba(200,80,80,.75) !important; box-shadow: 0 0 12px rgba(200,80,80,.3) !important; cursor: pointer;
+}
+body.mp-game-active #spread .slot.mp-anchored::after {
+  content: '⚓'; position: absolute; bottom: 4px; right: 5px;
+  font-size: 10px; opacity: .7; pointer-events: none;
+}
+body.mp-game-active #spread .slot.mp-silenced::after {
+  content: ''; position: absolute; inset: 0;
+  background: rgba(0,0,0,.5); border-radius: 5px; pointer-events: none;
+}
+body.mp-game-active #spread .slot.mp-swap-a    { border-color: rgba(120,200,120,.9) !important; box-shadow: 0 0 12px rgba(100,180,100,.35) !important; }
+body.mp-game-active #spread .slot.mp-swap-pick { border-color: rgba(120,200,120,.5) !important; cursor: pointer; }
+
+/* ── Action panel ── */
+.mp-action-panel {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  padding: 4px 14px 5px; background: linear-gradient(transparent, rgba(8,5,3,.7));
+  min-height: 32px;
+}
+.mp-action-btn {
+  padding: 5px 11px;
+  background: rgba(180,140,90,.12); border: 1px solid rgba(180,140,90,.3);
+  border-radius: 6px; color: #b09060;
+  font: 600 11px/1 system-ui,sans-serif; cursor: pointer;
+  transition: background .12s, border-color .12s;
+}
+.mp-action-btn:hover  { background: rgba(180,140,90,.22); border-color: rgba(180,140,90,.55); color: #ddc98a; filter: none; }
+.mp-action-btn.invoke { border-color: rgba(200,130,60,.45); color: #c89060; }
+.mp-action-btn.invoke:hover { background: rgba(200,130,60,.2); }
+.mp-action-btn.swap   { border-color: rgba(100,180,100,.4); color: #79c778; }
+.mp-action-btn.swap:hover { background: rgba(50,120,50,.2); }
+.mp-action-btn.cancel { border-color: rgba(160,60,60,.35); color: #c06060; }
+.mp-action-hint { font: 400 10px/1.3 system-ui,sans-serif; color: #4a3820; flex: 1; }
+
+/* ── Scoring / complete overlay ── */
+.mp-overlay {
+  position: absolute; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(10,6,3,.88); backdrop-filter: blur(4px);
+  transition: opacity .3s;
+}
+.mp-overlay.mp-ov-hidden { opacity: 0; pointer-events: none; }
+.mp-ov-box {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  padding: 28px 24px;
+  background: rgba(20,12,8,.95);
+  border: 1px solid rgba(180,140,70,.3); border-radius: 12px;
+  min-width: min(300px,86vw); text-align: center;
+}
+.mp-ov-title  { font: 700 17px/1.1 Georgia,serif; color: #f0d58a; margin: 0; letter-spacing: .04em; }
+.mp-ov-scores { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px 14px; align-items: center; width: 100%; }
+.mp-ov-score-val   { font: 800 28px/1 Georgia,serif; color: #ddc98a; }
+.mp-ov-score-label { font: 400 10px/1 system-ui,sans-serif; color: #6a5535; letter-spacing: .08em; text-transform: uppercase; margin-top: 4px; }
+.mp-ov-vs          { font: 700 14px/1 Georgia,serif; color: #4a3820; }
+.mp-ov-totals      { font: 400 11px/1 system-ui,sans-serif; color: #6a5535; width: 100%; }
+.mp-ov-btn  {
+  padding: 12px 24px;
+  background: rgba(200,160,80,.18); border: 1px solid rgba(200,160,80,.5);
+  border-radius: 7px; color: #f0d58a; font: 700 13px/1 Georgia,serif;
+  cursor: pointer; transition: background .15s; width: 100%;
+}
+.mp-ov-btn:hover    { background: rgba(200,160,80,.3); filter: none; }
+.mp-ov-waiting { font: 400 11px/1 system-ui,sans-serif; color: #4a3820; letter-spacing: .06em; }
+.mp-ov-winner  { font: 700 22px/1.2 Georgia,serif; margin: 0; }
+.mp-ov-winner.win  { color: #ffd978; text-shadow: 0 0 20px rgba(255,217,120,.4); }
+.mp-ov-winner.lose { color: #8a7551; }
+.mp-ov-winner.draw { color: #b09060; }
+
+/* Interaction card tint */
+.card.mp-interaction { background: linear-gradient(160deg, rgba(30,15,5,.95), rgba(15,8,3,.98)) !important; border-color: rgba(180,80,80,.5) !important; }

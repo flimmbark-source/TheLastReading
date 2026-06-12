@@ -9,6 +9,7 @@ function placeIntoSlot(index){
 }
 
 export function renderSpread(ability, inPurge) {
+  if (document.body.classList.contains('mp-game-active')) return;
   const sp=$('#spread');
   // Lazily create the 5 stable slot elements; reuse them across renders so
   // CSS transitions on slot tilt / card transforms stay continuous and no
