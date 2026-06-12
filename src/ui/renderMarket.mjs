@@ -3,7 +3,7 @@
 // (src/systems/shop.mjs); purchase logic stays with the game flow.
 /* global state, persist, render, _nextRefreshCost, showOverlay, $, relicSlots, _relicRackKey, RELICS, _openRelicKey, RELIC_SPRITE */
 
-const STORE_ABILITY_PACKS = Object.freeze(['innate', 'restless', 'second_sight', 'thread']);
+const STORE_ABILITY_PACKS = Object.freeze(['innate', 'restless', 'second_sight', 'thread', 'foundation', 'ritual', 'pattern']);
 const RELIC_CACHE_PACK_ID = 'relic';
 const STORE_ASSET_PATH = './';
 const STORE_FADE_MS = 260;
@@ -66,27 +66,71 @@ function ensureStoreFrontStyles(target = window) {
     doc.head.appendChild(style);
   }
   style.textContent = `
-    .summary.store-front-shell{background:transparent;border:0;box-shadow:none;padding:0;max-width:none;width:auto;overflow:visible;animation:storeShellFadeIn ${STORE_FADE_MS}ms ease-out both}
+    .modal:has(.store-front-shell){background:rgba(0,0,0,.78);backdrop-filter:blur(2px);padding:0;align-items:center;justify-content:center}
+    .summary.store-front-shell{background:transparent;border:0;box-shadow:none;padding:0;max-width:none;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:storeShellFadeIn ${STORE_FADE_MS}ms ease-out both}
     .summary.store-front-shell.store-exiting{animation:storeShellFadeOut ${STORE_FADE_MS}ms ease-in both;pointer-events:none}
-    .summary.store-front-shell.store-exiting .store-front{animation:storeFrontFadeOut ${STORE_FADE_MS}ms ease-in both}
-    .modal:has(.store-front-shell){padding:8px;align-items:center;justify-content:center;overflow:auto}
-    .store-front{position:relative;width:min(94vw,calc(96dvh * .6667),620px);aspect-ratio:2/3;margin:0 auto;color:#eadbb9;background:url('${STORE_ASSET_PATH}Store_Front.png') center/100% 100% no-repeat;border-radius:18px;filter:drop-shadow(0 22px 46px rgba(0,0,0,.76));font-family:Georgia,serif;isolation:isolate;animation:storeFrontFadeIn ${STORE_FADE_MS}ms cubic-bezier(.2,.75,.2,1) both}
-    @keyframes storeShellFadeIn{from{opacity:0}to{opacity:1}}
-    @keyframes storeShellFadeOut{from{opacity:1}to{opacity:0}}
-    @keyframes storeFrontFadeIn{from{opacity:0;transform:translateY(14px) scale(.985);filter:drop-shadow(0 14px 30px rgba(0,0,0,.55)) blur(1px)}to{opacity:1;transform:translateY(0) scale(1);filter:drop-shadow(0 22px 46px rgba(0,0,0,.76)) blur(0)}}
-    @keyframes storeFrontFadeOut{from{opacity:1;transform:translateY(0) scale(1);filter:drop-shadow(0 22px 46px rgba(0,0,0,.76)) blur(0)}to{opacity:0;transform:translateY(10px) scale(.985);filter:drop-shadow(0 14px 30px rgba(0,0,0,.45)) blur(1px)}}
-    @media(prefers-reduced-motion:reduce){.summary.store-front-shell,.summary.store-front-shell.store-exiting,.store-front,.summary.store-front-shell.store-exiting .store-front{animation:none!important}}
-    .store-front button{font-family:Georgia,serif;cursor:pointer;-webkit-tap-highlight-color:transparent}.store-front button:disabled{cursor:not-allowed;filter:grayscale(.45);opacity:.45}
-    .store-title{position:absolute;left:20%;right:20%;top:3.55%;text-align:center;letter-spacing:.075em;text-transform:uppercase;font-weight:800;font-size:28px;line-height:.94;text-shadow:0 2px 4px #000}.store-title small{display:block;font-size:12px;letter-spacing:.18em;margin-bottom:0}.store-subtitle{position:absolute;left:19%;right:19%;top:10.55%;text-align:center;color:#d1a15e;font:600 13px system-ui,Segoe UI,sans-serif;white-space:nowrap;text-shadow:0 1px 2px #000}.store-reserve{position:absolute;right:6%;top:3.1%;width:14.9%;height:7.2%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:0;background:transparent;box-shadow:none}.store-reserve-label{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#c7944f}.store-reserve-value{font-size:34px;line-height:.9;color:#f1d196;text-shadow:0 1px 3px #000}.store-reserve-value .coin{font-size:.38em;margin-left:.08em;color:#c89445}
-    .store-section{position:absolute;left:5.3%;right:5.3%}.store-section.scoring{top:16.1%;height:21.7%}.store-section.abilities{top:38.7%;height:23.2%}.store-section.relics{top:65.7%;height:20.5%}
-    .store-plaque{position:absolute;left:50%;top:0;width:auto;height:auto;min-width:0;transform:translate(-50%,-32%);background:none!important;display:flex;align-items:center;justify-content:center;gap:.32em;text-align:center;text-transform:uppercase;letter-spacing:.07em;font-size:16px;font-weight:800;color:#d6b16f;text-shadow:0 2px 3px #000;pointer-events:none}.store-plaque .store-section-icon{font-size:.68em;opacity:.9}.store-section-copy{position:absolute;left:4%;right:4%;top:8.8%;text-align:center;font:600 11px system-ui,Segoe UI,sans-serif;color:#dfcda8;text-shadow:0 1px 2px #000;pointer-events:none}
-    .store-offer-row{position:absolute;left:17.2%;right:8.5%;top:18%;bottom:10%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9.5%}.store-section.abilities .store-offer-row{top:16%;bottom:13%}.store-scoring-row{position:absolute;left:7.2%;right:3.8%;top:16%;bottom:8%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4.2%}.store-relic-row{position:absolute;left:15.3%;right:5.2%;top:16%;bottom:9%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5.5%}
-    .store-pack-offer,.store-scoring-card,.store-relic-offer{position:relative;border:0!important;border-radius:0;background:transparent!important;box-shadow:none!important;outline:0;overflow:visible;transition:transform .12s ease,filter .12s ease}.store-pack-offer:not(.disabled):hover,.store-scoring-card:not(.disabled):hover,.store-relic-offer:not(.disabled):hover{transform:translateY(-1px);filter:brightness(1.09)}.store-empty-offer{opacity:0;border:0;background:transparent}
-    .store-pack-art,.store-score-art{position:absolute;left:0;top:5%;bottom:13%;width:40%;display:flex;align-items:center;justify-content:center;pointer-events:none}.store-pack-art .isp,.store-score-art .isp{transform:scale(.72);transform-origin:center;filter:drop-shadow(0 4px 5px rgba(0,0,0,.65))}.store-score-art .isp{transform:scale(.42)}.store-pack-body,.store-score-body{position:absolute;left:42%;right:1%;top:8%;bottom:34%;display:flex;flex-direction:column;justify-content:center;text-align:left;pointer-events:none}.store-pack-name,.store-score-name{font-size:12px;line-height:1.02;text-transform:uppercase;font-weight:800;color:#f0dfbd;text-shadow:0 1px 3px #000}.store-pack-desc,.store-score-desc{margin-top:.32em;font:700 9px system-ui,Segoe UI,sans-serif;color:#d5c6a8;line-height:1.12}.store-score-lv{margin-top:.28em;font:800 8px system-ui,Segoe UI,sans-serif;color:#c89445;text-transform:uppercase}.store-pack-buy,.store-score-buy,.store-relic-buy{position:absolute;right:3%;bottom:12%;min-width:40%;height:20%;border:1px solid rgba(226,181,100,.7);border-radius:5px;background:rgba(8,8,10,.52);color:#f5d9a0;text-transform:uppercase;letter-spacing:.05em;font-weight:800;font-size:9.5px;box-shadow:inset 0 0 10px rgba(0,0,0,.42),0 1px 3px rgba(0,0,0,.36)}.store-pack-buy .coin,.store-score-buy .coin,.store-relic-buy .coin{color:#c99443;margin-left:.2em}
-    .store-relic-offer{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:0 2% 2.5%;text-align:center}.store-relic-art{position:absolute;top:-2%;left:50%;width:64px;height:64px;transform:translateX(-50%);display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer;background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important;padding:0!important;margin:0!important;appearance:none;-webkit-appearance:none}.store-relic-art .relic-art-sprite{width:64px;height:64px;flex:0 0 64px;transform:scale(.98);transform-origin:center;filter:drop-shadow(0 5px 5px rgba(0,0,0,.65))}.store-vessel-glyph{font:800 28px/1 Georgia,serif;color:#f1d196;text-shadow:0 2px 5px #000}.store-relic-name{width:100%;font-size:8.5px;line-height:1.02;text-transform:uppercase;font-weight:800;color:#f0dfbd;text-shadow:0 1px 3px #000}.store-relic-desc{display:none}.store-relic-buy{position:relative;left:auto;right:auto;bottom:auto;width:84%;height:auto;min-height:18%;margin-top:.36em;padding:.28em .12em}.store-relic-offer.disabled .store-relic-buy{pointer-events:none}.store-relic-callout{z-index:10010;max-width:220px}.store-relic-callout .relic-callout-desc{font-size:12px;line-height:1.35}
-    .store-actions{position:absolute;left:5.5%;right:5.5%;bottom:2.45%;height:7.05%;display:grid;grid-template-columns:1fr 1.15fr;gap:3%}.store-refresh,.store-proceed{border:0;background:center/100% 100% no-repeat;color:#f1dfbd;text-transform:uppercase;letter-spacing:.08em;font-weight:800;text-shadow:0 1px 3px #000;box-shadow:none}.store-refresh{background-image:url('${STORE_ASSET_PATH}Refresh_Button.png');font-size:14px;display:grid;grid-template-columns:23% 1fr;align-items:center}.store-refresh-icon{font-size:1.3em}.store-refresh-cost{display:block;font-size:.86em;color:#e9c17d;margin-top:0}.store-proceed{background-image:url('${STORE_ASSET_PATH}Proceed_Button.png');font-size:20px;padding-right:11%}.store-replace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:12px}.store-replace-card{border:1px solid rgba(210,161,94,.42);border-radius:8px;background:rgba(255,255,255,.04);padding:9px;text-align:center}.store-replace-card button{margin-top:8px}
-    @media(min-width:900px){.store-front{width:min(52vw,calc(96dvh * .6667),760px)}.store-title{font-size:27px}.store-title small{font-size:11px}.store-subtitle{font-size:12px}.store-plaque{font-size:15px}.store-section-copy{font-size:10px}.store-pack-name,.store-score-name{font-size:11.5px}.store-pack-desc,.store-score-desc{font-size:8.5px}.store-pack-buy,.store-score-buy,.store-relic-buy{font-size:8.8px}.store-pack-art .isp,.store-score-art .isp{transform:scale(.78)}.store-relic-name{font-size:8.2px}.store-relic-art{width:64px;height:64px}.store-relic-art .relic-art-sprite{width:64px;height:64px;flex-basis:64px;transform:scale(.92)}.store-vessel-glyph{font-size:25px}}
-    @media(max-width:640px){.modal:has(.store-front-shell){padding:4px}.store-front{width:min(98vw,calc(96dvh * .6667));}.store-title{top:3.75%;font-size:21px}.store-title small{font-size:8px}.store-reserve{right:5.9%;top:3.5%;width:15.8%;height:7%}.store-reserve-label{font-size:6px}.store-reserve-value{font-size:18px}.store-section.scoring{top:16%;height:21.8%}.store-section.abilities{top:38.9%;height:23.1%}.store-section.relics{top:65.9%;height:20%}.store-plaque{font-size:11px}.store-scoring-row{left:6%;right:3.5%;top:18%;bottom:10%;gap:3%}.store-offer-row{left:17%;right:8.5%;top:18%;bottom:11%;gap:7%}.store-section.abilities .store-offer-row{top:16%;bottom:13%}.store-relic-row{left:14%;right:4.5%;top:16%;bottom:8%;gap:3.8%}.store-pack-art,.store-score-art{left:-1%;width:40%}.store-pack-art .isp{transform:scale(.58)}.store-score-art .isp{transform:scale(.34)}.store-pack-body,.store-score-body{left:42%;right:1%;bottom:34%}.store-pack-name,.store-score-name{font-size:7.4px}.store-pack-desc,.store-score-desc{font-size:5.8px}.store-score-lv{font-size:5.8px}.store-pack-buy,.store-score-buy,.store-relic-buy{font-size:6.4px;border-radius:4px}.store-relic-art{width:64px;height:64px;top:-6%}.store-relic-art .relic-art-sprite{width:64px;height:64px;flex-basis:64px;transform:scale(.58)}.store-vessel-glyph{font-size:20px}.store-relic-name{font-size:5.9px}.store-relic-buy{width:88%;padding:.2em .1em}.store-actions{bottom:2.55%;height:7%}.store-refresh{font-size:7.5px}.store-proceed{font-size:11px}}
+    @keyframes storeShellFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes storeShellFadeOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(8px)}}
+    @media(prefers-reduced-motion:reduce){.summary.store-front-shell,.summary.store-front-shell.store-exiting{animation:none!important}}
+
+    .store-front{position:relative;width:min(96vw,560px);font-family:Georgia,serif;color:#eadbb9}
+    .store-front button{font-family:Georgia,serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .store-front button:disabled{cursor:not-allowed;opacity:.4}
+
+    .store-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px}
+    .store-refresh{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.07);border:1px solid rgba(226,181,100,.35);border-radius:8px;color:#f1dfbd;padding:7px 12px;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;transition:background .15s,opacity .15s}
+    .store-refresh:not(:disabled):hover{background:rgba(255,255,255,.13)}
+    .store-refresh:disabled{opacity:.35;cursor:not-allowed}
+    .store-refresh-icon{font-size:1.15em;line-height:1}
+    .store-refresh-cost{color:#e0b96a;font-size:.88em}
+    .store-reserve-display{display:flex;flex-direction:column;align-items:flex-end;line-height:1}
+    .store-reserve-label{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#b08040;font-family:system-ui,sans-serif}
+    .store-reserve-amount{font-size:28px;color:#f1d196;text-shadow:0 1px 3px #000;line-height:1}
+    .store-reserve-amount .coin{font-size:.42em;margin-left:.1em;color:#c89445;vertical-align:middle}
+
+    .store-offer-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+
+    .store-card{position:relative;border-radius:12px;background:rgba(20,15,8,.72);border:1px solid rgba(200,160,80,.28);box-shadow:0 8px 28px rgba(0,0,0,.55);padding:14px 12px 56px;display:flex;flex-direction:column;align-items:center;text-align:center;transition:transform .13s,box-shadow .13s;min-height:180px}
+    .store-card:not(.disabled):hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(0,0,0,.7)}
+    .store-card.disabled{opacity:.55}
+    .store-card-tag{font:700 9px/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#9a7840;margin-bottom:8px;align-self:flex-start}
+    .store-card-art{width:56px;height:56px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;flex-shrink:0}
+    .store-card-art .isp{transform:scale(.48);transform-origin:center;filter:drop-shadow(0 3px 5px rgba(0,0,0,.6))}
+    .store-card-art .relic-art-sprite{width:56px;height:56px;flex:0 0 56px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.65))}
+    .store-vessel-glyph{font:800 30px/1 Georgia,serif;color:#f1d196;text-shadow:0 2px 6px #000}
+    .store-card-name{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#f0dfbd;line-height:1.1;margin-bottom:4px}
+    .store-card-desc{font:600 10px/1.25 system-ui,sans-serif;color:#b8a882;margin-bottom:4px}
+    .store-card-lv{font:800 9px/1 system-ui,sans-serif;color:#c89445;text-transform:uppercase;margin-top:2px}
+    .store-card-buy{position:absolute;bottom:10px;left:10px;right:10px;height:34px;border:1px solid rgba(226,181,100,.6);border-radius:7px;background:rgba(8,8,10,.58);color:#f5d9a0;font:800 10px/1 Georgia,serif;text-transform:uppercase;letter-spacing:.05em;box-shadow:inset 0 0 8px rgba(0,0,0,.4)}
+    .store-card-buy:not(:disabled):hover{background:rgba(30,22,8,.8)}
+    .store-card-buy .coin{color:#c99443;margin-left:.2em}
+    .store-relic-art-btn{background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important;padding:0;margin:0;cursor:pointer;display:flex;align-items:center;justify-content:center;width:56px;height:56px}
+
+    .store-footer{display:flex;justify-content:flex-end;margin-top:14px}
+    .store-proceed{background:rgba(200,160,60,.18);border:1px solid rgba(226,181,100,.55);border-radius:8px;color:#f1dfbd;font:800 14px/1 Georgia,serif;text-transform:uppercase;letter-spacing:.07em;padding:10px 22px;transition:background .15s}
+    .store-proceed:hover{background:rgba(200,160,60,.3)}
+
+    .store-replace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:12px}
+    .store-replace-card{border:1px solid rgba(210,161,94,.42);border-radius:8px;background:rgba(255,255,255,.04);padding:9px;text-align:center}
+    .store-replace-card button{margin-top:8px}
+    .store-relic-callout{z-index:10010;max-width:220px}
+    .store-relic-callout .relic-callout-desc{font-size:12px;line-height:1.35}
+
+    @media(max-width:480px){
+      .store-front{width:min(98vw,380px)}
+      .store-offer-row{gap:8px}
+      .store-card{padding:10px 8px 50px;min-height:160px}
+      .store-card-art{width:48px;height:48px;margin-bottom:6px}
+      .store-card-art .isp{transform:scale(.38)}
+      .store-card-art .relic-art-sprite{width:48px;height:48px;flex-basis:48px}
+      .store-relic-art-btn{width:48px;height:48px}
+      .store-card-name{font-size:10px}
+      .store-card-desc{font-size:9px}
+      .store-card-buy{height:30px;font-size:9px;bottom:8px;left:8px;right:8px}
+      .store-vessel-glyph{font-size:24px}
+      .store-refresh{font-size:11px;padding:6px 10px}
+      .store-reserve-amount{font-size:22px}
+    }
   `;
 }
 
@@ -119,9 +163,9 @@ function pickRelics(count, target = window) {
 
 export function buildStoreFrontOffers(target = window) {
   return {
-    scoring: pickScoringUpgrades(3, target),
-    abilities: pickPacks(STORE_ABILITY_PACKS, 2, target),
-    relics: pickRelics(2, target),
+    scoring: pickScoringUpgrades(1, target),
+    pack: pickPacks(STORE_ABILITY_PACKS, 1, target),
+    relics: pickRelics(1, target),
   };
 }
 
@@ -129,12 +173,12 @@ function currentStoreFrontOffers(target = window) {
   const owned = new Set((persistOf(target).relics || []));
   if (!target._storeFrontOffers) target._storeFrontOffers = buildStoreFrontOffers(target);
   const offers = target._storeFrontOffers;
-  offers.scoring = Array.isArray(offers.scoring) ? offers.scoring.slice(0, 3) : [];
-  offers.abilities = Array.isArray(offers.abilities) ? offers.abilities.slice(0, 2) : [];
-  offers.relics = (Array.isArray(offers.relics) ? offers.relics : []).filter(key => key && !owned.has(key)).slice(0, 2);
-  if (offers.relics.length < 2) {
+  offers.scoring = Array.isArray(offers.scoring) ? offers.scoring.slice(0, 1) : [];
+  offers.pack = Array.isArray(offers.pack) ? offers.pack.slice(0, 1) : [];
+  offers.relics = (Array.isArray(offers.relics) ? offers.relics : []).filter(key => key && !owned.has(key)).slice(0, 1);
+  if (offers.relics.length < 1) {
     const fill = pickRelics(4, target).filter(key => !offers.relics.includes(key));
-    while (offers.relics.length < 2 && fill.length) offers.relics.push(fill.shift());
+    while (offers.relics.length < 1 && fill.length) offers.relics.push(fill.shift());
   }
   target._storeFrontOffers = offers;
   return offers;
@@ -171,86 +215,69 @@ function storeVesselCost(target = window) {
   return typeof target.shopCost === 'function' ? target.shopCost('relicSlot') : 35;
 }
 
-function renderStorePackTile(sectionKey, index, packId, target = window) {
-  if (!packId) return '<div class="store-empty-offer" aria-hidden="true"></div>';
-  const pack = (target.PACKS || {})[packId];
-  if (!pack) return '<div class="store-empty-offer" aria-hidden="true"></div>';
-  const cost = packCostFor(packId, target);
-  const ok = (persistOf(target).pool || 0) >= cost;
-  const desc = STORE_PACK_COPY[packId] || pack.desc || '';
-  return `<div class="store-pack-offer ${ok ? 'affordable' : 'disabled'}">
-    <div class="store-pack-art"><span class="isp isp-108 ${pack.icon}"></span></div>
-    <div class="store-pack-body"><div class="store-pack-name">${escapeHtml(pack.name)}</div><div class="store-pack-desc">${escapeHtml(desc)}</div></div>
-    <button class="store-pack-buy" ${ok ? '' : 'disabled'} onclick="buyStorePack('${sectionKey}',${index},'${packId}',${cost})">Open <span class="coin">✦</span> ${cost}</button>
-  </div>`;
-}
-
-function renderStoreScoringTile(index, upgradeKey, target = window) {
-  if (!upgradeKey) return '<div class="store-empty-offer" aria-hidden="true"></div>';
+function renderScoringCard(index, upgradeKey, target = window) {
+  if (!upgradeKey) return '<div class="store-card disabled"><div class="store-card-tag">Scoring</div><div class="store-card-name">—</div></div>';
   const item = (target.SHOP || {})[upgradeKey];
-  if (!item) return '<div class="store-empty-offer" aria-hidden="true"></div>';
+  if (!item) return '<div class="store-card disabled"><div class="store-card-tag">Scoring</div><div class="store-card-name">—</div></div>';
   const copy = STORE_SCORING_COPY[upgradeKey] || { name: item[0], desc: String(item[1] || '').replace(/<[^>]*>/g, ''), icon: (target.SHOP_ICON || {})[upgradeKey] || 'isp-scoring' };
   const cost = scoringCostFor(upgradeKey, target);
   const ok = (persistOf(target).pool || 0) >= cost;
   const level = (persistOf(target).up || {})[upgradeKey] || 0;
-  return `<div class="store-scoring-card ${ok ? 'affordable' : 'disabled'}">
-    <div class="store-score-art"><span class="isp isp-108 ${copy.icon}"></span></div>
-    <div class="store-score-body"><div class="store-score-name">${escapeHtml(copy.name)}</div><div class="store-score-desc">${escapeHtml(copy.desc)}</div><div class="store-score-lv">Lv ${level} → ${level + 1}</div></div>
-    <button class="store-score-buy" ${ok ? '' : 'disabled'} onclick="buyStoreScoringUpgrade(${index},'${upgradeKey}',${cost})">Buy <span class="coin">✦</span> ${cost}</button>
+  return `<div class="store-card ${ok ? '' : 'disabled'}">
+    <div class="store-card-tag">Scoring</div>
+    <div class="store-card-art"><span class="isp isp-108 ${copy.icon}"></span></div>
+    <div class="store-card-name">${escapeHtml(copy.name)}</div>
+    <div class="store-card-desc">${escapeHtml(copy.desc)}</div>
+    <div class="store-card-lv">Lv ${level} → ${level + 1}</div>
+    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreScoringUpgrade(${index},'${upgradeKey}',${cost})">Buy <span class="coin">✦</span> ${cost}</button>
   </div>`;
 }
 
-function renderStoreScoringSection(upgradeKeys, target = window) {
-  const cells = [0, 1, 2].map(index => renderStoreScoringTile(index, upgradeKeys[index], target)).join('');
-  return `<section class="store-section scoring">
-    <div class="store-plaque"><span class="store-section-icon">✦</span>Scoring</div>
-    <div class="store-scoring-row">${cells}</div>
-  </section>`;
+function renderPackCard(index, packId, target = window) {
+  if (!packId) return '<div class="store-card disabled"><div class="store-card-tag">Pack</div><div class="store-card-name">—</div></div>';
+  const pack = (target.PACKS || {})[packId];
+  if (!pack) return '<div class="store-card disabled"><div class="store-card-tag">Pack</div><div class="store-card-name">—</div></div>';
+  const cost = packCostFor(packId, target);
+  const ok = (persistOf(target).pool || 0) >= cost;
+  const desc = STORE_PACK_COPY[packId] || pack.desc || '';
+  return `<div class="store-card ${ok ? '' : 'disabled'}">
+    <div class="store-card-tag">Pack</div>
+    <div class="store-card-art"><span class="isp isp-108 ${pack.icon}"></span></div>
+    <div class="store-card-name">${escapeHtml(pack.name)}</div>
+    <div class="store-card-desc">${escapeHtml(desc)}</div>
+    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStorePack('pack',${index},'${packId}',${cost})">Open <span class="coin">✦</span> ${cost}</button>
+  </div>`;
 }
 
-function renderStoreSection(sectionKey, title, icon, copy, packIds, target = window) {
-  const cells = [0, 1].map(index => renderStorePackTile(sectionKey, index, packIds[index], target)).join('');
-  return `<section class="store-section ${sectionKey}">
-    <div class="store-plaque"><span class="store-section-icon">${icon}</span>${escapeHtml(title)}</div>
-    <div class="store-offer-row">${cells}</div>
-  </section>`;
-}
-
-function renderStoreRelicTile(index, relicKey, target = window) {
-  if (!relicKey) return '<div class="store-empty-offer" aria-hidden="true"></div>';
+function renderRelicCard(index, relicKey, target = window) {
+  if (!relicKey) return renderVesselCard(target);
   const relic = (target.RELICS || {})[relicKey];
-  if (!relic) return '<div class="store-empty-offer" aria-hidden="true"></div>';
+  if (!relic) return renderVesselCard(target);
   const cost = relicCost(target);
   const ok = (persistOf(target).pool || 0) >= cost;
-  const style = typeof target.relicIconStyle === 'function' ? target.relicIconStyle(relicKey, 64) : '';
-  const desc = STORE_RELIC_COPY[relicKey] || relic.desc || relic.description || '';
-  return `<div class="store-relic-offer ${ok ? 'affordable' : 'disabled'} ${relic.rarity || ''}">
-    <button class="store-relic-art" type="button" onclick="showStoreRelicCallout('${relicKey}',this);event.stopPropagation()" aria-label="Show ${escapeHtml(relic.name)} ability"><div class="relic-art-sprite" style="${style}"></div></button>
-    <div class="store-relic-name">${escapeHtml(relic.name)}</div>
-    <div class="store-relic-desc">${escapeHtml(desc)}</div>
-    <button class="store-relic-buy" ${ok ? '' : 'disabled'} onclick="buyStoreRelic(${index},'${relicKey}',${cost})">Buy <span class="coin">✦</span> ${cost}</button>
+  const style = typeof target.relicIconStyle === 'function' ? target.relicIconStyle(relicKey, 56) : '';
+  return `<div class="store-card ${ok ? '' : 'disabled'} ${relic.rarity || ''}">
+    <div class="store-card-tag">Relic</div>
+    <div class="store-card-art">
+      <button class="store-relic-art-btn" type="button" onclick="showStoreRelicCallout('${relicKey}',this);event.stopPropagation()" aria-label="Show ${escapeHtml(relic.name)} details"><div class="relic-art-sprite" style="${style}"></div></button>
+    </div>
+    <div class="store-card-name">${escapeHtml(relic.name)}</div>
+    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreRelic(${index},'${relicKey}',${cost})">Buy <span class="coin">✦</span> ${cost}</button>
   </div>`;
 }
 
-function renderStoreVesselTile(target = window) {
+function renderVesselCard(target = window) {
   const level = (persistOf(target).up || {}).relicSlot || 0;
   const maxed = level >= 2;
   const cost = storeVesselCost(target);
   const ok = !maxed && (persistOf(target).pool || 0) >= cost;
-  return `<div class="store-relic-offer vessel ${ok ? 'affordable' : 'disabled'}">
-    <div class="store-relic-art"><div class="store-vessel-glyph">＋</div></div>
-    <div class="store-relic-name">Relic Vessel</div>
-    <div class="store-relic-desc">${maxed ? 'Relic Slots maxed.' : 'Gain +1 Relic Slot. Max 5.'}</div>
-    <button class="store-relic-buy" ${ok ? '' : 'disabled'} onclick="buyStoreVessel()">${maxed ? 'Maxed' : `Buy <span class="coin">✦</span> ${cost}`}</button>
+  return `<div class="store-card ${ok ? '' : 'disabled'}">
+    <div class="store-card-tag">Relic Slot</div>
+    <div class="store-card-art"><div class="store-vessel-glyph">＋</div></div>
+    <div class="store-card-name">Relic Vessel</div>
+    <div class="store-card-desc">${maxed ? 'Relic Slots maxed.' : 'Gain +1 Relic Slot'}</div>
+    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreVessel()">${maxed ? 'Maxed' : `Buy <span class="coin">✦</span> ${cost}`}</button>
   </div>`;
-}
-
-function renderRelicStoreSection(relics, target = window) {
-  const cells = [renderStoreRelicTile(0, relics[0], target), renderStoreRelicTile(1, relics[1], target), renderStoreVesselTile(target)].join('');
-  return `<section class="store-section relics">
-    <div class="store-plaque"><span class="store-section-icon">♜</span>Relics</div>
-    <div class="store-relic-row">${cells}</div>
-  </section>`;
 }
 
 export function showStoreRelicCallout(relicKey, anchor, target = window) {
@@ -301,13 +328,20 @@ export function openShopMain(){
   if(state.pendingPool){persist.pool+=state.pendingPool;state.pendingPool=0;render();}
   const offers = currentStoreFrontOffers(window);
   const rc=_nextRefreshCost(),canRefresh=persist.pool>=rc;
+  const relicKey = offers.relics[0] || null;
   const html=`<div class="summary tarot-shop store-front-shell"><div class="store-front">
-    <div class="store-title"><small>The</small>Oracle's Market</div>
-    <div class="store-reserve"><div class="store-reserve-label">Reserve</div><div class="store-reserve-value">${persist.pool}<span class="coin">✦</span></div></div>
-    ${renderStoreScoringSection(offers.scoring,window)}
-    ${renderStoreSection('abilities','Draw & Abilities','✋','Improve draw, hand, and ability reveals.',offers.abilities,window)}
-    ${renderRelicStoreSection(offers.relics,window)}
-    <div class="store-actions"><button class="store-refresh" ${canRefresh?'':'disabled'} onclick="refreshStoreFront()"><span class="store-refresh-icon">↻</span><span>Refresh Offers <span class="store-refresh-cost">✦ ${rc}</span></span></button><button class="store-proceed" onclick="storeExitToNextReading()">Next Reading</button></div>
+    <div class="store-meta">
+      <button class="store-refresh" ${canRefresh?'':'disabled'} onclick="refreshStoreFront()"><span class="store-refresh-icon">↻</span> Refresh <span class="store-refresh-cost">✦ ${rc}</span></button>
+      <div class="store-reserve-display"><div class="store-reserve-label">Reserve</div><div class="store-reserve-amount">${persist.pool}<span class="coin">✦</span></div></div>
+    </div>
+    <div class="store-offer-row">
+      ${renderScoringCard(0, offers.scoring[0], window)}
+      ${renderPackCard(0, offers.pack[0], window)}
+      ${relicKey ? renderRelicCard(0, relicKey, window) : renderVesselCard(window)}
+    </div>
+    <div class="store-footer">
+      <button class="store-proceed" onclick="storeExitToNextReading()">Next Reading →</button>
+    </div>
   </div></div>`;
   showOverlay(html);
 }
@@ -324,7 +358,7 @@ export function refreshStoreFront(target = window){
 }
 
 export function buyStorePack(sectionKey,index,packId,cost,target = window){
-  if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers[sectionKey]))target._storeFrontOffers[sectionKey][index]=null;
+  if(target._storeFrontOffers)target._storeFrontOffers.pack=[null];
   if(typeof target.buyPack==='function')return target.buyPack(packId,cost);
   return false;
 }
@@ -361,7 +395,7 @@ export function buyStoreRelic(index,relicKey,cost,target = window){
   const charged=chargeStoreRelic(cost,target);
   if(charged!==true)return charged;
   const acquired=typeof target.doAcquireRelic==='function'?target.doAcquireRelic(relicKey,()=>{
-    if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.relics))target._storeFrontOffers.relics[index]=null;
+    if(target._storeFrontOffers)target._storeFrontOffers.relics=[];
     if(typeof target.openShopMain==='function')target.openShopMain();
   },target):false;
   return acquired;
@@ -388,7 +422,7 @@ export function confirmStoreRelicReplace(index,oldKey,newKey,cost,target = windo
   if(charged!==true)return charged;
   const bought=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'relic',relicId:newKey,replaceRelicId:oldKey}):false;
   if(bought!==true)return bought;
-  if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.relics))target._storeFrontOffers.relics[index]=null;
+  if(target._storeFrontOffers)target._storeFrontOffers.relics=[];
   if(typeof target.renderRelicRack==='function')target.renderRelicRack();
   if(typeof target.openShopMain==='function')target.openShopMain();
   return true;
