@@ -57,6 +57,9 @@ function putBanishInHandFromDeck(state, playerIndex) {
   for (const p of Object.values(PERSONAS)) {
     assert(typeof p.name === 'string' && p.name.length > 0, `persona ${p.id} has a name`);
     assert(typeof p.tagline === 'string', `persona ${p.id} has a tagline`);
+    assert(typeof p.ability?.name === 'string' && p.ability.name.length > 0, `persona ${p.id} has an ability name`);
+    assert(typeof p.ability?.tag === 'string' && p.ability.tag.length > 0, `persona ${p.id} has an ability tag`);
+    assert(typeof p.ability?.text === 'string' && p.ability.text.length > 0, `persona ${p.id} has ability text`);
     assert(typeof p.passives === 'object', `persona ${p.id} has passives`);
   }
 }

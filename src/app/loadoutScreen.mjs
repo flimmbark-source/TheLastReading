@@ -32,6 +32,10 @@ function esc(str) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
 }
+// Renders ability rules text: escapes, then turns **word** into keyword markup.
+function abilityText(str) {
+  return esc(str).replace(/\*\*(.+?)\*\*/g, '<strong class="loadout-desc-key">$1</strong>');
+}
 
 export function installLoadoutScreen(target = window) {
   if (!target || target.__tlrLoadoutInstalled) return;
@@ -112,8 +116,11 @@ export function installLoadoutScreen(target = window) {
     const p = activePersona();
     if (!p) { box.innerHTML = ''; return; }
     box.innerHTML = `
-      <div class="loadout-desc-heading">${esc(p.name)}</div>
-      <p class="loadout-desc-text">${esc(p.description)}</p>
+      <div class="loadout-desc-header">
+        <span class="loadout-desc-ability">✦ ${esc(p.ability.name)}</span>
+        <span class="loadout-desc-tag">${esc(p.ability.tag)}</span>
+      </div>
+      <p class="loadout-desc-text">${abilityText(p.ability.text)}</p>
     `;
   }
 
