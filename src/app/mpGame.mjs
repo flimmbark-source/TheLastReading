@@ -48,8 +48,7 @@ export function installMpGame(target = window) {
         <div class="mp-round-label" id="mpRoundLabel"></div>
       </div>
 
-      <div class="mp-player-row" id="mpOppRow"></div>
-      <div class="mp-opp-hand"   id="mpOppHand"></div>
+      <div class="mp-opp-hand" id="mpOppHand"></div>
 
       <div class="mp-opp-spread-clip">
         <div class="mp-opp-spread-transform">
@@ -89,7 +88,6 @@ export function installMpGame(target = window) {
     const my = _myIndex;
 
     renderTopBar(s, my);
-    renderPlayerRow(s, 1 - my, 'mpOppRow');
     renderOppHand(s, 1 - my);
     renderSpread(s, 1 - my, 'mpOppSpread', false);
     renderPills(s, my);
@@ -159,7 +157,7 @@ export function installMpGame(target = window) {
       spreadEl.replaceChildren();
       for (let i = 0; i < 5; i++) {
         const slot = doc.createElement('div');
-        if (isSelf) slot.style.setProperty('--a', ((i - 2) * 4) + 'deg');
+        slot.style.setProperty('--a', ((i - 2) * 4 * (isSelf ? 1 : -1)) + 'deg');
         spreadEl.appendChild(slot);
         spreadEl._mpSlots.push(slot);
       }

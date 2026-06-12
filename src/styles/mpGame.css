@@ -85,16 +85,16 @@ body.mp-game-active #purgePrompt { display: none !important; }
 .mp-opp-pip  { width: 14px; height: 20px; border-radius: 3px; background: rgba(40,28,16,.8); border: 1px solid rgba(100,72,36,.4); display: inline-block; }
 .mp-opp-hand-label { font: 400 10px/1 system-ui,sans-serif; color: #4a3820; }
 
-/* ── Opponent spread (scaled + flipped) ── */
+/* ── Opponent spread (full size, arcing opposite to the player's) ── */
 .mp-opp-spread-clip {
-  height: 140px; overflow: hidden; position: relative; width: 100%; flex-shrink: 0;
+  height: 205px; overflow: visible; position: relative; width: 100%; flex-shrink: 0;
 }
 .mp-opp-spread-transform {
-  position: absolute;
-  top: -46px; left: 0; right: 0; height: 231px;
-  transform: scale(0.58) rotate(180deg);
-  transform-origin: center center;
+  position: absolute; top: 0; left: 0; right: 0;
 }
+.mp-opp-spread-transform .spread { padding: 0 6px; min-height: 0; }
+/* Mirror the player fan: negated --a angles (set in JS) + pivot below */
+.mp-opp-spread-transform .slot { transform-origin: 50% 280%; }
 .mp-opp-spread-transform .slot .num { display: none !important; }
 .mp-opp-spread-transform .slot.mp-targetable {
   border-color: rgba(200,80,80,.75) !important;
