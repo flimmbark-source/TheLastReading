@@ -85,6 +85,10 @@ function canShowStep(step, force = false) {
   return true;
 }
 
+function hasPendingTip() {
+  return tutStep >= 0 || queuedTipSteps.length > 0 || !!queuedTipTimer;
+}
+
 function finishIntro() {
   localStorage.setItem(TUT_KEY, '1');
   tutDone = true;
@@ -240,10 +244,10 @@ export function maybeShowMarketTutorial() {
 }
 
 export function maybeShowConstellationTutorial() {
-  if (localStorage.getItem(TUT_CONSTELLATION_KEY)) return;
+  if (!tutDone || hasPendingTip() || localStorage.getItem(TUT_CONSTELLATION_KEY)) return;
   const pill = document.querySelector('#constellationPill:not(.hidden)');
   if (!pill) return;
-  queueTip(TUT_STEP.CONSTELLATION, 260);
+  queueTip(TUT_STEP.CONSTELLATION, 500);
 }
 
 function posTutTip(target, arrowDir) {
