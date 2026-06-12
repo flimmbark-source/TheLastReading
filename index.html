@@ -4,25 +4,16 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>The Last Reading</title>
-<link rel="preload" as="image" href="sheet01.png">
-<link rel="preload" as="image" href="sheet02.png">
-<link rel="preload" as="image" href="sheet03.png">
-<link rel="preload" as="image" href="sheet04.png">
-<link rel="preload" as="image" href="sheet05.png">
-<link rel="preload" as="image" href="sheet06.png">
-<link rel="preload" as="image" href="sheet07.png">
-<link rel="preload" as="image" href="sheet08.png">
-<link rel="preload" as="image" href="sheet09.png">
-<link rel="preload" as="image" href="sheet10.png">
-<link rel="stylesheet" href="src/styles/base.css?v=constellation-callout-clean-1">
-<link rel="stylesheet" href="src/styles/spread.css?v=constellation-callout-clean-1">
-<link rel="stylesheet" href="src/styles/hand.css?v=constellation-callout-clean-1">
-<link rel="stylesheet" href="src/styles/cards.css?v=constellation-callout-clean-1">
-<link rel="stylesheet" href="src/styles/market.css?v=constellation-callout-clean-1">
-<link rel="stylesheet" href="src/styles/constellations.css?v=constellation-callout-clean-1">
-<link rel="stylesheet" href="src/styles/mobile.css?v=constellation-callout-clean-1">
-<link rel="stylesheet" href="src/styles/attic.css?v=constellation-callout-clean-1">
-<link rel="stylesheet" href="src/styles/drawers.css?v=constellation-callout-clean-1">
+<link rel="stylesheet" href="src/styles/base.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/hand.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/cards.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/market.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/constellations.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/mobile.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/attic.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/drawers.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/performance.css?v=mobile-load-fix-1">
 </head>
 <body class="tlr-loading">
 <div id="roomAmbient"></div>
@@ -49,6 +40,7 @@
 <div id="atticScene" aria-hidden="true"><div id="atticTutorial"></div><div id="atticPan"><div id="atticRoom"><div id="atticObjects"></div></div></div><div id="obalsHud"></div><button id="atticTableReturn" type="button" aria-label="Return to the table"><span>Return to Table</span></button><div id="atticWhisper"></div></div>
 <div id="summary"></div>
 <div id="modal" class="modal"><div class="box"><div class="modalHead"><h2 id="modalTitle"></h2><button id="modalToggle" onclick="toggleModalCollapse()">Hide</button></div><p id="modalPrompt"></p><div id="choices" class="choices"></div></div></div>
-<script type="module" src="src/app/main.mjs?v=constellation-callout-clean-1"></script>
+<script type="module" src="src/app/main.mjs?v=mobile-load-fix-1"></script>
+<script type="module" src="src/app/deferredAssets.mjs?v=mobile-load-fix-1"></script>
 </body>
 </html>
