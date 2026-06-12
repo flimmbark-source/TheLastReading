@@ -80,8 +80,8 @@ assert.equal(state.run.hand.length, 4, 'placing should remove one card from hand
 assert.equal(publicRunSnapshot(state).spreadCount, 1, 'public snapshot should expose spread count');
 
 let constellationState = reducer(createGameState(), { type: ACTIONS.SYNC_LEGACY_RUN, run: { thresholdIndex: 1 } });
-constellationState = reducer(constellationState, { type: ACTIONS.START_READING, rng: () => 0.5 });
-assert.equal(constellationState.run.constellationId, 'closed_palm', 'second round should start under Aries');
+constellationState = reducer(constellationState, { type: ACTIONS.START_READING, rng: () => 0 });
+assert.equal(constellationState.run.constellationId, 'closed_palm', 'second round should start under Aries (rng=0 picks first constellation)');
 constellationState = reducer(constellationState, { type: ACTIONS.SELECT_CARD, cardId: constellationState.run.hand[0].uid });
 assert.equal(canDiscardSelected(constellationState), false, 'Aries should block discards at reading start');
 constellationState = reducer(constellationState, { type: ACTIONS.PLACE_CARD, slotIndex: 0 });
