@@ -114,7 +114,7 @@ function installStoreFrontTuning(target = window) {
     callout.remove();
     // Only swallow the event if the tap was on a non-interactive area.
     // Don't block button/link clicks — those should still fire normally.
-    if (!event.target.closest('button,a,[role="button"]')) {
+    if (!event.target.closest?.('button,a,[role="button"]')) {
       event.preventDefault();
       event.stopPropagation();
     }
