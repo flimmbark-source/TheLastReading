@@ -81,18 +81,43 @@ export function installMpGame(target = window) {
       </div>`;
   }
 
+  function syncPerspectiveState(s, my) {
+    const p = s.players[my];
+    if (!p || !target.state) return;
+
+    const selected = target.state.selected;
+    target.state.hand = (p.hand || []).slice();
+    target.state.spread = (p.spread || Array(5).fill(null)).slice();
+    target.state.discard = (p.discard || []).slice();
+    target.state.discards = p.discards ?? 0;
+    target.state.busy = false;
+    target.state.abilitySelect = null;
+    target.state.purgeSelect = null;
+
+    if (selected !== null && !target.state.hand.some(c => c.uid === selected)) {
+      target.state.selected = null;
+    }
+  }
+
+  function renderSelfHand(s, my) {
+    syncPerspectiveState(s, my);
+    if (typeof target.renderHand === 'function') target.renderHand(null, false);
+  }
+
   // ── Full re-render ───────────────────────────────────────────────────────
   function render() {
     if (!_state) return;
     const s  = _state;
     const my = _myIndex;
 
+    syncPerspectiveState(s, my);
     renderTopBar(s, my);
     renderOppHand(s, 1 - my);
     renderSpread(s, 1 - my, 'mpOppSpread', false);
     renderPills(s, my);
     renderProgress(s);
     renderSelfSpread(s, my);
+    renderSelfHand(s, my);
     renderActionPanel(s, my);
 
     if (needsScoring(s))   showScoringOverlay(s);
