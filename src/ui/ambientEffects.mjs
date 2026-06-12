@@ -42,20 +42,21 @@ function installAmbientMotes(target){
   if(target.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
   const layer=document.getElementById('ambientFX');
   if(!layer)return;
-  const MAX=14;
+  const isMobile=()=>target.innerWidth<=640;
+  const maxMotes=()=>isMobile()?6:14;
   function makeMote(){
-    if(layer.childElementCount>=MAX)return;
+    if(layer.childElementCount>=maxMotes())return;
     const m=document.createElement('div');m.className='mote';
-    m.style.setProperty('--s',(2+Math.random()*4).toFixed(1)+'px');
+    m.style.setProperty('--s',(isMobile()?1.8+Math.random()*2.8:2+Math.random()*4).toFixed(1)+'px');
     const leftPct=(Math.random()*100).toFixed(1);
     m.style.left=leftPct+'vw';
     m.style.setProperty('--x',(Math.random()*64-32).toFixed(0)+'px');
-    m.style.setProperty('--o',(0.14+Math.random()*0.34).toFixed(2));
+    m.style.setProperty('--o',(isMobile()?0.10+Math.random()*0.22:0.14+Math.random()*0.34).toFixed(2));
     m.style.setProperty('--d',(12+Math.random()*8).toFixed(1)+'s');
     m.addEventListener('animationend',()=>m.remove());
     layer.appendChild(m);
   }
-  function loop(){if(!document.hidden)makeMote();setTimeout(loop,900+Math.random()*1700)}
-  for(let i=0;i<4;i++)setTimeout(makeMote,i*1800);
+  function loop(){if(!document.hidden)makeMote();setTimeout(loop,(isMobile()?1500:900)+Math.random()*(isMobile()?2200:1700))}
+  for(let i=0;i<(isMobile()?2:4);i++)setTimeout(makeMote,i*1800);
   loop();
 }
