@@ -38,25 +38,41 @@ function installHandIdleAnimation(target){
 
 function installAmbientMotes(target){
   if(target.__tlrAmbientMotesInstalled)return;
-  target.__tlrAmbientMotesInstalled=true;
-  if(target.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  if(target.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)return;
+
   const layer=document.getElementById('ambientFX');
-  if(!layer)return;
+  if(!layer){
+    target.setTimeout(()=>installAmbientMotes(target),250);
+    return;
+  }
+
+  target.__tlrAmbientMotesInstalled=true;
+
   const isMobile=()=>target.innerWidth<=640;
-  const maxMotes=()=>isMobile()?6:14;
-  function makeMote(){
+  const maxMotes=()=>isMobile()?8:16;
+
+  function makeMote(seed=false){
     if(layer.childElementCount>=maxMotes())return;
-    const m=document.createElement('div');m.className='mote';
-    m.style.setProperty('--s',(isMobile()?1.8+Math.random()*2.8:2+Math.random()*4).toFixed(1)+'px');
-    const leftPct=(Math.random()*100).toFixed(1);
-    m.style.left=leftPct+'vw';
-    m.style.setProperty('--x',(Math.random()*64-32).toFixed(0)+'px');
-    m.style.setProperty('--o',(isMobile()?0.10+Math.random()*0.22:0.14+Math.random()*0.34).toFixed(2));
+    const m=document.createElement('div');
+    m.className='mote';
+    m.style.setProperty('--s',(isMobile()?2.2+Math.random()*3.2:2.4+Math.random()*4.4).toFixed(1)+'px');
+    m.style.left=(Math.random()*100).toFixed(1)+'vw';
+    m.style.setProperty('--x',(Math.random()*72-36).toFixed(0)+'px');
+    m.style.setProperty('--o',(isMobile()?0.22+Math.random()*0.26:0.20+Math.random()*0.34).toFixed(2));
     m.style.setProperty('--d',(12+Math.random()*8).toFixed(1)+'s');
+    if(seed){
+      m.style.animationDelay=(-Math.random()*9).toFixed(2)+'s';
+      m.style.bottom=(Math.random()*76-10).toFixed(1)+'vh';
+    }
     m.addEventListener('animationend',()=>m.remove());
     layer.appendChild(m);
   }
-  function loop(){if(!document.hidden)makeMote();setTimeout(loop,(isMobile()?1500:900)+Math.random()*(isMobile()?2200:1700))}
-  for(let i=0;i<(isMobile()?2:4);i++)setTimeout(makeMote,i*1800);
+
+  function loop(){
+    if(!document.hidden)makeMote(false);
+    setTimeout(loop,(isMobile()?1300:850)+Math.random()*(isMobile()?1800:1500));
+  }
+
+  for(let i=0;i<(isMobile()?5:7);i++)setTimeout(()=>makeMote(true),i*160);
   loop();
 }
