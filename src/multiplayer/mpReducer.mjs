@@ -1,5 +1,5 @@
 import { MP_ACTIONS } from './mpActions.mjs';
-import { MP_PHASES, MP_SPREAD_SIZE, createMatchState, startingDiscardsForPersona, applyRoundStartPassives, handSizeForPersona } from './mpState.mjs';
+import { MP_PHASES, MP_SPREAD_SIZE, createMatchState, startingDiscardsForPersona, applyGameStartPassives, applyRoundStartPassives, handSizeForPersona } from './mpState.mjs';
 import { computeScore } from '../systems/scoring.mjs';
 import { shuffleDeck } from '../systems/deck.mjs';
 import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
@@ -28,6 +28,19 @@ function otherPlayerIndex(index) {
 
 function spreadFull(spread) {
   return spread.every(slot => slot !== null);
+}
+
+function lastPlayedLiveSlot(player) {
+  const history = Array.isArray(player?.playedSlotHistory) ? player.playedSlotHistory : [];
+  for (let i = history.length - 1; i >= 0; i--) {
+    const slotIndex = history[i];
+    if (slotIndex >= 0 && slotIndex < MP_SPREAD_SIZE && player.spread[slotIndex] !== null) return slotIndex;
+  }
+  return -1;
+}
+
+function removeSlotFromHistory(history, slotIndex) {
+  return (Array.isArray(history) ? history : []).filter(i => i !== slotIndex);
 }
 
 // Draw up to `count` cards from a player's deck, reshuffling discard if needed.
@@ -70,13 +83,12 @@ function applyInteractionAbility(state, playerIndex, card, target) {
   const { abilityType } = card;
 
   if (abilityType === MP_ABILITY_TYPES.MP_BANISH) {
-    if (!target) return { error: 'Banish requires a target.' };
-    const { playerIndex: targetPlayerIdx, slotIndex: targetSlot } = target;
-
-    if (targetPlayerIdx === playerIndex) return { error: 'Cannot Banish your own spread.' };
+    const targetPlayerIdx = otherPlayerIndex(playerIndex);
     const targetPlayer = state.players[targetPlayerIdx];
     if (!targetPlayer) return { error: 'Invalid target player.' };
-    if (targetSlot < 0 || targetSlot >= MP_SPREAD_SIZE) return { error: 'Invalid target slot.' };
+
+    const targetSlot = lastPlayedLiveSlot(targetPlayer);
+    if (targetSlot < 0) return { error: 'Opponent has no played card to Banish.' };
     if (targetPlayer.spread[targetSlot] === null) return { error: 'Target slot is empty.' };
 
     // Anchor: protect the first-placed slot
@@ -88,7 +100,8 @@ function applyInteractionAbility(state, playerIndex, card, target) {
     const newSpread = targetPlayer.spread.map((c, i) => i === targetSlot ? null : c);
     // Removed card goes to the target player's discard
     const newDiscard = [...targetPlayer.discard, removedCard];
-    const nextState = updatePlayer(state, targetPlayerIdx, { spread: newSpread, discard: newDiscard });
+    const playedSlotHistory = removeSlotFromHistory(targetPlayer.playedSlotHistory, targetSlot);
+    const nextState = updatePlayer(state, targetPlayerIdx, { spread: newSpread, discard: newDiscard, playedSlotHistory });
     return { nextState };
   }
 
@@ -205,12 +218,17 @@ export function mpReducer(state, action) {
         phase: MP_PHASES.PLACEMENT,
         round: 1,
       };
-      // Apply round-start persona passives for round 1
       let uid = next.nextInjectedUid;
+      // Apply game-start deck passives first, then round-start passives for round 1.
       for (let i = 0; i < 2; i++) {
-        const result = applyRoundStartPassives(next.players[i], uid);
-        next = updatePlayer(next, i, result.player);
-        uid = result.nextUid;
+        const gameStart = applyGameStartPassives(next.players[i], uid, rng);
+        next = updatePlayer(next, i, gameStart.player);
+        uid = gameStart.nextUid;
+      }
+      for (let i = 0; i < 2; i++) {
+        const roundStart = applyRoundStartPassives(next.players[i], uid);
+        next = updatePlayer(next, i, roundStart.player);
+        uid = roundStart.nextUid;
       }
       return { ...next, nextInjectedUid: uid };
     }
@@ -238,6 +256,7 @@ export function mpReducer(state, action) {
       const card = player.hand[cardIdx];
       const hand = player.hand.filter((_, i) => i !== cardIdx);
       const spread = player.spread.map((s, i) => i === slotIndex ? card : s);
+      const playedSlotHistory = [...(player.playedSlotHistory || []), slotIndex];
 
       // Anchor: record the first placed card's slot
       const wasEmpty = player.spread.every(s => s === null);
@@ -246,7 +265,7 @@ export function mpReducer(state, action) {
           ? slotIndex
           : player.anchoredSlotIndex;
 
-      let next = updatePlayer(state, playerIndex, { hand, spread, anchoredSlotIndex });
+      let next = updatePlayer(state, playerIndex, { hand, spread, anchoredSlotIndex, playedSlotHistory });
       return advanceTurn(next, playerIndex, spreadFull(spread));
     }
 
@@ -351,7 +370,7 @@ export function mpReducer(state, action) {
 
       for (let i = 0; i < 2; i++) {
         const p = next.players[i];
-        // Interaction cards don't persist between rounds — return them (and spread cards) to discard.
+        // Interaction cards persist in the player's deck cycle, but they do not stay on the table between rounds.
         const spreadCards = p.spread.filter(Boolean);
         const handInteraction = p.hand.filter(c => c.type === 'interaction');
         const handNormal = p.hand.filter(c => c.type !== 'interaction');
@@ -365,11 +384,12 @@ export function mpReducer(state, action) {
           discards: startingDiscardsForPersona(p.persona),
           roundScore: 0,
           anchoredSlotIndex: null,
+          playedSlotHistory: [],
           silencedCardUids: [],
           bonusActionAvailable: false,
           swapAvailable: false,
         };
-        // Draw back up to persona hand size, then inject round-start cards (e.g. Cleaner's Banish)
+        // Draw back up to persona hand size, then apply round-start passives.
         const target = handSizeForPersona(p.persona);
         const needed = target - resetPlayer.hand.length;
         const filled = needed > 0 ? drawCards(resetPlayer, needed) : resetPlayer;
