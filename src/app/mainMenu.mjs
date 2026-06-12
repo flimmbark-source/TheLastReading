@@ -8,7 +8,9 @@ function hasSavedProgress(storage) {
     const parsed = JSON.parse(raw);
     if (!parsed?.persist) return false;
     const p = parsed.persist;
-    return (p.pool > 0) || (p.relics?.length > 0) || Object.values(p.up || {}).some(v => v > 0);
+    const reserve = Number(p.reserve ?? p.pool ?? 0);
+    const upgrades = p.upgrades || p.up || {};
+    return (reserve > 0) || (p.relics?.length > 0) || Object.values(upgrades).some(v => v > 0);
   } catch (_) {
     return false;
   }
@@ -164,6 +166,10 @@ export function installMainMenu(target = window) {
       target.tlrStore.dispatch({ type: target.tlrActions.RESET_SESSION, fresh: true });
       syncInitialPersistToStore(target, initialPersist);
       syncInitialRunToStore(target, initialState);
+    }
+
+    if (typeof target.tlrBindSelectionToStore === 'function') {
+      target.tlrBindSelectionToStore();
     }
 
     gameStarted = false;
