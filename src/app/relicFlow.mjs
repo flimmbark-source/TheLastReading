@@ -7,6 +7,23 @@ function stateOf(target){return runtime(target).state;}
 function persistOf(target){return runtime(target).persist || {};}
 function market(target){return target.tlrMarketFlow || {};}
 
+function markReturningToMarket(target = window){
+  const doc = target.document;
+  if(!doc || doc.querySelector('.store-front-shell:not(.store-exiting)'))return;
+  const summary = doc.getElementById('summary');
+  if(!summary)return;
+  const marker = doc.createElement('div');
+  marker.className = 'store-front-shell';
+  marker.style.display = 'none';
+  marker.innerHTML = '<div class="store-front"></div>';
+  summary.appendChild(marker);
+}
+
+function returnToMarket(target = window){
+  markReturningToMarket(target);
+  if(typeof target.openShopMain==='function')target.openShopMain();
+}
+
 export function relicSlots(target = window){
   return typeof market(target).relicSlots==='function'?market(target).relicSlots(target):3+Math.min((persistOf(target).up||{}).relicSlot||0,2);
 }
@@ -32,14 +49,14 @@ export function doAcquireRelic(key,afterFn,target = window){
 
 export function acquireRelicFree(key,target = window){
   const persist=persistOf(target);
-  const after=target.openShopMain || (()=>{});
+  const after=()=>returnToMarket(target);
   if((persist.relics||[]).length<relicSlots(target))return doAcquireRelic(key,after,target);
   return showRelicReplace(key,after,target);
 }
 
 export function acquireRelic(key,target = window){
   const persist=persistOf(target);
-  const after=target.openShopMain || (()=>{});
+  const after=()=>returnToMarket(target);
   if((persist.relics||[]).length<relicSlots(target))return doAcquireRelic(key,after,target);
   return showRelicReplace(key,after,target);
 }
@@ -80,7 +97,7 @@ export function selectRelicReplace(oldKey,newKey,target = window){
     if(typeof target.renderRelicRack==='function')target.renderRelicRack();
     rt.replaceSelectedKey=null;
     markRelicTutorialPending(target);
-    const after=target._relicReplaceAfter||target.openShopMain;
+    const after=target._relicReplaceAfter||(()=>returnToMarket(target));
     if(typeof after==='function')after();
     return true;
   }
