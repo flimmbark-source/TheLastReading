@@ -57,18 +57,15 @@ export function installMpGame(target = window) {
         </div>
       </div>
 
-      <div class="mp-progress-row">
-        <span class="mp-progress-score"       id="mpScoreP0">0</span>
-        <div  class="mp-progress-bar">
-          <div class="mp-progress-fill p0" id="mpFillP0" style="width:0%"></div>
-          <div class="mp-progress-fill p1" id="mpFillP1" style="width:0%"></div>
+      <div class="mp-mid-wrap" id="mpMidWrap">
+        <div class="mp-pills-row" id="mpPillsRow"></div>
+        <div class="mp-progress-row">
+          <div class="mp-progress-bar">
+            <div class="mp-progress-fill p0" id="mpFillP0" style="width:0%"></div>
+            <div class="mp-progress-fill p1" id="mpFillP1" style="width:0%"></div>
+          </div>
+          <span class="mp-target-label" id="mpTargetLabel"></span>
         </div>
-        <span class="mp-progress-score right" id="mpScoreP1">0</span>
-        <span class="mp-target-label"         id="mpTargetLabel"></span>
-      </div>
-
-      <div class="mp-self-row-wrap">
-        <div class="mp-player-row"   id="mpSelfRow"></div>
         <div class="mp-action-panel" id="mpActionPanel"></div>
       </div>
 
@@ -87,8 +84,8 @@ export function installMpGame(target = window) {
     renderPlayerRow(s, 1 - my, 'mpOppRow');
     renderOppHand(s, 1 - my);
     renderSpread(s, 1 - my, 'mpOppSpread', false);
+    renderPills(s, my);
     renderProgress(s);
-    renderPlayerRow(s, my, 'mpSelfRow');
     renderSelfSpread(s, my);
     renderActionPanel(s, my);
 
@@ -289,17 +286,40 @@ export function installMpGame(target = window) {
     }
   }
 
+  // ── Middle pills (scores + discards) ────────────────────────────────────
+  function renderPills(s, my) {
+    const row = el('mpPillsRow');
+    if (!row) return;
+    const opp = 1 - my;
+    const mp = s.players[my],  op = s.players[opp];
+    const myName  = personaOf(s, my)?.name  ?? mp?.persona ?? '?';
+    const oppName = personaOf(s, opp)?.name ?? op?.persona ?? '?';
+    const myScore  = mp?.totalScore ?? 0;
+    const oppScore = op?.totalScore ?? 0;
+    const myDisc   = mp?.discards   ?? 0;
+    const tgt      = s.scoreTarget  ?? 200;
+    let myBadge = '';
+    if (mp?.swapAvailable) myBadge = `<span class="mp-badge mp-badge-swap">Swap</span>`;
+    row.innerHTML = `
+      <div class="mp-pill-group">
+        <div class="pill score-pill mp-score-pill"><span class="mp-pill-label">${esc(myName)}</span> <b>${myScore}</b></div>
+        <div class="pill reserve-pill mp-disc-pill">Discards <b>${myDisc}</b></div>
+      </div>
+      <div class="mp-pill-vs">
+        <span class="mp-pill-target">/ ${tgt}</span>
+      </div>
+      <div class="mp-pill-group mp-pill-group-opp">
+        <div class="pill score-pill mp-score-pill mp-score-pill-opp"><span class="mp-pill-label">${esc(oppName)}</span> <b>${oppScore}</b></div>
+      </div>`;
+  }
+
   // ── Progress bar ─────────────────────────────────────────────────────────
   function renderProgress(s) {
     const sc  = scores(s);
     const tgt = s.scoreTarget ?? 200;
-    const p0e = el('mpScoreP0'), p1e = el('mpScoreP1');
-    const f0  = el('mpFillP0'),  f1  = el('mpFillP1');
-    if (p0e) p0e.textContent = sc[0];
-    if (p1e) p1e.textContent = sc[1];
-    if (f0)  f0.style.width = Math.min(100, Math.round(sc[0] / tgt * 100)) + '%';
-    if (f1)  f1.style.width = Math.min(100, Math.round(sc[1] / tgt * 100)) + '%';
-    el('mpTargetLabel')?.textContent && (el('mpTargetLabel').textContent = `/ ${tgt}`);
+    const f0  = el('mpFillP0'), f1 = el('mpFillP1');
+    if (f0) f0.style.width = Math.min(100, Math.round(sc[0] / tgt * 100)) + '%';
+    if (f1) f1.style.width = Math.min(100, Math.round(sc[1] / tgt * 100)) + '%';
     const lbl = el('mpTargetLabel'); if (lbl) lbl.textContent = `/ ${tgt}`;
   }
 

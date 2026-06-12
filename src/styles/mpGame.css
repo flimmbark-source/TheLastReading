@@ -125,12 +125,30 @@ body.mp-game-active #purgePrompt { display: none !important; }
 .mp-progress-fill.p1 { right: 0; background: linear-gradient(to left, rgba(120,100,180,.6), rgba(150,120,200,.85)); }
 .mp-target-label { font: 400 10px/1 system-ui,sans-serif; color: #4a3820; white-space: nowrap; }
 
-/* ── My player row + action panel float above spread ── */
-.mp-self-row-wrap {
-  position: fixed; bottom: 325px; left: 0; right: 0; z-index: 9401;
-  display: flex; flex-direction: column; pointer-events: none;
+/* ── Middle section: pills + progress + action panel ── */
+.mp-mid-wrap {
+  position: fixed; bottom: 400px; left: 0; right: 0; z-index: 9401;
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 0 14px; pointer-events: none;
 }
-.mp-self-row-wrap > * { pointer-events: auto; }
+.mp-mid-wrap > * { pointer-events: auto; }
+
+/* Pills row — reuse SP .pill / .score-pill / .reserve-pill background images */
+.mp-pills-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+}
+.mp-pill-group { display: flex; gap: 6px; align-items: center; }
+.mp-pill-group-opp { flex-direction: row-reverse; }
+.mp-pill-vs {
+  display: flex; flex-direction: column; align-items: center;
+  font: 700 11px/1 Georgia,serif; color: #6a5535;
+}
+.mp-pill-target { font: 400 10px/1 system-ui,sans-serif; color: #4a3820; }
+/* Override SP pill sizing for compact MP use */
+.mp-score-pill { min-width: 0 !important; padding: 0 12px !important; font-size: 11px !important; height: 40px !important; display: flex !important; align-items: center !important; gap: 5px !important; }
+.mp-score-pill-opp { background-image: url(../../pill_dark_medium.png) !important; }
+.mp-disc-pill  { min-width: 0 !important; padding: 0 10px !important; font-size: 11px !important; height: 38px !important; display: flex !important; align-items: center !important; gap: 4px !important; }
+.mp-pill-label { font: 600 10px/1 Georgia,serif; color: #b09060; opacity: .85; }
 
 /* ── Player spread slot state overrides (for MP-specific states) ── */
 body.mp-game-active #spread .slot.mp-targetable {
