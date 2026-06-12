@@ -121,7 +121,8 @@
 .tut-arrow{position:absolute;width:0;height:0;left:50%;transform:translateX(-50%)}
 .tut-arrow.down{border-left:8px solid transparent;border-right:8px solid transparent;border-top:10px solid #856536;bottom:-10px}
 .tut-arrow.up{border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:10px solid #856536;top:-10px}
-.tut-foot{display:flex;gap:8px;margin-top:10px;justify-content:flex-end}
+.tut-foot{display:flex;gap:8px;margin-top:10px;justify-content:flex-end;align-items:center}
+.tut-tap-prompt{flex:1;font-size:10px;color:#8a7551;font-style:italic;text-align:left}
 #tutSkipBtn{background:transparent;border:1px solid #5f4c29;color:#7a6540;font-size:11px;padding:3px 8px;font-weight:400}
 .card.photo{border:none;background-color:#100806;border-radius:4px;background-size:200% 200%;background-repeat:no-repeat}
 .card.photo .title,.card.photo .art{display:none}

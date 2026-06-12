@@ -121,6 +121,8 @@ function clearSpreadForMarket(target = window){
   state.selected=null;
   state.abilitySelect=null;
   state.purgeSelect=null;
+  state.busy=false;
+  if(typeof target.snapCounter==='function')target.snapCounter(0);
   if(typeof target.render==='function')target.render();
 }
 
