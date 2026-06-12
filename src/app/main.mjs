@@ -2,6 +2,7 @@
 // module mounts the architecture bridge, installs the UI modules as the
 // globals the legacy markup/script still calls, and then boots the game.
 import { installLiveMirror } from './liveMirror.mjs';
+import { bootGame } from './boot.mjs';
 import { installArchitectureBridge } from './bootstrap.mjs';
 import { installDataGlobals } from './dataGlobals.mjs';
 import { installRuntimeState } from './runtimeState.mjs';
