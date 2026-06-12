@@ -129,7 +129,7 @@ body.mp-game-active #purgePrompt { display: none !important; }
 .mp-mid-wrap {
   position: fixed; bottom: 405px; left: 0; right: 0; z-index: 9401;
   display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 0 14px; pointer-events: none;
+  padding: 0 14px; pointer-events: none; width: 100%; box-sizing: border-box;
 }
 .mp-mid-wrap > * { pointer-events: auto; }
 
@@ -140,22 +140,17 @@ body.mp-game-active #purgePrompt { display: none !important; }
 
 /* Two-column grid: Score col | Discards col */
 .mp-mid-cols {
-  display: flex; gap: 8px; align-items: flex-end;
+  display: flex; gap: 8px; width: 100%;
 }
 .mp-mid-col {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1;
 }
 
 /* Compact pill sizing */
-.mp-pill-score {
-  min-width: 0 !important; padding: 0 14px !important;
-  font-size: 12px !important; height: 36px !important;
-  display: flex !important; align-items: center !important; gap: 6px !important;
-}
-.mp-pill-disc {
-  min-width: 0 !important; padding: 0 12px !important;
-  font-size: 12px !important; height: 36px !important;
-  display: flex !important; align-items: center !important; gap: 5px !important;
+.mp-pill-score, .mp-pill-disc {
+  min-width: 0 !important; width: 100% !important; box-sizing: border-box !important;
+  padding: 0 12px !important; font-size: 12px !important; height: 36px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important; gap: 6px !important;
 }
 .mp-pill-thresh {
   min-width: 0 !important; padding: 0 14px !important;
