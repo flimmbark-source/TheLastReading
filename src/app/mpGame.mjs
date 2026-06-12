@@ -7,7 +7,7 @@ import {
   isMatchOver, needsScoring, scores, roundScores, winnerName,
   personaOf,
 } from '../multiplayer/mpSelectors.mjs';
-import { cardHTML, applyCardPhoto, CARD_SHEET } from '../ui/renderCard.mjs';
+import { applyCardPhoto, CARD_SHEET, title as cardTitle, symbol as cardSymbol } from '../ui/renderCard.mjs';
 
 export function installMpGame(target = window) {
   if (!target || target.__tlrMpGameInstalled) return;
@@ -23,20 +23,21 @@ export function installMpGame(target = window) {
   const doc = target.document;
   function el(id) { return doc.getElementById(id); }
 
-  // ── Interaction-card HTML (they don't have TXT entries) ───────────────────
-  function mpInteractionCardHTML(card) {
-    const sym = card.abilityType === MP_ABILITY_TYPES.MP_BANISH ? '⚔' : '🔇';
-    return `
-      <div class="card-type">Interaction</div>
-      <div class="card-name">${esc(card.name)}</div>
-      <div class="card-glyph">${sym}</div>
-      <div class="card-pts">${card.points}</div>`;
-  }
-
+  // ── Card HTML ─────────────────────────────────────────────────────────────
+  // We generate the inner HTML ourselves rather than using the cached cardHTML()
+  // so we can null-safely handle cards with no ability (TXT[null] = undefined).
+  // Structure must match what the .card CSS expects: .title / .art / .sym / .plaque / .seal
   function mpCardHTML(card) {
     if (!card) return '';
-    if (card.type === 'interaction') return mpInteractionCardHTML(card);
-    return cardHTML(card);
+    if (card.type === 'interaction') {
+      const sym  = card.abilityType === MP_ABILITY_TYPES.MP_BANISH ? '⚔' : '🔇';
+      const desc = card.abilityType === MP_ABILITY_TYPES.MP_BANISH ? 'Remove' : 'Silence';
+      return `<div class="title">${esc(card.name)}</div><div class="art"><div class="sym">${sym}</div><div class="plaque">${desc}</div><div class="seal tr">${card.points}</div></div>`;
+    }
+    const sym   = cardSymbol(card);
+    const ttl   = cardTitle(card);
+    const label = (card.ability && target.TXT?.[card.ability]) || '';
+    return `<div class="title">${ttl}</div><div class="art"><div class="sym">${sym}</div>${label ? `<div class="plaque">${label}</div>` : ''}<div class="seal tr">${card.points}</div></div>`;
   }
 
   function mpApplyPhoto(el, card) {
@@ -407,6 +408,8 @@ export function installMpGame(target = window) {
     _swapFirst  = null;
     mount();
     el('mpGame')?.classList.remove('mp-hidden');
+    // Hide singleplayer UI chrome that sits above mpGame's z-index
+    el('tutTip')?.classList.add('mp-hidden-by-game');
     render();
     scheduleAutoScore();
   };
@@ -527,6 +530,7 @@ export function installMpGame(target = window) {
     if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; }
     _state = null; _selected = null; _invokeCard = null; _swapFirst = null;
     el('mpGame')?.classList.add('mp-hidden');
+    el('tutTip')?.classList.remove('mp-hidden-by-game');
     target.tlrHideMatchmaking?.();
     if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu();
   };

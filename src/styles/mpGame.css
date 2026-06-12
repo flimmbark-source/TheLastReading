@@ -177,3 +177,6 @@
 
 /* Interaction card tint (Banish / Seal) */
 .card.mp-interaction { background: linear-gradient(160deg, rgba(30,15,5,.95), rgba(15,8,3,.98)) !important; border-color: rgba(180,80,80,.5) !important; }
+
+/* Hide singleplayer chrome that exceeds mpGame's z-index */
+#tutTip.mp-hidden-by-game { display: none !important; }
