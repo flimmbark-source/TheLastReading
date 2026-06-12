@@ -3,7 +3,7 @@
 // (src/systems/shop.mjs); purchase logic stays with the game flow.
 /* global state, persist, render, _nextRefreshCost, showOverlay, $, relicSlots, _relicRackKey, RELICS, _openRelicKey, RELIC_SPRITE */
 
-const STORE_ABILITY_PACKS = Object.freeze(['innate', 'restless', 'second_sight', 'thread', 'foundation', 'ritual', 'pattern']);
+const STORE_ABILITY_PACKS = Object.freeze(['innate', 'restless', 'second_sight', 'thread', 'foundation', 'ritual']);
 const RELIC_CACHE_PACK_ID = 'relic';
 const STORE_ASSET_PATH = './';
 const STORE_FADE_MS = 260;
@@ -375,17 +375,17 @@ export function storeExitToNextReading(target = window) {
 }
 
 const MARKET_AMBIENCE_FILES = Object.freeze([
-  'soundreality-bell-fx-410608.mp3',
-  'izafi-gong-sound-419930.mp3',
-  'olenchic-psycho-1-155031.mp3',
+  { file: 'soundreality-bell-fx-410608.mp3', vol: 0.24 },
+  { file: 'izafi-gong-sound-419930.mp3',     vol: 0.7  },
+  { file: 'olenchic-psycho-1-155031.mp3',    vol: 0.7  },
 ]);
 
 function playMarketAmbience(target = window) {
-  const file = MARKET_AMBIENCE_FILES[Math.floor(Math.random() * MARKET_AMBIENCE_FILES.length)];
+  const entry = MARKET_AMBIENCE_FILES[Math.floor(Math.random() * MARKET_AMBIENCE_FILES.length)];
   try {
     const vol = typeof target._sfxVol === 'number' ? target._sfxVol : 1;
-    const a = new (target.Audio || Audio)(file);
-    a.volume = vol * 0.7;
+    const a = new (target.Audio || Audio)(entry.file);
+    a.volume = vol * entry.vol;
     a.play().catch(() => {});
   } catch(e) {}
 }
@@ -418,6 +418,8 @@ export function openShopMain(){
   const rc=_nextRefreshCost(),canRefresh=persist.pool>=rc;
   const relicKey = offers.relics[0] || null;
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // if store is already open (e.g. returning from a pack picker), skip the intro
+  const alreadyOpen = !!document.querySelector('.store-front-shell:not(.store-exiting)');
 
   const inner=`
     <div class="store-meta">
@@ -435,27 +437,20 @@ export function openShopMain(){
 
   const html=`<div class="summary tarot-shop store-front-shell">
     <div class="store-dim"></div>
-    <div class="store-candle" id="storeCandle">
+    <div class="store-candle${alreadyOpen ? ' lit' : ''}" id="storeCandle">
       <img class="candle-off" src="ui/candle_flame_off.png" alt="">
       <img class="candle-on"  src="ui/candle_flame_on.png"  alt="">
     </div>
-    <div class="store-front" id="storeFront">${inner}</div>
+    <div class="store-front${alreadyOpen ? ' store-visible' : ''}" id="storeFront">${inner}</div>
   </div>`;
   showOverlay(html);
 
-  if (reduce) {
-    const front = document.getElementById('storeFront');
-    if (front) front.classList.add('store-visible');
-    return;
-  }
+  if (alreadyOpen || reduce) return;
 
   // light the candle after dim appears, then fade in content + play ambience
   setTimeout(() => {
     const candle = document.getElementById('storeCandle');
-    if (candle) {
-      playMatchLight(window);
-      candle.classList.add('lit');
-    }
+    if (candle) { playMatchLight(window); candle.classList.add('lit'); }
   }, 300);
 
   setTimeout(() => {
