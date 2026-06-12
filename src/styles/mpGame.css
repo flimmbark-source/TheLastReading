@@ -154,9 +154,9 @@ body.mp-game-active #purgePrompt { display: none !important; }
   display: flex !important; align-items: center !important; gap: 6px !important;
 }
 
-/* Middle band: threshold left, constellation right */
-.mp-pills-mid { justify-content: flex-start; gap: 10px; }
-.mp-constellation { margin-left: auto; }
+/* Middle band: threshold centered, constellation right when visible */
+.mp-pills-mid { justify-content: center; gap: 10px; }
+.mp-constellation:not(.hidden) { margin-left: auto; }
 
 /* Actions band: discard/purge buttons */
 .mp-pills-actions { justify-content: center; gap: 8px; margin-top: 4px; }
