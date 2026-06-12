@@ -2,10 +2,19 @@
 // multiplayer match. Passives are applied by the reducer at init and round-start;
 // they do not require story justification.
 //
-// `ability` is the display form of the persona's mechanical hook:
-//   name — the ability's title, shown in the loadout description box
-//   tag  — frequency badge ('Game Start' | 'Passive' | 'Once / Round')
-//   text — rules text; **word** marks mechanic keywords for emphasis
+// `ability` is the display form of the persona's mechanical hook, split the way
+// card games template it:
+//   name     — the ability's title
+//   tag      — timing badge ('Game Start' | 'Passive' | 'Once per Round')
+//   rules    — templated rules text; **word** marks a game keyword
+//   reminder — optional muted line explaining a keyword referenced in rules
+//   flavor   — optional one-line italic flavor quote
+//
+// Rules text style guide: lead with the timing window, state the effect in
+// the fewest words that stay unambiguous, capitalize game terms (Place,
+// Discard, Banish, Spread), digits for numbers, no metaphors. The player-facing
+// term for spending a discard to trigger a card's ability is Discard (the code
+// calls this "invoke" internally — never show that word to players).
 
 export const PERSONAS = Object.freeze({
 
@@ -16,9 +25,9 @@ export const PERSONAS = Object.freeze({
     ability: {
       name: 'Cleansing Rite',
       tag: 'Game Start',
-      text:
-        'Your deck arrives purified — seeded with 3 **Banish**. Strip the last ' +
-        'card your opponent played right out of their spread.',
+      rules: 'Your deck starts with 3 **Banish**.',
+      reminder: 'Banish: remove the last card your opponent played from their spread.',
+      flavor: 'Every deck carries residue. Burn it clean.',
     },
     passives: {
       gameStartDeckCards: [{ defId: 'mp_banish', count: 3 }],
@@ -32,9 +41,8 @@ export const PERSONAS = Object.freeze({
     ability: {
       name: 'Overdraw',
       tag: 'Passive',
-      text:
-        'Draw an extra card every round, but the table takes its cut: start ' +
-        'each game with one fewer **Discard**. More options, less fuel.',
+      rules: '+1 **Hand Size**. −1 starting **Discard**.',
+      flavor: 'More cards. Fewer outs.',
     },
     passives: {
       handSizeBonus: 1,
@@ -49,9 +57,8 @@ export const PERSONAS = Object.freeze({
     ability: {
       name: 'Significator',
       tag: 'Passive',
-      text:
-        'The first card you lay each round is set in stone. No opponent ' +
-        'ability can remove or silence it.',
+      rules: 'The first card you **Place** each round can’t be removed or silenced.',
+      flavor: 'The first card laid is the truest.',
     },
     passives: {
       anchoredFirstCard: true,
@@ -61,13 +68,12 @@ export const PERSONAS = Object.freeze({
   gambit: {
     id: 'gambit',
     name: 'The Gambit',
-    tagline: 'Once per round: Place after Invoke.',
+    tagline: 'Once per round: Place after Discard.',
     ability: {
       name: 'Double Deal',
-      tag: 'Once / Round',
-      text:
-        'After you **Invoke**, immediately place a card as a bonus action. ' +
-        'Two moves, one turn.',
+      tag: 'Once per Round',
+      rules: 'After you **Discard**, you may immediately **Place** a card for free.',
+      flavor: 'Why take one turn when you’re owed two?',
     },
     passives: {
       bonusPlaceAfterInvoke: true,
@@ -80,10 +86,9 @@ export const PERSONAS = Object.freeze({
     tagline: 'Once per round: free swap in your spread.',
     ability: {
       name: 'Transposition',
-      tag: 'Once / Round',
-      text:
-        'Swap any two cards in your spread as a free action. Your turn is ' +
-        'still yours to spend.',
+      tag: 'Once per Round',
+      rules: 'On your turn, swap 2 cards in your **Spread** for free.',
+      flavor: 'Fate rewards a steady hand.',
     },
     passives: {
       freeSpreadSwap: true,

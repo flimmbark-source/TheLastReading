@@ -115,12 +115,15 @@ export function installLoadoutScreen(target = window) {
     if (!box) return;
     const p = activePersona();
     if (!p) { box.innerHTML = ''; return; }
+    const a = p.ability;
     box.innerHTML = `
       <div class="loadout-desc-header">
-        <span class="loadout-desc-ability">✦ ${esc(p.ability.name)}</span>
-        <span class="loadout-desc-tag">${esc(p.ability.tag)}</span>
+        <span class="loadout-desc-ability">✦ ${esc(a.name)}</span>
+        <span class="loadout-desc-tag">${esc(a.tag)}</span>
       </div>
-      <p class="loadout-desc-text">${abilityText(p.ability.text)}</p>
+      <p class="loadout-desc-text">${abilityText(a.rules)}</p>
+      ${a.reminder ? `<p class="loadout-desc-reminder">(${esc(a.reminder)})</p>` : ''}
+      ${a.flavor ? `<p class="loadout-desc-flavor">${esc(a.flavor)}</p>` : ''}
     `;
   }
 
