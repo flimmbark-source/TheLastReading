@@ -44,7 +44,7 @@ import * as handRenderer from '../ui/renderHand.mjs';
 import * as tableRenderer from '../ui/renderTable.mjs';
 import * as atticRenderer from '../ui/renderAttic.mjs';
 import * as effectsModule from './effects.mjs';
-import * as tutorialModule from './tutorialSafe.mjs';
+import * as tutorialModule from './tutorialCore.mjs';
 import * as readingFlowModule from './readingFlow.mjs';
 import * as archivesModule from './archives.mjs';
 
@@ -53,7 +53,7 @@ function installStoreFrontTuning(target = window) {
   if (!doc || doc.getElementById('store-front-tuning-style')) return;
 
   const style = doc.createElement('style');
-  style.id = 'store-front-tuning-style';
+  style.id = 'store-front-style';
   style.textContent = `
     #summary.modal.show:has(.store-front-shell){background:transparent!important}
     #tutTip{z-index:2147483000!important}
