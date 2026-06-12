@@ -10,6 +10,7 @@
    _relicMeldNameToKey, _relicMeldNames, _packBuys, _shopPacks, _shopRefreshCount,
    getUnlockedFragments, render, refreshHandState,
    ghost, bump, centerGhost, fireMultGhost, fireScoreGhost, holdEffects,
+   scorePillFlash,
    meldStr, normMeldName, sortCards, cardDisplayName, cleanName, choice,
    buildDeck, shuffle, drawN, slotsForMeld,
    tlrSyncRunToStore, tlrStoreReady, tlrResolveAbilityThroughStore,
@@ -129,7 +130,7 @@ export function placeCard(i){
 
 export function setCounterTarget(v){const floor=Math.max(counterShown,counterTarget,visibleCounterValue());counterTarget=Math.max(v,floor);if(counterTimer)clearTimeout(counterTimer);counterTimer=setTimeout(()=>{if(counterCancel)counterCancel();const from=Math.max(counterShown,visibleCounterValue());const to=Math.max(counterTarget,from);counterCancel=rollCounter(from,to,650);counterShown=to;counterTimer=null},700)}
 export function snapCounter(v){if(counterTimer){clearTimeout(counterTimer);counterTimer=null}if(counterCancel){counterCancel();counterCancel=null}counterShown=counterTarget=v;_cacheEls();_elCurrent.textContent=v;_elCurrent.style.color=''}
-export function rollCounter(from,to,dur){_cacheEls();let el=_elCurrent,start=performance.now(),dead=false,lastVal=from,popAnim=null;if(to<=from){el.textContent=from;el.style.color='';return()=>{dead=true}}function step(now){if(dead)return;let t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++){fireScoreGhost();}if(val!==lastVal){if(popAnim)popAnim.cancel();popAnim=el.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});}lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color='';holdEffects(1000);}}requestAnimationFrame(step);return()=>{dead=true;if(popAnim)popAnim.cancel();el.style.color=''}}
+export function rollCounter(from,to,dur){_cacheEls();let el=_elCurrent,start=performance.now(),dead=false,lastVal=from,popAnim=null;if(to<=from){el.textContent=from;el.style.color='';return()=>{dead=true}}function step(now){if(dead)return;let t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++){fireScoreGhost();}if(val!==lastVal){if(popAnim)popAnim.cancel();popAnim=el.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});}lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color='';if(to-from>=10&&typeof scorePillFlash==='function')scorePillFlash();holdEffects(1000);}}requestAnimationFrame(step);return()=>{dead=true;if(popAnim)popAnim.cancel();el.style.color=''}}
 
 export function startPurge(){if(state.busy||state.hand.length<3||state.abilitySelect||state.purgeSelect!==null)return;state.purgeSelect=[];state.selected=null;render()}
 export function togglePurgeCard(uid){if(state.purgeSelect===null)return;const idx=state.purgeSelect.indexOf(uid);if(idx>=0)state.purgeSelect.splice(idx,1);else if(state.purgeSelect.length<3)state.purgeSelect.push(uid);refreshHandState()}
