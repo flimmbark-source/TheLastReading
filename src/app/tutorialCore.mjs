@@ -44,7 +44,7 @@ const TUT_STEPS = [
   { sel: '#hand .card[data-uid]', arrow: 'down', text: 'The red circle on each card shows how many points it adds.' },
   { sel: '.threshold-pill', arrow: 'up', text: 'Try to beat the <b>Threshold</b> with your <b>Score</b> by the time you place 5 cards.' },
   { sel: '#discardBtn', arrow: 'up', text: '<b>Discard</b> a card to use its <b>Ability</b> instead of placing it.' },
-  { sel: '.handDock', arrow: 'down', key: TUT_PATTERN_KEY, text: 'Some of your cards may work together.' },
+  { sel: '#hand .card[data-hint], #hand .card.hint-complete, #hand .card.hint-card', fallbackSel: '.handDock', arrow: 'down', key: TUT_PATTERN_KEY, text: 'Some of your cards may work together.' },
   { center: true, text: 'Each cleared Threshold makes the next one harder. Clear the 10th Threshold to win.' },
   { sel: '#relicRack', arrow: 'up', text: 'You found a <b>Relic</b>. Relics carry passive effects across every reading until you lose. Tap a relic icon to see what it does.' },
   { sel: '#scoringPullTab', arrow: 'up', key: TUT_PATTERN_KEY, text: 'Check <b>Scoring</b> to see if you can complete a pattern. Place the cards down to activate a pattern.' },
@@ -71,6 +71,7 @@ const MARKET_TUT_STEPS = [
 function q(sel) { return document.querySelector(sel); }
 function stepKey(step) { return TUT_STEPS[step] && TUT_STEPS[step].key ? TUT_STEPS[step].key : null; }
 function markStepSeen(step) { const key = stepKey(step); if (key) localStorage.setItem(key, '1'); }
+function targetForStep(s) { return document.querySelector(s.sel) || (s.fallbackSel ? document.querySelector(s.fallbackSel) : null); }
 
 function canShowStep(step, force = false) {
   const s = TUT_STEPS[step];
@@ -151,6 +152,7 @@ export function tutShow(step, options = {}) {
   clearTimeout(tutTimer);
   tutTimer = null;
   tutStep = step;
+  tutIgnoreClicksUntil = Date.now() + (step === TUT_STEP.PATTERN_NOTICE ? 450 : 180);
   const s = TUT_STEPS[step];
   if (!s) return;
   const tip = q('#tutTip');
@@ -164,7 +166,7 @@ export function tutShow(step, options = {}) {
   if (s.center) {
     tip.classList.add('show', 'tut-center');
   } else {
-    const target = document.querySelector(s.sel);
+    const target = targetForStep(s);
     if (!target) { tutHide(); scheduleQueuedTips(300); return; }
     tip.classList.add('show');
     requestAnimationFrame(() => posTutTip(target, s.arrow));
@@ -205,7 +207,7 @@ function hasPatternOpportunity() {
 
 export function maybeShowPatternTutorial() {
   if (!tutDone || tutStep >= 0 || localStorage.getItem(TUT_PATTERN_KEY)) return;
-  if (hasPatternOpportunity()) tutShow(TUT_STEP.PATTERN_NOTICE);
+  if (hasPatternOpportunity()) queueTip(TUT_STEP.PATTERN_NOTICE, 220);
 }
 
 export function maybeShowReadingCompletionTutorial() {
