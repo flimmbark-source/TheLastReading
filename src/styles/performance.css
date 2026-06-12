@@ -1,6 +1,11 @@
 @media(max-width:640px){
   body{background-attachment:scroll!important;background-size:cover!important;}
   #roomAmbient{animation:none!important;opacity:.42!important;transform:none!important;}
+  #ambientFX{display:block!important;}
+  .mote{display:block!important;filter:blur(.35px)!important;}
+}
+
+@media(prefers-reduced-motion:reduce){
   #ambientFX{display:none!important;}
   .mote{display:none!important;}
 }
