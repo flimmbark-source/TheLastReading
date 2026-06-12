@@ -144,6 +144,7 @@ export function openShop(target = window){
 export function installMarketFlow(target = window){
   if(!target || target.__tlrMarketFlowInstalled)return;
   target.__tlrMarketFlowInstalled=true;
+  preloadMarketImages(target);
   const api={marketRuntime,nextRefreshCost,relicSlots,relicPool,shopPacks,refreshShopPacks,packCost,markPackBought,playRelicVision,openRelicVisionShop,openShop};
   target.tlrMarketFlow=api;
   marketRuntime(target);
