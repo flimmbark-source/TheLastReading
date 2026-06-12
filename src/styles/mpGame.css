@@ -127,49 +127,49 @@ body.mp-game-active #purgePrompt { display: none !important; }
 
 /* ── Middle section (fixed between the two spreads) ── */
 .mp-mid-wrap {
-  position: fixed; bottom: 405px; left: 0; right: 0; z-index: 9401;
-  display: flex; flex-direction: column; gap: 2px;
+  position: fixed; bottom: 401px; left: 0; right: 0; z-index: 9401;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
   padding: 0 14px; pointer-events: none;
 }
 .mp-mid-wrap > * { pointer-events: auto; }
 
-/* Each band: pills grouped together, centered */
+/* Each band: two equal-width pills side by side, so the rows line up
+   into tidy columns. */
 .mp-pills-band {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-}
-/* Override SP .pill sizing to be compact */
-.mp-pill-score {
-  min-width: 0 !important; padding: 0 14px !important;
-  font-size: 12px !important; height: 40px !important;
-  display: flex !important; align-items: center !important; gap: 6px !important;
-}
-.mp-pill-disc {
-  min-width: 0 !important; padding: 0 12px !important;
-  font-size: 12px !important; height: 38px !important;
-  display: flex !important; align-items: center !important; gap: 5px !important;
-}
-.mp-pill-thresh {
-  min-width: 0 !important; padding: 0 14px !important;
-  font-size: 12px !important; height: 40px !important;
-  display: flex !important; align-items: center !important; gap: 6px !important;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
 }
 
-/* Middle band: threshold centered, constellation right when visible */
-.mp-pills-mid { justify-content: center; gap: 10px; }
-.mp-constellation:not(.hidden) { margin-left: auto; }
+/* market.css reorders pills with flex `order` at mobile widths — neutralize
+   so DOM order is what renders */
+.mp-pill-score, .mp-pill-disc, .mp-pill-thresh { order: 0 !important; transform: none !important; }
 
-/* Actions band: discard/purge buttons */
-.mp-pills-actions { justify-content: center; gap: 8px; margin-top: 4px; }
+/* Uniform compact pill sizing — equal widths keep rows aligned */
+.mp-pill-score, .mp-pill-disc, .mp-pill-thresh {
+  min-width: 0 !important; width: 118px !important; box-sizing: border-box !important;
+  height: 32px !important; padding: 0 10px !important;
+  display: flex !important; align-items: center !important;
+  justify-content: center !important; gap: 5px !important;
+  font-size: 11px !important; letter-spacing: .03em;
+  white-space: nowrap;
+}
+.mp-pill-score b, .mp-pill-disc b, .mp-pill-thresh b { font-size: 13px; }
+.mp-pill-thresh { width: 142px !important; }
 
-/* Action panel: hint text + contextual buttons, below action buttons */
+/* Middle band: threshold centered; constellation beside it when shown */
+.mp-pills-mid { gap: 10px; }
+
+/* Actions band: discard/purge buttons centered under the pills */
+.mp-pills-actions { gap: 10px; margin-top: 3px; }
+
+/* Action panel: contextual hint/buttons, kept subtle */
 .mp-action-panel {
   display: flex; align-items: center; justify-content: center; gap: 8px;
-  flex-wrap: wrap; min-height: 18px; padding: 2px 0;
+  flex-wrap: wrap; min-height: 16px;
   pointer-events: auto;
 }
 .mp-action-hint {
   font: 400 10px/1.3 system-ui,sans-serif;
-  color: #4a3820; text-align: center; width: 100%;
+  color: #6a5535; text-align: center; width: 100%;
 }
 
 /* ── Player spread slot state overrides (for MP-specific states) ── */
