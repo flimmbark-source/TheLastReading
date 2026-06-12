@@ -18,7 +18,6 @@ import { installDiscardRuntime } from './discardRuntime.mjs';
 import { installSpreadPlacementBridge } from './spreadPlacementBridge.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
-import { bootGame } from './boot.mjs';
 import { installMainMenu } from './mainMenu.mjs';
 import { installLoadoutScreen } from './loadoutScreen.mjs';
 import { installMatchmakingScreen } from './matchmakingScreen.mjs';
@@ -128,48 +127,90 @@ function installMarketTutorialTrigger(target = window) {
   if (!doc || target.__marketTutorialTriggerInstalled) return;
   target.__marketTutorialTriggerInstalled = true;
   let wasOpen = false;
-  let storeFrontReadyPromise = null;
+  let marketReadyPromise = null;
 
   const afterPaint = () => new Promise(resolve => {
     target.requestAnimationFrame(() => target.requestAnimationFrame(resolve));
   });
 
-  const waitForStoreFrontArt = () => {
+  const preloadStoreFrontArt = () => new Promise(resolve => {
+    const ImageCtor = target.Image || Image;
+    const img = new ImageCtor();
+    let settled = false;
+    const done = () => {
+      if (settled) return;
+      settled = true;
+      resolve(true);
+    };
+    img.onload = () => {
+      if (typeof img.decode === 'function') img.decode().catch(() => {}).then(done);
+      else done();
+    };
+    img.onerror = done;
+    img.src = './Store_Front.png';
+    if (img.complete) {
+      if (typeof img.decode === 'function') img.decode().catch(() => {}).then(done);
+      else done();
+    }
+    target.setTimeout(done, 1200);
+  });
+
+  const waitForMarketIntro = () => {
     if (!doc.querySelector('.store-front-shell .store-front')) return Promise.resolve(false);
-    if (!storeFrontReadyPromise) {
-      storeFrontReadyPromise = new Promise(resolve => {
-        const ImageCtor = target.Image || Image;
-        const img = new ImageCtor();
+    if (!marketReadyPromise) {
+      marketReadyPromise = new Promise(resolve => {
         let settled = false;
+        let observer = null;
+        let fallback = null;
+
         const done = () => {
           if (settled) return;
           settled = true;
+          if (observer) observer.disconnect();
+          if (fallback) target.clearTimeout(fallback);
           afterPaint().then(() => resolve(true));
         };
-        img.onload = () => {
-          if (typeof img.decode === 'function') img.decode().catch(() => {}).then(done);
-          else done();
+
+        const ready = () => {
+          const front = doc.getElementById('storeFront') || doc.querySelector('.store-front-shell .store-front');
+          const candle = doc.getElementById('storeCandle');
+          return !!front && front.classList.contains('store-visible') && (!candle || candle.classList.contains('lit'));
         };
-        img.onerror = done;
-        img.src = './Store_Front.png';
-        if (img.complete) {
-          if (typeof img.decode === 'function') img.decode().catch(() => {}).then(done);
-          else done();
-        }
-        target.setTimeout(done, 1200);
+
+        const waitForVisibleTransition = () => {
+          const front = doc.getElementById('storeFront') || doc.querySelector('.store-front-shell .store-front');
+          if (!front) return done();
+          if (ready()) {
+            const transitionMs = target.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 0 : 280;
+            target.setTimeout(done, transitionMs);
+          }
+        };
+
+        preloadStoreFrontArt().then(() => {
+          if (target.matchMedia?.('(prefers-reduced-motion: reduce)').matches || ready()) {
+            waitForVisibleTransition();
+            return;
+          }
+
+          observer = new MutationObserver(waitForVisibleTransition);
+          const shell = doc.querySelector('.store-front-shell');
+          if (shell) observer.observe(shell, { attributes: true, subtree: true, attributeFilter: ['class'] });
+          fallback = target.setTimeout(done, 1100);
+          waitForVisibleTransition();
+        });
       });
     }
-    return storeFrontReadyPromise;
+    return marketReadyPromise;
   };
 
   const check = () => {
     const isOpen = !!doc.querySelector('.store-front-shell .store-front');
     if (isOpen && !wasOpen && typeof target.maybeShowMarketTutorial === 'function') {
-      waitForStoreFrontArt().then(() => {
+      waitForMarketIntro().then(() => {
         if (doc.querySelector('.store-front-shell .store-front')) target.maybeShowMarketTutorial();
       });
     }
-    if (!isOpen) storeFrontReadyPromise = null;
+    if (!isOpen) marketReadyPromise = null;
     wasOpen = isOpen;
   };
   new MutationObserver(check).observe(doc.body, { childList: true, subtree: true });
