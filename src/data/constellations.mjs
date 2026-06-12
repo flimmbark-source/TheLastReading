@@ -53,8 +53,9 @@ export function getConstellation(id) {
   return CONSTELLATION_BY_ID[id] || null;
 }
 
-export function constellationForRound(roundIndex = 0) {
+export function constellationForRound(roundIndex = 0, rng = null) {
   if (roundIndex <= 0) return NO_CONSTELLATION;
+  if (rng) return CONSTELLATIONS[Math.floor(rng() * CONSTELLATIONS.length)];
   const shiftedIndex = roundIndex - 1;
   const index = ((shiftedIndex % CONSTELLATIONS.length) + CONSTELLATIONS.length) % CONSTELLATIONS.length;
   return CONSTELLATIONS[index];
