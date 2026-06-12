@@ -12,7 +12,9 @@
 //
 // Rules text style guide: lead with the timing window, state the effect in
 // the fewest words that stay unambiguous, capitalize game terms (Place,
-// Invoke, Banish, Discard, Spread), digits for numbers, no metaphors.
+// Discard, Banish, Spread), digits for numbers, no metaphors. The player-facing
+// term for spending a discard to trigger a card's ability is Discard (the code
+// calls this "invoke" internally — never show that word to players).
 
 export const PERSONAS = Object.freeze({
 
@@ -66,11 +68,11 @@ export const PERSONAS = Object.freeze({
   gambit: {
     id: 'gambit',
     name: 'The Gambit',
-    tagline: 'Once per round: Place after Invoke.',
+    tagline: 'Once per round: Place after Discard.',
     ability: {
       name: 'Double Deal',
       tag: 'Once per Round',
-      rules: 'After you **Invoke**, you may immediately **Place** a card for free.',
+      rules: 'After you **Discard**, you may immediately **Place** a card for free.',
       flavor: 'Why take one turn when you’re owed two?',
     },
     passives: {
