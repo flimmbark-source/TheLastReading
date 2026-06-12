@@ -21,7 +21,7 @@ const STORE_SCORING_COPY = Object.freeze({
   sequence: { name: 'Sequence', desc: '+5 Chips / +0.5 Mult', icon: 'isp-scoring' },
   court_chips: { name: 'Full Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin' },
   path_chips: { name: 'Path of the Magi', desc: '+15 Chips / +0.5 Mult', icon: 'isp-scoring' },
-  balanced_reading: { name: 'Balanced Reading', desc: '+5 Chips / +0.25 Mult', icon: 'isp-scoring' },
+  balanced_reading: { name: 'Major & Minor', desc: '+5 Chips / +0.25 Mult', icon: 'isp-scoring' },
   elemental_harmony: { name: 'Elemental Harmony', desc: '+10 Chips / +0.5 Mult', icon: 'isp-scoring' },
 });
 
