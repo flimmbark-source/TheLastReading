@@ -1,0 +1,33 @@
+/* Multiplayer spread cards should fill their slots.
+   This file loads after mpGame.css and mpMobile.css so mobile/global card sizing
+   cannot shrink placed cards inside spread slots. */
+body.mp-game-active #spread .slot > .card,
+body.mp-game-active #mpOppSpread .slot > .card {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  min-height: 100% !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+body.mp-game-active #spread .slot > .card.photo,
+body.mp-game-active #mpOppSpread .slot > .card.photo {
+  background-size: 200% 200% !important;
+}
+
+body.mp-game-active #spread .slot > .card .title,
+body.mp-game-active #mpOppSpread .slot > .card .title {
+  line-height: 17px !important;
+}
+
+@media (max-width: 640px) {
+  body.mp-game-active #spread .slot > .card,
+  body.mp-game-active #mpOppSpread .slot > .card {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 100% !important;
+    min-height: 100% !important;
+  }
+}
