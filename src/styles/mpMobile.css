@@ -109,14 +109,17 @@
   body.mp-game-active .mp-pills-actions {
     gap: 8px;
     margin-top: 1px;
+    min-height: 34px;
+    overflow: visible;
   }
 
   body.mp-game-active .mp-pills-actions .sbtn {
-    width: 82px !important;
-    height: 28px !important;
-    min-height: 0 !important;
-    padding: 0 !important;
-    font-size: 11px !important;
+    width: min(86px, 30vw) !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 0 8px !important;
+    font-size: 9px !important;
+    line-height: 1 !important;
   }
 
   body.mp-game-active .mp-action-panel {
