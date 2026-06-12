@@ -19,14 +19,25 @@ export function installMainMenu(target = window) {
 
   let gameStarted = false;
 
+  function menuEl() {
+    return target.document.getElementById('mainMenu');
+  }
+
   function hide() {
-    const el = target.document.getElementById('mainMenu');
-    if (el) el.classList.add('mm-hidden');
+    const el = menuEl();
+    if (!el) return;
+    el.classList.add('mm-hidden');
+    el.setAttribute('aria-hidden', 'true');
+    if ('inert' in el) el.inert = true;
+    el.hidden = true;
   }
 
   function show() {
-    const el = target.document.getElementById('mainMenu');
+    const el = menuEl();
     if (!el) return;
+    el.hidden = false;
+    if ('inert' in el) el.inert = false;
+    el.setAttribute('aria-hidden', 'false');
     el.classList.remove('mm-hidden');
     syncContinueBtn();
   }
@@ -90,8 +101,7 @@ export function installMainMenu(target = window) {
 
   target.tlrMainMenuMultiplayer = function () {
     // Hide main menu, show loadout screen
-    const el = target.document.getElementById('mainMenu');
-    if (el) el.classList.add('mm-hidden');
+    hide();
     if (typeof target.tlrShowLoadout === 'function') {
       target.tlrShowLoadout();
     }
