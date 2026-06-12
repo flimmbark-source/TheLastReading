@@ -44,7 +44,7 @@ import * as handRenderer from '../ui/renderHand.mjs';
 import * as tableRenderer from '../ui/renderTable.mjs';
 import * as atticRenderer from '../ui/renderAttic.mjs';
 import * as effectsModule from './effects.mjs';
-import * as tutorialModule from './tutorial.mjs';
+import * as tutorialModule from './tutorialSafe.mjs';
 import * as readingFlowModule from './readingFlow.mjs';
 import * as archivesModule from './archives.mjs';
 
@@ -112,8 +112,6 @@ function installStoreFrontTuning(target = window) {
     if (!callout) return;
     if (callout.contains(event.target)) return;
     callout.remove();
-    // Only swallow the event if the tap was on a non-interactive area.
-    // Don't block button/link clicks — those should still fire normally.
     if (!event.target.closest('button,a,[role="button"]')) {
       event.preventDefault();
       event.stopPropagation();
