@@ -43,6 +43,16 @@ function removeSlotFromHistory(history, slotIndex) {
   return (Array.isArray(history) ? history : []).filter(i => i !== slotIndex);
 }
 
+function isActionPhase(state) {
+  return state.phase === MP_PHASES.PLACEMENT || state.phase === MP_PHASES.FINAL_TURN;
+}
+
+function requireActivePlayer(state, playerIndex) {
+  if (!isActionPhase(state)) return 'Cannot act in phase: ' + state.phase;
+  if (playerIndex !== state.activePlayerIndex) return 'Not your turn.';
+  return null;
+}
+
 // Draw up to `count` cards from a player's deck, reshuffling discard if needed.
 function drawCards(player, count) {
   let deck = [...player.deck];
@@ -235,12 +245,9 @@ export function mpReducer(state, action) {
 
     case MP_ACTIONS.MP_PLACE_CARD: {
       const { playerIndex, cardUid, slotIndex } = action;
-      if (state.phase !== MP_PHASES.PLACEMENT && state.phase !== MP_PHASES.FINAL_TURN) {
-        return err(state, 'Cannot place a card in phase: ' + state.phase);
-      }
-      if (playerIndex !== state.activePlayerIndex) {
-        return err(state, 'Not your turn.');
-      }
+      const activeError = requireActivePlayer(state, playerIndex);
+      if (activeError) return err(state, activeError);
+
       const player = state.players[playerIndex];
       if (slotIndex < 0 || slotIndex >= MP_SPREAD_SIZE) {
         return err(state, 'Invalid slot index: ' + slotIndex);
@@ -271,12 +278,8 @@ export function mpReducer(state, action) {
 
     case MP_ACTIONS.MP_INVOKE_ABILITY: {
       const { playerIndex, cardUid, target } = action;
-      if (state.phase !== MP_PHASES.PLACEMENT && state.phase !== MP_PHASES.FINAL_TURN) {
-        return err(state, 'Cannot invoke in phase: ' + state.phase);
-      }
-      if (playerIndex !== state.activePlayerIndex) {
-        return err(state, 'Not your turn.');
-      }
+      const activeError = requireActivePlayer(state, playerIndex);
+      if (activeError) return err(state, activeError);
 
       const result = applyInvoke(state, playerIndex, cardUid, target);
       if (result.error) return err(state, result.error);
@@ -296,14 +299,56 @@ export function mpReducer(state, action) {
       return advanceTurn(next, playerIndex, false);
     }
 
+    case MP_ACTIONS.MP_DISCARD_CARD: {
+      const { playerIndex, cardUid } = action;
+      const activeError = requireActivePlayer(state, playerIndex);
+      if (activeError) return err(state, activeError);
+
+      const player = state.players[playerIndex];
+      if (player.discards <= 0) return err(state, 'No discards remaining.');
+
+      const cardIndex = player.hand.findIndex(c => c.uid === cardUid);
+      if (cardIndex < 0) return err(state, 'Card not in hand.');
+
+      const card = player.hand[cardIndex];
+      const hand = player.hand.filter((_, i) => i !== cardIndex);
+      const discard = [...player.discard, card];
+      const next = updatePlayer(state, playerIndex, {
+        hand,
+        discard,
+        discards: player.discards - 1,
+      });
+      return advanceTurn(next, playerIndex, false);
+    }
+
+    case MP_ACTIONS.MP_PURGE_CARDS: {
+      const { playerIndex, cardUids } = action;
+      const activeError = requireActivePlayer(state, playerIndex);
+      if (activeError) return err(state, activeError);
+
+      const ids = Array.isArray(cardUids) ? cardUids : [];
+      const uniqueIds = [...new Set(ids)];
+      if (uniqueIds.length !== 3) return err(state, 'Choose exactly 3 cards to purge.');
+
+      const player = state.players[playerIndex];
+      const selected = uniqueIds.map(uid => player.hand.find(c => c.uid === uid));
+      if (selected.some(c => !c)) return err(state, 'One or more purge cards are not in hand.');
+
+      const hand = player.hand.filter(c => !uniqueIds.includes(c.uid));
+      const discard = [...player.discard, ...selected];
+      const next = updatePlayer(state, playerIndex, {
+        hand,
+        discard,
+        discards: player.discards + 1,
+      });
+      return advanceTurn(next, playerIndex, false);
+    }
+
     case MP_ACTIONS.MP_SWAP_SPREAD: {
       const { playerIndex, slotA, slotB } = action;
-      if (state.phase !== MP_PHASES.PLACEMENT && state.phase !== MP_PHASES.FINAL_TURN) {
-        return err(state, 'Cannot swap in phase: ' + state.phase);
-      }
-      if (playerIndex !== state.activePlayerIndex) {
-        return err(state, 'Not your turn.');
-      }
+      const activeError = requireActivePlayer(state, playerIndex);
+      if (activeError) return err(state, activeError);
+
       const player = state.players[playerIndex];
       if (!player.swapAvailable) {
         return err(state, 'No swap available. Surgeon persona required once per round.');
