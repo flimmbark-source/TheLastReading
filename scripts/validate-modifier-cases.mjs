@@ -43,11 +43,11 @@ assert.equal(found.chips, 15, 'sequence upgrade should add 5 chips');
 assert.equal(found.mult, 1.75, 'seq_mult upgrade should add 0.5 pattern mult');
 
 result = score(['court_Cups_Page', 'court_Cups_Knight', 'court_Cups_Queen'], {
-  upgrades: { court_chips: 1, court_mult: 1 },
+  upgrades: { royal_court_chips: 1, royal_court_mult: 1 },
 });
 found = assertMeld(result, 'Royal Court (3, Cups)');
-assert.equal(found.chips, 18, 'court_chips upgrade should add 8 chips');
-assert.equal(found.mult, 1.75, 'court_mult upgrade should add 0.25 pattern mult');
+assert.equal(found.chips, 18, 'royal_court_chips upgrade should add 8 chips');
+assert.equal(found.mult, 1.75, 'royal_court_mult upgrade should add 0.25 pattern mult');
 
 result = score(['major_0', 'major_1', 'major_21'], {
   upgrades: { path_chips: 1, path_mult: 1 },

@@ -228,6 +228,10 @@
 .isp-108.isp-innate{background-position:0px -108px}.isp-108.isp-restless{background-position:-108px -108px}.isp-108.isp-relic-cache{background-position:-216px -108px}
 .isp-108.isp-second-sight,.isp-108.isp-thread{background-image:url(../../Card_packs2.png);background-size:216px 108px}
 .isp-108.isp-second-sight{background-position:0px 0px}.isp-108.isp-thread{background-position:-108px 0px}
+/* ── Main icon sprites at 108px (scoring/ability icons from icons.png) ── */
+.isp-108.isp-draw,.isp-108.isp-peek,.isp-108.isp-mirror,.isp-108.isp-neighbor,.isp-108.isp-between,.isp-108.isp-kin,.isp-108.isp-search,.isp-108.isp-reshuffle,.isp-108.isp-scoring,.isp-108.isp-abilities,.isp-108.isp-disc,.isp-108.isp-purge-ic{background-image:url(../../icons.png);background-size:832px 624px}
+.isp-108.isp-draw{background-position:-41px -110px}.isp-108.isp-peek{background-position:-170px -110px}.isp-108.isp-mirror{background-position:-299px -110px}.isp-108.isp-neighbor{background-position:-426px -110px}.isp-108.isp-between{background-position:-555px -110px}.isp-108.isp-kin{background-position:-685px -110px}
+.isp-108.isp-search{background-position:-41px -253px}.isp-108.isp-reshuffle{background-position:-170px -253px}.isp-108.isp-scoring{background-position:-299px -253px}.isp-108.isp-abilities{background-position:-426px -253px}.isp-108.isp-disc{background-position:-555px -253px}.isp-108.isp-purge-ic{background-position:-685px -253px}
 @media(max-width:640px){
   .sbtn-discard,.sbtn-purge{width:94px;height:30px;background-size:310px 233px}
   .sbtn-discard{background-position:-31px -9px}

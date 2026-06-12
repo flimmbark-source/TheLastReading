@@ -290,9 +290,18 @@ if(_run.lastScore){
 const previousRoundScore=Math.max(0,roundTotal-total);
 if(needsNext){recordScorePillBase(roundTotal);continueSet();return;}
 snapCounter(roundTotal);
-let title=pass?'The Round Opens':'The Reading Fails';
-let verdict=pass?('Threshold '+curTH+' Cleared'):('Below Threshold '+curTH);
-let html=`<div class="result-panel ${pass?'pass':'fail'}">`;html+=`<div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="${pass?'pass':'fail'}">${title}</h3></div>`;html+=`<div class="rscore"><span class="rsc">${previousRoundScore}</span><span class="rop">+</span><span class="rsm">${total}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${roundTotal}</span></div>`;html+=`<span class="rverdict ${pass?'pass':'fail'}">Set ${setNumber} added to Round · ${verdict}</span>`;html+='<hr class="rdiv"><table class="rtable">';html+=`<tr><td>Set ${setNumber} score</td><td class="r">${res.chips} × ${res.mult} = ${total}</td></tr>`;html+=`<tr><td>Base card points</td><td class="r">${res.baseChips}</td></tr>`;const _regMelds=res.melds.filter(m=>!m[0].startsWith('⚷'));const _resMelds=res.melds.filter(m=>m[0].startsWith('⚷'));if(_regMelds.length||_resMelds.length){_regMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);_resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}html+=`<tr class="totrow"><td>Round total</td><td class="r">${roundTotal} / ${curTH}</td></tr>`;if(pass){const miserBonus=persist.relics.includes('miser')?5:0;
+let title=pass?'Threshold Cleared':'Reading Failed';
+let html=`<div class="result-panel ${pass?'pass':'fail'}">`;
+html+=`<div class="rhead"><h3 class="${pass?'pass':'fail'}">${title}</h3></div>`;
+html+=`<div class="rscore"><span class="rsc">${previousRoundScore}</span><span class="rop">+</span><span class="rsm">${total}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${roundTotal}</span></div>`;
+html+='<hr class="rdiv"><table class="rtable">';
+const _regMelds=res.melds.filter(m=>!m[0].startsWith('⚷'));const _resMelds=res.melds.filter(m=>m[0].startsWith('⚷'));
+if(_regMelds.length||_resMelds.length){
+  _regMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);
+  _resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});
+}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}
+html+=`<tr class="totrow"><td>Round total</td><td class="r">${roundTotal} / ${curTH}</td></tr>`;
+if(pass){const miserBonus=persist.relics.includes('miser')?5:0;
 {const _st=window.tlrStore.getState();
 state.worldCarry=_st.run.worldCarry||0;
 state.pendingPool=_st.run.pendingReserve||0;
@@ -300,7 +309,11 @@ persist.totalScore=_st.persist.totalScore||0;
 state.relicEarned=!!_st.run.relicEarned;
 state.th=_st.run.thresholdIndex;}
 const worldCarry=state.worldCarry;
-html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${roundTotal}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}else{html+=`<tr class="totrow"><td>The candles burn out</td><td class="r">${roundTotal}</td></tr>`;}html+='</table><div class="rbtns">';if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}else{html+='<button onclick="endSession()">End Session</button>';}html+='</div></div>';showOverlay(html);render();}
+html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${roundTotal}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}
+html+='</table><div class="rbtns">';
+if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}
+else{html+='<button onclick="endSession()">End Session</button>';}
+html+='</div></div>';showOverlay(html);render();}
 function tlSyncBeforeScore(){tlrSyncRunToStore()}
 
 export function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html;tlrArchitectureSync()}

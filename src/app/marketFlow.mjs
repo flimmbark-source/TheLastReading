@@ -106,6 +106,14 @@ export function openRelicVisionShop(options,target = window){
   if(typeof target.showOverlay==='function')target.showOverlay(html);
 }
 
+function preloadMarketImages(target = window){
+  if(!target||target.__tlrMarketImagesPreloaded)return;
+  target.__tlrMarketImagesPreloaded=true;
+  ['Store_Front.png','Refresh_Button.png','Proceed_Button.png'].forEach(src=>{
+    const img=new (target.Image||Image)();img.src=src;
+  });
+}
+
 function clearSpreadForMarket(target = window){
   const state=stateOf(target);
   if(!state||!Array.isArray(state.spread))return;
@@ -124,6 +132,7 @@ export function openShop(target = window){
   const state=stateOf(target),persist=persistOf(target);
   clearSpreadForMarket(target);
   refreshStorefrontOnEntry(target);
+  preloadMarketImages(target);
   if(!state.relicEarned){if(typeof target.openShopMain==='function')target.openShopMain();return;}
   if(state.pendingPool){persist.pool+=state.pendingPool;state.pendingPool=0;if(typeof target.render==='function')target.render();}
   const options=relicPool(4,target);
@@ -135,6 +144,7 @@ export function openShop(target = window){
 export function installMarketFlow(target = window){
   if(!target || target.__tlrMarketFlowInstalled)return;
   target.__tlrMarketFlowInstalled=true;
+  preloadMarketImages(target);
   const api={marketRuntime,nextRefreshCost,relicSlots,relicPool,shopPacks,refreshShopPacks,packCost,markPackBought,playRelicVision,openRelicVisionShop,openShop};
   target.tlrMarketFlow=api;
   marketRuntime(target);

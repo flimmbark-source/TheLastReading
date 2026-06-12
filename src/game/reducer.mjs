@@ -391,7 +391,7 @@ function startReading(state, deck, rng = Math.random) {
   const handSize = handSizeForSet(persist);
   const { drawn: hand, deck: remainingDeck } = drawCards(nextDeck, handSize);
   const offeringReserve = (persist.upgrades.offering || 0) * 5;
-  const constellation = constellationForRound(run.thresholdIndex || 0);
+  const constellation = constellationForRound(run.thresholdIndex || 0, rng);
   return replacePersist(
     replaceRun(state, {
       phase: GAME_PHASES.TABLE,
