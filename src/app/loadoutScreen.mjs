@@ -27,34 +27,97 @@ function saveProfile(storage, profile) {
 }
 
 function el(id) { return document.getElementById(id); }
+function esc(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
 
 export function installLoadoutScreen(target = window) {
   if (!target || target.__tlrLoadoutInstalled) return;
   target.__tlrLoadoutInstalled = true;
 
+  const personas = allPersonas();
   let profile = loadProfile(target.localStorage);
+  let swipeStartX = 0;
+  let swipeStartY = 0;
+
+  function personaIndex() {
+    const index = personas.findIndex(p => p.id === profile.personaId);
+    return index >= 0 ? index : 0;
+  }
+
+  function activePersona() {
+    return personas[personaIndex()] ?? null;
+  }
+
+  function ensurePersonaSelected() {
+    if (!personas.length) return;
+    if (!profile.personaId || !personas.some(p => p.id === profile.personaId)) {
+      profile = { ...profile, personaId: personas[0].id };
+      saveProfile(target.localStorage, profile);
+    }
+  }
+
+  function selectPersonaByIndex(index) {
+    if (!personas.length) return;
+    const wrapped = (index + personas.length) % personas.length;
+    profile = { ...profile, personaId: personas[wrapped].id };
+    saveProfile(target.localStorage, profile);
+    renderAll();
+  }
+
   // --- Render helpers ---
 
   function renderPersonaGrid() {
     const grid = el('loadoutPersonaGrid');
     if (!grid) return;
-    grid.innerHTML = allPersonas().map(p => `
-      <button
-        class="loadout-persona-card${profile.personaId === p.id ? ' selected' : ''}"
-        onclick="tlrLoadoutSelectPersona('${p.id}')"
-        aria-pressed="${profile.personaId === p.id}"
-        type="button"
+
+    const p = activePersona();
+    if (!p) {
+      grid.innerHTML = '<p class="loadout-empty">No personas available.</p>';
+      return;
+    }
+
+    const index = personaIndex();
+    grid.innerHTML = `
+      <div
+        class="loadout-persona-carousel"
+        ontouchstart="tlrLoadoutSwipeStart(event)"
+        ontouchend="tlrLoadoutSwipeEnd(event)"
       >
-        <span class="loadout-persona-check">✓</span>
-        <span class="loadout-persona-name">${p.name}</span>
-        <span class="loadout-persona-tagline">${p.tagline}</span>
-        <span class="loadout-persona-desc">${p.description}</span>
-      </button>
-    `).join('');
+        <button class="loadout-carousel-btn prev" onclick="tlrLoadoutShiftPersona(-1)" type="button" aria-label="Previous persona">‹</button>
+        <button
+          class="loadout-persona-card loadout-persona-active selected"
+          onclick="tlrLoadoutSelectPersona('${esc(p.id)}')"
+          aria-pressed="true"
+          type="button"
+        >
+          <span class="loadout-persona-check">✓</span>
+          <span class="loadout-persona-kicker">Persona ${index + 1} / ${personas.length}</span>
+          <span class="loadout-persona-name">${esc(p.name)}</span>
+          <span class="loadout-persona-tagline">${esc(p.tagline)}</span>
+        </button>
+        <button class="loadout-carousel-btn next" onclick="tlrLoadoutShiftPersona(1)" type="button" aria-label="Next persona">›</button>
+      </div>
+      <div class="loadout-persona-dots" aria-hidden="true">
+        ${personas.map((_, i) => `<span class="loadout-persona-dot${i === index ? ' active' : ''}"></span>`).join('')}
+      </div>
+    `;
+  }
+
+  function renderPersonaDescription() {
+    const box = el('loadoutPersonaDescBox');
+    if (!box) return;
+    const p = activePersona();
+    if (!p) { box.innerHTML = ''; return; }
+    box.innerHTML = `
+      <div class="loadout-desc-heading">${esc(p.name)}</div>
+      <p class="loadout-desc-text">${esc(p.description)}</p>
+    `;
   }
 
   function renderTargetRow() {
-    const labels = { [SCORE_TARGETS.QUICK]: 'Quick', [SCORE_TARGETS.STANDARD]: 'Standard', [SCORE_TARGETS.LONG]: 'Long' };
     target.document.querySelectorAll('.loadout-target-btn').forEach(btn => {
       const val = Number(btn.dataset.target);
       btn.classList.toggle('selected', val === profile.scoreTarget);
@@ -68,7 +131,9 @@ export function installLoadoutScreen(target = window) {
   }
 
   function renderAll() {
+    ensurePersonaSelected();
     renderPersonaGrid();
+    renderPersonaDescription();
     renderTargetRow();
     renderReady();
   }
@@ -94,8 +159,27 @@ export function installLoadoutScreen(target = window) {
   target.tlrLoadoutSelectPersona = function (personaId) {
     profile = { ...profile, personaId };
     saveProfile(target.localStorage, profile);
-    renderPersonaGrid();
-    renderReady();
+    renderAll();
+  };
+
+  target.tlrLoadoutShiftPersona = function (delta) {
+    selectPersonaByIndex(personaIndex() + Number(delta || 0));
+  };
+
+  target.tlrLoadoutSwipeStart = function (event) {
+    const touch = event.changedTouches?.[0] || event.touches?.[0];
+    if (!touch) return;
+    swipeStartX = touch.clientX;
+    swipeStartY = touch.clientY;
+  };
+
+  target.tlrLoadoutSwipeEnd = function (event) {
+    const touch = event.changedTouches?.[0];
+    if (!touch) return;
+    const dx = touch.clientX - swipeStartX;
+    const dy = touch.clientY - swipeStartY;
+    if (Math.abs(dx) < 38 || Math.abs(dx) < Math.abs(dy)) return;
+    target.tlrLoadoutShiftPersona(dx < 0 ? 1 : -1);
   };
 
   target.tlrLoadoutSetTarget = function (value) {
@@ -105,6 +189,7 @@ export function installLoadoutScreen(target = window) {
   };
 
   target.tlrLoadoutReady = function () {
+    ensurePersonaSelected();
     if (!profile.personaId) return;
     saveProfile(target.localStorage, profile);
     // Hide loadout, open matchmaking with the saved profile
@@ -116,6 +201,7 @@ export function installLoadoutScreen(target = window) {
 
   // Expose profile for use by the match init system
   target.tlrGetMpProfile = function () {
+    ensurePersonaSelected();
     return { ...profile };
   };
 }
@@ -128,12 +214,16 @@ const LOADOUT_HTML = `
       <h2 class="loadout-title">Loadout</h2>
     </div>
 
-    <section class="loadout-section">
+    <section class="loadout-section loadout-persona-section">
       <h3 class="loadout-section-label">Persona</h3>
       <div id="loadoutPersonaGrid" class="loadout-persona-grid"></div>
     </section>
 
-    <section class="loadout-section">
+    <section class="loadout-description-section">
+      <div id="loadoutPersonaDescBox" class="loadout-persona-desc-box"></div>
+    </section>
+
+    <section class="loadout-section loadout-match-section">
       <h3 class="loadout-section-label">Match Length</h3>
       <div class="loadout-targets">
         <button class="loadout-target-btn" data-target="100" onclick="tlrLoadoutSetTarget(100)" type="button">Quick <span>100</span></button>
@@ -144,7 +234,7 @@ const LOADOUT_HTML = `
 
     <div class="loadout-footer">
       <button class="loadout-ready-btn" id="loadoutReadyBtn" onclick="tlrLoadoutReady()" type="button" disabled>Ready</button>
-      <p class="loadout-ready-note">Select a Persona to continue.</p>
+      <p class="loadout-ready-note">Swipe to choose a Persona.</p>
     </div>
   </div>
 `;
