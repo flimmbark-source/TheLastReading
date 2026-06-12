@@ -66,20 +66,31 @@ function ensureStoreFrontStyles(target = window) {
     doc.head.appendChild(style);
   }
   style.textContent = `
-    .modal:has(.store-front-shell){background:rgba(0,0,0,.78);backdrop-filter:blur(2px);padding:0;align-items:center;justify-content:center}
-    .summary.store-front-shell{background:transparent;border:0;box-shadow:none;padding:0;max-width:none;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:storeShellFadeIn ${STORE_FADE_MS}ms ease-out both}
+    .modal:has(.store-front-shell){background:transparent;padding:0;align-items:center;justify-content:center}
+    .summary.store-front-shell{background:transparent;border:0;box-shadow:none;padding:0;max-width:none;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
     .summary.store-front-shell.store-exiting{animation:storeShellFadeOut ${STORE_FADE_MS}ms ease-in both;pointer-events:none}
-    @keyframes storeShellFadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    @keyframes storeShellFadeOut{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(8px)}}
-    @media(prefers-reduced-motion:reduce){.summary.store-front-shell,.summary.store-front-shell.store-exiting{animation:none!important}}
+    @keyframes storeShellFadeOut{from{opacity:1}to{opacity:0}}
 
-    .store-front{position:relative;width:min(96vw,560px);font-family:Georgia,serif;color:#eadbb9}
+    .store-dim{position:absolute;inset:0;background:rgba(0,0,0,.82);animation:storeDimIn 420ms ease-out both;pointer-events:none;z-index:0}
+    @keyframes storeDimIn{from{opacity:0}to{opacity:1}}
+
+    .store-candle{position:absolute;top:0;left:50%;transform:translateX(-50%);width:96px;height:96px;z-index:1;pointer-events:none}
+    .store-candle img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity 80ms linear}
+    .store-candle .candle-off{opacity:1}
+    .store-candle .candle-on{opacity:0}
+    .store-candle.lit .candle-off{opacity:0}
+    .store-candle.lit .candle-on{opacity:1}
+    .store-candle{animation:storeCandleIn 220ms ease-out both}
+    @keyframes storeCandleIn{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+    .store-front{position:relative;width:min(96vw,560px);font-family:Georgia,serif;color:#eadbb9;z-index:1;opacity:0;transition:opacity 280ms ease-out}
+    .store-front.store-visible{opacity:1}
     .store-front button{font-family:Georgia,serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
     .store-front button:disabled{cursor:not-allowed;opacity:.4}
 
     .store-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px}
-    .store-refresh{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.07);border:1px solid rgba(226,181,100,.35);border-radius:8px;color:#f1dfbd;padding:7px 12px;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;transition:background .15s,opacity .15s}
-    .store-refresh:not(:disabled):hover{background:rgba(255,255,255,.13)}
+    .store-refresh{display:flex;align-items:center;gap:6px;background:transparent;border:1px solid rgba(226,181,100,.35);border-radius:8px;color:#f1dfbd;padding:7px 12px;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;transition:background .15s,opacity .15s}
+    .store-refresh:not(:disabled):hover{background:rgba(255,255,255,.08)}
     .store-refresh:disabled{opacity:.35;cursor:not-allowed}
     .store-refresh-icon{font-size:1.15em;line-height:1}
     .store-refresh-cost{color:#e0b96a;font-size:.88em}
@@ -90,9 +101,9 @@ function ensureStoreFrontStyles(target = window) {
 
     .store-offer-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 
-    .store-card{position:relative;border-radius:12px;background:rgba(20,15,8,.72);border:1px solid rgba(200,160,80,.28);box-shadow:0 8px 28px rgba(0,0,0,.55);padding:14px 12px 56px;display:flex;flex-direction:column;align-items:center;text-align:center;transition:transform .13s,box-shadow .13s;min-height:180px}
-    .store-card:not(.disabled):hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(0,0,0,.7)}
-    .store-card.disabled{opacity:.55}
+    .store-card{position:relative;border-radius:12px;background:transparent;border:1px solid rgba(200,160,80,.22);padding:14px 12px 56px;display:flex;flex-direction:column;align-items:center;text-align:center;transition:transform .13s,border-color .13s;min-height:180px}
+    .store-card:not(.disabled):hover{transform:translateY(-2px);border-color:rgba(200,160,80,.5)}
+    .store-card.disabled{opacity:.5}
     .store-card-tag{font:700 9px/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#9a7840;margin-bottom:8px;align-self:flex-start}
     .store-card-art{width:56px;height:56px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;flex-shrink:0}
     .store-card-art .isp{transform:scale(.48);transform-origin:center;filter:drop-shadow(0 3px 5px rgba(0,0,0,.6))}
@@ -101,14 +112,14 @@ function ensureStoreFrontStyles(target = window) {
     .store-card-name{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#f0dfbd;line-height:1.1;margin-bottom:4px}
     .store-card-desc{font:600 10px/1.25 system-ui,sans-serif;color:#b8a882;margin-bottom:4px}
     .store-card-lv{font:800 9px/1 system-ui,sans-serif;color:#c89445;text-transform:uppercase;margin-top:2px}
-    .store-card-buy{position:absolute;bottom:10px;left:10px;right:10px;height:34px;border:1px solid rgba(226,181,100,.6);border-radius:7px;background:rgba(8,8,10,.58);color:#f5d9a0;font:800 10px/1 Georgia,serif;text-transform:uppercase;letter-spacing:.05em;box-shadow:inset 0 0 8px rgba(0,0,0,.4)}
-    .store-card-buy:not(:disabled):hover{background:rgba(30,22,8,.8)}
+    .store-card-buy{position:absolute;bottom:10px;left:10px;right:10px;height:34px;border:1px solid rgba(226,181,100,.5);border-radius:7px;background:transparent;color:#f5d9a0;font:800 10px/1 Georgia,serif;text-transform:uppercase;letter-spacing:.05em}
+    .store-card-buy:not(:disabled):hover{background:rgba(226,181,100,.1)}
     .store-card-buy .coin{color:#c99443;margin-left:.2em}
     .store-relic-art-btn{background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important;padding:0;margin:0;cursor:pointer;display:flex;align-items:center;justify-content:center;width:56px;height:56px}
 
     .store-footer{display:flex;justify-content:flex-end;margin-top:14px}
-    .store-proceed{background:rgba(200,160,60,.18);border:1px solid rgba(226,181,100,.55);border-radius:8px;color:#f1dfbd;font:800 14px/1 Georgia,serif;text-transform:uppercase;letter-spacing:.07em;padding:10px 22px;transition:background .15s}
-    .store-proceed:hover{background:rgba(200,160,60,.3)}
+    .store-proceed{background:transparent;border:1px solid rgba(226,181,100,.55);border-radius:8px;color:#f1dfbd;font:800 14px/1 Georgia,serif;text-transform:uppercase;letter-spacing:.07em;padding:10px 22px;transition:background .15s}
+    .store-proceed:hover{background:rgba(200,160,60,.15)}
 
     .store-replace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:12px}
     .store-replace-card{border:1px solid rgba(210,161,94,.42);border-radius:8px;background:rgba(255,255,255,.04);padding:9px;text-align:center}
@@ -116,6 +127,12 @@ function ensureStoreFrontStyles(target = window) {
     .store-relic-callout{z-index:10010;max-width:220px}
     .store-relic-callout .relic-callout-desc{font-size:12px;line-height:1.35}
 
+    @media(prefers-reduced-motion:reduce){
+      .store-dim{animation:none}
+      .store-candle{animation:none}
+      .store-front{opacity:1;transition:none}
+      .summary.store-front-shell.store-exiting{animation:none;opacity:0}
+    }
     @media(max-width:480px){
       .store-front{width:min(98vw,380px)}
       .store-offer-row{gap:8px}
@@ -130,6 +147,7 @@ function ensureStoreFrontStyles(target = window) {
       .store-vessel-glyph{font-size:24px}
       .store-refresh{font-size:11px;padding:6px 10px}
       .store-reserve-amount{font-size:22px}
+      .store-candle{width:72px;height:72px}
     }
   `;
 }
@@ -323,13 +341,52 @@ export function storeExitToNextReading(target = window) {
   return true;
 }
 
+const MARKET_AMBIENCE_FILES = Object.freeze([
+  'soundreality-bell-fx-410608.mp3',
+  'izafi-gong-sound-419930.mp3',
+  'olenchic-psycho-1-155031.mp3',
+]);
+
+function playMarketAmbience(target = window) {
+  const file = MARKET_AMBIENCE_FILES[Math.floor(Math.random() * MARKET_AMBIENCE_FILES.length)];
+  try {
+    const vol = typeof target._sfxVol === 'number' ? target._sfxVol : 1;
+    const a = new (target.Audio || Audio)(file);
+    a.volume = vol * 0.7;
+    a.play().catch(() => {});
+  } catch(e) {}
+}
+
+function playMatchLight(target = window) {
+  try {
+    const ctx = target._tlrACtx || (target._tlrACtx = new (target.AudioContext || target.webkitAudioContext)());
+    if (ctx.state === 'suspended') ctx.resume();
+    const vol = typeof target._sfxVol === 'number' ? target._sfxVol : 1;
+    // scratch/hiss burst
+    const dur = 0.18;
+    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) {
+      const t = i / d.length;
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 1.2) * Math.min(1, t * 12);
+    }
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 3200; f.Q.value = 0.5;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.28 * vol, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    src.connect(f); f.connect(g); g.connect(ctx.destination); src.start();
+    src.onended = () => { src.disconnect(); f.disconnect(); g.disconnect(); };
+  } catch(e) {}
+}
+
 export function openShopMain(){
   ensureStoreFrontStyles(window);
   if(state.pendingPool){persist.pool+=state.pendingPool;state.pendingPool=0;render();}
   const offers = currentStoreFrontOffers(window);
   const rc=_nextRefreshCost(),canRefresh=persist.pool>=rc;
   const relicKey = offers.relics[0] || null;
-  const html=`<div class="summary tarot-shop store-front-shell"><div class="store-front">
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const inner=`
     <div class="store-meta">
       <button class="store-refresh" ${canRefresh?'':'disabled'} onclick="refreshStoreFront()"><span class="store-refresh-icon">↻</span> Refresh <span class="store-refresh-cost">✦ ${rc}</span></button>
       <div class="store-reserve-display"><div class="store-reserve-label">Reserve</div><div class="store-reserve-amount">${persist.pool}<span class="coin">✦</span></div></div>
@@ -341,9 +398,38 @@ export function openShopMain(){
     </div>
     <div class="store-footer">
       <button class="store-proceed" onclick="storeExitToNextReading()">Next Reading →</button>
+    </div>`;
+
+  const html=`<div class="summary tarot-shop store-front-shell">
+    <div class="store-dim"></div>
+    <div class="store-candle" id="storeCandle">
+      <img class="candle-off" src="ui/candle_flame_off.png" alt="">
+      <img class="candle-on"  src="ui/candle_flame_on.png"  alt="">
     </div>
-  </div></div>`;
+    <div class="store-front" id="storeFront">${inner}</div>
+  </div>`;
   showOverlay(html);
+
+  if (reduce) {
+    const front = document.getElementById('storeFront');
+    if (front) front.classList.add('store-visible');
+    return;
+  }
+
+  // light the candle after dim appears, then fade in content + play ambience
+  setTimeout(() => {
+    const candle = document.getElementById('storeCandle');
+    if (candle) {
+      playMatchLight(window);
+      candle.classList.add('lit');
+    }
+  }, 300);
+
+  setTimeout(() => {
+    const front = document.getElementById('storeFront');
+    if (front) front.classList.add('store-visible');
+    playMarketAmbience(window);
+  }, 520);
 }
 
 export function refreshStoreFront(target = window){
