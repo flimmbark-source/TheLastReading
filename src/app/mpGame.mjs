@@ -15,7 +15,7 @@ export function installMpGame(target = window) {
 
   let _state      = null;
   let _myIndex    = 0;
-  let _invokeCard = null;  // uid awaiting spread target (Banish/Seal)
+  let _invokeCard = null;  // uid awaiting opponent-spread target (Seal)
   let _swapFirst  = null;  // null | -1 | slotIndex (Surgeon swap)
   let _origPlaceCard    = null;
   let _origRenderSpread = null;
@@ -29,7 +29,7 @@ export function installMpGame(target = window) {
     if (!card) return '';
     if (card.type === 'interaction') {
       const sym  = card.abilityType === MP_ABILITY_TYPES.MP_BANISH ? '⚔' : '🔇';
-      const desc = card.abilityType === MP_ABILITY_TYPES.MP_BANISH ? 'Remove' : 'Silence';
+      const desc = card.abilityType === MP_ABILITY_TYPES.MP_BANISH ? 'Last Card' : 'Silence';
       return `<div class="title">${esc(card.name)}</div><div class="art"><div class="sym">${sym}</div><div class="plaque">${desc}</div><div class="seal tr">${card.points}</div></div>`;
     }
     const label = (card.ability && target.TXT?.[card.ability]) || '';
@@ -334,7 +334,11 @@ export function installMpGame(target = window) {
       if (card && (card.ability || card.abilityType) && canInvokeAbility(s, my, selUid)) {
         parts.push(`<button class="mp-action-btn invoke" onclick="tlrMpInvoke()" type="button">Invoke</button>`);
       }
-      parts.push(`<span class="mp-action-hint">Drag or tap a spread slot to place.</span>`);
+      if (card?.abilityType === MP_ABILITY_TYPES.MP_BANISH) {
+        parts.push(`<span class="mp-action-hint">Banish removes the opponent's last played card.</span>`);
+      } else {
+        parts.push(`<span class="mp-action-hint">Drag or tap a spread slot to place.</span>`);
+      }
     } else if (isTurn) {
       if (canSwapSpread(s, my)) {
         parts.push(`<button class="mp-action-btn swap" onclick="tlrMpStartSwap()" type="button">Swap Spread</button>`);
@@ -502,7 +506,11 @@ export function installMpGame(target = window) {
     if (!_state || uid === null) return;
     const card = _state.players[my].hand.find(c => c.uid === uid);
     if (!card) return;
-    if (card.abilityType === MP_ABILITY_TYPES.MP_BANISH || card.abilityType === MP_ABILITY_TYPES.MP_SEAL) {
+    if (card.abilityType === MP_ABILITY_TYPES.MP_BANISH) {
+      target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_INVOKE_ABILITY, playerIndex: my, cardUid: uid });
+      if (target.state) target.state.selected = null;
+      target.refreshHandState?.();
+    } else if (card.abilityType === MP_ABILITY_TYPES.MP_SEAL) {
       _invokeCard = uid; render();
     } else {
       target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_INVOKE_ABILITY, playerIndex: my, cardUid: uid });
