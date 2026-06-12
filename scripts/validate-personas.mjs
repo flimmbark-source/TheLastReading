@@ -3,7 +3,7 @@ import { MP_PHASES, SCORE_TARGETS, MP_HAND_SIZE, MP_STARTING_DISCARDS, createMat
 import { mpReducer } from '../src/multiplayer/mpReducer.mjs';
 import * as sel from '../src/multiplayer/mpSelectors.mjs';
 import { PERSONAS } from '../src/multiplayer/personas.mjs';
-import { MP_ABILITY_TYPES } from '../src/multiplayer/interactionCards.mjs';
+import { makeInteractionCard } from '../src/multiplayer/interactionCards.mjs';
 
 let passed = 0;
 let failed = 0;
@@ -20,6 +20,33 @@ function assert(condition, label) {
 function initMatch(opts = {}) {
   const state = createMatchState(opts);
   return mpReducer(state, { type: MP_ACTIONS.MP_INIT, scoreTarget: opts.scoreTarget ?? SCORE_TARGETS.QUICK, personas: opts.personas ?? [null, null] });
+}
+
+function updatePlayerForTest(state, index, patch) {
+  const players = state.players.map((p, i) => i === index ? { ...p, ...patch } : p);
+  return { ...state, players };
+}
+
+function countBanishEverywhere(player) {
+  return [...player.hand, ...player.deck, ...player.discard, ...player.spread.filter(Boolean)]
+    .filter(c => c.id === 'mp_banish').length;
+}
+
+function putBanishInHandFromDeck(state, playerIndex) {
+  const player = state.players[playerIndex];
+  let banishCard = player.hand.find(c => c.id === 'mp_banish');
+  if (banishCard) return { state, banishCard };
+
+  banishCard = player.deck.find(c => c.id === 'mp_banish');
+  assert(!!banishCard, `test setup: player ${playerIndex} has Banish in deck`);
+  if (!banishCard) return { state, banishCard: null };
+
+  const deck = player.deck.filter(c => c.uid !== banishCard.uid);
+  const hand = [banishCard, ...player.hand];
+  return {
+    state: updatePlayerForTest(state, playerIndex, { deck, hand, discards: Math.max(player.discards, 1) }),
+    banishCard,
+  };
 }
 
 // -----------------------------------------------------------------------
@@ -46,14 +73,15 @@ function initMatch(opts = {}) {
 }
 
 // -----------------------------------------------------------------------
-// The Cleaner — 2 Banish in hand at round start
+// The Cleaner — 3 Banish added to deck once at game start
 // -----------------------------------------------------------------------
 {
   const s = initMatch({ personas: ['cleaner', null] });
-  const banishCards = s.players[0].hand.filter(c => c.id === 'mp_banish');
-  assert(banishCards.length === 2, 'Cleaner: starts with 2 Banish cards');
+  const banishCards = s.players[0].deck.filter(c => c.id === 'mp_banish');
+  assert(banishCards.length === 3, 'Cleaner: starts with 3 Banish cards in deck');
   assert(banishCards.every(c => c.type === 'interaction'), 'Banish cards have type interaction');
   assert(banishCards.every(c => c.playerOwner === 0), 'Banish cards owned by player 0');
+  assert(countBanishEverywhere(s.players[0]) === 3, 'Cleaner: exactly 3 Banish cards exist at match start');
 }
 
 // -----------------------------------------------------------------------
@@ -94,7 +122,6 @@ function initMatch(opts = {}) {
   // Place two cards first
   let p0 = s.players[0];
   const card0 = p0.hand[0];
-  const card1 = p0.hand[1] ?? p0.hand[0]; // use same card if only one
 
   s = mpReducer(s, { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex: 0, cardUid: card0.uid, slotIndex: 0 });
   // P1's turn now
@@ -141,13 +168,14 @@ function initMatch(opts = {}) {
 }
 
 // -----------------------------------------------------------------------
-// Banish — remove a card from opponent spread
+// Banish — remove opponent's last played card
 // -----------------------------------------------------------------------
 {
-  // Give P0 a Banish card and P1 a card in slot 2
   let s = initMatch({ personas: ['cleaner', null] });
-  const banishCard = s.players[0].hand.find(c => c.id === 'mp_banish');
-  assert(banishCard !== undefined, 'Banish card in Cleaner hand');
+  const setup = putBanishInHandFromDeck(s, 0);
+  s = setup.state;
+  const banishCard = setup.banishCard;
+  assert(banishCard !== undefined, 'Banish card available to Cleaner');
 
   // Place a card for P1 first (alternate turns properly)
   s = mpReducer(s, { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex: 0, cardUid: s.players[0].hand.find(c => c.id !== 'mp_banish').uid, slotIndex: 0 });
@@ -156,11 +184,11 @@ function initMatch(opts = {}) {
   const cardInP1Slot2 = s.players[1].spread[2];
   assert(cardInP1Slot2 !== null, 'P1 has a card in slot 2');
 
-  // P0 invokes Banish targeting P1 slot 2
+  // P0 invokes Banish with no target — it removes P1's last played card.
   const freshBanish = s.players[0].hand.find(c => c.id === 'mp_banish');
-  s = mpReducer(s, { type: MP_ACTIONS.MP_INVOKE_ABILITY, playerIndex: 0, cardUid: freshBanish.uid, target: { playerIndex: 1, slotIndex: 2 } });
+  s = mpReducer(s, { type: MP_ACTIONS.MP_INVOKE_ABILITY, playerIndex: 0, cardUid: freshBanish.uid });
   assert(s.error === null, 'Banish: no error');
-  assert(s.players[1].spread[2] === null, 'Banish: slot 2 is now empty');
+  assert(s.players[1].spread[2] === null, 'Banish: last played slot 2 is now empty');
   assert(s.players[1].discard.some(c => c.uid === cardInP1Slot2.uid), 'Banish: removed card in P1 discard');
   assert(s.activePlayerIndex === 1, 'Banish: turn passes after invoke');
 }
@@ -170,7 +198,8 @@ function initMatch(opts = {}) {
 // -----------------------------------------------------------------------
 {
   let s = initMatch({ personas: ['cleaner', 'anchor'] });
-  const banishCard = s.players[0].hand.find(c => c.id === 'mp_banish');
+  const setup = putBanishInHandFromDeck(s, 0);
+  s = setup.state;
 
   // P0 places first
   s = mpReducer(s, { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex: 0, cardUid: s.players[0].hand.find(c => c.id !== 'mp_banish').uid, slotIndex: 0 });
@@ -179,9 +208,9 @@ function initMatch(opts = {}) {
   const anchoredSlot = s.players[1].anchoredSlotIndex;
   assert(anchoredSlot === 1, 'Anchor setup: P1 slot 1 is anchored');
 
-  // P0 tries to Banish the anchored slot
+  // P0 tries to Banish the opponent's last played card, which is anchored.
   const freshBanish = s.players[0].hand.find(c => c.id === 'mp_banish');
-  const s2 = mpReducer(s, { type: MP_ACTIONS.MP_INVOKE_ABILITY, playerIndex: 0, cardUid: freshBanish.uid, target: { playerIndex: 1, slotIndex: anchoredSlot } });
+  const s2 = mpReducer(s, { type: MP_ACTIONS.MP_INVOKE_ABILITY, playerIndex: 0, cardUid: freshBanish.uid });
   assert(s2.error !== null, 'Banish blocked by Anchor');
   assert(s2.players[1].spread[anchoredSlot] !== null, 'Anchored card not removed');
 }
@@ -193,7 +222,6 @@ function initMatch(opts = {}) {
   // Build a state with a Seal card in P0's hand by manually constructing it
   let s = initMatch();
   // Force a seal card into P0's hand for test purposes
-  const { makeInteractionCard } = await import('../src/multiplayer/interactionCards.mjs');
   const sealCard = makeInteractionCard('mp_seal', 8999, 0);
   s = updatePlayerForTest(s, 0, { hand: [sealCard, ...s.players[0].hand], discards: 3 });
 
@@ -228,15 +256,15 @@ function initMatch(opts = {}) {
 }
 
 // -----------------------------------------------------------------------
-// Cleaner gets Banish refilled at new round
+// Cleaner does not create new Banish cards at new round
 // -----------------------------------------------------------------------
 {
   let s = initMatch({ personas: ['cleaner', null] });
+  assert(countBanishEverywhere(s.players[0]) === 3, 'Cleaner: 3 Banish before round 2');
   // Force BETWEEN_ROUNDS
   s = { ...s, phase: MP_PHASES.BETWEEN_ROUNDS };
   s = mpReducer(s, { type: MP_ACTIONS.MP_NEW_ROUND });
-  const banishCount = s.players[0].hand.filter(c => c.id === 'mp_banish').length;
-  assert(banishCount === 2, 'Cleaner: gets 2 new Banish at start of round 2');
+  assert(countBanishEverywhere(s.players[0]) === 3, 'Cleaner: still only 3 Banish after round 2 start');
 }
 
 // -----------------------------------------------------------------------
@@ -263,12 +291,6 @@ function initMatch(opts = {}) {
   s = mpReducer(s, { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex: 0, cardUid: s.players[0].hand[0].uid, slotIndex: 2 });
   // But we need P0 to have a Banish — this is just checking Anchor didn't break
   assert(s.players[1].anchoredSlotIndex === 2, 'Anchor: anchored slot index unchanged by opponent swap');
-}
-
-// Helper used by the Seal test above
-function updatePlayerForTest(state, index, patch) {
-  const players = state.players.map((p, i) => i === index ? { ...p, ...patch } : p);
-  return { ...state, players };
 }
 
 if (failed > 0) {
