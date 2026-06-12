@@ -19,6 +19,7 @@ import { installSpreadPlacementBridge } from './spreadPlacementBridge.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
 import { bootGame } from './boot.mjs';
+import { installMainMenu } from './mainMenu.mjs';
 import { installMenuControls } from './menuControls.mjs';
 import { installResonationFlow } from './resonationFlow.mjs';
 import { installHintRuntime } from './hintRuntime.mjs';
@@ -191,6 +192,7 @@ export function startApp(target = window) {
   installAmbientEffects(target);
   installAudioControls(target);
   installMenuControls(target);
+  installMainMenu(target);
   installStoreFrontTuning(target);
   installMarketTutorialTrigger(target);
 

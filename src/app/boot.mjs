@@ -10,9 +10,13 @@ export function bootGame(target = window){
   }
 
   target.tlrLegacyBoot=function(){
-    if(typeof target.startReading==='function')target.startReading();
-    if(!target.localStorage.getItem('tlr_tut_done')&&typeof target.tutShow==='function'){
-      target.setTimeout(()=>target.tutShow(0),400);
+    if(typeof target.tlrShowMainMenu==='function'){
+      target.tlrShowMainMenu();
+    } else {
+      if(typeof target.startReading==='function')target.startReading();
+      if(!target.localStorage.getItem('tlr_tut_done')&&typeof target.tutShow==='function'){
+        target.setTimeout(()=>target.tutShow(0),400);
+      }
     }
   };
 
