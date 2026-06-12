@@ -9,8 +9,8 @@ export const MP_ACTIONS = Object.freeze({
 
   // A player invokes a card's ability (spends 1 discard, discards the card)
   // { type, playerIndex, cardUid, target?: { playerIndex, slotIndex } }
-  // DRAW abilities: fully resolved. MP_BANISH/MP_SEAL: requires target.
-  // Others are stubbed (discard spent, no secondary effect).
+  // DRAW abilities: fully resolved. MP_BANISH: no target; removes the opponent's last played card.
+  // MP_SEAL: requires target. Others are stubbed (discard spent, no secondary effect).
   MP_INVOKE_ABILITY: 'MP_INVOKE_ABILITY',
 
   // Surgeon persona: swap two cards in own spread (free action, once per round)
