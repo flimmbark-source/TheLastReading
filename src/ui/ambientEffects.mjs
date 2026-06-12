@@ -55,10 +55,10 @@ function installAmbientMotes(target){
     if(layer.childElementCount>=maxMotes())return;
     const m=document.createElement('div');
     m.className='mote';
-    m.style.setProperty('--s',(isMobile()?4+Math.random()*5:4.5+Math.random()*6.5).toFixed(1)+'px');
+    m.style.setProperty('--s',(isMobile()?2.2+Math.random()*3.2:2.4+Math.random()*4.4).toFixed(1)+'px');
     m.style.left=(Math.random()*100).toFixed(1)+'vw';
     m.style.setProperty('--x',(Math.random()*72-36).toFixed(0)+'px');
-    m.style.setProperty('--o',(0.5+Math.random()*0.32).toFixed(2));
+    m.style.setProperty('--o',(isMobile()?0.22+Math.random()*0.26:0.20+Math.random()*0.34).toFixed(2));
     m.style.setProperty('--d',(12+Math.random()*8).toFixed(1)+'s');
     if(seed){
       m.style.animationDelay=(-Math.random()*9).toFixed(2)+'s';
