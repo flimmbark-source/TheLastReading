@@ -74,14 +74,13 @@ function ensureStoreFrontStyles(target = window) {
     .store-dim{position:absolute;inset:0;background:rgba(0,0,0,.82);animation:storeDimIn 420ms ease-out both;pointer-events:none;z-index:0}
     @keyframes storeDimIn{from{opacity:0}to{opacity:1}}
 
-    .store-candle{position:absolute;top:0;left:50%;transform:translateX(-50%);width:96px;height:96px;z-index:1;pointer-events:none}
-    .store-candle img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity 80ms linear}
+    .store-candle{position:relative;width:80px;height:80px;flex-shrink:0;margin-bottom:-8px;z-index:1;pointer-events:none;align-self:center;animation:storeCandleIn 220ms ease-out both}
+    .store-candle img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity 90ms linear}
     .store-candle .candle-off{opacity:1}
     .store-candle .candle-on{opacity:0}
     .store-candle.lit .candle-off{opacity:0}
     .store-candle.lit .candle-on{opacity:1}
-    .store-candle{animation:storeCandleIn 220ms ease-out both}
-    @keyframes storeCandleIn{from{opacity:0;transform:translateX(-50%) translateY(-8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+    @keyframes storeCandleIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 
     .store-front{position:relative;width:min(96vw,560px);font-family:Georgia,serif;color:#eadbb9;z-index:1;opacity:0;transition:opacity 280ms ease-out}
     .store-front.store-visible{opacity:1}
@@ -147,7 +146,7 @@ function ensureStoreFrontStyles(target = window) {
       .store-vessel-glyph{font-size:24px}
       .store-refresh{font-size:11px;padding:6px 10px}
       .store-reserve-amount{font-size:22px}
-      .store-candle{width:72px;height:72px}
+      .store-candle{width:60px;height:60px}
     }
   `;
 }
@@ -325,6 +324,27 @@ export function showStoreRelicCallout(relicKey, anchor, target = window) {
   return true;
 }
 
+function playCandleSnuff(target = window) {
+  try {
+    const ctx = target._tlrACtx || (target._tlrACtx = new (target.AudioContext || target.webkitAudioContext)());
+    if (ctx.state === 'suspended') ctx.resume();
+    const vol = typeof target._sfxVol === 'number' ? target._sfxVol : 1;
+    // soft puff/hiss — high-freq noise that decays quickly
+    const dur = 0.22;
+    const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) {
+      const t = i / d.length;
+      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.2) * Math.min(1, t * 20) * 0.6;
+    }
+    const src = ctx.createBufferSource(); src.buffer = buf;
+    const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 2400;
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.18 * vol, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    src.connect(f); f.connect(g); g.connect(ctx.destination); src.start();
+    src.onended = () => { src.disconnect(); f.disconnect(); g.disconnect(); };
+  } catch(e) {}
+}
+
 export function storeExitToNextReading(target = window) {
   const shell = target.document.querySelector('.store-front-shell');
   if (!shell) {
@@ -332,12 +352,25 @@ export function storeExitToNextReading(target = window) {
     return true;
   }
   if (shell.classList.contains('store-exiting')) return true;
-  shell.classList.add('store-exiting');
   target.document.querySelectorAll('.relic-callout,.store-relic-callout').forEach(el => el.remove());
   const reduce = target.matchMedia && target.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) {
+    shell.classList.add('store-exiting');
+    target.setTimeout(() => { if (typeof target.continueReading === 'function') target.continueReading(); }, 0);
+    return true;
+  }
+  // snuff the candle first, then fade out
+  const candle = target.document.getElementById('storeCandle');
+  if (candle && candle.classList.contains('lit')) {
+    playCandleSnuff(target);
+    candle.classList.remove('lit');
+  }
   target.setTimeout(() => {
-    if (typeof target.continueReading === 'function') target.continueReading();
-  }, reduce ? 0 : STORE_FADE_MS);
+    shell.classList.add('store-exiting');
+    target.setTimeout(() => {
+      if (typeof target.continueReading === 'function') target.continueReading();
+    }, STORE_FADE_MS);
+  }, 200);
   return true;
 }
 
