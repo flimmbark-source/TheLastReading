@@ -187,7 +187,11 @@ function installMarketTutorialTrigger(target = window) {
         };
 
         preloadStoreFrontArt().then(() => {
-          if (target.matchMedia?.('(prefers-reduced-motion: reduce)').matches || ready()) {
+          if (target.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+            done();
+            return;
+          }
+          if (ready()) {
             waitForVisibleTransition();
             return;
           }
