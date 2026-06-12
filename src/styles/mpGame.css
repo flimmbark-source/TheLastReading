@@ -128,45 +128,43 @@ body.mp-game-active #purgePrompt { display: none !important; }
 /* ── Middle section (fixed between the two spreads) ── */
 .mp-mid-wrap {
   position: fixed; bottom: 405px; left: 0; right: 0; z-index: 9401;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  display: flex; flex-direction: column; gap: 2px;
   padding: 0 14px; pointer-events: none;
 }
 .mp-mid-wrap > * { pointer-events: auto; }
 
-/* Threshold row: centered above the columns */
-.mp-mid-thresh-row {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
+/* Each band: pills grouped together, centered */
+.mp-pills-band {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
 }
-
-/* Two-column grid: Score col | Discards col */
-.mp-mid-cols {
-  display: flex; gap: 8px; align-items: flex-end;
-}
-.mp-mid-col {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-}
-
-/* Compact pill sizing */
+/* Override SP .pill sizing to be compact */
 .mp-pill-score {
   min-width: 0 !important; padding: 0 14px !important;
-  font-size: 12px !important; height: 36px !important;
+  font-size: 12px !important; height: 40px !important;
   display: flex !important; align-items: center !important; gap: 6px !important;
 }
 .mp-pill-disc {
   min-width: 0 !important; padding: 0 12px !important;
-  font-size: 12px !important; height: 36px !important;
+  font-size: 12px !important; height: 38px !important;
   display: flex !important; align-items: center !important; gap: 5px !important;
 }
 .mp-pill-thresh {
   min-width: 0 !important; padding: 0 14px !important;
-  font-size: 12px !important; height: 36px !important;
+  font-size: 12px !important; height: 40px !important;
   display: flex !important; align-items: center !important; gap: 6px !important;
 }
 
-/* Action panel: hint text + contextual buttons */
+/* Middle band: threshold centered, constellation right when visible */
+.mp-pills-mid { justify-content: center; gap: 10px; }
+.mp-constellation:not(.hidden) { margin-left: auto; }
+
+/* Actions band: discard/purge buttons */
+.mp-pills-actions { justify-content: center; gap: 8px; margin-top: 4px; }
+
+/* Action panel: hint text + contextual buttons, below action buttons */
 .mp-action-panel {
   display: flex; align-items: center; justify-content: center; gap: 8px;
-  flex-wrap: wrap; min-height: 18px; padding: 2px 0; width: 100%;
+  flex-wrap: wrap; min-height: 18px; padding: 2px 0;
   pointer-events: auto;
 }
 .mp-action-hint {
