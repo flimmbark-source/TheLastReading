@@ -55,7 +55,7 @@ export function startReading(){
   state.deck=_run.deck.slice();state.hand=_run.hand.slice();state.discard=[];
   state.spread=_run.spread.slice();state.purgeSelect=null;
   state.discards=_run.discards;state.mullCharges=_run.mulliganCharges;
-  state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];
+  state.busy=false;state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];
   state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
   state.resonationBonus={chips:0,mult:0};
   state.thBonus=_run.thresholdBonus;state.thBonusPending=0;
@@ -75,7 +75,7 @@ export function continueSet(){
   state.deck=_run.deck.slice();state.hand=_run.hand.slice();state.discard=_run.discard.slice();
   state.spread=_run.spread.slice();state.purgeSelect=null;state.selected=null;
   state.discards=_run.discards;state.mullCharges=_run.mulliganCharges;
-  state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
+  state.busy=false;state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
   state.resonationBonus={chips:0,mult:0};
   syncRoundFields(_run);
   playSound('shuffle');
