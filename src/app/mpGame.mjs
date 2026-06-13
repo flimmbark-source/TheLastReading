@@ -536,9 +536,9 @@ export function installMpGame(target = window) {
     _invokeCard = null;
     _swapFirst  = null;
     _purgeSelect = null;
+    doc.body.classList.add('mp-game-active');
     mount();
     el('mpGame')?.classList.remove('mp-hidden');
-    doc.body.classList.add('mp-game-active');
     installPlaceCardOverride();
     installRenderSpreadOverride();
     installPurgeOverride();
