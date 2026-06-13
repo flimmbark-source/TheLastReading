@@ -11,6 +11,9 @@ export function installSurgeonHandSwapPatch(target = window) {
   patchMatchmakingBack(target, doc);
   installStyle(doc);
 
+  const copiedButtonArt = new Set();
+  let syncQueued = false;
+
   function playerIndexFromRole() {
     return target.tlrMpGetRole?.() === 'guest' ? 1 : 0;
   }
@@ -94,6 +97,7 @@ export function installSurgeonHandSwapPatch(target = window) {
 
     // Mirror the singleplayer visual treatment without stealing the wrong label identity.
     button.className = className;
+    if (copiedButtonArt.has(targetId)) return;
 
     const props = [
       'width', 'height', 'minWidth', 'minHeight', 'padding',
@@ -106,6 +110,7 @@ export function installSurgeonHandSwapPatch(target = window) {
       const value = computed[prop];
       if (value) button.style.setProperty(cssName(prop), value, 'important');
     });
+    copiedButtonArt.add(targetId);
   }
 
   function hideSwipeTutorialInMultiplayer() {
@@ -119,6 +124,7 @@ export function installSurgeonHandSwapPatch(target = window) {
   }
 
   function syncUi() {
+    syncQueued = false;
     hideSwipeTutorialInMultiplayer();
 
     const panel = doc.getElementById('mpActionPanel');
@@ -162,6 +168,8 @@ export function installSurgeonHandSwapPatch(target = window) {
   }
 
   function scheduleSync() {
+    if (syncQueued) return;
+    syncQueued = true;
     target.requestAnimationFrame?.(syncUi) ?? syncUi();
   }
 
