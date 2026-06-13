@@ -32,7 +32,7 @@ export const PERSONAS = Object.freeze({
     id: 'cleaner',
     name: 'The Cleaner',
     tagline: 'Start with 3 Banish in your deck.',
-    bio: 'A ritual exorcist who burns away the residue other readers leave behind.',
+    bio: 'A former crematorium keeper who left the furnace for the card table, at ease with ash and long silences.',
     accent: '#e8743c',
     icon: '<path d="M12 2.5c1 3 4 4.2 4 8.3a4 4 0 1 1-8 0c0-1.7.8-2.9 1.7-3.8C9.8 8.2 10.6 9.2 11 10c.6-2.7-1-4.7 1-7.5Z"/><path d="M11.8 21.5c1.6 0 2.9-1.1 2.9-2.6 0-1.5-1.4-2.2-1.9-3.4-.6 1-1.4 1.5-1.9 2.2-.5-.5-.7-1.1-.7-1.7-.6.6-1.2 1.5-1.2 2.6 0 1.6 1.3 2.9 2.8 2.9Z"/>',
     ability: {
@@ -51,7 +51,7 @@ export const PERSONAS = Object.freeze({
     id: 'hoarder',
     name: 'The Hoarder',
     tagline: '+1 hand size, −1 starting discard.',
-    bio: 'A collector who never parts with a card, hoarding fortune against every loss.',
+    bio: "A pawnshop heir raised among other people's lost treasures, who has never once been able to let a thing go.",
     accent: '#e2b24a',
     icon: '<ellipse cx="12" cy="6" rx="7.5" ry="3"/><path d="M4.5 6v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3V6"/><path d="M4.5 12v6c0 1.7 3.4 3 7.5 3s7.5-1.3 7.5-3v-6"/>',
     ability: {
@@ -70,7 +70,7 @@ export const PERSONAS = Object.freeze({
     id: 'anchor',
     name: 'The Anchor',
     tagline: 'Your first placed card each round is protected.',
-    bio: 'Steadfast and unshakable, she holds the reading fast against any tide.',
+    bio: 'A retired harbor pilot who guided ships through countless storms and learned to trust patience over daring.',
     accent: '#5fb0c9',
     icon: '<circle cx="12" cy="5" r="2.2"/><path d="M12 7.2V21"/><path d="M5 13a7 7 0 0 0 14 0"/><path d="M3 13h2M19 13h2M8.5 10h7"/>',
     ability: {
@@ -88,7 +88,7 @@ export const PERSONAS = Object.freeze({
     id: 'gambit',
     name: 'The Gambit',
     tagline: 'Once per round: Place after Discard.',
-    bio: 'A reckless gambler who would sooner deal twice than fold once.',
+    bio: 'A back-alley card sharp barred from every honest house in the city, grinning wider as the stakes climb.',
     accent: '#74c47a',
     icon: '<rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="8.8" cy="8.8" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.2" cy="15.2" r="1.3" fill="currentColor" stroke="none"/>',
     ability: {
@@ -106,7 +106,7 @@ export const PERSONAS = Object.freeze({
     id: 'surgeon',
     name: 'The Surgeon',
     tagline: 'Once per round: free swap in your spread.',
-    bio: 'A precise operator who reshapes fate with a cold, steady hand.',
+    bio: 'A field surgeon struck from the register for unsanctioned work, still proud of her flawless, unhurried hands.',
     accent: '#b98ad8',
     icon: '<polyline points="16 5 20 9 16 13"/><line x1="4" y1="9" x2="20" y2="9"/><polyline points="8 11 4 15 8 19"/><line x1="20" y1="15" x2="4" y2="15"/>',
     ability: {
