@@ -9,7 +9,7 @@
   --lo-gold-bright:#ffd978;
   --lo-parch:#f0d58a;
   --accent:#d4af6a;
-  position:fixed;inset:0;z-index:9100;
+  position:fixed;inset:0;z-index:10200;
   display:flex;align-items:stretch;justify-content:center;
   background:url(../../background.png) center top/cover no-repeat;
   transition:opacity .3s ease;
@@ -33,7 +33,7 @@
 .loadout-header{grid-area:header;display:flex;align-items:center;gap:14px}
 .loadout-back{background:none;border:none;color:#b09060;font:600 13px/1 system-ui,sans-serif;letter-spacing:.06em;cursor:pointer;padding:6px 4px;transition:color .15s;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 .loadout-back:hover{color:var(--lo-parch);filter:none}
-.loadout-title{margin-left:auto;font:700 clamp(15px,4.4vw,18px)/1 Georgia,serif;color:#3a1a06;letter-spacing:.05em;background:url(../../parchment_plaque_large_center.png) center/100% 100% no-repeat;height:clamp(40px,9vh,52px);display:flex;align-items:center;justify-content:center;width:clamp(160px,42vw,220px);filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
+.loadout-title{margin-left:auto;font:700 clamp(14px,4vw,17px)/1 Georgia,serif;color:#e8d4a0;letter-spacing:.1em;text-shadow:0 1px 4px rgba(0,0,0,.9);background:url(../../Section_Plaque.png) center/100% 100% no-repeat;height:clamp(36px,8vh,48px);display:flex;align-items:center;justify-content:center;padding-left:clamp(18px,5vw,28px);width:clamp(150px,40vw,210px);filter:drop-shadow(0 3px 10px rgba(0,0,0,.7))}
 
 /* Roster rail — full roster, tap to feature */
 .loadout-roster{grid-area:roster;display:flex;gap:clamp(5px,1.6vw,9px);justify-content:center;align-items:stretch}
