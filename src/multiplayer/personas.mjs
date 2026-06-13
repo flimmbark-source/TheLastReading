@@ -105,14 +105,14 @@ export const PERSONAS = Object.freeze({
   surgeon: {
     id: 'surgeon',
     name: 'The Surgeon',
-    tagline: 'Once per round: free swap in your spread.',
+    tagline: 'Once per round: swap your Spread with your Hand.',
     bio: 'A field surgeon struck from the register for unsanctioned work, still proud of her flawless, unhurried hands.',
     accent: '#b98ad8',
     icon: '<polyline points="16 5 20 9 16 13"/><line x1="4" y1="9" x2="20" y2="9"/><polyline points="8 11 4 15 8 19"/><line x1="20" y1="15" x2="4" y2="15"/>',
     ability: {
       name: 'Transposition',
       tag: 'Once per Round',
-      rules: 'On your turn, swap 2 cards in your **Spread** for free.',
+      rules: 'On your turn, swap a card in your **Spread** with a card in your **Hand** for free.',
       flavor: 'Fate rewards a steady hand.',
     },
     passives: {
