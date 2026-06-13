@@ -199,6 +199,7 @@ export function installLoadoutScreen(target = window) {
       </li>`).join('');
     box.innerHTML = `
       <h3 class="loadout-details-name">${esc(p.name)}</h3>
+      ${p.bio ? `<p class="loadout-details-bio">${esc(p.bio)}</p>` : ''}
       <div class="loadout-details-divider" aria-hidden="true"></div>
       <ul class="loadout-relics">${relicSlots}</ul>
     `;
