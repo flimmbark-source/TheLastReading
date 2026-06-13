@@ -173,7 +173,6 @@ export function installLoadoutScreen(target = window) {
           <span class="loadout-persona-kicker">Persona ${index + 1} / ${personas.length}</span>
           <span class="loadout-persona-icon">${personaIconSvg(p)}</span>
           <span class="loadout-persona-name">${esc(p.name)}</span>
-          <span class="loadout-persona-tagline">${esc(p.tagline)}</span>
         </div>
         <button class="loadout-carousel-btn next" data-loadout-action="next" type="button" aria-label="Next persona">›</button>
       </div>
