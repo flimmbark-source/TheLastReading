@@ -32,12 +32,12 @@ body.mp-game-active #mpAbilityBtn {
 
 @media (max-width: 640px) {
   body.mp-game-active .mp-mid-wrap {
-    top: 300px !important;
+    top: 280px !important;
     bottom: auto !important;
   }
 
   body.mp-game-active .mp-opp-spread-clip {
-    top: 62px !important;
+    top: 42px !important;
     height: 118px !important;
     transform: none !important;
     transform-origin: top center !important;
@@ -87,11 +87,11 @@ body.mp-game-active #mpAbilityBtn {
 
 @media (max-width: 380px) and (max-height: 740px) {
   body.mp-game-active .mp-mid-wrap {
-    top: 280px !important;
+    top: 260px !important;
   }
 
   body.mp-game-active .mp-opp-spread-clip {
-    top: 50px !important;
+    top: 30px !important;
   }
 
   body.mp-game-active #mpOppSpread,
