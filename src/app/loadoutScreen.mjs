@@ -160,17 +160,26 @@ export function installLoadoutScreen(target = window) {
       : ' loadout-enter';
 
     stage.innerHTML = `
-      <div class="loadout-featured-row">
-        <button class="loadout-carousel-btn prev" data-loadout-action="prev" type="button" aria-label="Previous persona">‹</button>
-        <div class="loadout-persona-card${enterClass}">
-          <span class="loadout-persona-kicker">Persona ${index + 1} / ${personas.length}</span>
-          <span class="loadout-persona-icon">${personaIconSvg(p)}</span>
-          <span class="loadout-persona-name">${esc(p.name)}</span>
+      <div class="loadout-panel${enterClass}">
+        <div class="loadout-panel-art">
+          <div class="loadout-art-arch">
+            <span class="loadout-panel-icon">${personaIconSvg(p)}</span>
+          </div>
         </div>
-        <button class="loadout-carousel-btn next" data-loadout-action="next" type="button" aria-label="Next persona">›</button>
-      </div>
-      <div class="loadout-persona-dots" aria-hidden="true">
-        ${personas.map((_, i) => `<span class="loadout-persona-dot${i === index ? ' active' : ''}"></span>`).join('')}
+        <div class="loadout-panel-divider-v"></div>
+        <div class="loadout-panel-info">
+          <div class="loadout-panel-name-section">
+            <span class="loadout-panel-star-sep">✦</span>
+            <span class="loadout-panel-name">${esc(p.name)}</span>
+            <span class="loadout-panel-tagline">${esc(p.tagline ?? '')}</span>
+          </div>
+          <div class="loadout-panel-mid-sep"><span>✦</span></div>
+          <div class="loadout-panel-circles">
+            <div class="loadout-panel-circle"></div>
+            <div class="loadout-panel-circle"></div>
+            <div class="loadout-panel-circle"></div>
+          </div>
+        </div>
       </div>
     `;
   }
@@ -182,13 +191,22 @@ export function installLoadoutScreen(target = window) {
     if (!p) { box.innerHTML = ''; return; }
     const a = p.ability;
     box.innerHTML = `
-      <div class="loadout-desc-header">
-        <span class="loadout-desc-ability">✦ ${esc(a.name)}</span>
-        <span class="loadout-desc-tag">${esc(a.tag)}</span>
+      <div class="loadout-desc-layout">
+        <div class="loadout-desc-icon-col">
+          <div class="loadout-desc-icon-circle" style="--desc-accent:${esc(p.accent || '#d4af6a')}">
+            ${personaIconSvg(p)}
+          </div>
+        </div>
+        <div class="loadout-desc-text-col">
+          <div class="loadout-desc-header">
+            <span class="loadout-desc-label">Ability</span>
+            <span class="loadout-desc-ability">✦ ${esc(a.name)}</span>
+            <span class="loadout-desc-tag">${esc(a.tag)}</span>
+          </div>
+          <p class="loadout-desc-text">${abilityText(a.rules)}</p>
+          ${a.reminder ? `<p class="loadout-desc-reminder">(${esc(a.reminder)})</p>` : ''}
+        </div>
       </div>
-      <p class="loadout-desc-text">${abilityText(a.rules)}</p>
-      ${a.reminder ? `<p class="loadout-desc-reminder">(${esc(a.reminder)})</p>` : ''}
-      ${a.flavor ? `<p class="loadout-desc-flavor">${esc(a.flavor)}</p>` : ''}
     `;
   }
 
