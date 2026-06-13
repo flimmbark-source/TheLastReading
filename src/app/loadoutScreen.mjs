@@ -4,6 +4,20 @@ import { SCORE_TARGETS } from '../multiplayer/mpState.mjs';
 const PROFILE_KEY = 'tlr_mp_profile';
 const SWITCH_CUE_FILE = 'soundreality-bell-fx-410608.mp3';
 
+// Per-persona portrait art (relative to the document root). `tile` is the
+// half-body card used in the slot carousel; `full` is the full-body display.
+const PERSONA_ART = {
+  cleaner: { tile: 'Cleaner_Tile.png', full: 'Cleaner_Full.png' },
+  hoarder: { tile: 'Hoarder_Tile.png', full: 'Hoarder_Full.png' },
+  anchor:  { tile: 'Anchor_Tile.png',  full: 'Anchor_Full.png' },
+  gambit:  { tile: 'Gambit_Tile.png',  full: 'Gambit_Full.png' },
+  surgeon: { tile: 'Surgeon_Tile.png', full: 'Surgeon_Full.png' },
+};
+function personaArt(p) { return PERSONA_ART[p?.id] || null; }
+
+// Number of placeholder relic/upgrade slots shown beside the portrait.
+const RELIC_SLOT_COUNT = 3;
+
 const DEFAULT_PROFILE = {
   personaId: null,
   scoreTarget: SCORE_TARGETS.STANDARD,
@@ -120,75 +134,97 @@ export function installLoadoutScreen(target = window) {
     if (inner && p?.accent) inner.style.setProperty('--accent', p.accent);
   }
 
-  function renderRoster() {
-    const rail = el('loadoutRosterRail');
+  // The slot carousel: one fixed tile per persona, active tile highlighted
+  // with the selection marker. Tapping a tile features that persona.
+  function renderSlots() {
+    const rail = el('loadoutSlots');
     if (!rail) return;
     if (!personas.length) { rail.innerHTML = ''; return; }
     const activeId = activePersona()?.id;
     rail.innerHTML = personas.map(p => {
       const active = p.id === activeId;
+      const art = personaArt(p);
+      const tileStyle = art ? `background-image:url(${esc(art.tile)})` : '';
       return `
         <button
-          class="loadout-roster-tile${active ? ' active' : ''}"
+          class="loadout-slot${active ? ' active' : ''}"
           style="--tile-accent:${esc(p.accent || '#d4af6a')}"
           data-persona="${esc(p.id)}"
           type="button"
           aria-pressed="${active}"
           title="${esc(p.name)}"
         >
-          <span class="loadout-roster-icon">${personaIconSvg(p)}</span>
-          <span class="loadout-roster-name">${esc(p.name.replace(/^The\s+/i, ''))}</span>
+          <span class="loadout-slot-art"${tileStyle ? ` style="${tileStyle}"` : ''}>
+            ${art ? '' : personaIconSvg(p)}
+          </span>
+          <span class="loadout-slot-marker" aria-hidden="true"></span>
         </button>`;
     }).join('');
   }
 
-  function renderFeatured(dir) {
-    const stage = el('loadoutPersonaGrid');
+  // Left column: the featured persona's full-body art in the arched frame.
+  function renderPortrait(dir) {
+    const stage = el('loadoutPortrait');
     if (!stage) return;
-
     const p = activePersona();
-    if (!p) {
-      stage.innerHTML = '<p class="loadout-empty">No personas available.</p>';
-      return;
-    }
+    if (!p) { stage.innerHTML = '<p class="loadout-empty">No personas available.</p>'; return; }
 
-    const index = personaIndex();
+    const art = personaArt(p);
     const enterClass = prefersReducedMotion()
       ? ''
       : dir === 'next' ? ' loadout-enter-next'
       : dir === 'prev' ? ' loadout-enter-prev'
       : ' loadout-enter';
 
+    const imageStyle = art ? `style="background-image:url(${esc(art.full)})"` : '';
     stage.innerHTML = `
-      <div class="loadout-featured-row">
-        <button class="loadout-carousel-btn prev" data-loadout-action="prev" type="button" aria-label="Previous persona">‹</button>
-        <div class="loadout-persona-card${enterClass}">
-          <span class="loadout-persona-kicker">Persona ${index + 1} / ${personas.length}</span>
-          <span class="loadout-persona-icon">${personaIconSvg(p)}</span>
-          <span class="loadout-persona-name">${esc(p.name)}</span>
-        </div>
-        <button class="loadout-carousel-btn next" data-loadout-action="next" type="button" aria-label="Next persona">›</button>
+      <div class="loadout-portrait-art${enterClass}" ${imageStyle}>
+        ${art ? '' : personaIconSvg(p)}
       </div>
-      <div class="loadout-persona-dots" aria-hidden="true">
-        ${personas.map((_, i) => `<span class="loadout-persona-dot${i === index ? ' active' : ''}"></span>`).join('')}
-      </div>
+      <span class="loadout-portrait-name">${esc(p.name)}</span>
     `;
   }
 
-  function renderPersonaDescription() {
+  // Right column: persona name, tagline and the relic/upgrade slots that the
+  // character comes with. The slots are placeholders for now.
+  function renderDetails() {
+    const box = el('loadoutDetails');
+    if (!box) return;
+    const p = activePersona();
+    if (!p) { box.innerHTML = ''; return; }
+    const index = personaIndex();
+    const relicSlots = Array.from({ length: RELIC_SLOT_COUNT }, () => `
+      <li class="loadout-relic">
+        <span class="loadout-relic-orb" aria-hidden="true"></span>
+        <span class="loadout-relic-label">Relic slot — empty</span>
+      </li>`).join('');
+    box.innerHTML = `
+      <span class="loadout-details-kicker">Persona ${index + 1} / ${personas.length}</span>
+      <h3 class="loadout-details-name">${esc(p.name)}</h3>
+      ${p.tagline ? `<p class="loadout-details-tagline">${esc(p.tagline)}</p>` : ''}
+      <div class="loadout-details-divider" aria-hidden="true"></div>
+      <ul class="loadout-relics">${relicSlots}</ul>
+    `;
+  }
+
+  // Bottom bar: the active persona's signature ability.
+  function renderAbility() {
     const box = el('loadoutPersonaDescBox');
     if (!box) return;
     const p = activePersona();
     if (!p) { box.innerHTML = ''; return; }
     const a = p.ability;
     box.innerHTML = `
-      <div class="loadout-desc-header">
-        <span class="loadout-desc-ability">✦ ${esc(a.name)}</span>
-        <span class="loadout-desc-tag">${esc(a.tag)}</span>
+      <span class="loadout-ability-icon">${personaIconSvg(p)}</span>
+      <div class="loadout-ability-body">
+        <div class="loadout-desc-header">
+          <span class="loadout-desc-ability">${esc(a.name)}</span>
+          <span class="loadout-desc-tag">${esc(a.tag)}</span>
+        </div>
+        <p class="loadout-desc-text">${abilityText(a.rules)}</p>
+        ${a.reminder ? `<p class="loadout-desc-reminder">(${esc(a.reminder)})</p>` : ''}
+        ${a.flavor ? `<p class="loadout-desc-flavor">${esc(a.flavor)}</p>` : ''}
       </div>
-      <p class="loadout-desc-text">${abilityText(a.rules)}</p>
-      ${a.reminder ? `<p class="loadout-desc-reminder">(${esc(a.reminder)})</p>` : ''}
-      ${a.flavor ? `<p class="loadout-desc-flavor">${esc(a.flavor)}</p>` : ''}
     `;
   }
 
@@ -200,9 +236,10 @@ export function installLoadoutScreen(target = window) {
   function renderAll(dir = null) {
     ensurePersonaSelected();
     applyAccent();
-    renderRoster();
-    renderFeatured(dir);
-    renderPersonaDescription();
+    renderSlots();
+    renderPortrait(dir);
+    renderDetails();
+    renderAbility();
     renderReady();
   }
 
@@ -261,7 +298,7 @@ export function installLoadoutScreen(target = window) {
   const screen = el('loadoutScreen');
   if (screen) {
     screen.addEventListener('click', onClick);
-    const swipeZone = el('loadoutPersonaGrid');
+    const swipeZone = el('loadoutPortrait');
     if (swipeZone) {
       swipeZone.addEventListener('touchstart', onTouchStart, { passive: true });
       swipeZone.addEventListener('touchend', onTouchEnd, { passive: true });

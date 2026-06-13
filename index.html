@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="src/styles/drawers.css?v=mobile-load-fix-1">
 <link rel="stylesheet" href="src/styles/performance.css?v=mobile-load-fix-1">
 <link rel="stylesheet" href="src/styles/mainMenu.css?v=render-boot-1">
-<link rel="stylesheet" href="src/styles/loadout.css?v=roster-3">
+<link rel="stylesheet" href="src/styles/loadout.css?v=portrait-1">
 <link rel="stylesheet" href="src/styles/matchmaking.css?v=1">
 <link rel="stylesheet" href="src/styles/mpGame.css?v=spread-layout-1">
 <link rel="stylesheet" href="src/styles/mpMobile.css?v=1">
@@ -59,17 +59,21 @@
 <div id="loadoutScreen" class="loadout-hidden">
   <div class="loadout-inner">
     <header class="loadout-header">
-      <button class="loadout-back" data-loadout-action="back" type="button">&#8592; Back</button>
+      <button class="loadout-back" data-loadout-action="back" type="button" aria-label="Back">&#8592;</button>
       <h2 class="loadout-title">Loadout</h2>
     </header>
-    <nav id="loadoutRosterRail" class="loadout-roster" aria-label="Persona roster"></nav>
-    <section class="loadout-stage" aria-live="polite">
-      <div id="loadoutPersonaGrid" class="loadout-persona-grid"></div>
+    <nav class="loadout-slots-row" aria-label="Persona select">
+      <button class="loadout-arrow prev" data-loadout-action="prev" type="button" aria-label="Previous persona">&#8249;</button>
+      <div id="loadoutSlots" class="loadout-slots"></div>
+      <button class="loadout-arrow next" data-loadout-action="next" type="button" aria-label="Next persona">&#8250;</button>
+    </nav>
+    <section class="loadout-main" aria-live="polite">
+      <div id="loadoutPortrait" class="loadout-portrait loadout-frame"></div>
+      <aside id="loadoutDetails" class="loadout-details loadout-frame"></aside>
     </section>
-    <div id="loadoutPersonaDescBox" class="loadout-persona-desc-box" aria-live="polite"></div>
+    <div id="loadoutPersonaDescBox" class="loadout-ability-bar loadout-frame" aria-live="polite"></div>
     <footer class="loadout-footer">
       <button class="loadout-ready-btn" id="loadoutReadyBtn" data-loadout-action="ready" type="button">Ready</button>
-      <p class="loadout-ready-note">Tap a persona to choose, then press Ready.</p>
     </footer>
   </div>
 </div>
