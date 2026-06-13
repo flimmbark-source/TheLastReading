@@ -72,7 +72,7 @@
 
   body.mp-game-active .mp-mid-wrap {
     position: fixed;
-    top: 190px;
+    top: 230px;
     bottom: auto;
     left: 0;
     right: 0;
@@ -219,7 +219,7 @@
   }
 
   body.mp-game-active .mp-mid-wrap {
-    top: 176px;
+    top: 210px;
   }
 
   body.mp-game-active .spread-wrap {
