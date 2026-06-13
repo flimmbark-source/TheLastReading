@@ -31,11 +31,6 @@ function installHandIdleAnimation(target){
     hand.style.transition=`rotate ${dur}ms ease-in-out,translate ${dur}ms ease-in-out`;
     hand.style.rotate=rot+'deg';
     hand.style.translate=`${tx}px ${ty}px`;
-    // If the player left the hand lifted, drift it back to the resting position
-    // over this cycle's duration so the transition feels like a natural handoff.
-    if(typeof target.__handDriftLiftToZero==='function'){
-      target.__handDriftLiftToZero(dur);
-    }
     const pause=2000+Math.random()*10000;
     setTimeout(handAnim,dur+pause);
   })();
