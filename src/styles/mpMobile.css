@@ -140,7 +140,7 @@
   body.mp-game-active .spread-wrap {
     position: fixed !important;
     top: auto !important;
-    bottom: 130px !important;
+    bottom: 200px !important;
     left: 0 !important;
     right: 0 !important;
     height: 166px !important;
@@ -163,7 +163,7 @@
   }
 
   body.mp-game-active .handDock {
-    height: 126px !important;
+    height: 157px !important;
     bottom: 0 !important;
     align-items: flex-start !important;
     overflow: visible !important;
@@ -171,27 +171,27 @@
   }
 
   body.mp-game-active .hand {
-    height: 128px !important;
+    height: 160px !important;
     --track-radius: 420px !important;
     --track-spacing: 6deg !important;
   }
 
   body.mp-game-active .hand .card {
-    width: 88px !important;
-    height: 132px !important;
-    grid-template-rows: 12px 1fr !important;
+    width: 110px !important;
+    height: 165px !important;
+    grid-template-rows: 14px 1fr !important;
     border-radius: 5px !important;
   }
 
   body.mp-game-active .hand .card.sel,
   body.mp-game-active .hand .card.ability-picked,
   body.mp-game-active .hand .card.purge-picked {
-    --lift-y: -58px !important;
+    --lift-y: -72px !important;
   }
 
   body.mp-game-active .hand .card .title {
-    font-size: 7px !important;
-    line-height: 12px !important;
+    font-size: 8px !important;
+    line-height: 14px !important;
     letter-spacing: .02em !important;
     padding: 0 3px !important;
   }
@@ -206,7 +206,7 @@
   }
 
   body.mp-game-active .hand-swipe-zone {
-    bottom: 104px !important;
+    bottom: 130px !important;
     height: 46px !important;
     z-index: 9401 !important;
   }
@@ -225,7 +225,7 @@
   }
 
   body.mp-game-active .spread-wrap {
-    bottom: 130px !important;
+    bottom: 160px !important;
     height: 133px !important;
   }
 
@@ -234,7 +234,7 @@
   }
 
   body.mp-game-active .hand .card {
-    width: 82px !important;
-    height: 123px !important;
+    width: 100px !important;
+    height: 150px !important;
   }
 }
