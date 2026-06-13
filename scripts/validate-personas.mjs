@@ -97,7 +97,6 @@ function putBanishInHandFromDeck(state, playerIndex) {
   // Find any card with a DRAW ability in P0 hand
   const drawCard = s.players[0].hand.find(c => c.ability && c.ability.startsWith('DRAW'));
   if (drawCard) {
-    const before = s.activePlayerIndex;
     s = mpReducer(s, { type: MP_ACTIONS.MP_INVOKE_ABILITY, playerIndex: 0, cardUid: drawCard.uid });
     assert(s.error === null, 'Gambit: invoke succeeds');
     assert(s.activePlayerIndex === 0, 'Gambit: turn does NOT pass after invoke (bonus action)');
@@ -116,37 +115,31 @@ function putBanishInHandFromDeck(state, playerIndex) {
 }
 
 // -----------------------------------------------------------------------
-// The Surgeon — free spread swap once per round
+// The Surgeon — free spread/hand swap once per round
 // -----------------------------------------------------------------------
 {
   let s = initMatch({ personas: ['surgeon', null] });
   assert(s.players[0].swapAvailable === true, 'Surgeon: swapAvailable starts true');
 
-  // Place two cards first
-  let p0 = s.players[0];
-  const card0 = p0.hand[0];
-
+  const card0 = s.players[0].hand[0];
   s = mpReducer(s, { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex: 0, cardUid: card0.uid, slotIndex: 0 });
   // P1's turn now
   s = mpReducer(s, { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex: 1, cardUid: s.players[1].hand[0].uid, slotIndex: 0 });
   // Back to P0
-  const card1uid = s.players[0].hand[0].uid;
-  s = mpReducer(s, { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex: 0, cardUid: card1uid, slotIndex: 1 });
-  // P1 again
-  s = mpReducer(s, { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex: 1, cardUid: s.players[1].hand[0].uid, slotIndex: 1 });
 
-  // Now P0 can swap slots 0 and 1
-  const cardInSlot0 = s.players[0].spread[0];
-  const cardInSlot1 = s.players[0].spread[1];
-  s = mpReducer(s, { type: MP_ACTIONS.MP_SWAP_SPREAD, playerIndex: 0, slotA: 0, slotB: 1 });
-  assert(s.error === null, 'Surgeon: swap succeeds');
-  assert(s.players[0].spread[0]?.uid === cardInSlot1?.uid, 'Surgeon: slot 0 now has former slot 1 card');
-  assert(s.players[0].spread[1]?.uid === cardInSlot0?.uid, 'Surgeon: slot 1 now has former slot 0 card');
+  const spreadCard = s.players[0].spread[0];
+  const handCard = s.players[0].hand[0];
+  s = mpReducer(s, { type: MP_ACTIONS.MP_SWAP_SPREAD, playerIndex: 0, slotIndex: 0, cardUid: handCard.uid });
+  assert(s.error === null, 'Surgeon: spread/hand swap succeeds');
+  assert(s.players[0].spread[0]?.uid === handCard.uid, 'Surgeon: spread slot now has former hand card');
+  assert(s.players[0].hand.some(c => c.uid === spreadCard.uid), 'Surgeon: hand now contains former spread card');
+  assert(!s.players[0].hand.some(c => c.uid === handCard.uid), 'Surgeon: hand no longer contains swapped-in hand card');
   assert(s.players[0].swapAvailable === false, 'Surgeon: swap consumed');
   assert(s.activePlayerIndex === 0, 'Surgeon: turn did NOT advance (free action)');
 
   // Second swap attempt should fail
-  const s2 = mpReducer(s, { type: MP_ACTIONS.MP_SWAP_SPREAD, playerIndex: 0, slotA: 0, slotB: 1 });
+  const nextHandCard = s.players[0].hand[0];
+  const s2 = mpReducer(s, { type: MP_ACTIONS.MP_SWAP_SPREAD, playerIndex: 0, slotIndex: 0, cardUid: nextHandCard.uid });
   assert(s2.error !== null, 'Surgeon: second swap is rejected');
 }
 
@@ -271,7 +264,7 @@ function putBanishInHandFromDeck(state, playerIndex) {
 }
 
 // -----------------------------------------------------------------------
-// Surgeon: swap moves anchored slot correctly
+// Surgeon: swap does not disturb opponent anchored slot
 // -----------------------------------------------------------------------
 {
   let s = initMatch({ personas: ['surgeon', 'anchor'] });
@@ -285,8 +278,9 @@ function putBanishInHandFromDeck(state, playerIndex) {
   // P1 places at slot 4
   s = mpReducer(s, { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex: 1, cardUid: s.players[1].hand[0].uid, slotIndex: 4 });
 
-  // Now P0's turn — P0 uses Surgeon swap: slots 0 and 1
-  s = mpReducer(s, { type: MP_ACTIONS.MP_SWAP_SPREAD, playerIndex: 0, slotA: 0, slotB: 1 });
+  // Now P0's turn — P0 uses Surgeon swap between spread slot 0 and hand
+  const handCard = s.players[0].hand[0];
+  s = mpReducer(s, { type: MP_ACTIONS.MP_SWAP_SPREAD, playerIndex: 0, slotIndex: 0, cardUid: handCard.uid });
   assert(s.error === null, 'Surgeon + Anchor setup swap: no error');
 
   // P1 is still Anchor — try Banish on a non-anchored slot (slot 4)
