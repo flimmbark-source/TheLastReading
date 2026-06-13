@@ -27,7 +27,7 @@ export function installHandSwipeScroll(target = window){
   const HAND_LIFT_PX=38;
   const HAND_LIFT_PX_MOBILE=30;
   const DEG_PER_SIDE_SCROLL=0.08;
-  let momentumRaf=null,liftMomentumRaf=null;
+  let momentumRaf=null,liftMomentumRaf=null,driftLiftRaf=null;
   // ── Layout caches (busted by refreshLayout / stepPinch / resize) ──
   let cachedCap=null,cachedRadius=null,cachedView=null,cachedCount=-1;
   // Card pixel width: determined purely by CSS so survives render-cycle cache busts;
@@ -165,6 +165,7 @@ export function installHandSwipeScroll(target = window){
   const updateOverflowHint=()=>{const z=zoneEl();if(!z)return;const step=target.__handHintStep||1;z.dataset.hintStep=String(Math.max(1,Math.min(3,step)));if(target.__handHasBeenSwiped||step>=4){z.classList.add('hints-complete');z.classList.remove('has-overflow');return;}z.classList.remove('hints-complete','has-swiped');z.classList.toggle('has-overflow',slideCap()>1);};
   const cancelMomentum=()=>{if(momentumRaf){cancelAnimationFrame(momentumRaf);momentumRaf=null;}};
   const cancelLiftMomentum=()=>{if(liftMomentumRaf){cancelAnimationFrame(liftMomentumRaf);liftMomentumRaf=null;}};
+  const cancelDriftLift=()=>{if(driftLiftRaf){cancelAnimationFrame(driftLiftRaf);driftLiftRaf=null;}};
   const inHandArea=el=>el instanceof Element&&!!el.closest('#hand,.handDock,#handSwipeZone');
   const inSwipeZone=el=>{const z=zoneEl();return!!z&&el instanceof Element&&(el===z||z.contains(el));};
   // ── Auto-fit: choose a per-card spacing (in deg) so that all cards fit in the dock. ──
@@ -185,6 +186,8 @@ export function installHandSwipeScroll(target = window){
   };
   const refreshLayout=()=>{
     const h=handEl();if(!h)return;
+    // Re-apply lift to the live element in case render() replaced the DOM node.
+    if(lift!==0)h.style.setProperty('--hand-lift-y',lift.toFixed(1)+'px');
     invalidateCache();
     const n=cardCount();
     const handChanged=(n!==lastHandLen);
@@ -252,7 +255,7 @@ export function installHandSwipeScroll(target = window){
     momentumRaf=requestAnimationFrame(step);
   };
   const runLiftMomentum=v0=>{
-    cancelLiftMomentum();
+    cancelLiftMomentum();cancelDriftLift();
     // Leave the hand floating where the player released it.
     // Only correct back into bounds if the player let go while rubber-banding past the allowance.
     const targetLift=clampLift(lift);
@@ -268,6 +271,25 @@ export function installHandSwipeScroll(target = window){
     };
     liftMomentumRaf=requestAnimationFrame(step);
   };
+  // Smoothly return lift to 0 over `dur` ms using an easeInOut curve.
+  // Called by the ambient idle animation so the hand drifts down naturally
+  // as the animation cycle takes over, rather than snapping.
+  const driftLiftToZero=dur=>{
+    cancelLiftMomentum();cancelDriftLift();
+    if(Math.abs(lift)<0.5){applyLift(0);return;}
+    const from=lift,start=performance.now();
+    const step=t=>{
+      const p=Math.min(1,(t-start)/dur);
+      // easeInOut quad: slow start, slow end
+      const e=p<0.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+      applyLift(from*(1-e));
+      if(p<1)driftLiftRaf=requestAnimationFrame(step);
+      else{applyLift(0);driftLiftRaf=null;}
+    };
+    driftLiftRaf=requestAnimationFrame(step);
+  };
+  target.__handDriftLiftToZero=driftLiftToZero;
+
   // ── Pinch helpers ──
   const distOf=(a,b)=>{const dx=a.x-b.x,dy=a.y-b.y;return Math.hypot(dx,dy);};
   // Kick the other pointer listeners (press-highlight, drag-select) out of their
@@ -318,7 +340,7 @@ export function installHandSwipeScroll(target = window){
   };
   // ── Slide helpers (single-pointer, swipe zone only) ──
   const startSlideMode=ev=>{
-    cancelMomentum();cancelLiftMomentum();
+    cancelMomentum();cancelLiftMomentum();cancelDriftLift();
     kickUndulation();
     mode='slide';
     startX=ev.clientX;startY=ev.clientY||0;startOffset=offset;startLift=lift;

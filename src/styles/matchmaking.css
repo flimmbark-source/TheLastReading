@@ -1,5 +1,5 @@
 /* Matchmaking screen (host/join/connecting/ready states) */
-#matchmakingScreen{position:fixed;inset:0;z-index:9200;display:flex;align-items:flex-start;justify-content:center;background:rgba(10,6,3,.92);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);overflow-y:auto;transition:opacity .3s ease}
+#matchmakingScreen{position:fixed;inset:0;z-index:10300;display:flex;align-items:flex-start;justify-content:center;background:rgba(10,6,3,.92);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);overflow-y:auto;transition:opacity .3s ease}
 #matchmakingScreen.mm-screen-hidden{opacity:0;pointer-events:none}
 
 .mm-inner{display:flex;flex-direction:column;gap:24px;padding:28px 20px 48px;width:100%;max-width:480px;min-height:100vh}
