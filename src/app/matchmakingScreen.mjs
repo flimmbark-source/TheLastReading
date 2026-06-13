@@ -3,6 +3,8 @@ import { PeerConnection } from './peerConnection.mjs';
 import { randomSeed } from '../multiplayer/mpRng.mjs';
 import { MP_ACTIONS } from '../multiplayer/mpActions.mjs';
 import { mpReducer } from '../multiplayer/mpReducer.mjs';
+import { MP_PHASES } from '../multiplayer/mpState.mjs';
+import { hasSubmittedAction, emptySlots } from '../multiplayer/mpSelectors.mjs';
 
 // ---------------------------------------------------------------------------
 // Internal state
@@ -15,6 +17,7 @@ let _roomCode = null;
 let _matchState = null; // live mpState once match starts
 let _profile = null;    // { personaId, scoreTarget }
 let _opponentProfile = null; // { personaId }
+let _cpuMode = false;
 
 // ---------------------------------------------------------------------------
 // Install
@@ -55,6 +58,12 @@ export function installMatchmakingScreen(target = window) {
         <button class="mm-mode-btn" onclick="tlrMmJoin()" type="button">
           Join
           <span class="mm-mode-label">Enter a code</span>
+        </button>
+      </div>
+      <div class="mm-cpu-row">
+        <button class="mm-mode-btn mm-cpu-btn" onclick="tlrMmVsCpu()" type="button">
+          vs CPU
+          <span class="mm-mode-label">Solo practice</span>
         </button>
       </div>
     `);
@@ -325,6 +334,8 @@ export function installMatchmakingScreen(target = window) {
   // --- Cleanup ---
 
   function teardown() {
+    _cpuMode = false;
+    _matchState = null;
     _signaling?.close(); _signaling = null;
     _peer?.close(); _peer = null;
     _role = null; _roomCode = null; _opponentProfile = null;
@@ -419,6 +430,88 @@ export function installMatchmakingScreen(target = window) {
   target.tlrMpGetState = function () { return _matchState; };
   target.tlrMpGetRole = function () { return _role; };
   target.tlrMpGetPeer = function () { return _peer; };
+
+  // ── CPU opponent ─────────────────────────────────────────────────────────
+
+  function chooseCpuAction(state, pi) {
+    const p = state.players[pi];
+    const hand = p?.hand ?? [];
+    const slots = emptySlots(state, pi);
+    const regular = hand.filter(c => c.type !== 'interaction').sort((a, b) => b.points - a.points);
+    const interaction = hand.filter(c => c.type === 'interaction');
+
+    if (slots.length > 0 && regular.length > 0) {
+      return { type: MP_ACTIONS.MP_PLACE_CARD, cardUid: regular[0].uid, slotIndex: slots[0] };
+    }
+    if (interaction.length > 0 && (p?.discards ?? 0) > 0) {
+      return { type: MP_ACTIONS.MP_DISCARD_CARD, cardUid: interaction[0].uid };
+    }
+    if ((p?.discards ?? 0) > 0 && hand.length > 0) {
+      const lowest = [...hand].sort((a, b) => a.points - b.points)[0];
+      return { type: MP_ACTIONS.MP_DISCARD_CARD, cardUid: lowest.uid };
+    }
+    if (hand.length >= 3) {
+      const sorted = [...hand].sort((a, b) => a.points - b.points);
+      return { type: MP_ACTIONS.MP_PURGE_CARDS, cardUids: sorted.slice(0, 3).map(c => c.uid) };
+    }
+    return { type: MP_ACTIONS.MP_DISCARD_CARD, cardUid: hand[0]?.uid };
+  }
+
+  function scheduleCpuMove(delayMs) {
+    target.setTimeout(() => {
+      if (!_cpuMode || !_matchState) return;
+      const s = _matchState;
+      if (s.phase !== MP_PHASES.PLACEMENT || hasSubmittedAction(s, 1)) return;
+      const inner = chooseCpuAction(s, 1);
+      dispatchMatchAction({
+        type: MP_ACTIONS.MP_SUBMIT_ACTION,
+        playerIndex: 1,
+        action: { ...inner, playerIndex: 1 },
+      });
+    }, delayMs);
+  }
+
+  function maybeCpuAct(action, state) {
+    if (!_cpuMode || !state || state.phase !== MP_PHASES.PLACEMENT) return;
+    if (hasSubmittedAction(state, 1)) return;
+    const isHumanSubmit = action?.type === MP_ACTIONS.MP_SUBMIT_ACTION && action.playerIndex === 0;
+    const isNewRound = action?.type === MP_ACTIONS.MP_NEW_ROUND;
+    if (!isHumanSubmit && !isNewRound) return;
+    scheduleCpuMove(400 + Math.random() * 600);
+  }
+
+  function installCpuHook() {
+    const origOnLocal = target.tlrMpOnLocalAction;
+    target.tlrMpOnLocalAction = function (action, state) {
+      origOnLocal?.call(target, action, state);
+      maybeCpuAct(action, state);
+    };
+    // CPU pre-submits its first action at round start
+    scheduleCpuMove(500 + Math.random() * 500);
+  }
+
+  function startCpuMatch() {
+    const p = _profile ?? {};
+    const initAction = {
+      type: MP_ACTIONS.MP_INIT,
+      seed: randomSeed(),
+      scoreTarget: p.scoreTarget ?? 200,
+      personas: [p.personaId ?? null, null],
+    };
+    _matchState = null;
+    enterMatchView();
+    dispatchMatchAction(initAction);
+    target.tlrMpOnMatchStart?.(_matchState, { role: 'host', peer: null });
+    // tlrMpOnMatchStart (from mpGame) just set tlrMpOnLocalAction — now wrap it
+    installCpuHook();
+  }
+
+  target.tlrMmVsCpu = function () {
+    _role = 'host';
+    _cpuMode = true;
+    _opponentProfile = { personaId: null };
+    startCpuMatch();
+  };
 }
 
 // --- Utility ---
