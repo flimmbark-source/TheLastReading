@@ -2,7 +2,6 @@ import { allPersonas } from '../multiplayer/personas.mjs';
 import { SCORE_TARGETS } from '../multiplayer/mpState.mjs';
 
 const PROFILE_KEY = 'tlr_mp_profile';
-const SWITCH_CUE_FILE = 'soundreality-bell-fx-410608.mp3';
 
 const DEFAULT_PROFILE = {
   personaId: null,
@@ -51,7 +50,6 @@ export function installLoadoutScreen(target = window) {
   let profile = loadProfile(target.localStorage);
   let swipeStartX = 0;
   let swipeStartY = 0;
-  let switchAudio = null;
 
   function personaIndex() {
     const index = personas.findIndex(p => p.id === profile.personaId);
@@ -73,19 +71,6 @@ export function installLoadoutScreen(target = window) {
   function prefersReducedMotion() {
     try { return target.matchMedia?.('(prefers-reduced-motion: reduce)').matches; }
     catch (_) { return false; }
-  }
-
-  // Plays the persona-switch chime. Reuses one element so rapid switching
-  // restarts the cue rather than stacking overlapping sounds.
-  function playSwitchCue() {
-    try {
-      const vol = typeof target._sfxVol === 'number' ? target._sfxVol : 1;
-      if (vol <= 0) return;
-      if (!switchAudio) switchAudio = new (target.Audio || Audio)(SWITCH_CUE_FILE);
-      switchAudio.volume = Math.max(0, Math.min(1, vol * 0.3));
-      switchAudio.currentTime = 0;
-      switchAudio.play().catch(() => {});
-    } catch (_) {}
   }
 
   // Central selection entry point. `dir` is 'next' | 'prev' | null and drives
