@@ -183,13 +183,6 @@ export function installHandCardGestures(target = window){
       const ev2=g.lastDragEv;
       const x=ev2.clientX,y=ev2.clientY;
 
-      // Flush gesture: drag card 120px downward from grab point (off the screen edge).
-      if(!inSelectionMode()&&!state.busy&&(y-g.startY)>120){
-        endDrag(false);
-        if(typeof flushHand==='function')flushHand();
-        return;
-      }
-
       // Apply slot highlight (DOM writes batched here, not in pointermove).
       const{inSpread,hit,hover}=calcDropTarget(x,y);
       if(inSpread){

@@ -361,6 +361,8 @@ export function installHandSwipeScroll(target = window){
   const stepSlide=ev=>{
     const dx=ev.clientX-startX;
     const dy=(ev.clientY||startY)-startY;
+    // Flush gesture: drag the hand dock downward > 120px (off the screen edge).
+    if(dy>120&&typeof target.flushHand==='function'){endGesture();target.flushHand();return;}
     const _desktopDir=target.matchMedia('(pointer:fine)').matches?-1:1;const targetOffset=softClamp(startOffset+dx*DEG_PER_PX_SWIPE*_desktopDir);
     if(Math.abs(targetOffset-startOffset)>1.15)completeHandHintStep(1);
     const _desktopYDir=target.matchMedia('(pointer:fine)').matches?-1:1;const y=softClampLift(startLift+dy*_desktopYDir);
