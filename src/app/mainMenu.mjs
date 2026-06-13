@@ -100,7 +100,9 @@ export function installMainMenu(target = window) {
     el.classList.add('mm-hidden');
     el.setAttribute('aria-hidden', 'true');
     if ('inert' in el) el.inert = true;
-    el.hidden = true;
+    // Delay display:none until after the 0.35s opacity fade-out finishes,
+    // so the game never shows through while the overlay is still fading.
+    setTimeout(() => { if (el.classList.contains('mm-hidden')) el.hidden = true; }, 400);
   }
 
   function show() {
