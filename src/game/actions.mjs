@@ -26,6 +26,7 @@ export const ACTIONS = Object.freeze({
   SYNC_LEGACY_SNAPSHOT: 'SYNC_LEGACY_SNAPSHOT',
   SYNC_LEGACY_RUN: 'SYNC_LEGACY_RUN',
   SYNC_LEGACY_PERSIST: 'SYNC_LEGACY_PERSIST',
+  FLUSH_HAND: 'FLUSH_HAND',
 });
 
 export const startReading = () => ({ type: ACTIONS.START_READING });
