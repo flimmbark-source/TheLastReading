@@ -345,7 +345,7 @@ export function mpReducer(state, action) {
     }
 
     case MP_ACTIONS.MP_SWAP_SPREAD: {
-      const { playerIndex, slotA, slotB } = action;
+      const { playerIndex, slotIndex, cardUid } = action;
       const activeError = requireActivePlayer(state, playerIndex);
       if (activeError) return err(state, activeError);
 
@@ -353,23 +353,26 @@ export function mpReducer(state, action) {
       if (!player.swapAvailable) {
         return err(state, 'No swap available. Surgeon persona required once per round.');
       }
-      if (slotA < 0 || slotA >= MP_SPREAD_SIZE || slotB < 0 || slotB >= MP_SPREAD_SIZE) {
-        return err(state, 'Invalid slot index for swap.');
-      }
-      if (slotA === slotB) {
-        return err(state, 'Cannot swap a slot with itself.');
+      if (slotIndex < 0 || slotIndex >= MP_SPREAD_SIZE) {
+        return err(state, 'Invalid spread slot for swap.');
       }
 
-      const spread = [...player.spread];
-      [spread[slotA], spread[slotB]] = [spread[slotB], spread[slotA]];
+      const spreadCard = player.spread[slotIndex];
+      if (!spreadCard) {
+        return err(state, 'Choose a card in your Spread to swap.');
+      }
 
-      // If the anchored slot was swapped, update its index
-      let { anchoredSlotIndex } = player;
-      if (anchoredSlotIndex === slotA) anchoredSlotIndex = slotB;
-      else if (anchoredSlotIndex === slotB) anchoredSlotIndex = slotA;
+      const handIndex = player.hand.findIndex(c => c.uid === cardUid);
+      if (handIndex < 0) {
+        return err(state, 'Choose a card in your Hand to swap.');
+      }
+
+      const handCard = player.hand[handIndex];
+      const spread = player.spread.map((card, i) => i === slotIndex ? handCard : card);
+      const hand = player.hand.map((card, i) => i === handIndex ? spreadCard : card);
 
       // Free action: does NOT advance the turn
-      return updatePlayer(state, playerIndex, { spread, anchoredSlotIndex, swapAvailable: false });
+      return updatePlayer(state, playerIndex, { hand, spread, swapAvailable: false });
     }
 
     case MP_ACTIONS.MP_SCORE_ROUND: {
