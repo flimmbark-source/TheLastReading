@@ -28,6 +28,18 @@ body.mp-game-active #mpAbilityBtn::before { content: 'Ability' !important; }
 
 body.mp-game-active #mpAbilityBtn {
   display: none !important;
+  background: linear-gradient(#ead9b5, #b98948) !important;
+  background-image: linear-gradient(#ead9b5, #b98948) !important;
+  background-color: #d2ae73 !important;
+  background-size: auto !important;
+  background-position: center !important;
+  background-repeat: repeat !important;
+  border: 1px solid #7a5a2d !important;
+  border-radius: 6px !important;
+  color: #20130b !important;
+  font: 700 12px/1 system-ui, Segoe UI, sans-serif !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
 }
 
 @media (max-width: 640px) {
