@@ -185,36 +185,29 @@ export function installLoadoutScreen(target = window) {
     `;
   }
 
-  // Right column: persona name, tagline and the relic/upgrade slots that the
-  // character comes with. The slots are placeholders for now.
+  // Right column: persona name and the relic/upgrade slots that the character
+  // comes with. The slots are placeholders for now.
   function renderDetails() {
     const box = el('loadoutDetails');
     if (!box) return;
     const p = activePersona();
     if (!p) { box.innerHTML = ''; return; }
-    const index = personaIndex();
     const relicSlots = Array.from({ length: RELIC_SLOT_COUNT }, () => `
       <li class="loadout-relic">
         <span class="loadout-relic-orb" aria-hidden="true"></span>
         <span class="loadout-relic-label">Relic slot — empty</span>
       </li>`).join('');
     box.innerHTML = `
-      <span class="loadout-details-kicker">Persona ${index + 1} / ${personas.length}</span>
       <h3 class="loadout-details-name">${esc(p.name)}</h3>
-      ${p.tagline ? `<p class="loadout-details-tagline">${esc(p.tagline)}</p>` : ''}
       <div class="loadout-details-divider" aria-hidden="true"></div>
       <ul class="loadout-relics">${relicSlots}</ul>
     `;
   }
 
-  // Bottom bar: the active persona's signature ability.
-  function renderAbility() {
-    const box = el('loadoutPersonaDescBox');
-    if (!box) return;
-    const p = activePersona();
-    if (!p) { box.innerHTML = ''; return; }
+  // Markup for the bottom ability bar for a given persona.
+  function abilityBarHtml(p) {
     const a = p.ability;
-    box.innerHTML = `
+    return `
       <span class="loadout-ability-icon">${personaIconSvg(p)}</span>
       <div class="loadout-ability-body">
         <div class="loadout-desc-header">
@@ -226,6 +219,31 @@ export function installLoadoutScreen(target = window) {
         ${a.flavor ? `<p class="loadout-desc-flavor">${esc(a.flavor)}</p>` : ''}
       </div>
     `;
+  }
+
+  // Bottom bar: the active persona's signature ability.
+  function renderAbility() {
+    const box = el('loadoutPersonaDescBox');
+    if (!box) return;
+    const p = activePersona();
+    if (!p) { box.innerHTML = ''; return; }
+    box.innerHTML = abilityBarHtml(p);
+  }
+
+  // Locks the ability bar to the height of its tallest persona so switching
+  // personas never resizes the row. Measures each persona's content in place
+  // (no paint occurs mid-loop), then pins min-height to the largest.
+  function lockAbilityHeight() {
+    const box = el('loadoutPersonaDescBox');
+    if (!box || !personas.length) return;
+    box.style.minHeight = '0px';
+    let max = 0;
+    for (const p of personas) {
+      box.innerHTML = abilityBarHtml(p);
+      if (box.offsetHeight > max) max = box.offsetHeight;
+    }
+    box.style.minHeight = `${max}px`;
+    renderAbility();
   }
 
   function renderReady() {
@@ -303,6 +321,12 @@ export function installLoadoutScreen(target = window) {
       swipeZone.addEventListener('touchstart', onTouchStart, { passive: true });
       swipeZone.addEventListener('touchend', onTouchEnd, { passive: true });
     }
+    // Re-measure the ability bar when the viewport changes (e.g. rotation),
+    // since text wrapping — and so the tallest persona's height — can shift.
+    target.addEventListener?.('resize', () => {
+      if (screen.classList.contains('loadout-hidden')) return;
+      lockAbilityHeight();
+    });
   }
 
   // --- Public API (referenced from other screens / match init) ---
@@ -310,6 +334,7 @@ export function installLoadoutScreen(target = window) {
   target.tlrShowLoadout = function () {
     profile = loadProfile(target.localStorage);
     renderAll();
+    lockAbilityHeight();
     el('loadoutScreen')?.classList.remove('loadout-hidden');
   };
 
