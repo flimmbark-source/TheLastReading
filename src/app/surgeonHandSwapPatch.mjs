@@ -66,7 +66,7 @@ export function installSurgeonHandSwapPatch(target = window) {
     if (!btn) {
       btn = doc.createElement('button');
       btn.id = 'mpAbilityBtn';
-      btn.className = 'sbtn sbtn-ability';
+      btn.className = 'sbtn sbtn-ability mp-action-copy';
       btn.type = 'button';
       btn.textContent = 'Ability';
       btn.setAttribute('aria-label', 'Ability');
@@ -86,7 +86,7 @@ export function installSurgeonHandSwapPatch(target = window) {
   function copySingleplayerButtonArt() {
     copyButtonArt('discardBtn', 'mpDiscardBtn', 'sbtn sbtn-discard mp-action-copy');
     copyButtonArt('purgeBtn', 'mpPurgeBtn', 'sbtn sbtn-purge mp-action-copy');
-    copyButtonArt('discardBtn', 'mpAbilityBtn', 'sbtn sbtn-ability mp-action-copy');
+    styleAbilityButton(doc.getElementById('mpAbilityBtn'));
   }
 
   function copyButtonArt(sourceId, targetId, className) {
@@ -111,6 +111,25 @@ export function installSurgeonHandSwapPatch(target = window) {
       if (value) button.style.setProperty(cssName(prop), value, 'important');
     });
     copiedButtonArt.add(targetId);
+  }
+
+  function styleAbilityButton(button) {
+    if (!button) return;
+    button.className = 'sbtn sbtn-ability mp-action-copy';
+    button.textContent = 'Ability';
+    button.style.setProperty('background', 'linear-gradient(#ead9b5, #b98948)', 'important');
+    button.style.setProperty('background-image', 'linear-gradient(#ead9b5, #b98948)', 'important');
+    button.style.setProperty('background-color', '#d2ae73', 'important');
+    button.style.setProperty('background-size', 'auto', 'important');
+    button.style.setProperty('background-position', 'center', 'important');
+    button.style.setProperty('background-repeat', 'repeat', 'important');
+    button.style.setProperty('border', '1px solid #7a5a2d', 'important');
+    button.style.setProperty('border-radius', '6px', 'important');
+    button.style.setProperty('box-shadow', '0 2px 0 rgba(53, 31, 13, .75), inset 0 1px rgba(255,255,255,.22)', 'important');
+    button.style.setProperty('color', '#20130b', 'important');
+    button.style.setProperty('font', '700 12px/1 system-ui, Segoe UI, sans-serif', 'important');
+    button.style.setProperty('letter-spacing', 'normal', 'important');
+    button.style.setProperty('text-transform', 'none', 'important');
   }
 
   function hideSwipeTutorialInMultiplayer() {
@@ -148,9 +167,9 @@ export function installSurgeonHandSwapPatch(target = window) {
     if (abilityBtn) {
       const isVisible = !!personaAction;
       abilityBtn.disabled = !isVisible;
-      abilityBtn.textContent = personaAction?.label || 'Ability';
-      abilityBtn.title = personaAction?.title || 'Ability';
-      abilityBtn.setAttribute('aria-label', personaAction?.title || 'Ability');
+      abilityBtn.textContent = 'Ability';
+      abilityBtn.title = personaAction?.title || 'Ability unavailable';
+      abilityBtn.setAttribute('aria-label', personaAction?.title || 'Ability unavailable');
       abilityBtn.dataset.mpAbilityAction = personaAction?.type || '';
       abilityBtn.classList.toggle('mp-visible', isVisible);
       abilityBtn.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
