@@ -69,12 +69,11 @@
 .loadout-slot.active .loadout-slot-marker{opacity:1}
 
 /* Main region — portrait (left) + details/relics (right) */
-.loadout-main{grid-area:main;display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(7px,2vw,12px);min-height:0}
+.loadout-main{grid-area:main;display:grid;grid-template-columns:1.15fr .85fr;gap:clamp(7px,2vw,12px);min-height:0;touch-action:pan-y}
 
-.loadout-portrait{overflow:hidden;min-height:0;padding:clamp(6px,1.4vh,10px);touch-action:pan-y}
+.loadout-portrait{overflow:hidden;min-height:0;padding:clamp(6px,1.4vh,10px)}
 .loadout-portrait-art{position:absolute;inset:clamp(6px,1.4vh,10px);border-radius:10px;background-size:cover;background-position:center 10%;display:flex;align-items:center;justify-content:center;color:var(--accent);box-shadow:inset 0 0 34px rgba(0,0,0,.6)}
 .loadout-portrait-art .loadout-icon-svg{width:38%;height:38%;filter:drop-shadow(0 0 12px color-mix(in srgb,var(--accent) 60%,transparent))}
-.loadout-portrait-name{position:absolute;left:clamp(6px,1.4vh,10px);right:clamp(6px,1.4vh,10px);bottom:clamp(6px,1.4vh,10px);text-align:center;font:700 clamp(15px,4.4vw,22px)/1.1 Georgia,serif;color:var(--lo-parch);letter-spacing:.04em;padding:22px 8px 9px;text-shadow:0 2px 8px rgba(0,0,0,.95);background:linear-gradient(transparent,rgba(5,8,16,.94));border-radius:0 0 10px 10px}
 
 .loadout-details{display:flex;flex-direction:column;min-height:0;padding:clamp(10px,2vh,16px) clamp(10px,2.6vw,14px);overflow:hidden}
 .loadout-details-name{margin:0;font:700 clamp(15px,4.6vw,21px)/1.1 Georgia,serif;color:var(--lo-parch);text-shadow:0 2px 6px rgba(0,0,0,.7)}

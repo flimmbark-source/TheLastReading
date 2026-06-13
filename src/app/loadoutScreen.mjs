@@ -181,7 +181,6 @@ export function installLoadoutScreen(target = window) {
       <div class="loadout-portrait-art${enterClass}" ${imageStyle}>
         ${art ? '' : personaIconSvg(p)}
       </div>
-      <span class="loadout-portrait-name">${esc(p.name)}</span>
     `;
   }
 
@@ -317,7 +316,7 @@ export function installLoadoutScreen(target = window) {
   const screen = el('loadoutScreen');
   if (screen) {
     screen.addEventListener('click', onClick);
-    const swipeZone = el('loadoutPortrait');
+    const swipeZone = el('loadoutMain');
     if (swipeZone) {
       swipeZone.addEventListener('touchstart', onTouchStart, { passive: true });
       swipeZone.addEventListener('touchend', onTouchEnd, { passive: true });
