@@ -102,9 +102,10 @@ export function refreshHandState(){
   const inPurge=state.purgeSelect!==null;
   document.querySelectorAll('#hand .card').forEach(el=>{
     const uid=Number(el.dataset.uid);
-    el.classList.toggle('sel',!ability&&!inPurge&&state.selected===uid);
-    if(ability){const isPicked=ability.picked.includes(uid);el.classList.toggle('ability-picked',isPicked);el.classList.toggle('ability-target',!isPicked&&ability.validIds.has(uid));}
-    if(inPurge){el.classList.toggle('purge-picked',state.purgeSelect.includes(uid));el.classList.toggle('purge-target',!state.purgeSelect.includes(uid));}
+    el.classList.remove('sel','ability-picked','ability-target','ability-disabled','purge-picked','purge-target');
+    if(!ability&&!inPurge&&state.selected===uid)el.classList.add('sel');
+    if(ability){const isPicked=ability.picked.includes(uid);el.classList.toggle('ability-picked',isPicked);el.classList.toggle('ability-target',!isPicked&&ability.validIds.has(uid));el.classList.toggle('ability-disabled',!ability.validIds.has(uid));}
+    if(inPurge){const isPicked=state.purgeSelect.includes(uid);el.classList.toggle('purge-picked',isPicked);el.classList.toggle('purge-target',!isPicked);}
   });
   document.querySelectorAll('#spread .slot').forEach(slot=>{
     const el=slot.querySelector('.card[data-uid]');
