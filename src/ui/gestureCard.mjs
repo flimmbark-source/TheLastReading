@@ -183,8 +183,8 @@ export function installHandCardGestures(target = window){
       const ev2=g.lastDragEv;
       const x=ev2.clientX,y=ev2.clientY;
 
-      // Flush gesture: drag card centre 66 % below the viewport bottom.
-      if(!inSelectionMode()&&!state.busy&&(y-(g.grabOffsetY||0))>target.innerHeight*1.66){
+      // Flush gesture: drag card downward > 50% of viewport height from grab point.
+      if(!inSelectionMode()&&!state.busy&&(y-g.startY)>target.innerHeight*0.5){
         endDrag(false);
         if(typeof flushHand==='function')flushHand();
         return;
