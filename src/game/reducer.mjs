@@ -199,6 +199,35 @@ function startNextSet(state, rng = Math.random) {
     purge: null,
     abilityTakenCardIds: [],
     resonationBonus: null,
+    discards: startingDiscards(persist),
+    freeDiscardUsed: false,
+    sightChargesUsed: 0,
+  });
+}
+
+function flushHand(state, rng = Math.random) {
+  const { run, persist } = state;
+  const allCards = [
+    ...(run.deck || []),
+    ...(run.discard || []),
+    ...(run.hand || []),
+    ...(run.spread || []).filter(Boolean),
+  ];
+  const shuffled = shuffleDeck(allCards, rng);
+  const handSize = handSizeForSet(persist);
+  const hand = shuffled.splice(0, handSize);
+  return replaceRun(state, {
+    hand,
+    deck: shuffled,
+    discard: [],
+    spread: Array(5).fill(null),
+    selectedCardId: null,
+    thresholdBonus: (run.thresholdBonus || 0) + 10,
+    ability: null,
+    sourceCardId: null,
+    busy: false,
+    abilityTakenCardIds: [],
+    resonationBonus: null,
   });
 }
 
@@ -500,6 +529,8 @@ export function reducer(state, action) {
         replaceRun(state, { phase: GAME_PHASES.SESSION_END, lastSessionScore: action.totalScore ?? state.persist.totalScore, lastSessionObals: action.obals ?? state.persist.obals }),
         { totalScore: action.totalScore ?? state.persist.totalScore, obals: action.obals ?? state.persist.obals }
       );
+    case ACTIONS.FLUSH_HAND:
+      return flushHand(state, action.rng || Math.random);
     case ACTIONS.RESET_SESSION:
       return resetSession(state, !!action.fresh);
     default:

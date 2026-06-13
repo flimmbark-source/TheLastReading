@@ -44,7 +44,25 @@ export function getUpFromTable(){
   if(window.tlrCloseArchives)window.tlrCloseArchives();
   const panel=document.getElementById('settingsPanel');if(panel)panel.classList.add('hidden');
   const mw=document.getElementById('menuPullWrap');if(mw&&mw.classList.contains('open')){mw.classList.remove('open');const mt=document.getElementById('menuPullTab');if(mt)mt.innerHTML='&#9660; Menu';}
-  if(typeof endSession==='function')endSession();
+  showOverlay(`<div class="result-panel"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3>Rise from the Table?</h3></div><p style="color:#8a7551;font-size:13px;text-align:center;margin:0 0 22px;line-height:1.5">The cards will be left as they are.<br>Your session ends here.</p><div class="rbtns"><button onclick="clearOverlay()">Stay</button><button class="btn-gold" onclick="clearOverlay();endSession()">Leave the Reading</button></div></div>`);
+}
+
+export function flushHand(){
+  if(state&&(state.busy||state.abilitySelect||state.purgeSelect!==null))return;
+  tlrSyncRunToStore();
+  window.tlrStore.dispatch({type:window.tlrActions.FLUSH_HAND});
+  const _run=window.tlrStore.getState().run;
+  state.hand=_run.hand.slice();state.deck=_run.deck.slice();state.discard=_run.discard.slice();
+  state.spread=_run.spread.slice();state.selected=null;
+  state.thBonus=_run.thresholdBonus;
+  state.busy=false;state.abilitySelect=null;state.purgeSelect=null;
+  state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
+  state.resonationBonus={chips:0,mult:0};
+  syncRoundFields(_run);
+  playSound('shuffle');
+  _resStateKey=null;
+  clearOverlay();render();
+  if(typeof fireThresholdBonusGhost==='function')fireThresholdBonusGhost(10);
 }
 
 export function startReading(){

@@ -107,7 +107,7 @@ function putBanishInHandFromDeck(state, playerIndex) {
     const cardToPlace = s.players[0].hand.find(c => c.type !== 'interaction');
     if (cardToPlace && emptySlot !== undefined) {
       s = mpReducer(s, { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex: 0, cardUid: cardToPlace.uid, slotIndex: emptySlot });
-      assert(s.activePlayerIndex === 1, 'Gambit: turn passes after bonus place');
+      assert(sel.isPlayerTurn(s, 1), 'Gambit: turn passes after bonus place');
     }
   } else {
     passed += 4; // no DRAW card in this random hand, skip
@@ -186,7 +186,7 @@ function putBanishInHandFromDeck(state, playerIndex) {
   assert(s.error === null, 'Banish: no error');
   assert(s.players[1].spread[2] === null, 'Banish: last played slot 2 is now empty');
   assert(s.players[1].discard.some(c => c.uid === cardInP1Slot2.uid), 'Banish: removed card in P1 discard');
-  assert(s.activePlayerIndex === 1, 'Banish: turn passes after invoke');
+  assert(sel.isPlayerTurn(s, 1), 'Banish: turn passes after invoke');
 }
 
 // -----------------------------------------------------------------------

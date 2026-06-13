@@ -1,6 +1,6 @@
 // Hand card gesture controller (Step 4). Verbatim port target from the
 // legacy inline hand card gestures handler patch.
-/* global state, refreshHandState, expandCard, render, placeCard */
+/* global state, refreshHandState, expandCard, render, placeCard, flushHand */
 
 export function installHandCardGestures(target = window){
   if(!target || target.__handCardGesturesInstalled)return;
@@ -182,6 +182,13 @@ export function installHandCardGestures(target = window){
       if(!g||g.mode!=='drag')return;
       const ev2=g.lastDragEv;
       const x=ev2.clientX,y=ev2.clientY;
+
+      // Flush gesture: drag card centre 66 % below the viewport bottom.
+      if(!inSelectionMode()&&!state.busy&&(y-(g.grabOffsetY||0))>target.innerHeight*1.66){
+        endDrag(false);
+        if(typeof flushHand==='function')flushHand();
+        return;
+      }
 
       // Apply slot highlight (DOM writes batched here, not in pointermove).
       const{inSpread,hit,hover}=calcDropTarget(x,y);
