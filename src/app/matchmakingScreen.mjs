@@ -14,6 +14,7 @@ let _role = null;       // 'host' | 'guest'
 let _roomCode = null;
 let _matchState = null; // live mpState once match starts
 let _profile = null;    // { personaId, scoreTarget }
+let _opponentProfile = null; // { personaId }
 
 // ---------------------------------------------------------------------------
 // Install
@@ -99,11 +100,12 @@ export function installMatchmakingScreen(target = window) {
 
   function renderReadyPhase() {
     const isHost = _role === 'host';
+    const hasOpponentProfile = !!_opponentProfile;
     setHtml('mmContent', `
       <div class="mm-status mm-status-success">✓ Opponent connected!</div>
       <div class="mm-ready-section">
         ${isHost
-          ? `<button class="mm-start-btn" onclick="tlrMmStartMatch()" type="button">Start Match</button>`
+          ? `<button class="mm-start-btn" onclick="tlrMmStartMatch()" type="button" ${hasOpponentProfile ? '' : 'disabled'}>${hasOpponentProfile ? 'Start Match' : 'Loading Opponent…'}</button>`
           : `<p class="mm-waiting-host">Waiting for the host to start…</p>`
         }
       </div>
@@ -194,10 +196,18 @@ export function installMatchmakingScreen(target = window) {
     }
   }
 
+  function sendProfile() {
+    _peer?.send({
+      type: 'mp-profile',
+      profile: { personaId: _profile?.personaId ?? null },
+    });
+  }
+
   function createPeer() {
     _peer = new PeerConnection({
       onConnected: () => {
         // DataChannel open — signaling no longer needed
+        sendProfile();
         _signaling?.close();
         _signaling = null;
         renderReadyPhase();
@@ -258,6 +268,12 @@ export function installMatchmakingScreen(target = window) {
   }
 
   function handleDataMessage(msg) {
+    if (msg.type === 'mp-profile') {
+      _opponentProfile = { ...(msg.profile ?? {}) };
+      if (!_matchState) renderReadyPhase();
+      return;
+    }
+
     if (msg.type === 'mp-action') {
       const isMatchStart = msg.action?.type === MP_ACTIONS.MP_INIT;
       const alreadyStarted = !!_matchState;
@@ -288,7 +304,7 @@ export function installMatchmakingScreen(target = window) {
     const seed = randomSeed();
     const p = _profile ?? {};
     const myPersona = p.personaId ?? null;
-    const opponentPersona = null; // future: exchange via DataChannel pre-start
+    const opponentPersona = _opponentProfile?.personaId ?? null;
 
     const personas = _role === 'host'
       ? [myPersona, opponentPersona]
@@ -311,7 +327,7 @@ export function installMatchmakingScreen(target = window) {
   function teardown() {
     _signaling?.close(); _signaling = null;
     _peer?.close(); _peer = null;
-    _role = null; _roomCode = null;
+    _role = null; _roomCode = null; _opponentProfile = null;
   }
 
   // --- Public API ---
@@ -390,6 +406,7 @@ export function installMatchmakingScreen(target = window) {
   target.tlrMmStartMatch = function () {
     if (_role !== 'host') return;
     if (!_peer?.connected) return;
+    if (!_opponentProfile) return;
     startMatch();
   };
 
