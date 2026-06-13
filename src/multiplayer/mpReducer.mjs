@@ -44,13 +44,27 @@ function removeSlotFromHistory(history, slotIndex) {
 }
 
 function isActionPhase(state) {
-  return state.phase === MP_PHASES.PLACEMENT || state.phase === MP_PHASES.FINAL_TURN;
+  return state.phase === MP_PHASES.PLACEMENT;
 }
 
-function requireActivePlayer(state, playerIndex) {
+function canSubmit(state, playerIndex) {
   if (!isActionPhase(state)) return 'Cannot act in phase: ' + state.phase;
-  if (playerIndex !== state.activePlayerIndex) return 'Not your turn.';
+  if (playerIndex !== 0 && playerIndex !== 1) return 'Invalid player.';
+  if (state.pendingActions?.[playerIndex]) return 'Action already submitted.';
   return null;
+}
+
+function sanitizeSubmittedAction(playerIndex, action) {
+  if (!action || typeof action !== 'object') return null;
+  const allowed = new Set([
+    MP_ACTIONS.MP_PLACE_CARD,
+    MP_ACTIONS.MP_INVOKE_ABILITY,
+    MP_ACTIONS.MP_DISCARD_CARD,
+    MP_ACTIONS.MP_PURGE_CARDS,
+    MP_ACTIONS.MP_SWAP_SPREAD,
+  ]);
+  if (!allowed.has(action.type)) return null;
+  return { ...action, playerIndex };
 }
 
 // Draw up to `count` cards from a player's deck, reshuffling discard if needed.
@@ -69,13 +83,6 @@ function drawCards(player, count) {
   }
 
   return { ...player, deck, discard, hand };
-}
-
-// Draw hand back up to the player's persona-adjusted hand size.
-function drawToHandSize(player) {
-  const target = handSizeForPersona(player.persona);
-  const needed = target - player.hand.length;
-  return needed > 0 ? drawCards(player, needed) : player;
 }
 
 // Apply a standard singleplayer-style ability (DRAW etc.).
@@ -188,65 +195,11 @@ function resolveVictory(state) {
   return p0.totalScore > p1.totalScore ? 0 : 1;
 }
 
-// --- Turn advance ---
-
-// After a player's action, advance the turn or phase.
-// `playerIndex` = who just acted.
-// `filledSpread` = whether their spread is now full.
-// `isBonusConsumed` = whether a Gambit bonus action was just consumed (so don't check again).
-function advanceTurn(state, playerIndex, filledSpread, isBonusConsumed = false) {
-  if (state.phase === MP_PHASES.FINAL_TURN) {
-    return { ...state, phase: MP_PHASES.SCORING };
-  }
-
-  if (filledSpread) {
-    const other = otherPlayerIndex(playerIndex);
-    if (spreadFull(state.players[other].spread)) {
-      return { ...state, phase: MP_PHASES.SCORING };
-    }
-    return { ...state, phase: MP_PHASES.FINAL_TURN, finalTurnForIndex: other, activePlayerIndex: other };
-  }
-
-  return { ...state, activePlayerIndex: otherPlayerIndex(playerIndex) };
-}
-
-// --- Reducer ---
-
-export function mpReducer(state, action) {
-  if (!state) state = createMatchState();
-  state = clearError(state);
-
+function applyImmediateAction(state, action) {
   switch (action.type) {
-
-    case MP_ACTIONS.MP_INIT: {
-      // Prefer a seeded RNG derived from action.seed so both peers produce
-      // identical shuffles. Fall back to action.rng or Math.random for tests.
-      const rng = action.seed != null ? mulberry32(action.seed) : (action.rng || Math.random);
-      const personas = action.personas ?? [null, null];
-      let next = {
-        ...createMatchState({ scoreTarget: action.scoreTarget ?? state.scoreTarget, rng, personas }),
-        phase: MP_PHASES.PLACEMENT,
-        round: 1,
-      };
-      let uid = next.nextInjectedUid;
-      // Apply game-start deck passives first, then round-start passives for round 1.
-      for (let i = 0; i < 2; i++) {
-        const gameStart = applyGameStartPassives(next.players[i], uid, rng);
-        next = updatePlayer(next, i, gameStart.player);
-        uid = gameStart.nextUid;
-      }
-      for (let i = 0; i < 2; i++) {
-        const roundStart = applyRoundStartPassives(next.players[i], uid);
-        next = updatePlayer(next, i, roundStart.player);
-        uid = roundStart.nextUid;
-      }
-      return { ...next, nextInjectedUid: uid };
-    }
-
     case MP_ACTIONS.MP_PLACE_CARD: {
       const { playerIndex, cardUid, slotIndex } = action;
-      const activeError = requireActivePlayer(state, playerIndex);
-      if (activeError) return err(state, activeError);
+      if (!isActionPhase(state)) return err(state, 'Cannot act in phase: ' + state.phase);
 
       const player = state.players[playerIndex];
       if (slotIndex < 0 || slotIndex >= MP_SPREAD_SIZE) {
@@ -272,37 +225,27 @@ export function mpReducer(state, action) {
           ? slotIndex
           : player.anchoredSlotIndex;
 
-      let next = updatePlayer(state, playerIndex, { hand, spread, anchoredSlotIndex, playedSlotHistory });
-      return advanceTurn(next, playerIndex, spreadFull(spread));
+      return updatePlayer(state, playerIndex, { hand, spread, anchoredSlotIndex, playedSlotHistory });
     }
 
     case MP_ACTIONS.MP_INVOKE_ABILITY: {
       const { playerIndex, cardUid, target } = action;
-      const activeError = requireActivePlayer(state, playerIndex);
-      if (activeError) return err(state, activeError);
+      if (!isActionPhase(state)) return err(state, 'Cannot act in phase: ' + state.phase);
 
       const result = applyInvoke(state, playerIndex, cardUid, target);
       if (result.error) return err(state, result.error);
 
-      // result.state is set when an interaction ability ran (it already has all player updates)
-      // result.player is set when a standard ability ran (only the acting player changed)
       let next = result.state ?? updatePlayer(state, playerIndex, result.player);
-
-      // Gambit: if bonus action is available, spend it and keep the turn.
       const actingPlayer = next.players[playerIndex];
       if (actingPlayer.bonusActionAvailable) {
         next = updatePlayer(next, playerIndex, { bonusActionAvailable: false });
-        // Stay on this player's turn (don't call advanceTurn).
-        return next;
       }
-
-      return advanceTurn(next, playerIndex, false);
+      return next;
     }
 
     case MP_ACTIONS.MP_DISCARD_CARD: {
       const { playerIndex, cardUid } = action;
-      const activeError = requireActivePlayer(state, playerIndex);
-      if (activeError) return err(state, activeError);
+      if (!isActionPhase(state)) return err(state, 'Cannot act in phase: ' + state.phase);
 
       const player = state.players[playerIndex];
       if (player.discards <= 0) return err(state, 'No discards remaining.');
@@ -313,18 +256,16 @@ export function mpReducer(state, action) {
       const card = player.hand[cardIndex];
       const hand = player.hand.filter((_, i) => i !== cardIndex);
       const discard = [...player.discard, card];
-      const next = updatePlayer(state, playerIndex, {
+      return updatePlayer(state, playerIndex, {
         hand,
         discard,
         discards: player.discards - 1,
       });
-      return advanceTurn(next, playerIndex, false);
     }
 
     case MP_ACTIONS.MP_PURGE_CARDS: {
       const { playerIndex, cardUids } = action;
-      const activeError = requireActivePlayer(state, playerIndex);
-      if (activeError) return err(state, activeError);
+      if (!isActionPhase(state)) return err(state, 'Cannot act in phase: ' + state.phase);
 
       const ids = Array.isArray(cardUids) ? cardUids : [];
       const uniqueIds = [...new Set(ids)];
@@ -336,18 +277,16 @@ export function mpReducer(state, action) {
 
       const hand = player.hand.filter(c => !uniqueIds.includes(c.uid));
       const discard = [...player.discard, ...selected];
-      const next = updatePlayer(state, playerIndex, {
+      return updatePlayer(state, playerIndex, {
         hand,
         discard,
         discards: player.discards + 1,
       });
-      return advanceTurn(next, playerIndex, false);
     }
 
     case MP_ACTIONS.MP_SWAP_SPREAD: {
       const { playerIndex, slotIndex, cardUid } = action;
-      const activeError = requireActivePlayer(state, playerIndex);
-      if (activeError) return err(state, activeError);
+      if (!isActionPhase(state)) return err(state, 'Cannot act in phase: ' + state.phase);
 
       const player = state.players[playerIndex];
       if (!player.swapAvailable) {
@@ -370,9 +309,88 @@ export function mpReducer(state, action) {
       const handCard = player.hand[handIndex];
       const spread = player.spread.map((card, i) => i === slotIndex ? handCard : card);
       const hand = player.hand.map((card, i) => i === handIndex ? spreadCard : card);
-
-      // Free action: does NOT advance the turn
       return updatePlayer(state, playerIndex, { hand, spread, swapAvailable: false });
+    }
+
+    default:
+      return state;
+  }
+}
+
+function resolvePendingActions(state) {
+  const actions = state.pendingActions ?? [null, null];
+  let next = { ...state, pendingActions: [null, null] };
+
+  for (const action of actions) {
+    if (action) next = applyImmediateAction(next, action);
+  }
+
+  if (next.error) return next;
+  if (next.players.every(p => spreadFull(p.spread))) {
+    return { ...next, phase: MP_PHASES.SCORING };
+  }
+  return { ...next, phase: MP_PHASES.PLACEMENT };
+}
+
+// --- Reducer ---
+
+export function mpReducer(state, action) {
+  if (!state) state = createMatchState();
+  state = clearError(state);
+
+  switch (action.type) {
+
+    case MP_ACTIONS.MP_INIT: {
+      // Prefer a seeded RNG derived from action.seed so both peers produce
+      // identical shuffles. Fall back to action.rng or Math.random for tests.
+      const rng = action.seed != null ? mulberry32(action.seed) : (action.rng || Math.random);
+      const personas = action.personas ?? [null, null];
+      let next = {
+        ...createMatchState({ scoreTarget: action.scoreTarget ?? state.scoreTarget, rng, personas }),
+        phase: MP_PHASES.PLACEMENT,
+        round: 1,
+        pendingActions: [null, null],
+      };
+      let uid = next.nextInjectedUid;
+      // Apply game-start deck passives first, then round-start passives for round 1.
+      for (let i = 0; i < 2; i++) {
+        const gameStart = applyGameStartPassives(next.players[i], uid, rng);
+        next = updatePlayer(next, i, gameStart.player);
+        uid = gameStart.nextUid;
+      }
+      for (let i = 0; i < 2; i++) {
+        const roundStart = applyRoundStartPassives(next.players[i], uid);
+        next = updatePlayer(next, i, roundStart.player);
+        uid = roundStart.nextUid;
+      }
+      return { ...next, nextInjectedUid: uid };
+    }
+
+    case MP_ACTIONS.MP_SUBMIT_ACTION: {
+      const playerIndex = action.playerIndex;
+      const submitError = canSubmit(state, playerIndex);
+      if (submitError) return err(state, submitError);
+
+      const submitted = sanitizeSubmittedAction(playerIndex, action.action);
+      if (!submitted) return err(state, 'Invalid submitted action.');
+
+      const pendingActions = [...(state.pendingActions ?? [null, null])];
+      pendingActions[playerIndex] = submitted;
+      const next = { ...state, pendingActions };
+
+      return pendingActions.every(Boolean) ? resolvePendingActions(next) : next;
+    }
+
+    case MP_ACTIONS.MP_PLACE_CARD:
+    case MP_ACTIONS.MP_INVOKE_ABILITY:
+    case MP_ACTIONS.MP_DISCARD_CARD:
+    case MP_ACTIONS.MP_PURGE_CARDS:
+    case MP_ACTIONS.MP_SWAP_SPREAD: {
+      // Direct application is kept for tests/tools. Live multiplayer uses MP_SUBMIT_ACTION.
+      const next = applyImmediateAction(state, action);
+      if (next.error) return next;
+      if (next.players.every(p => spreadFull(p.spread))) return { ...next, phase: MP_PHASES.SCORING };
+      return next;
     }
 
     case MP_ACTIONS.MP_SCORE_ROUND: {
@@ -399,7 +417,7 @@ export function mpReducer(state, action) {
           totals: [next.players[0].totalScore, next.players[1].totalScore],
         },
       ];
-      next = { ...next, roundHistory: history };
+      next = { ...next, roundHistory: history, pendingActions: [null, null] };
 
       const winner = resolveVictory(next);
       if (winner !== null) {
@@ -446,14 +464,12 @@ export function mpReducer(state, action) {
         uid = passiveResult.nextUid;
       }
 
-      const firstPlayer = (state.round % 2 === 0) ? 0 : 1;
-
       return {
         ...next,
         phase: MP_PHASES.PLACEMENT,
         round: state.round + 1,
-        activePlayerIndex: firstPlayer,
-        finalTurnForIndex: null,
+        activePlayerIndex: 0,
+        pendingActions: [null, null],
         nextInjectedUid: uid,
       };
     }
