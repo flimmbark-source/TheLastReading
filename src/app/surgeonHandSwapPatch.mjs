@@ -1,4 +1,5 @@
 import { MP_ACTIONS } from '../multiplayer/mpActions.mjs';
+import { MP_PHASES } from '../multiplayer/mpState.mjs';
 import { getPersona } from '../multiplayer/personas.mjs';
 
 export function installSurgeonHandSwapPatch(target = window) {
@@ -29,11 +30,15 @@ export function installSurgeonHandSwapPatch(target = window) {
     return slots.indexOf(selectedSlot);
   }
 
+  function playerCanAct(state, playerIndex) {
+    return state?.phase === MP_PHASES.PLACEMENT && !state.pendingActions?.[playerIndex];
+  }
+
   function canDispatchSwap(playerIndex, slotIndex, cardUid) {
     const state = target.tlrMpGetState?.();
     const player = state?.players?.[playerIndex];
     if (!state || !player) return false;
-    if (state.activePlayerIndex !== playerIndex) return false;
+    if (!playerCanAct(state, playerIndex)) return false;
     if (!player.swapAvailable) return false;
     if (slotIndex < 0 || !player.spread?.[slotIndex]) return false;
     return player.hand?.some(card => card.uid === cardUid);
@@ -44,7 +49,7 @@ export function installSurgeonHandSwapPatch(target = window) {
     const playerIndex = playerIndexFromRole();
     const player = state?.players?.[playerIndex];
     if (!state || !player) return null;
-    if (state.activePlayerIndex !== playerIndex) return null;
+    if (!playerCanAct(state, playerIndex)) return null;
 
     const persona = getPersona(player.persona);
     if (player.swapAvailable && persona?.passives?.freeSpreadSwap) {
@@ -210,10 +215,14 @@ export function installSurgeonHandSwapPatch(target = window) {
     event.stopImmediatePropagation?.();
 
     target.tlrMpDispatch?.({
-      type: MP_ACTIONS.MP_SWAP_SPREAD,
+      type: MP_ACTIONS.MP_SUBMIT_ACTION,
       playerIndex,
-      slotIndex,
-      cardUid,
+      action: {
+        type: MP_ACTIONS.MP_SWAP_SPREAD,
+        playerIndex,
+        slotIndex,
+        cardUid,
+      },
     });
 
     if (target.state) target.state.selected = null;
