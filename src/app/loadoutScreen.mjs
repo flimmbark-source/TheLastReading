@@ -95,7 +95,6 @@ export function installLoadoutScreen(target = window) {
     if (personaId === profile.personaId) return;
     profile = { ...profile, personaId };
     saveProfile(target.localStorage, profile);
-    playSwitchCue();
     renderAll(dir);
   }
 

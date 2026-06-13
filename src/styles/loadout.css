@@ -1,8 +1,7 @@
 /* Multiplayer loadout / profile screen.
    Layout is a single CSS grid with named regions (header / roster / stage /
-   match / footer). The stage is the only flexible row and scrolls internally
-   when vertical space is tight, so type stays legible instead of shrinking.
-   Sizing uses clamp() rather than a stack of per-pixel breakpoints. */
+   match / footer). All rows are auto-sized so content shows at natural height
+   with no internal scrolling. Sizing uses clamp() rather than breakpoint stacks. */
 
 #loadoutScreen{
   --lo-gold:#d4af6a;
@@ -11,8 +10,11 @@
   --accent:#d4af6a;
   position:fixed;inset:0;z-index:10200;
   display:flex;align-items:stretch;justify-content:center;
-  background:url(../../background.png) center top/cover no-repeat;
+  background-color:#080503;
+  background-image:url(../../background.png);
+  background-size:cover;background-position:center top;
   transition:opacity .3s ease;
+  overflow:hidden;
 }
 #loadoutScreen::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center 28%,transparent 0%,rgba(8,5,3,.52) 100%);pointer-events:none}
 #loadoutScreen.loadout-hidden{opacity:0;pointer-events:none}
@@ -21,12 +23,13 @@
   position:relative;
   display:grid;
   grid-template-areas:"header" "roster" "stage" "match" "footer";
-  grid-template-rows:auto auto minmax(0,1fr) auto auto;
-  gap:clamp(8px,2.2vh,18px);
+  grid-template-rows:auto auto auto auto auto;
+  gap:clamp(6px,1.8vh,16px);
   width:100%;max-width:640px;
   height:100dvh;max-height:100dvh;
-  padding:clamp(10px,2.4vh,24px) clamp(12px,4vw,20px) calc(clamp(10px,2.4vh,24px) + env(safe-area-inset-bottom));
+  padding:clamp(8px,2vh,22px) clamp(12px,4vw,20px) calc(clamp(8px,2vh,22px) + env(safe-area-inset-bottom));
   box-sizing:border-box;
+  overflow:hidden;
 }
 
 /* Header — Back button left, Loadout title right */
@@ -58,34 +61,34 @@
 .loadout-roster-name{font:700 clamp(9px,2.4vw,11px)/1 system-ui,sans-serif;letter-spacing:.02em;text-transform:uppercase;color:#9a8358;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .loadout-roster-tile.active .loadout-roster-name{color:var(--lo-parch)}
 
-/* Stage — featured persona + ability text; scrolls if cramped */
-.loadout-stage{grid-area:stage;display:flex;flex-direction:column;gap:clamp(10px,2vh,16px);min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:6px 6px 2px}
+/* Stage — featured persona + ability text, no internal scrolling */
+.loadout-stage{grid-area:stage;display:flex;flex-direction:column;gap:clamp(8px,1.6vh,14px);padding:0}
 .loadout-persona-grid{flex:0 0 auto}
 
 .loadout-featured-row{display:grid;grid-template-columns:clamp(40px,12vw,50px) minmax(0,1fr) clamp(40px,12vw,50px);align-items:center;gap:clamp(8px,2.4vw,14px);touch-action:pan-y}
-.loadout-carousel-btn{height:clamp(46px,11vh,58px);border:1px solid rgba(180,140,70,.35);border-radius:999px;background:rgba(20,12,8,.78);color:var(--lo-gold);font:700 clamp(28px,8vw,34px)/1 Georgia,serif;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 5px 14px rgba(0,0,0,.45);transition:background .15s,border-color .15s,color .15s,transform .12s}
+.loadout-carousel-btn{height:clamp(44px,9vh,56px);border:1px solid rgba(180,140,70,.35);border-radius:999px;background:rgba(20,12,8,.78);color:var(--lo-gold);font:700 clamp(28px,8vw,34px)/1 Georgia,serif;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 5px 14px rgba(0,0,0,.45);transition:background .15s,border-color .15s,color .15s,transform .12s}
 .loadout-carousel-btn:hover{background:rgba(45,28,14,.9);border-color:rgba(220,176,92,.65);color:var(--lo-gold-bright);transform:translateY(-1px)}
 
 .loadout-persona-card{
-  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(6px,1.4vh,10px);
-  padding:clamp(14px,2.6vh,20px) 18px;
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(5px,1.2vh,10px);
+  padding:clamp(10px,2vh,18px) 18px;
   background:linear-gradient(165deg,rgba(34,22,14,.94),rgba(18,11,7,.97));
   border:1px solid var(--accent);border-radius:12px;text-align:center;font-family:Georgia,serif;
   box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 55%,transparent),0 0 26px -6px var(--accent),0 10px 26px rgba(0,0,0,.55);
 }
-.loadout-persona-icon{width:clamp(48px,14vw,72px);height:clamp(48px,14vw,72px);display:flex;color:var(--accent);filter:drop-shadow(0 0 12px color-mix(in srgb,var(--accent) 60%,transparent))}
+.loadout-persona-icon{width:clamp(40px,11vw,64px);height:clamp(40px,11vw,64px);display:flex;color:var(--accent);filter:drop-shadow(0 0 12px color-mix(in srgb,var(--accent) 60%,transparent))}
 .loadout-persona-icon .loadout-icon-svg{width:100%;height:100%}
 .loadout-persona-kicker{font:700 clamp(9px,2.6vw,10px)/1 system-ui,sans-serif;color:#8a734a;letter-spacing:.18em;text-transform:uppercase}
 .loadout-persona-name{font:700 clamp(22px,6.4vw,28px)/1.04 Georgia,serif;color:var(--lo-parch);margin:0;text-shadow:0 2px 8px rgba(0,0,0,.7)}
 .loadout-persona-tagline{font:700 clamp(11px,3.2vw,13px)/1.35 system-ui,sans-serif;color:#c49b5d;letter-spacing:.05em;text-transform:uppercase;margin:0;max-width:94%}
 
-.loadout-persona-dots{display:flex;justify-content:center;gap:7px;margin-top:clamp(8px,1.6vh,11px)}
+.loadout-persona-dots{display:flex;justify-content:center;gap:7px;margin-top:clamp(5px,1.2vh,9px)}
 .loadout-persona-dot{width:6px;height:6px;border-radius:50%;background:rgba(176,144,96,.28);box-shadow:0 0 0 1px rgba(176,144,96,.18);transition:background .18s,box-shadow .18s}
 .loadout-persona-dot.active{background:var(--accent);box-shadow:0 0 8px color-mix(in srgb,var(--accent) 70%,transparent)}
 .loadout-empty{margin:0;color:#8a7551;text-align:center;font:400 13px/1.4 system-ui,sans-serif}
 
 /* Ability description panel */
-.loadout-persona-desc-box{width:100%;box-sizing:border-box;padding:clamp(12px,2vh,16px) clamp(14px,3.4vw,18px);background:linear-gradient(165deg,rgba(25,16,10,.94),rgba(10,7,5,.96));border:1px solid color-mix(in srgb,var(--accent) 38%,rgba(180,140,70,.42));border-radius:11px;box-shadow:0 7px 18px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,217,120,.05)}
+.loadout-persona-desc-box{width:100%;box-sizing:border-box;padding:clamp(10px,1.6vh,14px) clamp(12px,3.2vw,16px);background:linear-gradient(165deg,rgba(25,16,10,.94),rgba(10,7,5,.96));border:1px solid color-mix(in srgb,var(--accent) 38%,rgba(180,140,70,.42));border-radius:11px;box-shadow:0 7px 18px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,217,120,.05)}
 .loadout-desc-header{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(180,140,70,.22)}
 .loadout-desc-ability{font:700 clamp(13.5px,4vw,15px)/1 Georgia,serif;color:var(--lo-parch);letter-spacing:.04em;text-shadow:0 0 10px color-mix(in srgb,var(--accent) 30%,transparent)}
 .loadout-desc-tag{flex:0 0 auto;font:800 clamp(8px,2.2vw,9px)/1 system-ui,sans-serif;color:var(--lo-gold);letter-spacing:.13em;text-transform:uppercase;padding:4px 8px;border:1px solid color-mix(in srgb,var(--accent) 45%,rgba(180,140,70,.45));border-radius:999px;background:color-mix(in srgb,var(--accent) 12%,transparent)}
@@ -108,7 +111,7 @@
 .loadout-section-label::after{content:'';position:absolute;left:50%;transform:translateX(-50%);bottom:0;width:min(260px,66vw);height:9px;background:url(../../divider_crystal.png) center/contain no-repeat;opacity:.85}
 .loadout-targets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(6px,2vw,10px)}
 .loadout-target-btn{
-  min-width:0;height:clamp(46px,7.4vh,60px);padding:0 8px;
+  min-width:0;height:clamp(42px,6.8vh,56px);padding:0 8px;
   background:linear-gradient(165deg,rgba(30,20,12,.84),rgba(15,10,6,.9));
   border:1px solid rgba(120,92,48,.5);border-radius:10px;
   color:#b09060;font:600 clamp(10px,2.8vw,12px)/1 Georgia,serif;cursor:pointer;
@@ -126,7 +129,7 @@
 
 /* Footer / Ready */
 .loadout-footer{grid-area:footer;display:flex;flex-direction:column;align-items:center;gap:7px}
-.loadout-ready-btn{width:100%;max-width:260px;height:clamp(46px,7.4vh,60px);padding:0 24px;font:700 clamp(14px,4vw,17px)/1 Georgia,serif;letter-spacing:.06em;background:url(../../parchment_plaque_large_center.png) center/100% 100% no-repeat;border:none;border-radius:0;color:#3a1a06;cursor:pointer;transition:transform .12s,filter .15s;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
+.loadout-ready-btn{width:100%;max-width:260px;height:clamp(42px,6.8vh,56px);padding:0 24px;font:700 clamp(14px,4vw,17px)/1 Georgia,serif;letter-spacing:.06em;background:url(../../parchment_plaque_large_center.png) center/100% 100% no-repeat;border:none;border-radius:0;color:#3a1a06;cursor:pointer;transition:transform .12s,filter .15s;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
 .loadout-ready-btn:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
 .loadout-ready-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .loadout-ready-note{font:400 clamp(10px,2.8vw,11px)/1.35 system-ui,sans-serif;color:#8a7551;letter-spacing:.05em;text-align:center;margin:0;text-shadow:0 1px 3px rgba(0,0,0,.8)}
@@ -147,4 +150,21 @@
 @media (max-width:380px){
   .loadout-roster-name{letter-spacing:.02em}
   .loadout-title{max-width:200px}
+}
+
+/* Compact layout for small-height devices so all content fits without any scrolling */
+@media (max-height:720px){
+  .loadout-inner{gap:8px;padding:8px clamp(12px,4vw,20px) calc(8px + env(safe-area-inset-bottom))}
+  .loadout-roster-tile{padding:6px 6px}
+  .loadout-persona-card{padding:8px 16px;gap:5px}
+  .loadout-persona-icon{width:36px;height:36px}
+  .loadout-persona-dots{margin-top:5px}
+  .loadout-carousel-btn{height:40px}
+  .loadout-persona-desc-box{padding:8px 12px}
+  .loadout-desc-header{margin-bottom:6px;padding-bottom:6px}
+  .loadout-desc-flavor{display:none}
+  .loadout-section-label{margin-bottom:7px}
+  .loadout-target-btn{height:38px}
+  .loadout-ready-btn{height:40px}
+  .loadout-footer{gap:5px}
 }
