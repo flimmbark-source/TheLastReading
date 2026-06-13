@@ -61,9 +61,9 @@
 .loadout-roster-name{font:700 clamp(9px,2.4vw,11px)/1 system-ui,sans-serif;letter-spacing:.02em;text-transform:uppercase;color:#9a8358;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .loadout-roster-tile.active .loadout-roster-name{color:var(--lo-parch)}
 
-/* Stage — featured persona + ability text; expands to fill freed space */
+/* Stage — featured persona + ability text; ability panel stays at natural height */
 .loadout-stage{grid-area:stage;display:flex;flex-direction:column;gap:clamp(10px,2vh,16px);padding:0;min-height:0}
-.loadout-persona-desc-box{flex:1 1 auto}
+.loadout-persona-desc-box{flex:0 0 auto}
 .loadout-persona-grid{flex:0 0 auto}
 
 .loadout-featured-row{display:grid;grid-template-columns:clamp(40px,12vw,50px) minmax(0,1fr) clamp(40px,12vw,50px);align-items:center;gap:clamp(8px,2.4vw,14px);touch-action:pan-y}
