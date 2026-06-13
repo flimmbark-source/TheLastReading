@@ -90,6 +90,7 @@ export function installSurgeonHandSwapPatch(target = window) {
     if (abilityBtn) {
       abilityBtn.disabled = !canUseAbility;
       abilityBtn.classList.toggle('mp-visible', canUseAbility);
+      abilityBtn.setAttribute('aria-hidden', canUseAbility ? 'false' : 'true');
     }
     panel?.classList.toggle('mp-hide-mobile-ability-panel', canUseAbility);
 
@@ -102,6 +103,12 @@ export function installSurgeonHandSwapPatch(target = window) {
       slotEl.classList.toggle('mp-surgeon-swap-blocked', hasSelectedSlot);
     });
   }
+
+  function scheduleSync() {
+    target.requestAnimationFrame?.(syncUi) ?? syncUi();
+  }
+
+  wrapRefreshHandState(target, scheduleSync);
 
   doc.addEventListener('click', event => {
     const handCard = event.target.closest?.('body.mp-game-active #hand .card[data-uid]');
@@ -127,21 +134,33 @@ export function installSurgeonHandSwapPatch(target = window) {
 
     if (target.state) target.state.selected = null;
     target.refreshHandState?.();
-    target.requestAnimationFrame?.(syncUi);
+    scheduleSync();
   }, true);
 
   const MutationObserverCtor = target.MutationObserver || globalThis.MutationObserver;
   if (MutationObserverCtor) {
-    const observer = new MutationObserverCtor(syncUi);
+    const observer = new MutationObserverCtor(scheduleSync);
     observer.observe(doc.body, {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['class'],
+      attributeFilter: ['class', 'disabled', 'data-uid'],
     });
   }
 
   syncUi();
+}
+
+function wrapRefreshHandState(target, afterRefresh) {
+  if (target.__tlrMpAbilityRefreshWrapped) return;
+  const original = target.refreshHandState;
+  if (typeof original !== 'function') return;
+  target.__tlrMpAbilityRefreshWrapped = true;
+  target.refreshHandState = function (...args) {
+    const result = original.apply(this, args);
+    afterRefresh();
+    return result;
+  };
 }
 
 function patchMatchmakingBack(target, doc) {
@@ -169,54 +188,6 @@ function installStyle(doc) {
   const style = doc.createElement('style');
   style.id = 'tlr-surgeon-hand-swap-style';
   style.textContent = `
-    body.mp-game-active .mp-pills-actions {
-      justify-content: center !important;
-    }
-
-    body.mp-game-active .mp-pills-actions .sbtn {
-      width: auto !important;
-      min-width: 80px !important;
-      height: auto !important;
-      min-height: 0 !important;
-      padding: 5px 12px !important;
-      overflow: visible !important;
-      border-radius: 6px !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      background: #ead9b5 !important;
-      border: 1px solid #7a5a2d !important;
-      box-shadow: none !important;
-      color: #20130b !important;
-      font: 700 12px/1 system-ui, Segoe UI, sans-serif !important;
-      letter-spacing: normal !important;
-      text-transform: none !important;
-    }
-
-    body.mp-game-active .mp-pills-actions .sbtn:not(:disabled),
-    body.mp-game-active .mp-pills-actions .sbtn.mp-active-action {
-      color: #20130b !important;
-      border-color: #7a5a2d !important;
-      background: #ead9b5 !important;
-      cursor: pointer !important;
-    }
-
-    body.mp-game-active .mp-pills-actions .sbtn:disabled {
-      opacity: .35 !important;
-      cursor: not-allowed !important;
-    }
-
-    body.mp-game-active .mp-pills-actions .sbtn:hover {
-      filter: brightness(1.08) !important;
-    }
-
-    #mpAbilityBtn {
-      display: none !important;
-    }
-
-    #mpDiscardBtn::before { content: 'Discard' !important; }
-    #mpPurgeBtn::before { content: 'Purge' !important; }
-
     body.mp-game-active #hand .card.mp-surgeon-swap-target {
       cursor: pointer !important;
       border-color: rgba(120,200,120,.68) !important;
@@ -226,31 +197,6 @@ function installStyle(doc) {
       pointer-events: none !important;
       opacity: .72;
       cursor: default !important;
-    }
-
-    body.mp-game-active .hand-swipe-hint {
-      display: none !important;
-    }
-
-    @media (max-width: 640px) {
-      body.mp-game-active #mpAbilityBtn.mp-visible {
-        display: inline-flex !important;
-      }
-
-      body.mp-game-active .mp-pills-actions {
-        width: 100% !important;
-        gap: 8px !important;
-      }
-
-      body.mp-game-active .mp-pills-actions .sbtn {
-        min-width: 78px !important;
-        padding: 6px 9px !important;
-        font-size: 12px !important;
-      }
-
-      body.mp-game-active .mp-action-panel.mp-hide-mobile-ability-panel {
-        display: none !important;
-      }
     }
   `;
   doc.head.appendChild(style);
