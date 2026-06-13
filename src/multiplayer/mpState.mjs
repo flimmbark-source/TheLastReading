@@ -65,55 +65,80 @@ export function createPlayerState(playerIndex, personaId = null, rng = Math.rand
     playedSlotHistory: [],   // most recent spread placements, used by Banish
     silencedCardUids: [],    // Seal: UIDs excluded from scoring this round
     bonusActionAvailable: false, // Gambit: can place immediately after next invoke
-    swapAvailable: false,    // Surgeon: free spread swap available this round
+    swapAvailable: false,    // Surgeon: free spread/hand swap available this round
   };
 }
 
-export function createMatchState({ seed = null, scoreTarget = SCORE_TARGETS.STANDARD, personas = [null, null] } = {}) {
-  const rng = seed ? seededRng(seed) : Math.random;
+export function createMatchState(options = {}) {
+  const rng = options.rng || Math.random;
+  const personas = options.personas ?? [null, null];
   return {
     phase: MP_PHASES.IDLE,
+    scoreTarget: options.scoreTarget ?? SCORE_TARGETS.STANDARD,
     round: 0,
-    scoreTarget,
     activePlayerIndex: 0,
-    firstPlayerIndex: 0,
     finalTurnForIndex: null,
     players: [
-      createPlayerState(0, personas[0] ?? null, rng),
-      createPlayerState(1, personas[1] ?? null, rng),
+      createPlayerState(0, personas[0], rng),
+      createPlayerState(1, personas[1], rng),
     ],
-    log: [],
+    winner: null,
+    roundHistory: [],
+    nextInjectedUid: 9000, // counter for injected interaction card UIDs
     error: null,
-    seed,
-    nextInjectedUid: 9000,
   };
 }
 
-function seededRng(seed) {
-  // Mulberry32-ish deterministic RNG from numeric/string seed.
-  let h = 2166136261 >>> 0;
-  const str = String(seed);
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return function rng() {
-    h += 0x6D2B79F5;
-    let t = h;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+// Apply game-start persona passives to a player's deck, returning updated player
+// state and the next injected UID counter. These cards are added once per match.
+export function applyGameStartPassives(player, nextUid, rng = Math.random) {
+  let deck = [...player.deck];
+  let uid = nextUid;
 
-export function injectInteractionCards(player, interactionId, count, state) {
-  let nextUid = state.nextInjectedUid ?? 9000;
-  const injected = [];
-  for (let i = 0; i < count; i++) {
-    injected.push(makeInteractionCard(interactionId, nextUid++, player.index));
+  const persona = getPersona(player.persona);
+  if (persona?.passives?.gameStartDeckCards) {
+    const injected = [];
+    for (const { defId, count } of persona.passives.gameStartDeckCards) {
+      for (let i = 0; i < count; i++) {
+        injected.push(makeInteractionCard(defId, uid, player.index));
+        uid++;
+      }
+    }
+    if (injected.length) deck = shuffleDeck([...deck, ...injected], rng);
   }
+
   return {
-    player: { ...player, deck: shuffleDeck([...player.deck, ...injected]) },
-    nextInjectedUid: nextUid,
+    player: { ...player, deck },
+    nextUid: uid,
+  };
+}
+
+// Apply round-start persona passives to a player, returning updated player state
+// and the next injected UID counter.
+export function applyRoundStartPassives(player, nextUid) {
+  let hand = [...player.hand];
+  let uid = nextUid;
+
+  const persona = getPersona(player.persona);
+  if (persona?.passives?.roundStartCards) {
+    for (const { defId, count } of persona.passives.roundStartCards) {
+      for (let i = 0; i < count; i++) {
+        hand = [makeInteractionCard(defId, uid, player.index), ...hand];
+        uid++;
+      }
+    }
+  }
+
+  const swapAvailable = !!(persona?.passives?.freeSpreadSwap);
+  const bonusActionAvailable = !!(persona?.passives?.bonusPlaceAfterInvoke);
+
+  return {
+    player: {
+      ...player,
+      hand,
+      swapAvailable,
+      bonusActionAvailable,
+    },
+    nextUid: uid,
   };
 }
