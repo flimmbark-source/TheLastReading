@@ -24,6 +24,7 @@ body.mp-game-active .mp-pills-actions .sbtn {
 
 body.mp-game-active #mpDiscardBtn::before { content: 'Discard' !important; }
 body.mp-game-active #mpPurgeBtn::before { content: 'Purge' !important; }
+body.mp-game-active #mpAbilityBtn::before { content: 'Ability' !important; }
 
 body.mp-game-active #mpAbilityBtn {
   display: none !important;
@@ -33,6 +34,36 @@ body.mp-game-active #mpAbilityBtn {
   body.mp-game-active .mp-mid-wrap {
     top: 300px !important;
     bottom: auto !important;
+  }
+
+  body.mp-game-active .mp-opp-spread-clip {
+    top: 62px !important;
+    height: 118px !important;
+    transform: none !important;
+    transform-origin: top center !important;
+  }
+
+  body.mp-game-active .mp-opp-spread-transform {
+    top: 0 !important;
+  }
+
+  body.mp-game-active #mpOppSpread {
+    padding: 0 !important;
+    min-height: 0 !important;
+    transform: scale(.68) !important;
+    transform-origin: top center !important;
+  }
+
+  body.mp-game-active #mpOppSpread .slot,
+  body.mp-game-active #spread .slot {
+    flex: 0 0 130px !important;
+    width: 130px !important;
+    height: 195px !important;
+  }
+
+  body.mp-game-active #spread {
+    transform: scale(.68) !important;
+    transform-origin: top center !important;
   }
 
   body.mp-game-active #mpAbilityBtn.mp-visible {
@@ -57,5 +88,14 @@ body.mp-game-active #mpAbilityBtn {
 @media (max-width: 380px) and (max-height: 740px) {
   body.mp-game-active .mp-mid-wrap {
     top: 280px !important;
+  }
+
+  body.mp-game-active .mp-opp-spread-clip {
+    top: 50px !important;
+  }
+
+  body.mp-game-active #mpOppSpread,
+  body.mp-game-active #spread {
+    transform: scale(.62) !important;
   }
 }
