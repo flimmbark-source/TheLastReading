@@ -2,6 +2,7 @@ import { allPersonas } from '../multiplayer/personas.mjs';
 import { SCORE_TARGETS } from '../multiplayer/mpState.mjs';
 
 const PROFILE_KEY = 'tlr_mp_profile';
+const SWITCH_CUE_FILE = 'soundreality-bell-fx-410608.mp3';
 
 const DEFAULT_PROFILE = {
   personaId: null,
@@ -36,6 +37,11 @@ function esc(str) {
 function abilityText(str) {
   return esc(str).replace(/\*\*(.+?)\*\*/g, '<strong class="loadout-desc-key">$1</strong>');
 }
+// Wraps a persona's stored SVG glyph markup in a styleable, inert <svg>.
+function personaIconSvg(p) {
+  if (!p?.icon) return '';
+  return `<svg class="loadout-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p.icon}</svg>`;
+}
 
 export function installLoadoutScreen(target = window) {
   if (!target || target.__tlrLoadoutInstalled) return;
@@ -45,6 +51,7 @@ export function installLoadoutScreen(target = window) {
   let profile = loadProfile(target.localStorage);
   let swipeStartX = 0;
   let swipeStartY = 0;
+  let switchAudio = null;
 
   function personaIndex() {
     const index = personas.findIndex(p => p.id === profile.personaId);
@@ -63,46 +70,112 @@ export function installLoadoutScreen(target = window) {
     }
   }
 
-  function selectPersonaByIndex(index) {
-    if (!personas.length) return;
-    const wrapped = (index + personas.length) % personas.length;
-    profile = { ...profile, personaId: personas[wrapped].id };
+  function prefersReducedMotion() {
+    try { return target.matchMedia?.('(prefers-reduced-motion: reduce)').matches; }
+    catch (_) { return false; }
+  }
+
+  // Plays the persona-switch chime. Reuses one element so rapid switching
+  // restarts the cue rather than stacking overlapping sounds.
+  function playSwitchCue() {
+    try {
+      const vol = typeof target._sfxVol === 'number' ? target._sfxVol : 1;
+      if (vol <= 0) return;
+      if (!switchAudio) switchAudio = new (target.Audio || Audio)(SWITCH_CUE_FILE);
+      switchAudio.volume = Math.max(0, Math.min(1, vol * 0.3));
+      switchAudio.currentTime = 0;
+      switchAudio.play().catch(() => {});
+    } catch (_) {}
+  }
+
+  // Central selection entry point. `dir` is 'next' | 'prev' | null and drives
+  // the enter animation direction; null = a neutral fade (e.g. roster tap).
+  function setPersona(personaId, dir) {
+    if (!personas.some(p => p.id === personaId)) return;
+    if (personaId === profile.personaId) return;
+    profile = { ...profile, personaId };
     saveProfile(target.localStorage, profile);
-    renderAll();
+    playSwitchCue();
+    renderAll(dir);
+  }
+
+  function shiftPersona(delta) {
+    if (!personas.length) return;
+    const step = Number(delta) || 0;
+    const next = (personaIndex() + step + personas.length) % personas.length;
+    setPersona(personas[next].id, step >= 0 ? 'next' : 'prev');
+  }
+
+  function selectPersonaById(personaId) {
+    const from = personaIndex();
+    const to = personas.findIndex(p => p.id === personaId);
+    if (to < 0) return;
+    setPersona(personaId, to === from ? null : (to > from ? 'next' : 'prev'));
+  }
+
+  function setTarget(value) {
+    profile = { ...profile, scoreTarget: Number(value) };
+    saveProfile(target.localStorage, profile);
+    renderTargetRow();
   }
 
   // --- Render helpers ---
 
-  function renderPersonaGrid() {
-    const grid = el('loadoutPersonaGrid');
-    if (!grid) return;
+  function applyAccent() {
+    const inner = target.document.querySelector('#loadoutScreen .loadout-inner');
+    const p = activePersona();
+    if (inner && p?.accent) inner.style.setProperty('--accent', p.accent);
+  }
+
+  function renderRoster() {
+    const rail = el('loadoutRosterRail');
+    if (!rail) return;
+    if (!personas.length) { rail.innerHTML = ''; return; }
+    const activeId = activePersona()?.id;
+    rail.innerHTML = personas.map(p => {
+      const active = p.id === activeId;
+      return `
+        <button
+          class="loadout-roster-tile${active ? ' active' : ''}"
+          style="--tile-accent:${esc(p.accent || '#d4af6a')}"
+          data-persona="${esc(p.id)}"
+          type="button"
+          aria-pressed="${active}"
+          title="${esc(p.name)}"
+        >
+          <span class="loadout-roster-icon">${personaIconSvg(p)}</span>
+          <span class="loadout-roster-name">${esc(p.name.replace(/^The\s+/i, ''))}</span>
+        </button>`;
+    }).join('');
+  }
+
+  function renderFeatured(dir) {
+    const stage = el('loadoutPersonaGrid');
+    if (!stage) return;
 
     const p = activePersona();
     if (!p) {
-      grid.innerHTML = '<p class="loadout-empty">No personas available.</p>';
+      stage.innerHTML = '<p class="loadout-empty">No personas available.</p>';
       return;
     }
 
     const index = personaIndex();
-    grid.innerHTML = `
-      <div
-        class="loadout-persona-carousel"
-        ontouchstart="tlrLoadoutSwipeStart(event)"
-        ontouchend="tlrLoadoutSwipeEnd(event)"
-      >
-        <button class="loadout-carousel-btn prev" onclick="tlrLoadoutShiftPersona(-1)" type="button" aria-label="Previous persona">‹</button>
-        <button
-          class="loadout-persona-card loadout-persona-active selected"
-          onclick="tlrLoadoutSelectPersona('${esc(p.id)}')"
-          aria-pressed="true"
-          type="button"
-        >
-          <span class="loadout-persona-check">✓</span>
+    const enterClass = prefersReducedMotion()
+      ? ''
+      : dir === 'next' ? ' loadout-enter-next'
+      : dir === 'prev' ? ' loadout-enter-prev'
+      : ' loadout-enter';
+
+    stage.innerHTML = `
+      <div class="loadout-featured-row">
+        <button class="loadout-carousel-btn prev" data-loadout-action="prev" type="button" aria-label="Previous persona">‹</button>
+        <div class="loadout-persona-card${enterClass}">
           <span class="loadout-persona-kicker">Persona ${index + 1} / ${personas.length}</span>
+          <span class="loadout-persona-icon">${personaIconSvg(p)}</span>
           <span class="loadout-persona-name">${esc(p.name)}</span>
           <span class="loadout-persona-tagline">${esc(p.tagline)}</span>
-        </button>
-        <button class="loadout-carousel-btn next" onclick="tlrLoadoutShiftPersona(1)" type="button" aria-label="Next persona">›</button>
+        </div>
+        <button class="loadout-carousel-btn next" data-loadout-action="next" type="button" aria-label="Next persona">›</button>
       </div>
       <div class="loadout-persona-dots" aria-hidden="true">
         ${personas.map((_, i) => `<span class="loadout-persona-dot${i === index ? ' active' : ''}"></span>`).join('')}
@@ -130,8 +203,9 @@ export function installLoadoutScreen(target = window) {
   function renderTargetRow() {
     target.document.querySelectorAll('.loadout-target-btn').forEach(btn => {
       const val = Number(btn.dataset.target);
-      btn.classList.toggle('selected', val === profile.scoreTarget);
-      btn.setAttribute('aria-pressed', val === profile.scoreTarget);
+      const on = val === profile.scoreTarget;
+      btn.classList.toggle('selected', on);
+      btn.setAttribute('aria-pressed', on);
     });
   }
 
@@ -140,15 +214,82 @@ export function installLoadoutScreen(target = window) {
     if (btn) btn.disabled = profile.personaId === null;
   }
 
-  function renderAll() {
+  function renderAll(dir = null) {
     ensurePersonaSelected();
-    renderPersonaGrid();
+    applyAccent();
+    renderRoster();
+    renderFeatured(dir);
     renderPersonaDescription();
     renderTargetRow();
     renderReady();
   }
 
-  // --- Public API ---
+  // --- Event wiring (delegated; no inline handlers) ---
+
+  function onClick(event) {
+    const action = event.target.closest('[data-loadout-action]');
+    if (action) {
+      switch (action.dataset.loadoutAction) {
+        case 'back': return backToMenu();
+        case 'ready': return readyUp();
+        case 'prev': return shiftPersona(-1);
+        case 'next': return shiftPersona(1);
+        default: return;
+      }
+    }
+    const personaBtn = event.target.closest('[data-persona]');
+    if (personaBtn) return selectPersonaById(personaBtn.dataset.persona);
+
+    const targetBtn = event.target.closest('[data-target]');
+    if (targetBtn) return setTarget(Number(targetBtn.dataset.target));
+  }
+
+  function onTouchStart(event) {
+    const touch = event.changedTouches?.[0] || event.touches?.[0];
+    if (!touch) return;
+    swipeStartX = touch.clientX;
+    swipeStartY = touch.clientY;
+  }
+
+  function onTouchEnd(event) {
+    const touch = event.changedTouches?.[0];
+    if (!touch) return;
+    const dx = touch.clientX - swipeStartX;
+    const dy = touch.clientY - swipeStartY;
+    if (Math.abs(dx) < 38 || Math.abs(dx) < Math.abs(dy)) return;
+    shiftPersona(dx < 0 ? 1 : -1);
+  }
+
+  function backToMenu() {
+    hideScreen();
+    if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu();
+  }
+
+  function readyUp() {
+    ensurePersonaSelected();
+    if (!profile.personaId) return;
+    saveProfile(target.localStorage, profile);
+    hideScreen();
+    if (typeof target.tlrShowMatchmaking === 'function') {
+      target.tlrShowMatchmaking({ ...profile });
+    }
+  }
+
+  function hideScreen() {
+    el('loadoutScreen')?.classList.add('loadout-hidden');
+  }
+
+  const screen = el('loadoutScreen');
+  if (screen) {
+    screen.addEventListener('click', onClick);
+    const swipeZone = el('loadoutPersonaGrid');
+    if (swipeZone) {
+      swipeZone.addEventListener('touchstart', onTouchStart, { passive: true });
+      swipeZone.addEventListener('touchend', onTouchEnd, { passive: true });
+    }
+  }
+
+  // --- Public API (referenced from other screens / match init) ---
 
   target.tlrShowLoadout = function () {
     profile = loadProfile(target.localStorage);
@@ -156,95 +297,11 @@ export function installLoadoutScreen(target = window) {
     el('loadoutScreen')?.classList.remove('loadout-hidden');
   };
 
-  target.tlrHideLoadout = function () {
-    const screen = el('loadoutScreen');
-    if (screen) screen.classList.add('loadout-hidden');
-  };
+  target.tlrHideLoadout = hideScreen;
 
-  target.tlrLoadoutBack = function () {
-    target.tlrHideLoadout();
-    if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu();
-  };
-
-  target.tlrLoadoutSelectPersona = function (personaId) {
-    profile = { ...profile, personaId };
-    saveProfile(target.localStorage, profile);
-    renderAll();
-  };
-
-  target.tlrLoadoutShiftPersona = function (delta) {
-    selectPersonaByIndex(personaIndex() + Number(delta || 0));
-  };
-
-  target.tlrLoadoutSwipeStart = function (event) {
-    const touch = event.changedTouches?.[0] || event.touches?.[0];
-    if (!touch) return;
-    swipeStartX = touch.clientX;
-    swipeStartY = touch.clientY;
-  };
-
-  target.tlrLoadoutSwipeEnd = function (event) {
-    const touch = event.changedTouches?.[0];
-    if (!touch) return;
-    const dx = touch.clientX - swipeStartX;
-    const dy = touch.clientY - swipeStartY;
-    if (Math.abs(dx) < 38 || Math.abs(dx) < Math.abs(dy)) return;
-    target.tlrLoadoutShiftPersona(dx < 0 ? 1 : -1);
-  };
-
-  target.tlrLoadoutSetTarget = function (value) {
-    profile = { ...profile, scoreTarget: Number(value) };
-    saveProfile(target.localStorage, profile);
-    renderTargetRow();
-  };
-
-  target.tlrLoadoutReady = function () {
-    ensurePersonaSelected();
-    if (!profile.personaId) return;
-    saveProfile(target.localStorage, profile);
-    // Hide loadout, open matchmaking with the saved profile
-    target.tlrHideLoadout();
-    if (typeof target.tlrShowMatchmaking === 'function') {
-      target.tlrShowMatchmaking({ ...profile });
-    }
-  };
-
-  // Expose profile for use by the match init system
+  // Expose profile for use by the match init system.
   target.tlrGetMpProfile = function () {
     ensurePersonaSelected();
     return { ...profile };
   };
 }
-
-// Static HTML for the loadout screen body (rebuilt after returning from lobby)
-const LOADOUT_HTML = `
-  <div class="loadout-inner">
-    <div class="loadout-header">
-      <button class="loadout-back" onclick="tlrLoadoutBack()" type="button">← Back</button>
-      <h2 class="loadout-title">Loadout</h2>
-    </div>
-
-    <section class="loadout-section loadout-persona-section">
-      <h3 class="loadout-section-label">Persona</h3>
-      <div id="loadoutPersonaGrid" class="loadout-persona-grid"></div>
-    </section>
-
-    <section class="loadout-description-section">
-      <div id="loadoutPersonaDescBox" class="loadout-persona-desc-box"></div>
-    </section>
-
-    <section class="loadout-section loadout-match-section">
-      <h3 class="loadout-section-label">Match Length</h3>
-      <div class="loadout-targets">
-        <button class="loadout-target-btn" data-target="100" onclick="tlrLoadoutSetTarget(100)" type="button">Quick <span>100</span></button>
-        <button class="loadout-target-btn" data-target="200" onclick="tlrLoadoutSetTarget(200)" type="button">Standard <span>200</span></button>
-        <button class="loadout-target-btn" data-target="300" onclick="tlrLoadoutSetTarget(300)" type="button">Long <span>300</span></button>
-      </div>
-    </section>
-
-    <div class="loadout-footer">
-      <button class="loadout-ready-btn" id="loadoutReadyBtn" onclick="tlrLoadoutReady()" type="button" disabled>Ready</button>
-      <p class="loadout-ready-note">Swipe to choose a Persona.</p>
-    </div>
-  </div>
-`;

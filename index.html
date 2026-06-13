@@ -15,8 +15,7 @@
 <link rel="stylesheet" href="src/styles/drawers.css?v=mobile-load-fix-1">
 <link rel="stylesheet" href="src/styles/performance.css?v=mobile-load-fix-1">
 <link rel="stylesheet" href="src/styles/mainMenu.css?v=render-boot-1">
-<link rel="stylesheet" href="src/styles/loadout.css?v=carousel-1">
-<link rel="stylesheet" href="src/styles/loadoutCarouselPosition.css?v=1">
+<link rel="stylesheet" href="src/styles/loadout.css?v=roster-1">
 <link rel="stylesheet" href="src/styles/matchmaking.css?v=1">
 <link rel="stylesheet" href="src/styles/mpGame.css?v=spread-layout-1">
 <link rel="stylesheet" href="src/styles/mpMobile.css?v=1">
@@ -59,29 +58,27 @@
 </div>
 <div id="loadoutScreen" class="loadout-hidden">
   <div class="loadout-inner">
-    <div class="loadout-header">
-      <button class="loadout-back" onclick="tlrLoadoutBack()" type="button">&#8592; Back</button>
+    <header class="loadout-header">
+      <button class="loadout-back" data-loadout-action="back" type="button">&#8592; Back</button>
       <h2 class="loadout-title">Loadout</h2>
-    </div>
-    <section class="loadout-section loadout-persona-section">
-      <h3 class="loadout-section-label">Persona</h3>
+    </header>
+    <nav id="loadoutRosterRail" class="loadout-roster" aria-label="Persona roster"></nav>
+    <section class="loadout-stage" aria-live="polite">
       <div id="loadoutPersonaGrid" class="loadout-persona-grid"></div>
-    </section>
-    <section class="loadout-description-section">
       <div id="loadoutPersonaDescBox" class="loadout-persona-desc-box"></div>
     </section>
-    <section class="loadout-section loadout-match-section">
+    <section class="loadout-match-section">
       <h3 class="loadout-section-label">Match Length</h3>
       <div class="loadout-targets">
-        <button class="loadout-target-btn" data-target="100" onclick="tlrLoadoutSetTarget(100)" type="button">Quick <span>100</span></button>
-        <button class="loadout-target-btn" data-target="200" onclick="tlrLoadoutSetTarget(200)" type="button">Standard <span>200</span></button>
-        <button class="loadout-target-btn" data-target="300" onclick="tlrLoadoutSetTarget(300)" type="button">Long <span>300</span></button>
+        <button class="loadout-target-btn" data-target="100" type="button">Quick <span>100</span></button>
+        <button class="loadout-target-btn" data-target="200" type="button">Standard <span>200</span></button>
+        <button class="loadout-target-btn" data-target="300" type="button">Long <span>300</span></button>
       </div>
     </section>
-    <div class="loadout-footer">
-      <button class="loadout-ready-btn" id="loadoutReadyBtn" onclick="tlrLoadoutReady()" type="button" disabled>Ready</button>
-      <p class="loadout-ready-note">Swipe to choose a Persona.</p>
-    </div>
+    <footer class="loadout-footer">
+      <button class="loadout-ready-btn" id="loadoutReadyBtn" data-loadout-action="ready" type="button">Ready</button>
+      <p class="loadout-ready-note">Tap a persona to choose, then press Ready.</p>
+    </footer>
   </div>
 </div>
 <div id="mainMenu" class="main-menu-overlay">
