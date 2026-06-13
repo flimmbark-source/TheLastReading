@@ -81,19 +81,19 @@ export function installSurgeonHandSwapPatch(target = window) {
   }
 
   function copySingleplayerButtonArt() {
-    copyButtonArt('discardBtn', 'mpDiscardBtn');
-    copyButtonArt('purgeBtn', 'mpPurgeBtn');
-    copyButtonArt('discardBtn', 'mpAbilityBtn');
+    copyButtonArt('discardBtn', 'mpDiscardBtn', 'sbtn sbtn-discard mp-action-copy');
+    copyButtonArt('purgeBtn', 'mpPurgeBtn', 'sbtn sbtn-purge mp-action-copy');
+    copyButtonArt('discardBtn', 'mpAbilityBtn', 'sbtn sbtn-ability mp-action-copy');
   }
 
-  function copyButtonArt(sourceId, targetId) {
+  function copyButtonArt(sourceId, targetId, className) {
     const source = doc.getElementById(sourceId);
     const button = doc.getElementById(targetId);
     const computed = source && target.getComputedStyle?.(source);
     if (!source || !button || !computed) return;
 
-    // Keep the MP-specific ID/handler, but mirror the singleplayer action-button art.
-    button.className = `${source.className || 'sbtn'} mp-action-copy${button.id === 'mpAbilityBtn' ? ' sbtn-ability' : ''}`;
+    // Mirror the singleplayer visual treatment without stealing the wrong label identity.
+    button.className = className;
 
     const props = [
       'width', 'height', 'minWidth', 'minHeight', 'padding',
