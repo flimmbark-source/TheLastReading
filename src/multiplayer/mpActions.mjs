@@ -3,6 +3,12 @@ export const MP_ACTIONS = Object.freeze({
   // { type, scoreTarget, personas?: [p0personaId, p1personaId] }
   MP_INIT: 'MP_INIT',
 
+  // A player chooses an action for the current simultaneous action cycle.
+  // The reducer stores it in pendingActions[playerIndex]. When both players have
+  // submitted, both actions commit in player-index order and the next cycle opens.
+  // { type, playerIndex, action }
+  MP_SUBMIT_ACTION: 'MP_SUBMIT_ACTION',
+
   // A player places a card from their hand into a spread slot
   // { type, playerIndex, cardUid, slotIndex }
   MP_PLACE_CARD: 'MP_PLACE_CARD',
@@ -21,11 +27,11 @@ export const MP_ACTIONS = Object.freeze({
   // { type, playerIndex, cardUids: [uid, uid, uid] }
   MP_PURGE_CARDS: 'MP_PURGE_CARDS',
 
-  // Surgeon persona: swap a card in own spread with a card in hand (free action, once per round)
+  // Surgeon persona: swap a card in own spread with a card in hand
   // { type, playerIndex, slotIndex, cardUid }
   MP_SWAP_SPREAD: 'MP_SWAP_SPREAD',
 
-  // Trigger scoring after the final turn completes
+  // Trigger scoring after the simultaneous action cycle completes
   // { type }
   MP_SCORE_ROUND: 'MP_SCORE_ROUND',
 
