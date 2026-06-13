@@ -10,10 +10,15 @@ export function playerByIndex(state, index) {
   return state.players[index] ?? null;
 }
 
+export function hasSubmittedAction(state, playerIndex) {
+  return !!state?.pendingActions?.[playerIndex];
+}
+
 export function isPlayerTurn(state, playerIndex) {
   return (
-    (state.phase === MP_PHASES.PLACEMENT || state.phase === MP_PHASES.FINAL_TURN) &&
-    state.activePlayerIndex === playerIndex
+    state &&
+    state.phase === MP_PHASES.PLACEMENT &&
+    !hasSubmittedAction(state, playerIndex)
   );
 }
 
@@ -70,7 +75,7 @@ export function isMatchOver(state) {
 }
 
 export function isInFinalTurn(state) {
-  return state.phase === MP_PHASES.FINAL_TURN;
+  return false;
 }
 
 export function needsScoring(state) {
