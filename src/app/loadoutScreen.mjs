@@ -112,12 +112,6 @@ export function installLoadoutScreen(target = window) {
     setPersona(personaId, to === from ? null : (to > from ? 'next' : 'prev'));
   }
 
-  function setTarget(value) {
-    profile = { ...profile, scoreTarget: Number(value) };
-    saveProfile(target.localStorage, profile);
-    renderTargetRow();
-  }
-
   // --- Render helpers ---
 
   function applyAccent() {
@@ -198,15 +192,6 @@ export function installLoadoutScreen(target = window) {
     `;
   }
 
-  function renderTargetRow() {
-    target.document.querySelectorAll('.loadout-target-btn').forEach(btn => {
-      const val = Number(btn.dataset.target);
-      const on = val === profile.scoreTarget;
-      btn.classList.toggle('selected', on);
-      btn.setAttribute('aria-pressed', on);
-    });
-  }
-
   function renderReady() {
     const btn = el('loadoutReadyBtn');
     if (btn) btn.disabled = profile.personaId === null;
@@ -218,7 +203,6 @@ export function installLoadoutScreen(target = window) {
     renderRoster();
     renderFeatured(dir);
     renderPersonaDescription();
-    renderTargetRow();
     renderReady();
   }
 
@@ -237,9 +221,6 @@ export function installLoadoutScreen(target = window) {
     }
     const personaBtn = event.target.closest('[data-persona]');
     if (personaBtn) return selectPersonaById(personaBtn.dataset.persona);
-
-    const targetBtn = event.target.closest('[data-target]');
-    if (targetBtn) return setTarget(Number(targetBtn.dataset.target));
   }
 
   function onTouchStart(event) {

@@ -33,13 +33,17 @@ export function installMatchmakingScreen(target = window) {
 
   function renderIdlePhase() {
     const p = _profile ?? {};
-    const persona = p.personaId ?? '—';
-    const targetLabel = { 100: 'Quick · 100', 200: 'Standard · 200', 300: 'Long · 300' }[p.scoreTarget] ?? `${p.scoreTarget ?? '—'} pts`;
+    const t = p.scoreTarget ?? 200;
+    const persona = p.personaId;
+    const sel = v => t === v ? ' selected' : '';
     setHtml('mmContent', `
-      <div class="mm-profile">
-        <div>
-          <div class="mm-profile-persona">${persona ? personaName(persona) : '—'}</div>
-          <div class="mm-profile-detail">${targetLabel}</div>
+      ${persona ? `<div class="mm-profile"><div class="mm-profile-persona">${escHtml(personaName(persona))}</div></div>` : ''}
+      <div class="mm-match-section">
+        <h3 class="mm-section-label">Match Length</h3>
+        <div class="mm-targets">
+          <button class="mm-target-btn${sel(100)}" onclick="tlrMmSetTarget(100)" type="button">Quick<span>100</span></button>
+          <button class="mm-target-btn${sel(200)}" onclick="tlrMmSetTarget(200)" type="button">Standard<span>200</span></button>
+          <button class="mm-target-btn${sel(300)}" onclick="tlrMmSetTarget(300)" type="button">Long<span>300</span></button>
         </div>
       </div>
       <div class="mm-mode-row">
@@ -313,11 +317,24 @@ export function installMatchmakingScreen(target = window) {
   // --- Public API ---
 
   target.tlrShowMatchmaking = function (profile) {
-    _profile = profile ?? target.tlrGetMpProfile?.() ?? {};
+    _profile = { ...(profile ?? target.tlrGetMpProfile?.() ?? {}) };
+    // Restore the player's last-chosen match length preference.
+    try {
+      const saved = Number(target.localStorage?.getItem('tlr_mm_target'));
+      if (saved === 100 || saved === 200 || saved === 300) _profile.scoreTarget = saved;
+    } catch (_) {}
+    if (!_profile.scoreTarget) _profile.scoreTarget = 200;
     _matchState = null;
     teardown();
     renderIdlePhase();
     show('matchmakingScreen');
+  };
+
+  target.tlrMmSetTarget = function (value) {
+    if (!_profile) _profile = {};
+    _profile = { ..._profile, scoreTarget: Number(value) };
+    try { target.localStorage?.setItem('tlr_mm_target', String(value)); } catch (_) {}
+    renderIdlePhase();
   };
 
   target.tlrHideMatchmaking = function () {
