@@ -49,7 +49,7 @@ body.mp-game-active #mpAbilityBtn {
   }
 
   body.mp-game-active .mp-opp-spread-clip {
-    top: 110px !important;
+    top: 85px !important;
     height: 118px !important;
     transform: none !important;
     transform-origin: top center !important;
