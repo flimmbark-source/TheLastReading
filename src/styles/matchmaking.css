@@ -51,4 +51,26 @@
 .mm-start-btn:hover{background:rgba(200,160,80,.34);transform:translateY(-1px)}
 .mm-waiting-host{font:400 12px/1.5 system-ui,sans-serif;color:#6a5535;text-align:center}
 
+/* Match length selector */
+.mm-match-section{display:flex;flex-direction:column;gap:8px}
+.mm-section-label{font:700 10px/1 system-ui,sans-serif;color:#6a5535;letter-spacing:.18em;text-transform:uppercase;margin:0}
+.mm-targets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mm-target-btn{
+  padding:13px 8px;
+  background:rgba(22,16,13,.7);
+  border:1px solid rgba(140,100,50,.3);border-radius:8px;
+  color:#8a7551;font:600 11px/1 Georgia,serif;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  transition:border-color .15s,background .15s,color .15s;
+}
+.mm-target-btn span{font:700 20px/1 Georgia,serif;color:#b09060;transition:color .15s;display:block}
+.mm-target-btn:hover{border-color:rgba(200,160,80,.55);background:rgba(30,20,13,.85);color:#b09060}
+.mm-target-btn.selected{
+  background:rgba(28,18,8,.9);
+  border-color:rgba(255,217,120,.75);
+  box-shadow:0 0 0 1px rgba(255,217,120,.45),0 4px 14px rgba(0,0,0,.45);
+  color:#ddc98a;
+}
+.mm-target-btn.selected span{color:#ffd978}
+
 @media(max-width:420px){.mm-inner{padding:20px 14px 40px}}
