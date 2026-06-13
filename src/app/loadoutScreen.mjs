@@ -316,10 +316,12 @@ export function installLoadoutScreen(target = window) {
   const screen = el('loadoutScreen');
   if (screen) {
     screen.addEventListener('click', onClick);
-    const swipeZone = el('loadoutMain');
-    if (swipeZone) {
-      swipeZone.addEventListener('touchstart', onTouchStart, { passive: true });
-      swipeZone.addEventListener('touchend', onTouchEnd, { passive: true });
+    // Swipe to switch personas anywhere over the character art, the details
+    // panel, and the ability box.
+    for (const zone of [el('loadoutMain'), el('loadoutPersonaDescBox')]) {
+      if (!zone) continue;
+      zone.addEventListener('touchstart', onTouchStart, { passive: true });
+      zone.addEventListener('touchend', onTouchEnd, { passive: true });
     }
     // Re-measure the ability bar when the viewport changes (e.g. rotation),
     // since text wrapping — and so the tallest persona's height — can shift.
