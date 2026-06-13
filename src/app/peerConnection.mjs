@@ -31,8 +31,7 @@ export class PeerConnection {
 
     const offer = await this._pc.createOffer();
     await this._pc.setLocalDescription(offer);
-    // Gather all ICE candidates (wait for gathering to complete)
-    await this._waitIceGathering();
+    // Send the SDP immediately. ICE candidates continue trickling over signaling.
     return this._pc.localDescription.sdp;
   }
 
@@ -59,7 +58,7 @@ export class PeerConnection {
 
     const answer = await this._pc.createAnswer();
     await this._pc.setLocalDescription(answer);
-    await this._waitIceGathering();
+    // Send the SDP immediately. ICE candidates continue trickling over signaling.
     return this._pc.localDescription.sdp;
   }
 
@@ -113,21 +112,6 @@ export class PeerConnection {
     ch.addEventListener('close', () => this._onDisconnected());
     ch.addEventListener('message', ev => {
       try { this._onMessage(JSON.parse(ev.data)); } catch (_) {}
-    });
-  }
-
-  _waitIceGathering() {
-    if (this._pc.iceGatheringState === 'complete') return Promise.resolve();
-    return new Promise(resolve => {
-      const handler = () => {
-        if (this._pc?.iceGatheringState === 'complete') {
-          this._pc.removeEventListener('icegatheringstatechange', handler);
-          resolve();
-        }
-      };
-      this._pc.addEventListener('icegatheringstatechange', handler);
-      // Safety timeout — proceed even if gathering stalls
-      setTimeout(resolve, 8000);
     });
   }
 
