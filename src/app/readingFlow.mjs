@@ -58,10 +58,11 @@ export function flushHand(){
   state.busy=false;state.abilitySelect=null;state.purgeSelect=null;
   state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
   state.resonationBonus={chips:0,mult:0};
+  state.roundScore=0;state.setScores=[];
   syncRoundFields(_run);
   playSound('shuffle');
   _resStateKey=null;
-  clearOverlay();render();
+  clearOverlay();recordScorePillBase(0);render();
   if(typeof fireThresholdBonusGhost==='function')fireThresholdBonusGhost(10);
 }
 

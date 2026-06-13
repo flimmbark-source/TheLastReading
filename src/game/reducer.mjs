@@ -223,6 +223,8 @@ function flushHand(state, rng = Math.random) {
     spread: Array(5).fill(null),
     selectedCardId: null,
     thresholdBonus: (run.thresholdBonus || 0) + 10,
+    roundScore: 0,
+    setScores: [],
     ability: null,
     sourceCardId: null,
     busy: false,
