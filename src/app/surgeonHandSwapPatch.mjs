@@ -7,6 +7,7 @@ export function installSurgeonHandSwapPatch(target = window) {
   const doc = target.document;
   if (!doc) return;
 
+  patchMatchmakingBack(target, doc);
   installStyle(doc);
 
   function playerIndexFromRole() {
@@ -98,6 +99,25 @@ export function installSurgeonHandSwapPatch(target = window) {
   }
 
   syncUi();
+}
+
+function patchMatchmakingBack(target, doc) {
+  if (target.__tlrMatchmakingBackToChoicesPatchInstalled) return;
+  target.__tlrMatchmakingBackToChoicesPatchInstalled = true;
+
+  const originalBack = target.tlrMmBack;
+  target.tlrMmBack = function (...args) {
+    const screen = doc.getElementById('matchmakingScreen');
+    const isOnMatchmakingScreen = !!screen && !screen.classList.contains('mm-screen-hidden');
+    const isPreMatchHostOrJoin = !!target.tlrMpGetRole?.() && !target.tlrMpGetState?.();
+
+    if (isOnMatchmakingScreen && isPreMatchHostOrJoin && typeof target.tlrMmReset === 'function') {
+      target.tlrMmReset();
+      return;
+    }
+
+    return originalBack?.apply(this, args);
+  };
 }
 
 function installStyle(doc) {
