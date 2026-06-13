@@ -5,7 +5,6 @@ import { makeInteractionCard } from './interactionCards.mjs';
 export const MP_PHASES = Object.freeze({
   IDLE: 'idle',
   PLACEMENT: 'placement',
-  FINAL_TURN: 'final_turn', // one player filled their spread; opponent gets one last action
   SCORING: 'scoring',
   BETWEEN_ROUNDS: 'between_rounds',
   COMPLETE: 'complete',
@@ -65,7 +64,7 @@ export function createPlayerState(playerIndex, personaId = null, rng = Math.rand
     playedSlotHistory: [],   // most recent spread placements, used by Banish
     silencedCardUids: [],    // Seal: UIDs excluded from scoring this round
     bonusActionAvailable: false, // Gambit: can place immediately after next invoke
-    swapAvailable: false,    // Surgeon: free spread/hand swap available this round
+    swapAvailable: false,    // Surgeon: spread/hand swap available this round
   };
 }
 
@@ -77,11 +76,12 @@ export function createMatchState(options = {}) {
     scoreTarget: options.scoreTarget ?? SCORE_TARGETS.STANDARD,
     round: 0,
     activePlayerIndex: 0,
-    finalTurnForIndex: null,
     players: [
       createPlayerState(0, personas[0], rng),
       createPlayerState(1, personas[1], rng),
     ],
+    // One chosen action per player. Actions are hidden/resolved only when both are present.
+    pendingActions: [null, null],
     winner: null,
     roundHistory: [],
     nextInjectedUid: 9000, // counter for injected interaction card UIDs
