@@ -15,7 +15,7 @@ export function installMpGame(target = window) {
   let _state      = null;
   let _myIndex    = 0;
   let _invokeCard = null;  // uid awaiting opponent-spread target (Seal)
-  let _swapFirst  = null;  // null | -1 | slotIndex (Surgeon swap)
+  let _swapPending = false; // true while awaiting a Spread slot to swap with the selected Hand card (Surgeon)
   let _purgeSelect = null; // null | uid[]
   let _origPlaceCard    = null;
   let _origRenderSpread = null;
@@ -229,22 +229,19 @@ export function installMpGame(target = window) {
         cls += 'filled';
         if (isSlotAnchored(s, my, i))        cls += ' mp-anchored';
         if (isCardSilenced(s, my, card.uid)) cls += ' mp-silenced';
-        if (_swapFirst === i)                cls += ' mp-swap-a';
-        else if (_swapFirst >= 0)            cls += ' mp-swap-pick';
+        if (_swapPending)                    cls += ' mp-swap-pick';
       } else {
         cls += 'empty';
-        if (isTurn && selUid !== null && _invokeCard === null && _swapFirst === null && _purgeSelect === null) {
+        if (isTurn && selUid !== null && _invokeCard === null && !_swapPending && _purgeSelect === null) {
           cls += ' target';
         }
       }
       slotEl.className = cls;
 
-      if (!card && isTurn && selUid !== null && _invokeCard === null && _swapFirst === null && _purgeSelect === null) {
+      if (!card && isTurn && selUid !== null && _invokeCard === null && !_swapPending && _purgeSelect === null) {
         slotEl.onclick = () => dispatchPlace(selUid, i);
-      } else if (card && _swapFirst === -1) {
-        slotEl.onclick = () => { _swapFirst = i; render(); };
-      } else if (card && _swapFirst >= 0 && _swapFirst !== i) {
-        slotEl.onclick = () => dispatchSwap(_swapFirst, i);
+      } else if (card && _swapPending && selUid !== null) {
+        slotEl.onclick = () => dispatchSwap(i);
       } else {
         slotEl.onclick = null;
       }
@@ -300,11 +297,11 @@ export function installMpGame(target = window) {
     const purgeBtn = el('mpPurgeBtn');
 
     if (discardBtn) {
-      discardBtn.disabled = !isTurn || _purgeSelect !== null || _invokeCard !== null || _swapFirst !== null || !selectedCard || (p?.discards ?? 0) <= 0;
+      discardBtn.disabled = !isTurn || _purgeSelect !== null || _invokeCard !== null || _swapPending || !selectedCard || (p?.discards ?? 0) <= 0;
       discardBtn.classList.toggle('mp-active-action', !discardBtn.disabled);
     }
     if (purgeBtn) {
-      const canStartPurge = isTurn && _invokeCard === null && _swapFirst === null && (p?.hand?.length ?? 0) >= 3;
+      const canStartPurge = isTurn && _invokeCard === null && !_swapPending && (p?.hand?.length ?? 0) >= 3;
       purgeBtn.disabled = _purgeSelect === null ? !canStartPurge : _purgeSelect.length !== 3;
       purgeBtn.classList.toggle('mp-active-action', _purgeSelect !== null);
     }
@@ -325,13 +322,16 @@ export function installMpGame(target = window) {
     } else if (_invokeCard !== null) {
       parts.push(`<span class="mp-action-hint">Tap a card on the opponent's spread.</span>`);
       parts.push(`<button class="mp-action-btn cancel" onclick="tlrMpCancelAction()" type="button">Cancel</button>`);
-    } else if (_swapFirst !== null) {
-      parts.push(`<span class="mp-action-hint">${_swapFirst === -1 ? 'Tap a card to swap.' : 'Tap the second card.'}</span>`);
+    } else if (_swapPending) {
+      parts.push(`<span class="mp-action-hint">Tap a card in your Spread to swap it with the selected card.</span>`);
       parts.push(`<button class="mp-action-btn cancel" onclick="tlrMpCancelAction()" type="button">Cancel</button>`);
     } else if (selUid !== null && isTurn) {
       const card = p?.hand.find(c => c.uid === selUid);
       if (card && (card.ability || card.abilityType) && canInvokeAbility(s, my, selUid)) {
         parts.push(`<button class="mp-action-btn invoke" onclick="tlrMpInvoke()" type="button">Invoke</button>`);
+      }
+      if (canSwapSpread(s, my)) {
+        parts.push(`<button class="mp-action-btn swap" onclick="tlrMpStartSwap()" type="button">Swap</button>`);
       }
       if (card?.abilityType === MP_ABILITY_TYPES.MP_BANISH) {
         parts.push(`<span class="mp-action-hint">Discard invokes Banish and removes the opponent's last played card.</span>`);
@@ -339,9 +339,6 @@ export function installMpGame(target = window) {
         parts.push(`<span class="mp-action-hint">Place it, discard it, or purge 3 cards for +1 discard.</span>`);
       }
     } else if (isTurn) {
-      if (canSwapSpread(s, my)) {
-        parts.push(`<button class="mp-action-btn swap" onclick="tlrMpStartSwap()" type="button">Swap Spread</button>`);
-      }
       parts.push(`<span class="mp-action-hint">Select a card from your hand.</span>`);
     } else {
       parts.push(`<span class="mp-action-hint">Waiting for opponent…</span>`);
@@ -356,9 +353,13 @@ export function installMpGame(target = window) {
     target.refreshHandState?.();
   }
 
-  function dispatchSwap(slotA, slotB) {
-    _swapFirst = null;
-    target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_SWAP_SPREAD, playerIndex: _myIndex, slotA, slotB });
+  function dispatchSwap(slotIndex) {
+    const cardUid = target.state?.selected ?? null;
+    _swapPending = false;
+    if (cardUid === null) { render(); return; }
+    target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_SWAP_HAND_SPREAD, playerIndex: _myIndex, slotIndex, cardUid });
+    if (target.state) target.state.selected = null;
+    target.refreshHandState?.();
   }
 
   function handleInvokeTarget(playerIdx, slotIdx) {
@@ -518,7 +519,7 @@ export function installMpGame(target = window) {
     _state      = state;
     _myIndex    = role === 'host' ? 0 : 1;
     _invokeCard = null;
-    _swapFirst  = null;
+    _swapPending = false;
     _purgeSelect = null;
     mount();
     el('mpGame')?.classList.remove('mp-hidden');
@@ -531,12 +532,12 @@ export function installMpGame(target = window) {
   };
 
   target.tlrMpOnLocalAction = function (_action, state) {
-    _state = state; _invokeCard = null; _swapFirst = null; _purgeSelect = null;
+    _state = state; _invokeCard = null; _swapPending = false; _purgeSelect = null;
     render(); scheduleAutoScore();
   };
 
   target.tlrMpOnPeerAction = function (_action, state) {
-    _state = state; _invokeCard = null; _swapFirst = null; _purgeSelect = null;
+    _state = state; _invokeCard = null; _swapPending = false; _purgeSelect = null;
     render(); scheduleAutoScore();
   };
 
@@ -556,7 +557,7 @@ export function installMpGame(target = window) {
   target.tlrMpConfirmPurge = function () { confirmPurge(); };
 
   target.tlrMpCancelAction = function () {
-    _invokeCard = null; _swapFirst = null; _purgeSelect = null;
+    _invokeCard = null; _swapPending = false; _purgeSelect = null;
     if (target.state) target.state.selected = null;
     target.refreshHandState?.();
     render();
@@ -564,7 +565,8 @@ export function installMpGame(target = window) {
 
   target.tlrMpStartSwap = function () {
     if (!_state || !canSwapSpread(_state, _myIndex)) return;
-    _swapFirst = -1; render();
+    if ((target.state?.selected ?? null) === null) return; // need a hand card selected to swap in
+    _swapPending = true; render();
   };
 
   target.tlrMpNextRound = function () {
@@ -574,7 +576,7 @@ export function installMpGame(target = window) {
 
   target.tlrMpLeave = function () {
     if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; }
-    _state = null; _invokeCard = null; _swapFirst = null; _purgeSelect = null;
+    _state = null; _invokeCard = null; _swapPending = false; _purgeSelect = null;
     restorePlaceCard();
     restoreRenderSpread();
     restorePurgeOverride();

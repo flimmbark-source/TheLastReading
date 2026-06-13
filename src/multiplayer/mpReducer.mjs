@@ -344,8 +344,8 @@ export function mpReducer(state, action) {
       return advanceTurn(next, playerIndex, false);
     }
 
-    case MP_ACTIONS.MP_SWAP_SPREAD: {
-      const { playerIndex, slotA, slotB } = action;
+    case MP_ACTIONS.MP_SWAP_HAND_SPREAD: {
+      const { playerIndex, slotIndex, cardUid } = action;
       const activeError = requireActivePlayer(state, playerIndex);
       if (activeError) return err(state, activeError);
 
@@ -353,23 +353,25 @@ export function mpReducer(state, action) {
       if (!player.swapAvailable) {
         return err(state, 'No swap available. Surgeon persona required once per round.');
       }
-      if (slotA < 0 || slotA >= MP_SPREAD_SIZE || slotB < 0 || slotB >= MP_SPREAD_SIZE) {
+      if (slotIndex < 0 || slotIndex >= MP_SPREAD_SIZE) {
         return err(state, 'Invalid slot index for swap.');
       }
-      if (slotA === slotB) {
-        return err(state, 'Cannot swap a slot with itself.');
+      const spreadCard = player.spread[slotIndex];
+      if (!spreadCard) {
+        return err(state, 'Choose a card in your Spread to swap.');
+      }
+      const handCard = player.hand.find(c => c.uid === cardUid);
+      if (!handCard) {
+        return err(state, 'Choose a card in your Hand to swap.');
       }
 
-      const spread = [...player.spread];
-      [spread[slotA], spread[slotB]] = [spread[slotB], spread[slotA]];
-
-      // If the anchored slot was swapped, update its index
-      let { anchoredSlotIndex } = player;
-      if (anchoredSlotIndex === slotA) anchoredSlotIndex = slotB;
-      else if (anchoredSlotIndex === slotB) anchoredSlotIndex = slotA;
+      // Spread card returns to hand (keeping its slot in the hand order);
+      // the chosen hand card takes its place in the spread.
+      const spread = player.spread.map((c, i) => (i === slotIndex ? handCard : c));
+      const hand = player.hand.map(c => (c.uid === cardUid ? spreadCard : c));
 
       // Free action: does NOT advance the turn
-      return updatePlayer(state, playerIndex, { spread, anchoredSlotIndex, swapAvailable: false });
+      return updatePlayer(state, playerIndex, { spread, hand, swapAvailable: false });
     }
 
     case MP_ACTIONS.MP_SCORE_ROUND: {

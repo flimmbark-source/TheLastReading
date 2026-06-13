@@ -65,7 +65,7 @@ export function createPlayerState(playerIndex, personaId = null, rng = Math.rand
     playedSlotHistory: [],   // most recent spread placements, used by Banish
     silencedCardUids: [],    // Seal: UIDs excluded from scoring this round
     bonusActionAvailable: false, // Gambit: can place immediately after next invoke
-    swapAvailable: false,    // Surgeon: free spread swap available this round
+    swapAvailable: false,    // Surgeon: free Hand/Spread swap available this round
   };
 }
 
@@ -129,7 +129,7 @@ export function applyRoundStartPassives(player, nextUid) {
     }
   }
 
-  const swapAvailable = !!(persona?.passives?.freeSpreadSwap);
+  const swapAvailable = !!(persona?.passives?.handSpreadSwap);
   const bonusActionAvailable = !!(persona?.passives?.bonusPlaceAfterInvoke);
 
   return {

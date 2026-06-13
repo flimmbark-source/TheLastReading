@@ -112,11 +112,11 @@ export const PERSONAS = Object.freeze({
     ability: {
       name: 'Transposition',
       tag: 'Once per Round',
-      rules: 'On your turn, swap 2 cards in your **Spread** for free.',
+      rules: 'Swap a card in your **Spread** with a card in your **Hand**.',
       flavor: 'Fate rewards a steady hand.',
     },
     passives: {
-      freeSpreadSwap: true,
+      handSpreadSwap: true,
     },
   },
 
