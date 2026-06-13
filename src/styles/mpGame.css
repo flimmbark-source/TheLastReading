@@ -17,21 +17,21 @@ body.mp-game-active .spread-wrap {
   top: auto !important;
   bottom: 328px !important;
   left: 0 !important; right: 0 !important;
-  height: 241px !important;
+  height: 362px !important;
   transform: none !important;
   z-index: 9400 !important;
   padding: 0 !important;
 }
 /* Keep the player spread at the same dimensions as the singleplayer table. */
 body.mp-game-active #spread {
-  padding: 36px 6px 0 !important;
-  min-height: 205px !important;
+  padding: 54px 6px 0 !important;
+  min-height: 308px !important;
   align-items: flex-start !important;
 }
 body.mp-game-active #spread .slot {
-  flex: 0 0 130px !important;
-  width: 130px !important;
-  height: 195px !important;
+  flex: 0 0 195px !important;
+  width: 195px !important;
+  height: 293px !important;
 }
 
 /* Hide SP UI chrome that would bleed through */
@@ -92,8 +92,14 @@ body.mp-game-active #purgePrompt { display: none !important; }
 
 /* ── Opponent spread (full size, arcing opposite to the player's) ── */
 .mp-opp-spread-clip {
-  height: 205px; overflow: visible; position: relative; width: 100%; flex-shrink: 0;
+  height: 308px; overflow: visible; position: relative; width: 100%; flex-shrink: 0;
   margin-top: 30px;
+}
+/* Opponent spread slot sizing matches the 50% bigger player slots */
+body.mp-game-active #mpOppSpread .slot {
+  flex: 0 0 195px !important;
+  width: 195px !important;
+  height: 293px !important;
 }
 .mp-opp-spread-transform {
   position: absolute; top: 0; left: 0; right: 0;
@@ -133,7 +139,7 @@ body.mp-game-active #purgePrompt { display: none !important; }
 
 /* ── Middle section (fixed just above the player spread) ── */
 .mp-mid-wrap {
-  position: fixed; bottom: 540px; left: 0; right: 0; z-index: 9401;
+  position: fixed; bottom: 710px; left: 0; right: 0; z-index: 9401;
   display: flex; flex-direction: column; align-items: center; gap: 5px;
   padding: 0 14px; pointer-events: none;
 }
