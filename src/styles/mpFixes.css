@@ -37,7 +37,7 @@ body.mp-game-active #mpAbilityBtn {
   }
 
   body.mp-game-active .mp-opp-spread-clip {
-    top: 42px !important;
+    top: 110px !important;
     height: 118px !important;
     transform: none !important;
     transform-origin: top center !important;
@@ -91,7 +91,7 @@ body.mp-game-active #mpAbilityBtn {
   }
 
   body.mp-game-active .mp-opp-spread-clip {
-    top: 30px !important;
+    top: 92px !important;
   }
 
   body.mp-game-active #mpOppSpread,
