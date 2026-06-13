@@ -5,7 +5,7 @@ export function installHandSwipeScroll(target = window){
   if(!target || target.__handSwipeScrollInstalled)return;
   target.__handSwipeScrollInstalled=true;
   let zone=null,hand=null;
-  let offset=0,startOffset=0,startX=0,startY=0,startLift=0,lift=0; // track offset (degrees), plus vertical lift
+  let offset=0,startOffset=0,startX=0,startY=0,startLift=0,lift=0,startDockH=157;
   let samples=[];                                    // {t,deg} ring for horizontal swipe velocity
   let liftSamples=[];                                // {t,y} ring for vertical swipe velocity
   let pointers=new Map();                            // active pointer id -> {x,y}
@@ -154,7 +154,7 @@ export function installHandSwipeScroll(target = window){
   const applySpacing=d=>{const h=handEl();if(!h)return;h.style.setProperty('--track-spacing',d.toFixed(3)+'deg');};
   const liftCap=()=>target.innerWidth<640?HAND_LIFT_PX_MOBILE:HAND_LIFT_PX;
   const clampLift=y=>Math.max(-liftCap(),Math.min(0,y));
-  const softClampLift=y=>{const c=liftCap();if(y>0)return y*RUBBER;if(y<-c)return -c+(y+c)*RUBBER;return y;};
+  const softClampLift=y=>{const c=liftCap();if(y>0)return y;if(y<-c)return -c+(y+c)*RUBBER;return y;};
   const applyLift=y=>{const h=handEl();if(!h)return;lift=y;h.style.setProperty('--hand-lift-y',y.toFixed(1)+'px');};
   const applySlots=()=>{
     const h=handEl();if(!h)return;
@@ -344,6 +344,7 @@ export function installHandSwipeScroll(target = window){
     kickUndulation();
     mode='slide';
     startX=ev.clientX;startY=ev.clientY||0;startOffset=offset;startLift=lift;
+  startDockH=document.querySelector('.handDock')?.offsetHeight||157;
     samples.length=0;liftSamples.length=0;pushSample(performance.now(),offset);pushLiftSample(performance.now(),lift);
     const z=zoneEl();if(z){z.classList.add('dragging');z.classList.remove('pinching');}
     handEl()?.classList.add('hand-scroll-dragging');
@@ -361,8 +362,8 @@ export function installHandSwipeScroll(target = window){
   const stepSlide=ev=>{
     const dx=ev.clientX-startX;
     const dy=(ev.clientY||startY)-startY;
-    // Flush gesture: drag the hand dock downward > 120px (off the screen edge).
-    if(dy>120&&typeof target.flushHand==='function'){endGesture();target.flushHand();return;}
+    // Flush gesture: drag 2/3 of the hand dock below the screen edge.
+    if(dy>startDockH*2/3&&typeof target.flushHand==='function'){endGesture();target.flushHand();return;}
     const _desktopDir=target.matchMedia('(pointer:fine)').matches?-1:1;const targetOffset=softClamp(startOffset+dx*DEG_PER_PX_SWIPE*_desktopDir);
     if(Math.abs(targetOffset-startOffset)>1.15)completeHandHintStep(1);
     const _desktopYDir=target.matchMedia('(pointer:fine)').matches?-1:1;const y=softClampLift(startLift+dy*_desktopYDir);
