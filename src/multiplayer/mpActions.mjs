@@ -21,8 +21,8 @@ export const MP_ACTIONS = Object.freeze({
   // { type, playerIndex, cardUids: [uid, uid, uid] }
   MP_PURGE_CARDS: 'MP_PURGE_CARDS',
 
-  // Surgeon persona: swap two cards in own spread (free action, once per round)
-  // { type, playerIndex, slotA, slotB }
+  // Surgeon persona: swap a card in own spread with a card in hand (free action, once per round)
+  // { type, playerIndex, slotIndex, cardUid }
   MP_SWAP_SPREAD: 'MP_SWAP_SPREAD',
 
   // Trigger scoring after the final turn completes
