@@ -23,6 +23,7 @@ import { installMainMenu } from './mainMenu.mjs';
 import { installLoadoutScreen } from './loadoutScreen.mjs';
 import { installMatchmakingScreen } from './matchmakingScreen.mjs';
 import { installMpGame } from './mpGame.mjs';
+import { installSurgeonHandSwapPatch } from './surgeonHandSwapPatch.mjs';
 import { installMenuControls } from './menuControls.mjs';
 import { installResonationFlow } from './resonationFlow.mjs';
 import { installHintRuntime } from './hintRuntime.mjs';
@@ -245,6 +246,7 @@ export function startApp(target = window) {
   installLoadoutScreen(target);
   installMatchmakingScreen(target);
   installMpGame(target);
+  installSurgeonHandSwapPatch(target);
   installStoreFrontTuning(target);
   installMarketTutorialTrigger(target);
 
