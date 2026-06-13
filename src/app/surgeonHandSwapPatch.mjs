@@ -1,4 +1,5 @@
 import { MP_ACTIONS } from '../multiplayer/mpActions.mjs';
+import { getPersona } from '../multiplayer/personas.mjs';
 
 export function installSurgeonHandSwapPatch(target = window) {
   if (!target || target.__tlrSurgeonHandSwapPatchInstalled) return;
@@ -35,15 +36,23 @@ export function installSurgeonHandSwapPatch(target = window) {
     return player.hand?.some(card => card.uid === cardUid);
   }
 
-  function selectedCardCanUseAbility() {
+  function currentPersonaAbilityAction() {
     const state = target.tlrMpGetState?.();
     const playerIndex = playerIndexFromRole();
     const player = state?.players?.[playerIndex];
-    const selectedUid = target.state?.selected ?? null;
-    if (!state || !player || selectedUid === null) return false;
-    if (state.activePlayerIndex !== playerIndex) return false;
-    if ((player.discards ?? 0) <= 0) return false;
-    return player.hand?.some(card => card.uid === selectedUid && (card.ability || card.abilityType));
+    if (!state || !player) return null;
+    if (state.activePlayerIndex !== playerIndex) return null;
+
+    const persona = getPersona(player.persona);
+    if (player.swapAvailable && persona?.passives?.freeSpreadSwap) {
+      return {
+        type: 'persona-swap',
+        label: 'Ability',
+        title: `${persona.ability?.name || 'Persona Ability'}: ${stripMarkup(persona.ability?.rules || 'Swap a card in your Spread with a card in your Hand.')}`,
+      };
+    }
+
+    return null;
   }
 
   function ensureAbilityButton() {
@@ -62,7 +71,8 @@ export function installSurgeonHandSwapPatch(target = window) {
       btn.addEventListener('click', event => {
         event.preventDefault();
         event.stopPropagation();
-        if (!btn.disabled) target.tlrMpInvoke?.();
+        if (btn.disabled) return;
+        if (btn.dataset.mpAbilityAction === 'persona-swap') target.tlrMpStartSwap?.();
       });
     }
 
@@ -70,7 +80,47 @@ export function installSurgeonHandSwapPatch(target = window) {
     return btn;
   }
 
+  function copySingleplayerButtonArt() {
+    copyButtonArt('discardBtn', 'mpDiscardBtn');
+    copyButtonArt('purgeBtn', 'mpPurgeBtn');
+    copyButtonArt('discardBtn', 'mpAbilityBtn');
+  }
+
+  function copyButtonArt(sourceId, targetId) {
+    const source = doc.getElementById(sourceId);
+    const button = doc.getElementById(targetId);
+    const computed = source && target.getComputedStyle?.(source);
+    if (!source || !button || !computed) return;
+
+    // Keep the MP-specific ID/handler, but mirror the singleplayer action-button art.
+    button.className = `${source.className || 'sbtn'} mp-action-copy${button.id === 'mpAbilityBtn' ? ' sbtn-ability' : ''}`;
+
+    const props = [
+      'width', 'height', 'minWidth', 'minHeight', 'padding',
+      'border', 'borderRadius', 'boxShadow',
+      'background', 'backgroundColor', 'backgroundImage', 'backgroundSize', 'backgroundPosition', 'backgroundRepeat',
+      'color', 'font', 'fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'textTransform',
+    ];
+
+    props.forEach(prop => {
+      const value = computed[prop];
+      if (value) button.style.setProperty(cssName(prop), value, 'important');
+    });
+  }
+
+  function hideSwipeTutorialInMultiplayer() {
+    if (!doc.body.classList.contains('mp-game-active')) return;
+    doc.querySelectorAll('.hand-swipe-hint').forEach(el => {
+      el.hidden = true;
+      el.setAttribute('aria-hidden', 'true');
+      el.style.setProperty('display', 'none', 'important');
+      el.style.setProperty('opacity', '0', 'important');
+    });
+  }
+
   function syncUi() {
+    hideSwipeTutorialInMultiplayer();
+
     const panel = doc.getElementById('mpActionPanel');
     if (panel) {
       const swapBtn = Array.from(panel.querySelectorAll('button'))
@@ -86,13 +136,20 @@ export function installSurgeonHandSwapPatch(target = window) {
     }
 
     const abilityBtn = ensureAbilityButton();
-    const canUseAbility = selectedCardCanUseAbility();
+    copySingleplayerButtonArt();
+
+    const personaAction = currentPersonaAbilityAction();
     if (abilityBtn) {
-      abilityBtn.disabled = !canUseAbility;
-      abilityBtn.classList.toggle('mp-visible', canUseAbility);
-      abilityBtn.setAttribute('aria-hidden', canUseAbility ? 'false' : 'true');
+      const isVisible = !!personaAction;
+      abilityBtn.disabled = !isVisible;
+      abilityBtn.textContent = personaAction?.label || 'Ability';
+      abilityBtn.title = personaAction?.title || 'Ability';
+      abilityBtn.setAttribute('aria-label', personaAction?.title || 'Ability');
+      abilityBtn.dataset.mpAbilityAction = personaAction?.type || '';
+      abilityBtn.classList.toggle('mp-visible', isVisible);
+      abilityBtn.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
     }
-    panel?.classList.toggle('mp-hide-mobile-ability-panel', canUseAbility);
+    panel?.classList.toggle('mp-hide-mobile-ability-panel', !!personaAction);
 
     const hasSelectedSlot = !!selectedSwapSlot();
     doc.querySelectorAll('#hand .card[data-uid]').forEach(cardEl => {
@@ -144,7 +201,7 @@ export function installSurgeonHandSwapPatch(target = window) {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ['class', 'disabled', 'data-uid'],
+      attributeFilter: ['class', 'disabled', 'data-uid', 'hidden'],
     });
   }
 
@@ -180,6 +237,14 @@ function patchMatchmakingBack(target, doc) {
 
     return originalBack?.apply(this, args);
   };
+}
+
+function cssName(prop) {
+  return prop.replace(/[A-Z]/g, ch => '-' + ch.toLowerCase());
+}
+
+function stripMarkup(value) {
+  return String(value ?? '').replace(/\*\*/g, '');
 }
 
 function installStyle(doc) {
