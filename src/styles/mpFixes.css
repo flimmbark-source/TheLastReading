@@ -26,6 +26,12 @@ body.mp-game-active .mp-action-panel {
   display: none !important;
 }
 
+body.mp-game-active #modal.show,
+body.mp-game-active #abilityPrompt.show,
+body.mp-game-active #purgePrompt.show {
+  z-index: 2147483000 !important;
+}
+
 body.mp-game-active #mpDiscardBtn::before { content: 'Discard' !important; }
 body.mp-game-active #mpPurgeBtn::before { content: 'Purge' !important; }
 body.mp-game-active #mpAbilityBtn::before { content: 'Ability' !important; }
