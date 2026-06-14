@@ -26,7 +26,6 @@ body.mp-game-active .mp-action-panel {
   display: none !important;
 }
 
-body.mp-game-active .mp-action-panel:has(button[onclick*="tlrMpInvoke"]),
 body.mp-game-active .mp-action-panel:has(button[onclick*="tlrMpConfirmPurge"]),
 body.mp-game-active .mp-action-panel:has(button[onclick*="tlrMpCancelAction"]) {
   display: flex !important;
