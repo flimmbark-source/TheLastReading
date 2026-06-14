@@ -12,6 +12,8 @@ export function installSurgeonHandSwapPatch(target = window) {
   patchMatchmakingBack(target, doc);
   installStyle(doc);
   installOpponentPopTuning(target, doc);
+  installMultiplayerEntryCleanup(target, doc);
+  installFlushGuard(target, doc);
 
   const copiedButtonArt = new Set();
   let syncQueued = false;
@@ -232,9 +234,18 @@ export function installSurgeonHandSwapPatch(target = window) {
   }
 
   function scheduleSync() {
-    if (syncQueued) return;
+    if (syncQueued || !doc.body.classList.contains('mp-game-active')) return;
     syncQueued = true;
     target.requestAnimationFrame?.(syncUi) ?? syncUi();
+  }
+
+  function shouldSyncMutation(records) {
+    if (!doc.body.classList.contains('mp-game-active')) return false;
+    for (const record of records || []) {
+      const node = record.target?.nodeType === 1 ? record.target : record.target?.parentElement;
+      if (node?.closest?.('#mpGame,#hand,#spread,#mpOppSpread,#mpActionPanel,.mp-pills-actions')) return true;
+    }
+    return false;
   }
 
   wrapRefreshHandState(target, scheduleSync);
@@ -272,7 +283,9 @@ export function installSurgeonHandSwapPatch(target = window) {
 
   const MutationObserverCtor = target.MutationObserver || globalThis.MutationObserver;
   if (MutationObserverCtor) {
-    const observer = new MutationObserverCtor(scheduleSync);
+    const observer = new MutationObserverCtor(records => {
+      if (shouldSyncMutation(records)) scheduleSync();
+    });
     observer.observe(doc.body, {
       childList: true,
       subtree: true,
@@ -312,6 +325,41 @@ function patchMatchmakingBack(target, doc) {
     }
 
     return originalBack?.apply(this, args);
+  };
+}
+
+function installMultiplayerEntryCleanup(target, doc) {
+  if (target.__tlrMpEntryCleanupInstalled) return;
+  target.__tlrMpEntryCleanupInstalled = true;
+
+  const clearStaleHandlers = () => {
+    if (doc.body.classList.contains('mp-game-active')) return;
+    target.tlrMpOnLocalAction = null;
+    target.tlrMpOnPeerAction = null;
+  };
+
+  const wrap = name => {
+    const original = target[name];
+    if (typeof original !== 'function') return;
+    target[name] = function (...args) {
+      clearStaleHandlers();
+      return original.apply(this, args);
+    };
+  };
+
+  wrap('tlrShowMatchmaking');
+  wrap('tlrMmVsCpu');
+  wrap('tlrMmStartMatch');
+}
+
+function installFlushGuard(target, doc) {
+  if (target.__tlrMpFlushGuardInstalled) return;
+  const original = target.flushHand;
+  if (typeof original !== 'function') return;
+  target.__tlrMpFlushGuardInstalled = true;
+  target.flushHand = function (...args) {
+    if (doc.body.classList.contains('mp-game-active')) return false;
+    return original.apply(this, args);
   };
 }
 
