@@ -114,6 +114,16 @@ body.mp-game-active .spread-wrap {
   }
 
   body.mp-game-active .mp-action-panel {
+    display: flex !important;
+    width: min(300px, 88vw) !important;
+    min-height: 24px !important;
+    padding: 3px 8px 4px !important;
+    background: rgba(8, 5, 3, .58) !important;
+    border: 1px solid rgba(180, 140, 90, .18) !important;
+    border-radius: 8px !important;
+  }
+
+  body.mp-game-active .mp-action-panel:empty {
     display: none !important;
   }
 }
