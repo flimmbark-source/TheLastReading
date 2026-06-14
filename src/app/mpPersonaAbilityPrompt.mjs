@@ -28,10 +28,6 @@ function currentPersona(target) {
   return getPersona(personaId);
 }
 
-function hasPersonaSwapDomState(doc) {
-  return !!doc.querySelector('body.mp-game-active #spread .slot.mp-swap-pick, body.mp-game-active #spread .slot.mp-swap-a, body.mp-game-active #hand .card.mp-surgeon-swap-target');
-}
-
 function selectedSpreadCard(doc, target) {
   const slot = doc.querySelector('body.mp-game-active #spread .slot.mp-swap-a');
   if (!slot) return null;
@@ -56,8 +52,7 @@ function syncPersonaPrompt(target = window, personaSwapRequested = false) {
   const button = doc.getElementById('abilityConfirm');
   if (!promptBox || !title || !text || !button) return;
 
-  const active = personaSwapRequested && hasPersonaSwapDomState(doc);
-  if (!active) {
+  if (!personaSwapRequested) {
     doc.body.classList.remove('mp-persona-ability-active');
     if (promptBox.dataset.mpPersonaPrompt === '1') {
       promptBox.classList.remove('show');
