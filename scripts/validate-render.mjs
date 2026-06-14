@@ -81,4 +81,15 @@ assert.ok(!cards.some(el => el.classList.contains('sel')), 'clearing selection r
   );
 }
 
+// --- View model selection: clicks route to the handler, not the global state ---
+{
+  const viewHand = deck.slice(20, 22).map((card, i) => ({ ...card, uid: 700 + i }));
+  const before = globalThis.state.selected;
+  let toggled = null;
+  renderHand(null, false, { hand: viewHand, selected: null, purgeSelect: null, onToggleSelect: uid => { toggled = uid; } });
+  dom.window.document.querySelector('#hand > .card').click();
+  assert.equal(toggled, viewHand[0].uid, 'hand click routes to the view model onToggleSelect handler');
+  assert.equal(globalThis.state.selected, before, 'view-model selection does not mutate the global state');
+}
+
 console.log('Render smoke checks passed.');

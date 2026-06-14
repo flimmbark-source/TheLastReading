@@ -55,6 +55,9 @@ export function renderHand(ability, inPurge, view = null) {
     e.onclick=()=>{
       if(ability){handleAbilityHandClick(c);return}
       if(inPurge){togglePurgeCard(c.uid);return}
+      // When the caller owns selection (multiplayer passes its own store via the
+      // view model), route the toggle to it instead of mutating global `state`.
+      if(v.onToggleSelect){v.onToggleSelect(c.uid);return}
       if(state.busy)return;
       if(state.selected===c.uid){state.selected=null;refreshHandState();return;}
       state.selected=c.uid;

@@ -23,6 +23,7 @@ export function installMpGame(target = window) {
   let _invokeCard = null;  // uid awaiting opponent-spread target (Seal)
   let _swapFirst  = null;  // null | -1 | slotIndex (Surgeon swap)
   let _purgeSelect = null; // null | uid[]
+  let _selected = null;    // multiplayer's own hand-selection store (uid | null)
   let _abilityResolving = false;
   let _origPlaceCard    = null;
   let _origRenderSpread = null;
@@ -104,33 +105,31 @@ export function installMpGame(target = window) {
       </div>`;
   }
 
-  // Multiplayer keeps its card piles in the match state (`_state`) and feeds them
-  // to the renderers via view models, so it no longer copies deck/hand/spread/
-  // discard into the legacy global `state`. A few scalars still live on the
-  // global because the shared singleplayer refreshHandState path reads them while
-  // a match is active: selection (`selected`, for the hand's sel highlight),
-  // `purgeSelect` (purge highlight), `busy` (renderHand's click guard), and
-  // `abilitySelect` which is forced null so no stale singleplayer ability prompt
-  // appears. Removing this last scalar bridge requires migrating refreshHandState
-  // itself (see docs/migration-roadmap.md, Phase 4).
+  // Multiplayer owns all of its own UI state now: card piles come from the match
+  // state (`_state`) and selection/purge live in module-local vars (`_selected`,
+  // `_purgeSelect`). Nothing is written into the legacy global `state`; the
+  // renderers receive everything via explicit view models. This keeps the
+  // selected card valid when the hand changes underneath it.
   function syncPerspectiveState(s, my) {
     const p = s.players[my];
-    if (!p || !target.state) return;
-
-    target.state.busy = mySubmitted(s) || _abilityResolving;
-    target.state.abilitySelect = null;
-    target.state.purgeSelect = _purgeSelect;
-    if (target.state.selected !== null && !(p.hand || []).some(c => c.uid === target.state.selected)) {
-      target.state.selected = null;
-    }
+    if (!p) return;
+    if (_selected !== null && !(p.hand || []).some(c => c.uid === _selected)) _selected = null;
   }
 
   function selfHandView(s, my) {
     return {
       hand: s.players[my]?.hand || [],
-      selected: target.state?.selected ?? null,
+      selected: _selected,
       purgeSelect: _purgeSelect,
+      onToggleSelect: handleSelectToggle,
     };
+  }
+
+  function handleSelectToggle(uid) {
+    if (!_state || mySubmitted(_state) || _abilityResolving) return;
+    _selected = _selected === uid ? null : uid;
+    renderSelfHand(_state, _myIndex);
+    refreshSelectionUi();
   }
 
   function renderSelfHand(s, my) {
@@ -294,7 +293,7 @@ export function installMpGame(target = window) {
       }
       target._slotEls = null;
     }
-    const selUid = target.state?.selected ?? null;
+    const selUid = _selected;
     for (let i = 0; i < 5; i++) {
       const slotEl = spreadEl._mpSlots[i];
       const card = player.spread[i];
@@ -355,7 +354,7 @@ export function installMpGame(target = window) {
   function renderActionButtons(s, my) {
     const p = s.players[my];
     const isTurn = isMyActionTurn(s) && !_abilityResolving;
-    const selUid = target.state?.selected ?? null;
+    const selUid = _selected;
     const selectedCard = selUid !== null ? p?.hand.find(c => c.uid === selUid) : null;
     const discardBtn = el('mpDiscardBtn');
     const purgeBtn = el('mpPurgeBtn');
@@ -375,7 +374,7 @@ export function installMpGame(target = window) {
     if (!panel) return;
     const p = s.players[my];
     const isTurn = isMyActionTurn(s) && !_abilityResolving;
-    const selUid = target.state?.selected ?? null;
+    const selUid = _selected;
     const parts = [];
     if (_abilityResolving) parts.push(`<span class="mp-action-hint">Resolve the ability choice.</span>`);
     else if (mySubmitted(s)) parts.push(`<span class="mp-action-hint">Action submitted. Waiting for opponent…</span>`);
@@ -404,8 +403,7 @@ export function installMpGame(target = window) {
   function submitAction(action) {
     if (!_state || mySubmitted(_state)) return;
     target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_SUBMIT_ACTION, playerIndex: _myIndex, action: { ...action, playerIndex: _myIndex } });
-    _invokeCard = null; _swapFirst = null; _purgeSelect = null; _abilityResolving = false;
-    if (target.state) target.state.selected = null;
+    _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false;
     target.refreshHandState?.();
   }
 
@@ -418,7 +416,7 @@ export function installMpGame(target = window) {
 
   async function invokeSelectedCard() {
     const my = _myIndex;
-    const uid = target.state?.selected ?? null;
+    const uid = _selected;
     if (!_state || uid === null || mySubmitted(_state) || _abilityResolving) return;
     const card = _state.players[my].hand.find(c => c.uid === uid);
     if (!card) return;
@@ -441,7 +439,7 @@ export function installMpGame(target = window) {
     const p = _state.players[_myIndex];
     if (!p || p.hand.length < 3) return;
     _purgeSelect = [];
-    if (target.state) target.state.selected = null;
+    _selected = null;
     render();
   }
   function confirmPurge() { if (_state && _purgeSelect?.length === 3 && !mySubmitted(_state)) submitAction({ type: MP_ACTIONS.MP_PURGE_CARDS, cardUids: _purgeSelect.slice() }); }
@@ -563,7 +561,11 @@ export function installMpGame(target = window) {
   function scheduleAutoScore() { if (!needsScoring(_state) || _myIndex !== 0 || _autoScoreTimer) return; _autoScoreTimer = target.setTimeout(() => { _autoScoreTimer = null; if (_state && _myIndex === 0 && needsScoring(_state)) target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_SCORE_ROUND }); }, 950); }
   function scheduleAutoNextRound() { if (!_state || _state.phase !== MP_PHASES.BETWEEN_ROUNDS || _myIndex !== 0 || _autoRoundTimer) return; _autoRoundTimer = target.setTimeout(() => { _autoRoundTimer = null; if (_state && _myIndex === 0 && _state.phase === MP_PHASES.BETWEEN_ROUNDS) { clearOpponentRevealQueues(); target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_NEW_ROUND, playerIndex: 0 }); } }, 120); }
 
-  function installPlaceCardOverride() { _origPlaceCard = target.placeCard; target.placeCard = function (slotIndex) { if (!_state) { _origPlaceCard?.call(target, slotIndex); return; } const uid = target.state?.selected ?? null; if (uid !== null && _purgeSelect === null && !_abilityResolving && !mySubmitted(_state)) dispatchPlace(uid, slotIndex); }; }
+  // placeCard is only reached via the drag-to-place path (tap-to-place calls
+  // dispatchPlace directly). The drag gesture in gestureCard.mjs communicates the
+  // dragged card through the global `state.selected`, so honor that here and fall
+  // back to our own selection store.
+  function installPlaceCardOverride() { _origPlaceCard = target.placeCard; target.placeCard = function (slotIndex) { if (!_state) { _origPlaceCard?.call(target, slotIndex); return; } const uid = target.state?.selected != null ? target.state.selected : _selected; if (uid != null && _purgeSelect === null && !_abilityResolving && !mySubmitted(_state)) dispatchPlace(uid, slotIndex); }; }
   function restorePlaceCard() { if (_origPlaceCard !== null) { target.placeCard = _origPlaceCard; _origPlaceCard = null; } }
   function installRenderSpreadOverride() { _origRenderSpread = target.renderSpread; target.renderSpread = function () { if (_state) return; _origRenderSpread?.apply(target, arguments); }; }
   function restoreRenderSpread() { if (_origRenderSpread !== null) { target.renderSpread = _origRenderSpread; _origRenderSpread = null; } }
@@ -574,21 +576,25 @@ export function installMpGame(target = window) {
   function restoreRenderHandOverride() { if (_origRenderHand !== null) { target.renderHand = _origRenderHand; _origRenderHand = null; } }
   function installPurgeOverride() { if (_origTogglePurgeCard !== null) return; _origTogglePurgeCard = target.togglePurgeCard; target.togglePurgeCard = toggleMpPurgeCard; }
   function restorePurgeOverride() { if (_origTogglePurgeCard !== null) { target.togglePurgeCard = _origTogglePurgeCard; _origTogglePurgeCard = null; } }
-  function installRefreshHandStateOverride() { if (_origRefreshHandState !== null) return; _origRefreshHandState = target.refreshHandState; if (typeof _origRefreshHandState !== 'function') return; target.refreshHandState = function () { const result = _origRefreshHandState.apply(target, arguments); refreshSelectionUi(); return result; }; }
+  // The singleplayer refreshHandState (also wrapped by the surgeon patch for its
+  // sync) still runs during a match for its side effects, but it toggles hand
+  // classes from the now-unused global `state`. Re-render the multiplayer hand
+  // afterwards so MP's view model is authoritative for selection/purge classes.
+  function installRefreshHandStateOverride() { if (_origRefreshHandState !== null) return; _origRefreshHandState = target.refreshHandState; if (typeof _origRefreshHandState !== 'function') return; target.refreshHandState = function () { const result = _origRefreshHandState.apply(target, arguments); if (_state) renderSelfHand(_state, _myIndex); refreshSelectionUi(); return result; }; }
   function restoreRefreshHandStateOverride() { if (_origRefreshHandState !== null) { target.refreshHandState = _origRefreshHandState; _origRefreshHandState = null; } }
 
-  target.tlrMpOnMatchStart = function (state, { role }) { _state = state; _myIndex = role === 'host' ? 0 : 1; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _abilityResolving = false; clearOpponentRevealQueues(); doc.body.classList.add('mp-game-active'); mount(); el('mpGame')?.classList.remove('mp-hidden'); installPlaceCardOverride(); installRenderSpreadOverride(); installRenderHandOverride(); installPurgeOverride(); installRefreshHandStateOverride(); render(); scheduleAutoScore(); scheduleAutoNextRound(); };
-  target.tlrMpOnLocalAction = function (action, state) { if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues(); _state = state; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _abilityResolving = false; render(); scheduleAutoScore(); scheduleAutoNextRound(); };
-  target.tlrMpOnPeerAction = function (action, state) { if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues(); _state = state; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _abilityResolving = false; render(); scheduleAutoScore(); scheduleAutoNextRound(); };
+  target.tlrMpOnMatchStart = function (state, { role }) { _state = state; _myIndex = role === 'host' ? 0 : 1; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; clearOpponentRevealQueues(); doc.body.classList.add('mp-game-active'); mount(); el('mpGame')?.classList.remove('mp-hidden'); installPlaceCardOverride(); installRenderSpreadOverride(); installRenderHandOverride(); installPurgeOverride(); installRefreshHandStateOverride(); render(); scheduleAutoScore(); scheduleAutoNextRound(); };
+  target.tlrMpOnLocalAction = function (action, state) { if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues(); _state = state; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; render(); scheduleAutoScore(); scheduleAutoNextRound(); };
+  target.tlrMpOnPeerAction = function (action, state) { if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues(); _state = state; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; render(); scheduleAutoScore(); scheduleAutoNextRound(); };
   target.tlrMpHandlePeerLeft = function () { const overlay = el('mpOverlay'), box = el('mpOvBox'); if (!box || !overlay) return; box.innerHTML = `<h2 class="mp-ov-title">Opponent Left</h2><p style="color:#b09060;font:400 12px/1.5 system-ui,sans-serif">Your opponent disconnected.</p><button class="mp-ov-btn" onclick="tlrMpLeave()" type="button">Return to Menu</button>`; overlay.classList.remove('mp-ov-hidden'); };
   target.tlrMpInvoke = function () { invokeSelectedCard(); };
   target.tlrMpDiscard = function () { invokeSelectedCard(); };
   target.tlrMpPurge = function () { _purgeSelect === null ? startPurgeMode() : confirmPurge(); };
   target.tlrMpConfirmPurge = function () { confirmPurge(); };
-  target.tlrMpCancelAction = function () { if (mySubmitted(_state)) return; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _abilityResolving = false; if (target.state) target.state.selected = null; target.refreshHandState?.(); render(); };
+  target.tlrMpCancelAction = function () { if (mySubmitted(_state)) return; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; target.refreshHandState?.(); render(); };
   target.tlrMpStartSwap = function () { if (!_state || !canSwapSpread(_state, _myIndex)) return; _swapFirst = -1; render(); };
   target.tlrMpNextRound = function () { if (_state && _myIndex === 0) { clearOpponentRevealQueues(); target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_NEW_ROUND, playerIndex: 0 }); } };
-  target.tlrMpLeave = function () { if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; } if (_autoRoundTimer) { target.clearTimeout(_autoRoundTimer); _autoRoundTimer = null; } _state = null; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _abilityResolving = false; clearOpponentRevealQueues(); restorePlaceCard(); restoreRenderSpread(); restoreRenderHandOverride(); restorePurgeOverride(); restoreRefreshHandStateOverride(); doc.body.classList.remove('mp-game-active'); el('mpGame')?.classList.add('mp-hidden'); target._slotEls = null; const sp = el('spread'); if (sp) { sp._mpSlots = null; sp.replaceChildren(); } target.tlrHideMatchmaking?.(); if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu(); };
+  target.tlrMpLeave = function () { if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; } if (_autoRoundTimer) { target.clearTimeout(_autoRoundTimer); _autoRoundTimer = null; } _state = null; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; clearOpponentRevealQueues(); restorePlaceCard(); restoreRenderSpread(); restoreRenderHandOverride(); restorePurgeOverride(); restoreRefreshHandStateOverride(); doc.body.classList.remove('mp-game-active'); el('mpGame')?.classList.add('mp-hidden'); target._slotEls = null; const sp = el('spread'); if (sp) { sp._mpSlots = null; sp.replaceChildren(); } target.tlrHideMatchmaking?.(); if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu(); };
 }
 
 function esc(str) {
