@@ -44,7 +44,10 @@ export function installHandCardGestures(target = window){
     const rects=g&&g.slotRects?g.slotRects:
       [...document.querySelectorAll('#spread .slot')].map((el,i)=>({el,idx:i,r:el.getBoundingClientRect()}));
     for(const{el,idx,r}of rects){
-      if(state.spread[idx])continue;           // occupied
+      // Occupied check: `state.spread` is authoritative in singleplayer, but in
+      // multiplayer the piles live in match state, so also treat any slot whose
+      // DOM already holds a card as occupied (never a valid drop target).
+      if(state.spread[idx]||el.querySelector('.card'))continue;
       if(cardCX>=r.left-SLOT_HIT_PAD&&cardCX<=r.right+SLOT_HIT_PAD&&
          cardCY>=r.top-SLOT_HIT_PAD&&cardCY<=r.bottom+SLOT_HIT_PAD){
         return{slotEl:el,idx};

@@ -153,3 +153,69 @@ body.mp-game-active .spread-wrap {
     height: 150px !important;
   }
 }
+
+/* ── Desktop / wide layout ──────────────────────────────────────────────
+   The mobile layout stacks the spreads vertically, which collide on wide
+   screens. On desktop, lay the duel out horizontally: the player's spread on
+   the left, the opponent's on the right, both tilted inward, with the score /
+   threshold pills centered between them. The player's hand stays at the bottom. */
+@media (min-width: 641px) {
+  /* Player spread → left side, tilted inward toward the centre. */
+  body.mp-game-active .spread-wrap {
+    position: fixed !important;
+    top: 50% !important;
+    bottom: auto !important;
+    left: 1.5vw !important;
+    right: auto !important;
+    width: 660px !important;
+    max-width: 44vw !important;
+    height: auto !important;
+    padding: 0 !important;
+    transform: translateY(-50%) scale(.62) rotate(7deg) !important;
+    transform-origin: left center !important;
+    z-index: 9400 !important;
+  }
+  body.mp-game-active #spread {
+    padding: 0 !important;
+    min-height: 0 !important;
+    transform: none !important;
+    justify-content: center !important;
+  }
+
+  /* Opponent spread → right side, mirrored tilt. */
+  body.mp-game-active .mp-opp-spread-clip {
+    position: fixed !important;
+    top: 50% !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: 1.5vw !important;
+    width: 660px !important;
+    max-width: 44vw !important;
+    height: auto !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    transform: translateY(-50%) scale(.62) rotate(-7deg) !important;
+    transform-origin: right center !important;
+    z-index: 9400 !important;
+  }
+  body.mp-game-active .mp-opp-spread-transform {
+    position: static !important;
+  }
+  body.mp-game-active #mpOppSpread {
+    padding: 0 !important;
+    min-height: 0 !important;
+    justify-content: center !important;
+  }
+
+  /* Score / threshold pills → centred between the two spreads. */
+  body.mp-game-active .mp-mid-wrap {
+    position: fixed !important;
+    top: 50% !important;
+    bottom: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translate(-50%, -50%) !important;
+    width: auto !important;
+    padding: 0 !important;
+  }
+}
