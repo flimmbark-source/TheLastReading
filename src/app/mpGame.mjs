@@ -10,9 +10,14 @@ import {
 import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
 import { shuffleDeck } from '../systems/deck.mjs';
 import { abilityHeldCards } from '../systems/abilities.mjs';
+import { computeScore } from '../systems/scoring.mjs';
+import { getPersona } from '../multiplayer/personas.mjs';
 import { applyCardPhoto, CARD_SHEET, title as cardTitle, symbol as cardSymbol } from '../ui/renderCard.mjs';
 
 const OPPONENT_REVEAL_DELAY_MS = 750;
+const EFFECT_WINDOW_MS = 2600;
+const COURT_RANKS = ['Page', 'Knight', 'Queen', 'King'];
+const MINOR_SUITS = ['Cups', 'Wands', 'Swords', 'Pentacles'];
 
 export function installMpGame(target = window) {
   if (!target || target.__tlrMpGameInstalled) return;
@@ -25,6 +30,7 @@ export function installMpGame(target = window) {
   let _purgeSelect = null; // null | uid[]
   let _selected = null;    // multiplayer's own hand-selection store (uid | null)
   let _abilityResolving = false;
+  let _personaSwapRequested = false;
   let _origPlaceCard    = null;
   let _origRenderSpread = null;
   let _origRenderHand   = null;
@@ -33,9 +39,18 @@ export function installMpGame(target = window) {
   let _oppRevealPending = new Set();
   let _oppRevealShown = new Set();
   let _oppRevealTimers = new Set();
+  let _lastShownScores = [0, 0];
+  let _lastScoringState = null;
+  let _latestEffectsUntil = 0;
+  let _delayedNextRoundQueued = false;
 
   const doc = target.document;
   function el(id) { return doc.getElementById(id); }
+  installMpGameStyle(doc);
+  patchMatchmakingBack(target, doc);
+  installFlushGuard(target, doc);
+  installOpponentPopTuning(target, doc);
+  installDispatchEffectDelay();
 
   function isMyActionTurn(s = _state) {
     if (!s) return false;
@@ -98,6 +113,7 @@ export function installMpGame(target = window) {
         <div class="mp-pills-band mp-pills-actions">
           <button class="sbtn sbtn-discard" id="mpDiscardBtn" onclick="tlrMpDiscard()" type="button" disabled aria-label="Discard selected card" title="Discard"></button>
           <button class="sbtn sbtn-purge" id="mpPurgeBtn" onclick="tlrMpPurge()" type="button" disabled aria-label="Purge 3 cards" title="Purge"></button>
+          <button class="sbtn sbtn-ability mp-action-copy" id="mpAbilityBtn" onclick="tlrMpStartSwap()" type="button" disabled aria-label="Ability unavailable" title="Ability unavailable">Ability</button>
         </div>
         <div class="mp-action-panel" id="mpActionPanel"></div>
       </div>
@@ -129,6 +145,10 @@ export function installMpGame(target = window) {
 
   function handleSelectToggle(uid) {
     if (!_state || mySubmitted(_state) || _abilityResolving) return;
+    if (_swapFirst >= 0) {
+      dispatchSwap(_swapFirst, uid);
+      return;
+    }
     _selected = _selected === uid ? null : uid;
     renderSelfHand(_state, _myIndex);
     refreshSelectionUi();
@@ -153,6 +173,9 @@ export function installMpGame(target = window) {
     renderSelfSpread(s, my);
     renderSelfHand(s, my);
     renderActionPanel(s, my);
+    syncPersonaPrompt();
+    syncMpActionPresentation(s, my);
+    applyPendingPlacementPreview();
 
     if (needsScoring(s))   showScoringOverlay(s);
     else if (isMatchOver(s)) showCompleteOverlay(s, my);
@@ -344,13 +367,179 @@ export function installMpGame(target = window) {
     return null;
   }
 
+  function localPendingPlace(s = _state, my = _myIndex) {
+    const action = s?.pendingActions?.[my];
+    if (!s || action?.type !== MP_ACTIONS.MP_PLACE_CARD) return null;
+    const player = s.players?.[my];
+    const slotIndex = Number(action.slotIndex);
+    if (!player || !Number.isInteger(slotIndex) || slotIndex < 0 || slotIndex >= (player.spread?.length || 0)) return null;
+    if (player.spread?.[slotIndex]) return null;
+    const card = player.hand?.find(item => item.uid === action.cardUid);
+    if (!card) return null;
+    return { card, cardUid: action.cardUid, slotIndex };
+  }
+
+  function clearPendingPlacementPreview() {
+    doc.querySelectorAll('.mp-local-pending-card').forEach(node => node.remove());
+    doc.querySelectorAll('.mp-local-pending-slot').forEach(slot => {
+      slot.classList.remove('mp-local-pending-slot', 'filled');
+      slot.style.removeProperty('opacity');
+      slot.style.removeProperty('filter');
+      if (!slot.querySelector('.card')) slot.classList.add('empty');
+    });
+    doc.querySelectorAll('.mp-local-pending-hidden').forEach(card => card.classList.remove('mp-local-pending-hidden'));
+  }
+
+  function buildPendingSpreadCard(card) {
+    const cardEl = doc.createElement('div');
+    cardEl.dataset.uid = card.uid;
+    cardEl.className = 'card'
+      + (card.type === 'major' ? ' major' : '')
+      + (CARD_SHEET[card.id] ? ' photo' : '')
+      + (card.type === 'interaction' ? ' mp-interaction' : '')
+      + ' mp-local-pending-card';
+    cardEl.innerHTML = mpCardHTML(card);
+    if (card.type !== 'interaction') applyCardPhoto(cardEl, card);
+    cardEl.style.setProperty('opacity', '1', 'important');
+    cardEl.style.setProperty('filter', 'none', 'important');
+    cardEl.onclick = null;
+    return cardEl;
+  }
+
+  function applyPendingPlacementPreview() {
+    if (!doc.body?.classList?.contains('mp-game-active')) return;
+    const pending = localPendingPlace();
+    clearPendingPlacementPreview();
+    if (!pending) return;
+    const handCard = doc.querySelector(`body.mp-game-active #hand .card[data-uid="${pending.cardUid}"]`);
+    const slot = doc.querySelectorAll('body.mp-game-active #spread .slot')[pending.slotIndex];
+    if (!slot) return;
+    if (handCard) handCard.classList.add('mp-local-pending-hidden');
+    slot.replaceChildren(buildPendingSpreadCard(pending.card));
+    slot.classList.remove('empty', 'target');
+    slot.classList.add('filled', 'mp-local-pending-slot');
+    slot.style.setProperty('opacity', '1', 'important');
+    slot.style.setProperty('filter', 'none', 'important');
+  }
+
   function renderPills(s, my) {
     const opp = 1 - my;
     const mp  = s.players[my], op = s.players[opp];
     const e = (id, val) => { const n = el(id); if (n) n.textContent = val; };
-    e('mpOppScore', op?.totalScore ?? 0); e('mpOppDisc', op?.discards ?? 0);
-    e('mpMyScore', mp?.totalScore ?? 0); e('mpMyDisc', mp?.discards ?? 0);
+    e('mpOppScore', visibleScoreForPlayer(s, opp, { allowOpponentAdvance: !opponentRevealPending() }));
+    e('mpOppDisc', op?.discards ?? 0);
+    e('mpMyScore', visibleScoreForPlayer(s, my, { allowOpponentAdvance: true }));
+    e('mpMyDisc', mp?.discards ?? 0);
     e('mpThresh', s.scoreTarget ?? 200);
+    moveMultPillsOutside();
+  }
+
+  function opponentRevealPending() {
+    return !!el('mpOppSpread')?.querySelector?.('.slot.mp-reveal-pending');
+  }
+
+  function scoredCards(player) {
+    const silenced = new Set(player?.silencedCardUids || []);
+    return (player?.spread || []).filter(card => card && !silenced.has(card.uid));
+  }
+
+  function normalizeMult(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return 1;
+    return Math.max(1, Number(number.toFixed(2)));
+  }
+
+  function liveSpreadScore(player) {
+    const cards = scoredCards(player);
+    if (!cards.length) return 0;
+    const score = computeScore(cards, { skipFlatBonuses: true, skipRelics: true });
+    return Math.floor((score.chips || 0) * normalizeMult(player?.roundMult ?? 1));
+  }
+
+  function scoreSpreadRaw(player) {
+    const cards = scoredCards(player);
+    if (!cards.length) return emptyScore();
+    return computeScore(cards, { skipFlatBonuses: true, skipRelics: true });
+  }
+
+  function scoreWithRoundMult(player) {
+    const score = scoreSpreadRaw(player);
+    return Math.floor((score.chips || 0) * normalizeMult(player?.roundMult ?? 1));
+  }
+
+  function scoreForPlayer(s, playerIndex) {
+    const player = s?.players?.[playerIndex];
+    if (!player) return 0;
+    const total = player.totalScore ?? 0;
+    if (s.phase === MP_PHASES.PLACEMENT || s.phase === MP_PHASES.SCORING) return total + liveSpreadScore(player);
+    return total;
+  }
+
+  function visibleScoreForPlayer(s, playerIndex, options = {}) {
+    const isOpponent = playerIndex === 1 - _myIndex;
+    const keepOpponentHidden = isOpponent && !options.allowOpponentAdvance;
+    const expected = keepOpponentHidden
+      ? (_lastShownScores[playerIndex] ?? s.players[playerIndex]?.totalScore ?? 0)
+      : scoreForPlayer(s, playerIndex);
+    const numeric = Number(expected);
+    if (Number.isFinite(numeric)) _lastShownScores[playerIndex] = numeric;
+    return expected;
+  }
+
+  function ensureRoundMults(state, before = null, reset = false) {
+    if (!state?.players) return;
+    state.players.forEach((player, index) => {
+      const previous = before?.players?.[index]?.roundMult;
+      player.roundMult = reset ? 1 : normalizeMult(player.roundMult ?? previous ?? 1);
+    });
+  }
+
+  function applyDerivedScoringState(before, state, action) {
+    if (!state?.players) return;
+    ensureRoundMults(state, before, action?.type === MP_ACTIONS.MP_INIT);
+    if (action?.type === MP_ACTIONS.MP_SUBMIT_ACTION) accumulateNewPlacementMult(before, state);
+    else if (action?.type === MP_ACTIONS.MP_SCORE_ROUND) correctScoreRoundWithAccumulatedMult(before, state);
+    else if (action?.type === MP_ACTIONS.MP_NEW_ROUND) ensureRoundMults(state, before, false);
+  }
+
+  function accumulateNewPlacementMult(before, state) {
+    if (!before?.players || !state?.players) return;
+    for (let playerIndex = 0; playerIndex < state.players.length; playerIndex += 1) {
+      if (!spreadChangedByPlacement(before.players[playerIndex], state.players[playerIndex])) continue;
+      const beforeScore = scoreSpreadRaw(before.players[playerIndex]);
+      const afterScore = scoreSpreadRaw(state.players[playerIndex]);
+      const delta = Math.max(0, (afterScore.mult || 1) - (beforeScore.mult || 1));
+      if (delta > 0) state.players[playerIndex].roundMult = normalizeMult((state.players[playerIndex].roundMult ?? 1) + delta);
+    }
+  }
+
+  function correctScoreRoundWithAccumulatedMult(before, state) {
+    if (!before?.players || !state?.players) return;
+    for (let playerIndex = 0; playerIndex < state.players.length; playerIndex += 1) {
+      const beforePlayer = before.players[playerIndex];
+      const player = state.players[playerIndex];
+      const adjusted = scoreWithRoundMult(beforePlayer);
+      const beforeTotal = beforePlayer?.totalScore ?? 0;
+      player.roundMult = normalizeMult(player.roundMult ?? beforePlayer?.roundMult ?? 1);
+      player.roundScore = adjusted;
+      player.totalScore = beforeTotal + adjusted;
+    }
+    const [p0, p1] = state.players;
+    const targetScore = state.scoreTarget ?? 200;
+    if ((p0.totalScore ?? 0) >= targetScore || (p1.totalScore ?? 0) >= targetScore) {
+      state.phase = MP_PHASES.COMPLETE;
+      if (p0.totalScore === p1.totalScore) state.winner = 'draw';
+      else state.winner = p0.totalScore > p1.totalScore ? 0 : 1;
+    } else {
+      state.phase = MP_PHASES.BETWEEN_ROUNDS;
+      state.winner = null;
+    }
+  }
+
+  function spreadChangedByPlacement(beforePlayer, afterPlayer) {
+    const beforeSpread = beforePlayer?.spread || [];
+    const afterSpread = afterPlayer?.spread || [];
+    return afterSpread.some((card, index) => card && !beforeSpread[index]);
   }
 
   function renderActionButtons(s, my) {
@@ -360,6 +549,7 @@ export function installMpGame(target = window) {
     const selectedCard = selUid !== null ? p?.hand.find(c => c.uid === selUid) : null;
     const discardBtn = el('mpDiscardBtn');
     const purgeBtn = el('mpPurgeBtn');
+    const abilityBtn = el('mpAbilityBtn');
     if (discardBtn) {
       discardBtn.disabled = !isTurn || _purgeSelect !== null || _invokeCard !== null || _swapFirst !== null || !selectedCard || (p?.discards ?? 0) <= 0;
       discardBtn.classList.toggle('mp-active-action', !discardBtn.disabled);
@@ -368,6 +558,17 @@ export function installMpGame(target = window) {
       const canStartPurge = isTurn && _invokeCard === null && _swapFirst === null && (p?.hand?.length ?? 0) >= 3;
       purgeBtn.disabled = _purgeSelect === null ? !canStartPurge : _purgeSelect.length !== 3;
       purgeBtn.classList.toggle('mp-active-action', _purgeSelect !== null);
+    }
+    if (abilityBtn) {
+      const personaAction = currentPersonaAbilityAction(s, my);
+      const isVisible = !!personaAction && _purgeSelect === null && _invokeCard === null && !_abilityResolving;
+      abilityBtn.disabled = !isVisible;
+      abilityBtn.textContent = 'Ability';
+      abilityBtn.title = personaAction?.title || 'Ability unavailable';
+      abilityBtn.setAttribute('aria-label', personaAction?.title || 'Ability unavailable');
+      abilityBtn.dataset.mpAbilityAction = personaAction?.type || '';
+      abilityBtn.classList.toggle('mp-visible', isVisible);
+      abilityBtn.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
     }
   }
 
@@ -397,11 +598,438 @@ export function installMpGame(target = window) {
       parts.push(`<span class="mp-action-hint">Spread complete — waiting for opponent…</span>`);
     } else if (isTurn) {
       if (opponentSubmitted(s)) parts.push(`<span class="mp-action-hint">Opponent is ready. Choose your action.</span>`);
-      if (canSwapSpread(s, my)) parts.push(`<button class="mp-action-btn swap" onclick="tlrMpStartSwap()" type="button">Swap Spread</button>`);
+      if (canSwapSpread(s, my)) parts.push(`<button class="mp-action-btn swap" onclick="tlrMpStartSwap()" type="button">Swap Card</button>`);
       if (!opponentSubmitted(s)) parts.push(`<span class="mp-action-hint">Select a card from your hand.</span>`);
     } else if (s.phase === MP_PHASES.BETWEEN_ROUNDS) parts.push(`<span class="mp-action-hint">Starting next set…</span>`);
     else parts.push(`<span class="mp-action-hint">Waiting…</span>`);
     panel.innerHTML = parts.join('');
+  }
+
+  function currentPersona() {
+    const personaId = _state?.players?.[_myIndex]?.persona;
+    return getPersona(personaId);
+  }
+
+  function currentPersonaAbilityAction(s = _state, my = _myIndex) {
+    const player = s?.players?.[my];
+    if (!s || !player || !isMyActionTurn(s)) return null;
+    const persona = getPersona(player.persona);
+    if (player.swapAvailable && persona?.passives?.freeSpreadSwap) {
+      return {
+        type: 'persona-swap',
+        title: `${persona.ability?.name || 'Persona Ability'}: ${stripMarkup(persona.ability?.rules || 'Swap a card in your Spread with a card in your Hand.')}`,
+      };
+    }
+    return null;
+  }
+
+  function canDispatchSwap(slotIndex, cardUid) {
+    const player = _state?.players?.[_myIndex];
+    if (!_state || !player || !isMyActionTurn(_state)) return false;
+    if (!player.swapAvailable) return false;
+    if (!Number.isInteger(slotIndex) || slotIndex < 0 || !player.spread?.[slotIndex]) return false;
+    return player.hand?.some(card => card.uid === cardUid);
+  }
+
+  function selectedSwapSpreadCard() {
+    if (_swapFirst === null || _swapFirst < 0) return null;
+    return _state?.players?.[_myIndex]?.spread?.[_swapFirst] || null;
+  }
+
+  function syncPersonaPrompt() {
+    const promptBox = el('abilityPrompt');
+    const title = el('abilityPromptTitle');
+    const text = el('abilityPromptText');
+    const button = el('abilityConfirm');
+    if (!promptBox || !title || !text || !button) return;
+
+    if (!_personaSwapRequested || _swapFirst === null) {
+      doc.body.classList.remove('mp-persona-ability-active');
+      if (promptBox.dataset.mpPersonaPrompt === '1') {
+        promptBox.classList.remove('show');
+        promptBox.dataset.mpPersonaPrompt = '';
+        title.textContent = '';
+        text.textContent = '';
+        button.disabled = true;
+        button.textContent = 'Choose';
+        button.onclick = null;
+      }
+      return;
+    }
+
+    const persona = currentPersona();
+    const ability = persona?.ability;
+    const chosenSpreadCard = selectedSwapSpreadCard();
+    const firstStep = !chosenSpreadCard;
+
+    doc.body.classList.add('mp-persona-ability-active');
+    promptBox.dataset.mpPersonaPrompt = '1';
+    promptBox.classList.add('show');
+    title.textContent = ability?.name || 'Persona Ability';
+    text.innerHTML = firstStep
+      ? `<b>${esc(persona?.name || 'Persona')}:</b> Choose a card in your <b>Spread</b>. Then choose a card in your <b>Hand</b> to swap with it.`
+      : `Selected <b>${esc(cleanCardName(chosenSpreadCard))}</b>. Now choose a card in your <b>Hand</b> to swap with it.`;
+    button.disabled = false;
+    button.textContent = 'Cancel';
+    button.onclick = () => target.tlrMpCancelAction?.();
+  }
+
+  function syncMpActionPresentation(s = _state, my = _myIndex) {
+    if (!doc.body.classList.contains('mp-game-active')) return;
+    hideSwipeTutorialInMultiplayer();
+
+    const personaAction = currentPersonaAbilityAction(s, my);
+    el('mpActionPanel')?.classList.toggle('mp-hide-mobile-ability-panel', !!personaAction);
+
+    const hasSelectedSwapSlot = _swapFirst >= 0;
+    doc.querySelectorAll('body.mp-game-active #hand .card[data-uid]').forEach(cardEl => {
+      cardEl.classList.toggle('mp-surgeon-swap-target', hasSelectedSwapSlot);
+    });
+    doc.querySelectorAll('body.mp-game-active #spread .slot.mp-swap-pick').forEach(slotEl => {
+      slotEl.classList.toggle('mp-surgeon-swap-blocked', hasSelectedSwapSlot);
+    });
+
+    syncMpButtonArt('mpDiscardBtn');
+    syncMpButtonArt('mpPurgeBtn');
+  }
+
+  function syncMpButtonArt(id) {
+    const button = el(id);
+    if (!button) return;
+    const active = !button.disabled;
+    button.classList.toggle('mp-active-action', active);
+    button.style.setProperty('opacity', active ? '1' : '.38', 'important');
+    button.style.setProperty('cursor', active ? 'pointer' : 'default', 'important');
+    button.style.setProperty('filter', active ? 'brightness(1.06)' : 'none', 'important');
+    button.style.setProperty('color', active ? '#f0d58a' : '#8a7551', 'important');
+    button.style.setProperty('border-color', active ? 'rgba(220,176,92,.78)' : 'rgba(180,140,90,.28)', 'important');
+    button.style.setProperty('background', active ? 'rgba(74,46,18,.92)' : 'rgba(28,18,10,.68)', 'important');
+    button.style.setProperty('background-color', active ? 'rgba(74,46,18,.92)' : 'rgba(28,18,10,.68)', 'important');
+    button.style.setProperty('box-shadow', active
+      ? '0 0 0 1px rgba(255,217,120,.16), 0 7px 18px rgba(0,0,0,.42), inset 0 1px rgba(255,255,255,.08)'
+      : '0 4px 12px rgba(0,0,0,.28)', 'important');
+  }
+
+  function hideSwipeTutorialInMultiplayer() {
+    doc.querySelectorAll('.hand-swipe-hint').forEach(node => {
+      node.hidden = true;
+      node.setAttribute('aria-hidden', 'true');
+      node.style.setProperty('display', 'none', 'important');
+      node.style.setProperty('opacity', '0', 'important');
+    });
+  }
+
+  function moveMultPillsOutside() {
+    if (!doc.body.classList.contains('mp-game-active')) return;
+    const isDesktop = target.matchMedia?.('(min-width: 641px)').matches ?? false;
+    doc.querySelectorAll('.mp-pill-score').forEach(pill => {
+      const parent = pill.parentElement;
+      if (!parent) return;
+      const embedded = pill.querySelector(':scope > .mp-mult-inline');
+      const putRight = isDesktop && pill.classList.contains('mp-pill-opp-score');
+      const adjacent = putRight
+        ? (pill.nextElementSibling?.classList?.contains('mp-mult-inline') ? pill.nextElementSibling : null)
+        : (pill.previousElementSibling?.classList?.contains('mp-mult-inline') ? pill.previousElementSibling : null);
+      let mult = adjacent || embedded;
+      if (!mult) return;
+      if (embedded && embedded !== mult) embedded.remove();
+      if (putRight) {
+        if (mult.parentElement !== parent || pill.nextElementSibling !== mult) parent.insertBefore(mult, pill.nextSibling);
+        mult.classList.add('mp-mult-right');
+        mult.classList.remove('mp-mult-left');
+      } else {
+        if (mult.parentElement !== parent || mult.nextElementSibling !== pill) parent.insertBefore(mult, pill);
+        mult.classList.add('mp-mult-left');
+        mult.classList.remove('mp-mult-right');
+      }
+      const cleanText = mult.textContent.replace(/[()]/g, '').trim();
+      if (mult.textContent !== cleanText) mult.textContent = cleanText;
+      if (!putRight) parent.classList.add('mp-has-left-mult');
+      pill.style.setProperty('width', '118px', 'important');
+      pill.style.setProperty('gap', '5px', 'important');
+    });
+  }
+
+  function updateScoreMultPills(state = _state, options = {}) {
+    if (!state?.players) return;
+    if (Number.isInteger(options.onlyPlayerIndex)) {
+      const id = options.onlyPlayerIndex === _myIndex ? 'mpMyScore' : 'mpOppScore';
+      updateOneScorePill(id, state, options.onlyPlayerIndex);
+      return;
+    }
+    updateOneScorePill('mpMyScore', state, _myIndex);
+    if (options.includeOpponent !== false) updateOneScorePill('mpOppScore', state, 1 - _myIndex);
+  }
+
+  function updateOneScorePill(scoreId, state, playerIndex) {
+    const scoreNode = el(scoreId);
+    if (!scoreNode) return;
+    const player = state.players[playerIndex];
+    const score = String(scoreForPlayer(state, playerIndex));
+    if (scoreNode.textContent !== score) scoreNode.textContent = score;
+    const pill = scoreNode.closest('.mp-pill-score') || scoreNode.parentElement;
+    if (!pill) return;
+    let mult = pill.querySelector('.mp-mult-inline');
+    if (!mult) {
+      mult = doc.createElement('span');
+      mult.className = 'mp-mult-inline';
+      pill.appendChild(mult);
+    }
+    mult.textContent = `${formatMult(player?.roundMult ?? 1)}x`;
+    moveMultPillsOutside();
+  }
+
+  function playPlacementFeedback(before, state) {
+    if (!before?.players || !state?.players) return;
+    const placements = findPlacements(before, state);
+    if (!placements.length) return;
+
+    _latestEffectsUntil = Math.max(_latestEffectsUntil, Date.now() + EFFECT_WINDOW_MS + OPPONENT_REVEAL_DELAY_MS);
+    target.holdEffects?.(EFFECT_WINDOW_MS + OPPONENT_REVEAL_DELAY_MS);
+
+    target.requestAnimationFrame?.(() => {
+      placements.forEach((placement, index) => {
+        const localDelay = placement.playerIndex === _myIndex ? 0 : OPPONENT_REVEAL_DELAY_MS;
+        target.setTimeout(() => playSinglePlacementFeedback(before, state, placement), localDelay + index * 120);
+      });
+    });
+  }
+
+  function playSinglePlacementFeedback(before, state, placement) {
+    const { playerIndex, slotIndex, card } = placement;
+    const slotEl = slotElementForPlayer(playerIndex, slotIndex);
+    if (!slotEl) return;
+
+    const cardEl = slotEl.querySelector('.card');
+    if (cardEl) {
+      cardEl.classList.add('landing');
+      cardEl.addEventListener('animationend', () => cardEl.classList.remove('landing'), { once: true });
+    }
+
+    updateScoreMultPills(state, { onlyPlayerIndex: playerIndex });
+    slotGhost(slotEl, `+${card.points || 0}`);
+    scoreGhost(playerIndex, '+1');
+    target.playSound?.('place');
+    target.haptic?.(12);
+
+    const beforeScore = scoreSpreadRaw(before.players[playerIndex]);
+    const afterScore = scoreSpreadRaw(state.players[playerIndex]);
+    const newMelds = diffMelds(beforeScore, afterScore);
+    let delay = 420;
+    let announceOffset = 0;
+
+    for (const meld of newMelds) {
+      const slots = slotsForMeld(state.players[playerIndex]?.spread || [], meld.name);
+      const visualSlots = slots.map(index => slotElementForPlayer(playerIndex, index)).filter(Boolean);
+      visualSlots.forEach((slot, index) => target.setTimeout(() => bumpSlot(slot), delay + index * 130));
+
+      const anchor = visualSlots[visualSlots.length - 1] || slotEl;
+      const ghostDelay = delay + visualSlots.length * 130 + 120;
+      target.setTimeout(() => slotGhost(anchor, meldText(meld), true), ghostDelay);
+
+      if (!meld.name.startsWith('⚷') && meld.name !== 'Omen' && meld.name !== 'Resonance') {
+        target.setTimeout(() => {
+          target.centerGhost?.(normMeldName(meld.name), meld.mult > 1.5 || (meld.mode === 'add' && meld.mult >= 1.5));
+          target.playSound?.('meld');
+          target.haptic?.([0, 10, 35, 12]);
+        }, delay + announceOffset);
+      }
+
+      if (meld.mult > 0) {
+        const shownMult = meld.mode === 'add' ? meld.mult : meld.mult - 1;
+        target.setTimeout(() => scoreGhost(playerIndex, signed(shownMult), true), ghostDelay + 200);
+      }
+
+      delay += visualSlots.length * 130 + 700;
+      announceOffset += 600;
+      _latestEffectsUntil = Math.max(_latestEffectsUntil, Date.now() + delay + 1100);
+      target.holdEffects?.(delay + 1100);
+    }
+
+    target.setTimeout(() => updateScoreMultPills(state, { onlyPlayerIndex: playerIndex }), Math.min(delay + 180, EFFECT_WINDOW_MS));
+  }
+
+  function findPlacements(before, state) {
+    const out = [];
+    for (let playerIndex = 0; playerIndex < state.players.length; playerIndex += 1) {
+      const beforeSpread = before.players[playerIndex]?.spread || [];
+      const afterSpread = state.players[playerIndex]?.spread || [];
+      for (let slotIndex = 0; slotIndex < afterSpread.length; slotIndex += 1) {
+        const beforeCard = beforeSpread[slotIndex];
+        const afterCard = afterSpread[slotIndex];
+        if (!beforeCard && afterCard) out.push({ playerIndex, slotIndex, card: afterCard });
+      }
+    }
+    return out;
+  }
+
+  function slotElementForPlayer(playerIndex, slotIndex) {
+    const spreadId = playerIndex === _myIndex ? 'spread' : 'mpOppSpread';
+    const spread = el(spreadId);
+    return spread?._mpSlots?.[slotIndex] || spread?.querySelectorAll?.('.slot')?.[slotIndex] || null;
+  }
+
+  function bumpSlot(slot) {
+    slot.classList.remove('bump');
+    void slot.offsetWidth;
+    slot.classList.add('bump');
+  }
+
+  function slotGhost(slot, text, big = false) {
+    if (!slot) return;
+    target.holdEffects?.(1700);
+    const rect = slot.getBoundingClientRect();
+    const ghost = doc.createElement('div');
+    ghost.className = `ghost ${big ? 'big' : ''}`;
+    ghost.textContent = text;
+    ghost.style.setProperty('--dx', `${(Math.random() * 20 - 10).toFixed(1)}px`);
+    ghost.style.setProperty('--rot', `${(Math.random() * 8 - 4).toFixed(1)}deg`);
+    ghost.style.position = 'fixed';
+    ghost.style.left = `${rect.left + rect.width / 2}px`;
+    ghost.style.top = `${rect.top - 10}px`;
+    ghost.style.zIndex = '99999';
+    doc.body.appendChild(ghost);
+    const card = slot.querySelector('.card');
+    if (card?.animate && !prefersReducedMotion()) {
+      card.animate([{ filter: 'brightness(1)' }, { filter: 'brightness(1.22)' }, { filter: 'brightness(1)' }], { duration: 220, easing: 'ease-out' });
+    }
+    target.setTimeout(() => ghost.remove(), 1700);
+  }
+
+  function scoreGhost(playerIndex, label, isMult = false) {
+    const id = playerIndex === _myIndex ? 'mpMyScore' : 'mpOppScore';
+    const scoreNode = el(id);
+    const pill = scoreNode?.closest?.('.mp-pill-score') || scoreNode;
+    if (!pill) return;
+    const rect = pill.getBoundingClientRect();
+    const ghost = doc.createElement('span');
+    ghost.className = `score-ghost ${isMult ? 'mult' : ''}`;
+    ghost.textContent = label;
+    ghost.style.left = `${rect.left + 8 + Math.random() * Math.max(1, rect.width - 16)}px`;
+    ghost.style.top = `${rect.top + rect.height * 0.25}px`;
+    doc.body.appendChild(ghost);
+    if (pill.animate && !prefersReducedMotion()) {
+      pill.animate([{ filter: 'brightness(1)' }, { filter: 'brightness(1.25)' }, { filter: 'brightness(1)' }], { duration: 260, easing: 'ease-out' });
+    }
+    target.setTimeout(() => ghost.remove(), 950);
+  }
+
+  function diffMelds(beforeScore, afterScore) {
+    const before = new Map((beforeScore.melds || []).map(meld => [meld.name, meld]));
+    const out = [];
+    for (const meld of afterScore.melds || []) {
+      const old = before.get(meld.name);
+      if (!old) {
+        out.push(meld);
+        continue;
+      }
+      const chips = (meld.chips || 0) - (old.chips || 0);
+      const mult = (meld.mult || 0) - (old.mult || 0);
+      if (chips > 0 || mult > 0) out.push({ ...meld, chips, mult });
+    }
+    return out;
+  }
+
+  function slotsForMeld(spread, name) {
+    const filled = (spread || []).map((card, index) => card ? { card, index } : null).filter(Boolean);
+    if (name.startsWith('Three of a Kind') || name.startsWith('Four of a Kind')) {
+      const rank = COURT_RANKS.find(rankName => name.includes(`${rankName}s`));
+      const limit = name.startsWith('Three') ? 3 : 4;
+      return rank ? filled.filter(item => item.card.type === 'court' && item.card.rank === rank).slice(0, limit).map(item => item.index) : [];
+    }
+    if (name.startsWith('Full Court')) {
+      const limit = tierFrom(name) || 4;
+      const seen = new Set();
+      const out = [];
+      for (const item of filled) {
+        if (out.length >= limit) break;
+        if (item.card.type === 'court' && COURT_RANKS.includes(item.card.rank) && !seen.has(item.card.rank)) {
+          seen.add(item.card.rank);
+          out.push(item.index);
+        }
+      }
+      return out;
+    }
+    if (name.startsWith('Royal Court')) {
+      const suit = MINOR_SUITS.find(suitName => name.includes(suitName));
+      const limit = tierFrom(name) || 4;
+      return suit ? filled.filter(item => item.card.suit === suit).slice(0, limit).map(item => item.index) : [];
+    }
+    if (name.startsWith('Sequence')) {
+      const majors = filled
+        .filter(item => item.card.type === 'major')
+        .sort((a, b) => majorNumber(a.card) - majorNumber(b.card));
+      if (!majors.length) return [];
+      let bestStart = 0, bestLen = 1, curStart = 0, curLen = 1;
+      for (let i = 1; i < majors.length; i += 1) {
+        if (majorNumber(majors[i].card) === majorNumber(majors[i - 1].card) + 1) {
+          curLen += 1;
+          if (curLen > bestLen) { bestLen = curLen; bestStart = curStart; }
+        } else {
+          curStart = i;
+          curLen = 1;
+        }
+      }
+      const want = tierFrom(name) || bestLen;
+      return majors.slice(bestStart, bestStart + want).map(item => item.index);
+    }
+    if (name === 'Path of the Magi') {
+      const ids = new Set(['I', 'II', 'V']);
+      return filled.filter(item => ids.has(item.card.id)).map(item => item.index);
+    }
+    return filled.map(item => item.index);
+  }
+
+  function meldText(meld) {
+    if (typeof target.meldStr === 'function') return target.meldStr([meld.name, meld.chips || 0, meld.mult || 0, meld.mode]);
+    const shown = meld.mode === 'add' ? meld.mult : meld.mult - 1;
+    if (meld.chips && meld.mult) return `${signed(meld.chips)} ${signed(shown)}`;
+    if (meld.chips) return signed(meld.chips);
+    if (meld.mult) return signed(shown);
+    return '';
+  }
+
+  function normMeldName(name) {
+    if (typeof target.normMeldName === 'function') return target.normMeldName(name);
+    if (name.startsWith('Sequence')) return 'Sequence';
+    if (name.startsWith('Royal Court')) return 'Royal Court';
+    if (name.startsWith('Full Court')) return 'Full Court';
+    if (name.startsWith('Three of a Kind')) return 'Three of a Kind';
+    if (name.startsWith('Four of a Kind')) return 'Four of a Kind';
+    return name;
+  }
+
+  function tierFrom(name) {
+    const match = String(name).match(/\((\d+)/) || String(name).match(/of (\d+)/);
+    return match ? Number(match[1]) : 0;
+  }
+
+  function majorNumber(card) {
+    return card.number ?? card.num ?? 0;
+  }
+
+  function signed(value) {
+    const number = Number(value || 0);
+    return `${number >= 0 ? '+' : ''}${number.toFixed(2).replace(/\.?0+$/, '')}`;
+  }
+
+  function formatMult(value) {
+    return normalizeMult(value).toFixed(2).replace(/\.?0+$/, '');
+  }
+
+  function emptyScore() {
+    return { baseChips: 0, chips: 0, mult: 1, melds: [], finalScore: 0 };
+  }
+
+  function cloneState(state) {
+    if (!state) return null;
+    try { return structuredClone(state); }
+    catch (_) { return JSON.parse(JSON.stringify(state)); }
+  }
+
+  function prefersReducedMotion() {
+    try { return !!target.matchMedia?.('(prefers-reduced-motion: reduce)').matches; }
+    catch (_) { return false; }
   }
 
   function submitAction(action) {
@@ -412,7 +1040,23 @@ export function installMpGame(target = window) {
   }
 
   function dispatchPlace(cardUid, slotIndex) { submitAction({ type: MP_ACTIONS.MP_PLACE_CARD, cardUid, slotIndex }); }
-  function dispatchSwap(slotA, slotB) { _swapFirst = null; render(); }
+  function dispatchSwap(slotIndex, cardUid) {
+    if (!canDispatchSwap(slotIndex, cardUid)) return;
+    target.tlrMpDispatch?.({
+      type: MP_ACTIONS.MP_SUBMIT_ACTION,
+      playerIndex: _myIndex,
+      action: {
+        type: MP_ACTIONS.MP_SWAP_SPREAD,
+        playerIndex: _myIndex,
+        slotIndex,
+        cardUid,
+      },
+    });
+    _swapFirst = null;
+    _selected = null;
+    _personaSwapRequested = false;
+    target.refreshHandState?.();
+  }
   function handleInvokeTarget(playerIdx, slotIdx) {
     if (_invokeCard === null) return;
     submitAction({ type: MP_ACTIONS.MP_INVOKE_ABILITY, cardUid: _invokeCard, target: { playerIndex: playerIdx, slotIndex: slotIdx } });
@@ -505,8 +1149,9 @@ export function installMpGame(target = window) {
     if (!secondOptions.length) return fallbackChoice('Between — no cards between');
     const second = await showMpCardChoice('Between', 'Choose the second anchor card.', secondOptions);
     if (!second) return null;
-    const held = heldCardsBetween(player, first, second);
-    const picked = await showMpCardChoice(`Between — ${cleanCardName(first)} / ${cleanCardName(second)}`, 'Cards found between them. Take 1.', held);
+    const limit = Math.max(1, Number(ability.count || getAbility('BETWEEN_2')?.count || 2));
+    const held = heldCardsBetween(player, first, second).slice(0, limit);
+    const picked = await showMpCardChoice(`Between — ${cleanCardName(first)} / ${cleanCardName(second)}`, `Cards found between them. Take 1. Revealed up to ${limit}.`, held);
     return picked ? { anchorUids: [first.uid, second.uid], takenCardUid: picked.uid } : null;
   }
   function inPlayCardsForAbility(player, sourceUid) { return [...player.hand.filter(card => card.uid !== sourceUid), ...player.spread.filter(Boolean)].filter(card => card.type === 'major' || card.type === 'court'); }
@@ -590,20 +1235,201 @@ export function installMpGame(target = window) {
   function installRefreshHandStateOverride() { if (_origRefreshHandState !== null) return; _origRefreshHandState = target.refreshHandState; if (typeof _origRefreshHandState !== 'function') return; target.refreshHandState = function () { const result = _origRefreshHandState.apply(target, arguments); if (_state) renderSelfHand(_state, _myIndex); refreshSelectionUi(); return result; }; }
   function restoreRefreshHandStateOverride() { if (_origRefreshHandState !== null) { target.refreshHandState = _origRefreshHandState; _origRefreshHandState = null; } }
 
-  target.tlrMpOnMatchStart = function (state, { role }) { _state = state; _myIndex = role === 'host' ? 0 : 1; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; clearOpponentRevealQueues(); doc.body.classList.add('mp-game-active'); mount(); el('mpGame')?.classList.remove('mp-hidden'); installPlaceCardOverride(); installRenderSpreadOverride(); installRenderHandOverride(); installPurgeOverride(); installRefreshHandStateOverride(); render(); scheduleAutoScore(); scheduleAutoNextRound(); };
-  target.tlrMpOnLocalAction = function (action, state) { if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues(); _state = state; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; render(); scheduleAutoScore(); scheduleAutoNextRound(); };
-  target.tlrMpOnPeerAction = function (action, state) { if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues(); _state = state; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; render(); scheduleAutoScore(); scheduleAutoNextRound(); };
+  function installDispatchEffectDelay() {
+    const original = target.tlrMpDispatch;
+    if (typeof original !== 'function' || target.__tlrMpScoringFeedbackDispatchWrapped) return;
+    target.__tlrMpScoringFeedbackDispatchWrapped = true;
+    target.tlrMpDispatch = function (action) {
+      if (action?.type === MP_ACTIONS.MP_NEW_ROUND && target.tlrMpGetState?.()?.phase === MP_PHASES.BETWEEN_ROUNDS) {
+        const remaining = Math.max(0, _latestEffectsUntil - Date.now());
+        if (remaining > 40) {
+          if (!_delayedNextRoundQueued) {
+            _delayedNextRoundQueued = true;
+            target.setTimeout(() => {
+              _delayedNextRoundQueued = false;
+              if (target.tlrMpGetState?.()?.phase === MP_PHASES.BETWEEN_ROUNDS) original.call(this, action);
+            }, remaining);
+          }
+          return target.tlrMpGetState?.() ?? null;
+        }
+      }
+      return original.call(this, action);
+    };
+  }
+
+  function resetTransientActionState() {
+    _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; _personaSwapRequested = false;
+  }
+
+  target.tlrMpOnMatchStart = function (state, { role }) { ensureRoundMults(state, null, true); _lastScoringState = cloneState(state); _state = state; _myIndex = role === 'host' ? 0 : 1; resetTransientActionState(); _lastShownScores = [state?.players?.[0]?.totalScore ?? 0, state?.players?.[1]?.totalScore ?? 0]; clearOpponentRevealQueues(); doc.body.classList.add('mp-game-active'); mount(); el('mpGame')?.classList.remove('mp-hidden'); installPlaceCardOverride(); installRenderSpreadOverride(); installRenderHandOverride(); installPurgeOverride(); installRefreshHandStateOverride(); render(); updateScoreMultPills(state); scheduleAutoScore(); scheduleAutoNextRound(); };
+  target.tlrMpOnLocalAction = function (action, state) { const before = _lastScoringState ? cloneState(_lastScoringState) : cloneState(state); applyDerivedScoringState(before, state, action); if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues(); _state = state; resetTransientActionState(); render(); updateScoreMultPills(state, { includeOpponent: false }); playPlacementFeedback(before, state); _lastScoringState = cloneState(state); scheduleAutoScore(); scheduleAutoNextRound(); };
+  target.tlrMpOnPeerAction = function (action, state) { const before = _lastScoringState ? cloneState(_lastScoringState) : cloneState(state); applyDerivedScoringState(before, state, action); if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues(); _state = state; resetTransientActionState(); render(); updateScoreMultPills(state, { includeOpponent: false }); playPlacementFeedback(before, state); _lastScoringState = cloneState(state); scheduleAutoScore(); scheduleAutoNextRound(); };
   target.tlrMpHandlePeerLeft = function () { const overlay = el('mpOverlay'), box = el('mpOvBox'); if (!box || !overlay) return; box.innerHTML = `<h2 class="mp-ov-title">Opponent Left</h2><p style="color:#b09060;font:400 12px/1.5 system-ui,sans-serif">Your opponent disconnected.</p><button class="mp-ov-btn" onclick="tlrMpLeave()" type="button">Return to Menu</button>`; overlay.classList.remove('mp-ov-hidden'); };
   target.tlrMpInvoke = function () { invokeSelectedCard(); };
   target.tlrMpDiscard = function () { invokeSelectedCard(); };
   target.tlrMpPurge = function () { _purgeSelect === null ? startPurgeMode() : confirmPurge(); };
   target.tlrMpConfirmPurge = function () { confirmPurge(); };
-  target.tlrMpCancelAction = function () { if (mySubmitted(_state)) return; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; target.refreshHandState?.(); render(); };
-  target.tlrMpStartSwap = function () { if (!_state || !canSwapSpread(_state, _myIndex)) return; _swapFirst = -1; render(); };
+  target.tlrMpCancelAction = function () { if (mySubmitted(_state)) return; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; _personaSwapRequested = false; target.refreshHandState?.(); render(); };
+  target.tlrMpStartSwap = function () { if (!_state || !canSwapSpread(_state, _myIndex)) return; _swapFirst = -1; _personaSwapRequested = true; render(); };
   target.tlrMpNextRound = function () { if (_state && _myIndex === 0) { clearOpponentRevealQueues(); target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_NEW_ROUND, playerIndex: 0 }); } };
-  target.tlrMpLeave = function () { if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; } if (_autoRoundTimer) { target.clearTimeout(_autoRoundTimer); _autoRoundTimer = null; } _state = null; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; clearOpponentRevealQueues(); restorePlaceCard(); restoreRenderSpread(); restoreRenderHandOverride(); restorePurgeOverride(); restoreRefreshHandStateOverride(); doc.body.classList.remove('mp-game-active'); el('mpGame')?.classList.add('mp-hidden'); target._slotEls = null; const sp = el('spread'); if (sp) { sp._mpSlots = null; sp.replaceChildren(); } target.tlrHideMatchmaking?.(); if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu(); };
+  target.tlrMpLeave = function () { if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; } if (_autoRoundTimer) { target.clearTimeout(_autoRoundTimer); _autoRoundTimer = null; } _state = null; resetTransientActionState(); _lastScoringState = null; _latestEffectsUntil = 0; _delayedNextRoundQueued = false; clearOpponentRevealQueues(); restorePlaceCard(); restoreRenderSpread(); restoreRenderHandOverride(); restorePurgeOverride(); restoreRefreshHandStateOverride(); clearPendingPlacementPreview(); syncPersonaPrompt(); doc.body.classList.remove('mp-game-active'); el('mpGame')?.classList.add('mp-hidden'); target._slotEls = null; const sp = el('spread'); if (sp) { sp._mpSlots = null; sp.replaceChildren(); } target.tlrHideMatchmaking?.(); if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu(); };
 }
 
 function esc(str) {
   return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function stripMarkup(value) {
+  return String(value ?? '').replace(/\*\*/g, '');
+}
+
+function patchMatchmakingBack(target, doc) {
+  if (target.__tlrMatchmakingBackToChoicesPatchInstalled) return;
+  target.__tlrMatchmakingBackToChoicesPatchInstalled = true;
+
+  const originalBack = target.tlrMmBack;
+  target.tlrMmBack = function (...args) {
+    const screen = doc.getElementById('matchmakingScreen');
+    const isOnMatchmakingScreen = !!screen && !screen.classList.contains('mm-screen-hidden');
+    const isPreMatchHostOrJoin = !!target.tlrMpGetRole?.() && !target.tlrMpGetState?.();
+
+    if (isOnMatchmakingScreen && isPreMatchHostOrJoin && typeof target.tlrMmReset === 'function') {
+      target.tlrMmReset();
+      return;
+    }
+
+    return originalBack?.apply(this, args);
+  };
+}
+
+function installFlushGuard(target, doc) {
+  if (target.__tlrMpFlushGuardInstalled) return;
+  const original = target.flushHand;
+  if (typeof original !== 'function') return;
+  target.__tlrMpFlushGuardInstalled = true;
+  target.flushHand = function (...args) {
+    if (doc.body.classList.contains('mp-game-active')) return false;
+    return original.apply(this, args);
+  };
+}
+
+function installOpponentPopTuning(target, doc) {
+  if (target.__tlrMpOpponentPopTuned) return;
+  const proto = target.Element?.prototype;
+  if (!proto || typeof proto.animate !== 'function') return;
+  target.__tlrMpOpponentPopTuned = true;
+  const original = proto.animate;
+  proto.animate = function (keyframes, options) {
+    const isOpponentCard = doc.body.classList.contains('mp-game-active')
+      && this?.classList?.contains('card')
+      && this.closest?.('#mpOppSpread');
+    const firstTransform = Array.isArray(keyframes) ? String(keyframes[0]?.transform || '') : '';
+    if (isOpponentCard && firstTransform.includes('scale(.78)')) {
+      return original.call(this, [
+        { transform: 'translateY(-18px) scale(.28)', opacity: 0, filter: 'brightness(1.6)' },
+        { transform: 'translateY(3px) scale(1.12)', opacity: 1, filter: 'brightness(1.22)' },
+        { transform: 'translateY(0) scale(1)', opacity: 1, filter: 'brightness(1)' },
+      ], { ...(options || {}), duration: 380, easing: 'cubic-bezier(.16,.9,.22,1)' });
+    }
+    return original.call(this, keyframes, options);
+  };
+}
+
+function installMpGameStyle(doc) {
+  if (!doc || doc.getElementById('mp-game-integrated-style')) return;
+  const style = doc.createElement('style');
+  style.id = 'mp-game-integrated-style';
+  style.textContent = `
+    body.mp-game-active #hand .card.mp-local-pending-hidden {
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    body.mp-game-active #spread .slot.mp-local-pending-slot {
+      opacity: 1 !important;
+      filter: none !important;
+      box-shadow: 0 0 0 1px rgba(255, 214, 132, .32), 0 0 18px rgba(255, 214, 132, .22) !important;
+    }
+    body.mp-game-active #spread .slot .card.mp-local-pending-card {
+      opacity: 1 !important;
+      filter: none !important;
+      pointer-events: none !important;
+    }
+    body.mp-game-active.mp-persona-ability-active #abilityPrompt {
+      display: flex !important;
+      z-index: 2147482600 !important;
+    }
+    body.mp-game-active.mp-persona-ability-active #spread .slot.mp-swap-pick {
+      border-color: rgba(190, 138, 216, .95) !important;
+      box-shadow: 0 0 0 2px rgba(190, 138, 216, .46), 0 0 22px rgba(190, 138, 216, .5) !important;
+      cursor: pointer !important;
+    }
+    body.mp-game-active.mp-persona-ability-active #spread .slot.mp-swap-a {
+      border-color: rgba(255, 221, 144, .98) !important;
+      box-shadow: 0 0 0 2px rgba(255, 221, 144, .6), 0 0 28px rgba(255, 221, 144, .58) !important;
+    }
+    body.mp-game-active.mp-persona-ability-active #hand .card.mp-surgeon-swap-target {
+      border-color: rgba(120, 220, 150, .95) !important;
+      box-shadow: 0 0 0 2px rgba(120, 220, 150, .42), 0 0 22px rgba(120, 220, 150, .5) !important;
+      cursor: pointer !important;
+    }
+    body.mp-game-active #hand .card.mp-surgeon-swap-target {
+      cursor: pointer !important;
+      border-color: rgba(120,200,120,.68) !important;
+      box-shadow: 0 0 14px rgba(100,180,100,.38) !important;
+    }
+    body.mp-game-active #spread .slot.mp-surgeon-swap-blocked {
+      pointer-events: none !important;
+      opacity: .72;
+      cursor: default !important;
+    }
+    body.mp-game-active #mpAbilityBtn {
+      background: linear-gradient(#ead9b5, #b98948) !important;
+      background-image: linear-gradient(#ead9b5, #b98948) !important;
+      background-color: #d2ae73 !important;
+      border: 1px solid #7a5a2d !important;
+      border-radius: 6px !important;
+      box-shadow: 0 2px 0 rgba(53, 31, 13, .75), inset 0 1px rgba(255,255,255,.22) !important;
+      color: #20130b !important;
+      font: 700 12px/1 system-ui, Segoe UI, sans-serif !important;
+      letter-spacing: normal !important;
+      text-transform: none !important;
+    }
+    body.mp-game-active #mpAbilityBtn:not(.mp-visible) {
+      display: none !important;
+    }
+    body.mp-game-active #mpAbilityBtn::before,
+    body.mp-game-active #mpAbilityBtn::after {
+      content: none !important;
+      display: none !important;
+    }
+    body.mp-game-active .mp-pills-opp.mp-has-left-mult,
+    body.mp-game-active .mp-pills-self.mp-has-left-mult {
+      transform: translateX(-14px) !important;
+    }
+    body.mp-game-active .mp-mult-inline.mp-mult-left,
+    body.mp-game-active .mp-mult-inline.mp-mult-right {
+      display: inline-flex !important;
+      align-items: center !important;
+      min-width: 0 !important;
+      flex: 0 0 auto !important;
+      color: #ff5a4f !important;
+    }
+    body.mp-game-active .mp-mult-inline.mp-mult-left {
+      justify-content: flex-end !important;
+      margin-left: 0 !important;
+      margin-right: 2px !important;
+    }
+    body.mp-game-active .mp-mult-inline.mp-mult-right {
+      justify-content: flex-start !important;
+      margin-left: 2px !important;
+      margin-right: 0 !important;
+    }
+    body.mp-game-active .mp-pill-score {
+      gap: 5px !important;
+    }
+    body.mp-game-active .mp-overlay:not(.mp-ov-hidden) {
+      pointer-events: auto;
+    }
+  `;
+  doc.head.appendChild(style);
 }
