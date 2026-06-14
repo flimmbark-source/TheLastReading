@@ -33,7 +33,7 @@ path to collapse them. Each phase is independently shippable and must keep
 |---|---|---|
 | Shared mutable `state` / `persist` | `src/app/*`, `src/ui/*` | Read/written directly; mirrored to the store via `legacyBridge`. |
 | Store ↔ legacy sync | `app/legacyBridge.mjs`, `app/liveMirror.mjs`, `app/bootstrap.mjs` | `syncRunToStore`, `resolveAbilityThroughStore`, `tlrMirrorLiveState`. |
-| Multiplayer ↔ legacy render | `app/mpGame.mjs` `syncPerspectiveState` | Copies the MP player's piles into `window.state` each render so the shared hand renderer can draw them. |
+| Multiplayer ↔ legacy render | `app/mpGame.mjs` `syncPerspectiveState` | _Reduced._ The card piles (deck/hand/spread/discard/discards) are no longer copied into `window.state`; `renderHand` takes a view model and MP passes its match state. Only `selected`/`busy`/`purgeSelect`/`abilitySelect` scalars remain, until refreshHandState is migrated. |
 | Remaining live patch overlays | `app/surgeonHandSwapPatch.mjs`, `app/mpScoringFeedbackPatch.mjs`, `app/mpScorePillStabilityPatch.mjs` | Still imported and installed by `main.mjs`; fold into hosts as those flows migrate. |
 
 ## Phased plan
@@ -69,6 +69,17 @@ delete the `Object.defineProperty` selection bridge and `syncRunToStore`.
 `syncPerspectiveState`'s copy-into-`window.state` with a dedicated MP view model
 so the shared hand renderer takes explicit data instead of reading a global.
 This removes the last place where MP writes singleplayer globals.
+
+> _In progress._ `renderHand(ability, inPurge, view)` now takes an optional
+> display view model (singleplayer omits it; verified by `validate-render.mjs`),
+> and `mpGame` passes its match-state hand via `selfHandView`. A `renderHand`
+> override (mirroring the existing `renderSpread` one) redirects any stray
+> singleplayer render during a match to the MP view, so `syncPerspectiveState` no
+> longer copies deck/hand/spread/discard/discards into `window.state`. The
+> remaining scalar bridge (`selected`/`busy`/`purgeSelect`/`abilitySelect`) is
+> still written because the shared `refreshHandState` reads those to toggle hand
+> classes between full renders; eliminating it means giving multiplayer its own
+> selection store and a self-contained hand refresh (the next Phase 4 step).
 
 **Phase 5 — Fold remaining patch overlays into their hosts** and delete the
 `*Patch.mjs` install seam from `main.mjs`.

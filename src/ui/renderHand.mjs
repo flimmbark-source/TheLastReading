@@ -5,10 +5,16 @@
 import { cardHTML, applyCardPhoto, CARD_SHEET } from './renderCard.mjs';
 import { applyHint } from './renderHints.mjs';
 
-export function renderHand(ability, inPurge) {
+export function renderHand(ability, inPurge, view = null) {
+  // Display data (hand list, selection, purge picks) comes from `view` when
+  // provided — multiplayer passes its own match-state view so it no longer has
+  // to copy piles into the legacy global `state`. Singleplayer omits `view` and
+  // the global `state` is used. Click handlers still drive the shared legacy
+  // selection store (`state.selected`) in both modes.
+  const v = view || state;
   const h=$('#hand');
-  const selectedId=state.selected;
-  const handLen=state.hand.length;
+  const selectedId=v.selected;
+  const handLen=v.hand.length;
   // Suppress the swipe handler's MutationObserver during the loop.
   // Each insertBefore fires it synchronously with an intermediate card count,
   // causing applySlots() to assign wrong --slot values that then animate.
@@ -17,10 +23,10 @@ export function renderHand(ability, inPurge) {
   // Build uid -> existing element map so we can reuse DOM that's still in hand.
   const _handExisting=new Map();
   h.querySelectorAll(':scope > .card[data-uid]').forEach(el=>_handExisting.set(Number(el.dataset.uid),el));
-  state.hand.forEach((c,i)=>{
+  v.hand.forEach((c,i)=>{
     const valid=ability&&ability.validIds.has(c.uid);
     const picked=ability&&ability.picked.includes(c.uid);
-    const purgePicked=inPurge&&state.purgeSelect.includes(c.uid);
+    const purgePicked=inPurge&&(v.purgeSelect||[]).includes(c.uid);
     let e=_handExisting.get(c.uid);
     const fresh=!e;
     if(fresh){

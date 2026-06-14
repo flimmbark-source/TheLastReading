@@ -55,4 +55,30 @@ assert.ok(!cards.some(el => Number(el.dataset.uid) === removedUid), 'removed car
 assert.ok(cards.includes(reusedNode), 'surviving card nodes are reused, not rebuilt');
 assert.ok(!cards.some(el => el.classList.contains('sel')), 'clearing selection removes sel from the DOM');
 
+// --- View model: explicit display data overrides the global state ---
+{
+  // Global state currently holds the diffed-down 4-card hand (uids 101..104).
+  // Render a different hand through an explicit view model and assert the DOM
+  // follows the view, not the global — this is what multiplayer relies on.
+  const viewHand = deck.slice(10, 13).map((card, i) => ({ ...card, uid: 900 + i }));
+  renderHand(null, false, { hand: viewHand, selected: viewHand[1].uid, purgeSelect: null });
+  let cards = [...dom.window.document.querySelectorAll('#hand > .card')];
+  assert.deepEqual(cards.map(el => Number(el.dataset.uid)), viewHand.map(c => c.uid), 'view model drives the rendered hand');
+  assert.ok(
+    cards.find(el => Number(el.dataset.uid) === viewHand[1].uid).classList.contains('sel'),
+    'view model selection applies the sel class',
+  );
+  const globalUids = new Set(globalThis.state.hand.map(c => c.uid));
+  assert.ok(!cards.some(el => globalUids.has(Number(el.dataset.uid))), 'global hand is not rendered when a view is supplied');
+
+  // Omitting the view falls back to the global state (singleplayer back-compat).
+  renderHand(null, false);
+  cards = [...dom.window.document.querySelectorAll('#hand > .card')];
+  assert.deepEqual(
+    cards.map(el => Number(el.dataset.uid)),
+    globalThis.state.hand.map(c => c.uid),
+    'no view -> global state hand (back-compat)',
+  );
+}
+
 console.log('Render smoke checks passed.');

@@ -26,6 +26,7 @@ export function installMpGame(target = window) {
   let _abilityResolving = false;
   let _origPlaceCard    = null;
   let _origRenderSpread = null;
+  let _origRenderHand   = null;
   let _origTogglePurgeCard = null;
   let _origRefreshHandState = null;
   let _oppRevealPending = new Set();
@@ -103,28 +104,38 @@ export function installMpGame(target = window) {
       </div>`;
   }
 
+  // Multiplayer keeps its card piles in the match state (`_state`) and feeds them
+  // to the renderers via view models, so it no longer copies deck/hand/spread/
+  // discard into the legacy global `state`. A few scalars still live on the
+  // global because the shared singleplayer refreshHandState path reads them while
+  // a match is active: selection (`selected`, for the hand's sel highlight),
+  // `purgeSelect` (purge highlight), `busy` (renderHand's click guard), and
+  // `abilitySelect` which is forced null so no stale singleplayer ability prompt
+  // appears. Removing this last scalar bridge requires migrating refreshHandState
+  // itself (see docs/migration-roadmap.md, Phase 4).
   function syncPerspectiveState(s, my) {
     const p = s.players[my];
     if (!p || !target.state) return;
 
-    const selected = target.state.selected;
-    target.state.deck = (p.deck || []).slice();
-    target.state.hand = (p.hand || []).slice();
-    target.state.spread = (p.spread || Array(5).fill(null)).slice();
-    target.state.discard = (p.discard || []).slice();
-    target.state.discards = p.discards ?? 0;
     target.state.busy = mySubmitted(s) || _abilityResolving;
     target.state.abilitySelect = null;
     target.state.purgeSelect = _purgeSelect;
-
-    if (selected !== null && !target.state.hand.some(c => c.uid === selected)) {
+    if (target.state.selected !== null && !(p.hand || []).some(c => c.uid === target.state.selected)) {
       target.state.selected = null;
     }
   }
 
+  function selfHandView(s, my) {
+    return {
+      hand: s.players[my]?.hand || [],
+      selected: target.state?.selected ?? null,
+      purgeSelect: _purgeSelect,
+    };
+  }
+
   function renderSelfHand(s, my) {
     syncPerspectiveState(s, my);
-    if (typeof target.renderHand === 'function') target.renderHand(null, _purgeSelect !== null);
+    if (typeof target.renderHand === 'function') target.renderHand(null, _purgeSelect !== null, selfHandView(s, my));
   }
 
   function render() {
@@ -556,12 +567,17 @@ export function installMpGame(target = window) {
   function restorePlaceCard() { if (_origPlaceCard !== null) { target.placeCard = _origPlaceCard; _origPlaceCard = null; } }
   function installRenderSpreadOverride() { _origRenderSpread = target.renderSpread; target.renderSpread = function () { if (_state) return; _origRenderSpread?.apply(target, arguments); }; }
   function restoreRenderSpread() { if (_origRenderSpread !== null) { target.renderSpread = _origRenderSpread; _origRenderSpread = null; } }
+  // While a match is active the hand piles live in match state, not the legacy
+  // global. Any stray singleplayer renderHand() call (e.g. from a shared render)
+  // is redirected to the multiplayer view so it can never draw a stale hand.
+  function installRenderHandOverride() { if (_origRenderHand !== null) return; _origRenderHand = target.renderHand; if (typeof _origRenderHand !== 'function') return; target.renderHand = function (ability, inPurge, view) { if (_state && !view) return _origRenderHand.call(target, ability, inPurge, selfHandView(_state, _myIndex)); return _origRenderHand.call(target, ability, inPurge, view); }; }
+  function restoreRenderHandOverride() { if (_origRenderHand !== null) { target.renderHand = _origRenderHand; _origRenderHand = null; } }
   function installPurgeOverride() { if (_origTogglePurgeCard !== null) return; _origTogglePurgeCard = target.togglePurgeCard; target.togglePurgeCard = toggleMpPurgeCard; }
   function restorePurgeOverride() { if (_origTogglePurgeCard !== null) { target.togglePurgeCard = _origTogglePurgeCard; _origTogglePurgeCard = null; } }
   function installRefreshHandStateOverride() { if (_origRefreshHandState !== null) return; _origRefreshHandState = target.refreshHandState; if (typeof _origRefreshHandState !== 'function') return; target.refreshHandState = function () { const result = _origRefreshHandState.apply(target, arguments); refreshSelectionUi(); return result; }; }
   function restoreRefreshHandStateOverride() { if (_origRefreshHandState !== null) { target.refreshHandState = _origRefreshHandState; _origRefreshHandState = null; } }
 
-  target.tlrMpOnMatchStart = function (state, { role }) { _state = state; _myIndex = role === 'host' ? 0 : 1; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _abilityResolving = false; clearOpponentRevealQueues(); doc.body.classList.add('mp-game-active'); mount(); el('mpGame')?.classList.remove('mp-hidden'); installPlaceCardOverride(); installRenderSpreadOverride(); installPurgeOverride(); installRefreshHandStateOverride(); render(); scheduleAutoScore(); scheduleAutoNextRound(); };
+  target.tlrMpOnMatchStart = function (state, { role }) { _state = state; _myIndex = role === 'host' ? 0 : 1; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _abilityResolving = false; clearOpponentRevealQueues(); doc.body.classList.add('mp-game-active'); mount(); el('mpGame')?.classList.remove('mp-hidden'); installPlaceCardOverride(); installRenderSpreadOverride(); installRenderHandOverride(); installPurgeOverride(); installRefreshHandStateOverride(); render(); scheduleAutoScore(); scheduleAutoNextRound(); };
   target.tlrMpOnLocalAction = function (action, state) { if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues(); _state = state; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _abilityResolving = false; render(); scheduleAutoScore(); scheduleAutoNextRound(); };
   target.tlrMpOnPeerAction = function (action, state) { if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues(); _state = state; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _abilityResolving = false; render(); scheduleAutoScore(); scheduleAutoNextRound(); };
   target.tlrMpHandlePeerLeft = function () { const overlay = el('mpOverlay'), box = el('mpOvBox'); if (!box || !overlay) return; box.innerHTML = `<h2 class="mp-ov-title">Opponent Left</h2><p style="color:#b09060;font:400 12px/1.5 system-ui,sans-serif">Your opponent disconnected.</p><button class="mp-ov-btn" onclick="tlrMpLeave()" type="button">Return to Menu</button>`; overlay.classList.remove('mp-ov-hidden'); };
@@ -572,7 +588,7 @@ export function installMpGame(target = window) {
   target.tlrMpCancelAction = function () { if (mySubmitted(_state)) return; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _abilityResolving = false; if (target.state) target.state.selected = null; target.refreshHandState?.(); render(); };
   target.tlrMpStartSwap = function () { if (!_state || !canSwapSpread(_state, _myIndex)) return; _swapFirst = -1; render(); };
   target.tlrMpNextRound = function () { if (_state && _myIndex === 0) { clearOpponentRevealQueues(); target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_NEW_ROUND, playerIndex: 0 }); } };
-  target.tlrMpLeave = function () { if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; } if (_autoRoundTimer) { target.clearTimeout(_autoRoundTimer); _autoRoundTimer = null; } _state = null; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _abilityResolving = false; clearOpponentRevealQueues(); restorePlaceCard(); restoreRenderSpread(); restorePurgeOverride(); restoreRefreshHandStateOverride(); doc.body.classList.remove('mp-game-active'); el('mpGame')?.classList.add('mp-hidden'); target._slotEls = null; const sp = el('spread'); if (sp) { sp._mpSlots = null; sp.replaceChildren(); } target.tlrHideMatchmaking?.(); if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu(); };
+  target.tlrMpLeave = function () { if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; } if (_autoRoundTimer) { target.clearTimeout(_autoRoundTimer); _autoRoundTimer = null; } _state = null; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _abilityResolving = false; clearOpponentRevealQueues(); restorePlaceCard(); restoreRenderSpread(); restoreRenderHandOverride(); restorePurgeOverride(); restoreRefreshHandStateOverride(); doc.body.classList.remove('mp-game-active'); el('mpGame')?.classList.add('mp-hidden'); target._slotEls = null; const sp = el('spread'); if (sp) { sp._mpSlots = null; sp.replaceChildren(); } target.tlrHideMatchmaking?.(); if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu(); };
 }
 
 function esc(str) {
