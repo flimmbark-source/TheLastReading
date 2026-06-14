@@ -3,6 +3,7 @@ import { MP_PHASES } from '../multiplayer/mpState.mjs';
 import { computeScore } from '../systems/scoring.mjs';
 
 const EFFECT_WINDOW_MS = 2600;
+const OPPONENT_REVEAL_DELAY_MS = 750;
 const COURT_RANKS = ['Page', 'Knight', 'Queen', 'King'];
 const MINOR_SUITS = ['Cups', 'Wands', 'Swords', 'Pentacles'];
 
@@ -153,12 +154,14 @@ export function installMpScoringFeedbackPatch(target = window) {
     const placements = findPlacements(before, state);
     if (!placements.length) return;
 
-    latestEffectsUntil = Math.max(latestEffectsUntil, Date.now() + EFFECT_WINDOW_MS);
-    target.holdEffects?.(EFFECT_WINDOW_MS);
+    const myIndex = target.tlrMpGetRole?.() === 'guest' ? 1 : 0;
+    latestEffectsUntil = Math.max(latestEffectsUntil, Date.now() + EFFECT_WINDOW_MS + OPPONENT_REVEAL_DELAY_MS);
+    target.holdEffects?.(EFFECT_WINDOW_MS + OPPONENT_REVEAL_DELAY_MS);
 
     target.requestAnimationFrame?.(() => {
       placements.forEach((placement, index) => {
-        target.setTimeout(() => playSinglePlacementFeedback(before, state, placement), index * 120);
+        const localDelay = placement.playerIndex === myIndex ? 0 : OPPONENT_REVEAL_DELAY_MS;
+        target.setTimeout(() => playSinglePlacementFeedback(before, state, placement), localDelay + index * 120);
       });
     });
   }
@@ -479,7 +482,6 @@ function installStyle(doc) {
   style.id = 'mp-scoring-feedback-patch-style';
   style.textContent = `
     body.mp-game-active .mp-pill-score {
-      width: 146px !important;
       gap: 5px !important;
     }
     .mp-mult-inline {
