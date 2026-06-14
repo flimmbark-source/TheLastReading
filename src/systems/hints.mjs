@@ -15,6 +15,8 @@ export const HINT_GROUPS = Object.freeze({
   GOLD: 'gold',
 });
 
+const PATH_OF_THE_MAGI_COLOR_KEY = 'path:magi';
+
 export function normalizeMeldName(name) {
   if (name.startsWith('Sequence')) return SCORING_PATTERNS.SEQUENCE.label;
   if (name.startsWith('Royal Court')) return SCORING_PATTERNS.ROYAL_COURT.label;
@@ -41,6 +43,7 @@ export function sequenceRunKey(number, cards) {
 
 function extractColorKeyFromMeld(label, rawName, card, placedCards) {
   if (label === SCORING_PATTERNS.SEQUENCE.label && card.type === 'major') return sequenceRunKey(card.number, placedCards);
+  if (label === SCORING_PATTERNS.PATH_OF_THE_MAGI.label) return PATH_OF_THE_MAGI_COLOR_KEY;
   if (label === SCORING_PATTERNS.ROYAL_COURT.label) {
     const match = rawName.match(/\((?:\d+,\s*)?(\w+)\)/);
     return match ? `flush:${match[1]}` : null;
@@ -52,8 +55,28 @@ function extractColorKeyFromMeld(label, rawName, card, placedCards) {
   return null;
 }
 
+function sameHintIdentity(hint, level, label, colorKey) {
+  return hint.level === level && hint.label === label && (hint.colorKey || '') === (colorKey || '');
+}
+
 function addHint(hints, seen, level, label, colorKey = null) {
-  const key = `${level}:${label}:${colorKey || ''}`;
+  const suffix = `${label}:${colorKey || ''}`;
+  const key = `${level}:${suffix}`;
+
+  // A card that completes a pattern should not also show the same pattern as
+  // merely near. This was the source of text like "Path of the Magi + Path of
+  // the Magi" when the selected/drawn card both belonged to and completed the
+  // Path set.
+  if (level === HINT_LEVELS.NEAR && seen.has(`${HINT_LEVELS.COMPLETE}:${suffix}`)) return;
+  if (level === HINT_LEVELS.COMPLETE) {
+    const nearKey = `${HINT_LEVELS.NEAR}:${suffix}`;
+    if (seen.has(nearKey)) {
+      seen.delete(nearKey);
+      const index = hints.findIndex(hint => sameHintIdentity(hint, HINT_LEVELS.NEAR, label, colorKey));
+      if (index >= 0) hints.splice(index, 1);
+    }
+  }
+
   if (seen.has(key)) return;
   seen.add(key);
   hints.push({
@@ -85,7 +108,7 @@ function addNearMajorHints({ hints, seen, card, allCards }) {
 
   if (SCORING_PATTERNS.PATH_OF_THE_MAGI.requiredCardIds.includes(card.id)) {
     const pathIds = new Set(allCards.filter(other => SCORING_PATTERNS.PATH_OF_THE_MAGI.requiredCardIds.includes(other.id)).map(other => other.id));
-    if (pathIds.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.PATH_OF_THE_MAGI.label);
+    if (pathIds.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.PATH_OF_THE_MAGI.label, PATH_OF_THE_MAGI_COLOR_KEY);
   }
 }
 
@@ -134,5 +157,13 @@ export function getHandHints(state, options = {}) {
 }
 
 export function hintLabel(hints) {
-  return hints.map(hint => hint.label).join(' + ');
+  const labels = [];
+  const seen = new Set();
+  for (const hint of hints) {
+    if (!seen.has(hint.label)) {
+      seen.add(hint.label);
+      labels.push(hint.label);
+    }
+  }
+  return labels.join(' + ');
 }
