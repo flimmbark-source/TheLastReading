@@ -47,6 +47,10 @@ need to be run after each larger slice.
   live in the base game. The `mpGameExtensions.mjs` seam and its companion
   modules have been deleted, and `mpGameHost.mjs` is now a thin entry point that
   installs only the base game.
+- **Singleplayer patch overlays are folded.** `betweenAbilityLimitPatch`
+  (BETWEEN_2 reveal cap) and `endSessionFailPatch` (failed-reading end flow) now
+  live directly in `readingFlow.mjs`; both patch modules and their installers
+  have been removed.
 - **Legacy layer** still lives in `src/app` and `src/ui`. Some modules still read
   and write `window.state` / `window.persist` and cache DOM nodes in module
   globals. These are mirrored into the store by `app/legacyBridge.mjs` and
@@ -141,10 +145,10 @@ legacy handoffs with explicit multiplayer view models and match-state selectors.
 > the base reducer. `scripts/validate-mp-ability-flow.mjs` is the verification
 > anchor for the folded ability flow.
 >
-> _Remaining work._ Singleplayer-side patch overlays still exist as separate
-> installers: `betweenAbilityLimitPatch.mjs` (via `discardRuntime.mjs`) and
-> `endSessionFailPatch.mjs` (via `deferredAssets.mjs`). Fold these into their
-> hosts next.
+> _Singleplayer overlays done._ `betweenAbilityLimitPatch.mjs` and
+> `endSessionFailPatch.mjs` have been folded into `readingFlow.mjs` and deleted.
+> No standalone patch overlays remain; Phase 5 is essentially complete. Remaining
+> cleanup is the Phase 2/3 legacy-`state` retirement tracked below.
 
 ## Immediate next steps
 
@@ -153,11 +157,9 @@ legacy handoffs with explicit multiplayer view models and match-state selectors.
    ability prompt flow, spread/hand target glows, mult spans after placements,
    pending placement preview, and WORLD / Reshuffle preserving already placed
    cards.
-3. Fold the remaining singleplayer patch overlays (`betweenAbilityLimitPatch`,
-   `endSessionFailPatch`) into their hosts.
-4. Continue Phase 2 singleplayer work: move ability targeting initiation out of
+3. Continue Phase 2 singleplayer work: move ability targeting initiation out of
    `readingFlow` / `state.abilitySelect`.
-5. Migrate hand reorder and hold-to-expand off legacy runtime `state.hand` /
+4. Migrate hand reorder and hold-to-expand off legacy runtime `state.hand` /
    `state.selected`.
 
 ## Efficiency follow-ups (tracked, intentionally not bundled here)
