@@ -4,6 +4,7 @@ import { installMpScoringFeedbackPatch } from './mpScoringFeedbackPatch.mjs';
 import { installMpScorePillStabilityPatch } from './mpScorePillStabilityPatch.mjs';
 import { installMpSingleplayerAbilityFlow } from './mpSingleplayerAbilityFlow.mjs';
 import { installMpUiStateFixes } from './mpUiStateFixes.mjs';
+import { installMpPersonaAbilityPrompt } from './mpPersonaAbilityPrompt.mjs';
 
 export function installMpGame(target = window) {
   installBaseMpGame(target);
@@ -12,4 +13,5 @@ export function installMpGame(target = window) {
   installMpScorePillStabilityPatch(target);
   installMpSingleplayerAbilityFlow(target);
   installMpUiStateFixes(target);
+  installMpPersonaAbilityPrompt(target);
 }
