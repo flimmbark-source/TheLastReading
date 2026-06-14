@@ -12,7 +12,6 @@ export function installSurgeonHandSwapPatch(target = window) {
   patchMatchmakingBack(target, doc);
   installStyle(doc);
   installOpponentPopTuning(target, doc);
-  installMultiplayerEntryCleanup(target, doc);
   installFlushGuard(target, doc);
 
   const copiedButtonArt = new Set();
@@ -326,30 +325,6 @@ function patchMatchmakingBack(target, doc) {
 
     return originalBack?.apply(this, args);
   };
-}
-
-function installMultiplayerEntryCleanup(target, doc) {
-  if (target.__tlrMpEntryCleanupInstalled) return;
-  target.__tlrMpEntryCleanupInstalled = true;
-
-  const clearStaleHandlers = () => {
-    if (doc.body.classList.contains('mp-game-active')) return;
-    target.tlrMpOnLocalAction = null;
-    target.tlrMpOnPeerAction = null;
-  };
-
-  const wrap = name => {
-    const original = target[name];
-    if (typeof original !== 'function') return;
-    target[name] = function (...args) {
-      clearStaleHandlers();
-      return original.apply(this, args);
-    };
-  };
-
-  wrap('tlrShowMatchmaking');
-  wrap('tlrMmVsCpu');
-  wrap('tlrMmStartMatch');
 }
 
 function installFlushGuard(target, doc) {
