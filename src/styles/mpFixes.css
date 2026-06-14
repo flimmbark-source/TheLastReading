@@ -169,7 +169,7 @@ body.mp-game-active .spread-wrap {
   /* Player spread → far left, full-size cards, tilted inward toward the centre. */
   body.mp-game-active .spread-wrap {
     position: fixed !important;
-    top: 50% !important;
+    top: 41% !important;
     bottom: auto !important;
     left: -2vw !important;
     right: auto !important;
@@ -191,7 +191,7 @@ body.mp-game-active .spread-wrap {
   /* Opponent spread → right side, full-size cards, mirrored inward tilt. */
   body.mp-game-active .mp-opp-spread-clip {
     position: fixed !important;
-    top: 50% !important;
+    top: 41% !important;
     bottom: auto !important;
     left: auto !important;
     right: -2vw !important;
@@ -213,14 +213,14 @@ body.mp-game-active .spread-wrap {
     justify-content: center !important;
   }
 
-  /* Pills → centred grid, shifted above the midpoint.
+  /* Pills → centred grid, generously shifted above the midpoint.
      5-column layout: [player-mult] [player-pills] [centre] [opp-pills] [opp-mult]
      display:contents on the opp/self bands makes their pill children (including
      the mult spans placed by JS) participate directly in the grid, so each can
      be placed independently. Mobile flex-row layout is completely unchanged. */
   body.mp-game-active .mp-mid-wrap {
     position: fixed !important;
-    top: 38% !important;
+    top: 29% !important;
     bottom: auto !important;
     left: 50% !important;
     right: auto !important;
