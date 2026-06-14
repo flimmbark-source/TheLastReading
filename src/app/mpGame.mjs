@@ -30,6 +30,8 @@ export function installMpGame(target = window) {
   let _purgeSelect = null; // null | uid[]
   let _selected = null;    // multiplayer's own hand-selection store (uid | null)
   let _abilityResolving = false;
+  let _abilityTargeting = null; // visible hand/spread anchor-pick sub-phase
+  let _abilityConfirmOriginalOnclick = null;
   let _personaSwapRequested = false;
   let _origPlaceCard    = null;
   let _origRenderSpread = null;
@@ -52,6 +54,12 @@ export function installMpGame(target = window) {
   installOpponentPopTuning(target, doc);
   installDispatchEffectDelay();
   installMultPillObserver();
+  installAbilityTargetClicks();
+
+  // The shared #abilityConfirm button drives singleplayer targeting via its
+  // inline onclick. While a match is active we repoint it at the multiplayer
+  // confirm; remember the original so tlrMpLeave can restore it.
+  _abilityConfirmOriginalOnclick = el('abilityConfirm')?.getAttribute('onclick') || '';
 
   function isMyActionTurn(s = _state) {
     if (!s) return false;
@@ -146,7 +154,7 @@ export function installMpGame(target = window) {
 
   function handleSelectToggle(uid) {
     if (!_state || mySubmitted(_state) || _abilityResolving) return;
-    if (_swapFirst >= 0) {
+    if (swapSlotChosen()) {
       dispatchSwap(_swapFirst, uid);
       return;
     }
@@ -181,6 +189,10 @@ export function installMpGame(target = window) {
     if (needsScoring(s))   showScoringOverlay(s);
     else if (isMatchOver(s)) showCompleteOverlay(s, my);
     else                   hideOverlay();
+
+    // Re-apply the ability prompt and target glows: render() rebuilds the hand
+    // and spread, which would otherwise wipe the selection classes mid-pick.
+    if (_abilityTargeting) { renderAbilityPrompt(); refreshAbilityTargets(); }
   }
 
   function refreshSelectionUi() {
@@ -329,7 +341,7 @@ export function installMpGame(target = window) {
         if (isSlotAnchored(s, my, i)) cls += ' mp-anchored';
         if (isCardSilenced(s, my, card.uid)) cls += ' mp-silenced';
         if (_swapFirst === i) cls += ' mp-swap-a';
-        else if (_swapFirst >= 0) cls += ' mp-swap-pick';
+        else if (swapSlotChosen()) cls += ' mp-swap-pick';
       } else {
         cls += 'empty';
         if (isTurn && selUid !== null && _invokeCard === null && _swapFirst === null && _purgeSelect === null) cls += ' target';
@@ -337,7 +349,7 @@ export function installMpGame(target = window) {
       slotEl.className = cls;
       if (!card && isTurn && selUid !== null && _invokeCard === null && _swapFirst === null && _purgeSelect === null) slotEl.onclick = () => dispatchPlace(selUid, i);
       else if (card && isTurn && _swapFirst === -1) slotEl.onclick = () => { _swapFirst = i; render(); };
-      else if (card && isTurn && _swapFirst >= 0 && _swapFirst !== i) slotEl.onclick = () => dispatchSwap(_swapFirst, i);
+      else if (card && isTurn && swapSlotChosen() && _swapFirst !== i) slotEl.onclick = () => dispatchSwap(_swapFirst, i);
       else slotEl.onclick = null;
       renderSlotCard(slotEl, card, i);
     }
@@ -624,6 +636,11 @@ export function installMpGame(target = window) {
     return null;
   }
 
+  // A real spread slot index is chosen as the swap source. `_swapFirst` is null
+  // when not swapping and -1 while awaiting the first pick; guard against null so
+  // the JS `null >= 0` coercion (which is true) does not misfire as "slot chosen".
+  function swapSlotChosen() { return Number.isInteger(_swapFirst) && _swapFirst >= 0; }
+
   function canDispatchSwap(slotIndex, cardUid) {
     const player = _state?.players?.[_myIndex];
     if (!_state || !player || !isMyActionTurn(_state)) return false;
@@ -682,7 +699,7 @@ export function installMpGame(target = window) {
     const personaAction = currentPersonaAbilityAction(s, my);
     el('mpActionPanel')?.classList.toggle('mp-hide-mobile-ability-panel', !!personaAction);
 
-    const hasSelectedSwapSlot = _swapFirst >= 0;
+    const hasSelectedSwapSlot = swapSlotChosen();
     doc.querySelectorAll('body.mp-game-active #hand .card[data-uid]').forEach(cardEl => {
       cardEl.classList.toggle('mp-surgeon-swap-target', hasSelectedSwapSlot);
     });
@@ -1151,30 +1168,226 @@ export function installMpGame(target = window) {
   }
 
   async function fallbackChoice(title) { await showMpNotice(title, 'No valid target was available. Draw 1 instead.'); return { fallbackDraw: 1 }; }
+  // Singleplayer-style relation flow: anchors are picked by tapping the visible
+  // hand/spread cards (glow + #abilityPrompt), then the revealed card is taken
+  // through the shared modal. This matches the singleplayer ability UX.
   async function buildSingleAnchorAbilityChoice(player, sourceCard, ability) {
     const candidates = inPlayCardsForAbility(player, sourceCard.uid).filter(card => heldCardsForAnchor(player, ability, card).length > 0);
     if (!candidates.length) return fallbackChoice(`${ability.title} — no matching cards`);
-    const anchor = await showMpCardChoice(ability.title, ability.prompt || 'Choose an anchor card.', sortChoiceCards(candidates));
-    if (!anchor) return null;
-    const held = heldCardsForAnchor(player, ability, anchor);
-    if (!held.length) return fallbackChoice(`${ability.title} — no matching cards`);
-    const picked = await showMpCardChoice(`${ability.title} — ${cleanCardName(anchor)}`, `Cards found from ${cleanCardName(anchor)}. Take 1.`, held);
+    const anchors = await selectAbilityTargets(
+      ability.title,
+      ability.prompt || singleplayerPromptFor(ability),
+      candidates,
+      1,
+      anchorCard => {
+        const total = heldCardsForAnchor(player, ability, anchorCard).length;
+        return total ? `${cleanCardName(anchorCard)}: ${total} card${total === 1 ? '' : 's'} found` : 'No matching cards.';
+      },
+    );
+    if (!anchors) return null;
+    const [anchor] = anchors;
+    const found = sortChoiceCards(heldCardsForAnchor(player, ability, anchor));
+    if (!found.length) return fallbackChoice(`${ability.title} — no matching cards`);
+    const picked = await showMpCardChoice(
+      `${ability.title} — ${cleanCardName(anchor)}`,
+      `Cards found from ${cleanCardName(anchor)}. Take 1. Unchosen revealed cards go to the bottom.`,
+      found,
+    );
     return picked ? { anchorUids: [anchor.uid], takenCardUid: picked.uid } : null;
   }
   async function buildBetweenAbilityChoice(player, sourceCard, ability) {
     const anchors = sortChoiceCards(inPlayCardsForAbility(player, sourceCard.uid));
-    const firstOptions = anchors.filter(a => anchors.some(b => b.uid !== a.uid && heldCardsBetween(player, a, b).length > 0));
-    if (!firstOptions.length) return fallbackChoice('Between — no cards between');
-    const first = await showMpCardChoice('Between', 'Choose the first anchor card.', firstOptions);
-    if (!first) return null;
-    const secondOptions = anchors.filter(card => card.uid !== first.uid && heldCardsBetween(player, first, card).length > 0);
-    if (!secondOptions.length) return fallbackChoice('Between — no cards between');
-    const second = await showMpCardChoice('Between', 'Choose the second anchor card.', secondOptions);
-    if (!second) return null;
+    const validAnchors = anchors.filter(a => anchors.some(b => b.uid !== a.uid && heldCardsBetween(player, a, b).length > 0));
+    if (!validAnchors.length) return fallbackChoice('Between — no cards between');
+    const pickedAnchors = await selectAbilityTargets(
+      'Between',
+      'Choose 2 cards. Between finds cards whose values fall between them in sequence.',
+      validAnchors,
+      2,
+      (a, b) => {
+        if (!a || !b) return '';
+        const total = heldCardsBetween(player, a, b).length;
+        return total ? `Between these anchors: ${total} card${total === 1 ? '' : 's'}` : 'No cards between these anchors.';
+      },
+    );
+    if (!pickedAnchors) return null;
+    const [first, second] = pickedAnchors;
     const limit = Math.max(1, Number(ability.count || getAbility('BETWEEN_2')?.count || 2));
-    const held = heldCardsBetween(player, first, second).slice(0, limit);
-    const picked = await showMpCardChoice(`Between — ${cleanCardName(first)} / ${cleanCardName(second)}`, `Cards found between them. Take 1. Revealed up to ${limit}.`, held);
+    const found = sortChoiceCards(heldCardsBetween(player, first, second)).slice(0, limit);
+    if (!found.length) return fallbackChoice('Between — no cards between');
+    const picked = await showMpCardChoice(
+      `Between — ${cleanCardName(first)} / ${cleanCardName(second)}`,
+      `Cards found between them. Take 1. Revealed up to ${limit}. Unchosen revealed cards go to the bottom.`,
+      found,
+    );
     return picked ? { anchorUids: [first.uid, second.uid], takenCardUid: picked.uid } : null;
+  }
+
+  // ── Visible hand/spread anchor selection (folded from mpSingleplayerAbilityFlow) ──
+  function selectAbilityTargets(title, prompt, cards, count, previewFn = null) {
+    return new Promise(resolve => {
+      _abilityTargeting = {
+        title,
+        prompt,
+        validIds: new Set(cards.map(card => card.uid)),
+        picked: [],
+        count,
+        previewFn,
+        resolve,
+      };
+      renderAbilityPrompt();
+      refreshAbilityTargets();
+    });
+  }
+
+  function abilityTargetingCards() {
+    const player = _state?.players?.[_myIndex];
+    return [...(player?.hand || []), ...((player?.spread || []).filter(Boolean))];
+  }
+
+  function handleAbilityTargetCard(card) {
+    if (!_abilityTargeting || !_abilityTargeting.validIds.has(card.uid)) return;
+    const picked = _abilityTargeting.picked;
+    const index = picked.indexOf(card.uid);
+    if (index >= 0) picked.splice(index, 1);
+    else {
+      if (picked.length >= _abilityTargeting.count) picked.shift();
+      picked.push(card.uid);
+    }
+    renderAbilityPrompt();
+    refreshAbilityTargets();
+  }
+
+  function confirmAbilityTargeting() {
+    if (!_abilityTargeting || _abilityTargeting.picked.length < _abilityTargeting.count) return;
+    const allCards = abilityTargetingCards();
+    const pickedCards = _abilityTargeting.picked.map(uid => allCards.find(card => card.uid === uid)).filter(Boolean);
+    const resolve = _abilityTargeting.resolve;
+    clearAbilityTargeting();
+    resolve(pickedCards);
+  }
+
+  function cancelAbilityTargeting() {
+    if (!_abilityTargeting) return;
+    const resolve = _abilityTargeting.resolve;
+    clearAbilityTargeting();
+    if (resolve) resolve(null);
+  }
+
+  function clearAbilityTargeting() {
+    _abilityTargeting = null;
+    renderAbilityPrompt();
+    clearAbilityTargetClasses();
+  }
+
+  function restoreAbilityConfirm() {
+    const button = el('abilityConfirm');
+    if (!button) return;
+    button.onclick = null;
+    if (_abilityConfirmOriginalOnclick) button.setAttribute('onclick', _abilityConfirmOriginalOnclick);
+  }
+
+  function renderAbilityPrompt() {
+    const promptBox = el('abilityPrompt');
+    doc.body.classList.toggle('mp-ability-flow-active', !!_abilityTargeting || _abilityResolving);
+    if (!promptBox) return;
+
+    if (!_abilityTargeting) {
+      promptBox.classList.remove('show');
+      return;
+    }
+
+    const title = el('abilityPromptTitle');
+    const text = el('abilityPromptText');
+    const button = el('abilityConfirm');
+    if (title) title.textContent = _abilityTargeting.title;
+
+    let preview = '';
+    if (_abilityTargeting.previewFn && _abilityTargeting.picked.length) {
+      const allCards = abilityTargetingCards();
+      const picked = _abilityTargeting.picked.map(uid => allCards.find(card => card.uid === uid)).filter(Boolean);
+      preview = _abilityTargeting.previewFn(...picked) || '';
+    }
+
+    if (text) text.innerHTML = preview ? `${escAbility(_abilityTargeting.prompt)}<br><b>${escAbility(preview)}</b>` : escAbility(_abilityTargeting.prompt);
+    if (button) {
+      button.disabled = _abilityTargeting.picked.length < _abilityTargeting.count;
+      button.onclick = confirmAbilityTargeting;
+    }
+    promptBox.classList.add('show');
+  }
+
+  function refreshAbilityTargets() {
+    clearAbilityTargetClasses();
+    if (!_abilityTargeting) return;
+    const player = _state?.players?.[_myIndex];
+    const picked = new Set(_abilityTargeting.picked);
+
+    doc.querySelectorAll('body.mp-game-active #hand .card[data-uid]').forEach(cardEl => {
+      const uid = Number(cardEl.dataset.uid);
+      const valid = _abilityTargeting.validIds.has(uid);
+      const isPicked = valid && picked.has(uid);
+      cardEl.classList.toggle('ability-target', valid && !isPicked);
+      cardEl.classList.toggle('ability-picked', isPicked);
+      cardEl.classList.toggle('ability-disabled', !valid);
+    });
+
+    doc.querySelectorAll('body.mp-game-active #spread .slot').forEach((slot, index) => {
+      const card = player?.spread?.[index] || null;
+      const cardEl = slot.querySelector('.card[data-uid]');
+      if (!card || !cardEl) {
+        slot.classList.add('ability-empty-slot');
+        return;
+      }
+      const valid = _abilityTargeting.validIds.has(card.uid);
+      const isPicked = valid && picked.has(card.uid);
+      slot.classList.toggle('ability-target-slot', valid && !isPicked);
+      slot.classList.toggle('ability-picked-slot', isPicked);
+      slot.classList.toggle('ability-disabled-slot', !valid);
+      cardEl.classList.toggle('ability-target', valid && !isPicked);
+      cardEl.classList.toggle('ability-picked', isPicked);
+      cardEl.classList.toggle('ability-disabled', !valid);
+    });
+  }
+
+  function clearAbilityTargetClasses() {
+    doc.querySelectorAll('body.mp-game-active #hand .card, body.mp-game-active #spread .card').forEach(cardEl => {
+      cardEl.classList.remove('ability-target', 'ability-picked', 'ability-disabled');
+    });
+    doc.querySelectorAll('body.mp-game-active #spread .slot').forEach(slot => {
+      slot.classList.remove('ability-target-slot', 'ability-picked-slot', 'ability-disabled-slot', 'ability-empty-slot');
+    });
+    doc.body.classList.toggle('mp-ability-flow-active', !!_abilityTargeting || _abilityResolving);
+  }
+
+  function singleplayerPromptFor(ability) {
+    if (ability.type === ABILITY_TYPES.NEIGHBOR) return 'Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers or court ranks in the same suit.';
+    if (ability.type === ABILITY_TYPES.KIN) return 'Choose an anchor card. Kin finds cards of the same Arcana.';
+    if (ability.type === ABILITY_TYPES.MIRROR) return 'Choose a card. Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)';
+    return ability.prompt || 'Choose an anchor card.';
+  }
+
+  function escAbility(value) {
+    return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+
+  // Capture-phase listener: while an anchor pick is active, tapping a hand or
+  // spread card toggles it as a target instead of falling through to the normal
+  // selection/placement handlers.
+  function installAbilityTargetClicks() {
+    doc.addEventListener('click', event => {
+      if (!_abilityTargeting || !doc.body.classList.contains('mp-game-active')) return;
+      const cardEl = event.target.closest?.('body.mp-game-active #hand .card[data-uid], body.mp-game-active #spread .card[data-uid]');
+      if (!cardEl) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation?.();
+
+      const uid = Number(cardEl.dataset.uid);
+      const card = abilityTargetingCards().find(item => item.uid === uid);
+      if (card) handleAbilityTargetCard(card);
+    }, true);
   }
   function inPlayCardsForAbility(player, sourceUid) { return [...player.hand.filter(card => card.uid !== sourceUid), ...player.spread.filter(Boolean)].filter(card => card.type === 'major' || card.type === 'court'); }
   // Reveal computation is shared with the reducer (and singleplayer) so the cards
@@ -1291,10 +1504,11 @@ export function installMpGame(target = window) {
   target.tlrMpDiscard = function () { invokeSelectedCard(); };
   target.tlrMpPurge = function () { _purgeSelect === null ? startPurgeMode() : confirmPurge(); };
   target.tlrMpConfirmPurge = function () { confirmPurge(); };
-  target.tlrMpCancelAction = function () { if (mySubmitted(_state)) return; _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; _personaSwapRequested = false; target.refreshHandState?.(); render(); };
+  target.tlrMpConfirmAbilitySelection = function () { confirmAbilityTargeting(); };
+  target.tlrMpCancelAction = function () { if (mySubmitted(_state)) return; cancelAbilityTargeting(); _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; _personaSwapRequested = false; target.refreshHandState?.(); render(); };
   target.tlrMpStartSwap = function () { if (!_state || !canSwapSpread(_state, _myIndex)) return; _swapFirst = -1; _personaSwapRequested = true; render(); };
   target.tlrMpNextRound = function () { if (_state && _myIndex === 0) { clearOpponentRevealQueues(); target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_NEW_ROUND, playerIndex: 0 }); } };
-  target.tlrMpLeave = function () { if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; } if (_autoRoundTimer) { target.clearTimeout(_autoRoundTimer); _autoRoundTimer = null; } _state = null; resetTransientActionState(); _lastScoringState = null; _latestEffectsUntil = 0; _delayedNextRoundQueued = false; clearOpponentRevealQueues(); restorePlaceCard(); restoreRenderSpread(); restoreRenderHandOverride(); restorePurgeOverride(); restoreRefreshHandStateOverride(); clearPendingPlacementPreview(); syncPersonaPrompt(); doc.body.classList.remove('mp-game-active'); el('mpGame')?.classList.add('mp-hidden'); target._slotEls = null; const sp = el('spread'); if (sp) { sp._mpSlots = null; sp.replaceChildren(); } target.tlrHideMatchmaking?.(); if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu(); };
+  target.tlrMpLeave = function () { if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; } if (_autoRoundTimer) { target.clearTimeout(_autoRoundTimer); _autoRoundTimer = null; } cancelAbilityTargeting(); restoreAbilityConfirm(); _state = null; resetTransientActionState(); _lastScoringState = null; _latestEffectsUntil = 0; _delayedNextRoundQueued = false; clearOpponentRevealQueues(); restorePlaceCard(); restoreRenderSpread(); restoreRenderHandOverride(); restorePurgeOverride(); restoreRefreshHandStateOverride(); clearPendingPlacementPreview(); syncPersonaPrompt(); doc.body.classList.remove('mp-game-active', 'mp-ability-flow-active'); el('mpGame')?.classList.add('mp-hidden'); target._slotEls = null; const sp = el('spread'); if (sp) { sp._mpSlots = null; sp.replaceChildren(); } target.tlrHideMatchmaking?.(); if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu(); };
 }
 
 function esc(str) {
@@ -1458,6 +1672,13 @@ function installMpGameStyle(doc) {
     }
     body.mp-game-active .mp-overlay:not(.mp-ov-hidden) {
       pointer-events: auto;
+    }
+    body.mp-game-active.mp-ability-flow-active #abilityPrompt {
+      display: flex !important;
+      z-index: 2147482600 !important;
+    }
+    body.mp-game-active.mp-ability-flow-active .mp-pills-actions button {
+      pointer-events: none;
     }
   `;
   doc.head.appendChild(style);
