@@ -1,5 +1,4 @@
 import { MP_ACTIONS } from '../multiplayer/mpActions.mjs';
-import { MP_ABILITY_TYPES } from '../multiplayer/interactionCards.mjs';
 import { canInvokeAbility } from '../multiplayer/mpSelectors.mjs';
 import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
 import { shuffleDeck } from '../systems/deck.mjs';
@@ -83,14 +82,14 @@ export function installMpSingleplayerAbilityFlow(target = window) {
     }
 
     resolving = true;
-    lockActionButtons(true);
+    setAbilityFlowActive(true);
     try {
       const abilityChoice = await buildAbilityChoice(card);
       if (abilityChoice === null) return;
       submitAction({ type: MP_ACTIONS.MP_INVOKE_ABILITY, cardUid: card.uid, abilityChoice });
     } finally {
       resolving = false;
-      lockActionButtons(false);
+      setAbilityFlowActive(false);
       clearAbilitySelection();
     }
   }
@@ -253,7 +252,7 @@ export function installMpSingleplayerAbilityFlow(target = window) {
   function renderAbilityPrompt() {
     const promptBox = doc.getElementById('abilityPrompt');
     if (!promptBox) return;
-    doc.body.classList.toggle('mp-ability-flow-active', !!abilitySelect);
+    doc.body.classList.toggle('mp-ability-flow-active', !!abilitySelect || resolving);
 
     if (!abilitySelect) {
       promptBox.classList.remove('show');
@@ -273,7 +272,7 @@ export function installMpSingleplayerAbilityFlow(target = window) {
       preview = abilitySelect.previewFn(...picked) || '';
     }
 
-    if (text) text.innerHTML = preview ? `${abilitySelect.prompt}<br><b>${esc(preview)}</b>` : esc(abilitySelect.prompt);
+    if (text) text.innerHTML = preview ? `${esc(abilitySelect.prompt)}<br><b>${esc(preview)}</b>` : esc(abilitySelect.prompt);
     if (button) {
       button.disabled = abilitySelect.picked.length < abilitySelect.count;
       button.onclick = confirmAbilitySelection;
@@ -321,7 +320,11 @@ export function installMpSingleplayerAbilityFlow(target = window) {
     doc.querySelectorAll('body.mp-game-active #spread .slot').forEach(slot => {
       slot.classList.remove('ability-target-slot', 'ability-picked-slot', 'ability-disabled-slot', 'ability-empty-slot');
     });
-    doc.body.classList.toggle('mp-ability-flow-active', !!abilitySelect);
+    doc.body.classList.toggle('mp-ability-flow-active', !!abilitySelect || resolving);
+  }
+
+  function setAbilityFlowActive(active) {
+    doc.body.classList.toggle('mp-ability-flow-active', active || !!abilitySelect);
   }
 
   function showCardChoice(title, prompt, cards) {
@@ -389,12 +392,6 @@ export function installMpSingleplayerAbilityFlow(target = window) {
       modal.classList.remove('collapsed');
       modal.classList.add('show');
       target.playSound?.('flip');
-    });
-  }
-
-  function lockActionButtons(locked) {
-    doc.querySelectorAll('body.mp-game-active #mpDiscardBtn, body.mp-game-active #mpPurgeBtn, body.mp-game-active #mpAbilityBtn').forEach(button => {
-      button.disabled = locked || button.disabled;
     });
   }
 
