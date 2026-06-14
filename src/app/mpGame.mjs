@@ -9,6 +9,8 @@ import {
 } from '../multiplayer/mpSelectors.mjs';
 import { applyCardPhoto, CARD_SHEET, title as cardTitle, symbol as cardSymbol } from '../ui/renderCard.mjs';
 
+const OPPONENT_REVEAL_DELAY_MS = 750;
+
 export function installMpGame(target = window) {
   if (!target || target.__tlrMpGameInstalled) return;
   target.__tlrMpGameInstalled = true;
@@ -22,6 +24,9 @@ export function installMpGame(target = window) {
   let _origRenderSpread = null;
   let _origTogglePurgeCard = null;
   let _origRefreshHandState = null;
+  let _oppRevealPending = new Set();
+  let _oppRevealShown = new Set();
+  let _oppRevealTimers = new Set();
 
   const doc = target.document;
   function el(id) { return doc.getElementById(id); }
@@ -183,6 +188,53 @@ export function installMpGame(target = window) {
     wrap.innerHTML = `${pips}<span class="mp-opp-hand-label">${count} card${count !== 1 ? 's' : ''}</span>`;
   }
 
+  function opponentRevealKey(pIdx, slotIndex, card) {
+    return `${pIdx}:${slotIndex}:${card?.uid ?? 'x'}`;
+  }
+
+  function shouldDelayOpponentCard(spreadEl, pIdx, slotIndex, card) {
+    if (!card || pIdx === _myIndex) return false;
+    const key = opponentRevealKey(pIdx, slotIndex, card);
+    if (_oppRevealShown.has(key)) return false;
+    if (_oppRevealPending.has(key)) return true;
+
+    const slotEl = spreadEl?._mpSlots?.[slotIndex];
+    const alreadyVisible = !!slotEl?.querySelector?.('.card');
+    if (alreadyVisible) {
+      _oppRevealShown.add(key);
+      return false;
+    }
+
+    _oppRevealPending.add(key);
+    const timer = target.setTimeout(() => {
+      _oppRevealTimers.delete(timer);
+      _oppRevealPending.delete(key);
+      _oppRevealShown.add(key);
+      render();
+      target.requestAnimationFrame?.(() => popOpponentCard(pIdx, slotIndex));
+    }, OPPONENT_REVEAL_DELAY_MS);
+    _oppRevealTimers.add(timer);
+    return true;
+  }
+
+  function popOpponentCard(pIdx, slotIndex) {
+    const spread = pIdx === _myIndex ? el('spread') : el('mpOppSpread');
+    const cardEl = spread?._mpSlots?.[slotIndex]?.querySelector?.('.card');
+    if (!cardEl?.animate) return;
+    cardEl.animate([
+      { transform: 'translateY(-12px) scale(.78)', opacity: .15, filter: 'brightness(1.45)' },
+      { transform: 'translateY(2px) scale(1.08)', opacity: 1, filter: 'brightness(1.18)' },
+      { transform: 'translateY(0) scale(1)', opacity: 1, filter: 'brightness(1)' },
+    ], { duration: 320, easing: 'cubic-bezier(.16,.9,.22,1)' });
+  }
+
+  function clearOpponentRevealQueues() {
+    for (const timer of _oppRevealTimers) target.clearTimeout(timer);
+    _oppRevealTimers.clear();
+    _oppRevealPending.clear();
+    _oppRevealShown.clear();
+  }
+
   function renderSpread(s, pIdx, spreadId, isSelf) {
     const spreadEl = el(spreadId);
     if (!spreadEl) return;
@@ -206,22 +258,25 @@ export function installMpGame(target = window) {
     for (let i = 0; i < 5; i++) {
       const slotEl = spreadEl._mpSlots[i];
       const card   = player.spread[i];
+      const delayOpponentCard = !isSelf && shouldDelayOpponentCard(spreadEl, pIdx, i, card);
+      const displayCard = delayOpponentCard ? null : card;
       let cls = 'slot ';
 
-      if (card) {
+      if (displayCard) {
         cls += 'filled';
         if (isSlotAnchored(s, pIdx, i))        cls += ' mp-anchored';
-        if (isCardSilenced(s, pIdx, card.uid)) cls += ' mp-silenced';
+        if (isCardSilenced(s, pIdx, displayCard.uid)) cls += ' mp-silenced';
         if (_invokeCard !== null && pIdx === opp && canTargetSlot(s, pIdx, i)) cls += ' mp-targetable';
       } else {
         cls += 'empty';
+        if (delayOpponentCard) cls += ' mp-reveal-pending';
       }
       slotEl.className = cls;
-      slotEl.onclick = (_invokeCard !== null && pIdx === opp && card && canTargetSlot(s, pIdx, i) && isMyActionTurn(s))
+      slotEl.onclick = (_invokeCard !== null && pIdx === opp && displayCard && canTargetSlot(s, pIdx, i) && isMyActionTurn(s))
         ? () => handleInvokeTarget(pIdx, i)
         : null;
 
-      renderSlotCard(slotEl, card, isSelf ? i : null);
+      renderSlotCard(slotEl, displayCard, isSelf ? i : null);
     }
   }
 
@@ -294,6 +349,7 @@ export function installMpGame(target = window) {
         + (card.type === 'major' ? ' major' : '')
         + (CARD_SHEET[card.id] ? ' photo' : '')
         + (card.type === 'interaction' ? ' mp-interaction' : '');
+      return cardEl;
     } else {
       let nm = slotEl.firstElementChild;
       if (!nm?.classList?.contains('num')) {
@@ -303,6 +359,7 @@ export function installMpGame(target = window) {
         slotEl.appendChild(nm);
       }
       nm.textContent = emptyNumber === null ? '' : String(emptyNumber + 1);
+      return null;
     }
   }
 
@@ -501,7 +558,7 @@ export function installMpGame(target = window) {
       _autoScoreTimer = null;
       if (_state && _myIndex === 0 && needsScoring(_state))
         target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_SCORE_ROUND });
-    }, 400);
+    }, 950);
   }
 
   function scheduleAutoNextRound() {
@@ -509,6 +566,7 @@ export function installMpGame(target = window) {
     _autoRoundTimer = target.setTimeout(() => {
       _autoRoundTimer = null;
       if (_state && _myIndex === 0 && _state.phase === MP_PHASES.BETWEEN_ROUNDS) {
+        clearOpponentRevealQueues();
         target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_NEW_ROUND, playerIndex: 0 });
       }
     }, 120);
@@ -582,6 +640,7 @@ export function installMpGame(target = window) {
     _invokeCard = null;
     _swapFirst  = null;
     _purgeSelect = null;
+    clearOpponentRevealQueues();
     doc.body.classList.add('mp-game-active');
     mount();
     el('mpGame')?.classList.remove('mp-hidden');
@@ -594,12 +653,14 @@ export function installMpGame(target = window) {
     scheduleAutoNextRound();
   };
 
-  target.tlrMpOnLocalAction = function (_action, state) {
+  target.tlrMpOnLocalAction = function (action, state) {
+    if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues();
     _state = state; _invokeCard = null; _swapFirst = null; _purgeSelect = null;
     render(); scheduleAutoScore(); scheduleAutoNextRound();
   };
 
-  target.tlrMpOnPeerAction = function (_action, state) {
+  target.tlrMpOnPeerAction = function (action, state) {
+    if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues();
     _state = state; _invokeCard = null; _swapFirst = null; _purgeSelect = null;
     render(); scheduleAutoScore(); scheduleAutoNextRound();
   };
@@ -633,14 +694,17 @@ export function installMpGame(target = window) {
   };
 
   target.tlrMpNextRound = function () {
-    if (_state && _myIndex === 0)
+    if (_state && _myIndex === 0) {
+      clearOpponentRevealQueues();
       target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_NEW_ROUND, playerIndex: 0 });
+    }
   };
 
   target.tlrMpLeave = function () {
     if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; }
     if (_autoRoundTimer) { target.clearTimeout(_autoRoundTimer); _autoRoundTimer = null; }
     _state = null; _invokeCard = null; _swapFirst = null; _purgeSelect = null;
+    clearOpponentRevealQueues();
     restorePlaceCard();
     restoreRenderSpread();
     restorePurgeOverride();
