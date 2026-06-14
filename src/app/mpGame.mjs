@@ -9,7 +9,7 @@ import {
 } from '../multiplayer/mpSelectors.mjs';
 import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
 import { shuffleDeck } from '../systems/deck.mjs';
-import { cardsInDeckByIds, neighborCardIds, isSameArcana, mirrorCardId, betweenCardIds } from '../systems/abilities.mjs';
+import { abilityHeldCards } from '../systems/abilities.mjs';
 import { applyCardPhoto, CARD_SHEET, title as cardTitle, symbol as cardSymbol } from '../ui/renderCard.mjs';
 
 const OPPONENT_REVEAL_DELAY_MS = 750;
@@ -497,13 +497,10 @@ export function installMpGame(target = window) {
     return picked ? { anchorUids: [first.uid, second.uid], takenCardUid: picked.uid } : null;
   }
   function inPlayCardsForAbility(player, sourceUid) { return [...player.hand.filter(card => card.uid !== sourceUid), ...player.spread.filter(Boolean)].filter(card => card.type === 'major' || card.type === 'court'); }
-  function heldCardsForAnchor(player, ability, anchor) {
-    if (ability.type === ABILITY_TYPES.NEIGHBOR) return cardsInDeckByIds(player.deck, neighborCardIds(anchor)).slice(0, ability.count ?? 2);
-    if (ability.type === ABILITY_TYPES.KIN) return player.deck.filter(card => isSameArcana(card, anchor)).slice(0, ability.count ?? 2);
-    if (ability.type === ABILITY_TYPES.MIRROR) return cardsInDeckByIds(player.deck, [mirrorCardId(anchor)].filter(Boolean)).slice(0, ability.count ?? 1);
-    return [];
-  }
-  function heldCardsBetween(player, first, second) { return uniqueCards(cardsInDeckByIds(player.deck, betweenCardIds(first, second))); }
+  // Reveal computation is shared with the reducer (and singleplayer) so the cards
+  // shown here always match what MP_INVOKE_ABILITY resolves on both peers.
+  function heldCardsForAnchor(player, ability, anchor) { return abilityHeldCards(player.deck, ability, [anchor]).slice(0, ability.count ?? 2); }
+  function heldCardsBetween(player, first, second) { return uniqueCards(abilityHeldCards(player.deck, { type: ABILITY_TYPES.BETWEEN }, [first, second])); }
   function uniqueCards(cards) { const seen = new Set(); return (cards || []).filter(card => { if (!card || seen.has(card.uid)) return false; seen.add(card.uid); return true; }); }
   function sortChoiceCards(cards) { if (typeof target.sortCards === 'function') return target.sortCards(cards.slice()); return cards.slice().sort((a, b) => cleanCardName(a).localeCompare(cleanCardName(b))); }
   function cleanCardName(card) { try { return cardTitle(card).replace(/<[^>]+>/g, ''); } catch (_) { return card?.name || card?.id || 'Card'; } }

@@ -6,7 +6,7 @@ import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
 import { MP_ABILITY_TYPES } from './interactionCards.mjs';
 import { getPersona } from './personas.mjs';
 import { mulberry32 } from './mpRng.mjs';
-import { cardsInDeckByIds, neighborCardIds, isSameArcana, mirrorCardId, betweenCardIds } from '../systems/abilities.mjs';
+import { abilityHeldCards, applyAbilityTake } from '../systems/abilities.mjs';
 
 // --- Helpers ---
 
@@ -99,58 +99,9 @@ function orderedCardsFromUids(cards, uidOrder) {
   return { ordered: out, remaining: [...pool.values()] };
 }
 
-function applyResolvedAbilityState(player, resultState) {
-  if (!resultState || typeof resultState !== 'object') return player;
-
-  const pool = new Map();
-  const add = card => { if (card?.uid != null && !pool.has(card.uid)) pool.set(card.uid, card); };
-  (player.deck || []).forEach(add);
-  (player.hand || []).forEach(add);
-  (player.discard || []).forEach(add);
-  (player.spread || []).filter(Boolean).forEach(add);
-
-  const take = uid => {
-    if (uid == null) return null;
-    const card = pool.get(uid);
-    if (!card) return null;
-    pool.delete(uid);
-    return card;
-  };
-  const takeList = list => (Array.isArray(list) ? list : []).map(take).filter(Boolean);
-
-  const hand = takeList(resultState.handUids);
-  const deck = takeList(resultState.deckUids);
-  const discard = takeList(resultState.discardUids);
-  const spreadUids = Array.isArray(resultState.spreadUids)
-    ? resultState.spreadUids.slice(0, MP_SPREAD_SIZE)
-    : Array(MP_SPREAD_SIZE).fill(null);
-  while (spreadUids.length < MP_SPREAD_SIZE) spreadUids.push(null);
-  const spread = spreadUids.map(uid => uid == null ? null : take(uid));
-
-  return {
-    ...player,
-    hand,
-    deck: [...deck, ...pool.values()],
-    discard,
-    spread,
-    playedSlotHistory: (player.playedSlotHistory || []).filter(slot => spread[slot]),
-    anchoredSlotIndex: spread[player.anchoredSlotIndex] ? player.anchoredSlotIndex : null,
-    silencedCardUids: (player.silencedCardUids || []).filter(uid => spread.some(card => card?.uid === uid)),
-  };
-}
-
 function takeFromHeld(player, heldCards, takenCardUid) {
-  const held = (heldCards || []).filter(Boolean);
-  const taken = held.find(card => card.uid === takenCardUid);
-  if (!taken) return player;
-
-  const heldUids = new Set(held.map(card => card.uid));
-  const deck = player.deck.filter(card => !heldUids.has(card.uid));
-  for (const card of held) {
-    if (card.uid !== takenCardUid) deck.push(card);
-  }
-
-  return { ...player, deck, hand: [...player.hand, taken] };
+  const applied = applyAbilityTake(player, (heldCards || []).filter(Boolean), takenCardUid);
+  return applied ? { ...player, deck: applied.deck, hand: applied.hand } : player;
 }
 
 function inPlayCards(player) {
@@ -163,40 +114,22 @@ function anchorByUid(player, uid) {
 
 function relationHeldCards(player, ability, choice) {
   const anchorIds = Array.isArray(choice?.anchorUids) ? choice.anchorUids : [];
-  const first = anchorByUid(player, anchorIds[0]);
-  if (!first) return [];
-
-  if (ability.type === ABILITY_TYPES.NEIGHBOR) {
-    return cardsInDeckByIds(player.deck, neighborCardIds(first)).slice(0, ability.count ?? 2);
-  }
-
-  if (ability.type === ABILITY_TYPES.KIN) {
-    return player.deck.filter(card => isSameArcana(card, first)).slice(0, ability.count ?? 2);
-  }
-
-  if (ability.type === ABILITY_TYPES.MIRROR) {
-    return cardsInDeckByIds(player.deck, [mirrorCardId(first)].filter(Boolean)).slice(0, ability.count ?? 1);
-  }
-
-  if (ability.type === ABILITY_TYPES.BETWEEN) {
-    const second = anchorByUid(player, anchorIds[1]);
-    if (!second) return [];
-    return cardsInDeckByIds(player.deck, betweenCardIds(first, second));
-  }
-
-  return [];
+  const anchors = anchorIds.map(uid => anchorByUid(player, uid));
+  if (!anchors[0]) return [];
+  if (ability.type === ABILITY_TYPES.BETWEEN && !anchors[1]) return [];
+  const held = abilityHeldCards(player.deck, ability, anchors);
+  // Between reveals every card in the window; relation abilities cap by count.
+  return ability.type === ABILITY_TYPES.BETWEEN ? held : held.slice(0, ability.count ?? 2);
 }
 
-// Apply a standard singleplayer-style ability. Multiplayer can either pass the
-// legacy choice fields, or pass resultState captured from the real singleplayer
-// ability flow. resultState is preferred because it lets multiplayer reuse the
-// exact same card ability UI while still syncing the final state to both peers.
+// Apply a standard (non-interaction) card ability to a multiplayer player.
+// The acting client computes its anchor/take selections in mpGame and passes
+// them as plain `choice` fields; both peers replay this pure resolution so the
+// match state stays in sync. Reveal computation is shared with singleplayer via
+// abilityHeldCards; ordering-sensitive abilities (search/world) carry an explicit
+// uid order in `choice` because the multiplayer reducer has no shared RNG.
 function applyStandardAbility(player, ability, choice = {}) {
   if (!ability) return player;
-
-  if (choice?.resultState) {
-    return applyResolvedAbilityState(player, choice.resultState);
-  }
 
   if (choice?.fallbackDraw) {
     return drawCards(player, Number(choice.fallbackDraw) || 1);

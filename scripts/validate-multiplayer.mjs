@@ -2,6 +2,7 @@ import { MP_ACTIONS } from '../src/multiplayer/mpActions.mjs';
 import { MP_PHASES, SCORE_TARGETS, MP_SPREAD_SIZE, MP_HAND_SIZE, createMatchState } from '../src/multiplayer/mpState.mjs';
 import { mpReducer } from '../src/multiplayer/mpReducer.mjs';
 import * as sel from '../src/multiplayer/mpSelectors.mjs';
+import { buildDeck } from '../src/systems/deck.mjs';
 
 let passed = 0;
 let failed = 0;
@@ -211,6 +212,61 @@ function fillSpread(state, playerIndex) {
   s = mpReducer(s, { type: MP_ACTIONS.MP_SCORE_ROUND });
   assert(s.phase === MP_PHASES.COMPLETE, 'match completes when score target reached');
   assert(s.winner !== null, 'winner is set');
+}
+
+// --- Standard ability resolution via the shared resolver ---
+// These exercise abilityHeldCards + takeFromHeld on the multiplayer reducer, the
+// paths shared with singleplayer. We craft deterministic hands/decks of real card
+// definitions so the reveal math is predictable.
+{
+  const defs = buildDeck();
+  const def = id => ({ ...defs.find(c => c.id === id) });
+  const setP0 = (state, patch) => ({ ...state, players: [{ ...state.players[0], discards: 3, ...patch }, state.players[1]] });
+  const invoke = (state, cardUid, abilityChoice) =>
+    mpReducer(state, { type: MP_ACTIONS.MP_INVOKE_ABILITY, playerIndex: 0, cardUid, abilityChoice });
+
+  // PEEK_3: reveal top 3, take one, the rest drop to the deck bottom.
+  {
+    const source = { ...def('major_1'), uid: 9101, ability: 'PEEK_3' };
+    const [a, b, c, d] = ['major_5', 'major_6', 'major_7', 'major_8'].map((id, i) => ({ ...def(id), uid: 9110 + i }));
+    let s = setP0(initMatch(), { hand: [source], deck: [a, b, c, d] });
+    const next = invoke(s, source.uid, { takenCardUid: b.uid });
+    assert(next.error === null, 'PEEK invoke has no error');
+    assert(next.players[0].hand.some(x => x.uid === b.uid), 'PEEK takes the chosen revealed card');
+    assert(next.players[0].deck[0].uid === d.uid, 'PEEK keeps the un-revealed card on top');
+    assert(!next.players[0].deck.some(x => x.uid === b.uid), 'PEEK removes the taken card from the deck');
+    assert(next.players[0].discards === 2, 'PEEK spends a discard');
+  }
+
+  // NEIGHBOR_2: anchor in hand reveals adjacent cards from the deck, take one.
+  {
+    const anchor = { ...def('major_18'), uid: 9201 };            // Moon
+    const source = { ...def('major_0'), uid: 9202, ability: 'NEIGHBOR_2' };
+    const star = { ...def('major_17'), uid: 9203 };              // neighbor of Moon
+    const sun = { ...def('major_19'), uid: 9204 };               // neighbor of Moon
+    const filler = { ...def('major_5'), uid: 9205 };             // not a neighbor
+    let s = setP0(initMatch(), { hand: [anchor, source], deck: [star, sun, filler] });
+    const next = invoke(s, source.uid, { anchorUids: [anchor.uid], takenCardUid: star.uid });
+    assert(next.error === null, 'NEIGHBOR invoke has no error');
+    assert(next.players[0].hand.some(x => x.uid === star.uid), 'NEIGHBOR takes the chosen neighbor');
+    assert(!next.players[0].deck.some(x => x.uid === star.uid), 'taken neighbor leaves the deck');
+    assert(next.players[0].deck.some(x => x.uid === sun.uid), 'unchosen neighbor returns to the deck');
+    assert(next.players[0].deck.some(x => x.uid === filler.uid), 'non-neighbor stays in the deck');
+  }
+
+  // BETWEEN_2: two anchors reveal the cards numerically between them.
+  {
+    const lo = { ...def('major_5'), uid: 9301 };
+    const hi = { ...def('major_8'), uid: 9302 };
+    const source = { ...def('court_Cups_Page'), uid: 9303, ability: 'BETWEEN_2' };
+    const mid6 = { ...def('major_6'), uid: 9304 };
+    const mid7 = { ...def('major_7'), uid: 9305 };
+    let s = setP0(initMatch(), { hand: [lo, hi, source], deck: [mid6, mid7] });
+    const next = invoke(s, source.uid, { anchorUids: [lo.uid, hi.uid], takenCardUid: mid6.uid });
+    assert(next.error === null, 'BETWEEN invoke has no error');
+    assert(next.players[0].hand.some(x => x.uid === mid6.uid), 'BETWEEN takes the chosen between-card');
+    assert(next.players[0].deck.some(x => x.uid === mid7.uid), 'unchosen between-card returns to the deck');
+  }
 }
 
 if (failed > 0) {

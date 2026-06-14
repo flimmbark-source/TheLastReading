@@ -15,10 +15,10 @@ export const MP_ACTIONS = Object.freeze({
 
   // A player discards a selected card and invokes its ability (spends 1 discard)
   // { type, playerIndex, cardUid, target?: { playerIndex, slotIndex }, abilityChoice?: object }
-  // Standard card abilities should use the same singleplayer UI flow. Multiplayer
-  // captures that final resolved hand/deck/discard/spread as abilityChoice.resultState
-  // so both peers apply the same outcome. MP_BANISH removes the opponent's last
-  // played card. MP_SEAL requires target.
+  // The acting client resolves anchor/take selections in its own MP UI and passes
+  // them as plain abilityChoice fields (takenCardUid, anchorUids, deckOrderUids,
+  // handUids/deckUids); both peers replay the same pure resolution. MP_BANISH
+  // removes the opponent's last played card. MP_SEAL requires target.
   MP_INVOKE_ABILITY: 'MP_INVOKE_ABILITY',
 
   // A player discards a card without invoking its ability (spends 1 discard)
