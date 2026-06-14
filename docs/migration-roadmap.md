@@ -51,9 +51,14 @@ renderer at a time (`renderHand`, `renderSpread`, then `renderTable`). Keep
 > of truth (`LEGACY_RUN_FIELDS`, exported from `game/reducer.mjs`) and is pinned
 > by `scripts/validate-bridge.mjs`, which fails if `syncRunToStore` and the
 > reducer whitelist drift apart. This makes the eventual authority-flip safe to
-> do incrementally. The remaining Phase 2 work (renderers reading from the store)
-> changes live DOM output and needs a browser/jsdom smoke harness to verify —
-> that harness is the prerequisite for Phases 2b–4 and does not exist yet.
+> do incrementally.
+>
+> _Verification anchor in place._ `scripts/validate-render.mjs` boots the real
+> data globals + hint runtime against a jsdom document and asserts `renderHand`'s
+> uid-keyed diffing and selection output. The renderer cutover (have each
+> renderer read store-derived view data, then drop its `state` reads) can now be
+> done one renderer at a time, extending this harness to cover each before
+> switching its data source. That makes Phases 2b–4 verifiable headlessly.
 
 **Phase 3 — Retire the legacy `state` object.** Once renderers read from the
 store, replace the remaining direct `state.*` writes (in `readingFlow.mjs`,

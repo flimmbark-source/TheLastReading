@@ -32,6 +32,7 @@ Individual suites:
 | `scripts/check-architecture.mjs` | Reducer smoke tests: placement, discard, scoring, abilities, market, attic |
 | `scripts/validate-bridge.mjs` | Legacy↔store bridge contract: field-drift guard and round-trip mapping |
 | `scripts/validate-multiplayer.mjs` | Multiplayer reducer: placement, scoring, ability resolution, rounds |
+| `scripts/validate-render.mjs` | Headless (jsdom) render smoke test: `renderHand` uid-diffing and selection |
 
 `npm test` and `npm run build` both run `validate-all.mjs`.
 
