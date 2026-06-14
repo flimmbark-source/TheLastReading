@@ -156,6 +156,21 @@ export function installSurgeonHandSwapPatch(target = window) {
     });
   }
 
+  function suppressTransientScoringOverlay() {
+    if (!doc.body.classList.contains('mp-game-active')) return;
+    const overlay = doc.getElementById('mpOverlay');
+    const box = doc.getElementById('mpOvBox');
+    if (!overlay || !box || overlay.classList.contains('mp-ov-hidden')) return;
+
+    const title = box.querySelector('.mp-ov-title')?.textContent?.trim() || '';
+    const state = target.tlrMpGetState?.();
+    const isTransientSetScore = title.startsWith('Round ') && state && state.phase !== MP_PHASES.COMPLETE;
+    if (!isTransientSetScore) return;
+
+    overlay.classList.add('mp-ov-hidden');
+    box.innerHTML = '';
+  }
+
   function hideSwipeTutorialInMultiplayer() {
     if (!doc.body.classList.contains('mp-game-active')) return;
     doc.querySelectorAll('.hand-swipe-hint').forEach(el => {
@@ -169,6 +184,7 @@ export function installSurgeonHandSwapPatch(target = window) {
   function syncUi() {
     syncQueued = false;
     hideSwipeTutorialInMultiplayer();
+    suppressTransientScoringOverlay();
 
     const panel = doc.getElementById('mpActionPanel');
     if (panel) {
