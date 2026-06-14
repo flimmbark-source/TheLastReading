@@ -22,6 +22,16 @@ body.mp-game-active .mp-pills-actions .sbtn {
   justify-content: center !important;
 }
 
+body.mp-game-active .mp-action-panel {
+  display: none !important;
+}
+
+body.mp-game-active .mp-action-panel:has(button[onclick*="tlrMpInvoke"]),
+body.mp-game-active .mp-action-panel:has(button[onclick*="tlrMpConfirmPurge"]),
+body.mp-game-active .mp-action-panel:has(button[onclick*="tlrMpCancelAction"]) {
+  display: flex !important;
+}
+
 body.mp-game-active #mpDiscardBtn::before { content: 'Discard' !important; }
 body.mp-game-active #mpPurgeBtn::before { content: 'Purge' !important; }
 body.mp-game-active #mpAbilityBtn::before { content: 'Ability' !important; }
@@ -114,17 +124,12 @@ body.mp-game-active .spread-wrap {
   }
 
   body.mp-game-active .mp-action-panel {
-    display: flex !important;
     width: min(300px, 88vw) !important;
     min-height: 24px !important;
     padding: 3px 8px 4px !important;
     background: rgba(8, 5, 3, .58) !important;
     border: 1px solid rgba(180, 140, 90, .18) !important;
     border-radius: 8px !important;
-  }
-
-  body.mp-game-active .mp-action-panel:empty {
-    display: none !important;
   }
 }
 
