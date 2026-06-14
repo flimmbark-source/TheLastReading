@@ -1,4 +1,5 @@
 import { MP_ACTIONS } from '../multiplayer/mpActions.mjs';
+import { applyCardPhoto, CARD_SHEET, cardHTML } from '../ui/renderCard.mjs';
 
 export function installMpPendingPlacementPreview(target = window) {
   if (!target || target.__tlrMpPendingPlacementPreviewInstalled) return;
@@ -42,6 +43,22 @@ function clearPendingPlacementPreview(doc) {
   doc.querySelectorAll('.mp-local-pending-hidden').forEach(card => card.classList.remove('mp-local-pending-hidden'));
 }
 
+function buildSpreadCard(doc, card) {
+  const cardEl = doc.createElement('div');
+  cardEl.dataset.uid = card.uid;
+  cardEl.className = 'card'
+    + (card.type === 'major' ? ' major' : '')
+    + (CARD_SHEET[card.id] ? ' photo' : '')
+    + (card.type === 'interaction' ? ' mp-interaction' : '')
+    + ' mp-local-pending-card';
+  cardEl.innerHTML = cardHTML(card);
+  if (card.type !== 'interaction') applyCardPhoto(cardEl, card);
+  cardEl.style.setProperty('opacity', '1', 'important');
+  cardEl.style.setProperty('filter', 'none', 'important');
+  cardEl.onclick = null;
+  return cardEl;
+}
+
 function applyPendingPlacementPreview(target = window) {
   const doc = target.document;
   if (!doc?.body?.classList?.contains('mp-game-active')) return;
@@ -52,28 +69,11 @@ function applyPendingPlacementPreview(target = window) {
 
   const handCard = doc.querySelector(`body.mp-game-active #hand .card[data-uid="${pending.cardUid}"]`);
   const slot = doc.querySelectorAll('body.mp-game-active #spread .slot')[pending.slotIndex];
-  if (!handCard || !slot) return;
+  if (!slot) return;
 
-  handCard.classList.add('mp-local-pending-hidden');
+  if (handCard) handCard.classList.add('mp-local-pending-hidden');
 
-  const clone = handCard.cloneNode(true);
-  clone.classList.remove(
-    'sel',
-    'hand-card',
-    'hand-card-dragging',
-    'hand-card-landing',
-    'mp-local-pending-hidden',
-    'ability-target',
-    'ability-picked',
-    'ability-disabled',
-  );
-  clone.classList.add('mp-local-pending-card');
-  clone.removeAttribute('style');
-  clone.style.setProperty('opacity', '1', 'important');
-  clone.style.setProperty('filter', 'none', 'important');
-  clone.onclick = null;
-
-  slot.replaceChildren(clone);
+  slot.replaceChildren(buildSpreadCard(doc, pending.card));
   slot.classList.remove('empty', 'target');
   slot.classList.add('filled', 'mp-local-pending-slot');
   slot.style.setProperty('opacity', '1', 'important');
@@ -125,7 +125,7 @@ function installStyle(doc) {
   style.id = 'mp-pending-placement-preview-style';
   style.textContent = `
     body.mp-game-active #hand .card.mp-local-pending-hidden {
-      opacity: 0 !important;
+      visibility: hidden !important;
       pointer-events: none !important;
     }
     body.mp-game-active #spread .slot.mp-local-pending-slot {
