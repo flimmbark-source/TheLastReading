@@ -13,6 +13,17 @@ export function selectedCard(state) {
   return state.run.hand.find(card => card.uid === state.run.selectedCardId) || null;
 }
 
+export function handView(state, options = {}) {
+  return {
+    hand: state.run.hand || [],
+    selected: state.run.selectedCardId ?? null,
+    // Purge is not fully store-owned yet, so callers may pass the current legacy
+    // purge list while the rest of the hand display data comes from the store.
+    purgeSelect: options.purgeSelect ?? state.run.purge ?? null,
+    onToggleSelect: options.onToggleSelect || null,
+  };
+}
+
 export function thresholdValue(state) {
   return constellationThreshold(currentThreshold(state.run.thresholdIndex, state.run.thresholdBonus), state.run);
 }
