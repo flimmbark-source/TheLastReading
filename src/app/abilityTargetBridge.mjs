@@ -2,6 +2,13 @@ const START_ABILITY_TARGETING = 'START_ABILITY_TARGETING';
 const TOGGLE_ABILITY_TARGET = 'TOGGLE_ABILITY_TARGET';
 const CLEAR_ABILITY_TARGETING = 'CLEAR_ABILITY_TARGETING';
 
+// The store owns the serializable targeting selection (valid/picked ids, title,
+// count). The confirm callback and preview function cannot live in the store, so
+// they are held here while a pick is active and the store-derived
+// `state.abilitySelect` mirror points at them for the renderer.
+let pendingCallbacks = { cb: null, previewFn: null };
+function clearPendingCallbacks() { pendingCallbacks = { cb: null, previewFn: null }; }
+
 function runtime(target) { return target.tlrRuntime || {}; }
 function stateOf(target) { return runtime(target).state || target.state; }
 function storeReady(target) { return !!(target.tlrStore && target.tlrStore.getState && target.tlrStore.dispatch); }
@@ -58,6 +65,7 @@ function syncStoreSelectionToLegacy(target) {
   const targeting = storeTargeting(target);
   if (!targeting) {
     if (state.abilitySelect && state.abilitySelect.__storeOwned) state.abilitySelect = null;
+    clearPendingCallbacks();
     return;
   }
 
@@ -70,8 +78,8 @@ function syncStoreSelectionToLegacy(target) {
     validIds: new Set(targeting.validCardIds || []),
     picked: [...(targeting.pickedCardIds || [])],
     count: targeting.count || previous.count || 1,
-    cb: previous.cb,
-    previewFn: previous.previewFn,
+    cb: pendingCallbacks.cb ?? previous.cb,
+    previewFn: pendingCallbacks.previewFn ?? previous.previewFn,
   };
 }
 
@@ -105,6 +113,25 @@ export function installAbilityTargetBridge(target = window) {
     };
   }
 
+  // Store-native targeting initiation. Replaces writing `state.abilitySelect`
+  // directly from readingFlow: the selection lives in the store and only the
+  // callback/preview are held locally. The legacy mirror is still produced for
+  // the current renderer via syncStoreSelectionToLegacy.
+  target.tlrStartAbilityTargeting = function ({ title, prompt, validCardIds = [], count = 1, cb = null, previewFn = null }) {
+    pendingCallbacks = { cb, previewFn };
+    if (storeReady(target)) {
+      target.tlrStore.dispatch({
+        type: START_ABILITY_TARGETING,
+        selection: { title: title || '', prompt: prompt || '', validCardIds: [...validCardIds], count: count || 1 },
+      });
+      syncStoreSelectionToLegacy(target);
+    } else {
+      const state = stateOf(target);
+      if (state) state.abilitySelect = { title, prompt, validIds: new Set(validCardIds), picked: [], count, cb, previewFn };
+    }
+    if (typeof target.render === 'function') target.render();
+  };
+
   target.handleAbilityHandClick = function (card) {
     const state = stateOf(target);
     if (!card || !state?.abilitySelect) return;
@@ -135,7 +162,8 @@ export function installAbilityTargetBridge(target = window) {
 
     const cards = allSelectableCards(target);
     const picked = pickedIds.map(id => cards.find(card => card.uid === id)).filter(Boolean);
-    const cb = selection.cb;
+    const cb = pendingCallbacks.cb || selection.cb;
+    clearPendingCallbacks();
 
     if (storeReady(target)) target.tlrStore.dispatch({ type: CLEAR_ABILITY_TARGETING });
     state.abilitySelect = null;

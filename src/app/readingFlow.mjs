@@ -218,7 +218,16 @@ function uniqueCards(cards){let seen=new Set();return cards.filter(c=>{if(seen.h
 function fallbackAbility(done,title='No valid ability result'){tlrAbilityDraw(1);choice(title,'No valid target was available. Draw 1 instead.',state.hand.slice(-1),()=>{state.busy=false;done()})}
 
 export function selectFromHand(title,prompt,cards,count,cb,previewFn=null){
-  state.abilitySelect={title,prompt,validIds:new Set(cards.map(c=>c.uid)),picked:[],count,cb,previewFn};
+  const validCardIds=cards.map(c=>c.uid);
+  // Store-native initiation: the ability targeting selection is owned by the
+  // store via the bridge; the legacy `state.abilitySelect` is rebuilt from it
+  // for the current renderer. Fall back to the legacy write if the bridge is
+  // not installed (e.g. headless/non-store environments).
+  if(typeof window.tlrStartAbilityTargeting==='function'){
+    window.tlrStartAbilityTargeting({title,prompt,validCardIds,count,cb,previewFn});
+    return;
+  }
+  state.abilitySelect={title,prompt,validIds:new Set(validCardIds),picked:[],count,cb,previewFn};
   render();
 }
 
