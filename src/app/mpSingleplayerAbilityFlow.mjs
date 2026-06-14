@@ -185,12 +185,13 @@ export function installMpSingleplayerAbilityFlow(target = window) {
     if (!pickedAnchors) return null;
 
     const [first, second] = pickedAnchors;
-    const found = sortCards(heldCardsBetween(player, first, second));
+    const limit = Math.max(1, Number(ability.count || getAbility('BETWEEN_2')?.count || 2));
+    const found = sortCards(heldCardsBetween(player, first, second)).slice(0, limit);
     if (!found.length) return fallbackChoice('Between — no cards between');
 
     const picked = await showCardChoice(
       `Between — ${cleanCardName(first)} / ${cleanCardName(second)}`,
-      'Cards found between them. Take 1. Unchosen revealed cards go to the bottom.',
+      `Cards found between them. Take 1. Revealed up to ${limit}. Unchosen revealed cards go to the bottom.`,
       found,
     );
     return picked ? { anchorUids: [first.uid, second.uid], takenCardUid: picked.uid } : null;

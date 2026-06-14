@@ -40,9 +40,12 @@ need to be run after each larger slice.
   Reshuffle now reshuffles from deck, discard, and hand, preserving already
   placed spread cards. Between reveal resolution is capped by `ability.count` in
   `mpReducer.mjs`.
-- **Multiplayer extension installs are centralized.** `mpGameHost.mjs` installs
-  the base multiplayer game and then one ordered `mpGameExtensions.mjs` seam. The
-  extensions still exist, but the host no longer imports each patch directly.
+- **Multiplayer extension installs are centralized and shrinking.**
+  `mpGameHost.mjs` installs the base multiplayer game and then one ordered
+  `mpGameExtensions.mjs` seam. Pending placement preview, persona ability prompt,
+  Between modal capping, mult-span / Surgeon swap presentation, and score-pill
+  stability, and scoring feedback have been folded into the base multiplayer
+  flow.
 - **Legacy layer** still lives in `src/app` and `src/ui`. Some modules still read
   and write `window.state` / `window.persist` and cache DOM nodes in module
   globals. These are mirrored into the store by `app/legacyBridge.mjs` and
@@ -60,7 +63,7 @@ need to be run after each larger slice.
 | Singleplayer ability targeting | `game/reducerWithPurge.mjs`, `app/abilityTargetBridge.mjs`, `app/readingFlow.mjs` | Picked targets are store-owned, but targeting is still initiated through legacy `state.abilitySelect` and mirrored back for current renderers. |
 | Singleplayer placement / gesture bridge | `ui/gestureCard.mjs`, `app/placementRuntime.mjs`, `app/spreadPlacementBridge.mjs` | Drag-to-spread now calls `placeCardUid` when available. Reorder and hold-to-expand still operate on legacy runtime `state.hand` / `state.selected`. |
 | Multiplayer match reducer | `multiplayer/mpReducer.mjs` | WORLD / Reshuffle spread preservation and Between reveal cap now live in the base reducer. `mpReducerFixed.mjs` remains only as a compatibility alias. |
-| Multiplayer UI extension seam | `app/mpGameHost.mjs`, `app/mpGameExtensions.mjs` | The host is clean, but companion modules remain: scoring feedback, score-pill stability, singleplayer-style ability flow, UI state fixes, persona prompt, Between modal limiter, and pending placement preview. |
+| Multiplayer UI extension seam | `app/mpGameHost.mjs`, `app/mpGameExtensions.mjs` | The host is clean, but companion modules remain: singleplayer-style ability flow and UI state fixes. Persona prompt, Between modal capping, pending placement preview, mult-span / Surgeon swap presentation, score-pill stability, and scoring feedback now live in `mpGame.mjs` / the ability flow. |
 | Multiplayer to legacy render | `app/mpGame.mjs`, `ui/gestureCard.mjs` | Mostly resolved. Multiplayer card piles and selection/purge are module-local match-state view models. Drag placement now has an explicit UID path, but the shared gesture module still retains legacy fallback behavior. |
 
 ## Phased plan
@@ -117,8 +120,11 @@ legacy handoffs with explicit multiplayer view models and match-state selectors.
 > `mpGame.mjs`, and multiplayer spread/hand rendering uses match state.
 >
 > _Recent fixes folded._ WORLD / Reshuffle spread preservation and Between reveal
-> cap are in `mpReducer.mjs`. The local pending placement preview, persona prompt,
-> mult-span sync, and score-pill stability remain UI extensions.
+> cap are in `mpReducer.mjs`. Local pending placement preview and persona prompt
+> now live in `mpGame.mjs`, and Between modal capping happens before multiplayer
+> ability-choice rendering. Mult-span / Surgeon swap presentation and score-pill
+> stability now also live in `mpGame.mjs`. Scoring feedback and scoring-effect
+> delays are now owned by `mpGame.mjs`.
 >
 > _Remaining bridge._ The shared gesture layer still exists for multiplayer hand
 > dragging, but drag-to-spread now has a direct UID placement path.
@@ -131,9 +137,10 @@ legacy handoffs with explicit multiplayer view models and match-state selectors.
 > base reducer.
 >
 > _Remaining work._ Fold stable UI extensions into `mpGame.mjs` one at a time.
-> Highest-priority candidates: pending placement preview, persona ability prompt,
-> mult-span rendering, and ability-choice modal capping. After each fold, remove
-> the corresponding extension installer from `mpGameExtensions.mjs`.
+> Mult-span / Surgeon swap presentation and score-pill stability now live in
+> `mpGame.mjs`, and scoring feedback is now folded too. The next highest-priority
+> candidates are singleplayer-style ability flow and UI state fixes. After each
+> fold, remove the corresponding extension installer from `mpGameExtensions.mjs`.
 
 ## Immediate next steps
 
@@ -142,10 +149,12 @@ legacy handoffs with explicit multiplayer view models and match-state selectors.
    ability prompt flow, spread/hand target glows, mult spans after placements,
    pending placement preview, and WORLD / Reshuffle preserving already placed
    cards.
-3. Fold `mpPendingPlacementPreview` into `mpGame.mjs` directly.
-4. Fold `mpPersonaAbilityPrompt` into `mpGame.mjs` directly.
-5. Cap Between before modal rendering in the multiplayer ability-choice flow, then
-   remove `mpBetweenChoiceLimit` from `mpGameExtensions.mjs`.
+3. Fold the remaining multiplayer UI extensions into `mpGame.mjs` one at a time,
+   starting with singleplayer-style ability flow.
+4. Continue Phase 2 singleplayer work: move ability targeting initiation out of
+   `readingFlow` / `state.abilitySelect`.
+5. Migrate hand reorder and hold-to-expand off legacy runtime `state.hand` /
+   `state.selected`.
 
 ## Efficiency follow-ups (tracked, intentionally not bundled here)
 
