@@ -14,9 +14,10 @@ export const MP_ACTIONS = Object.freeze({
   MP_PLACE_CARD: 'MP_PLACE_CARD',
 
   // A player discards a selected card and invokes its ability (spends 1 discard)
-  // { type, playerIndex, cardUid, target?: { playerIndex, slotIndex } }
-  // DRAW abilities: fully resolved. MP_BANISH: no target; removes the opponent's last played card.
-  // MP_SEAL: requires target. Others are stubbed (discard spent, no secondary effect).
+  // { type, playerIndex, cardUid, target?: { playerIndex, slotIndex }, abilityChoice?: object }
+  // DRAW abilities resolve directly. PEEK/SEARCH/NEIGHBOR/KIN/MIRROR/BETWEEN
+  // include abilityChoice so both peers apply the same selected result. MP_BANISH
+  // removes the opponent's last played card. MP_SEAL requires target.
   MP_INVOKE_ABILITY: 'MP_INVOKE_ABILITY',
 
   // A player discards a card without invoking its ability (spends 1 discard)
