@@ -243,9 +243,9 @@ function cardById(id, uid) {
 {
   let s = initMatch();
   const player = s.players[0];
-  const source = { ...cardById('IX', 9010), ability: 'NEIGHBOR' };
-  const anchor = cardById('X', 9011);
-  const found = cardById('XI', 9012);
+  const source = { ...cardById('major_9', 9010), ability: 'NEIGHBOR_2' };
+  const anchor = cardById('major_10', 9011);
+  const found = cardById('major_11', 9012);
   s = {
     ...s,
     players: [
@@ -260,10 +260,10 @@ function cardById(id, uid) {
 {
   let s = initMatch();
   const player = s.players[0];
-  const source = { ...cardById('XIV', 9020), ability: 'BETWEEN' };
-  const low = cardById('V', 9021);
-  const high = cardById('VIII', 9022);
-  const found = cardById('VII', 9023);
+  const source = { ...cardById('major_14', 9020), ability: 'BETWEEN_2' };
+  const low = cardById('major_5', 9021);
+  const high = cardById('major_8', 9022);
+  const found = cardById('major_7', 9023);
   s = {
     ...s,
     players: [
