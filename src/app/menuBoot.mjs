@@ -2,8 +2,10 @@
 // Keeps the main menu responsive before loading the full game module graph.
 
 const GAME_MODULE = './main.mjs?v=lazy-boot-1';
+const DEFERRED_ASSETS_MODULE = './deferredAssets.mjs?v=lazy-boot-1';
 
 let gamePromise = null;
+let deferredAssetsPromise = null;
 let bootAction = null;
 
 function hasSavedProgress(storage) {
@@ -60,8 +62,28 @@ function clearBusy() {
   syncContinueButton();
 }
 
+function scheduleDeferredAssets() {
+  if (deferredAssetsPromise) return;
+  const start = () => {
+    deferredAssetsPromise = import(DEFERRED_ASSETS_MODULE).catch(err => {
+      console.warn('The Last Reading deferred asset load did not complete.', err);
+      deferredAssetsPromise = null;
+    });
+  };
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(start, { timeout: 4000 });
+  } else {
+    window.setTimeout(start, 1200);
+  }
+}
+
 function loadGame() {
-  if (!gamePromise) gamePromise = import(GAME_MODULE);
+  if (!gamePromise) {
+    gamePromise = import(GAME_MODULE).then(mod => {
+      scheduleDeferredAssets();
+      return mod;
+    });
+  }
   return gamePromise;
 }
 
@@ -78,17 +100,16 @@ async function launch(actionName) {
     }
     throw new Error(`${actionName} was not installed by the game boot.`);
   } catch (err) {
-    console.error('The Last Reading failed to load the full game.', err);
+    console.error('The Last Reading could not load the full game.', err);
     bootAction = null;
     gamePromise = null;
     clearBusy();
-    window.alert?.('The game failed to load. Try refreshing the page.');
   }
 }
 
 function warmGame() {
   loadGame().catch(err => {
-    console.warn('The Last Reading game preload failed.', err);
+    console.warn('The Last Reading game preload did not complete.', err);
     gamePromise = null;
   });
 }
