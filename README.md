@@ -30,6 +30,8 @@ Individual suites:
 | `scripts/validate-modifier-cases.mjs` | Scoring modifiers and relic stacking |
 | `scripts/validate-economy-cases.mjs` | Shop pricing, pack costs, refresh ladder, Merchant's Scale |
 | `scripts/check-architecture.mjs` | Reducer smoke tests: placement, discard, scoring, abilities, market, attic |
+| `scripts/validate-bridge.mjs` | Legacy↔store bridge contract: field-drift guard and round-trip mapping |
+| `scripts/validate-multiplayer.mjs` | Multiplayer reducer: placement, scoring, ability resolution, rounds |
 
 `npm test` and `npm run build` both run `validate-all.mjs`.
 

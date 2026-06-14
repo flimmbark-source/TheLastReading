@@ -381,7 +381,10 @@ function resetSession(state, fresh = false) {
   });
 }
 
-const LEGACY_RUN_FIELDS = [
+// The single source of truth for which run fields cross the legacy<->store
+// bridge. SYNC_LEGACY_RUN only accepts these, and app/legacyBridge.mjs must emit
+// exactly this set; scripts/validate-bridge.mjs guards against the two drifting.
+export const LEGACY_RUN_FIELDS = [
   'deck', 'hand', 'discard', 'spread', 'selectedCardId', 'discards', 'discardedCards',
   'freeDiscardUsed', 'sightChargesUsed', 'thresholdIndex', 'thresholdBonus',
   'thresholdBonusPending', 'reading', 'pendingReserve', 'worldCarry',
