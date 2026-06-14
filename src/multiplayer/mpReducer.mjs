@@ -404,7 +404,12 @@ export function mpReducer(state, action) {
       const pendingActions = [...(state.pendingActions ?? [null, null])];
       pendingActions[playerIndex] = submitted;
       const next = { ...state, pendingActions };
-      return pendingActions.every(Boolean) ? resolvePendingActions(next) : next;
+      // A player whose spread is already full has nothing left to place, so treat
+      // them as having auto-passed: resolve once every player has either
+      // submitted or filled their spread. Otherwise a full spread (e.g. with no
+      // discards left to spend) would stall the cycle and the set would never end.
+      const ready = next.players.every((p, i) => pendingActions[i] || spreadFull(p.spread));
+      return ready ? resolvePendingActions(next) : next;
     }
 
     case MP_ACTIONS.MP_PLACE_CARD:

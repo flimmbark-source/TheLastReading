@@ -269,6 +269,29 @@ function fillSpread(state, playerIndex) {
   }
 }
 
+// --- A full spread must not stall the set (auto-pass) ---
+{
+  let s = initMatch();
+  // Fill player 0's spread directly; one full spread alone does not end the set.
+  for (let slot = 0; slot < MP_SPREAD_SIZE; slot++) {
+    s = mpReducer(s, { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex: 0, cardUid: s.players[0].hand[0].uid, slotIndex: slot });
+  }
+  assert(s.phase === MP_PHASES.PLACEMENT, 'one full spread does not end the set');
+  assert(s.players[0].spread.every(c => c !== null), 'player 0 spread is full');
+
+  // Player 1 fills via the simultaneous submit path. Player 0 is full and never
+  // re-submits; it must be treated as auto-passed so the cycles still resolve.
+  for (let slot = 0; slot < MP_SPREAD_SIZE; slot++) {
+    s = mpReducer(s, {
+      type: MP_ACTIONS.MP_SUBMIT_ACTION,
+      playerIndex: 1,
+      action: { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex: 1, cardUid: s.players[1].hand[0].uid, slotIndex: slot },
+    });
+    assert(!s.error, `player 1 placement ${slot} resolves without error`);
+  }
+  assert(s.phase === MP_PHASES.SCORING, 'set enters scoring once both spreads fill, even if the full player never re-submits');
+}
+
 if (failed > 0) {
   console.error(`Multiplayer validation: ${failed} case(s) failed.`);
   process.exit(1);

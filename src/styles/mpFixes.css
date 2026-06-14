@@ -160,18 +160,18 @@ body.mp-game-active .spread-wrap {
    the left, the opponent's on the right, both tilted inward, with the score /
    threshold pills centered between them. The player's hand stays at the bottom. */
 @media (min-width: 641px) {
-  /* Player spread → left side, tilted inward toward the centre. */
+  /* Player spread → far left, full-size cards, tilted inward toward the centre. */
   body.mp-game-active .spread-wrap {
     position: fixed !important;
     top: 50% !important;
     bottom: auto !important;
-    left: 1.5vw !important;
+    left: -2vw !important;
     right: auto !important;
-    width: 660px !important;
-    max-width: 44vw !important;
+    width: 680px !important;
+    max-width: 50vw !important;
     height: auto !important;
     padding: 0 !important;
-    transform: translateY(-50%) scale(.62) rotate(7deg) !important;
+    transform: translateY(-50%) rotate(15deg) !important;
     transform-origin: left center !important;
     z-index: 9400 !important;
   }
@@ -182,19 +182,19 @@ body.mp-game-active .spread-wrap {
     justify-content: center !important;
   }
 
-  /* Opponent spread → right side, mirrored tilt. */
+  /* Opponent spread → right side, full-size cards, mirrored inward tilt. */
   body.mp-game-active .mp-opp-spread-clip {
     position: fixed !important;
     top: 50% !important;
     bottom: auto !important;
     left: auto !important;
-    right: 1.5vw !important;
-    width: 660px !important;
-    max-width: 44vw !important;
+    right: -2vw !important;
+    width: 680px !important;
+    max-width: 50vw !important;
     height: auto !important;
     margin: 0 !important;
     overflow: visible !important;
-    transform: translateY(-50%) scale(.62) rotate(-7deg) !important;
+    transform: translateY(-50%) rotate(-15deg) !important;
     transform-origin: right center !important;
     z-index: 9400 !important;
   }

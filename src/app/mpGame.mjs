@@ -391,6 +391,8 @@ export function installMpGame(target = window) {
       if (card && (card.ability || card.abilityType) && canInvokeAbility(s, my, selUid)) parts.push(`<button class="mp-action-btn invoke" onclick="tlrMpInvoke()" type="button">Invoke</button>`);
       if (card?.abilityType === MP_ABILITY_TYPES.MP_BANISH) parts.push(`<span class="mp-action-hint">Discard invokes Banish and removes the opponent's last played card.</span>`);
       else parts.push(`<span class="mp-action-hint">Place it, discard it, or purge 3 cards for +1 discard.</span>`);
+    } else if (isTurn && (p?.spread || []).every(Boolean)) {
+      parts.push(`<span class="mp-action-hint">Spread complete — waiting for opponent…</span>`);
     } else if (isTurn) {
       if (opponentSubmitted(s)) parts.push(`<span class="mp-action-hint">Opponent is ready. Choose your action.</span>`);
       if (canSwapSpread(s, my)) parts.push(`<button class="mp-action-btn swap" onclick="tlrMpStartSwap()" type="button">Swap Spread</button>`);
