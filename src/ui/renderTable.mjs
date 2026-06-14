@@ -8,7 +8,7 @@ import { renderHand } from './renderHand.mjs';
 import { renderAbilityPrompt, renderPurgePrompt } from './renderAbility.mjs';
 import { renderRelicRack } from './renderMarket.mjs';
 import { cleanName } from './renderCard.mjs';
-import { handView as selectHandView } from '../game/selectors.mjs';
+import { handView as selectHandView, spreadView as selectSpreadView } from '../game/selectors.mjs';
 import { getConstellation, constellationThreshold, blocksDiscard, hasActiveConstellation as runHasActiveConstellation } from '../systems/constellations.mjs';
 
 let constellationCalloutOpen=false;
@@ -84,7 +84,8 @@ export function render(){
   const inPurge=state.purgeSelect!==null;
   const storeState=currentStoreState();
   const displayHand=storeState?selectHandView(storeState,{purgeSelect:state.purgeSelect}):null;
-  renderSpread(ability,inPurge);
+  const displaySpread=storeState?selectSpreadView(storeState):null;
+  renderSpread(ability,inPurge,displaySpread);
   _resStateKey=null;
   applyResonationGlows(state.spread);
   renderHand(ability,inPurge,displayHand);
