@@ -1,0 +1,11 @@
+# Normalize line endings for text; let git detect text vs binary by default.
+* text=auto eol=lf
+
+# Treat game assets as binary so git never tries to diff/merge them.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.mp3 binary
+*.wav binary
+*.ogg binary
