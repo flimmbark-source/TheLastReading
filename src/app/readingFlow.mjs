@@ -16,6 +16,7 @@
    tlrAbilityDraw, tlrBindSelectionToStore, openShop,
    maxHand, hasMull, tlrArchitectureSync, tlrScoreToObals */
 import { isCardUntargetable, hasActiveConstellation } from '../systems/constellations.mjs';
+import { getAbility } from '../data/abilities.mjs';
 
 let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 let scorePillSetBase=0;
@@ -244,18 +245,24 @@ export function confirmAbilitySelection(){
   cb(...picked);
 }
 
+// Between reveals only the ability's `count` cards (2), matching the multiplayer
+// reducer. The reveal cap was previously bolted on by betweenAbilityLimitPatch;
+// it now lives here in the host.
 function betweenAbility(done,sourceCard=null){
   state.busy=true;
+  const limit=Math.max(1,Number(getAbility('BETWEEN_2')?.count||2));
   const anchors=sortCards(targetable([...state.hand,...state.spread.filter(Boolean)]));
   const validAnchors=anchors.filter(a=>anchors.some(b=>b.uid!==a.uid&&betweenPool(a,b).length>0));
   if(!validAnchors.length){fallbackAbility(done,'Between — no cards between');return}
   const previewFn=(a,b)=>{
     if(!a||!b)return'';
     const total=betweenPool(a,b).length;
-    return total?('Between these anchors: '+total+' card'+(total===1?'':'s')):'No cards between these anchors.';
+    if(!total)return'No cards between these anchors.';
+    const shown=Math.min(limit,total);
+    return 'Between these anchors: '+shown+' of '+total+' card'+(total===1?'':'s')+' will be revealed';
   };
-  selectFromHand('Between','Choose 2 cards. Between finds cards whose values fall between them in sequence.',validAnchors,2,(a,b)=>{
-    const found=uniqueCards(betweenPool(a,b));
+  selectFromHand('Between','Choose 2 cards. Between reveals up to '+limit+' cards whose values fall between them in sequence.',validAnchors,2,(a,b)=>{
+    const found=sortCards(uniqueCards(betweenPool(a,b))).slice(0,limit);
     if(!found.length){
       state.busy=false;done();return;
     }
@@ -337,6 +344,7 @@ function tlSyncBeforeScore(){tlrSyncRunToStore()}
 
 export function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html;tlrArchitectureSync()}
 export function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML='';tlrArchitectureSync()}
+function summaryIsFailedReading(){const s=$('#summary');if(!s||!s.classList.contains('show'))return false;return !!s.querySelector('.result-panel.fail')}
 
 export function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount=0;const firstShop=!localStorage.getItem('tlr_tut_shop');const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;
 tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});state.reading=window.tlrStore.getState().run.reading;
@@ -344,6 +352,7 @@ startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout
 
 export function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;
 tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.END_SESSION,totalScore:total,obals:candles});
+if(summaryIsFailedReading()){clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);return}
 showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Obals</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}
 
 export function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0,setIndex:0,setsPerRound:2,roundScore:0,setScores:[],roundDiscardCount:0,roundPatternCount:0,constellationId:null,untargetableCardUids:[],awaitingNextSet:false,lastOutcome:null};tlrBindSelectionToStore();

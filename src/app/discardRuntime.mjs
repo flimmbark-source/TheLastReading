@@ -3,7 +3,6 @@
 // on the store DISCARD_SELECTED action can fail if store selection is stale, so
 // this owns the selected-card discard and then delegates to the existing ability resolver.
 import { installPurgeRuntime } from './purgeRuntime.mjs';
-import { installBetweenAbilityLimitPatch } from './betweenAbilityLimitPatch.mjs';
 
 function runtime(target){return target.tlrRuntime || {};}
 function stateOf(target){return runtime(target).state || target.state;}
@@ -49,7 +48,6 @@ export function discardSelected(target = window){
 export function installDiscardRuntime(target = window){
   if(!target || target.__tlrDiscardRuntimeInstalled)return;
   target.__tlrDiscardRuntimeInstalled=true;
-  installBetweenAbilityLimitPatch(target);
   target.tlrDiscardRuntime={discardSelected};
   target.discardSelected=()=>discardSelected(target);
   installPurgeRuntime(target);
