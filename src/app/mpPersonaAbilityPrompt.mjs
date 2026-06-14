@@ -8,12 +8,14 @@ export function installMpPersonaAbilityPrompt(target = window) {
   const doc = target.document;
   if (!doc) return;
 
+  let personaSwapRequested = false;
+
   installStyle(doc);
-  wrapSwapStart(target, syncPersonaPrompt);
-  wrapCancel(target, syncPersonaPrompt);
-  wrapMatchCallbacks(target, syncPersonaPrompt);
-  installMutationSync(target, doc, syncPersonaPrompt);
-  target.requestAnimationFrame?.(() => syncPersonaPrompt(target));
+  wrapSwapStart(target, () => { personaSwapRequested = true; syncPersonaPrompt(target, personaSwapRequested); });
+  wrapCancel(target, () => { personaSwapRequested = false; syncPersonaPrompt(target, personaSwapRequested); });
+  wrapMatchCallbacks(target, () => { personaSwapRequested = false; syncPersonaPrompt(target, personaSwapRequested); });
+  installMutationSync(target, doc, () => syncPersonaPrompt(target, personaSwapRequested));
+  target.requestAnimationFrame?.(() => syncPersonaPrompt(target, personaSwapRequested));
 }
 
 function myIndex(target) {
@@ -26,7 +28,7 @@ function currentPersona(target) {
   return getPersona(personaId);
 }
 
-function isPersonaSwapActive(doc) {
+function hasPersonaSwapDomState(doc) {
   return !!doc.querySelector('body.mp-game-active #spread .slot.mp-swap-pick, body.mp-game-active #spread .slot.mp-swap-a, body.mp-game-active #hand .card.mp-surgeon-swap-target');
 }
 
@@ -45,7 +47,7 @@ function cleanCardName(card) {
   catch (_) { return card?.name || card?.id || 'that card'; }
 }
 
-function syncPersonaPrompt(target = window) {
+function syncPersonaPrompt(target = window, personaSwapRequested = false) {
   const doc = target.document;
   if (!doc) return;
   const promptBox = doc.getElementById('abilityPrompt');
@@ -54,7 +56,7 @@ function syncPersonaPrompt(target = window) {
   const button = doc.getElementById('abilityConfirm');
   if (!promptBox || !title || !text || !button) return;
 
-  const active = isPersonaSwapActive(doc);
+  const active = personaSwapRequested && hasPersonaSwapDomState(doc);
   if (!active) {
     doc.body.classList.remove('mp-persona-ability-active');
     if (promptBox.dataset.mpPersonaPrompt === '1') {
@@ -86,36 +88,36 @@ function syncPersonaPrompt(target = window) {
   button.onclick = () => target.tlrMpCancelAction?.();
 }
 
-function wrapSwapStart(target, sync) {
+function wrapSwapStart(target, afterStart) {
   const original = target.tlrMpStartSwap;
   if (typeof original !== 'function') return;
   target.tlrMpStartSwap = function (...args) {
     const result = original.apply(this, args);
-    sync(target);
-    target.requestAnimationFrame?.(() => sync(target));
+    afterStart(target);
+    target.requestAnimationFrame?.(() => afterStart(target));
     return result;
   };
 }
 
-function wrapCancel(target, sync) {
+function wrapCancel(target, afterCancel) {
   const original = target.tlrMpCancelAction;
   if (typeof original !== 'function') return;
   target.tlrMpCancelAction = function (...args) {
     const result = original.apply(this, args);
-    sync(target);
-    target.requestAnimationFrame?.(() => sync(target));
+    afterCancel(target);
+    target.requestAnimationFrame?.(() => afterCancel(target));
     return result;
   };
 }
 
-function wrapMatchCallbacks(target, sync) {
+function wrapMatchCallbacks(target, afterAction) {
   const wrap = name => {
     const original = target[name];
     if (typeof original !== 'function') return;
     target[name] = function (...args) {
       const result = original.apply(this, args);
-      sync(target);
-      target.requestAnimationFrame?.(() => sync(target));
+      afterAction(target);
+      target.requestAnimationFrame?.(() => afterAction(target));
       return result;
     };
   };
