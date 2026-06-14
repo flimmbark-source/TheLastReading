@@ -33,6 +33,22 @@ export function spreadView(state, options = {}) {
   };
 }
 
+export function tableView(state, options = {}) {
+  const run = state.run;
+  const persist = state.persist;
+  const inPurge = options.inPurge ?? run.purge !== null;
+  const discardBlocked = blocksDiscard(run);
+  return {
+    threshold: thresholdValue(state),
+    thresholdBonusPending: run.thresholdBonusPending || 0,
+    reserve: persist.reserve,
+    discards: run.discards,
+    discardDisabled: selectedCard(state) === null || run.discards <= 0 || inPurge || discardBlocked,
+    discardTitle: discardBlocked ? 'Place 2 cards before discarding.' : '',
+    purgeDisabled: run.busy || run.hand.length < 3 || !!run.ability || inPurge,
+  };
+}
+
 export function thresholdValue(state) {
   return constellationThreshold(currentThreshold(state.run.thresholdIndex, state.run.thresholdBonus), state.run);
 }
