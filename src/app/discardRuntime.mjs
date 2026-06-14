@@ -2,6 +2,7 @@
 // Discarding is what triggers card abilities. After the shell cutover, relying
 // on the store DISCARD_SELECTED action can fail if store selection is stale, so
 // this owns the selected-card discard and then delegates to the existing ability resolver.
+import { installPurgeRuntime } from './purgeRuntime.mjs';
 
 function runtime(target){return target.tlrRuntime || {};}
 function stateOf(target){return runtime(target).state || target.state;}
@@ -49,4 +50,5 @@ export function installDiscardRuntime(target = window){
   target.__tlrDiscardRuntimeInstalled=true;
   target.tlrDiscardRuntime={discardSelected};
   target.discardSelected=()=>discardSelected(target);
+  installPurgeRuntime(target);
 }
