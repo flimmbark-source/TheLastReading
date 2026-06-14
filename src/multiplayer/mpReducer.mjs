@@ -99,6 +99,46 @@ function orderedCardsFromUids(cards, uidOrder) {
   return { ordered: out, remaining: [...pool.values()] };
 }
 
+function applyResolvedAbilityState(player, resultState) {
+  if (!resultState || typeof resultState !== 'object') return player;
+
+  const pool = new Map();
+  const add = card => { if (card?.uid != null && !pool.has(card.uid)) pool.set(card.uid, card); };
+  (player.deck || []).forEach(add);
+  (player.hand || []).forEach(add);
+  (player.discard || []).forEach(add);
+  (player.spread || []).filter(Boolean).forEach(add);
+
+  const take = uid => {
+    if (uid == null) return null;
+    const card = pool.get(uid);
+    if (!card) return null;
+    pool.delete(uid);
+    return card;
+  };
+  const takeList = list => (Array.isArray(list) ? list : []).map(take).filter(Boolean);
+
+  const hand = takeList(resultState.handUids);
+  const deck = takeList(resultState.deckUids);
+  const discard = takeList(resultState.discardUids);
+  const spreadUids = Array.isArray(resultState.spreadUids)
+    ? resultState.spreadUids.slice(0, MP_SPREAD_SIZE)
+    : Array(MP_SPREAD_SIZE).fill(null);
+  while (spreadUids.length < MP_SPREAD_SIZE) spreadUids.push(null);
+  const spread = spreadUids.map(uid => uid == null ? null : take(uid));
+
+  return {
+    ...player,
+    hand,
+    deck: [...deck, ...pool.values()],
+    discard,
+    spread,
+    playedSlotHistory: (player.playedSlotHistory || []).filter(slot => spread[slot]),
+    anchoredSlotIndex: spread[player.anchoredSlotIndex] ? player.anchoredSlotIndex : null,
+    silencedCardUids: (player.silencedCardUids || []).filter(uid => spread.some(card => card?.uid === uid)),
+  };
+}
+
 function takeFromHeld(player, heldCards, takenCardUid) {
   const held = (heldCards || []).filter(Boolean);
   const taken = held.find(card => card.uid === takenCardUid);
@@ -147,10 +187,16 @@ function relationHeldCards(player, ability, choice) {
   return [];
 }
 
-// Apply a standard singleplayer-style ability. Choice-heavy abilities receive
-// their chosen result from the acting client so both peers resolve identically.
+// Apply a standard singleplayer-style ability. Multiplayer can either pass the
+// legacy choice fields, or pass resultState captured from the real singleplayer
+// ability flow. resultState is preferred because it lets multiplayer reuse the
+// exact same card ability UI while still syncing the final state to both peers.
 function applyStandardAbility(player, ability, choice = {}) {
   if (!ability) return player;
+
+  if (choice?.resultState) {
+    return applyResolvedAbilityState(player, choice.resultState);
+  }
 
   if (choice?.fallbackDraw) {
     return drawCards(player, Number(choice.fallbackDraw) || 1);
@@ -210,14 +256,12 @@ function applyInteractionAbility(state, playerIndex, card, target) {
     if (targetSlot < 0) return { error: 'Opponent has no played card to Banish.' };
     if (targetPlayer.spread[targetSlot] === null) return { error: 'Target slot is empty.' };
 
-    // Anchor: protect the first-placed slot
     if (targetPlayer.anchoredSlotIndex === targetSlot) {
       return { error: 'That card is anchored and cannot be removed.' };
     }
 
     const removedCard = targetPlayer.spread[targetSlot];
     const newSpread = targetPlayer.spread.map((c, i) => i === targetSlot ? null : c);
-    // Removed card goes to the target player's discard
     const newDiscard = [...targetPlayer.discard, removedCard];
     const playedSlotHistory = removeSlotFromHistory(targetPlayer.playedSlotHistory, targetSlot);
     const nextState = updatePlayer(state, targetPlayerIdx, { spread: newSpread, discard: newDiscard, playedSlotHistory });
@@ -236,7 +280,6 @@ function applyInteractionAbility(state, playerIndex, card, target) {
     const targetCard = targetPlayer.spread[targetSlot];
     if (!targetCard) return { error: 'Target slot is empty.' };
 
-    // Anchor: protect the first-placed slot
     if (targetPlayer.anchoredSlotIndex === targetSlot) {
       return { error: 'That card is anchored and cannot be silenced.' };
     }
@@ -249,8 +292,6 @@ function applyInteractionAbility(state, playerIndex, card, target) {
   return { error: 'Unknown interaction ability: ' + abilityType };
 }
 
-// Apply an Invoke: remove card from hand, spend a discard, apply ability.
-// Returns { player, interactionResult } or { error }.
 function applyInvoke(state, playerIndex, cardUid, target, abilityChoice) {
   const player = state.players[playerIndex];
   const cardIndex = player.hand.findIndex(c => c.uid === cardUid);
@@ -262,34 +303,23 @@ function applyInvoke(state, playerIndex, cardUid, target, abilityChoice) {
   const discard = [...player.discard, card];
   let updatedPlayer = { ...player, hand, discard, discards: player.discards - 1 };
 
-  // Interaction card (Banish, Seal)?
   if (card.abilityType) {
-    const result = applyInteractionAbility(
-      updatePlayer(state, playerIndex, updatedPlayer),
-      playerIndex,
-      card,
-      target,
-    );
+    const result = applyInteractionAbility(updatePlayer(state, playerIndex, updatedPlayer), playerIndex, card, target);
     if (result.error) return { error: result.error };
     return { state: result.nextState };
   }
 
-  // Standard singleplayer-style ability
   const ability = card.ability ? getAbility(card.ability) : null;
   updatedPlayer = applyStandardAbility(updatedPlayer, ability, abilityChoice);
   return { player: updatedPlayer };
 }
 
-// Score a player's spread, excluding silenced cards.
 function scoreSpread(player) {
-  const cards = player.spread.filter(
-    c => c !== null && !player.silencedCardUids.includes(c.uid)
-  );
+  const cards = player.spread.filter(c => c !== null && !player.silencedCardUids.includes(c.uid));
   if (!cards.length) return 0;
   return computeScore(cards, { skipFlatBonuses: true, skipRelics: true }).finalScore;
 }
 
-// After scoring, determine the winner (or null if the match continues).
 function resolveVictory(state) {
   const [p0, p1] = state.players;
   if (p0.totalScore < state.scoreTarget && p1.totalScore < state.scoreTarget) return null;
@@ -304,28 +334,20 @@ function applyImmediateAction(state, action) {
       if (!isActionPhase(state)) return err(state, 'Cannot act in phase: ' + state.phase);
 
       const player = state.players[playerIndex];
-      if (slotIndex < 0 || slotIndex >= MP_SPREAD_SIZE) {
-        return err(state, 'Invalid slot index: ' + slotIndex);
-      }
-      if (player.spread[slotIndex] !== null) {
-        return err(state, 'Slot already occupied.');
-      }
+      if (slotIndex < 0 || slotIndex >= MP_SPREAD_SIZE) return err(state, 'Invalid slot index: ' + slotIndex);
+      if (player.spread[slotIndex] !== null) return err(state, 'Slot already occupied.');
       const cardIdx = player.hand.findIndex(c => c.uid === cardUid);
-      if (cardIdx < 0) {
-        return err(state, 'Card not in hand.');
-      }
+      if (cardIdx < 0) return err(state, 'Card not in hand.');
 
       const card = player.hand[cardIdx];
       const hand = player.hand.filter((_, i) => i !== cardIdx);
       const spread = player.spread.map((s, i) => i === slotIndex ? card : s);
       const playedSlotHistory = [...(player.playedSlotHistory || []), slotIndex];
 
-      // Anchor: record the first placed card's slot
       const wasEmpty = player.spread.every(s => s === null);
-      const anchoredSlotIndex =
-        wasEmpty && getPersona(player.persona)?.passives?.anchoredFirstCard
-          ? slotIndex
-          : player.anchoredSlotIndex;
+      const anchoredSlotIndex = wasEmpty && getPersona(player.persona)?.passives?.anchoredFirstCard
+        ? slotIndex
+        : player.anchoredSlotIndex;
 
       return updatePlayer(state, playerIndex, { hand, spread, anchoredSlotIndex, playedSlotHistory });
     }
@@ -339,9 +361,7 @@ function applyImmediateAction(state, action) {
 
       let next = result.state ?? updatePlayer(state, playerIndex, result.player);
       const actingPlayer = next.players[playerIndex];
-      if (actingPlayer.bonusActionAvailable) {
-        next = updatePlayer(next, playerIndex, { bonusActionAvailable: false });
-      }
+      if (actingPlayer.bonusActionAvailable) next = updatePlayer(next, playerIndex, { bonusActionAvailable: false });
       return next;
     }
 
@@ -351,18 +371,13 @@ function applyImmediateAction(state, action) {
 
       const player = state.players[playerIndex];
       if (player.discards <= 0) return err(state, 'No discards remaining.');
-
       const cardIndex = player.hand.findIndex(c => c.uid === cardUid);
       if (cardIndex < 0) return err(state, 'Card not in hand.');
 
       const card = player.hand[cardIndex];
       const hand = player.hand.filter((_, i) => i !== cardIndex);
       const discard = [...player.discard, card];
-      return updatePlayer(state, playerIndex, {
-        hand,
-        discard,
-        discards: player.discards - 1,
-      });
+      return updatePlayer(state, playerIndex, { hand, discard, discards: player.discards - 1 });
     }
 
     case MP_ACTIONS.MP_PURGE_CARDS: {
@@ -379,11 +394,7 @@ function applyImmediateAction(state, action) {
 
       const hand = player.hand.filter(c => !uniqueIds.includes(c.uid));
       const discard = [...player.discard, ...selected];
-      return updatePlayer(state, playerIndex, {
-        hand,
-        discard,
-        discards: player.discards + 1,
-      });
+      return updatePlayer(state, playerIndex, { hand, discard, discards: player.discards + 1 });
     }
 
     case MP_ACTIONS.MP_SWAP_SPREAD: {
@@ -391,22 +402,13 @@ function applyImmediateAction(state, action) {
       if (!isActionPhase(state)) return err(state, 'Cannot act in phase: ' + state.phase);
 
       const player = state.players[playerIndex];
-      if (!player.swapAvailable) {
-        return err(state, 'No swap available. Surgeon persona required once per round.');
-      }
-      if (slotIndex < 0 || slotIndex >= MP_SPREAD_SIZE) {
-        return err(state, 'Invalid spread slot for swap.');
-      }
+      if (!player.swapAvailable) return err(state, 'No swap available. Surgeon persona required once per round.');
+      if (slotIndex < 0 || slotIndex >= MP_SPREAD_SIZE) return err(state, 'Invalid spread slot for swap.');
 
       const spreadCard = player.spread[slotIndex];
-      if (!spreadCard) {
-        return err(state, 'Choose a card in your Spread to swap.');
-      }
-
+      if (!spreadCard) return err(state, 'Choose a card in your Spread to swap.');
       const handIndex = player.hand.findIndex(c => c.uid === cardUid);
-      if (handIndex < 0) {
-        return err(state, 'Choose a card in your Hand to swap.');
-      }
+      if (handIndex < 0) return err(state, 'Choose a card in your Hand to swap.');
 
       const handCard = player.hand[handIndex];
       const spread = player.spread.map((card, i) => i === slotIndex ? handCard : card);
@@ -422,29 +424,20 @@ function applyImmediateAction(state, action) {
 function resolvePendingActions(state) {
   const actions = state.pendingActions ?? [null, null];
   let next = { ...state, pendingActions: [null, null] };
-
   for (const action of actions) {
     if (action) next = applyImmediateAction(next, action);
   }
-
   if (next.error) return next;
-  if (next.players.every(p => spreadFull(p.spread))) {
-    return { ...next, phase: MP_PHASES.SCORING };
-  }
+  if (next.players.every(p => spreadFull(p.spread))) return { ...next, phase: MP_PHASES.SCORING };
   return { ...next, phase: MP_PHASES.PLACEMENT };
 }
-
-// --- Reducer ---
 
 export function mpReducer(state, action) {
   if (!state) state = createMatchState();
   state = clearError(state);
 
   switch (action.type) {
-
     case MP_ACTIONS.MP_INIT: {
-      // Prefer a seeded RNG derived from action.seed so both peers produce
-      // identical shuffles. Fall back to action.rng or Math.random for tests.
       const rng = action.seed != null ? mulberry32(action.seed) : (action.rng || Math.random);
       const personas = action.personas ?? [null, null];
       let next = {
@@ -454,7 +447,6 @@ export function mpReducer(state, action) {
         pendingActions: [null, null],
       };
       let uid = next.nextInjectedUid;
-      // Apply game-start deck passives first, then round-start passives for round 1.
       for (let i = 0; i < 2; i++) {
         const gameStart = applyGameStartPassives(next.players[i], uid, rng);
         next = updatePlayer(next, i, gameStart.player);
@@ -479,7 +471,6 @@ export function mpReducer(state, action) {
       const pendingActions = [...(state.pendingActions ?? [null, null])];
       pendingActions[playerIndex] = submitted;
       const next = { ...state, pendingActions };
-
       return pendingActions.every(Boolean) ? resolvePendingActions(next) : next;
     }
 
@@ -488,7 +479,6 @@ export function mpReducer(state, action) {
     case MP_ACTIONS.MP_DISCARD_CARD:
     case MP_ACTIONS.MP_PURGE_CARDS:
     case MP_ACTIONS.MP_SWAP_SPREAD: {
-      // Direct application is kept for tests/tools. Live multiplayer uses MP_SUBMIT_ACTION.
       const next = applyImmediateAction(state, action);
       if (next.error) return next;
       if (next.players.every(p => spreadFull(p.spread))) return { ...next, phase: MP_PHASES.SCORING };
@@ -496,49 +486,31 @@ export function mpReducer(state, action) {
     }
 
     case MP_ACTIONS.MP_SCORE_ROUND: {
-      if (state.phase !== MP_PHASES.SCORING) {
-        return err(state, 'Cannot score in phase: ' + state.phase);
-      }
+      if (state.phase !== MP_PHASES.SCORING) return err(state, 'Cannot score in phase: ' + state.phase);
 
       const p0Score = scoreSpread(state.players[0]);
       const p1Score = scoreSpread(state.players[1]);
-
-      let next = updatePlayer(state, 0, {
-        roundScore: p0Score,
-        totalScore: state.players[0].totalScore + p0Score,
-      });
-      next = updatePlayer(next, 1, {
-        roundScore: p1Score,
-        totalScore: state.players[1].totalScore + p1Score,
-      });
+      let next = updatePlayer(state, 0, { roundScore: p0Score, totalScore: state.players[0].totalScore + p0Score });
+      next = updatePlayer(next, 1, { roundScore: p1Score, totalScore: state.players[1].totalScore + p1Score });
 
       const history = [
         ...state.roundHistory,
-        {
-          scores: [p0Score, p1Score],
-          totals: [next.players[0].totalScore, next.players[1].totalScore],
-        },
+        { scores: [p0Score, p1Score], totals: [next.players[0].totalScore, next.players[1].totalScore] },
       ];
       next = { ...next, roundHistory: history, pendingActions: [null, null] };
 
       const winner = resolveVictory(next);
-      if (winner !== null) {
-        return { ...next, phase: MP_PHASES.COMPLETE, winner };
-      }
+      if (winner !== null) return { ...next, phase: MP_PHASES.COMPLETE, winner };
       return { ...next, phase: MP_PHASES.BETWEEN_ROUNDS };
     }
 
     case MP_ACTIONS.MP_NEW_ROUND: {
-      if (state.phase !== MP_PHASES.BETWEEN_ROUNDS) {
-        return err(state, 'Cannot start a new round in phase: ' + state.phase);
-      }
+      if (state.phase !== MP_PHASES.BETWEEN_ROUNDS) return err(state, 'Cannot start a new round in phase: ' + state.phase);
 
       let next = state;
       let uid = state.nextInjectedUid;
-
       for (let i = 0; i < 2; i++) {
         const p = next.players[i];
-        // Interaction cards persist in the player's deck cycle, but they do not stay on the table between rounds.
         const spreadCards = p.spread.filter(Boolean);
         const handInteraction = p.hand.filter(c => c.type === 'interaction');
         const handNormal = p.hand.filter(c => c.type !== 'interaction');
@@ -557,9 +529,8 @@ export function mpReducer(state, action) {
           bonusActionAvailable: false,
           swapAvailable: false,
         };
-        // Draw back up to persona hand size, then apply round-start passives.
-        const target = handSizeForPersona(p.persona);
-        const needed = target - resetPlayer.hand.length;
+        const targetHandSize = handSizeForPersona(p.persona);
+        const needed = targetHandSize - resetPlayer.hand.length;
         const filled = needed > 0 ? drawCards(resetPlayer, needed) : resetPlayer;
         const passiveResult = applyRoundStartPassives(filled, uid);
         next = updatePlayer(next, i, passiveResult.player);
