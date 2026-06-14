@@ -42,8 +42,12 @@ body.mp-game-active #mpAbilityBtn {
   text-transform: none !important;
 }
 
+body.mp-game-active .mp-opp-spread-clip {
+  margin-top: 22px !important;
+}
+
 body.mp-game-active .spread-wrap {
-  bottom: 344px !important;
+  bottom: 334px !important;
 }
 
 @media (max-width: 640px) {
@@ -53,8 +57,9 @@ body.mp-game-active .spread-wrap {
   }
 
   body.mp-game-active .mp-opp-spread-clip {
-    top: 68px !important;
+    top: 62px !important;
     height: 150px !important;
+    margin-top: 0 !important;
     transform: none !important;
     transform-origin: top center !important;
   }
@@ -90,7 +95,7 @@ body.mp-game-active .spread-wrap {
   }
 
   body.mp-game-active .spread-wrap {
-    bottom: 236px !important;
+    bottom: 226px !important;
     height: 150px !important;
   }
 
@@ -119,7 +124,7 @@ body.mp-game-active .spread-wrap {
   }
 
   body.mp-game-active .mp-opp-spread-clip {
-    top: 75px !important;
+    top: 69px !important;
     height: 150px !important;
   }
 
@@ -129,7 +134,7 @@ body.mp-game-active .spread-wrap {
   }
 
   body.mp-game-active .spread-wrap {
-    bottom: 196px !important;
+    bottom: 186px !important;
     height: 150px !important;
   }
 }
