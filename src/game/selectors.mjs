@@ -37,6 +37,7 @@ export function tableView(state, options = {}) {
   const run = state.run;
   const persist = state.persist;
   const inPurge = options.inPurge ?? run.purge !== null;
+  const inAbility = options.inAbility ?? !!run.ability;
   const discardBlocked = blocksDiscard(run);
   return {
     threshold: thresholdValue(state),
@@ -45,7 +46,7 @@ export function tableView(state, options = {}) {
     discards: run.discards,
     discardDisabled: selectedCard(state) === null || run.discards <= 0 || inPurge || discardBlocked,
     discardTitle: discardBlocked ? 'Place 2 cards before discarding.' : '',
-    purgeDisabled: run.busy || run.hand.length < 3 || !!run.ability || inPurge,
+    purgeDisabled: run.busy || run.hand.length < 3 || inAbility || inPurge,
   };
 }
 
