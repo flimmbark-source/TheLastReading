@@ -45,7 +45,9 @@ need to be run after each larger slice.
   `mpGameExtensions.mjs` seam. Pending placement preview, persona ability prompt,
   Between modal capping, mult-span / Surgeon swap presentation, and score-pill
   stability, and scoring feedback have been folded into the base multiplayer
-  flow.
+  flow. The mult-span sync UI-state fix has been fully folded into
+  `mpGame.mjs` and its installer removed, leaving `mpSingleplayerAbilityFlow`
+  as the sole remaining extension.
 - **Legacy layer** still lives in `src/app` and `src/ui`. Some modules still read
   and write `window.state` / `window.persist` and cache DOM nodes in module
   globals. These are mirrored into the store by `app/legacyBridge.mjs` and
@@ -63,7 +65,7 @@ need to be run after each larger slice.
 | Singleplayer ability targeting | `game/reducerWithPurge.mjs`, `app/abilityTargetBridge.mjs`, `app/readingFlow.mjs` | Picked targets are store-owned, but targeting is still initiated through legacy `state.abilitySelect` and mirrored back for current renderers. |
 | Singleplayer placement / gesture bridge | `ui/gestureCard.mjs`, `app/placementRuntime.mjs`, `app/spreadPlacementBridge.mjs` | Drag-to-spread now calls `placeCardUid` when available. Reorder and hold-to-expand still operate on legacy runtime `state.hand` / `state.selected`. |
 | Multiplayer match reducer | `multiplayer/mpReducer.mjs` | WORLD / Reshuffle spread preservation and Between reveal cap now live in the base reducer. `mpReducerFixed.mjs` remains only as a compatibility alias. |
-| Multiplayer UI extension seam | `app/mpGameHost.mjs`, `app/mpGameExtensions.mjs` | The host is clean, but companion modules remain: singleplayer-style ability flow and UI state fixes. Persona prompt, Between modal capping, pending placement preview, mult-span / Surgeon swap presentation, score-pill stability, and scoring feedback now live in `mpGame.mjs` / the ability flow. |
+| Multiplayer UI extension seam | `app/mpGameHost.mjs`, `app/mpGameExtensions.mjs` | The host is clean, and only the singleplayer-style ability flow companion module remains. Persona prompt, Between modal capping, pending placement preview, mult-span / Surgeon swap presentation, score-pill stability, mult-span sync, and scoring feedback now live in `mpGame.mjs` / the ability flow. |
 | Multiplayer to legacy render | `app/mpGame.mjs`, `ui/gestureCard.mjs` | Mostly resolved. Multiplayer card piles and selection/purge are module-local match-state view models. Drag placement now has an explicit UID path, but the shared gesture module still retains legacy fallback behavior. |
 
 ## Phased plan
@@ -138,9 +140,10 @@ legacy handoffs with explicit multiplayer view models and match-state selectors.
 >
 > _Remaining work._ Fold stable UI extensions into `mpGame.mjs` one at a time.
 > Mult-span / Surgeon swap presentation and score-pill stability now live in
-> `mpGame.mjs`, and scoring feedback is now folded too. The next highest-priority
-> candidates are singleplayer-style ability flow and UI state fixes. After each
-> fold, remove the corresponding extension installer from `mpGameExtensions.mjs`.
+> `mpGame.mjs`, scoring feedback is now folded too, and the mult-span sync
+> UI-state fix has been folded and its installer removed. The single remaining
+> candidate is the singleplayer-style ability flow. After each fold, remove the
+> corresponding extension installer from `mpGameExtensions.mjs`.
 
 ## Immediate next steps
 
