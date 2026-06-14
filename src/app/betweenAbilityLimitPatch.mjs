@@ -3,7 +3,6 @@ import { isCardUntargetable } from '../systems/constellations.mjs';
 
 function runtime(target) { return target.tlrRuntime || {}; }
 function stateOf(target) { return runtime(target).state || target.state; }
-function persistOf(target) { return runtime(target).persist || target.persist || {}; }
 
 function cleanName(target, card) {
   if (typeof target.cleanName === 'function') return target.cleanName(card);
@@ -42,7 +41,7 @@ function betweenPool(target, state, a, b) {
   return abilities.cardsInDeckByIds(state.deck, abilities.betweenCardIds(a, b));
 }
 
-function revealLimit(target, abilityId) {
+function revealLimit(abilityId) {
   const ability = getAbility(abilityId);
   return Math.max(1, Number(ability?.count || 2));
 }
@@ -64,10 +63,9 @@ function fallbackAbility(target, done, title = 'Between — no cards between') {
 
 function resolveBetween(target, abilityId, done, sourceCard = null) {
   const state = stateOf(target);
-  const persist = persistOf(target);
   if (!state) return false;
 
-  const limit = revealLimit(target, abilityId);
+  const limit = revealLimit(abilityId);
   if (target.tlrStoreReady?.()) {
     target.tlrStore.dispatch({
       type: target.tlrActions.START_ABILITY,
