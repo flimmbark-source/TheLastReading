@@ -169,7 +169,7 @@ body.mp-game-active .spread-wrap {
   /* Player spread → far left, full-size cards, tilted inward toward the centre. */
   body.mp-game-active .spread-wrap {
     position: fixed !important;
-    top: 41% !important;
+    top: 34% !important;
     bottom: auto !important;
     left: -2vw !important;
     right: auto !important;
@@ -191,7 +191,7 @@ body.mp-game-active .spread-wrap {
   /* Opponent spread → right side, full-size cards, mirrored inward tilt. */
   body.mp-game-active .mp-opp-spread-clip {
     position: fixed !important;
-    top: 41% !important;
+    top: 34% !important;
     bottom: auto !important;
     left: auto !important;
     right: -2vw !important;
@@ -220,7 +220,7 @@ body.mp-game-active .spread-wrap {
      be placed independently. Mobile flex-row layout is completely unchanged. */
   body.mp-game-active .mp-mid-wrap {
     position: fixed !important;
-    top: 29% !important;
+    top: 22% !important;
     bottom: auto !important;
     left: 50% !important;
     right: auto !important;
