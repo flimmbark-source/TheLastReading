@@ -15,9 +15,9 @@ export function installHandCardGestures(target = window){
   const TILT_LERP=0.22;
   // How far below the spread's bottom edge the card centre can be and still
   // trigger slot hit-testing (gives some slack when approaching from below).
-  const SPREAD_ZONE_SLACK=48;
+  const SPREAD_ZONE_SLACK=72;
   // Padding applied around each slot rect for hit detection.
-  const SLOT_HIT_PAD=20;
+  const SLOT_HIT_PAD=28;
 
   let g=null;
   const handEl=()=>document.querySelector('.hand');
@@ -245,17 +245,25 @@ export function installHandCardGestures(target = window){
   const endDrag=committed=>{
     if(!g)return;
     cancelHold();
-    const{uid,cardEl,origIndex,hoverIndex,dropSlot,mode,pendingUids=[]}=g;
+    const{uid,cardEl,origIndex,hoverIndex,mode,pendingUids=[]}=g;
+    let dropSlot=g.dropSlot;
     const wasDrag=mode==='drag';
     const wasSelectDrag=mode==='select-drag';
     // Capture visual drag position before removing drag state (used for FLIP slide).
     const firstRect=wasDrag?cardEl.getBoundingClientRect():null;
+    // If pointerup lands before the queued drag rAF runs, the cached drop target
+    // can be stale. Recompute synchronously from the last pointer position before
+    // cancelling that frame so quick releases over a spread slot still place.
+    if(wasDrag&&committed&&g.lastDragEv){
+      const last=calcDropTarget(g.lastDragEv.clientX,g.lastDragEv.clientY);
+      if(last.inSpread)dropSlot=last.hit||null;
+    }
     // Cancel any queued rAF frame so it doesn't fire after cleanup.
     if(g.dragRafId){cancelAnimationFrame(g.dragRafId);g.dragRafId=null;}
     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
     cardEl.classList.remove('hand-card-dragging');
     cardEl.style.removeProperty('transform');
-    if(dropSlot)dropSlot.slotEl.classList.remove('drop-target');
+    if(g.dropSlot)g.dropSlot.slotEl.classList.remove('drop-target');
     const h=handEl();if(h)h.classList.remove('hand-parting');
     const spEl3=document.querySelector('#spread');if(spEl3)spEl3.classList.remove('drag-active');
     target.__handReorderActive=false;
