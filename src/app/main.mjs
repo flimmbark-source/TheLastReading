@@ -1,6 +1,6 @@
 // Application entry point (Phase 16). index.html is becoming a shell: this
 // module mounts the architecture bridge, installs the UI modules as the
-// globals the legacy markup/script still calls, and then boots the game.
+globals the legacy markup/script still calls, and then boots the game.
 import { installLiveMirror } from './liveMirror.mjs';
 import { bootGame } from './boot.mjs';
 import { installArchitectureBridge } from './bootstrap.mjs';
@@ -16,6 +16,7 @@ import { installControlBindings } from './controlBindings.mjs';
 import { installScoringRuntime } from './scoringRuntime.mjs';
 import { installPlacementRuntime } from './placementRuntime.mjs';
 import { installDiscardRuntime } from './discardRuntime.mjs';
+import { installAbilityTargetBridge } from './abilityTargetBridge.mjs';
 import { installSpreadPlacementBridge } from './spreadPlacementBridge.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
@@ -265,6 +266,7 @@ export function startApp(target = window) {
   installHintRuntime(target);
   installPlacementRuntime(target);
   installDiscardRuntime(target);
+  installAbilityTargetBridge(target);
   installSpreadPlacementBridge(target);
   installControlBindings(target);
 
