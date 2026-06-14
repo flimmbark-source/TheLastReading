@@ -8,6 +8,7 @@ import { renderHand } from './renderHand.mjs';
 import { renderAbilityPrompt, renderPurgePrompt } from './renderAbility.mjs';
 import { renderRelicRack } from './renderMarket.mjs';
 import { cleanName } from './renderCard.mjs';
+import { handView as selectHandView } from '../game/selectors.mjs';
 import { getConstellation, constellationThreshold, blocksDiscard, hasActiveConstellation as runHasActiveConstellation } from '../systems/constellations.mjs';
 
 let constellationCalloutOpen=false;
@@ -41,7 +42,8 @@ export function _cacheEls(){
   _elCurrent=document.getElementById('current');
 }
 
-function currentRun(){return window.tlrStore?.getState?.().run || state}
+function currentStoreState(){return window.tlrStore?.getState?.()||null}
+function currentRun(){return currentStoreState()?.run || state}
 function activeThreshold(){const run=currentRun();return constellationThreshold(TH[state.th]+(state.thBonus||0),run)}
 function discardBlocked(){return blocksDiscard(currentRun())}
 function ensureConstellationPill(){let el=document.getElementById('constellationPill');if(el)return el;el=document.createElement('button');el.type='button';el.id='constellationPill';el.className='constellation-pill hidden';document.body.appendChild(el);return el}
@@ -80,10 +82,12 @@ export function render(){
   const now=_getPlacedScore();
   const ability=state.abilitySelect;
   const inPurge=state.purgeSelect!==null;
+  const storeState=currentStoreState();
+  const displayHand=storeState?selectHandView(storeState,{purgeSelect:state.purgeSelect}):null;
   renderSpread(ability,inPurge);
   _resStateKey=null;
   applyResonationGlows(state.spread);
-  renderHand(ability,inPurge);
+  renderHand(ability,inPurge,displayHand);
   renderAbilityPrompt();
   renderPurgePrompt();
   updateScorePreview(now);
