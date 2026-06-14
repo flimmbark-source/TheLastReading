@@ -1,5 +1,6 @@
 import { MP_PHASES } from '../multiplayer/mpState.mjs';
 import { computeScore } from '../systems/scoring.mjs';
+import { installMpSingleplayerAbilityBridge } from './mpSingleplayerAbilityBridge.mjs';
 
 const OPPONENT_REVEAL_DELAY_MS = 750;
 
@@ -9,6 +10,8 @@ export function installMpScorePillStabilityPatch(target = window) {
 
   const doc = target.document;
   if (!doc) return;
+
+  installMpSingleplayerAbilityBridge(target);
 
   const lastShown = [0, 0];
 
