@@ -32,9 +32,15 @@ body.mp-game-active #purgePrompt.show {
   z-index: 2147483000 !important;
 }
 
-body.mp-game-active #mpDiscardBtn::before { content: 'Discard' !important; }
-body.mp-game-active #mpPurgeBtn::before { content: 'Purge' !important; }
+body.mp-game-active #mpDiscardBtn::before { content: 'Discard' !important; font-size: 11px !important; color: inherit !important; }
+body.mp-game-active #mpPurgeBtn::before   { content: 'Purge' !important;   font-size: 11px !important; color: inherit !important; }
 body.mp-game-active #mpAbilityBtn::before { content: 'Ability' !important; }
+
+/* Ensure the sprite sheet from market.css never bleeds through. */
+body.mp-game-active #mpDiscardBtn,
+body.mp-game-active #mpPurgeBtn {
+  background-image: none !important;
+}
 
 body.mp-game-active #mpAbilityBtn {
   display: none !important;
