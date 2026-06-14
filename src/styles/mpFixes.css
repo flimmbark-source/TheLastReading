@@ -213,7 +213,10 @@ body.mp-game-active .spread-wrap {
     justify-content: center !important;
   }
 
-  /* Score / threshold pills → centred, shifted above the midpoint. */
+  /* Pills → centred grid, shifted above the midpoint.
+     display:contents on the opp/self bands makes their pill children
+     participate directly in the grid so they can be placed independently,
+     while the mobile band layout (flex rows) is completely unchanged. */
   body.mp-game-active .mp-mid-wrap {
     position: fixed !important;
     top: 38% !important;
@@ -221,9 +224,27 @@ body.mp-game-active .spread-wrap {
     left: 50% !important;
     right: auto !important;
     transform: translate(-50%, -50%) !important;
+    display: grid !important;
+    grid-template-columns: auto auto auto !important;
+    grid-template-rows: auto auto auto auto !important;
+    gap: 5px 8px !important;
     width: auto !important;
     padding: 0 !important;
   }
+
+  /* Flatten opp/self bands — their pill children enter the grid directly. */
+  body.mp-game-active .mp-pills-opp,
+  body.mp-game-active .mp-pills-self { display: contents !important; }
+
+  /* Place each pill in its grid cell:
+       col 1 (left) = player   col 2 (centre) = threshold band   col 3 (right) = opponent */
+  body.mp-game-active .mp-pill-my-disc   { grid-row: 1 !important; grid-column: 1 !important; }
+  body.mp-game-active .mp-pill-opp-disc  { grid-row: 1 !important; grid-column: 3 !important; }
+  body.mp-game-active .mp-pills-mid      { grid-row: 2 !important; grid-column: 1 / -1 !important; }
+  body.mp-game-active .mp-pill-my-score  { grid-row: 3 !important; grid-column: 1 !important; }
+  body.mp-game-active .mp-pill-opp-score { grid-row: 3 !important; grid-column: 3 !important; }
+  body.mp-game-active .mp-pills-actions  { grid-row: 4 !important; grid-column: 1 / -1 !important; }
+  body.mp-game-active .mp-action-panel   { grid-column: 1 / -1 !important; }
 
   /* You / Foe labels flanking the threshold pill. */
   body.mp-game-active .mp-side-label {

@@ -141,19 +141,20 @@ export function installSurgeonHandSwapPatch(target = window) {
 
   function moveMultPillsOutside() {
     if (!doc.body.classList.contains('mp-game-active')) return;
+    const isDesktop = target.matchMedia?.('(min-width: 641px)').matches ?? false;
     doc.querySelectorAll('.mp-pill-score').forEach(pill => {
       const parent = pill.parentElement;
       if (!parent) return;
-      // Opponent (right) pill gets its mult on the right; player (left) pill gets it on the left.
-      const isRightPill = pill.classList.contains('mp-pill-score-opp');
       const embedded = pill.querySelector(':scope > .mp-mult-inline');
-      const adjacent = isRightPill
+      // Desktop only: opponent pill (.mp-pill-opp-score) gets its mult on the right.
+      const putRight = isDesktop && pill.classList.contains('mp-pill-opp-score');
+      const adjacent = putRight
         ? (pill.nextElementSibling?.classList?.contains('mp-mult-inline') ? pill.nextElementSibling : null)
         : (pill.previousElementSibling?.classList?.contains('mp-mult-inline') ? pill.previousElementSibling : null);
       let mult = adjacent || embedded;
       if (!mult) return;
       if (embedded && embedded !== mult) embedded.remove();
-      if (isRightPill) {
+      if (putRight) {
         if (mult.parentElement !== parent || pill.nextElementSibling !== mult) parent.insertBefore(mult, pill.nextSibling);
         mult.classList.add('mp-mult-right');
         mult.classList.remove('mp-mult-left');
@@ -164,6 +165,7 @@ export function installSurgeonHandSwapPatch(target = window) {
       }
       const cleanText = mult.textContent.replace(/[()]/g, '').trim();
       if (mult.textContent !== cleanText) mult.textContent = cleanText;
+      if (!putRight) parent.classList.add('mp-has-left-mult');
       pill.style.setProperty('width', '118px', 'important');
       pill.style.setProperty('gap', '5px', 'important');
     });
@@ -419,6 +421,10 @@ function installStyle(doc) {
     body.mp-game-active #mpAbilityBtn::after {
       content: none !important;
       display: none !important;
+    }
+    body.mp-game-active .mp-pills-opp.mp-has-left-mult,
+    body.mp-game-active .mp-pills-self.mp-has-left-mult {
+      transform: translateX(-14px) !important;
     }
     body.mp-game-active .mp-mult-inline.mp-mult-left,
     body.mp-game-active .mp-mult-inline.mp-mult-right {
