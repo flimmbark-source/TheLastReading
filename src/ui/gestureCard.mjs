@@ -1,6 +1,6 @@
 // Hand card gesture controller (Step 4). Verbatim port target from the
 // legacy inline hand card gestures handler patch.
-/* global state, refreshHandState, expandCard, render, placeCard, flushHand */
+/* global state, refreshHandState, expandCard, render, placeCard */
 
 export function installHandCardGestures(target = window){
   if(!target || target.__handCardGesturesInstalled)return;
@@ -297,8 +297,11 @@ export function installHandCardGestures(target = window){
 
     // ── Drop onto spread slot ──
     if(dropSlot){
-      state.selected=uid;
-      if(typeof placeCard==='function')placeCard(dropSlot.idx);
+      if(typeof target.placeCardUid==='function')target.placeCardUid(uid,dropSlot.idx);
+      else{
+        state.selected=uid;
+        if(typeof placeCard==='function')placeCard(dropSlot.idx);
+      }
       return;
     }
 
