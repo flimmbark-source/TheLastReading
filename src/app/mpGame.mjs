@@ -51,6 +51,7 @@ export function installMpGame(target = window) {
   installFlushGuard(target, doc);
   installOpponentPopTuning(target, doc);
   installDispatchEffectDelay();
+  installMultPillObserver();
 
   function isMyActionTurn(s = _state) {
     if (!s) return false;
@@ -775,8 +776,29 @@ export function installMpGame(target = window) {
       mult.className = 'mp-mult-inline';
       pill.appendChild(mult);
     }
-    mult.textContent = `${formatMult(player?.roundMult ?? 1)}x`;
+    const multText = `${formatMult(player?.roundMult ?? 1)}x`;
+    if (mult.textContent !== multText) mult.textContent = multText;
     moveMultPillsOutside();
+  }
+
+  // Safety net: if the score pills are rebuilt or reordered by any render path
+  // outside the action callbacks, re-sync the mult spans. Writes are guarded to
+  // only mutate on real changes, so this observer settles instead of looping.
+  function installMultPillObserver() {
+    const MutationObserverCtor = target.MutationObserver || globalThis.MutationObserver;
+    if (!MutationObserverCtor) return;
+    let queued = false;
+    const observer = new MutationObserverCtor(records => {
+      if (!_state || !doc.body.classList.contains('mp-game-active')) return;
+      if (!records.some(record => {
+        const node = record.target?.nodeType === 1 ? record.target : record.target?.parentElement;
+        return node?.closest?.('#mpMidWrap,.mp-pill-score,.mp-mult-inline');
+      })) return;
+      if (queued) return;
+      queued = true;
+      target.requestAnimationFrame?.(() => { queued = false; updateScoreMultPills(); });
+    });
+    observer.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   }
 
   function playPlacementFeedback(before, state) {
@@ -1397,6 +1419,11 @@ function installMpGameStyle(doc) {
     body.mp-game-active #mpAbilityBtn:not(.mp-visible) {
       display: none !important;
     }
+    body.mp-game-active #mpAbilityBtn.mp-visible {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
     body.mp-game-active #mpAbilityBtn::before,
     body.mp-game-active #mpAbilityBtn::after {
       content: none !important;
@@ -1413,6 +1440,8 @@ function installMpGameStyle(doc) {
       min-width: 0 !important;
       flex: 0 0 auto !important;
       color: #ff5a4f !important;
+      font-weight: 800 !important;
+      white-space: nowrap !important;
     }
     body.mp-game-active .mp-mult-inline.mp-mult-left {
       justify-content: flex-end !important;
