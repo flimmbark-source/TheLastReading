@@ -6,6 +6,7 @@ import { installMpSingleplayerAbilityFlow } from './mpSingleplayerAbilityFlow.mj
 import { installMpUiStateFixes } from './mpUiStateFixes.mjs';
 import { installMpPersonaAbilityPrompt } from './mpPersonaAbilityPrompt.mjs';
 import { installMpBetweenChoiceLimit } from './mpBetweenChoiceLimit.mjs';
+import { installMpPendingPlacementPreview } from './mpPendingPlacementPreview.mjs';
 
 export function installMpGame(target = window) {
   installBaseMpGame(target);
@@ -16,4 +17,5 @@ export function installMpGame(target = window) {
   installMpUiStateFixes(target);
   installMpPersonaAbilityPrompt(target);
   installMpBetweenChoiceLimit(target);
+  installMpPendingPlacementPreview(target);
 }
