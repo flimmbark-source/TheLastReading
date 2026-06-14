@@ -1,6 +1,7 @@
 import { MP_ACTIONS } from '../multiplayer/mpActions.mjs';
 import { MP_PHASES } from '../multiplayer/mpState.mjs';
 import { getPersona } from '../multiplayer/personas.mjs';
+import { computeScore } from '../systems/scoring.mjs';
 
 export function installSurgeonHandSwapPatch(target = window) {
   if (!target || target.__tlrSurgeonHandSwapPatchInstalled) return;
@@ -11,6 +12,7 @@ export function installSurgeonHandSwapPatch(target = window) {
 
   patchMatchmakingBack(target, doc);
   installStyle(doc);
+  installOpponentPopTuning(target, doc);
 
   const copiedButtonArt = new Set();
   let syncQueued = false;
@@ -159,6 +161,38 @@ export function installSurgeonHandSwapPatch(target = window) {
     });
   }
 
+  function scoredCards(player) {
+    const silenced = new Set(player?.silencedCardUids || []);
+    return (player?.spread || []).filter(card => card && !silenced.has(card.uid));
+  }
+
+  function scoreWithRoundMult(player) {
+    const cards = scoredCards(player);
+    if (!cards.length) return 0;
+    const score = computeScore(cards, { skipFlatBonuses: true, skipRelics: true });
+    return Math.floor((score.chips || 0) * normalizeMult(player?.roundMult ?? 1));
+  }
+
+  function displayScoreForPlayer(state, playerIndex) {
+    const player = state?.players?.[playerIndex];
+    if (!player) return 0;
+    const total = player.totalScore ?? 0;
+    if (state.phase === MP_PHASES.PLACEMENT || state.phase === MP_PHASES.SCORING) return total + scoreWithRoundMult(player);
+    return total;
+  }
+
+  function stabilizeScoreText() {
+    const state = target.tlrMpGetState?.();
+    if (!state?.players || !doc.body.classList.contains('mp-game-active')) return;
+    const my = playerIndexFromRole();
+    [['mpMyScore', my], ['mpOppScore', 1 - my]].forEach(([id, playerIndex]) => {
+      const node = doc.getElementById(id);
+      if (!node) return;
+      const expected = String(displayScoreForPlayer(state, playerIndex));
+      if (node.textContent !== expected) node.textContent = expected;
+    });
+  }
+
   function suppressTransientScoringOverlay() {
     if (!doc.body.classList.contains('mp-game-active')) return;
     const overlay = doc.getElementById('mpOverlay');
@@ -188,6 +222,7 @@ export function installSurgeonHandSwapPatch(target = window) {
     syncQueued = false;
     hideSwipeTutorialInMultiplayer();
     suppressTransientScoringOverlay();
+    stabilizeScoreText();
 
     const panel = doc.getElementById('mpActionPanel');
     if (panel) {
@@ -206,6 +241,7 @@ export function installSurgeonHandSwapPatch(target = window) {
     const abilityBtn = ensureAbilityButton();
     copySingleplayerButtonArt();
     moveMultPillsOutside();
+    stabilizeScoreText();
 
     const personaAction = currentPersonaAbilityAction();
     if (abilityBtn) {
@@ -233,7 +269,9 @@ export function installSurgeonHandSwapPatch(target = window) {
   function scheduleSync() {
     if (syncQueued) return;
     syncQueued = true;
-    target.requestAnimationFrame?.(syncUi) ?? syncUi();
+    const run = () => syncUi();
+    if (typeof target.queueMicrotask === 'function') target.queueMicrotask(run);
+    else Promise.resolve().then(run).catch(() => syncUi());
   }
 
   wrapRefreshHandState(target, scheduleSync);
@@ -315,12 +353,40 @@ function patchMatchmakingBack(target, doc) {
   };
 }
 
+function installOpponentPopTuning(target, doc) {
+  if (target.__tlrMpOpponentPopTuned) return;
+  const proto = target.Element?.prototype;
+  if (!proto || typeof proto.animate !== 'function') return;
+  target.__tlrMpOpponentPopTuned = true;
+  const original = proto.animate;
+  proto.animate = function (keyframes, options) {
+    const isOpponentCard = doc.body.classList.contains('mp-game-active')
+      && this?.classList?.contains('card')
+      && this.closest?.('#mpOppSpread');
+    const firstTransform = Array.isArray(keyframes) ? String(keyframes[0]?.transform || '') : '';
+    if (isOpponentCard && firstTransform.includes('scale(.78)')) {
+      return original.call(this, [
+        { transform: 'translateY(-18px) scale(.28)', opacity: 0, filter: 'brightness(1.6)' },
+        { transform: 'translateY(3px) scale(1.12)', opacity: 1, filter: 'brightness(1.22)' },
+        { transform: 'translateY(0) scale(1)', opacity: 1, filter: 'brightness(1)' },
+      ], { ...(options || {}), duration: 380, easing: 'cubic-bezier(.16,.9,.22,1)' });
+    }
+    return original.call(this, keyframes, options);
+  };
+}
+
 function cssName(prop) {
   return prop.replace(/[A-Z]/g, ch => '-' + ch.toLowerCase());
 }
 
 function stripMarkup(value) {
   return String(value ?? '').replace(/\*\*/g, '');
+}
+
+function normalizeMult(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 1;
+  return Math.max(1, Number(number.toFixed(2)));
 }
 
 function installStyle(doc) {
@@ -346,15 +412,15 @@ function installStyle(doc) {
     }
     body.mp-game-active .mp-pills-opp.mp-has-left-mult,
     body.mp-game-active .mp-pills-self.mp-has-left-mult {
-      transform: translateX(-20px) !important;
+      transform: translateX(-14px) !important;
     }
     body.mp-game-active .mp-mult-inline.mp-mult-left {
       display: inline-flex !important;
       align-items: center !important;
-      justify-content: center !important;
-      min-width: 34px !important;
+      justify-content: flex-end !important;
+      min-width: 0 !important;
       margin-left: 0 !important;
-      margin-right: 6px !important;
+      margin-right: 2px !important;
       flex: 0 0 auto !important;
       color: #ff5a4f !important;
     }
