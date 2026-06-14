@@ -1,7 +1,6 @@
 import { MP_ACTIONS } from '../multiplayer/mpActions.mjs';
 import { MP_PHASES } from '../multiplayer/mpState.mjs';
 import { getPersona } from '../multiplayer/personas.mjs';
-import { computeScore } from '../systems/scoring.mjs';
 
 export function installSurgeonHandSwapPatch(target = window) {
   if (!target || target.__tlrSurgeonHandSwapPatchInstalled) return;
@@ -161,38 +160,6 @@ export function installSurgeonHandSwapPatch(target = window) {
     });
   }
 
-  function scoredCards(player) {
-    const silenced = new Set(player?.silencedCardUids || []);
-    return (player?.spread || []).filter(card => card && !silenced.has(card.uid));
-  }
-
-  function scoreWithRoundMult(player) {
-    const cards = scoredCards(player);
-    if (!cards.length) return 0;
-    const score = computeScore(cards, { skipFlatBonuses: true, skipRelics: true });
-    return Math.floor((score.chips || 0) * normalizeMult(player?.roundMult ?? 1));
-  }
-
-  function displayScoreForPlayer(state, playerIndex) {
-    const player = state?.players?.[playerIndex];
-    if (!player) return 0;
-    const total = player.totalScore ?? 0;
-    if (state.phase === MP_PHASES.PLACEMENT || state.phase === MP_PHASES.SCORING) return total + scoreWithRoundMult(player);
-    return total;
-  }
-
-  function stabilizeScoreText() {
-    const state = target.tlrMpGetState?.();
-    if (!state?.players || !doc.body.classList.contains('mp-game-active')) return;
-    const my = playerIndexFromRole();
-    [['mpMyScore', my], ['mpOppScore', 1 - my]].forEach(([id, playerIndex]) => {
-      const node = doc.getElementById(id);
-      if (!node) return;
-      const expected = String(displayScoreForPlayer(state, playerIndex));
-      if (node.textContent !== expected) node.textContent = expected;
-    });
-  }
-
   function suppressTransientScoringOverlay() {
     if (!doc.body.classList.contains('mp-game-active')) return;
     const overlay = doc.getElementById('mpOverlay');
@@ -222,7 +189,6 @@ export function installSurgeonHandSwapPatch(target = window) {
     syncQueued = false;
     hideSwipeTutorialInMultiplayer();
     suppressTransientScoringOverlay();
-    stabilizeScoreText();
 
     const panel = doc.getElementById('mpActionPanel');
     if (panel) {
@@ -241,7 +207,6 @@ export function installSurgeonHandSwapPatch(target = window) {
     const abilityBtn = ensureAbilityButton();
     copySingleplayerButtonArt();
     moveMultPillsOutside();
-    stabilizeScoreText();
 
     const personaAction = currentPersonaAbilityAction();
     if (abilityBtn) {
@@ -269,9 +234,7 @@ export function installSurgeonHandSwapPatch(target = window) {
   function scheduleSync() {
     if (syncQueued) return;
     syncQueued = true;
-    const run = () => syncUi();
-    if (typeof target.queueMicrotask === 'function') target.queueMicrotask(run);
-    else Promise.resolve().then(run).catch(() => syncUi());
+    target.requestAnimationFrame?.(syncUi) ?? syncUi();
   }
 
   wrapRefreshHandState(target, scheduleSync);
@@ -314,7 +277,6 @@ export function installSurgeonHandSwapPatch(target = window) {
       childList: true,
       subtree: true,
       attributes: true,
-      characterData: true,
       attributeFilter: ['class', 'disabled', 'data-uid', 'hidden'],
     });
   }
@@ -381,12 +343,6 @@ function cssName(prop) {
 
 function stripMarkup(value) {
   return String(value ?? '').replace(/\*\*/g, '');
-}
-
-function normalizeMult(value) {
-  const number = Number(value);
-  if (!Number.isFinite(number)) return 1;
-  return Math.max(1, Number(number.toFixed(2)));
 }
 
 function installStyle(doc) {
