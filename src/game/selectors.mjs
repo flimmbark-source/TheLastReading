@@ -24,6 +24,15 @@ export function handView(state, options = {}) {
   };
 }
 
+export function spreadView(state, options = {}) {
+  return {
+    spread: state.run.spread || Array(5).fill(null),
+    selected: state.run.selectedCardId ?? null,
+    onPlaceCard: options.onPlaceCard || null,
+    onAbilityTarget: options.onAbilityTarget || null,
+  };
+}
+
 export function thresholdValue(state) {
   return constellationThreshold(currentThreshold(state.run.thresholdIndex, state.run.thresholdBonus), state.run);
 }
