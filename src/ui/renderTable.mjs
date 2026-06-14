@@ -8,7 +8,7 @@ import { renderHand } from './renderHand.mjs';
 import { renderAbilityPrompt, renderPurgePrompt } from './renderAbility.mjs';
 import { renderRelicRack } from './renderMarket.mjs';
 import { cleanName } from './renderCard.mjs';
-import { handView as selectHandView, spreadView as selectSpreadView } from '../game/selectors.mjs';
+import { handView as selectHandView, spreadView as selectSpreadView, tableView as selectTableView } from '../game/selectors.mjs';
 import { getConstellation, constellationThreshold, blocksDiscard, hasActiveConstellation as runHasActiveConstellation } from '../systems/constellations.mjs';
 
 let constellationCalloutOpen=false;
@@ -75,16 +75,17 @@ export function render(){
   _cachedPlacedScore=null; // invalidate on every render
   const _newHintsKey=_hintsKey();if(_newHintsKey!==_hintsCacheKey){_hintsCache.clear();_hintsCacheKey=_newHintsKey;_unlockedFragmentsCache=null;_spreadScoreForHints=null;}
   _cacheEls();
-  _elThreshold.textContent=activeThreshold();
-  const _thNext=document.getElementById('thNext');if(_thNext){const _p=state.thBonusPending||0;_thNext.style.display=_p?'':'none';if(_p)_thNext.textContent='+'+_p+' next';}
-  _elPool.textContent=persist.pool;
-  _elDiscards.textContent=state.discards;
-  renderConstellationPill();
-  renderRelicRack();
-  const now=_getPlacedScore();
   const ability=state.abilitySelect;
   const inPurge=state.purgeSelect!==null;
   const storeState=currentStoreState();
+  const table=storeState?selectTableView(storeState,{inPurge,inAbility:!!ability}):null;
+  _elThreshold.textContent=table?table.threshold:activeThreshold();
+  const _thNext=document.getElementById('thNext');if(_thNext){const _p=table?table.thresholdBonusPending:(state.thBonusPending||0);_thNext.style.display=_p?'':'none';if(_p)_thNext.textContent='+'+_p+' next';}
+  _elPool.textContent=table?table.reserve:persist.pool;
+  _elDiscards.textContent=table?table.discards:state.discards;
+  renderConstellationPill();
+  renderRelicRack();
+  const now=_getPlacedScore();
   const displayHand=storeState?selectHandView(storeState,{purgeSelect:state.purgeSelect}):null;
   const displaySpread=storeState?selectSpreadView(storeState):null;
   renderSpread(ability,inPurge,displaySpread);
@@ -94,9 +95,9 @@ export function render(){
   renderAbilityPrompt();
   renderPurgePrompt();
   updateScorePreview(now);
-  _elDiscardBtn.disabled=state.selected===null||state.discards<=0||inPurge||discardBlocked();
-  _elDiscardBtn.title=discardBlocked()?'Place 2 cards before discarding.':'';
-  _elPurgeBtn.disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
+  _elDiscardBtn.disabled=table?table.discardDisabled:(state.selected===null||state.discards<=0||inPurge||discardBlocked());
+  _elDiscardBtn.title=table?table.discardTitle:(discardBlocked()?'Place 2 cards before discarding.':'');
+  _elPurgeBtn.disabled=table?table.purgeDisabled:(state.busy||state.hand.length<3||!!state.abilitySelect||inPurge);
   _elMullBtn.style.display=hasMull()?'inline-block':'none';
   _elMullBtn.disabled=!(state.mullCharges>0)||!state.spread.every(x=>!x)||state.hand.length!==maxHand();
   tlrArchitectureSync();
@@ -104,9 +105,12 @@ export function render(){
 }
 
 export function refreshHandState(){
+  syncStoreBeforeView();
   _cacheEls();
   const ability=state.abilitySelect;
   const inPurge=state.purgeSelect!==null;
+  const storeState=currentStoreState();
+  const table=storeState?selectTableView(storeState,{inPurge,inAbility:!!ability}):null;
   document.querySelectorAll('#hand .card').forEach(el=>{
     const uid=Number(el.dataset.uid);
     el.classList.remove('sel','ability-picked','ability-target','ability-disabled','purge-picked','purge-target');
@@ -123,9 +127,9 @@ export function refreshHandState(){
   renderAbilityPrompt();
   renderPurgePrompt();
   updateScorePreview(_getPlacedScore());
-  _elDiscardBtn.disabled=state.selected===null||state.discards<=0||inPurge||discardBlocked();
-  _elDiscardBtn.title=discardBlocked()?'Place 2 cards before discarding.':'';
-  _elPurgeBtn.disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
+  _elDiscardBtn.disabled=table?table.discardDisabled:(state.selected===null||state.discards<=0||inPurge||discardBlocked());
+  _elDiscardBtn.title=table?table.discardTitle:(discardBlocked()?'Place 2 cards before discarding.':'');
+  _elPurgeBtn.disabled=table?table.purgeDisabled:(state.busy||state.hand.length<3||!!state.abilitySelect||inPurge);
   tlrArchitectureSync();
   maybeShowContextualTutorials();
 }
