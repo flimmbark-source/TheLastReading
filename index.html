@@ -81,6 +81,23 @@
     </footer>
   </div>
 </div>
-<script type="module" src="src/app/main.mjs?v=mp-host-1"></script>
+<div id="mainMenu" class="main-menu-overlay">
+  <div class="main-menu-inner">
+    <h1 class="main-menu-title">The Last Reading</h1>
+    <p class="main-menu-subtitle">A tarot card game</p>
+    <div class="main-menu-divider"></div>
+    <div class="main-menu-section">
+      <span class="main-menu-section-label">Singleplayer</span>
+      <button id="mainMenuContinue" class="main-menu-btn main-menu-btn-primary" onclick="tlrMainMenuContinue()" disabled>Continue</button>
+      <button class="main-menu-btn" onclick="tlrMainMenuNewGame()">New Game</button>
+    </div>
+    <div class="main-menu-divider"></div>
+    <div class="main-menu-section">
+      <span class="main-menu-section-label">Multiplayer</span>
+      <button class="main-menu-btn" onclick="tlrMainMenuMultiplayer()">Duel</button>
+    </div>
+  </div>
+</div>
+<script type="module" src="src/app/menuBoot.mjs?v=lazy-boot-1"></script>
 </body>
 </html>
