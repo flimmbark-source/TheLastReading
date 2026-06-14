@@ -35,6 +35,8 @@ function clearPendingPlacementPreview(doc) {
   doc.querySelectorAll('.mp-local-pending-card').forEach(node => node.remove());
   doc.querySelectorAll('.mp-local-pending-slot').forEach(slot => {
     slot.classList.remove('mp-local-pending-slot', 'filled');
+    slot.style.removeProperty('opacity');
+    slot.style.removeProperty('filter');
     if (!slot.querySelector('.card')) slot.classList.add('empty');
   });
   doc.querySelectorAll('.mp-local-pending-hidden').forEach(card => card.classList.remove('mp-local-pending-hidden'));
@@ -55,14 +57,27 @@ function applyPendingPlacementPreview(target = window) {
   handCard.classList.add('mp-local-pending-hidden');
 
   const clone = handCard.cloneNode(true);
-  clone.classList.remove('sel', 'hand-card-dragging', 'hand-card-landing', 'mp-local-pending-hidden');
+  clone.classList.remove(
+    'sel',
+    'hand-card',
+    'hand-card-dragging',
+    'hand-card-landing',
+    'mp-local-pending-hidden',
+    'ability-target',
+    'ability-picked',
+    'ability-disabled',
+  );
   clone.classList.add('mp-local-pending-card');
   clone.removeAttribute('style');
+  clone.style.setProperty('opacity', '1', 'important');
+  clone.style.setProperty('filter', 'none', 'important');
   clone.onclick = null;
 
   slot.replaceChildren(clone);
   slot.classList.remove('empty', 'target');
   slot.classList.add('filled', 'mp-local-pending-slot');
+  slot.style.setProperty('opacity', '1', 'important');
+  slot.style.setProperty('filter', 'none', 'important');
 }
 
 function wrapMatchCallbacks(target, afterRender) {
@@ -114,10 +129,13 @@ function installStyle(doc) {
       pointer-events: none !important;
     }
     body.mp-game-active #spread .slot.mp-local-pending-slot {
-      opacity: .92 !important;
+      opacity: 1 !important;
+      filter: none !important;
       box-shadow: 0 0 0 1px rgba(255, 214, 132, .32), 0 0 18px rgba(255, 214, 132, .22) !important;
     }
     body.mp-game-active #spread .slot .card.mp-local-pending-card {
+      opacity: 1 !important;
+      filter: none !important;
       pointer-events: none !important;
     }
   `;
