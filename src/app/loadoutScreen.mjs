@@ -66,6 +66,21 @@ export function installLoadoutScreen(target = window) {
   let swipeStartX = 0;
   let swipeStartY = 0;
   let switchAudio = null;
+  let artPreloaded = false;
+
+  function preloadPersonaArt() {
+    if (artPreloaded) return;
+    artPreloaded = true;
+    const ImageCtor = target.Image || Image;
+    const sources = Object.values(PERSONA_ART).flatMap(art => [art.tile, art.full]).filter(Boolean);
+    for (const src of sources) {
+      try {
+        const img = new ImageCtor();
+        img.src = src;
+        img.decode?.().catch(() => {});
+      } catch (_) {}
+    }
+  }
 
   function personaIndex() {
     const index = personas.findIndex(p => p.id === profile.personaId);
@@ -141,6 +156,20 @@ export function installLoadoutScreen(target = window) {
     if (!rail) return;
     if (!personas.length) { rail.innerHTML = ''; return; }
     const activeId = activePersona()?.id;
+    const existing = Array.from(rail.querySelectorAll(':scope > .loadout-slot[data-persona]'));
+    const canReuse = existing.length === personas.length && personas.every((p, i) => existing[i]?.dataset.persona === p.id);
+
+    if (canReuse) {
+      personas.forEach((p, i) => {
+        const btn = existing[i];
+        const active = p.id === activeId;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', String(active));
+        btn.style.setProperty('--tile-accent', p.accent || '#d4af6a');
+      });
+      return;
+    }
+
     rail.innerHTML = personas.map(p => {
       const active = p.id === activeId;
       const art = personaArt(p);
@@ -176,12 +205,24 @@ export function installLoadoutScreen(target = window) {
       : dir === 'prev' ? ' loadout-enter-prev'
       : ' loadout-enter';
 
-    const imageStyle = art ? `style="background-image:url(${esc(art.full)})"` : '';
-    stage.innerHTML = `
-      <div class="loadout-portrait-art${enterClass}" ${imageStyle}>
-        ${art ? '' : personaIconSvg(p)}
-      </div>
-    `;
+    let artEl = stage.querySelector(':scope > .loadout-portrait-art');
+    if (!artEl) {
+      stage.replaceChildren();
+      artEl = target.document.createElement('div');
+      stage.appendChild(artEl);
+    }
+
+    artEl.className = 'loadout-portrait-art';
+    // Restart the switch animation while preserving the node and decoded image cache.
+    void artEl.offsetWidth;
+    artEl.className = `loadout-portrait-art${enterClass}`;
+    if (art) {
+      artEl.style.backgroundImage = `url("${art.full}")`;
+      artEl.innerHTML = '';
+    } else {
+      artEl.style.backgroundImage = '';
+      artEl.innerHTML = personaIconSvg(p);
+    }
   }
 
   // Right column: persona name and the relic/upgrade slots that the character
@@ -253,6 +294,7 @@ export function installLoadoutScreen(target = window) {
 
   function renderAll(dir = null) {
     ensurePersonaSelected();
+    preloadPersonaArt();
     applyAccent();
     renderSlots();
     renderPortrait(dir);
@@ -333,6 +375,7 @@ export function installLoadoutScreen(target = window) {
 
   target.tlrShowLoadout = function () {
     profile = loadProfile(target.localStorage);
+    preloadPersonaArt();
     renderAll();
     lockAbilityHeight();
     el('loadoutScreen')?.classList.remove('loadout-hidden');
