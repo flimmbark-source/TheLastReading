@@ -151,6 +151,9 @@ export function installSurgeonHandSwapPatch(target = window) {
       if (embedded && embedded !== mult) embedded.remove();
       if (mult.parentElement !== parent || mult.nextElementSibling !== pill) parent.insertBefore(mult, pill);
       mult.classList.add('mp-mult-left');
+      const cleanText = mult.textContent.replace(/[()]/g, '').trim();
+      if (mult.textContent !== cleanText) mult.textContent = cleanText;
+      parent.classList.add('mp-has-left-mult');
       pill.style.setProperty('width', '118px', 'important');
       pill.style.setProperty('gap', '5px', 'important');
     });
@@ -273,6 +276,7 @@ export function installSurgeonHandSwapPatch(target = window) {
       childList: true,
       subtree: true,
       attributes: true,
+      characterData: true,
       attributeFilter: ['class', 'disabled', 'data-uid', 'hidden'],
     });
   }
@@ -340,13 +344,17 @@ function installStyle(doc) {
       content: none !important;
       display: none !important;
     }
+    body.mp-game-active .mp-pills-opp.mp-has-left-mult,
+    body.mp-game-active .mp-pills-self.mp-has-left-mult {
+      transform: translateX(-20px) !important;
+    }
     body.mp-game-active .mp-mult-inline.mp-mult-left {
       display: inline-flex !important;
       align-items: center !important;
-      justify-content: flex-end !important;
-      min-width: 38px !important;
+      justify-content: center !important;
+      min-width: 34px !important;
       margin-left: 0 !important;
-      margin-right: -2px !important;
+      margin-right: 6px !important;
       flex: 0 0 auto !important;
       color: #ff5a4f !important;
     }
