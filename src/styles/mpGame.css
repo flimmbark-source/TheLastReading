@@ -161,6 +161,9 @@ body.mp-game-active #purgePrompt { display: none !important; }
 .mp-pill-score b, .mp-pill-disc b, .mp-pill-thresh b { font-size: 13px; }
 .mp-pill-thresh { width: 142px !important; }
 
+/* You / Foe labels beside the threshold — hidden on mobile, shown on desktop via mpFixes.css */
+.mp-side-label { display: none; }
+
 /* Middle band: threshold centered; constellation beside it when shown */
 .mp-pills-mid { gap: 10px; }
 

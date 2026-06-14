@@ -207,15 +207,31 @@ body.mp-game-active .spread-wrap {
     justify-content: center !important;
   }
 
-  /* Score / threshold pills → centred between the two spreads. */
+  /* Score / threshold pills → centred, shifted above the midpoint. */
   body.mp-game-active .mp-mid-wrap {
     position: fixed !important;
-    top: 50% !important;
+    top: 38% !important;
     bottom: auto !important;
     left: 50% !important;
     right: auto !important;
     transform: translate(-50%, -50%) !important;
     width: auto !important;
     padding: 0 !important;
+  }
+
+  /* You / Foe labels flanking the threshold pill. */
+  body.mp-game-active .mp-side-label {
+    display: inline-block !important;
+    font: 600 10px/1 system-ui, sans-serif !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+    color: #7a6040 !important;
+    white-space: nowrap !important;
+    padding: 0 4px !important;
+  }
+
+  /* Shift the player hand left to align with the player's spread side. */
+  body.mp-game-active .handDock {
+    transform: translateX(-12vw) !important;
   }
 }

@@ -81,17 +81,19 @@ export function installMpGame(target = window) {
       </div>
 
       <div class="mp-mid-wrap" id="mpMidWrap">
-        <div class="mp-pills-band mp-pills-opp">
-          <div class="pill score-pill mp-pill-score">Score <b id="mpOppScore">0</b></div>
-          <div class="pill reserve-pill mp-pill-disc">Discards <b id="mpOppDisc">0</b></div>
+        <div class="mp-pills-band mp-pills-discs">
+          <div class="pill reserve-pill mp-pill-disc">Discards <b id="mpMyDisc">0</b></div>
+          <div class="pill reserve-pill mp-pill-disc mp-pill-disc-opp">Discards <b id="mpOppDisc">0</b></div>
         </div>
         <div class="mp-pills-band mp-pills-mid">
+          <span class="mp-side-label mp-you-label">You</span>
           <div class="pill threshold-pill mp-pill-thresh">Threshold <b id="mpThresh">200</b></div>
           <button class="constellation-pill mp-constellation hidden" id="mpConstellation" type="button"></button>
+          <span class="mp-side-label mp-foe-label">Foe</span>
         </div>
-        <div class="mp-pills-band mp-pills-self">
+        <div class="mp-pills-band mp-pills-scores">
           <div class="pill score-pill mp-pill-score">Score <b id="mpMyScore">0</b></div>
-          <div class="pill reserve-pill mp-pill-disc">Discards <b id="mpMyDisc">0</b></div>
+          <div class="pill score-pill mp-pill-score mp-pill-score-opp">Score <b id="mpOppScore">0</b></div>
         </div>
         <div class="mp-pills-band mp-pills-actions">
           <button class="sbtn sbtn-discard" id="mpDiscardBtn" onclick="tlrMpDiscard()" type="button" disabled aria-label="Discard selected card" title="Discard"></button>
