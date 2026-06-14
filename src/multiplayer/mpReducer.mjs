@@ -118,8 +118,7 @@ function relationHeldCards(player, ability, choice) {
   if (!anchors[0]) return [];
   if (ability.type === ABILITY_TYPES.BETWEEN && !anchors[1]) return [];
   const held = abilityHeldCards(player.deck, ability, anchors);
-  // Between reveals every card in the window; relation abilities cap by count.
-  return ability.type === ABILITY_TYPES.BETWEEN ? held : held.slice(0, ability.count ?? 2);
+  return held.slice(0, ability.count ?? 2);
 }
 
 // Apply a standard (non-interaction) card ability to a multiplayer player.
@@ -157,7 +156,7 @@ function applyStandardAbility(player, ability, choice = {}) {
   }
 
   if (ability.type === ABILITY_TYPES.WORLD) {
-    const pool = [...player.deck, ...player.discard, ...player.hand, ...player.spread.filter(Boolean)];
+    const pool = [...player.deck, ...player.discard, ...player.hand];
     const handResult = orderedCardsFromUids(pool, choice?.handUids);
     const deckResult = orderedCardsFromUids(handResult.remaining, choice?.deckUids);
     if (!handResult.ordered.length && !deckResult.ordered.length) return player;
@@ -166,10 +165,6 @@ function applyStandardAbility(player, ability, choice = {}) {
       hand: handResult.ordered,
       deck: [...deckResult.ordered, ...deckResult.remaining],
       discard: [],
-      spread: Array(MP_SPREAD_SIZE).fill(null),
-      playedSlotHistory: [],
-      anchoredSlotIndex: null,
-      silencedCardUids: [],
     };
   }
 
