@@ -42,6 +42,7 @@ export function _cacheEls(){
   _elCurrent=document.getElementById('current');
 }
 
+function syncStoreBeforeView(){if(typeof window.tlrSyncRunToStore==='function')window.tlrSyncRunToStore()}
 function currentStoreState(){return window.tlrStore?.getState?.()||null}
 function currentRun(){return currentStoreState()?.run || state}
 function activeThreshold(){const run=currentRun();return constellationThreshold(TH[state.th]+(state.thBonus||0),run)}
@@ -70,6 +71,7 @@ function installConstellationOutsideHandler(){if(constellationOutsideHandlerInst
 function renderConstellationPill(){installConstellationOutsideHandler();const el=ensureConstellationPill();const constellationId=activeConstellationId();if(!constellationId)return hideConstellationPill(el);const constellation=getConstellation(constellationId);if(!constellation)return hideConstellationPill(el);el.classList.remove('hidden');el.setAttribute('aria-label',`${constellation.name}. ${constellation.shortRule||constellation.rule}`);el.innerHTML=constellationIconHTML(constellation);positionConstellationIcon(el);el.onclick=event=>{event.stopPropagation();if(constellationCalloutOpen)closeConstellationCallout();else showConstellationCallout(el,constellation)}}
 
 export function render(){
+  syncStoreBeforeView();
   _cachedPlacedScore=null; // invalidate on every render
   const _newHintsKey=_hintsKey();if(_newHintsKey!==_hintsCacheKey){_hintsCache.clear();_hintsCacheKey=_newHintsKey;_unlockedFragmentsCache=null;_spreadScoreForHints=null;}
   _cacheEls();
