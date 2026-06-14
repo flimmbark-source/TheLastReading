@@ -34,6 +34,7 @@ path to collapse them. Each phase is independently shippable and must keep
 | Shared mutable `state` / `persist` | `src/app/*`, `src/ui/*` | Still read/written directly; mirrored to the store via `legacyBridge`. |
 | Store to legacy sync | `app/legacyBridge.mjs`, `app/liveMirror.mjs`, `app/bootstrap.mjs` | `syncRunToStore`, `resolveAbilityThroughStore`, `tlrMirrorLiveState`. |
 | Singleplayer hand/spread render data | `game/selectors.mjs`, `ui/renderTable.mjs`, `ui/renderHand.mjs`, `ui/renderSpread.mjs` | Phase 2 in progress: `handView(state)` feeds `renderHand`, and `spreadView(state)` feeds `renderSpread` from store-derived display data when the store is available. Purge and ability targeting still bridge through legacy until those flows are store-owned. |
+| Singleplayer table chrome data | `game/selectors.mjs`, `ui/renderTable.mjs` | `tableView(state)` now centralizes threshold, reserve, discards, discard button state, and purge button state. It is validated, but not yet wired into `renderTable` because the large renderTable replacement was blocked by the connector. |
 | Multiplayer to legacy render | `app/mpGame.mjs`, `app/mpSingleplayerAbilityFlow.mjs` | Mostly resolved. Multiplayer card piles and selection/purge are module-local match-state view models. One read of `state.selected` remains for drag-to-place from `gestureCard`. |
 | Patch overlay host seam | `app/mpGameHost.mjs` | `main.mjs` no longer imports or installs `*Patch.mjs` directly. The remaining companion modules are installed behind the multiplayer host and should be folded or renamed as their flows are absorbed. |
 
@@ -56,13 +57,17 @@ renderer at a time (`renderHand`, `renderSpread`, then `renderTable`). Keep
 > _Verification anchor expanded._ `scripts/validate-render.mjs` boots the real
 > data globals and hint runtime against a jsdom document and now asserts both
 > `renderHand` and `renderSpread` view-model behavior, including click routing.
+> `scripts/validate-table-view.mjs` pins the new store-derived table chrome
+> selector.
 >
-> _Hand and spread renderer slices started._ `game/selectors.mjs#handView` and
-> `game/selectors.mjs#spreadView` now build singleplayer display views, and
-> `renderTable` passes them into `renderHand` and `renderSpread` when the store is
-> available. Remaining Phase 2 work: migrate table-level pills/buttons/preview,
-> then remove renderer fallback reads from legacy state once purge, ability
-> targeting, and placement are store-owned.
+> _Hand and spread renderer slices started; table selector prepared._
+> `game/selectors.mjs#handView` and `game/selectors.mjs#spreadView` now build
+> singleplayer display views, and `renderTable` passes them into `renderHand` and
+> `renderSpread` when the store is available. `game/selectors.mjs#tableView`
+> centralizes threshold/reserve/discards/button state, but still needs to be wired
+> into `renderTable`. Remaining Phase 2 work: wire table chrome, migrate score
+> preview, then remove renderer fallback reads from legacy state once purge,
+> ability targeting, and placement are store-owned.
 
 **Phase 3 — Retire the legacy `state` object.** Once renderers read from the
 store, replace the remaining direct `state.*` writes (in `readingFlow.mjs`,
