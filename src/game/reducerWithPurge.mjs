@@ -1,8 +1,17 @@
 import { ACTIONS } from './actions.mjs';
 import { reducer as baseReducer } from './reducer.mjs';
 
+const START_ABILITY_TARGETING = 'START_ABILITY_TARGETING';
+const TOGGLE_ABILITY_TARGET = 'TOGGLE_ABILITY_TARGET';
+const CLEAR_ABILITY_TARGETING = 'CLEAR_ABILITY_TARGETING';
+
 function replaceRun(state, patch) {
   return { ...state, run: { ...state.run, ...patch } };
+}
+
+function replaceAbility(state, abilityPatch) {
+  const current = state.run.ability || {};
+  return replaceRun(state, { ability: { ...current, ...abilityPatch } });
 }
 
 function startPurge(state) {
@@ -41,6 +50,47 @@ function cancelPurge(state) {
   return replaceRun(state, { purge: null });
 }
 
+function startAbilityTargeting(state, action) {
+  const payload = action.selection || action.targeting || {};
+  const validCardIds = [...new Set((payload.validCardIds || payload.validIds || []).filter(Number.isFinite))];
+  const count = Math.max(1, Number(payload.count || 1));
+  return replaceAbility(state, {
+    targeting: {
+      title: String(payload.title || ''),
+      prompt: String(payload.prompt || ''),
+      validCardIds,
+      pickedCardIds: [],
+      count,
+    },
+  });
+}
+
+function toggleAbilityTarget(state, action) {
+  const targeting = state.run.ability?.targeting;
+  if (!targeting) return state;
+  const cardId = action.cardId ?? action.uid;
+  if (!targeting.validCardIds.includes(cardId)) return state;
+
+  const pickedCardIds = [...targeting.pickedCardIds];
+  const index = pickedCardIds.indexOf(cardId);
+  if (index >= 0) pickedCardIds.splice(index, 1);
+  else {
+    while (pickedCardIds.length >= targeting.count) pickedCardIds.shift();
+    pickedCardIds.push(cardId);
+  }
+
+  return replaceAbility(state, {
+    targeting: { ...targeting, pickedCardIds },
+  });
+}
+
+function clearAbilityTargeting(state) {
+  const ability = state.run.ability;
+  if (!ability?.targeting) return state;
+  const { targeting: _targeting, ...rest } = ability;
+  return replaceRun(state, { ability: Object.keys(rest).length ? rest : null });
+}
+
 export function reducer(state, action) {
   switch (action.type) {
     case ACTIONS.START_PURGE:
@@ -51,6 +101,12 @@ export function reducer(state, action) {
       return confirmPurge(state);
     case ACTIONS.CANCEL_PURGE:
       return cancelPurge(state);
+    case START_ABILITY_TARGETING:
+      return startAbilityTargeting(state, action);
+    case TOGGLE_ABILITY_TARGET:
+      return toggleAbilityTarget(state, action);
+    case CLEAR_ABILITY_TARGETING:
+      return clearAbilityTargeting(state);
     default:
       return baseReducer(state, action);
   }
