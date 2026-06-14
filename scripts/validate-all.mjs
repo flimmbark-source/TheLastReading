@@ -7,6 +7,7 @@ import './validate-multiplayer.mjs';
 import './validate-personas.mjs';
 import './validate-table-view.mjs';
 import './validate-purge-reducer.mjs';
+import './validate-ability-targeting.mjs';
 // jsdom-based UI checks run last: they populate a jsdom window on globalThis.
 import './validate-menu.mjs';
 import './validate-render.mjs';
