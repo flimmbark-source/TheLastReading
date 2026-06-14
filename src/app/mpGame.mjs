@@ -21,6 +21,7 @@ export function installMpGame(target = window) {
   let _origPlaceCard    = null;
   let _origRenderSpread = null;
   let _origTogglePurgeCard = null;
+  let _origRefreshHandState = null;
 
   const doc = target.document;
   function el(id) { return doc.getElementById(id); }
@@ -139,13 +140,29 @@ export function installMpGame(target = window) {
     else                   hideOverlay();
   }
 
+  // Cheap refresh used after selecting/deselecting a hand card. The shared
+  // single-player hand renderer only knows how to repaint card selection, so
+  // multiplayer has to refresh its own discard button, action text, and spread
+  // targets as well.
+  function refreshSelectionUi() {
+    if (!_state) return;
+    const s = _state;
+    const my = _myIndex;
+    syncPerspectiveState(s, my);
+    renderActionButtons(s, my);
+    renderSelfSpread(s, my);
+    renderActionPanel(s, my);
+  }
+
   function renderTopBar(s, my) {
     const badge = el('mpTurnBadge');
     const round = el('mpRoundLabel');
     if (!badge) return;
     badge.className = 'mp-turn-badge';
-    if (s.phase === MP_PHASES.SCORING || s.phase === MP_PHASES.BETWEEN_ROUNDS) {
+    if (s.phase === MP_PHASES.SCORING) {
       badge.textContent = 'Scoring…'; badge.classList.add('scoring');
+    } else if (s.phase === MP_PHASES.BETWEEN_ROUNDS) {
+      badge.textContent = 'Next Set…'; badge.classList.add('scoring');
     } else if (s.phase === MP_PHASES.COMPLETE) {
       badge.textContent = 'Match Over'; badge.classList.add('scoring');
     } else if (mySubmitted(s)) {
@@ -355,6 +372,8 @@ export function installMpGame(target = window) {
         parts.push(`<button class="mp-action-btn swap" onclick="tlrMpStartSwap()" type="button">Swap Spread</button>`);
       }
       if (!opponentSubmitted(s)) parts.push(`<span class="mp-action-hint">Select a card from your hand.</span>`);
+    } else if (s.phase === MP_PHASES.BETWEEN_ROUNDS) {
+      parts.push(`<span class="mp-action-hint">Starting next set…</span>`);
     } else {
       parts.push(`<span class="mp-action-hint">Waiting…</span>`);
     }
@@ -449,9 +468,7 @@ export function installMpGame(target = window) {
         <div><div class="mp-ov-score-val">${rs[opp]}</div><div class="mp-ov-score-label">Opponent</div></div>
       </div>
       <div class="mp-ov-totals">Total: ${ts[my]} – ${ts[opp]} / ${s.scoreTarget ?? 200}</div>
-      ${_myIndex === 0
-        ? `<button class="mp-ov-btn" onclick="tlrMpNextRound()" type="button">Next Round</button>`
-        : `<p class="mp-ov-waiting">Waiting for host…</p>`}`;
+      <p class="mp-ov-waiting">Starting next set…</p>`;
     overlay.classList.remove('mp-ov-hidden');
   }
 
@@ -477,6 +494,7 @@ export function installMpGame(target = window) {
   function hideOverlay() { el('mpOverlay')?.classList.add('mp-ov-hidden'); }
 
   let _autoScoreTimer = null;
+  let _autoRoundTimer = null;
   function scheduleAutoScore() {
     if (!needsScoring(_state) || _myIndex !== 0 || _autoScoreTimer) return;
     _autoScoreTimer = target.setTimeout(() => {
@@ -484,6 +502,16 @@ export function installMpGame(target = window) {
       if (_state && _myIndex === 0 && needsScoring(_state))
         target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_SCORE_ROUND });
     }, 400);
+  }
+
+  function scheduleAutoNextRound() {
+    if (!_state || _state.phase !== MP_PHASES.BETWEEN_ROUNDS || _myIndex !== 0 || _autoRoundTimer) return;
+    _autoRoundTimer = target.setTimeout(() => {
+      _autoRoundTimer = null;
+      if (_state && _myIndex === 0 && _state.phase === MP_PHASES.BETWEEN_ROUNDS) {
+        target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_NEW_ROUND, playerIndex: 0 });
+      }
+    }, 120);
   }
 
   function installPlaceCardOverride() {
@@ -530,6 +558,24 @@ export function installMpGame(target = window) {
     }
   }
 
+  function installRefreshHandStateOverride() {
+    if (_origRefreshHandState !== null) return;
+    _origRefreshHandState = target.refreshHandState;
+    if (typeof _origRefreshHandState !== 'function') return;
+    target.refreshHandState = function () {
+      const result = _origRefreshHandState.apply(target, arguments);
+      refreshSelectionUi();
+      return result;
+    };
+  }
+
+  function restoreRefreshHandStateOverride() {
+    if (_origRefreshHandState !== null) {
+      target.refreshHandState = _origRefreshHandState;
+      _origRefreshHandState = null;
+    }
+  }
+
   target.tlrMpOnMatchStart = function (state, { role }) {
     _state      = state;
     _myIndex    = role === 'host' ? 0 : 1;
@@ -542,18 +588,20 @@ export function installMpGame(target = window) {
     installPlaceCardOverride();
     installRenderSpreadOverride();
     installPurgeOverride();
+    installRefreshHandStateOverride();
     render();
     scheduleAutoScore();
+    scheduleAutoNextRound();
   };
 
   target.tlrMpOnLocalAction = function (_action, state) {
     _state = state; _invokeCard = null; _swapFirst = null; _purgeSelect = null;
-    render(); scheduleAutoScore();
+    render(); scheduleAutoScore(); scheduleAutoNextRound();
   };
 
   target.tlrMpOnPeerAction = function (_action, state) {
     _state = state; _invokeCard = null; _swapFirst = null; _purgeSelect = null;
-    render(); scheduleAutoScore();
+    render(); scheduleAutoScore(); scheduleAutoNextRound();
   };
 
   target.tlrMpHandlePeerLeft = function () {
@@ -591,10 +639,12 @@ export function installMpGame(target = window) {
 
   target.tlrMpLeave = function () {
     if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; }
+    if (_autoRoundTimer) { target.clearTimeout(_autoRoundTimer); _autoRoundTimer = null; }
     _state = null; _invokeCard = null; _swapFirst = null; _purgeSelect = null;
     restorePlaceCard();
     restoreRenderSpread();
     restorePurgeOverride();
+    restoreRefreshHandStateOverride();
     doc.body.classList.remove('mp-game-active');
     el('mpGame')?.classList.add('mp-hidden');
     target._slotEls = null;
