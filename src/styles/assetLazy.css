@@ -1,0 +1,26 @@
+#atticScene::before,
+#atticScene::after,
+#atticRoom{
+  background-image:none!important;
+}
+
+body.mode-to-attic #atticScene::before,
+body.mode-attic #atticScene::before,
+body.mode-to-table #atticScene::before,
+body.mode-table-return #atticScene::before{
+  background:url('../../fx/transition_dark_vignette_1080x1920.png') center center/cover no-repeat!important;
+}
+
+body.mode-to-attic #atticScene::after,
+body.mode-attic #atticScene::after,
+body.mode-to-table #atticScene::after,
+body.mode-table-return #atticScene::after{
+  background:url('../../fx/table_to_attic_fog_overlay_1080x1920.png') center center/cover no-repeat!important;
+}
+
+body.mode-to-attic #atticRoom,
+body.mode-attic #atticRoom,
+body.mode-to-table #atticRoom,
+body.mode-table-return #atticRoom{
+  background:url('../../backgrounds/attic_room_mvp_1080x1920.png') left top/100% 100% no-repeat!important;
+}
