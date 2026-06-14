@@ -2,6 +2,7 @@ import { MP_ACTIONS } from '../multiplayer/mpActions.mjs';
 import { MP_ABILITY_TYPES } from '../multiplayer/interactionCards.mjs';
 import { isPlayerTurn, hasSubmittedAction, canInvokeAbility } from '../multiplayer/mpSelectors.mjs';
 import { renderSpread as renderSingleplayerSpread } from '../ui/renderSpread.mjs';
+import { refreshHandState as refreshSingleplayerHandState } from '../ui/renderTable.mjs';
 
 export function installMpAbilityFlowPatch(target = window) {
   if (!target || target.__tlrMpAbilityFlowPatchInstalled) return;
@@ -64,9 +65,11 @@ export function installMpAbilityFlowPatch(target = window) {
     if (typeof target.resolveAbility !== 'function') return null;
 
     const previousRenderSpread = target.renderSpread;
+    const previousRefreshHandState = target.refreshHandState;
     const previousSlotEls = target._slotEls;
     target.__tlrMpUsingSingleAbilityFlow = true;
     target.renderSpread = renderSingleplayerSpread;
+    target.refreshHandState = refreshSingleplayerHandState;
     target._slotEls = null;
 
     try {
@@ -82,6 +85,7 @@ export function installMpAbilityFlowPatch(target = window) {
     } finally {
       target.__tlrMpUsingSingleAbilityFlow = false;
       target.renderSpread = previousRenderSpread;
+      target.refreshHandState = previousRefreshHandState;
       target._slotEls = previousSlotEls || null;
     }
   }
