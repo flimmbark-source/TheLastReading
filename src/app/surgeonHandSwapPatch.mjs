@@ -137,6 +137,25 @@ export function installSurgeonHandSwapPatch(target = window) {
     button.style.setProperty('text-transform', 'none', 'important');
   }
 
+  function moveMultPillsOutside() {
+    if (!doc.body.classList.contains('mp-game-active')) return;
+    doc.querySelectorAll('.mp-pill-score').forEach(pill => {
+      const parent = pill.parentElement;
+      if (!parent) return;
+      const embedded = pill.querySelector(':scope > .mp-mult-inline');
+      const previous = pill.previousElementSibling?.classList?.contains('mp-mult-inline')
+        ? pill.previousElementSibling
+        : null;
+      let mult = previous || embedded;
+      if (!mult) return;
+      if (embedded && embedded !== mult) embedded.remove();
+      if (mult.parentElement !== parent || mult.nextElementSibling !== pill) parent.insertBefore(mult, pill);
+      mult.classList.add('mp-mult-left');
+      pill.style.setProperty('width', '118px', 'important');
+      pill.style.setProperty('gap', '5px', 'important');
+    });
+  }
+
   function hideSwipeTutorialInMultiplayer() {
     if (!doc.body.classList.contains('mp-game-active')) return;
     doc.querySelectorAll('.hand-swipe-hint').forEach(el => {
@@ -167,6 +186,7 @@ export function installSurgeonHandSwapPatch(target = window) {
 
     const abilityBtn = ensureAbilityButton();
     copySingleplayerButtonArt();
+    moveMultPillsOutside();
 
     const personaAction = currentPersonaAbilityAction();
     if (abilityBtn) {
@@ -298,6 +318,21 @@ function installStyle(doc) {
       pointer-events: none !important;
       opacity: .72;
       cursor: default !important;
+    }
+    body.mp-game-active #mpAbilityBtn::before,
+    body.mp-game-active #mpAbilityBtn::after {
+      content: none !important;
+      display: none !important;
+    }
+    body.mp-game-active .mp-mult-inline.mp-mult-left {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: flex-end !important;
+      min-width: 38px !important;
+      margin-left: 0 !important;
+      margin-right: -2px !important;
+      flex: 0 0 auto !important;
+      color: #ff5a4f !important;
     }
   `;
   doc.head.appendChild(style);
