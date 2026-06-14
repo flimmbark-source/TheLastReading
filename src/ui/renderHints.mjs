@@ -4,6 +4,29 @@
 // glow and ability-modal glow share one renderer.
 /* global cardHints */
 
+function dedupeHints(hints){
+  const seen=new Set();
+  const out=[];
+  for(const hint of hints||[]){
+    const key=`${hint.level}:${hint.label}:${hint.colorKey||''}`;
+    if(seen.has(key))continue;
+    seen.add(key);
+    out.push(hint);
+  }
+  return out;
+}
+
+function hintText(hints){
+  const seen=new Set();
+  const labels=[];
+  for(const hint of hints||[]){
+    if(seen.has(hint.label))continue;
+    seen.add(hint.label);
+    labels.push(hint.label);
+  }
+  return labels.join(' + ');
+}
+
 export function multiHintShadow(hints, level){
   const ring=level==='complete'?'1px':'0.75px';
   const parts=[];
@@ -36,6 +59,7 @@ export function colorKeyRGB(key){
   const SUIT={Cups:'80,220,180',Wands:'255,155,70',Swords:'100,185,255',Pentacles:'185,240,90'};
   const RANK={Page:'255,121,78',Knight:'220,90,220',Queen:'255,190,70',King:'80,215,215'};
   const SEQ=['142,112,255','200,90,255','100,150,255','220,130,255'];
+  if(key==='path:magi')return '142,112,255';
   if(key.startsWith('flush:'))return SUIT[key.slice(6)]||'94,214,136';
   if(key.startsWith('rank:'))return RANK[key.slice(5)]||'255,121,78';
   if(key.startsWith('seq:')){const s=parseInt(key.slice(4));return SEQ[s%SEQ.length]}
@@ -45,7 +69,7 @@ export function colorKeyRGB(key){
 export function hintColor(h){return colorKeyRGB(h.colorKey)||hintRGB(h.group||hintGroup(h.label))}
 
 export function applyHint(el,card,poolCards=null){
-  let hints=cardHints(card,poolCards);
+  let hints=dedupeHints(cardHints(card,poolCards));
   if(!hints.length)return;
   const hasComplete=hints.some(h=>h.level==='complete');
   const primary=hints.find(h=>h.level==='complete')||hints[0];
@@ -55,5 +79,5 @@ export function applyHint(el,card,poolCards=null){
     el.classList.add('hint-multi');
     el.style.setProperty('--hint-shadow',multiHintShadow(hints,hasComplete?'complete':'near'));
   }
-  el.dataset.hint=hints.map(h=>h.label).join(' + ');
+  el.dataset.hint=hintText(hints);
 }
