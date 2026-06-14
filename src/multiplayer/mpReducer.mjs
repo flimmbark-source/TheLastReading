@@ -6,6 +6,7 @@ import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
 import { MP_ABILITY_TYPES } from './interactionCards.mjs';
 import { getPersona } from './personas.mjs';
 import { mulberry32 } from './mpRng.mjs';
+import { cardsInDeckByIds, neighborCardIds, isSameArcana, mirrorCardId, betweenCardIds } from '../systems/abilities.mjs';
 
 // --- Helpers ---
 
@@ -79,19 +80,120 @@ function drawCards(player, count) {
       deck = shuffleDeck(discard);
       discard = [];
     }
+    if (!deck.length) break;
     hand.push(deck.shift());
   }
 
   return { ...player, deck, discard, hand };
 }
 
-// Apply a standard singleplayer-style ability (DRAW etc.).
-// Returns updated player state.
-function applyStandardAbility(player, ability) {
-  if (ability?.type === ABILITY_TYPES.DRAW) {
+function orderedCardsFromUids(cards, uidOrder) {
+  const pool = new Map(cards.map(card => [card.uid, card]));
+  const out = [];
+  for (const uid of Array.isArray(uidOrder) ? uidOrder : []) {
+    const card = pool.get(uid);
+    if (!card) continue;
+    out.push(card);
+    pool.delete(uid);
+  }
+  return { ordered: out, remaining: [...pool.values()] };
+}
+
+function takeFromHeld(player, heldCards, takenCardUid) {
+  const held = (heldCards || []).filter(Boolean);
+  const taken = held.find(card => card.uid === takenCardUid);
+  if (!taken) return player;
+
+  const heldUids = new Set(held.map(card => card.uid));
+  const deck = player.deck.filter(card => !heldUids.has(card.uid));
+  for (const card of held) {
+    if (card.uid !== takenCardUid) deck.push(card);
+  }
+
+  return { ...player, deck, hand: [...player.hand, taken] };
+}
+
+function inPlayCards(player) {
+  return [...(player.hand || []), ...(player.spread || []).filter(Boolean)];
+}
+
+function anchorByUid(player, uid) {
+  return inPlayCards(player).find(card => card.uid === uid) || null;
+}
+
+function relationHeldCards(player, ability, choice) {
+  const anchorIds = Array.isArray(choice?.anchorUids) ? choice.anchorUids : [];
+  const first = anchorByUid(player, anchorIds[0]);
+  if (!first) return [];
+
+  if (ability.type === ABILITY_TYPES.NEIGHBOR) {
+    return cardsInDeckByIds(player.deck, neighborCardIds(first)).slice(0, ability.count ?? 2);
+  }
+
+  if (ability.type === ABILITY_TYPES.KIN) {
+    return player.deck.filter(card => isSameArcana(card, first)).slice(0, ability.count ?? 2);
+  }
+
+  if (ability.type === ABILITY_TYPES.MIRROR) {
+    return cardsInDeckByIds(player.deck, [mirrorCardId(first)].filter(Boolean)).slice(0, ability.count ?? 1);
+  }
+
+  if (ability.type === ABILITY_TYPES.BETWEEN) {
+    const second = anchorByUid(player, anchorIds[1]);
+    if (!second) return [];
+    return cardsInDeckByIds(player.deck, betweenCardIds(first, second));
+  }
+
+  return [];
+}
+
+// Apply a standard singleplayer-style ability. Choice-heavy abilities receive
+// their chosen result from the acting client so both peers resolve identically.
+function applyStandardAbility(player, ability, choice = {}) {
+  if (!ability) return player;
+
+  if (choice?.fallbackDraw) {
+    return drawCards(player, Number(choice.fallbackDraw) || 1);
+  }
+
+  if (ability.type === ABILITY_TYPES.DRAW) {
     return drawCards(player, ability.count ?? 1);
   }
-  // All other standard ability types need targeting/selection and are stubbed for now.
+
+  if (ability.type === ABILITY_TYPES.PEEK) {
+    const held = player.deck.slice(0, ability.count ?? 1);
+    return takeFromHeld(player, held, choice?.takenCardUid);
+  }
+
+  if (ability.type === ABILITY_TYPES.SEARCH) {
+    const taken = player.deck.find(card => card.uid === choice?.takenCardUid);
+    if (!taken) return player;
+    const withoutTaken = player.deck.filter(card => card.uid !== taken.uid);
+    const ordered = orderedCardsFromUids(withoutTaken, choice?.deckOrderUids);
+    return { ...player, hand: [...player.hand, taken], deck: [...ordered.ordered, ...ordered.remaining] };
+  }
+
+  if (ability.type === ABILITY_TYPES.NEIGHBOR || ability.type === ABILITY_TYPES.KIN || ability.type === ABILITY_TYPES.MIRROR || ability.type === ABILITY_TYPES.BETWEEN) {
+    return takeFromHeld(player, relationHeldCards(player, ability, choice), choice?.takenCardUid);
+  }
+
+  if (ability.type === ABILITY_TYPES.WORLD) {
+    const pool = [...player.deck, ...player.discard, ...player.hand, ...player.spread.filter(Boolean)];
+    const handResult = orderedCardsFromUids(pool, choice?.handUids);
+    const deckResult = orderedCardsFromUids(handResult.remaining, choice?.deckUids);
+    if (!handResult.ordered.length && !deckResult.ordered.length) return player;
+    return {
+      ...player,
+      hand: handResult.ordered,
+      deck: [...deckResult.ordered, ...deckResult.remaining],
+      discard: [],
+      spread: Array(MP_SPREAD_SIZE).fill(null),
+      playedSlotHistory: [],
+      anchoredSlotIndex: null,
+      silencedCardUids: [],
+    };
+  }
+
   return player;
 }
 
@@ -149,7 +251,7 @@ function applyInteractionAbility(state, playerIndex, card, target) {
 
 // Apply an Invoke: remove card from hand, spend a discard, apply ability.
 // Returns { player, interactionResult } or { error }.
-function applyInvoke(state, playerIndex, cardUid, target) {
+function applyInvoke(state, playerIndex, cardUid, target, abilityChoice) {
   const player = state.players[playerIndex];
   const cardIndex = player.hand.findIndex(c => c.uid === cardUid);
   if (cardIndex < 0) return { error: 'Card not in hand.' };
@@ -174,7 +276,7 @@ function applyInvoke(state, playerIndex, cardUid, target) {
 
   // Standard singleplayer-style ability
   const ability = card.ability ? getAbility(card.ability) : null;
-  updatedPlayer = applyStandardAbility(updatedPlayer, ability);
+  updatedPlayer = applyStandardAbility(updatedPlayer, ability, abilityChoice);
   return { player: updatedPlayer };
 }
 
@@ -229,10 +331,10 @@ function applyImmediateAction(state, action) {
     }
 
     case MP_ACTIONS.MP_INVOKE_ABILITY: {
-      const { playerIndex, cardUid, target } = action;
+      const { playerIndex, cardUid, target, abilityChoice } = action;
       if (!isActionPhase(state)) return err(state, 'Cannot act in phase: ' + state.phase);
 
-      const result = applyInvoke(state, playerIndex, cardUid, target);
+      const result = applyInvoke(state, playerIndex, cardUid, target, abilityChoice);
       if (result.error) return err(state, result.error);
 
       let next = result.state ?? updatePlayer(state, playerIndex, result.player);
