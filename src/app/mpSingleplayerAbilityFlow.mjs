@@ -454,14 +454,6 @@ export function installMpSingleplayerAbilityFlow(target = window) {
     if (card) handleTargetCard(card);
   }, true);
 
-  const MutationObserverCtor = target.MutationObserver || globalThis.MutationObserver;
-  if (MutationObserverCtor) {
-    const observer = new MutationObserverCtor(() => {
-      if (abilitySelect) refreshAbilityTargets();
-    });
-    observer.observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'data-uid'] });
-  }
-
   target.tlrMpInvoke = invokeUsingSingleplayerFlow;
   target.tlrMpDiscard = invokeUsingSingleplayerFlow;
   target.tlrMpConfirmAbilitySelection = confirmAbilitySelection;
