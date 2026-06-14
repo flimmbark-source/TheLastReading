@@ -53,7 +53,7 @@ function extractColorKeyFromMeld(label, rawName, card, placedCards) {
 }
 
 function addHint(hints, seen, level, label, colorKey = null) {
-  const key = `${level}:${label}:${colorKey || ''}`;
+  const key = `${label}:${colorKey || ''}`;
   if (seen.has(key)) return;
   seen.add(key);
   hints.push({
