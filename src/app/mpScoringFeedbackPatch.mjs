@@ -44,7 +44,7 @@ export function installMpScoringFeedbackPatch(target = window) {
         const before = lastState ? cloneState(lastState) : cloneState(state);
         applyDerivedScoringState(before, state, action);
         const result = originalLocal.call(this, action, state);
-        updateScoreMultPills(state);
+        updateScoreMultPills(state, { includeOpponent: false });
         playPlacementFeedback(before, state);
         lastState = cloneState(state);
         return result;
@@ -56,7 +56,7 @@ export function installMpScoringFeedbackPatch(target = window) {
         const before = lastState ? cloneState(lastState) : cloneState(state);
         applyDerivedScoringState(before, state, action);
         const result = originalPeer.call(this, action, state);
-        updateScoreMultPills(state);
+        updateScoreMultPills(state, { includeOpponent: false });
         playPlacementFeedback(before, state);
         lastState = cloneState(state);
         return result;
@@ -177,6 +177,7 @@ export function installMpScoringFeedbackPatch(target = window) {
       cardEl.addEventListener('animationend', () => cardEl.classList.remove('landing'), { once: true });
     }
 
+    updateScoreMultPills(state, { onlyPlayerIndex: playerIndex });
     slotGhost(slotEl, `+${card.points || 0}`);
     scoreGhost(playerIndex, '+1');
     target.playSound?.('place');
@@ -217,7 +218,7 @@ export function installMpScoringFeedbackPatch(target = window) {
       target.holdEffects?.(delay + 1100);
     }
 
-    target.setTimeout(() => updateScoreMultPills(state), Math.min(delay + 180, EFFECT_WINDOW_MS));
+    target.setTimeout(() => updateScoreMultPills(state, { onlyPlayerIndex: playerIndex }), Math.min(delay + 180, EFFECT_WINDOW_MS));
   }
 
   function findPlacements(before, state) {
@@ -266,11 +267,18 @@ export function installMpScoringFeedbackPatch(target = window) {
     return (player?.spread || []).filter(card => card && !silenced.has(card.uid));
   }
 
-  function updateScoreMultPills(state = target.tlrMpGetState?.()) {
+  function updateScoreMultPills(state = target.tlrMpGetState?.(), options = {}) {
     if (!state?.players) return;
     const myIndex = target.tlrMpGetRole?.() === 'guest' ? 1 : 0;
+
+    if (Number.isInteger(options.onlyPlayerIndex)) {
+      const id = options.onlyPlayerIndex === myIndex ? 'mpMyScore' : 'mpOppScore';
+      updateOneScorePill(id, state, options.onlyPlayerIndex);
+      return;
+    }
+
     updateOneScorePill('mpMyScore', state, myIndex);
-    updateOneScorePill('mpOppScore', state, 1 - myIndex);
+    if (options.includeOpponent !== false) updateOneScorePill('mpOppScore', state, 1 - myIndex);
   }
 
   function updateOneScorePill(scoreId, state, playerIndex) {
@@ -288,7 +296,7 @@ export function installMpScoringFeedbackPatch(target = window) {
       mult.className = 'mp-mult-inline';
       pill.appendChild(mult);
     }
-    mult.textContent = `(${formatMult(player?.roundMult ?? 1)}x)`;
+    mult.textContent = `${formatMult(player?.roundMult ?? 1)}x`;
   }
 
   function slotElementForPlayer(playerIndex, slotIndex) {
