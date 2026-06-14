@@ -560,7 +560,10 @@ export function installMpGame(target = window) {
   function hideOverlay() { el('mpOverlay')?.classList.add('mp-ov-hidden'); }
 
   let _autoScoreTimer = null, _autoRoundTimer = null;
-  function scheduleAutoScore() { if (!needsScoring(_state) || _myIndex !== 0 || _autoScoreTimer) return; _autoScoreTimer = target.setTimeout(() => { _autoScoreTimer = null; if (_state && _myIndex === 0 && needsScoring(_state)) target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_SCORE_ROUND }); }, 950); }
+  // Either client may drive scoring once the spreads are full — a duplicate
+  // MP_SCORE_ROUND is harmless (the reducer rejects it outside the SCORING
+  // phase). This keeps the set from stalling if the host's client doesn't fire.
+  function scheduleAutoScore() { if (!needsScoring(_state) || _autoScoreTimer) return; _autoScoreTimer = target.setTimeout(() => { _autoScoreTimer = null; if (_state && needsScoring(_state)) target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_SCORE_ROUND }); }, 950); }
   function scheduleAutoNextRound() { if (!_state || _state.phase !== MP_PHASES.BETWEEN_ROUNDS || _myIndex !== 0 || _autoRoundTimer) return; _autoRoundTimer = target.setTimeout(() => { _autoRoundTimer = null; if (_state && _myIndex === 0 && _state.phase === MP_PHASES.BETWEEN_ROUNDS) { clearOpponentRevealQueues(); target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_NEW_ROUND, playerIndex: 0 }); } }, 120); }
 
   // placeCard is only reached via the drag-to-place path (tap-to-place calls

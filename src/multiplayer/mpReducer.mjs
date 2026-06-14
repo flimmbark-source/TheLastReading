@@ -366,7 +366,22 @@ function resolvePendingActions(state) {
 }
 
 export function mpReducer(state, action) {
-  if (!state) state = createMatchState();
+  const next = reduceMatch(state ?? createMatchState(), action);
+  // Safety net: the moment both spreads are full the set must enter scoring, no
+  // matter which action filled them or how the simultaneous cycle resolved.
+  if (
+    next &&
+    next.phase === MP_PHASES.PLACEMENT &&
+    Array.isArray(next.players) &&
+    next.players.length === 2 &&
+    next.players.every(p => spreadFull(p.spread))
+  ) {
+    return { ...next, phase: MP_PHASES.SCORING };
+  }
+  return next;
+}
+
+function reduceMatch(state, action) {
   state = clearError(state);
 
   switch (action.type) {
