@@ -1,8 +1,9 @@
 // Spread placement bridge for the shell-cutover path.
 // It backs up the renderer onclick and drag gesture path by routing empty-slot
-// clicks/pointer releases through the module-owned placeCard function.
+// clicks/pointer releases through the module-owned placement runtime.
 
 function currentState(target){return target.tlrRuntime?.state || target.state;}
+function selectedCardId(target){return target.tlrStore?.getState?.()?.run?.selectedCardId ?? currentState(target)?.selected ?? null;}
 
 function slotIndexFromElement(el){
   const slot=el&&el.closest?el.closest('#spread .slot'):null;
@@ -12,8 +13,9 @@ function slotIndexFromElement(el){
 }
 
 function placeSelectedInto(index,target){
-  const state=currentState(target);
-  if(!state||state.selected===null||index<0)return false;
+  const uid=selectedCardId(target);
+  if(uid===null||index<0)return false;
+  if(typeof target.placeCardUid==='function')return target.placeCardUid(uid,index);
   if(typeof target.placeCard!=='function')return false;
   target.placeCard(index);
   return true;
@@ -34,8 +36,8 @@ export function installSpreadPlacementBridge(target = window){
   },true);
 
   document.addEventListener('pointerup',event=>{
-    const state=currentState(target);
-    if(!state||state.selected===null)return;
+    const uid=selectedCardId(target);
+    if(uid===null)return;
     const els=document.elementsFromPoint(event.clientX,event.clientY);
     for(const el of els){
       if(!(el instanceof Element))continue;
