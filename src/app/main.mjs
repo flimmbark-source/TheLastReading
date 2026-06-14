@@ -25,6 +25,7 @@ import { installMatchmakingScreen } from './matchmakingScreen.mjs';
 import { installMpGame } from './mpGame.mjs';
 import { installSurgeonHandSwapPatch } from './surgeonHandSwapPatch.mjs';
 import { installMpScoringFeedbackPatch } from './mpScoringFeedbackPatch.mjs';
+import { installMpScorePillStabilityPatch } from './mpScorePillStabilityPatch.mjs';
 import { installMenuControls } from './menuControls.mjs';
 import { installResonationFlow } from './resonationFlow.mjs';
 import { installHintRuntime } from './hintRuntime.mjs';
@@ -249,6 +250,7 @@ export function startApp(target = window) {
   installMpGame(target);
   installSurgeonHandSwapPatch(target);
   installMpScoringFeedbackPatch(target);
+  installMpScorePillStabilityPatch(target);
   installStoreFrontTuning(target);
   installMarketTutorialTrigger(target);
 
