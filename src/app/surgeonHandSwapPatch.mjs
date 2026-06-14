@@ -102,16 +102,14 @@ export function installSurgeonHandSwapPatch(target = window) {
     const computed = source && target.getComputedStyle?.(source);
     if (!source || !button || !computed) return;
 
-    // Mirror the singleplayer visual treatment without freezing the sprite state.
+    // Mirror the singleplayer visual treatment without stealing the wrong label identity.
     button.className = className;
-    button.style.removeProperty('background');
-    button.style.removeProperty('background-position');
     if (copiedButtonArt.has(targetId)) return;
 
     const props = [
       'width', 'height', 'minWidth', 'minHeight', 'padding',
       'border', 'borderRadius', 'boxShadow',
-      'backgroundColor', 'backgroundImage', 'backgroundSize', 'backgroundRepeat',
+      'background', 'backgroundColor', 'backgroundImage', 'backgroundSize', 'backgroundPosition', 'backgroundRepeat',
       'color', 'font', 'fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'textTransform',
     ];
 
@@ -163,6 +161,28 @@ export function installSurgeonHandSwapPatch(target = window) {
     });
   }
 
+  function syncMpActionButtonArt() {
+    syncMpButtonArt('mpDiscardBtn');
+    syncMpButtonArt('mpPurgeBtn');
+  }
+
+  function syncMpButtonArt(id) {
+    const button = doc.getElementById(id);
+    if (!button) return;
+    const active = !button.disabled;
+    button.classList.toggle('mp-active-action', active);
+    button.style.setProperty('opacity', active ? '1' : '.38', 'important');
+    button.style.setProperty('cursor', active ? 'pointer' : 'default', 'important');
+    button.style.setProperty('filter', active ? 'brightness(1.06)' : 'none', 'important');
+    button.style.setProperty('color', active ? '#f0d58a' : '#8a7551', 'important');
+    button.style.setProperty('border-color', active ? 'rgba(220,176,92,.78)' : 'rgba(180,140,90,.28)', 'important');
+    button.style.setProperty('background', active ? 'rgba(74,46,18,.92)' : 'rgba(28,18,10,.68)', 'important');
+    button.style.setProperty('background-color', active ? 'rgba(74,46,18,.92)' : 'rgba(28,18,10,.68)', 'important');
+    button.style.setProperty('box-shadow', active
+      ? '0 0 0 1px rgba(255,217,120,.16), 0 7px 18px rgba(0,0,0,.42), inset 0 1px rgba(255,255,255,.08)'
+      : '0 4px 12px rgba(0,0,0,.28)', 'important');
+  }
+
   function suppressTransientScoringOverlay() {
     if (!doc.body.classList.contains('mp-game-active')) return;
     const overlay = doc.getElementById('mpOverlay');
@@ -210,6 +230,7 @@ export function installSurgeonHandSwapPatch(target = window) {
     const abilityBtn = ensureAbilityButton();
     copySingleplayerButtonArt();
     moveMultPillsOutside();
+    syncMpActionButtonArt();
 
     const personaAction = currentPersonaAbilityAction();
     if (abilityBtn) {
@@ -390,18 +411,6 @@ function installStyle(doc) {
     body.mp-game-active #mpAbilityBtn::after {
       content: none !important;
       display: none !important;
-    }
-    body.mp-game-active #mpDiscardBtn.sbtn-discard:not(:disabled) {
-      background-position: -40px -11px !important;
-    }
-    body.mp-game-active #mpDiscardBtn.sbtn-discard:disabled {
-      background-position: -40px -54px !important;
-    }
-    body.mp-game-active #mpPurgeBtn.sbtn-purge:not(:disabled) {
-      background-position: -165px -11px !important;
-    }
-    body.mp-game-active #mpPurgeBtn.sbtn-purge:disabled {
-      background-position: -165px -54px !important;
     }
     body.mp-game-active .mp-pills-opp.mp-has-left-mult,
     body.mp-game-active .mp-pills-self.mp-has-left-mult {
