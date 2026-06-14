@@ -1,0 +1,26 @@
+/* Mobile-only placement for the multiplayer score multipliers.
+   The multiplier spans are still injected into each score pill by JS, but on
+   mobile they should read as a separate label immediately to the left of that
+   score pill. */
+
+@media (max-width: 640px) {
+  body.mp-game-active .mp-pills-opp,
+  body.mp-game-active .mp-pills-self {
+    padding-left: 24px;
+    box-sizing: border-box;
+  }
+
+  body.mp-game-active .mp-pill-score {
+    position: relative !important;
+    overflow: visible !important;
+  }
+
+  body.mp-game-active .mp-pill-score .mp-mult-inline {
+    position: absolute !important;
+    right: calc(100% + 5px);
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 0 !important;
+    pointer-events: none;
+  }
+}
