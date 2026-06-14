@@ -3,6 +3,7 @@ import { installSurgeonHandSwapPatch } from './surgeonHandSwapPatch.mjs';
 import { installMpScoringFeedbackPatch } from './mpScoringFeedbackPatch.mjs';
 import { installMpScorePillStabilityPatch } from './mpScorePillStabilityPatch.mjs';
 import { installMpSingleplayerAbilityFlow } from './mpSingleplayerAbilityFlow.mjs';
+import { installMpUiStateFixes } from './mpUiStateFixes.mjs';
 
 export function installMpGame(target = window) {
   installBaseMpGame(target);
@@ -10,4 +11,5 @@ export function installMpGame(target = window) {
   installMpScoringFeedbackPatch(target);
   installMpScorePillStabilityPatch(target);
   installMpSingleplayerAbilityFlow(target);
+  installMpUiStateFixes(target);
 }
