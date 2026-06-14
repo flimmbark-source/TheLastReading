@@ -1,7 +1,7 @@
 // Direct card placement runtime.
-// After the shell cutover, module state is the source of truth. The old
-// PLACE_CARD store action can no-op if the store selection is stale, so this
-// owns the actual hand -> spread move and syncs the store afterward.
+// After the shell cutover, module state is the source of truth. Placement can
+// now receive an explicit card uid, so callers do not have to communicate a
+// dragged/selected card through legacy `state.selected` first.
 
 function runtime(target){return target.tlrRuntime || {};}
 function stateOf(target){return runtime(target).state || target.state;}
@@ -12,6 +12,11 @@ function call(target,name,...args){
   return undefined;
 }
 
+function selectedCardId(target,state){
+  const storeSelected=target.tlrStore?.getState?.()?.run?.selectedCardId;
+  return storeSelected ?? state?.selected ?? null;
+}
+
 function scorePillBase(target,state){
   const explicit=Number(target.tlrScorePillSetBase||0);
   if(Number.isFinite(explicit)&&explicit>0)return explicit;
@@ -19,10 +24,11 @@ function scorePillBase(target,state){
   return Number.isFinite(round)?round:0;
 }
 
-export function placeCard(slotIndex,target = window){
+export function placeCard(slotIndex,target = window, explicitCardUid = null){
   const state=stateOf(target);
-  if(!state || state.selected===null || state.spread[slotIndex])return false;
-  const handIndex=state.hand.findIndex(card=>card.uid===state.selected);
+  const cardUid=explicitCardUid ?? selectedCardId(target,state);
+  if(!state || cardUid===null || state.spread[slotIndex])return false;
+  const handIndex=state.hand.findIndex(card=>card.uid===cardUid);
   if(handIndex<0)return false;
 
   const beforeScore=typeof target._scoreLegacy==='function'
@@ -93,9 +99,14 @@ export function placeCard(slotIndex,target = window){
   return true;
 }
 
+export function placeCardByUid(cardUid,slotIndex,target = window){
+  return placeCard(slotIndex,target,cardUid);
+}
+
 export function installPlacementRuntime(target = window){
   if(!target || target.__tlrPlacementRuntimeInstalled)return;
   target.__tlrPlacementRuntimeInstalled=true;
-  target.tlrPlacementRuntime={placeCard};
+  target.tlrPlacementRuntime={placeCard,placeCardByUid};
   target.placeCard=index=>placeCard(index,target);
+  target.placeCardUid=(cardUid,index)=>placeCardByUid(cardUid,index,target);
 }
