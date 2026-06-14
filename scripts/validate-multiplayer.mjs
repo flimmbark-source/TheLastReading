@@ -1,6 +1,6 @@
 import { MP_ACTIONS } from '../src/multiplayer/mpActions.mjs';
 import { MP_PHASES, SCORE_TARGETS, MP_SPREAD_SIZE, MP_HAND_SIZE, createMatchState } from '../src/multiplayer/mpState.mjs';
-import { mpReducer } from '../src/multiplayer/mpReducerFixed.mjs';
+import { mpReducer } from '../src/multiplayer/mpReducer.mjs';
 import * as sel from '../src/multiplayer/mpSelectors.mjs';
 import { buildDeck } from '../src/systems/deck.mjs';
 

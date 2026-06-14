@@ -1,6 +1,6 @@
 import { MP_ACTIONS } from '../src/multiplayer/mpActions.mjs';
 import { MP_PHASES, SCORE_TARGETS, MP_HAND_SIZE, MP_STARTING_DISCARDS, createMatchState } from '../src/multiplayer/mpState.mjs';
-import { mpReducer } from '../src/multiplayer/mpReducerFixed.mjs';
+import { mpReducer } from '../src/multiplayer/mpReducer.mjs';
 import * as sel from '../src/multiplayer/mpSelectors.mjs';
 import { PERSONAS } from '../src/multiplayer/personas.mjs';
 import { makeInteractionCard } from '../src/multiplayer/interactionCards.mjs';

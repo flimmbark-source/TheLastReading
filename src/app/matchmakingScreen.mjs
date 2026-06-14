@@ -2,7 +2,7 @@ import { SignalingClient } from './signalingClient.mjs';
 import { PeerConnection } from './peerConnection.mjs';
 import { randomSeed } from '../multiplayer/mpRng.mjs';
 import { MP_ACTIONS } from '../multiplayer/mpActions.mjs';
-import { mpReducer } from '../multiplayer/mpReducerFixed.mjs';
+import { mpReducer } from '../multiplayer/mpReducer.mjs';
 import { MP_PHASES } from '../multiplayer/mpState.mjs';
 import { hasSubmittedAction, emptySlots } from '../multiplayer/mpSelectors.mjs';
 
