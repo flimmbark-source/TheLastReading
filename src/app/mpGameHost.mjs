@@ -5,6 +5,7 @@ import { installMpScorePillStabilityPatch } from './mpScorePillStabilityPatch.mj
 import { installMpSingleplayerAbilityFlow } from './mpSingleplayerAbilityFlow.mjs';
 import { installMpUiStateFixes } from './mpUiStateFixes.mjs';
 import { installMpPersonaAbilityPrompt } from './mpPersonaAbilityPrompt.mjs';
+import { installMpBetweenChoiceLimit } from './mpBetweenChoiceLimit.mjs';
 
 export function installMpGame(target = window) {
   installBaseMpGame(target);
@@ -14,4 +15,5 @@ export function installMpGame(target = window) {
   installMpSingleplayerAbilityFlow(target);
   installMpUiStateFixes(target);
   installMpPersonaAbilityPrompt(target);
+  installMpBetweenChoiceLimit(target);
 }
