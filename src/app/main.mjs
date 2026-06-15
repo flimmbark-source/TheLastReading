@@ -1,7 +1,6 @@
 // Application entry point (Phase 16). index.html is becoming a shell: this
 // module mounts the architecture bridge, installs the UI modules as the
 // globals the legacy markup/script still calls, and then boots the game.
-import { installLiveMirror } from './liveMirror.mjs';
 import { bootGame } from './boot.mjs';
 import { installArchitectureBridge } from './bootstrap.mjs';
 import { installDataGlobals } from './dataGlobals.mjs';
@@ -271,7 +270,6 @@ export function startApp(target = window) {
   installControlBindings(target);
 
   try {
-    installLiveMirror(target);
     bootGame(target);
   } catch (err) {
     console.error('The Last Reading module boot failed', err);

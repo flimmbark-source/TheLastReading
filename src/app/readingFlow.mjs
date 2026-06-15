@@ -249,10 +249,7 @@ export function selectFromHand(title,prompt,cards,count,cb,previewFn=null){
   // not installed (e.g. headless/non-store environments).
   if(typeof window.tlrStartAbilityTargeting==='function'){
     window.tlrStartAbilityTargeting({title,prompt,validCardIds,count,cb,previewFn});
-    return;
   }
-  state.abilitySelect={title,prompt,validIds:new Set(validCardIds),picked:[],count,cb,previewFn};
-  render();
 }
 
 export function handleAbilityHandClick(card){

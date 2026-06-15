@@ -100,48 +100,30 @@ export function installAbilityTargetBridge(target = window) {
         type: START_ABILITY_TARGETING,
         selection: { title: title || '', prompt: prompt || '', validCardIds: [...validCardIds], count: count || 1 },
       });
-    } else {
-      const state = stateOf(target);
-      if (state) state.abilitySelect = { title, prompt, validIds: new Set(validCardIds), picked: [], count, cb, previewFn };
     }
     if (typeof target.render === 'function') target.render();
   };
 
   target.handleAbilityHandClick = function (card) {
-    const state = stateOf(target);
-    if (!card || !(storeTargeting(target) || state?.abilitySelect)) return;
+    if (!card || !storeTargeting(target)) return;
     syncBoth(target);
-    if (storeReady(target)) {
-      target.tlrStore.dispatch({ type: TOGGLE_ABILITY_TARGET, cardId: card.uid });
-    } else {
-      const selection = state.abilitySelect;
-      if (!selection.validIds?.has?.(card.uid)) return;
-      const index = selection.picked.indexOf(card.uid);
-      if (index >= 0) selection.picked.splice(index, 1);
-      else {
-        if (selection.picked.length >= selection.count) selection.picked.shift();
-        selection.picked.push(card.uid);
-      }
-    }
+    target.tlrStore.dispatch({ type: TOGGLE_ABILITY_TARGET, cardId: card.uid });
     if (typeof target.refreshHandState === 'function') target.refreshHandState();
   };
 
   target.confirmAbilitySelection = function () {
-    const state = stateOf(target);
     const targeting = storeTargeting(target);
-    if (!(targeting || state?.abilitySelect)) return;
+    if (!targeting) return;
     syncBoth(target);
-    const selection = state?.abilitySelect || {};
-    const pickedIds = targeting?.pickedCardIds || selection.picked || [];
-    if (pickedIds.length < (targeting?.count || selection.count || 1)) return;
+    const pickedIds = targeting.pickedCardIds || [];
+    if (pickedIds.length < (targeting.count || 1)) return;
 
     const cards = allSelectableCards(target);
     const picked = pickedIds.map(id => cards.find(card => card.uid === id)).filter(Boolean);
-    const cb = pendingCallbacks.cb || selection.cb;
+    const cb = pendingCallbacks.cb;
     clearPendingCallbacks();
 
-    if (storeReady(target)) target.tlrStore.dispatch({ type: CLEAR_ABILITY_TARGETING });
-    if (state) state.abilitySelect = null;
+    target.tlrStore.dispatch({ type: CLEAR_ABILITY_TARGETING });
     if (typeof target.render === 'function') target.render();
     if (typeof cb === 'function') cb(...picked);
   };

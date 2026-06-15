@@ -143,7 +143,20 @@ dispatches. Then delete the `Object.defineProperty` selection bridge and
 > _`validate-bridge.mjs` updated._ Tests now cover `syncPersistToStore`,
 > `resolveAbilityThroughStore`, and the bootstrap `SYNC_LEGACY_RUN` path.
 
-**Phase 4 — Multiplayer renders from match state directly.** Replace remaining
+**Phase 4 — Dead code removal and singleplayer cleanup.**
+
+> _`liveMirror` uninstalled._ `installLiveMirror` removed from `main.mjs`;
+> `liveMirror.mjs` remains for debug access but is no longer part of the boot
+> path. `tlrMirrorLiveState` / `tlrSyncArchitectureToLiveSnapshot` are no longer
+> installed on `window`.
+>
+> _`state.abilitySelect` legacy mirror removed._ `abilityTargetBridge` no longer
+> writes `state.abilitySelect` (the store-less fallback branch was dead code after
+> Phase 3). `handleAbilityHandClick` and `confirmAbilitySelection` now read only
+> from `storeTargeting`. `readingFlow.selectFromHand` no longer has a fallback
+> legacy write; `tlrStartAbilityTargeting` is always installed.
+
+**Phase 5 — Multiplayer renders from match state directly.** Replace remaining
 legacy handoffs with explicit multiplayer view models and match-state selectors.
 
 > _Mostly done._ `renderHand(ability, inPurge, view)` takes a display view model.
@@ -181,9 +194,10 @@ legacy handoffs with explicit multiplayer view models and match-state selectors.
 1. Run local validation: `npm test`, `npm run lint`, and `npm run build`.
 2. Manually smoke-test singleplayer: card placement, discard, purge, mulligan,
    resonation triggers, ability targeting, and end-of-round scoring.
-3. Phase 4 / cleanup: retire `liveMirror.mjs` once no renderer reads from it;
-   delete `SYNC_LEGACY_RUN` handler from the reducer once bootstrap
-   (`mainMenu.syncInitialRunToStore`) is ported to individual dispatches.
+3. Remaining cleanup (low priority): remove the `SYNC_LEGACY_RUN` reducer case
+   once `mainMenu.syncInitialRunToStore` is ported to individual dispatches
+   (`START_READING` with initial deck, `SYNC_LEGACY_PERSIST` for persist).
+   `liveMirror.mjs` can be deleted once confirmed no debug tooling references it.
 
 ## Efficiency follow-ups (tracked, intentionally not bundled here)
 
