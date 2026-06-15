@@ -84,7 +84,8 @@ function installMpHostFixes(target = window) {
       stateRef = null;
       removeInjectedMpTopRefTabs(doc);
       restoreExistingRefButtons(doc);
-      doc.body.classList.remove('mp-overlay-active');
+      doc.body.classList.remove('mp-overlay-active', 'mp-ability-flow-active');
+      closeAllMpAbilitySurfaces(doc);
       return onLeave.apply(this, arguments);
     };
   }
@@ -132,69 +133,105 @@ function installMpModalFlowFix(target, doc) {
   if (target.__tlrMpModalFlowFixInstalled) return;
   target.__tlrMpModalFlowFixInstalled = true;
 
+  const isMp = () => doc.body.classList.contains('mp-game-active');
   const modal = () => doc.getElementById('modal');
   const toggle = () => doc.getElementById('modalToggle');
   const choices = () => doc.getElementById('choices');
   const abilityPrompt = () => doc.getElementById('abilityPrompt');
-  const isMp = () => doc.body.classList.contains('mp-game-active');
+  const purgePrompt = () => doc.getElementById('purgePrompt');
 
-  const openCurrentModalStep = () => {
+  function setToggleLabel() {
     const m = modal();
-    if (!isMp() || !m || !m.classList.contains('show')) return;
-    if (m.classList.contains('collapsed')) {
-      m.classList.remove('collapsed');
-      const t = toggle();
-      if (t) t.textContent = 'Hide';
-    }
-    abilityPrompt()?.classList.remove('show');
-  };
+    const t = toggle();
+    if (!m || !t) return;
+    t.textContent = m.classList.contains('collapsed') ? 'Show' : 'Hide';
+  }
 
-  const closeStaleModalForPrompt = () => {
-    const prompt = abilityPrompt();
+  function hideCardChoiceModal({ clearChoices = false } = {}) {
     const m = modal();
-    if (!isMp() || !prompt || !m || !prompt.classList.contains('show')) return;
+    if (!m) return;
     m.classList.remove('show', 'collapsed');
     const t = toggle();
     if (t) t.textContent = 'Hide';
-    const ch = choices();
-    if (ch) ch.innerHTML = '';
-  };
+    if (clearChoices) {
+      const ch = choices();
+      if (ch) ch.innerHTML = '';
+    }
+  }
 
-  const observeModalContent = () => {
+  function hideAnchorPrompt() {
+    abilityPrompt()?.classList.remove('show');
+    purgePrompt()?.classList.remove('show');
+  }
+
+  function showOnlyCardChoiceModal() {
+    if (!isMp()) return;
+    const m = modal();
+    if (!m || !m.classList.contains('show')) return;
+    hideAnchorPrompt();
+    if (m.classList.contains('collapsed')) m.classList.remove('collapsed');
+    setToggleLabel();
+  }
+
+  function showOnlyAnchorPrompt() {
+    if (!isMp()) return;
+    const prompt = abilityPrompt();
+    if (!prompt || !prompt.classList.contains('show')) return;
+    hideCardChoiceModal({ clearChoices: true });
+  }
+
+  function reconcileAbilitySurface() {
+    if (!isMp()) return;
+    const m = modal();
+    const prompt = abilityPrompt();
+    const modalOpen = !!m?.classList.contains('show');
+    const promptOpen = !!prompt?.classList.contains('show');
+    if (modalOpen) showOnlyCardChoiceModal();
+    else if (promptOpen) showOnlyAnchorPrompt();
+  }
+
+  function observeModal() {
+    const m = modal();
     const title = doc.getElementById('modalTitle');
     const prompt = doc.getElementById('modalPrompt');
     const ch = choices();
-    if (!title || !prompt || !ch || target.__tlrMpModalContentObserver) return;
-    const observer = new MutationObserver(() => openCurrentModalStep());
+    if (!m || !title || !prompt || !ch || target.__tlrMpModalContentObserver) return;
+    const observer = new MutationObserver(() => target.requestAnimationFrame?.(reconcileAbilitySurface));
+    observer.observe(m, { attributes: true, attributeFilter: ['class'] });
     observer.observe(title, { childList: true, characterData: true, subtree: true });
     observer.observe(prompt, { childList: true, characterData: true, subtree: true });
-    observer.observe(ch, { childList: true });
+    observer.observe(ch, { childList: true, subtree: false });
     target.__tlrMpModalContentObserver = observer;
-  };
+  }
 
-  const observeAbilityPrompt = () => {
+  function observeAbilityPrompt() {
     const prompt = abilityPrompt();
     if (!prompt || target.__tlrMpAbilityPromptObserver) return;
-    const observer = new MutationObserver(() => closeStaleModalForPrompt());
+    const observer = new MutationObserver(() => target.requestAnimationFrame?.(reconcileAbilitySurface));
     observer.observe(prompt, { attributes: true, attributeFilter: ['class'] });
     target.__tlrMpAbilityPromptObserver = observer;
-  };
+  }
 
   doc.addEventListener('click', event => {
     if (!isMp()) return;
     if (!event.target?.closest?.('#modalToggle')) return;
-    target.requestAnimationFrame?.(() => {
-      const m = modal();
-      const t = toggle();
-      if (!m || !m.classList.contains('show')) return;
-      if (t) t.textContent = m.classList.contains('collapsed') ? 'Show' : 'Hide';
-    });
+    target.requestAnimationFrame?.(setToggleLabel);
   }, true);
 
-  observeModalContent();
+  observeModal();
   observeAbilityPrompt();
-  target.setTimeout?.(observeModalContent, 500);
-  target.setTimeout?.(observeAbilityPrompt, 500);
+  target.setTimeout?.(observeModal, 250);
+  target.setTimeout?.(observeAbilityPrompt, 250);
+  target.setTimeout?.(observeModal, 1000);
+  target.setTimeout?.(observeAbilityPrompt, 1000);
+}
+
+function closeAllMpAbilitySurfaces(doc) {
+  doc.getElementById('modal')?.classList.remove('show', 'collapsed');
+  doc.getElementById('abilityPrompt')?.classList.remove('show');
+  doc.getElementById('purgePrompt')?.classList.remove('show');
+  const toggle = doc.getElementById('modalToggle');
+  if (toggle) toggle.textContent = 'Hide';
 }
 
 function shouldPreserveSelection(action, myIndex) {
