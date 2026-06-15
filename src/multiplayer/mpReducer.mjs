@@ -1,5 +1,14 @@
 import { MP_ACTIONS } from './mpActions.mjs';
-import { MP_PHASES, MP_SPREAD_SIZE, createMatchState, startingDiscardsForPersona, applyGameStartPassives, applyRoundStartPassives, handSizeForPersona } from './mpState.mjs';
+import {
+  MP_PHASES,
+  MP_SPREAD_SIZE,
+  createMatchState,
+  createPlayerState,
+  startingDiscardsForPersona,
+  applyGameStartPassives,
+  applyRoundStartPassives,
+  handSizeForPersona,
+} from './mpState.mjs';
 import { computeScore } from '../systems/scoring.mjs';
 import { shuffleDeck } from '../systems/deck.mjs';
 import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
@@ -7,6 +16,11 @@ import { MP_ABILITY_TYPES } from './interactionCards.mjs';
 import { getPersona } from './personas.mjs';
 import { mulberry32 } from './mpRng.mjs';
 import { abilityHeldCards, applyAbilityTake } from '../systems/abilities.mjs';
+
+export const MP_SHUFFLE_MODES = Object.freeze({
+  EACH_ROUND: 'each_round',
+  WHEN_EMPTY: 'when_empty',
+});
 
 // --- Helpers ---
 
@@ -29,6 +43,38 @@ function otherPlayerIndex(index) {
 
 function spreadFull(spread) {
   return spread.every(slot => slot !== null);
+}
+
+function normalizeShuffleMode(value) {
+  return value === MP_SHUFFLE_MODES.EACH_ROUND ? MP_SHUFFLE_MODES.EACH_ROUND : MP_SHUFFLE_MODES.WHEN_EMPTY;
+}
+
+function roundShuffleSeed(baseSeed, roundNumber, playerIndex) {
+  const seed = Number(baseSeed) >>> 0;
+  const round = Number(roundNumber || 1) >>> 0;
+  const player = Number(playerIndex || 0) >>> 0;
+  return (seed ^ Math.imul(round + 1, 0x9E3779B1) ^ Math.imul(player + 1, 0x85EBCA77)) >>> 0;
+}
+
+function freshRoundPlayerFrom(existingPlayer, playerIndex, nextUid, baseSeed, roundNumber) {
+  const rng = mulberry32(roundShuffleSeed(baseSeed, roundNumber, playerIndex));
+  let player = createPlayerState(playerIndex, existingPlayer.persona, rng);
+  player = {
+    ...player,
+    totalScore: existingPlayer.totalScore || 0,
+    roundScore: 0,
+  };
+
+  const gameStart = applyGameStartPassives(player, nextUid, rng);
+  const roundStart = applyRoundStartPassives(gameStart.player, gameStart.nextUid);
+  return {
+    player: {
+      ...roundStart.player,
+      totalScore: existingPlayer.totalScore || 0,
+      roundScore: 0,
+    },
+    nextUid: roundStart.nextUid,
+  };
 }
 
 function lastPlayedLiveSlot(player) {
@@ -388,6 +434,8 @@ function reduceMatch(state, action) {
         phase: MP_PHASES.PLACEMENT,
         round: 1,
         pendingActions: [null, null],
+        shuffleMode: normalizeShuffleMode(action.shuffleMode),
+        shuffleSeed: action.seed != null ? (Number(action.seed) >>> 0) : randomStateSeed(),
       };
       let uid = next.nextInjectedUid;
       for (let i = 0; i < 2; i++) {
@@ -455,6 +503,26 @@ function reduceMatch(state, action) {
     case MP_ACTIONS.MP_NEW_ROUND: {
       if (state.phase !== MP_PHASES.BETWEEN_ROUNDS) return err(state, 'Cannot start a new round in phase: ' + state.phase);
 
+      if (normalizeShuffleMode(state.shuffleMode) === MP_SHUFFLE_MODES.EACH_ROUND) {
+        let next = state;
+        let uid = state.nextInjectedUid;
+        const nextRound = state.round + 1;
+        const seed = state.shuffleSeed ?? 0;
+        for (let i = 0; i < 2; i++) {
+          const result = freshRoundPlayerFrom(next.players[i], i, uid, seed, nextRound);
+          next = updatePlayer(next, i, result.player);
+          uid = result.nextUid;
+        }
+        return {
+          ...next,
+          phase: MP_PHASES.PLACEMENT,
+          round: nextRound,
+          activePlayerIndex: 0,
+          pendingActions: [null, null],
+          nextInjectedUid: uid,
+        };
+      }
+
       let next = state;
       let uid = state.nextInjectedUid;
       for (let i = 0; i < 2; i++) {
@@ -498,4 +566,8 @@ function reduceMatch(state, action) {
     default:
       return state;
   }
+}
+
+function randomStateSeed() {
+  return (Math.random() * 0xFFFFFFFF) >>> 0;
 }
