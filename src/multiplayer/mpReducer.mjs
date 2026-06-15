@@ -255,7 +255,7 @@ function resolveVictory(state) {
   return p0.totalScore > p1.totalScore ? 0 : 1;
 }
 
-function applyImmediateAction(state, action) {
+export function applyImmediateAction(state, action) {
   switch (action.type) {
     case MP_ACTIONS.MP_PLACE_CARD: {
       const { playerIndex, cardUid, slotIndex } = action;
