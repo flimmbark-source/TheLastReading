@@ -18,6 +18,8 @@ let _opponentProfile = null; // { personaId }
 let _cpuMode = false;
 let _scoreRoundRetryTimer = null;
 let _peerScoreRoundRetryTimer = null;
+let _newRoundRetryTimer = null;
+let _peerNewRoundRetryTimer = null;
 
 // ---------------------------------------------------------------------------
 // Install
@@ -184,6 +186,7 @@ export function installMatchmakingScreen(target = window) {
 
   function applyPeerActionWhenReady(action) {
     if (action?.type === MP_ACTIONS.MP_SCORE_ROUND && scoreVisualsPending()) return delayPeerScoreRound(action);
+    if (action?.type === MP_ACTIONS.MP_NEW_ROUND && newRoundVisualsPending()) return delayPeerNewRound(action);
     return applyPeerAction(action);
   }
 
@@ -201,15 +204,22 @@ export function installMatchmakingScreen(target = window) {
       && state.players.every(player => Array.isArray(player.spread) && player.spread.every(Boolean));
   }
 
-  function scoreVisualsPending() {
-    if (!_matchState || _matchState.phase !== MP_PHASES.SCORING || !spreadsAreFull(_matchState)) return false;
+  function visualEffectsPending() {
     const doc = target.document;
     const effectsUntil = Number(target.effectsUntil) || 0;
     if (effectsUntil > Date.now() + 40) return true;
     return !!doc.querySelector('body.mp-game-active #mpOppSpread .mp-reveal-pending, body.mp-game-active .ghost, body.mp-game-active .score-ghost, body.mp-game-active .meld-announce');
   }
 
-  function scoreDelayMs() {
+  function scoreVisualsPending() {
+    return !!(_matchState && _matchState.phase === MP_PHASES.SCORING && spreadsAreFull(_matchState) && visualEffectsPending());
+  }
+
+  function newRoundVisualsPending() {
+    return !!(_matchState && _matchState.phase === MP_PHASES.BETWEEN_ROUNDS && visualEffectsPending());
+  }
+
+  function visualDelayMs() {
     const effectsUntil = Number(target.effectsUntil) || 0;
     return Math.max(120, Math.min(Math.max(0, effectsUntil - Date.now()), 500) || 160);
   }
@@ -219,7 +229,7 @@ export function installMatchmakingScreen(target = window) {
     _scoreRoundRetryTimer = target.setTimeout(() => {
       _scoreRoundRetryTimer = null;
       if (_matchState?.phase === MP_PHASES.SCORING) target.tlrMpDispatch?.(action);
-    }, scoreDelayMs());
+    }, visualDelayMs());
     return _matchState;
   }
 
@@ -228,12 +238,31 @@ export function installMatchmakingScreen(target = window) {
     _peerScoreRoundRetryTimer = target.setTimeout(() => {
       _peerScoreRoundRetryTimer = null;
       if (_matchState?.phase === MP_PHASES.SCORING) applyPeerActionWhenReady(action);
-    }, scoreDelayMs());
+    }, visualDelayMs());
+    return _matchState;
+  }
+
+  function delayNewRound(action) {
+    if (_newRoundRetryTimer) return _matchState;
+    _newRoundRetryTimer = target.setTimeout(() => {
+      _newRoundRetryTimer = null;
+      if (_matchState?.phase === MP_PHASES.BETWEEN_ROUNDS) target.tlrMpDispatch?.(action);
+    }, visualDelayMs());
+    return _matchState;
+  }
+
+  function delayPeerNewRound(action) {
+    if (_peerNewRoundRetryTimer) return _matchState;
+    _peerNewRoundRetryTimer = target.setTimeout(() => {
+      _peerNewRoundRetryTimer = null;
+      if (_matchState?.phase === MP_PHASES.BETWEEN_ROUNDS) applyPeerActionWhenReady(action);
+    }, visualDelayMs());
     return _matchState;
   }
 
   function dispatchMatchActionWhenReady(action) {
     if (action?.type === MP_ACTIONS.MP_SCORE_ROUND && scoreVisualsPending()) return delayScoreRound(action);
+    if (action?.type === MP_ACTIONS.MP_NEW_ROUND && newRoundVisualsPending()) return delayNewRound(action);
     return dispatchMatchAction(action);
   }
 
@@ -273,6 +302,14 @@ export function installMatchmakingScreen(target = window) {
     if (_peerScoreRoundRetryTimer) {
       target.clearTimeout(_peerScoreRoundRetryTimer);
       _peerScoreRoundRetryTimer = null;
+    }
+    if (_newRoundRetryTimer) {
+      target.clearTimeout(_newRoundRetryTimer);
+      _newRoundRetryTimer = null;
+    }
+    if (_peerNewRoundRetryTimer) {
+      target.clearTimeout(_peerNewRoundRetryTimer);
+      _peerNewRoundRetryTimer = null;
     }
     _peer?.close(); _peer = null;
     _role = null; _roomCode = null; _opponentProfile = null;
