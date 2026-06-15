@@ -22,6 +22,7 @@ function installMpHostFixes(target = window) {
   let myIndex = 0;
 
   installOverlayLayerFix(doc);
+  installEmptySpaceDeselect(target, doc);
   removeInjectedMpTopRefTabs(doc);
   restoreExistingRefButtons(doc);
 
@@ -55,9 +56,11 @@ function installMpHostFixes(target = window) {
   const onLocalAction = target.tlrMpOnLocalAction;
   if (typeof onLocalAction === 'function') {
     target.tlrMpOnLocalAction = function (action, state) {
+      const selectedUid = shouldPreserveSelection(action, myIndex) ? currentSelectedHandUid(doc) : null;
       stateRef = state;
       const result = onLocalAction.apply(this, arguments);
       syncLater();
+      restoreSelectionIfNeeded(target, doc, selectedUid);
       return result;
     };
   }
@@ -65,9 +68,11 @@ function installMpHostFixes(target = window) {
   const onPeerAction = target.tlrMpOnPeerAction;
   if (typeof onPeerAction === 'function') {
     target.tlrMpOnPeerAction = function (action, state) {
+      const selectedUid = shouldPreserveSelection(action, myIndex) ? currentSelectedHandUid(doc) : null;
       stateRef = state;
       const result = onPeerAction.apply(this, arguments);
       syncLater();
+      restoreSelectionIfNeeded(target, doc, selectedUid);
       return result;
     };
   }
@@ -93,6 +98,11 @@ function installOverlayLayerFix(doc) {
   }
   style.textContent = `
     body.mp-game-active .spread-wrap{z-index:2147480500!important}
+    body.mp-game-active .handDock{z-index:2147481200!important}
+    body.mp-game-active #hand{position:relative!important;z-index:2147481201!important}
+    body.mp-game-active #hand .card{z-index:2147481202!important}
+    body.mp-game-active #hand .card.sel,
+    body.mp-game-active #hand .card:hover{z-index:2147481300!important}
     body.mp-game-active #mpOverlay.mp-hide-between-results{display:none!important;pointer-events:none!important}
     body.mp-game-active #mpOverlay:not(.mp-ov-hidden){position:fixed!important;inset:0!important;z-index:2147483000!important}
     body.mp-game-active .refs-layer{position:fixed!important;z-index:2147483100!important;pointer-events:none!important}
@@ -106,6 +116,49 @@ function installOverlayLayerFix(doc) {
     body.mp-game-active #scoringPullWrap.open,
     body.mp-game-active #abilitiesPullWrap.open{pointer-events:auto!important}
   `;
+}
+
+function shouldPreserveSelection(action, myIndex) {
+  if (action?.type !== 'MP_SUBMIT_ACTION') return false;
+  return action.playerIndex !== myIndex;
+}
+
+function currentSelectedHandUid(doc) {
+  return doc.querySelector('#hand .card.sel[data-uid]')?.dataset?.uid || null;
+}
+
+function restoreSelectionIfNeeded(target, doc, uid) {
+  if (!uid) return;
+  target.requestAnimationFrame?.(() => {
+    if (!doc.body.classList.contains('mp-game-active')) return;
+    const card = doc.querySelector(`#hand .card[data-uid="${cssEscape(uid)}"]`);
+    if (!card || card.classList.contains('sel')) return;
+    card.click();
+  });
+}
+
+function installEmptySpaceDeselect(target, doc) {
+  if (target.__tlrMpEmptySpaceDeselectInstalled) return;
+  target.__tlrMpEmptySpaceDeselectInstalled = true;
+  doc.addEventListener('click', event => {
+    if (!doc.body.classList.contains('mp-game-active')) return;
+    const selected = doc.querySelector('#hand .card.sel[data-uid]');
+    if (!selected) return;
+    if (!isMpEmptySpaceClick(event.target)) return;
+    selected.click();
+  }, true);
+}
+
+function isMpEmptySpaceClick(target) {
+  const blocked = target?.closest?.(
+    '.card,.slot,button,a,input,select,textarea,label,.tlr-pull-wrap,.mp-overlay,.ref,.modal,#settingsPanel,#abilityPrompt,#purgePrompt,.mp-mid-wrap,.mp-bar,.mp-opp-hand'
+  );
+  return !blocked;
+}
+
+function cssEscape(value) {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') return CSS.escape(String(value));
+  return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 function syncDrawerTabs(target) {
