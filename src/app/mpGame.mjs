@@ -155,7 +155,11 @@ export function installMpGame(target = window) {
     if (!p) return;
     // Drop the optimistic ability snapshot once my action has resolved (my
     // pending action is cleared), so the canonical state becomes authoritative.
-    if (_optimisticSelf && !hasSubmittedAction(s, my)) _optimisticSelf = null;
+    if (_optimisticSelf && !hasSubmittedAction(s, my)) {
+      const myHand = s.players[my]?.hand || [];
+      const optimisticExtra = _optimisticSelf.hand.filter(c => !myHand.some(h => h.uid === c.uid));
+      if (!optimisticExtra.length) _optimisticSelf = null;
+    }
     if (_selected !== null && !(p.hand || []).some(c => c.uid === _selected)) _selected = null;
   }
 
@@ -1766,7 +1770,7 @@ function installMpGameStyle(doc) {
     body.mp-game-active .mp-overlay:not(.mp-ov-hidden) {
       pointer-events: auto;
     }
-    body.mp-game-active.mp-ability-flow-active #abilityPrompt,
+    body.mp-game-active.mp-ability-flow-active #abilityPrompt.show,
     body.mp-game-active.mp-purge-flow-active #purgePrompt {
       display: flex !important;
       z-index: 2147482600 !important;
