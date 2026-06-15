@@ -151,6 +151,35 @@ export function pickPackUpgrade(upgradeKey,target = window){
   return true;
 }
 
+function buildRelicPicker(pack,target = window){
+  const options=target.tlrMarketFlow?.relicPool?target.tlrMarketFlow.relicPool(4,target):[];
+  let html='<div class="summary tarot-shop">';
+  html+=`<div class="pack-picker-header"><h3>${pack.name}</h3><p>Choose one relic.</p></div>`;
+  html+='<div class="shop-items-row relic-picker-row">';
+  for(const k of options){
+    const r=target.RELICS[k];
+    if(!r)continue;
+    const style=typeof target.relicIconStyle==='function'?target.relicIconStyle(k,64):'';
+    html+=`<div class="upg-card relic-option ${r.rarity}" onclick="acquireRelic('${k}')">
+      <div class="upg-title-strip relic-title-strip"><span>${r.name}</span></div>
+      <div class="upg-art relic-art"><div class="relic-art-sprite" style="${style}"></div></div>
+      <div class="upg-body"><div class="upg-desc">${r.desc||r.description||''}</div></div>
+      <div class="upg-footer"><button class="sbtn sbtn-pick" aria-label="Pick" onclick="acquireRelic('${k}');event.stopPropagation()"></button></div>
+    </div>`;
+  }
+  html+='</div></div>';
+  return html;
+}
+
+function showPackContents(packId,target = window){
+  const pack=(target.PACKS||{})[packId];
+  if(!pack || typeof target.showOverlay!=='function')return false;
+  const html=packId==='relic'?buildRelicPicker(pack,target):buildUpgradePicker(packId,target);
+  if(!html)return false;
+  target.showOverlay(html);
+  return true;
+}
+
 export function buyPack(packId,cost,target = window){
   const pack=(target.PACKS||{})[packId];
   if(!pack)return false;
@@ -159,29 +188,12 @@ export function buyPack(packId,cost,target = window){
   if((persist.pool||0)<finalCost)return false;
   if(typeof target.tlrMarketPurchase==='function'&&target.tlrMarketPurchase({kind:'pack',packId,cost:finalCost})!==true)return false;
   if(market(target).markPackBought)market(target).markPackBought(packId,target);
-  animatePackOpen(packId,()=>{
-    if(packId==='relic'){
-      const options=target.tlrMarketFlow?.relicPool?target.tlrMarketFlow.relicPool(4,target):[];
-      let html='<div class="summary tarot-shop">';
-      html+=`<div class="pack-picker-header"><h3>${pack.name}</h3><p>Choose one relic.</p></div>`;
-      html+='<div class="shop-items-row relic-picker-row">';
-      for(const k of options){
-        const r=target.RELICS[k];
-        const style=typeof target.relicIconStyle==='function'?target.relicIconStyle(k,64):'';
-        html+=`<div class="upg-card relic-option ${r.rarity}" onclick="acquireRelic('${k}')">
-          <div class="upg-title-strip relic-title-strip"><span>${r.name}</span></div>
-          <div class="upg-art relic-art"><div class="relic-art-sprite" style="${style}"></div></div>
-          <div class="upg-body"><div class="upg-desc">${r.desc||r.description||''}</div></div>
-          <div class="upg-footer"><button class="sbtn sbtn-pick" aria-label="Pick" onclick="acquireRelic('${k}');event.stopPropagation()"></button></div>
-        </div>`;
-      }
-      html+='</div></div>';
-      if(typeof target.showOverlay==='function')target.showOverlay(html);
-      return;
-    }
-    const html=buildUpgradePicker(packId,target);
-    if(html&&typeof target.showOverlay==='function')target.showOverlay(html);
-  },target);
+  let revealed=false;
+  const reveal=()=>{if(revealed)return;revealed=true;showPackContents(packId,target);};
+  animatePackOpen(packId,reveal,target);
+  // The picker is the purchased item. Do not let a missing animation element,
+  // interrupted timer, or reduced-motion/browser timing quirk swallow the pack.
+  target.setTimeout?.(reveal,1500);
   return true;
 }
 
