@@ -201,6 +201,7 @@ function installMpModalFlowFix(target, doc) {
   }
 
   function observeModal() {
+    if (typeof MutationObserver === 'undefined') return;
     const m = modal();
     const title = doc.getElementById('modalTitle');
     const prompt = doc.getElementById('modalPrompt');
@@ -215,6 +216,7 @@ function installMpModalFlowFix(target, doc) {
   }
 
   function observeAbilityPrompt() {
+    if (typeof MutationObserver === 'undefined') return;
     const prompt = abilityPrompt();
     if (!prompt || target.__tlrMpAbilityPromptObserver) return;
     const observer = new MutationObserver(() => target.requestAnimationFrame?.(reconcileAbilitySurface));
