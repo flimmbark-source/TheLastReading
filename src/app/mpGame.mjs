@@ -1169,7 +1169,11 @@ export function installMpGame(target = window) {
         _abilityResolving = true;
         render();
         try { abilityChoice = await buildMpAbilityChoice(card); }
-        finally { _abilityResolving = false; render(); }
+        // renderAbilityPrompt() must run once resolution ends: render() only
+        // reconciles the prompt while _abilityTargeting is set, so without this
+        // the mp-ability-flow-active body class (which the injected style uses to
+        // show #abilityPrompt) stays on and the targeting box never disappears.
+        finally { _abilityResolving = false; renderAbilityPrompt(); render(); }
         if (abilityChoice === null) return;
       }
       submitAction({ type: MP_ACTIONS.MP_INVOKE_ABILITY, cardUid: uid, abilityChoice });
