@@ -8,6 +8,7 @@ const CLEAR_ABILITY_TARGETING = 'CLEAR_ABILITY_TARGETING';
 // `state.abilitySelect` mirror points at them for the renderer.
 let pendingCallbacks = { cb: null, previewFn: null };
 function clearPendingCallbacks() { pendingCallbacks = { cb: null, previewFn: null }; }
+export function getPendingPreviewFn() { return pendingCallbacks.previewFn; }
 
 function runtime(target) { return target.tlrRuntime || {}; }
 function stateOf(target) { return runtime(target).state || target.state; }

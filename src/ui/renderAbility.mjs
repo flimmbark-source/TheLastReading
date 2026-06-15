@@ -2,6 +2,8 @@
 // Selection logic (selectFromHand, confirmAbilitySelection) and ability
 // resolution stay with the game flow; this module owns the modal DOM.
 /* global $, state, uniqueCards, applyHint, cardHTML, applyCardPhoto, playSound, tlrArchitectureSync */
+import { abilityTargetView as selectAbilityTargetView } from '../game/selectors.mjs';
+import { getPendingPreviewFn } from '../app/abilityTargetBridge.mjs';
 
 export function choice(title,prompt,cards,cb){$('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';let ch=$('#choices');ch.innerHTML='';cards.forEach(c=>{let e=document.createElement('div');e.className='card '+(c.type==='major'?'major':'');applyHint(e,c,uniqueCards([...state.spread.filter(Boolean),...state.hand,c]));e.innerHTML=cardHTML(c);applyCardPhoto(e,c);e.onclick=()=>{$('#modal').classList.remove('show','collapsed');cb(c)};ch.appendChild(e)});$('#modal').classList.remove('collapsed');$('#modal').classList.add('show');playSound('flip');tlrArchitectureSync()}
 
@@ -10,14 +12,16 @@ export function toggleModalCollapse(){let m=$('#modal');if(!m.classList.contains
 export function renderAbilityPrompt(){
   const el=$('#abilityPrompt');
   if(!el)return;
-  const a=state.abilitySelect;
+  const storeState=window.tlrStore?.getState?.()??null;
+  const a=storeState?selectAbilityTargetView(storeState):state.abilitySelect;
   if(!a){el.classList.remove('show');return}
   $('#abilityPromptTitle').textContent=a.title;
   let preview='';
-  if(a.previewFn&&a.picked.length){
+  const previewFn=storeState?getPendingPreviewFn():a.previewFn;
+  if(previewFn&&a.picked.length){
     const allCards=[...state.hand,...state.spread.filter(Boolean)];
     const picked=a.picked.map(id=>allCards.find(c=>c.uid===id)).filter(Boolean);
-    preview=a.previewFn(...picked)||'';
+    preview=previewFn(...picked)||'';
   }
   $('#abilityPromptText').innerHTML=preview?a.prompt+'<br><b>'+preview+'</b>':a.prompt;
   $('#abilityConfirm').disabled=a.picked.length<a.count;
