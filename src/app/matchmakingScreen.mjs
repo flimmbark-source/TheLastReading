@@ -1,5 +1,4 @@
-import { SignalingClient } from './signalingClient.mjs';
-import { PeerConnection } from './peerConnection.mjs';
+import { AblyRoomPeer } from './ablyRoomPeer.mjs';
 import { randomSeed } from '../multiplayer/mpRng.mjs';
 import { MP_ACTIONS } from '../multiplayer/mpActions.mjs';
 import { mpReducer } from '../multiplayer/mpReducer.mjs';
@@ -10,7 +9,6 @@ import { hasSubmittedAction, emptySlots } from '../multiplayer/mpSelectors.mjs';
 // Internal state
 // ---------------------------------------------------------------------------
 
-let _signaling = null;
 let _peer = null;
 let _role = null;       // 'host' | 'guest'
 let _roomCode = null;
@@ -101,7 +99,7 @@ export function installMatchmakingScreen(target = window) {
       <div class="mm-status mm-status-info">
         <div class="mm-waiting">
           <span class="mm-spinner"></span>
-          <span>${_role === 'guest' ? 'Connecting to host…' : 'Setting up connection…'}</span>
+          <span>${_role === 'guest' ? 'Connecting to host…' : 'Setting up room…'}</span>
         </div>
       </div>
     `);
@@ -125,68 +123,36 @@ export function installMatchmakingScreen(target = window) {
     setHtml('mmContent', `<div class="mm-status mm-status-error">${escHtml(message)}</div>`);
   }
 
-  // --- Signaling / peer connection ---
+  // --- Ably room connection ---
 
-  async function connectSignaling() {
-    if (_signaling) return _signaling;
-    _signaling = new SignalingClient();
-    _signaling.onmessage = handleSignal;
-    await _signaling.connect();
-    return _signaling;
-  }
-
-  async function createPeer(initiator) {
-    _peer = new PeerConnection({ initiator });
+  async function createRoomPeer(role, roomCode) {
+    _peer = new AblyRoomPeer({ role, roomCode, profile: _profile ?? {}, target });
+    _roomCode = _peer.roomCode;
     _peer.onopen = () => {
       _peer.send({ type: 'mp-profile', profile: _profile ?? {} });
       if (_role === 'guest') renderReadyPhase();
     };
     _peer.onmessage = handlePeerMessage;
-    _peer.onicecandidate = candidate => {
-      if (_signaling) _signaling.send({ type: 'signal', roomCode: _roomCode, data: { candidate } });
+    _peer.onclose = () => {
+      if (_matchState) target.tlrMpHandlePeerLeft?.();
+      else renderError('Opponent disconnected.');
     };
+    _peer.onerror = error => {
+      console.warn('Ably multiplayer connection issue:', error);
+      if (!_matchState) renderError('Could not connect to Ably. Check the Ably key and token function.');
+    };
+    await _peer.connect();
     return _peer;
-  }
-
-  async function handleSignal(msg) {
-    if (!msg) return;
-
-    if (msg.type === 'hosted') {
-      _roomCode = msg.roomCode;
-      await createPeer(true);
-      renderHostingPhase();
-      return;
-    }
-
-    if (msg.type === 'joined') {
-      _roomCode = msg.roomCode;
-      await createPeer(false);
-      if (msg.offer) await _peer.acceptOffer(msg.offer);
-      return;
-    }
-
-    if (msg.type === 'peer-joined') {
-      if (!_peer) await createPeer(true);
-      const offer = await _peer.createOffer();
-      _signaling.send({ type: 'signal', roomCode: _roomCode, data: { offer } });
-      return;
-    }
-
-    if (msg.type === 'signal') {
-      if (!_peer) return;
-      const data = msg.data ?? {};
-      if (data.offer) {
-        await _peer.acceptOffer(data.offer);
-        const answer = await _peer.createAnswer();
-        _signaling.send({ type: 'signal', roomCode: _roomCode, data: { answer } });
-      }
-      if (data.answer) await _peer.acceptAnswer(data.answer);
-      if (data.candidate) await _peer.addIceCandidate(data.candidate);
-    }
   }
 
   function handlePeerMessage(msg) {
     if (!msg) return;
+
+    if (msg.type === 'peer-left') {
+      if (_matchState) target.tlrMpHandlePeerLeft?.();
+      else renderError('Opponent disconnected.');
+      return;
+    }
 
     if (msg.type === 'mp-profile') {
       _opponentProfile = { ...(msg.profile ?? {}) };
@@ -247,7 +213,6 @@ export function installMatchmakingScreen(target = window) {
   function teardown() {
     _cpuMode = false;
     _matchState = null;
-    _signaling?.close(); _signaling = null;
     _peer?.close(); _peer = null;
     _role = null; _roomCode = null; _opponentProfile = null;
   }
@@ -288,12 +253,14 @@ export function installMatchmakingScreen(target = window) {
 
   target.tlrMmHost = async function () {
     _role = 'host';
-    renderHostingPhase(); // show "waiting" immediately
+    _roomCode = AblyRoomPeer.createRoomCode();
+    renderHostingPhase();
     try {
-      await connectSignaling();
-      _signaling.send({ type: 'host' });
+      await createRoomPeer('host', _roomCode);
+      renderHostingPhase();
     } catch (e) {
-      renderError('Cannot reach signaling server. Is the dev server running?');
+      console.warn('Could not host Ably room:', e);
+      renderError('Cannot create an Ably room. Make sure ABLY_API_KEY is set on Netlify.');
     }
   };
 
@@ -311,12 +278,13 @@ export function installMatchmakingScreen(target = window) {
     const input = el('mmCodeInput');
     const code = (input?.value ?? '').trim().toUpperCase();
     if (code.length < 4) return;
+    _role = 'guest';
     renderConnectingPhase();
     try {
-      await connectSignaling();
-      _signaling.send({ type: 'join', roomCode: code });
+      await createRoomPeer('guest', code);
     } catch (e) {
-      renderError('Cannot reach signaling server. Is the dev server running?');
+      console.warn('Could not join Ably room:', e);
+      renderError('Cannot connect to Ably. Make sure the room code is correct and ABLY_API_KEY is set.');
     }
   };
 
@@ -332,7 +300,7 @@ export function installMatchmakingScreen(target = window) {
     startMatch();
   };
 
-  // Expose for the game layer to dispatch actions over the DataChannel
+  // Expose for the game layer to dispatch actions over the Ably room channel.
   target.tlrMpDispatch = function (action) {
     if (!_matchState) return null;
     return dispatchMatchAction(action);
