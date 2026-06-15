@@ -22,7 +22,6 @@ function installMpHostFixes(target = window) {
   let myIndex = 0;
 
   installOverlayLayerFix(target, doc);
-  installRenderHandHintStateFix(target, doc, () => stateRef, () => myIndex);
 
   const syncLater = () => {
     syncMultSpans(target, doc, stateRef, myIndex);
@@ -68,24 +67,6 @@ function installMpHostFixes(target = window) {
       return onLeave.apply(this, arguments);
     };
   }
-}
-
-function installRenderHandHintStateFix(target, doc, getState, getMyIndex) {
-  if (target.__tlrMpRenderHandHintStateFixInstalled) return;
-  target.__tlrMpRenderHandHintStateFixInstalled = true;
-  const renderHand = target.renderHand;
-  if (typeof renderHand !== 'function') return;
-
-  target.renderHand = function (ability, inPurge, view) {
-    let nextView = view;
-    const state = getState();
-    const my = getMyIndex();
-    const player = state?.players?.[my];
-    if (doc.body.classList.contains('mp-game-active') && nextView && player) {
-      nextView = { ...nextView, spread: nextView.spread || player.spread || [] };
-    }
-    return renderHand.call(this, ability, inPurge, nextView);
-  };
 }
 
 function installOverlayLayerFix(target, doc) {
