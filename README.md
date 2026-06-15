@@ -14,6 +14,29 @@ python3 -m http.server 8080
 
 Opening `index.html` directly via `file://` works for basic play but disables ES module loading, which means the architecture bridge (store, reducer, live mirror) will not mount. The game falls back to legacy-only mode automatically in that case.
 
+## Multiplayer with Ably
+
+Multiplayer rooms use Ably Pub/Sub channels named `tlr:room:<ROOMCODE>`. The browser loads the Ably JavaScript SDK on demand, then requests a short-lived channel-scoped token from `/.netlify/functions/ably-token`.
+
+Required setup:
+
+1. Create an Ably app and API key with `publish`, `subscribe`, `presence`, and `history` permissions.
+2. In Netlify, add this environment variable:
+
+```sh
+ABLY_API_KEY=your-key-name:your-key-secret
+```
+
+3. Deploy the site normally. Netlify will serve `netlify/functions/ably-token.mjs` at `/.netlify/functions/ably-token`.
+
+For local multiplayer testing, use Netlify's local dev server so the function route exists:
+
+```sh
+npx netlify dev
+```
+
+The old `npm run dev` static server still works for singleplayer, but it does not serve Netlify Functions.
+
 ## Validation suite
 
 All pure-logic systems are covered by a node-based validation suite. No browser needed.
