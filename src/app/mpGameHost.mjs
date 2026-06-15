@@ -1,5 +1,8 @@
 import { installMpGame as installBaseMpGame } from './mpGame.mjs';
 
+const RESULT_OVERLAY_MIN_DELAY_MS = 1250;
+const POINT_EFFECT_SELECTOR = '.score-ghost,.ghost';
+
 function normalizeMult(value) {
   const number = Number(value);
   if (!Number.isFinite(number)) return 1;
@@ -20,6 +23,8 @@ function installMpHostFixes(target = window) {
 
   let stateRef = null;
   let myIndex = 0;
+  let resultsOverlayHoldUntil = 0;
+  let resultsOverlayTimer = null;
 
   installOverlayLayerFix(target, doc);
 
@@ -28,10 +33,46 @@ function installMpHostFixes(target = window) {
     target.requestAnimationFrame?.(() => syncMultSpans(target, doc, stateRef, myIndex));
   };
 
+  const holdResultsOverlay = (action, state) => {
+    if (!isScoreResultAction(action, state)) return;
+    const overlay = doc.getElementById('mpOverlay');
+    if (!overlay || overlay.classList.contains('mp-ov-hidden')) return;
+
+    const holdUntil = Date.now() + RESULT_OVERLAY_MIN_DELAY_MS;
+    resultsOverlayHoldUntil = Math.max(resultsOverlayHoldUntil, holdUntil);
+    overlay.classList.add('mp-ov-hidden');
+    doc.body.classList.remove('mp-overlay-active');
+
+    const revealWhenReady = () => {
+      if (!doc.body.classList.contains('mp-game-active')) return;
+      const remaining = Math.max(0, resultsOverlayHoldUntil - Date.now());
+      const pointEffectsActive = !!doc.querySelector(POINT_EFFECT_SELECTOR);
+      const currentOverlay = doc.getElementById('mpOverlay');
+      if (!currentOverlay) return;
+      if (remaining > 0 || pointEffectsActive) {
+        resultsOverlayTimer = target.setTimeout(revealWhenReady, Math.max(80, Math.min(remaining || 160, 240)));
+        return;
+      }
+      currentOverlay.classList.remove('mp-ov-hidden');
+      doc.body.classList.add('mp-overlay-active');
+      syncOverlayLayerClass(doc);
+    };
+
+    if (resultsOverlayTimer) target.clearTimeout(resultsOverlayTimer);
+    resultsOverlayTimer = target.setTimeout(revealWhenReady, 80);
+  };
+
+  wrapDispatchForResultHold(target, () => resultsOverlayHoldUntil, () => !!doc.querySelector(POINT_EFFECT_SELECTOR));
+
   const onMatchStart = target.tlrMpOnMatchStart;
   if (typeof onMatchStart === 'function') {
     target.tlrMpOnMatchStart = function (state, meta = {}) {
       stateRef = state;
+      resultsOverlayHoldUntil = 0;
+      if (resultsOverlayTimer) {
+        target.clearTimeout(resultsOverlayTimer);
+        resultsOverlayTimer = null;
+      }
       myIndex = meta.role === 'host' ? 0 : 1;
       const result = onMatchStart.apply(this, arguments);
       syncLater();
@@ -45,6 +86,7 @@ function installMpHostFixes(target = window) {
       stateRef = state;
       const result = onLocalAction.apply(this, arguments);
       syncLater();
+      holdResultsOverlay(action, state);
       return result;
     };
   }
@@ -55,6 +97,7 @@ function installMpHostFixes(target = window) {
       stateRef = state;
       const result = onPeerAction.apply(this, arguments);
       syncLater();
+      holdResultsOverlay(action, state);
       return result;
     };
   }
@@ -63,10 +106,38 @@ function installMpHostFixes(target = window) {
   if (typeof onLeave === 'function') {
     target.tlrMpLeave = function () {
       stateRef = null;
+      resultsOverlayHoldUntil = 0;
+      if (resultsOverlayTimer) {
+        target.clearTimeout(resultsOverlayTimer);
+        resultsOverlayTimer = null;
+      }
       doc.body.classList.remove('mp-overlay-active');
       return onLeave.apply(this, arguments);
     };
   }
+}
+
+function isScoreResultAction(action, state) {
+  if (action?.type !== 'MP_SCORE_ROUND') return false;
+  return state?.phase === 'BETWEEN_ROUNDS' || state?.phase === 'COMPLETE';
+}
+
+function wrapDispatchForResultHold(target, getHoldUntil, hasPointEffects) {
+  if (target.__tlrMpResultHoldDispatchWrapped) return;
+  const dispatch = target.tlrMpDispatch;
+  if (typeof dispatch !== 'function') return;
+  target.__tlrMpResultHoldDispatchWrapped = true;
+
+  target.tlrMpDispatch = function (action) {
+    if (action?.type === 'MP_NEW_ROUND') {
+      const wait = Math.max(0, getHoldUntil() - Date.now());
+      if (wait > 40 || hasPointEffects()) {
+        target.setTimeout(() => target.tlrMpDispatch?.(action), Math.max(120, wait || 180));
+        return target.tlrMpGetState?.() ?? null;
+      }
+    }
+    return dispatch.apply(this, arguments);
+  };
 }
 
 function installOverlayLayerFix(target, doc) {
@@ -80,18 +151,18 @@ function installOverlayLayerFix(target, doc) {
     doc.head.appendChild(style);
   }
 
-  const syncOverlayClass = () => {
-    const overlay = doc.getElementById('mpOverlay');
-    const active = !!overlay && !overlay.classList.contains('mp-ov-hidden') && doc.body.classList.contains('mp-game-active');
-    doc.body.classList.toggle('mp-overlay-active', active);
-  };
-
   const Observer = target.MutationObserver || globalThis.MutationObserver;
   if (Observer && !target.__tlrMpOverlayLayerObserverInstalled) {
     target.__tlrMpOverlayLayerObserverInstalled = true;
-    new Observer(syncOverlayClass).observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+    new Observer(() => syncOverlayLayerClass(doc)).observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   }
-  syncOverlayClass();
+  syncOverlayLayerClass(doc);
+}
+
+function syncOverlayLayerClass(doc) {
+  const overlay = doc.getElementById('mpOverlay');
+  const active = !!overlay && !overlay.classList.contains('mp-ov-hidden') && doc.body.classList.contains('mp-game-active');
+  doc.body.classList.toggle('mp-overlay-active', active);
 }
 
 function syncMultSpans(target, doc, state, myIndex) {
