@@ -4,6 +4,7 @@ import { MP_ACTIONS } from '../multiplayer/mpActions.mjs';
 import { mpReducer } from '../multiplayer/mpReducer.mjs';
 import { MP_PHASES } from '../multiplayer/mpState.mjs';
 import { hasSubmittedAction, emptySlots } from '../multiplayer/mpSelectors.mjs';
+import { computeScore } from '../systems/scoring.mjs';
 
 // ---------------------------------------------------------------------------
 // Internal state
@@ -20,6 +21,9 @@ let _scoreRoundRetryTimer = null;
 let _peerScoreRoundRetryTimer = null;
 let _newRoundRetryTimer = null;
 let _peerNewRoundRetryTimer = null;
+
+const CPU_MONTE_CARLO_ROLLOUTS = 28;
+const CPU_MAX_MONTE_CARLO_CANDIDATES = 24;
 
 // ---------------------------------------------------------------------------
 // Install
@@ -414,12 +418,12 @@ export function installMatchmakingScreen(target = window) {
     const p = state.players[pi];
     const hand = p?.hand ?? [];
     const slots = emptySlots(state, pi);
-    const regular = hand.filter(c => c.type !== 'interaction').sort((a, b) => b.points - a.points);
+    const regular = hand.filter(c => c.type !== 'interaction');
     const interaction = hand.filter(c => c.type === 'interaction');
 
-    if (slots.length > 0 && regular.length > 0) {
-      return { type: MP_ACTIONS.MP_PLACE_CARD, cardUid: regular[0].uid, slotIndex: slots[0] };
-    }
+    const placement = chooseCpuMonteCarloPlacement(state, pi, regular, slots);
+    if (placement) return placement;
+
     if (interaction.length > 0 && (p?.discards ?? 0) > 0) {
       return { type: MP_ACTIONS.MP_DISCARD_CARD, cardUid: interaction[0].uid };
     }
@@ -432,6 +436,77 @@ export function installMatchmakingScreen(target = window) {
       return { type: MP_ACTIONS.MP_PURGE_CARDS, cardUids: sorted.slice(0, 3).map(c => c.uid) };
     }
     return { type: MP_ACTIONS.MP_DISCARD_CARD, cardUid: hand[0]?.uid };
+  }
+
+  function chooseCpuMonteCarloPlacement(state, pi, cards, slots) {
+    if (!slots.length || !cards.length) return null;
+    const candidates = [];
+    for (const card of cards) {
+      for (const slotIndex of slots) candidates.push({ type: MP_ACTIONS.MP_PLACE_CARD, cardUid: card.uid, slotIndex, card });
+    }
+    candidates.sort((a, b) => (b.card.points || 0) - (a.card.points || 0));
+    const trimmed = candidates.slice(0, CPU_MAX_MONTE_CARLO_CANDIDATES);
+
+    let best = null;
+    let bestValue = -Infinity;
+    for (const candidate of trimmed) {
+      let total = 0;
+      for (let i = 0; i < CPU_MONTE_CARLO_ROLLOUTS; i += 1) total += monteCarloPlacementValue(state, pi, candidate);
+      const average = total / CPU_MONTE_CARLO_ROLLOUTS;
+      const tieBreaker = (candidate.card.points || 0) * 0.01 - candidate.slotIndex * 0.001;
+      const value = average + tieBreaker;
+      if (value > bestValue) {
+        bestValue = value;
+        best = candidate;
+      }
+    }
+    return best ? { type: MP_ACTIONS.MP_PLACE_CARD, cardUid: best.cardUid, slotIndex: best.slotIndex } : null;
+  }
+
+  function monteCarloPlacementValue(state, pi, candidate) {
+    const players = state.players.map(player => cloneMonteCarloPlayer(player));
+    const opp = pi === 0 ? 1 : 0;
+    applyMonteCarloPlacement(players[pi], candidate.cardUid, candidate.slotIndex);
+    randomFillSpread(players[pi]);
+    randomFillSpread(players[opp]);
+    const cpuScore = scoreMonteCarloSpread(players[pi]) + (players[pi].totalScore || 0);
+    const oppScore = scoreMonteCarloSpread(players[opp]) + (players[opp].totalScore || 0);
+    return cpuScore - oppScore;
+  }
+
+  function cloneMonteCarloPlayer(player) {
+    return {
+      ...player,
+      hand: [...(player.hand || [])],
+      spread: [...(player.spread || [])],
+      discard: [...(player.discard || [])],
+      silencedCardUids: [...(player.silencedCardUids || [])],
+    };
+  }
+
+  function applyMonteCarloPlacement(player, cardUid, slotIndex) {
+    if (player.spread[slotIndex]) return;
+    const cardIndex = player.hand.findIndex(card => card.uid === cardUid);
+    if (cardIndex < 0) return;
+    const [card] = player.hand.splice(cardIndex, 1);
+    player.spread[slotIndex] = card;
+  }
+
+  function randomFillSpread(player) {
+    const placeable = player.hand.filter(card => card.type !== 'interaction');
+    for (let i = 0; i < player.spread.length && placeable.length; i += 1) {
+      if (player.spread[i]) continue;
+      const pickIndex = Math.floor(Math.random() * placeable.length);
+      const [card] = placeable.splice(pickIndex, 1);
+      player.spread[i] = card;
+    }
+  }
+
+  function scoreMonteCarloSpread(player) {
+    const silenced = new Set(player.silencedCardUids || []);
+    const cards = (player.spread || []).filter(card => card && !silenced.has(card.uid));
+    if (!cards.length) return 0;
+    return computeScore(cards, { skipFlatBonuses: true, skipRelics: true }).finalScore || 0;
   }
 
   function scheduleCpuMove(delayMs) {
