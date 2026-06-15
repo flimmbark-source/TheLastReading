@@ -10,6 +10,7 @@ import { installDeckRuntime } from './deckRuntime.mjs';
 import { installMarketFlow } from './marketFlow.mjs';
 import { installShopOverlayFlow } from './shopOverlayFlow.mjs';
 import { installRelicFlow } from './relicFlow.mjs';
+import { installShopPolish } from './shopPolish.mjs';
 import { installReferenceControls } from './referenceControls.mjs';
 import { installControlBindings } from './controlBindings.mjs';
 import { installScoringRuntime } from './scoringRuntime.mjs';
@@ -23,6 +24,7 @@ import { installMainMenu } from './mainMenu.mjs';
 import { installLoadoutScreen } from './loadoutScreen.mjs';
 import { installMatchmakingScreen } from './matchmakingScreen.mjs';
 import { installMpGame } from './mpGameHost.mjs';
+import { installMpCpuSafety } from './mpCpuSafety.mjs';
 import { installMenuControls } from './menuControls.mjs';
 import { installResonationFlow } from './resonationFlow.mjs';
 import { installHintRuntime } from './hintRuntime.mjs';
@@ -245,6 +247,7 @@ export function startApp(target = window) {
   installLoadoutScreen(target);
   installMatchmakingScreen(target);
   installMpGame(target);
+  installMpCpuSafety(target);
   installStoreFrontTuning(target);
   installMarketTutorialTrigger(target);
 
@@ -260,6 +263,7 @@ export function startApp(target = window) {
   installMarketFlow(target);
   installShopOverlayFlow(target);
   installRelicFlow(target);
+  installShopPolish(target);
   installResonationFlow(target);
   installReferenceControls(target);
   installHintRuntime(target);
