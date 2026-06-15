@@ -76,7 +76,7 @@ export function render(){
   const _newHintsKey=_hintsKey();if(_newHintsKey!==_hintsCacheKey){_hintsCache.clear();_hintsCacheKey=_newHintsKey;_unlockedFragmentsCache=null;_spreadScoreForHints=null;}
   _cacheEls();
   const storeState=currentStoreState();
-  const ability=storeState?selectAbilityTargetView(storeState):state.abilitySelect;
+  const ability=storeState?selectAbilityTargetView(storeState):null;
   const inPurge=state.purgeSelect!==null;
   const table=storeState?selectTableView(storeState,{inPurge,inAbility:!!ability}):null;
   _elThreshold.textContent=table?table.threshold:activeThreshold();
@@ -108,7 +108,7 @@ export function refreshHandState(){
   syncStoreBeforeView();
   _cacheEls();
   const storeState=currentStoreState();
-  const ability=storeState?selectAbilityTargetView(storeState):state.abilitySelect;
+  const ability=storeState?selectAbilityTargetView(storeState):null;
   const inPurge=state.purgeSelect!==null;
   const table=storeState?selectTableView(storeState,{inPurge,inAbility:!!ability}):null;
   document.querySelectorAll('#hand .card').forEach(el=>{

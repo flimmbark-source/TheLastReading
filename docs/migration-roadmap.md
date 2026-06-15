@@ -96,28 +96,23 @@ both ways until a renderer or runtime no longer touches legacy state.
 > and `purgeRuntime`. This is intentionally still a wrapper so the large base
 > reducer was not rewritten in one risky pass.
 >
-> _Ability targeting progress._ Targeting is store-native: `selectFromHand`
-> delegates to `abilityTargetBridge#tlrStartAbilityTargeting`, which owns the
-> selection in `run.ability.targeting` and holds the confirm callback / preview
-> locally. `state.abilitySelect` is now only a store-derived render mirror, kept
-> until `renderTable` reads targeting from a selector.
+> _Ability targeting: complete._ `selectFromHand` delegates to
+> `tlrStartAbilityTargeting` (store-native). `renderTable` and `renderAbilityPrompt`
+> read targeting via `abilityTargetView` from `game/selectors.mjs`.
+> `syncStoreSelectionToLegacy` mirror write has been removed; guards check
+> `run.ability.targeting` directly. Gesture ability-sweep dispatches
+> `SET_ABILITY_PICKS`. Renderer legacy fallback branches (`state.abilitySelect`)
+> have been removed.
 >
-> _Gesture progress._ Spread placement supports explicit `placeCardUid(cardUid,
-> slotIndex)`, and drag-to-spread uses it when available. Hand reorder and
-> hold-to-expand are still legacy runtime operations.
+> _Gesture: complete._ Hand reorder dispatches `REORDER_HAND`; hold-to-expand
+> reads the card from the store hand. Spread placement uses explicit `placeCardUid`.
 >
-> _Verification anchors._ `scripts/validate-render.mjs` covers hand/spread view
-> behavior, `scripts/validate-table-view.mjs` covers table chrome,
-> `scripts/validate-purge-reducer.mjs` covers the purge reducer wrapper,
-> `scripts/validate-ability-targeting.mjs` covers reducer-owned target picks, and
-> `scripts/validate-ability-targeting-bridge.mjs` covers the store-native
-> targeting initiation / pick / confirm round-trip.
+> _Verification anchors._ `validate-render.mjs`, `validate-table-view.mjs`,
+> `validate-purge-reducer.mjs` (now covers `REORDER_HAND`),
+> `validate-ability-targeting.mjs` (covers `SET_ABILITY_PICKS`),
+> `validate-ability-targeting-bridge.mjs`.
 >
-> _Remaining Phase 2 work._ Ability targeting initiation is store-native (done).
-> `renderTable` now reads targeting via `abilityTargetView` from `game/selectors.mjs` (done).
-> Next: drop the `syncStoreSelectionToLegacy` mirror write from `abilityTargetBridge`
-> (the renderer no longer consumes `state.abilitySelect`); migrate reorder/hold selection;
-> then remove renderer fallback reads from legacy state.
+> **Phase 2 complete.**
 
 **Phase 3 — Retire the legacy `state` object.** Once renderers and runtimes read
 from the store, replace remaining direct `state.*` writes in `readingFlow.mjs`,

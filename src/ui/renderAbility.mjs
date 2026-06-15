@@ -13,7 +13,7 @@ export function renderAbilityPrompt(){
   const el=$('#abilityPrompt');
   if(!el)return;
   const storeState=window.tlrStore?.getState?.()??null;
-  const a=storeState?selectAbilityTargetView(storeState):state.abilitySelect;
+  const a=storeState?selectAbilityTargetView(storeState):null;
   if(!a){el.classList.remove('show');return}
   $('#abilityPromptTitle').textContent=a.title;
   let preview='';
