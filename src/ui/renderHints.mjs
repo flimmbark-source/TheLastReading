@@ -32,6 +32,7 @@ function hintPersist(target=window){return hintRuntime(target).persist||target.p
 function hintSettings(target=window){return hintRuntime(target).hintSettings||{patterns:true,relics:false};}
 
 function hintsForCard(card,poolCards=null,hintState=null,target=window){
+  if(!card)return[];
   if(hintState&&target.tlrHints&&typeof target.tlrHints.getCardHints==='function'){
     const settings=hintSettings(target);
     const persist=hintPersist(target);
@@ -88,7 +89,13 @@ export function colorKeyRGB(key){
 export function hintColor(h){return colorKeyRGB(h.colorKey)||hintRGB(h.group||hintGroup(h.label))}
 
 export function applyHint(el,card,poolCards=null,hintState=null){
-  let hints=dedupeHints(hintsForCard(card,poolCards,hintState));
+  let hints=[];
+  try{
+    hints=dedupeHints(hintsForCard(card,poolCards,hintState));
+  }catch(err){
+    console.warn('Card hint render failed; continuing without hint.',err,card);
+    return;
+  }
   if(!hints.length)return;
   const hasComplete=hints.some(h=>h.level==='complete');
   const primary=hints.find(h=>h.level==='complete')||hints[0];
