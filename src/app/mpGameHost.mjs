@@ -24,11 +24,9 @@ function installMpHostFixes(target = window) {
   installOverlayLayerFix(doc);
 
   const syncLater = () => {
-    ensureMpTopRefTabs(target, doc);
     suppressBetweenSetResults(doc);
     syncMultSpans(target, doc, stateRef, myIndex);
     target.requestAnimationFrame?.(() => {
-      ensureMpTopRefTabs(target, doc);
       suppressBetweenSetResults(doc);
       syncMultSpans(target, doc, stateRef, myIndex);
       syncOverlayLayerClass(doc);
@@ -89,33 +87,18 @@ function installOverlayLayerFix(doc) {
     body.mp-game-active #mpOverlay:not(.mp-ov-hidden){position:fixed!important;inset:0!important;z-index:2147483000!important}
     body.mp-game-active .refs-layer{position:fixed!important;z-index:2147483100!important;pointer-events:none!important}
     body.mp-game-active .refs-layer .ref:not(.hidden){pointer-events:auto!important}
-    .mp-top-ref-tabs{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
-    .mp-top-ref-tabs button{height:26px;padding:0 9px;border-radius:999px;border:1px solid rgba(180,140,90,.36);background:rgba(28,18,10,.58);color:#b09060;font:800 10px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
-    .mp-top-ref-tabs button:hover{color:#f0d58a;border-color:rgba(220,176,92,.62);background:rgba(70,44,18,.78)}
+    body.mp-game-active #titleWrap{display:block!important;position:fixed!important;top:8px!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;z-index:2147483200!important;pointer-events:none!important;width:auto!important;margin:0!important;padding:0!important}
+    body.mp-game-active #titleRow{display:flex!important;align-items:center!important;justify-content:center!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+    body.mp-game-active #titleContent{display:block!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+    body.mp-game-active #titleWrap .actions{display:flex!important;align-items:center!important;gap:6px!important;margin:0!important;padding:0!important;pointer-events:auto!important}
+    body.mp-game-active #titleWrap #menuBtn,
+    body.mp-game-active #titleWrap #settingsPanel,
+    body.mp-game-active #titleWrap #mullBtn{display:none!important}
+    body.mp-game-active #titleWrap #scoringBtn,
+    body.mp-game-active #titleWrap #abilitiesBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:26px!important;padding:0 9px!important;border-radius:999px!important;border:1px solid rgba(180,140,90,.36)!important;background:rgba(28,18,10,.58)!important;color:#b09060!important;font:800 10px/1 system-ui,sans-serif!important;letter-spacing:.08em!important;text-transform:uppercase!important;cursor:pointer!important}
+    body.mp-game-active #titleWrap #scoringBtn:hover,
+    body.mp-game-active #titleWrap #abilitiesBtn:hover{color:#f0d58a!important;border-color:rgba(220,176,92,.62)!important;background:rgba(70,44,18,.78)!important}
   `;
-}
-
-function ensureMpTopRefTabs(target, doc) {
-  const bar = doc.querySelector('#mpGame .mp-bar');
-  if (!bar || doc.getElementById('mpTopRefTabs')) return;
-  const wrap = doc.createElement('div');
-  wrap.id = 'mpTopRefTabs';
-  wrap.className = 'mp-top-ref-tabs';
-
-  const scoring = doc.createElement('button');
-  scoring.type = 'button';
-  scoring.textContent = 'Scoring';
-  scoring.addEventListener('click', event => target.toggleRef?.(event));
-
-  const abilities = doc.createElement('button');
-  abilities.type = 'button';
-  abilities.textContent = 'Abilities';
-  abilities.addEventListener('click', event => target.toggleAbilityRef?.(event));
-
-  wrap.append(scoring, abilities);
-  const round = doc.getElementById('mpRoundLabel');
-  if (round?.parentElement === bar) bar.insertBefore(wrap, round);
-  else bar.appendChild(wrap);
 }
 
 function suppressBetweenSetResults(doc) {
