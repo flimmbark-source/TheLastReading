@@ -46,15 +46,22 @@ function installMpHostFixes(target = window) {
     target.requestAnimationFrame?.(() => syncMultSpans(target, doc, stateRef, myIndex));
   };
 
-  const markFinalPlacementHold = state => {
-    if (!isPreScoreState(state)) return;
+  const beginFinalPlacementHold = state => {
+    if (!isPreScoreState(state)) return false;
     doc.body.classList.add('mp-score-hold');
     scoreDispatchHoldUntil = Math.max(
       scoreDispatchHoldUntil,
       currentEffectsUntil(),
       Date.now() + FINAL_PLACEMENT_SCORE_DELAY_MS,
     );
-    hidePrematureScoringOverlay(doc, scoreDispatchHoldUntil);
+    hidePrematureScoringOverlay(doc);
+    return true;
+  };
+
+  const beginResultHold = action => {
+    if (action?.type !== 'MP_SCORE_ROUND') return;
+    doc.body.classList.add('mp-result-hold');
+    hidePrematureScoringOverlay(doc);
   };
 
   const holdResultsOverlay = (action, state) => {
@@ -64,6 +71,7 @@ function installMpHostFixes(target = window) {
     if (!overlay || !box) return;
 
     doc.body.classList.remove('mp-score-hold');
+    doc.body.classList.add('mp-result-hold');
     renderResultsOverlayBox(box, state, myIndex);
     const holdUntil = Math.max(Date.now() + RESULT_OVERLAY_MIN_DELAY_MS, currentEffectsUntil());
     resultsOverlayHoldUntil = Math.max(resultsOverlayHoldUntil, holdUntil);
@@ -79,6 +87,7 @@ function installMpHostFixes(target = window) {
         resultsOverlayTimer = target.setTimeout(revealWhenReady, Math.max(80, Math.min(remaining || 160, 240)));
         return;
       }
+      doc.body.classList.remove('mp-result-hold');
       currentOverlay.classList.remove('mp-ov-hidden');
       doc.body.classList.add('mp-overlay-active');
       syncOverlayLayerClass(doc);
@@ -90,6 +99,11 @@ function installMpHostFixes(target = window) {
 
   wrapDispatchForEffectHolds(target, {
     getScoreHoldUntil: () => Math.max(scoreDispatchHoldUntil, currentEffectsUntil()),
+    ensureScoreHold: () => {
+      doc.body.classList.add('mp-score-hold');
+      scoreDispatchHoldUntil = Math.max(scoreDispatchHoldUntil, Date.now() + FINAL_PLACEMENT_SCORE_DELAY_MS, currentEffectsUntil());
+      hidePrematureScoringOverlay(doc);
+    },
     clearScoreHold: () => {
       scoreDispatchHoldUntil = 0;
       doc.body.classList.remove('mp-score-hold');
@@ -105,7 +119,7 @@ function installMpHostFixes(target = window) {
       effectsHoldUntil = 0;
       scoreDispatchHoldUntil = 0;
       resultsOverlayHoldUntil = 0;
-      doc.body.classList.remove('mp-score-hold');
+      doc.body.classList.remove('mp-score-hold', 'mp-result-hold');
       if (resultsOverlayTimer) {
         target.clearTimeout(resultsOverlayTimer);
         resultsOverlayTimer = null;
@@ -121,11 +135,13 @@ function installMpHostFixes(target = window) {
   if (typeof onLocalAction === 'function') {
     target.tlrMpOnLocalAction = function (action, state) {
       stateRef = state;
-      if (isPreScoreState(state)) doc.body.classList.add('mp-score-hold');
+      beginFinalPlacementHold(state);
+      beginResultHold(action);
       const result = onLocalAction.apply(this, arguments);
       syncLater();
-      markFinalPlacementHold(state);
+      beginFinalPlacementHold(state);
       holdResultsOverlay(action, state);
+      if (action?.type === 'MP_NEW_ROUND') doc.body.classList.remove('mp-score-hold', 'mp-result-hold');
       return result;
     };
   }
@@ -134,11 +150,13 @@ function installMpHostFixes(target = window) {
   if (typeof onPeerAction === 'function') {
     target.tlrMpOnPeerAction = function (action, state) {
       stateRef = state;
-      if (isPreScoreState(state)) doc.body.classList.add('mp-score-hold');
+      beginFinalPlacementHold(state);
+      beginResultHold(action);
       const result = onPeerAction.apply(this, arguments);
       syncLater();
-      markFinalPlacementHold(state);
+      beginFinalPlacementHold(state);
       holdResultsOverlay(action, state);
+      if (action?.type === 'MP_NEW_ROUND') doc.body.classList.remove('mp-score-hold', 'mp-result-hold');
       return result;
     };
   }
@@ -154,7 +172,7 @@ function installMpHostFixes(target = window) {
         target.clearTimeout(resultsOverlayTimer);
         resultsOverlayTimer = null;
       }
-      doc.body.classList.remove('mp-overlay-active', 'mp-score-hold');
+      doc.body.classList.remove('mp-overlay-active', 'mp-score-hold', 'mp-result-hold');
       return onLeave.apply(this, arguments);
     };
   }
@@ -187,11 +205,9 @@ function visualEffectsActive(doc) {
   return !!doc.querySelector(POINT_EFFECT_SELECTOR);
 }
 
-function hidePrematureScoringOverlay(doc, holdUntil) {
-  if (Date.now() >= holdUntil && !visualEffectsActive(doc)) return;
+function hidePrematureScoringOverlay(doc) {
   const overlay = doc.getElementById('mpOverlay');
   if (!overlay) return;
-  doc.body.classList.add('mp-score-hold');
   overlay.classList.add('mp-ov-hidden');
   doc.body.classList.remove('mp-overlay-active');
 }
@@ -209,6 +225,7 @@ function wrapDispatchForEffectHolds(target, options) {
     const state = target.tlrMpGetState?.();
 
     if (action?.type === 'MP_SCORE_ROUND' && state?.phase === 'SCORING') {
+      options.ensureScoreHold?.();
       const wait = Math.max(0, options.getScoreHoldUntil() - Date.now());
       if (wait > 40 || options.hasVisualEffects()) {
         if (!scoreQueued) {
@@ -260,16 +277,17 @@ function renderResultsOverlayBox(box, state, myIndex) {
 }
 
 function installOverlayLayerFix(target, doc) {
-  if (!doc.getElementById('mp-host-layer-fix-style')) {
-    const style = doc.createElement('style');
+  let style = doc.getElementById('mp-host-layer-fix-style');
+  if (!style) {
+    style = doc.createElement('style');
     style.id = 'mp-host-layer-fix-style';
-    style.textContent = `
-      body.mp-game-active.mp-score-hold #mpOverlay{display:none!important;pointer-events:none!important}
-      body.mp-game-active.mp-overlay-active #mpGame{z-index:2147482000!important}
-      body.mp-game-active #mpOverlay:not(.mp-ov-hidden){position:fixed!important;inset:0!important;z-index:2147483000!important}
-    `;
     doc.head.appendChild(style);
   }
+  style.textContent = `
+    body.mp-game-active:is(.mp-score-hold,.mp-result-hold) #mpOverlay{display:none!important;pointer-events:none!important}
+    body.mp-game-active.mp-overlay-active #mpGame{z-index:2147482000!important}
+    body.mp-game-active #mpOverlay:not(.mp-ov-hidden){position:fixed!important;inset:0!important;z-index:2147483000!important}
+  `;
 
   const Observer = target.MutationObserver || globalThis.MutationObserver;
   if (Observer && !target.__tlrMpOverlayLayerObserverInstalled) {
@@ -281,7 +299,8 @@ function installOverlayLayerFix(target, doc) {
 
 function syncOverlayLayerClass(doc) {
   const overlay = doc.getElementById('mpOverlay');
-  const active = !!overlay && !overlay.classList.contains('mp-ov-hidden') && !doc.body.classList.contains('mp-score-hold') && doc.body.classList.contains('mp-game-active');
+  const holding = doc.body.classList.contains('mp-score-hold') || doc.body.classList.contains('mp-result-hold');
+  const active = !!overlay && !overlay.classList.contains('mp-ov-hidden') && !holding && doc.body.classList.contains('mp-game-active');
   doc.body.classList.toggle('mp-overlay-active', active);
 }
 
