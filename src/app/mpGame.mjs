@@ -1560,6 +1560,7 @@ export function installMpGame(target = window) {
     const my = _myIndex, opp = 1 - my;
     box.innerHTML = `<h2 class="mp-ov-title">Round ${s.round ?? 1} Complete</h2><div class="mp-ov-scores"><div><div class="mp-ov-score-val">${rs[my]}</div><div class="mp-ov-score-label">You</div></div><div class="mp-ov-vs">vs</div><div><div class="mp-ov-score-val">${rs[opp]}</div><div class="mp-ov-score-label">Opponent</div></div></div><div class="mp-ov-totals">Total: ${ts[my]} – ${ts[opp]} / ${s.scoreTarget ?? 200}</div><p class="mp-ov-waiting">Starting next set…</p>`;
     overlay.classList.remove('mp-ov-hidden');
+    doc.body.classList.add('mp-overlay-active');
   }
   function showCompleteOverlay(s, my) {
     const overlay = el('mpOverlay'), box = el('mpOvBox');
@@ -1567,8 +1568,9 @@ export function installMpGame(target = window) {
     const ts = scores(s), w = s.winner, result = w === 'draw' ? 'Draw' : (w === my ? 'Victory' : 'Defeat'), cls = w === 'draw' ? 'draw' : (w === my ? 'win' : 'lose');
     box.innerHTML = `<h2 class="mp-ov-title">Match Over</h2><p class="mp-ov-winner ${cls}">${result}</p><div class="mp-ov-scores"><div><div class="mp-ov-score-val">${ts[my]}</div><div class="mp-ov-score-label">You</div></div><div class="mp-ov-vs">vs</div><div><div class="mp-ov-score-val">${ts[1-my]}</div><div class="mp-ov-score-label">Opponent</div></div></div><button class="mp-ov-btn" onclick="tlrMpLeave()" type="button">Return to Menu</button>`;
     overlay.classList.remove('mp-ov-hidden');
+    doc.body.classList.add('mp-overlay-active');
   }
-  function hideOverlay() { el('mpOverlay')?.classList.add('mp-ov-hidden'); }
+  function hideOverlay() { el('mpOverlay')?.classList.add('mp-ov-hidden'); doc.body.classList.remove('mp-overlay-active'); }
 
   let _autoScoreTimer = null, _autoRoundTimer = null;
   // Either client may drive scoring once the spreads are full — a duplicate
