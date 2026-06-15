@@ -21,7 +21,7 @@ function installMpHostFixes(target = window) {
   let stateRef = null;
   let myIndex = 0;
 
-  installOverlayLayerFix(target, doc);
+  installOverlayLayerFix(doc);
 
   const syncLater = () => {
     suppressBetweenSetResults(doc);
@@ -29,6 +29,7 @@ function installMpHostFixes(target = window) {
     target.requestAnimationFrame?.(() => {
       suppressBetweenSetResults(doc);
       syncMultSpans(target, doc, stateRef, myIndex);
+      syncOverlayLayerClass(doc);
     });
   };
 
@@ -73,7 +74,7 @@ function installMpHostFixes(target = window) {
   }
 }
 
-function installOverlayLayerFix(target, doc) {
+function installOverlayLayerFix(doc) {
   let style = doc.getElementById('mp-host-layer-fix-style');
   if (!style) {
     style = doc.createElement('style');
@@ -85,17 +86,6 @@ function installOverlayLayerFix(target, doc) {
     body.mp-game-active #mpOverlay.mp-hide-between-results{display:none!important;pointer-events:none!important}
     body.mp-game-active #mpOverlay:not(.mp-ov-hidden){position:fixed!important;inset:0!important;z-index:2147483000!important}
   `;
-
-  const Observer = target.MutationObserver || globalThis.MutationObserver;
-  if (Observer && !target.__tlrMpOverlayLayerObserverInstalled) {
-    target.__tlrMpOverlayLayerObserverInstalled = true;
-    new Observer(() => {
-      suppressBetweenSetResults(doc);
-      syncOverlayLayerClass(doc);
-    }).observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
-  }
-  suppressBetweenSetResults(doc);
-  syncOverlayLayerClass(doc);
 }
 
 function suppressBetweenSetResults(doc) {
