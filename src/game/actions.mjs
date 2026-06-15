@@ -31,6 +31,7 @@ export const ACTIONS = Object.freeze({
   SET_BUSY: 'SET_BUSY',
   SET_PURGE_PICKS: 'SET_PURGE_PICKS',
   MULLIGAN: 'MULLIGAN',
+  UPDATE_RESONATION_BONUS: 'UPDATE_RESONATION_BONUS',
 });
 
 export const startReading = () => ({ type: ACTIONS.START_READING });

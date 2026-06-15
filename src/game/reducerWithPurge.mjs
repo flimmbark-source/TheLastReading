@@ -161,6 +161,16 @@ export function reducer(state, action) {
         .slice(0, 3);
       return replaceRun(state, { purge: picks });
     }
+    case ACTIONS.UPDATE_RESONATION_BONUS: {
+      const existing = state.run.resonationBonus || { chips: 0, mult: 0 };
+      return replaceRun(state, {
+        resonationBonus: {
+          chips: (existing.chips || 0) + (action.chips || 0),
+          mult: (existing.mult || 0) + (action.mult || 0),
+          name: action.name || existing.name || '',
+        },
+      });
+    }
     case CLEAR_ABILITY_TARGETING:
       return clearAbilityTargeting(state);
     default:

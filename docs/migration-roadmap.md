@@ -120,6 +120,21 @@ from the store, replace remaining direct `state.*` writes in `readingFlow.mjs`,
 dispatches. Then delete the `Object.defineProperty` selection bridge and
 `syncRunToStore`.
 
+> _Resonation bonus: store-native._ `resonationFlow.triggerResonation` now
+> dispatches `UPDATE_RESONATION_BONUS` to the store immediately alongside the
+> legacy `state.resonationBonus` write. `reducerWithPurge` accumulates the bonus.
+> `SCORE_READING` in the base reducer already reads `run.resonationBonus` from
+> the store, so scoring is correct even before `syncRunToStore` is called.
+> Verification: `validate-purge-reducer.mjs` covers `UPDATE_RESONATION_BONUS`.
+>
+> _Remaining for capstone._ `discardRuntime` and `mulliganRuntime` are already
+> store-first (dispatch then sync back). `readingFlow` round-start writes are
+> sync-back writes (copy from `_run.*`), correct already. The remaining gap
+> before retiring `syncRunToStore` is `placementRuntime` and the round-end/market
+> flows in `readingFlow` which still rely on `syncRunToStore` to push state before
+> dispatch. After those are ported the `Object.defineProperty` selection proxy
+> (`bindSelectionToStore`) and `syncRunToStore` can be deleted.
+
 **Phase 4 — Multiplayer renders from match state directly.** Replace remaining
 legacy handoffs with explicit multiplayer view models and match-state selectors.
 
@@ -160,10 +175,8 @@ legacy handoffs with explicit multiplayer view models and match-state selectors.
    ability prompt flow, spread/hand target glows, mult spans after placements,
    pending placement preview, and WORLD / Reshuffle preserving already placed
    cards.
-3. Continue Phase 2 singleplayer work: move ability targeting initiation out of
-   `readingFlow` / `state.abilitySelect`.
-4. Migrate hand reorder and hold-to-expand off legacy runtime `state.hand` /
-   `state.selected`.
+3. Phase 3 capstone: port `placementRuntime` and remaining `readingFlow` flows to
+   dispatch-first, then delete `bindSelectionToStore` proxy and `syncRunToStore`.
 
 ## Efficiency follow-ups (tracked, intentionally not bundled here)
 

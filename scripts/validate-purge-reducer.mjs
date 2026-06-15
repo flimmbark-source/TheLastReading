@@ -81,4 +81,16 @@ assert.equal(state.run.purge, null, 'start purge is ignored when fewer than thre
   assert.equal(s2.run.mulliganCharges, 1, 'MULLIGAN is a no-op when spread is occupied');
 }
 
+// UPDATE_RESONATION_BONUS: accumulates chips/mult into run.resonationBonus
+{
+  let s = createGameState({ run: { hand: [], spread: Array(5).fill(null) } });
+  assert.equal(s.run.resonationBonus, null, 'resonationBonus starts null');
+
+  s = reducer(s, { type: ACTIONS.UPDATE_RESONATION_BONUS, chips: 10, mult: 2, name: 'Star Cross' });
+  assert.deepEqual(s.run.resonationBonus, { chips: 10, mult: 2, name: 'Star Cross' }, 'UPDATE_RESONATION_BONUS sets initial bonus');
+
+  s = reducer(s, { type: ACTIONS.UPDATE_RESONATION_BONUS, chips: 5, mult: 1, name: 'Moon Tide' });
+  assert.deepEqual(s.run.resonationBonus, { chips: 15, mult: 3, name: 'Moon Tide' }, 'UPDATE_RESONATION_BONUS accumulates chips and mult');
+}
+
 console.log('Purge reducer checks passed.');
