@@ -588,11 +588,17 @@ export function installMpGame(target = window) {
     if (discardBtn) {
       discardBtn.disabled = !isTurn || _purgeSelect !== null || _invokeCard !== null || _swapFirst !== null || !selectedCard || (p?.discards ?? 0) <= 0;
       discardBtn.classList.toggle('mp-active-action', !discardBtn.disabled);
+      // Refresh the inline button art here (not only in the full render pass) so
+      // the enabled/disabled look tracks selection changes routed through
+      // refreshSelectionUi(); otherwise the stale ".38 opacity" disabled styling
+      // sticks and the button reads as disabled even when it is clickable.
+      syncMpButtonArt('mpDiscardBtn');
     }
     if (purgeBtn) {
       const canStartPurge = isTurn && _invokeCard === null && _swapFirst === null && (p?.hand?.length ?? 0) >= 3;
       purgeBtn.disabled = _purgeSelect === null ? !canStartPurge : _purgeSelect.length !== 3;
       purgeBtn.classList.toggle('mp-active-action', _purgeSelect !== null);
+      syncMpButtonArt('mpPurgeBtn');
     }
     if (abilityBtn) {
       const personaAction = currentPersonaAbilityAction(s, my);
@@ -730,9 +736,8 @@ export function installMpGame(target = window) {
     doc.querySelectorAll('body.mp-game-active #spread .slot.mp-swap-pick').forEach(slotEl => {
       slotEl.classList.toggle('mp-surgeon-swap-blocked', hasSelectedSwapSlot);
     });
-
-    syncMpButtonArt('mpDiscardBtn');
-    syncMpButtonArt('mpPurgeBtn');
+    // Button art is refreshed in renderActionButtons so it tracks selection
+    // changes (which only run refreshSelectionUi, not this presentation pass).
   }
 
   function syncMpButtonArt(id) {
