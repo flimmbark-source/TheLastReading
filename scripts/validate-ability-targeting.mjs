@@ -37,6 +37,17 @@ assert.deepEqual(state.run.ability.targeting.pickedCardIds, [hand[1].uid], 'sing
 state = reducer(state, { type: 'TOGGLE_ABILITY_TARGET', cardId: hand[2].uid });
 assert.deepEqual(state.run.ability.targeting.pickedCardIds, [hand[1].uid], 'toggle ignores invalid target');
 
+// SET_ABILITY_PICKS: bulk-sets picks (used by gesture sweep)
+state = reducer(state, {
+  type: 'START_ABILITY_TARGETING',
+  selection: { title: 'T', prompt: 'P', validCardIds: [hand[0].uid, hand[1].uid], count: 2 },
+});
+state = reducer(state, { type: 'SET_ABILITY_PICKS', cardIds: [hand[1].uid, hand[0].uid] });
+assert.deepEqual(state.run.ability.targeting.pickedCardIds, [hand[1].uid, hand[0].uid], 'SET_ABILITY_PICKS sets picks in order');
+
+state = reducer(state, { type: 'SET_ABILITY_PICKS', cardIds: [hand[2].uid] });
+assert.deepEqual(state.run.ability.targeting.pickedCardIds, [], 'SET_ABILITY_PICKS filters out invalid ids');
+
 state = reducer(state, { type: 'CLEAR_ABILITY_TARGETING' });
 assert.equal(state.run.ability.targeting, undefined, 'clear removes targeting but keeps active ability');
 assert.equal(state.run.ability.id, 'NEIGHBOR_2', 'clear keeps ability identity');

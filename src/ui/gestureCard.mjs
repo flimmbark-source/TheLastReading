@@ -1,6 +1,7 @@
 // Hand card gesture controller (Step 4). Verbatim port target from the
 // legacy inline hand card gestures handler patch.
 /* global state, refreshHandState, expandCard, render, placeCard */
+import { abilityTargetView as selectAbilityTargetView } from '../game/selectors.mjs';
 
 export function installHandCardGestures(target = window){
   if(!target || target.__handCardGesturesInstalled)return;
@@ -22,7 +23,9 @@ export function installHandCardGestures(target = window){
   let g=null;
   const handEl=()=>document.querySelector('.hand');
   const handCards=()=>{const h=handEl();return h?[...h.querySelectorAll(':scope > .card[data-uid]')]:[]};
-  const inSelectionMode=()=>!!(state.abilitySelect||state.purgeSelect!==null||state.busy);
+  const storeState=()=>target.tlrStore?.getState?.()??null;
+  const gestureTargeting=()=>{const s=storeState();return s?selectAbilityTargetView(s):state.abilitySelect;};
+  const inSelectionMode=()=>!!(gestureTargeting()||state.purgeSelect!==null||state.busy);
   const cancelHold=()=>{if(g&&g.holdTimer){clearTimeout(g.holdTimer);g.holdTimer=null;}};
   // Add uid to end of arr (no duplicates), trim to last max items.
   const queueUid=(arr,uid,max)=>{if(arr.includes(uid))return arr;const a=[...arr,uid];return a.length>max?a.slice(-max):a;};
@@ -113,9 +116,10 @@ export function installHandCardGestures(target = window){
       if(!cardEl)continue;
       const uid=Number(cardEl.dataset.uid);
       if(!Number.isFinite(uid))break;
-      if(state.abilitySelect){
-        if(!state.abilitySelect.validIds.has(uid))break;
-        g.pendingUids=queueUid(g.pendingUids,uid,state.abilitySelect.count);
+      const _t=gestureTargeting();
+      if(_t){
+        if(!_t.validIds.has(uid))break;
+        g.pendingUids=queueUid(g.pendingUids,uid,_t.count);
       }else if(state.purgeSelect!==null){
         g.pendingUids=queueUid(g.pendingUids,uid,3);
       }
@@ -272,8 +276,14 @@ export function installHandCardGestures(target = window){
     // ── Commit ability/purge selection from sweep ──
     if(wasSelectDrag){
       if(!committed)return;
-      if(state.abilitySelect&&pendingUids.length){
-        state.abilitySelect.picked=pendingUids.slice(-state.abilitySelect.count);
+      const _t=gestureTargeting();
+      if(_t&&pendingUids.length){
+        const s=storeState();
+        if(s&&target.tlrStore){
+          target.tlrStore.dispatch({type:'SET_ABILITY_PICKS',cardIds:pendingUids});
+        }else if(state.abilitySelect){
+          state.abilitySelect.picked=pendingUids.slice(-_t.count);
+        }
         if(typeof refreshHandState==='function')refreshHandState();
       }else if(state.purgeSelect!==null&&pendingUids.length){
         state.purgeSelect=pendingUids.slice(0,3);
@@ -373,7 +383,7 @@ export function installHandCardGestures(target = window){
       // busy: drop pointer tracking entirely.
       if(state.busy){cancelHold();g=null;return;}
       // ability/purge: sweep-to-select mode.
-      if(state.abilitySelect||state.purgeSelect!==null){startSelectDrag(ev);return;}
+      if(gestureTargeting()||state.purgeSelect!==null){startSelectDrag(ev);return;}
       // normal: card drag-to-reorder / drag-to-place.
       startDrag(ev);
       return;

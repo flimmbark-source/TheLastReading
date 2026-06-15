@@ -4,6 +4,7 @@ import { reducer as baseReducer } from './reducer.mjs';
 const START_ABILITY_TARGETING = 'START_ABILITY_TARGETING';
 const TOGGLE_ABILITY_TARGET = 'TOGGLE_ABILITY_TARGET';
 const CLEAR_ABILITY_TARGETING = 'CLEAR_ABILITY_TARGETING';
+const SET_ABILITY_PICKS = 'SET_ABILITY_PICKS';
 
 function replaceRun(state, patch) {
   return { ...state, run: { ...state.run, ...patch } };
@@ -84,6 +85,14 @@ function toggleAbilityTarget(state, action) {
   });
 }
 
+function setAbilityPicks(state, action) {
+  const targeting = state.run.ability?.targeting;
+  if (!targeting) return state;
+  const requested = (action.cardIds || []).filter(id => targeting.validCardIds.includes(id));
+  const pickedCardIds = requested.slice(-targeting.count);
+  return replaceAbility(state, { targeting: { ...targeting, pickedCardIds } });
+}
+
 function clearAbilityTargeting(state) {
   const ability = state.run.ability;
   if (!ability?.targeting) return state;
@@ -105,6 +114,8 @@ export function reducer(state, action) {
       return startAbilityTargeting(state, action);
     case TOGGLE_ABILITY_TARGET:
       return toggleAbilityTarget(state, action);
+    case SET_ABILITY_PICKS:
+      return setAbilityPicks(state, action);
     case CLEAR_ABILITY_TARGETING:
       return clearAbilityTargeting(state);
     default:
