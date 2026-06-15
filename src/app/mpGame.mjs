@@ -45,6 +45,7 @@ export function installMpGame(target = window) {
   let _lastScoringState = null;
   let _latestEffectsUntil = 0;
   let _delayedNextRoundQueued = false;
+  let _localPlacementFeedbackKeys = new Set();
 
   const doc = target.document;
   function el(id) { return doc.getElementById(id); }
@@ -184,6 +185,7 @@ export function installMpGame(target = window) {
     renderActionPanel(s, my);
     syncPersonaPrompt();
     syncMpActionPresentation(s, my);
+    renderMpPurgePrompt();
     applyPendingPlacementPreview();
 
     if (needsScoring(s))   showScoringOverlay(s);
@@ -390,6 +392,26 @@ export function installMpGame(target = window) {
     const card = player.hand?.find(item => item.uid === action.cardUid);
     if (!card) return null;
     return { card, cardUid: action.cardUid, slotIndex };
+  }
+
+  function renderMpPurgePrompt() {
+    const prompt = el('purgePrompt');
+    if (!prompt) return;
+    doc.body.classList.toggle('mp-purge-flow-active', _purgeSelect !== null);
+    if (_purgeSelect === null) {
+      prompt.classList.remove('show');
+      return;
+    }
+    const count = el('purgeCount');
+    const confirm = el('purgeConfirm');
+    const cancel = el('purgeCancel');
+    if (count) count.textContent = String(_purgeSelect.length);
+    if (confirm) {
+      confirm.disabled = _purgeSelect.length !== 3;
+      confirm.onclick = () => target.tlrMpConfirmPurge?.();
+    }
+    if (cancel) cancel.onclick = () => target.tlrMpCancelAction?.();
+    prompt.classList.add('show');
   }
 
   function clearPendingPlacementPreview() {
@@ -841,8 +863,9 @@ export function installMpGame(target = window) {
     const slotEl = slotElementForPlayer(playerIndex, slotIndex);
     if (!slotEl) return;
 
+    const localAlreadyPlayed = playerIndex === _myIndex && _localPlacementFeedbackKeys.delete(`${slotIndex}:${card?.uid}`);
     const cardEl = slotEl.querySelector('.card');
-    if (cardEl) {
+    if (cardEl && !localAlreadyPlayed) {
       cardEl.classList.add('landing');
       cardEl.addEventListener('animationend', () => cardEl.classList.remove('landing'), { once: true });
     }
@@ -850,8 +873,10 @@ export function installMpGame(target = window) {
     updateScoreMultPills(state, { onlyPlayerIndex: playerIndex });
     slotGhost(slotEl, `+${card.points || 0}`);
     scoreGhost(playerIndex, '+1');
-    target.playSound?.('place');
-    target.haptic?.(12);
+    if (!localAlreadyPlayed) {
+      target.playSound?.('place');
+      target.haptic?.(12);
+    }
 
     const beforeScore = scoreSpreadRaw(before.players[playerIndex]);
     const afterScore = scoreSpreadRaw(state.players[playerIndex]);
@@ -1082,7 +1107,28 @@ export function installMpGame(target = window) {
     render();
   }
 
-  function dispatchPlace(cardUid, slotIndex) { submitAction({ type: MP_ACTIONS.MP_PLACE_CARD, cardUid, slotIndex }, { keepSelected: true }); }
+  function dispatchPlace(cardUid, slotIndex) {
+    submitAction({ type: MP_ACTIONS.MP_PLACE_CARD, cardUid, slotIndex }, { keepSelected: true });
+    playLocalPlacementSubmitFeedback(cardUid, slotIndex);
+  }
+  function playLocalPlacementSubmitFeedback(cardUid, slotIndex) {
+    if (!_state || cardUid == null || !Number.isInteger(slotIndex)) return;
+    _localPlacementFeedbackKeys.add(`${slotIndex}:${cardUid}`);
+    const runFeedback = () => {
+      applyPendingPlacementPreview();
+      const slotEl = slotElementForPlayer(_myIndex, slotIndex);
+      const cardEl = slotEl?.querySelector?.('.card');
+      if (cardEl) {
+        cardEl.classList.add('landing');
+        cardEl.addEventListener('animationend', () => cardEl.classList.remove('landing'), { once: true });
+      }
+      target.playSound?.('place');
+      target.haptic?.(12);
+    };
+    if (typeof target.requestAnimationFrame === 'function') target.requestAnimationFrame(runFeedback);
+    else target.setTimeout?.(runFeedback, 0);
+  }
+
   function dispatchSwap(slotIndex, cardUid) {
     if (!canDispatchSwap(slotIndex, cardUid)) return;
     target.tlrMpDispatch?.({
@@ -1103,15 +1149,6 @@ export function installMpGame(target = window) {
   function handleInvokeTarget(playerIdx, slotIdx) {
     if (_invokeCard === null) return;
     submitAction({ type: MP_ACTIONS.MP_INVOKE_ABILITY, cardUid: _invokeCard, target: { playerIndex: playerIdx, slotIndex: slotIdx } });
-  }
-
-  function discardSelectedCard() {
-    const my = _myIndex;
-    const uid = _selected;
-    if (!_state || uid === null || mySubmitted(_state) || _abilityResolving) return;
-    const p = _state.players?.[my];
-    if (!p?.hand?.some(c => c.uid === uid) || (p.discards ?? 0) <= 0) return;
-    submitAction({ type: MP_ACTIONS.MP_DISCARD_CARD, cardUid: uid });
   }
 
   async function invokeSelectedCard() {
@@ -1518,6 +1555,7 @@ export function installMpGame(target = window) {
 
   function resetTransientActionState() {
     _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; _personaSwapRequested = false;
+    renderMpPurgePrompt();
   }
 
   target.tlrMpOnMatchStart = function (state, { role }) { ensureRoundMults(state, null, true); _lastScoringState = cloneState(state); _state = state; _myIndex = role === 'host' ? 0 : 1; resetTransientActionState(); _lastShownScores = [state?.players?.[0]?.totalScore ?? 0, state?.players?.[1]?.totalScore ?? 0]; clearOpponentRevealQueues(); doc.body.classList.add('mp-game-active'); mount(); el('mpGame')?.classList.remove('mp-hidden'); installPlaceCardOverride(); installRenderSpreadOverride(); installRenderHandOverride(); installPurgeOverride(); installRefreshHandStateOverride(); render(); updateScoreMultPills(state); scheduleAutoScore(); scheduleAutoNextRound(); };
@@ -1525,7 +1563,7 @@ export function installMpGame(target = window) {
   target.tlrMpOnPeerAction = function (action, state) { const before = _lastScoringState ? cloneState(_lastScoringState) : cloneState(state); applyDerivedScoringState(before, state, action); if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues(); _state = state; resetTransientActionState(); render(); updateScoreMultPills(state, { includeOpponent: false }); playPlacementFeedback(before, state); _lastScoringState = cloneState(state); scheduleAutoScore(); scheduleAutoNextRound(); };
   target.tlrMpHandlePeerLeft = function () { const overlay = el('mpOverlay'), box = el('mpOvBox'); if (!box || !overlay) return; box.innerHTML = `<h2 class="mp-ov-title">Opponent Left</h2><p style="color:#b09060;font:400 12px/1.5 system-ui,sans-serif">Your opponent disconnected.</p><button class="mp-ov-btn" onclick="tlrMpLeave()" type="button">Return to Menu</button>`; overlay.classList.remove('mp-ov-hidden'); };
   target.tlrMpInvoke = function () { invokeSelectedCard(); };
-  target.tlrMpDiscard = function () { discardSelectedCard(); };
+  target.tlrMpDiscard = function () { invokeSelectedCard(); };
   target.tlrMpAbilityButton = function () { const action = el('mpAbilityBtn')?.dataset?.mpAbilityAction; if (action === 'persona-swap') target.tlrMpStartSwap(); else invokeSelectedCard(); };
   target.tlrMpPurge = function () { _purgeSelect === null ? startPurgeMode() : confirmPurge(); };
   target.tlrMpConfirmPurge = function () { confirmPurge(); };
@@ -1533,7 +1571,7 @@ export function installMpGame(target = window) {
   target.tlrMpCancelAction = function () { if (mySubmitted(_state)) return; cancelAbilityTargeting(); _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; _personaSwapRequested = false; target.refreshHandState?.(); render(); };
   target.tlrMpStartSwap = function () { if (!_state || !canSwapSpread(_state, _myIndex)) return; _swapFirst = -1; _personaSwapRequested = true; render(); };
   target.tlrMpNextRound = function () { if (_state && _myIndex === 0) { clearOpponentRevealQueues(); target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_NEW_ROUND, playerIndex: 0 }); } };
-  target.tlrMpLeave = function () { if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; } if (_autoRoundTimer) { target.clearTimeout(_autoRoundTimer); _autoRoundTimer = null; } cancelAbilityTargeting(); restoreAbilityConfirm(); _state = null; resetTransientActionState(); _lastScoringState = null; _latestEffectsUntil = 0; _delayedNextRoundQueued = false; clearOpponentRevealQueues(); restorePlaceCard(); restoreRenderSpread(); restoreRenderHandOverride(); restorePurgeOverride(); restoreRefreshHandStateOverride(); clearPendingPlacementPreview(); syncPersonaPrompt(); doc.body.classList.remove('mp-game-active', 'mp-ability-flow-active', 'mp-persona-ability-active'); el('mpGame')?.classList.add('mp-hidden'); target._slotEls = null; const sp = el('spread'); if (sp) { sp._mpSlots = null; sp.replaceChildren(); } target.tlrHideMatchmaking?.(); if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu(); };
+  target.tlrMpLeave = function () { if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; } if (_autoRoundTimer) { target.clearTimeout(_autoRoundTimer); _autoRoundTimer = null; } cancelAbilityTargeting(); restoreAbilityConfirm(); _state = null; resetTransientActionState(); _lastScoringState = null; _latestEffectsUntil = 0; _delayedNextRoundQueued = false; clearOpponentRevealQueues(); restorePlaceCard(); restoreRenderSpread(); restoreRenderHandOverride(); restorePurgeOverride(); restoreRefreshHandStateOverride(); clearPendingPlacementPreview(); syncPersonaPrompt(); doc.body.classList.remove('mp-game-active', 'mp-ability-flow-active', 'mp-persona-ability-active', 'mp-purge-flow-active'); el('mpGame')?.classList.add('mp-hidden'); target._slotEls = null; const sp = el('spread'); if (sp) { sp._mpSlots = null; sp.replaceChildren(); } target.tlrHideMatchmaking?.(); if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu(); };
 }
 
 function esc(str) {
@@ -1698,7 +1736,8 @@ function installMpGameStyle(doc) {
     body.mp-game-active .mp-overlay:not(.mp-ov-hidden) {
       pointer-events: auto;
     }
-    body.mp-game-active.mp-ability-flow-active #abilityPrompt {
+    body.mp-game-active.mp-ability-flow-active #abilityPrompt,
+    body.mp-game-active.mp-purge-flow-active #purgePrompt {
       display: flex !important;
       z-index: 2147482600 !important;
     }
