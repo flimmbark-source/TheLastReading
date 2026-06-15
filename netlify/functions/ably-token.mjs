@@ -7,9 +7,9 @@ export async function handler(event) {
     return json(405, { error: 'Method not allowed' });
   }
 
-  const apiKey = process.env.ABLY_API_KEY;
+  const apiKey = process.env.ABLY_API_KEY || process.env.ABLYAPIKEY;
   if (!apiKey || !apiKey.includes(':')) {
-    return json(500, { error: 'Missing ABLY_API_KEY environment variable.' });
+    return json(500, { error: 'Missing ABLY_API_KEY or ABLYAPIKEY environment variable.' });
   }
 
   const body = parseBody(event.body);
