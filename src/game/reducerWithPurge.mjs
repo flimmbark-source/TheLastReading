@@ -85,6 +85,16 @@ function toggleAbilityTarget(state, action) {
   });
 }
 
+function reorderHand(state, action) {
+  const hand = [...state.run.hand];
+  const fromIndex = hand.findIndex(c => c.uid === action.uid);
+  if (fromIndex < 0) return state;
+  const [card] = hand.splice(fromIndex, 1);
+  hand.splice(action.toIndex, 0, card);
+  const selectedCardId = state.run.selectedCardId === action.uid ? null : state.run.selectedCardId;
+  return replaceRun(state, { hand, selectedCardId });
+}
+
 function setAbilityPicks(state, action) {
   const targeting = state.run.ability?.targeting;
   if (!targeting) return state;
@@ -116,6 +126,8 @@ export function reducer(state, action) {
       return toggleAbilityTarget(state, action);
     case SET_ABILITY_PICKS:
       return setAbilityPicks(state, action);
+    case ACTIONS.REORDER_HAND:
+      return reorderHand(state, action);
     case CLEAR_ABILITY_TARGETING:
       return clearAbilityTargeting(state);
     default:

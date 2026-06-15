@@ -34,4 +34,21 @@ assert.equal(state.run.purge, null, 'confirm purge exits purge mode');
 state = reducer(state, { type: ACTIONS.START_PURGE });
 assert.equal(state.run.purge, null, 'start purge is ignored when fewer than three cards remain');
 
+// REORDER_HAND: moves a card to a new position without mutating legacy state.hand
+{
+  const h = buildDeck().slice(0, 3).map((card, i) => ({ ...card, uid: 3100 + i }));
+  let s = createGameState({ run: { hand: h, selectedCardId: h[0].uid } });
+
+  s = reducer(s, { type: ACTIONS.REORDER_HAND, uid: h[0].uid, toIndex: 2 });
+  assert.deepEqual(s.run.hand.map(c => c.uid), [h[1].uid, h[2].uid, h[0].uid], 'REORDER_HAND moves card to target index');
+  assert.equal(s.run.selectedCardId, null, 'REORDER_HAND clears selection when the dragged card was selected');
+
+  s = reducer(s, { type: ACTIONS.REORDER_HAND, uid: h[2].uid, toIndex: 0 });
+  assert.deepEqual(s.run.hand.map(c => c.uid), [h[2].uid, h[1].uid, h[0].uid], 'REORDER_HAND: middle card moves to front');
+
+  s = createGameState({ run: { hand: h, selectedCardId: h[2].uid } });
+  s = reducer(s, { type: ACTIONS.REORDER_HAND, uid: h[0].uid, toIndex: 1 });
+  assert.equal(s.run.selectedCardId, h[2].uid, 'REORDER_HAND preserves selection when a different card is dragged');
+}
+
 console.log('Purge reducer checks passed.');

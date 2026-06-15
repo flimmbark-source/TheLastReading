@@ -317,6 +317,15 @@ export function installHandCardGestures(target = window){
 
     // ── Reorder within hand ──
     if(hoverIndex!==origIndex){
+      const s=storeState();
+      if(s&&target.tlrStore){
+        target.tlrStore.dispatch({type:'REORDER_HAND',uid,toIndex:hoverIndex});
+        // Sync legacy hand from store so syncStoreBeforeView in render() doesn't overwrite.
+        state.hand=target.tlrStore.getState().run.hand.slice();
+        if(state.selected===uid)state.selected=null;
+        if(typeof render==='function')render();
+        return;
+      }
       const idx=state.hand.findIndex(c=>c.uid===uid);
       if(idx>=0){
         const card=state.hand.splice(idx,1)[0];
@@ -363,7 +372,8 @@ export function installHandCardGestures(target = window){
     if(!inSelectionMode()){
       g.holdTimer=setTimeout(()=>{
         if(!g||g.mode!=='pending')return;
-        const card=state.hand.find(c=>c.uid===uid);
+        const _hand=storeState()?.run?.hand||state.hand;
+        const card=_hand.find(c=>c.uid===uid);
         g=null;
         if(card&&typeof expandCard==='function'){
           target.__handGestureSuppressClickUntil=performance.now()+800;
