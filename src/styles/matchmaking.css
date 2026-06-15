@@ -14,6 +14,11 @@
 .mm-profile-persona{font:700 13px/1.2 Georgia,serif;color:#ddc98a}
 .mm-profile-detail{font:400 11px/1 system-ui,sans-serif;color:#6a5535;margin-top:3px}
 
+/* Matchmaking layout */
+.mm-content-with-footer{display:flex;flex-direction:column;gap:18px;flex:1;min-height:0}
+.mm-settings-stack{display:flex;flex-direction:column;gap:16px}
+.mm-action-footer{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding-top:18px}
+
 /* Mode picker */
 .mm-mode-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .mm-mode-btn{padding:18px 12px;background:rgba(22,16,13,.7);border:1px solid rgba(140,100,50,.3);border-radius:8px;color:#b09060;font:700 13px/1.2 system-ui,sans-serif;cursor:pointer;text-align:center;transition:border-color .15s,background .15s,transform .1s}
@@ -72,6 +77,15 @@
   color:#ddc98a;
 }
 .mm-target-btn.selected span{color:#ffd978}
+
+/* Shuffle selector */
+.mm-shuffle-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:rgba(12,8,5,.55);border:1px solid rgba(140,100,50,.2);border-radius:10px;padding:5px}
+.mm-shuffle-btn{border:1px solid transparent;border-radius:8px;background:transparent;color:#8a7551;padding:11px 10px;font:800 11px/1.1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;transition:border-color .15s,background .15s,color .15s}
+.mm-shuffle-btn span{font:600 10px/1.2 system-ui,sans-serif;letter-spacing:.04em;text-transform:none;color:#6a5535}
+.mm-shuffle-btn:hover{border-color:rgba(200,160,80,.38);color:#b09060;background:rgba(30,20,13,.55)}
+.mm-shuffle-btn.selected{background:rgba(28,18,8,.95);border-color:rgba(255,217,120,.72);box-shadow:0 0 0 1px rgba(255,217,120,.34);color:#ffd978}
+.mm-shuffle-btn.selected span{color:#b09060}
+.mm-host-settings-note{font:600 10px/1.35 system-ui,sans-serif;color:#6a5535;text-align:center;letter-spacing:.04em;margin-top:-2px}
 
 /* vs CPU button */
 .mm-cpu-row{margin-top:-2px}
