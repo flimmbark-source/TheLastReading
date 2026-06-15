@@ -49,12 +49,7 @@ function targeting(target) {
   assert.deepEqual(t.validCardIds, [cardA.uid, cardB.uid], 'store holds the valid ids');
   assert.deepEqual(t.pickedCardIds, [], 'store starts with no picks');
   assert.equal(t.count, 1, 'store holds the count');
-
-  const mirror = target.state.abilitySelect;
-  assert.ok(mirror?.__storeOwned, 'legacy mirror is store-owned');
-  assert.ok(mirror.validIds.has(cardA.uid) && mirror.validIds.has(cardB.uid), 'mirror exposes valid ids for the renderer');
-  assert.equal(mirror.cb, cb, 'callback is mirrored from the local holder, not the store');
-  assert.equal(mirror.previewFn, previewFn, 'preview function is mirrored from the local holder');
+  assert.equal(target.state.abilitySelect, null, 'state.abilitySelect is not mirrored when store is ready');
 
   // --- Picking toggles through the store ---
   target.handleAbilityHandClick(cardB);
@@ -66,7 +61,6 @@ function targeting(target) {
   target.confirmAbilitySelection();
   assert.deepEqual(received, [cardA], 'confirm invokes the callback with the picked card object');
   assert.equal(targeting(target), null, 'confirm clears the store targeting');
-  assert.equal(target.state.abilitySelect, null, 'confirm clears the legacy mirror');
 }
 
 // --- A second pick does not leak the previous callback ---

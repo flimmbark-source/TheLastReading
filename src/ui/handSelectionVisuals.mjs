@@ -32,7 +32,7 @@ function installEmptySpaceDeselect(target = window){
   document.addEventListener('click',ev=>{
     if((target.performance?.now?.() || 0) < (target.__handGestureSuppressClickUntil || 0))return;
     const state=stateOf(target);
-    if(!state || state.selected===null || state.busy || state.abilitySelect || state.purgeSelect!==null)return;
+    if(!state || state.selected===null || state.busy || (target.tlrStore?.getState?.()?.run?.ability?.targeting||state.abilitySelect) || state.purgeSelect!==null)return;
     const eventTarget=ev.target instanceof Element?ev.target:null;
     if(isInteractiveOrCardSpace(eventTarget))return;
     state.selected=null;

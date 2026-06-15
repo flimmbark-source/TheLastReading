@@ -227,7 +227,7 @@ export function maybeShowReadingCompletionTutorial() {
 export function maybeShowPurgeTutorial() {
   const st = window.state;
   if (!tutDone || tutStep >= 0 || localStorage.getItem(TUT_PURGE_KEY) || !st) return;
-  if (st.discards !== 0 || !Array.isArray(st.hand) || st.hand.length < 4 || st.busy || st.abilitySelect || st.purgeSelect !== null) return;
+  if (st.discards !== 0 || !Array.isArray(st.hand) || st.hand.length < 4 || st.busy || (window.tlrStore?.getState?.()?.run?.ability?.targeting||st.abilitySelect) || st.purgeSelect !== null) return;
   const btn = document.querySelector('#purgeBtn');
   if (!btn || btn.disabled) return;
   queueTip(TUT_STEP.PURGE);

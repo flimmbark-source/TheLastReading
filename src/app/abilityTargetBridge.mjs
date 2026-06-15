@@ -60,33 +60,8 @@ function syncLegacySelectionToStore(target) {
   });
 }
 
-function syncStoreSelectionToLegacy(target) {
-  const state = stateOf(target);
-  if (!state) return;
-  const targeting = storeTargeting(target);
-  if (!targeting) {
-    if (state.abilitySelect && state.abilitySelect.__storeOwned) state.abilitySelect = null;
-    clearPendingCallbacks();
-    return;
-  }
-
-  const previous = state.abilitySelect || {};
-  state.abilitySelect = {
-    ...previous,
-    __storeOwned: true,
-    title: targeting.title || previous.title || '',
-    prompt: targeting.prompt || previous.prompt || '',
-    validIds: new Set(targeting.validCardIds || []),
-    picked: [...(targeting.pickedCardIds || [])],
-    count: targeting.count || previous.count || 1,
-    cb: pendingCallbacks.cb ?? previous.cb,
-    previewFn: pendingCallbacks.previewFn ?? previous.previewFn,
-  };
-}
-
 function syncBoth(target) {
   syncLegacySelectionToStore(target);
-  syncStoreSelectionToLegacy(target);
 }
 
 function allSelectableCards(target) {
@@ -125,7 +100,6 @@ export function installAbilityTargetBridge(target = window) {
         type: START_ABILITY_TARGETING,
         selection: { title: title || '', prompt: prompt || '', validCardIds: [...validCardIds], count: count || 1 },
       });
-      syncStoreSelectionToLegacy(target);
     } else {
       const state = stateOf(target);
       if (state) state.abilitySelect = { title, prompt, validIds: new Set(validCardIds), picked: [], count, cb, previewFn };
@@ -135,11 +109,10 @@ export function installAbilityTargetBridge(target = window) {
 
   target.handleAbilityHandClick = function (card) {
     const state = stateOf(target);
-    if (!card || !state?.abilitySelect) return;
+    if (!card || !(storeTargeting(target) || state?.abilitySelect)) return;
     syncBoth(target);
     if (storeReady(target)) {
       target.tlrStore.dispatch({ type: TOGGLE_ABILITY_TARGET, cardId: card.uid });
-      syncStoreSelectionToLegacy(target);
     } else {
       const selection = state.abilitySelect;
       if (!selection.validIds?.has?.(card.uid)) return;
@@ -155,11 +128,12 @@ export function installAbilityTargetBridge(target = window) {
 
   target.confirmAbilitySelection = function () {
     const state = stateOf(target);
-    if (!state?.abilitySelect) return;
+    const targeting = storeTargeting(target);
+    if (!(targeting || state?.abilitySelect)) return;
     syncBoth(target);
-    const selection = state.abilitySelect;
-    const pickedIds = storeTargeting(target)?.pickedCardIds || selection.picked || [];
-    if (pickedIds.length < (selection.count || 1)) return;
+    const selection = state?.abilitySelect || {};
+    const pickedIds = targeting?.pickedCardIds || selection.picked || [];
+    if (pickedIds.length < (targeting?.count || selection.count || 1)) return;
 
     const cards = allSelectableCards(target);
     const picked = pickedIds.map(id => cards.find(card => card.uid === id)).filter(Boolean);
@@ -167,7 +141,7 @@ export function installAbilityTargetBridge(target = window) {
     clearPendingCallbacks();
 
     if (storeReady(target)) target.tlrStore.dispatch({ type: CLEAR_ABILITY_TARGETING });
-    state.abilitySelect = null;
+    if (state) state.abilitySelect = null;
     if (typeof target.render === 'function') target.render();
     if (typeof cb === 'function') cb(...picked);
   };
