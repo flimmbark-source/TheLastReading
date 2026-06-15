@@ -21,11 +21,15 @@ Multiplayer rooms use Ably Pub/Sub channels named `tlr:room:<ROOMCODE>`. The bro
 Required setup:
 
 1. Create an Ably app and API key with `publish`, `subscribe`, `presence`, and `history` permissions.
-2. In Netlify, add this environment variable:
+2. In Netlify, add an environment variable for the Ably key. The token function accepts either name:
 
 ```sh
+ABLYAPIKEY=your-key-name:your-key-secret
+# or
 ABLY_API_KEY=your-key-name:your-key-secret
 ```
+
+Use `ABLYAPIKEY` if the Netlify UI you are using rejects underscores in variable names.
 
 3. Deploy the site normally. Netlify will serve `netlify/functions/ably-token.mjs` at `/.netlify/functions/ably-token`.
 
