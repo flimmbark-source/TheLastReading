@@ -7,10 +7,6 @@ function normalizeShuffleMode(value) {
   return value === MP_SHUFFLE_MODES.WHEN_EMPTY ? MP_SHUFFLE_MODES.WHEN_EMPTY : MP_SHUFFLE_MODES.EACH_ROUND;
 }
 
-function shuffleLabel(value) {
-  return normalizeShuffleMode(value) === MP_SHUFFLE_MODES.EACH_ROUND ? 'Each Round' : 'When Empty';
-}
-
 function readShuffleMode(target = window) {
   try { return normalizeShuffleMode(target.localStorage?.getItem(STORAGE_KEY)); }
   catch (_) { return MP_SHUFFLE_MODES.EACH_ROUND; }
@@ -135,6 +131,8 @@ export function installMpMatchSettings(target = window) {
     function wrapped(action) {
       let nextAction = action;
       if (action?.type === MP_ACTIONS.MP_INIT) {
+        // Only the host/CPU can send MP_INIT. Guests may choose local UI settings,
+        // but the match follows the host-authored init action.
         nextAction = { ...action, shuffleMode: readShuffleMode(target) };
       }
       return original.call(this, nextAction);
@@ -149,4 +147,13 @@ export function installMpMatchSettings(target = window) {
   target.setTimeout?.(wrapShow, 0);
   target.setTimeout?.(wrapDispatch, 0);
   target.setTimeout?.(wrapDispatch, 500);
+  target.setTimeout?.(wrapDispatch, 1500);
+}
+
+if (typeof window !== 'undefined') {
+  const install = () => installMpMatchSettings(window);
+  install();
+  window.setTimeout?.(install, 0);
+  window.setTimeout?.(install, 500);
+  window.setTimeout?.(install, 1500);
 }
