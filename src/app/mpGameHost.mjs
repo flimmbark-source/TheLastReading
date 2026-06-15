@@ -103,6 +103,10 @@ function installOverlayLayerFix(doc) {
     body.mp-game-active #hand .card{z-index:2147481202!important}
     body.mp-game-active #hand .card.sel,
     body.mp-game-active #hand .card:hover{z-index:2147481300!important}
+    body.mp-game-active .mp-bar{justify-content:flex-start!important;position:relative!important;padding-right:230px!important}
+    body.mp-game-active .mp-leave-btn{flex:0 0 auto!important}
+    body.mp-game-active .mp-turn-badge{flex:0 1 auto!important;text-align:left!important;margin-left:8px!important;margin-right:auto!important;max-width:calc(100vw - 340px)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+    body.mp-game-active .mp-round-label{display:none!important}
     body.mp-game-active #mpOverlay.mp-hide-between-results{display:none!important;pointer-events:none!important}
     body.mp-game-active #mpOverlay:not(.mp-ov-hidden){position:fixed!important;inset:0!important;z-index:2147483000!important}
     body.mp-game-active .refs-layer{position:fixed!important;z-index:2147483100!important;pointer-events:none!important}
