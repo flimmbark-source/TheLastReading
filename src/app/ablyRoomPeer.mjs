@@ -122,13 +122,14 @@ export class AblyRoomPeer {
       return;
     }
 
+    const previousPeerId = this._lastPeerId;
     this._lastPeerId = opposite.clientId;
     if (!this._connected) {
       this._connected = true;
       this.onopen?.();
     }
 
-    if (!this._announcedPeerProfile || this._lastPeerId !== opposite.clientId) {
+    if (!this._announcedPeerProfile || previousPeerId !== opposite.clientId) {
       this._announcedPeerProfile = true;
       this.onmessage?.({ type: 'mp-profile', profile: { ...(opposite.data?.profile || {}) } });
     }
