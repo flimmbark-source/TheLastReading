@@ -23,6 +23,7 @@ function installMpHostFixes(target = window) {
 
   installOverlayLayerFix(doc);
   installEmptySpaceDeselect(target, doc);
+  installMpModalFlowFix(target, doc);
   removeInjectedMpTopRefTabs(doc);
   restoreExistingRefButtons(doc);
 
@@ -103,6 +104,11 @@ function installOverlayLayerFix(doc) {
     body.mp-game-active #hand .card{z-index:2147481202!important}
     body.mp-game-active #hand .card.sel,
     body.mp-game-active #hand .card:hover{z-index:2147481300!important}
+    body.mp-game-active #modal.show,
+    body.mp-game-active #modal.collapsed{z-index:2147483300!important;pointer-events:auto!important}
+    body.mp-game-active.mp-overlay-active #mpGame{z-index:2147483400!important}
+    body.mp-game-active.mp-overlay-active #mpOverlay:not(.mp-ov-hidden){position:fixed!important;inset:0!important;z-index:2147483500!important}
+    body.mp-game-active.mp-overlay-active #mpOvBox{position:relative!important;z-index:2147483510!important}
     body.mp-game-active .mp-bar{justify-content:flex-start!important;position:relative!important;padding-right:230px!important}
     body.mp-game-active .mp-leave-btn{flex:0 0 auto!important}
     body.mp-game-active .mp-turn-badge{flex:0 1 auto!important;text-align:left!important;margin-left:8px!important;margin-right:auto!important;max-width:calc(100vw - 340px)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
@@ -120,6 +126,75 @@ function installOverlayLayerFix(doc) {
     body.mp-game-active #scoringPullWrap.open,
     body.mp-game-active #abilitiesPullWrap.open{pointer-events:auto!important}
   `;
+}
+
+function installMpModalFlowFix(target, doc) {
+  if (target.__tlrMpModalFlowFixInstalled) return;
+  target.__tlrMpModalFlowFixInstalled = true;
+
+  const modal = () => doc.getElementById('modal');
+  const toggle = () => doc.getElementById('modalToggle');
+  const choices = () => doc.getElementById('choices');
+  const abilityPrompt = () => doc.getElementById('abilityPrompt');
+  const isMp = () => doc.body.classList.contains('mp-game-active');
+
+  const openCurrentModalStep = () => {
+    const m = modal();
+    if (!isMp() || !m || !m.classList.contains('show')) return;
+    if (m.classList.contains('collapsed')) {
+      m.classList.remove('collapsed');
+      const t = toggle();
+      if (t) t.textContent = 'Hide';
+    }
+    abilityPrompt()?.classList.remove('show');
+  };
+
+  const closeStaleModalForPrompt = () => {
+    const prompt = abilityPrompt();
+    const m = modal();
+    if (!isMp() || !prompt || !m || !prompt.classList.contains('show')) return;
+    m.classList.remove('show', 'collapsed');
+    const t = toggle();
+    if (t) t.textContent = 'Hide';
+    const ch = choices();
+    if (ch) ch.innerHTML = '';
+  };
+
+  const observeModalContent = () => {
+    const title = doc.getElementById('modalTitle');
+    const prompt = doc.getElementById('modalPrompt');
+    const ch = choices();
+    if (!title || !prompt || !ch || target.__tlrMpModalContentObserver) return;
+    const observer = new MutationObserver(() => openCurrentModalStep());
+    observer.observe(title, { childList: true, characterData: true, subtree: true });
+    observer.observe(prompt, { childList: true, characterData: true, subtree: true });
+    observer.observe(ch, { childList: true });
+    target.__tlrMpModalContentObserver = observer;
+  };
+
+  const observeAbilityPrompt = () => {
+    const prompt = abilityPrompt();
+    if (!prompt || target.__tlrMpAbilityPromptObserver) return;
+    const observer = new MutationObserver(() => closeStaleModalForPrompt());
+    observer.observe(prompt, { attributes: true, attributeFilter: ['class'] });
+    target.__tlrMpAbilityPromptObserver = observer;
+  };
+
+  doc.addEventListener('click', event => {
+    if (!isMp()) return;
+    if (!event.target?.closest?.('#modalToggle')) return;
+    target.requestAnimationFrame?.(() => {
+      const m = modal();
+      const t = toggle();
+      if (!m || !m.classList.contains('show')) return;
+      if (t) t.textContent = m.classList.contains('collapsed') ? 'Show' : 'Hide';
+    });
+  }, true);
+
+  observeModalContent();
+  observeAbilityPrompt();
+  target.setTimeout?.(observeModalContent, 500);
+  target.setTimeout?.(observeAbilityPrompt, 500);
 }
 
 function shouldPreserveSelection(action, myIndex) {
