@@ -1,5 +1,6 @@
 // Lightweight first-paint boot.
 // Keeps the main menu responsive before loading the full game module graph.
+import { installMarketAudioRotation } from './marketAudioRotation.mjs';
 
 const GAME_MODULE = './main.mjs?v=lazy-boot-1';
 const DEFERRED_ASSETS_MODULE = './deferredAssets.mjs?v=lazy-boot-1';
@@ -7,6 +8,8 @@ const DEFERRED_ASSETS_MODULE = './deferredAssets.mjs?v=lazy-boot-1';
 let gamePromise = null;
 let deferredAssetsPromise = null;
 let bootAction = null;
+
+installMarketAudioRotation(window);
 
 function hasSavedProgress(storage) {
   try {
