@@ -120,10 +120,10 @@ function addNearCourtHints({ hints, seen, card, allCards }) {
   else if (sameRank.length >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.THREE_OF_A_KIND.label, `rank:${card.rank}`);
 
   const sameSuitRanks = new Set(allCards.filter(other => other.type === 'court' && other.suit === card.suit).map(other => other.rank));
-  if (sameSuitRanks.size >= 3) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.ROYAL_COURT.label, `flush:${card.suit}`);
+  if (sameSuitRanks.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.ROYAL_COURT.label, `flush:${card.suit}`);
 
   const ranks = new Set(allCards.filter(other => other.type === 'court').map(other => other.rank));
-  if (ranks.size >= 3) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.FULL_COURT.label);
+  if (ranks.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.FULL_COURT.label);
 }
 
 export function getCardHints(card, state, options = {}) {
