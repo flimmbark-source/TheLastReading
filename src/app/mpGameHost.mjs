@@ -20,20 +20,28 @@ function installMpHostFixes(target = window) {
 
   let stateRef = null;
   let myIndex = 0;
+  let refTabsHome = null;
 
   installOverlayLayerFix(doc);
   removeInjectedMpTopRefTabs(doc);
 
   const syncLater = () => {
+    mountExistingRefTabs(doc, refTabsHomeRef);
     removeInjectedMpTopRefTabs(doc);
     suppressBetweenSetResults(doc);
     syncMultSpans(target, doc, stateRef, myIndex);
     target.requestAnimationFrame?.(() => {
+      mountExistingRefTabs(doc, refTabsHomeRef);
       removeInjectedMpTopRefTabs(doc);
       suppressBetweenSetResults(doc);
       syncMultSpans(target, doc, stateRef, myIndex);
       syncOverlayLayerClass(doc);
     });
+  };
+
+  const refTabsHomeRef = {
+    get value() { return refTabsHome; },
+    set value(next) { refTabsHome = next; },
   };
 
   const onMatchStart = target.tlrMpOnMatchStart;
@@ -72,6 +80,7 @@ function installMpHostFixes(target = window) {
     target.tlrMpLeave = function () {
       stateRef = null;
       removeInjectedMpTopRefTabs(doc);
+      restoreExistingRefTabs(doc, refTabsHomeRef);
       doc.body.classList.remove('mp-overlay-active');
       return onLeave.apply(this, arguments);
     };
@@ -91,18 +100,53 @@ function installOverlayLayerFix(doc) {
     body.mp-game-active #mpOverlay:not(.mp-ov-hidden){position:fixed!important;inset:0!important;z-index:2147483000!important}
     body.mp-game-active .refs-layer{position:fixed!important;z-index:2147483100!important;pointer-events:none!important}
     body.mp-game-active .refs-layer .ref:not(.hidden){pointer-events:auto!important}
-    body.mp-game-active #titleWrap{display:block!important;position:fixed!important;top:8px!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;z-index:2147483200!important;pointer-events:none!important;width:auto!important;margin:0!important;padding:0!important}
-    body.mp-game-active #titleRow{display:flex!important;align-items:center!important;justify-content:center!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
-    body.mp-game-active #titleContent{display:block!important;margin:0!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
-    body.mp-game-active #titleWrap .actions{display:flex!important;align-items:center!important;gap:6px!important;margin:0!important;padding:0!important;pointer-events:auto!important}
-    body.mp-game-active #titleWrap #menuBtn,
-    body.mp-game-active #titleWrap #settingsPanel,
-    body.mp-game-active #titleWrap #mullBtn{display:none!important}
-    body.mp-game-active #titleWrap #scoringBtn,
-    body.mp-game-active #titleWrap #abilitiesBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:26px!important;padding:0 9px!important;border-radius:999px!important;border:1px solid rgba(180,140,90,.36)!important;background:rgba(28,18,10,.58)!important;color:#b09060!important;font:800 10px/1 system-ui,sans-serif!important;letter-spacing:.08em!important;text-transform:uppercase!important;cursor:pointer!important}
-    body.mp-game-active #titleWrap #scoringBtn:hover,
-    body.mp-game-active #titleWrap #abilitiesBtn:hover{color:#f0d58a!important;border-color:rgba(220,176,92,.62)!important;background:rgba(70,44,18,.78)!important}
+    .mp-existing-ref-tabs{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
+    .mp-existing-ref-tabs #scoringBtn,
+    .mp-existing-ref-tabs #abilitiesBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;height:26px!important;padding:0 9px!important;border-radius:999px!important;border:1px solid rgba(180,140,90,.36)!important;background:rgba(28,18,10,.58)!important;color:#b09060!important;font:800 10px/1 system-ui,sans-serif!important;letter-spacing:.08em!important;text-transform:uppercase!important;cursor:pointer!important;margin:0!important}
+    .mp-existing-ref-tabs #scoringBtn:hover,
+    .mp-existing-ref-tabs #abilitiesBtn:hover{color:#f0d58a!important;border-color:rgba(220,176,92,.62)!important;background:rgba(70,44,18,.78)!important}
   `;
+}
+
+function mountExistingRefTabs(doc, homeRef) {
+  const bar = doc.querySelector('#mpGame .mp-bar');
+  const scoring = doc.getElementById('scoringBtn');
+  const abilities = doc.getElementById('abilitiesBtn');
+  if (!bar || !scoring || !abilities) return;
+
+  let wrap = doc.getElementById('mpExistingRefTabs');
+  if (!wrap) {
+    wrap = doc.createElement('div');
+    wrap.id = 'mpExistingRefTabs';
+    wrap.className = 'mp-existing-ref-tabs';
+  }
+
+  if (!homeRef.value) {
+    homeRef.value = { parent: scoring.parentElement, next: scoring.nextSibling };
+  }
+
+  if (scoring.parentElement !== wrap) wrap.appendChild(scoring);
+  if (abilities.parentElement !== wrap) wrap.appendChild(abilities);
+
+  const round = doc.getElementById('mpRoundLabel');
+  if (wrap.parentElement !== bar) {
+    if (round?.parentElement === bar) bar.insertBefore(wrap, round);
+    else bar.appendChild(wrap);
+  }
+}
+
+function restoreExistingRefTabs(doc, homeRef) {
+  const home = homeRef.value;
+  const scoring = doc.getElementById('scoringBtn');
+  const abilities = doc.getElementById('abilitiesBtn');
+  const wrap = doc.getElementById('mpExistingRefTabs');
+  const parent = home?.parent || doc.querySelector('#titleWrap .actions');
+  if (parent && scoring && abilities) {
+    parent.insertBefore(abilities, parent.firstChild);
+    parent.insertBefore(scoring, abilities);
+  }
+  wrap?.remove();
+  homeRef.value = null;
 }
 
 function removeInjectedMpTopRefTabs(doc) {
