@@ -147,6 +147,15 @@ function installMpModalFlowFix(target, doc) {
     t.textContent = m.classList.contains('collapsed') ? 'Show' : 'Hide';
   }
 
+  function clearUnderlyingTargetSelector() {
+    doc.querySelectorAll('body.mp-game-active #hand .card, body.mp-game-active #spread .card').forEach(cardEl => {
+      cardEl.classList.remove('ability-target', 'ability-picked', 'ability-disabled');
+    });
+    doc.querySelectorAll('body.mp-game-active #spread .slot').forEach(slot => {
+      slot.classList.remove('ability-target-slot', 'ability-picked-slot', 'ability-disabled-slot', 'ability-empty-slot');
+    });
+  }
+
   function hideCardChoiceModal({ clearChoices = false } = {}) {
     const m = modal();
     if (!m) return;
@@ -162,6 +171,7 @@ function installMpModalFlowFix(target, doc) {
   function hideAnchorPrompt() {
     abilityPrompt()?.classList.remove('show');
     purgePrompt()?.classList.remove('show');
+    clearUnderlyingTargetSelector();
   }
 
   function showOnlyCardChoiceModal() {
@@ -230,6 +240,12 @@ function closeAllMpAbilitySurfaces(doc) {
   doc.getElementById('modal')?.classList.remove('show', 'collapsed');
   doc.getElementById('abilityPrompt')?.classList.remove('show');
   doc.getElementById('purgePrompt')?.classList.remove('show');
+  doc.querySelectorAll('body.mp-game-active #hand .card, body.mp-game-active #spread .card').forEach(cardEl => {
+    cardEl.classList.remove('ability-target', 'ability-picked', 'ability-disabled');
+  });
+  doc.querySelectorAll('body.mp-game-active #spread .slot').forEach(slot => {
+    slot.classList.remove('ability-target-slot', 'ability-picked-slot', 'ability-disabled-slot', 'ability-empty-slot');
+  });
   const toggle = doc.getElementById('modalToggle');
   if (toggle) toggle.textContent = 'Hide';
 }
