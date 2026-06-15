@@ -151,6 +151,13 @@ export function installMpGame(target = window) {
 
   function selfHandView(s, my) {
     const rawHand = s.players[my]?.hand || [];
+    if (_pendingRemovalUids.size) {
+      // Auto-evict UIDs that have already left the hand (action resolved in _state)
+      // so the set doesn't grow stale between the submit and the next match start.
+      for (const uid of _pendingRemovalUids) {
+        if (!rawHand.some(c => c.uid === uid)) _pendingRemovalUids.delete(uid);
+      }
+    }
     const hand = _pendingRemovalUids.size
       ? rawHand.filter(c => !_pendingRemovalUids.has(c.uid))
       : rawHand;
@@ -1621,13 +1628,18 @@ export function installMpGame(target = window) {
   }
 
   function resetTransientActionState() {
-    _pendingRemovalUids.clear();
+    // _pendingRemovalUids is intentionally NOT cleared here. tlrMpOnLocalAction
+    // calls this before render(), but when the local player submits first (waiting
+    // for the opponent), _state still has the card in hand. Clearing here would
+    // let the card flash back into the hand during that intermediate render.
+    // selfHandView auto-evicts entries once they leave the hand; tlrMpOnMatchStart
+    // clears the set explicitly at match start.
     _abilityPickMode = false;
     _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; _personaSwapRequested = false;
     renderMpPurgePrompt();
   }
 
-  target.tlrMpOnMatchStart = function (state, { role }) { ensureRoundMults(state, null, true); _lastScoringState = cloneState(state); _state = state; _myIndex = role === 'host' ? 0 : 1; resetTransientActionState(); _lastShownScores = [state?.players?.[0]?.totalScore ?? 0, state?.players?.[1]?.totalScore ?? 0]; clearOpponentRevealQueues(); doc.body.classList.add('mp-game-active'); mount(); el('mpGame')?.classList.remove('mp-hidden'); installPlaceCardOverride(); installRenderSpreadOverride(); installRenderHandOverride(); installPurgeOverride(); installRefreshHandStateOverride(); render(); updateScoreMultPills(state); scheduleAutoScore(); scheduleAutoNextRound(); };
+  target.tlrMpOnMatchStart = function (state, { role }) { ensureRoundMults(state, null, true); _lastScoringState = cloneState(state); _state = state; _myIndex = role === 'host' ? 0 : 1; _pendingRemovalUids.clear(); resetTransientActionState(); _lastShownScores = [state?.players?.[0]?.totalScore ?? 0, state?.players?.[1]?.totalScore ?? 0]; clearOpponentRevealQueues(); doc.body.classList.add('mp-game-active'); mount(); el('mpGame')?.classList.remove('mp-hidden'); installPlaceCardOverride(); installRenderSpreadOverride(); installRenderHandOverride(); installPurgeOverride(); installRefreshHandStateOverride(); render(); updateScoreMultPills(state); scheduleAutoScore(); scheduleAutoNextRound(); };
   target.tlrMpOnLocalAction = function (action, state) { const before = _lastScoringState ? cloneState(_lastScoringState) : cloneState(state); applyDerivedScoringState(before, state, action); if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues(); _state = state; resetTransientActionState(); render(); updateScoreMultPills(state, { includeOpponent: false }); playPlacementFeedback(before, state); _lastScoringState = cloneState(state); scheduleAutoScore(); scheduleAutoNextRound(); };
   target.tlrMpOnPeerAction = function (action, state) { const before = _lastScoringState ? cloneState(_lastScoringState) : cloneState(state); applyDerivedScoringState(before, state, action); if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues(); _state = state; resetTransientActionState(); render(); updateScoreMultPills(state, { includeOpponent: false }); playPlacementFeedback(before, state); _lastScoringState = cloneState(state); scheduleAutoScore(); scheduleAutoNextRound(); };
   target.tlrMpHandlePeerLeft = function () { const overlay = el('mpOverlay'), box = el('mpOvBox'); if (!box || !overlay) return; box.innerHTML = `<h2 class="mp-ov-title">Opponent Left</h2><p style="color:#b09060;font:400 12px/1.5 system-ui,sans-serif">Your opponent disconnected.</p><button class="mp-ov-btn" onclick="tlrMpLeave()" type="button">Return to Menu</button>`; overlay.classList.remove('mp-ov-hidden'); };
