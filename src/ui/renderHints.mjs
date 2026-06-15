@@ -27,6 +27,25 @@ function hintText(hints){
   return labels.join(' + ');
 }
 
+function hintRuntime(target=window){return target.tlrRuntime||{};}
+function hintPersist(target=window){return hintRuntime(target).persist||target.persist||{};}
+function hintSettings(target=window){return hintRuntime(target).hintSettings||{patterns:true,relics:false};}
+
+function hintsForCard(card,poolCards=null,hintState=null,target=window){
+  if(hintState&&target.tlrHints&&typeof target.tlrHints.getCardHints==='function'){
+    const settings=hintSettings(target);
+    const persist=hintPersist(target);
+    return target.tlrHints.getCardHints(card,{spread:hintState.spread||[],hand:hintState.hand||[]},{
+      poolCards:poolCards||undefined,
+      patterns:settings.patterns,
+      relics:persist.relics,
+      includeRelics:settings.relics,
+      upgrades:persist.up,
+    });
+  }
+  return cardHints(card,poolCards);
+}
+
 export function multiHintShadow(hints, level){
   const ring=level==='complete'?'1px':'0.75px';
   const parts=[];
@@ -68,8 +87,8 @@ export function colorKeyRGB(key){
 
 export function hintColor(h){return colorKeyRGB(h.colorKey)||hintRGB(h.group||hintGroup(h.label))}
 
-export function applyHint(el,card,poolCards=null){
-  let hints=dedupeHints(cardHints(card,poolCards));
+export function applyHint(el,card,poolCards=null,hintState=null){
+  let hints=dedupeHints(hintsForCard(card,poolCards,hintState));
   if(!hints.length)return;
   const hasComplete=hints.some(h=>h.level==='complete');
   const primary=hints.find(h=>h.level==='complete')||hints[0];
