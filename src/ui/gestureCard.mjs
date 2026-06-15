@@ -25,7 +25,7 @@ export function installHandCardGestures(target = window){
   const handCards=()=>{const h=handEl();return h?[...h.querySelectorAll(':scope > .card[data-uid]')]:[]};
   const storeState=()=>target.tlrStore?.getState?.()??null;
   const gestureTargeting=()=>{const s=storeState();return s?selectAbilityTargetView(s):state.abilitySelect;};
-  const inSelectionMode=()=>!!(gestureTargeting()||state.purgeSelect!==null||(storeState()?.run?.busy??state.busy));
+  const inSelectionMode=()=>!!(gestureTargeting()||(storeState()?.run?.purge??state.purgeSelect)!==null||(storeState()?.run?.busy??state.busy));
   const cancelHold=()=>{if(g&&g.holdTimer){clearTimeout(g.holdTimer);g.holdTimer=null;}};
   // Add uid to end of arr (no duplicates), trim to last max items.
   const queueUid=(arr,uid,max)=>{if(arr.includes(uid))return arr;const a=[...arr,uid];return a.length>max?a.slice(-max):a;};
@@ -120,7 +120,7 @@ export function installHandCardGestures(target = window){
       if(_t){
         if(!_t.validIds.has(uid))break;
         g.pendingUids=queueUid(g.pendingUids,uid,_t.count);
-      }else if(state.purgeSelect!==null){
+      }else if((storeState()?.run?.purge??state.purgeSelect)!==null){
         g.pendingUids=queueUid(g.pendingUids,uid,3);
       }
       break;
@@ -285,8 +285,14 @@ export function installHandCardGestures(target = window){
           state.abilitySelect.picked=pendingUids.slice(-_t.count);
         }
         if(typeof refreshHandState==='function')refreshHandState();
-      }else if(state.purgeSelect!==null&&pendingUids.length){
-        state.purgeSelect=pendingUids.slice(0,3);
+      }else if((storeState()?.run?.purge??state.purgeSelect)!==null&&pendingUids.length){
+        const s=storeState();
+        if(s&&target.tlrStore){
+          target.tlrStore.dispatch({type:'SET_PURGE_PICKS',cardIds:pendingUids});
+          state.purgeSelect=target.tlrStore.getState().run.purge?.slice()??null;
+        }else{
+          state.purgeSelect=pendingUids.slice(0,3);
+        }
         if(typeof render==='function')render();
       }
       return;
@@ -393,7 +399,7 @@ export function installHandCardGestures(target = window){
       // busy: drop pointer tracking entirely.
       if(storeState()?.run?.busy??state.busy){cancelHold();g=null;return;}
       // ability/purge: sweep-to-select mode.
-      if(gestureTargeting()||state.purgeSelect!==null){startSelectDrag(ev);return;}
+      if(gestureTargeting()||(storeState()?.run?.purge??state.purgeSelect)!==null){startSelectDrag(ev);return;}
       // normal: card drag-to-reorder / drag-to-place.
       startDrag(ev);
       return;

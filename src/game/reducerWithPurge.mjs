@@ -130,6 +130,13 @@ export function reducer(state, action) {
       return reorderHand(state, action);
     case ACTIONS.SET_BUSY:
       return replaceRun(state, { busy: !!action.busy });
+    case ACTIONS.SET_PURGE_PICKS: {
+      if (!Array.isArray(state.run.purge)) return state;
+      const picks = (action.cardIds || [])
+        .filter(id => state.run.hand.some(c => c.uid === id))
+        .slice(0, 3);
+      return replaceRun(state, { purge: picks });
+    }
     case CLEAR_ABILITY_TARGETING:
       return clearAbilityTargeting(state);
     default:

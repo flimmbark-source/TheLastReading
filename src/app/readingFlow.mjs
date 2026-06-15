@@ -21,6 +21,7 @@ import { getAbility } from '../data/abilities.mjs';
 let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 let scorePillSetBase=0;
 function setBusy(v){state.busy=v;if(tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.SET_BUSY,busy:v});}
+function syncPurgeFromStore(){const run=window.tlrStore.getState().run;state.purgeSelect=Array.isArray(run.purge)?run.purge.slice():null;state.hand=run.hand.slice();state.discards=run.discards;}
 
 function legacyScore(score){return {...score,melds:(score.melds||[]).map(m=>Array.isArray(m)?m:[m.name,m.chips,m.mult,m.mode])}}
 function syncRoundFields(_run){
@@ -50,7 +51,7 @@ export function getUpFromTable(){
 }
 
 export function flushHand(){
-  if(state&&(state.busy||(window.tlrStore?.getState?.()?.run?.ability?.targeting||state.abilitySelect)||state.purgeSelect!==null))return;
+  if(state&&(state.busy||(window.tlrStore?.getState?.()?.run?.ability?.targeting||state.abilitySelect)||(window.tlrStore?.getState?.()?.run?.purge??state.purgeSelect)!==null))return;
   tlrSyncRunToStore();
   window.tlrStore.dispatch({type:window.tlrActions.FLUSH_HAND});
   const _run=window.tlrStore.getState().run;
@@ -152,10 +153,33 @@ export function setCounterTarget(v){const floor=Math.max(counterShown,counterTar
 export function snapCounter(v){if(counterTimer){clearTimeout(counterTimer);counterTimer=null}if(counterCancel){counterCancel();counterCancel=null}counterShown=counterTarget=v;_cacheEls();_elCurrent.textContent=v;_elCurrent.style.color=''}
 export function rollCounter(from,to,dur){_cacheEls();let el=_elCurrent,start=performance.now(),dead=false,lastVal=from,popAnim=null;if(to<=from){el.textContent=from;el.style.color='';return()=>{dead=true}}function step(now){if(dead)return;let t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++){fireScoreGhost();}if(val!==lastVal){if(popAnim)popAnim.cancel();popAnim=el.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});}lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color='';holdEffects(1000);}}requestAnimationFrame(step);return()=>{dead=true;if(popAnim)popAnim.cancel();el.style.color=''}}
 
-export function startPurge(){if(state.busy||state.hand.length<3||(window.tlrStore?.getState?.()?.run?.ability?.targeting||state.abilitySelect)||state.purgeSelect!==null)return;state.purgeSelect=[];state.selected=null;render()}
-export function togglePurgeCard(uid){if(state.purgeSelect===null)return;const idx=state.purgeSelect.indexOf(uid);if(idx>=0)state.purgeSelect.splice(idx,1);else if(state.purgeSelect.length<3)state.purgeSelect.push(uid);refreshHandState()}
-export function confirmPurge(){if(!state.purgeSelect||state.purgeSelect.length!==3)return;state.hand=state.hand.filter(c=>!state.purgeSelect.includes(c.uid));state.discards++;state.purgeSelect=null;render();checkEnd()}
-export function cancelPurge(){state.purgeSelect=null;render()}
+export function startPurge(){
+  const _run=tlrStoreReady()?window.tlrStore.getState().run:null;
+  const busy=_run?.busy??state.busy;const abilityActive=_run?.ability?.targeting||state.abilitySelect;const inPurge=(_run?.purge??state.purgeSelect)!==null;
+  if(busy||state.hand.length<3||abilityActive||inPurge)return;
+  if(_run){tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.START_PURGE});syncPurgeFromStore();state.selected=null;}
+  else{state.purgeSelect=[];state.selected=null;}
+  render();
+}
+export function togglePurgeCard(uid){
+  const _run=tlrStoreReady()?window.tlrStore.getState().run:null;
+  if((_run?.purge??state.purgeSelect)===null)return;
+  if(_run){window.tlrStore.dispatch({type:window.tlrActions.TOGGLE_PURGE_CARD,cardId:uid});syncPurgeFromStore();}
+  else{const idx=state.purgeSelect.indexOf(uid);if(idx>=0)state.purgeSelect.splice(idx,1);else if(state.purgeSelect.length<3)state.purgeSelect.push(uid);}
+  refreshHandState();
+}
+export function confirmPurge(){
+  const _run=tlrStoreReady()?window.tlrStore.getState().run:null;
+  const picks=_run?.purge??state.purgeSelect;
+  if(!picks||picks.length!==3)return;
+  if(_run){tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.CONFIRM_PURGE});syncPurgeFromStore();}
+  else{state.hand=state.hand.filter(c=>!state.purgeSelect.includes(c.uid));state.discards++;state.purgeSelect=null;}
+  render();checkEnd();
+}
+export function cancelPurge(){
+  if(tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.CANCEL_PURGE});
+  state.purgeSelect=null;render();
+}
 
 export function discardSelected(){
   if(state.busy||state.selected===null)return;

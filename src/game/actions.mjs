@@ -29,6 +29,7 @@ export const ACTIONS = Object.freeze({
   FLUSH_HAND: 'FLUSH_HAND',
   REORDER_HAND: 'REORDER_HAND',
   SET_BUSY: 'SET_BUSY',
+  SET_PURGE_PICKS: 'SET_PURGE_PICKS',
 });
 
 export const startReading = () => ({ type: ACTIONS.START_READING });
