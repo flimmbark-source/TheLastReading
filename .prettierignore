@@ -1,0 +1,17 @@
+# Binary assets
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.mp3
+*.wav
+*.ogg
+
+# Dependencies and lockfiles
+node_modules/
+package-lock.json
+
+# Legacy/extracted gameplay modules use a deliberately terse one-line style.
+# Reformatting them would create huge, review-hostile diffs with no behavior
+# change, so they are formatted only when individually touched.
+src/app/

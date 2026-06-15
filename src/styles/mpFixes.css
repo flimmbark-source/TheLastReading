@@ -32,9 +32,15 @@ body.mp-game-active #purgePrompt.show {
   z-index: 2147483000 !important;
 }
 
-body.mp-game-active #mpDiscardBtn::before { content: 'Discard' !important; }
-body.mp-game-active #mpPurgeBtn::before { content: 'Purge' !important; }
+body.mp-game-active #mpDiscardBtn::before { content: 'Discard' !important; font-size: 11px !important; color: inherit !important; }
+body.mp-game-active #mpPurgeBtn::before   { content: 'Purge' !important;   font-size: 11px !important; color: inherit !important; }
 body.mp-game-active #mpAbilityBtn::before { content: 'Ability' !important; }
+
+/* Ensure the sprite sheet from market.css never bleeds through. */
+body.mp-game-active #mpDiscardBtn,
+body.mp-game-active #mpPurgeBtn {
+  background-image: none !important;
+}
 
 body.mp-game-active #mpAbilityBtn {
   display: none !important;
@@ -151,5 +157,114 @@ body.mp-game-active .spread-wrap {
   body.mp-game-active .spread-wrap {
     bottom: 186px !important;
     height: 150px !important;
+  }
+}
+
+/* ── Desktop / wide layout ──────────────────────────────────────────────
+   The mobile layout stacks the spreads vertically, which collide on wide
+   screens. On desktop, lay the duel out horizontally: the player's spread on
+   the left, the opponent's on the right, both tilted inward, with the score /
+   threshold pills centered between them. The player's hand stays at the bottom. */
+@media (min-width: 641px) {
+  /* Player spread → far left, full-size cards, tilted inward toward the centre. */
+  body.mp-game-active .spread-wrap {
+    position: fixed !important;
+    top: 34% !important;
+    bottom: auto !important;
+    left: -2vw !important;
+    right: auto !important;
+    width: 680px !important;
+    max-width: 50vw !important;
+    height: auto !important;
+    padding: 0 !important;
+    transform: translateY(-50%) rotate(15deg) !important;
+    transform-origin: left center !important;
+    z-index: 9400 !important;
+  }
+  body.mp-game-active #spread {
+    padding: 0 !important;
+    min-height: 0 !important;
+    transform: none !important;
+    justify-content: center !important;
+  }
+
+  /* Opponent spread → right side, full-size cards, mirrored inward tilt. */
+  body.mp-game-active .mp-opp-spread-clip {
+    position: fixed !important;
+    top: 34% !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: -2vw !important;
+    width: 680px !important;
+    max-width: 50vw !important;
+    height: auto !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    transform: translateY(-50%) rotate(-15deg) !important;
+    transform-origin: right center !important;
+    z-index: 9400 !important;
+  }
+  body.mp-game-active .mp-opp-spread-transform {
+    position: static !important;
+  }
+  body.mp-game-active #mpOppSpread {
+    padding: 0 !important;
+    min-height: 0 !important;
+    justify-content: center !important;
+  }
+
+  /* Pills → centred grid, generously shifted above the midpoint.
+     5-column layout: [player-mult] [player-pills] [centre] [opp-pills] [opp-mult]
+     display:contents on the opp/self bands makes their pill children (including
+     the mult spans placed by JS) participate directly in the grid, so each can
+     be placed independently. Mobile flex-row layout is completely unchanged. */
+  body.mp-game-active .mp-mid-wrap {
+    position: fixed !important;
+    top: 22% !important;
+    bottom: auto !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translate(-50%, -50%) !important;
+    display: grid !important;
+    grid-template-columns: auto 118px auto 118px auto !important;
+    grid-template-rows: auto auto auto auto !important;
+    gap: 5px 6px !important;
+    align-items: center !important;
+    width: auto !important;
+    padding: 0 !important;
+  }
+
+  /* Flatten opp/self bands — their pill children enter the grid directly. */
+  body.mp-game-active .mp-pills-opp,
+  body.mp-game-active .mp-pills-self { display: contents !important; }
+
+  /* Row 1 — discs in player col (2) and opp col (4). */
+  body.mp-game-active .mp-pill-my-disc   { grid-row: 1 !important; grid-column: 2 !important; }
+  body.mp-game-active .mp-pill-opp-disc  { grid-row: 1 !important; grid-column: 4 !important; }
+  /* Row 2 — threshold band spans all 5 columns. */
+  body.mp-game-active .mp-pills-mid      { grid-row: 2 !important; grid-column: 1 / -1 !important; }
+  /* Row 3 — [mult] [my-score] (centre gap) [opp-score] [mult] */
+  body.mp-game-active .mp-mult-inline.mp-mult-left  { grid-row: 3 !important; grid-column: 1 !important; justify-self: end !important; }
+  body.mp-game-active .mp-pill-my-score  { grid-row: 3 !important; grid-column: 2 !important; }
+  body.mp-game-active .mp-pill-opp-score { grid-row: 3 !important; grid-column: 4 !important; }
+  body.mp-game-active .mp-mult-inline.mp-mult-right { grid-row: 3 !important; grid-column: 5 !important; justify-self: start !important; }
+  /* Row 4+ — actions and action panel span full width. */
+  body.mp-game-active .mp-pills-actions  { grid-row: 4 !important; grid-column: 1 / -1 !important; }
+  body.mp-game-active .mp-action-panel   { grid-column: 1 / -1 !important; }
+
+  /* You / Foe labels flanking the threshold pill. */
+  body.mp-game-active .mp-side-label {
+    display: inline-block !important;
+    font: 600 10px/1 system-ui, sans-serif !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+    color: #7a6040 !important;
+    white-space: nowrap !important;
+    padding: 0 4px !important;
+  }
+
+  /* Shift the player hand left to align with the player's spread side. */
+  body.mp-game-active .handDock {
+    transform: translateX(-12vw) !important;
   }
 }

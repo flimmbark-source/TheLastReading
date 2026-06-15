@@ -1,4 +1,4 @@
-import { reducer } from '../game/reducer.mjs';
+import { reducer } from '../game/reducerWithPurge.mjs';
 import { createGameState } from '../game/state.mjs';
 
 export function createStore(initialState = createGameState(), rootReducer = reducer) {

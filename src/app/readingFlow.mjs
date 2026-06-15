@@ -12,13 +12,16 @@
    ghost, bump, centerGhost, fireMultGhost, fireScoreGhost, holdEffects,
    meldStr, normMeldName, sortCards, cardDisplayName, cleanName, choice,
    buildDeck, shuffle, drawN, slotsForMeld,
-   tlrSyncRunToStore, tlrStoreReady, tlrResolveAbilityThroughStore,
-   tlrAbilityDraw, tlrBindSelectionToStore, openShop,
+   tlrSyncPersistToStore, tlrStoreReady, tlrResolveAbilityThroughStore,
+   tlrAbilityDraw, openShop,
    maxHand, hasMull, tlrArchitectureSync, tlrScoreToObals */
 import { isCardUntargetable, hasActiveConstellation } from '../systems/constellations.mjs';
+import { getAbility } from '../data/abilities.mjs';
 
 let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 let scorePillSetBase=0;
+function setBusy(v){state.busy=v;if(tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.SET_BUSY,busy:v});}
+function syncPurgeFromStore(){const run=window.tlrStore.getState().run;state.purgeSelect=Array.isArray(run.purge)?run.purge.slice():null;state.hand=run.hand.slice();state.discards=run.discards;}
 
 function legacyScore(score){return {...score,melds:(score.melds||[]).map(m=>Array.isArray(m)?m:[m.name,m.chips,m.mult,m.mode])}}
 function syncRoundFields(_run){
@@ -48,14 +51,14 @@ export function getUpFromTable(){
 }
 
 export function flushHand(){
-  if(state&&(state.busy||state.abilitySelect||state.purgeSelect!==null))return;
-  tlrSyncRunToStore();
+  if(state&&(state.busy||(window.tlrStore?.getState?.()?.run?.ability?.targeting||state.abilitySelect)||(window.tlrStore?.getState?.()?.run?.purge??state.purgeSelect)!==null))return;
+  tlrSyncPersistToStore();
   window.tlrStore.dispatch({type:window.tlrActions.FLUSH_HAND});
   const _run=window.tlrStore.getState().run;
   state.hand=_run.hand.slice();state.deck=_run.deck.slice();state.discard=_run.discard.slice();
   state.spread=_run.spread.slice();state.selected=null;
   state.thBonus=_run.thresholdBonus;
-  state.busy=false;state.abilitySelect=null;state.purgeSelect=null;
+  setBusy(false);state.abilitySelect=null;state.purgeSelect=null;
   state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
   state.resonationBonus={chips:0,mult:0};
   state.roundScore=0;state.setScores=[];
@@ -68,13 +71,13 @@ export function flushHand(){
 
 export function startReading(){
   if(window.tlrCloseArchives)window.tlrCloseArchives();
-  tlrSyncRunToStore();
+  tlrSyncPersistToStore();
   window.tlrStore.dispatch({type:window.tlrActions.START_READING,deck:shuffle(buildDeck())});
   const _st=window.tlrStore.getState(),_run=_st.run;
   state.deck=_run.deck.slice();state.hand=_run.hand.slice();state.discard=[];
   state.spread=_run.spread.slice();state.purgeSelect=null;state.abilitySelect=null;state.selected=null;
   state.discards=_run.discards;state.mullCharges=_run.mulliganCharges;
-  state.busy=false;state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];
+  setBusy(false);state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];
   state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
   state.resonationBonus={chips:0,mult:0};
   state.thBonus=_run.thresholdBonus;state.thBonusPending=0;
@@ -88,13 +91,13 @@ export function startReading(){
 export function continueSet(){
   if(!state.awaitingNextSet)return;
   const recordedBase=Math.max(visibleCounterValue(),state.roundScore||0,scorePillSetBase||0);
-  tlrSyncRunToStore();
+  tlrSyncPersistToStore();
   window.tlrStore.dispatch({type:window.tlrActions.START_NEXT_SET});
   const _run=window.tlrStore.getState().run;
   state.deck=_run.deck.slice();state.hand=_run.hand.slice();state.discard=_run.discard.slice();
   state.spread=_run.spread.slice();state.purgeSelect=null;state.abilitySelect=null;state.selected=null;
   state.discards=_run.discards;state.mullCharges=_run.mulliganCharges;
-  state.busy=false;state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
+  setBusy(false);state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
   state.resonationBonus={chips:0,mult:0};
   syncRoundFields(_run);
   playSound('shuffle');
@@ -107,7 +110,6 @@ export function placeCard(i){
   let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;
   const beforeMelds=new Map(_scoreLegacy(state.spread.filter(Boolean)).melds.map(x=>[x[0],x]));
   let c=state.hand[idx];
-  tlrSyncRunToStore();
   window.tlrStore.dispatch({type:window.tlrActions.PLACE_CARD,slotIndex:i});
   const _run=window.tlrStore.getState().run;
   state.hand=_run.hand.slice();
@@ -150,10 +152,33 @@ export function setCounterTarget(v){const floor=Math.max(counterShown,counterTar
 export function snapCounter(v){if(counterTimer){clearTimeout(counterTimer);counterTimer=null}if(counterCancel){counterCancel();counterCancel=null}counterShown=counterTarget=v;_cacheEls();_elCurrent.textContent=v;_elCurrent.style.color=''}
 export function rollCounter(from,to,dur){_cacheEls();let el=_elCurrent,start=performance.now(),dead=false,lastVal=from,popAnim=null;if(to<=from){el.textContent=from;el.style.color='';return()=>{dead=true}}function step(now){if(dead)return;let t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++){fireScoreGhost();}if(val!==lastVal){if(popAnim)popAnim.cancel();popAnim=el.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});}lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color='';holdEffects(1000);}}requestAnimationFrame(step);return()=>{dead=true;if(popAnim)popAnim.cancel();el.style.color=''}}
 
-export function startPurge(){if(state.busy||state.hand.length<3||state.abilitySelect||state.purgeSelect!==null)return;state.purgeSelect=[];state.selected=null;render()}
-export function togglePurgeCard(uid){if(state.purgeSelect===null)return;const idx=state.purgeSelect.indexOf(uid);if(idx>=0)state.purgeSelect.splice(idx,1);else if(state.purgeSelect.length<3)state.purgeSelect.push(uid);refreshHandState()}
-export function confirmPurge(){if(!state.purgeSelect||state.purgeSelect.length!==3)return;state.hand=state.hand.filter(c=>!state.purgeSelect.includes(c.uid));state.discards++;state.purgeSelect=null;render();checkEnd()}
-export function cancelPurge(){state.purgeSelect=null;render()}
+export function startPurge(){
+  const _run=tlrStoreReady()?window.tlrStore.getState().run:null;
+  const busy=_run?.busy??state.busy;const abilityActive=_run?.ability?.targeting||state.abilitySelect;const inPurge=(_run?.purge??state.purgeSelect)!==null;
+  if(busy||state.hand.length<3||abilityActive||inPurge)return;
+  if(_run){window.tlrStore.dispatch({type:window.tlrActions.START_PURGE});syncPurgeFromStore();state.selected=null;}
+  else{state.purgeSelect=[];state.selected=null;}
+  render();
+}
+export function togglePurgeCard(uid){
+  const _run=tlrStoreReady()?window.tlrStore.getState().run:null;
+  if((_run?.purge??state.purgeSelect)===null)return;
+  if(_run){window.tlrStore.dispatch({type:window.tlrActions.TOGGLE_PURGE_CARD,cardId:uid});syncPurgeFromStore();}
+  else{const idx=state.purgeSelect.indexOf(uid);if(idx>=0)state.purgeSelect.splice(idx,1);else if(state.purgeSelect.length<3)state.purgeSelect.push(uid);}
+  refreshHandState();
+}
+export function confirmPurge(){
+  const _run=tlrStoreReady()?window.tlrStore.getState().run:null;
+  const picks=_run?.purge??state.purgeSelect;
+  if(!picks||picks.length!==3)return;
+  if(_run){window.tlrStore.dispatch({type:window.tlrActions.CONFIRM_PURGE});syncPurgeFromStore();}
+  else{state.hand=state.hand.filter(c=>!state.purgeSelect.includes(c.uid));state.discards++;state.purgeSelect=null;}
+  render();checkEnd();
+}
+export function cancelPurge(){
+  if(tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.CANCEL_PURGE});
+  state.purgeSelect=null;render();
+}
 
 export function discardSelected(){
   if(state.busy||state.selected===null)return;
@@ -162,7 +187,7 @@ export function discardSelected(){
   if(!free&&state.discards<=0)return;
   let idx=state.hand.findIndex(c=>c.uid===selectedBefore);if(idx<0)return;
   let c=state.hand[idx];
-  tlrSyncRunToStore();
+  tlrSyncPersistToStore();
   window.tlrStore.dispatch({type:window.tlrActions.DISCARD_SELECTED});
   const _run=window.tlrStore.getState().run;
   if(_run.selectedCardId===selectedBefore)return;
@@ -197,13 +222,13 @@ export function resolveAbility(ab,done,sourceCard=null){
   else{if(ab&&tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.CANCEL_ABILITY});done()}
 }
 
-function peek(n,done){state.busy=true;let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){state.busy=false;done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{
+function peek(n,done){setBusy(true);let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){setBusy(false);done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{
   tlrResolveAbilityThroughStore({kind:'take',heldCards:cards,takenCardId:p.uid});
-  state.busy=false;done()})}
+  setBusy(false);done()})}
 
-function search(done){state.busy=true;if(!state.deck.length){state.busy=false;done();return}choice('Search deck','Pick any card. The deck reshuffles.',sortCards(state.deck),p=>{
+function search(done){setBusy(true);if(!state.deck.length){setBusy(false);done();return}choice('Search deck','Pick any card. The deck reshuffles.',sortCards(state.deck),p=>{
   tlrResolveAbilityThroughStore({kind:'search',takenCardId:p.uid});
-  playSound('shuffle');state.busy=false;done()})}
+  playSound('shuffle');setBusy(false);done()})}
 
 function inPlay(){return[...state.hand,...state.spread.filter(Boolean)]}
 function neighbor(t){return window.tlrAbilities.cardsInDeckByIds(state.deck,window.tlrAbilities.neighborCardIds(t))}
@@ -214,11 +239,17 @@ function betweenPool(a,b){
   return window.tlrAbilities.cardsInDeckByIds(state.deck,window.tlrAbilities.betweenCardIds(a,b));
 }
 function uniqueCards(cards){let seen=new Set();return cards.filter(c=>{if(seen.has(c.uid))return false;seen.add(c.uid);return true})}
-function fallbackAbility(done,title='No valid ability result'){tlrAbilityDraw(1);choice(title,'No valid target was available. Draw 1 instead.',state.hand.slice(-1),()=>{state.busy=false;done()})}
+function fallbackAbility(done,title='No valid ability result'){tlrAbilityDraw(1);choice(title,'No valid target was available. Draw 1 instead.',state.hand.slice(-1),()=>{setBusy(false);done()})}
 
 export function selectFromHand(title,prompt,cards,count,cb,previewFn=null){
-  state.abilitySelect={title,prompt,validIds:new Set(cards.map(c=>c.uid)),picked:[],count,cb,previewFn};
-  render();
+  const validCardIds=cards.map(c=>c.uid);
+  // Store-native initiation: the ability targeting selection is owned by the
+  // store via the bridge; the legacy `state.abilitySelect` is rebuilt from it
+  // for the current renderer. Fall back to the legacy write if the bridge is
+  // not installed (e.g. headless/non-store environments).
+  if(typeof window.tlrStartAbilityTargeting==='function'){
+    window.tlrStartAbilityTargeting({title,prompt,validCardIds,count,cb,previewFn});
+  }
 }
 
 export function handleAbilityHandClick(card){
@@ -244,30 +275,36 @@ export function confirmAbilitySelection(){
   cb(...picked);
 }
 
+// Between reveals only the ability's `count` cards (2), matching the multiplayer
+// reducer. The reveal cap was previously bolted on by betweenAbilityLimitPatch;
+// it now lives here in the host.
 function betweenAbility(done,sourceCard=null){
-  state.busy=true;
+  setBusy(true);
+  const limit=Math.max(1,Number(getAbility('BETWEEN_2')?.count||2));
   const anchors=sortCards(targetable([...state.hand,...state.spread.filter(Boolean)]));
   const validAnchors=anchors.filter(a=>anchors.some(b=>b.uid!==a.uid&&betweenPool(a,b).length>0));
   if(!validAnchors.length){fallbackAbility(done,'Between — no cards between');return}
   const previewFn=(a,b)=>{
     if(!a||!b)return'';
     const total=betweenPool(a,b).length;
-    return total?('Between these anchors: '+total+' card'+(total===1?'':'s')):'No cards between these anchors.';
+    if(!total)return'No cards between these anchors.';
+    const shown=Math.min(limit,total);
+    return 'Between these anchors: '+shown+' of '+total+' card'+(total===1?'':'s')+' will be revealed';
   };
-  selectFromHand('Between','Choose 2 cards. Between finds cards whose values fall between them in sequence.',validAnchors,2,(a,b)=>{
-    const found=uniqueCards(betweenPool(a,b));
+  selectFromHand('Between','Choose 2 cards. Between reveals up to '+limit+' cards whose values fall between them in sequence.',validAnchors,2,(a,b)=>{
+    const found=sortCards(uniqueCards(betweenPool(a,b))).slice(0,limit);
     if(!found.length){
-      state.busy=false;done();return;
+      setBusy(false);done();return;
     }
     choice('Between — '+cleanName(a)+' / '+cleanName(b),'Cards found between them. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
       tlrResolveAbilityThroughStore({kind:'take',heldCards:found,takenCardId:p.uid,threadBond:true});
-      state.busy=false;done();
+      setBusy(false);done();
     });
   },previewFn);
 }
 
 function relation(title,prompt,poolFn,n,done){
-  state.busy=true;
+  setBusy(true);
   const candidates=targetable(inPlay()).filter(c=>poolFn(c).length>0);
   if(!candidates.length){fallbackAbility(done,title+' — no matching cards');return}
   const previewFn=(t)=>{
@@ -278,11 +315,11 @@ function relation(title,prompt,poolFn,n,done){
   selectFromHand(title,prompt,candidates,1,(t)=>{
     const found=sortCards(poolFn(t)).slice(0,n);
     if(!found.length){
-      state.busy=false;done();return;
+      setBusy(false);done();return;
     }
     choice(title+' — '+cleanName(t),'Cards found from '+cleanName(t)+'. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
       tlrResolveAbilityThroughStore({kind:'take',heldCards:found,takenCardId:p.uid,threadBond:title==='Kin'||title==='Neighbor'});
-      state.busy=false;done();
+      setBusy(false);done();
     });
   },previewFn);
 }
@@ -333,20 +370,22 @@ html+='</table><div class="rbtns">';
 if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}
 else{html+='<button onclick="endSession()">End Session</button>';}
 html+='</div></div>';showOverlay(html);render();}
-function tlSyncBeforeScore(){tlrSyncRunToStore()}
+function tlSyncBeforeScore(){tlrSyncPersistToStore()}
 
 export function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html;tlrArchitectureSync()}
 export function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML='';tlrArchitectureSync()}
+function summaryIsFailedReading(){const s=$('#summary');if(!s||!s.classList.contains('show'))return false;return !!s.querySelector('.result-panel.fail')}
 
 export function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount=0;const firstShop=!localStorage.getItem('tlr_tut_shop');const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;
-tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});state.reading=window.tlrStore.getState().run.reading;
+window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});state.reading=window.tlrStore.getState().run.reading;
 startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}else if(pendingRelic){setTimeout(()=>tutShow(9),400)}}
 
 export function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;
-tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.END_SESSION,totalScore:total,obals:candles});
+window.tlrStore.dispatch({type:window.tlrActions.END_SESSION,totalScore:total,obals:candles});
+if(summaryIsFailedReading()){clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);return}
 showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Obals</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}
 
-export function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0,setIndex:0,setsPerRound:2,roundScore:0,setScores:[],roundDiscardCount:0,roundPatternCount:0,constellationId:null,untargetableCardUids:[],awaitingNextSet:false,lastOutcome:null};tlrBindSelectionToStore();
+export function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0,setIndex:0,setsPerRound:2,roundScore:0,setScores:[],roundDiscardCount:0,roundPatternCount:0,constellationId:null,untargetableCardUids:[],awaitingNextSet:false,lastOutcome:null};
 window.tlrStore.dispatch({type:window.tlrActions.SYNC_LEGACY_PERSIST,persist:{reserve:persist.pool,totalScore:persist.totalScore||0,upgrades:persist.up,relics:persist.relics,relicUsed:persist.relicUsed}});
 window.tlrStore.dispatch({type:window.tlrActions.RESET_SESSION});
 const _p=window.tlrStore.getState().persist;

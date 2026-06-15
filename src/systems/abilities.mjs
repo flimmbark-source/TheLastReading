@@ -144,38 +144,38 @@ export function validHandTargetsForAbility(abilityId, state) {
   }
 }
 
-export function resolveAbilityRevealIds(abilityId, pickedCards, state) {
-  const ability = getAbility(abilityId);
+// Canonical reveal computation shared by both singleplayer and multiplayer.
+// Given a deck, an ability definition, and the chosen anchor card(s), it returns
+// the full set of eligible cards the ability would reveal/hold from the deck.
+// Callers apply their own count limits (singleplayer factors in upgrades, the
+// multiplayer reducer slices by ability.count) so this stays a single source of
+// truth for *which* cards an ability can reach.
+export function abilityHeldCards(deck = [], ability, anchors = []) {
   if (!ability) return [];
-  const deck = state.deck || [];
-  const picked = pickedCards.filter(Boolean);
+  const picked = (Array.isArray(anchors) ? anchors : [anchors]).filter(Boolean);
 
   switch (ability.type) {
     case ABILITY_TYPES.NEIGHBOR:
-      return picked[0] ? neighborCardIds(picked[0]) : [];
+      return picked[0] ? cardsInDeckByIds(deck, neighborCardIds(picked[0])) : [];
 
     case ABILITY_TYPES.KIN:
-      return picked[0] ? deck.filter(card => isSameArcana(card, picked[0])).slice(0, ability.count).map(card => card.id) : [];
+      return picked[0] ? deck.filter(card => isSameArcana(card, picked[0])) : [];
 
     case ABILITY_TYPES.MIRROR:
-      return picked[0] ? [mirrorCardId(picked[0])].filter(Boolean) : [];
+      return picked[0] ? cardsInDeckByIds(deck, [mirrorCardId(picked[0])].filter(Boolean)) : [];
 
     case ABILITY_TYPES.BETWEEN:
-      return picked.length >= 2 ? betweenCardIds(picked[0], picked[1]) : [];
+      return picked.length >= 2 ? cardsInDeckByIds(deck, betweenCardIds(picked[0], picked[1])) : [];
 
     case ABILITY_TYPES.PEEK:
-      return deck.slice(0, ability.count).map(card => card.id);
+      return deck.slice(0, ability.count ?? 1);
 
     case ABILITY_TYPES.SEARCH:
-      return deck.map(card => card.id);
+      return deck.slice();
 
     default:
       return [];
   }
-}
-
-export function resolveAbilityReveals(abilityId, pickedCards, state) {
-  return cardsInDeckByIds(state.deck || [], resolveAbilityRevealIds(abilityId, pickedCards, state));
 }
 
 // ── Pure ability resolution (Phase 11) ──

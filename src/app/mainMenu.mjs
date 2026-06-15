@@ -111,7 +111,17 @@ export function installMainMenu(target = window) {
     el.hidden = false;
     if ('inert' in el) el.inert = false;
     el.setAttribute('aria-hidden', 'false');
-    el.classList.remove('mm-hidden');
+    el.classList.remove('mm-hidden', 'main-menu-busy');
+    // The lightweight boot loader disables every menu button while it loads the
+    // game module and only restores them on failure, so a button left disabled
+    // there would make this menu dead when we return to it. Once the game is
+    // running we own the menu: re-enable the buttons (and restore any "Loading…"
+    // label) on every show, then let syncContinueBtn re-disable Continue if there
+    // is no saved progress.
+    el.querySelectorAll('.main-menu-btn').forEach(btn => {
+      btn.disabled = false;
+      if (btn.dataset.bootLabel) { btn.textContent = btn.dataset.bootLabel; delete btn.dataset.bootLabel; }
+    });
     syncContinueBtn();
   }
 
@@ -168,10 +178,6 @@ export function installMainMenu(target = window) {
       target.tlrStore.dispatch({ type: target.tlrActions.RESET_SESSION, fresh: true });
       syncInitialPersistToStore(target, initialPersist);
       syncInitialRunToStore(target, initialState);
-    }
-
-    if (typeof target.tlrBindSelectionToStore === 'function') {
-      target.tlrBindSelectionToStore();
     }
 
     gameStarted = false;

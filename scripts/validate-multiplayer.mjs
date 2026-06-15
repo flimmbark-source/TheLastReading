@@ -2,6 +2,7 @@ import { MP_ACTIONS } from '../src/multiplayer/mpActions.mjs';
 import { MP_PHASES, SCORE_TARGETS, MP_SPREAD_SIZE, MP_HAND_SIZE, createMatchState } from '../src/multiplayer/mpState.mjs';
 import { mpReducer } from '../src/multiplayer/mpReducer.mjs';
 import * as sel from '../src/multiplayer/mpSelectors.mjs';
+import { buildDeck } from '../src/systems/deck.mjs';
 
 let passed = 0;
 let failed = 0;
@@ -213,9 +214,95 @@ function fillSpread(state, playerIndex) {
   assert(s.winner !== null, 'winner is set');
 }
 
-if (failed > 0) {
-  console.error(`Multiplayer validation: ${failed} case(s) failed.`);
-  process.exit(1);
-} else {
-  console.log(`Multiplayer validation cases passed (${passed} assertions).`);
+// --- Standard ability resolution via the shared resolver ---
+// These exercise abilityHeldCards + takeFromHeld on the multiplayer reducer, the
+// paths shared with singleplayer. We craft deterministic hands/decks of real card
+// definitions so the reveal math is predictable.
+
+function cardById(id, uid) {
+  const card = buildDeck().find(c => c.id === id);
+  return { ...card, uid };
 }
+
+{
+  let s = initMatch();
+  const player = s.players[0];
+  const source = { ...cardById('VII', 9001), ability: 'DRAW_1' };
+  s = {
+    ...s,
+    players: [
+      { ...player, hand: [source, ...player.hand.slice(1)], deck: [cardById('0', 9002), ...player.deck], discards: 2 },
+      s.players[1],
+    ],
+  };
+  const next = mpReducer(s, { type: MP_ACTIONS.MP_INVOKE_ABILITY, playerIndex: 0, cardUid: source.uid });
+  assert(next.players[0].hand.some(c => c.uid === 9002), 'DRAW takes from deck into hand');
+  assert(next.players[0].discard.some(c => c.uid === source.uid), 'DRAW source goes to discard');
+}
+
+{
+  let s = initMatch();
+  const player = s.players[0];
+  const source = { ...cardById('major_9', 9010), ability: 'NEIGHBOR_2' };
+  const anchor = cardById('major_10', 9011);
+  const found = cardById('major_11', 9012);
+  s = {
+    ...s,
+    players: [
+      { ...player, hand: [source, anchor], deck: [found, ...player.deck], discards: 2 },
+      s.players[1],
+    ],
+  };
+  const next = mpReducer(s, { type: MP_ACTIONS.MP_INVOKE_ABILITY, playerIndex: 0, cardUid: source.uid, abilityChoice: { anchorUids: [anchor.uid], takenCardUid: found.uid } });
+  assert(next.players[0].hand.some(c => c.uid === found.uid), 'NEIGHBOR takes chosen adjacent card');
+}
+
+{
+  let s = initMatch();
+  const player = s.players[0];
+  const source = { ...cardById('major_14', 9020), ability: 'BETWEEN_2' };
+  const low = cardById('major_5', 9021);
+  const high = cardById('major_8', 9022);
+  const found = cardById('major_7', 9023);
+  s = {
+    ...s,
+    players: [
+      { ...player, hand: [source, low, high], deck: [found, ...player.deck], discards: 2 },
+      s.players[1],
+    ],
+  };
+  const next = mpReducer(s, { type: MP_ACTIONS.MP_INVOKE_ABILITY, playerIndex: 0, cardUid: source.uid, abilityChoice: { anchorUids: [low.uid, high.uid], takenCardUid: found.uid } });
+  assert(next.players[0].hand.some(c => c.uid === found.uid), 'BETWEEN takes chosen in-between card');
+}
+
+{
+  let s = initMatch();
+  const player = s.players[0];
+  const source = { ...cardById('XXI', 9030), ability: 'WORLD' };
+  const placed = cardById('V', 9031);
+  const kept = cardById('VI', 9032);
+  const drawn = cardById('VII', 9033);
+  s = {
+    ...s,
+    players: [
+      { ...player, hand: [source, kept], spread: [placed, null, null, null, null], deck: [drawn], discard: [], discards: 2, playedSlotHistory: [0] },
+      s.players[1],
+    ],
+  };
+  const next = mpReducer(s, {
+    type: MP_ACTIONS.MP_INVOKE_ABILITY,
+    playerIndex: 0,
+    cardUid: source.uid,
+    abilityChoice: { handUids: [kept.uid, source.uid, drawn.uid], deckUids: [] },
+  });
+  assert(next.players[0].spread[0]?.uid === placed.uid, 'WORLD keeps already placed spread cards');
+  assert(next.players[0].hand.every(c => c.uid !== placed.uid), 'WORLD does not duplicate spread card into hand');
+  assert(next.players[0].deck.every(c => c.uid !== placed.uid), 'WORLD does not duplicate spread card into deck');
+}
+
+if (failed > 0) {
+  console.error(`Multiplayer validation failed: ${failed} failed, ${passed} passed`);
+  process.exit(1);
+}
+
+console.log(`Multiplayer validation passed: ${passed} checks`);

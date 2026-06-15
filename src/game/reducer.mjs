@@ -46,11 +46,12 @@ function drawFreshSetHand(run, persist, rng = Math.random, sourceDeck = null) {
   return { hand, deck, discard };
 }
 
-function placeCard(state, slotIndex) {
+function placeCard(state, slotIndex, cardUid) {
   const { run } = state;
-  if (run.selectedCardId == null || run.spread[slotIndex]) return state;
+  const uid = cardUid ?? run.selectedCardId;
+  if (uid == null || run.spread[slotIndex]) return state;
 
-  const cardIndex = run.hand.findIndex(card => card.uid === run.selectedCardId);
+  const cardIndex = run.hand.findIndex(card => card.uid === uid);
   if (cardIndex < 0) return state;
 
   const hand = [...run.hand];
@@ -381,7 +382,10 @@ function resetSession(state, fresh = false) {
   });
 }
 
-const LEGACY_RUN_FIELDS = [
+// The single source of truth for which run fields cross the legacy<->store
+// bridge. SYNC_LEGACY_RUN only accepts these, and app/legacyBridge.mjs must emit
+// exactly this set; scripts/validate-bridge.mjs guards against the two drifting.
+export const LEGACY_RUN_FIELDS = [
   'deck', 'hand', 'discard', 'spread', 'selectedCardId', 'discards', 'discardedCards',
   'freeDiscardUsed', 'sightChargesUsed', 'thresholdIndex', 'thresholdBonus',
   'thresholdBonusPending', 'reading', 'pendingReserve', 'worldCarry',
@@ -496,7 +500,7 @@ export function reducer(state, action) {
     case ACTIONS.CLEAR_SELECTION:
       return replaceRun(state, { selectedCardId: null });
     case ACTIONS.PLACE_CARD:
-      return placeCard(state, action.slotIndex);
+      return placeCard(state, action.slotIndex, action.cardUid ?? null);
     case ACTIONS.DISCARD_SELECTED:
       return discardSelected(state);
     case ACTIONS.RESOLVE_ABILITY:

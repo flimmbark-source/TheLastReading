@@ -1,7 +1,6 @@
 // Application entry point (Phase 16). index.html is becoming a shell: this
 // module mounts the architecture bridge, installs the UI modules as the
 // globals the legacy markup/script still calls, and then boots the game.
-import { installLiveMirror } from './liveMirror.mjs';
 import { bootGame } from './boot.mjs';
 import { installArchitectureBridge } from './bootstrap.mjs';
 import { installDataGlobals } from './dataGlobals.mjs';
@@ -16,16 +15,14 @@ import { installControlBindings } from './controlBindings.mjs';
 import { installScoringRuntime } from './scoringRuntime.mjs';
 import { installPlacementRuntime } from './placementRuntime.mjs';
 import { installDiscardRuntime } from './discardRuntime.mjs';
+import { installAbilityTargetBridge } from './abilityTargetBridge.mjs';
 import { installSpreadPlacementBridge } from './spreadPlacementBridge.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
 import { installMainMenu } from './mainMenu.mjs';
 import { installLoadoutScreen } from './loadoutScreen.mjs';
 import { installMatchmakingScreen } from './matchmakingScreen.mjs';
-import { installMpGame } from './mpGame.mjs';
-import { installSurgeonHandSwapPatch } from './surgeonHandSwapPatch.mjs';
-import { installMpScoringFeedbackPatch } from './mpScoringFeedbackPatch.mjs';
-import { installMpScorePillStabilityPatch } from './mpScorePillStabilityPatch.mjs';
+import { installMpGame } from './mpGameHost.mjs';
 import { installMenuControls } from './menuControls.mjs';
 import { installResonationFlow } from './resonationFlow.mjs';
 import { installHintRuntime } from './hintRuntime.mjs';
@@ -248,9 +245,6 @@ export function startApp(target = window) {
   installLoadoutScreen(target);
   installMatchmakingScreen(target);
   installMpGame(target);
-  installSurgeonHandSwapPatch(target);
-  installMpScoringFeedbackPatch(target);
-  installMpScorePillStabilityPatch(target);
   installStoreFrontTuning(target);
   installMarketTutorialTrigger(target);
 
@@ -271,11 +265,11 @@ export function startApp(target = window) {
   installHintRuntime(target);
   installPlacementRuntime(target);
   installDiscardRuntime(target);
+  installAbilityTargetBridge(target);
   installSpreadPlacementBridge(target);
   installControlBindings(target);
 
   try {
-    installLiveMirror(target);
     bootGame(target);
   } catch (err) {
     console.error('The Last Reading module boot failed', err);

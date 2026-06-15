@@ -13,6 +13,43 @@ export function selectedCard(state) {
   return state.run.hand.find(card => card.uid === state.run.selectedCardId) || null;
 }
 
+export function handView(state, options = {}) {
+  return {
+    hand: state.run.hand || [],
+    selected: state.run.selectedCardId ?? null,
+    // Purge is not fully store-owned yet, so callers may pass the current legacy
+    // purge list while the rest of the hand display data comes from the store.
+    purgeSelect: options.purgeSelect ?? state.run.purge ?? null,
+    onToggleSelect: options.onToggleSelect || null,
+  };
+}
+
+export function spreadView(state, options = {}) {
+  return {
+    spread: state.run.spread || Array(5).fill(null),
+    selected: state.run.selectedCardId ?? null,
+    onPlaceCard: options.onPlaceCard || null,
+    onAbilityTarget: options.onAbilityTarget || null,
+  };
+}
+
+export function tableView(state, options = {}) {
+  const run = state.run;
+  const persist = state.persist;
+  const inPurge = options.inPurge ?? run.purge !== null;
+  const inAbility = options.inAbility ?? !!run.ability;
+  const discardBlocked = blocksDiscard(run);
+  return {
+    threshold: thresholdValue(state),
+    thresholdBonusPending: run.thresholdBonusPending || 0,
+    reserve: persist.reserve,
+    discards: run.discards,
+    discardDisabled: selectedCard(state) === null || run.discards <= 0 || inPurge || discardBlocked,
+    discardTitle: discardBlocked ? 'Place 2 cards before discarding.' : '',
+    purgeDisabled: run.busy || run.hand.length < 3 || inAbility || inPurge,
+  };
+}
+
 export function thresholdValue(state) {
   return constellationThreshold(currentThreshold(state.run.thresholdIndex, state.run.thresholdBonus), state.run);
 }
@@ -77,6 +114,21 @@ export function handHints(state, options = {}) {
     relics: state.persist.relics,
     ...options,
   });
+}
+
+// Converts the store-owned targeting selection into the view shape that
+// renderHand / renderSpread / refreshHandState expect: { validIds: Set, picked: [] }.
+// Returns null when no targeting is active.
+export function abilityTargetView(state) {
+  const targeting = state.run?.ability?.targeting;
+  if (!targeting) return null;
+  return {
+    title: targeting.title || '',
+    prompt: targeting.prompt || '',
+    count: targeting.count || 1,
+    validIds: new Set(targeting.validCardIds || []),
+    picked: [...(targeting.pickedCardIds || [])],
+  };
 }
 
 export function scorePreview(state) {

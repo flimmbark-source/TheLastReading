@@ -30,8 +30,30 @@ Individual suites:
 | `scripts/validate-modifier-cases.mjs` | Scoring modifiers and relic stacking |
 | `scripts/validate-economy-cases.mjs` | Shop pricing, pack costs, refresh ladder, Merchant's Scale |
 | `scripts/check-architecture.mjs` | Reducer smoke tests: placement, discard, scoring, abilities, market, attic |
+| `scripts/validate-bridge.mjs` | Legacy↔store bridge contract: field-drift guard and round-trip mapping |
+| `scripts/validate-multiplayer.mjs` | Multiplayer reducer: placement, scoring, ability resolution, rounds |
+| `scripts/validate-menu.mjs` | Headless (jsdom) main-menu show path: buttons stay interactive on return |
+| `scripts/validate-render.mjs` | Headless (jsdom) render smoke test: `renderHand` uid-diffing and selection |
 
 `npm test` and `npm run build` both run `validate-all.mjs`.
+
+## Development tooling
+
+```sh
+npm install        # one-time: installs ESLint + Prettier (dev only)
+npm run lint       # correctness-focused lint over src/ and scripts/
+npm run format     # Prettier (skips the terse legacy app/ modules)
+```
+
+CI (`.github/workflows/ci.yml`) runs `npm run lint` and `npm test` on every push
+and pull request.
+
+## Architecture migration
+
+The codebase is mid-migration from a shared mutable `window.state` to the
+reducer/store in `src/game` and `src/multiplayer`. The remaining seams and the
+phased plan to reach a single source of truth are tracked in
+[`docs/migration-roadmap.md`](docs/migration-roadmap.md).
 
 ## Module structure
 

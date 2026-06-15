@@ -8,6 +8,7 @@ import { renderHand } from './renderHand.mjs';
 import { renderAbilityPrompt, renderPurgePrompt } from './renderAbility.mjs';
 import { renderRelicRack } from './renderMarket.mjs';
 import { cleanName } from './renderCard.mjs';
+import { handView as selectHandView, spreadView as selectSpreadView, tableView as selectTableView, scorePreview as selectScorePreview, abilityTargetView as selectAbilityTargetView } from '../game/selectors.mjs';
 import { getConstellation, constellationThreshold, blocksDiscard, hasActiveConstellation as runHasActiveConstellation } from '../systems/constellations.mjs';
 
 let constellationCalloutOpen=false;
@@ -41,7 +42,9 @@ export function _cacheEls(){
   _elCurrent=document.getElementById('current');
 }
 
-function currentRun(){return window.tlrStore?.getState?.().run || state}
+function syncStoreBeforeView(){if(typeof window.tlrSyncRunToStore==='function')window.tlrSyncRunToStore()}
+function currentStoreState(){return window.tlrStore?.getState?.()||null}
+function currentRun(){return currentStoreState()?.run || state}
 function activeThreshold(){const run=currentRun();return constellationThreshold(TH[state.th]+(state.thBonus||0),run)}
 function discardBlocked(){return blocksDiscard(currentRun())}
 function ensureConstellationPill(){let el=document.getElementById('constellationPill');if(el)return el;el=document.createElement('button');el.type='button';el.id='constellationPill';el.className='constellation-pill hidden';document.body.appendChild(el);return el}
@@ -68,28 +71,33 @@ function installConstellationOutsideHandler(){if(constellationOutsideHandlerInst
 function renderConstellationPill(){installConstellationOutsideHandler();const el=ensureConstellationPill();const constellationId=activeConstellationId();if(!constellationId)return hideConstellationPill(el);const constellation=getConstellation(constellationId);if(!constellation)return hideConstellationPill(el);el.classList.remove('hidden');el.setAttribute('aria-label',`${constellation.name}. ${constellation.shortRule||constellation.rule}`);el.innerHTML=constellationIconHTML(constellation);positionConstellationIcon(el);el.onclick=event=>{event.stopPropagation();if(constellationCalloutOpen)closeConstellationCallout();else showConstellationCallout(el,constellation)}}
 
 export function render(){
+  syncStoreBeforeView();
   _cachedPlacedScore=null; // invalidate on every render
   const _newHintsKey=_hintsKey();if(_newHintsKey!==_hintsCacheKey){_hintsCache.clear();_hintsCacheKey=_newHintsKey;_unlockedFragmentsCache=null;_spreadScoreForHints=null;}
   _cacheEls();
-  _elThreshold.textContent=activeThreshold();
-  const _thNext=document.getElementById('thNext');if(_thNext){const _p=state.thBonusPending||0;_thNext.style.display=_p?'':'none';if(_p)_thNext.textContent='+'+_p+' next';}
-  _elPool.textContent=persist.pool;
-  _elDiscards.textContent=state.discards;
+  const storeState=currentStoreState();
+  const ability=storeState?selectAbilityTargetView(storeState):null;
+  const inPurge=state.purgeSelect!==null;
+  const table=storeState?selectTableView(storeState,{inPurge,inAbility:!!ability}):null;
+  _elThreshold.textContent=table?table.threshold:activeThreshold();
+  const _thNext=document.getElementById('thNext');if(_thNext){const _p=table?table.thresholdBonusPending:(state.thBonusPending||0);_thNext.style.display=_p?'':'none';if(_p)_thNext.textContent='+'+_p+' next';}
+  _elPool.textContent=table?table.reserve:persist.pool;
+  _elDiscards.textContent=table?table.discards:state.discards;
   renderConstellationPill();
   renderRelicRack();
   const now=_getPlacedScore();
-  const ability=state.abilitySelect;
-  const inPurge=state.purgeSelect!==null;
-  renderSpread(ability,inPurge);
+  const displayHand=storeState?selectHandView(storeState,{purgeSelect:state.purgeSelect}):null;
+  const displaySpread=storeState?selectSpreadView(storeState):null;
+  renderSpread(ability,inPurge,displaySpread);
   _resStateKey=null;
   applyResonationGlows(state.spread);
-  renderHand(ability,inPurge);
+  renderHand(ability,inPurge,displayHand);
   renderAbilityPrompt();
   renderPurgePrompt();
   updateScorePreview(now);
-  _elDiscardBtn.disabled=state.selected===null||state.discards<=0||inPurge||discardBlocked();
-  _elDiscardBtn.title=discardBlocked()?'Place 2 cards before discarding.':'';
-  _elPurgeBtn.disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
+  _elDiscardBtn.disabled=table?table.discardDisabled:(state.selected===null||state.discards<=0||inPurge||discardBlocked());
+  _elDiscardBtn.title=table?table.discardTitle:(discardBlocked()?'Place 2 cards before discarding.':'');
+  _elPurgeBtn.disabled=table?table.purgeDisabled:(state.busy||state.hand.length<3||!!state.abilitySelect||inPurge);
   _elMullBtn.style.display=hasMull()?'inline-block':'none';
   _elMullBtn.disabled=!(state.mullCharges>0)||!state.spread.every(x=>!x)||state.hand.length!==maxHand();
   tlrArchitectureSync();
@@ -97,9 +105,12 @@ export function render(){
 }
 
 export function refreshHandState(){
+  syncStoreBeforeView();
   _cacheEls();
-  const ability=state.abilitySelect;
+  const storeState=currentStoreState();
+  const ability=storeState?selectAbilityTargetView(storeState):null;
   const inPurge=state.purgeSelect!==null;
+  const table=storeState?selectTableView(storeState,{inPurge,inAbility:!!ability}):null;
   document.querySelectorAll('#hand .card').forEach(el=>{
     const uid=Number(el.dataset.uid);
     el.classList.remove('sel','ability-picked','ability-target','ability-disabled','purge-picked','purge-target');
@@ -116,11 +127,11 @@ export function refreshHandState(){
   renderAbilityPrompt();
   renderPurgePrompt();
   updateScorePreview(_getPlacedScore());
-  _elDiscardBtn.disabled=state.selected===null||state.discards<=0||inPurge||discardBlocked();
-  _elDiscardBtn.title=discardBlocked()?'Place 2 cards before discarding.':'';
-  _elPurgeBtn.disabled=state.busy||state.hand.length<3||!!state.abilitySelect||inPurge;
+  _elDiscardBtn.disabled=table?table.discardDisabled:(state.selected===null||state.discards<=0||inPurge||discardBlocked());
+  _elDiscardBtn.title=table?table.discardTitle:(discardBlocked()?'Place 2 cards before discarding.':'');
+  _elPurgeBtn.disabled=table?table.purgeDisabled:(state.busy||state.hand.length<3||!!state.abilitySelect||inPurge);
   tlrArchitectureSync();
   maybeShowContextualTutorials();
 }
 
-export function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=_scoreLegacy([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}
+export function updateScorePreview(now){let el=$('#scorePreview');if(!el)return;const storeState=currentStoreState();if(storeState){const preview=selectScorePreview(storeState);if(!preview){el.classList.add('hidden');el.innerHTML='';return}const newNames=preview.newMelds.map(m=>m.name);el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(preview.card)+'</b> would add <b>'+preview.delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern');return}if(state.selected===null){el.classList.add('hidden');el.innerHTML='';return}let card=state.hand.find(c=>c.uid===state.selected);if(!card){el.classList.add('hidden');el.innerHTML='';return}let after=_scoreLegacy([...state.spread.filter(Boolean),card]);let beforeNames=new Set(now.melds.map(m=>m[0]));let newNames=after.melds.filter(m=>!beforeNames.has(m[0])).map(m=>m[0]);let delta=after.finalScore-now.finalScore;el.classList.remove('hidden');el.innerHTML='<b>'+cleanName(card)+'</b> would add <b>'+delta+'</b>'+(newNames.length?' — forms <b>'+newNames.join(', ')+'</b>':' — no new pattern')}

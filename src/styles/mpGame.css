@@ -161,6 +161,9 @@ body.mp-game-active #purgePrompt { display: none !important; }
 .mp-pill-score b, .mp-pill-disc b, .mp-pill-thresh b { font-size: 13px; }
 .mp-pill-thresh { width: 142px !important; }
 
+/* You / Foe labels beside the threshold — hidden on mobile, shown on desktop via mpFixes.css */
+.mp-side-label { display: none; }
+
 /* Middle band: threshold centered; constellation beside it when shown */
 .mp-pills-mid { gap: 10px; }
 
@@ -253,6 +256,13 @@ body.mp-game-active #spread .slot.mp-swap-pick { border-color: rgba(120,200,120,
   transition: opacity .3s;
 }
 .mp-overlay.mp-ov-hidden { opacity: 0; pointer-events: none; }
+
+/* #mpGame (z-index 9300) is a stacking context, but the SP hand/spread are
+   lifted to 9400/9401 as siblings above it — so the overlay, trapped inside
+   #mpGame, would otherwise render beneath them. While the round-complete /
+   match-over overlay is up, raise the whole MP layer above the lifted hand
+   and spread so the overlay covers everything. */
+body.mp-game-active.mp-overlay-active #mpGame { z-index: 99999 !important; }
 .mp-ov-box {
   display: flex; flex-direction: column; align-items: center; gap: 16px;
   padding: 28px 24px;

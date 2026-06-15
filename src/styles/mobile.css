@@ -167,6 +167,19 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
     --drift-y:0px!important;
     z-index:999!important;
   }
+  /* When a card lifts on hover it slides out from under the pointer, which would
+     drop the :hover state and cause a rapid lift/fall flicker. Extend the card's
+     hit area downward over its original footprint (the gap left behind) so the
+     pointer stays "on" the card. Only active while hovered, so it never blocks
+     the swipe zone or other cards otherwise. */
+  .hand .card::before{
+    content:'';
+    position:absolute;
+    left:0;right:0;top:100%;
+    height:110px;
+    pointer-events:none;
+  }
+  .hand:not(.has-selected-card) .card:hover::before{pointer-events:auto}
 }
 @media(max-width:640px){
   .hand .card.sel,.hand .card.ability-picked,.hand .card.purge-picked{--lift-y:-86px}

@@ -54,6 +54,7 @@ function clearBusy() {
   const menu = menuEl();
   if (menu) menu.classList.remove('main-menu-busy');
   for (const btn of buttons()) {
+    btn.disabled = false;
     if (btn.dataset.bootLabel) {
       btn.textContent = btn.dataset.bootLabel;
       delete btn.dataset.bootLabel;
@@ -96,6 +97,11 @@ async function launch(actionName) {
     const action = window[actionName];
     if (typeof action === 'function') {
       action();
+      // Reset the boot state and re-enable the menu buttons. The full game took
+      // over the menu (and usually hid it) but if the user ever returns here the
+      // buttons must not be left disabled from setBusy().
+      bootAction = null;
+      clearBusy();
       return;
     }
     throw new Error(`${actionName} was not installed by the game boot.`);

@@ -32,10 +32,15 @@ function installEmptySpaceDeselect(target = window){
   document.addEventListener('click',ev=>{
     if((target.performance?.now?.() || 0) < (target.__handGestureSuppressClickUntil || 0))return;
     const state=stateOf(target);
-    if(!state || state.selected===null || state.busy || state.abilitySelect || state.purgeSelect!==null)return;
+    if(!state || state.selected===null || (target.tlrStore?.getState?.()?.run?.busy??state.busy) || (target.tlrStore?.getState?.()?.run?.ability?.targeting||state.abilitySelect) || (target.tlrStore?.getState?.()?.run?.purge??state.purgeSelect)!==null)return;
     const eventTarget=ev.target instanceof Element?ev.target:null;
     if(isInteractiveOrCardSpace(eventTarget))return;
-    state.selected=null;
+    if(target.tlrStore&&target.tlrActions){
+      target.tlrStore.dispatch({type:target.tlrActions.CLEAR_SELECTION});
+      state.selected=target.tlrStore.getState?.()?.run?.selectedCardId ?? null;
+    }else{
+      state.selected=null;
+    }
     if(typeof target.refreshHandState==='function')target.refreshHandState();
   });
 }

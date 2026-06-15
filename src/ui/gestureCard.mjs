@@ -1,6 +1,7 @@
 // Hand card gesture controller (Step 4). Verbatim port target from the
 // legacy inline hand card gestures handler patch.
-/* global state, refreshHandState, expandCard, render, placeCard, flushHand */
+/* global state, refreshHandState, expandCard, render, placeCard */
+import { abilityTargetView as selectAbilityTargetView } from '../game/selectors.mjs';
 
 export function installHandCardGestures(target = window){
   if(!target || target.__handCardGesturesInstalled)return;
@@ -15,14 +16,16 @@ export function installHandCardGestures(target = window){
   const TILT_LERP=0.22;
   // How far below the spread's bottom edge the card centre can be and still
   // trigger slot hit-testing (gives some slack when approaching from below).
-  const SPREAD_ZONE_SLACK=48;
+  const SPREAD_ZONE_SLACK=72;
   // Padding applied around each slot rect for hit detection.
-  const SLOT_HIT_PAD=20;
+  const SLOT_HIT_PAD=28;
 
   let g=null;
   const handEl=()=>document.querySelector('.hand');
   const handCards=()=>{const h=handEl();return h?[...h.querySelectorAll(':scope > .card[data-uid]')]:[]};
-  const inSelectionMode=()=>!!(state.abilitySelect||state.purgeSelect!==null||state.busy);
+  const storeState=()=>target.tlrStore?.getState?.()??null;
+  const gestureTargeting=()=>{const s=storeState();return s?selectAbilityTargetView(s):state.abilitySelect;};
+  const inSelectionMode=()=>!!(gestureTargeting()||(storeState()?.run?.purge??state.purgeSelect)!==null||(storeState()?.run?.busy??state.busy));
   const cancelHold=()=>{if(g&&g.holdTimer){clearTimeout(g.holdTimer);g.holdTimer=null;}};
   // Add uid to end of arr (no duplicates), trim to last max items.
   const queueUid=(arr,uid,max)=>{if(arr.includes(uid))return arr;const a=[...arr,uid];return a.length>max?a.slice(-max):a;};
@@ -44,7 +47,10 @@ export function installHandCardGestures(target = window){
     const rects=g&&g.slotRects?g.slotRects:
       [...document.querySelectorAll('#spread .slot')].map((el,i)=>({el,idx:i,r:el.getBoundingClientRect()}));
     for(const{el,idx,r}of rects){
-      if(state.spread[idx])continue;           // occupied
+      // Occupied check: `state.spread` is authoritative in singleplayer, but in
+      // multiplayer the piles live in match state, so also treat any slot whose
+      // DOM already holds a card as occupied (never a valid drop target).
+      if(state.spread[idx]||el.querySelector('.card'))continue;
       if(cardCX>=r.left-SLOT_HIT_PAD&&cardCX<=r.right+SLOT_HIT_PAD&&
          cardCY>=r.top-SLOT_HIT_PAD&&cardCY<=r.bottom+SLOT_HIT_PAD){
         return{slotEl:el,idx};
@@ -110,10 +116,11 @@ export function installHandCardGestures(target = window){
       if(!cardEl)continue;
       const uid=Number(cardEl.dataset.uid);
       if(!Number.isFinite(uid))break;
-      if(state.abilitySelect){
-        if(!state.abilitySelect.validIds.has(uid))break;
-        g.pendingUids=queueUid(g.pendingUids,uid,state.abilitySelect.count);
-      }else if(state.purgeSelect!==null){
+      const _t=gestureTargeting();
+      if(_t){
+        if(!_t.validIds.has(uid))break;
+        g.pendingUids=queueUid(g.pendingUids,uid,_t.count);
+      }else if((storeState()?.run?.purge??state.purgeSelect)!==null){
         g.pendingUids=queueUid(g.pendingUids,uid,3);
       }
       break;
@@ -242,17 +249,25 @@ export function installHandCardGestures(target = window){
   const endDrag=committed=>{
     if(!g)return;
     cancelHold();
-    const{uid,cardEl,origIndex,hoverIndex,dropSlot,mode,pendingUids=[]}=g;
+    const{uid,cardEl,origIndex,hoverIndex,mode,pendingUids=[]}=g;
+    let dropSlot=g.dropSlot;
     const wasDrag=mode==='drag';
     const wasSelectDrag=mode==='select-drag';
     // Capture visual drag position before removing drag state (used for FLIP slide).
     const firstRect=wasDrag?cardEl.getBoundingClientRect():null;
+    // If pointerup lands before the queued drag rAF runs, the cached drop target
+    // can be stale. Recompute synchronously from the last pointer position before
+    // cancelling that frame so quick releases over a spread slot still place.
+    if(wasDrag&&committed&&g.lastDragEv){
+      const last=calcDropTarget(g.lastDragEv.clientX,g.lastDragEv.clientY);
+      if(last.inSpread)dropSlot=last.hit||null;
+    }
     // Cancel any queued rAF frame so it doesn't fire after cleanup.
     if(g.dragRafId){cancelAnimationFrame(g.dragRafId);g.dragRafId=null;}
     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
     cardEl.classList.remove('hand-card-dragging');
     cardEl.style.removeProperty('transform');
-    if(dropSlot)dropSlot.slotEl.classList.remove('drop-target');
+    if(g.dropSlot)g.dropSlot.slotEl.classList.remove('drop-target');
     const h=handEl();if(h)h.classList.remove('hand-parting');
     const spEl3=document.querySelector('#spread');if(spEl3)spEl3.classList.remove('drag-active');
     target.__handReorderActive=false;
@@ -261,11 +276,23 @@ export function installHandCardGestures(target = window){
     // ── Commit ability/purge selection from sweep ──
     if(wasSelectDrag){
       if(!committed)return;
-      if(state.abilitySelect&&pendingUids.length){
-        state.abilitySelect.picked=pendingUids.slice(-state.abilitySelect.count);
+      const _t=gestureTargeting();
+      if(_t&&pendingUids.length){
+        const s=storeState();
+        if(s&&target.tlrStore){
+          target.tlrStore.dispatch({type:'SET_ABILITY_PICKS',cardIds:pendingUids});
+        }else if(state.abilitySelect){
+          state.abilitySelect.picked=pendingUids.slice(-_t.count);
+        }
         if(typeof refreshHandState==='function')refreshHandState();
-      }else if(state.purgeSelect!==null&&pendingUids.length){
-        state.purgeSelect=pendingUids.slice(0,3);
+      }else if((storeState()?.run?.purge??state.purgeSelect)!==null&&pendingUids.length){
+        const s=storeState();
+        if(s&&target.tlrStore){
+          target.tlrStore.dispatch({type:'SET_PURGE_PICKS',cardIds:pendingUids});
+          state.purgeSelect=target.tlrStore.getState().run.purge?.slice()??null;
+        }else{
+          state.purgeSelect=pendingUids.slice(0,3);
+        }
         if(typeof render==='function')render();
       }
       return;
@@ -286,13 +313,21 @@ export function installHandCardGestures(target = window){
 
     // ── Drop onto spread slot ──
     if(dropSlot){
-      state.selected=uid;
-      if(typeof placeCard==='function')placeCard(dropSlot.idx);
+      if(typeof target.placeCardUid==='function')target.placeCardUid(uid,dropSlot.idx);
       return;
     }
 
     // ── Reorder within hand ──
     if(hoverIndex!==origIndex){
+      const s=storeState();
+      if(s&&target.tlrStore){
+        target.tlrStore.dispatch({type:'REORDER_HAND',uid,toIndex:hoverIndex});
+        // Sync legacy hand from store so syncStoreBeforeView in render() doesn't overwrite.
+        state.hand=target.tlrStore.getState().run.hand.slice();
+        if(state.selected===uid)state.selected=null;
+        if(typeof render==='function')render();
+        return;
+      }
       const idx=state.hand.findIndex(c=>c.uid===uid);
       if(idx>=0){
         const card=state.hand.splice(idx,1)[0];
@@ -339,11 +374,13 @@ export function installHandCardGestures(target = window){
     if(!inSelectionMode()){
       g.holdTimer=setTimeout(()=>{
         if(!g||g.mode!=='pending')return;
-        const card=state.hand.find(c=>c.uid===uid);
+        const _hand=storeState()?.run?.hand||state.hand;
+        const card=_hand.find(c=>c.uid===uid);
         g=null;
         if(card&&typeof expandCard==='function'){
           target.__handGestureSuppressClickUntil=performance.now()+800;
           state.selected=uid;
+          if(target.tlrStore&&target.tlrActions)target.tlrStore.dispatch({type:target.tlrActions.SELECT_CARD,cardId:uid});
           if(typeof refreshHandState==='function')refreshHandState();
           expandCard(card);
         }
@@ -357,9 +394,9 @@ export function installHandCardGestures(target = window){
       const dx=ev.clientX-g.startX,dy=ev.clientY-g.startY;
       if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
       // busy: drop pointer tracking entirely.
-      if(state.busy){cancelHold();g=null;return;}
+      if(storeState()?.run?.busy??state.busy){cancelHold();g=null;return;}
       // ability/purge: sweep-to-select mode.
-      if(state.abilitySelect||state.purgeSelect!==null){startSelectDrag(ev);return;}
+      if(gestureTargeting()||(storeState()?.run?.purge??state.purgeSelect)!==null){startSelectDrag(ev);return;}
       // normal: card drag-to-reorder / drag-to-place.
       startDrag(ev);
       return;

@@ -67,6 +67,7 @@ export function triggerResonation(res,target = window){
   state.resonationBonus.chips+=res.chips;
   state.resonationBonus.mult+=res.mult;
   state.resonationBonus.name=res.name;
+  if(target.tlrStore&&target.tlrActions)target.tlrStore.dispatch({type:target.tlrActions.UPDATE_RESONATION_BONUS,chips:res.chips,mult:res.mult,name:res.name});
   state.thBonusPending=(state.thBonusPending||0)+10;
   if(typeof target.render==='function')target.render();
   setTimeout(()=>{if(runtime(target).caches)runtime(target).caches.resonationStateKey=null;applyResonationGlows(state.spread,target);},2100);

@@ -121,162 +121,73 @@ export function installMatchmakingScreen(target = window) {
     `);
   }
 
-  function renderError(msg) {
-    setHtml('mmContent', `
-      <div class="mm-status mm-status-error">${escHtml(msg)}</div>
-      <div style="text-align:center;margin-top:16px">
-        <button class="mm-mode-btn" onclick="tlrMmReset()" type="button" style="max-width:160px">Try again</button>
-      </div>
-    `);
+  function renderError(message) {
+    setHtml('mmContent', `<div class="mm-status mm-status-error">${escHtml(message)}</div>`);
   }
 
-  // --- Signaling + WebRTC flow ---
+  // --- Signaling / peer connection ---
 
   async function connectSignaling() {
-    _signaling = new SignalingClient({
-      onMessage: handleSignalMessage,
-      onClose: () => handleSignalClose(),
-    });
-    await _signaling.connect(SignalingClient.defaultUrl());
+    if (_signaling) return _signaling;
+    _signaling = new SignalingClient();
+    _signaling.onmessage = handleSignal;
+    await _signaling.connect();
+    return _signaling;
   }
 
-  function handleSignalMessage(msg) {
-    switch (msg.type) {
-
-      case 'room-created':
-        _roomCode = msg.roomCode;
-        renderHostingPhase();
-        break;
-
-      case 'guest-ready':
-        // Guest joined; host creates offer
-        renderConnectingPhase();
-        hostCreateOffer();
-        break;
-
-      case 'room-joined':
-        // Guest successfully joined; wait for offer
-        renderConnectingPhase();
-        break;
-
-      case 'offer':
-        guestHandleOffer(msg.sdp);
-        break;
-
-      case 'answer':
-        hostHandleAnswer(msg.sdp);
-        break;
-
-      case 'ice':
-        _peer?.addIceCandidate(msg.candidate);
-        break;
-
-      case 'room-not-found':
-        renderError('Room not found. Check the code and try again.');
-        teardown();
-        break;
-
-      case 'room-full':
-        renderError('That room is already full.');
-        teardown();
-        break;
-
-      case 'peer-left':
-        handlePeerLeft();
-        break;
-    }
-  }
-
-  function handleSignalClose() {
-    // Signaling socket closed — only matters pre-connection.
-    // Once DataChannel is open we no longer need signaling.
-    if (_peer?.connected) return;
-    renderError('Lost connection to signaling server.');
-    teardown();
-  }
-
-  function handlePeerLeft() {
-    if (_peer?.connected) {
-      // Mid-match disconnect handled separately
-      target.tlrMpHandlePeerLeft?.();
-    } else {
-      renderError('Opponent disconnected before the match could start.');
-      teardown();
-    }
-  }
-
-  function sendProfile() {
-    _peer?.send({
-      type: 'mp-profile',
-      profile: { personaId: _profile?.personaId ?? null },
-    });
-  }
-
-  function createPeer() {
-    _peer = new PeerConnection({
-      onConnected: () => {
-        // DataChannel open — signaling no longer needed
-        sendProfile();
-        _signaling?.close();
-        _signaling = null;
-        renderReadyPhase();
-      },
-      onDisconnected: () => {
-        target.tlrMpHandlePeerLeft?.();
-      },
-      onMessage: handleDataMessage,
-    });
-    _peer.onIceCandidate = candidate => {
-      _signaling?.send({ type: 'ice', candidate });
+  async function createPeer(initiator) {
+    _peer = new PeerConnection({ initiator });
+    _peer.onopen = () => {
+      _peer.send({ type: 'mp-profile', profile: _profile ?? {} });
+      if (_role === 'guest') renderReadyPhase();
     };
+    _peer.onmessage = handlePeerMessage;
+    _peer.onicecandidate = candidate => {
+      if (_signaling) _signaling.send({ type: 'signal', roomCode: _roomCode, data: { candidate } });
+    };
+    return _peer;
   }
 
-  async function hostCreateOffer() {
-    createPeer();
-    try {
-      const sdp = await _peer.createOffer();
-      _signaling?.send({ type: 'offer', sdp });
-    } catch (e) {
-      renderError('Failed to create offer: ' + e.message);
-      teardown();
+  async function handleSignal(msg) {
+    if (!msg) return;
+
+    if (msg.type === 'hosted') {
+      _roomCode = msg.roomCode;
+      await createPeer(true);
+      renderHostingPhase();
+      return;
+    }
+
+    if (msg.type === 'joined') {
+      _roomCode = msg.roomCode;
+      await createPeer(false);
+      if (msg.offer) await _peer.acceptOffer(msg.offer);
+      return;
+    }
+
+    if (msg.type === 'peer-joined') {
+      if (!_peer) await createPeer(true);
+      const offer = await _peer.createOffer();
+      _signaling.send({ type: 'signal', roomCode: _roomCode, data: { offer } });
+      return;
+    }
+
+    if (msg.type === 'signal') {
+      if (!_peer) return;
+      const data = msg.data ?? {};
+      if (data.offer) {
+        await _peer.acceptOffer(data.offer);
+        const answer = await _peer.createAnswer();
+        _signaling.send({ type: 'signal', roomCode: _roomCode, data: { answer } });
+      }
+      if (data.answer) await _peer.acceptAnswer(data.answer);
+      if (data.candidate) await _peer.addIceCandidate(data.candidate);
     }
   }
 
-  async function guestHandleOffer(sdp) {
-    createPeer();
-    try {
-      const answerSdp = await _peer.receiveOffer(sdp);
-      _signaling?.send({ type: 'answer', sdp: answerSdp });
-    } catch (e) {
-      renderError('Failed to process offer: ' + e.message);
-      teardown();
-    }
-  }
+  function handlePeerMessage(msg) {
+    if (!msg) return;
 
-  async function hostHandleAnswer(sdp) {
-    try {
-      await _peer?.receiveAnswer(sdp);
-    } catch (e) {
-      renderError('Failed to process answer: ' + e.message);
-      teardown();
-    }
-  }
-
-  // --- DataChannel messages (in-match) ---
-
-  function enterMatchView() {
-    hide('matchmakingScreen');
-    el('loadoutScreen')?.classList.add('loadout-hidden');
-    const mainMenu = el('mainMenu');
-    if (mainMenu) {
-      mainMenu.classList.add('mm-hidden');
-      mainMenu.setAttribute('aria-hidden', 'true');
-      if ('inert' in mainMenu) mainMenu.inert = true;
-      mainMenu.hidden = true;
-    }
-  }
-
-  function handleDataMessage(msg) {
     if (msg.type === 'mp-profile') {
       _opponentProfile = { ...(msg.profile ?? {}) };
       if (!_matchState) renderReadyPhase();
@@ -458,69 +369,48 @@ export function installMatchmakingScreen(target = window) {
   }
 
   function scheduleCpuMove(delayMs) {
+    if (!_cpuMode || !_matchState) return;
     target.setTimeout(() => {
       if (!_cpuMode || !_matchState) return;
-      const s = _matchState;
-      if (s.phase !== MP_PHASES.PLACEMENT || hasSubmittedAction(s, 1)) return;
-      const inner = chooseCpuAction(s, 1);
-      dispatchMatchAction({
-        type: MP_ACTIONS.MP_SUBMIT_ACTION,
-        playerIndex: 1,
-        action: { ...inner, playerIndex: 1 },
-      });
+      const cpuIndex = _role === 'host' ? 1 : 0;
+      if (!hasSubmittedAction(_matchState, cpuIndex) && _matchState.phase === MP_PHASES.PLACEMENT) {
+        const action = chooseCpuAction(_matchState, cpuIndex);
+        dispatchMatchAction({ type: MP_ACTIONS.MP_SUBMIT_ACTION, playerIndex: cpuIndex, action });
+      }
     }, delayMs);
   }
 
-  function maybeCpuAct(action, state) {
-    if (!_cpuMode || !state || state.phase !== MP_PHASES.PLACEMENT) return;
-    if (hasSubmittedAction(state, 1)) return;
-    const isHumanSubmit = action?.type === MP_ACTIONS.MP_SUBMIT_ACTION && action.playerIndex === 0;
-    const isNewRound = action?.type === MP_ACTIONS.MP_NEW_ROUND;
-    if (!isHumanSubmit && !isNewRound) return;
-    scheduleCpuMove(400 + Math.random() * 600);
-  }
-
-  function installCpuHook() {
-    const origOnLocal = target.tlrMpOnLocalAction;
-    target.tlrMpOnLocalAction = function (action, state) {
-      origOnLocal?.call(target, action, state);
-      maybeCpuAct(action, state);
-    };
-    // CPU pre-submits its first action at round start
-    scheduleCpuMove(500 + Math.random() * 500);
-  }
-
-  function startCpuMatch() {
-    const p = _profile ?? {};
-    const initAction = {
-      type: MP_ACTIONS.MP_INIT,
-      seed: randomSeed(),
-      scoreTarget: p.scoreTarget ?? 200,
-      personas: [p.personaId ?? null, null],
-    };
-    _matchState = null;
-    enterMatchView();
-    dispatchMatchAction(initAction);
-    target.tlrMpOnMatchStart?.(_matchState, { role: 'host', peer: null });
-    // tlrMpOnMatchStart (from mpGame) just set tlrMpOnLocalAction — now wrap it
-    installCpuHook();
-  }
-
   target.tlrMmVsCpu = function () {
-    _role = 'host';
     _cpuMode = true;
-    _opponentProfile = { personaId: null };
-    startCpuMatch();
+    _role = 'host';
+    _peer = null;
+    _opponentProfile = { personaId: 'rival' };
+    startMatch();
   };
+
+  // Patch local dispatch to trigger CPU response after the human acts.
+  const originalDispatch = target.tlrMpDispatch;
+  target.tlrMpDispatch = function (action) {
+    const result = originalDispatch(action);
+    if (_cpuMode && action?.type === MP_ACTIONS.MP_SUBMIT_ACTION) scheduleCpuMove(650);
+    return result;
+  };
+
+  function enterMatchView() {
+    hide('matchmakingScreen');
+    if (typeof target.tlrShowMpGame === 'function') target.tlrShowMpGame(_matchState, { role: _role, peer: _peer });
+  }
 }
 
-// --- Utility ---
-
-function escHtml(str) {
-  return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function personaName(id) {
-  const names = { cleaner: 'The Cleaner', hoarder: 'The Hoarder', anchor: 'The Anchor', gambit: 'The Gambit', surgeon: 'The Surgeon' };
-  return names[id] ?? id;
+  if (!id) return 'No Persona';
+  return id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function escHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 }

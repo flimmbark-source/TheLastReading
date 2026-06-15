@@ -1,0 +1,5 @@
+/* Drag stability overrides: active hand cards should follow the pointer directly. */
+.hand .card.hand-card-dragging{
+  transition:none!important;
+  will-change:transform;
+}
