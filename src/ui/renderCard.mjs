@@ -14,7 +14,7 @@ function interactionMeaning(c){return c?.abilityType==='mp_banish'
   ? ['Remove the opponent\'s last played card from their spread.','']
   : ['Silence a card in the opponent\'s spread.',''];}
 
-export function title(c){if(isInteraction(c))return c.name;if(c.type==='major')return ROMAN[c.num]+' · '+c.name.replace(/^[IVXLCDM\d]+\s+/,'');if(c.type==='court')return c.rank+' of '+GLYPH[c.suit];return c.name}
+export function title(c){if(isInteraction(c))return c.name;if(c.type==='major')return ROMAN[c.num]+' · '+c.name.replace(/^[IVXLCDM\d]+\s+/,'');if(c.type==='court')return c.rank+' of '+c.suit;return c.name}
 export function meanings(c){if(isInteraction(c))return interactionMeaning(c);if(c.type==='major')return MEAN[c.id]||['',''];if(c.type==='court')return COURT_MEAN[c.rank]||['',''];return SUIT_MEAN[c.suit]||['','']}
 export function symbol(c){if(isInteraction(c))return interactionSymbol(c);return c.type==='major'?(MAJOR_G[c.num]||'✦'):GLYPH[c.suit]}
 
