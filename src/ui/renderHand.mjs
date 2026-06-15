@@ -24,8 +24,6 @@ export function renderHand(ability, inPurge, view = null) {
   const _handExisting=new Map();
   h.querySelectorAll(':scope > .card[data-uid]').forEach(el=>_handExisting.set(Number(el.dataset.uid),el));
   v.hand.forEach((c,i)=>{
-    const valid=ability&&ability.validIds.has(c.uid);
-    const picked=ability&&ability.picked.includes(c.uid);
     const purgePicked=inPurge&&(v.purgeSelect||[]).includes(c.uid);
     let e=_handExisting.get(c.uid);
     const fresh=!e;
@@ -42,11 +40,16 @@ export function renderHand(ability, inPurge, view = null) {
       e.style.removeProperty('--hint-shadow');
       delete e.dataset.hint;
     }
+    // v.abilityPickView is an MP-owned ability view (for card-pick mode) that
+    // applies visual classes without routing clicks to the SP handleAbilityHandClick.
+    const av=ability||v?.abilityPickView||null;
+    const valid=av&&av.validIds.has(c.uid);
+    const picked=av&&av.picked.includes(c.uid);
     e.className='card '+(c.type==='major'?'major ':'')+(CARD_SHEET[c.id]?'photo ':'')
       +(inPurge?(purgePicked?'purge-picked ':'purge-target '):'')
-      +(selectedId===c.uid&&!ability&&!inPurge?'sel ':'')
+      +(selectedId===c.uid&&!av&&!inPurge?'sel ':'')
       +(valid&&!picked?'ability-target ':'')+(picked?'ability-picked ':'')
-      +(ability&&!valid?'ability-disabled ':'');
+      +(av&&!valid?'ability-disabled ':'');
     if(!inPurge)applyHint(e,c);
     e.style.zIndex=handLen-i;
     e.style.setProperty('--a',((i-(handLen-1)/2)*5)+'deg');
