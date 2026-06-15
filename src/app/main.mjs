@@ -25,6 +25,7 @@ import { installLoadoutScreen } from './loadoutScreen.mjs';
 import { installMatchmakingScreen } from './matchmakingScreen.mjs';
 import { installMpGame } from './mpGameHost.mjs';
 import { installMpCpuSafety } from './mpCpuSafety.mjs';
+import { installMpAbilitySurfaceCleanup } from './mpAbilitySurfaceCleanup.mjs';
 import { installMenuControls } from './menuControls.mjs';
 import { installResonationFlow } from './resonationFlow.mjs';
 import { installHintRuntime } from './hintRuntime.mjs';
@@ -248,6 +249,7 @@ export function startApp(target = window) {
   installMatchmakingScreen(target);
   installMpGame(target);
   installMpCpuSafety(target);
+  installMpAbilitySurfaceCleanup(target);
   installStoreFrontTuning(target);
   installMarketTutorialTrigger(target);
 
