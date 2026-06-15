@@ -46,6 +46,10 @@ export function installMpGame(target = window) {
   let _latestEffectsUntil = 0;
   let _delayedNextRoundQueued = false;
   let _localPlacementFeedbackKeys = new Set();
+  // Cards submitted for discard/purge/invoke stay in _state until the round
+  // resolves, causing a one-frame flash where they reappear as unselected cards.
+  // Track them here and filter in selfHandView until _state catches up.
+  let _pendingRemovalUids = new Set();
 
   const doc = target.document;
   function el(id) { return doc.getElementById(id); }
@@ -145,8 +149,12 @@ export function installMpGame(target = window) {
   }
 
   function selfHandView(s, my) {
+    const rawHand = s.players[my]?.hand || [];
+    const hand = _pendingRemovalUids.size
+      ? rawHand.filter(c => !_pendingRemovalUids.has(c.uid))
+      : rawHand;
     return {
-      hand: s.players[my]?.hand || [],
+      hand,
       selected: _selected,
       purgeSelect: _purgeSelect,
       onToggleSelect: handleSelectToggle,
@@ -1105,6 +1113,11 @@ export function installMpGame(target = window) {
 
   function submitAction(action, options = {}) {
     if (!_state || mySubmitted(_state)) return;
+    // Mark cards being removed so selfHandView hides them immediately, preventing
+    // a one-frame flash where they reappear as unselected before _state updates.
+    if (action.type === MP_ACTIONS.MP_DISCARD_CARD && action.cardUid != null) _pendingRemovalUids.add(action.cardUid);
+    else if (action.type === MP_ACTIONS.MP_INVOKE_ABILITY && action.cardUid != null) _pendingRemovalUids.add(action.cardUid);
+    else if (action.type === MP_ACTIONS.MP_PURGE_CARDS) action.cardUids?.forEach(uid => _pendingRemovalUids.add(uid));
     target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_SUBMIT_ACTION, playerIndex: _myIndex, action: { ...action, playerIndex: _myIndex } });
     _invokeCard = null; _swapFirst = null; _purgeSelect = null; _abilityResolving = false;
     if (!options.keepSelected) _selected = null;
@@ -1563,6 +1576,7 @@ export function installMpGame(target = window) {
   }
 
   function resetTransientActionState() {
+    _pendingRemovalUids.clear();
     _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; _personaSwapRequested = false;
     renderMpPurgePrompt();
   }
