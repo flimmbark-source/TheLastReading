@@ -99,6 +99,8 @@ function installOverlayLayerFix(doc) {
     body.mp-game-active .refs-layer .ref:not(.hidden){pointer-events:auto!important}
     body.mp-game-active #scoringPullWrap,
     body.mp-game-active #abilitiesPullWrap{display:block!important;z-index:2147483200!important}
+    body.mp-game-active #scoringPullTab{left:calc(100vw - 196px)!important}
+    body.mp-game-active #abilitiesPullTab{left:calc(100vw - 100px)!important}
     body.mp-game-active #scoringPullWrap .tlr-pull-tab,
     body.mp-game-active #abilitiesPullWrap .tlr-pull-tab{pointer-events:auto!important}
     body.mp-game-active #scoringPullWrap.open,
