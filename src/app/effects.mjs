@@ -133,7 +133,7 @@ export function _scheduleBreath(){
   if(_breathTimer)clearTimeout(_breathTimer);
   const delay=35000+Math.random()*40000;
   _breathTimer=setTimeout(()=>{
-    if(typeof state!=='undefined'&&!state.busy&&!(window.tlrStore?.getState?.()?.run?.ability?.targeting||state.abilitySelect)&&state.purgeSelect===null){
+    if(typeof state!=='undefined'&&!(window.tlrStore?.getState?.()?.run?.busy??state.busy)&&!(window.tlrStore?.getState?.()?.run?.ability?.targeting||state.abilitySelect)&&state.purgeSelect===null){
       playSound('breath');
       breathVisuals();
     }

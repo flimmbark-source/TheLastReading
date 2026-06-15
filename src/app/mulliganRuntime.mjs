@@ -5,7 +5,7 @@ function stateOf(target){return runtime(target).state || target.state;}
 
 export function mulligan(target = window){
   const state=stateOf(target);
-  if(!state || state.busy || (target.tlrStore?.getState?.()?.run?.ability?.targeting||state.abilitySelect) || state.purgeSelect!==null)return false;
+  if(!state || (target.tlrStore?.getState?.()?.run?.busy??state.busy) || (target.tlrStore?.getState?.()?.run?.ability?.targeting||state.abilitySelect) || state.purgeSelect!==null)return false;
   if(!(state.mullCharges>0))return false;
   if(!state.spread.every(slot=>!slot))return false;
   if(typeof target.maxHand==='function' && state.hand.length!==target.maxHand())return false;

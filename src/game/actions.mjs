@@ -28,6 +28,7 @@ export const ACTIONS = Object.freeze({
   SYNC_LEGACY_PERSIST: 'SYNC_LEGACY_PERSIST',
   FLUSH_HAND: 'FLUSH_HAND',
   REORDER_HAND: 'REORDER_HAND',
+  SET_BUSY: 'SET_BUSY',
 });
 
 export const startReading = () => ({ type: ACTIONS.START_READING });

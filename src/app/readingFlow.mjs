@@ -20,6 +20,7 @@ import { getAbility } from '../data/abilities.mjs';
 
 let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 let scorePillSetBase=0;
+function setBusy(v){state.busy=v;if(tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.SET_BUSY,busy:v});}
 
 function legacyScore(score){return {...score,melds:(score.melds||[]).map(m=>Array.isArray(m)?m:[m.name,m.chips,m.mult,m.mode])}}
 function syncRoundFields(_run){
@@ -56,7 +57,7 @@ export function flushHand(){
   state.hand=_run.hand.slice();state.deck=_run.deck.slice();state.discard=_run.discard.slice();
   state.spread=_run.spread.slice();state.selected=null;
   state.thBonus=_run.thresholdBonus;
-  state.busy=false;state.abilitySelect=null;state.purgeSelect=null;
+  setBusy(false);state.abilitySelect=null;state.purgeSelect=null;
   state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
   state.resonationBonus={chips:0,mult:0};
   state.roundScore=0;state.setScores=[];
@@ -75,7 +76,7 @@ export function startReading(){
   state.deck=_run.deck.slice();state.hand=_run.hand.slice();state.discard=[];
   state.spread=_run.spread.slice();state.purgeSelect=null;state.abilitySelect=null;state.selected=null;
   state.discards=_run.discards;state.mullCharges=_run.mulliganCharges;
-  state.busy=false;state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];
+  setBusy(false);state.freeDiscardUsed=false;state.sightChargesUsed=0;state.discardedCards=[];
   state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
   state.resonationBonus={chips:0,mult:0};
   state.thBonus=_run.thresholdBonus;state.thBonusPending=0;
@@ -95,7 +96,7 @@ export function continueSet(){
   state.deck=_run.deck.slice();state.hand=_run.hand.slice();state.discard=_run.discard.slice();
   state.spread=_run.spread.slice();state.purgeSelect=null;state.abilitySelect=null;state.selected=null;
   state.discards=_run.discards;state.mullCharges=_run.mulliganCharges;
-  state.busy=false;state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
+  setBusy(false);state.abilityTakenUids=new Set();state.resonationTriggeredThisReading={};
   state.resonationBonus={chips:0,mult:0};
   syncRoundFields(_run);
   playSound('shuffle');
@@ -198,13 +199,13 @@ export function resolveAbility(ab,done,sourceCard=null){
   else{if(ab&&tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.CANCEL_ABILITY});done()}
 }
 
-function peek(n,done){state.busy=true;let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){state.busy=false;done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{
+function peek(n,done){setBusy(true);let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){setBusy(false);done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{
   tlrResolveAbilityThroughStore({kind:'take',heldCards:cards,takenCardId:p.uid});
-  state.busy=false;done()})}
+  setBusy(false);done()})}
 
-function search(done){state.busy=true;if(!state.deck.length){state.busy=false;done();return}choice('Search deck','Pick any card. The deck reshuffles.',sortCards(state.deck),p=>{
+function search(done){setBusy(true);if(!state.deck.length){setBusy(false);done();return}choice('Search deck','Pick any card. The deck reshuffles.',sortCards(state.deck),p=>{
   tlrResolveAbilityThroughStore({kind:'search',takenCardId:p.uid});
-  playSound('shuffle');state.busy=false;done()})}
+  playSound('shuffle');setBusy(false);done()})}
 
 function inPlay(){return[...state.hand,...state.spread.filter(Boolean)]}
 function neighbor(t){return window.tlrAbilities.cardsInDeckByIds(state.deck,window.tlrAbilities.neighborCardIds(t))}
@@ -215,7 +216,7 @@ function betweenPool(a,b){
   return window.tlrAbilities.cardsInDeckByIds(state.deck,window.tlrAbilities.betweenCardIds(a,b));
 }
 function uniqueCards(cards){let seen=new Set();return cards.filter(c=>{if(seen.has(c.uid))return false;seen.add(c.uid);return true})}
-function fallbackAbility(done,title='No valid ability result'){tlrAbilityDraw(1);choice(title,'No valid target was available. Draw 1 instead.',state.hand.slice(-1),()=>{state.busy=false;done()})}
+function fallbackAbility(done,title='No valid ability result'){tlrAbilityDraw(1);choice(title,'No valid target was available. Draw 1 instead.',state.hand.slice(-1),()=>{setBusy(false);done()})}
 
 export function selectFromHand(title,prompt,cards,count,cb,previewFn=null){
   const validCardIds=cards.map(c=>c.uid);
@@ -258,7 +259,7 @@ export function confirmAbilitySelection(){
 // reducer. The reveal cap was previously bolted on by betweenAbilityLimitPatch;
 // it now lives here in the host.
 function betweenAbility(done,sourceCard=null){
-  state.busy=true;
+  setBusy(true);
   const limit=Math.max(1,Number(getAbility('BETWEEN_2')?.count||2));
   const anchors=sortCards(targetable([...state.hand,...state.spread.filter(Boolean)]));
   const validAnchors=anchors.filter(a=>anchors.some(b=>b.uid!==a.uid&&betweenPool(a,b).length>0));
@@ -273,17 +274,17 @@ function betweenAbility(done,sourceCard=null){
   selectFromHand('Between','Choose 2 cards. Between reveals up to '+limit+' cards whose values fall between them in sequence.',validAnchors,2,(a,b)=>{
     const found=sortCards(uniqueCards(betweenPool(a,b))).slice(0,limit);
     if(!found.length){
-      state.busy=false;done();return;
+      setBusy(false);done();return;
     }
     choice('Between — '+cleanName(a)+' / '+cleanName(b),'Cards found between them. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
       tlrResolveAbilityThroughStore({kind:'take',heldCards:found,takenCardId:p.uid,threadBond:true});
-      state.busy=false;done();
+      setBusy(false);done();
     });
   },previewFn);
 }
 
 function relation(title,prompt,poolFn,n,done){
-  state.busy=true;
+  setBusy(true);
   const candidates=targetable(inPlay()).filter(c=>poolFn(c).length>0);
   if(!candidates.length){fallbackAbility(done,title+' — no matching cards');return}
   const previewFn=(t)=>{
@@ -294,11 +295,11 @@ function relation(title,prompt,poolFn,n,done){
   selectFromHand(title,prompt,candidates,1,(t)=>{
     const found=sortCards(poolFn(t)).slice(0,n);
     if(!found.length){
-      state.busy=false;done();return;
+      setBusy(false);done();return;
     }
     choice(title+' — '+cleanName(t),'Cards found from '+cleanName(t)+'. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
       tlrResolveAbilityThroughStore({kind:'take',heldCards:found,takenCardId:p.uid,threadBond:title==='Kin'||title==='Neighbor'});
-      state.busy=false;done();
+      setBusy(false);done();
     });
   },previewFn);
 }

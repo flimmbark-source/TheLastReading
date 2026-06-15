@@ -25,7 +25,7 @@ export function installHandCardGestures(target = window){
   const handCards=()=>{const h=handEl();return h?[...h.querySelectorAll(':scope > .card[data-uid]')]:[]};
   const storeState=()=>target.tlrStore?.getState?.()??null;
   const gestureTargeting=()=>{const s=storeState();return s?selectAbilityTargetView(s):state.abilitySelect;};
-  const inSelectionMode=()=>!!(gestureTargeting()||state.purgeSelect!==null||state.busy);
+  const inSelectionMode=()=>!!(gestureTargeting()||state.purgeSelect!==null||(storeState()?.run?.busy??state.busy));
   const cancelHold=()=>{if(g&&g.holdTimer){clearTimeout(g.holdTimer);g.holdTimer=null;}};
   // Add uid to end of arr (no duplicates), trim to last max items.
   const queueUid=(arr,uid,max)=>{if(arr.includes(uid))return arr;const a=[...arr,uid];return a.length>max?a.slice(-max):a;};
@@ -391,7 +391,7 @@ export function installHandCardGestures(target = window){
       const dx=ev.clientX-g.startX,dy=ev.clientY-g.startY;
       if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
       // busy: drop pointer tracking entirely.
-      if(state.busy){cancelHold();g=null;return;}
+      if(storeState()?.run?.busy??state.busy){cancelHold();g=null;return;}
       // ability/purge: sweep-to-select mode.
       if(gestureTargeting()||state.purgeSelect!==null){startSelectDrag(ev);return;}
       // normal: card drag-to-reorder / drag-to-place.

@@ -16,7 +16,7 @@ function call(target,name,...args){
 
 export function discardSelected(target = window){
   const state=stateOf(target),persist=persistOf(target);
-  if(!state||!persist||state.busy||state.selected===null)return false;
+  if(!state||!persist||(target.tlrStore?.getState?.()?.run?.busy??state.busy)||state.selected===null)return false;
   const free=(persist.relics||[]).includes('gilded_discard')&&!state.freeDiscardUsed;
   if(!free&&state.discards<=0)return false;
   const idx=state.hand.findIndex(card=>card.uid===state.selected);

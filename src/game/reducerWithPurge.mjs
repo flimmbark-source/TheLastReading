@@ -128,6 +128,8 @@ export function reducer(state, action) {
       return setAbilityPicks(state, action);
     case ACTIONS.REORDER_HAND:
       return reorderHand(state, action);
+    case ACTIONS.SET_BUSY:
+      return replaceRun(state, { busy: !!action.busy });
     case CLEAR_ABILITY_TARGETING:
       return clearAbilityTargeting(state);
     default:
