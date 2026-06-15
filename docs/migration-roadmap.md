@@ -120,20 +120,28 @@ from the store, replace remaining direct `state.*` writes in `readingFlow.mjs`,
 dispatches. Then delete the `Object.defineProperty` selection bridge and
 `syncRunToStore`.
 
-> _Resonation bonus: store-native._ `resonationFlow.triggerResonation` now
-> dispatches `UPDATE_RESONATION_BONUS` to the store immediately alongside the
-> legacy `state.resonationBonus` write. `reducerWithPurge` accumulates the bonus.
-> `SCORE_READING` in the base reducer already reads `run.resonationBonus` from
-> the store, so scoring is correct even before `syncRunToStore` is called.
-> Verification: `validate-purge-reducer.mjs` covers `UPDATE_RESONATION_BONUS`.
+> **Phase 3 complete.**
 >
-> _Remaining for capstone._ `discardRuntime` and `mulliganRuntime` are already
-> store-first (dispatch then sync back). `readingFlow` round-start writes are
-> sync-back writes (copy from `_run.*`), correct already. The remaining gap
-> before retiring `syncRunToStore` is `placementRuntime` and the round-end/market
-> flows in `readingFlow` which still rely on `syncRunToStore` to push state before
-> dispatch. After those are ported the `Object.defineProperty` selection proxy
-> (`bindSelectionToStore`) and `syncRunToStore` can be deleted.
+> _Resonation bonus store-native._ `resonationFlow.triggerResonation` dispatches
+> `UPDATE_RESONATION_BONUS` alongside the legacy write (`validate-purge-reducer.mjs`).
+>
+> _Placement dispatch-first._ `placementRuntime.placeCard` dispatches `PLACE_CARD`
+> (with explicit `cardUid`) and syncs back; `reducer.placeCard` extended to accept
+> `cardUid` from the action. Gesture spread-drop legacy fallback removed.
+>
+> _`syncRunToStore` retired._ The full legacy→store dump has been deleted from
+> `legacyBridge.mjs`. Replaced by `syncPersistToStore` (persist-only sync) used
+> before round-start and discard dispatches. All run-state fields now reach the
+> store via individual dispatch-then-sync-back operations.
+>
+> _`bindSelectionToStore` retired._ The `Object.defineProperty` proxy on
+> `state.selected` is deleted. Selection is now dual-written: hold-to-expand in
+> `gestureCard` dispatches `SELECT_CARD` explicitly alongside the legacy write.
+> Round-start flows, discard, and purge sync `state.selected` back from
+> `newRun.selectedCardId` after each dispatch.
+>
+> _`validate-bridge.mjs` updated._ Tests now cover `syncPersistToStore`,
+> `resolveAbilityThroughStore`, and the bootstrap `SYNC_LEGACY_RUN` path.
 
 **Phase 4 — Multiplayer renders from match state directly.** Replace remaining
 legacy handoffs with explicit multiplayer view models and match-state selectors.
@@ -171,12 +179,11 @@ legacy handoffs with explicit multiplayer view models and match-state selectors.
 ## Immediate next steps
 
 1. Run local validation: `npm test`, `npm run lint`, and `npm run build`.
-2. Manually smoke-test desktop multiplayer: Ability button visibility, persona
-   ability prompt flow, spread/hand target glows, mult spans after placements,
-   pending placement preview, and WORLD / Reshuffle preserving already placed
-   cards.
-3. Phase 3 capstone: port `placementRuntime` and remaining `readingFlow` flows to
-   dispatch-first, then delete `bindSelectionToStore` proxy and `syncRunToStore`.
+2. Manually smoke-test singleplayer: card placement, discard, purge, mulligan,
+   resonation triggers, ability targeting, and end-of-round scoring.
+3. Phase 4 / cleanup: retire `liveMirror.mjs` once no renderer reads from it;
+   delete `SYNC_LEGACY_RUN` handler from the reducer once bootstrap
+   (`mainMenu.syncInitialRunToStore`) is ported to individual dispatches.
 
 ## Efficiency follow-ups (tracked, intentionally not bundled here)
 

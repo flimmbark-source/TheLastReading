@@ -180,10 +180,6 @@ export function installMainMenu(target = window) {
       syncInitialRunToStore(target, initialState);
     }
 
-    if (typeof target.tlrBindSelectionToStore === 'function') {
-      target.tlrBindSelectionToStore();
-    }
-
     gameStarted = false;
   }
 

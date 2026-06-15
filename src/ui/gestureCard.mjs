@@ -314,10 +314,6 @@ export function installHandCardGestures(target = window){
     // ── Drop onto spread slot ──
     if(dropSlot){
       if(typeof target.placeCardUid==='function')target.placeCardUid(uid,dropSlot.idx);
-      else{
-        state.selected=uid;
-        if(typeof placeCard==='function')placeCard(dropSlot.idx);
-      }
       return;
     }
 
@@ -384,6 +380,7 @@ export function installHandCardGestures(target = window){
         if(card&&typeof expandCard==='function'){
           target.__handGestureSuppressClickUntil=performance.now()+800;
           state.selected=uid;
+          if(target.tlrStore&&target.tlrActions)target.tlrStore.dispatch({type:target.tlrActions.SELECT_CARD,cardId:uid});
           if(typeof refreshHandState==='function')refreshHandState();
           expandCard(card);
         }

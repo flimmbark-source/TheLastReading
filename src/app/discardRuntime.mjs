@@ -27,7 +27,7 @@ export function discardSelected(target = window){
 
   const storeReady=target.tlrStore&&target.tlrActions&&typeof target.tlrStore.getState==='function';
   if(storeReady){
-    call(target,'tlrSyncRunToStore');
+    call(target,'tlrSyncPersistToStore');
     target.tlrStore.dispatch({type:target.tlrActions.DISCARD_SELECTED});
     const newRun=target.tlrStore.getState().run;
     if(newRun.selectedCardId===selectedId)return false; // guard: dispatch had no effect

@@ -12,8 +12,8 @@
    ghost, bump, centerGhost, fireMultGhost, fireScoreGhost, holdEffects,
    meldStr, normMeldName, sortCards, cardDisplayName, cleanName, choice,
    buildDeck, shuffle, drawN, slotsForMeld,
-   tlrSyncRunToStore, tlrStoreReady, tlrResolveAbilityThroughStore,
-   tlrAbilityDraw, tlrBindSelectionToStore, openShop,
+   tlrSyncPersistToStore, tlrStoreReady, tlrResolveAbilityThroughStore,
+   tlrAbilityDraw, openShop,
    maxHand, hasMull, tlrArchitectureSync, tlrScoreToObals */
 import { isCardUntargetable, hasActiveConstellation } from '../systems/constellations.mjs';
 import { getAbility } from '../data/abilities.mjs';
@@ -52,7 +52,7 @@ export function getUpFromTable(){
 
 export function flushHand(){
   if(state&&(state.busy||(window.tlrStore?.getState?.()?.run?.ability?.targeting||state.abilitySelect)||(window.tlrStore?.getState?.()?.run?.purge??state.purgeSelect)!==null))return;
-  tlrSyncRunToStore();
+  tlrSyncPersistToStore();
   window.tlrStore.dispatch({type:window.tlrActions.FLUSH_HAND});
   const _run=window.tlrStore.getState().run;
   state.hand=_run.hand.slice();state.deck=_run.deck.slice();state.discard=_run.discard.slice();
@@ -71,7 +71,7 @@ export function flushHand(){
 
 export function startReading(){
   if(window.tlrCloseArchives)window.tlrCloseArchives();
-  tlrSyncRunToStore();
+  tlrSyncPersistToStore();
   window.tlrStore.dispatch({type:window.tlrActions.START_READING,deck:shuffle(buildDeck())});
   const _st=window.tlrStore.getState(),_run=_st.run;
   state.deck=_run.deck.slice();state.hand=_run.hand.slice();state.discard=[];
@@ -91,7 +91,7 @@ export function startReading(){
 export function continueSet(){
   if(!state.awaitingNextSet)return;
   const recordedBase=Math.max(visibleCounterValue(),state.roundScore||0,scorePillSetBase||0);
-  tlrSyncRunToStore();
+  tlrSyncPersistToStore();
   window.tlrStore.dispatch({type:window.tlrActions.START_NEXT_SET});
   const _run=window.tlrStore.getState().run;
   state.deck=_run.deck.slice();state.hand=_run.hand.slice();state.discard=_run.discard.slice();
@@ -110,7 +110,6 @@ export function placeCard(i){
   let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;
   const beforeMelds=new Map(_scoreLegacy(state.spread.filter(Boolean)).melds.map(x=>[x[0],x]));
   let c=state.hand[idx];
-  tlrSyncRunToStore();
   window.tlrStore.dispatch({type:window.tlrActions.PLACE_CARD,slotIndex:i});
   const _run=window.tlrStore.getState().run;
   state.hand=_run.hand.slice();
@@ -157,7 +156,7 @@ export function startPurge(){
   const _run=tlrStoreReady()?window.tlrStore.getState().run:null;
   const busy=_run?.busy??state.busy;const abilityActive=_run?.ability?.targeting||state.abilitySelect;const inPurge=(_run?.purge??state.purgeSelect)!==null;
   if(busy||state.hand.length<3||abilityActive||inPurge)return;
-  if(_run){tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.START_PURGE});syncPurgeFromStore();state.selected=null;}
+  if(_run){window.tlrStore.dispatch({type:window.tlrActions.START_PURGE});syncPurgeFromStore();state.selected=null;}
   else{state.purgeSelect=[];state.selected=null;}
   render();
 }
@@ -172,7 +171,7 @@ export function confirmPurge(){
   const _run=tlrStoreReady()?window.tlrStore.getState().run:null;
   const picks=_run?.purge??state.purgeSelect;
   if(!picks||picks.length!==3)return;
-  if(_run){tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.CONFIRM_PURGE});syncPurgeFromStore();}
+  if(_run){window.tlrStore.dispatch({type:window.tlrActions.CONFIRM_PURGE});syncPurgeFromStore();}
   else{state.hand=state.hand.filter(c=>!state.purgeSelect.includes(c.uid));state.discards++;state.purgeSelect=null;}
   render();checkEnd();
 }
@@ -188,7 +187,7 @@ export function discardSelected(){
   if(!free&&state.discards<=0)return;
   let idx=state.hand.findIndex(c=>c.uid===selectedBefore);if(idx<0)return;
   let c=state.hand[idx];
-  tlrSyncRunToStore();
+  tlrSyncPersistToStore();
   window.tlrStore.dispatch({type:window.tlrActions.DISCARD_SELECTED});
   const _run=window.tlrStore.getState().run;
   if(_run.selectedCardId===selectedBefore)return;
@@ -374,22 +373,22 @@ html+='</table><div class="rbtns">';
 if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}
 else{html+='<button onclick="endSession()">End Session</button>';}
 html+='</div></div>';showOverlay(html);render();}
-function tlSyncBeforeScore(){tlrSyncRunToStore()}
+function tlSyncBeforeScore(){tlrSyncPersistToStore()}
 
 export function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html;tlrArchitectureSync()}
 export function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML='';tlrArchitectureSync()}
 function summaryIsFailedReading(){const s=$('#summary');if(!s||!s.classList.contains('show'))return false;return !!s.querySelector('.result-panel.fail')}
 
 export function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount=0;const firstShop=!localStorage.getItem('tlr_tut_shop');const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;
-tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});state.reading=window.tlrStore.getState().run.reading;
+window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});state.reading=window.tlrStore.getState().run.reading;
 startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}else if(pendingRelic){setTimeout(()=>tutShow(9),400)}}
 
 export function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;
-tlrSyncRunToStore();window.tlrStore.dispatch({type:window.tlrActions.END_SESSION,totalScore:total,obals:candles});
+window.tlrStore.dispatch({type:window.tlrActions.END_SESSION,totalScore:total,obals:candles});
 if(summaryIsFailedReading()){clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);return}
 showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Obals</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}
 
-export function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0,setIndex:0,setsPerRound:2,roundScore:0,setScores:[],roundDiscardCount:0,roundPatternCount:0,constellationId:null,untargetableCardUids:[],awaitingNextSet:false,lastOutcome:null};tlrBindSelectionToStore();
+export function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0,setIndex:0,setsPerRound:2,roundScore:0,setScores:[],roundDiscardCount:0,roundPatternCount:0,constellationId:null,untargetableCardUids:[],awaitingNextSet:false,lastOutcome:null};
 window.tlrStore.dispatch({type:window.tlrActions.SYNC_LEGACY_PERSIST,persist:{reserve:persist.pool,totalScore:persist.totalScore||0,upgrades:persist.up,relics:persist.relics,relicUsed:persist.relicUsed}});
 window.tlrStore.dispatch({type:window.tlrActions.RESET_SESSION});
 const _p=window.tlrStore.getState().persist;
