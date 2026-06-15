@@ -47,7 +47,7 @@ export function renderHand(ability, inPurge, view = null) {
       +(selectedId===c.uid&&!ability&&!inPurge?'sel ':'')
       +(valid&&!picked?'ability-target ':'')+(picked?'ability-picked ':'')
       +(ability&&!valid?'ability-disabled ':'');
-    if(!inPurge)applyHint(e,c,null,{spread:v.spread||[],hand:v.hand||[]});
+    if(!inPurge)applyHint(e,c,null,view?{spread:v.spread||[],hand:v.hand||[]}:null);
     e.style.zIndex=handLen-i;
     e.style.setProperty('--a',((i-(handLen-1)/2)*5)+'deg');
     // onclick captures the current render's ability/inPurge snapshot, so
