@@ -46,11 +46,12 @@ function drawFreshSetHand(run, persist, rng = Math.random, sourceDeck = null) {
   return { hand, deck, discard };
 }
 
-function placeCard(state, slotIndex) {
+function placeCard(state, slotIndex, cardUid) {
   const { run } = state;
-  if (run.selectedCardId == null || run.spread[slotIndex]) return state;
+  const uid = cardUid ?? run.selectedCardId;
+  if (uid == null || run.spread[slotIndex]) return state;
 
-  const cardIndex = run.hand.findIndex(card => card.uid === run.selectedCardId);
+  const cardIndex = run.hand.findIndex(card => card.uid === uid);
   if (cardIndex < 0) return state;
 
   const hand = [...run.hand];
@@ -499,7 +500,7 @@ export function reducer(state, action) {
     case ACTIONS.CLEAR_SELECTION:
       return replaceRun(state, { selectedCardId: null });
     case ACTIONS.PLACE_CARD:
-      return placeCard(state, action.slotIndex);
+      return placeCard(state, action.slotIndex, action.cardUid ?? null);
     case ACTIONS.DISCARD_SELECTED:
       return discardSelected(state);
     case ACTIONS.RESOLVE_ABILITY:

@@ -36,12 +36,23 @@ export function placeCard(slotIndex,target = window, explicitCardUid = null){
     : {melds:[],finalScore:0};
   const beforeMelds=new Map((beforeScore.melds||[]).map(m=>[m[0],m]));
 
-  const card=state.hand.splice(handIndex,1)[0];
-  state.spread[slotIndex]=card;
-  state.selected=null;
+  const card=state.hand[handIndex];
+  const storeReady=target.tlrStore&&target.tlrActions&&typeof target.tlrStore.getState==='function';
+  if(storeReady){
+    call(target,'tlrSyncRunToStore');
+    target.tlrStore.dispatch({type:target.tlrActions.PLACE_CARD,slotIndex,cardUid});
+    const newRun=target.tlrStore.getState().run;
+    if(newRun.spread[slotIndex]!==card)return false;
+    state.hand=newRun.hand.slice();
+    state.spread=newRun.spread.slice();
+    state.selected=newRun.selectedCardId;
+  } else {
+    state.hand.splice(handIndex,1);
+    state.spread[slotIndex]=card;
+    state.selected=null;
+  }
   target._cachedPlacedScore=null;
 
-  call(target,'tlrSyncRunToStore');
   call(target,'render');
   call(target,'tutSignal','cardPlaced');
   call(target,'playSound','place');
