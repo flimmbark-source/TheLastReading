@@ -250,6 +250,11 @@ export function installMpGame(target = window) {
     renderActionButtons(s, my);
     renderSelfSpread(s, my);
     renderActionPanel(s, my);
+    // The MP refreshHandState override runs the singleplayer refreshHandState
+    // first, which calls the SP renderAbilityPrompt and strips the `show` class
+    // off #abilityPrompt. Re-reconcile the persona prompt here (as the full
+    // render() does) so the swap directions aren't silently hidden mid-flow.
+    syncPersonaPrompt();
   }
 
   function renderTopBar(s, my) {
