@@ -16,7 +16,9 @@
    tlrAbilityDraw, openShop,
    maxHand, hasMull, tlrArchitectureSync, tlrScoreToObals */
 import { isCardUntargetable, hasActiveConstellation } from '../systems/constellations.mjs';
-import { getAbility } from '../data/abilities.mjs';
+import { getAbility, ABILITY_TYPES } from '../data/abilities.mjs';
+import { buildAbilityChoiceAsync } from './abilityFlowAsync.mjs';
+import { choiceAsync } from '../ui/renderAbility.mjs';
 
 let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 let scorePillSetBase=0;
@@ -202,53 +204,69 @@ export function discardSelected(){
   resolveAbility(c.ability,()=>{if(persist.up.nimble_fingers)drawN(persist.up.nimble_fingers);render();checkEnd()},c);
 }
 
-export function resolveAbility(ab,done,sourceCard=null){
-  const lens=persist.up.lens_mastery||0;
-  const rd=persist.up.ritual_depth||0;
-  if(ab&&tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.START_ABILITY,abilityId:ab,sourceCardId:sourceCard?sourceCard.uid:null});
-  if(ab==='DRAW_1'){tlrAbilityDraw(1+rd);done()}
-  else if(ab==='DRAW_2'){tlrAbilityDraw(2+rd);done()}
-  else if(ab==='DRAW_3'){tlrAbilityDraw(3+rd);done()}
-  else if(ab==='PEEK_3')peek(3+lens+(persist.up.peek_plus||0),done);
-  else if(ab==='PEEK_5')peek(5+lens+(persist.up.peek_plus||0),done);
-  else if(ab==='SEARCH')search(done);
-  else if(ab==='NEIGHBOR_2')relation('Neighbor','Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers or court ranks in the same suit.',neighbor,2+lens+(persist.up.relation_plus||0),done);
-  else if(ab==='KIN_2')relation('Kin','Choose an anchor card. Kin finds cards of the same Arcana.',kin,2+lens+(persist.up.relation_plus||0),done);
-  else if(ab==='MIRROR_1')relation('Mirror','Choose a card. Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)',mirror,1+lens,done);
-  else if(ab==='BETWEEN_2')betweenAbility(done,sourceCard);
-  else if(ab==='WORLD'){
-    tlrResolveAbilityThroughStore({kind:'world',handSize:maxHand()+rd});
-    playSound('shuffle');done()}
-  else{if(ab&&tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.CANCEL_ABILITY});done()}
+export async function resolveAbility(ab, done, sourceCard = null) {
+  const lens = persist.up.lens_mastery || 0;
+  const rd = persist.up.ritual_depth || 0;
+  if (ab && tlrStoreReady()) window.tlrStore.dispatch({ type: window.tlrActions.START_ABILITY, abilityId: ab, sourceCardId: sourceCard?.uid ?? null });
+  if (ab === 'DRAW_1') { tlrAbilityDraw(1 + rd); done(); return; }
+  if (ab === 'DRAW_2') { tlrAbilityDraw(2 + rd); done(); return; }
+  if (ab === 'DRAW_3') { tlrAbilityDraw(3 + rd); done(); return; }
+  // PEEK: reshuffles discard into deck when empty — handled locally to preserve that behaviour.
+  if (ab === 'PEEK_3') { peek(3 + lens + (persist.up.peek_plus || 0), done); return; }
+  if (ab === 'PEEK_5') { peek(5 + lens + (persist.up.peek_plus || 0), done); return; }
+  if (ab === 'WORLD') { tlrResolveAbilityThroughStore({ kind: 'world', handSize: maxHand() + rd }); playSound('shuffle'); done(); return; }
+
+  const baseAbility = getAbility(ab);
+  if (!baseAbility) { if (ab && tlrStoreReady()) window.tlrStore.dispatch({ type: window.tlrActions.CANCEL_ABILITY }); done(); return; }
+
+  const ability = { ...baseAbility };
+  if (ability.type === ABILITY_TYPES.NEIGHBOR || ability.type === ABILITY_TYPES.KIN) ability.count = (ability.count ?? 2) + lens + (persist.up.relation_plus || 0);
+  if (ability.type === ABILITY_TYPES.MIRROR) ability.count = (ability.count ?? 1) + lens;
+
+  setBusy(true);
+
+  const abilityChoice = await buildAbilityChoiceAsync(
+    ability,
+    { deck: state.deck, hand: state.hand, spread: state.spread.filter(Boolean), sourceCardUid: sourceCard?.uid ?? null },
+    {
+      showChoice:    (t, p, cards) => choiceAsync(t, p, cards),
+      selectTargets: (t, p, cards, count, previewFn) => new Promise(resolve => selectFromHand(t, p, cards, count, (...picked) => resolve(picked), previewFn)),
+      sortCards:     cards => sortCards(cards.slice()),
+      cleanName:     card => cleanName(card),
+      shuffleDeck:   cards => shuffle([...cards]),
+      isTargetable:  card => !isTargetBlocked(card),
+    },
+  );
+
+  if (!abilityChoice) { setBusy(false); return; }
+
+  if (abilityChoice.kind === 'fallback') {
+    // fallbackAbility draws 1, shows it, then calls done() and setBusy(false) internally.
+    fallbackAbility(done, `${ability.title} — no valid targets`);
+    return;
+  }
+
+  const allCards = [...state.deck, ...state.discard, ...state.hand, ...state.spread.filter(Boolean)];
+  if (abilityChoice.kind === 'take') {
+    const heldCards = abilityChoice.heldCardUids.map(uid => allCards.find(c => c.uid === uid)).filter(Boolean);
+    tlrResolveAbilityThroughStore({ kind: 'take', heldCards, takenCardId: abilityChoice.takenCardUid, ...(abilityChoice.threadBond ? { threadBond: true } : {}) });
+  } else if (abilityChoice.kind === 'search') {
+    tlrResolveAbilityThroughStore({ kind: 'search', takenCardId: abilityChoice.takenCardUid });
+    playSound('shuffle');
+  }
+
+  setBusy(false);
+  done();
 }
 
-function peek(n,done){setBusy(true);let cards=[];for(let i=0;i<n;i++){if(!state.deck.length&&state.discard.length)state.deck=shuffle(state.discard.splice(0));if(!state.deck.length)break;cards.push(state.deck.shift())}if(!cards.length){setBusy(false);done();return}choice('Peek '+n,'Pick one. The rest go to the bottom.',cards,p=>{
-  tlrResolveAbilityThroughStore({kind:'take',heldCards:cards,takenCardId:p.uid});
-  setBusy(false);done()})}
+function peek(n, done) { setBusy(true); let cards = []; for (let i = 0; i < n; i++) { if (!state.deck.length && state.discard.length) state.deck = shuffle(state.discard.splice(0)); if (!state.deck.length) break; cards.push(state.deck.shift()); } if (!cards.length) { setBusy(false); done(); return; } choice('Peek ' + n, 'Pick one. The rest go to the bottom.', cards, p => { tlrResolveAbilityThroughStore({ kind: 'take', heldCards: cards, takenCardId: p.uid }); setBusy(false); done(); }); }
+function isTargetBlocked(card) { return isCardUntargetable({ th: state.th, constellationId: state.constellationId, untargetableCardIds: state.untargetableCardUids }, card); }
+function fallbackAbility(done, title = 'No valid ability result') { tlrAbilityDraw(1); choice(title, 'No valid target was available. Draw 1 instead.', state.hand.slice(-1), () => { setBusy(false); done(); }); }
 
-function search(done){setBusy(true);if(!state.deck.length){setBusy(false);done();return}choice('Search deck','Pick any card. The deck reshuffles.',sortCards(state.deck),p=>{
-  tlrResolveAbilityThroughStore({kind:'search',takenCardId:p.uid});
-  playSound('shuffle');setBusy(false);done()})}
-
-function inPlay(){return[...state.hand,...state.spread.filter(Boolean)]}
-function neighbor(t){return window.tlrAbilities.cardsInDeckByIds(state.deck,window.tlrAbilities.neighborCardIds(t))}
-function kin(t){return state.deck.filter(c=>c.uid!==t.uid&&window.tlrAbilities.isSameArcana(c,t))}
-function mirror(t){return window.tlrAbilities.cardsInDeckByIds(state.deck,[window.tlrAbilities.mirrorCardId(t)].filter(Boolean))}
-function betweenPool(a,b){
-  if(!a||!b||a.uid===b.uid)return[];
-  return window.tlrAbilities.cardsInDeckByIds(state.deck,window.tlrAbilities.betweenCardIds(a,b));
-}
-function uniqueCards(cards){let seen=new Set();return cards.filter(c=>{if(seen.has(c.uid))return false;seen.add(c.uid);return true})}
-function fallbackAbility(done,title='No valid ability result'){tlrAbilityDraw(1);choice(title,'No valid target was available. Draw 1 instead.',state.hand.slice(-1),()=>{setBusy(false);done()})}
-
-export function selectFromHand(title,prompt,cards,count,cb,previewFn=null){
-  const validCardIds=cards.map(c=>c.uid);
-  // Store-native initiation: the ability targeting selection is owned by the
-  // store via the bridge; the legacy `state.abilitySelect` is rebuilt from it
-  // for the current renderer. Fall back to the legacy write if the bridge is
-  // not installed (e.g. headless/non-store environments).
-  if(typeof window.tlrStartAbilityTargeting==='function'){
-    window.tlrStartAbilityTargeting({title,prompt,validCardIds,count,cb,previewFn});
+export function selectFromHand(title, prompt, cards, count, cb, previewFn = null) {
+  const validCardIds = cards.map(c => c.uid);
+  if (typeof window.tlrStartAbilityTargeting === 'function') {
+    window.tlrStartAbilityTargeting({ title, prompt, validCardIds, count, cb, previewFn });
   }
 }
 
