@@ -17,6 +17,7 @@ let _profile = null;    // { personaId, scoreTarget }
 let _opponentProfile = null; // { personaId }
 let _cpuMode = false;
 let _scoreRoundRetryTimer = null;
+let _peerScoreRoundRetryTimer = null;
 
 // ---------------------------------------------------------------------------
 // Install
@@ -162,19 +163,28 @@ export function installMatchmakingScreen(target = window) {
     }
 
     if (msg.type === 'mp-action') {
-      const isMatchStart = msg.action?.type === MP_ACTIONS.MP_INIT;
-      const alreadyStarted = !!_matchState;
-
-      // Apply action from peer to local match state
-      _matchState = mpReducer(_matchState, msg.action);
-
-      if (isMatchStart && !alreadyStarted) {
-        enterMatchView();
-        target.tlrMpOnMatchStart?.(_matchState, { role: _role, peer: _peer });
-      } else {
-        target.tlrMpOnPeerAction?.(msg.action, _matchState);
-      }
+      applyPeerActionWhenReady(msg.action);
     }
+  }
+
+  function applyPeerAction(action) {
+    const isMatchStart = action?.type === MP_ACTIONS.MP_INIT;
+    const alreadyStarted = !!_matchState;
+
+    _matchState = mpReducer(_matchState, action);
+
+    if (isMatchStart && !alreadyStarted) {
+      enterMatchView();
+      target.tlrMpOnMatchStart?.(_matchState, { role: _role, peer: _peer });
+    } else {
+      target.tlrMpOnPeerAction?.(action, _matchState);
+    }
+    return _matchState;
+  }
+
+  function applyPeerActionWhenReady(action) {
+    if (action?.type === MP_ACTIONS.MP_SCORE_ROUND && scoreVisualsPending()) return delayPeerScoreRound(action);
+    return applyPeerAction(action);
   }
 
   // Dispatch a match action from this player: apply locally and send to peer.
@@ -199,14 +209,26 @@ export function installMatchmakingScreen(target = window) {
     return !!doc.querySelector('body.mp-game-active #mpOppSpread .mp-reveal-pending, body.mp-game-active .ghost, body.mp-game-active .score-ghost, body.mp-game-active .meld-announce');
   }
 
+  function scoreDelayMs() {
+    const effectsUntil = Number(target.effectsUntil) || 0;
+    return Math.max(120, Math.min(Math.max(0, effectsUntil - Date.now()), 500) || 160);
+  }
+
   function delayScoreRound(action) {
     if (_scoreRoundRetryTimer) return _matchState;
-    const effectsUntil = Number(target.effectsUntil) || 0;
-    const wait = Math.max(120, Math.min(Math.max(0, effectsUntil - Date.now()), 500) || 160);
     _scoreRoundRetryTimer = target.setTimeout(() => {
       _scoreRoundRetryTimer = null;
       if (_matchState?.phase === MP_PHASES.SCORING) target.tlrMpDispatch?.(action);
-    }, wait);
+    }, scoreDelayMs());
+    return _matchState;
+  }
+
+  function delayPeerScoreRound(action) {
+    if (_peerScoreRoundRetryTimer) return _matchState;
+    _peerScoreRoundRetryTimer = target.setTimeout(() => {
+      _peerScoreRoundRetryTimer = null;
+      if (_matchState?.phase === MP_PHASES.SCORING) applyPeerActionWhenReady(action);
+    }, scoreDelayMs());
     return _matchState;
   }
 
@@ -247,6 +269,10 @@ export function installMatchmakingScreen(target = window) {
     if (_scoreRoundRetryTimer) {
       target.clearTimeout(_scoreRoundRetryTimer);
       _scoreRoundRetryTimer = null;
+    }
+    if (_peerScoreRoundRetryTimer) {
+      target.clearTimeout(_peerScoreRoundRetryTimer);
+      _peerScoreRoundRetryTimer = null;
     }
     _peer?.close(); _peer = null;
     _role = null; _roomCode = null; _opponentProfile = null;
