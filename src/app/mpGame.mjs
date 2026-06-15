@@ -932,7 +932,10 @@ export function installMpGame(target = window) {
 
     updateScoreMultPills(state, { onlyPlayerIndex: playerIndex });
     slotGhost(slotEl, `+${card.points || 0}`);
-    scoreGhost(playerIndex, '+1');
+    const _scoreDelta = Math.max(0, liveSpreadScore(state.players[playerIndex]) - liveSpreadScore(before.players[playerIndex]));
+    for (let _i = 0; _i < _scoreDelta; _i += 1) {
+      target.setTimeout(() => scoreGhost(playerIndex, '+1'), 28 * _i);
+    }
     if (!localAlreadyPlayed) {
       target.playSound?.('place');
       target.haptic?.(12);
