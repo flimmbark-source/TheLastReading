@@ -24,8 +24,12 @@ function installMpHostFixes(target = window) {
   installOverlayLayerFix(target, doc);
 
   const syncLater = () => {
+    suppressBetweenSetResults(doc);
     syncMultSpans(target, doc, stateRef, myIndex);
-    target.requestAnimationFrame?.(() => syncMultSpans(target, doc, stateRef, myIndex));
+    target.requestAnimationFrame?.(() => {
+      suppressBetweenSetResults(doc);
+      syncMultSpans(target, doc, stateRef, myIndex);
+    });
   };
 
   const onMatchStart = target.tlrMpOnMatchStart;
@@ -78,20 +82,41 @@ function installOverlayLayerFix(target, doc) {
   }
   style.textContent = `
     body.mp-game-active.mp-overlay-active #mpGame{z-index:2147482000!important}
+    body.mp-game-active #mpOverlay.mp-hide-between-results{display:none!important;pointer-events:none!important}
     body.mp-game-active #mpOverlay:not(.mp-ov-hidden){position:fixed!important;inset:0!important;z-index:2147483000!important}
   `;
 
   const Observer = target.MutationObserver || globalThis.MutationObserver;
   if (Observer && !target.__tlrMpOverlayLayerObserverInstalled) {
     target.__tlrMpOverlayLayerObserverInstalled = true;
-    new Observer(() => syncOverlayLayerClass(doc)).observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+    new Observer(() => {
+      suppressBetweenSetResults(doc);
+      syncOverlayLayerClass(doc);
+    }).observe(doc.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   }
+  suppressBetweenSetResults(doc);
   syncOverlayLayerClass(doc);
+}
+
+function suppressBetweenSetResults(doc) {
+  const overlay = doc.getElementById('mpOverlay');
+  const box = doc.getElementById('mpOvBox');
+  if (!overlay || !box) return;
+  const title = box.querySelector('.mp-ov-title')?.textContent?.trim() || '';
+  const isBetweenSetResult = /^Round\s+\d+\s+Complete$/i.test(title);
+  overlay.classList.toggle('mp-hide-between-results', isBetweenSetResult);
+  if (isBetweenSetResult) {
+    overlay.classList.add('mp-ov-hidden');
+    doc.body.classList.remove('mp-overlay-active');
+  }
 }
 
 function syncOverlayLayerClass(doc) {
   const overlay = doc.getElementById('mpOverlay');
-  const active = !!overlay && !overlay.classList.contains('mp-ov-hidden') && doc.body.classList.contains('mp-game-active');
+  const active = !!overlay
+    && !overlay.classList.contains('mp-ov-hidden')
+    && !overlay.classList.contains('mp-hide-between-results')
+    && doc.body.classList.contains('mp-game-active');
   doc.body.classList.toggle('mp-overlay-active', active);
 }
 
