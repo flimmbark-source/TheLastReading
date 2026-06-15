@@ -116,6 +116,21 @@ export function handHints(state, options = {}) {
   });
 }
 
+// Converts the store-owned targeting selection into the view shape that
+// renderHand / renderSpread / refreshHandState expect: { validIds: Set, picked: [] }.
+// Returns null when no targeting is active.
+export function abilityTargetView(state) {
+  const targeting = state.run?.ability?.targeting;
+  if (!targeting) return null;
+  return {
+    title: targeting.title || '',
+    prompt: targeting.prompt || '',
+    count: targeting.count || 1,
+    validIds: new Set(targeting.validCardIds || []),
+    picked: [...(targeting.pickedCardIds || [])],
+  };
+}
+
 export function scorePreview(state) {
   const before = scorePlacedCards(state, { skipFlatBonuses: true });
   const after = scoreIfSelectedPlaced(state, { skipFlatBonuses: true });

@@ -25,10 +25,12 @@ need to be run after each larger slice.
   wraps the base reducer for purge actions, and `app/purgeRuntime.mjs` routes the
   old global purge functions through store dispatches while legacy state still
   needs to be mirrored for older render/runtime code.
-- **Singleplayer ability targeting has a store-owned picked-target path.**
+- **Singleplayer ability targeting is store-initiated.**
   `game/reducerWithPurge.mjs` owns `run.ability.targeting`, and
-  `app/abilityTargetBridge.mjs` mirrors that state into the legacy
-  `state.abilitySelect` shape that the current UI still expects.
+  `readingFlow.selectFromHand` now starts targeting through
+  `abilityTargetBridge#tlrStartAbilityTargeting` (store-native), with the confirm
+  callback / preview held in the bridge. `state.abilitySelect` is now only a
+  store-derived render mirror that the current UI still reads.
 - **Singleplayer placement now supports explicit card placement.**
   `placementRuntime.mjs` exposes `placeCardUid(cardUid, slotIndex)`, and the hand
   drag gesture uses it when available instead of always communicating placement
@@ -65,7 +67,7 @@ need to be run after each larger slice.
 | Singleplayer hand/spread render data | `game/selectors.mjs`, `ui/renderTable.mjs`, `ui/renderHand.mjs`, `ui/renderSpread.mjs` | `handView(state)` feeds `renderHand`; `spreadView(state)` feeds `renderSpread`; `renderTable` passes both when the store is available. |
 | Singleplayer table chrome and score preview | `game/selectors.mjs`, `ui/renderTable.mjs` | `tableView(state)` is wired into `renderTable`; `scorePreview(state)` drives preview when store state is available. Legacy preview logic remains as fallback. |
 | Singleplayer purge ownership | `game/reducerWithPurge.mjs`, `app/purgeRuntime.mjs`, `app/discardRuntime.mjs` | Purge actions are store-owned through a reducer wrapper and runtime installer. The wrapper is a temporary seam until purge is folded into the base reducer. |
-| Singleplayer ability targeting | `game/reducerWithPurge.mjs`, `app/abilityTargetBridge.mjs`, `app/readingFlow.mjs` | Picked targets are store-owned, but targeting is still initiated through legacy `state.abilitySelect` and mirrored back for current renderers. |
+| Singleplayer ability targeting | `game/reducerWithPurge.mjs`, `app/abilityTargetBridge.mjs`, `app/readingFlow.mjs` | Targeting is store-initiated via `tlrStartAbilityTargeting`; picked targets and selection are store-owned. `renderTable` now reads targeting via `abilityTargetView(storeState)` from `game/selectors.mjs`. `state.abilitySelect` legacy mirror write in `abilityTargetBridge` is now unused by the renderer and can be removed. |
 | Singleplayer placement / gesture bridge | `ui/gestureCard.mjs`, `app/placementRuntime.mjs`, `app/spreadPlacementBridge.mjs` | Drag-to-spread now calls `placeCardUid` when available. Reorder and hold-to-expand still operate on legacy runtime `state.hand` / `state.selected`. |
 | Multiplayer match reducer | `multiplayer/mpReducer.mjs` | WORLD / Reshuffle spread preservation and Between reveal cap now live in the base reducer. The `mpReducerFixed.mjs` compatibility alias has been removed; all callers import `mpReducer.mjs` directly. |
 | Multiplayer UI extension seam | `app/mpGameHost.mjs` | Fully collapsed. `mpGameExtensions.mjs` and its companion modules are deleted; the host installs only the base game. Persona prompt, Between modal capping, pending placement preview, mult-span / Surgeon swap presentation, score-pill stability, mult-span sync, scoring feedback, and the singleplayer-style ability flow now all live in `mpGame.mjs`. |
@@ -94,9 +96,11 @@ both ways until a renderer or runtime no longer touches legacy state.
 > and `purgeRuntime`. This is intentionally still a wrapper so the large base
 > reducer was not rewritten in one risky pass.
 >
-> _Ability targeting progress._ Picked ability targets are stored under
-> `run.ability.targeting`. The current UI is still bridged from and to
-> `state.abilitySelect`, so this is not yet store-native.
+> _Ability targeting progress._ Targeting is store-native: `selectFromHand`
+> delegates to `abilityTargetBridge#tlrStartAbilityTargeting`, which owns the
+> selection in `run.ability.targeting` and holds the confirm callback / preview
+> locally. `state.abilitySelect` is now only a store-derived render mirror, kept
+> until `renderTable` reads targeting from a selector.
 >
 > _Gesture progress._ Spread placement supports explicit `placeCardUid(cardUid,
 > slotIndex)`, and drag-to-spread uses it when available. Hand reorder and
@@ -104,12 +108,16 @@ both ways until a renderer or runtime no longer touches legacy state.
 >
 > _Verification anchors._ `scripts/validate-render.mjs` covers hand/spread view
 > behavior, `scripts/validate-table-view.mjs` covers table chrome,
-> `scripts/validate-purge-reducer.mjs` covers the purge reducer wrapper, and
-> `scripts/validate-ability-targeting.mjs` covers reducer-owned target picks.
+> `scripts/validate-purge-reducer.mjs` covers the purge reducer wrapper,
+> `scripts/validate-ability-targeting.mjs` covers reducer-owned target picks, and
+> `scripts/validate-ability-targeting-bridge.mjs` covers the store-native
+> targeting initiation / pick / confirm round-trip.
 >
-> _Remaining Phase 2 work._ Move ability targeting initiation out of
-> `readingFlow`/`state.abilitySelect`, migrate reorder/hold selection, then remove
-> renderer fallback reads from legacy state.
+> _Remaining Phase 2 work._ Ability targeting initiation is store-native (done).
+> `renderTable` now reads targeting via `abilityTargetView` from `game/selectors.mjs` (done).
+> Next: drop the `syncStoreSelectionToLegacy` mirror write from `abilityTargetBridge`
+> (the renderer no longer consumes `state.abilitySelect`); migrate reorder/hold selection;
+> then remove renderer fallback reads from legacy state.
 
 **Phase 3 — Retire the legacy `state` object.** Once renderers and runtimes read
 from the store, replace remaining direct `state.*` writes in `readingFlow.mjs`,

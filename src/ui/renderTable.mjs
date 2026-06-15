@@ -8,7 +8,7 @@ import { renderHand } from './renderHand.mjs';
 import { renderAbilityPrompt, renderPurgePrompt } from './renderAbility.mjs';
 import { renderRelicRack } from './renderMarket.mjs';
 import { cleanName } from './renderCard.mjs';
-import { handView as selectHandView, spreadView as selectSpreadView, tableView as selectTableView, scorePreview as selectScorePreview } from '../game/selectors.mjs';
+import { handView as selectHandView, spreadView as selectSpreadView, tableView as selectTableView, scorePreview as selectScorePreview, abilityTargetView as selectAbilityTargetView } from '../game/selectors.mjs';
 import { getConstellation, constellationThreshold, blocksDiscard, hasActiveConstellation as runHasActiveConstellation } from '../systems/constellations.mjs';
 
 let constellationCalloutOpen=false;
@@ -75,9 +75,9 @@ export function render(){
   _cachedPlacedScore=null; // invalidate on every render
   const _newHintsKey=_hintsKey();if(_newHintsKey!==_hintsCacheKey){_hintsCache.clear();_hintsCacheKey=_newHintsKey;_unlockedFragmentsCache=null;_spreadScoreForHints=null;}
   _cacheEls();
-  const ability=state.abilitySelect;
-  const inPurge=state.purgeSelect!==null;
   const storeState=currentStoreState();
+  const ability=storeState?selectAbilityTargetView(storeState):state.abilitySelect;
+  const inPurge=state.purgeSelect!==null;
   const table=storeState?selectTableView(storeState,{inPurge,inAbility:!!ability}):null;
   _elThreshold.textContent=table?table.threshold:activeThreshold();
   const _thNext=document.getElementById('thNext');if(_thNext){const _p=table?table.thresholdBonusPending:(state.thBonusPending||0);_thNext.style.display=_p?'':'none';if(_p)_thNext.textContent='+'+_p+' next';}
@@ -107,9 +107,9 @@ export function render(){
 export function refreshHandState(){
   syncStoreBeforeView();
   _cacheEls();
-  const ability=state.abilitySelect;
-  const inPurge=state.purgeSelect!==null;
   const storeState=currentStoreState();
+  const ability=storeState?selectAbilityTargetView(storeState):state.abilitySelect;
+  const inPurge=state.purgeSelect!==null;
   const table=storeState?selectTableView(storeState,{inPurge,inAbility:!!ability}):null;
   document.querySelectorAll('#hand .card').forEach(el=>{
     const uid=Number(el.dataset.uid);
