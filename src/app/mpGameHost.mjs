@@ -82,7 +82,7 @@ function installOverlayLayerFix(doc) {
     doc.head.appendChild(style);
   }
   style.textContent = `
-    body.mp-game-active.mp-overlay-active #mpGame{z-index:2147482000!important}
+    body.mp-game-active .spread-wrap{z-index:2147480500!important}
     body.mp-game-active #mpOverlay.mp-hide-between-results{display:none!important;pointer-events:none!important}
     body.mp-game-active #mpOverlay:not(.mp-ov-hidden){position:fixed!important;inset:0!important;z-index:2147483000!important}
     body.mp-game-active .refs-layer{position:fixed!important;z-index:2147483100!important;pointer-events:none!important}
