@@ -48,6 +48,7 @@ function installMpHostFixes(target = window) {
 
   const markFinalPlacementHold = state => {
     if (!isPreScoreState(state)) return;
+    doc.body.classList.add('mp-score-hold');
     scoreDispatchHoldUntil = Math.max(
       scoreDispatchHoldUntil,
       currentEffectsUntil(),
@@ -62,6 +63,7 @@ function installMpHostFixes(target = window) {
     const box = doc.getElementById('mpOvBox');
     if (!overlay || !box) return;
 
+    doc.body.classList.remove('mp-score-hold');
     renderResultsOverlayBox(box, state, myIndex);
     const holdUntil = Math.max(Date.now() + RESULT_OVERLAY_MIN_DELAY_MS, currentEffectsUntil());
     resultsOverlayHoldUntil = Math.max(resultsOverlayHoldUntil, holdUntil);
@@ -88,7 +90,10 @@ function installMpHostFixes(target = window) {
 
   wrapDispatchForEffectHolds(target, {
     getScoreHoldUntil: () => Math.max(scoreDispatchHoldUntil, currentEffectsUntil()),
-    clearScoreHold: () => { scoreDispatchHoldUntil = 0; },
+    clearScoreHold: () => {
+      scoreDispatchHoldUntil = 0;
+      doc.body.classList.remove('mp-score-hold');
+    },
     getResultHoldUntil: () => Math.max(resultsOverlayHoldUntil, currentEffectsUntil()),
     hasVisualEffects: () => visualEffectsActive(doc),
   });
@@ -100,6 +105,7 @@ function installMpHostFixes(target = window) {
       effectsHoldUntil = 0;
       scoreDispatchHoldUntil = 0;
       resultsOverlayHoldUntil = 0;
+      doc.body.classList.remove('mp-score-hold');
       if (resultsOverlayTimer) {
         target.clearTimeout(resultsOverlayTimer);
         resultsOverlayTimer = null;
@@ -115,6 +121,7 @@ function installMpHostFixes(target = window) {
   if (typeof onLocalAction === 'function') {
     target.tlrMpOnLocalAction = function (action, state) {
       stateRef = state;
+      if (isPreScoreState(state)) doc.body.classList.add('mp-score-hold');
       const result = onLocalAction.apply(this, arguments);
       syncLater();
       markFinalPlacementHold(state);
@@ -127,6 +134,7 @@ function installMpHostFixes(target = window) {
   if (typeof onPeerAction === 'function') {
     target.tlrMpOnPeerAction = function (action, state) {
       stateRef = state;
+      if (isPreScoreState(state)) doc.body.classList.add('mp-score-hold');
       const result = onPeerAction.apply(this, arguments);
       syncLater();
       markFinalPlacementHold(state);
@@ -146,7 +154,7 @@ function installMpHostFixes(target = window) {
         target.clearTimeout(resultsOverlayTimer);
         resultsOverlayTimer = null;
       }
-      doc.body.classList.remove('mp-overlay-active');
+      doc.body.classList.remove('mp-overlay-active', 'mp-score-hold');
       return onLeave.apply(this, arguments);
     };
   }
@@ -183,6 +191,7 @@ function hidePrematureScoringOverlay(doc, holdUntil) {
   if (Date.now() >= holdUntil && !visualEffectsActive(doc)) return;
   const overlay = doc.getElementById('mpOverlay');
   if (!overlay) return;
+  doc.body.classList.add('mp-score-hold');
   overlay.classList.add('mp-ov-hidden');
   doc.body.classList.remove('mp-overlay-active');
 }
@@ -255,6 +264,7 @@ function installOverlayLayerFix(target, doc) {
     const style = doc.createElement('style');
     style.id = 'mp-host-layer-fix-style';
     style.textContent = `
+      body.mp-game-active.mp-score-hold #mpOverlay{display:none!important;pointer-events:none!important}
       body.mp-game-active.mp-overlay-active #mpGame{z-index:2147482000!important}
       body.mp-game-active #mpOverlay:not(.mp-ov-hidden){position:fixed!important;inset:0!important;z-index:2147483000!important}
     `;
@@ -271,7 +281,7 @@ function installOverlayLayerFix(target, doc) {
 
 function syncOverlayLayerClass(doc) {
   const overlay = doc.getElementById('mpOverlay');
-  const active = !!overlay && !overlay.classList.contains('mp-ov-hidden') && doc.body.classList.contains('mp-game-active');
+  const active = !!overlay && !overlay.classList.contains('mp-ov-hidden') && !doc.body.classList.contains('mp-score-hold') && doc.body.classList.contains('mp-game-active');
   doc.body.classList.toggle('mp-overlay-active', active);
 }
 
