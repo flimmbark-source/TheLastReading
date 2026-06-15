@@ -16,6 +16,7 @@ let _matchState = null; // live mpState once match starts
 let _profile = null;    // { personaId, scoreTarget }
 let _opponentProfile = null; // { personaId }
 let _cpuMode = false;
+let _scoreRoundRetryTimer = null;
 
 // ---------------------------------------------------------------------------
 // Install
@@ -184,6 +185,36 @@ export function installMatchmakingScreen(target = window) {
     return _matchState;
   }
 
+  function spreadsAreFull(state) {
+    return Array.isArray(state?.players)
+      && state.players.length === 2
+      && state.players.every(player => Array.isArray(player.spread) && player.spread.every(Boolean));
+  }
+
+  function scoreVisualsPending() {
+    if (!_matchState || _matchState.phase !== MP_PHASES.SCORING || !spreadsAreFull(_matchState)) return false;
+    const doc = target.document;
+    const effectsUntil = Number(target.effectsUntil) || 0;
+    if (effectsUntil > Date.now() + 40) return true;
+    return !!doc.querySelector('body.mp-game-active #mpOppSpread .mp-reveal-pending, body.mp-game-active .ghost, body.mp-game-active .score-ghost, body.mp-game-active .meld-announce');
+  }
+
+  function delayScoreRound(action) {
+    if (_scoreRoundRetryTimer) return _matchState;
+    const effectsUntil = Number(target.effectsUntil) || 0;
+    const wait = Math.max(120, Math.min(Math.max(0, effectsUntil - Date.now()), 500) || 160);
+    _scoreRoundRetryTimer = target.setTimeout(() => {
+      _scoreRoundRetryTimer = null;
+      if (_matchState?.phase === MP_PHASES.SCORING) target.tlrMpDispatch?.(action);
+    }, wait);
+    return _matchState;
+  }
+
+  function dispatchMatchActionWhenReady(action) {
+    if (action?.type === MP_ACTIONS.MP_SCORE_ROUND && scoreVisualsPending()) return delayScoreRound(action);
+    return dispatchMatchAction(action);
+  }
+
   // --- Match start ---
 
   function startMatch() {
@@ -213,6 +244,10 @@ export function installMatchmakingScreen(target = window) {
   function teardown() {
     _cpuMode = false;
     _matchState = null;
+    if (_scoreRoundRetryTimer) {
+      target.clearTimeout(_scoreRoundRetryTimer);
+      _scoreRoundRetryTimer = null;
+    }
     _peer?.close(); _peer = null;
     _role = null; _roomCode = null; _opponentProfile = null;
   }
@@ -303,7 +338,7 @@ export function installMatchmakingScreen(target = window) {
   // Expose for the game layer to dispatch actions over the Ably room channel.
   target.tlrMpDispatch = function (action) {
     if (!_matchState) return null;
-    return dispatchMatchAction(action);
+    return dispatchMatchActionWhenReady(action);
   };
 
   target.tlrMpGetState = function () { return _matchState; };
