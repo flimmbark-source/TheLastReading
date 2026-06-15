@@ -24,9 +24,11 @@ function installMpHostFixes(target = window) {
   installOverlayLayerFix(doc);
 
   const syncLater = () => {
+    ensureMpTopRefTabs(target, doc);
     suppressBetweenSetResults(doc);
     syncMultSpans(target, doc, stateRef, myIndex);
     target.requestAnimationFrame?.(() => {
+      ensureMpTopRefTabs(target, doc);
       suppressBetweenSetResults(doc);
       syncMultSpans(target, doc, stateRef, myIndex);
       syncOverlayLayerClass(doc);
@@ -85,7 +87,35 @@ function installOverlayLayerFix(doc) {
     body.mp-game-active.mp-overlay-active #mpGame{z-index:2147482000!important}
     body.mp-game-active #mpOverlay.mp-hide-between-results{display:none!important;pointer-events:none!important}
     body.mp-game-active #mpOverlay:not(.mp-ov-hidden){position:fixed!important;inset:0!important;z-index:2147483000!important}
+    body.mp-game-active .refs-layer{position:fixed!important;z-index:2147483100!important;pointer-events:none!important}
+    body.mp-game-active .refs-layer .ref:not(.hidden){pointer-events:auto!important}
+    .mp-top-ref-tabs{display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
+    .mp-top-ref-tabs button{height:26px;padding:0 9px;border-radius:999px;border:1px solid rgba(180,140,90,.36);background:rgba(28,18,10,.58);color:#b09060;font:800 10px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+    .mp-top-ref-tabs button:hover{color:#f0d58a;border-color:rgba(220,176,92,.62);background:rgba(70,44,18,.78)}
   `;
+}
+
+function ensureMpTopRefTabs(target, doc) {
+  const bar = doc.querySelector('#mpGame .mp-bar');
+  if (!bar || doc.getElementById('mpTopRefTabs')) return;
+  const wrap = doc.createElement('div');
+  wrap.id = 'mpTopRefTabs';
+  wrap.className = 'mp-top-ref-tabs';
+
+  const scoring = doc.createElement('button');
+  scoring.type = 'button';
+  scoring.textContent = 'Scoring';
+  scoring.addEventListener('click', event => target.toggleRef?.(event));
+
+  const abilities = doc.createElement('button');
+  abilities.type = 'button';
+  abilities.textContent = 'Abilities';
+  abilities.addEventListener('click', event => target.toggleAbilityRef?.(event));
+
+  wrap.append(scoring, abilities);
+  const round = doc.getElementById('mpRoundLabel');
+  if (round?.parentElement === bar) bar.insertBefore(wrap, round);
+  else bar.appendChild(wrap);
 }
 
 function suppressBetweenSetResults(doc) {
