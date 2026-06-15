@@ -22,11 +22,14 @@ function installMpHostFixes(target = window) {
   let myIndex = 0;
 
   installOverlayLayerFix(doc);
+  removeInjectedMpTopRefTabs(doc);
 
   const syncLater = () => {
+    removeInjectedMpTopRefTabs(doc);
     suppressBetweenSetResults(doc);
     syncMultSpans(target, doc, stateRef, myIndex);
     target.requestAnimationFrame?.(() => {
+      removeInjectedMpTopRefTabs(doc);
       suppressBetweenSetResults(doc);
       syncMultSpans(target, doc, stateRef, myIndex);
       syncOverlayLayerClass(doc);
@@ -68,6 +71,7 @@ function installMpHostFixes(target = window) {
   if (typeof onLeave === 'function') {
     target.tlrMpLeave = function () {
       stateRef = null;
+      removeInjectedMpTopRefTabs(doc);
       doc.body.classList.remove('mp-overlay-active');
       return onLeave.apply(this, arguments);
     };
@@ -99,6 +103,11 @@ function installOverlayLayerFix(doc) {
     body.mp-game-active #titleWrap #scoringBtn:hover,
     body.mp-game-active #titleWrap #abilitiesBtn:hover{color:#f0d58a!important;border-color:rgba(220,176,92,.62)!important;background:rgba(70,44,18,.78)!important}
   `;
+}
+
+function removeInjectedMpTopRefTabs(doc) {
+  doc.getElementById('mpTopRefTabs')?.remove();
+  doc.querySelectorAll('#mpGame .mp-top-ref-tabs').forEach(node => node.remove());
 }
 
 function suppressBetweenSetResults(doc) {
