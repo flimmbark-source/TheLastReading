@@ -1,7 +1,7 @@
 import { AblyRoomPeer } from './ablyRoomPeer.mjs';
 import { randomSeed } from '../multiplayer/mpRng.mjs';
 import { MP_ACTIONS } from '../multiplayer/mpActions.mjs';
-import { mpReducer, applyImmediateAction } from '../multiplayer/mpReducer.mjs';
+import { mpReducer, applyImmediateAction, MP_SHUFFLE_MODES } from '../multiplayer/mpReducer.mjs';
 import { MP_PHASES } from '../multiplayer/mpState.mjs';
 import { hasSubmittedAction, emptySlots } from '../multiplayer/mpSelectors.mjs';
 import { MP_ABILITY_TYPES } from '../multiplayer/interactionCards.mjs';
@@ -26,6 +26,22 @@ let _peerNewRoundRetryTimer = null;
 
 const CPU_MONTE_CARLO_ROLLOUTS = 28;
 const CPU_MAX_MONTE_CARLO_CANDIDATES = 24;
+const SHUFFLE_STORAGE_KEY = 'tlr_mm_shuffle';
+
+function normalizeShuffleMode(value) {
+  return value === MP_SHUFFLE_MODES.WHEN_EMPTY ? MP_SHUFFLE_MODES.WHEN_EMPTY : MP_SHUFFLE_MODES.EACH_ROUND;
+}
+
+function readShuffleMode(target = window) {
+  try { return normalizeShuffleMode(target.localStorage?.getItem(SHUFFLE_STORAGE_KEY)); }
+  catch (_) { return MP_SHUFFLE_MODES.EACH_ROUND; }
+}
+
+function writeShuffleMode(target = window, value) {
+  const mode = normalizeShuffleMode(value);
+  try { target.localStorage?.setItem(SHUFFLE_STORAGE_KEY, mode); } catch (_) {}
+  return mode;
+}
 
 // ---------------------------------------------------------------------------
 // Install
@@ -47,32 +63,48 @@ export function installMatchmakingScreen(target = window) {
     const p = _profile ?? {};
     const t = p.scoreTarget ?? 200;
     const persona = p.personaId;
+    const shuffleMode = readShuffleMode(target);
     const sel = v => t === v ? ' selected' : '';
+    const shuffleSel = v => shuffleMode === v ? ' selected' : '';
     setHtml('mmContent', `
-      ${persona ? `<div class="mm-profile"><div class="mm-profile-persona">${escHtml(personaName(persona))}</div></div>` : ''}
-      <div class="mm-match-section">
-        <h3 class="mm-section-label">Match Length</h3>
-        <div class="mm-targets">
-          <button class="mm-target-btn${sel(100)}" onclick="tlrMmSetTarget(100)" type="button">Quick<span>100</span></button>
-          <button class="mm-target-btn${sel(200)}" onclick="tlrMmSetTarget(200)" type="button">Standard<span>200</span></button>
-          <button class="mm-target-btn${sel(300)}" onclick="tlrMmSetTarget(300)" type="button">Long<span>300</span></button>
+      <div class="mm-content-with-footer">
+        <div class="mm-settings-stack">
+          ${persona ? `<div class="mm-profile"><div class="mm-profile-persona">${escHtml(personaName(persona))}</div></div>` : ''}
+          <div class="mm-match-section">
+            <h3 class="mm-section-label">Match Length</h3>
+            <div class="mm-targets">
+              <button class="mm-target-btn${sel(100)}" onclick="tlrMmSetTarget(100)" type="button">Quick<span>100</span></button>
+              <button class="mm-target-btn${sel(200)}" onclick="tlrMmSetTarget(200)" type="button">Standard<span>200</span></button>
+              <button class="mm-target-btn${sel(300)}" onclick="tlrMmSetTarget(300)" type="button">Long<span>300</span></button>
+            </div>
+          </div>
+          <div class="mm-match-section mm-shuffle-section">
+            <h3 class="mm-section-label">Shuffle</h3>
+            <div class="mm-shuffle-toggle" role="group" aria-label="Shuffle">
+              <button class="mm-shuffle-btn${shuffleSel(MP_SHUFFLE_MODES.EACH_ROUND)}" onclick="tlrMmSetShuffle('${MP_SHUFFLE_MODES.EACH_ROUND}')" type="button">Each Round<span>Fresh deck each set</span></button>
+              <button class="mm-shuffle-btn${shuffleSel(MP_SHUFFLE_MODES.WHEN_EMPTY)}" onclick="tlrMmSetShuffle('${MP_SHUFFLE_MODES.WHEN_EMPTY}')" type="button">When Empty<span>Continuous deck</span></button>
+            </div>
+            <div class="mm-host-settings-note">Only the host's match settings are used.</div>
+          </div>
         </div>
-      </div>
-      <div class="mm-mode-row">
-        <button class="mm-mode-btn" onclick="tlrMmHost()" type="button">
-          Host
-          <span class="mm-mode-label">Create a room</span>
-        </button>
-        <button class="mm-mode-btn" onclick="tlrMmJoin()" type="button">
-          Join
-          <span class="mm-mode-label">Enter a code</span>
-        </button>
-      </div>
-      <div class="mm-cpu-row">
-        <button class="mm-mode-btn mm-cpu-btn" onclick="tlrMmVsCpu()" type="button">
-          vs CPU
-          <span class="mm-mode-label">Solo practice</span>
-        </button>
+        <div class="mm-action-footer">
+          <div class="mm-mode-row">
+            <button class="mm-mode-btn" onclick="tlrMmHost()" type="button">
+              Host
+              <span class="mm-mode-label">Create a room</span>
+            </button>
+            <button class="mm-mode-btn" onclick="tlrMmJoin()" type="button">
+              Join
+              <span class="mm-mode-label">Enter a code</span>
+            </button>
+          </div>
+          <div class="mm-cpu-row">
+            <button class="mm-mode-btn mm-cpu-btn" onclick="tlrMmVsCpu()" type="button">
+              vs CPU
+              <span class="mm-mode-label">Solo practice</span>
+            </button>
+          </div>
+        </div>
       </div>
     `);
   }
@@ -288,6 +320,7 @@ export function installMatchmakingScreen(target = window) {
       type: MP_ACTIONS.MP_INIT,
       seed,
       scoreTarget: p.scoreTarget ?? 200,
+      shuffleMode: readShuffleMode(target),
       personas,
     };
 
@@ -341,6 +374,11 @@ export function installMatchmakingScreen(target = window) {
     if (!_profile) _profile = {};
     _profile = { ..._profile, scoreTarget: Number(value) };
     try { target.localStorage?.setItem('tlr_mm_target', String(value)); } catch (_) {}
+    renderIdlePhase();
+  };
+
+  target.tlrMmSetShuffle = function (value) {
+    writeShuffleMode(target, value);
     renderIdlePhase();
   };
 
