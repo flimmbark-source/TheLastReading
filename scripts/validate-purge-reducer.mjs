@@ -51,4 +51,34 @@ assert.equal(state.run.purge, null, 'start purge is ignored when fewer than thre
   assert.equal(s.run.selectedCardId, h[2].uid, 'REORDER_HAND preserves selection when a different card is dragged');
 }
 
+// MULLIGAN: shuffles hand back into deck and draws new cards
+{
+  const deck = buildDeck().slice(5, 10).map((c, i) => ({ ...c, uid: 4000 + i }));
+  const hand = buildDeck().slice(0, 5).map((c, i) => ({ ...c, uid: 4100 + i }));
+  let s = createGameState({
+    persist: { upgrades: {}, relics: [] },
+    run: { deck, hand, spread: Array(5).fill(null), mulliganCharges: 1, selectedCardId: hand[0].uid },
+  });
+  s = reducer(s, { type: ACTIONS.MULLIGAN });
+  assert.equal(s.run.mulliganCharges, 0, 'MULLIGAN decrements mulligan charges');
+  assert.equal(s.run.hand.length, 5, 'MULLIGAN draws back to max hand size');
+  assert.equal(s.run.deck.length, deck.length, 'MULLIGAN combined cards stay the same count');
+  assert.equal(s.run.selectedCardId, null, 'MULLIGAN clears selection');
+  // All original cards should still exist somewhere in hand + deck
+  const allUids = new Set([...s.run.hand, ...s.run.deck].map(c => c.uid));
+  [...hand, ...deck].forEach(c => assert.ok(allUids.has(c.uid), `MULLIGAN preserves card uid ${c.uid}`));
+
+  // Should be ignored when no charges remain
+  s = reducer(s, { type: ACTIONS.MULLIGAN });
+  assert.equal(s.run.mulliganCharges, 0, 'MULLIGAN is a no-op when charges are exhausted');
+
+  // Should be ignored when spread is not empty
+  let s2 = createGameState({
+    persist: { upgrades: {}, relics: [] },
+    run: { deck, hand, spread: [hand[0], null, null, null, null], mulliganCharges: 1 },
+  });
+  s2 = reducer(s2, { type: ACTIONS.MULLIGAN });
+  assert.equal(s2.run.mulliganCharges, 1, 'MULLIGAN is a no-op when spread is occupied');
+}
+
 console.log('Purge reducer checks passed.');

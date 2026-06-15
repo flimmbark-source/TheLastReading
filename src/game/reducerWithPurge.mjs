@@ -1,5 +1,7 @@
 import { ACTIONS } from './actions.mjs';
 import { reducer as baseReducer } from './reducer.mjs';
+import { shuffleDeck } from '../systems/deck.mjs';
+import { hasRelic } from '../systems/relics.mjs';
 
 const START_ABILITY_TARGETING = 'START_ABILITY_TARGETING';
 const TOGGLE_ABILITY_TARGET = 'TOGGLE_ABILITY_TARGET';
@@ -85,6 +87,26 @@ function toggleAbilityTarget(state, action) {
   });
 }
 
+function maxHandSize(persist) {
+  return 5 + ((persist?.upgrades?.hand) || 0) - (hasRelic(persist?.relics || [], 'fool_reversed') ? 1 : 0);
+}
+
+function mulliganHand(state) {
+  const { run, persist } = state;
+  if (!run.mulliganCharges || run.mulliganCharges <= 0) return state;
+  if (run.spread.some(Boolean)) return state;
+  const handSize = maxHandSize(persist);
+  if (run.hand.length !== handSize) return state;
+  const combined = shuffleDeck([...(run.deck || []), ...(run.hand || [])]);
+  const hand = combined.splice(0, handSize);
+  return replaceRun(state, {
+    deck: combined,
+    hand,
+    selectedCardId: null,
+    mulliganCharges: run.mulliganCharges - 1,
+  });
+}
+
 function reorderHand(state, action) {
   const hand = [...state.run.hand];
   const fromIndex = hand.findIndex(c => c.uid === action.uid);
@@ -128,6 +150,8 @@ export function reducer(state, action) {
       return setAbilityPicks(state, action);
     case ACTIONS.REORDER_HAND:
       return reorderHand(state, action);
+    case ACTIONS.MULLIGAN:
+      return mulliganHand(state);
     case ACTIONS.SET_BUSY:
       return replaceRun(state, { busy: !!action.busy });
     case ACTIONS.SET_PURGE_PICKS: {

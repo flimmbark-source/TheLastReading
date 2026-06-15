@@ -30,6 +30,7 @@ export const ACTIONS = Object.freeze({
   REORDER_HAND: 'REORDER_HAND',
   SET_BUSY: 'SET_BUSY',
   SET_PURGE_PICKS: 'SET_PURGE_PICKS',
+  MULLIGAN: 'MULLIGAN',
 });
 
 export const startReading = () => ({ type: ACTIONS.START_READING });
