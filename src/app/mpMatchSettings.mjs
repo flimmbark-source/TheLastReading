@@ -97,13 +97,29 @@ function enhanceWhenReady(target = window) {
   run();
   target.requestAnimationFrame?.(run);
   target.setTimeout?.(run, 0);
+  target.setTimeout?.(run, 80);
+}
+
+function installContentWatcher(target = window) {
+  const doc = target.document;
+  if (!doc || target.__tlrMpMatchSettingsWatcherInstalled) return;
+  target.__tlrMpMatchSettingsWatcherInstalled = true;
+  const content = doc.getElementById('mmContent');
+  if (!content) {
+    target.setTimeout?.(() => installContentWatcher(target), 200);
+    return;
+  }
+  const observer = new MutationObserver(() => enhanceWhenReady(target));
+  observer.observe(content, { childList: true, subtree: false });
+  target.__tlrMpMatchSettingsWatcher = observer;
 }
 
 export function installMpMatchSettings(target = window) {
-  if (!target || target.__tlrMpMatchSettingsInstalled) return;
+  if (!target) return;
   target.__tlrMpMatchSettingsInstalled = true;
 
   installStyle(target.document);
+  installContentWatcher(target);
   target.__tlrMpShuffleMode = readShuffleMode(target);
 
   target.tlrMmSetShuffle = function (value) {
@@ -113,7 +129,11 @@ export function installMpMatchSettings(target = window) {
 
   const wrapShow = () => {
     const original = target.tlrShowMatchmaking;
-    if (typeof original !== 'function' || original.__tlrMpMatchSettingsWrapped) return false;
+    if (typeof original !== 'function') return false;
+    if (original.__tlrMpMatchSettingsWrapped) {
+      enhanceWhenReady(target);
+      return true;
+    }
     function wrapped(profile) {
       const nextProfile = { ...(profile || {}), shuffleMode: readShuffleMode(target) };
       const result = original.call(this, nextProfile);
@@ -127,7 +147,8 @@ export function installMpMatchSettings(target = window) {
 
   const wrapDispatch = () => {
     const original = target.tlrMpDispatch;
-    if (typeof original !== 'function' || original.__tlrMpMatchSettingsWrapped) return false;
+    if (typeof original !== 'function') return false;
+    if (original.__tlrMpMatchSettingsWrapped) return true;
     function wrapped(action) {
       let nextAction = action;
       if (action?.type === MP_ACTIONS.MP_INIT) {
@@ -144,10 +165,15 @@ export function installMpMatchSettings(target = window) {
 
   wrapShow();
   wrapDispatch();
+  enhanceWhenReady(target);
   target.setTimeout?.(wrapShow, 0);
+  target.setTimeout?.(wrapShow, 500);
+  target.setTimeout?.(wrapShow, 1500);
+  target.setTimeout?.(wrapShow, 3000);
   target.setTimeout?.(wrapDispatch, 0);
   target.setTimeout?.(wrapDispatch, 500);
   target.setTimeout?.(wrapDispatch, 1500);
+  target.setTimeout?.(wrapDispatch, 3000);
 }
 
 if (typeof window !== 'undefined') {
@@ -156,4 +182,5 @@ if (typeof window !== 'undefined') {
   window.setTimeout?.(install, 0);
   window.setTimeout?.(install, 500);
   window.setTimeout?.(install, 1500);
+  window.setTimeout?.(install, 3000);
 }
