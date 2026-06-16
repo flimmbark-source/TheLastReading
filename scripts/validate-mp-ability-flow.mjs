@@ -140,6 +140,43 @@ function startMatch(player0) {
   assert.equal(dispatched?.action?.abilityChoice?.takenCardUid, found.uid, 'BETWEEN carries the taken card');
 }
 
+// --- PEEK: direct deck reveal (no anchor phase) ---
+{
+  const source = { ...cardById('major_0', 9030), ability: 'PEEK_3' }; // Fool — PEEK_3
+  const d1 = cardById('major_1', 9031);
+  const d2 = cardById('major_2', 9032);
+  const d3 = cardById('major_3', 9033);
+  const getDispatched = startMatch({ hand: [source], deck: [d1, d2, d3], discards: 2 });
+  await wait();
+
+  click(handCard(source.uid));
+  await wait();
+  w.tlrMpInvoke();
+  await wait();
+
+  // PEEK must NOT show the anchor prompt — it goes straight to the card-choice modal.
+  assert.ok(!w.document.getElementById('abilityPrompt').classList.contains('show'), 'PEEK does not show the ability prompt');
+  // The body must carry mp-ability-flow-active so action buttons are disabled.
+  assert.ok(w.document.body.classList.contains('mp-ability-flow-active'), 'PEEK sets mp-ability-flow-active on body');
+
+  const choices = [...w.document.querySelectorAll('#choices .card')];
+  assert.equal(choices.length, 3, 'PEEK modal lists all peeked deck cards');
+  // Simulate peer action arriving mid-PEEK — must NOT clear _abilityResolving.
+  const peerState = w.tlrMpGetState();
+  w.tlrMpOnPeerAction({ type: 'MP_PLACE_CARD', playerIndex: 1 }, peerState);
+  await wait();
+  assert.ok(w.document.body.classList.contains('mp-ability-flow-active'), 'PEEK keeps mp-ability-flow-active after peer action');
+
+  click(choices[0]);
+  await wait();
+
+  const dispatched = getDispatched();
+  assert.equal(dispatched?.type, MP_ACTIONS.MP_SUBMIT_ACTION, 'PEEK submits an action');
+  assert.equal(dispatched?.action?.type, MP_ACTIONS.MP_INVOKE_ABILITY, 'PEEK invokes the ability');
+  assert.equal(dispatched?.action?.cardUid, source.uid, 'PEEK invokes the source card');
+  assert.equal(dispatched?.action?.abilityChoice?.takenCardUid, d1.uid, 'PEEK carries the taken card uid');
+}
+
 console.log('Multiplayer ability flow checks passed.');
 // The installed game keeps a MutationObserver and jsdom timers alive, so exit
 // explicitly once the assertions pass. This script is spawned as its own

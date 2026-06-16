@@ -1282,7 +1282,11 @@ export function installMpGame(target = window) {
       return { handUids: shuffled.slice(0, handSize).map(card => card.uid), deckUids: shuffled.slice(handSize).map(card => card.uid) };
     }
     // PEEK: MP takes from top of deck without reshuffle (no shared discard behaviour needed).
+    // renderAbilityPrompt() is called here (without _abilityTargeting) to push
+    // mp-ability-flow-active onto the body — disabling action buttons while the
+    // card-choice modal is open, exactly as NEIGHBOR/BETWEEN do during targeting.
     if (ability.type === ABILITY_TYPES.PEEK) {
+      renderAbilityPrompt();
       const held = player.deck.slice(0, ability.count ?? 1);
       if (!held.length) return fallbackChoice('Peek — no cards');
       const picked = await showMpCardChoice(`Peek ${held.length}`, 'Pick one. The rest go to the bottom.', held);
@@ -1588,11 +1592,16 @@ export function installMpGame(target = window) {
     // let the card flash back into the hand during that intermediate render.
     // selfHandView auto-evicts entries once they leave the hand; tlrMpOnMatchStart
     // clears the set explicitly at match start.
-    _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; _personaSwapRequested = false;
+    //
+    // _abilityResolving is intentionally NOT reset here. Its lifecycle is owned by
+    // invokeSelectedCard's try/finally block (and tlrMpCancelAction for user cancel).
+    // Resetting it here would clear the flag when a peer action arrives mid-PEEK,
+    // corrupting the UI state while showMpCardChoice is still awaiting user input.
+    _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _personaSwapRequested = false;
     renderMpPurgePrompt();
   }
 
-  target.tlrMpOnMatchStart = function (state, { role }) { ensureRoundMults(state, null, true); _lastScoringState = cloneState(state); _state = state; _myIndex = role === 'host' ? 0 : 1; _pendingRemovalUids.clear(); _optimisticSelf = null; resetTransientActionState(); _lastShownScores = [state?.players?.[0]?.totalScore ?? 0, state?.players?.[1]?.totalScore ?? 0]; clearOpponentRevealQueues(); doc.body.classList.add('mp-game-active'); mount(); el('mpGame')?.classList.remove('mp-hidden'); installPlaceCardOverride(); installRenderSpreadOverride(); installRenderHandOverride(); installPurgeOverride(); installRefreshHandStateOverride(); render(); updateScoreMultPills(state); scheduleAutoScore(); scheduleAutoNextRound(); };
+  target.tlrMpOnMatchStart = function (state, { role }) { ensureRoundMults(state, null, true); _lastScoringState = cloneState(state); _state = state; _myIndex = role === 'host' ? 0 : 1; _pendingRemovalUids.clear(); _optimisticSelf = null; _abilityResolving = false; resetTransientActionState(); _lastShownScores = [state?.players?.[0]?.totalScore ?? 0, state?.players?.[1]?.totalScore ?? 0]; clearOpponentRevealQueues(); doc.body.classList.add('mp-game-active'); mount(); el('mpGame')?.classList.remove('mp-hidden'); installPlaceCardOverride(); installRenderSpreadOverride(); installRenderHandOverride(); installPurgeOverride(); installRefreshHandStateOverride(); render(); updateScoreMultPills(state); scheduleAutoScore(); scheduleAutoNextRound(); };
   target.tlrMpOnLocalAction = function (action, state) { const before = _lastScoringState ? cloneState(_lastScoringState) : cloneState(state); applyDerivedScoringState(before, state, action); if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues(); _state = state; resetTransientActionState(); render(); updateScoreMultPills(state, { includeOpponent: false }); playPlacementFeedback(before, state); _lastScoringState = cloneState(state); scheduleAutoScore(); scheduleAutoNextRound(); };
   target.tlrMpOnPeerAction = function (action, state) { const before = _lastScoringState ? cloneState(_lastScoringState) : cloneState(state); applyDerivedScoringState(before, state, action); if (action?.type === MP_ACTIONS.MP_NEW_ROUND) clearOpponentRevealQueues(); _state = state; resetTransientActionState(); render(); updateScoreMultPills(state, { includeOpponent: false }); playPlacementFeedback(before, state); _lastScoringState = cloneState(state); scheduleAutoScore(); scheduleAutoNextRound(); };
   target.tlrMpHandlePeerLeft = function () { const overlay = el('mpOverlay'), box = el('mpOvBox'); if (!box || !overlay) return; box.innerHTML = `<h2 class="mp-ov-title">Opponent Left</h2><p style="color:#b09060;font:400 12px/1.5 system-ui,sans-serif">Your opponent disconnected.</p><button class="mp-ov-btn" onclick="tlrMpLeave()" type="button">Return to Menu</button>`; overlay.classList.remove('mp-ov-hidden'); };
