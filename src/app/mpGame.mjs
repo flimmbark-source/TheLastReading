@@ -740,6 +740,12 @@ export function installMpGame(target = window) {
   }
 
   function syncPersonaPrompt() {
+    // During any stage of ability resolution the MP ability flow owns #abilityPrompt
+    // and the confirm button. Returning early prevents the persona-swap UI from
+    // overriding button.onclick (which would fire cancel instead of confirm) or
+    // adding/removing .show from #abilityPrompt (which would trigger the host's
+    // MutationObserver and potentially call showOnlyAnchorPrompt mid-flow).
+    if (_abilityResolving || _abilityTargeting) return;
     const promptBox = el('abilityPrompt');
     const title = el('abilityPromptTitle');
     const text = el('abilityPromptText');

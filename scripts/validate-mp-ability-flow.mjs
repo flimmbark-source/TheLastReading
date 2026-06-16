@@ -140,6 +140,51 @@ function startMatch(player0) {
   assert.equal(dispatched?.action?.abilityChoice?.takenCardUid, found.uid, 'BETWEEN carries the taken card');
 }
 
+// --- NEIGHBOR with peer action mid-targeting: stall guard ---
+// Verifies that a peer action arriving while anchor selection is active does
+// not clear mp-ability-flow-active, strip the ability prompt, or corrupt the
+// confirm button — the three pre-fix failure modes.
+{
+  const source = { ...cardById('major_9', 9060), ability: 'NEIGHBOR_2' };
+  const anchor = cardById('major_10', 9061);
+  const found = cardById('major_11', 9062);
+  const getDispatched = startMatch({ hand: [source, anchor], deck: [found], discards: 2 });
+  await wait();
+
+  click(handCard(source.uid));
+  await wait();
+  w.tlrMpInvoke();
+  await wait();
+
+  assert.ok(w.document.getElementById('abilityPrompt').classList.contains('show'), 'NEIGHBOR-peer: ability prompt shown before peer action');
+  assert.ok(w.document.body.classList.contains('mp-ability-flow-active'), 'NEIGHBOR-peer: mp-ability-flow-active before peer action');
+
+  // Peer places a card while we are choosing an anchor.
+  const peerState = w.tlrMpGetState();
+  w.tlrMpOnPeerAction({ type: 'MP_PLACE_CARD', playerIndex: 1 }, peerState);
+  await wait();
+
+  assert.ok(w.document.getElementById('abilityPrompt').classList.contains('show'), 'NEIGHBOR-peer: ability prompt survives peer action');
+  assert.ok(w.document.body.classList.contains('mp-ability-flow-active'), 'NEIGHBOR-peer: mp-ability-flow-active survives peer action');
+  assert.ok(handCard(anchor.uid)?.classList.contains('ability-target'), 'NEIGHBOR-peer: anchor still glows after peer action');
+
+  click(handCard(anchor.uid));
+  await wait();
+  assert.ok(!w.document.getElementById('abilityConfirm').disabled, 'NEIGHBOR-peer: confirm button enabled after picking anchor post-peer-action');
+
+  click(w.document.getElementById('abilityConfirm'));
+  await wait();
+  const choices = [...w.document.querySelectorAll('#choices .card')];
+  assert.ok(choices.length >= 1, 'NEIGHBOR-peer: card choice modal lists cards after peer action mid-targeting');
+  click(choices.find(el => Number(el.querySelector?.('[data-uid]')?.dataset?.uid) === found.uid) || choices[0]);
+  await wait();
+
+  const dispatched = getDispatched();
+  assert.equal(dispatched?.action?.type, MP_ACTIONS.MP_INVOKE_ABILITY, 'NEIGHBOR-peer: ability invoked');
+  assert.deepEqual(dispatched?.action?.abilityChoice?.anchorUids, [anchor.uid], 'NEIGHBOR-peer: anchor carried');
+  assert.equal(dispatched?.action?.abilityChoice?.takenCardUid, found.uid, 'NEIGHBOR-peer: taken card carried');
+}
+
 // --- PEEK: direct deck reveal (no anchor phase) ---
 {
   const source = { ...cardById('major_0', 9030), ability: 'PEEK_3' }; // Fool — PEEK_3
