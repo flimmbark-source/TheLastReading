@@ -1,0 +1,12 @@
+/* Stylesheet for pseudo-3D isometric view */
+.isometric-container {
+  perspective: 800px;
+  transform-style: preserve-3d;
+  transform: rotateX(60deg) rotateZ(-45deg);
+}
+
+.isometric-container .card {
+  transform-style: preserve-3d;
+  transform: translateZ(10px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.3);
+}
