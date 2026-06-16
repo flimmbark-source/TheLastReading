@@ -206,13 +206,15 @@ function installMpModalFlowFix(target, doc) {
   }
 
   function observeModal() {
-    if (typeof MutationObserver === 'undefined') return;
+    const MO = typeof target.MutationObserver === 'function' ? target.MutationObserver
+             : (typeof MutationObserver !== 'undefined' ? MutationObserver : null);
+    if (!MO) return;
     const m = modal();
     const title = doc.getElementById('modalTitle');
     const prompt = doc.getElementById('modalPrompt');
     const ch = choices();
     if (!m || !title || !prompt || !ch || target.__tlrMpModalContentObserver) return;
-    const observer = new MutationObserver(() => target.requestAnimationFrame?.(reconcileAbilitySurface));
+    const observer = new MO(() => target.requestAnimationFrame?.(reconcileAbilitySurface));
     observer.observe(m, { attributes: true, attributeFilter: ['class'] });
     observer.observe(title, { childList: true, characterData: true, subtree: true });
     observer.observe(prompt, { childList: true, characterData: true, subtree: true });
@@ -221,10 +223,12 @@ function installMpModalFlowFix(target, doc) {
   }
 
   function observeAbilityPrompt() {
-    if (typeof MutationObserver === 'undefined') return;
+    const MO = typeof target.MutationObserver === 'function' ? target.MutationObserver
+             : (typeof MutationObserver !== 'undefined' ? MutationObserver : null);
+    if (!MO) return;
     const prompt = abilityPrompt();
     if (!prompt || target.__tlrMpAbilityPromptObserver) return;
-    const observer = new MutationObserver(() => target.requestAnimationFrame?.(reconcileAbilitySurface));
+    const observer = new MO(() => target.requestAnimationFrame?.(reconcileAbilitySurface));
     observer.observe(prompt, { attributes: true, attributeFilter: ['class'] });
     target.__tlrMpAbilityPromptObserver = observer;
   }
