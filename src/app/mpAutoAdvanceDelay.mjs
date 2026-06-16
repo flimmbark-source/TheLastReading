@@ -85,7 +85,8 @@ function installMpModalHide(target, doc) {
     if (!isMpModalOpen()) doc.body.classList.remove('mp-modal-forced-collapsed');
     const btn = toggle();
     if (btn && isMpModalOpen()) {
-      btn.textContent = doc.body.classList.contains('mp-modal-forced-collapsed') ? 'Show' : 'Hide';
+      const label = doc.body.classList.contains('mp-modal-forced-collapsed') ? 'Show' : 'Hide';
+      if (btn.textContent !== label) btn.textContent = label;
     }
   };
 
