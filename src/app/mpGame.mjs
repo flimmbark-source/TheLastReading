@@ -10,7 +10,7 @@ import {
 } from '../multiplayer/mpSelectors.mjs';
 import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
 import { shuffleDeck } from '../systems/deck.mjs';
-import { abilityHeldCards } from '../systems/abilities.mjs';
+import { buildAbilityChoiceAsync } from './abilityFlowAsync.mjs';
 import { computeScore } from '../systems/scoring.mjs';
 import { getPersona } from '../multiplayer/personas.mjs';
 import { applyCardPhoto, CARD_SHEET, title as cardTitle, symbol as cardSymbol } from '../ui/renderCard.mjs';
@@ -155,7 +155,11 @@ export function installMpGame(target = window) {
     if (!p) return;
     // Drop the optimistic ability snapshot once my action has resolved (my
     // pending action is cleared), so the canonical state becomes authoritative.
-    if (_optimisticSelf && !hasSubmittedAction(s, my)) _optimisticSelf = null;
+    if (_optimisticSelf && !hasSubmittedAction(s, my)) {
+      const myHand = s.players[my]?.hand || [];
+      const optimisticExtra = _optimisticSelf.hand.filter(c => !myHand.some(h => h.uid === c.uid));
+      if (!optimisticExtra.length) _optimisticSelf = null;
+    }
     if (_selected !== null && !(p.hand || []).some(c => c.uid === _selected)) _selected = null;
   }
 
@@ -928,7 +932,10 @@ export function installMpGame(target = window) {
 
     updateScoreMultPills(state, { onlyPlayerIndex: playerIndex });
     slotGhost(slotEl, `+${card.points || 0}`);
-    scoreGhost(playerIndex, '+1');
+    const _scoreDelta = Math.max(0, liveSpreadScore(state.players[playerIndex]) - liveSpreadScore(before.players[playerIndex]));
+    for (let _i = 0; _i < _scoreDelta; _i += 1) {
+      target.setTimeout(() => scoreGhost(playerIndex, '+1'), 28 * _i);
+    }
     if (!localAlreadyPlayed) {
       target.playSound?.('place');
       target.haptic?.(12);
@@ -1274,79 +1281,36 @@ export function installMpGame(target = window) {
       const handSize = handSizeForPersona(player.persona);
       return { handUids: shuffled.slice(0, handSize).map(card => card.uid), deckUids: shuffled.slice(handSize).map(card => card.uid) };
     }
+    // PEEK: MP takes from top of deck without reshuffle (no shared discard behaviour needed).
     if (ability.type === ABILITY_TYPES.PEEK) {
       const held = player.deck.slice(0, ability.count ?? 1);
       if (!held.length) return fallbackChoice('Peek — no cards');
       const picked = await showMpCardChoice(`Peek ${held.length}`, 'Pick one. The rest go to the bottom.', held);
       return picked ? { takenCardUid: picked.uid } : null;
     }
-    if (ability.type === ABILITY_TYPES.SEARCH) {
-      if (!player.deck.length) return fallbackChoice('Search — empty deck');
-      const picked = await showMpCardChoice('Search deck', 'Pick any card. The deck reshuffles.', sortChoiceCards(player.deck));
-      if (!picked) return null;
-      const remaining = shuffleDeck(player.deck.filter(card => card.uid !== picked.uid));
-      return { takenCardUid: picked.uid, deckOrderUids: remaining.map(card => card.uid) };
-    }
-    if (ability.type === ABILITY_TYPES.NEIGHBOR || ability.type === ABILITY_TYPES.KIN || ability.type === ABILITY_TYPES.MIRROR) return buildSingleAnchorAbilityChoice(player, sourceCard, ability);
-    if (ability.type === ABILITY_TYPES.BETWEEN) return buildBetweenAbilityChoice(player, sourceCard, ability);
+
+    // Shared async flow for SEARCH, NEIGHBOR, KIN, MIRROR, BETWEEN.
+    const choice = await buildAbilityChoiceAsync(
+      ability,
+      { deck: player.deck, hand: player.hand, spread: player.spread.filter(Boolean), sourceCardUid: sourceCard.uid },
+      {
+        showChoice:    showMpCardChoice,
+        selectTargets: selectAbilityTargets,
+        sortCards:     sortChoiceCards,
+        cleanName:     cleanCardName,
+        shuffleDeck,
+        isTargetable:  card => card.type === 'major' || card.type === 'court',
+      },
+    );
+
+    if (!choice) return null;
+    if (choice.kind === 'fallback') return fallbackChoice(`${ability.title ?? ability.type} — no valid targets`);
+    if (choice.kind === 'take') return { takenCardUid: choice.takenCardUid, ...(choice.anchorUids?.length ? { anchorUids: choice.anchorUids } : {}) };
+    if (choice.kind === 'search') return { takenCardUid: choice.takenCardUid, deckOrderUids: choice.deckOrderUids };
     return {};
   }
 
   async function fallbackChoice(title) { await showMpNotice(title, 'No valid target was available. Draw 1 instead.'); return { fallbackDraw: 1 }; }
-  // Singleplayer-style relation flow: anchors are picked by tapping the visible
-  // hand/spread cards (glow + #abilityPrompt), then the revealed card is taken
-  // through the shared modal. This matches the singleplayer ability UX.
-  async function buildSingleAnchorAbilityChoice(player, sourceCard, ability) {
-    const candidates = inPlayCardsForAbility(player, sourceCard.uid).filter(card => heldCardsForAnchor(player, ability, card).length > 0);
-    if (!candidates.length) return fallbackChoice(`${ability.title} — no matching cards`);
-    const anchors = await selectAbilityTargets(
-      ability.title,
-      ability.prompt || singleplayerPromptFor(ability),
-      candidates,
-      1,
-      anchorCard => {
-        const total = heldCardsForAnchor(player, ability, anchorCard).length;
-        return total ? `${cleanCardName(anchorCard)}: ${total} card${total === 1 ? '' : 's'} found` : 'No matching cards.';
-      },
-    );
-    if (!anchors) return null;
-    const [anchor] = anchors;
-    const found = sortChoiceCards(heldCardsForAnchor(player, ability, anchor));
-    if (!found.length) return fallbackChoice(`${ability.title} — no matching cards`);
-    const picked = await showMpCardChoice(
-      `${ability.title} — ${cleanCardName(anchor)}`,
-      `Cards found from ${cleanCardName(anchor)}. Take 1. Unchosen revealed cards go to the bottom.`,
-      found,
-    );
-    return picked ? { anchorUids: [anchor.uid], takenCardUid: picked.uid } : null;
-  }
-  async function buildBetweenAbilityChoice(player, sourceCard, ability) {
-    const anchors = sortChoiceCards(inPlayCardsForAbility(player, sourceCard.uid));
-    const validAnchors = anchors.filter(a => anchors.some(b => b.uid !== a.uid && heldCardsBetween(player, a, b).length > 0));
-    if (!validAnchors.length) return fallbackChoice('Between — no cards between');
-    const pickedAnchors = await selectAbilityTargets(
-      'Between',
-      'Choose 2 cards. Between finds cards whose values fall between them in sequence.',
-      validAnchors,
-      2,
-      (a, b) => {
-        if (!a || !b) return '';
-        const total = heldCardsBetween(player, a, b).length;
-        return total ? `Between these anchors: ${total} card${total === 1 ? '' : 's'}` : 'No cards between these anchors.';
-      },
-    );
-    if (!pickedAnchors) return null;
-    const [first, second] = pickedAnchors;
-    const limit = Math.max(1, Number(ability.count || getAbility('BETWEEN_2')?.count || 2));
-    const found = sortChoiceCards(heldCardsBetween(player, first, second)).slice(0, limit);
-    if (!found.length) return fallbackChoice('Between — no cards between');
-    const picked = await showMpCardChoice(
-      `Between — ${cleanCardName(first)} / ${cleanCardName(second)}`,
-      `Cards found between them. Take 1. Revealed up to ${limit}. Unchosen revealed cards go to the bottom.`,
-      found,
-    );
-    return picked ? { anchorUids: [first.uid, second.uid], takenCardUid: picked.uid } : null;
-  }
 
   // ── Visible hand/spread anchor selection (folded from mpSingleplayerAbilityFlow) ──
   function selectAbilityTargets(title, prompt, cards, count, previewFn = null) {
@@ -1485,13 +1449,6 @@ export function installMpGame(target = window) {
     doc.body.classList.toggle('mp-ability-flow-active', !!_abilityTargeting || _abilityResolving);
   }
 
-  function singleplayerPromptFor(ability) {
-    if (ability.type === ABILITY_TYPES.NEIGHBOR) return 'Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers or court ranks in the same suit.';
-    if (ability.type === ABILITY_TYPES.KIN) return 'Choose an anchor card. Kin finds cards of the same Arcana.';
-    if (ability.type === ABILITY_TYPES.MIRROR) return 'Choose a card. Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)';
-    return ability.prompt || 'Choose an anchor card.';
-  }
-
   function escAbility(value) {
     return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   }
@@ -1514,12 +1471,6 @@ export function installMpGame(target = window) {
       if (card) handleAbilityTargetCard(card);
     }, true);
   }
-  function inPlayCardsForAbility(player, sourceUid) { return [...player.hand.filter(card => card.uid !== sourceUid), ...player.spread.filter(Boolean)].filter(card => card.type === 'major' || card.type === 'court'); }
-  // Reveal computation is shared with the reducer (and singleplayer) so the cards
-  // shown here always match what MP_INVOKE_ABILITY resolves on both peers.
-  function heldCardsForAnchor(player, ability, anchor) { return abilityHeldCards(player.deck, ability, [anchor]).slice(0, ability.count ?? 2); }
-  function heldCardsBetween(player, first, second) { return uniqueCards(abilityHeldCards(player.deck, { type: ABILITY_TYPES.BETWEEN }, [first, second])); }
-  function uniqueCards(cards) { const seen = new Set(); return (cards || []).filter(card => { if (!card || seen.has(card.uid)) return false; seen.add(card.uid); return true; }); }
   function sortChoiceCards(cards) { if (typeof target.sortCards === 'function') return target.sortCards(cards.slice()); return cards.slice().sort((a, b) => cleanCardName(a).localeCompare(cleanCardName(b))); }
   function cleanCardName(card) { try { return cardTitle(card).replace(/<[^>]+>/g, ''); } catch (_) { return card?.name || card?.id || 'Card'; } }
 
@@ -1822,7 +1773,7 @@ function installMpGameStyle(doc) {
     body.mp-game-active .mp-overlay:not(.mp-ov-hidden) {
       pointer-events: auto;
     }
-    body.mp-game-active.mp-ability-flow-active #abilityPrompt,
+    body.mp-game-active.mp-ability-flow-active #abilityPrompt.show,
     body.mp-game-active.mp-purge-flow-active #purgePrompt {
       display: flex !important;
       z-index: 2147482600 !important;
