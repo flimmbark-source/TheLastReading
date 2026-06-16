@@ -27,6 +27,7 @@ import { installMpGame } from './mpGameHost.mjs';
 import { installMpCpuSafety } from './mpCpuSafety.mjs';
 import { installMpAbilitySurfaceCleanup } from './mpAbilitySurfaceCleanup.mjs';
 import { installMpScoreGhostParity } from './mpScoreGhostParity.mjs';
+import { installMpAutoAdvanceDelay } from './mpAutoAdvanceDelay.mjs';
 import { installMenuControls } from './menuControls.mjs';
 import { installResonationFlow } from './resonationFlow.mjs';
 import { installHintRuntime } from './hintRuntime.mjs';
@@ -252,6 +253,7 @@ export function startApp(target = window) {
   installMpCpuSafety(target);
   installMpAbilitySurfaceCleanup(target);
   installMpScoreGhostParity(target);
+  installMpAutoAdvanceDelay(target);
   installStoreFrontTuning(target);
   installMarketTutorialTrigger(target);
 
