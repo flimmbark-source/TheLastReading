@@ -201,6 +201,10 @@ function installMpModalFlowFix(target, doc) {
     const prompt = abilityPrompt();
     const modalOpen = !!m?.classList.contains('show');
     const promptOpen = !!prompt?.classList.contains('show');
+    if (modalOpen && doc.body.classList.contains('mp-ability-flow-active')) {
+      setToggleLabel();
+      return;
+    }
     if (modalOpen) showOnlyCardChoiceModal();
     else if (promptOpen) showOnlyAnchorPrompt();
   }
