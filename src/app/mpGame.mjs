@@ -1572,7 +1572,11 @@ export function installMpGame(target = window) {
   // sync) still runs during a match for its side effects, but it toggles hand
   // classes from the now-unused global `state`. Re-render the multiplayer hand
   // afterwards so MP's view model is authoritative for selection/purge classes.
-  function installRefreshHandStateOverride() { if (_origRefreshHandState !== null) return; _origRefreshHandState = target.refreshHandState; if (typeof _origRefreshHandState !== 'function') return; target.refreshHandState = function () { const result = _origRefreshHandState.apply(target, arguments); if (_state) renderSelfHand(_state, _myIndex); refreshSelectionUi(); return result; }; }
+  // SP's refreshHandState internally calls SP renderAbilityPrompt(), which strips
+  // .show from #abilityPrompt when the SP store has no active targeting (which is
+  // always true during MP). Re-apply MP targeting state afterwards so the anchor
+  // prompt is not hidden mid-flow by a swipe or drag gesture.
+  function installRefreshHandStateOverride() { if (_origRefreshHandState !== null) return; _origRefreshHandState = target.refreshHandState; if (typeof _origRefreshHandState !== 'function') return; target.refreshHandState = function () { const result = _origRefreshHandState.apply(target, arguments); if (_state) renderSelfHand(_state, _myIndex); refreshSelectionUi(); if (_abilityTargeting) { renderAbilityPrompt(); refreshAbilityTargets(); } return result; }; }
   function restoreRefreshHandStateOverride() { if (_origRefreshHandState !== null) { target.refreshHandState = _origRefreshHandState; _origRefreshHandState = null; } }
 
   function installDispatchEffectDelay() {
