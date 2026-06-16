@@ -185,6 +185,11 @@ function installMpModalFlowFix(target, doc) {
 
   function showOnlyAnchorPrompt() {
     if (!isMp()) return;
+    // mp-ability-flow-active is on the body during Stage 1 (anchor selection) and
+    // Stage 2 (card-choice modal). In Stage 2, showMpCardChoice holds its resolve
+    // in card onclick handlers inside #choices. Clearing choices here would
+    // permanently break that Promise, stalling the ability flow.
+    if (doc.body.classList.contains('mp-ability-flow-active')) return;
     const prompt = abilityPrompt();
     if (!prompt || !prompt.classList.contains('show')) return;
     hideCardChoiceModal({ clearChoices: true });
