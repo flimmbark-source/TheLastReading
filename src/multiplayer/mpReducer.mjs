@@ -158,7 +158,17 @@ function anchorByUid(player, uid) {
   return inPlayCards(player).find(card => card.uid === uid) || null;
 }
 
+function explicitHeldCards(player, choice) {
+  const heldUids = Array.isArray(choice?.heldCardUids) ? choice.heldCardUids : [];
+  if (!heldUids.length) return [];
+  const deckByUid = new Map((player.deck || []).map(card => [card.uid, card]));
+  return heldUids.map(uid => deckByUid.get(uid)).filter(Boolean);
+}
+
 function relationHeldCards(player, ability, choice) {
+  const explicit = explicitHeldCards(player, choice);
+  if (explicit.length) return explicit;
+
   const anchorIds = Array.isArray(choice?.anchorUids) ? choice.anchorUids : [];
   const anchors = anchorIds.map(uid => anchorByUid(player, uid));
   if (!anchors[0]) return [];
