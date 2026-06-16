@@ -1294,6 +1294,12 @@ export function installMpGame(target = window) {
     }
 
     // Shared async flow for SEARCH, NEIGHBOR, KIN, MIRROR, BETWEEN.
+    // renderAbilityPrompt() here ensures mp-ability-flow-active is on the body
+    // before any async step: SEARCH goes straight to showMpCardChoice with no
+    // anchor phase, so without this call it would show the modal without the
+    // class (leaving action buttons enabled). NEIGHBOR/KIN/MIRROR/BETWEEN also
+    // call renderAbilityPrompt() inside selectAbilityTargets, so this is harmless.
+    renderAbilityPrompt();
     const choice = await buildAbilityChoiceAsync(
       ability,
       { deck: player.deck, hand: player.hand, spread: player.spread.filter(Boolean), sourceCardUid: sourceCard.uid },
