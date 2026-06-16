@@ -1,4 +1,3 @@
-import { MP_ACTIONS } from '../multiplayer/mpActions.mjs';
 import { MP_PHASES } from '../multiplayer/mpState.mjs';
 
 const ROUND_ADVANCE_VISUAL_DELAY_MS = 3350;
@@ -7,53 +6,29 @@ export function installMpAutoAdvanceDelay(target = window) {
   if (!target || target.__tlrMpAutoAdvanceDelayInstalled) return;
   target.__tlrMpAutoAdvanceDelayInstalled = true;
 
-  const doc = target.document;
-  let nextRoundDelayUntil = 0;
-  let nextRoundTimer = null;
+  installRoundCompleteOverlaySuppressor(target, target.document);
+  installAutoNextRoundTimerDelay(target);
+}
 
-  function markNextRoundHold(state) {
-    if (state?.phase !== MP_PHASES.BETWEEN_ROUNDS) return;
-    nextRoundDelayUntil = Math.max(nextRoundDelayUntil, Date.now() + ROUND_ADVANCE_VISUAL_DELAY_MS);
-  }
+function installAutoNextRoundTimerDelay(target) {
+  if (typeof target.setTimeout !== 'function') return;
 
-  function wrapMatchActionHook(name) {
-    const original = target[name];
-    if (typeof original !== 'function') return;
-    target[name] = function wrappedMpActionHook(action, state, ...rest) {
-      markNextRoundHold(state);
-      return original.call(this, action, state, ...rest);
-    };
-  }
+  const originalSetTimeout = target.setTimeout.bind(target);
+  target.setTimeout = function tlrDelayedMpSetTimeout(callback, delay = 0, ...args) {
+    if (shouldDelayAutoNextRound(callback, delay, target)) {
+      return originalSetTimeout(callback, ROUND_ADVANCE_VISUAL_DELAY_MS, ...args);
+    }
+    return originalSetTimeout(callback, delay, ...args);
+  };
+}
 
-  wrapMatchActionHook('tlrMpOnLocalAction');
-  wrapMatchActionHook('tlrMpOnPeerAction');
+function shouldDelayAutoNextRound(callback, delay, target) {
+  if (Number(delay) !== 120) return false;
+  if (typeof callback !== 'function') return false;
+  if (target.tlrMpGetState?.()?.phase !== MP_PHASES.BETWEEN_ROUNDS) return false;
 
-  const originalDispatch = target.tlrMpDispatch;
-  if (typeof originalDispatch === 'function') {
-    target.tlrMpDispatch = function wrappedMpDispatch(action, ...args) {
-      const currentState = target.tlrMpGetState?.();
-      if (action?.type === MP_ACTIONS.MP_NEW_ROUND && currentState?.phase === MP_PHASES.BETWEEN_ROUNDS) {
-        const remaining = nextRoundDelayUntil - Date.now();
-        if (remaining > 40) {
-          if (!nextRoundTimer) {
-            nextRoundTimer = target.setTimeout(() => {
-              nextRoundTimer = null;
-              if (target.tlrMpGetState?.()?.phase === MP_PHASES.BETWEEN_ROUNDS) {
-                originalDispatch.call(this, action, ...args);
-              }
-            }, remaining);
-          }
-          return currentState;
-        }
-      }
-
-      const result = originalDispatch.call(this, action, ...args);
-      if (action?.type === MP_ACTIONS.MP_SCORE_ROUND) markNextRoundHold(target.tlrMpGetState?.() ?? result);
-      return result;
-    };
-  }
-
-  installRoundCompleteOverlaySuppressor(target, doc);
+  const source = Function.prototype.toString.call(callback);
+  return source.includes('MP_NEW_ROUND') && source.includes('tlrMpDispatch');
 }
 
 function installRoundCompleteOverlaySuppressor(target, doc) {
