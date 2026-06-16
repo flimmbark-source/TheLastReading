@@ -1,5 +1,7 @@
 import { MP_ACTIONS } from '../multiplayer/mpActions.mjs';
 import { MP_PHASES } from '../multiplayer/mpState.mjs';
+import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
+import { abilityHeldCards } from '../systems/abilities.mjs';
 
 const NEXT_SET_DELAY_MS = 3350;
 const DETAIL_HOLD_MS = 400;
@@ -10,6 +12,7 @@ export function installMpAutoAdvanceDelay(target = window) {
   target.__tlrMpAutoAdvanceDelayInstalled = true;
 
   installAutoNextRoundDelay(target);
+  installMpAbilityHeldChoiceUids(target);
   installMpModalHide(target, target.document);
   installMpCardDetail(target, target.document);
 }
@@ -41,6 +44,68 @@ function installAutoNextRoundDelay(target) {
 
     return originalDispatch(action);
   };
+}
+
+function installMpAbilityHeldChoiceUids(target) {
+  const originalDispatch = target.tlrMpDispatch;
+  if (typeof originalDispatch !== 'function') return;
+
+  target.tlrMpDispatch = function mpDispatchWithHeldChoiceUids(action) {
+    return originalDispatch(enrichHeldAbilityChoice(target, action));
+  };
+}
+
+function enrichHeldAbilityChoice(target, action) {
+  if (action?.type !== MP_ACTIONS.MP_SUBMIT_ACTION) return action;
+  const submitted = action.action;
+  if (submitted?.type !== MP_ACTIONS.MP_INVOKE_ABILITY) return action;
+
+  const choice = submitted.abilityChoice;
+  if (!choice || Array.isArray(choice.heldCardUids) || !Array.isArray(choice.anchorUids)) return action;
+
+  const state = target.tlrMpGetState?.();
+  const playerIndex = Number.isInteger(action.playerIndex) ? action.playerIndex : submitted.playerIndex;
+  const player = state?.players?.[playerIndex];
+  if (!player) return action;
+
+  const sourceCard = (player.hand || []).find(card => card.uid === submitted.cardUid);
+  const ability = sourceCard?.ability ? getAbility(sourceCard.ability) : null;
+  if (!isHeldChoiceAbility(ability)) return action;
+
+  const inPlay = [
+    ...(player.hand || []).filter(card => card.uid !== sourceCard.uid),
+    ...(player.spread || []).filter(Boolean),
+  ];
+  const anchors = choice.anchorUids.map(uid => inPlay.find(card => card.uid === uid)).filter(Boolean);
+  if (!anchors[0]) return action;
+  if (ability.type === ABILITY_TYPES.BETWEEN && !anchors[1]) return action;
+
+  let held = abilityHeldCards(player.deck || [], ability, anchors);
+  if (typeof target.sortCards === 'function') held = target.sortCards(held.slice());
+  else held = held.slice().sort((a, b) => String(a?.name || a?.id || '').localeCompare(String(b?.name || b?.id || '')));
+
+  const heldCardUids = held.slice(0, ability.count ?? 1).map(card => card.uid);
+  if (!heldCardUids.length) return action;
+
+  return {
+    ...action,
+    action: {
+      ...submitted,
+      abilityChoice: {
+        ...choice,
+        heldCardUids,
+      },
+    },
+  };
+}
+
+function isHeldChoiceAbility(ability) {
+  return !!ability && (
+    ability.type === ABILITY_TYPES.NEIGHBOR
+    || ability.type === ABILITY_TYPES.KIN
+    || ability.type === ABILITY_TYPES.MIRROR
+    || ability.type === ABILITY_TYPES.BETWEEN
+  );
 }
 
 function installMpModalHide(target, doc) {
