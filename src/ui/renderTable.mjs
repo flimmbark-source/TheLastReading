@@ -25,8 +25,8 @@ const CONSTELLATION_GLYPHS=Object.freeze({
 
 function maybeShowContextualTutorials(){
   if(typeof window.maybeShowPatternTutorial==='function')window.maybeShowPatternTutorial();
-  if(typeof window.maybeShowReadingCompletionTutorial==='function')window.maybeShowReadingCompletionTutorial();
   if(typeof window.maybeShowPurgeTutorial==='function')window.maybeShowPurgeTutorial();
+  if(typeof window.maybeShowDiscardTutorial==='function')window.maybeShowDiscardTutorial();
   if(typeof window.maybeShowConstellationTutorial==='function')window.maybeShowConstellationTutorial();
 }
 
