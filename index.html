@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="src/styles/tableMotion.css?v=physical-table-motion-1">
 <link rel="stylesheet" href="src/styles/attic.css?v=mobile-load-fix-1">
 <link rel="stylesheet" href="src/styles/drawers.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/tableTools.css?v=table-tools-1">
 <link rel="stylesheet" href="src/styles/performance.css?v=mobile-load-fix-1">
 <link rel="stylesheet" href="src/styles/mainMenu.css?v=render-boot-1">
 <link rel="stylesheet" href="src/styles/loadout.css?v=portrait-4">
@@ -40,6 +41,10 @@
 <div class="bar"></div>
 <div id="sophiaVeil"></div>
 <div class="score-stack"><div class="pill reserve-pill">Reserve <b id="pool">0</b></div><div class="pill score-pill">Score <b id="current">0</b></div><div class="th-pill-wrap"><div class="pill threshold-pill">Threshold <b id="threshold">30</b></div><span id="thNext"></span></div><div class="pill discards-pill">Discards <b id="discards">3</b></div></div>
+<div class="table-tools" aria-label="Table references">
+  <button id="abilitiesTableTool" type="button" class="table-tool table-tool-abilities" aria-label="Open Abilities" onclick="tlrTogglePullTab('abilities')"><span class="table-tool-mark" aria-hidden="true"></span><span class="table-tool-label">Abilities</span></button>
+  <button id="scoringTableTool" type="button" class="table-tool table-tool-scoring" aria-label="Open Scoring" onclick="tlrTogglePullTab('scoring')"><span class="table-tool-mark" aria-hidden="true"></span><span class="table-tool-label">Scoring</span></button>
+</div>
 <button type="button" id="constellationPill" class="constellation-pill hidden" aria-label="Constellation"></button>
 <div class="refs-layer"><div id="ref" class="ref hidden scoring-sheet"></div><div id="abilityRef" class="ref hidden"><table><tr><td><b>Ability</b></td><td class="r"><b>What it does</b></td></tr><tr><td>Draw</td><td class="r">Draw that many cards.</td></tr><tr><td>Peek</td><td class="r">Look at that many cards. Take 1. Put the rest on the bottom.</td></tr><tr><td>Search</td><td class="r">Take any card from the deck, then shuffle.</td></tr><tr><td>Reshuffle</td><td class="r">Shuffle discard and hand into the deck, then redraw a full hand.</td></tr><tr><td>Neighbor</td><td class="r">Choose a card. Reveal up to 2 adjacent cards from the deck. Take 1.</td></tr><tr><td>Kin</td><td class="r">Choose a card. Reveal up to 2 cards of the same Arcana from the deck. Take 1.</td></tr><tr><td>Mirror</td><td class="r">Choose a card. Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)</td></tr><tr><td>Between</td><td class="r">Choose two cards. Reveal up to 2 cards between them from the deck. Take 1.</td></tr></table></div></div>
 <div id="tableStage" aria-hidden="true"><div class="table-room"></div><div class="table-plane"></div><div class="table-light"></div><div class="table-vignette"></div></div>
