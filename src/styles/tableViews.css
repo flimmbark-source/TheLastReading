@@ -136,15 +136,6 @@ body.table-interacting .hand .card.hand-card-dragging {
     transform: translateX(-50%) rotateX(40deg);
   }
 
-  body[data-table-view="inspect"]:not(.mp-game-active) .spread-wrap {
-    position: fixed;
-    left: 0;
-    right: 0;
-    top: clamp(150px, 21vh, 190px);
-    width: 100vw;
-    transform: none;
-  }
-
   body[data-table-view="seated"]:not(.mp-game-active) #tableStage {
     perspective: 620px;
     perspective-origin: 50% 58%;
