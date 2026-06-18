@@ -59,12 +59,12 @@
 }
 
 body[data-table-view="inspect"] .table-tool {
-  top: 102px;
+  top: 142px;
   --tool-scale-y: 1;
 }
 
 body[data-table-view="seated"] .table-tool {
-  top: 178px;
+  top: 228px;
   --tool-scale-y: .66;
 }
 
@@ -187,12 +187,12 @@ body.main-menu-active .table-tools {
   }
 
   body[data-table-view="inspect"] .table-tool {
-    top: calc(46% - 145px);
+    top: calc(46% - 105px);
     --tool-scale-y: 1;
   }
 
   body[data-table-view="seated"] .table-tool {
-    top: calc(46% - 68px);
+    top: calc(46% - 28px);
     --tool-scale-y: .62;
   }
 
