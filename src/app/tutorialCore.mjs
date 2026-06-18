@@ -5,7 +5,9 @@ const TUT_PURGE_KEY = 'tlr_tut_purge';
 const TUT_ARCHIVES_KEY = 'tlr_tut_archives_found';
 const TUT_MARKET_KEY = 'tlr_tut_oracle_market';
 const TUT_CONSTELLATION_KEY = 'tlr_tut_constellation';
-const INTRO_LAST_STEP = 6;
+const TUT_THRESHOLD_KEY = 'tlr_tut_threshold';
+const TUT_DISCARD_KEY = 'tlr_tut_discard';
+const INTRO_LAST_STEP = 2;
 
 export const TUT_STEP = Object.freeze({
   INTRO: 0,
@@ -37,6 +39,7 @@ let tutDone = !!localStorage.getItem(TUT_KEY);
 let tutIgnoreClicksUntil = 0;
 let queuedTipSteps = [];
 let queuedTipTimer = null;
+let placementCount = 0;
 
 const TUT_STEPS = [
   { center: true, text: 'Your relative left behind their tarot deck. You used to play this game together.' },
@@ -44,8 +47,8 @@ const TUT_STEPS = [
   { sel: '#spread', arrow: 'up', waitFor: 'cardPlaced', text: 'Tap an empty slot to place it.' },
   { sel: '.score-pill', arrow: 'up', text: 'That card added points to your total.' },
   { sel: '#hand .card[data-uid]', arrow: 'down', text: 'The red circle on each card shows how many points it adds.' },
-  { sel: '.threshold-pill', arrow: 'up', text: 'Try to beat the <b>Threshold</b> with your <b>Score</b> by the time you place 5 cards.' },
-  { sel: '#discardBtn', arrow: 'up', text: '<b>Discard</b> a card to use its <b>Ability</b> instead of placing it.' },
+  { sel: '.threshold-pill', arrow: 'up', key: TUT_THRESHOLD_KEY, text: 'Complete spreads to build your <b>Score</b>. Beat the <b>Threshold</b> to advance.' },
+  { sel: '#discardBtn', arrow: 'up', key: TUT_DISCARD_KEY, text: '<b>Discard</b> a card to use its <b>Ability</b> instead of placing it.' },
   { sel: '#hand .card[data-hint], #hand .card.hint-complete, #hand .card.hint-card', fallbackSel: '.handDock', arrow: 'down', key: TUT_PATTERN_KEY, text: 'Some of your cards may work together.' },
   { center: true, text: 'Each cleared Threshold makes the next one harder. Clear the 10th Threshold to win.' },
   { sel: '#relicRack', arrow: 'up', text: 'You found a <b>Relic</b>. Relics carry passive effects across every reading until you lose. Tap a relic icon to see what it does.' },
@@ -64,10 +67,6 @@ const TUT_STEPS = [
 
 const MARKET_TUT_STEPS = [
   TUT_STEP.MARKET_RESERVE,
-  TUT_STEP.MARKET_SCORING,
-  TUT_STEP.MARKET_ABILITIES,
-  TUT_STEP.MARKET_RELICS,
-  TUT_STEP.MARKET_REFRESH,
   TUT_STEP.MARKET_NEXT,
 ];
 
@@ -126,7 +125,6 @@ export function replayTutorial() {
   [
     TUT_KEY,
     'tlr_tut_relic',
-    'tlr_tut_shop',
     'tlr_tut_inv_open',
     'tlr_tut_inv_name',
     'tlr_tut_inv_detail',
@@ -136,10 +134,13 @@ export function replayTutorial() {
     TUT_ARCHIVES_KEY,
     TUT_MARKET_KEY,
     TUT_CONSTELLATION_KEY,
+    TUT_THRESHOLD_KEY,
+    TUT_DISCARD_KEY,
   ].forEach(k => localStorage.removeItem(k));
   queuedTipSteps = [];
   clearTimeout(queuedTipTimer);
   queuedTipTimer = null;
+  placementCount = 0;
   tutDone = false;
   tutShow(TUT_STEP.INTRO, { force: true });
 }
@@ -185,8 +186,7 @@ export function tutNext() {
   if (tutStep < 0) return;
   const s = TUT_STEPS[tutStep];
   if (!s || s.waitFor) return;
-  if (tutStep < TUT_STEP.DISCARD_ABILITY) { tutShow(tutStep + 1); return; }
-  if (tutStep === TUT_STEP.DISCARD_ABILITY) { finishIntro(); scheduleQueuedTips(260); return; }
+  if (tutStep < TUT_STEP.SELECT_CARD) { tutShow(tutStep + 1); return; }
   if (tutStep === TUT_STEP.PATTERN_NOTICE) { tutShow(TUT_STEP.PATTERN_SCORING); return; }
   const marketIndex = MARKET_TUT_STEPS.indexOf(tutStep);
   if (marketIndex >= 0 && marketIndex < MARKET_TUT_STEPS.length - 1) {
@@ -198,13 +198,21 @@ export function tutNext() {
   scheduleQueuedTips(260);
 }
 
+function onPlacement() {
+  placementCount++;
+  if (!tutDone || localStorage.getItem(TUT_THRESHOLD_KEY)) return;
+  if (placementCount === 3) queueTip(TUT_STEP.THRESHOLD, 400);
+}
+
 export function tutSignal(eventName) {
+  if (eventName === 'cardPlaced') onPlacement();
   if (tutStep < 0) return;
   const s = TUT_STEPS[tutStep];
   if (!s || s.waitFor !== eventName) return;
   tutIgnoreClicksUntil = Date.now() + 180;
-  if (tutStep < TUT_STEP.DISCARD_ABILITY) tutShow(tutStep + 1);
-  else { finishIntro(); scheduleQueuedTips(260); }
+  if (tutStep < TUT_STEP.PLACE_CARD) { tutShow(tutStep + 1); return; }
+  finishIntro();
+  scheduleQueuedTips(260);
 }
 
 function hasPatternOpportunity() {
@@ -218,10 +226,12 @@ export function maybeShowPatternTutorial() {
   if (hasPatternOpportunity()) queueTip(TUT_STEP.PATTERN_NOTICE, 220);
 }
 
-export function maybeShowReadingCompletionTutorial() {
+export function maybeShowReadingCompletionTutorial() { }
+
+export function maybeShowDiscardTutorial() {
   const st = window.state;
-  if (!tutDone || tutStep >= 0 || localStorage.getItem(TUT_READING_KEY) || !st || !Array.isArray(st.spread)) return;
-  if (st.spread.filter(Boolean).length === 4) queueTip(TUT_STEP.READING_COMPLETE);
+  if (!tutDone || tutStep >= 0 || localStorage.getItem(TUT_DISCARD_KEY) || !st) return;
+  if (st.discards > 0 && !st.busy) queueTip(TUT_STEP.DISCARD_ABILITY);
 }
 
 export function maybeShowPurgeTutorial() {

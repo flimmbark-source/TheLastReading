@@ -393,9 +393,9 @@ export function showOverlay(html){let s=$('#summary');s.className='modal show';s
 export function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML='';tlrArchitectureSync()}
 function summaryIsFailedReading(){const s=$('#summary');if(!s||!s.classList.contains('show'))return false;return !!s.querySelector('.result-panel.fail')}
 
-export function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount=0;const firstShop=!localStorage.getItem('tlr_tut_shop');const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;
+export function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount=0;const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;
 window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});state.reading=window.tlrStore.getState().run.reading;
-startReading();if(firstShop){localStorage.setItem('tlr_tut_shop','1');setTimeout(()=>tutShow(8),400)}else if(pendingRelic){setTimeout(()=>tutShow(9),400)}}
+startReading();if(pendingRelic){setTimeout(()=>tutShow(9),400)}}
 
 export function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;
 window.tlrStore.dispatch({type:window.tlrActions.END_SESSION,totalScore:total,obals:candles});
