@@ -27,8 +27,8 @@ function hasAbilityTargeting(target = window) {
 
 function hasPurgeTargeting(target = window) {
   const run = target.tlrStore?.getState?.()?.run;
-  return (run?.purge ?? target.state?.purgeSelect) !== null &&
-    (run?.purge ?? target.state?.purgeSelect) !== undefined;
+  const purge = run?.purge ?? target.state?.purgeSelect;
+  return purge !== null && purge !== undefined;
 }
 
 function shouldInspect(target = window) {
@@ -82,7 +82,9 @@ export function endTableInteraction(options = {}, target = window) {
 export function installTableCamera(target = window) {
   if (installed || !target?.document) return;
   installed = true;
-  const body = target.document.body;
+  const doc = target.document;
+  const body = doc.body;
+  const activePointers = new Set();
   if (!body.dataset.tableView) body.dataset.tableView = 'seated';
 
   target.__tlrBeginTableInteraction = () => beginTableInteraction(target);
@@ -90,8 +92,48 @@ export function installTableCamera(target = window) {
   target.__tlrSyncTableView = () => syncTableView(target);
   target.__tlrSetTableView = view => setTableView(view, target);
 
+  // Switch before drag recognition starts and capture the pointer immediately.
+  // This keeps portrait drags attached to the original card even when the finger
+  // leaves the visible card bounds while the camera is moving.
+  doc.addEventListener('pointerdown', event => {
+    if (!isSingleplayerTable(target)) return;
+    const card = event.target instanceof Element
+      ? event.target.closest('#hand .card[data-uid]')
+      : null;
+    if (!card) return;
+    if (activePointers.has(event.pointerId)) return;
+    activePointers.add(event.pointerId);
+    try { card.setPointerCapture(event.pointerId); } catch (error) {}
+    beginTableInteraction(target);
+  }, true);
+
+  const finishPointer = event => {
+    if (!activePointers.has(event.pointerId)) return;
+    activePointers.delete(event.pointerId);
+    // A short grace period allows the synthetic click to commit selection before
+    // deciding whether to return to seated view. Placement/cancelled drag returns.
+    endTableInteraction({ delay: event.type === 'pointercancel' ? 0 : 90 }, target);
+  };
+  doc.addEventListener('pointerup', finishPointer, true);
+  doc.addEventListener('pointercancel', finishPointer, true);
+
+  // Selection, ability, purge, and placement are reducer-backed in the current
+  // architecture. Subscribe once so camera state follows non-pointer changes too.
+  const store = target.tlrStore;
+  if (store && typeof store.subscribe === 'function') {
+    store.subscribe(() => target.queueMicrotask(() => syncTableView(target)));
+  }
+
+  // Legacy paths can still change selection during click handlers.
+  doc.addEventListener('click', event => {
+    const relevant = event.target instanceof Element &&
+      event.target.closest('#hand .card[data-uid],#spread .slot,.spread-actions,#abilityPrompt,#purgePrompt');
+    if (relevant) target.queueMicrotask(() => syncTableView(target));
+  }, true);
+
   target.addEventListener('pageshow', () => syncTableView(target));
   target.addEventListener('blur', () => {
+    activePointers.clear();
     interactionDepth = 0;
     body.classList.remove('table-interacting');
     syncTableView(target);
