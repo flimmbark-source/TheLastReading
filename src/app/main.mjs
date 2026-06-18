@@ -38,6 +38,7 @@ import { installCardDetailGestures } from '../ui/cardDetailGestures.mjs';
 import { installGestureDrawers } from '../ui/gestureDrawers.mjs';
 import { installPressHighlight } from '../ui/gesturePressHighlight.mjs';
 import { installHandSelectionVisuals } from '../ui/handSelectionVisuals.mjs';
+import { installTableCamera } from '../ui/tableCamera.mjs';
 import * as abilitySystem from '../systems/abilities.mjs';
 import * as shopSystem from '../systems/shop.mjs';
 import * as scoringSystem from '../systems/scoring.mjs';
@@ -236,6 +237,7 @@ export function startApp(target = window) {
   installRuntimeState(target);
   installArchitectureBridge(target);
   installAtticFlow(target);
+  installTableCamera(target);
 
   installHandSwipeScroll(target);
   installHandCardGestures(target);
