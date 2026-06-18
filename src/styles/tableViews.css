@@ -10,12 +10,36 @@ body:not(.mp-game-active) .handDock,
 body:not(.mp-game-active) .score-stack,
 body:not(.mp-game-active) #relicRack {
   transition:
-    transform 340ms cubic-bezier(.2,.76,.24,1),
-    top 340ms cubic-bezier(.2,.76,.24,1),
-    bottom 340ms cubic-bezier(.2,.76,.24,1),
-    height 340ms cubic-bezier(.2,.76,.24,1),
-    opacity 220ms ease,
-    filter 260ms ease;
+    transform 180ms cubic-bezier(.2,.76,.24,1),
+    top 180ms cubic-bezier(.2,.76,.24,1),
+    bottom 180ms cubic-bezier(.2,.76,.24,1),
+    height 180ms cubic-bezier(.2,.76,.24,1),
+    opacity 120ms ease,
+    filter 140ms ease;
+}
+
+/* Moving into the table must complete before a drag meaningfully begins. */
+body[data-table-view="inspect"]:not(.mp-game-active) #tableStage,
+body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-plane,
+body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-light,
+body[data-table-view="inspect"]:not(.mp-game-active) .spread-wrap,
+body[data-table-view="inspect"]:not(.mp-game-active) .handDock,
+body[data-table-view="inspect"]:not(.mp-game-active) .score-stack,
+body[data-table-view="inspect"]:not(.mp-game-active) #relicRack {
+  transition-duration: 75ms,75ms,75ms,75ms,60ms,70ms;
+  transition-timing-function: cubic-bezier(.1,.8,.2,1),cubic-bezier(.1,.8,.2,1),cubic-bezier(.1,.8,.2,1),cubic-bezier(.1,.8,.2,1),linear,ease-out;
+}
+
+/* Pointer-down already switched the camera. During an active grab make that
+   shift nearly immediate so the drag starts in the inspection composition. */
+body.table-interacting[data-table-view="inspect"]:not(.mp-game-active) #tableStage,
+body.table-interacting[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-plane,
+body.table-interacting[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-light,
+body.table-interacting[data-table-view="inspect"]:not(.mp-game-active) .spread-wrap,
+body.table-interacting[data-table-view="inspect"]:not(.mp-game-active) .handDock,
+body.table-interacting[data-table-view="inspect"]:not(.mp-game-active) .score-stack,
+body.table-interacting[data-table-view="inspect"]:not(.mp-game-active) #relicRack {
+  transition-duration: 45ms,45ms,45ms,45ms,35ms,40ms;
 }
 
 /* Readable overhead/inspection composition: preserves the prototype layout. */
