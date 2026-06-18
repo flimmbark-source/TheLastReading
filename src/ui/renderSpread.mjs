@@ -12,6 +12,14 @@ function targetCard(card, view) {
   else handleAbilityHandClick(card);
 }
 
+function markFreshSpreadCard(element) {
+  if (!element || document.body.classList.contains('mp-game-active')) return;
+  element.classList.add('card-just-placed');
+  const clear = () => element.classList.remove('card-just-placed');
+  element.addEventListener('animationend', clear, { once: true });
+  window.setTimeout(clear, 500);
+}
+
 export function renderSpread(ability, inPurge, view = null) {
   if (document.body.classList.contains('mp-game-active') && !window.__tlrMpUsingSingleAbilityFlow) return;
   const displaySpread = view && view.spread ? view.spread : state.spread;
@@ -46,12 +54,14 @@ export function renderSpread(ability, inPurge, view = null) {
         e.innerHTML = cardHTML(card);
         applyCardPhoto(e, card);
         s.appendChild(e);
+        markFreshSpreadCard(e);
       } else {
         e.style.removeProperty('--hint-rgb');
         e.style.removeProperty('--hint-shadow');
         delete e.dataset.hint;
       }
-      e.className = 'card ' + (card.type === 'major' ? 'major ' : '') + (CARD_SHEET[card.id] ? 'photo ' : '') + (validSpread && !pickedSpread ? 'ability-target ' : '') + (pickedSpread ? 'ability-picked ' : '') + (ability && !validSpread ? 'ability-disabled ' : '');
+      const transient = e.classList.contains('card-just-placed') ? 'card-just-placed ' : '';
+      e.className = 'card ' + transient + (card.type === 'major' ? 'major ' : '') + (CARD_SHEET[card.id] ? 'photo ' : '') + (validSpread && !pickedSpread ? 'ability-target ' : '') + (pickedSpread ? 'ability-picked ' : '') + (ability && !validSpread ? 'ability-disabled ' : '');
       if (!inPurge) applyHint(e, card);
       e.onclick = (ability && validSpread) ? (ev) => { ev.stopPropagation(); targetCard(card, view); } : null;
     } else {
