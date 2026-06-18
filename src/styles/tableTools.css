@@ -1,0 +1,227 @@
+/* Physical table references that replace the closed Scoring/Abilities pull tabs.
+   They flank the existing HUD and remain in the same world positions in both
+   seated and inspect views. */
+
+.table-tools {
+  position: fixed;
+  inset: 0;
+  z-index: 24;
+  pointer-events: none;
+}
+
+.table-tool {
+  position: absolute;
+  top: 10px;
+  width: 92px;
+  height: 58px;
+  border: 0;
+  padding: 0;
+  color: #e7cf96;
+  background: transparent;
+  pointer-events: auto;
+  cursor: pointer;
+  isolation: isolate;
+  transition: transform 110ms ease, filter 110ms ease;
+}
+
+.table-tool:hover,
+.table-tool:focus-visible {
+  filter: brightness(1.13);
+}
+
+.table-tool:active {
+  transform: translateY(2px) scale(.98);
+}
+
+.table-tool-label {
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  transform: translateX(-50%);
+  font: 700 9px/1 system-ui,Segoe UI,sans-serif;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(238,211,154,.78);
+  text-shadow: 0 2px 4px #000;
+  opacity: 0;
+  transition: opacity 100ms ease;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.table-tool:hover .table-tool-label,
+.table-tool:focus-visible .table-tool-label {
+  opacity: 1;
+}
+
+/* Abilities: an uneven bundle of folded reference papers. */
+.table-tool-abilities {
+  left: calc(50% - 364px);
+  transform: rotate(-5deg);
+}
+
+.table-tool-abilities:hover,
+.table-tool-abilities:focus-visible {
+  transform: translateY(-3px) rotate(-3deg);
+}
+
+.table-tool-abilities::before,
+.table-tool-abilities::after {
+  content: "";
+  position: absolute;
+  border: 1px solid rgba(91,55,21,.8);
+  box-shadow: 0 5px 12px rgba(0,0,0,.48);
+}
+
+.table-tool-abilities::before {
+  inset: 10px 8px 4px 11px;
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 8px, rgba(90,55,24,.18) 9px),
+    linear-gradient(145deg,#e7d7a9,#b8985f);
+  transform: rotate(4deg);
+}
+
+.table-tool-abilities::after {
+  inset: 4px 15px 10px 3px;
+  background:
+    linear-gradient(90deg,transparent 44%,rgba(91,49,20,.3) 45% 47%,transparent 48%),
+    repeating-linear-gradient(to bottom, transparent 0 9px, rgba(90,55,24,.2) 10px),
+    linear-gradient(145deg,#efe1b7,#c5a46a);
+  transform: rotate(-2deg);
+}
+
+.table-tool-abilities .table-tool-mark {
+  position: absolute;
+  z-index: 2;
+  left: 35px;
+  top: 19px;
+  width: 23px;
+  height: 13px;
+  border-top: 2px solid rgba(93,48,20,.65);
+  border-bottom: 1px solid rgba(93,48,20,.48);
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+
+/* Scoring: a compact, dark leather ledger. */
+.table-tool-scoring {
+  right: calc(50% - 364px);
+  transform: rotate(5deg);
+}
+
+.table-tool-scoring:hover,
+.table-tool-scoring:focus-visible {
+  transform: translateY(-3px) rotate(3deg);
+}
+
+.table-tool-scoring::before {
+  content: "";
+  position: absolute;
+  inset: 4px 5px 4px 9px;
+  border: 2px solid #76552e;
+  border-radius: 3px 7px 7px 3px;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.05),transparent 18%),
+    linear-gradient(145deg,#352014,#170c08);
+  box-shadow:
+    0 6px 14px rgba(0,0,0,.58),
+    inset 4px 0 rgba(121,84,43,.26),
+    inset -3px 0 rgba(0,0,0,.32);
+}
+
+.table-tool-scoring::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: 2px;
+  top: 10px;
+  bottom: 8px;
+  width: 72px;
+  border-radius: 2px 7px 7px 2px;
+  background: repeating-linear-gradient(to bottom,#cdbd90 0 2px,#9e875b 3px);
+  box-shadow: 0 3px 8px rgba(0,0,0,.42);
+}
+
+.table-tool-scoring .table-tool-mark {
+  position: absolute;
+  z-index: 2;
+  left: 39px;
+  top: 18px;
+  width: 18px;
+  height: 18px;
+  border: 1px solid #a67c42;
+  transform: rotate(45deg);
+  box-shadow: inset 0 0 0 2px rgba(25,12,7,.8);
+  pointer-events: none;
+}
+
+/* The old tabs are no longer entry points. They appear only while their drawer
+   is open, where they continue to provide the existing close interaction. */
+#scoringPullWrap:not(.open) #scoringPullTab,
+#abilitiesPullWrap:not(.open) #abilitiesPullTab {
+  display: none !important;
+}
+
+body.mp-game-active .table-tools,
+body.attic-active .table-tools,
+body.main-menu-active .table-tools {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .table-tool {
+    top: calc(46% - 207px);
+    width: 58px;
+    height: 48px;
+  }
+
+  .table-tool-abilities {
+    left: calc(50% - 177px);
+  }
+
+  .table-tool-scoring {
+    right: calc(50% - 177px);
+  }
+
+  .table-tool-label {
+    bottom: -11px;
+    font-size: 7px;
+  }
+
+  .table-tool-abilities::before {
+    inset: 10px 3px 3px 8px;
+  }
+
+  .table-tool-abilities::after {
+    inset: 4px 9px 9px 1px;
+  }
+
+  .table-tool-abilities .table-tool-mark {
+    left: 21px;
+    top: 17px;
+    width: 18px;
+  }
+
+  .table-tool-scoring::before {
+    inset: 4px 3px 4px 6px;
+  }
+
+  .table-tool-scoring::after {
+    right: 0;
+    width: 45px;
+  }
+
+  .table-tool-scoring .table-tool-mark {
+    left: 24px;
+    top: 16px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .table-tool,
+  .table-tool-label {
+    transition: none;
+  }
+}
