@@ -4,6 +4,8 @@
 
 let interactionDepth = 0;
 let returnTimer = null;
+let inspectHoldTimer = null;
+let inspectHoldUntil = 0;
 let installed = false;
 
 function isSingleplayerTable(target = window) {
@@ -31,11 +33,35 @@ function hasPurgeTargeting(target = window) {
   return purge !== null && purge !== undefined;
 }
 
+function hasInspectHold() {
+  return performance.now() < inspectHoldUntil;
+}
+
 function shouldInspect(target = window) {
   return interactionDepth > 0 ||
+    hasInspectHold() ||
     selectedCardId(target) !== null ||
     hasAbilityTargeting(target) ||
     hasPurgeTargeting(target);
+}
+
+function clearInspectHold(target = window) {
+  inspectHoldUntil = 0;
+  if (inspectHoldTimer !== null) {
+    target.clearTimeout(inspectHoldTimer);
+    inspectHoldTimer = null;
+  }
+}
+
+function holdInspectFor(duration, target = window) {
+  clearInspectHold(target);
+  inspectHoldUntil = performance.now() + Math.max(0, Number(duration) || 0);
+  setTableView('inspect', target);
+  inspectHoldTimer = target.setTimeout(() => {
+    inspectHoldTimer = null;
+    inspectHoldUntil = 0;
+    syncTableView(target);
+  }, Math.max(0, Number(duration) || 0));
 }
 
 export function setTableView(view, target = window) {
@@ -56,6 +82,7 @@ export function syncTableView(target = window) {
 
 export function beginTableInteraction(target = window) {
   if (!isSingleplayerTable(target)) return;
+  clearInspectHold(target);
   if (returnTimer !== null) {
     target.clearTimeout(returnTimer);
     returnTimer = null;
@@ -85,6 +112,7 @@ export function installTableCamera(target = window) {
   const doc = target.document;
   const body = doc.body;
   const activePointers = new Set();
+  let pressedSelectedUid = null;
   if (!body.dataset.tableView) body.dataset.tableView = 'seated';
 
   target.__tlrBeginTableInteraction = () => beginTableInteraction(target);
@@ -102,6 +130,8 @@ export function installTableCamera(target = window) {
       : null;
     if (!card) return;
     if (activePointers.has(event.pointerId)) return;
+    const uid = Number(card.dataset.uid);
+    pressedSelectedUid = selectedCardId(target) === uid ? uid : null;
     activePointers.add(event.pointerId);
     try { card.setPointerCapture(event.pointerId); } catch (error) {}
     beginTableInteraction(target);
@@ -110,6 +140,7 @@ export function installTableCamera(target = window) {
   const finishPointer = event => {
     if (!activePointers.has(event.pointerId)) return;
     activePointers.delete(event.pointerId);
+    if (event.type === 'pointercancel') pressedSelectedUid = null;
     // A short grace period allows the synthetic click to commit selection before
     // deciding whether to return to seated view. Placement/cancelled drag returns.
     endTableInteraction({ delay: event.type === 'pointercancel' ? 0 : 90 }, target);
@@ -126,15 +157,36 @@ export function installTableCamera(target = window) {
 
   // Legacy paths can still change selection during click handlers.
   doc.addEventListener('click', event => {
-    const relevant = event.target instanceof Element &&
-      event.target.closest('#hand .card[data-uid],#spread .slot,.spread-actions,#abilityPrompt,#purgePrompt');
-    if (relevant) target.queueMicrotask(() => syncTableView(target));
+    const element = event.target instanceof Element ? event.target : null;
+    const card = element?.closest('#hand .card[data-uid]') || null;
+    const relevant = element &&
+      element.closest('#hand .card[data-uid],#spread .slot,.spread-actions,#abilityPrompt,#purgePrompt');
+    if (!relevant) return;
+
+    const wasSelectedUid = pressedSelectedUid;
+    pressedSelectedUid = null;
+    target.queueMicrotask(() => {
+      const clickedUid = card ? Number(card.dataset.uid) : null;
+      const deselected = clickedUid !== null &&
+        clickedUid === wasSelectedUid &&
+        selectedCardId(target) === null &&
+        !hasAbilityTargeting(target) &&
+        !hasPurgeTargeting(target);
+
+      if (deselected) {
+        holdInspectFor(2000, target);
+        return;
+      }
+      syncTableView(target);
+    });
   }, true);
 
   target.addEventListener('pageshow', () => syncTableView(target));
   target.addEventListener('blur', () => {
     activePointers.clear();
+    pressedSelectedUid = null;
     interactionDepth = 0;
+    clearInspectHold(target);
     body.classList.remove('table-interacting');
     syncTableView(target);
   });
