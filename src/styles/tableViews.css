@@ -1,0 +1,149 @@
+/* Two fixed camera compositions.
+   `inspect` is the existing readable overhead table. `seated` lowers the camera,
+   exposes more room beyond the far edge, and foreshortens the spread. */
+
+body:not(.mp-game-active) #tableStage,
+body:not(.mp-game-active) #tableStage .table-plane,
+body:not(.mp-game-active) #tableStage .table-light,
+body:not(.mp-game-active) .spread-wrap,
+body:not(.mp-game-active) .handDock,
+body:not(.mp-game-active) .score-stack,
+body:not(.mp-game-active) #relicRack {
+  transition:
+    transform 340ms cubic-bezier(.2,.76,.24,1),
+    top 340ms cubic-bezier(.2,.76,.24,1),
+    bottom 340ms cubic-bezier(.2,.76,.24,1),
+    height 340ms cubic-bezier(.2,.76,.24,1),
+    opacity 220ms ease,
+    filter 260ms ease;
+}
+
+/* Readable overhead/inspection composition: preserves the prototype layout. */
+body[data-table-view="inspect"]:not(.mp-game-active) #tableStage {
+  perspective: 1050px;
+  perspective-origin: 50% 28%;
+}
+
+body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-plane {
+  top: 16vh;
+  width: min(1460px, 148vw);
+  transform: translateX(-50%) rotateX(49deg);
+}
+
+body[data-table-view="inspect"]:not(.mp-game-active) .spread-wrap {
+  transform: translateX(-50%) scaleY(1);
+  filter: none;
+}
+
+body[data-table-view="inspect"]:not(.mp-game-active) .handDock {
+  transform: translateY(0);
+}
+
+/* Default seated composition. The far edge sits around the upper-middle of the
+   screen and the spread is deliberately compressed until the player interacts. */
+body[data-table-view="seated"]:not(.mp-game-active) #tableStage {
+  perspective: 720px;
+  perspective-origin: 50% 64%;
+}
+
+body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-room {
+  filter: saturate(.72) brightness(.52) contrast(1.1);
+}
+
+body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-plane {
+  top: 34vh;
+  width: min(1680px, 172vw);
+  height: 104vh;
+  transform: translateX(-50%) rotateX(68deg);
+  box-shadow:
+    0 -20px 62px rgba(0,0,0,.78),
+    inset 0 0 150px rgba(0,0,0,.58),
+    inset 0 1px rgba(239,194,119,.08);
+}
+
+body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-light {
+  transform: translateY(7vh) scaleY(.82);
+  opacity: .82;
+}
+
+@media (min-width: 701px) {
+  body[data-table-view="seated"]:not(.mp-game-active) .spread-wrap {
+    top: clamp(265px, 39vh, 390px);
+    transform: translateX(-50%) scale(.82,.58);
+    transform-origin: 50% 100%;
+    filter: brightness(.78) saturate(.88);
+  }
+
+  body[data-table-view="seated"]:not(.mp-game-active) .spread .slot {
+    box-shadow:
+      inset 0 0 26px rgba(0,0,0,.25),
+      0 16px 18px rgba(0,0,0,.2);
+  }
+
+  body[data-table-view="seated"]:not(.mp-game-active) .handDock {
+    height: 254px;
+    transform: translateY(7px) scale(1.035);
+    transform-origin: 50% 100%;
+  }
+
+  body[data-table-view="seated"]:not(.mp-game-active) .score-stack {
+    transform: translateX(-50%) scale(.92);
+  }
+
+  body[data-table-view="inspect"]:not(.mp-game-active) .score-stack {
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+/* The actively dragged card must follow the pointer, not the camera easing. */
+body.table-interacting .hand .card.hand-card-dragging {
+  transition: none !important;
+}
+
+@media (max-width: 700px) {
+  body[data-table-view="inspect"]:not(.mp-game-active) #tableStage {
+    perspective: 780px;
+    perspective-origin: 50% 22%;
+  }
+
+  body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-plane {
+    top: 11vh;
+    width: 188vw;
+    transform: translateX(-50%) rotateX(40deg);
+  }
+
+  body[data-table-view="seated"]:not(.mp-game-active) #tableStage {
+    perspective: 620px;
+    perspective-origin: 50% 58%;
+  }
+
+  body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-plane {
+    top: 31vh;
+    width: 230vw;
+    height: 112vh;
+    transform: translateX(-50%) rotateX(63deg);
+  }
+
+  body[data-table-view="seated"]:not(.mp-game-active) .spread-wrap {
+    transform: scale(.9,.68);
+    transform-origin: 50% 100%;
+    filter: brightness(.82);
+  }
+
+  body[data-table-view="seated"]:not(.mp-game-active) .handDock {
+    transform: translateY(8px) scale(1.025);
+    transform-origin: 50% 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body:not(.mp-game-active) #tableStage,
+  body:not(.mp-game-active) #tableStage .table-plane,
+  body:not(.mp-game-active) #tableStage .table-light,
+  body:not(.mp-game-active) .spread-wrap,
+  body:not(.mp-game-active) .handDock,
+  body:not(.mp-game-active) .score-stack,
+  body:not(.mp-game-active) #relicRack {
+    transition-duration: 1ms !important;
+  }
+}
