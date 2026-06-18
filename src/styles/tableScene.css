@@ -1,0 +1,251 @@
+/* Physical-table prototype.
+   This layer is deliberately presentation-only: gameplay remains in the existing
+   spread, hand, HUD, and overlay coordinate systems. */
+
+:root {
+  --tlr-table-horizon: 16vh;
+  --tlr-table-angle: 49deg;
+  --tlr-table-width: min(1460px, 148vw);
+  --tlr-table-light-x: 50%;
+  --tlr-table-light-y: 48%;
+}
+
+#tableStage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  perspective: 1050px;
+  perspective-origin: 50% 28%;
+  background:
+    radial-gradient(ellipse at 50% 16%, rgba(60, 39, 24, .18), transparent 42%),
+    linear-gradient(to bottom, rgba(3, 3, 3, .2), rgba(3, 2, 2, .76));
+}
+
+#tableStage .table-room {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(7, 5, 4, .15), rgba(5, 3, 2, .58)),
+    url(../../background.png) center top / cover no-repeat;
+  filter: saturate(.76) brightness(.62) contrast(1.08);
+  transform: scale(1.03);
+}
+
+#tableStage .table-plane {
+  position: absolute;
+  left: 50%;
+  top: var(--tlr-table-horizon);
+  width: var(--tlr-table-width);
+  height: 118vh;
+  transform: translateX(-50%) rotateX(var(--tlr-table-angle));
+  transform-origin: 50% 0;
+  background:
+    linear-gradient(to bottom, rgba(15, 9, 6, .06), rgba(6, 4, 3, .38)),
+    repeating-linear-gradient(
+      88deg,
+      rgba(255,255,255,.018) 0,
+      rgba(255,255,255,.018) 1px,
+      transparent 1px,
+      transparent 84px
+    ),
+    linear-gradient(92deg, #1a0f0a 0%, #382315 22%, #25150e 50%, #3a2416 76%, #160d09 100%);
+  border-top: 1px solid rgba(160, 116, 65, .26);
+  box-shadow:
+    0 -24px 58px rgba(0, 0, 0, .62),
+    inset 0 0 130px rgba(0, 0, 0, .58),
+    inset 0 1px rgba(239, 194, 119, .08);
+}
+
+#tableStage .table-plane::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: .42;
+  background:
+    repeating-linear-gradient(
+      2deg,
+      transparent 0,
+      transparent 19px,
+      rgba(244, 214, 161, .025) 20px,
+      transparent 22px
+    );
+  mix-blend-mode: screen;
+}
+
+#tableStage .table-light {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse at var(--tlr-table-light-x) var(--tlr-table-light-y),
+      rgba(255, 190, 104, .17) 0%,
+      rgba(167, 101, 48, .08) 33%,
+      transparent 64%
+    );
+  mix-blend-mode: screen;
+}
+
+#tableStage .table-vignette {
+  position: absolute;
+  inset: -2px;
+  background:
+    linear-gradient(to bottom, rgba(0,0,0,.42), transparent 19%, transparent 74%, rgba(0,0,0,.76)),
+    radial-gradient(ellipse at center, transparent 42%, rgba(0,0,0,.72) 100%);
+}
+
+/* Keep the existing interactive world above the non-interactive table. */
+.spread-wrap,
+#relicRack,
+.handDock,
+.hand-swipe-zone {
+  isolation: isolate;
+}
+
+/* Desktop composition: spread reads as the rear/middle of the table. */
+@media (min-width: 701px) {
+  body:not(.mp-active) .spread-wrap {
+    position: fixed;
+    left: 50%;
+    top: clamp(150px, 22vh, 225px);
+    width: min(910px, 95vw);
+    transform: translateX(-50%);
+    z-index: 10;
+  }
+
+  body:not(.mp-active) .spread {
+    min-height: 222px;
+    padding-top: 32px;
+    perspective: 900px;
+    perspective-origin: 50% 0;
+  }
+
+  body:not(.mp-active) .spread .slot {
+    transform:
+      translateY(var(--table-slot-y, 0px))
+      scale(var(--table-slot-scale, 1))
+      rotate(var(--a));
+    transform-origin: 50% 115%;
+    border-color: rgba(129, 99, 60, .72);
+    background:
+      radial-gradient(ellipse at 50% 35%, rgba(111, 79, 44, .09), transparent 72%),
+      rgba(22, 13, 9, .16);
+    box-shadow: inset 0 0 26px rgba(0,0,0,.18);
+  }
+
+  body:not(.mp-active) .spread .slot:nth-child(1),
+  body:not(.mp-active) .spread .slot:nth-child(5) {
+    --table-slot-y: 11px;
+    --table-slot-scale: .965;
+  }
+
+  body:not(.mp-active) .spread .slot:nth-child(2),
+  body:not(.mp-active) .spread .slot:nth-child(4) {
+    --table-slot-y: 4px;
+    --table-slot-scale: .985;
+  }
+
+  body:not(.mp-active) .spread .slot:nth-child(3) {
+    --table-slot-y: 0px;
+    --table-slot-scale: 1;
+  }
+
+  body:not(.mp-active) .handDock {
+    height: 232px;
+    align-items: flex-start;
+    padding-top: 8px;
+    background:
+      linear-gradient(to top, rgba(4,3,2,.98) 0%, rgba(17,10,7,.86) 29%, rgba(14,8,5,.25) 67%, transparent 100%);
+    perspective: 900px;
+    perspective-origin: 50% 100%;
+  }
+
+  body:not(.mp-active) .hand .card {
+    transform:
+      translate3d(0, 17px, 0)
+      rotateX(4deg)
+      rotate(var(--a));
+    transform-origin: 50% 140%;
+  }
+
+  body:not(.mp-active) .hand:not(.has-selected-card) .card:hover,
+  body:not(.mp-active) .hand .card.sel,
+  body:not(.mp-active) .hand .card.ability-picked {
+    transform:
+      translate3d(0, -92px, 50px)
+      rotateX(0deg)
+      rotate(0deg);
+  }
+}
+
+/* Physical card contact. Avoid pseudo-elements because cards already use ::after for hints. */
+body:not(.mp-active) .spread .card {
+  filter: drop-shadow(0 3px 2px rgba(0,0,0,.58)) drop-shadow(0 11px 9px rgba(0,0,0,.24));
+  box-shadow:
+    0 2px 1px rgba(0,0,0,.52),
+    0 8px 13px rgba(0,0,0,.22),
+    inset 0 -2px rgba(255,255,255,.035);
+}
+
+body:not(.mp-active) .spread .card .art {
+  box-shadow: inset 0 -5px 10px rgba(0,0,0,.18);
+}
+
+body:not(.mp-active) .hand .card {
+  filter: drop-shadow(0 9px 7px rgba(0,0,0,.42));
+}
+
+body:not(.mp-active) .hand:not(.has-selected-card) .card:hover,
+body:not(.mp-active) .hand .card.sel,
+body:not(.mp-active) .hand .card.ability-picked {
+  filter: drop-shadow(0 26px 17px rgba(0,0,0,.68));
+}
+
+/* Preserve important glow states above the physical shadows. */
+body:not(.mp-active) .card.hint-card,
+body:not(.mp-active) .card.hint-complete,
+body:not(.mp-active) .card.hint-multi,
+body:not(.mp-active) .card.ability-target,
+body:not(.mp-active) .card.ability-picked {
+  filter: none;
+}
+
+/* Portrait gets a wider, shallower table rather than a squeezed desktop stage. */
+@media (max-width: 700px) {
+  :root {
+    --tlr-table-horizon: 11vh;
+    --tlr-table-angle: 40deg;
+    --tlr-table-width: 188vw;
+    --tlr-table-light-y: 47%;
+  }
+
+  #tableStage {
+    perspective: 780px;
+    perspective-origin: 50% 22%;
+  }
+
+  #tableStage .table-plane {
+    height: 126vh;
+  }
+
+  body:not(.mp-active) .spread {
+    perspective: 760px;
+    perspective-origin: 50% 0;
+  }
+
+  body:not(.mp-active) .spread .slot {
+    box-shadow: inset 0 0 20px rgba(0,0,0,.16);
+  }
+
+  body:not(.mp-active) .handDock {
+    background:
+      linear-gradient(to top, rgba(3,2,2,.99) 0%, rgba(14,8,5,.88) 32%, rgba(9,5,3,.25) 72%, transparent 100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #tableStage .table-light {
+    animation: none !important;
+  }
+}
