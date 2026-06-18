@@ -11,7 +11,6 @@ body:not(.mp-game-active) #tableStage .table-plane,
 body:not(.mp-game-active) #tableStage .table-light,
 body:not(.mp-game-active) .spread-wrap,
 body:not(.mp-game-active) .handDock,
-body:not(.mp-game-active) .score-stack,
 body:not(.mp-game-active) #relicRack {
   transition:
     transform 90ms cubic-bezier(.16,.84,.24,1),
@@ -32,7 +31,6 @@ body:not(.mp-game-active) #relicRack {
 
 .spread-wrap,
 .handDock,
-.score-stack,
 #relicRack {
   contain: layout paint style;
 }
@@ -103,14 +101,6 @@ body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-light {
     transform: translate3d(0,7px,0) scale(1.035);
     transform-origin: 50% 100%;
   }
-
-  body[data-table-view="seated"]:not(.mp-game-active) .score-stack {
-    transform: translate3d(-50%,0,0) scale(.92);
-  }
-
-  body[data-table-view="inspect"]:not(.mp-game-active) .score-stack {
-    transform: translate3d(-50%,0,0) scale(1);
-  }
 }
 
 body.table-interacting .hand .card.hand-card-dragging {
@@ -164,7 +154,6 @@ body.table-interacting .hand .card.hand-card-dragging {
   body:not(.mp-game-active) #tableStage .table-light,
   body:not(.mp-game-active) .spread-wrap,
   body:not(.mp-game-active) .handDock,
-  body:not(.mp-game-active) .score-stack,
   body:not(.mp-game-active) #relicRack {
     transition-duration: 1ms !important;
   }
