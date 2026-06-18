@@ -1,6 +1,6 @@
 /* Physical table references that replace the closed Scoring/Abilities pull tabs.
-   They flank the existing HUD and remain in the same world positions in both
-   seated and inspect views. */
+   They flank the existing HUD but occupy distinct table positions in seated and
+   inspect views so they read as physical objects rather than fixed HUD icons. */
 
 .table-tools {
   position: fixed;
@@ -10,8 +10,9 @@
 }
 
 .table-tool {
+  --tool-scale-y: 1;
+  --tool-lift: 0px;
   position: absolute;
-  top: 10px;
   width: 92px;
   height: 58px;
   border: 0;
@@ -21,16 +22,19 @@
   pointer-events: auto;
   cursor: pointer;
   isolation: isolate;
-  transition: transform 110ms ease, filter 110ms ease;
+  transform-origin: 50% 100%;
+  transition: transform 110ms ease, filter 110ms ease, top 110ms ease, left 110ms ease, right 110ms ease;
 }
 
 .table-tool:hover,
 .table-tool:focus-visible {
+  --tool-lift: -3px;
   filter: brightness(1.13);
 }
 
 .table-tool:active {
-  transform: translateY(2px) scale(.98);
+  --tool-lift: 1px;
+  filter: brightness(.98);
 }
 
 .table-tool-label {
@@ -54,15 +58,25 @@
   opacity: 1;
 }
 
-/* Abilities: an uneven bundle of folded reference papers. */
-.table-tool-abilities {
-  left: calc(50% - 364px);
-  transform: rotate(-5deg);
+body[data-table-view="inspect"] .table-tool {
+  top: 72px;
+  --tool-scale-y: 1;
 }
 
-.table-tool-abilities:hover,
-.table-tool-abilities:focus-visible {
-  transform: translateY(-3px) rotate(-3deg);
+body[data-table-view="seated"] .table-tool {
+  top: 128px;
+  --tool-scale-y: .66;
+}
+
+.table-tool-abilities {
+  left: calc(50% - 364px);
+  --tool-rotate: -5deg;
+  transform: translate3d(0,var(--tool-lift),0) scaleY(var(--tool-scale-y)) rotate(var(--tool-rotate));
+}
+
+body[data-table-view="seated"] .table-tool-abilities {
+  left: calc(50% - 390px);
+  --tool-rotate: -9deg;
 }
 
 .table-tool-abilities::before,
@@ -103,15 +117,15 @@
   pointer-events: none;
 }
 
-/* Scoring: a compact, dark leather ledger. */
 .table-tool-scoring {
   right: calc(50% - 364px);
-  transform: rotate(5deg);
+  --tool-rotate: 5deg;
+  transform: translate3d(0,var(--tool-lift),0) scaleY(var(--tool-scale-y)) rotate(var(--tool-rotate));
 }
 
-.table-tool-scoring:hover,
-.table-tool-scoring:focus-visible {
-  transform: translateY(-3px) rotate(3deg);
+body[data-table-view="seated"] .table-tool-scoring {
+  right: calc(50% - 390px);
+  --tool-rotate: 9deg;
 }
 
 .table-tool-scoring::before {
@@ -155,8 +169,6 @@
   pointer-events: none;
 }
 
-/* The old tabs are no longer entry points. They appear only while their drawer
-   is open, where they continue to provide the existing close interaction. */
 #scoringPullWrap:not(.open) #scoringPullTab,
 #abilitiesPullWrap:not(.open) #abilitiesPullTab {
   display: none !important;
@@ -170,9 +182,18 @@ body.main-menu-active .table-tools {
 
 @media (max-width: 640px) {
   .table-tool {
-    top: calc(46% - 207px);
     width: 58px;
     height: 48px;
+  }
+
+  body[data-table-view="inspect"] .table-tool {
+    top: calc(46% - 175px);
+    --tool-scale-y: 1;
+  }
+
+  body[data-table-view="seated"] .table-tool {
+    top: calc(46% - 118px);
+    --tool-scale-y: .62;
   }
 
   .table-tool-abilities {
@@ -181,6 +202,16 @@ body.main-menu-active .table-tools {
 
   .table-tool-scoring {
     right: calc(50% - 177px);
+  }
+
+  body[data-table-view="seated"] .table-tool-abilities {
+    left: calc(50% - 190px);
+    --tool-rotate: -10deg;
+  }
+
+  body[data-table-view="seated"] .table-tool-scoring {
+    right: calc(50% - 190px);
+    --tool-rotate: 10deg;
   }
 
   .table-tool-label {
