@@ -92,7 +92,7 @@ body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-light {
 
 @media (min-width: 701px) {
   body[data-table-view="seated"]:not(.mp-game-active) .spread-wrap {
-    top: clamp(265px, 39vh, 390px);
+    top: clamp(150px, 22vh, 235px);
     transform: translateX(-50%) scale(.82,.58);
     transform-origin: 50% 100%;
     filter: brightness(.78) saturate(.88);
@@ -149,6 +149,7 @@ body.table-interacting .hand .card.hand-card-dragging {
   }
 
   body[data-table-view="seated"]:not(.mp-game-active) .spread-wrap {
+    top: clamp(126px, 18vh, 170px);
     transform: scale(.9,.68);
     transform-origin: 50% 100%;
     filter: brightness(.82);
