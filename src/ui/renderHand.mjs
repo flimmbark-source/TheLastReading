@@ -5,6 +5,14 @@
 import { cardHTML, applyCardPhoto, CARD_SHEET } from './renderCard.mjs';
 import { applyHint } from './renderHints.mjs';
 
+function markFreshHandCard(element) {
+  if (!element || document.body.classList.contains('mp-game-active')) return;
+  element.classList.add('card-just-dealt');
+  const clear = () => element.classList.remove('card-just-dealt');
+  element.addEventListener('animationend', clear, { once: true });
+  window.setTimeout(clear, 650);
+}
+
 export function renderHand(ability, inPurge, view = null) {
   // Display data (hand list, selection, purge picks) comes from `view` when
   // provided — multiplayer passes its own match-state view so it no longer has
@@ -34,6 +42,7 @@ export function renderHand(ability, inPurge, view = null) {
       e.dataset.uid=c.uid;
       e.innerHTML=cardHTML(c);
       applyCardPhoto(e,c);
+      markFreshHandCard(e);
     }else{
       _handExisting.delete(c.uid);
       // Clear hint inline styles so applyHint can re-apply (or leave clean
@@ -42,7 +51,8 @@ export function renderHand(ability, inPurge, view = null) {
       e.style.removeProperty('--hint-shadow');
       delete e.dataset.hint;
     }
-    e.className='card '+(c.type==='major'?'major ':'')+(CARD_SHEET[c.id]?'photo ':'')
+    const transient=e.classList.contains('card-just-dealt')?'card-just-dealt ':'';
+    e.className='card '+transient+(c.type==='major'?'major ':'')+(CARD_SHEET[c.id]?'photo ':'')
       +(inPurge?(purgePicked?'purge-picked ':'purge-target '):'')
       +(selectedId===c.uid&&!ability&&!inPurge?'sel ':'')
       +(valid&&!picked?'ability-target ':'')+(picked?'ability-picked ':'')
