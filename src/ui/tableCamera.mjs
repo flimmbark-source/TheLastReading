@@ -22,7 +22,7 @@ function selectedCardId(target = window) {
 
 function hasAbilityTargeting(target = window) {
   const run = target.tlrStore?.getState?.()?.run;
-  return !!(run?.abilitySelection ?? target.state?.abilitySelect);
+  return !!(run?.ability ?? target.state?.abilitySelect);
 }
 
 function hasPurgeTargeting(target = window) {
