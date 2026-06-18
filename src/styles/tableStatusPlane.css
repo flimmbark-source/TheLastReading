@@ -5,9 +5,9 @@
 .score-stack {
   position: fixed;
   left: 50%;
-  top: clamp(150px, 22vh, 225px);
+  top: clamp(126px, calc(22vh - 24px), 201px);
   width: min(910px, 95vw);
-  height: 190px;
+  height: 214px;
   inset: auto;
   transform: translate3d(-50%,0,0) scaleY(1);
   transform-origin: 50% 100%;
@@ -21,25 +21,26 @@
   transform-style: preserve-3d;
 }
 
-/* Positions are now local to the tabletop layer rather than the viewport. */
+/* Positions are local to the tabletop layer. The four props form two loose
+   rows instead of collapsing into a single HUD-like band. */
 .reserve-pill {
-  left: calc(50% - 190px);
-  top: -126px;
+  left: calc(50% - 206px);
+  top: -142px;
 }
 
 .score-pill {
-  left: calc(50% - 205px);
-  top: -53px;
+  left: calc(50% - 193px);
+  top: -33px;
 }
 
 .th-pill-wrap {
-  left: calc(50% + 42px);
-  top: -110px;
+  left: calc(50% + 64px);
+  top: -118px;
 }
 
 .discards-pill {
-  left: calc(50% + 176px);
-  top: -40px;
+  left: calc(50% + 200px);
+  top: -16px;
 }
 
 body[data-table-view="inspect"]:not(.mp-game-active) .score-stack {
@@ -47,7 +48,7 @@ body[data-table-view="inspect"]:not(.mp-game-active) .score-stack {
 }
 
 body[data-table-view="seated"]:not(.mp-game-active) .score-stack {
-  top: clamp(150px, 22vh, 235px);
+  top: clamp(126px, calc(22vh - 24px), 211px);
   transform: translate3d(-50%,0,0) scale(.82,.58);
   filter: brightness(.78) saturate(.88);
 }
@@ -55,26 +56,26 @@ body[data-table-view="seated"]:not(.mp-game-active) .score-stack {
 /* The shared camera transform supplies the foreshortening. Individual objects
    retain only small arrangement rotations, avoiding a second fake perspective. */
 body[data-table-view="seated"] .reserve-pill {
-  left: calc(50% - 190px);
-  top: -126px;
+  left: calc(50% - 206px);
+  top: -142px;
   transform: rotate(-6deg);
 }
 
 body[data-table-view="seated"] .score-pill {
-  left: calc(50% - 205px);
-  top: -53px;
+  left: calc(50% - 193px);
+  top: -33px;
   transform: rotate(-7deg);
 }
 
 body[data-table-view="seated"] .th-pill-wrap {
-  left: calc(50% + 42px);
-  top: -110px;
+  left: calc(50% + 64px);
+  top: -118px;
   transform: rotate(3deg);
 }
 
 body[data-table-view="seated"] .discards-pill {
-  left: calc(50% + 176px);
-  top: -40px;
+  left: calc(50% + 200px);
+  top: -16px;
   transform: rotate(7deg);
 }
 
@@ -82,31 +83,31 @@ body[data-table-view="seated"] .discards-pill {
   .score-stack {
     left: 0;
     right: 0;
-    top: 46%;
+    top: calc(46% - 32px);
     width: 100%;
-    height: 160px;
+    height: 192px;
     transform: translate3d(0,0,0);
     transform-origin: 50% 100%;
   }
 
   .reserve-pill {
-    left: calc(50% - 132px);
-    top: -154px;
+    left: calc(50% - 140px);
+    top: -170px;
   }
 
   .score-pill {
-    left: calc(50% - 140px);
-    top: -95px;
+    left: calc(50% - 112px);
+    top: -75px;
   }
 
   .th-pill-wrap {
-    left: calc(50% + 16px);
-    top: -147px;
+    left: calc(50% + 28px);
+    top: -155px;
   }
 
   .discards-pill {
-    left: calc(50% + 94px);
-    top: -93px;
+    left: calc(50% + 58px);
+    top: -69px;
   }
 
   body[data-table-view="inspect"]:not(.mp-game-active) .score-stack {
@@ -114,29 +115,29 @@ body[data-table-view="seated"] .discards-pill {
   }
 
   body[data-table-view="seated"]:not(.mp-game-active) .score-stack {
-    top: 46%;
+    top: calc(46% - 32px);
     transform: translate3d(0,0,0) scale(.9,.68);
     filter: brightness(.82);
   }
 
   body[data-table-view="seated"] .reserve-pill {
-    left: calc(50% - 132px);
-    top: -154px;
+    left: calc(50% - 140px);
+    top: -170px;
   }
 
   body[data-table-view="seated"] .score-pill {
-    left: calc(50% - 140px);
-    top: -95px;
+    left: calc(50% - 112px);
+    top: -75px;
   }
 
   body[data-table-view="seated"] .th-pill-wrap {
-    left: calc(50% + 16px);
-    top: -147px;
+    left: calc(50% + 28px);
+    top: -155px;
   }
 
   body[data-table-view="seated"] .discards-pill {
-    left: calc(50% + 94px);
-    top: -93px;
+    left: calc(50% + 58px);
+    top: -69px;
   }
 }
 
