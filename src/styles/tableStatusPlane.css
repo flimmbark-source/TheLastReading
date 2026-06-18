@@ -1,0 +1,147 @@
+/* Keep the tabletop status props on the same visual plane as the spread.
+   This layer mirrors the spread anchor and camera transform instead of using
+   viewport HUD coordinates, so the objects read as resting on the wood. */
+
+.score-stack {
+  position: fixed;
+  left: 50%;
+  top: clamp(150px, 22vh, 225px);
+  width: min(910px, 95vw);
+  height: 190px;
+  inset: auto;
+  transform: translate3d(-50%,0,0) scaleY(1);
+  transform-origin: 50% 100%;
+  z-index: 11;
+  pointer-events: none;
+  transition:
+    transform 90ms cubic-bezier(.16,.84,.24,1),
+    opacity 70ms linear;
+  will-change: transform;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
+}
+
+/* Positions are now local to the tabletop layer rather than the viewport. */
+.reserve-pill {
+  left: calc(50% - 190px);
+  top: -126px;
+}
+
+.score-pill {
+  left: calc(50% - 205px);
+  top: -53px;
+}
+
+.th-pill-wrap {
+  left: calc(50% + 42px);
+  top: -110px;
+}
+
+.discards-pill {
+  left: calc(50% + 176px);
+  top: -40px;
+}
+
+body[data-table-view="inspect"]:not(.mp-game-active) .score-stack {
+  transform: translate3d(-50%,0,0) scaleY(1);
+}
+
+body[data-table-view="seated"]:not(.mp-game-active) .score-stack {
+  top: clamp(150px, 22vh, 235px);
+  transform: translate3d(-50%,0,0) scale(.82,.58);
+  filter: brightness(.78) saturate(.88);
+}
+
+/* The shared camera transform supplies the foreshortening. Individual objects
+   retain only small arrangement rotations, avoiding a second fake perspective. */
+body[data-table-view="seated"] .reserve-pill {
+  left: calc(50% - 190px);
+  top: -126px;
+  transform: rotate(-6deg);
+}
+
+body[data-table-view="seated"] .score-pill {
+  left: calc(50% - 205px);
+  top: -53px;
+  transform: rotate(-7deg);
+}
+
+body[data-table-view="seated"] .th-pill-wrap {
+  left: calc(50% + 42px);
+  top: -110px;
+  transform: rotate(3deg);
+}
+
+body[data-table-view="seated"] .discards-pill {
+  left: calc(50% + 176px);
+  top: -40px;
+  transform: rotate(7deg);
+}
+
+@media (max-width: 700px) {
+  .score-stack {
+    left: 0;
+    right: 0;
+    top: 46%;
+    width: 100%;
+    height: 160px;
+    transform: translate3d(0,0,0);
+    transform-origin: 50% 100%;
+  }
+
+  .reserve-pill {
+    left: calc(50% - 132px);
+    top: -154px;
+  }
+
+  .score-pill {
+    left: calc(50% - 140px);
+    top: -95px;
+  }
+
+  .th-pill-wrap {
+    left: calc(50% + 16px);
+    top: -147px;
+  }
+
+  .discards-pill {
+    left: calc(50% + 94px);
+    top: -93px;
+  }
+
+  body[data-table-view="inspect"]:not(.mp-game-active) .score-stack {
+    transform: translate3d(0,0,0);
+  }
+
+  body[data-table-view="seated"]:not(.mp-game-active) .score-stack {
+    top: 46%;
+    transform: translate3d(0,0,0) scale(.9,.68);
+    filter: brightness(.82);
+  }
+
+  body[data-table-view="seated"] .reserve-pill {
+    left: calc(50% - 132px);
+    top: -154px;
+  }
+
+  body[data-table-view="seated"] .score-pill {
+    left: calc(50% - 140px);
+    top: -95px;
+  }
+
+  body[data-table-view="seated"] .th-pill-wrap {
+    left: calc(50% + 16px);
+    top: -147px;
+  }
+
+  body[data-table-view="seated"] .discards-pill {
+    left: calc(50% + 94px);
+    top: -93px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .score-stack {
+    transition-duration: 1ms !important;
+  }
+}
