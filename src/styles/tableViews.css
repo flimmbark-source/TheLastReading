@@ -1,6 +1,10 @@
 /* Two fixed camera compositions.
    `inspect` is the existing readable overhead table. `seated` lowers the camera,
-   exposes more room beyond the far edge, and foreshortens the spread. */
+   exposes more room beyond the far edge, and foreshortens the spread.
+
+   Performance rule: view changes animate only compositor-friendly transforms and
+   opacity. Perspective, top, width, height, filters, and shadows snap to their new
+   values instead of forcing layout/paint work across the whole scene. */
 
 body:not(.mp-game-active) #tableStage,
 body:not(.mp-game-active) #tableStage .table-plane,
@@ -10,36 +14,27 @@ body:not(.mp-game-active) .handDock,
 body:not(.mp-game-active) .score-stack,
 body:not(.mp-game-active) #relicRack {
   transition:
-    transform 180ms cubic-bezier(.2,.76,.24,1),
-    top 180ms cubic-bezier(.2,.76,.24,1),
-    bottom 180ms cubic-bezier(.2,.76,.24,1),
-    height 180ms cubic-bezier(.2,.76,.24,1),
-    opacity 120ms ease,
-    filter 140ms ease;
+    transform 90ms cubic-bezier(.16,.84,.24,1),
+    opacity 70ms linear;
+  will-change: transform;
+  backface-visibility: hidden;
+  transform-style: preserve-3d;
 }
 
-/* Moving into the table must complete before a drag meaningfully begins. */
-body[data-table-view="inspect"]:not(.mp-game-active) #tableStage,
-body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-plane,
-body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-light,
-body[data-table-view="inspect"]:not(.mp-game-active) .spread-wrap,
-body[data-table-view="inspect"]:not(.mp-game-active) .handDock,
-body[data-table-view="inspect"]:not(.mp-game-active) .score-stack,
-body[data-table-view="inspect"]:not(.mp-game-active) #relicRack {
-  transition-duration: 75ms,75ms,75ms,75ms,60ms,70ms;
-  transition-timing-function: cubic-bezier(.1,.8,.2,1),cubic-bezier(.1,.8,.2,1),cubic-bezier(.1,.8,.2,1),cubic-bezier(.1,.8,.2,1),linear,ease-out;
+#tableStage {
+  contain: strict;
 }
 
-/* Pointer-down already switched the camera. During an active grab make that
-   shift nearly immediate so the drag starts in the inspection composition. */
-body.table-interacting[data-table-view="inspect"]:not(.mp-game-active) #tableStage,
-body.table-interacting[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-plane,
-body.table-interacting[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-light,
-body.table-interacting[data-table-view="inspect"]:not(.mp-game-active) .spread-wrap,
-body.table-interacting[data-table-view="inspect"]:not(.mp-game-active) .handDock,
-body.table-interacting[data-table-view="inspect"]:not(.mp-game-active) .score-stack,
-body.table-interacting[data-table-view="inspect"]:not(.mp-game-active) #relicRack {
-  transition-duration: 45ms,45ms,45ms,45ms,35ms,40ms;
+#tableStage .table-plane,
+#tableStage .table-light {
+  contain: paint;
+}
+
+.spread-wrap,
+.handDock,
+.score-stack,
+#relicRack {
+  contain: layout paint style;
 }
 
 /* Readable overhead/inspection composition: preserves the prototype layout. */
@@ -51,20 +46,19 @@ body[data-table-view="inspect"]:not(.mp-game-active) #tableStage {
 body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-plane {
   top: 16vh;
   width: min(1460px, 148vw);
-  transform: translateX(-50%) rotateX(49deg);
+  transform: translate3d(-50%,0,0) rotateX(49deg);
 }
 
 body[data-table-view="inspect"]:not(.mp-game-active) .spread-wrap {
-  transform: translateX(-50%) scaleY(1);
+  transform: translate3d(-50%,0,0) scaleY(1);
   filter: none;
 }
 
 body[data-table-view="inspect"]:not(.mp-game-active) .handDock {
-  transform: translateY(0);
+  transform: translate3d(0,0,0);
 }
 
-/* Default seated composition. The far edge sits around the upper-middle of the
-   screen and the spread is deliberately compressed until the player interacts. */
+/* Default seated composition. */
 body[data-table-view="seated"]:not(.mp-game-active) #tableStage {
   perspective: 720px;
   perspective-origin: 50% 64%;
@@ -78,7 +72,7 @@ body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-plane {
   top: 34vh;
   width: min(1680px, 172vw);
   height: 104vh;
-  transform: translateX(-50%) rotateX(68deg);
+  transform: translate3d(-50%,0,0) rotateX(68deg);
   box-shadow:
     0 -20px 62px rgba(0,0,0,.78),
     inset 0 0 150px rgba(0,0,0,.58),
@@ -86,14 +80,14 @@ body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-plane {
 }
 
 body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-light {
-  transform: translateY(7vh) scaleY(.82);
+  transform: translate3d(0,7vh,0) scaleY(.82);
   opacity: .82;
 }
 
 @media (min-width: 701px) {
   body[data-table-view="seated"]:not(.mp-game-active) .spread-wrap {
     top: clamp(150px, 22vh, 235px);
-    transform: translateX(-50%) scale(.82,.58);
+    transform: translate3d(-50%,0,0) scale(.82,.58);
     transform-origin: 50% 100%;
     filter: brightness(.78) saturate(.88);
   }
@@ -106,20 +100,19 @@ body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-light {
 
   body[data-table-view="seated"]:not(.mp-game-active) .handDock {
     height: 254px;
-    transform: translateY(7px) scale(1.035);
+    transform: translate3d(0,7px,0) scale(1.035);
     transform-origin: 50% 100%;
   }
 
   body[data-table-view="seated"]:not(.mp-game-active) .score-stack {
-    transform: translateX(-50%) scale(.92);
+    transform: translate3d(-50%,0,0) scale(.92);
   }
 
   body[data-table-view="inspect"]:not(.mp-game-active) .score-stack {
-    transform: translateX(-50%) scale(1);
+    transform: translate3d(-50%,0,0) scale(1);
   }
 }
 
-/* The actively dragged card must follow the pointer, not the camera easing. */
 body.table-interacting .hand .card.hand-card-dragging {
   transition: none !important;
 }
@@ -133,13 +126,12 @@ body.table-interacting .hand .card.hand-card-dragging {
   body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-plane {
     top: 11vh;
     width: 188vw;
-    transform: translateX(-50%) rotateX(40deg);
+    transform: translate3d(-50%,0,0) rotateX(40deg);
   }
 
-  /* Portrait inspect view must keep the game's original mobile spread layout.
-     Only remove the desktop centering transform introduced above. */
+  /* Keep the original mobile spread position in inspect mode. */
   body[data-table-view="inspect"]:not(.mp-game-active) .spread-wrap {
-    transform: none;
+    transform: translate3d(0,0,0);
   }
 
   body[data-table-view="seated"]:not(.mp-game-active) #tableStage {
@@ -151,17 +143,17 @@ body.table-interacting .hand .card.hand-card-dragging {
     top: 31vh;
     width: 230vw;
     height: 112vh;
-    transform: translateX(-50%) rotateX(63deg);
+    transform: translate3d(-50%,0,0) rotateX(63deg);
   }
 
   body[data-table-view="seated"]:not(.mp-game-active) .spread-wrap {
-    transform: scale(.9,.68);
+    transform: translate3d(0,0,0) scale(.9,.68);
     transform-origin: 50% 100%;
     filter: brightness(.82);
   }
 
   body[data-table-view="seated"]:not(.mp-game-active) .handDock {
-    transform: translateY(8px) scale(1.025);
+    transform: translate3d(0,8px,0) scale(1.025);
     transform-origin: 50% 100%;
   }
 }
