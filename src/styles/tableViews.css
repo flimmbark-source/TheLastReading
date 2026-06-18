@@ -149,7 +149,6 @@ body.table-interacting .hand .card.hand-card-dragging {
   }
 
   body[data-table-view="seated"]:not(.mp-game-active) .spread-wrap {
-    top: clamp(126px, 18vh, 170px);
     transform: scale(.9,.68);
     transform-origin: 50% 100%;
     filter: brightness(.82);
