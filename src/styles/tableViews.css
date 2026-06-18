@@ -29,8 +29,8 @@ body:not(.mp-game-active) #relicRack {
   contain: paint;
 }
 
-.spread-wrap,
-.handDock,
+/* Do not paint-contain the hand or spread. Their cards deliberately rise and
+   render outside their parent bounds; paint containment clips that overflow. */
 #relicRack {
   contain: layout paint style;
 }
