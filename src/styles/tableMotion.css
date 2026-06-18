@@ -1,0 +1,89 @@
+/* Motion layer for the physical-table branch. Kept separate so it can be
+   tuned or removed without disturbing table composition. */
+
+body:not(.mp-game-active) .hand .card.card-just-dealt {
+  animation: tlrCardDealIn 440ms cubic-bezier(.18,.78,.24,1) both;
+}
+
+body:not(.mp-game-active) .spread .card.card-just-placed {
+  animation: tlrCardLand 320ms cubic-bezier(.2,.82,.24,1) both;
+  transform-origin: 50% 100%;
+}
+
+@keyframes tlrCardDealIn {
+  0% {
+    opacity: 0;
+    transform:
+      translate3d(0, 120px, 80px)
+      rotateX(-18deg)
+      rotate(var(--a));
+    filter: drop-shadow(0 30px 22px rgba(0,0,0,.72));
+  }
+  62% {
+    opacity: 1;
+    transform:
+      translate3d(0, 10px, 8px)
+      rotateX(2deg)
+      rotate(var(--a));
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes tlrCardLand {
+  0% {
+    opacity: .9;
+    transform: translate3d(0, -42px, 70px) scale(1.045) rotateZ(-1.2deg);
+    filter: drop-shadow(0 28px 20px rgba(0,0,0,.66));
+  }
+  68% {
+    transform: translate3d(0, 3px, 0) scale(.985) rotateZ(.45deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1) rotateZ(0deg);
+  }
+}
+
+/* Small physical response when the player presses a table card. */
+body:not(.mp-game-active) .spread .card:active {
+  transform: translateY(1px) scale(.995);
+  filter: drop-shadow(0 2px 1px rgba(0,0,0,.5));
+}
+
+@media (max-width: 700px) {
+  body:not(.mp-game-active) .hand .card.card-just-dealt {
+    animation-duration: 360ms;
+  }
+
+  body:not(.mp-game-active) .spread .card.card-just-placed {
+    animation-duration: 280ms;
+  }
+
+  @keyframes tlrCardDealIn {
+    0% {
+      opacity: 0;
+      transform: translate3d(0, 86px, 45px) rotateX(-10deg) rotate(var(--a));
+    }
+    70% {
+      opacity: 1;
+      transform: translate3d(0, 6px, 4px) rotateX(1deg) rotate(var(--a));
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body:not(.mp-game-active) .hand .card.card-just-dealt,
+  body:not(.mp-game-active) .spread .card.card-just-placed {
+    animation: tlrCardAppear 120ms linear both;
+  }
+
+  @keyframes tlrCardAppear {
+    from { opacity: .55; }
+    to { opacity: 1; }
+  }
+}
