@@ -136,6 +136,12 @@ body.table-interacting .hand .card.hand-card-dragging {
     transform: translateX(-50%) rotateX(40deg);
   }
 
+  /* Portrait inspect view must keep the game's original mobile spread layout.
+     Only remove the desktop centering transform introduced above. */
+  body[data-table-view="inspect"]:not(.mp-game-active) .spread-wrap {
+    transform: none;
+  }
+
   body[data-table-view="seated"]:not(.mp-game-active) #tableStage {
     perspective: 620px;
     perspective-origin: 50% 58%;
