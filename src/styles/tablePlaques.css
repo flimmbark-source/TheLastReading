@@ -148,45 +148,64 @@ body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .scor
 
 @media (max-width: 700px) {
   body:not(.mp-game-active):not(.main-menu-active) .score-stack {
-    top: 205px;
-    width: calc(100vw - 18px);
-    grid-template-columns: repeat(4, minmax(0,1fr));
-    gap: 5px;
+    top: 176px;
+    width: min(330px, calc(100vw - 24px));
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    grid-template-areas:
+      "reserve score"
+      "threshold discards";
+    gap: 8px;
+  }
+
+  body:not(.mp-game-active):not(.main-menu-active) .score-stack .reserve-pill {
+    grid-area: reserve;
+  }
+
+  body:not(.mp-game-active):not(.main-menu-active) .score-stack .score-pill {
+    grid-area: score;
+  }
+
+  body:not(.mp-game-active):not(.main-menu-active) .score-stack .th-pill-wrap {
+    grid-area: threshold;
+  }
+
+  body:not(.mp-game-active):not(.main-menu-active) .score-stack .discards-pill {
+    grid-area: discards;
   }
 
   body:not(.mp-game-active):not(.main-menu-active) .score-stack .pill {
     height: 54px;
-    padding: 6px 4px 6px 26px;
+    padding: 6px 7px 6px 34px;
     border-radius: 11px;
     grid-template-rows: 15px 1fr;
-    column-gap: 2px;
-    font-size: 6.5px;
-    letter-spacing: .06em;
+    column-gap: 4px;
+    font-size: 7px;
+    letter-spacing: .07em;
   }
 
   body:not(.mp-game-active):not(.main-menu-active) .score-stack .pill::after {
-    left: 23px;
-    right: 4px;
+    left: 29px;
+    right: 6px;
     top: 21px;
   }
 
   body:not(.mp-game-active):not(.main-menu-active) .score-stack .pill-icon {
-    left: 4px;
-    width: 20px;
-    height: 20px;
-    font-size: 11px;
+    left: 6px;
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
   }
 
   body:not(.mp-game-active):not(.main-menu-active) .score-stack .pill b {
-    font-size: 21px;
+    font-size: 22px;
   }
 
   body[data-table-view="inspect"]:not(.mp-game-active):not(.main-menu-active) .score-stack {
-    top: 188px;
+    top: 160px;
   }
 
   body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .score-stack {
-    top: 224px;
+    top: 190px;
     transform: translate3d(-50%,0,0) perspective(620px) rotateX(5deg) scale(.98,.94);
   }
 }
