@@ -68,8 +68,12 @@ body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-light {
 }
 
 body[data-table-view="inspect"]:not(.mp-game-active) .spread-wrap {
-  transform: translate3d(-50%,0,0) scaleY(1);
+  transform: translate3d(-50%,30px,0) scaleY(1);
   filter: none;
+}
+
+body[data-table-view="inspect"]:not(.mp-game-active) #relicRack {
+  transform: translate3d(0,30px,0);
 }
 
 body[data-table-view="inspect"]:not(.mp-game-active) .handDock {
@@ -121,7 +125,7 @@ body.table-interacting .hand .card.hand-card-dragging {
   }
 
   body[data-table-view="inspect"]:not(.mp-game-active) .spread-wrap {
-    transform: translate3d(0,0,0);
+    transform: translate3d(0,30px,0);
   }
 
   body[data-table-view="seated"]:not(.mp-game-active) .spread-wrap {
