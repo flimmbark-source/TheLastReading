@@ -13,7 +13,7 @@ body:not(.mp-game-active):not(.main-menu-active) .score-stack {
   align-items: center;
   transform: translate3d(-50%,0,0);
   transform-origin: 50% 100%;
-  transition: top 110ms ease, transform 110ms ease, filter 110ms ease;
+  transition: top 110ms ease, width 110ms ease, gap 110ms ease, transform 110ms ease, filter 110ms ease;
   filter: drop-shadow(0 9px 10px rgba(0,0,0,.42));
 }
 
@@ -128,13 +128,17 @@ body:not(.mp-game-active):not(.main-menu-active) .score-stack #thNext {
 
 body[data-table-view="inspect"]:not(.mp-game-active):not(.main-menu-active) .score-stack {
   top: clamp(112px,16vh,166px);
+  width: min(680px, calc(100vw - 36px));
+  gap: 10px;
   transform: translate3d(-50%,0,0);
 }
 
 body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .score-stack {
   top: clamp(150px,22vh,218px);
-  transform: translate3d(-50%,0,0) perspective(760px) rotateX(6deg) scale(.98,.93);
-  filter: drop-shadow(0 11px 11px rgba(0,0,0,.48)) brightness(.92);
+  width: min(570px, calc(100vw - 72px));
+  gap: 8px;
+  transform: translate3d(-50%,0,0) perspective(760px) rotateX(10deg) scaleY(.82);
+  filter: drop-shadow(0 12px 12px rgba(0,0,0,.5)) brightness(.9);
 }
 
 @media (max-width: 700px) {
@@ -163,11 +167,15 @@ body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .scor
 
   body[data-table-view="inspect"]:not(.mp-game-active):not(.main-menu-active) .score-stack {
     top: 146px;
+    width: min(322px, calc(100vw - 24px));
+    gap: 5px 8px;
   }
 
   body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .score-stack {
     top: 174px;
-    transform: translate3d(-50%,0,0) perspective(620px) rotateX(5deg) scale(.98,.94);
+    width: min(286px, calc(100vw - 48px));
+    gap: 4px 7px;
+    transform: translate3d(-50%,0,0) perspective(620px) rotateX(9deg) scaleY(.84);
   }
 }
 
