@@ -18,26 +18,26 @@
     backface-visibility: hidden;
   }
 
-  /* Seated table edge: table top 11vh plus its 16vh camera offset. */
+  /* Seated table edge: place the cabinet's bottom directly against the edge. */
   body[data-table-view="seated"]:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::before,
   body[data-table-view="seated"]:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::after {
-    transform: translate3d(0,calc(27vh - 6px),0);
+    transform: translate3d(0,calc(27vh - 78px),0);
   }
 
   body[data-table-view="seated"] #menuPullTab,
   body[data-table-view="seated"] #invTab {
-    --cabinet-view-shift: calc(27vh - 6px);
+    --cabinet-view-shift: calc(27vh - 78px);
   }
 
-  /* Top-down table edge: table top 11vh plus its 1vh camera offset. */
+  /* Top-down table edge: place the cabinet's bottom directly against the edge. */
   body[data-table-view="inspect"]:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::before,
   body[data-table-view="inspect"]:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::after {
-    transform: translate3d(0,calc(12vh - 6px),0);
+    transform: translate3d(0,calc(12vh - 78px),0);
   }
 
   body[data-table-view="inspect"] #menuPullTab,
   body[data-table-view="inspect"] #invTab {
-    --cabinet-view-shift: calc(12vh - 6px);
+    --cabinet-view-shift: calc(12vh - 78px);
     pointer-events:auto!important;
   }
 
