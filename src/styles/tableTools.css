@@ -64,7 +64,7 @@ body[data-table-view="inspect"] .table-tool {
 }
 
 body[data-table-view="seated"] .table-tool {
-  top: 228px;
+  top: 238px;
   --tool-scale-y: .66;
 }
 
@@ -192,7 +192,7 @@ body.main-menu-active .table-tools {
   }
 
   body[data-table-view="seated"] .table-tool {
-    top: calc(46% - 28px);
+    top: calc(46% - 18px);
     --tool-scale-y: .62;
   }
 
