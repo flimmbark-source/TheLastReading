@@ -63,7 +63,7 @@ body[data-table-view="seated"]:not(.mp-game-active) #tableStage {
 }
 
 body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-room {
-  filter: saturate(.72) brightness(.52) contrast(1.1);
+  filter: saturate(.86) brightness(.82) contrast(1.04);
 }
 
 body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-plane {
