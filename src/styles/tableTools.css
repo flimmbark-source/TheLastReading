@@ -67,7 +67,7 @@
 
 body[data-table-view="inspect"] .table-tool {
   --tool-scale-y: 1;
-  --tool-shift-y: 30px;
+  --tool-shift-y: 60px;
 }
 
 body[data-table-view="seated"] .table-tool {
@@ -202,7 +202,7 @@ body.main-menu-active .table-tools {
 
   body[data-table-view="inspect"] .table-tool {
     --tool-scale-y: 1;
-    --tool-shift-y: 30px;
+    --tool-shift-y: 60px;
   }
 
   body[data-table-view="seated"] .table-tool {
