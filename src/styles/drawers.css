@@ -100,18 +100,20 @@
 
   #menuPullTab,
   #invTab{
-    top:calc(var(--tlr-drawer-h) + 16px)!important;
+    --cabinet-door-offset:16px;
+    top:var(--tlr-drawer-h)!important;
     width:calc(50vw - 47px)!important;
     height:50px!important;
     margin:0!important;
     padding:0!important;
     border:1px solid #79512a!important;
-    border-radius:3px!important;
+    border-top:0!important;
+    border-radius:0 0 3px 3px!important;
     background:
       linear-gradient(90deg,rgba(255,255,255,.025),transparent 14%,transparent 86%,rgba(0,0,0,.2)),
       linear-gradient(160deg,#3b2111,#211108)!important;
     box-shadow:
-      inset 0 0 0 4px #29150b,
+      inset 0 4px 0 #29150b,
       inset 0 0 0 5px rgba(121,80,40,.5),
       0 4px 9px rgba(0,0,0,.46)!important;
     color:transparent!important;
@@ -119,7 +121,13 @@
     line-height:1!important;
     cursor:pointer!important;
     touch-action:manipulation!important;
-    transition:filter 130ms ease,transform 130ms ease!important;
+    transform:translateY(var(--cabinet-door-offset));
+    transition:filter 130ms ease,transform 190ms cubic-bezier(.16,1,.3,1)!important;
+  }
+
+  #menuPullWrap.open #menuPullTab,
+  #invWrap.open #invTab{
+    --cabinet-door-offset:0px;
   }
 
   #menuPullTab{
@@ -128,7 +136,7 @@
   }
 
   #invTab{
-    top:calc(var(--inv-h) + 16px)!important;
+    top:var(--inv-h)!important;
     left:auto!important;
     right:14px!important;
   }
@@ -177,7 +185,7 @@
   }
 
   #menuPullTab:active,#invTab:active{
-    transform:translateY(1px);
+    transform:translateY(calc(var(--cabinet-door-offset) + 1px));
     filter:brightness(.96);
   }
 
