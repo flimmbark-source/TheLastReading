@@ -9,8 +9,8 @@ body:not(.mp-game-active) #tableStage .table-light,
 body:not(.mp-game-active) .spread-wrap,
 body:not(.mp-game-active) .handDock,
 body:not(.mp-game-active) #relicRack {
-  transition-timing-function: cubic-bezier(.22,.74,.18,1);
-  transition-duration: 360ms;
+  transition-timing-function: cubic-bezier(.16,1,.3,1);
+  transition-duration: 220ms;
   backface-visibility: hidden;
   transform-style: preserve-3d;
 }
