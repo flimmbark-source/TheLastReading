@@ -42,7 +42,7 @@ body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-room {
 }
 
 body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-plane {
-  transform: translate3d(-50%,2vh,0) rotateX(49deg) scaleX(.86);
+  transform: translate3d(-50%,-2vh,0) rotateX(49deg) scaleX(.86);
 }
 
 body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-room {
@@ -50,7 +50,7 @@ body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-room {
 }
 
 body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-plane {
-  transform: translate3d(-50%,18vh,0) rotateX(68deg) scaleX(1);
+  transform: translate3d(-50%,14vh,0) rotateX(68deg) scaleX(1);
   box-shadow:
     0 -20px 62px rgba(0,0,0,.78),
     inset 0 0 150px rgba(0,0,0,.58),
@@ -117,11 +117,11 @@ body.table-interacting .hand .card.hand-card-dragging {
   }
 
   body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-plane {
-    transform: translate3d(-50%,5vh,0) rotateX(40deg) scaleX(.82);
+    transform: translate3d(-50%,1vh,0) rotateX(40deg) scaleX(.82);
   }
 
   body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-plane {
-    transform: translate3d(-50%,20vh,0) rotateX(63deg) scaleX(1);
+    transform: translate3d(-50%,16vh,0) rotateX(63deg) scaleX(1);
   }
 
   body[data-table-view="inspect"]:not(.mp-game-active) .spread-wrap {
