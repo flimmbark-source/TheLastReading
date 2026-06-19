@@ -1,23 +1,51 @@
 /* Two fixed camera compositions.
    `inspect` is the existing readable overhead table. `seated` lowers the camera,
-   exposes more room beyond the far edge, and foreshortens the spread.
-
-   Performance rule: view changes animate only compositor-friendly transforms and
-   opacity. Perspective, top, width, height, filters, and shadows snap to their new
-   values instead of forcing layout/paint work across the whole scene. */
+   exposes more room beyond the far edge, and foreshortens the spread. */
 
 body:not(.mp-game-active) #tableStage,
 body:not(.mp-game-active) #tableStage .table-plane,
+body:not(.mp-game-active) #tableStage .table-room,
 body:not(.mp-game-active) #tableStage .table-light,
 body:not(.mp-game-active) .spread-wrap,
 body:not(.mp-game-active) .handDock,
 body:not(.mp-game-active) #relicRack {
-  transition:
-    transform 90ms cubic-bezier(.16,.84,.24,1),
-    opacity 70ms linear;
-  will-change: transform;
+  transition-timing-function: cubic-bezier(.22,.74,.18,1);
+  transition-duration: 360ms;
   backface-visibility: hidden;
   transform-style: preserve-3d;
+}
+
+body:not(.mp-game-active) #tableStage {
+  transition-property: perspective, perspective-origin;
+}
+
+body:not(.mp-game-active) #tableStage .table-plane {
+  transition-property: top, width, height, transform, box-shadow;
+  will-change: transform, top, width;
+}
+
+body:not(.mp-game-active) #tableStage .table-room {
+  transition-property: filter, transform;
+}
+
+body:not(.mp-game-active) #tableStage .table-light {
+  transition-property: transform, opacity;
+  will-change: transform, opacity;
+}
+
+body:not(.mp-game-active) .spread-wrap {
+  transition-property: top, transform, filter;
+  will-change: transform, top;
+}
+
+body:not(.mp-game-active) .handDock {
+  transition-property: height, transform;
+  will-change: transform;
+}
+
+body:not(.mp-game-active) #relicRack {
+  transition-property: transform, opacity;
+  will-change: transform, opacity;
 }
 
 #tableStage {
@@ -151,6 +179,7 @@ body.table-interacting .hand .card.hand-card-dragging {
 @media (prefers-reduced-motion: reduce) {
   body:not(.mp-game-active) #tableStage,
   body:not(.mp-game-active) #tableStage .table-plane,
+  body:not(.mp-game-active) #tableStage .table-room,
   body:not(.mp-game-active) #tableStage .table-light,
   body:not(.mp-game-active) .spread-wrap,
   body:not(.mp-game-active) .handDock,
