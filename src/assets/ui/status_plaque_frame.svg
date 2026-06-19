@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 140" fill="none">
+  <defs>
+    <linearGradient id="body" x1="28" y1="18" x2="328" y2="126" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#342116"/>
+      <stop offset="0.48" stop-color="#110B08"/>
+      <stop offset="1" stop-color="#24170F"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="28" y1="14" x2="330" y2="128" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E0B463"/>
+      <stop offset="0.28" stop-color="#8B5A25"/>
+      <stop offset="0.62" stop-color="#D1A24C"/>
+      <stop offset="1" stop-color="#684018"/>
+    </linearGradient>
+    <linearGradient id="divider" x1="116" y1="0" x2="326" y2="0" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C08A3E" stop-opacity=".76"/>
+      <stop offset="1" stop-color="#7B4C1D" stop-opacity=".16"/>
+    </linearGradient>
+    <radialGradient id="well" cx="0" cy="0" r="1" gradientTransform="translate(64 69) rotate(90) scale(38)">
+      <stop stop-color="#1A100A"/>
+      <stop offset="1" stop-color="#070504"/>
+    </radialGradient>
+    <filter id="shadow" x="0" y="0" width="360" height="140" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#000" flood-opacity=".62"/>
+    </filter>
+    <filter id="grain" x="0" y="0" width="360" height="140" filterUnits="userSpaceOnUse">
+      <feTurbulence type="fractalNoise" baseFrequency=".72" numOctaves="2" seed="8" result="noise"/>
+      <feColorMatrix in="noise" type="saturate" values="0" result="mono"/>
+      <feComponentTransfer in="mono" result="soft">
+        <feFuncA type="table" tableValues="0 .07"/>
+      </feComponentTransfer>
+      <feBlend in="SourceGraphic" in2="soft" mode="soft-light"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <rect x="13" y="11" width="334" height="116" rx="24" fill="url(#body)" stroke="url(#rim)" stroke-width="4"/>
+    <rect x="19" y="17" width="322" height="104" rx="18" stroke="#F0C875" stroke-opacity=".2" stroke-width="2"/>
+    <rect x="24" y="22" width="312" height="94" rx="14" stroke="#553415" stroke-opacity=".86" stroke-width="2"/>
+    <path d="M116 59H327" stroke="url(#divider)" stroke-width="2"/>
+    <path d="M116 62H327" stroke="#25160D" stroke-opacity=".9"/>
+    <circle cx="64" cy="69" r="39" fill="url(#well)" stroke="url(#rim)" stroke-width="3"/>
+    <circle cx="64" cy="69" r="31" stroke="#69431D" stroke-width="3"/>
+    <path d="M29 27H42M318 27H331" stroke="#D9A957" stroke-opacity=".42" stroke-width="2" stroke-linecap="round"/>
+    <rect x="13" y="11" width="334" height="116" rx="24" filter="url(#grain)" opacity=".8"/>
+  </g>
+</svg>
