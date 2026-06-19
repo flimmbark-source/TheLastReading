@@ -13,7 +13,12 @@ body:not(.mp-game-active):not(.main-menu-active) .score-stack {
   align-items: center;
   transform: translate3d(-50%,0,0);
   transform-origin: 50% 100%;
-  transition: top 110ms ease, width 110ms ease, gap 110ms ease, transform 110ms ease, filter 110ms ease;
+  transition:
+    top 360ms cubic-bezier(.22,.74,.18,1),
+    width 360ms cubic-bezier(.22,.74,.18,1),
+    gap 360ms cubic-bezier(.22,.74,.18,1),
+    transform 360ms cubic-bezier(.22,.74,.18,1),
+    filter 360ms cubic-bezier(.22,.74,.18,1);
   filter: drop-shadow(0 9px 10px rgba(0,0,0,.42));
 }
 
