@@ -42,7 +42,7 @@ body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-room {
 }
 
 body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-plane {
-  transform: translate3d(-50%,6vh,0) rotateX(49deg) scaleX(.86);
+  transform: translate3d(-50%,2vh,0) rotateX(49deg) scaleX(.86);
 }
 
 body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-room {
@@ -117,7 +117,7 @@ body.table-interacting .hand .card.hand-card-dragging {
   }
 
   body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-plane {
-    transform: translate3d(-50%,11vh,0) rotateX(40deg) scaleX(.82);
+    transform: translate3d(-50%,5vh,0) rotateX(40deg) scaleX(.82);
   }
 
   body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-plane {
