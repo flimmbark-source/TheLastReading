@@ -2,6 +2,7 @@
    The transition stays on compositor-friendly transforms and opacity only.
    Layout, perspective, filters, and shadows snap so the camera does not hitch. */
 
+body:not(.mp-game-active) #tableStage .table-room,
 body:not(.mp-game-active) #tableStage .table-plane,
 body:not(.mp-game-active) #tableStage .table-light,
 body:not(.mp-game-active) .spread-wrap,
@@ -38,6 +39,7 @@ body:not(.mp-game-active) #tableStage .table-plane {
 }
 
 body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-room {
+  transform: translate3d(0,-6vh,0) scale(1.03);
   filter: saturate(.84) brightness(.78) contrast(1.03);
 }
 
@@ -46,6 +48,7 @@ body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-plane {
 }
 
 body[data-table-view="seated"]:not(.mp-game-active) #tableStage .table-room {
+  transform: translate3d(0,0,0) scale(1.03);
   filter: saturate(.86) brightness(.82) contrast(1.04);
 }
 
@@ -116,6 +119,10 @@ body.table-interacting .hand .card.hand-card-dragging {
     height: 112vh;
   }
 
+  body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-room {
+    transform: translate3d(0,-8vh,0) scale(1.03);
+  }
+
   body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-plane {
     transform: translate3d(-50%,1vh,0) rotateX(40deg) scaleX(.82);
   }
@@ -141,6 +148,7 @@ body.table-interacting .hand .card.hand-card-dragging {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  body:not(.mp-game-active) #tableStage .table-room,
   body:not(.mp-game-active) #tableStage .table-plane,
   body:not(.mp-game-active) #tableStage .table-light,
   body:not(.mp-game-active) .spread-wrap,
