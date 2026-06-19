@@ -12,7 +12,10 @@
 .table-tool {
   --tool-scale-y: 1;
   --tool-lift: 0px;
+  --tool-shift-x: 0px;
+  --tool-shift-y: 0px;
   position: absolute;
+  top: 142px;
   width: 92px;
   height: 58px;
   border: 0;
@@ -24,11 +27,10 @@
   isolation: isolate;
   transform-origin: 50% 100%;
   transition:
-    transform 220ms cubic-bezier(.16,1,.3,1),
-    filter 220ms cubic-bezier(.16,1,.3,1),
-    top 220ms cubic-bezier(.16,1,.3,1),
-    left 220ms cubic-bezier(.16,1,.3,1),
-    right 220ms cubic-bezier(.16,1,.3,1);
+    transform 190ms cubic-bezier(.16,1,.3,1),
+    filter 150ms ease-out;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .table-tool:hover,
@@ -64,23 +66,26 @@
 }
 
 body[data-table-view="inspect"] .table-tool {
-  top: 142px;
   --tool-scale-y: 1;
+  --tool-shift-y: 0px;
 }
 
 body[data-table-view="seated"] .table-tool {
-  top: 238px;
   --tool-scale-y: .66;
+  --tool-shift-y: 96px;
 }
 
 .table-tool-abilities {
   left: calc(50% - 364px);
   --tool-rotate: -5deg;
-  transform: translate3d(0,var(--tool-lift),0) scaleY(var(--tool-scale-y)) rotate(var(--tool-rotate));
+  transform:
+    translate3d(var(--tool-shift-x),calc(var(--tool-shift-y) + var(--tool-lift)),0)
+    scaleY(var(--tool-scale-y))
+    rotate(var(--tool-rotate));
 }
 
 body[data-table-view="seated"] .table-tool-abilities {
-  left: calc(50% - 390px);
+  --tool-shift-x: -26px;
   --tool-rotate: -9deg;
 }
 
@@ -125,11 +130,14 @@ body[data-table-view="seated"] .table-tool-abilities {
 .table-tool-scoring {
   right: calc(50% - 364px);
   --tool-rotate: 5deg;
-  transform: translate3d(0,var(--tool-lift),0) scaleY(var(--tool-scale-y)) rotate(var(--tool-rotate));
+  transform:
+    translate3d(var(--tool-shift-x),calc(var(--tool-shift-y) + var(--tool-lift)),0)
+    scaleY(var(--tool-scale-y))
+    rotate(var(--tool-rotate));
 }
 
 body[data-table-view="seated"] .table-tool-scoring {
-  right: calc(50% - 390px);
+  --tool-shift-x: 26px;
   --tool-rotate: 9deg;
 }
 
@@ -187,18 +195,19 @@ body.main-menu-active .table-tools {
 
 @media (max-width: 640px) {
   .table-tool {
+    top: calc(46% - 105px);
     width: 58px;
     height: 48px;
   }
 
   body[data-table-view="inspect"] .table-tool {
-    top: calc(46% - 105px);
     --tool-scale-y: 1;
+    --tool-shift-y: 0px;
   }
 
   body[data-table-view="seated"] .table-tool {
-    top: calc(46% - 18px);
     --tool-scale-y: .62;
+    --tool-shift-y: 87px;
   }
 
   .table-tool-abilities {
@@ -210,12 +219,12 @@ body.main-menu-active .table-tools {
   }
 
   body[data-table-view="seated"] .table-tool-abilities {
-    left: calc(50% - 190px);
+    --tool-shift-x: -13px;
     --tool-rotate: -10deg;
   }
 
   body[data-table-view="seated"] .table-tool-scoring {
-    right: calc(50% - 190px);
+    --tool-shift-x: 13px;
     --tool-rotate: 10deg;
   }
 
