@@ -1,0 +1,57 @@
+/* Keep the mobile Menu and Archives cabinet attached to the seated camera only. */
+@media (max-width:640px) {
+  body:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::before,
+  body:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::after {
+    transition:
+      transform 190ms cubic-bezier(.16,1,.3,1),
+      opacity 150ms ease-out;
+    will-change: transform,opacity;
+    backface-visibility: hidden;
+  }
+
+  #menuPullTab,
+  #invTab {
+    --cabinet-view-shift: 0px;
+    opacity: 1;
+    transform: translate3d(0,calc(var(--cabinet-door-offset) + var(--cabinet-view-shift)),0)!important;
+    transition:
+      transform 190ms cubic-bezier(.16,1,.3,1),
+      opacity 150ms ease-out,
+      filter 130ms ease!important;
+    will-change: transform,opacity;
+    backface-visibility: hidden;
+  }
+
+  body[data-table-view="seated"]:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::before,
+  body[data-table-view="seated"]:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::after {
+    transform: translate3d(0,0,0);
+    opacity: 1;
+  }
+
+  body[data-table-view="inspect"]:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::before,
+  body[data-table-view="inspect"]:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::after {
+    transform: translate3d(0,-104px,0);
+    opacity: 0;
+  }
+
+  body[data-table-view="inspect"] #menuPullTab,
+  body[data-table-view="inspect"] #invTab {
+    --cabinet-view-shift: -104px;
+    opacity: 0;
+    pointer-events: none!important;
+  }
+
+  #menuPullTab:active,
+  #invTab:active {
+    transform: translate3d(0,calc(var(--cabinet-door-offset) + var(--cabinet-view-shift) + 1px),0)!important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  #tableStage::before,
+  #tableStage::after,
+  #menuPullTab,
+  #invTab {
+    transition:none!important;
+  }
+}
