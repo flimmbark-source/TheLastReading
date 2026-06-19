@@ -67,12 +67,12 @@
 
 body[data-table-view="inspect"] .table-tool {
   --tool-scale-y: 1;
-  --tool-shift-y: 0px;
+  --tool-shift-y: 30px;
 }
 
 body[data-table-view="seated"] .table-tool {
   --tool-scale-y: .66;
-  --tool-shift-y: 176px;
+  --tool-shift-y: 116px;
 }
 
 .table-tool-abilities {
@@ -202,12 +202,12 @@ body.main-menu-active .table-tools {
 
   body[data-table-view="inspect"] .table-tool {
     --tool-scale-y: 1;
-    --tool-shift-y: 0px;
+    --tool-shift-y: 30px;
   }
 
   body[data-table-view="seated"] .table-tool {
     --tool-scale-y: .62;
-    --tool-shift-y: 167px;
+    --tool-shift-y: 107px;
   }
 
   .table-tool-abilities {
