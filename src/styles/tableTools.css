@@ -163,7 +163,7 @@ body[data-table-view="inspect"]:not(.mp-game-active):not(.main-menu-active) .tab
 
 body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .table-tools {
   transform:
-    translate3d(-50%,calc(18vh + 18px - 100% - 8px),0)
+    translate3d(-50%,calc(18vh + 28px - 100% - 8px),0)
     perspective(760px)
     rotateX(10deg)
     scale(.838,.82);
@@ -202,7 +202,7 @@ body.main-menu-active .table-tools {
 
   body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .table-tools {
     transform:
-      translate3d(-50%,calc(31vh - 132px - 100% - 4px),0)
+      translate3d(-50%,calc(31vh - 124px - 100% - 4px),0)
       perspective(620px)
       rotateX(9deg)
       scale(.888,.84);
