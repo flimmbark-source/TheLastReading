@@ -143,8 +143,8 @@ body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .scor
     width: min(322px, calc(100vw - 24px));
     grid-template-columns: repeat(2,minmax(0,1fr));
     grid-template-areas:
-      "reserve score"
-      "threshold discards";
+      "reserve discards"
+      "score threshold";
     gap: 5px 8px;
   }
 
