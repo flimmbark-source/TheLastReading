@@ -39,7 +39,7 @@ body:not(.mp-game-active) #tableStage .table-plane {
 }
 
 body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-room {
-  transform: translate3d(0,-6vh,0) scale(1.03);
+  transform: translate3d(0,-18vh,0) scale(1.03);
   filter: saturate(.84) brightness(.78) contrast(1.03);
 }
 
@@ -120,7 +120,7 @@ body.table-interacting .hand .card.hand-card-dragging {
   }
 
   body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-room {
-    transform: translate3d(0,-8vh,0) scale(1.03);
+    transform: translate3d(0,-22vh,0) scale(1.03);
   }
 
   body[data-table-view="inspect"]:not(.mp-game-active) #tableStage .table-plane {
