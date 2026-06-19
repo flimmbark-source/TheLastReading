@@ -134,7 +134,7 @@ body[data-table-view="inspect"]:not(.mp-game-active):not(.main-menu-active) .sco
 }
 
 body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .score-stack {
-  top: clamp(170px,24vh,238px);
+  top: calc(34vh + 18px);
   width: min(570px, calc(100vw - 72px));
   gap: 8px;
   transform: translate3d(-50%,0,0) perspective(760px) rotateX(10deg) scaleY(.82);
@@ -172,7 +172,7 @@ body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .scor
   }
 
   body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .score-stack {
-    top: 190px;
+    top: calc(31vh + 14px);
     width: min(286px, calc(100vw - 48px));
     gap: 4px 7px;
     transform: translate3d(-50%,0,0) perspective(620px) rotateX(9deg) scaleY(.84);
