@@ -134,7 +134,7 @@ body[data-table-view="inspect"]:not(.mp-game-active):not(.main-menu-active) .sco
 }
 
 body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .score-stack {
-  top: clamp(150px,22vh,218px);
+  top: clamp(170px,24vh,238px);
   width: min(570px, calc(100vw - 72px));
   gap: 8px;
   transform: translate3d(-50%,0,0) perspective(760px) rotateX(10deg) scaleY(.82);
@@ -152,7 +152,7 @@ body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .scor
     gap: 5px 8px;
   }
 
-  body:not(.mp-game-active):not(.main-menu-active) .score-stack .reserve-pill { grid-area: reserve; }
+  body:not(.mp-game-active):not(..main-menu-active) .score-stack .reserve-pill { grid-area: reserve; }
   body:not(.mp-game-active):not(.main-menu-active) .score-stack .score-pill { grid-area: score; }
   body:not(.mp-game-active):not(.main-menu-active) .score-stack .th-pill-wrap { grid-area: threshold; }
   body:not(.mp-game-active):not(.main-menu-active) .score-stack .discards-pill { grid-area: discards; }
@@ -172,7 +172,7 @@ body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .scor
   }
 
   body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .score-stack {
-    top: 174px;
+    top: 190px;
     width: min(286px, calc(100vw - 48px));
     gap: 4px 7px;
     transform: translate3d(-50%,0,0) perspective(620px) rotateX(9deg) scaleY(.84);
