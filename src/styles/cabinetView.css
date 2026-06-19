@@ -1,14 +1,14 @@
 /* Keep the mobile Menu and Archives cabinet attached to the back edge of the table. */
 @media (max-width:640px) {
-  /* Top-down cabinet backing. It closes the gap to the top of the screen. */
+  /* Top-down cabinet backing. Its lower edge is the drawer seam, so drawers travel beneath it. */
   body:not(.mp-game-active):not(.attic-active):not(.main-menu-active)::before {
     content:"";
     position:fixed;
     top:0;
     left:8px;
     right:8px;
-    height:max(0px,calc(12vh - 72px));
-    z-index:140;
+    height:max(0px,calc(12vh - 62px));
+    z-index:390;
     pointer-events:none;
     border-left:1px solid #684522;
     border-right:1px solid #684522;
@@ -33,19 +33,22 @@
 
   body:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::before,
   body:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::after {
-    transition: transform 190ms cubic-bezier(.16,1,.3,1);
-    will-change: transform;
-    backface-visibility: hidden;
+    transition:transform 190ms cubic-bezier(.16,1,.3,1);
+    will-change:transform;
+    backface-visibility:hidden;
   }
 
-  /* The drawer wrappers begin at the cabinet seam. Closed drawers expose only their fronts. */
+  /* The wrappers stay below the cabinet backing at every point in the slide. */
   #menuPullWrap,
-  #invWrap {
+  #invWrap,
+  #menuPullWrap.open,
+  #invWrap.open {
+    z-index:150!important;
     overflow:visible;
+    clip-path:none!important;
     transition:
       top 190ms cubic-bezier(.16,1,.3,1),
-      transform .45s cubic-bezier(.34,1.28,.64,1),
-      clip-path 0s linear .45s!important;
+      transform .45s cubic-bezier(.34,1.28,.64,1)!important;
     will-change:top,transform;
   }
 
@@ -55,20 +58,6 @@
 
   #invWrap {
     height:calc(var(--inv-h) + 50px);
-  }
-
-  #menuPullWrap:not(.open),
-  #invWrap:not(.open) {
-    clip-path:inset(calc(100% - 50px) 0 0 0);
-  }
-
-  #menuPullWrap.open,
-  #invWrap.open {
-    clip-path:inset(0);
-    transition:
-      top 190ms cubic-bezier(.16,1,.3,1),
-      transform .45s cubic-bezier(.34,1.28,.64,1),
-      clip-path 0s linear 0s!important;
   }
 
   #menuPullTab,
@@ -93,7 +82,7 @@
     top:calc(27vh - 62px)!important;
   }
 
-  /* Top-down table edge: use the same cabinet seam as the drawer origin. */
+  /* Top-down table edge: the drawer origin and backing edge share the same seam. */
   body[data-table-view="inspect"]:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::before,
   body[data-table-view="inspect"]:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::after {
     transform:translate3d(0,calc(12vh - 78px),0);
