@@ -50,7 +50,7 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%,-50%);
-  font: 800 clamp(7px,1.05vw,11px)/1 system-ui,Segoe UI,sans-serif;
+  font: 800 clamp(10px,1.35vw,15px)/1 system-ui,Segoe UI,sans-serif;
   letter-spacing: .1em;
   text-transform: uppercase;
   text-align: center;
@@ -170,7 +170,7 @@ body.main-menu-active .table-tools {
   .table-tool-scoring { grid-column:2; }
 
   .table-tool-label {
-    font-size:clamp(7px,2.25vw,9px);
+    font-size:clamp(9px,3vw,12px);
   }
 
   body[data-table-view="inspect"]:not(.mp-game-active):not(.main-menu-active) .table-tools {
