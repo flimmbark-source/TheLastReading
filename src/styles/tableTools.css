@@ -87,7 +87,6 @@
 .table-tool-abilities::after {
   inset: 7% 13% 15% 3%;
   background:
-    linear-gradient(90deg,transparent 44%,rgba(91,49,20,.3) 45% 47%,transparent 48%),
     repeating-linear-gradient(to bottom,transparent 0 14%,rgba(90,55,24,.2) 15% 16%),
     linear-gradient(145deg,#efe1b7,#c5a46a);
   transform: rotate(-2deg);
@@ -141,7 +140,7 @@ body[data-table-view="inspect"]:not(.mp-game-active):not(.main-menu-active) .tab
 
 body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .table-tools {
   transform:
-    translate3d(-50%,calc(18vh + 28px - 100% - 8px),0)
+    translate3d(-50%,calc(18vh + 42px - 100% - 8px),0)
     perspective(760px)
     rotateX(10deg)
     scale(.838,.82);
@@ -180,7 +179,7 @@ body.main-menu-active .table-tools {
 
   body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .table-tools {
     transform:
-      translate3d(-50%,calc(31vh - 124px - 100% - 4px),0)
+      translate3d(-50%,calc(31vh - 112px - 100% - 4px),0)
       perspective(620px)
       rotateX(9deg)
       scale(.888,.84);
