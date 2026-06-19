@@ -58,3 +58,135 @@
 #abilitiesPullDesk td{padding:3px 5px!important;vertical-align:top!important;white-space:normal!important}
 #abilitiesPullDesk td:first-child{width:86px!important;font-weight:700!important;white-space:nowrap!important;color:#3a1a06!important}
 #menuPullDesk #settingsPanel{max-width:min(92vw,300px)!important;gap:9px!important}
+
+/* Mobile hanging cabinet. The existing Menu and Archives controls become the doors,
+   so their original drawer behavior remains intact. */
+@media(max-width:640px){
+  body:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::before{
+    content:"";
+    position:fixed;
+    top:6px;
+    left:8px;
+    right:8px;
+    height:72px;
+    z-index:145;
+    pointer-events:none;
+    border:1px solid #765029;
+    border-radius:5px;
+    background:
+      radial-gradient(circle at 50% 43%,rgba(191,132,48,.65) 0 3px,transparent 4px),
+      radial-gradient(ellipse at 50% 43%,transparent 0 12px,rgba(112,72,28,.68) 13px 14px,transparent 15px),
+      linear-gradient(90deg,transparent 0 46%,rgba(112,70,29,.42) 46.5% 47%,transparent 47.5% 52.5%,rgba(112,70,29,.42) 53% 53.5%,transparent 54%),
+      linear-gradient(180deg,#4a2a14 0 10%,#2d180d 11% 88%,#1d0f09 89% 100%);
+    box-shadow:
+      0 8px 16px rgba(0,0,0,.58),
+      inset 0 0 0 3px rgba(27,13,7,.74),
+      inset 0 1px rgba(211,158,81,.18);
+  }
+
+  body:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::after{
+    content:"";
+    position:fixed;
+    top:0;
+    left:27px;
+    right:27px;
+    height:11px;
+    z-index:144;
+    pointer-events:none;
+    border-left:2px solid rgba(113,75,34,.8);
+    border-right:2px solid rgba(113,75,34,.8);
+    background:linear-gradient(90deg,transparent 0 49%,rgba(102,67,30,.65) 49% 51%,transparent 51%);
+  }
+
+  #menuPullTab,
+  #invTab{
+    top:calc(var(--tlr-drawer-h) + 16px)!important;
+    width:calc(50vw - 47px)!important;
+    height:50px!important;
+    margin:0!important;
+    padding:0!important;
+    border:1px solid #79512a!important;
+    border-radius:3px!important;
+    background:
+      linear-gradient(90deg,rgba(255,255,255,.025),transparent 14%,transparent 86%,rgba(0,0,0,.2)),
+      linear-gradient(160deg,#3b2111,#211108)!important;
+    box-shadow:
+      inset 0 0 0 4px #29150b,
+      inset 0 0 0 5px rgba(121,80,40,.5),
+      0 4px 9px rgba(0,0,0,.46)!important;
+    color:transparent!important;
+    font-size:0!important;
+    line-height:1!important;
+    cursor:pointer!important;
+    touch-action:manipulation!important;
+    transition:filter 130ms ease,transform 130ms ease!important;
+  }
+
+  #menuPullTab{
+    left:14px!important;
+    right:auto!important;
+  }
+
+  #invTab{
+    top:calc(var(--inv-h) + 16px)!important;
+    left:auto!important;
+    right:14px!important;
+  }
+
+  #menuPullTab::before,
+  #invTab::before{
+    position:absolute;
+    left:11px;
+    right:11px;
+    top:17px;
+    height:17px;
+    border:1px solid #b17a35;
+    border-radius:2px;
+    background:linear-gradient(180deg,#725022,#4a2e12);
+    box-shadow:inset 0 0 0 1px rgba(24,12,6,.72),0 1px 2px rgba(0,0,0,.65);
+    color:#efd596;
+    font:700 8px/17px Georgia,serif;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    text-align:center;
+    text-shadow:0 1px 1px #000;
+  }
+
+  #menuPullTab::before{content:"Menu"}
+  #invTab::before{content:"Archives"}
+
+  #menuPullTab::after,
+  #invTab::after{
+    content:"";
+    position:absolute;
+    top:37px;
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:#bd8240;
+    border:1px solid #4b2b12;
+    box-shadow:0 1px 2px rgba(0,0,0,.7);
+  }
+
+  #menuPullTab::after{right:8px}
+  #invTab::after{left:8px}
+
+  #menuPullTab:hover,#menuPullTab:focus-visible,
+  #invTab:hover,#invTab:focus-visible{
+    filter:brightness(1.16);
+  }
+
+  #menuPullTab:active,#invTab:active{
+    transform:translateY(1px);
+    filter:brightness(.96);
+  }
+
+  body.mp-game-active #menuPullTab,
+  body.mp-game-active #invTab,
+  body.attic-active #menuPullTab,
+  body.attic-active #invTab,
+  body.main-menu-active #menuPullTab,
+  body.main-menu-active #invTab{
+    display:none!important;
+  }
+}
