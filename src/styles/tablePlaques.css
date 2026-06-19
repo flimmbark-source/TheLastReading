@@ -152,7 +152,7 @@ body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .scor
     gap: 5px 8px;
   }
 
-  body:not(.mp-game-active):not(..main-menu-active) .score-stack .reserve-pill { grid-area: reserve; }
+  body:not(.mp-game-active):not(.main-menu-active) .score-stack .reserve-pill { grid-area: reserve; }
   body:not(.mp-game-active):not(.main-menu-active) .score-stack .score-pill { grid-area: score; }
   body:not(.mp-game-active):not(.main-menu-active) .score-stack .th-pill-wrap { grid-area: threshold; }
   body:not(.mp-game-active):not(.main-menu-active) .score-stack .discards-pill { grid-area: discards; }
