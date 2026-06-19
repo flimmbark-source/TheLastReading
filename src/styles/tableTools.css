@@ -1,4 +1,4 @@
-/* Physical Scoring and Abilities references aligned with the live status plaques. */
+/* Physical Scoring and Abilities references aligned above the live status plaques. */
 
 .table-tools {
   position: fixed;
@@ -24,7 +24,6 @@
   aspect-ratio: 18 / 7;
   border: 0;
   padding: 0;
-  color: #e7cf96;
   background: transparent;
   pointer-events: auto;
   cursor: pointer;
@@ -47,20 +46,17 @@
 
 .table-tool-label {
   position: absolute;
-  z-index: 3;
-  left: 34%;
-  right: 7%;
-  top: 39%;
-  transform: translateY(-50%);
+  z-index: 4;
+  left: 50%;
+  bottom: 10%;
+  transform: translateX(-50%);
   font: 800 clamp(7px,1.05vw,11px)/1 system-ui,Segoe UI,sans-serif;
   letter-spacing: .1em;
   text-transform: uppercase;
   text-align: center;
-  color: #e3bd6b;
-  text-shadow: 0 2px 3px rgba(0,0,0,.88);
-  opacity: 1;
   white-space: nowrap;
   pointer-events: none;
+  text-shadow: 0 2px 3px rgba(0,0,0,.82);
 }
 
 .table-tool-abilities {
@@ -71,67 +67,94 @@
   grid-column: 4;
 }
 
+/* Abilities remains a layered parchment object, only enlarged to pill dimensions. */
 .table-tool-abilities::before,
-.table-tool-scoring::before {
+.table-tool-abilities::after {
   content: "";
   position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: url('../assets/ui/status_plaque_frame.svg') center / 100% 100% no-repeat;
-  filter: drop-shadow(0 7px 8px rgba(0,0,0,.42));
+  border: 1px solid rgba(91,55,21,.8);
+  box-shadow: 0 7px 12px rgba(0,0,0,.48);
 }
 
-.table-tool-abilities::after,
-.table-tool-scoring::after {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  left: 6.9%;
-  top: 24%;
-  width: 21.2%;
-  aspect-ratio: 1;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: contain;
+.table-tool-abilities::before {
+  inset: 13% 7% 8% 11%;
+  background:
+    repeating-linear-gradient(to bottom,transparent 0 13%,rgba(90,55,24,.18) 14% 15%),
+    linear-gradient(145deg,#e7d7a9,#b8985f);
+  transform: rotate(3deg);
 }
 
 .table-tool-abilities::after {
-  background-image:
-    linear-gradient(145deg,rgba(239,225,183,.92),rgba(181,145,88,.92));
-  border: 1px solid rgba(91,55,21,.8);
-  box-shadow: inset 0 0 0 2px rgba(76,43,18,.2);
-  transform: rotate(-4deg);
-}
-
-.table-tool-scoring::after {
+  inset: 7% 13% 15% 3%;
   background:
-    linear-gradient(90deg,rgba(255,255,255,.05),transparent 20%),
-    linear-gradient(145deg,#4a2d1a,#1b0d08);
-  border: 1px solid #8a6332;
-  box-shadow: inset 3px 0 rgba(121,84,43,.28);
-  transform: rotate(2deg);
+    linear-gradient(90deg,transparent 44%,rgba(91,49,20,.3) 45% 47%,transparent 48%),
+    repeating-linear-gradient(to bottom,transparent 0 14%,rgba(90,55,24,.2) 15% 16%),
+    linear-gradient(145deg,#efe1b7,#c5a46a);
+  transform: rotate(-2deg);
 }
 
-.table-tool-mark {
-  position: absolute;
-  z-index: 2;
-  left: 13%;
-  top: 38%;
-  width: 9%;
-  aspect-ratio: 1;
-  pointer-events: none;
+.table-tool-abilities .table-tool-label {
+  color:#4b2a12;
+  text-shadow:0 1px rgba(255,240,190,.32);
 }
 
 .table-tool-abilities .table-tool-mark {
-  border-top: 1px solid rgba(93,48,20,.72);
-  border-bottom: 1px solid rgba(93,48,20,.52);
-  transform: rotate(-4deg);
+  position:absolute;
+  z-index:3;
+  left:38%;
+  top:32%;
+  width:24%;
+  height:18%;
+  border-top:2px solid rgba(93,48,20,.65);
+  border-bottom:1px solid rgba(93,48,20,.48);
+  transform:rotate(-4deg);
+  pointer-events:none;
+}
+
+/* Scoring remains a physical dark book, only enlarged to pill dimensions. */
+.table-tool-scoring::before {
+  content:"";
+  position:absolute;
+  inset:7% 5% 8% 8%;
+  border:2px solid #76552e;
+  border-radius:4px 9px 9px 4px;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.05),transparent 18%),
+    linear-gradient(145deg,#352014,#170c08);
+  box-shadow:
+    0 8px 14px rgba(0,0,0,.58),
+    inset 5px 0 rgba(121,84,43,.26),
+    inset -4px 0 rgba(0,0,0,.32);
+}
+
+.table-tool-scoring::after {
+  content:"";
+  position:absolute;
+  z-index:-1;
+  right:2%;
+  top:16%;
+  bottom:15%;
+  width:78%;
+  border-radius:2px 8px 8px 2px;
+  background:repeating-linear-gradient(to bottom,#cdbd90 0 3px,#9e875b 4px);
+  box-shadow:0 4px 8px rgba(0,0,0,.42);
+}
+
+.table-tool-scoring .table-tool-label {
+  color:#d9bc7a;
 }
 
 .table-tool-scoring .table-tool-mark {
-  border: 1px solid #b28a4d;
-  transform: rotate(45deg);
-  box-shadow: inset 0 0 0 1px rgba(25,12,7,.82);
+  position:absolute;
+  z-index:3;
+  left:43%;
+  top:28%;
+  width:14%;
+  aspect-ratio:1;
+  border:1px solid #a67c42;
+  transform:rotate(45deg);
+  box-shadow:inset 0 0 0 2px rgba(25,12,7,.8);
+  pointer-events:none;
 }
 
 body[data-table-view="inspect"]:not(.mp-game-active):not(.main-menu-active) .table-tools {
@@ -149,32 +172,32 @@ body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .tabl
 
 #scoringPullWrap:not(.open) #scoringPullTab,
 #abilitiesPullWrap:not(.open) #abilitiesPullTab {
-  display: none !important;
+  display:none!important;
 }
 
 body.mp-game-active .table-tools,
 body.attic-active .table-tools,
 body.main-menu-active .table-tools {
-  display: none;
+  display:none;
 }
 
-@media (max-width: 700px) {
+@media(max-width:700px) {
   .table-tools {
-    top: 146px;
-    width: min(322px,calc(100vw - 24px));
-    grid-template-columns: repeat(2,minmax(0,1fr));
-    gap: 8px;
+    top:146px;
+    width:min(322px,calc(100vw - 24px));
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
   }
 
-  .table-tool-abilities { grid-column: 1; }
-  .table-tool-scoring { grid-column: 2; }
+  .table-tool-abilities { grid-column:1; }
+  .table-tool-scoring { grid-column:2; }
 
   .table-tool-label {
-    font-size: clamp(7px,2.25vw,9px);
+    font-size:clamp(7px,2.25vw,9px);
   }
 
   body[data-table-view="inspect"]:not(.mp-game-active):not(.main-menu-active) .table-tools {
-    transform: translate3d(-50%,calc(6vh + 30px - 100% - 5px),0);
+    transform:translate3d(-50%,calc(6vh + 30px - 100% - 5px),0);
   }
 
   body[data-table-view="seated"]:not(.mp-game-active):not(.main-menu-active) .table-tools {
@@ -186,9 +209,9 @@ body.main-menu-active .table-tools {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media(prefers-reduced-motion:reduce) {
   .table-tools,
   .table-tool {
-    transition: none;
+    transition:none;
   }
 }
