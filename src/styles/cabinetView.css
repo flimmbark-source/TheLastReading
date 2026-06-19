@@ -1,5 +1,36 @@
 /* Keep the mobile Menu and Archives cabinet attached to the back edge of the table. */
 @media (max-width:640px) {
+  /* Top-down cabinet backing. It closes the gap to the top of the screen. */
+  body:not(.mp-game-active):not(.attic-active):not(.main-menu-active)::before {
+    content:"";
+    position:fixed;
+    top:0;
+    left:8px;
+    right:8px;
+    height:max(0px,calc(12vh - 72px));
+    z-index:140;
+    pointer-events:none;
+    border-left:1px solid #684522;
+    border-right:1px solid #684522;
+    background:
+      linear-gradient(90deg,rgba(255,255,255,.025),transparent 18%,transparent 82%,rgba(0,0,0,.2)),
+      repeating-linear-gradient(90deg,rgba(115,73,31,.08) 0 1px,transparent 1px 44px),
+      linear-gradient(180deg,#3c2111,#241108);
+    box-shadow:
+      inset 3px 0 rgba(20,10,5,.45),
+      inset -3px 0 rgba(20,10,5,.45),
+      0 8px 18px rgba(0,0,0,.34);
+    transform:scaleY(0);
+    transform-origin:50% 100%;
+    transition:transform 190ms cubic-bezier(.16,1,.3,1);
+    will-change:transform;
+    backface-visibility:hidden;
+  }
+
+  body[data-table-view="inspect"]:not(.mp-game-active):not(.attic-active):not(.main-menu-active)::before {
+    transform:scaleY(1);
+  }
+
   body:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::before,
   body:not(.mp-game-active):not(.attic-active):not(.main-menu-active) #tableStage::after {
     transition: transform 190ms cubic-bezier(.16,1,.3,1);
@@ -7,13 +38,32 @@
     backface-visibility: hidden;
   }
 
-  /* The drawer wrappers now begin at the cabinet's horizontal seam. */
+  /* The drawer wrappers begin at the cabinet seam. Closed drawers expose only their fronts. */
   #menuPullWrap,
   #invWrap {
+    overflow:visible;
     transition:
       top 190ms cubic-bezier(.16,1,.3,1),
       transform .45s cubic-bezier(.34,1.28,.64,1)!important;
-    will-change: top,transform;
+    will-change:top,transform;
+  }
+
+  #menuPullWrap {
+    height:calc(var(--tlr-drawer-h) + 50px);
+  }
+
+  #invWrap {
+    height:calc(var(--inv-h) + 50px);
+  }
+
+  #menuPullWrap:not(.open),
+  #invWrap:not(.open) {
+    clip-path:inset(calc(100% - 50px) 0 0 0);
+  }
+
+  #menuPullWrap.open,
+  #invWrap.open {
+    clip-path:inset(0);
   }
 
   #menuPullTab,
@@ -61,6 +111,7 @@
 }
 
 @media (prefers-reduced-motion:reduce) {
+  body::before,
   #tableStage::before,
   #tableStage::after,
   #menuPullWrap,
