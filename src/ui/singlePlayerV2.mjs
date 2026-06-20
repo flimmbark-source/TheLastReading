@@ -1,4 +1,6 @@
-// Phase 1 composition bridge plus Phase 2 Batch A art activation.
+import { installReferenceSheetAssets } from './referenceSheetAssets.mjs';
+
+// Phase 1 composition bridge plus Phase 2 reference-sheet reconstruction.
 // Reuses the existing live DOM and state; no gameplay state is duplicated.
 
 (function installSinglePlayerV2(target = window){
@@ -13,13 +15,14 @@
     const link=doc.createElement('link');
     link.id='single-player-v2-assets';
     link.rel='stylesheet';
-    link.href='src/styles/singlePlayerV2Assets.css?v=batch-a-1';
+    link.href='src/styles/singlePlayerV2Assets.css?v=reference-sheet-1';
     doc.head.appendChild(link);
   };
 
   const enable=()=>{
     doc.body?.classList.add('single-player-v2');
     ensureAssetLayer();
+    installReferenceSheetAssets(target);
   };
 
   const wrapLabel=(pill,label)=>{
