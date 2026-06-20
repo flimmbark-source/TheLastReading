@@ -46,3 +46,35 @@
     bottom: 14px !important;
   }
 }
+
+/* The exact sheet reconstruction owns its own geometry and must win over the
+   compact Phase 1 fallbacks above. */
+@media (max-width: 640px) {
+  body.single-player-v2.reference-sheet-ready {
+    --spv2-title-h:6.58dvh;
+    --spv2-hud-top:6.58dvh;
+    --spv2-hud-h:16.39dvh;
+    --spv2-slot-w:15.2vw;
+    --spv2-slot-h:14.95dvh;
+  }
+
+  body.single-player-v2.reference-sheet-ready #menuBtn,
+  body.single-player-v2.reference-sheet-ready .actions button {
+    position:relative;
+    color:transparent !important;
+    font-size:0 !important;
+  }
+
+  body.single-player-v2.reference-sheet-ready #menuBtn::before,
+  body.single-player-v2.reference-sheet-ready .actions button::before {
+    content:none !important;
+  }
+
+  body.single-player-v2.reference-sheet-ready .handDock::before {
+    z-index:0;
+  }
+
+  body.single-player-v2.reference-sheet-ready .handDock .hand {
+    z-index:2;
+  }
+}
