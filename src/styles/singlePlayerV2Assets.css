@@ -1,314 +1,96 @@
-/* Exact reconstruction layer cut from the approved reference sheet.
-   The sheet is loaded at runtime into --tlr-reference-sheet. Existing Phase 1
-   CSS remains underneath as a fallback if the artwork cannot be decoded. */
+/* Stable Phase 2 shell layer.
+   These are temporary vector placeholders until the reference artwork is
+   rebuilt as genuinely separate transparent assets. */
 
 @media (max-width: 640px) {
-  body.single-player-v2.reference-sheet-ready {
-    --spv2-title-h: 6.58dvh;
-    --spv2-hud-top: 6.58dvh;
-    --spv2-hud-h: 16.39dvh;
-    --spv2-side: .43vw;
-    --spv2-slot-w: 15.2vw;
-    --spv2-slot-h: 14.95dvh;
-    background:#050403 !important;
+  body.single-player-v2 .score-stack {
+    background-color: #0d0a08;
+    background-image: url('/public/ui/single-player-v2/hud-frame.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border-color: transparent;
+    box-shadow: none;
   }
 
-  /* Exact table field extracted from the approved sheet. */
-  body.single-player-v2.reference-sheet-ready::before {
-    content:"";
-    position:fixed;
-    z-index:1;
-    left:0;
-    right:0;
-    top:22.73dvh;
-    height:55.5dvh;
-    pointer-events:none;
-    background-image:var(--tlr-reference-sheet);
-    background-repeat:no-repeat;
-    background-size:100vw 100dvh;
-    background-position:0 -22.73dvh;
+  body.single-player-v2 .reserve-pill {
+    background-image: url('/public/ui/single-player-v2/hud-reserve.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
   }
 
-  /* Exact title crop, transparent outside its own clipped layer. */
-  body.single-player-v2.reference-sheet-ready #titleWrap::before {
-    content:"";
-    position:absolute;
-    left:26.04vw;
-    top:1.08dvh;
-    width:48.35vw;
-    height:5.5dvh;
-    background-image:var(--tlr-reference-sheet);
-    background-repeat:no-repeat;
-    background-size:100vw 100dvh;
-    background-position:-26.04vw -1.08dvh;
-    filter:none;
+  body.single-player-v2 .score-stack .score-pill {
+    background-image: url('/public/ui/single-player-v2/hud-score.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    box-shadow: none;
   }
 
-  /* The HUD shell is the actual sheet crop. Live values are repainted over
-     small dark patches while the original borders, icons and labels remain. */
-  body.single-player-v2.reference-sheet-ready .score-stack {
-    top:6.58dvh;
-    left:.43vw;
-    right:1.49vw;
-    width:auto;
-    height:16.39dvh;
-    background-color:#090706;
-    background-image:var(--tlr-reference-sheet);
-    background-repeat:no-repeat;
-    background-size:100vw 100dvh;
-    background-position:-.43vw -6.58dvh;
-    border:0;
-    border-radius:2.1vw;
-    box-shadow:none;
-    overflow:hidden;
+  body.single-player-v2 .score-stack .threshold-pill {
+    background-image: url('/public/ui/single-player-v2/hud-threshold.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    box-shadow: none;
   }
 
-  body.single-player-v2.reference-sheet-ready .score-stack > .pill,
-  body.single-player-v2.reference-sheet-ready .score-stack > .th-pill-wrap {
-    border:0;
-    background:transparent !important;
-    box-shadow:none !important;
+  body.single-player-v2 .discards-pill {
+    background-image: url('/public/ui/single-player-v2/hud-discards.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
   }
 
-  body.single-player-v2.reference-sheet-ready .score-stack .pill {
-    isolation:isolate;
-    overflow:hidden;
-    padding:0;
+  body.single-player-v2 .spread-wrap::before {
+    border: 0;
+    background: url('/public/ui/single-player-v2/reading-circle.svg') center/contain no-repeat;
+    box-shadow: none;
   }
 
-  body.single-player-v2.reference-sheet-ready .score-stack .pill::before {
-    content:"";
-    position:absolute;
-    z-index:0;
-    left:17%;
-    right:12%;
-    top:38%;
-    height:39%;
-    border-radius:1.4vw;
-    background:rgba(8,7,7,.94);
-    box-shadow:0 0 1.8vw 1vw rgba(8,7,7,.94);
+  body.single-player-v2 .slot {
+    background-color: #100b08;
+    background-image: url('/public/ui/single-player-v2/spread-slot.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border-color: transparent;
   }
 
-  body.single-player-v2.reference-sheet-ready .reserve-pill::before {
-    background:rgba(8,14,22,.95);
-    box-shadow:0 0 1.8vw 1vw rgba(8,14,22,.95);
+  body.single-player-v2 .slot.empty::after {
+    content: none;
   }
 
-  body.single-player-v2.reference-sheet-ready .score-pill::before {
-    background:rgba(24,17,9,.94);
-    box-shadow:0 0 2vw 1.1vw rgba(24,17,9,.94);
+  body.single-player-v2 .slot.empty:hover,
+  body.single-player-v2 .slot.target {
+    background-image: url('/public/ui/single-player-v2/spread-slot.svg');
+    border-color: transparent;
+    box-shadow: 0 0 0 2px rgba(126,190,126,.62),0 0 20px rgba(106,181,112,.42),0 8px 20px rgba(0,0,0,.62);
   }
 
-  body.single-player-v2.reference-sheet-ready .threshold-pill::before {
-    left:12%;
-    right:10%;
-    background:rgba(18,13,29,.95);
-    box-shadow:0 0 2vw 1.1vw rgba(18,13,29,.95);
+  body.single-player-v2 .handDock {
+    background-color: transparent !important;
+    background-image: url('/public/ui/single-player-v2/hand-dock.svg') !important;
+    background-position: center bottom !important;
+    background-size: 100% auto !important;
+    background-repeat: no-repeat !important;
   }
 
-  body.single-player-v2.reference-sheet-ready .discards-pill::before {
-    background:rgba(8,7,7,.96);
-    box-shadow:0 0 1.8vw 1vw rgba(8,7,7,.96);
+  body.single-player-v2 #menuBtn,
+  body.single-player-v2 .actions button {
+    background-color: #15100d;
+    background-image: url('/public/ui/single-player-v2/action-secondary.svg');
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border-color: transparent;
+    box-shadow: none;
   }
 
-  body.single-player-v2.reference-sheet-ready .spv2-label {
-    opacity:0;
-    pointer-events:none;
-  }
-
-  body.single-player-v2.reference-sheet-ready .score-stack .pill b {
-    position:absolute;
-    z-index:2;
-    left:0;
-    right:0;
-    top:55%;
-    transform:translateY(-50%);
-    margin:0;
-    color:#f1eadf;
-    font:700 clamp(24px,7.7vw,36px)/1 Georgia,serif;
-    font-variant-numeric:tabular-nums;
-    letter-spacing:-.045em;
-    text-shadow:0 .25vw .7vw #000;
-  }
-
-  body.single-player-v2.reference-sheet-ready .score-stack .score-pill b {
-    color:#ffe5a2;
-    font-size:clamp(28px,8.8vw,41px);
-    text-shadow:0 0 1vw rgba(255,194,83,.55),0 .25vw .7vw #000;
-  }
-
-  body.single-player-v2.reference-sheet-ready .score-stack .threshold-pill b {
-    color:#d8c9ff;
-    font-size:clamp(28px,8.8vw,41px);
-    text-shadow:0 0 1vw rgba(155,116,230,.6),0 .25vw .7vw #000;
-  }
-
-  body.single-player-v2.reference-sheet-ready .spv2-threshold-progress {
-    z-index:4;
-    left:13%;
-    right:12%;
-    bottom:12%;
-    height:.78dvh;
-  }
-
-  /* Exact circular utility-button crops with larger transparent hit targets. */
-  body.single-player-v2.reference-sheet-ready #menuBtn,
-  body.single-player-v2.reference-sheet-ready .actions button {
-    background:transparent !important;
-    border:0 !important;
-    box-shadow:none !important;
-    overflow:visible;
-  }
-
-  body.single-player-v2.reference-sheet-ready #menuBtn::after,
-  body.single-player-v2.reference-sheet-ready .actions button::after {
-    content:"";
-    position:absolute;
-    inset:50% auto auto 50%;
-    width:9.15vw;
-    height:5.08dvh;
-    transform:translate(-50%,-50%);
-    border-radius:50%;
-    background-image:var(--tlr-reference-sheet);
-    background-repeat:no-repeat;
-    background-size:100vw 100dvh;
-    pointer-events:none;
-  }
-
-  body.single-player-v2.reference-sheet-ready #menuBtn::after {
-    background-position:-87.89vw -23.62dvh;
-  }
-
-  body.single-player-v2.reference-sheet-ready .actions button::after {
-    width:8.5vw;
-    height:4.9dvh;
-    background-position:-1.49vw -23.62dvh;
-  }
-
-  body.single-player-v2.reference-sheet-ready #menuBtn,
-  body.single-player-v2.reference-sheet-ready .actions {
-    top:23.62dvh;
-  }
-
-  /* Exact face-down card crop reused as the live five-slot spread. */
-  body.single-player-v2.reference-sheet-ready .spread-wrap {
-    z-index:12;
-    top:44.2dvh;
-    bottom:auto;
-    height:16.2dvh;
-    display:flex;
-    align-items:flex-start;
-    justify-content:center;
-  }
-
-  body.single-player-v2.reference-sheet-ready .spread-wrap::before {
-    content:none;
-  }
-
-  body.single-player-v2.reference-sheet-ready .spread {
-    min-height:16.2dvh;
-    padding:0 7vw;
-  }
-
-  body.single-player-v2.reference-sheet-ready .slot {
-    flex:0 0 var(--spv2-slot-w);
-    width:var(--spv2-slot-w);
-    height:var(--spv2-slot-h);
-    margin-left:-.7vw;
-    border:0;
-    border-radius:.85vw;
-    background-color:#0d0b09;
-    background-image:var(--tlr-reference-sheet);
-    background-repeat:no-repeat;
-    background-size:100vw 100dvh;
-    background-position:-41.66vw -44.2dvh;
-    box-shadow:0 .7dvh 1.4dvh rgba(0,0,0,.66);
-  }
-
-  body.single-player-v2.reference-sheet-ready .slot.empty::after { content:none; }
-  body.single-player-v2.reference-sheet-ready .slot.empty:hover,
-  body.single-player-v2.reference-sheet-ready .slot.target {
-    background-image:var(--tlr-reference-sheet);
-    box-shadow:0 0 0 2px rgba(126,190,126,.7),0 0 18px rgba(106,181,112,.5),0 .7dvh 1.4dvh rgba(0,0,0,.66);
-  }
-
-  /* The live hand covers the baked example hand. Only the exact lower rail is
-     exposed beneath it, keeping the source ornament and control silhouettes. */
-  body.single-player-v2.reference-sheet-ready .handDock {
-    z-index:26 !important;
-    height:31.5dvh;
-    bottom:0 !important;
-    background:linear-gradient(180deg,transparent 0 18%,rgba(5,4,3,.82) 45%,rgba(5,4,3,.97) 100%) !important;
-  }
-
-  body.single-player-v2.reference-sheet-ready .handDock::before {
-    content:"";
-    position:absolute;
-    z-index:-1;
-    left:0;
-    right:0;
-    bottom:0;
-    height:12.7dvh;
-    background-image:var(--tlr-reference-sheet);
-    background-repeat:no-repeat;
-    background-size:100vw 100dvh;
-    background-position:0 -87.3dvh;
-    pointer-events:none;
-  }
-
-  /* Exact lower controls. Existing buttons retain their handlers and aria. */
-  body.single-player-v2.reference-sheet-ready .spread-actions {
-    height:12.7dvh;
-    bottom:0;
-    padding:0;
-    align-items:flex-start;
-  }
-
-  body.single-player-v2.reference-sheet-ready #discardBtn,
-  body.single-player-v2.reference-sheet-ready #purgeBtn {
-    position:absolute;
-    top:1.5dvh;
-    width:14.05vw;
-    height:9.63dvh;
-    padding:0;
-    border:0;
-    border-radius:50%;
-    background-color:transparent;
-    background-image:var(--tlr-reference-sheet);
-    background-repeat:no-repeat;
-    background-size:100vw 100dvh;
-    font-size:0;
-  }
-
-  body.single-player-v2.reference-sheet-ready #discardBtn {
-    left:5.53vw;
-    background-position:-5.53vw -88.82dvh;
-  }
-
-  body.single-player-v2.reference-sheet-ready #purgeBtn {
-    right:5.21vw;
-    background-position:-80.32vw -88.82dvh;
-  }
-
-  body.single-player-v2.reference-sheet-ready .spread-actions::before {
-    content:"";
-    position:absolute;
-    left:38.94vw;
-    top:0;
-    width:22.66vw;
-    height:12.38dvh;
-    transform:none;
-    background-image:var(--tlr-reference-sheet);
-    background-repeat:no-repeat;
-    background-size:100vw 100dvh;
-    background-position:-38.94vw -87.32dvh;
-    pointer-events:none;
-  }
-
-  /* Existing cards always remain above the reconstructed shell. */
-  body.single-player-v2.reference-sheet-ready .hand,
-  body.single-player-v2.reference-sheet-ready .hand .card {
-    position:relative;
-    z-index:2;
+  body.single-player-v2 .spread-actions::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -3px;
+    width: 58px;
+    height: 58px;
+    transform: translateX(-50%);
+    background: url('/public/ui/single-player-v2/action-primary.svg') center/contain no-repeat;
+    pointer-events: none;
   }
 }
