@@ -23,29 +23,51 @@ function installHandIdleAnimation(target){
   target.__tlrHandIdleAnimationInstalled=true;
 
   let idleTimer=null;
+  let verticalGesture=null;
+  let releaseGuardRaf=null;
   let userLift=0;
   const activeHandPointers=new Set();
   const observedHands=new WeakSet();
 
   const handEl=()=>document.querySelector('.hand');
-  const liftCap=()=>target.innerWidth<640?30:38;
-  const clampUserLift=value=>Math.max(-liftCap(),Math.min(0,Number.isFinite(value)?value:0));
   const readLift=hand=>{
     if(!hand)return userLift;
     const raw=hand.style.getPropertyValue('--hand-lift-y')||getComputedStyle(hand).getPropertyValue('--hand-lift-y');
     const value=parseFloat(raw);
     return Number.isFinite(value)?value:userLift;
   };
-  const motionTransition=(idleDur,dragging=false)=>
-    `transform ${dragging?0:220}ms cubic-bezier(.2,.85,.25,1),rotate ${idleDur}ms ease-in-out,translate ${idleDur}ms ease-in-out`;
-  const setIdlePose=(hand,{x=0,y=0,rot=0,dur=300,dragging=false}={})=>{
+  const maxUpwardLift=()=>{
+    const dock=document.querySelector('.handDock');
+    const dockTop=dock?.getBoundingClientRect().top??target.innerHeight;
+    const safeTop=target.innerWidth<640?72:96;
+    return Math.max(30,dockTop-safeTop);
+  };
+  const clampUserLift=value=>Math.max(-maxUpwardLift(),Math.min(0,Number.isFinite(value)?value:0));
+  const writeUserLift=value=>{
+    const hand=handEl();
+    userLift=clampUserLift(value);
+    if(hand)hand.style.setProperty('--hand-lift-y',userLift.toFixed(1)+'px');
+  };
+  const setIdlePose=(hand,{x=0,y=0,rot=0,dur=300}={})=>{
     if(!hand)return;
-    hand.style.transition=motionTransition(dur,dragging);
-    hand.style.rotate=rot+'deg';
+    // Preserve the gesture controller's transform transition while also
+    // animating the independent idle translate/rotate properties.
+    hand.style.transition=`transform .22s cubic-bezier(.2,.85,.25,1),translate ${dur}ms ease-in-out,rotate ${dur}ms ease-in-out`;
     hand.style.translate=`${x}px ${y}px`;
+    hand.style.rotate=rot+'deg';
+  };
+  const clearIdleTimer=()=>{
+    if(idleTimer!==null){target.clearTimeout(idleTimer);idleTimer=null;}
+  };
+  const cancelReleaseGuard=()=>{
+    if(releaseGuardRaf!==null){target.cancelAnimationFrame(releaseGuardRaf);releaseGuardRaf=null;}
+  };
+  const scheduleIdle=delay=>{
+    clearIdleTimer();
+    idleTimer=target.setTimeout(handAnim,delay);
   };
   const ensureAnchor=hand=>{
-    if(!hand||activeHandPointers.size)return;
+    if(!hand||verticalGesture)return;
     const current=readLift(hand);
     if(Math.abs(current-userLift)>.1)hand.style.setProperty('--hand-lift-y',userLift.toFixed(1)+'px');
   };
@@ -59,21 +81,12 @@ function installHandIdleAnimation(target){
     observeHand(hand);
     return hand;
   };
-  const clearIdleTimer=()=>{
-    if(idleTimer!==null){target.clearTimeout(idleTimer);idleTimer=null;}
-  };
-  const scheduleIdle=delay=>{
-    clearIdleTimer();
-    idleTimer=target.setTimeout(handAnim,delay);
-  };
 
-  // Keep the legacy hook name, but neutralize only the temporary idle pose.
-  // The released --hand-lift-y is the user's persistent anchor.
-  const settleIdleToAnchor=(dur=240)=>{
+  // Neutralize only the temporary idle pose. The user's lift remains the base.
+  const settleIdleToAnchor=(dur=180)=>{
     const hand=currentHand();
     if(!hand)return;
-    ensureAnchor(hand);
-    setIdlePose(hand,{x:0,y:0,rot:0,dur,dragging:activeHandPointers.size>0});
+    setIdlePose(hand,{x:0,y:0,rot:0,dur});
   };
   target.__handDriftLiftToZero=settleIdleToAnchor;
 
@@ -85,54 +98,84 @@ function installHandIdleAnimation(target){
     if(activeHandPointers.size){scheduleIdle(240);return;}
     const rot=(Math.random()*3.2-1.6).toFixed(2);
     const tx=(Math.random()*6-3).toFixed(1);
-    // Drift equally above and below the user-selected anchor.
     const ty=(Math.random()*5-2.5).toFixed(1);
     const dur=900+Math.random()*500;
     setIdlePose(hand,{x:tx,y:ty,rot,dur});
-    const pause=2000+Math.random()*10000;
-    scheduleIdle(dur+pause);
+    scheduleIdle(dur+2000+Math.random()*10000);
   }
+
+  const updateVerticalGesture=clientY=>{
+    if(!verticalGesture||!Number.isFinite(clientY))return;
+    verticalGesture.lastY=clientY;
+    const desired=verticalGesture.startLift+(clientY-verticalGesture.startY);
+    // Downward travel is left to gestureHand so its flush gesture still works.
+    // Upward travel becomes the persistent user-oriented anchor.
+    if(desired<=0)writeUserLift(desired);
+    else userLift=0;
+  };
 
   document.addEventListener('pointerdown',event=>{
     const el=event.target instanceof Element?event.target:null;
     if(!el?.closest('#hand,.handDock,#handSwipeZone'))return;
-    const hand=currentHand();
-    userLift=clampUserLift(readLift(hand));
+
     activeHandPointers.add(event.pointerId);
     clearIdleTimer();
-    settleIdleToAnchor(140);
+    cancelReleaseGuard();
+    settleIdleToAnchor(120);
+
+    const startsInSwipeZone=!!el.closest('#handSwipeZone');
+    if(event.pointerType!=='mouse'&&startsInSwipeZone&&activeHandPointers.size===1){
+      const hand=currentHand();
+      userLift=clampUserLift(readLift(hand));
+      verticalGesture={
+        pointerId:event.pointerId,
+        startY:event.clientY,
+        lastY:event.clientY,
+        startLift:userLift,
+      };
+    }else if(activeHandPointers.size>1){
+      // A second finger means pinch; do not compete with pinch spacing.
+      verticalGesture=null;
+    }
   },true);
 
-  // gestureHand's pointermove listener was installed first, so this reads the
-  // updated lift after each drag frame without competing with the gesture.
   document.addEventListener('pointermove',event=>{
-    if(!activeHandPointers.has(event.pointerId))return;
-    const hand=currentHand();
-    userLift=clampUserLift(readLift(hand));
-  },true);
+    if(!verticalGesture||event.pointerId!==verticalGesture.pointerId)return;
+    updateVerticalGesture(event.clientY);
+  },{capture:true,passive:true});
+
+  const guardReleasedAnchor=()=>{
+    cancelReleaseGuard();
+    const started=performance.now();
+    const step=now=>{
+      const hand=currentHand();
+      if(hand)hand.style.setProperty('--hand-lift-y',userLift.toFixed(1)+'px');
+      // gestureHand's old 180ms correction can still be running. Outlast it.
+      if(now-started<240)releaseGuardRaf=target.requestAnimationFrame(step);
+      else releaseGuardRaf=null;
+    };
+    releaseGuardRaf=target.requestAnimationFrame(step);
+  };
 
   const endHandGesture=event=>{
-    if(!activeHandPointers.delete(event.pointerId))return;
-    const hand=currentHand();
-    userLift=clampUserLift(readLift(hand));
+    const wasVertical=verticalGesture&&event.pointerId===verticalGesture.pointerId;
+    if(wasVertical){
+      updateVerticalGesture(Number.isFinite(event.clientY)?event.clientY:verticalGesture.lastY);
+      verticalGesture=null;
+      writeUserLift(userLift);
+      guardReleasedAnchor();
+    }
+
+    activeHandPointers.delete(event.pointerId);
     if(activeHandPointers.size)return;
-
-    // Reassert after the other release handlers and again on the next frame.
-    // This prevents a stale reset animation from replacing the user anchor.
-    hand?.style.setProperty('--hand-lift-y',userLift.toFixed(1)+'px');
-    target.requestAnimationFrame(()=>{
-      const liveHand=currentHand();
-      if(liveHand)liveHand.style.setProperty('--hand-lift-y',userLift.toFixed(1)+'px');
-    });
-    if(hand)hand.style.transition=motionTransition(220,false);
-
-    // Let the released anchor become stable before resuming subtle motion.
     scheduleIdle(420);
   };
   document.addEventListener('pointerup',endHandGesture,true);
   document.addEventListener('pointercancel',endHandGesture,true);
 
+  target.addEventListener('resize',()=>writeUserLift(userLift));
   observeHand(handEl());
+  userLift=clampUserLift(readLift(handEl()));
   handAnim();
 }
 
