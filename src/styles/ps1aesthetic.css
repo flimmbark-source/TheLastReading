@@ -101,12 +101,18 @@ body {
   border-color: #496946 !important;
 }
 
-/* ── Stop iOS Safari from competing with the JS spring after swipe release ─
-   touch-action:none on the swipe zone tells the browser to hand ALL touch
-   handling to pointer events (JS). Without it, iOS fires its own post-gesture
-   scroll/momentum animation on the body compositor thread right after pointerup,
-   starving requestAnimationFrame so runLiftMomentum never gets a chance to
-   spring the hand back to its resting position. */
+/* ── Kill the CSS transition on .hand so the JS lift system owns all motion ──
+   mobile.css sets transition:transform .22s on .hand. On Android Chrome, rapidly
+   updating a CSS custom property (--hand-lift-y) that drives a transitioned
+   property causes the browser to restart each transition from the CSS class
+   default (0px) rather than the current visual position, so the hand never
+   visually lifts and snaps back to zero on release.
+   gestureHand.mjs's runLiftMomentum already provides a smooth rAF-driven
+   settle animation — the CSS transition is redundant and harmful here. */
+.hand {
+  transition: none !important;
+}
+
 #handSwipeZone {
   touch-action: none;
 }
