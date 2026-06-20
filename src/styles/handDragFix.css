@@ -1,3 +1,9 @@
+/* Keep the hand above the score pills (z-index:25) while leaving references,
+   modals, and tutorials above it. */
+.handDock {
+  z-index: 26 !important;
+}
+
 /* Active hand movement must follow the pointer directly.
    Release settling and idle motion resume when these classes are removed. */
 .hand.hand-scroll-dragging {
