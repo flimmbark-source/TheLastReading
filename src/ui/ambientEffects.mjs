@@ -21,19 +21,67 @@ export function installAmbientEffects(target = window){
 function installHandIdleAnimation(target){
   if(target.__tlrHandIdleAnimationInstalled)return;
   target.__tlrHandIdleAnimationInstalled=true;
-  (function handAnim(){
-    const hand=document.querySelector('.hand');
+
+  let idleTimer=null;
+  let gestureActive=false;
+
+  const handEl=()=>document.querySelector('.hand');
+  const setIdlePose=(hand,{x=0,y=0,rot=0,dur=300}={})=>{
     if(!hand)return;
+    hand.style.transition=`rotate ${dur}ms ease-in-out,translate ${dur}ms ease-in-out`;
+    hand.style.rotate=rot+'deg';
+    hand.style.translate=`${x}px ${y}px`;
+  };
+  const clearIdleTimer=()=>{
+    if(idleTimer!==null){target.clearTimeout(idleTimer);idleTimer=null;}
+  };
+  const scheduleIdle=delay=>{
+    clearIdleTimer();
+    idleTimer=target.setTimeout(handAnim,delay);
+  };
+
+  // Keep the legacy hook name for callers, but only settle the temporary idle
+  // offset. The user's --hand-lift-y remains the persistent vertical anchor.
+  const settleIdleToAnchor=(dur=240)=>{
+    const hand=handEl();
+    if(!hand)return;
+    setIdlePose(hand,{x:0,y:0,rot:0,dur});
+  };
+  target.__handDriftLiftToZero=settleIdleToAnchor;
+
+  function handAnim(){
+    idleTimer=null;
+    const hand=handEl();
+    if(!hand)return;
+    if(gestureActive){scheduleIdle(240);return;}
     const rot=(Math.random()*3.2-1.6).toFixed(2);
     const tx=(Math.random()*6-3).toFixed(1);
     const ty=(Math.random()*5).toFixed(1);
     const dur=900+Math.random()*500;
-    hand.style.transition=`rotate ${dur}ms ease-in-out,translate ${dur}ms ease-in-out`;
-    hand.style.rotate=rot+'deg';
-    hand.style.translate=`${tx}px ${ty}px`;
+    setIdlePose(hand,{x:tx,y:ty,rot,dur});
     const pause=2000+Math.random()*10000;
-    setTimeout(handAnim,dur+pause);
-  })();
+    scheduleIdle(dur+pause);
+  }
+
+  document.addEventListener('pointerdown',event=>{
+    const el=event.target instanceof Element?event.target:null;
+    if(!el?.closest('#hand,.handDock,#handSwipeZone'))return;
+    gestureActive=true;
+    clearIdleTimer();
+    settleIdleToAnchor(140);
+  },true);
+
+  const endHandGesture=()=>{
+    if(!gestureActive)return;
+    gestureActive=false;
+    // Let the released user lift become visually stable before the idle motion
+    // resumes around that new anchor.
+    scheduleIdle(420);
+  };
+  document.addEventListener('pointerup',endHandGesture,true);
+  document.addEventListener('pointercancel',endHandGesture,true);
+
+  handAnim();
 }
 
 function installAmbientMotes(target){
@@ -70,9 +118,9 @@ function installAmbientMotes(target){
 
   function loop(){
     if(!document.hidden)makeMote(false);
-    setTimeout(loop,(isMobile()?1300:850)+Math.random()*(isMobile()?1800:1500));
+    target.setTimeout(loop,(isMobile()?1300:850)+Math.random()*(isMobile()?1800:1500));
   }
 
-  for(let i=0;i<(isMobile()?5:7);i++)setTimeout(()=>makeMote(true),i*160);
+  for(let i=0;i<(isMobile()?5:7);i++)target.setTimeout(()=>makeMote(true),i*160);
   loop();
 }
