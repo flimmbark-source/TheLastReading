@@ -106,27 +106,37 @@ body {
    sinking out of frame. Lifting it reveals the table background below, giving
    the PS1 "cards floating in the scene" feel (cf. Inscryption).
    Three things move together: the dock itself, the swipe-capture zone that
-   sits just above it, and body's bottom padding that keeps the spread clear. */
-:root { --hand-float: 36px; }
+   sits just above it, and body's bottom padding that keeps the spread clear.
+   Direct px values are used instead of a CSS variable because var() inside
+   !important can misbehave on some mobile browsers. */
 
 .handDock {
-  bottom: var(--hand-float) !important;
+  bottom: 36px !important;
   background: linear-gradient(transparent, rgba(0,0,0,.70)) !important;
 }
 .hand-swipe-zone {
-  bottom: calc(197px + var(--hand-float)) !important;
+  bottom: 233px !important; /* 197px dock + 36px float */
 }
 body {
-  padding-bottom: calc(202px + var(--hand-float)) !important;
+  padding-bottom: 238px !important; /* 202px + 36px */
 }
 
 @media (max-width: 640px) {
-  :root { --hand-float: 18px; }
+  .handDock {
+    bottom: 24px !important;
+  }
   .hand-swipe-zone {
-    bottom: calc(152px + var(--hand-float)) !important;
+    bottom: 176px !important; /* 152px dock + 24px float */
   }
   body {
-    padding-bottom: calc(157px + var(--hand-float)) !important;
+    padding-bottom: 181px !important; /* 157px + 24px */
+  }
+
+  /* ── Re-enable candle glow on mobile (performance.css disables it) ── */
+  #roomAmbient {
+    animation: candleFlicker 7.3s ease-in-out infinite !important;
+    opacity: 0.86 !important;
+    transform: none !important;
   }
 }
 
