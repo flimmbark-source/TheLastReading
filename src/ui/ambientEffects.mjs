@@ -24,6 +24,8 @@ function installHandIdleAnimation(target){
 
   let idleTimer=null;
   let verticalGesture=null;
+  let dragMoveRaf=null;
+  let pendingDragY=null;
   let releaseGuardRaf=null;
   let userLift=0;
   const activeHandPointers=new Set();
@@ -68,6 +70,10 @@ function installHandIdleAnimation(target){
   };
   const clearIdleTimer=()=>{
     if(idleTimer!==null){target.clearTimeout(idleTimer);idleTimer=null;}
+  };
+  const cancelDragMove=()=>{
+    if(dragMoveRaf!==null){target.cancelAnimationFrame(dragMoveRaf);dragMoveRaf=null;}
+    pendingDragY=null;
   };
   const cancelReleaseGuard=()=>{
     if(releaseGuardRaf!==null){target.cancelAnimationFrame(releaseGuardRaf);releaseGuardRaf=null;}
@@ -124,12 +130,27 @@ function installHandIdleAnimation(target){
     else writeUserLift(0);
   };
 
+  const scheduleVerticalGestureUpdate=clientY=>{
+    pendingDragY=clientY;
+    if(dragMoveRaf!==null)return;
+    // gestureHand registered its pointermove listener first and schedules its own
+    // rAF first. This rAF therefore runs afterward in the same frame, ensuring
+    // the persistent user anchor is the final vertical value before paint.
+    dragMoveRaf=target.requestAnimationFrame(()=>{
+      dragMoveRaf=null;
+      const y=pendingDragY;
+      pendingDragY=null;
+      updateVerticalGesture(y);
+    });
+  };
+
   document.addEventListener('pointerdown',event=>{
     const el=event.target instanceof Element?event.target:null;
     if(!el?.closest('#hand,.handDock,#handSwipeZone'))return;
 
     activeHandPointers.add(event.pointerId);
     clearIdleTimer();
+    cancelDragMove();
     cancelReleaseGuard();
     settleIdleToAnchor(120);
 
@@ -151,7 +172,7 @@ function installHandIdleAnimation(target){
 
   document.addEventListener('pointermove',event=>{
     if(!verticalGesture||event.pointerId!==verticalGesture.pointerId)return;
-    updateVerticalGesture(event.clientY);
+    scheduleVerticalGestureUpdate(event.clientY);
   },{capture:true,passive:true});
 
   const guardReleasedAnchor=()=>{
@@ -169,7 +190,9 @@ function installHandIdleAnimation(target){
   const endHandGesture=event=>{
     const wasVertical=verticalGesture&&event.pointerId===verticalGesture.pointerId;
     if(wasVertical){
-      updateVerticalGesture(Number.isFinite(event.clientY)?event.clientY:verticalGesture.lastY);
+      const finalY=Number.isFinite(event.clientY)?event.clientY:(pendingDragY??verticalGesture.lastY);
+      cancelDragMove();
+      updateVerticalGesture(finalY);
       verticalGesture=null;
       writeUserLift(userLift);
       guardReleasedAnchor();
