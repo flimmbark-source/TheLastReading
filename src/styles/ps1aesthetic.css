@@ -142,6 +142,19 @@ body {
     padding-bottom: 181px !important; /* 157px + 24px */
   }
 
+  /* ── CSS-owned snap-back: guarantee the hand returns to rest after any drag ──
+     gestureHand.mjs adds hand-scroll-dragging while a swipe is live and removes
+     it on pointerup, so the :not() selector flips exactly at release.
+     When not dragging: CSS pins the hand at translateY(0) with a short ease-out,
+     bypassing the JS spring entirely so the hand reliably snaps back regardless
+     of rAF timing or scroll-competing behavior on the device.
+     When dragging: our rule doesn't match, so mobile.css's
+     translateY(var(--hand-lift-y)) is in full control for live gesture tracking. */
+  .hand:not(.hand-scroll-dragging) {
+    transform: translateY(0) !important;
+    transition: transform 0.22s ease-out;
+  }
+
   /* ── Re-enable candle glow on mobile (performance.css disables it) ── */
   #roomAmbient {
     animation: candleFlicker 7.3s ease-in-out infinite !important;
