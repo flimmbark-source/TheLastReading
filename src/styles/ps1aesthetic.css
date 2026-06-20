@@ -71,12 +71,13 @@ body {
 }
 
 /* ── Deepen card backgrounds (Inscryption-dark) ── */
-.card {
+/* Exclude .card.photo — those use background-image sprite sheets */
+.card:not(.photo) {
   background: linear-gradient(165deg, #160e07, #0b0301) !important;
   border-color: #362310 !important;
   box-shadow: 0 6px 18px rgba(0,0,0,.72) !important;
 }
-.card.major { border-color: #4f3413 !important; }
+.card.major:not(.photo) { border-color: #4f3413 !important; }
 
 /* ── Darker art field ── */
 .art {
