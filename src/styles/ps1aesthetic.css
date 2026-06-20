@@ -20,22 +20,6 @@ html::before {
   z-index: 9996;
 }
 
-/* ── CRT scanlines ── */
-html::after {
-  content: '';
-  position: fixed;
-  top: 0; right: 0; bottom: 0; left: 0;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent 3px,
-    rgba(0,0,0,.10) 3px,
-    rgba(0,0,0,.10) 4px
-  );
-  pointer-events: none;
-  z-index: 9997;
-}
-
 /* ── Whole-screen flicker ── */
 @keyframes ps1Flicker {
   0%,91%,100% { opacity: 1    }
