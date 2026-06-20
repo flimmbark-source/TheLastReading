@@ -3,7 +3,7 @@
 // generated artwork without approximating it with hand-authored vectors.
 
 const PARTS = [0, 1, 2, 3].map(index =>
-  `public/ui/single-player-v2/reference-sheet/part-${String(index).padStart(2, '0')}.txt`
+  `/ui/single-player-v2/reference-sheet/part-${String(index).padStart(2, '0')}.txt`
 );
 
 let objectUrl = null;
