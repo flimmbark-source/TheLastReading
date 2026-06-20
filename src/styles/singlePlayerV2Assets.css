@@ -1,77 +1,58 @@
-/* Phase 2 final-art replacement layer.
-   Do not load this file until the referenced assets exist and Batch A is approved. */
+/* Phase 2 Batch A asset replacement layer.
+   Batch B surfaces intentionally remain on Phase 1 CSS fallbacks. */
 
 @media (max-width: 640px) {
-  body.single-player-v2 {
-    background-color: #0d0907;
-    background-image: url('/ui/single-player-v2/table-bg.webp');
-    background-position: center top;
-    background-size: cover;
-    background-repeat: no-repeat;
-  }
-
-  body.single-player-v2 .spread-wrap::before {
-    border: 0;
-    background: url('/ui/single-player-v2/reading-circle.png') center/contain no-repeat;
-    box-shadow: none;
-  }
-
   body.single-player-v2 .score-stack {
     background-color: #0d0a08;
-    background-image: url('/ui/single-player-v2/hud-frame.png');
+    background-image: url('/ui/single-player-v2/hud-frame.svg');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     border-color: transparent;
-  }
-
-  body.single-player-v2 .reserve-pill {
-    background-image: url('/ui/single-player-v2/hud-reserve.png');
-    background-size: 100% 100%;
+    box-shadow: none;
   }
 
   body.single-player-v2 .score-stack .score-pill {
-    background-image: url('/ui/single-player-v2/hud-score.png');
+    background-image: url('/ui/single-player-v2/hud-score.svg');
     background-size: 100% 100%;
+    background-repeat: no-repeat;
+    box-shadow: none;
   }
 
   body.single-player-v2 .score-stack .threshold-pill {
-    background-image: url('/ui/single-player-v2/hud-threshold.png');
+    background-image: url('/ui/single-player-v2/hud-threshold.svg');
     background-size: 100% 100%;
-  }
-
-  body.single-player-v2 .discards-pill {
-    background-image: url('/ui/single-player-v2/hud-discards.png');
-    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    box-shadow: none;
   }
 
   body.single-player-v2 .slot {
     background-color: #100b08;
-    background-image: url('/ui/single-player-v2/spread-slot.png');
+    background-image: url('/ui/single-player-v2/spread-slot.svg');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     border-color: transparent;
   }
 
-  body.single-player-v2 .handDock {
-    background-color: transparent !important;
-    background-image: url('/ui/single-player-v2/hand-dock.png') !important;
-    background-position: center bottom !important;
-    background-size: 100% auto !important;
-    background-repeat: no-repeat !important;
+  body.single-player-v2 .slot.empty::after {
+    content: none;
   }
 
-  body.single-player-v2 .spv2-action-primary {
-    background-image: url('/ui/single-player-v2/action-primary.png');
-    background-size: 100% 100%;
+  body.single-player-v2 .slot.empty:hover,
+  body.single-player-v2 .slot.target {
+    background-image: url('/ui/single-player-v2/spread-slot.svg');
+    border-color: transparent;
+    box-shadow: 0 0 0 2px rgba(126,190,126,.62),0 0 20px rgba(106,181,112,.42),0 8px 20px rgba(0,0,0,.62);
   }
 
-  body.single-player-v2 .spv2-action-secondary {
-    background-image: url('/ui/single-player-v2/action-secondary.png');
-    background-size: 100% 100%;
-  }
-
-  body.single-player-v2 .spv2-badge {
-    background-image: url('/ui/single-player-v2/badge-gem.png');
-    background-size: 100% 100%;
+  body.single-player-v2 .spread-actions::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -3px;
+    width: 58px;
+    height: 58px;
+    transform: translateX(-50%);
+    background: url('/ui/single-player-v2/action-primary.svg') center/contain no-repeat;
+    pointer-events: none;
   }
 }
