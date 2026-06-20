@@ -3,10 +3,10 @@
    Inspired by Inscryption · Lunacid · Dread Delusion · You Must Feed It
    ═══════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-
-/* ── Persistent edge vignette (always-on; the #breathVignette is JS-animated on top) ── */
-body::before {
+/* ── Persistent edge vignette ──────────────────────────────────────────────
+   Using html:: not body:: — body has overflow-x:hidden on mobile which
+   causes iOS Safari to incorrectly clip position:fixed pseudo-elements. */
+html::before {
   content: '';
   position: fixed;
   inset: 0;
@@ -21,7 +21,7 @@ body::before {
 }
 
 /* ── CRT scanlines ── */
-body::after {
+html::after {
   content: '';
   position: fixed;
   inset: 0;
