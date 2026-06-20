@@ -23,7 +23,7 @@ function installHandIdleAnimation(target){
   target.__tlrHandIdleAnimationInstalled=true;
 
   let idleTimer=null;
-  let gestureActive=false;
+  const activeHandPointers=new Set();
 
   const handEl=()=>document.querySelector('.hand');
   const setIdlePose=(hand,{x=0,y=0,rot=0,dur=300}={})=>{
@@ -53,7 +53,7 @@ function installHandIdleAnimation(target){
     idleTimer=null;
     const hand=handEl();
     if(!hand)return;
-    if(gestureActive){scheduleIdle(240);return;}
+    if(activeHandPointers.size){scheduleIdle(240);return;}
     const rot=(Math.random()*3.2-1.6).toFixed(2);
     const tx=(Math.random()*6-3).toFixed(1);
     const ty=(Math.random()*5).toFixed(1);
@@ -66,14 +66,14 @@ function installHandIdleAnimation(target){
   document.addEventListener('pointerdown',event=>{
     const el=event.target instanceof Element?event.target:null;
     if(!el?.closest('#hand,.handDock,#handSwipeZone'))return;
-    gestureActive=true;
+    activeHandPointers.add(event.pointerId);
     clearIdleTimer();
     settleIdleToAnchor(140);
   },true);
 
-  const endHandGesture=()=>{
-    if(!gestureActive)return;
-    gestureActive=false;
+  const endHandGesture=event=>{
+    if(!activeHandPointers.delete(event.pointerId))return;
+    if(activeHandPointers.size)return;
     // Let the released user lift become visually stable before the idle motion
     // resumes around that new anchor.
     scheduleIdle(420);
