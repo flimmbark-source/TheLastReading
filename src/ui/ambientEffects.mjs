@@ -30,6 +30,7 @@ function installHandIdleAnimation(target){
   const observedHands=new WeakSet();
 
   const handEl=()=>document.querySelector('.hand');
+  const zoneEl=()=>document.getElementById('handSwipeZone');
   const readLift=hand=>{
     if(!hand)return userLift;
     const raw=hand.style.getPropertyValue('--hand-lift-y')||getComputedStyle(hand).getPropertyValue('--hand-lift-y');
@@ -43,10 +44,19 @@ function installHandIdleAnimation(target){
     return Math.max(30,dockTop-safeTop);
   };
   const clampUserLift=value=>Math.max(-maxUpwardLift(),Math.min(0,Number.isFinite(value)?value:0));
-  const writeUserLift=value=>{
+  const applyLiftToHandAndZone=value=>{
+    const px=value.toFixed(1)+'px';
     const hand=handEl();
+    const zone=zoneEl();
+    if(hand)hand.style.setProperty('--hand-lift-y',px);
+    if(zone){
+      zone.style.transition='translate .22s cubic-bezier(.2,.85,.25,1)';
+      zone.style.translate=`0 ${px}`;
+    }
+  };
+  const writeUserLift=value=>{
     userLift=clampUserLift(value);
-    if(hand)hand.style.setProperty('--hand-lift-y',userLift.toFixed(1)+'px');
+    applyLiftToHandAndZone(userLift);
   };
   const setIdlePose=(hand,{x=0,y=0,rot=0,dur=300}={})=>{
     if(!hand)return;
@@ -69,7 +79,7 @@ function installHandIdleAnimation(target){
   const ensureAnchor=hand=>{
     if(!hand||verticalGesture)return;
     const current=readLift(hand);
-    if(Math.abs(current-userLift)>.1)hand.style.setProperty('--hand-lift-y',userLift.toFixed(1)+'px');
+    if(Math.abs(current-userLift)>.1)applyLiftToHandAndZone(userLift);
   };
   const observeHand=hand=>{
     if(!hand||observedHands.has(hand))return;
@@ -111,7 +121,7 @@ function installHandIdleAnimation(target){
     // Downward travel is left to gestureHand so its flush gesture still works.
     // Upward travel becomes the persistent user-oriented anchor.
     if(desired<=0)writeUserLift(desired);
-    else userLift=0;
+    else writeUserLift(0);
   };
 
   document.addEventListener('pointerdown',event=>{
@@ -148,8 +158,7 @@ function installHandIdleAnimation(target){
     cancelReleaseGuard();
     const started=performance.now();
     const step=now=>{
-      const hand=currentHand();
-      if(hand)hand.style.setProperty('--hand-lift-y',userLift.toFixed(1)+'px');
+      applyLiftToHandAndZone(userLift);
       // gestureHand's old 180ms correction can still be running. Outlast it.
       if(now-started<240)releaseGuardRaf=target.requestAnimationFrame(step);
       else releaseGuardRaf=null;
@@ -176,6 +185,7 @@ function installHandIdleAnimation(target){
   target.addEventListener('resize',()=>writeUserLift(userLift));
   observeHand(handEl());
   userLift=clampUserLift(readLift(handEl()));
+  applyLiftToHandAndZone(userLift);
   handAnim();
 }
 
