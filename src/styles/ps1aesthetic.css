@@ -46,17 +46,9 @@ html::after {
   96.5%        { opacity: .93  }
   97%          { opacity: 1    }
 }
-/* Flicker lives on <html>, not <body>. On iOS Safari, body { overflow-x:hidden }
-   makes body a scroll container; animating body then causes the browser to
-   composite it as a layer and reposition position:fixed children (like .handDock)
-   relative to the body instead of the viewport — which is why the hand dock
-   sinks after a touch gesture. Animating <html> gives the same visual result
-   without touching the body compositing context. */
-html {
-  animation: ps1Flicker 14s ease-in-out infinite;
-}
 body {
   color: #bea67c !important;
+  animation: ps1Flicker 14s ease-in-out infinite;
 }
 
 /* ── Stronger breath-vignette gradient (JS still controls opacity) ── */
@@ -107,6 +99,16 @@ body {
 .slot.empty:hover, .slot.target {
   background: rgba(42,74,40,.20) !important;
   border-color: #496946 !important;
+}
+
+/* ── Stop iOS Safari from competing with the JS spring after swipe release ─
+   touch-action:none on the swipe zone tells the browser to hand ALL touch
+   handling to pointer events (JS). Without it, iOS fires its own post-gesture
+   scroll/momentum animation on the body compositor thread right after pointerup,
+   starving requestAnimationFrame so runLiftMomentum never gets a chance to
+   spring the hand back to its resting position. */
+#handSwipeZone {
+  touch-action: none;
 }
 
 /* ── Float the hand above the bottom edge ──────────────────────────────────
