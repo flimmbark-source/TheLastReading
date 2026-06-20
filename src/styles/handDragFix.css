@@ -1,0 +1,14 @@
+/* Active hand movement must follow the pointer directly.
+   Release settling and idle motion resume when these classes are removed. */
+.hand.hand-scroll-dragging {
+  transition: none !important;
+  translate: 0 0 !important;
+  rotate: 0deg !important;
+  will-change: transform;
+}
+
+#handSwipeZone.dragging,
+#handSwipeZone.pinching {
+  transition: none !important;
+  will-change: translate;
+}
