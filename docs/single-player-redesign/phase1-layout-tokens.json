@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "referenceViewport": {
+    "width": 390,
+    "height": 844
+  },
+  "validationViewports": [
+    { "width": 360, "height": 740 },
+    { "width": 375, "height": 812 },
+    { "width": 390, "height": 844 },
+    { "width": 412, "height": 915 },
+    { "width": 430, "height": 932 }
+  ],
+  "breakpoints": {
+    "compactHeightMax": 759,
+    "standardHeightMax": 900,
+    "narrowWidthMax": 374,
+    "wideWidthMin": 413
+  },
+  "zIndex": {
+    "background": 0,
+    "readingField": 10,
+    "spreadSlots": 14,
+    "hud": 25,
+    "hand": 26,
+    "references": 30,
+    "modal": 50,
+    "tutorial": 90
+  },
+  "touchTargets": {
+    "minimum": 44,
+    "primaryAction": 56,
+    "secondaryAction": 48
+  },
+  "standard390x844": {
+    "safeSide": 10,
+    "titleHeight": 40,
+    "hudTop": 42,
+    "hudHeight": 112,
+    "utilityTop": 164,
+    "utilitySize": 44,
+    "readingTop": 198,
+    "readingBottom": 286,
+    "spreadSlotWidth": 72,
+    "spreadSlotHeight": 108,
+    "spreadArcOffsets": [10, 3, 0, 3, 10],
+    "spreadArcRotations": [-4, -2, 0, 2, 4],
+    "handVisibleHeight": 166,
+    "handCardWidth": 100,
+    "handCardHeight": 150,
+    "bottomRailHeight": 72,
+    "bottomSafe": 8
+  },
+  "hudSegments": {
+    "reserve": 0.21,
+    "score": 0.29,
+    "threshold": 0.29,
+    "discards": 0.21
+  },
+  "typography": {
+    "labelMin": 10,
+    "labelMax": 12,
+    "primaryValueMin": 28,
+    "primaryValueMax": 36,
+    "secondaryValueMin": 24,
+    "secondaryValueMax": 31
+  }
+}
