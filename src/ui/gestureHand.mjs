@@ -153,8 +153,8 @@ export function installHandSwipeScroll(target = window){
   };
   const applySpacing=d=>{const h=handEl();if(!h)return;h.style.setProperty('--track-spacing',d.toFixed(3)+'deg');};
   const liftCap=()=>target.innerWidth<640?HAND_LIFT_PX_MOBILE:HAND_LIFT_PX;
-  const clampLift=y=>Math.max(-liftCap(),Math.min(0,y));
-  const softClampLift=y=>{const c=liftCap();if(y>0)return y;if(y<-c)return -c+(y+c)*RUBBER;return y;};
+  const clampLift=y=>Math.max(-liftCap(),Math.min(liftCap(),y));
+  const softClampLift=y=>{const c=liftCap();if(y>c)return c+(y-c)*RUBBER;if(y<-c)return -c+(y+c)*RUBBER;return y;};
   const applyLift=y=>{const h=handEl();if(!h)return;lift=y;h.style.setProperty('--hand-lift-y',y.toFixed(1)+'px');};
   const applySlots=()=>{
     const h=handEl();if(!h)return;

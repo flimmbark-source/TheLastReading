@@ -101,18 +101,6 @@ body {
   border-color: #496946 !important;
 }
 
-/* ── Kill the CSS transition on .hand so the JS lift system owns all motion ──
-   mobile.css sets transition:transform .22s on .hand. On Android Chrome, rapidly
-   updating a CSS custom property (--hand-lift-y) that drives a transitioned
-   property causes the browser to restart each transition from the CSS class
-   default (0px) rather than the current visual position, so the hand never
-   visually lifts and snaps back to zero on release.
-   gestureHand.mjs's runLiftMomentum already provides a smooth rAF-driven
-   settle animation — the CSS transition is redundant and harmful here. */
-.hand {
-  transition: none !important;
-}
-
 #handSwipeZone {
   touch-action: none;
 }
