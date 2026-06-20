@@ -1,4 +1,4 @@
-// Phase 1 composition bridge for the single-player screen.
+// Phase 1 composition bridge plus Phase 2 Batch A art activation.
 // Reuses the existing live DOM and state; no gameplay state is duplicated.
 
 (function installSinglePlayerV2(target = window){
@@ -8,7 +8,19 @@
   const doc=target.document;
   if(!doc)return;
 
-  const enable=()=>doc.body?.classList.add('single-player-v2');
+  const ensureAssetLayer=()=>{
+    if(doc.getElementById('single-player-v2-assets'))return;
+    const link=doc.createElement('link');
+    link.id='single-player-v2-assets';
+    link.rel='stylesheet';
+    link.href='src/styles/singlePlayerV2Assets.css?v=batch-a-1';
+    doc.head.appendChild(link);
+  };
+
+  const enable=()=>{
+    doc.body?.classList.add('single-player-v2');
+    ensureAssetLayer();
+  };
 
   const wrapLabel=(pill,label)=>{
     if(!pill||pill.querySelector(':scope > .spv2-label'))return;
