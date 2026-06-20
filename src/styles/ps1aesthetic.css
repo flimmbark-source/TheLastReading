@@ -9,7 +9,7 @@
 html::before {
   content: '';
   position: fixed;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   background: radial-gradient(
     ellipse 84% 78% at 50% 44%,
     transparent 22%,
@@ -24,7 +24,7 @@ html::before {
 html::after {
   content: '';
   position: fixed;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   background: repeating-linear-gradient(
     to bottom,
     transparent 0,
@@ -134,7 +134,7 @@ body {
 .spread-wrap::before {
   content: '';
   position: absolute;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   background: repeating-conic-gradient(
     rgba(0,0,0,.038) 0% 25%,
     transparent       0% 50%
