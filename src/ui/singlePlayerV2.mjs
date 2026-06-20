@@ -1,6 +1,4 @@
-import { installReferenceSheetAssets } from './referenceSheetAssets.mjs';
-
-// Phase 1 composition bridge plus Phase 2 reference-sheet reconstruction.
+// Phase 1 composition bridge plus the stable Phase 2 shell layer.
 // Reuses the existing live DOM and state; no gameplay state is duplicated.
 
 (function installSinglePlayerV2(target = window){
@@ -15,14 +13,14 @@ import { installReferenceSheetAssets } from './referenceSheetAssets.mjs';
     const link=doc.createElement('link');
     link.id='single-player-v2-assets';
     link.rel='stylesheet';
-    link.href='src/styles/singlePlayerV2Assets.css?v=reference-sheet-1';
+    link.href='src/styles/singlePlayerV2Assets.css?v=stable-shell-2';
     doc.head.appendChild(link);
   };
 
   const enable=()=>{
     doc.body?.classList.add('single-player-v2');
+    doc.body?.classList.remove('reference-sheet-ready','reference-sheet-failed');
     ensureAssetLayer();
-    installReferenceSheetAssets(target);
   };
 
   const wrapLabel=(pill,label)=>{
