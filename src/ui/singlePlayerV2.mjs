@@ -1,4 +1,6 @@
-// Phase 1 composition bridge plus the stable Phase 2 shell layer.
+import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs';
+
+// Phase 1 composition bridge plus the generated Phase 2 art kit.
 // Reuses the existing live DOM and state; no gameplay state is duplicated.
 
 (function installSinglePlayerV2(target = window){
@@ -13,7 +15,7 @@
     const link=doc.createElement('link');
     link.id='single-player-v2-assets';
     link.rel='stylesheet';
-    link.href='src/styles/singlePlayerV2Assets.css?v=stable-shell-2';
+    link.href='src/styles/singlePlayerV2Assets.css?v=generated-sheet-1';
     doc.head.appendChild(link);
   };
 
@@ -21,6 +23,7 @@
     doc.body?.classList.add('single-player-v2');
     doc.body?.classList.remove('reference-sheet-ready','reference-sheet-failed');
     ensureAssetLayer();
+    installGeneratedSheetAssets(target);
   };
 
   const wrapLabel=(pill,label)=>{
