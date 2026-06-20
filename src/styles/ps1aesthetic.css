@@ -1,0 +1,139 @@
+/* ═══════════════════════════════════════════════════════════════
+   PS1 / LOFI DARK AESTHETIC
+   Inspired by Inscryption · Lunacid · Dread Delusion · You Must Feed It
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+/* ── Persistent edge vignette (always-on; the #breathVignette is JS-animated on top) ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 84% 78% at 50% 44%,
+    transparent 22%,
+    rgba(0,0,0,.28) 66%,
+    rgba(0,0,0,.66) 100%
+  );
+  pointer-events: none;
+  z-index: 9996;
+}
+
+/* ── CRT scanlines ── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 3px,
+    rgba(0,0,0,.10) 3px,
+    rgba(0,0,0,.10) 4px
+  );
+  pointer-events: none;
+  z-index: 9997;
+}
+
+/* ── Whole-screen flicker ── */
+@keyframes ps1Flicker {
+  0%,91%,100% { opacity: 1    }
+  92%          { opacity: .975 }
+  92.5%        { opacity: .90  }
+  93%          { opacity: .975 }
+  93.5%        { opacity: 1    }
+  96.5%        { opacity: .93  }
+  97%          { opacity: 1    }
+}
+body {
+  color: #bea67c !important;
+  animation: ps1Flicker 14s ease-in-out infinite;
+}
+
+/* ── Stronger breath-vignette gradient (JS still controls opacity) ── */
+#breathVignette {
+  background: radial-gradient(
+    ellipse 73% 67% at 50% 42%,
+    transparent 8%,
+    rgba(0,0,0,.55) 60%,
+    rgba(0,0,0,.92) 100%
+  ) !important;
+}
+
+/* ── Pixelated card-art sprites ── */
+.card.photo,
+.isp,
+[class^='isp-'],
+[class*=' isp-'] {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* ── Deepen card backgrounds (Inscryption-dark) ── */
+.card {
+  background: linear-gradient(165deg, #160e07, #0b0301) !important;
+  border-color: #362310 !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,.72) !important;
+}
+.card.major { border-color: #4f3413 !important; }
+
+/* ── Darker art field ── */
+.art {
+  background: radial-gradient(circle, #1e1007, #0c0503 78%) !important;
+}
+
+/* ── Worn card title bar ── */
+.title {
+  background: #0c0603 !important;
+  color: #a88248 !important;
+  border-bottom-color: #3a2610 !important;
+}
+
+/* ── Spread slots: darker, more dungeon-ish ── */
+.slot {
+  background: rgba(0,0,0,.28) !important;
+  border-color: #2e2012 !important;
+}
+.slot.empty:hover, .slot.target {
+  background: rgba(42,74,40,.20) !important;
+  border-color: #496946 !important;
+}
+
+/* ── Heavy hand-dock shadow ── */
+.handDock {
+  background: linear-gradient(transparent, rgba(0,0,0,.92)) !important;
+}
+
+/* ── Dither texture on the spread surface ── */
+.spread-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-conic-gradient(
+    rgba(0,0,0,.038) 0% 25%,
+    transparent       0% 50%
+  ) 0 0 / 4px 4px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Desaturate self-contained UI regions (no stacking-context conflict) ── */
+.score-stack { filter: saturate(.68); }
+#relicRack   { filter: saturate(.70) contrast(1.03); }
+#titleWrap   { filter: saturate(.74); }
+#mainMenu    { filter: saturate(.72) contrast(1.04); }
+
+/* ── Muted heading gold ── */
+h1 {
+  color: #be9840 !important;
+  text-shadow: 0 0 10px rgba(144,106,26,.20) !important;
+}
+
+/* ── VT323 pixel font for score readouts ── */
+.pill b,
+.score-stack b {
+  font-family: 'VT323', 'Courier New', monospace;
+  font-size: 18px;
+  letter-spacing: .05em;
+}
