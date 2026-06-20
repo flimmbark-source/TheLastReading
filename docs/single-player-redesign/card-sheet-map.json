@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "status": "identity-map-complete_dimensions-pending-binary-audit",
+  "renderer": {
+    "source": "src/ui/renderCard.mjs",
+    "columns": 2,
+    "rows": 2,
+    "positionFormula": {
+      "column": "position % 2",
+      "row": "floor(position / 2)"
+    },
+    "currentPathPattern": "sheetNN.png",
+    "replacementPathPattern": "/ui/single-player-v2/cards/cards-sheet-NN.png"
+  },
+  "sheets": [
+    {"sheet":1,"sourceFile":"sheet01.png","replacementFile":"public/ui/single-player-v2/cards/cards-sheet-01.png","canvas":{"width":0,"height":0},"cards":[{"position":0,"id":"major_0"},{"position":1,"id":"major_1"},{"position":2,"id":"major_2"},{"position":3,"id":"major_3"}],"unusedCells":[]},
+    {"sheet":2,"sourceFile":"sheet02.png","replacementFile":"public/ui/single-player-v2/cards/cards-sheet-02.png","canvas":{"width":0,"height":0},"cards":[{"position":0,"id":"major_4"},{"position":1,"id":"major_5"},{"position":2,"id":"major_6"},{"position":3,"id":"major_7"}],"unusedCells":[]},
+    {"sheet":3,"sourceFile":"sheet03.png","replacementFile":"public/ui/single-player-v2/cards/cards-sheet-03.png","canvas":{"width":0,"height":0},"cards":[{"position":0,"id":"major_8"},{"position":1,"id":"major_9"},{"position":2,"id":"major_10"},{"position":3,"id":"major_11"}],"unusedCells":[]},
+    {"sheet":4,"sourceFile":"sheet04.png","replacementFile":"public/ui/single-player-v2/cards/cards-sheet-04.png","canvas":{"width":0,"height":0},"cards":[{"position":0,"id":"major_12"},{"position":1,"id":"major_13"},{"position":2,"id":"major_14"},{"position":3,"id":"major_15"}],"unusedCells":[]},
+    {"sheet":5,"sourceFile":"sheet05.png","replacementFile":"public/ui/single-player-v2/cards/cards-sheet-05.png","canvas":{"width":0,"height":0},"cards":[{"position":0,"id":"major_16"},{"position":1,"id":"major_17"},{"position":2,"id":"major_18"},{"position":3,"id":"major_19"}],"unusedCells":[]},
+    {"sheet":6,"sourceFile":"sheet06.png","replacementFile":"public/ui/single-player-v2/cards/cards-sheet-06.png","canvas":{"width":0,"height":0},"cards":[{"position":0,"id":"major_20"},{"position":1,"id":"major_21"}],"unusedCells":[2,3]},
+    {"sheet":7,"sourceFile":"sheet07.png","replacementFile":"public/ui/single-player-v2/cards/cards-sheet-07.png","canvas":{"width":0,"height":0},"cards":[{"position":0,"id":"court_Wands_Page"},{"position":1,"id":"court_Cups_Page"},{"position":2,"id":"court_Swords_Page"},{"position":3,"id":"court_Pentacles_Page"}],"unusedCells":[]},
+    {"sheet":8,"sourceFile":"sheet08.png","replacementFile":"public/ui/single-player-v2/cards/cards-sheet-08.png","canvas":{"width":0,"height":0},"cards":[{"position":0,"id":"court_Wands_Knight"},{"position":1,"id":"court_Cups_Knight"},{"position":2,"id":"court_Swords_Knight"},{"position":3,"id":"court_Pentacles_Knight"}],"unusedCells":[]},
+    {"sheet":9,"sourceFile":"sheet09.png","replacementFile":"public/ui/single-player-v2/cards/cards-sheet-09.png","canvas":{"width":0,"height":0},"cards":[{"position":0,"id":"court_Wands_Queen"},{"position":1,"id":"court_Cups_Queen"},{"position":2,"id":"court_Swords_Queen"},{"position":3,"id":"court_Pentacles_Queen"}],"unusedCells":[]},
+    {"sheet":10,"sourceFile":"sheet10.png","replacementFile":"public/ui/single-player-v2/cards/cards-sheet-10.png","canvas":{"width":0,"height":0},"cards":[{"position":0,"id":"court_Wands_King"},{"position":1,"id":"court_Cups_King"},{"position":2,"id":"court_Swords_King"},{"position":3,"id":"court_Pentacles_King"}],"unusedCells":[]}
+  ]
+}
