@@ -1,0 +1,117 @@
+{
+  "version": 1,
+  "status": "template",
+  "instructions": "Duplicate this structure into card-sheet-map.json after auditing the current ten sheets.",
+  "sheets": [
+    {
+      "sheet": 1,
+      "sourceFile": "",
+      "replacementFile": "public/ui/single-player-v2/cards/cards-sheet-01.png",
+      "canvas": { "width": 0, "height": 0 },
+      "grid": { "columns": 0, "rows": 0 },
+      "cell": { "width": 0, "height": 0 },
+      "gutter": { "x": 0, "y": 0 },
+      "cards": [],
+      "unusedCells": []
+    },
+    {
+      "sheet": 2,
+      "sourceFile": "",
+      "replacementFile": "public/ui/single-player-v2/cards/cards-sheet-02.png",
+      "canvas": { "width": 0, "height": 0 },
+      "grid": { "columns": 0, "rows": 0 },
+      "cell": { "width": 0, "height": 0 },
+      "gutter": { "x": 0, "y": 0 },
+      "cards": [],
+      "unusedCells": []
+    },
+    {
+      "sheet": 3,
+      "sourceFile": "",
+      "replacementFile": "public/ui/single-player-v2/cards/cards-sheet-03.png",
+      "canvas": { "width": 0, "height": 0 },
+      "grid": { "columns": 0, "rows": 0 },
+      "cell": { "width": 0, "height": 0 },
+      "gutter": { "x": 0, "y": 0 },
+      "cards": [],
+      "unusedCells": []
+    },
+    {
+      "sheet": 4,
+      "sourceFile": "",
+      "replacementFile": "public/ui/single-player-v2/cards/cards-sheet-04.png",
+      "canvas": { "width": 0, "height": 0 },
+      "grid": { "columns": 0, "rows": 0 },
+      "cell": { "width": 0, "height": 0 },
+      "gutter": { "x": 0, "y": 0 },
+      "cards": [],
+      "unusedCells": []
+    },
+    {
+      "sheet": 5,
+      "sourceFile": "",
+      "replacementFile": "public/ui/single-player-v2/cards/cards-sheet-05.png",
+      "canvas": { "width": 0, "height": 0 },
+      "grid": { "columns": 0, "rows": 0 },
+      "cell": { "width": 0, "height": 0 },
+      "gutter": { "x": 0, "y": 0 },
+      "cards": [],
+      "unusedCells": []
+    },
+    {
+      "sheet": 6,
+      "sourceFile": "",
+      "replacementFile": "public/ui/single-player-v2/cards/cards-sheet-06.png",
+      "canvas": { "width": 0, "height": 0 },
+      "grid": { "columns": 0, "rows": 0 },
+      "cell": { "width": 0, "height": 0 },
+      "gutter": { "x": 0, "y": 0 },
+      "cards": [],
+      "unusedCells": []
+    },
+    {
+      "sheet": 7,
+      "sourceFile": "",
+      "replacementFile": "public/ui/single-player-v2/cards/cards-sheet-07.png",
+      "canvas": { "width": 0, "height": 0 },
+      "grid": { "columns": 0, "rows": 0 },
+      "cell": { "width": 0, "height": 0 },
+      "gutter": { "x": 0, "y": 0 },
+      "cards": [],
+      "unusedCells": []
+    },
+    {
+      "sheet": 8,
+      "sourceFile": "",
+      "replacementFile": "public/ui/single-player-v2/cards/cards-sheet-08.png",
+      "canvas": { "width": 0, "height": 0 },
+      "grid": { "columns": 0, "rows": 0 },
+      "cell": { "width": 0, "height": 0 },
+      "gutter": { "x": 0, "y": 0 },
+      "cards": [],
+      "unusedCells": []
+    },
+    {
+      "sheet": 9,
+      "sourceFile": "",
+      "replacementFile": "public/ui/single-player-v2/cards/cards-sheet-09.png",
+      "canvas": { "width": 0, "height": 0 },
+      "grid": { "columns": 0, "rows": 0 },
+      "cell": { "width": 0, "height": 0 },
+      "gutter": { "x": 0, "y": 0 },
+      "cards": [],
+      "unusedCells": []
+    },
+    {
+      "sheet": 10,
+      "sourceFile": "",
+      "replacementFile": "public/ui/single-player-v2/cards/cards-sheet-10.png",
+      "canvas": { "width": 0, "height": 0 },
+      "grid": { "columns": 0, "rows": 0 },
+      "cell": { "width": 0, "height": 0 },
+      "gutter": { "x": 0, "y": 0 },
+      "cards": [],
+      "unusedCells": []
+    }
+  ]
+}
