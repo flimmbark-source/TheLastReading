@@ -1,6 +1,6 @@
-/* Stable Phase 2 shell layer.
-   These are temporary vector placeholders until the reference artwork is
-   rebuilt as genuinely separate transparent assets. */
+/* Phase 2 generated-sheet art layer.
+   The existing SVG kit remains the fallback until the generated sprite is
+   decoded and body.generated-sheet-ready is applied. */
 
 @media (max-width: 640px) {
   body.single-player-v2 .score-stack {
@@ -92,5 +92,145 @@
     transform: translateX(-50%);
     background: url('/public/ui/single-player-v2/action-primary.svg') center/contain no-repeat;
     pointer-events: none;
+  }
+
+  /* Generated contact-sheet kit */
+  body.single-player-v2.generated-sheet-ready {
+    background-color: #0b0805;
+    background-image: var(--spv2-table-bg-art);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
+    content: "";
+    left: 15%;
+    right: 15%;
+    top: 1px;
+    width: auto;
+    height: calc(var(--spv2-title-h) + 18px);
+    background-image: var(--spv2-title-art);
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    filter: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    background-color: transparent;
+    background-image: var(--spv2-hud-frame-art);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    overflow: visible;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack > .pill,
+  body.single-player-v2.generated-sheet-ready .score-stack > .th-pill-wrap {
+    border-right-color: transparent;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border-radius: 14px;
+  }
+
+  body.single-player-v2.generated-sheet-ready .reserve-pill {
+    background-image: var(--spv2-hud-reserve-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .score-pill {
+    background-image: var(--spv2-hud-score-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill {
+    background-image: var(--spv2-hud-threshold-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready .discards-pill {
+    background-image: var(--spv2-hud-discards-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    background-image: var(--spv2-reading-circle-art);
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: .82;
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot,
+  body.single-player-v2.generated-sheet-ready .slot.empty:hover,
+  body.single-player-v2.generated-sheet-ready .slot.target {
+    background-color: transparent;
+    background-image: var(--spv2-spread-slot-art);
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock {
+    background-color: transparent !important;
+    background-image: var(--spv2-hand-dock-art) !important;
+    background-position: center bottom !important;
+    background-size: 100% auto !important;
+    background-repeat: no-repeat !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready .actions button {
+    position: relative;
+    overflow: hidden;
+    background-color: transparent;
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border-color: transparent;
+    color: transparent;
+    font-size: 0;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    background-image: var(--spv2-utility-settings-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+  body.single-player-v2.generated-sheet-ready #mullBtn {
+    background-image: var(--spv2-utility-reference-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn::before,
+  body.single-player-v2.generated-sheet-ready #scoringBtn::before,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::before,
+  body.single-player-v2.generated-sheet-ready #mullBtn::before {
+    content: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions::before {
+    background-image: var(--spv2-action-center-art);
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    background-color: transparent;
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn {
+    background-image: var(--spv2-action-eye-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    background-image: var(--spv2-action-deck-art);
   }
 }
