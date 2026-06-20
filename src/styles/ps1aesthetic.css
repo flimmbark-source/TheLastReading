@@ -101,9 +101,33 @@ body {
   border-color: #496946 !important;
 }
 
-/* ── Heavy hand-dock shadow ── */
+/* ── Float the hand above the bottom edge ──────────────────────────────────
+   bottom: 0 pins the dock to the screen edge, making cards look like they're
+   sinking out of frame. Lifting it reveals the table background below, giving
+   the PS1 "cards floating in the scene" feel (cf. Inscryption).
+   Three things move together: the dock itself, the swipe-capture zone that
+   sits just above it, and body's bottom padding that keeps the spread clear. */
+:root { --hand-float: 36px; }
+
 .handDock {
-  background: linear-gradient(transparent, rgba(0,0,0,.92)) !important;
+  bottom: var(--hand-float) !important;
+  background: linear-gradient(transparent, rgba(0,0,0,.70)) !important;
+}
+.hand-swipe-zone {
+  bottom: calc(197px + var(--hand-float)) !important;
+}
+body {
+  padding-bottom: calc(202px + var(--hand-float)) !important;
+}
+
+@media (max-width: 640px) {
+  :root { --hand-float: 18px; }
+  .hand-swipe-zone {
+    bottom: calc(152px + var(--hand-float)) !important;
+  }
+  body {
+    padding-bottom: calc(157px + var(--hand-float)) !important;
+  }
 }
 
 /* ── Dither texture on the spread surface ── */
