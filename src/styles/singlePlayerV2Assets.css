@@ -1,5 +1,6 @@
-/* Phase 2 Batch A asset replacement layer.
-   Batch B surfaces intentionally remain on Phase 1 CSS fallbacks. */
+/* Phase 2 asset replacement layer. Vector masters are used directly during
+   production so assets remain crisp and editable; raster exports can replace
+   them later without changing selectors or layout. */
 
 @media (max-width: 640px) {
   body.single-player-v2 .score-stack {
@@ -9,6 +10,12 @@
     background-repeat: no-repeat;
     border-color: transparent;
     box-shadow: none;
+  }
+
+  body.single-player-v2 .reserve-pill {
+    background-image: url('/ui/single-player-v2/hud-reserve.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
   }
 
   body.single-player-v2 .score-stack .score-pill {
@@ -22,6 +29,18 @@
     background-image: url('/ui/single-player-v2/hud-threshold.svg');
     background-size: 100% 100%;
     background-repeat: no-repeat;
+    box-shadow: none;
+  }
+
+  body.single-player-v2 .discards-pill {
+    background-image: url('/ui/single-player-v2/hud-discards.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+  }
+
+  body.single-player-v2 .spread-wrap::before {
+    border: 0;
+    background: url('/ui/single-player-v2/reading-circle.svg') center/contain no-repeat;
     box-shadow: none;
   }
 
@@ -42,6 +61,25 @@
     background-image: url('/ui/single-player-v2/spread-slot.svg');
     border-color: transparent;
     box-shadow: 0 0 0 2px rgba(126,190,126,.62),0 0 20px rgba(106,181,112,.42),0 8px 20px rgba(0,0,0,.62);
+  }
+
+  body.single-player-v2 .handDock {
+    background-color: transparent !important;
+    background-image: url('/ui/single-player-v2/hand-dock.svg') !important;
+    background-position: center bottom !important;
+    background-size: 100% auto !important;
+    background-repeat: no-repeat !important;
+  }
+
+  body.single-player-v2 #menuBtn,
+  body.single-player-v2 .actions button {
+    background-color: #15100d;
+    background-image: url('/ui/single-player-v2/action-secondary.svg');
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border-color: transparent;
+    box-shadow: none;
   }
 
   body.single-player-v2 .spread-actions::before {
