@@ -2,8 +2,10 @@
 // Keeping the binary source as chunks lets the repository preserve the
 // generated artwork without approximating it with hand-authored vectors.
 
+// This project serves the repository root directly (scripts/serve.mjs), so
+// files inside public/ remain under /public/ in the browser URL.
 const PARTS = [0, 1, 2, 3].map(index =>
-  `/ui/single-player-v2/reference-sheet/part-${String(index).padStart(2, '0')}.txt`
+  `/public/ui/single-player-v2/reference-sheet/part-${String(index).padStart(2, '0')}.txt`
 );
 
 let objectUrl = null;
@@ -24,14 +26,17 @@ export function installReferenceSheetAssets(target = window) {
   if (!document) return Promise.resolve(false);
 
   loading = Promise.all(PARTS.map(async path => {
-    const response = await fetch(path, { cache: 'force-cache' });
-    if (!response.ok) throw new Error(`Unable to load reference art chunk: ${path}`);
+    const response = await fetch(path, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`Unable to load reference art chunk: ${path} (${response.status})`);
+    }
     return response.text();
   }))
     .then(parts => {
       const bytes = decodeBase64(parts.join(''));
       objectUrl = URL.createObjectURL(new Blob([bytes], { type: 'image/webp' }));
       document.documentElement.style.setProperty('--tlr-reference-sheet', `url("${objectUrl}")`);
+      document.body?.classList.remove('reference-sheet-failed');
       document.body?.classList.add('reference-sheet-ready');
       return true;
     })
