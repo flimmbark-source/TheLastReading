@@ -23,14 +23,41 @@ function installHandIdleAnimation(target){
   target.__tlrHandIdleAnimationInstalled=true;
 
   let idleTimer=null;
+  let userLift=0;
   const activeHandPointers=new Set();
+  const observedHands=new WeakSet();
 
   const handEl=()=>document.querySelector('.hand');
-  const setIdlePose=(hand,{x=0,y=0,rot=0,dur=300}={})=>{
+  const liftCap=()=>target.innerWidth<640?30:38;
+  const clampUserLift=value=>Math.max(-liftCap(),Math.min(0,Number.isFinite(value)?value:0));
+  const readLift=hand=>{
+    if(!hand)return userLift;
+    const raw=hand.style.getPropertyValue('--hand-lift-y')||getComputedStyle(hand).getPropertyValue('--hand-lift-y');
+    const value=parseFloat(raw);
+    return Number.isFinite(value)?value:userLift;
+  };
+  const motionTransition=(idleDur,dragging=false)=>
+    `transform ${dragging?0:220}ms cubic-bezier(.2,.85,.25,1),rotate ${idleDur}ms ease-in-out,translate ${idleDur}ms ease-in-out`;
+  const setIdlePose=(hand,{x=0,y=0,rot=0,dur=300,dragging=false}={})=>{
     if(!hand)return;
-    hand.style.transition=`rotate ${dur}ms ease-in-out,translate ${dur}ms ease-in-out`;
+    hand.style.transition=motionTransition(dur,dragging);
     hand.style.rotate=rot+'deg';
     hand.style.translate=`${x}px ${y}px`;
+  };
+  const ensureAnchor=hand=>{
+    if(!hand||activeHandPointers.size)return;
+    const current=readLift(hand);
+    if(Math.abs(current-userLift)>.1)hand.style.setProperty('--hand-lift-y',userLift.toFixed(1)+'px');
+  };
+  const observeHand=hand=>{
+    if(!hand||observedHands.has(hand))return;
+    observedHands.add(hand);
+    new MutationObserver(()=>ensureAnchor(hand)).observe(hand,{attributes:true,attributeFilter:['style']});
+  };
+  const currentHand=()=>{
+    const hand=handEl();
+    observeHand(hand);
+    return hand;
   };
   const clearIdleTimer=()=>{
     if(idleTimer!==null){target.clearTimeout(idleTimer);idleTimer=null;}
@@ -40,23 +67,26 @@ function installHandIdleAnimation(target){
     idleTimer=target.setTimeout(handAnim,delay);
   };
 
-  // Keep the legacy hook name for callers, but only settle the temporary idle
-  // offset. The user's --hand-lift-y remains the persistent vertical anchor.
+  // Keep the legacy hook name, but neutralize only the temporary idle pose.
+  // The released --hand-lift-y is the user's persistent anchor.
   const settleIdleToAnchor=(dur=240)=>{
-    const hand=handEl();
+    const hand=currentHand();
     if(!hand)return;
-    setIdlePose(hand,{x:0,y:0,rot:0,dur});
+    ensureAnchor(hand);
+    setIdlePose(hand,{x:0,y:0,rot:0,dur,dragging:activeHandPointers.size>0});
   };
   target.__handDriftLiftToZero=settleIdleToAnchor;
 
   function handAnim(){
     idleTimer=null;
-    const hand=handEl();
+    const hand=currentHand();
     if(!hand)return;
+    ensureAnchor(hand);
     if(activeHandPointers.size){scheduleIdle(240);return;}
     const rot=(Math.random()*3.2-1.6).toFixed(2);
     const tx=(Math.random()*6-3).toFixed(1);
-    const ty=(Math.random()*5).toFixed(1);
+    // Drift equally above and below the user-selected anchor.
+    const ty=(Math.random()*5-2.5).toFixed(1);
     const dur=900+Math.random()*500;
     setIdlePose(hand,{x:tx,y:ty,rot,dur});
     const pause=2000+Math.random()*10000;
@@ -66,21 +96,43 @@ function installHandIdleAnimation(target){
   document.addEventListener('pointerdown',event=>{
     const el=event.target instanceof Element?event.target:null;
     if(!el?.closest('#hand,.handDock,#handSwipeZone'))return;
+    const hand=currentHand();
+    userLift=clampUserLift(readLift(hand));
     activeHandPointers.add(event.pointerId);
     clearIdleTimer();
     settleIdleToAnchor(140);
   },true);
 
+  // gestureHand's pointermove listener was installed first, so this reads the
+  // updated lift after each drag frame without competing with the gesture.
+  document.addEventListener('pointermove',event=>{
+    if(!activeHandPointers.has(event.pointerId))return;
+    const hand=currentHand();
+    userLift=clampUserLift(readLift(hand));
+  },true);
+
   const endHandGesture=event=>{
     if(!activeHandPointers.delete(event.pointerId))return;
+    const hand=currentHand();
+    userLift=clampUserLift(readLift(hand));
     if(activeHandPointers.size)return;
-    // Let the released user lift become visually stable before the idle motion
-    // resumes around that new anchor.
+
+    // Reassert after the other release handlers and again on the next frame.
+    // This prevents a stale reset animation from replacing the user anchor.
+    hand?.style.setProperty('--hand-lift-y',userLift.toFixed(1)+'px');
+    target.requestAnimationFrame(()=>{
+      const liveHand=currentHand();
+      if(liveHand)liveHand.style.setProperty('--hand-lift-y',userLift.toFixed(1)+'px');
+    });
+    if(hand)hand.style.transition=motionTransition(220,false);
+
+    // Let the released anchor become stable before resuming subtle motion.
     scheduleIdle(420);
   };
   document.addEventListener('pointerup',endHandGesture,true);
   document.addEventListener('pointercancel',endHandGesture,true);
 
+  observeHand(handEl());
   handAnim();
 }
 
