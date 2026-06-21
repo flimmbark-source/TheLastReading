@@ -21,7 +21,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
   const ensureAssetLayer=()=>{
     ensureStylesheet('single-player-v2-assets','src/styles/singlePlayerV2Assets.css?v=clean-tiles-1');
     ensureStylesheet('single-player-v2-slot-match','src/styles/singlePlayerV2SlotMatch.css?v=2');
-    ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=4');
+    ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=5');
   };
 
   const refreshCompositionLayer=()=>{
@@ -32,16 +32,21 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     if(link.getAttribute('href')!==next)link.setAttribute('href',next);
   };
 
-  const closeSettings=()=>doc.getElementById('settingsPanel')?.classList.add('hidden');
-  const closeReferences=()=>{
-    doc.getElementById('ref')?.classList.add('hidden');
-    doc.getElementById('abilityRef')?.classList.add('hidden');
+  const closePullDrawer=(id,label)=>{
+    doc.getElementById(`${id}PullWrap`)?.classList.remove('open');
+    const tab=doc.getElementById(`${id}PullTab`);
+    if(tab)tab.innerHTML=`&#9660; ${label}`;
   };
+
+  const closeSettings=()=>closePullDrawer('menu','Menu');
+  const closeReference=()=>closePullDrawer('scoring','Scoring');
+  const closeAbility=()=>closePullDrawer('abilities','Abilities');
   const closeArchive=()=>doc.getElementById('invWrap')?.classList.remove('open');
 
   const closeByKind=kind=>{
     if(kind==='settings')closeSettings();
-    if(kind==='reference'||kind==='ability')closeReferences();
+    if(kind==='reference')closeReference();
+    if(kind==='ability')closeAbility();
     if(kind==='archive')closeArchive();
   };
 
@@ -101,26 +106,28 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
       const closeTab=element.closest('.spv2-menu-close-tab');
       if(closeTab){
         event.preventDefault();
-        event.stopPropagation();
+        event.stopImmediatePropagation();
         closeByKind(closeTab.dataset.closeMenu);
         return;
       }
 
-      const settings=doc.getElementById('settingsPanel');
-      if(settings&&!settings.classList.contains('hidden')&&!settings.contains(element)&&!element.closest('#menuBtn')){
+      const menuWrap=doc.getElementById('menuPullWrap');
+      if(menuWrap?.classList.contains('open')&&!menuWrap.contains(element)&&!element.closest('#menuBtn')){
         closeSettings();
       }
 
-      const ref=doc.getElementById('ref');
-      const ability=doc.getElementById('abilityRef');
-      const refsOpen=(ref&&!ref.classList.contains('hidden'))||(ability&&!ability.classList.contains('hidden'));
-      if(refsOpen&&!element.closest('#ref,#abilityRef,#scoringBtn,#abilitiesBtn')){
-        closeReferences();
+      const scoringWrap=doc.getElementById('scoringPullWrap');
+      if(scoringWrap?.classList.contains('open')&&!scoringWrap.contains(element)&&!element.closest('#scoringBtn')){
+        closeReference();
+      }
+
+      const abilitiesWrap=doc.getElementById('abilitiesPullWrap');
+      if(abilitiesWrap?.classList.contains('open')&&!abilitiesWrap.contains(element)&&!element.closest('#abilitiesBtn')){
+        closeAbility();
       }
 
       const archiveWrap=doc.getElementById('invWrap');
-      const archiveDesk=doc.getElementById('invDesk');
-      if(archiveWrap?.classList.contains('open')&&archiveDesk&&!archiveDesk.contains(element)&&!element.closest('#spv2ArchiveBtn,#invTab')){
+      if(archiveWrap?.classList.contains('open')&&!archiveWrap.contains(element)&&!element.closest('#spv2ArchiveBtn,#invTab')){
         closeArchive();
       }
     },true);
