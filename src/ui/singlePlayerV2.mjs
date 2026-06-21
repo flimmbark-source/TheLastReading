@@ -100,29 +100,24 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     if(rail&&rail.parentElement!==doc.body)doc.body.appendChild(rail);
   };
 
-  const ensureHandDragHandle=()=>{
+  const restoreHandTutorial=()=>{
     doc.getElementById('spv2HandDragLabel')?.remove();
     const zone=doc.getElementById('handSwipeZone');
     if(!zone)return;
-    zone.replaceChildren();
-    zone.setAttribute('aria-label','Drag hand');
-    zone.style.setProperty('left','50%','important');
-    zone.style.setProperty('right','auto','important');
-    zone.style.setProperty('bottom','calc(6.2dvh + 31dvh + 56px)','important');
-    zone.style.setProperty('width','clamp(132px,37vw,160px)','important');
-    zone.style.setProperty('height','36px','important');
-    zone.style.setProperty('transform','translateX(-50%)','important');
-    zone.style.setProperty('z-index','38','important');
+
+    zone.removeAttribute('aria-label');
+    ['left','right','bottom','width','height','transform','z-index'].forEach(property=>{
+      zone.style.removeProperty(property);
+    });
+
+    if(!zone.querySelector('.hand-swipe-hint')){
+      zone.innerHTML='<div class="hand-swipe-zone-lower" aria-hidden="true"></div><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div>';
+    }
   };
 
   const ensureUtilityControls=()=>{
     ensureActionRail();
-    ensureHandDragHandle();
-
-    const discard=doc.getElementById('discardBtn');
-    const purge=doc.getElementById('purgeBtn');
-    discard?.setAttribute('aria-label','Discard selected card to use its ability');
-    purge?.setAttribute('aria-label','Remove 3 cards to gain 1 Discard');
+    restoreHandTutorial();
 
     let archiveButton=doc.getElementById('spv2ArchiveBtn');
     if(!archiveButton){
