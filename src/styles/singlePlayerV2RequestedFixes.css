@@ -82,8 +82,27 @@
     transform: none !important;
   }
 
+  /* Use five equal tracks instead of a fixed negative margin. Each slot keeps
+     its existing dimensions, while the protected side gutters absorb the outer
+     card rotation and keep the spread inside the viewport. */
   html body.single-player-v2.generated-sheet-ready .spread {
     top: calc(.4dvh + 52px) !important;
+    display: grid !important;
+    grid-template-columns: repeat(5,minmax(0,1fr)) !important;
+    align-items: start !important;
+    justify-items: center !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    padding-inline: clamp(32px,9vw,38px) !important;
+    gap: 0 !important;
+    overflow: visible !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot,
+  html body.single-player-v2.generated-sheet-ready .spread .slot:first-child {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    justify-self: center !important;
   }
 
   /* Override the historical ID rule in attic.css. Preserve the old drag
