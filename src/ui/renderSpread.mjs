@@ -15,7 +15,7 @@ function targetCard(card, view) {
 export function renderSpread(ability, inPurge, view = null) {
   if (document.body.classList.contains('mp-game-active') && !window.__tlrMpUsingSingleAbilityFlow) return;
   const displaySpread = view && view.spread ? view.spread : state.spread;
-  const displayHand = view && view.hand ? view.hand : state.hand;
+  const displayHand = view ? (view.hand || []) : state.hand;
   const selected = view && Object.prototype.hasOwnProperty.call(view, 'selected') ? view.selected : state.selected;
   const hintState={spread:displaySpread||[],hand:displayHand||[]};
   const hintPool=[...hintState.spread.filter(Boolean),...hintState.hand];
