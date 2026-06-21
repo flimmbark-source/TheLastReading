@@ -1,0 +1,186 @@
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-spread-card-w: clamp(84px, 23.5vw, 98px);
+    --spv2-spread-card-h: calc(var(--spv2-spread-card-w) * 1.52);
+    --spv2-hand-card-w: clamp(96px, 26.5vw, 112px);
+    --spv2-hand-card-h: calc(var(--spv2-hand-card-w) * 1.52);
+  }
+
+  /* Spread: wider physical fan with stronger depth and readable separation. */
+  body.single-player-v2.generated-sheet-ready .spread {
+    min-height: calc(var(--spv2-spread-card-h) + 34px) !important;
+    padding-inline: 0 !important;
+    perspective: 900px;
+    justify-content: center !important;
+    overflow: visible !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot {
+    flex: 0 0 var(--spv2-spread-card-w) !important;
+    width: var(--spv2-spread-card-w) !important;
+    height: var(--spv2-spread-card-h) !important;
+    margin-left: clamp(-23px, -5.7vw, -18px) !important;
+    border: 1px solid rgba(171, 121, 53, .72) !important;
+    border-radius: 8px !important;
+    background-size: 100% 100% !important;
+    box-shadow:
+      0 12px 20px rgba(0,0,0,.68),
+      0 0 0 1px rgba(26,15,8,.92),
+      inset 0 0 0 1px rgba(229,176,88,.18),
+      inset 0 0 20px rgba(0,0,0,.28) !important;
+    transform-origin: 50% 145% !important;
+    overflow: hidden !important;
+    filter: saturate(.92) brightness(.84) contrast(1.08);
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot:first-child {
+    margin-left: 0 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(1) {
+    transform: translateY(20px) rotate(-6deg) rotateY(2deg) !important;
+    z-index: 1;
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(2) {
+    transform: translateY(7px) rotate(-3deg) rotateY(1deg) !important;
+    z-index: 2;
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(3) {
+    transform: translateY(0) rotate(0deg) scale(1.025) !important;
+    z-index: 5;
+    filter: saturate(1) brightness(.98) contrast(1.1);
+    box-shadow:
+      0 15px 26px rgba(0,0,0,.76),
+      0 0 0 1px rgba(26,15,8,.92),
+      0 0 16px rgba(191,130,54,.13),
+      inset 0 0 0 1px rgba(235,187,102,.26),
+      inset 0 0 20px rgba(0,0,0,.24) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(4) {
+    transform: translateY(7px) rotate(3deg) rotateY(-1deg) !important;
+    z-index: 2;
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(5) {
+    transform: translateY(20px) rotate(6deg) rotateY(-2deg) !important;
+    z-index: 1;
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot > .card {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: inherit !important;
+    box-shadow: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot.target,
+  body.single-player-v2.generated-sheet-ready .slot.empty:hover {
+    filter: brightness(1.08) saturate(1.08) !important;
+    border-color: rgba(149, 202, 139, .9) !important;
+    box-shadow:
+      0 14px 24px rgba(0,0,0,.72),
+      0 0 0 2px rgba(126,190,126,.42),
+      0 0 22px rgba(106,181,112,.34),
+      inset 0 0 0 1px rgba(219,255,213,.18) !important;
+  }
+
+  /* Hand: larger, deeper fan that feels planted on the table. */
+  body.single-player-v2.generated-sheet-ready .handDock {
+    height: 31.5dvh !important;
+    bottom: 6.2dvh !important;
+    background-size: 108% 23dvh !important;
+    overflow: visible !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 2.2dvh;
+    width: min(92vw, 420px);
+    height: 8.5dvh;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0,0,0,.72), rgba(0,0,0,.24) 55%, transparent 76%);
+    filter: blur(8px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand {
+    height: 29dvh !important;
+    --track-spacing: 7.6deg !important;
+    --track-radius: 455px !important;
+    transform: translateY(.4dvh) !important;
+    overflow: visible !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card {
+    width: var(--spv2-hand-card-w) !important;
+    height: var(--spv2-hand-card-h) !important;
+    border: 1px solid rgba(187,133,57,.74) !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    box-shadow:
+      0 16px 28px rgba(0,0,0,.78),
+      0 0 0 1px rgba(24,13,7,.92),
+      inset 0 0 0 1px rgba(237,182,91,.2) !important;
+    filter: saturate(.88) brightness(.8) contrast(1.08);
+    transform-origin: 50% 58% !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card:nth-child(1),
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card:nth-child(5) {
+    filter: saturate(.78) brightness(.7) contrast(1.09);
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card:nth-child(2),
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card:nth-child(4) {
+    filter: saturate(.9) brightness(.84) contrast(1.08);
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card:nth-child(3) {
+    filter: saturate(1.03) brightness(1.02) contrast(1.1);
+    box-shadow:
+      0 19px 34px rgba(0,0,0,.82),
+      0 0 0 1px rgba(24,13,7,.94),
+      0 0 18px rgba(220,155,63,.18),
+      inset 0 0 0 1px rgba(247,198,111,.3) !important;
+    z-index: 8 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card.sel,
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card.ability-picked,
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card.purge-picked {
+    --lift-y: -104px !important;
+    filter: brightness(1.08) saturate(1.04) contrast(1.08) !important;
+    box-shadow:
+      0 24px 42px rgba(0,0,0,.84),
+      0 0 0 2px #d4af6a,
+      0 0 24px rgba(212,175,106,.34) !important;
+  }
+
+  @media (hover:hover) {
+    body.single-player-v2.generated-sheet-ready .handDock .hand:not(.has-selected-card) .card:hover {
+      --lift-y: -104px !important;
+      filter: brightness(1.06) saturate(1.03) contrast(1.08) !important;
+      box-shadow:
+        0 24px 42px rgba(0,0,0,.84),
+        0 0 0 2px rgba(212,175,106,.88),
+        0 0 22px rgba(212,175,106,.28) !important;
+    }
+  }
+
+  /* Keep the drag handle clearly above the enlarged fan. */
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+    bottom: 40.5dvh !important;
+    height: clamp(38px,5.5dvh,48px) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #spv2HandDragLabel {
+    bottom: calc(40.5dvh + 8px) !important;
+  }
+}
