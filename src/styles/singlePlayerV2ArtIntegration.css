@@ -60,6 +60,30 @@
     gap: 6px !important;
   }
 
+  /* Taller HUD pills (the bar height drives pill height; the button rows below
+     reference this var, so they shift down with it). */
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-compact-hud-h: clamp(140px, 17.5dvh, 162px) !important;
+  }
+
+  /* Move settings + archive below the pills, centered side by side. */
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(calc(-100% - 5px)) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(5px) !important;
+  }
+
   /* Drop the hand fan down so its base nests inside the dock tray banner
      instead of floating above it. */
   body.single-player-v2.generated-sheet-ready .handDock .hand {
