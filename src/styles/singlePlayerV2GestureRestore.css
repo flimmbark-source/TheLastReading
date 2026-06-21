@@ -39,7 +39,7 @@
     content: "✤  SWIPE TO DRIFT  ✤";
     position: absolute;
     left: 50%;
-    top: clamp(54px, 7.5dvh, 70px);
+    top: clamp(62px, 8dvh, 76px);
     z-index: 20;
     transform: translateX(-50%);
     width: max-content;
