@@ -58,6 +58,20 @@
     transform: translateY(4.5dvh) !important;
   }
 
+  /* Spread slots sit flat on the table like the reference: keep the compass
+     art and a subtle depth shadow, but remove the green target/hover glow and
+     tint. */
+  body.single-player-v2.generated-sheet-ready .spread .slot,
+  body.single-player-v2.generated-sheet-ready .spread .slot.empty:hover,
+  body.single-player-v2.generated-sheet-ready .spread .slot.target,
+  body.single-player-v2.generated-sheet-ready .spread .slot.ability-target-slot {
+    border-color: transparent !important;
+    background-color: transparent !important;
+    background-image: var(--spv2-spread-slot-art) !important;
+    box-shadow: 0 7px 18px rgba(0, 0, 0, .5) !important;
+    filter: none !important;
+  }
+
   /* Utility buttons carry their icon as art, so drop the text fallbacks
      (⚙ / REF / ABIL / ARCH). The two without a dedicated tile reuse the
      reference (book) art so none render blank. */
