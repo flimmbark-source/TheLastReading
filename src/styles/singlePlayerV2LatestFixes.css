@@ -1,5 +1,4 @@
 @import url("./readableHandCompactHud.css");
-@import url("./spreadSlotsPhase1.css");
 
 /* Temporary ability-choice cards inherit the same hint information as cards in
    play, but use the restrained spread polish instead of the legacy broad card
