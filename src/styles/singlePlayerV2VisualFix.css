@@ -1,6 +1,29 @@
 @media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-compact-hud-h: clamp(72px, 10.5dvh, 88px);
+  }
+
   body.single-player-v2.generated-sheet-ready #titleWrap {
     pointer-events: none;
+  }
+
+  /* Tighten the HUD frame to the actual label/value content. */
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    height: var(--spv2-compact-hud-h) !important;
+    min-height: var(--spv2-compact-hud-h) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    padding: 7px 2px 6px !important;
+    gap: 3px !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
+    font-size: clamp(8px, 2.25vw, 11px) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill > b {
+    font-size: clamp(18px, 5vw, 25px) !important;
   }
 
   body.single-player-v2.generated-sheet-ready .actions {
@@ -46,27 +69,27 @@
   }
 
   body.single-player-v2.generated-sheet-ready #menuBtn {
-    top: 1.1dvh !important;
+    top: .8dvh !important;
     left: 3.8vw !important;
     right: auto !important;
     background-image: url('/public/ui/single-player-v2/generated/utility-settings.webp') !important;
   }
 
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    top: 1.1dvh !important;
+    top: .8dvh !important;
     left: auto !important;
     right: 3.8vw !important;
   }
 
   body.single-player-v2.generated-sheet-ready #scoringBtn {
-    top: 23.7dvh !important;
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + 1.5dvh) !important;
     left: 3.8vw !important;
     right: auto !important;
     background-image: url('/public/ui/single-player-v2/generated/utility-reference.webp') !important;
   }
 
   body.single-player-v2.generated-sheet-ready #abilitiesBtn {
-    top: 23.7dvh !important;
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + 1.5dvh) !important;
     left: auto !important;
     right: 3.8vw !important;
   }
@@ -110,20 +133,19 @@
     letter-spacing: .05em;
   }
 
+  /* Discard and Purge sit immediately below the five-card spread. */
   body.single-player-v2.generated-sheet-ready .spread-actions {
     position: fixed !important;
     z-index: 40 !important;
-    top: calc(28.2dvh + var(--spv2-live-card-h) + 6dvh) !important;
+    top: calc(28.2dvh + var(--spv2-live-card-h) + 3dvh) !important;
     left: 0 !important;
     right: 0 !important;
     bottom: auto !important;
     width: 100% !important;
     height: clamp(58px, 15vw, 72px) !important;
-    padding: 0 12vw !important;
+    padding: 0 !important;
     transform: none !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
+    display: block !important;
     pointer-events: none;
   }
 
@@ -131,14 +153,10 @@
     display: none !important;
   }
 
-  body.single-player-v2.generated-sheet-ready .spread-actions button {
-    pointer-events: auto;
-    opacity: 1 !important;
-    visibility: visible !important;
-  }
-
   body.single-player-v2.generated-sheet-ready #discardBtn,
   body.single-player-v2.generated-sheet-ready #purgeBtn {
+    position: absolute !important;
+    top: 0 !important;
     width: clamp(58px, 15.5vw, 72px) !important;
     height: clamp(58px, 15.5vw, 72px) !important;
     min-width: 0 !important;
@@ -146,45 +164,80 @@
     background-repeat: no-repeat !important;
     background-position: center !important;
     background-size: contain !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    visibility: visible !important;
   }
 
   body.single-player-v2.generated-sheet-ready #discardBtn {
+    left: 8vw !important;
+    right: auto !important;
     background-image: url('/public/ui/single-player-v2/generated/action-eye.webp') !important;
   }
 
   body.single-player-v2.generated-sheet-ready #purgeBtn {
+    left: auto !important;
+    right: 8vw !important;
     background-image: url('/public/ui/single-player-v2/generated/action-deck.webp') !important;
   }
 
-  body.single-player-v2.generated-sheet-ready #settingsPanel,
-  body.single-player-v2.generated-sheet-ready #ref,
-  body.single-player-v2.generated-sheet-ready #abilityRef,
-  body.single-player-v2.generated-sheet-ready #invDesk {
-    position: relative;
-    overflow: visible;
+  /* The hand gesture surface is a separate strip above the dock. It never
+     overlaps the cards themselves, so tapping and dragging cards remains direct. */
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 31dvh !important;
+    height: clamp(42px, 6.5dvh, 56px) !important;
+    z-index: 25 !important;
+    pointer-events: auto !important;
+    touch-action: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower {
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock {
+    z-index: 26 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card {
+    pointer-events: auto !important;
+  }
+
+  /* Close tabs belong to the drawer shell, outside and attached to its bottom. */
+  body.single-player-v2.generated-sheet-ready .tlr-pull-wrap,
+  body.single-player-v2.generated-sheet-ready #invWrap {
+    overflow: visible !important;
   }
 
   body.single-player-v2.generated-sheet-ready .spv2-menu-close-tab {
-    position: absolute;
-    left: 50%;
-    bottom: -24px;
-    transform: translateX(-50%);
-    z-index: 5;
-    width: 42px;
-    height: 24px;
-    padding: 0;
-    border: 1px solid #8f6a34;
-    border-top: 0;
-    border-radius: 0 0 10px 10px;
-    background: linear-gradient(180deg,#21162a,#130d19);
-    color: #d7b36e;
-    font: 700 18px/22px Georgia,serif;
-    box-shadow: 0 4px 10px rgba(0,0,0,.55);
+    position: absolute !important;
+    left: 50% !important;
+    z-index: 410 !important;
+    width: 42px !important;
+    height: 24px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: translateX(-50%) !important;
+    border: 1px solid #8f6a34 !important;
+    border-top: 0 !important;
+    border-radius: 0 0 10px 10px !important;
+    background: linear-gradient(180deg,#21162a,#130d19) !important;
+    color: #d7b36e !important;
+    font: 700 18px/22px Georgia,serif !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,.55) !important;
     cursor: pointer;
-    pointer-events: auto;
+    pointer-events: auto !important;
   }
 
-  body.single-player-v2.generated-sheet-ready .spv2-menu-close-tab:active {
-    transform: translateX(-50%) translateY(1px);
+  body.single-player-v2.generated-sheet-ready .tlr-pull-wrap > .spv2-menu-close-tab {
+    top: var(--tlr-drawer-h) !important;
+    bottom: auto !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #invWrap > .spv2-menu-close-tab {
+    top: var(--inv-h) !important;
+    bottom: auto !important;
   }
 }
