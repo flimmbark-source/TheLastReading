@@ -1,25 +1,33 @@
-// Decodes the approved generated UI sprite and exposes every tile as an
-// independent transparent CSS image. The packed source is fetched once.
+// Decodes the approved generated UI sheet and exposes each tile as an
+// independent runtime image. Checkerboard preview pixels are removed or
+// replaced before the images are applied to the live interface.
 
 const SOURCE_WIDTH = 1024;
 const SOURCE_HEIGHT = 1337;
 
 const REGIONS = {
-  '--spv2-title-art': [12, 12, 462, 202],
-  '--spv2-hud-frame-art': [486, 12, 500, 238],
-  '--spv2-hud-reserve-art': [12, 262, 210, 245],
-  '--spv2-hud-score-art': [234, 262, 215, 245],
-  '--spv2-hud-threshold-art': [461, 262, 216, 245],
-  '--spv2-hud-discards-art': [689, 262, 236, 245],
-  '--spv2-utility-reference-art': [12, 519, 125, 125],
-  '--spv2-utility-settings-art': [149, 519, 125, 125],
-  '--spv2-spread-slot-art': [286, 519, 164, 280],
-  '--spv2-reading-circle-art': [462, 519, 380, 348],
-  '--spv2-hand-dock-art': [12, 879, 503, 172],
-  '--spv2-action-eye-art': [527, 879, 129, 149],
-  '--spv2-action-center-art': [668, 879, 153, 143],
-  '--spv2-action-deck-art': [833, 879, 129, 139],
-  '--spv2-table-bg-art': [12, 1063, 426, 262]
+  '--spv2-title-art': { box: [12, 12, 462, 202], mode: 'transparent' },
+  '--spv2-hud-frame-art': { box: [486, 12, 500, 238], mode: 'transparent' },
+  '--spv2-hud-reserve-art': { box: [12, 262, 210, 245], mode: 'reserve-panel' },
+  '--spv2-hud-score-art': { box: [234, 262, 215, 245], mode: 'score-panel' },
+  '--spv2-hud-threshold-art': { box: [461, 262, 216, 245], mode: 'threshold-panel' },
+  '--spv2-hud-discards-art': { box: [689, 262, 236, 245], mode: 'discard-panel' },
+  '--spv2-utility-reference-art': { box: [12, 519, 125, 125], mode: 'transparent' },
+  '--spv2-utility-settings-art': { box: [149, 519, 125, 125], mode: 'transparent' },
+  '--spv2-spread-slot-art': { box: [286, 519, 164, 280], mode: 'transparent' },
+  '--spv2-reading-circle-art': { box: [462, 519, 380, 348], mode: 'transparent' },
+  '--spv2-hand-dock-art': { box: [12, 879, 503, 172], mode: 'transparent' },
+  '--spv2-action-eye-art': { box: [527, 879, 129, 149], mode: 'transparent' },
+  '--spv2-action-center-art': { box: [668, 879, 153, 143], mode: 'transparent' },
+  '--spv2-action-deck-art': { box: [833, 879, 129, 139], mode: 'transparent' },
+  '--spv2-table-bg-art': { box: [12, 1063, 426, 262], mode: 'background' }
+};
+
+const PANEL_COLORS = {
+  'reserve-panel': [5, 14, 24],
+  'score-panel': [25, 18, 8],
+  'threshold-panel': [19, 12, 30],
+  'discard-panel': [10, 8, 8]
 };
 
 let loading = null;
@@ -36,7 +44,7 @@ function decodeBase64(text) {
 
 function canvasBlob(canvas) {
   return new Promise((resolve, reject) => {
-    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Unable to create generated UI tile')), 'image/png');
+    canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Unable to create generated UI tile')), 'image/webp', .94);
   });
 }
 
@@ -46,6 +54,41 @@ async function loadImage(url) {
   image.src = url;
   await image.decode();
   return image;
+}
+
+function isCheckerPixel(red, green, blue) {
+  const maximum = Math.max(red, green, blue);
+  const minimum = Math.min(red, green, blue);
+  const neutral = maximum - minimum < 9;
+  const luminance = (red + green + blue) / 3;
+  return neutral && luminance >= 28 && luminance <= 112;
+}
+
+function cleanTile(context, width, height, mode) {
+  if (mode === 'background') return;
+
+  const imageData = context.getImageData(0, 0, width, height);
+  const pixels = imageData.data;
+  const panelColor = PANEL_COLORS[mode] || null;
+
+  for (let index = 0; index < pixels.length; index += 4) {
+    const red = pixels[index];
+    const green = pixels[index + 1];
+    const blue = pixels[index + 2];
+
+    if (!isCheckerPixel(red, green, blue)) continue;
+
+    if (panelColor) {
+      pixels[index] = panelColor[0];
+      pixels[index + 1] = panelColor[1];
+      pixels[index + 2] = panelColor[2];
+      pixels[index + 3] = 255;
+    } else {
+      pixels[index + 3] = 0;
+    }
+  }
+
+  context.putImageData(imageData, 0, 0);
 }
 
 export function installGeneratedSheetAssets(target = window) {
@@ -67,8 +110,8 @@ export function installGeneratedSheetAssets(target = window) {
       const scaleY = image.naturalHeight / SOURCE_HEIGHT;
       const root = document.documentElement;
 
-      await Promise.all(Object.entries(REGIONS).map(async ([property, region]) => {
-        const [x, y, width, height] = region;
+      await Promise.all(Object.entries(REGIONS).map(async ([property, definition]) => {
+        const [x, y, width, height] = definition.box;
         const sx = Math.round(x * scaleX);
         const sy = Math.round(y * scaleY);
         const sw = Math.max(1, Math.round(width * scaleX));
@@ -76,9 +119,10 @@ export function installGeneratedSheetAssets(target = window) {
         const canvas = document.createElement('canvas');
         canvas.width = sw;
         canvas.height = sh;
-        const context = canvas.getContext('2d', { alpha: true });
+        const context = canvas.getContext('2d', { alpha: true, willReadFrequently: true });
         if (!context) throw new Error('Canvas is unavailable for generated UI assets');
         context.drawImage(image, sx, sy, sw, sh, 0, 0, sw, sh);
+        cleanTile(context, sw, sh, definition.mode);
         const tileUrl = URL.createObjectURL(await canvasBlob(canvas));
         objectUrls.push(tileUrl);
         root.style.setProperty(property, `url("${tileUrl}")`);
