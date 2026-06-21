@@ -1,7 +1,13 @@
 @media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready #titleWrap {
+    pointer-events: none;
+  }
+
   body.single-player-v2.generated-sheet-ready .actions,
   body.single-player-v2.generated-sheet-ready #menuBtn {
     position: fixed !important;
+    z-index: 45 !important;
+    pointer-events: auto !important;
   }
 
   body.single-player-v2.generated-sheet-ready .actions {
@@ -14,11 +20,64 @@
     left: auto !important;
     right: 3.8vw !important;
     top: 23.7dvh !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    display: grid !important;
+    place-items: center;
+    width: clamp(46px, 12vw, 58px) !important;
+    height: clamp(46px, 12vw, 58px) !important;
+    min-width: 0 !important;
+    border-radius: 50% !important;
+    border: 2px solid #8f6a34 !important;
+    background-color: #17101f !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+    box-shadow:
+      0 3px 8px rgba(0, 0, 0, .75),
+      inset 0 0 0 2px rgba(218, 171, 91, .18),
+      inset 0 0 12px rgba(105, 61, 126, .35) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+    text-indent: 0 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn {
     background-image: url('/public/ui/single-player-v2/generated/utility-settings.webp') !important;
   }
 
   body.single-player-v2.generated-sheet-ready #scoringBtn {
     background-image: url('/public/ui/single-player-v2/generated/utility-reference.webp') !important;
+  }
+
+  /* Visible fallbacks ensure the controls never disappear when an art tile is
+     transparent, faint, or fails to load. */
+  body.single-player-v2.generated-sheet-ready #menuBtn::after,
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #d1a65f;
+    text-indent: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    text-shadow: 0 1px 2px #000;
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn::after {
+    content: "⚙";
+    font-size: clamp(22px, 6vw, 29px);
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after {
+    content: "REF";
+    font-size: clamp(9px, 2.5vw, 12px);
+    font-weight: 700;
+    letter-spacing: .08em;
   }
 
   body.single-player-v2.generated-sheet-ready #discardBtn {
