@@ -12,6 +12,58 @@
     background-size: 118% 118% !important;
   }
 
+  /* Drag highlighting must tint the existing slot art, not replace the entire
+     background shorthand and reset the PNG sizing. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.drop-target {
+    background-color: rgba(98,170,104,.28) !important;
+    background-image: var(--spv2-spread-slot-art) !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 118% 118% !important;
+    border-color: #79c778 !important;
+    box-shadow: 0 0 0 2px rgba(121,199,120,.55),0 0 32px rgba(121,199,120,.45) !important;
+  }
+
+  /* Keep the dock artwork at its intrinsic proportions and size. It is centered
+     and allowed to crop at the sides instead of being reduced to the viewport. */
+  html body.single-player-v2.generated-sheet-ready .handDock {
+    background-size: auto auto !important;
+  }
+
+  /* Reorder the four upper utility controls from left to right as:
+     Settings, Scoring, Ability, Archives. */
+  html body.single-player-v2.generated-sheet-ready #menuBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh + 4px) !important;
+    left: 3.8vw !important;
+    right: auto !important;
+    width: clamp(40px,10.5vw,50px) !important;
+    height: clamp(40px,10.5vw,50px) !important;
+    transform: none !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #scoringBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(calc(-100% - 5px)) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(5px) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh + 4px) !important;
+    left: auto !important;
+    right: 3.8vw !important;
+    width: clamp(40px,10.5vw,50px) !important;
+    height: clamp(40px,10.5vw,50px) !important;
+    transform: none !important;
+  }
+
   html body.single-player-v2.generated-sheet-ready .spread {
     top: calc(.4dvh + 52px) !important;
   }
