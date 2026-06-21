@@ -12,6 +12,12 @@
     background-size: 118% 118% !important;
   }
 
+  /* Keep the dock artwork at its intrinsic proportions and size. It is centered
+     and allowed to crop at the sides instead of being reduced to the viewport. */
+  html body.single-player-v2.generated-sheet-ready .handDock {
+    background-size: auto auto !important;
+  }
+
   html body.single-player-v2.generated-sheet-ready .spread {
     top: calc(.4dvh + 52px) !important;
   }
