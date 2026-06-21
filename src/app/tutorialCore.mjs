@@ -40,22 +40,25 @@ let tutIgnoreClicksUntil = 0;
 let queuedTipSteps = [];
 let queuedTipTimer = null;
 let placementCount = 0;
+let activeTutTarget = null;
+let activeTutArrow = 'up';
+let tutPositionTimer = null;
 
 const TUT_STEPS = [
   { center: true, text: 'Your relative left behind their tarot deck. You used to play this game together.' },
-  { sel: '.handDock', arrow: 'down', waitFor: 'cardSelected', text: 'Tap a card to select it.' },
-  { sel: '#spread', arrow: 'up', waitFor: 'cardPlaced', text: 'Tap an empty slot to place it.' },
-  { sel: '.score-pill', arrow: 'up', text: 'That card added points to your total.' },
-  { sel: '#hand .card[data-uid]', arrow: 'down', text: 'The red circle on each card shows how many points it adds.' },
-  { sel: '.threshold-pill', arrow: 'up', key: TUT_THRESHOLD_KEY, text: 'Complete spreads to build your <b>Score</b>. Beat the <b>Threshold</b> to advance.' },
-  { sel: '#discardBtn', arrow: 'up', key: TUT_DISCARD_KEY, text: '<b>Discard</b> a card to use its <b>Ability</b> instead of placing it.' },
-  { sel: '#hand .card[data-hint], #hand .card.hint-complete, #hand .card.hint-card', fallbackSel: '.handDock', arrow: 'down', key: TUT_PATTERN_KEY, text: 'Some of your cards may work together.' },
+  { sel: '#hand .card[data-uid]', fallbackSel: '.handDock .hand', arrow: 'down', waitFor: 'cardSelected', text: 'Tap a card to select it.' },
+  { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', waitFor: 'cardPlaced', text: 'Tap an empty slot to place it.' },
+  { sel: '#current', fallbackSel: '.score-pill', arrow: 'up', text: 'That card added points to your total.' },
+  { sel: '#hand .card[data-uid] .seal.tr', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The red circle on each card shows how many points it adds.' },
+  { sel: '#threshold', fallbackSel: '.threshold-pill', arrow: 'up', key: TUT_THRESHOLD_KEY, text: 'Complete spreads to build your <b>Score</b>. Beat the <b>Threshold</b> to advance.' },
+  { sel: '#discardBtn', arrow: 'down', key: TUT_DISCARD_KEY, text: '<b>Discard</b> a card to use its <b>Ability</b> instead of placing it.' },
+  { sel: '#hand .card[data-hint], #hand .card.hint-complete, #hand .card.hint-card', fallbackSel: '#hand .card[data-uid]', arrow: 'down', key: TUT_PATTERN_KEY, text: 'Some of your cards may work together.' },
   { center: true, text: 'Each cleared Threshold makes the next one harder. Clear the 10th Threshold to win.' },
-  { sel: '#relicRack', arrow: 'up', text: 'You found a <b>Relic</b>. Relics carry passive effects across every reading until you lose. Tap a relic icon to see what it does.' },
-  { sel: '#scoringPullTab', arrow: 'up', key: TUT_PATTERN_KEY, text: 'Check <b>Scoring</b> to see if you can complete a pattern. Place the cards down to activate a pattern.' },
-  { sel: '#purgeBtn', arrow: 'up', key: TUT_PURGE_KEY, text: 'Remove 3 cards from your hand to gain 1 Discard.' },
-  { sel: '#spread', arrow: 'up', key: TUT_READING_KEY, text: 'One more card completes the reading.' },
-  { sel: '#invTab', arrow: 'up', key: TUT_ARCHIVES_KEY, text: 'The <b>Archives</b> hold discovered items. Tap to open and investigate.' },
+  { sel: '#relicRack .relic-btn', fallbackSel: '#relicRack', arrow: 'up', text: 'You found a <b>Relic</b>. Relics carry passive effects across every reading until you lose. Tap a relic icon to see what it does.' },
+  { sel: '#scoringBtn', fallbackSel: '#scoringPullTab', arrow: 'up', key: TUT_PATTERN_KEY, text: 'Check <b>Scoring</b> to see if you can complete a pattern. Place the cards down to activate a pattern.' },
+  { sel: '#purgeBtn', arrow: 'down', key: TUT_PURGE_KEY, text: 'Remove 3 cards from your hand to gain 1 Discard.' },
+  { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', key: TUT_READING_KEY, text: 'One more card completes the reading.' },
+  { sel: '#spv2ArchiveBtn', fallbackSel: '#invTab', arrow: 'up', key: TUT_ARCHIVES_KEY, text: 'The <b>Archives</b> hold discovered items. Tap to open and investigate.' },
   { sel: '.store-reserve-display', arrow: 'down', key: TUT_MARKET_KEY, text: '<b>Reserve</b><br>Your currency for upgrades in the Market.' },
   { sel: '.store-offer-row .store-card:nth-child(1)', arrow: 'down', key: TUT_MARKET_KEY, text: '<b>Scoring</b><br>Buy pattern upgrades. Chips and Mult increase by the amount shown.' },
   { sel: '.store-offer-row .store-card:nth-child(2)', arrow: 'down', key: TUT_MARKET_KEY, text: '<b>Pack</b><br>Open a pack to choose a hand, discard, draw, or ability upgrade.' },
@@ -73,7 +76,23 @@ const MARKET_TUT_STEPS = [
 function q(sel) { return document.querySelector(sel); }
 function stepKey(step) { return TUT_STEPS[step] && TUT_STEPS[step].key ? TUT_STEPS[step].key : null; }
 function markStepSeen(step) { const key = stepKey(step); if (key) localStorage.setItem(key, '1'); }
-function targetForStep(s) { return document.querySelector(s.sel) || (s.fallbackSel ? document.querySelector(s.fallbackSel) : null); }
+
+function isVisibleTarget(element) {
+  if (!element || !element.isConnected) return false;
+  const style = getComputedStyle(element);
+  if (style.display === 'none' || style.visibility === 'hidden') return false;
+  const rect = element.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
+}
+
+function firstVisibleTarget(sel) {
+  if (!sel) return null;
+  return [...document.querySelectorAll(sel)].find(isVisibleTarget) || null;
+}
+
+function targetForStep(s) {
+  return firstVisibleTarget(s.sel) || firstVisibleTarget(s.fallbackSel);
+}
 
 function canShowStep(step, force = false) {
   const s = TUT_STEPS[step];
@@ -147,19 +166,29 @@ export function replayTutorial() {
 
 export function tutHide() {
   clearTimeout(tutTimer);
+  clearTimeout(tutPositionTimer);
   tutTimer = null;
+  tutPositionTimer = null;
   tutStep = -1;
+  activeTutTarget = null;
   const tip = q('#tutTip');
   if (!tip) return;
   tip.classList.remove('show', 'tut-center');
   tip.style.cssText = '';
 }
 
+function positionActiveTip() {
+  if (tutStep < 0 || !activeTutTarget) return;
+  posTutTip(activeTutTarget, activeTutArrow);
+}
+
 export function tutShow(step, options = {}) {
   const force = !!options.force;
   if (!canShowStep(step, force)) return;
   clearTimeout(tutTimer);
+  clearTimeout(tutPositionTimer);
   tutTimer = null;
+  tutPositionTimer = null;
   tutStep = step;
   tutIgnoreClicksUntil = Date.now() + (step === TUT_STEP.PATTERN_NOTICE ? 450 : 180);
   const s = TUT_STEPS[step];
@@ -173,12 +202,19 @@ export function tutShow(step, options = {}) {
   const tapPrompt = tip.querySelector('.tut-tap-prompt');
   if (tapPrompt) tapPrompt.style.display = s.waitFor ? 'none' : '';
   if (s.center) {
+    activeTutTarget = null;
     tip.classList.add('show', 'tut-center');
   } else {
     const target = targetForStep(s);
     if (!target) { tutHide(); scheduleQueuedTips(300); return; }
+    activeTutTarget = target;
+    activeTutArrow = s.arrow || 'up';
     tip.classList.add('show');
-    requestAnimationFrame(() => posTutTip(target, s.arrow));
+    requestAnimationFrame(() => {
+      positionActiveTip();
+      requestAnimationFrame(positionActiveTip);
+    });
+    tutPositionTimer = setTimeout(positionActiveTip, 180);
   }
 }
 
@@ -260,30 +296,54 @@ export function maybeShowConstellationTutorial() {
   queueTip(TUT_STEP.CONSTELLATION, hasPendingTip() ? 650 : 500);
 }
 
-function posTutTip(target, arrowDir) {
+function posTutTip(target, preferredArrow) {
   const tip = q('#tutTip');
-  if (!tip) return;
-  const tipW = Math.min(300, window.innerWidth * 0.88);
-  tip.style.maxWidth = tipW + 'px';
-  const r = target.getBoundingClientRect();
-  const anchorX = r.left + r.width / 2;
-  let left = anchorX - tipW / 2;
-  left = Math.max(8, Math.min(left, window.innerWidth - tipW - 8));
+  if (!tip || !isVisibleTarget(target)) return;
+
+  const edge = 8;
+  const gap = 14;
+  const maxTipWidth = Math.min(300, window.innerWidth * 0.88);
+  tip.style.maxWidth = maxTipWidth + 'px';
+  tip.style.width = '';
+
+  const targetRect = target.getBoundingClientRect();
+  const measuredTip = tip.getBoundingClientRect();
+  const tipWidth = Math.min(measuredTip.width || maxTipWidth, maxTipWidth);
+  const tipHeight = measuredTip.height;
+  const anchorX = targetRect.left + targetRect.width / 2;
+
+  let left = anchorX - tipWidth / 2;
+  left = Math.max(edge, Math.min(left, window.innerWidth - tipWidth - edge));
+
+  const roomAbove = targetRect.top - gap - edge;
+  const roomBelow = window.innerHeight - targetRect.bottom - gap - edge;
+  let arrowDir = preferredArrow === 'down' ? 'down' : 'up';
+  const wantsAbove = arrowDir === 'down';
+
+  if (wantsAbove && roomAbove < tipHeight && roomBelow > roomAbove) arrowDir = 'up';
+  if (!wantsAbove && roomBelow < tipHeight && roomAbove > roomBelow) arrowDir = 'down';
+
+  let top = arrowDir === 'down'
+    ? targetRect.top - gap - tipHeight
+    : targetRect.bottom + gap;
+  top = Math.max(edge, Math.min(top, window.innerHeight - tipHeight - edge));
+
   tip.style.left = left + 'px';
   tip.style.right = '';
-  if (arrowDir === 'down') {
-    tip.style.top = '';
-    tip.style.bottom = (window.innerHeight - r.top + 14) + 'px';
-  } else {
-    tip.style.top = (r.bottom + 14) + 'px';
-    tip.style.bottom = '';
-  }
+  tip.style.top = top + 'px';
+  tip.style.bottom = '';
+
   const arrow = tip.querySelector('.tut-arrow');
   if (!arrow) return;
   arrow.className = 'tut-arrow ' + arrowDir;
   const arrowX = anchorX - left;
-  arrow.style.left = Math.max(16, Math.min(arrowX, tipW - 16)) + 'px';
+  arrow.style.left = Math.max(16, Math.min(arrowX, tipWidth - 16)) + 'px';
 }
+
+window.addEventListener('resize', () => {
+  if (tutStep < 0 || !activeTutTarget) return;
+  requestAnimationFrame(positionActiveTip);
+});
 
 document.addEventListener('click', () => {
   if (Date.now() < tutIgnoreClicksUntil) return;
