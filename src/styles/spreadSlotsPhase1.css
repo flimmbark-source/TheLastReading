@@ -1,0 +1,90 @@
+@media (max-width: 640px) {
+  /* Empty spread positions should read as recessed board slots, not card backs. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot:not(:has(> .card)) {
+    background-image: none !important;
+    background:
+      radial-gradient(circle at 50% 43%, rgba(214,177,92,.09) 0, rgba(214,177,92,0) 32%),
+      linear-gradient(180deg, rgba(37,27,19,.95), rgba(16,11,8,.99)) !important;
+    border: 1px solid rgba(145,108,53,.74) !important;
+    border-radius: 11px !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(230,197,118,.09),
+      inset 0 1px 0 rgba(255,234,178,.04),
+      inset 0 -14px 22px rgba(0,0,0,.4),
+      0 10px 18px rgba(0,0,0,.48) !important;
+    overflow: visible !important;
+  }
+
+  /* Faint inner card silhouette and restrained ritual marking. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot:not(:has(> .card))::before {
+    content: "";
+    position: absolute;
+    inset: 9px;
+    border: 1px solid rgba(226,193,117,.16);
+    border-radius: 8px;
+    background:
+      radial-gradient(circle at 50% 53%, rgba(226,193,117,.15) 0 1px, transparent 2px),
+      radial-gradient(circle at 50% 53%, transparent 0 18px, rgba(226,193,117,.075) 18px 19px, transparent 20px),
+      linear-gradient(180deg, rgba(255,255,255,.014), rgba(0,0,0,.06));
+    box-shadow:
+      inset 0 0 0 1px rgba(0,0,0,.22),
+      inset 0 10px 16px rgba(255,255,255,.016),
+      inset 0 -10px 16px rgba(0,0,0,.18);
+    pointer-events: none;
+  }
+
+  /* Each spread position gets a small celestial identity marker. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot:not(:has(> .card))::after {
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 18px;
+    height: 18px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(173,131,66,.62);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(54,38,22,.92), rgba(24,16,11,.98));
+    color: rgba(232,196,96,.76);
+    font: 700 10px/1 Georgia,serif;
+    text-shadow: 0 0 8px rgba(232,196,96,.18);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,230,170,.05),
+      0 2px 6px rgba(0,0,0,.35);
+    pointer-events: none;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1):not(:has(> .card))::after { content: "☽"; }
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2):not(:has(> .card))::after { content: "✦"; }
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3):not(:has(> .card))::after { content: "☉"; }
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4):not(:has(> .card))::after { content: "✧"; }
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5):not(:has(> .card))::after { content: "☾"; }
+
+  /* Valid placement state. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.drop-target:not(:has(> .card)),
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-target-slot:not(:has(> .card)) {
+    background:
+      radial-gradient(circle at 50% 43%, rgba(121,199,120,.15) 0, rgba(121,199,120,0) 35%),
+      linear-gradient(180deg, rgba(30,42,28,.96), rgba(16,20,15,.99)) !important;
+    border-color: #79c778 !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(121,199,120,.18),
+      0 0 0 2px rgba(121,199,120,.48),
+      0 0 24px rgba(121,199,120,.28),
+      0 10px 18px rgba(0,0,0,.48) !important;
+  }
+
+  /* Chosen slot state. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-picked-slot:not(:has(> .card)) {
+    background:
+      radial-gradient(circle at 50% 43%, rgba(255,217,120,.15) 0, rgba(255,217,120,0) 35%),
+      linear-gradient(180deg, rgba(43,35,24,.96), rgba(19,15,11,.99)) !important;
+    border-color: #ffd978 !important;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,217,120,.16),
+      0 0 0 2px rgba(255,217,120,.72),
+      0 0 24px rgba(255,217,120,.3),
+      0 10px 18px rgba(0,0,0,.48) !important;
+  }
+}
