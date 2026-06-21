@@ -1,0 +1,29 @@
+/* Keep the five spread targets exactly the same physical size as live hand cards. */
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-live-card-w: clamp(78px, 22vw, 96px);
+    --spv2-live-card-h: calc(var(--spv2-live-card-w) * 1.5);
+    --spv2-slot-w: var(--spv2-live-card-w);
+    --spv2-slot-h: var(--spv2-live-card-h);
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot,
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card {
+    width: var(--spv2-live-card-w);
+    height: var(--spv2-live-card-h);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread {
+    min-height: calc(var(--spv2-live-card-h) + 24px);
+    padding-inline: 1vw;
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot {
+    margin-left: -7.2vw;
+    flex: 0 0 var(--spv2-live-card-w);
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot:first-child {
+    margin-left: 0;
+  }
+}
