@@ -2,7 +2,7 @@
 // Keeps the main menu responsive before loading the full game module graph.
 import { installMarketAudioRotation } from './marketAudioRotation.mjs';
 
-const GAME_MODULE = './main.mjs?v=tutorial-anchors-1';
+const GAME_MODULE = './main.mjs?v=hint-cross-zone-1';
 const DEFERRED_ASSETS_MODULE = './deferredAssets.mjs?v=lazy-boot-1';
 
 let gamePromise = null;
