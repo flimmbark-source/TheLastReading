@@ -37,4 +37,14 @@
   body.single-player-v2.generated-sheet-ready .spread-wrap::after {
     content: none !important;
   }
+
+  /* The title art tile already reads "THE LAST READING"; drop the duplicate
+     CSS text overlay and restore the art to full opacity. */
+  body.single-player-v2.generated-sheet-ready #titleWrap::after {
+    content: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
+    opacity: 1 !important;
+  }
 }
