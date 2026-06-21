@@ -22,7 +22,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     ensureStylesheet('single-player-v2-assets','src/styles/singlePlayerV2Assets.css?v=clean-tiles-1');
     ensureStylesheet('single-player-v2-slot-match','src/styles/singlePlayerV2SlotMatch.css?v=2');
     ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=8');
-    ensureStylesheet('single-player-v2-final-placement','src/styles/singlePlayerV2FinalPlacement.css?v=3');
+    ensureStylesheet('single-player-v2-final-placement','src/styles/singlePlayerV2FinalPlacement.css?v=4');
   };
 
   const refreshCompositionLayer=()=>{
@@ -94,7 +94,14 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     wrap.classList.toggle('open',opening);
   };
 
+  const ensureActionRail=()=>{
+    const rail=doc.querySelector('.spread-actions');
+    if(rail&&rail.parentElement!==doc.body)doc.body.appendChild(rail);
+  };
+
   const ensureUtilityControls=()=>{
+    ensureActionRail();
+
     let archiveButton=doc.getElementById('spv2ArchiveBtn');
     if(!archiveButton){
       archiveButton=doc.createElement('button');
