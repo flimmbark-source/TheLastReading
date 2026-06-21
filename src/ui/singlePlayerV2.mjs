@@ -101,18 +101,28 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
   };
 
   const ensureHandDragHandle=()=>{
-    doc.querySelector('.hand-swipe-zone .spv2-hand-drag-label')?.remove();
-    if(doc.getElementById('spv2HandDragLabel'))return;
-    const label=doc.createElement('div');
-    label.id='spv2HandDragLabel';
-    label.setAttribute('aria-hidden','true');
-    label.textContent='DRAG HAND';
-    doc.body.appendChild(label);
+    doc.getElementById('spv2HandDragLabel')?.remove();
+    const zone=doc.getElementById('handSwipeZone');
+    if(!zone)return;
+    zone.replaceChildren();
+    zone.setAttribute('aria-label','Drag hand');
+    zone.style.setProperty('left','50%','important');
+    zone.style.setProperty('right','auto','important');
+    zone.style.setProperty('bottom','calc(6.2dvh + 31dvh + 56px)','important');
+    zone.style.setProperty('width','clamp(132px,37vw,160px)','important');
+    zone.style.setProperty('height','36px','important');
+    zone.style.setProperty('transform','translateX(-50%)','important');
+    zone.style.setProperty('z-index','38','important');
   };
 
   const ensureUtilityControls=()=>{
     ensureActionRail();
     ensureHandDragHandle();
+
+    const discard=doc.getElementById('discardBtn');
+    const purge=doc.getElementById('purgeBtn');
+    discard?.setAttribute('aria-label','Discard selected card to use its ability');
+    purge?.setAttribute('aria-label','Remove 3 cards to gain 1 Discard');
 
     let archiveButton=doc.getElementById('spv2ArchiveBtn');
     if(!archiveButton){
