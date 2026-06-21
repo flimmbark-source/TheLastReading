@@ -15,6 +15,8 @@ export function renderHand(ability, inPurge, view = null) {
   const h=$('#hand');
   const selectedId=v.selected;
   const handLen=v.hand.length;
+  const hintState={spread:v.spread||[],hand:v.hand||[]};
+  const hintPool=[...hintState.spread.filter(Boolean),...hintState.hand];
   // Suppress the swipe handler's MutationObserver during the loop.
   // Each insertBefore fires it synchronously with an intermediate card count,
   // causing applySlots() to assign wrong --slot values that then animate.
@@ -47,7 +49,7 @@ export function renderHand(ability, inPurge, view = null) {
       +(selectedId===c.uid&&!ability&&!inPurge?'sel ':'')
       +(valid&&!picked?'ability-target ':'')+(picked?'ability-picked ':'')
       +(ability&&!valid?'ability-disabled ':'');
-    if(!inPurge)applyHint(e,c,null,view?{spread:v.spread||[],hand:v.hand||[]}:null);
+    if(!inPurge)applyHint(e,c,hintPool,hintState);
     e.style.zIndex=handLen-i;
     e.style.setProperty('--a',((i-(handLen-1)/2)*5)+'deg');
     // onclick captures the current render's ability/inPurge snapshot, so
