@@ -23,6 +23,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     ensureStylesheet('single-player-v2-slot-match','src/styles/singlePlayerV2SlotMatch.css?v=2');
     ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=8');
     ensureStylesheet('single-player-v2-final-placement','src/styles/singlePlayerV2FinalPlacement.css?v=6');
+    ensureStylesheet('single-player-v2-hud-table-pass','src/styles/singlePlayerV2HudTablePass.css?v=1');
   };
 
   const refreshCompositionLayer=()=>{
