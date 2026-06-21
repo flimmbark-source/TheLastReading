@@ -186,11 +186,11 @@
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
     left: 0 !important;
     right: 0 !important;
-    bottom: calc(34dvh + 70px) !important;
+    bottom: 25.5dvh !important;
     width: auto !important;
-    height: 58px !important;
+    height: 74px !important;
     transform: none !important;
-    z-index: 27 !important;
+    z-index: 25 !important;
     border: 0 !important;
     border-radius: 0 !important;
     background: transparent !important;
@@ -211,9 +211,20 @@
     visibility: visible !important;
   }
 
-  body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower,
-  body.single-player-v2.generated-sheet-ready .hand-swipe-hint {
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower {
     display: block !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-hint {
+    position: fixed !important;
+    left: 50% !important;
+    top: auto !important;
+    bottom: calc(34dvh + 74px) !important;
+    width: max-content !important;
+    transform: translateX(-50%) !important;
+    display: block !important;
+    z-index: 70 !important;
+    pointer-events: none !important;
   }
 
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone:not(.hints-complete):not(.has-swiped):not(.dragging):not(.pinching) .hand-swipe-hint {
@@ -226,6 +237,10 @@
   }
 
   body.single-player-v2.generated-sheet-ready .swipe-hint-line {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
     display: flex !important;
     animation: none !important;
     opacity: 0 !important;
