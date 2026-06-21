@@ -16,6 +16,7 @@ export function selectedCard(state) {
 export function handView(state, options = {}) {
   return {
     hand: state.run.hand || [],
+    spread: state.run.spread || Array(5).fill(null),
     selected: state.run.selectedCardId ?? null,
     // Purge is not fully store-owned yet, so callers may pass the current legacy
     // purge list while the rest of the hand display data comes from the store.
@@ -27,6 +28,7 @@ export function handView(state, options = {}) {
 export function spreadView(state, options = {}) {
   return {
     spread: state.run.spread || Array(5).fill(null),
+    hand: state.run.hand || [],
     selected: state.run.selectedCardId ?? null,
     onPlaceCard: options.onPlaceCard || null,
     onAbilityTarget: options.onAbilityTarget || null,
@@ -177,25 +179,4 @@ export function archiveEntries(state) {
 
 export function obals(state) {
   return state.persist.obals || 0;
-}
-
-export function publicRunSnapshot(state) {
-  return {
-    phase: state.run.phase,
-    reading: state.run.reading,
-    threshold: thresholdValue(state),
-    reserve: state.persist.reserve,
-    totalScore: state.persist.totalScore,
-    handCount: state.run.hand.length,
-    deckCount: state.run.deck.length,
-    discardCount: state.run.discard.length,
-    spreadCount: placedCards(state).length,
-    discards: state.run.discards,
-    setIndex: state.run.setIndex,
-    setsPerRound: state.run.setsPerRound,
-    roundScore: state.run.roundScore,
-    constellationId: state.run.constellationId,
-    canDiscard: canDiscardSelected(state),
-    canScore: canScoreReading(state),
-  };
 }
