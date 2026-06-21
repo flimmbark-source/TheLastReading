@@ -242,11 +242,34 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     progress.setAttribute('aria-label',threshold>0?`${Math.round(ratio*100)}% of threshold`:'No threshold');
   };
 
+  const ensureDiscardBadge=()=>{
+    const button=doc.getElementById('discardBtn');
+    if(!button)return null;
+    let badge=doc.getElementById('spv2DiscardBadge');
+    if(!badge){
+      badge=doc.createElement('span');
+      badge.id='spv2DiscardBadge';
+      badge.setAttribute('aria-hidden','true');
+    }
+    if(badge.parentElement!==button)button.appendChild(badge);
+    return badge;
+  };
+
+  const updateDiscardBadge=()=>{
+    const badge=ensureDiscardBadge();
+    if(!badge)return;
+    const raw=doc.getElementById('discards')?.textContent??'';
+    const value=String(raw).replace(/[^0-9]/g,'');
+    badge.textContent=value;
+    badge.style.display=value===''?'none':'';
+  };
+
   const observeValues=()=>{
     const ids=['pool','current','threshold','discards'];
     const observer=new MutationObserver(()=>{
       ensureHudStructure();
       updateProgress();
+      updateDiscardBadge();
     });
     ids.forEach(id=>{
       const el=doc.getElementById(id);
@@ -261,6 +284,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
       return;
     }
     updateProgress();
+    updateDiscardBadge();
     observeValues();
   };
 

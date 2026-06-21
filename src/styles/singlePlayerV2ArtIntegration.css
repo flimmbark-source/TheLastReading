@@ -116,22 +116,55 @@
     box-shadow: none !important;
     color: transparent !important;
     font-size: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Purge: medallion art + brightness on the element itself. */
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    background-image: var(--spv2-action-center-art) !important;
     filter: brightness(1.45) contrast(1.05) saturate(1.08)
       drop-shadow(0 0 6px rgba(0, 0, 0, .6)) !important;
   }
 
-  body.single-player-v2.generated-sheet-ready #discardBtn::before,
+  /* Discard: art + brightness live on ::before so the count badge child is
+     not affected by the filter. */
+  body.single-player-v2.generated-sheet-ready #discardBtn::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background-image: url("/public/ui/single-player-v2/elements/Discard.png") !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: contain !important;
+    filter: brightness(1.45) contrast(1.05) saturate(1.08)
+      drop-shadow(0 0 6px rgba(0, 0, 0, .6)) !important;
+    pointer-events: none !important;
+  }
+
   body.single-player-v2.generated-sheet-ready #discardBtn::after,
-  body.single-player-v2.generated-sheet-ready #purgeBtn::before,
   body.single-player-v2.generated-sheet-ready #purgeBtn::after {
     content: none !important;
   }
 
-  body.single-player-v2.generated-sheet-ready #discardBtn {
-    background-image: url("/public/ui/single-player-v2/elements/Discard.png") !important;
-  }
-
-  body.single-player-v2.generated-sheet-ready #purgeBtn {
-    background-image: var(--spv2-action-center-art) !important;
+  /* Discards-left count badge in the discard button's top-right corner. */
+  body.single-player-v2.generated-sheet-ready #spv2DiscardBadge {
+    position: absolute !important;
+    top: -2px !important;
+    right: -2px !important;
+    min-width: 19px !important;
+    height: 19px !important;
+    padding: 0 4px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(196, 224, 255, .8) !important;
+    background: radial-gradient(circle at 40% 32%, #6aa8ee, #1b4d99 78%) !important;
+    color: #fff !important;
+    font: 800 11px/1 system-ui, sans-serif !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .6) !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .55),
+      inset 0 1px 0 rgba(255, 255, 255, .25) !important;
+    z-index: 3 !important;
+    pointer-events: none !important;
   }
 }
