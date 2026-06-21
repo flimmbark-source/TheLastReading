@@ -1,9 +1,9 @@
 @media (max-width: 640px) {
-  /* Pin the score/threshold HUD directly to the top edge. The four utility
-     buttons already derive their vertical position from this shared variable,
-     so they move upward with the pills as one cluster. */
+  /* Leave a small breathing gap above the score/threshold HUD. The four utility
+     buttons derive their vertical position from this shared variable, so the
+     entire upper cluster moves together. */
   html body.single-player-v2.generated-sheet-ready {
-    --spv2-hud-top: 0px !important;
+    --spv2-hud-top: 6px !important;
   }
 
   /* Rebalance the five-card fan around the available viewport width. Slots 2
