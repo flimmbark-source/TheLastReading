@@ -63,15 +63,4 @@
   html body.single-player-v2.generated-sheet-ready .spread-wrap {
     top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + 58px) !important;
   }
-
-  html body.single-player-v2.generated-sheet-ready .handDock .hand {
-    --track-spacing: 4.25deg !important;
-    --track-radius: 760px !important;
-    transform: translateY(10.2dvh) !important;
-  }
-
-  html body.single-player-v2.generated-sheet-ready .handDock .hand .card {
-    width: clamp(84px,23.6vw,102px) !important;
-    height: calc(clamp(84px,23.6vw,102px) * 1.5) !important;
-  }
 }
