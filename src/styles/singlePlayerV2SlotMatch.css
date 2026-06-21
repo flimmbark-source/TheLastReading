@@ -27,7 +27,6 @@
     margin-left: 0;
   }
 
-  /* Pill labels sit above their live values. */
   body.single-player-v2.generated-sheet-ready .score-stack .pill {
     flex-direction: column;
     gap: 4px;
@@ -45,35 +44,35 @@
     line-height: 1;
   }
 
-  /* Restore the missing title even when the extracted title tile is too faint. */
+  body.single-player-v2.generated-sheet-ready .tlr-pull-tab,
+  body.single-player-v2.generated-sheet-ready #invTab {
+    display: none !important;
+  }
+
   body.single-player-v2.generated-sheet-ready #titleWrap {
     z-index: 34;
     pointer-events: none;
   }
 
   body.single-player-v2.generated-sheet-ready #titleWrap::before {
-    opacity: .45;
+    opacity: .6;
   }
 
   body.single-player-v2.generated-sheet-ready #titleWrap::after {
-    content: "THE\A LAST READING";
-    white-space: pre;
+    content: "THE LAST READING";
     position: absolute;
-    inset: .35dvh 18% auto;
+    left: 15%;
+    right: 15%;
+    top: 1.2dvh;
     text-align: center;
     font-family: Georgia, "Times New Roman", serif;
-    font-size: clamp(8px, 2.25vw, 12px);
-    line-height: .9;
-    letter-spacing: .18em;
+    font-size: clamp(15px, 4.5vw, 22px);
+    line-height: 1;
+    letter-spacing: .12em;
     color: #b68a48;
     text-shadow: 0 1px 0 #000, 0 0 10px rgba(192, 133, 55, .24);
   }
 
-  body.single-player-v2.generated-sheet-ready #titleWrap::after::first-line {
-    font-size: .65em;
-  }
-
-  /* Replace the old text tabs with the intended round utility controls. */
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready .actions button {
     color: transparent !important;
@@ -84,8 +83,7 @@
   }
 
   body.single-player-v2.generated-sheet-ready #abilitiesBtn,
-  body.single-player-v2.generated-sheet-ready #mullBtn,
-  body.single-player-v2.generated-sheet-ready #invTab {
+  body.single-player-v2.generated-sheet-ready #mullBtn {
     display: none !important;
   }
 
@@ -99,10 +97,12 @@
 
   body.single-player-v2.generated-sheet-ready .actions {
     left: 3.8vw !important;
+    right: auto !important;
     top: 23.7dvh !important;
   }
 
   body.single-player-v2.generated-sheet-ready #menuBtn {
+    left: auto !important;
     right: 3.8vw !important;
     top: 23.7dvh !important;
   }
@@ -123,9 +123,19 @@
   }
 
   body.single-player-v2.generated-sheet-ready .spread-actions {
+    position: fixed !important;
     z-index: 40 !important;
+    top: auto !important;
+    left: 0 !important;
+    right: 0 !important;
     bottom: max(1.2dvh, env(safe-area-inset-bottom)) !important;
+    width: 100% !important;
     height: clamp(66px, 17vw, 82px);
+    padding: 0 5vw !important;
+    transform: none !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
     pointer-events: none;
   }
 
@@ -144,5 +154,6 @@
   body.single-player-v2.generated-sheet-ready #purgeBtn {
     width: clamp(58px, 15.5vw, 72px) !important;
     height: clamp(66px, 17.5vw, 80px) !important;
+    min-width: 0 !important;
   }
 }
