@@ -58,10 +58,10 @@
     transform: translateY(4.5dvh) !important;
   }
 
-  /* Raise the dock banner art so its bottom edge sits at the bottom of the
-     hand fan rather than at the very bottom of the screen. */
+  /* Position the dock banner so most of it sits behind the fan and only its
+     bottom rim peeks out just below the hand cards. */
   body.single-player-v2.generated-sheet-ready .handDock {
-    background-position: center bottom 7dvh !important;
+    background-position: center bottom 2dvh !important;
   }
 
   /* Utility buttons carry their icon as art, so drop the text fallbacks
