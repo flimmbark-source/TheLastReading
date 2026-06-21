@@ -1,0 +1,159 @@
+{
+  "version": 1,
+  "root": "public/ui/single-player-v2",
+  "assets": [
+    {
+      "id": "table-bg",
+      "file": "table-bg.webp",
+      "batch": "B",
+      "format": "webp",
+      "alpha": false,
+      "master": { "width": 1536, "height": 2732 },
+      "targetSelector": "body.single-player-v2",
+      "notes": "Dark tarot table only. No UI, cards, labels, values, scanlines, or candle wash."
+    },
+    {
+      "id": "reading-circle",
+      "file": "reading-circle.png",
+      "batch": "B",
+      "format": "png",
+      "alpha": true,
+      "master": { "width": 1024, "height": 1024 },
+      "targetSelector": "body.single-player-v2 .spread-wrap::before",
+      "notes": "Subtle occult geometry; must remain quiet beneath five live slots."
+    },
+    {
+      "id": "hud-frame",
+      "file": "hud-frame.png",
+      "batch": "A",
+      "format": "png",
+      "alpha": true,
+      "master": { "width": 1170, "height": 336 },
+      "targetSelector": "body.single-player-v2 .score-stack",
+      "notes": "Outer shell and separators only. No labels or values."
+    },
+    {
+      "id": "hud-reserve",
+      "file": "hud-reserve.png",
+      "batch": "B",
+      "format": "png",
+      "alpha": true,
+      "master": { "width": 246, "height": 336 },
+      "targetSelector": "body.single-player-v2 .reserve-pill",
+      "notes": "Quiet dark-brass panel, transparent outside silhouette."
+    },
+    {
+      "id": "hud-score",
+      "file": "hud-score.png",
+      "batch": "A",
+      "format": "png",
+      "alpha": true,
+      "master": { "width": 339, "height": 336 },
+      "targetSelector": "body.single-player-v2 .score-pill",
+      "notes": "Warm gold emphasis but dark enough for live numerals."
+    },
+    {
+      "id": "hud-threshold",
+      "file": "hud-threshold.png",
+      "batch": "A",
+      "format": "png",
+      "alpha": true,
+      "master": { "width": 339, "height": 336 },
+      "targetSelector": "body.single-player-v2 .threshold-pill",
+      "notes": "Subtle violet emphasis with clear lower progress-bar area."
+    },
+    {
+      "id": "hud-discards",
+      "file": "hud-discards.png",
+      "batch": "B",
+      "format": "png",
+      "alpha": true,
+      "master": { "width": 246, "height": 336 },
+      "targetSelector": "body.single-player-v2 .discards-pill",
+      "notes": "Quiet dark panel with restrained red detail."
+    },
+    {
+      "id": "spread-slot",
+      "file": "spread-slot.png",
+      "batch": "A",
+      "format": "png",
+      "alpha": true,
+      "master": { "width": 384, "height": 576 },
+      "targetSelector": "body.single-player-v2 .slot",
+      "notes": "Reusable 2:3 frame. Center ornament subdued."
+    },
+    {
+      "id": "hand-dock",
+      "file": "hand-dock.png",
+      "batch": "B",
+      "format": "png",
+      "alpha": true,
+      "master": { "width": 1536, "height": 560 },
+      "targetSelector": "body.single-player-v2 .handDock",
+      "notes": "Curved ornament only; no cards or baked shadows that clip lifted hand."
+    },
+    {
+      "id": "action-primary",
+      "file": "action-primary.png",
+      "batch": "A",
+      "format": "png",
+      "alpha": true,
+      "master": { "width": 384, "height": 384 },
+      "targetSelector": "body.single-player-v2 .spv2-action-primary",
+      "notes": "Central sun/reading medallion frame, no baked state icon."
+    },
+    {
+      "id": "action-secondary",
+      "file": "action-secondary.png",
+      "batch": "B",
+      "format": "png",
+      "alpha": true,
+      "master": { "width": 256, "height": 256 },
+      "targetSelector": "body.single-player-v2 .spv2-action-secondary",
+      "notes": "Reusable circular side-action frame."
+    },
+    {
+      "id": "badge-gem",
+      "file": "badge-gem.png",
+      "batch": "B",
+      "format": "png",
+      "alpha": true,
+      "master": { "width": 128, "height": 128 },
+      "targetSelector": "body.single-player-v2 .spv2-badge",
+      "notes": "Blank count gem. Number remains live text."
+    },
+    {
+      "id": "card-back",
+      "file": "card-back.png",
+      "batch": "B",
+      "format": "png",
+      "alpha": false,
+      "master": { "width": 768, "height": 1152 },
+      "targetSelector": ".card-back, .slot.face-down",
+      "notes": "Exact 2:3 footprint and same frame language as spread slot."
+    }
+  ],
+  "cardSheets": {
+    "count": 10,
+    "strategy": "one-for-one replacement",
+    "rules": [
+      "Preserve current lookup order.",
+      "Preserve exact card footprint and sprite coordinates.",
+      "Do not enlarge cards to fill unused sheet space.",
+      "Empty cells are permitted.",
+      "All ten sheets use one frozen card-frame master."
+    ],
+    "filenames": [
+      "cards-sheet-01.png",
+      "cards-sheet-02.png",
+      "cards-sheet-03.png",
+      "cards-sheet-04.png",
+      "cards-sheet-05.png",
+      "cards-sheet-06.png",
+      "cards-sheet-07.png",
+      "cards-sheet-08.png",
+      "cards-sheet-09.png",
+      "cards-sheet-10.png"
+    ]
+  }
+}

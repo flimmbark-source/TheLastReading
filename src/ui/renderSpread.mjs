@@ -12,10 +12,20 @@ function targetCard(card, view) {
   else handleAbilityHandClick(card);
 }
 
+function clearHintVisual(element) {
+  if (!element) return;
+  element.style.removeProperty('--hint-rgb');
+  element.style.removeProperty('--hint-shadow');
+  delete element.dataset.hint;
+}
+
 export function renderSpread(ability, inPurge, view = null) {
   if (document.body.classList.contains('mp-game-active') && !window.__tlrMpUsingSingleAbilityFlow) return;
   const displaySpread = view && view.spread ? view.spread : state.spread;
+  const displayHand = view ? (view.hand || []) : state.hand;
   const selected = view && Object.prototype.hasOwnProperty.call(view, 'selected') ? view.selected : state.selected;
+  const hintState={spread:displaySpread||[],hand:displayHand||[]};
+  const hintPool=[...hintState.spread.filter(Boolean),...hintState.hand];
   const sp = $('#spread');
   if (!_slotEls || _slotEls.length !== 5 || !sp.contains(_slotEls[0])) {
     _slotEls = [];
@@ -30,6 +40,7 @@ export function renderSpread(ability, inPurge, view = null) {
   for (let i = 0; i < 5; i += 1) {
     const card = displaySpread[i];
     const s = _slotEls[i];
+    clearHintVisual(s);
     let cls = 'slot ' + (card ? 'filled' : 'empty') + (selected !== null && !card ? ' target' : '');
     if (card) {
       const validSpread = ability && ability.validIds.has(card.uid);
@@ -47,12 +58,16 @@ export function renderSpread(ability, inPurge, view = null) {
         applyCardPhoto(e, card);
         s.appendChild(e);
       } else {
-        e.style.removeProperty('--hint-rgb');
-        e.style.removeProperty('--hint-shadow');
-        delete e.dataset.hint;
+        clearHintVisual(e);
       }
       e.className = 'card ' + (card.type === 'major' ? 'major ' : '') + (CARD_SHEET[card.id] ? 'photo ' : '') + (validSpread && !pickedSpread ? 'ability-target ' : '') + (pickedSpread ? 'ability-picked ' : '') + (ability && !validSpread ? 'ability-disabled ' : '');
-      if (!inPurge) applyHint(e, card);
+      if (!inPurge) {
+        applyHint(e, card, hintPool, hintState);
+        // The placed card sits inside a layered, shadowed slot. Mirror the hint
+        // state onto the slot so its halo remains visible outside that stacking
+        // context instead of disappearing behind the fan.
+        applyHint(s, card, hintPool, hintState);
+      }
       e.onclick = (ability && validSpread) ? (ev) => { ev.stopPropagation(); targetCard(card, view); } : null;
     } else {
       if (ability) cls += ' ability-empty-slot';

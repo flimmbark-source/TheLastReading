@@ -1,0 +1,162 @@
+/* ═══════════════════════════════════════════════════════════════
+   PS1 / LOFI DARK AESTHETIC
+   Inspired by Inscryption · Lunacid · Dread Delusion · You Must Feed It
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Persistent edge vignette ──────────────────────────────────────────────
+   Using html:: not body:: — body has overflow-x:hidden on mobile which
+   causes iOS Safari to incorrectly clip position:fixed pseudo-elements. */
+html::before {
+  content: '';
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: radial-gradient(
+    ellipse 84% 78% at 50% 44%,
+    transparent 22%,
+    rgba(0,0,0,.28) 66%,
+    rgba(0,0,0,.66) 100%
+  );
+  pointer-events: none;
+  z-index: 9996;
+}
+
+/* ── Whole-screen flicker ── */
+@keyframes ps1Flicker {
+  0%,91%,100% { opacity: 1    }
+  92%          { opacity: .975 }
+  92.5%        { opacity: .90  }
+  93%          { opacity: .975 }
+  93.5%        { opacity: 1    }
+  96.5%        { opacity: .93  }
+  97%          { opacity: 1    }
+}
+body {
+  color: #bea67c !important;
+  animation: ps1Flicker 14s ease-in-out infinite;
+}
+
+/* ── Stronger breath-vignette gradient (JS still controls opacity) ── */
+#breathVignette {
+  background: radial-gradient(
+    ellipse 73% 67% at 50% 42%,
+    transparent 8%,
+    rgba(0,0,0,.55) 60%,
+    rgba(0,0,0,.92) 100%
+  ) !important;
+}
+
+/* ── Pixelated card-art sprites ── */
+.card.photo,
+.isp,
+[class^='isp-'],
+[class*=' isp-'] {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* ── Deepen card backgrounds (Inscryption-dark) ── */
+/* Exclude .card.photo — those use background-image sprite sheets */
+.card:not(.photo) {
+  background: linear-gradient(165deg, #160e07, #0b0301) !important;
+  border-color: #362310 !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,.72) !important;
+}
+.card.major:not(.photo) { border-color: #4f3413 !important; }
+
+/* ── Darker art field ── */
+.art {
+  background: radial-gradient(circle, #1e1007, #0c0503 78%) !important;
+}
+
+/* ── Worn card title bar ── */
+.title {
+  background: #0c0603 !important;
+  color: #a88248 !important;
+  border-bottom-color: #3a2610 !important;
+}
+
+/* ── Spread slots: darker, more dungeon-ish ── */
+.slot {
+  background: rgba(0,0,0,.28) !important;
+  border-color: #2e2012 !important;
+}
+.slot.empty:hover, .slot.target {
+  background: rgba(42,74,40,.20) !important;
+  border-color: #496946 !important;
+}
+
+#handSwipeZone {
+  touch-action: none;
+}
+
+/* ── Float the hand above the bottom edge ──────────────────────────────────
+   bottom: 0 pins the dock to the screen edge, making cards look like they're
+   sinking out of frame. Lifting it reveals the table background below, giving
+   the PS1 "cards floating in the scene" feel (cf. Inscryption).
+   Three things move together: the dock itself, the swipe-capture zone that
+   sits just above it, and body's bottom padding that keeps the spread clear.
+   Direct px values are used instead of a CSS variable because var() inside
+   !important can misbehave on some mobile browsers. */
+
+.handDock {
+  bottom: 36px !important;
+  background: linear-gradient(transparent, rgba(0,0,0,.70)) !important;
+}
+.hand-swipe-zone {
+  bottom: 233px !important; /* 197px dock + 36px float */
+}
+body {
+  padding-bottom: 238px !important; /* 202px + 36px */
+}
+
+@media (max-width: 640px) {
+  .handDock {
+    bottom: 24px !important;
+  }
+  .hand-swipe-zone {
+    bottom: 176px !important; /* 152px dock + 24px float */
+  }
+  body {
+    padding-bottom: 181px !important; /* 157px + 24px */
+  }
+
+  /* ── Re-enable candle glow on mobile (performance.css disables it) ── */
+  #roomAmbient {
+    animation: candleFlicker 7.3s ease-in-out infinite !important;
+    opacity: 0.86 !important;
+    transform: none !important;
+  }
+}
+
+/* ── Dither texture on the spread surface ── */
+.spread-wrap::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: repeating-conic-gradient(
+    rgba(0,0,0,.038) 0% 25%,
+    transparent       0% 50%
+  ) 0 0 / 4px 4px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Desaturate self-contained UI regions (no stacking-context conflict) ── */
+.score-stack { filter: saturate(.68); }
+#relicRack   { filter: saturate(.70) contrast(1.03); }
+#titleWrap   { filter: saturate(.74); }
+#mainMenu    { filter: saturate(.72) contrast(1.04); }
+
+/* ── Muted heading gold ── */
+h1 {
+  color: #be9840 !important;
+  text-shadow: 0 0 10px rgba(144,106,26,.20) !important;
+}
+
+/* ── VT323 pixel font for score readouts ── */
+.pill b,
+.score-stack b {
+  font-family: 'VT323', 'Courier New', monospace;
+  font-size: 18px;
+  letter-spacing: .05em;
+}

@@ -1,0 +1,63 @@
+@media (max-width: 640px) {
+  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+    bottom: calc(6.2dvh + 31dvh + 56px) !important;
+    width: clamp(176px, 48vw, 214px) !important;
+    height: 44px !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone > *,
+  html body.single-player-v2.generated-sheet-ready .hand-swipe-hint,
+  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower,
+  html body.single-player-v2.generated-sheet-ready .swipe-hint-line,
+  html body.single-player-v2.generated-sheet-ready #spv2HandDragLabel {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone::before {
+    content: "DRAG HAND" !important;
+    position: absolute !important;
+    inset: auto !important;
+    left: 50% !important;
+    top: 50% !important;
+    width: clamp(112px, 30vw, 136px) !important;
+    height: 30px !important;
+    transform: translate(-50%,-50%) !important;
+    display: grid !important;
+    place-items: center !important;
+    border: 1px solid rgba(188,139,68,.78) !important;
+    border-radius: 999px !important;
+    background: linear-gradient(180deg,rgba(45,29,19,.96),rgba(17,11,16,.97)) !important;
+    box-shadow:
+      0 5px 14px rgba(0,0,0,.65),
+      inset 0 0 0 1px rgba(235,185,98,.12),
+      inset 0 0 12px rgba(101,64,126,.28) !important;
+    color: #d5b271 !important;
+    font: 800 clamp(9px,2.5vw,11px)/1 system-ui,sans-serif !important;
+    letter-spacing: .11em !important;
+    text-shadow: 0 1px 2px #000 !important;
+    pointer-events: none !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #ambientFX::before {
+    left: -52px !important;
+    top: 40% !important;
+    width: 190px !important;
+    height: 240px !important;
+    background:
+      radial-gradient(ellipse at 0 52%,rgba(255,177,62,.18),rgba(255,135,40,.06) 38%,transparent 72%) !important;
+    filter: blur(3px) !important;
+    opacity: .72 !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #ambientFX::after {
+    right: -28px !important;
+    opacity: .56 !important;
+    filter: blur(11px) !important;
+  }
+}

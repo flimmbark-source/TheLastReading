@@ -88,14 +88,26 @@ function addHint(hints, seen, level, label, colorKey = null) {
 }
 
 function addCompletionHints({ hints, seen, card, spreadCards, scoringOptions }) {
-  const placedCards = [...spreadCards, card];
-  const before = new Set(computeScore(spreadCards, scoringOptions).melds.map(meld => meld.name));
-  const after = computeScore(placedCards, scoringOptions);
+  const cardIsPlaced = spreadCards.some(placed => placed.uid === card.uid);
+
+  // Hand card: compare the current spread against the spread with this card
+  // added. Placed card: compare the spread without this card against the real
+  // spread. This keeps every card that participates in a completed pattern
+  // glowing after it crosses from the hand into a slot.
+  const beforeCards = cardIsPlaced
+    ? spreadCards.filter(placed => placed.uid !== card.uid)
+    : spreadCards;
+  const afterCards = cardIsPlaced
+    ? spreadCards
+    : uniqueCards([...spreadCards, card]);
+
+  const before = new Set(computeScore(beforeCards, scoringOptions).melds.map(meld => meld.name));
+  const after = computeScore(afterCards, scoringOptions);
 
   for (const meld of after.melds) {
     if (before.has(meld.name)) continue;
     const label = normalizeMeldName(meld.name);
-    addHint(hints, seen, HINT_LEVELS.COMPLETE, label, extractColorKeyFromMeld(label, meld.name, card, placedCards));
+    addHint(hints, seen, HINT_LEVELS.COMPLETE, label, extractColorKeyFromMeld(label, meld.name, card, afterCards));
   }
 }
 

@@ -1,0 +1,157 @@
+/* Temporary ability-choice cards inherit the same hint information as cards in
+   play, but use the restrained spread polish instead of the legacy broad card
+   glow from market.css. */
+html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-card,
+html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-complete,
+html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-multi {
+  border-color: rgb(var(--hint-rgb,232,196,96)) !important;
+  box-shadow:
+    0 0 0 1px rgba(var(--hint-rgb,232,196,96),.55),
+    0 0 10px rgba(var(--hint-rgb,232,196,96),.30),
+    0 8px 18px rgba(0,0,0,.55) !important;
+  filter: none !important;
+}
+
+@keyframes spv2-pattern-card-bump {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  42% {
+    transform: translateY(-12px) scale(1.06);
+  }
+  68% {
+    transform: translateY(2px) scale(.99);
+  }
+}
+
+@media (max-width: 640px) {
+  /* Leave a small breathing gap above the score/threshold HUD. The four utility
+     buttons derive their vertical position from this shared variable, so the
+     entire upper cluster moves together. */
+  html body.single-player-v2.generated-sheet-ready {
+    --spv2-hud-top: 12px !important;
+  }
+
+  /* Center the visible five-card fan in the viewport rather than positioning it
+     beneath the upper HUD stack. The +7px correction accounts for the outer
+     cards extending 14px below the upright center card. */
+  html body.single-player-v2.generated-sheet-ready .spread {
+    position: fixed !important;
+    top: 45dvh !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+    transform: translateY(calc(-50% + 7px)) !important;
+  }
+
+  /* Rebalance the five-card fan around the available viewport width. Slots 2
+     and 4 move closer to the middle, while the outer cards anchor to protected
+     side gutters. This minimizes unavoidable overlap evenly across all four
+     card-to-card boundaries without changing any slot dimensions. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
+    left: 18px !important;
+    right: auto !important;
+    transform: translateY(14px) rotate(-8deg) !important;
+    --spv2-contact-shadow:
+      0 5px 4px rgba(0,0,0,.70),
+      0 14px 17px rgba(0,0,0,.52);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
+    left: 32.5% !important;
+    right: auto !important;
+    transform: translateX(-50%) translateY(5px) rotate(-4deg) !important;
+    --spv2-contact-shadow:
+      0 6px 4px rgba(0,0,0,.74),
+      0 16px 18px rgba(0,0,0,.56);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) scale(1.025) !important;
+    --spv2-contact-shadow:
+      0 7px 5px rgba(0,0,0,.82),
+      0 19px 22px rgba(0,0,0,.62);
+    box-shadow: var(--spv2-contact-shadow) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
+    left: 67.5% !important;
+    right: auto !important;
+    transform: translateX(-50%) translateY(5px) rotate(4deg) !important;
+    --spv2-contact-shadow:
+      0 6px 4px rgba(0,0,0,.74),
+      0 16px 18px rgba(0,0,0,.56);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
+    left: auto !important;
+    right: 18px !important;
+    transform: translateY(14px) rotate(8deg) !important;
+    --spv2-contact-shadow:
+      0 5px 4px rgba(0,0,0,.70),
+      0 14px 17px rgba(0,0,0,.52);
+  }
+
+  /* Match the approved hand-card polish exactly: a restrained one-pixel rim
+     and a short ten-pixel halo. The center slot no longer receives a broader
+     treatment just because it sits on the highest layer. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-card:not(.drop-target):not(.ability-target-slot):not(.ability-picked-slot),
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-complete:not(.drop-target):not(.ability-target-slot):not(.ability-picked-slot),
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-multi:not(.drop-target):not(.ability-target-slot):not(.ability-picked-slot) {
+    box-shadow:
+      0 0 0 1px rgba(var(--hint-rgb,232,196,96),.55),
+      0 0 10px rgba(var(--hint-rgb,232,196,96),.30),
+      var(--spv2-contact-shadow) !important;
+  }
+
+  /* The older resonation system paints an animated amber ::before glow directly
+     on slots. When a card also has a normal hint, suppress that legacy layer so
+     the polished hint remains the only colored effect. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-card.res-1::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-card.res-2::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-card.res-3::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-complete.res-1::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-complete.res-2::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-complete.res-3::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-multi.res-1::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-multi.res-2::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-multi.res-3::before {
+    content: none !important;
+    display: none !important;
+    animation: none !important;
+  }
+
+  /* The slot owns the placed-card glow. Remove the old inner card glow so the
+     fan does not stack two effects on top of one another. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.hint-card:not(.ability-target):not(.ability-picked),
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.hint-complete:not(.ability-target):not(.ability-picked),
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.hint-multi:not(.ability-target):not(.ability-picked) {
+    border-color: #6b4f25 !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.major.hint-card:not(.ability-target):not(.ability-picked),
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.major.hint-complete:not(.ability-target):not(.ability-picked),
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.major.hint-multi:not(.ability-target):not(.ability-picked) {
+    border-color: #9a7842 !important;
+  }
+
+  /* Pattern completion still adds .bump to each participating slot in a short
+     stagger. The old animation transformed the slot, but the fan now locks each
+     slot transform. Animate the card inside instead so the lift returns without
+     changing the fan's position or rotation. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.bump > .card {
+    animation: spv2-pattern-card-bump .42s cubic-bezier(.2,.85,.25,1) !important;
+    transform-origin: 50% 78% !important;
+    will-change: transform !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html body.single-player-v2.generated-sheet-ready #spread .slot.bump > .card {
+      animation: none !important;
+    }
+  }
+}

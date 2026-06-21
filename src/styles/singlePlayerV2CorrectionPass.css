@@ -1,0 +1,129 @@
+@media (max-width: 640px) {
+  /* Spread slots keep their ornate frame and placed cards occupy that exact box. */
+  body.single-player-v2.generated-sheet-ready .spread {
+    top: calc(.4dvh + 10px) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot {
+    box-sizing: border-box !important;
+    width: var(--spv2-spread-card-w) !important;
+    height: var(--spv2-spread-card-h) !important;
+    flex-basis: var(--spv2-spread-card-w) !important;
+    background-image: var(--spv2-spread-slot-art) !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 100% !important;
+    overflow: hidden !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot > .card {
+    box-sizing: border-box !important;
+    position: absolute !important;
+    inset: 0 !important;
+    width: var(--spv2-spread-card-w) !important;
+    height: var(--spv2-spread-card-h) !important;
+    min-width: var(--spv2-spread-card-w) !important;
+    min-height: var(--spv2-spread-card-h) !important;
+    max-width: var(--spv2-spread-card-w) !important;
+    max-height: var(--spv2-spread-card-h) !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: inherit !important;
+  }
+
+  /* Restore the earlier, wider hand fan instead of the compressed pass. */
+  body.single-player-v2.generated-sheet-ready .handDock {
+    height: 31dvh !important;
+    bottom: 6.2dvh !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand {
+    height: 28.5dvh !important;
+    --track-spacing: 6.5deg !important;
+    --track-radius: 560px !important;
+    transform: translateY(.6dvh) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card,
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card:nth-child(3) {
+    width: clamp(78px,22vw,96px) !important;
+    height: calc(clamp(78px,22vw,96px) * 1.5) !important;
+  }
+
+  /* Restore the original multi-step swipe/pinch tutorial above the hand. */
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+    left: 0 !important;
+    right: 0 !important;
+    bottom: calc(6.2dvh + 31dvh) !important;
+    width: auto !important;
+    height: 58px !important;
+    transform: none !important;
+    z-index: 25 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    pointer-events: auto !important;
+    touch-action: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone::before {
+    content: none !important;
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #spv2HandDragLabel {
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-hint {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone:not(.hints-complete):not(.has-swiped):not(.dragging):not(.pinching) .hand-swipe-hint {
+    opacity: 1 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone.has-swiped .hand-swipe-hint,
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone.hints-complete .hand-swipe-hint {
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .swipe-hint-line {
+    display: flex !important;
+    visibility: visible !important;
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone:not([data-hint-step]) .swipe-hint-line-1,
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone[data-hint-step="1"] .swipe-hint-line-1,
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone[data-hint-step="2"] .swipe-hint-line-2,
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone[data-hint-step="3"] .swipe-hint-line-3 {
+    opacity: 1 !important;
+  }
+
+  /* Retain only the subtle environmental lighting from the polish pass. */
+  body.single-player-v2.generated-sheet-ready #roomAmbient {
+    z-index: 1 !important;
+    mix-blend-mode: screen !important;
+    background:
+      radial-gradient(circle at 7% 56%,rgba(255,190,88,.2),rgba(255,137,48,.06) 18%,transparent 34%),
+      radial-gradient(circle at 92% 47%,rgba(146,104,180,.1),transparent 29%),
+      radial-gradient(ellipse at 50% 69%,rgba(177,111,41,.08),transparent 45%) !important;
+    opacity: .82 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #breathVignette {
+    z-index: 3 !important;
+    opacity: 1 !important;
+    background: radial-gradient(ellipse 78% 72% at 50% 50%,transparent 48%,rgba(0,0,0,.24) 78%,rgba(0,0,0,.58) 100%) !important;
+  }
+}
