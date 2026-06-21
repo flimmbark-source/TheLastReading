@@ -1,3 +1,5 @@
+@import url('./singlePlayerV2GestureRestore.css?v=1');
+
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 8.8dvh;
@@ -181,76 +183,6 @@
   body.single-player-v2.generated-sheet-ready #discardBtn:disabled,
   body.single-player-v2.generated-sheet-ready #purgeBtn:disabled {
     opacity: .58 !important;
-  }
-
-  /* Restore the original full-width gesture surface over the hand. Cards stay
-     above it, so card selection keeps working while drags in the open spaces
-     are handled by the existing gestureHand runtime. */
-  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 25.5dvh !important;
-    width: auto !important;
-    height: 7.5dvh !important;
-    transform: none !important;
-    z-index: 25 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    pointer-events: auto !important;
-    touch-action: none !important;
-  }
-
-  body.single-player-v2.generated-sheet-ready .hand-swipe-zone::before,
-  body.single-player-v2.generated-sheet-ready #spv2HandDragLabel {
-    content: none !important;
-    display: none !important;
-  }
-
-  body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower {
-    display: block !important;
-    visibility: visible !important;
-  }
-
-  body.single-player-v2.generated-sheet-ready .hand-swipe-hint {
-    position: fixed !important;
-    left: 50% !important;
-    top: auto !important;
-    bottom: calc(25.5dvh + 2.1dvh) !important;
-    width: max-content !important;
-    transform: translateX(-50%) !important;
-    display: block !important;
-    z-index: 27 !important;
-    visibility: visible !important;
-    pointer-events: none !important;
-  }
-
-  body.single-player-v2.generated-sheet-ready .hand-swipe-zone:not(.hints-complete):not(.has-swiped):not(.dragging):not(.pinching) .hand-swipe-hint {
-    opacity: 1 !important;
-  }
-
-  body.single-player-v2.generated-sheet-ready .hand-swipe-zone.has-swiped .hand-swipe-hint,
-  body.single-player-v2.generated-sheet-ready .hand-swipe-zone.hints-complete .hand-swipe-hint {
-    display: none !important;
-  }
-
-  body.single-player-v2.generated-sheet-ready .swipe-hint-line {
-    position: relative !important;
-    left: auto !important;
-    top: auto !important;
-    transform: none !important;
-    display: flex !important;
-    visibility: visible !important;
-    animation: none !important;
-    opacity: 0 !important;
-  }
-
-  body.single-player-v2.generated-sheet-ready .hand-swipe-zone:not([data-hint-step]) .swipe-hint-line-1,
-  body.single-player-v2.generated-sheet-ready .hand-swipe-zone[data-hint-step="1"] .swipe-hint-line-1,
-  body.single-player-v2.generated-sheet-ready .hand-swipe-zone[data-hint-step="2"] .swipe-hint-line-2,
-  body.single-player-v2.generated-sheet-ready .hand-swipe-zone[data-hint-step="3"] .swipe-hint-line-3 {
-    opacity: 1 !important;
   }
 
   body.single-player-v2.generated-sheet-ready #menuBtn::after,
