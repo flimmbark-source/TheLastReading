@@ -24,7 +24,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
   const ensureAssetLayer=()=>{
     ensureStylesheet('single-player-v2-assets','src/styles/singlePlayerV2Assets.css?v=clean-tiles-1');
     ensureStylesheet('single-player-v2-slot-match','src/styles/singlePlayerV2SlotMatch.css?v=2');
-    ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=2');
+    ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=3');
   };
 
   const refreshCompositionLayer=()=>{
@@ -35,14 +35,76 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     if(link.getAttribute('href')!==next)link.setAttribute('href',next);
   };
 
+  const closeSettings=()=>doc.getElementById('settingsPanel')?.classList.add('hidden');
+  const closeReferences=()=>{
+    doc.getElementById('ref')?.classList.add('hidden');
+    doc.getElementById('abilityRef')?.classList.add('hidden');
+  };
+  const closeArchive=()=>doc.getElementById('invWrap')?.classList.remove('open');
+
+  const createCloseTab=(parent,id,onClose)=>{
+    if(!parent||doc.getElementById(id))return;
+    const button=doc.createElement('button');
+    button.id=id;
+    button.className='spv2-menu-close-tab';
+    button.type='button';
+    button.setAttribute('aria-label','Close');
+    button.textContent='×';
+    button.addEventListener('click',event=>{
+      event.stopPropagation();
+      onClose();
+    });
+    parent.appendChild(button);
+  };
+
+  const ensureMenuCloseTabs=()=>{
+    createCloseTab(doc.getElementById('settingsPanel'),'spv2SettingsClose',closeSettings);
+    createCloseTab(doc.getElementById('ref'),'spv2RefClose',closeReferences);
+    createCloseTab(doc.getElementById('abilityRef'),'spv2AbilityClose',closeReferences);
+    createCloseTab(doc.getElementById('invDesk'),'spv2ArchiveClose',closeArchive);
+  };
+
   const ensureUtilityControls=()=>{
-    if(doc.getElementById('spv2ArchiveBtn'))return;
-    const archiveButton=doc.createElement('button');
-    archiveButton.id='spv2ArchiveBtn';
-    archiveButton.type='button';
-    archiveButton.setAttribute('aria-label','Archives');
-    archiveButton.addEventListener('click',()=>doc.getElementById('invTab')?.click());
-    doc.body.appendChild(archiveButton);
+    if(!doc.getElementById('spv2ArchiveBtn')){
+      const archiveButton=doc.createElement('button');
+      archiveButton.id='spv2ArchiveBtn';
+      archiveButton.type='button';
+      archiveButton.setAttribute('aria-label','Archives');
+      archiveButton.addEventListener('click',event=>{
+        event.stopPropagation();
+        doc.getElementById('invTab')?.click();
+      });
+      doc.body.appendChild(archiveButton);
+    }
+    ensureMenuCloseTabs();
+  };
+
+  const installOutsideClose=()=>{
+    if(target.__tlrSinglePlayerOutsideCloseInstalled)return;
+    target.__tlrSinglePlayerOutsideCloseInstalled=true;
+
+    doc.addEventListener('click',event=>{
+      const targetElement=event.target instanceof Element?event.target:null;
+      if(!targetElement)return;
+
+      const settings=doc.getElementById('settingsPanel');
+      if(settings&&!settings.classList.contains('hidden')&&!settings.contains(targetElement)&&!targetElement.closest('#menuBtn')){
+        closeSettings();
+      }
+
+      const ref=doc.getElementById('ref');
+      const ability=doc.getElementById('abilityRef');
+      const referenceOpen=ref&&!ref.classList.contains('hidden');
+      const abilityOpen=ability&&!ability.classList.contains('hidden');
+      if((referenceOpen||abilityOpen)&&!targetElement.closest('#ref,#abilityRef,#scoringBtn,#abilitiesBtn')){
+        closeReferences();
+      }
+
+      const archive=doc.getElementById('invWrap');
+      if(archive?.classList.contains('open')&&!archive.contains(targetElement)&&!targetElement.closest('#spv2ArchiveBtn,#invTab')){
+        closeArchive();
+      }
+    });
   };
 
   const enable=()=>{
@@ -51,6 +113,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     refreshCompositionLayer();
     ensureAssetLayer();
     ensureUtilityControls();
+    installOutsideClose();
     installGeneratedSheetAssets(target);
   };
 
