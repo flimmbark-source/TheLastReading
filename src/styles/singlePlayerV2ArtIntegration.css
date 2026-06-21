@@ -136,9 +136,16 @@
     background-position: center !important;
     background-repeat: no-repeat !important;
     background-size: contain !important;
-    filter: brightness(1.45) contrast(1.05) saturate(1.08)
+    filter: brightness(1.85) contrast(1.06) saturate(1.12)
       drop-shadow(0 0 6px rgba(0, 0, 0, .6)) !important;
     pointer-events: none !important;
+  }
+
+  /* Don't fade the action buttons so heavily while disabled (their default
+     state at the start of a turn), so the medallions stay legible. */
+  body.single-player-v2.generated-sheet-ready #discardBtn:disabled,
+  body.single-player-v2.generated-sheet-ready #purgeBtn:disabled {
+    opacity: .85 !important;
   }
 
   body.single-player-v2.generated-sheet-ready #discardBtn::after,
