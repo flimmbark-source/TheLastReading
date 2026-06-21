@@ -1,4 +1,17 @@
 @media (max-width: 640px) {
+  /* Keep the complete top HUD cluster closer to the top edge. Every pill and
+     upper utility button keys off this shared variable. */
+  html body.single-player-v2.generated-sheet-ready {
+    --spv2-hud-top: max(4.5dvh, env(safe-area-inset-top)) !important;
+  }
+
+  /* The replacement PNG has more breathing room around its frame. Overscale
+     the artwork inside the existing slot boxes rather than changing card or
+     spread geometry. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot {
+    background-size: 118% 118% !important;
+  }
+
   html body.single-player-v2.generated-sheet-ready .spread {
     top: calc(.4dvh + 52px) !important;
   }
