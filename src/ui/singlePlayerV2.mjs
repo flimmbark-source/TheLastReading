@@ -10,13 +10,20 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
   const doc=target.document;
   if(!doc)return;
 
+  const ensureStylesheet=(id,href)=>{
+    let link=doc.getElementById(id);
+    if(!link){
+      link=doc.createElement('link');
+      link.id=id;
+      link.rel='stylesheet';
+      doc.head.appendChild(link);
+    }
+    if(link.getAttribute('href')!==href)link.setAttribute('href',href);
+  };
+
   const ensureAssetLayer=()=>{
-    if(doc.getElementById('single-player-v2-assets'))return;
-    const link=doc.createElement('link');
-    link.id='single-player-v2-assets';
-    link.rel='stylesheet';
-    link.href='src/styles/singlePlayerV2Assets.css?v=clean-tiles-1';
-    doc.head.appendChild(link);
+    ensureStylesheet('single-player-v2-assets','src/styles/singlePlayerV2Assets.css?v=clean-tiles-1');
+    ensureStylesheet('single-player-v2-slot-match','src/styles/singlePlayerV2SlotMatch.css?v=1');
   };
 
   const refreshCompositionLayer=()=>{
