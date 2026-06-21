@@ -1,3 +1,15 @@
+@keyframes spv2-pattern-card-bump {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  42% {
+    transform: translateY(-12px) scale(1.06);
+  }
+  68% {
+    transform: translateY(2px) scale(.99);
+  }
+}
+
 @media (max-width: 640px) {
   /* Leave a small breathing gap above the score/threshold HUD. The four utility
      buttons derive their vertical position from this shared variable, so the
@@ -111,5 +123,21 @@
   html body.single-player-v2.generated-sheet-ready #spread .slot > .card.major.hint-complete:not(.ability-target):not(.ability-picked),
   html body.single-player-v2.generated-sheet-ready #spread .slot > .card.major.hint-multi:not(.ability-target):not(.ability-picked) {
     border-color: #9a7842 !important;
+  }
+
+  /* Pattern completion still adds .bump to each participating slot in a short
+     stagger. The old animation transformed the slot, but the fan now locks each
+     slot transform. Animate the card inside instead so the lift returns without
+     changing the fan's position or rotation. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.bump > .card {
+    animation: spv2-pattern-card-bump .42s cubic-bezier(.2,.85,.25,1) !important;
+    transform-origin: 50% 78% !important;
+    will-change: transform !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html body.single-player-v2.generated-sheet-ready #spread .slot.bump > .card {
+      animation: none !important;
+    }
   }
 }
