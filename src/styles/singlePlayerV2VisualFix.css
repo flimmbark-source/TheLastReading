@@ -45,7 +45,6 @@
     pointer-events: auto !important;
   }
 
-  /* Above the pills. */
   body.single-player-v2.generated-sheet-ready #menuBtn {
     top: 1.1dvh !important;
     left: 3.8vw !important;
@@ -59,7 +58,6 @@
     right: 3.8vw !important;
   }
 
-  /* Beneath the pills. */
   body.single-player-v2.generated-sheet-ready #scoringBtn {
     top: 23.7dvh !important;
     left: 3.8vw !important;
@@ -156,5 +154,37 @@
 
   body.single-player-v2.generated-sheet-ready #purgeBtn {
     background-image: url('/public/ui/single-player-v2/generated/action-deck.webp') !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #settingsPanel,
+  body.single-player-v2.generated-sheet-ready #ref,
+  body.single-player-v2.generated-sheet-ready #abilityRef,
+  body.single-player-v2.generated-sheet-ready #invDesk {
+    position: relative;
+    overflow: visible;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spv2-menu-close-tab {
+    position: absolute;
+    left: 50%;
+    bottom: -24px;
+    transform: translateX(-50%);
+    z-index: 5;
+    width: 42px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid #8f6a34;
+    border-top: 0;
+    border-radius: 0 0 10px 10px;
+    background: linear-gradient(180deg,#21162a,#130d19);
+    color: #d7b36e;
+    font: 700 18px/22px Georgia,serif;
+    box-shadow: 0 4px 10px rgba(0,0,0,.55);
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spv2-menu-close-tab:active {
+    transform: translateX(-50%) translateY(1px);
   }
 }
