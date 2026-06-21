@@ -28,8 +28,7 @@
     transform: translateY(14px) rotate(-8deg) !important;
     --spv2-contact-shadow:
       0 5px 4px rgba(0,0,0,.70),
-      0 14px 17px rgba(0,0,0,.52),
-      inset 0 0 0 3px rgba(183,139,67,.045);
+      0 14px 17px rgba(0,0,0,.52);
   }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
@@ -38,8 +37,7 @@
     transform: translateX(-50%) translateY(5px) rotate(-4deg) !important;
     --spv2-contact-shadow:
       0 6px 4px rgba(0,0,0,.74),
-      0 16px 18px rgba(0,0,0,.56),
-      inset 0 0 0 3px rgba(183,139,67,.045);
+      0 16px 18px rgba(0,0,0,.56);
   }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
@@ -48,8 +46,10 @@
     transform: translateX(-50%) scale(1.025) !important;
     --spv2-contact-shadow:
       0 7px 5px rgba(0,0,0,.82),
-      0 19px 22px rgba(0,0,0,.62),
-      inset 0 0 0 3px rgba(183,139,67,.045);
+      0 19px 22px rgba(0,0,0,.62);
+    /* Explicitly replace the older center-slot shadow stack from the previous
+       fan pass. This leaves only physical contact shadow when no hint is active. */
+    box-shadow: var(--spv2-contact-shadow) !important;
   }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
@@ -58,8 +58,7 @@
     transform: translateX(-50%) translateY(5px) rotate(4deg) !important;
     --spv2-contact-shadow:
       0 6px 4px rgba(0,0,0,.74),
-      0 16px 18px rgba(0,0,0,.56),
-      inset 0 0 0 3px rgba(183,139,67,.045);
+      0 16px 18px rgba(0,0,0,.56);
   }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
@@ -68,8 +67,7 @@
     transform: translateY(14px) rotate(8deg) !important;
     --spv2-contact-shadow:
       0 5px 4px rgba(0,0,0,.70),
-      0 14px 17px rgba(0,0,0,.52),
-      inset 0 0 0 3px rgba(183,139,67,.045);
+      0 14px 17px rgba(0,0,0,.52);
   }
 
   /* Render placed-card hints on the slot surface itself. The card still carries
@@ -78,14 +76,16 @@
   html body.single-player-v2.generated-sheet-ready #spread .slot.hint-card:not(.drop-target):not(.ability-target-slot):not(.ability-picked-slot) {
     box-shadow:
       0 0 0 1px rgba(var(--hint-rgb,255,217,120),.92),
-      0 0 18px rgba(var(--hint-rgb,255,217,120),.56),
+      0 0 8px rgba(var(--hint-rgb,255,217,120),.58),
+      0 0 18px rgba(var(--hint-rgb,255,217,120),.30),
       var(--spv2-contact-shadow) !important;
   }
 
   html body.single-player-v2.generated-sheet-ready #spread .slot.hint-complete:not(.drop-target):not(.ability-target-slot):not(.ability-picked-slot) {
     box-shadow:
       0 0 0 2px rgba(var(--hint-rgb,255,217,120),.98),
-      0 0 26px rgba(var(--hint-rgb,255,217,120),.72),
+      0 0 10px rgba(var(--hint-rgb,255,217,120),.72),
+      0 0 22px rgba(var(--hint-rgb,255,217,120),.38),
       var(--spv2-contact-shadow) !important;
   }
 
@@ -93,15 +93,32 @@
     box-shadow: var(--hint-shadow), var(--spv2-contact-shadow) !important;
   }
 
-  /* Placed Minor Arcana were still inheriting the original generic card hint
-     shadow from hand.css, creating a second inner glow beneath the new slot
-     halo. In the spread, the slot owns the glow and the card returns to its
-     normal frame. Major cards retain their own normal border color as well. */
+  /* The older resonation system paints an animated amber ::before glow directly
+     on slots. When a card also has a normal hint, that legacy layer previously
+     covered the polished hint halo, most noticeably on the center slot. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-card.res-1::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-card.res-2::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-card.res-3::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-complete.res-1::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-complete.res-2::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-complete.res-3::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-multi.res-1::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-multi.res-2::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-multi.res-3::before {
+    content: none !important;
+    display: none !important;
+    animation: none !important;
+  }
+
+  /* Placed cards were still inheriting the original generic card hint shadow
+     from hand.css, creating a second inner glow beneath the slot halo. In the
+     spread, the slot owns the glow and the card returns to its normal frame. */
   html body.single-player-v2.generated-sheet-ready #spread .slot > .card.hint-card:not(.ability-target):not(.ability-picked),
   html body.single-player-v2.generated-sheet-ready #spread .slot > .card.hint-complete:not(.ability-target):not(.ability-picked),
   html body.single-player-v2.generated-sheet-ready #spread .slot > .card.hint-multi:not(.ability-target):not(.ability-picked) {
     border-color: #6b4f25 !important;
     box-shadow: none !important;
+    filter: none !important;
   }
 
   html body.single-player-v2.generated-sheet-ready #spread .slot > .card.major.hint-card:not(.ability-target):not(.ability-picked),
