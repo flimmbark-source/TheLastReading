@@ -2,7 +2,7 @@
 // .handDock, and action surfaces. The single-player-v2 body class activates a
 // large set of mobile layout overrides for those shared nodes, so it must not be
 // present while a multiplayer match is active.
-export function installMpModeClassGuard(target = window) {
+export function installMpModeClassGuard(target) {
   const doc = target?.document;
   const body = doc?.body;
   if (!body || target.__tlrMpModeClassGuardInstalled) return;
@@ -31,9 +31,11 @@ export function installMpModeClassGuard(target = window) {
     }
   };
 
-  const observer = new MutationObserver(sync);
+  const Observer = target.MutationObserver;
+  if (typeof Observer !== 'function') return;
+  const observer = new Observer(sync);
   observer.observe(body, { attributes: true, attributeFilter: ['class'] });
   sync();
 }
 
-installMpModeClassGuard(window);
+if (typeof window !== 'undefined') installMpModeClassGuard(window);
