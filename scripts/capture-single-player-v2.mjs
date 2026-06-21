@@ -25,7 +25,17 @@ try {
     });
 
     await context.addInitScript(() => {
-      localStorage.setItem('tlr_tut_done', '1');
+      [
+        'tlr_tut_done',
+        'tlr_tut_pattern',
+        'tlr_tut_reading_complete',
+        'tlr_tut_purge',
+        'tlr_tut_archives_found',
+        'tlr_tut_oracle_market',
+        'tlr_tut_constellation',
+        'tlr_tut_threshold',
+        'tlr_tut_discard',
+      ].forEach(key => localStorage.setItem(key, '1'));
       localStorage.removeItem('tlr_save');
     });
 
@@ -40,10 +50,13 @@ try {
     await page.locator('button', { hasText: 'New Game' }).click();
     await page.waitForSelector('body.single-player-v2.generated-sheet-ready', { timeout: 15000 });
 
-    const skipButton = page.locator('#tutSkipBtn');
-    if (await skipButton.isVisible().catch(() => false)) {
-      await skipButton.click();
-    }
+    await page.evaluate(() => {
+      const tip = document.getElementById('tutTip');
+      if (tip) {
+        tip.classList.remove('show', 'tut-center');
+        tip.style.display = 'none';
+      }
+    });
 
     await page.waitForTimeout(1000);
 
@@ -78,6 +91,7 @@ try {
         actions: rect('.spread-actions'),
         discard: rect('#discardBtn'),
         purge: rect('#purgeBtn'),
+        actionParent: document.querySelector('.spread-actions')?.parentElement?.tagName || null,
         horizontalOverflow: document.documentElement.scrollWidth > innerWidth,
       };
     });
