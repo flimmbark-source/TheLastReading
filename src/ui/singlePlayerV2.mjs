@@ -21,7 +21,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
   const ensureAssetLayer=()=>{
     ensureStylesheet('single-player-v2-assets','src/styles/singlePlayerV2Assets.css?v=clean-tiles-1');
     ensureStylesheet('single-player-v2-slot-match','src/styles/singlePlayerV2SlotMatch.css?v=2');
-    ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=5');
+    ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=6');
   };
 
   const refreshCompositionLayer=()=>{
@@ -43,6 +43,13 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
   const closeAbility=()=>closePullDrawer('abilities','Abilities');
   const closeArchive=()=>doc.getElementById('invWrap')?.classList.remove('open');
 
+  const closeAllMenus=except=>{
+    if(except!=='settings')closeSettings();
+    if(except!=='reference')closeReference();
+    if(except!=='ability')closeAbility();
+    if(except!=='archive')closeArchive();
+  };
+
   const closeByKind=kind=>{
     if(kind==='settings')closeSettings();
     if(kind==='reference')closeReference();
@@ -50,7 +57,16 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     if(kind==='archive')closeArchive();
   };
 
-  const createCloseTab=(parent,id,kind)=>{
+  const drawerDeskFor=kind=>{
+    if(kind==='settings')return doc.getElementById('menuPullDesk');
+    if(kind==='reference')return doc.getElementById('scoringPullDesk');
+    if(kind==='ability')return doc.getElementById('abilitiesPullDesk');
+    if(kind==='archive')return doc.getElementById('invDesk');
+    return null;
+  };
+
+  const createCloseTab=(kind,id)=>{
+    const parent=drawerDeskFor(kind);
     if(!parent||parent.querySelector(`#${id}`))return;
     const button=doc.createElement('button');
     button.id=id;
@@ -63,23 +79,36 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
   };
 
   const ensureMenuCloseTabs=()=>{
-    createCloseTab(doc.getElementById('settingsPanel'),'spv2SettingsClose','settings');
-    createCloseTab(doc.getElementById('ref'),'spv2RefClose','reference');
-    createCloseTab(doc.getElementById('abilityRef'),'spv2AbilityClose','ability');
-    createCloseTab(doc.getElementById('invDesk'),'spv2ArchiveClose','archive');
+    createCloseTab('settings','spv2SettingsClose');
+    createCloseTab('reference','spv2RefClose');
+    createCloseTab('ability','spv2AbilityClose');
+    createCloseTab('archive','spv2ArchiveClose');
+  };
+
+  const toggleArchive=()=>{
+    const wrap=doc.getElementById('invWrap');
+    if(!wrap)return;
+    const opening=!wrap.classList.contains('open');
+    closeAllMenus(opening?'archive':null);
+    wrap.classList.toggle('open',opening);
   };
 
   const ensureUtilityControls=()=>{
-    if(!doc.getElementById('spv2ArchiveBtn')){
-      const archiveButton=doc.createElement('button');
+    let archiveButton=doc.getElementById('spv2ArchiveBtn');
+    if(!archiveButton){
+      archiveButton=doc.createElement('button');
       archiveButton.id='spv2ArchiveBtn';
       archiveButton.type='button';
       archiveButton.setAttribute('aria-label','Archives');
-      archiveButton.addEventListener('click',event=>{
-        event.stopPropagation();
-        doc.getElementById('invTab')?.click();
-      });
       doc.body.appendChild(archiveButton);
+    }
+    if(!archiveButton.__spv2Bound){
+      archiveButton.__spv2Bound=true;
+      archiveButton.addEventListener('click',event=>{
+        event.preventDefault();
+        event.stopPropagation();
+        toggleArchive();
+      });
     }
     ensureMenuCloseTabs();
   };
@@ -87,9 +116,8 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
   const installMenuObservers=()=>{
     if(target.__tlrSinglePlayerMenuObserverInstalled)return;
     target.__tlrSinglePlayerMenuObserverInstalled=true;
-
     const observer=new MutationObserver(()=>ensureMenuCloseTabs());
-    ['settingsPanel','ref','abilityRef','invDesk'].forEach(id=>{
+    ['menuPullDesk','scoringPullDesk','abilitiesPullDesk','invDesk'].forEach(id=>{
       const node=doc.getElementById(id);
       if(node)observer.observe(node,{childList:true,subtree:false});
     });
@@ -112,24 +140,17 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
       }
 
       const menuWrap=doc.getElementById('menuPullWrap');
-      if(menuWrap?.classList.contains('open')&&!menuWrap.contains(element)&&!element.closest('#menuBtn')){
-        closeSettings();
-      }
+      if(menuWrap?.classList.contains('open')&&!menuWrap.contains(element)&&!element.closest('#menuBtn'))closeSettings();
 
       const scoringWrap=doc.getElementById('scoringPullWrap');
-      if(scoringWrap?.classList.contains('open')&&!scoringWrap.contains(element)&&!element.closest('#scoringBtn')){
-        closeReference();
-      }
+      if(scoringWrap?.classList.contains('open')&&!scoringWrap.contains(element)&&!element.closest('#scoringBtn'))closeReference();
 
       const abilitiesWrap=doc.getElementById('abilitiesPullWrap');
-      if(abilitiesWrap?.classList.contains('open')&&!abilitiesWrap.contains(element)&&!element.closest('#abilitiesBtn')){
-        closeAbility();
-      }
+      if(abilitiesWrap?.classList.contains('open')&&!abilitiesWrap.contains(element)&&!element.closest('#abilitiesBtn'))closeAbility();
 
       const archiveWrap=doc.getElementById('invWrap');
-      if(archiveWrap?.classList.contains('open')&&!archiveWrap.contains(element)&&!element.closest('#spv2ArchiveBtn,#invTab')){
-        closeArchive();
-      }
+      const archiveDesk=doc.getElementById('invDesk');
+      if(archiveWrap?.classList.contains('open')&&archiveDesk&&!archiveDesk.contains(element)&&!element.closest('#spv2ArchiveBtn'))closeArchive();
     },true);
   };
 
