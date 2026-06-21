@@ -180,3 +180,24 @@ export function archiveEntries(state) {
 export function obals(state) {
   return state.persist.obals || 0;
 }
+
+export function publicRunSnapshot(state) {
+  return {
+    phase: state.run.phase,
+    reading: state.run.reading,
+    threshold: thresholdValue(state),
+    reserve: state.persist.reserve,
+    totalScore: state.persist.totalScore,
+    handCount: state.run.hand.length,
+    deckCount: state.run.deck.length,
+    discardCount: state.run.discard.length,
+    spreadCount: placedCards(state).length,
+    discards: state.run.discards,
+    setIndex: state.run.setIndex,
+    setsPerRound: state.run.setsPerRound,
+    roundScore: state.run.roundScore,
+    constellationId: state.run.constellationId,
+    canDiscard: canDiscardSelected(state),
+    canScore: canScoreReading(state),
+  };
+}
