@@ -47,7 +47,7 @@
   html body.single-player-v2.generated-sheet-ready .handDock .hand {
     --track-spacing: 4.25deg !important;
     --track-radius: 760px !important;
-    transform: translateY(.25dvh) !important;
+    transform: translateY(3.2dvh) !important;
   }
 
   html body.single-player-v2.generated-sheet-ready .handDock .hand .card {
