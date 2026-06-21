@@ -38,14 +38,18 @@
     content: none !important;
   }
 
-  /* The title art tile already reads "THE LAST READING"; drop the duplicate
-     CSS text overlay and restore the art to full opacity. */
-  body.single-player-v2.generated-sheet-ready #titleWrap::after {
+  /* Title art removed per design; keep #titleWrap for the corner buttons it
+     hosts, but render no title graphic or text. */
+  body.single-player-v2.generated-sheet-ready #titleWrap::after,
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
     content: none !important;
+    background: none !important;
   }
 
-  body.single-player-v2.generated-sheet-ready #titleWrap::before {
-    opacity: 1 !important;
+  /* Separate the four stat panels so each card's rounded border reads as a
+     distinct tile rather than butting edge-to-edge. */
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    gap: 6px !important;
   }
 
   /* Utility buttons carry their icon as art, so drop the text fallbacks
