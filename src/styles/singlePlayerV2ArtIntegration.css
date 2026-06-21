@@ -24,4 +24,17 @@
   body.single-player-v2.generated-sheet-ready .score-stack .pill {
     padding-top: 30px !important;
   }
+
+  /* The constellation circle is part of the table background art, so drop the
+     separately overlaid reading-circle tile and the procedural ring to avoid a
+     doubled circle floating over the spread. */
+  body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    background: none !important;
+    filter: none !important;
+    box-shadow: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::after {
+    content: none !important;
+  }
 }

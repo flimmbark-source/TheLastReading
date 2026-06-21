@@ -16,7 +16,6 @@ const ELEMENT_ART = {
   '--spv2-utility-reference-art': 'utility-reference.png',
   '--spv2-utility-settings-art': 'utility-settings.png',
   '--spv2-spread-slot-art': 'spread-slot.png',
-  '--spv2-reading-circle-art': 'reading-circle.png',
   '--spv2-hand-dock-art': 'hand-dock.png',
   '--spv2-action-eye-art': 'action-eye.png',
   '--spv2-action-center-art': 'action-center.png',
