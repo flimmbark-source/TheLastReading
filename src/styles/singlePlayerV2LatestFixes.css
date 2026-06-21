@@ -11,7 +11,7 @@
      cards extending 14px below the upright center card. */
   html body.single-player-v2.generated-sheet-ready .spread {
     position: fixed !important;
-    top: 50dvh !important;
+    top: 45dvh !important;
     left: 0 !important;
     right: 0 !important;
     bottom: auto !important;
