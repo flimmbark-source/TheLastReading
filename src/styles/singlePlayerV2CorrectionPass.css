@@ -99,6 +99,15 @@
   body.single-player-v2.generated-sheet-ready .swipe-hint-line {
     display: flex !important;
     visibility: visible !important;
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone:not([data-hint-step]) .swipe-hint-line-1,
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone[data-hint-step="1"] .swipe-hint-line-1,
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone[data-hint-step="2"] .swipe-hint-line-2,
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone[data-hint-step="3"] .swipe-hint-line-3 {
+    opacity: 1 !important;
   }
 
   /* Retain only the subtle environmental lighting from the polish pass. */
