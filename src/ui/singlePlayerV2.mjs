@@ -22,7 +22,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     ensureStylesheet('single-player-v2-assets','src/styles/singlePlayerV2Assets.css?v=clean-tiles-1');
     ensureStylesheet('single-player-v2-slot-match','src/styles/singlePlayerV2SlotMatch.css?v=2');
     ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=8');
-    ensureStylesheet('single-player-v2-final-placement','src/styles/singlePlayerV2FinalPlacement.css?v=5');
+    ensureStylesheet('single-player-v2-final-placement','src/styles/singlePlayerV2FinalPlacement.css?v=6');
   };
 
   const refreshCompositionLayer=()=>{
@@ -100,13 +100,13 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
   };
 
   const ensureHandDragHandle=()=>{
-    const zone=doc.getElementById('handSwipeZone');
-    if(!zone||zone.querySelector('.spv2-hand-drag-label'))return;
+    doc.querySelector('.hand-swipe-zone .spv2-hand-drag-label')?.remove();
+    if(doc.getElementById('spv2HandDragLabel'))return;
     const label=doc.createElement('div');
-    label.className='spv2-hand-drag-label';
+    label.id='spv2HandDragLabel';
     label.setAttribute('aria-hidden','true');
     label.textContent='DRAG HAND';
-    zone.appendChild(label);
+    doc.body.appendChild(label);
   };
 
   const ensureUtilityControls=()=>{
