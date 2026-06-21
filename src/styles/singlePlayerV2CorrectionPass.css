@@ -87,7 +87,7 @@
     visibility: visible !important;
   }
 
-  body.single-player-v2.generated-sheet-ready .hand-swipe-zone.has-overflow .hand-swipe-hint {
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone:not(.hints-complete):not(.has-swiped):not(.dragging):not(.pinching) .hand-swipe-hint {
     opacity: 1 !important;
   }
 
