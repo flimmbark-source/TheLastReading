@@ -113,14 +113,14 @@
     background-size: contain !important;
   }
 
-  /* Each utility button gets its own icon from the atlas:
-     settings = gear, scoring = book, abilities = eye, archive = deck. */
+  /* Swap the two right-side utility icons:
+     abilities = deck, archive = eye. */
   body.single-player-v2.generated-sheet-ready #abilitiesBtn {
-    background-image: var(--spv2-action-eye-art) !important;
+    background-image: var(--spv2-action-deck-art) !important;
   }
 
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    background-image: var(--spv2-action-deck-art) !important;
+    background-image: var(--spv2-action-eye-art) !important;
   }
 
   /* Soften the pattern-hint halo on the hand so it reads as subtle guidance
