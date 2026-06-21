@@ -5,7 +5,29 @@
     pointer-events: auto;
   }
 
-  /* Bottom actions must remain tappable above the expanded hand drag surface,
+  /* Keep the hand cards above the separate swipe surface. Empty space inside
+     the dock passes through to that surface, while every card remains directly
+     clickable and draggable. */
+  body.single-player-v2 .hand-swipe-zone {
+    z-index: 25;
+  }
+
+  body.single-player-v2 .handDock {
+    z-index: 26 !important;
+    pointer-events: none;
+  }
+
+  body.single-player-v2 .handDock .hand {
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  body.single-player-v2 .handDock .hand .card {
+    pointer-events: auto;
+  }
+
+  /* Bottom actions must remain tappable above the hand and swipe surface,
      but still below reference sheets, modals, and tutorials. */
   body.single-player-v2 .spread-actions {
     z-index: 29;
@@ -72,6 +94,7 @@
 
   body.single-player-v2.reference-sheet-ready .handDock::before {
     z-index:0;
+    pointer-events:none;
   }
 
   body.single-player-v2.reference-sheet-ready .handDock .hand {
