@@ -1,8 +1,17 @@
 @media (max-width: 640px) {
   /* Keep the complete top HUD cluster closer to the top edge. Every pill and
-     upper utility button keys off this shared variable. */
+     upper utility button keys off these shared variables. */
   html body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: max(4.5dvh, env(safe-area-inset-top)) !important;
+    --spv2-compact-hud-h: clamp(148px,18.5dvh,172px) !important;
+  }
+
+  /* Give the two live headline values more visual weight inside the slightly
+     taller Score and Threshold panels. */
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill > b,
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill > b {
+    font-size: clamp(39px,10.5vw,52px) !important;
+    line-height: .9 !important;
   }
 
   /* The replacement PNG has more breathing room around its frame. Overscale
