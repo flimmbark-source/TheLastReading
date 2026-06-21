@@ -37,6 +37,7 @@ try {
         'tlr_tut_discard',
       ].forEach(key => localStorage.setItem(key, '1'));
       localStorage.removeItem('tlr_save');
+      localStorage.removeItem('tlr_hand_hint_step');
     });
 
     const page = await context.newPage();
@@ -78,6 +79,20 @@ try {
         };
       };
 
+      const styleInfo = selector => {
+        const element = document.querySelector(selector);
+        if (!element) return null;
+        const style = getComputedStyle(element);
+        return {
+          display: style.display,
+          visibility: style.visibility,
+          opacity: style.opacity,
+          zIndex: style.zIndex,
+          text: element.textContent?.trim() || '',
+          className: element.className,
+        };
+      };
+
       return {
         viewport: { width: innerWidth, height: innerHeight },
         title: rect('#titleWrap'),
@@ -88,6 +103,9 @@ try {
         firstCard: rect('#hand .card'),
         handDock: rect('.handDock'),
         swipeZone: rect('.hand-swipe-zone'),
+        handHint: rect('.hand-swipe-hint'),
+        handHintStyle: styleInfo('.hand-swipe-hint'),
+        handHintLine1Style: styleInfo('.swipe-hint-line-1'),
         actions: rect('.spread-actions'),
         discard: rect('#discardBtn'),
         purge: rect('#purgeBtn'),
