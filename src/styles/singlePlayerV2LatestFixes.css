@@ -11,7 +11,7 @@
      side gutters. This minimizes unavoidable overlap evenly across all four
      card-to-card boundaries without changing any slot dimensions. */
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
-    left: 10px !important;
+    left: 18px !important;
     right: auto !important;
     transform: translateY(14px) rotate(-8deg) !important;
     --spv2-contact-shadow:
@@ -52,7 +52,7 @@
 
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
     left: auto !important;
-    right: 10px !important;
+    right: 18px !important;
     transform: translateY(14px) rotate(8deg) !important;
     --spv2-contact-shadow:
       0 5px 4px rgba(0,0,0,.70),
