@@ -2,6 +2,8 @@
   body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 8.8dvh;
     --spv2-control-size: clamp(46px, 12vw, 58px);
+    --spv2-spread-card-w: clamp(78px, 22vw, 96px);
+    --spv2-spread-card-h: calc(var(--spv2-spread-card-w) * 1.5);
     --spv2-spread-top: calc(
       var(--spv2-hud-top) +
       var(--spv2-compact-hud-h) +
@@ -37,18 +39,53 @@
     left: 0 !important;
     right: 0 !important;
     transform: none !important;
+    min-height: calc(var(--spv2-spread-card-h) + 24px) !important;
+    padding-inline: 1vw !important;
   }
 
   body.single-player-v2.generated-sheet-ready .spread .slot {
     box-sizing: border-box !important;
-    width: var(--spv2-spread-card-w, var(--spv2-slot-w)) !important;
-    height: var(--spv2-spread-card-h, var(--spv2-slot-h)) !important;
-    flex: 0 0 var(--spv2-spread-card-w, var(--spv2-slot-w)) !important;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: var(--spv2-spread-card-w) !important;
+    min-width: var(--spv2-spread-card-w) !important;
+    max-width: var(--spv2-spread-card-w) !important;
+    height: var(--spv2-spread-card-h) !important;
+    min-height: var(--spv2-spread-card-h) !important;
+    max-height: var(--spv2-spread-card-h) !important;
+    flex: 0 0 var(--spv2-spread-card-w) !important;
+    margin-left: -7.2vw !important;
     background-image: var(--spv2-spread-slot-art) !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
     background-size: 100% 100% !important;
     overflow: hidden !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot:first-child {
+    margin-left: 0 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
+    transform: translateY(1.3dvh) rotate(-4deg) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
+    transform: translateY(.45dvh) rotate(-2deg) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
+    transform: translateY(0) rotate(0) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
+    transform: translateY(.45dvh) rotate(2deg) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
+    transform: translateY(1.3dvh) rotate(4deg) !important;
   }
 
   body.single-player-v2.generated-sheet-ready .spread .slot > .card {
@@ -149,11 +186,11 @@
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
     left: 0 !important;
     right: 0 !important;
-    bottom: 34dvh !important;
+    bottom: calc(34dvh + 70px) !important;
     width: auto !important;
     height: 58px !important;
     transform: none !important;
-    z-index: 25 !important;
+    z-index: 27 !important;
     border: 0 !important;
     border-radius: 0 !important;
     background: transparent !important;
