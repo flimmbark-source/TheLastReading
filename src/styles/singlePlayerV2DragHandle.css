@@ -3,16 +3,16 @@
     display: none !important;
   }
 
-  body.single-player-v2.generated-sheet-ready .spv2-hand-drag-label {
-    position: absolute;
+  body.single-player-v2.generated-sheet-ready #spv2HandDragLabel {
+    position: fixed;
     left: 50%;
-    top: 50%;
-    transform: translate(-50%,-50%);
+    bottom: calc(39dvh + 8px);
+    transform: translateX(-50%);
     width: clamp(92px,25vw,118px);
     height: 24px;
     display: grid;
     place-items: center;
-    z-index: 2;
+    z-index: 30;
     border: 1px solid rgba(184,140,72,.72);
     border-radius: 999px;
     background: rgba(18,12,22,.94);
