@@ -32,10 +32,135 @@
   body.single-player-v2 .spread-actions {
     z-index: 29;
   }
+
+  /* Generated-sheet composition, matched to the approved 941 × 1672 layout. */
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-title-h: 6.58dvh;
+    --spv2-hud-top: 6.58dvh;
+    --spv2-hud-h: 16.39dvh;
+    --spv2-slot-w: clamp(56px,15.2vw,72px);
+    --spv2-slot-h: calc(var(--spv2-slot-w) * 1.75);
+    --spv2-hand-clearance: 34dvh;
+    background-position: center top;
+    background-size: 100% 100%;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap {
+    height: var(--spv2-title-h);
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
+    top: .55dvh;
+    left: 24%;
+    right: 24%;
+    height: 5.55dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    top: var(--spv2-hud-top);
+    left: max(4px,.45vw);
+    right: max(4px,.45vw);
+    height: var(--spv2-hud-h);
+    border-radius: clamp(14px,3.8vw,22px);
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready .actions {
+    top: 23.65dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready .actions button {
+    width: clamp(38px,9.3vw,48px);
+    height: clamp(38px,9.3vw,48px);
+    min-width: 0;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    right: 2.2vw;
+  }
+
+  body.single-player-v2.generated-sheet-ready .actions {
+    left: 2.2vw;
+    gap: 1.2vw;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap {
+    top: 28.2dvh;
+    bottom: 34dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    width: min(92vw,390px);
+    height: auto;
+    aspect-ratio: 380 / 348;
+    opacity: .9;
+    transform: translateY(-1.2dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread {
+    min-height: calc(var(--spv2-slot-h) + 24px);
+    padding: 0 4.5vw;
+    transform: translateY(4.1dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot {
+    margin-left: -1.25vw;
+    border-radius: clamp(5px,1.4vw,8px);
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(1) { transform: translateY(1.3dvh) rotate(-4deg); }
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(2) { transform: translateY(.45dvh) rotate(-2deg); }
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(3) { transform: translateY(0) rotate(0); }
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(4) { transform: translateY(.45dvh) rotate(2deg); }
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(5) { transform: translateY(1.3dvh) rotate(4deg); }
+
+  body.single-player-v2.generated-sheet-ready .handDock {
+    height: 34dvh;
+    bottom: 0 !important;
+    align-items: flex-start;
+    background-position: center bottom !important;
+    background-size: 100% auto !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand {
+    height: 31dvh;
+    --track-spacing: 6.5deg;
+    --track-radius: 560px;
+    transform: translateY(.8dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card {
+    width: clamp(78px,22vw,96px);
+    height: calc(clamp(78px,22vw,96px) * 1.5);
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+    bottom: 25.5dvh;
+    height: 7.5dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions {
+    bottom: max(1.35dvh,env(safe-area-inset-bottom));
+    padding: 0 5vw;
+    align-items: center;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    width: clamp(48px,13.8vw,64px);
+    height: clamp(55px,15.8vw,74px);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions::before {
+    bottom: -.2dvh;
+    width: clamp(70px,20.5vw,92px);
+    height: clamp(70px,20.5vw,92px);
+  }
 }
 
 @media (max-width: 640px) and (max-height: 759px) {
-  body.single-player-v2 {
+  body.single-player-v2:not(.generated-sheet-ready) {
     --spv2-title-h: 32px;
     --spv2-hud-top: 32px;
     --spv2-hud-h: 94px;
@@ -43,34 +168,33 @@
     --spv2-hand-clearance: 188px;
   }
 
-  body.single-player-v2 .score-stack .pill {
+  body.single-player-v2:not(.generated-sheet-ready) .score-stack .pill {
     padding-top: 8px;
     padding-bottom: 7px;
     gap: 4px;
   }
 
-  body.single-player-v2 .spv2-threshold-progress {
+  body.single-player-v2:not(.generated-sheet-ready) .spv2-threshold-progress {
     bottom: 8px;
     height: 6px;
   }
 
-  body.single-player-v2 #menuBtn,
-  body.single-player-v2 .actions {
+  body.single-player-v2:not(.generated-sheet-ready) #menuBtn,
+  body.single-player-v2:not(.generated-sheet-ready) .actions {
     top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 7px);
   }
 
-  body.single-player-v2 .spread-wrap {
+  body.single-player-v2:not(.generated-sheet-ready) .spread-wrap {
     top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 59px);
   }
 
-  body.single-player-v2 .handDock {
+  body.single-player-v2:not(.generated-sheet-ready) .handDock {
     height: 146px;
     bottom: 14px !important;
   }
 }
 
-/* The exact sheet reconstruction owns its own geometry and must win over the
-   compact Phase 1 fallbacks above. */
+/* Deprecated exact-sheet fallback. */
 @media (max-width: 640px) {
   body.single-player-v2.reference-sheet-ready {
     --spv2-title-h:6.58dvh;
