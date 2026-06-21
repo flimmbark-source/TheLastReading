@@ -1,5 +1,5 @@
 import { chromium } from 'playwright';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 
 const baseUrl = process.env.TLR_CAPTURE_URL || 'http://127.0.0.1:8080';
 const outputDir = process.env.TLR_CAPTURE_DIR || 'artifacts/single-player-v2';
@@ -14,6 +14,7 @@ const viewports = [
 
 await mkdir(outputDir, { recursive: true });
 const browser = await chromium.launch({ headless: true });
+const results = [];
 
 try {
   for (const viewport of viewports) {
@@ -88,6 +89,8 @@ try {
           visibility: style.visibility,
           opacity: style.opacity,
           zIndex: style.zIndex,
+          color: style.color,
+          fontSize: style.fontSize,
           text: element.textContent?.trim() || '',
           className: element.className,
         };
@@ -105,6 +108,7 @@ try {
         swipeZone: rect('.hand-swipe-zone'),
         handHint: rect('.hand-swipe-hint'),
         handHintStyle: styleInfo('.hand-swipe-hint'),
+        handHintLine1: rect('.swipe-hint-line-1'),
         handHintLine1Style: styleInfo('.swipe-hint-line-1'),
         actions: rect('.spread-actions'),
         discard: rect('#discardBtn'),
@@ -114,9 +118,13 @@ try {
       };
     });
 
-    console.log(JSON.stringify({ viewport: viewport.name, metrics, consoleErrors }, null, 2));
+    const result = { viewport: viewport.name, metrics, consoleErrors };
+    results.push(result);
+    console.log(JSON.stringify(result, null, 2));
     await context.close();
   }
 } finally {
   await browser.close();
 }
+
+await writeFile(`${outputDir}/metrics.json`, JSON.stringify(results, null, 2));
