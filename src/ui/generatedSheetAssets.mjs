@@ -116,14 +116,31 @@ export function installGeneratedSheetAssets(target = window) {
         const sy = Math.round(y * scaleY);
         const sw = Math.max(1, Math.round(width * scaleX));
         const sh = Math.max(1, Math.round(height * scaleY));
-        const canvas = document.createElement('canvas');
-        canvas.width = sw;
-        canvas.height = sh;
-        const context = canvas.getContext('2d', { alpha: true, willReadFrequently: true });
-        if (!context) throw new Error('Canvas is unavailable for generated UI assets');
-        context.drawImage(image, sx, sy, sw, sh, 0, 0, sw, sh);
-        cleanTile(context, sw, sh, definition.mode);
-        const tileUrl = URL.createObjectURL(await canvasBlob(canvas));
+
+        // Sample and clean the region at the source sheet's native scale so the
+        // checker-removal heuristic operates on the same pixels it was tuned for.
+        const sourceCanvas = document.createElement('canvas');
+        sourceCanvas.width = sw;
+        sourceCanvas.height = sh;
+        const sourceContext = sourceCanvas.getContext('2d', { alpha: true, willReadFrequently: true });
+        if (!sourceContext) throw new Error('Canvas is unavailable for generated UI assets');
+        sourceContext.drawImage(image, sx, sy, sw, sh, 0, 0, sw, sh);
+        cleanTile(sourceContext, sw, sh, definition.mode);
+
+        // Emit each tile at its full design resolution. When a full-res sheet is
+        // supplied this is a 1:1 copy; for the low-res placeholder it performs a
+        // single high-quality upscale here instead of letting the browser
+        // nearest-neighbour stretch a thumbnail-sized slice again at paint time.
+        const tileCanvas = document.createElement('canvas');
+        tileCanvas.width = width;
+        tileCanvas.height = height;
+        const tileContext = tileCanvas.getContext('2d', { alpha: true });
+        if (!tileContext) throw new Error('Canvas is unavailable for generated UI assets');
+        tileContext.imageSmoothingEnabled = true;
+        tileContext.imageSmoothingQuality = 'high';
+        tileContext.drawImage(sourceCanvas, 0, 0, sw, sh, 0, 0, width, height);
+
+        const tileUrl = URL.createObjectURL(await canvasBlob(tileCanvas));
         objectUrls.push(tileUrl);
         root.style.setProperty(property, `url("${tileUrl}")`);
       }));
