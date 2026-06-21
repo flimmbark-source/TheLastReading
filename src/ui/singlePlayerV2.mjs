@@ -24,7 +24,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
   const ensureAssetLayer=()=>{
     ensureStylesheet('single-player-v2-assets','src/styles/singlePlayerV2Assets.css?v=clean-tiles-1');
     ensureStylesheet('single-player-v2-slot-match','src/styles/singlePlayerV2SlotMatch.css?v=2');
-    ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=1');
+    ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=2');
   };
 
   const refreshCompositionLayer=()=>{
@@ -35,11 +35,22 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     if(link.getAttribute('href')!==next)link.setAttribute('href',next);
   };
 
+  const ensureUtilityControls=()=>{
+    if(doc.getElementById('spv2ArchiveBtn'))return;
+    const archiveButton=doc.createElement('button');
+    archiveButton.id='spv2ArchiveBtn';
+    archiveButton.type='button';
+    archiveButton.setAttribute('aria-label','Archives');
+    archiveButton.addEventListener('click',()=>doc.getElementById('invTab')?.click());
+    doc.body.appendChild(archiveButton);
+  };
+
   const enable=()=>{
     doc.body?.classList.add('single-player-v2');
     doc.body?.classList.remove('reference-sheet-ready','reference-sheet-failed');
     refreshCompositionLayer();
     ensureAssetLayer();
+    ensureUtilityControls();
     installGeneratedSheetAssets(target);
   };
 
