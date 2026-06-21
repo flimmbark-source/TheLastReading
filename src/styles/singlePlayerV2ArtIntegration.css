@@ -52,6 +52,12 @@
     gap: 6px !important;
   }
 
+  /* Drop the hand fan down so its base nests inside the dock tray banner
+     instead of floating above it. */
+  body.single-player-v2.generated-sheet-ready .handDock .hand {
+    transform: translateY(4.5dvh) !important;
+  }
+
   /* Utility buttons carry their icon as art, so drop the text fallbacks
      (⚙ / REF / ABIL / ARCH). The two without a dedicated tile reuse the
      reference (book) art so none render blank. */
