@@ -1,0 +1,39 @@
+@media (max-width: 640px) {
+  /* Put the hand gesture strip immediately above the hand dock. */
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+    bottom: 31.5dvh !important;
+    height: clamp(38px, 5.5dvh, 48px) !important;
+  }
+
+  /* Put Discard and Purge beneath the visible hand, at the bottom edge. */
+  body.single-player-v2.generated-sheet-ready .spread-actions {
+    top: auto !important;
+    bottom: max(.8dvh, env(safe-area-inset-bottom)) !important;
+    height: clamp(58px, 15vw, 72px) !important;
+    z-index: 48 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    top: auto !important;
+    bottom: 0 !important;
+  }
+
+  /* Do not stack fallback labels over art that already contains an icon. */
+  body.single-player-v2.generated-sheet-ready #menuBtn::after,
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after,
+  body.single-player-v2.generated-sheet-ready #discardBtn::after,
+  body.single-player-v2.generated-sheet-ready #purgeBtn::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  /* Abilities and Archive currently use text-only faces, so keep one label each. */
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after {
+    content: "ABIL" !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
+    content: "ARCH" !important;
+  }
+}
