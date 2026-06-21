@@ -1,29 +1,8 @@
 @import url('./singlePlayerV2SpreadHandPass2.css?v=1');
-@import url('./singlePlayerV2ControlsLightingPass.css?v=1');
-@import url('./singlePlayerV2ControlsLightingFix.css?v=1');
+@import url('./singlePlayerV2CorrectionPass.css?v=1');
 
 @media (max-width: 640px) {
-  body.single-player-v2.generated-sheet-ready .hand-swipe-zone::before {
-    display: none !important;
-  }
-
   body.single-player-v2.generated-sheet-ready #spv2HandDragLabel {
-    position: fixed;
-    left: 50%;
-    bottom: calc(39dvh + 8px);
-    transform: translateX(-50%);
-    width: clamp(92px,25vw,118px);
-    height: 24px;
-    display: grid;
-    place-items: center;
-    z-index: 30;
-    border: 1px solid rgba(184,140,72,.72);
-    border-radius: 999px;
-    background: rgba(18,12,22,.94);
-    color: #c9a765;
-    font: 800 clamp(9px,2.4vw,11px)/1 system-ui,sans-serif;
-    letter-spacing: .09em;
-    box-shadow: 0 3px 10px rgba(0,0,0,.55), inset 0 0 8px rgba(120,80,145,.22);
-    pointer-events: none;
+    display: none !important;
   }
 }
