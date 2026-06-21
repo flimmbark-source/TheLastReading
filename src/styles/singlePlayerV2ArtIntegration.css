@@ -1,0 +1,27 @@
+/* Reconciles the tuned single-player-v2 layout with the approved art tiles.
+   The four stat panels now carry their label text (RESERVE / SCORE / THRESHOLD
+   / DISCARDS) and their stat icons (bag / star / scales / skull) baked into the
+   art, so the CSS-generated duplicates are suppressed here. The live values, the
+   VS divider, and the threshold progress bar are NOT baked in and remain
+   CSS/DOM driven. */
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill::before {
+    content: none !important;
+  }
+
+  /* The art already supplies each panel's frame; drop the extra panel-edge
+     divider so the cards read as the discrete tiles the art intends. */
+  body.single-player-v2.generated-sheet-ready .score-stack > .pill,
+  body.single-player-v2.generated-sheet-ready .score-stack > .th-pill-wrap {
+    border-right: 0 !important;
+  }
+
+  /* Give the baked label room and re-center the live value beneath it. */
+  body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    padding-top: 30px !important;
+  }
+}
