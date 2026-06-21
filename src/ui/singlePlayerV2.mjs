@@ -19,9 +19,18 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     doc.head.appendChild(link);
   };
 
+  const refreshCompositionLayer=()=>{
+    const link=[...doc.querySelectorAll('link[rel="stylesheet"]')]
+      .find(node=>node.getAttribute('href')?.includes('singlePlayerV2Compat.css'));
+    if(!link)return;
+    const next='src/styles/singlePlayerV2Compat.css?v=composition-1';
+    if(link.getAttribute('href')!==next)link.setAttribute('href',next);
+  };
+
   const enable=()=>{
     doc.body?.classList.add('single-player-v2');
     doc.body?.classList.remove('reference-sheet-ready','reference-sheet-failed');
+    refreshCompositionLayer();
     ensureAssetLayer();
     installGeneratedSheetAssets(target);
   };
