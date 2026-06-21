@@ -31,8 +31,7 @@
   }
 
   html body.single-player-v2.generated-sheet-ready .hand-swipe-zone::before,
-  html body.single-player-v2.generated-sheet-ready #spv2HandDragLabel,
-  html body.single-player-v2.generated-sheet-ready .handDock::after {
+  html body.single-player-v2.generated-sheet-ready #spv2HandDragLabel {
     content: none !important;
     display: none !important;
   }
@@ -41,7 +40,7 @@
     display: none !important;
   }
 
-  /* Exact restoration of the original animated tutorial inside that zone. */
+  /* Keep the original tutorial element and timing available to gestureHand. */
   html body.single-player-v2.generated-sheet-ready .hand-swipe-hint {
     position: absolute !important;
     left: 50% !important;
@@ -101,5 +100,44 @@
     width: 30px !important;
     height: 1px !important;
     background: linear-gradient(90deg,transparent,rgba(232,196,96,.6),transparent) !important;
+  }
+
+  /* Mirror the active tutorial above the cards so the enlarged hand cannot
+     cover it. This is display-only and never captures input. */
+  html body.single-player-v2.generated-sheet-ready .handDock::after {
+    content: "✤  SWIPE TO DRIFT  ✤" !important;
+    position: fixed !important;
+    left: 50% !important;
+    bottom: 183px !important;
+    top: auto !important;
+    z-index: 30 !important;
+    transform: translateX(-50%) !important;
+    display: block !important;
+    width: max-content !important;
+    padding: 4px 9px !important;
+    border-radius: 999px !important;
+    background: rgba(10,7,10,.64) !important;
+    color: rgba(232,196,96,.86) !important;
+    font: 700 10px system-ui,"Segoe UI",sans-serif !important;
+    letter-spacing: .14em !important;
+    text-transform: uppercase !important;
+    text-shadow: 0 1px 3px #000,0 0 8px rgba(210,154,63,.22) !important;
+    pointer-events: none !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone[data-hint-step="2"]) .handDock::after {
+    content: "✤  PINCH TO CONSTRICT  ✤" !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone[data-hint-step="3"]) .handDock::after {
+    content: "✤  PULL OPEN TO EXPAND  ✤" !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone.has-swiped) .handDock::after,
+  html body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone.hints-complete) .handDock::after,
+  html body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone.dragging) .handDock::after,
+  html body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone.pinching) .handDock::after {
+    content: none !important;
+    display: none !important;
   }
 }
