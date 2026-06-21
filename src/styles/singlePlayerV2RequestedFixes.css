@@ -28,7 +28,7 @@
      size by 20 percent and moving the image down 10px. */
   html body.single-player-v2.generated-sheet-ready .handDock {
     background-size: auto clamp(144px,17.6dvh,155.2px) !important;
-    background-position: center bottom calc(2dvh - 10px) !important;
+    background-position: center bottom calc(2dvh - 5px) !important;
   }
 
   /* Make an available discard action visibly brighter than its disabled state. */
