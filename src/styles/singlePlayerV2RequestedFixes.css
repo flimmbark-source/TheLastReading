@@ -3,14 +3,16 @@
     top: calc(.4dvh + 52px) !important;
   }
 
-  /* Exact restoration of the original mobile hand gesture surface. */
+  /* Restore the old drag area's relationship to the hand, rather than its old
+     absolute screen coordinate. It begins 52px above the dock and overlaps the
+     dock by 45px, matching the working layout from before the shell rebuild. */
   html body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
     position: fixed !important;
     left: 0 !important;
     right: 0 !important;
-    bottom: 152px !important;
+    bottom: calc(6.2dvh + 31dvh - 45px) !important;
     width: auto !important;
-    height: 74px !important;
+    height: 97px !important;
     transform: none !important;
     z-index: 19 !important;
     pointer-events: auto !important;
@@ -31,16 +33,35 @@
   }
 
   html body.single-player-v2.generated-sheet-ready .hand-swipe-zone::before,
-  html body.single-player-v2.generated-sheet-ready #spv2HandDragLabel {
+  html body.single-player-v2.generated-sheet-ready #spv2HandDragLabel,
+  html body.single-player-v2.generated-sheet-ready .handDock::after {
     content: none !important;
     display: none !important;
   }
 
+  /* The original controller extended downward through the open portions of the
+     hand. Keep that extension inside the dock and stop it before the actions. */
   html body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower {
-    display: none !important;
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 100% !important;
+    height: calc(31dvh - 55px) !important;
+    display: block !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    touch-action: none !important;
+    background: transparent !important;
+    cursor: grab !important;
   }
 
-  /* Keep the original tutorial element and timing available to gestureHand. */
+  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone.dragging .hand-swipe-zone-lower,
+  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone.pinching .hand-swipe-zone-lower {
+    cursor: grabbing !important;
+  }
+
+  /* Restore the original three-step tutorial inside the upper part of the same
+     interaction region. */
   html body.single-player-v2.generated-sheet-ready .hand-swipe-hint {
     position: absolute !important;
     left: 50% !important;
@@ -65,7 +86,8 @@
     opacity: 0 !important;
   }
 
-  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone.has-swiped .hand-swipe-hint {
+  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone.has-swiped .hand-swipe-hint,
+  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone.hints-complete .hand-swipe-hint {
     display: none !important;
   }
 
@@ -100,44 +122,5 @@
     width: 30px !important;
     height: 1px !important;
     background: linear-gradient(90deg,transparent,rgba(232,196,96,.6),transparent) !important;
-  }
-
-  /* Mirror the active tutorial above the cards so the enlarged hand cannot
-     cover it. This is display-only and never captures input. */
-  html body.single-player-v2.generated-sheet-ready .handDock::after {
-    content: "✤  SWIPE TO DRIFT  ✤" !important;
-    position: fixed !important;
-    left: 50% !important;
-    bottom: 183px !important;
-    top: auto !important;
-    z-index: 30 !important;
-    transform: translateX(-50%) !important;
-    display: block !important;
-    width: max-content !important;
-    padding: 4px 9px !important;
-    border-radius: 999px !important;
-    background: rgba(10,7,10,.64) !important;
-    color: rgba(232,196,96,.86) !important;
-    font: 700 10px system-ui,"Segoe UI",sans-serif !important;
-    letter-spacing: .14em !important;
-    text-transform: uppercase !important;
-    text-shadow: 0 1px 3px #000,0 0 8px rgba(210,154,63,.22) !important;
-    pointer-events: none !important;
-  }
-
-  html body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone[data-hint-step="2"]) .handDock::after {
-    content: "✤  PINCH TO CONSTRICT  ✤" !important;
-  }
-
-  html body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone[data-hint-step="3"]) .handDock::after {
-    content: "✤  PULL OPEN TO EXPAND  ✤" !important;
-  }
-
-  html body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone.has-swiped) .handDock::after,
-  html body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone.hints-complete) .handDock::after,
-  html body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone.dragging) .handDock::after,
-  html body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone.pinching) .handDock::after {
-    content: none !important;
-    display: none !important;
   }
 }
