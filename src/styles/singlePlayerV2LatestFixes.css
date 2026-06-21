@@ -92,4 +92,21 @@
   html body.single-player-v2.generated-sheet-ready #spread .slot.hint-multi:not(.drop-target):not(.ability-target-slot):not(.ability-picked-slot) {
     box-shadow: var(--hint-shadow), var(--spv2-contact-shadow) !important;
   }
+
+  /* Placed Minor Arcana were still inheriting the original generic card hint
+     shadow from hand.css, creating a second inner glow beneath the new slot
+     halo. In the spread, the slot owns the glow and the card returns to its
+     normal frame. Major cards retain their own normal border color as well. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.hint-card:not(.ability-target):not(.ability-picked),
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.hint-complete:not(.ability-target):not(.ability-picked),
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.hint-multi:not(.ability-target):not(.ability-picked) {
+    border-color: #6b4f25 !important;
+    box-shadow: none !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.major.hint-card:not(.ability-target):not(.ability-picked),
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.major.hint-complete:not(.ability-target):not(.ability-picked),
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.major.hint-multi:not(.ability-target):not(.ability-picked) {
+    border-color: #9a7842 !important;
+  }
 }
