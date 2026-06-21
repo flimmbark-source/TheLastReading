@@ -22,7 +22,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     ensureStylesheet('single-player-v2-assets','src/styles/singlePlayerV2Assets.css?v=clean-tiles-1');
     ensureStylesheet('single-player-v2-slot-match','src/styles/singlePlayerV2SlotMatch.css?v=2');
     ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=8');
-    ensureStylesheet('single-player-v2-final-placement','src/styles/singlePlayerV2FinalPlacement.css?v=4');
+    ensureStylesheet('single-player-v2-final-placement','src/styles/singlePlayerV2FinalPlacement.css?v=5');
   };
 
   const refreshCompositionLayer=()=>{
@@ -99,8 +99,19 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     if(rail&&rail.parentElement!==doc.body)doc.body.appendChild(rail);
   };
 
+  const ensureHandDragHandle=()=>{
+    const zone=doc.getElementById('handSwipeZone');
+    if(!zone||zone.querySelector('.spv2-hand-drag-label'))return;
+    const label=doc.createElement('div');
+    label.className='spv2-hand-drag-label';
+    label.setAttribute('aria-hidden','true');
+    label.textContent='DRAG HAND';
+    zone.appendChild(label);
+  };
+
   const ensureUtilityControls=()=>{
     ensureActionRail();
+    ensureHandDragHandle();
 
     let archiveButton=doc.getElementById('spv2ArchiveBtn');
     if(!archiveButton){
