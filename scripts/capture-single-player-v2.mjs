@@ -67,7 +67,7 @@ try {
       fullPage: false,
     });
 
-    const metrics = await page.evaluate(() => {
+    const metrics = await page.evaluate(async () => {
       const rect = selector => {
         const element = document.querySelector(selector);
         if (!element) return null;
@@ -77,6 +77,8 @@ try {
           y: Math.round(box.y),
           width: Math.round(box.width),
           height: Math.round(box.height),
+          right: Math.round(box.right),
+          bottom: Math.round(box.bottom),
         };
       };
 
@@ -96,6 +98,91 @@ try {
         };
       };
 
+      const zone = document.getElementById('handSwipeZone');
+      const hand = document.getElementById('hand');
+      const lower = zone?.querySelector('.hand-swipe-zone-lower');
+
+      const waitFrames = () => new Promise(resolve => {
+        requestAnimationFrame(() => requestAnimationFrame(resolve));
+      });
+
+      const fire = (target, type, data) => {
+        target.dispatchEvent(new PointerEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          composed: true,
+          pointerId: data.pointerId,
+          pointerType: 'touch',
+          isPrimary: true,
+          clientX: data.x,
+          clientY: data.y,
+          buttons: type === 'pointerup' ? 0 : 1,
+          pressure: type === 'pointerup' ? 0 : .5,
+        }));
+      };
+
+      const testPoint = async (label, x, y, pointerId) => {
+        const target = document.elementFromPoint(x, y);
+        const beforeLift = hand?.style.getPropertyValue('--hand-lift-y') || '';
+        const beforeOffset = hand?.style.getPropertyValue('--track-offset') || '';
+        if (!target) return { label, x, y, target: null, started: false };
+
+        fire(target, 'pointerdown', { pointerId, x, y });
+        const started = !!zone?.classList.contains('dragging');
+        fire(document, 'pointermove', { pointerId, x: x + 24, y: y + 24 });
+        await waitFrames();
+        const duringLift = hand?.style.getPropertyValue('--hand-lift-y') || '';
+        const duringOffset = hand?.style.getPropertyValue('--track-offset') || '';
+        fire(document, 'pointerup', { pointerId, x: x + 24, y: y + 24 });
+        await waitFrames();
+
+        return {
+          label,
+          x: Math.round(x),
+          y: Math.round(y),
+          target: target instanceof Element ? `${target.tagName.toLowerCase()}${target.id ? `#${target.id}` : ''}${target.className ? `.${String(target.className).trim().replace(/\s+/g, '.')}` : ''}` : target.nodeName,
+          insideZone: target instanceof Element && (target === zone || !!zone?.contains(target)),
+          started,
+          beforeLift,
+          duringLift,
+          beforeOffset,
+          duringOffset,
+          moved: duringLift !== beforeLift || duringOffset !== beforeOffset,
+        };
+      };
+
+      const zoneBox = zone?.getBoundingClientRect();
+      const lowerBox = lower?.getBoundingClientRect();
+      const dockBox = document.querySelector('.handDock')?.getBoundingClientRect();
+
+      const upperPoint = zoneBox
+        ? { x: innerWidth / 2, y: zoneBox.top + 18 }
+        : null;
+
+      let openHandPoint = null;
+      if (lowerBox) {
+        const candidateYs = [lowerBox.top + 20, lowerBox.top + lowerBox.height * .45, lowerBox.bottom - 18];
+        for (const y of candidateYs) {
+          for (let x = 8; x < innerWidth - 8; x += 8) {
+            const el = document.elementFromPoint(x, y);
+            if (el instanceof Element && (el === zone || zone?.contains(el))) {
+              openHandPoint = { x, y };
+              break;
+            }
+          }
+          if (openHandPoint) break;
+        }
+      }
+
+      const belowPoint = dockBox
+        ? { x: innerWidth / 2, y: Math.min(innerHeight - 8, dockBox.bottom + 18) }
+        : null;
+
+      const interactionTests = [];
+      if (upperPoint) interactionTests.push(await testPoint('upper-zone', upperPoint.x, upperPoint.y, 501));
+      if (openHandPoint) interactionTests.push(await testPoint('open-hand-extension', openHandPoint.x, openHandPoint.y, 502));
+      if (belowPoint) interactionTests.push(await testPoint('below-hand', belowPoint.x, belowPoint.y, 503));
+
       return {
         viewport: { width: innerWidth, height: innerHeight },
         title: rect('#titleWrap'),
@@ -106,6 +193,7 @@ try {
         firstCard: rect('#hand .card'),
         handDock: rect('.handDock'),
         swipeZone: rect('.hand-swipe-zone'),
+        swipeZoneLower: rect('.hand-swipe-zone-lower'),
         handHint: rect('.hand-swipe-hint'),
         handHintStyle: styleInfo('.hand-swipe-hint'),
         handHintLine1: rect('.swipe-hint-line-1'),
@@ -115,6 +203,7 @@ try {
         purge: rect('#purgeBtn'),
         actionParent: document.querySelector('.spread-actions')?.parentElement?.tagName || null,
         horizontalOverflow: document.documentElement.scrollWidth > innerWidth,
+        interactionTests,
       };
     });
 
