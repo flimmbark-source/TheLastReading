@@ -39,6 +39,12 @@ try {
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
     await page.locator('button', { hasText: 'New Game' }).click();
     await page.waitForSelector('body.single-player-v2.generated-sheet-ready', { timeout: 15000 });
+
+    const skipButton = page.locator('#tutSkipBtn');
+    if (await skipButton.isVisible().catch(() => false)) {
+      await skipButton.click();
+    }
+
     await page.waitForTimeout(1000);
 
     await page.screenshot({
@@ -70,6 +76,8 @@ try {
         handDock: rect('.handDock'),
         swipeZone: rect('.hand-swipe-zone'),
         actions: rect('.spread-actions'),
+        discard: rect('#discardBtn'),
+        purge: rect('#purgeBtn'),
         horizontalOverflow: document.documentElement.scrollWidth > innerWidth,
       };
     });
