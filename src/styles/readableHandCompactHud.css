@@ -4,6 +4,11 @@
     --spv2-compact-hud-h: clamp(112px,14.2dvh,132px) !important;
   }
 
+  html body.single-player-v2.generated-sheet-ready .score-stack::after {
+    content: none !important;
+    display: none !important;
+  }
+
   html body.single-player-v2.generated-sheet-ready .score-stack .pill {
     padding-block: 6px !important;
     gap: 3px !important;
