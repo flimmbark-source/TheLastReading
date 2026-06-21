@@ -10,7 +10,7 @@
      taller Score and Threshold panels. */
   html body.single-player-v2.generated-sheet-ready .score-stack .score-pill > b,
   html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill > b {
-    font-size: clamp(39px,10.5vw,52px) !important;
+    font-size: clamp(40px,10.5vw,70px) !important;
     line-height: .9 !important;
   }
 
