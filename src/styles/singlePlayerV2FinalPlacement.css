@@ -1,22 +1,65 @@
 @media (max-width: 640px) {
-  /* Put the hand gesture strip immediately above the hand dock. */
-  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
-    bottom: 31.5dvh !important;
-    height: clamp(38px, 5.5dvh, 48px) !important;
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-hud-top: 8.8dvh;
+    --spv2-control-size: clamp(46px, 12vw, 58px);
+    --spv2-spread-top: calc(
+      var(--spv2-hud-top) +
+      var(--spv2-compact-hud-h) +
+      var(--spv2-control-size) +
+      .8dvh
+    );
   }
 
-  /* Put Discard and Purge beneath the visible hand, at the bottom edge. */
+  /* Keep the HUD and utility row close together. */
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    top: var(--spv2-hud-top) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
+  }
+
+  /* Anchor the visible cards directly below the utility row. The old grid
+     centering was leaving a large empty band above the spread. */
+  body.single-player-v2.generated-sheet-ready .spread-wrap {
+    top: var(--spv2-spread-top) !important;
+    display: block !important;
+    place-items: initial !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    top: -1.2dvh !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread {
+    position: absolute !important;
+    top: .4dvh !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+  }
+
+  /* Keep Discard and Purge immediately below the spread, not at the screen edge. */
   body.single-player-v2.generated-sheet-ready .spread-actions {
-    top: auto !important;
-    bottom: max(.8dvh, env(safe-area-inset-bottom)) !important;
+    top: calc(var(--spv2-spread-top) + var(--spv2-live-card-h) + 1dvh) !important;
+    bottom: auto !important;
     height: clamp(58px, 15vw, 72px) !important;
     z-index: 48 !important;
   }
 
   body.single-player-v2.generated-sheet-ready #discardBtn,
   body.single-player-v2.generated-sheet-ready #purgeBtn {
-    top: auto !important;
-    bottom: 0 !important;
+    top: 0 !important;
+    bottom: auto !important;
+  }
+
+  /* Put the hand gesture strip clearly above the hand without covering cards. */
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+    bottom: 36dvh !important;
+    height: clamp(38px, 5.5dvh, 48px) !important;
   }
 
   /* Do not stack fallback labels over art that already contains an icon. */
@@ -28,12 +71,23 @@
     display: none !important;
   }
 
-  /* Abilities and Archive currently use text-only faces, so keep one label each. */
   body.single-player-v2.generated-sheet-ready #abilitiesBtn::after {
     content: "ABIL" !important;
   }
 
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
     content: "ARCH" !important;
+  }
+
+  /* The close tab is present only while its drawer is open. */
+  body.single-player-v2.generated-sheet-ready .spv2-menu-close-tab {
+    display: none !important;
+    pointer-events: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .tlr-pull-wrap.open > .spv2-menu-close-tab,
+  body.single-player-v2.generated-sheet-ready #invWrap.open > .spv2-menu-close-tab {
+    display: block !important;
+    pointer-events: auto !important;
   }
 }
