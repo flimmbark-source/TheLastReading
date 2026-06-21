@@ -1,4 +1,4 @@
-import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs';
+import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-tiles-1';
 
 // Phase 1 composition bridge plus the generated Phase 2 art kit.
 // Reuses the existing live DOM and state; no gameplay state is duplicated.
@@ -15,7 +15,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs';
     const link=doc.createElement('link');
     link.id='single-player-v2-assets';
     link.rel='stylesheet';
-    link.href='src/styles/singlePlayerV2Assets.css?v=generated-sheet-1';
+    link.href='src/styles/singlePlayerV2Assets.css?v=clean-tiles-1';
     doc.head.appendChild(link);
   };
 
