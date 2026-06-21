@@ -137,8 +137,11 @@
       inset 0 0 0 3px rgba(183,139,67,.045) !important;
   }
 
+  /* Pull the two inner slots slightly toward the center. This redistributes the
+     small rotation-driven intersections evenly across the fan and creates more
+     clearance between the inner and outer pairs. */
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
-    transform: translateX(-158%) translateY(5px) rotate(-4deg) !important;
+    transform: translateX(-153%) translateY(5px) rotate(-4deg) !important;
     z-index: 2 !important;
     box-shadow:
       0 6px 4px rgba(0,0,0,.74),
@@ -156,7 +159,7 @@
   }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
-    transform: translateX(58%) translateY(5px) rotate(4deg) !important;
+    transform: translateX(53%) translateY(5px) rotate(4deg) !important;
     z-index: 2 !important;
     box-shadow:
       0 6px 4px rgba(0,0,0,.74),
@@ -304,7 +307,7 @@
     align-items: center !important;
     gap: 14px !important;
     visibility: visible !important;
-    font: 600 10px system-ui,"Segoe UI",sans-serif !important;
+    font: 600 10px system-ui,"Segoe UI UI",sans-serif !important;
     color: rgba(232,196,96,.55) !important;
     letter-spacing: .18em !important;
     text-transform: uppercase !important;
