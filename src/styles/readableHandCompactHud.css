@@ -73,20 +73,5 @@
   html body.single-player-v2.generated-sheet-ready .handDock .hand .card {
     width: clamp(84px,23.6vw,102px) !important;
     height: calc(clamp(84px,23.6vw,102px) * 1.5) !important;
-    transition: transform .18s ease, filter .18s ease, box-shadow .18s ease !important;
-  }
-
-  html body.single-player-v2.generated-sheet-ready .handDock .hand .card.sel {
-    z-index: 100 !important;
-    filter: brightness(1.14) saturate(1.08) !important;
-    box-shadow:
-      0 0 0 2px rgba(244,205,116,.92),
-      0 0 0 5px rgba(111,75,30,.62),
-      0 14px 28px rgba(0,0,0,.72),
-      0 0 22px rgba(232,181,81,.38) !important;
-  }
-
-  html body.single-player-v2.generated-sheet-ready .handDock .hand:has(.card.sel) .card:not(.sel) {
-    filter: brightness(.72) saturate(.78) !important;
   }
 }
