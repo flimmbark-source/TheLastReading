@@ -1,6 +1,7 @@
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-compact-hud-h: clamp(76px, 11dvh, 94px);
+    --spv2-hud-top: 8.2dvh;
   }
 
   body.single-player-v2.generated-sheet-ready #titleWrap {
@@ -8,6 +9,7 @@
   }
 
   body.single-player-v2.generated-sheet-ready .score-stack {
+    top: var(--spv2-hud-top) !important;
     height: var(--spv2-compact-hud-h) !important;
     min-height: var(--spv2-compact-hud-h) !important;
   }
@@ -84,14 +86,14 @@
   }
 
   body.single-player-v2.generated-sheet-ready #scoringBtn {
-    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + 1.5dvh) !important;
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
     left: 3.8vw !important;
     right: auto !important;
     background-image: var(--spv2-utility-reference-art) !important;
   }
 
   body.single-player-v2.generated-sheet-ready #abilitiesBtn {
-    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + 1.5dvh) !important;
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
     left: auto !important;
     right: 3.8vw !important;
   }
@@ -135,10 +137,18 @@
     letter-spacing: .05em;
   }
 
+  body.single-player-v2.generated-sheet-ready .spread-wrap {
+    top: 25.4dvh !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread {
+    transform: translateY(2.2dvh) !important;
+  }
+
   body.single-player-v2.generated-sheet-ready .spread-actions {
     position: fixed !important;
     z-index: 46 !important;
-    top: calc(28.2dvh + var(--spv2-live-card-h) + 2dvh) !important;
+    top: calc(25.4dvh + var(--spv2-live-card-h) + .8dvh) !important;
     left: 0 !important;
     right: 0 !important;
     bottom: auto !important;
@@ -258,6 +268,12 @@
     box-shadow: 0 4px 10px rgba(0,0,0,.55) !important;
     cursor: pointer;
     pointer-events: auto !important;
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .tlr-pull-wrap.open > .spv2-menu-close-tab,
+  body.single-player-v2.generated-sheet-ready #invWrap.open > .spv2-menu-close-tab {
+    display: block !important;
   }
 
   body.single-player-v2.generated-sheet-ready .tlr-pull-wrap > .spv2-menu-close-tab {
