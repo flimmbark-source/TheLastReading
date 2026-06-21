@@ -3,10 +3,10 @@
     top: calc(.4dvh + 52px) !important;
   }
 
-  /* Restore the old drag area's relationship to the hand, rather than its old
-     absolute screen coordinate. It begins 52px above the dock and overlaps the
-     dock by 45px, matching the working layout from before the shell rebuild. */
-  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+  /* Override the historical ID rule in attic.css. Preserve the old drag
+     region's relationship to the current hand dock: 52px above its top and
+     45px overlapping into it. */
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone {
     position: fixed !important;
     left: 0 !important;
     right: 0 !important;
@@ -24,24 +24,24 @@
     box-shadow: none !important;
   }
 
-  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone.dragging {
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone.dragging {
     cursor: grabbing !important;
   }
 
-  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone.pinching {
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone.pinching {
     cursor: ew-resize !important;
   }
 
-  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone::before,
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone::before,
   html body.single-player-v2.generated-sheet-ready #spv2HandDragLabel,
   html body.single-player-v2.generated-sheet-ready .handDock::after {
     content: none !important;
     display: none !important;
   }
 
-  /* The original controller extended downward through the open portions of the
-     hand. Keep that extension inside the dock and stop it before the actions. */
-  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower {
+  /* Restore the original extension through the open parts of the hand, but
+     terminate it before the bottom action row. */
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone .hand-swipe-zone-lower {
     position: absolute !important;
     left: 0 !important;
     right: 0 !important;
@@ -55,48 +55,48 @@
     cursor: grab !important;
   }
 
-  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone.dragging .hand-swipe-zone-lower,
-  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone.pinching .hand-swipe-zone-lower {
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.dragging .hand-swipe-zone-lower,
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.pinching .hand-swipe-zone-lower {
     cursor: grabbing !important;
   }
 
-  /* Restore the original three-step tutorial inside the upper part of the same
-     interaction region. */
-  html body.single-player-v2.generated-sheet-ready .hand-swipe-hint {
+  /* Keep the original one-at-a-time tutorial inside the upper drag region. */
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone .hand-swipe-hint {
     position: absolute !important;
     left: 50% !important;
     top: 50% !important;
     right: auto !important;
     bottom: auto !important;
     width: auto !important;
-    transform: none !important;
-    display: block !important;
+    transform: translate(-50%,-50%) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     visibility: visible !important;
     pointer-events: none !important;
     opacity: 0 !important;
     transition: opacity .4s !important;
   }
 
-  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone.has-overflow .hand-swipe-hint {
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.has-overflow .hand-swipe-hint {
     opacity: 1 !important;
   }
 
-  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone.dragging .hand-swipe-hint,
-  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone.pinching .hand-swipe-hint {
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.dragging .hand-swipe-hint,
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.pinching .hand-swipe-hint {
     opacity: 0 !important;
   }
 
-  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone.has-swiped .hand-swipe-hint,
-  html body.single-player-v2.generated-sheet-ready .hand-swipe-zone.hints-complete .hand-swipe-hint {
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.has-swiped .hand-swipe-hint,
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.hints-complete .hand-swipe-hint {
     display: none !important;
   }
 
-  html body.single-player-v2.generated-sheet-ready .swipe-hint-line {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    transform: translate(-50%,-50%) !important;
-    display: flex !important;
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone .swipe-hint-line {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
     align-items: center !important;
     gap: 14px !important;
     visibility: visible !important;
@@ -105,19 +105,11 @@
     letter-spacing: .18em !important;
     text-transform: uppercase !important;
     white-space: nowrap !important;
-    opacity: 0 !important;
-    animation: hint-cycle 9s ease-in-out infinite !important;
+    opacity: 1 !important;
+    animation: none !important;
   }
 
-  html body.single-player-v2.generated-sheet-ready .swipe-hint-line-2 {
-    animation-delay: 3s !important;
-  }
-
-  html body.single-player-v2.generated-sheet-ready .swipe-hint-line-3 {
-    animation-delay: 6s !important;
-  }
-
-  html body.single-player-v2.generated-sheet-ready .hand-swipe-hint span {
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone .hand-swipe-hint span {
     display: inline-block !important;
     width: 30px !important;
     height: 1px !important;
