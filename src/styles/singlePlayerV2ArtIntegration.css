@@ -46,9 +46,17 @@
     background: none !important;
   }
 
-  /* Separate the four stat panels so each card's rounded border reads as a
+  /* Remove the reserve and discards pills; keep Score and Threshold (with the
+     VS divider between them). Discards still show on the discard-button badge. */
+  body.single-player-v2.generated-sheet-ready .score-stack .reserve-pill,
+  body.single-player-v2.generated-sheet-ready .score-stack .discards-pill {
+    display: none !important;
+  }
+
+  /* Separate the remaining panels so each card's rounded border reads as a
      distinct tile rather than butting edge-to-edge. */
   body.single-player-v2.generated-sheet-ready .score-stack {
+    grid-template-columns: 1fr 1fr !important;
     gap: 6px !important;
   }
 
