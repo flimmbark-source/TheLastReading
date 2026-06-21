@@ -47,4 +47,32 @@
   body.single-player-v2.generated-sheet-ready #titleWrap::before {
     opacity: 1 !important;
   }
+
+  /* Utility buttons carry their icon as art, so drop the text fallbacks
+     (⚙ / REF / ABIL / ARCH). The two without a dedicated tile reuse the
+     reference (book) art so none render blank. */
+  body.single-player-v2.generated-sheet-ready #menuBtn::after,
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
+    content: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    background-image: var(--spv2-utility-reference-art) !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+  }
+
+  /* Soften the pattern-hint halo on the hand so it reads as subtle guidance
+     rather than a bright glow. */
+  body.single-player-v2 .hand .card.hint-card,
+  body.single-player-v2 .hand .card.hint-complete {
+    box-shadow:
+      0 0 0 1px rgba(var(--hint-rgb, 232, 196, 96), .55),
+      0 0 10px rgba(var(--hint-rgb, 232, 196, 96), .30),
+      0 5px 14px rgba(0, 0, 0, .5) !important;
+  }
 }
