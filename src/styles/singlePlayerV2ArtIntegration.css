@@ -64,6 +64,7 @@
      reference this var, so they shift down with it). */
   body.single-player-v2.generated-sheet-ready {
     --spv2-compact-hud-h: clamp(140px, 17.5dvh, 162px) !important;
+    --spv2-hud-top: 3dvh !important;
   }
 
   /* Move settings + archive below the pills, centered side by side. */
