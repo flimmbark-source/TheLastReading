@@ -66,7 +66,7 @@ export const ABILITIES = Object.freeze({
     title: 'Neighbor',
     count: 2,
     take: 1,
-    prompt: 'Choose a card. Reveal up to 2 neighboring cards from the deck. Take 1.',
+    prompt: 'Reveal up to 2 neighboring cards from the deck. Take 1.',
   },
   KIN_2: {
     id: 'KIN_2',
@@ -74,7 +74,7 @@ export const ABILITIES = Object.freeze({
     title: 'Kin',
     count: 2,
     take: 1,
-    prompt: 'Choose a card. Reveal up to 2 cards of the same Arcana from the deck. Take 1.',
+    prompt: 'Reveal up to 2 cards of the same Arcana from the deck. Take 1.',
   },
   MIRROR_1: {
     id: 'MIRROR_1',
@@ -82,7 +82,7 @@ export const ABILITIES = Object.freeze({
     title: 'Mirror',
     count: 1,
     take: 1,
-    prompt: 'Choose a card. Take the card opposite it across centerline of its Arcana.',
+    prompt: 'Take the opposite card across the Arcana centerline.',
   },
   BETWEEN_2: {
     id: 'BETWEEN_2',
@@ -90,7 +90,7 @@ export const ABILITIES = Object.freeze({
     title: 'Between',
     count: 2,
     take: 1,
-    prompt: 'Choose two cards in hand. Reveal cards between them in sequence. Take 1.',
+    prompt: 'Choose two cards. Reveal cards between them in sequence. Take 1.',
   },
 });
 

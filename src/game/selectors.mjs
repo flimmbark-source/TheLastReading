@@ -16,6 +16,7 @@ export function selectedCard(state) {
 export function handView(state, options = {}) {
   return {
     hand: state.run.hand || [],
+    spread: state.run.spread || Array(5).fill(null),
     selected: state.run.selectedCardId ?? null,
     // Purge is not fully store-owned yet, so callers may pass the current legacy
     // purge list while the rest of the hand display data comes from the store.
@@ -27,6 +28,7 @@ export function handView(state, options = {}) {
 export function spreadView(state, options = {}) {
   return {
     spread: state.run.spread || Array(5).fill(null),
+    hand: state.run.hand || [],
     selected: state.run.selectedCardId ?? null,
     onPlaceCard: options.onPlaceCard || null,
     onAbilityTarget: options.onAbilityTarget || null,
