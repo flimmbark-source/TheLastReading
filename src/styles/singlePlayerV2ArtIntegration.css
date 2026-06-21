@@ -94,4 +94,36 @@
       0 0 10px rgba(var(--hint-rgb, 232, 196, 96), .30),
       0 5px 14px rgba(0, 0, 0, .5) !important;
   }
+
+  /* Bottom action buttons render as medallion art instead of text pills:
+     discard = crescent/cards medallion, purge = sun-compass medallion. */
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    width: clamp(58px, 16vw, 74px) !important;
+    height: clamp(58px, 16vw, 74px) !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background-color: transparent !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    font-size: 0 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn::before,
+  body.single-player-v2.generated-sheet-ready #discardBtn::after,
+  body.single-player-v2.generated-sheet-ready #purgeBtn::before,
+  body.single-player-v2.generated-sheet-ready #purgeBtn::after {
+    content: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn {
+    background-image: url("/public/ui/single-player-v2/elements/Discard.png") !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    background-image: var(--spv2-action-center-art) !important;
+  }
 }
