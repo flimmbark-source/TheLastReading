@@ -1,11 +1,11 @@
 // Ability/choice modal renderer (Phase 15.5). Moved verbatim from index.html.
 // Selection logic (selectFromHand, confirmAbilitySelection) and ability
 // resolution stay with the game flow; this module owns the modal DOM.
-/* global $, state, cardHTML, applyCardPhoto, playSound, tlrArchitectureSync */
+/* global $, state, uniqueCards, applyHint, cardHTML, applyCardPhoto, playSound, tlrArchitectureSync */
 import { abilityTargetView as selectAbilityTargetView } from '../game/selectors.mjs';
 import { getPendingPreviewFn } from '../app/abilityTargetBridge.mjs';
 
-export function choice(title,prompt,cards,cb){$('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';let ch=$('#choices');ch.innerHTML='';cards.forEach(c=>{let e=document.createElement('div');e.className='card choice-card '+(c.type==='major'?'major':'');e.innerHTML=cardHTML(c);applyCardPhoto(e,c);e.onclick=()=>{$('#modal').classList.remove('show','collapsed');cb(c)};ch.appendChild(e)});$('#modal').classList.remove('collapsed');$('#modal').classList.add('show');playSound('flip');tlrArchitectureSync()}
+export function choice(title,prompt,cards,cb){$('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';let ch=$('#choices');ch.innerHTML='';cards.forEach(c=>{let e=document.createElement('div');e.className='card choice-card '+(c.type==='major'?'major':'');applyHint(e,c,uniqueCards([...state.spread.filter(Boolean),...state.hand,c]));e.innerHTML=cardHTML(c);applyCardPhoto(e,c);e.onclick=()=>{$('#modal').classList.remove('show','collapsed');cb(c)};ch.appendChild(e)});$('#modal').classList.remove('collapsed');$('#modal').classList.add('show');playSound('flip');tlrArchitectureSync()}
 
 export function choiceAsync(title,prompt,cards){return new Promise(resolve=>choice(title,prompt,cards,resolve))}
 
