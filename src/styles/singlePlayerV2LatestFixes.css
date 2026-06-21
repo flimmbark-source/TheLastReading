@@ -6,6 +6,18 @@
     --spv2-hud-top: 12px !important;
   }
 
+  /* Center the visible five-card fan in the viewport rather than positioning it
+     beneath the upper HUD stack. The +7px correction accounts for the outer
+     cards extending 14px below the upright center card. */
+  html body.single-player-v2.generated-sheet-ready .spread {
+    position: fixed !important;
+    top: 50dvh !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+    transform: translateY(calc(-50% + 7px)) !important;
+  }
+
   /* Rebalance the five-card fan around the available viewport width. Slots 2
      and 4 move closer to the middle, while the outer cards anchor to protected
      side gutters. This minimizes unavoidable overlap evenly across all four
