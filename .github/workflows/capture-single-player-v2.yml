@@ -1,0 +1,59 @@
+name: Capture single-player v2
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'src/styles/**'
+      - 'src/ui/**'
+      - 'src/app/**'
+      - 'scripts/capture-single-player-v2.mjs'
+      - '.github/workflows/capture-single-player-v2.yml'
+  workflow_dispatch:
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install project dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save playwright@1.52.0
+          npx playwright install --with-deps chromium
+
+      - name: Start game server
+        run: |
+          npm run start > /tmp/tlr-server.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8080/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/tlr-server.log
+          exit 1
+
+      - name: Capture target mobile sizes
+        run: node scripts/capture-single-player-v2.mjs | tee artifacts/single-player-v2/metrics.jsonl
+
+      - name: Upload screenshots and metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: single-player-v2-mobile-captures
+          path: artifacts/single-player-v2
+          if-no-files-found: error
+          retention-days: 14
