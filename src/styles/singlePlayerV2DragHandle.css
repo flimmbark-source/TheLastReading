@@ -1,0 +1,25 @@
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone::before {
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spv2-hand-drag-label {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%,-50%);
+    width: clamp(92px,25vw,118px);
+    height: 24px;
+    display: grid;
+    place-items: center;
+    z-index: 2;
+    border: 1px solid rgba(184,140,72,.72);
+    border-radius: 999px;
+    background: rgba(18,12,22,.94);
+    color: #c9a765;
+    font: 800 clamp(9px,2.4vw,11px)/1 system-ui,sans-serif;
+    letter-spacing: .09em;
+    box-shadow: 0 3px 10px rgba(0,0,0,.55), inset 0 0 8px rgba(120,80,145,.22);
+    pointer-events: none;
+  }
+}
