@@ -110,6 +110,8 @@
     box-shadow: none !important;
     color: transparent !important;
     font-size: 0 !important;
+    filter: brightness(1.45) contrast(1.05) saturate(1.08)
+      drop-shadow(0 0 6px rgba(0, 0, 0, .6)) !important;
   }
 
   body.single-player-v2.generated-sheet-ready #discardBtn::before,
