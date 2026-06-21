@@ -1,8 +1,5 @@
 import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-tiles-1';
 
-// Phase 1 composition bridge plus the generated Phase 2 art kit.
-// Reuses the existing live DOM and state; no gameplay state is duplicated.
-
 (function installSinglePlayerV2(target = window){
   if(!target || target.__tlrSinglePlayerV2Installed)return;
   target.__tlrSinglePlayerV2Installed=true;
@@ -24,7 +21,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
   const ensureAssetLayer=()=>{
     ensureStylesheet('single-player-v2-assets','src/styles/singlePlayerV2Assets.css?v=clean-tiles-1');
     ensureStylesheet('single-player-v2-slot-match','src/styles/singlePlayerV2SlotMatch.css?v=2');
-    ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=3');
+    ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=4');
   };
 
   const refreshCompositionLayer=()=>{
@@ -42,26 +39,29 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
   };
   const closeArchive=()=>doc.getElementById('invWrap')?.classList.remove('open');
 
-  const createCloseTab=(parent,id,onClose)=>{
-    if(!parent||doc.getElementById(id))return;
+  const closeByKind=kind=>{
+    if(kind==='settings')closeSettings();
+    if(kind==='reference'||kind==='ability')closeReferences();
+    if(kind==='archive')closeArchive();
+  };
+
+  const createCloseTab=(parent,id,kind)=>{
+    if(!parent||parent.querySelector(`#${id}`))return;
     const button=doc.createElement('button');
     button.id=id;
     button.className='spv2-menu-close-tab';
     button.type='button';
+    button.dataset.closeMenu=kind;
     button.setAttribute('aria-label','Close');
     button.textContent='×';
-    button.addEventListener('click',event=>{
-      event.stopPropagation();
-      onClose();
-    });
     parent.appendChild(button);
   };
 
   const ensureMenuCloseTabs=()=>{
-    createCloseTab(doc.getElementById('settingsPanel'),'spv2SettingsClose',closeSettings);
-    createCloseTab(doc.getElementById('ref'),'spv2RefClose',closeReferences);
-    createCloseTab(doc.getElementById('abilityRef'),'spv2AbilityClose',closeReferences);
-    createCloseTab(doc.getElementById('invDesk'),'spv2ArchiveClose',closeArchive);
+    createCloseTab(doc.getElementById('settingsPanel'),'spv2SettingsClose','settings');
+    createCloseTab(doc.getElementById('ref'),'spv2RefClose','reference');
+    createCloseTab(doc.getElementById('abilityRef'),'spv2AbilityClose','ability');
+    createCloseTab(doc.getElementById('invDesk'),'spv2ArchiveClose','archive');
   };
 
   const ensureUtilityControls=()=>{
@@ -79,32 +79,51 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     ensureMenuCloseTabs();
   };
 
+  const installMenuObservers=()=>{
+    if(target.__tlrSinglePlayerMenuObserverInstalled)return;
+    target.__tlrSinglePlayerMenuObserverInstalled=true;
+
+    const observer=new MutationObserver(()=>ensureMenuCloseTabs());
+    ['settingsPanel','ref','abilityRef','invDesk'].forEach(id=>{
+      const node=doc.getElementById(id);
+      if(node)observer.observe(node,{childList:true,subtree:false});
+    });
+  };
+
   const installOutsideClose=()=>{
     if(target.__tlrSinglePlayerOutsideCloseInstalled)return;
     target.__tlrSinglePlayerOutsideCloseInstalled=true;
 
-    doc.addEventListener('click',event=>{
-      const targetElement=event.target instanceof Element?event.target:null;
-      if(!targetElement)return;
+    doc.addEventListener('pointerdown',event=>{
+      const element=event.target instanceof Element?event.target:null;
+      if(!element)return;
+
+      const closeTab=element.closest('.spv2-menu-close-tab');
+      if(closeTab){
+        event.preventDefault();
+        event.stopPropagation();
+        closeByKind(closeTab.dataset.closeMenu);
+        return;
+      }
 
       const settings=doc.getElementById('settingsPanel');
-      if(settings&&!settings.classList.contains('hidden')&&!settings.contains(targetElement)&&!targetElement.closest('#menuBtn')){
+      if(settings&&!settings.classList.contains('hidden')&&!settings.contains(element)&&!element.closest('#menuBtn')){
         closeSettings();
       }
 
       const ref=doc.getElementById('ref');
       const ability=doc.getElementById('abilityRef');
-      const referenceOpen=ref&&!ref.classList.contains('hidden');
-      const abilityOpen=ability&&!ability.classList.contains('hidden');
-      if((referenceOpen||abilityOpen)&&!targetElement.closest('#ref,#abilityRef,#scoringBtn,#abilitiesBtn')){
+      const refsOpen=(ref&&!ref.classList.contains('hidden'))||(ability&&!ability.classList.contains('hidden'));
+      if(refsOpen&&!element.closest('#ref,#abilityRef,#scoringBtn,#abilitiesBtn')){
         closeReferences();
       }
 
-      const archive=doc.getElementById('invWrap');
-      if(archive?.classList.contains('open')&&!archive.contains(targetElement)&&!targetElement.closest('#spv2ArchiveBtn,#invTab')){
+      const archiveWrap=doc.getElementById('invWrap');
+      const archiveDesk=doc.getElementById('invDesk');
+      if(archiveWrap?.classList.contains('open')&&archiveDesk&&!archiveDesk.contains(element)&&!element.closest('#spv2ArchiveBtn,#invTab')){
         closeArchive();
       }
-    });
+    },true);
   };
 
   const enable=()=>{
@@ -113,6 +132,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     refreshCompositionLayer();
     ensureAssetLayer();
     ensureUtilityControls();
+    installMenuObservers();
     installOutsideClose();
     installGeneratedSheetAssets(target);
   };
@@ -134,7 +154,6 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
   const ensureHudStructure=()=>{
     const stack=doc.querySelector('.score-stack');
     if(!stack)return false;
-
     wrapLabel(stack.querySelector('.reserve-pill'),'Reserve');
     wrapLabel(stack.querySelector('.score-pill'),'Score');
     wrapLabel(stack.querySelector('.threshold-pill'),'Threshold');
