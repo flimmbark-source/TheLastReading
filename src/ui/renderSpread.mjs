@@ -15,7 +15,10 @@ function targetCard(card, view) {
 export function renderSpread(ability, inPurge, view = null) {
   if (document.body.classList.contains('mp-game-active') && !window.__tlrMpUsingSingleAbilityFlow) return;
   const displaySpread = view && view.spread ? view.spread : state.spread;
+  const displayHand = view && view.hand ? view.hand : state.hand;
   const selected = view && Object.prototype.hasOwnProperty.call(view, 'selected') ? view.selected : state.selected;
+  const hintState={spread:displaySpread||[],hand:displayHand||[]};
+  const hintPool=[...hintState.spread.filter(Boolean),...hintState.hand];
   const sp = $('#spread');
   if (!_slotEls || _slotEls.length !== 5 || !sp.contains(_slotEls[0])) {
     _slotEls = [];
@@ -52,7 +55,7 @@ export function renderSpread(ability, inPurge, view = null) {
         delete e.dataset.hint;
       }
       e.className = 'card ' + (card.type === 'major' ? 'major ' : '') + (CARD_SHEET[card.id] ? 'photo ' : '') + (validSpread && !pickedSpread ? 'ability-target ' : '') + (pickedSpread ? 'ability-picked ' : '') + (ability && !validSpread ? 'ability-disabled ' : '');
-      if (!inPurge) applyHint(e, card);
+      if (!inPurge) applyHint(e, card, hintPool, hintState);
       e.onclick = (ability && validSpread) ? (ev) => { ev.stopPropagation(); targetCard(card, view); } : null;
     } else {
       if (ability) cls += ' ability-empty-slot';
