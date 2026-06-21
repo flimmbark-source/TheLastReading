@@ -1,5 +1,4 @@
 @media (max-width: 640px) {
-  /* Compact the premium HUD while preserving the existing frame and live values. */
   html body.single-player-v2.generated-sheet-ready {
     --spv2-compact-hud-h: clamp(112px,14.2dvh,132px) !important;
   }
@@ -49,7 +48,6 @@
     height: 5px !important;
   }
 
-  /* Keep all utility controls attached to the newly compressed HUD. */
   html body.single-player-v2.generated-sheet-ready #menuBtn,
   html body.single-player-v2.generated-sheet-ready #scoringBtn,
   html body.single-player-v2.generated-sheet-ready #abilitiesBtn,
@@ -62,12 +60,10 @@
     margin-top: 4px !important;
   }
 
-  /* Reclaim the vertical room instead of leaving the play field where it was. */
   html body.single-player-v2.generated-sheet-ready .spread-wrap {
     top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + 58px) !important;
   }
 
-  /* Wider, flatter hand fan so titles and values remain visible before selection. */
   html body.single-player-v2.generated-sheet-ready .handDock .hand {
     --track-spacing: 4.25deg !important;
     --track-radius: 760px !important;
@@ -80,10 +76,8 @@
     transition: transform .18s ease, filter .18s ease, box-shadow .18s ease !important;
   }
 
-  /* A selected card becomes the unmistakable focal object. */
   html body.single-player-v2.generated-sheet-ready .handDock .hand .card.sel {
     z-index: 100 !important;
-    transform: translateY(-26px) rotate(0deg) scale(1.08) !important;
     filter: brightness(1.14) saturate(1.08) !important;
     box-shadow:
       0 0 0 2px rgba(244,205,116,.92),
