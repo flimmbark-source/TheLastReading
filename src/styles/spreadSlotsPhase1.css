@@ -1,57 +1,40 @@
 @media (max-width: 640px) {
-  /* Empty spread positions should read as recessed board slots, not card backs. */
+  /* Empty positions should feel engraved into the table, not like dark cards. */
   html body.single-player-v2.generated-sheet-ready .spread .slot:not(:has(> .card)) {
+    background: rgba(10,7,5,.08) !important;
     background-image: none !important;
-    background:
-      radial-gradient(circle at 50% 43%, rgba(214,177,92,.09) 0, rgba(214,177,92,0) 32%),
-      linear-gradient(180deg, rgba(37,27,19,.95), rgba(16,11,8,.99)) !important;
-    border: 1px solid rgba(145,108,53,.74) !important;
-    border-radius: 11px !important;
+    border: 1px solid rgba(177,132,62,.28) !important;
+    border-radius: 7px !important;
     box-shadow:
-      inset 0 0 0 1px rgba(230,197,118,.09),
-      inset 0 1px 0 rgba(255,234,178,.04),
-      inset 0 -14px 22px rgba(0,0,0,.4),
-      0 10px 18px rgba(0,0,0,.48) !important;
+      inset 0 0 0 1px rgba(0,0,0,.24),
+      inset 0 0 18px rgba(0,0,0,.13),
+      0 1px 0 rgba(230,190,102,.035) !important;
     overflow: visible !important;
   }
 
-  /* Faint inner card silhouette and restrained ritual marking. */
+  /* A nearly invisible inner silhouette suggests where the card will settle. */
   html body.single-player-v2.generated-sheet-ready .spread .slot:not(:has(> .card))::before {
     content: "";
     position: absolute;
-    inset: 9px;
-    border: 1px solid rgba(226,193,117,.16);
-    border-radius: 8px;
+    inset: 7px;
+    border: 1px solid rgba(205,160,78,.11);
+    border-radius: 5px;
     background:
-      radial-gradient(circle at 50% 53%, rgba(226,193,117,.15) 0 1px, transparent 2px),
-      radial-gradient(circle at 50% 53%, transparent 0 18px, rgba(226,193,117,.075) 18px 19px, transparent 20px),
-      linear-gradient(180deg, rgba(255,255,255,.014), rgba(0,0,0,.06));
-    box-shadow:
-      inset 0 0 0 1px rgba(0,0,0,.22),
-      inset 0 10px 16px rgba(255,255,255,.016),
-      inset 0 -10px 16px rgba(0,0,0,.18);
+      linear-gradient(135deg, transparent 0 48.8%, rgba(205,160,78,.045) 49.2% 50.8%, transparent 51.2%),
+      linear-gradient(45deg, transparent 0 48.8%, rgba(205,160,78,.035) 49.2% 50.8%, transparent 51.2%);
+    box-shadow: inset 0 0 12px rgba(0,0,0,.1);
     pointer-events: none;
   }
 
-  /* Each spread position gets a small celestial identity marker. */
+  /* Restrained watermark, centered and low-contrast. */
   html body.single-player-v2.generated-sheet-ready .spread .slot:not(:has(> .card))::after {
     position: absolute;
-    top: 7px;
     left: 50%;
-    transform: translateX(-50%);
-    width: 18px;
-    height: 18px;
-    display: grid;
-    place-items: center;
-    border: 1px solid rgba(173,131,66,.62);
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(54,38,22,.92), rgba(24,16,11,.98));
-    color: rgba(232,196,96,.76);
-    font: 700 10px/1 Georgia,serif;
-    text-shadow: 0 0 8px rgba(232,196,96,.18);
-    box-shadow:
-      inset 0 0 0 1px rgba(255,230,170,.05),
-      0 2px 6px rgba(0,0,0,.35);
+    top: 52%;
+    transform: translate(-50%,-50%);
+    color: rgba(214,171,86,.16);
+    font: 400 16px/1 Georgia,serif;
+    text-shadow: none;
     pointer-events: none;
   }
 
@@ -61,30 +44,44 @@
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4):not(:has(> .card))::after { content: "✧"; }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5):not(:has(> .card))::after { content: "☾"; }
 
-  /* Valid placement state. */
+  /* Valid positions become legible only when interaction requires it. */
   html body.single-player-v2.generated-sheet-ready #spread .slot.drop-target:not(:has(> .card)),
   html body.single-player-v2.generated-sheet-ready #spread .slot.ability-target-slot:not(:has(> .card)) {
-    background:
-      radial-gradient(circle at 50% 43%, rgba(121,199,120,.15) 0, rgba(121,199,120,0) 35%),
-      linear-gradient(180deg, rgba(30,42,28,.96), rgba(16,20,15,.99)) !important;
-    border-color: #79c778 !important;
+    background: rgba(53,91,50,.13) !important;
+    border-color: rgba(121,199,120,.88) !important;
     box-shadow:
-      inset 0 0 0 1px rgba(121,199,120,.18),
-      0 0 0 2px rgba(121,199,120,.48),
-      0 0 24px rgba(121,199,120,.28),
-      0 10px 18px rgba(0,0,0,.48) !important;
+      inset 0 0 0 1px rgba(121,199,120,.15),
+      inset 0 0 18px rgba(121,199,120,.08),
+      0 0 0 2px rgba(121,199,120,.24),
+      0 0 18px rgba(121,199,120,.24) !important;
   }
 
-  /* Chosen slot state. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.drop-target:not(:has(> .card))::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-target-slot:not(:has(> .card))::before {
+    border-color: rgba(154,220,153,.28);
+  }
+
+  html body.single-player-v2.generated-sheet-ready #spread .slot.drop-target:not(:has(> .card))::after,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-target-slot:not(:has(> .card))::after {
+    color: rgba(154,220,153,.48);
+  }
+
+  /* Chosen positions use a restrained gold confirmation treatment. */
   html body.single-player-v2.generated-sheet-ready #spread .slot.ability-picked-slot:not(:has(> .card)) {
-    background:
-      radial-gradient(circle at 50% 43%, rgba(255,217,120,.15) 0, rgba(255,217,120,0) 35%),
-      linear-gradient(180deg, rgba(43,35,24,.96), rgba(19,15,11,.99)) !important;
-    border-color: #ffd978 !important;
+    background: rgba(117,85,35,.12) !important;
+    border-color: rgba(255,217,120,.92) !important;
     box-shadow:
-      inset 0 0 0 1px rgba(255,217,120,.16),
-      0 0 0 2px rgba(255,217,120,.72),
-      0 0 24px rgba(255,217,120,.3),
-      0 10px 18px rgba(0,0,0,.48) !important;
+      inset 0 0 0 1px rgba(255,217,120,.14),
+      inset 0 0 18px rgba(255,217,120,.07),
+      0 0 0 2px rgba(255,217,120,.26),
+      0 0 18px rgba(255,217,120,.22) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-picked-slot:not(:has(> .card))::before {
+    border-color: rgba(255,217,120,.3);
+  }
+
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-picked-slot:not(:has(> .card))::after {
+    color: rgba(255,217,120,.55);
   }
 }
