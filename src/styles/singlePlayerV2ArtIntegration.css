@@ -58,6 +58,12 @@
     transform: translateY(4.5dvh) !important;
   }
 
+  /* Raise the dock banner art so its bottom edge sits at the bottom of the
+     hand fan rather than at the very bottom of the screen. */
+  body.single-player-v2.generated-sheet-ready .handDock {
+    background-position: center bottom 7dvh !important;
+  }
+
   /* Utility buttons carry their icon as art, so drop the text fallbacks
      (⚙ / REF / ABIL / ARCH). The two without a dedicated tile reuse the
      reference (book) art so none render blank. */
