@@ -24,10 +24,11 @@
     box-shadow: 0 0 0 2px rgba(121,199,120,.55),0 0 32px rgba(121,199,120,.45) !important;
   }
 
-  /* Preserve the dock artwork's aspect ratio while rendering it slightly below
-     its intrinsic size. It remains centered and may crop at the sides. */
+  /* Preserve the dock artwork's aspect ratio while reducing the current art
+     size by 20 percent and moving the image down 10px. */
   html body.single-player-v2.generated-sheet-ready .handDock {
-    background-size: auto clamp(180px,22dvh,194px) !important;
+    background-size: auto clamp(144px,17.6dvh,155.2px) !important;
+    background-position: center bottom calc(2dvh - 10px) !important;
   }
 
   /* Make an available discard action visibly brighter than its disabled state. */
