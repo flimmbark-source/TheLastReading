@@ -1,3 +1,17 @@
+/* Temporary ability-choice cards inherit the same hint information as cards in
+   play, but use the restrained spread polish instead of the legacy broad card
+   glow from market.css. */
+html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-card,
+html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-complete,
+html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-multi {
+  border-color: rgb(var(--hint-rgb,232,196,96)) !important;
+  box-shadow:
+    0 0 0 1px rgba(var(--hint-rgb,232,196,96),.55),
+    0 0 10px rgba(var(--hint-rgb,232,196,96),.30),
+    0 8px 18px rgba(0,0,0,.55) !important;
+  filter: none !important;
+}
+
 @keyframes spv2-pattern-card-bump {
   0%, 100% {
     transform: translateY(0) scale(1);
