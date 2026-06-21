@@ -1,0 +1,83 @@
+@media (max-width: 640px) {
+  /* Pin the score/threshold HUD directly to the top edge. The four utility
+     buttons already derive their vertical position from this shared variable,
+     so they move upward with the pills as one cluster. */
+  html body.single-player-v2.generated-sheet-ready {
+    --spv2-hud-top: 0px !important;
+  }
+
+  /* Rebalance the five-card fan around the available viewport width. Slots 2
+     and 4 move closer to the middle, while the outer cards anchor to protected
+     side gutters. This minimizes unavoidable overlap evenly across all four
+     card-to-card boundaries without changing any slot dimensions. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
+    left: 10px !important;
+    right: auto !important;
+    transform: translateY(14px) rotate(-8deg) !important;
+    --spv2-contact-shadow:
+      0 5px 4px rgba(0,0,0,.70),
+      0 14px 17px rgba(0,0,0,.52),
+      inset 0 0 0 3px rgba(183,139,67,.045);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
+    left: 32.5% !important;
+    right: auto !important;
+    transform: translateX(-50%) translateY(5px) rotate(-4deg) !important;
+    --spv2-contact-shadow:
+      0 6px 4px rgba(0,0,0,.74),
+      0 16px 18px rgba(0,0,0,.56),
+      inset 0 0 0 3px rgba(183,139,67,.045);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) scale(1.025) !important;
+    --spv2-contact-shadow:
+      0 7px 5px rgba(0,0,0,.82),
+      0 19px 22px rgba(0,0,0,.62),
+      inset 0 0 0 3px rgba(183,139,67,.045);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
+    left: 67.5% !important;
+    right: auto !important;
+    transform: translateX(-50%) translateY(5px) rotate(4deg) !important;
+    --spv2-contact-shadow:
+      0 6px 4px rgba(0,0,0,.74),
+      0 16px 18px rgba(0,0,0,.56),
+      inset 0 0 0 3px rgba(183,139,67,.045);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
+    left: auto !important;
+    right: 10px !important;
+    transform: translateY(14px) rotate(8deg) !important;
+    --spv2-contact-shadow:
+      0 5px 4px rgba(0,0,0,.70),
+      0 14px 17px rgba(0,0,0,.52),
+      inset 0 0 0 3px rgba(183,139,67,.045);
+  }
+
+  /* Render placed-card hints on the slot surface itself. The card still carries
+     the semantic hint classes, but the slot halo is what remains visible around
+     the layered fan and its contact shadows. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-card:not(.drop-target):not(.ability-target-slot):not(.ability-picked-slot) {
+    box-shadow:
+      0 0 0 1px rgba(var(--hint-rgb,255,217,120),.92),
+      0 0 18px rgba(var(--hint-rgb,255,217,120),.56),
+      var(--spv2-contact-shadow) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-complete:not(.drop-target):not(.ability-target-slot):not(.ability-picked-slot) {
+    box-shadow:
+      0 0 0 2px rgba(var(--hint-rgb,255,217,120),.98),
+      0 0 26px rgba(var(--hint-rgb,255,217,120),.72),
+      var(--spv2-contact-shadow) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-multi:not(.drop-target):not(.ability-target-slot):not(.ability-picked-slot) {
+    box-shadow: var(--hint-shadow), var(--spv2-contact-shadow) !important;
+  }
+}
