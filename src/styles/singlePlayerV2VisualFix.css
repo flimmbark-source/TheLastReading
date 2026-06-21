@@ -1,0 +1,35 @@
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready .actions,
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    position: fixed !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .actions {
+    left: 3.8vw !important;
+    right: auto !important;
+    top: 23.7dvh !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    left: auto !important;
+    right: 3.8vw !important;
+    top: 23.7dvh !important;
+    background-image: url('/public/ui/single-player-v2/generated/utility-settings.webp') !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn {
+    background-image: url('/public/ui/single-player-v2/generated/utility-reference.webp') !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn {
+    background-image: url('/public/ui/single-player-v2/generated/action-eye.webp') !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    background-image: url('/public/ui/single-player-v2/generated/action-deck.webp') !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions::before {
+    background-image: url('/public/ui/single-player-v2/generated/action-center.webp') !important;
+  }
+}
