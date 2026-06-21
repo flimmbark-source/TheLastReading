@@ -1,0 +1,74 @@
+@media (max-width: 640px) {
+  /* Compact the premium HUD while preserving the existing frame and live values. */
+  html body.single-player-v2.generated-sheet-ready {
+    --spv2-compact-hud-h: clamp(112px,14.2dvh,132px) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    padding-block: 6px !important;
+    gap: 3px !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill > b,
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill > b {
+    font-size: clamp(34px,9vw,54px) !important;
+    line-height: .84 !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spv2-label {
+    font-size: clamp(7px,2.1vw,9px) !important;
+    letter-spacing: .07em !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spv2-threshold-progress {
+    bottom: 6px !important;
+    height: 5px !important;
+  }
+
+  /* Keep all utility controls attached to the newly compressed HUD. */
+  html body.single-player-v2.generated-sheet-ready #menuBtn,
+  html body.single-player-v2.generated-sheet-ready #scoringBtn,
+  html body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #menuBtn,
+  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    margin-top: 4px !important;
+  }
+
+  /* Reclaim the vertical room instead of leaving the play field where it was. */
+  html body.single-player-v2.generated-sheet-ready .spread-wrap {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + 58px) !important;
+  }
+
+  /* Wider, flatter hand fan so titles and values remain visible before selection. */
+  html body.single-player-v2.generated-sheet-ready .handDock .hand {
+    --track-spacing: 4.25deg !important;
+    --track-radius: 760px !important;
+    transform: translateY(.25dvh) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .handDock .hand .card {
+    width: clamp(84px,23.6vw,102px) !important;
+    height: calc(clamp(84px,23.6vw,102px) * 1.5) !important;
+    transition: transform .18s ease, filter .18s ease, box-shadow .18s ease !important;
+  }
+
+  /* A selected card becomes the unmistakable focal object. */
+  html body.single-player-v2.generated-sheet-ready .handDock .hand .card.sel {
+    z-index: 100 !important;
+    transform: translateY(-26px) rotate(0deg) scale(1.08) !important;
+    filter: brightness(1.14) saturate(1.08) !important;
+    box-shadow:
+      0 0 0 2px rgba(244,205,116,.92),
+      0 0 0 5px rgba(111,75,30,.62),
+      0 14px 28px rgba(0,0,0,.72),
+      0 0 22px rgba(232,181,81,.38) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .handDock .hand:has(.card.sel) .card:not(.sel) {
+    filter: brightness(.72) saturate(.78) !important;
+  }
+}
