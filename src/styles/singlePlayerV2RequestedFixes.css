@@ -16,9 +16,15 @@
 
   /* The replacement PNG has more breathing room around its frame. Overscale
      the artwork inside the existing slot boxes rather than changing card or
-     spread geometry. */
+     spread geometry. Keep the slot open so a placed card's hint halo can render
+     outside the frame; the card itself still clips its artwork normally. */
   html body.single-player-v2.generated-sheet-ready .spread .slot {
     background-size: 118% 118% !important;
+    overflow: visible !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot > .card {
+    overflow: hidden !important;
   }
 
   /* Drag highlighting must tint the existing slot art, not replace the entire
