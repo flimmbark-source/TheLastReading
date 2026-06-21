@@ -26,4 +26,22 @@
   body.single-player-v2.generated-sheet-ready .slot:first-child {
     margin-left: 0;
   }
+
+  /* Pill labels sit above their live values. */
+  body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
+    display: block;
+    order: 1;
+    line-height: 1;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill > b {
+    display: block;
+    order: 2;
+    line-height: 1;
+  }
 }
