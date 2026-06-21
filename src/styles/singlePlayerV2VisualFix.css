@@ -1,29 +1,31 @@
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
-    --spv2-compact-hud-h: clamp(72px, 10.5dvh, 88px);
+    --spv2-compact-hud-h: clamp(76px, 11dvh, 94px);
   }
 
   body.single-player-v2.generated-sheet-ready #titleWrap {
     pointer-events: none;
   }
 
-  /* Tighten the HUD frame to the actual label/value content. */
   body.single-player-v2.generated-sheet-ready .score-stack {
     height: var(--spv2-compact-hud-h) !important;
     min-height: var(--spv2-compact-hud-h) !important;
   }
 
   body.single-player-v2.generated-sheet-ready .score-stack .pill {
-    padding: 7px 2px 6px !important;
-    gap: 3px !important;
+    padding: 6px 2px 5px !important;
+    gap: 2px !important;
   }
 
   body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
-    font-size: clamp(8px, 2.25vw, 11px) !important;
+    font-size: clamp(11px, 3vw, 14px) !important;
+    font-weight: 700 !important;
+    letter-spacing: .04em !important;
   }
 
   body.single-player-v2.generated-sheet-ready .score-stack .pill > b {
-    font-size: clamp(18px, 5vw, 25px) !important;
+    font-size: clamp(24px, 6.5vw, 32px) !important;
+    font-weight: 800 !important;
   }
 
   body.single-player-v2.generated-sheet-ready .actions {
@@ -72,7 +74,7 @@
     top: .8dvh !important;
     left: 3.8vw !important;
     right: auto !important;
-    background-image: url('/public/ui/single-player-v2/generated/utility-settings.webp') !important;
+    background-image: var(--spv2-utility-settings-art) !important;
   }
 
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
@@ -85,7 +87,7 @@
     top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + 1.5dvh) !important;
     left: 3.8vw !important;
     right: auto !important;
-    background-image: url('/public/ui/single-player-v2/generated/utility-reference.webp') !important;
+    background-image: var(--spv2-utility-reference-art) !important;
   }
 
   body.single-player-v2.generated-sheet-ready #abilitiesBtn {
@@ -133,20 +135,19 @@
     letter-spacing: .05em;
   }
 
-  /* Discard and Purge sit immediately below the five-card spread. */
   body.single-player-v2.generated-sheet-ready .spread-actions {
     position: fixed !important;
-    z-index: 40 !important;
-    top: calc(28.2dvh + var(--spv2-live-card-h) + 3dvh) !important;
+    z-index: 46 !important;
+    top: calc(28.2dvh + var(--spv2-live-card-h) + 2dvh) !important;
     left: 0 !important;
     right: 0 !important;
     bottom: auto !important;
     width: 100% !important;
-    height: clamp(58px, 15vw, 72px) !important;
+    height: clamp(62px, 16vw, 76px) !important;
     padding: 0 !important;
     transform: none !important;
     display: block !important;
-    pointer-events: none;
+    pointer-events: none !important;
   }
 
   body.single-player-v2.generated-sheet-ready .spread-actions::before {
@@ -157,36 +158,65 @@
   body.single-player-v2.generated-sheet-ready #purgeBtn {
     position: absolute !important;
     top: 0 !important;
-    width: clamp(58px, 15.5vw, 72px) !important;
-    height: clamp(58px, 15.5vw, 72px) !important;
+    display: grid !important;
+    place-items: center !important;
+    width: clamp(62px, 16vw, 76px) !important;
+    height: clamp(62px, 16vw, 76px) !important;
     min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
     border-radius: 50% !important;
+    border: 2px solid #8f6a34 !important;
+    background-color: #17101f !important;
     background-repeat: no-repeat !important;
     background-position: center !important;
     background-size: contain !important;
+    box-shadow:
+      0 4px 10px rgba(0,0,0,.72),
+      inset 0 0 0 2px rgba(218,171,91,.16),
+      inset 0 0 14px rgba(105,61,126,.32) !important;
     pointer-events: auto !important;
     opacity: 1 !important;
     visibility: visible !important;
+    filter: none !important;
+    transform: none !important;
   }
 
   body.single-player-v2.generated-sheet-ready #discardBtn {
     left: 8vw !important;
     right: auto !important;
-    background-image: url('/public/ui/single-player-v2/generated/action-eye.webp') !important;
+    background-image: var(--spv2-action-eye-art) !important;
   }
 
   body.single-player-v2.generated-sheet-ready #purgeBtn {
     left: auto !important;
     right: 8vw !important;
-    background-image: url('/public/ui/single-player-v2/generated/action-deck.webp') !important;
+    background-image: var(--spv2-action-deck-art) !important;
   }
 
-  /* The hand gesture surface is a separate strip above the dock. It never
-     overlaps the cards themselves, so tapping and dragging cards remains direct. */
+  body.single-player-v2.generated-sheet-ready #discardBtn::after,
+  body.single-player-v2.generated-sheet-ready #purgeBtn::after {
+    color: #d1a65f;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(9px, 2.6vw, 12px);
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-shadow: 0 1px 2px #000;
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn::after {
+    content: "DISCARD";
+  }
+
+  body.single-player-v2.generated-sheet-ready #purgeBtn::after {
+    content: "PURGE";
+  }
+
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
     left: 0 !important;
     right: 0 !important;
-    bottom: 31dvh !important;
+    bottom: 36dvh !important;
     height: clamp(42px, 6.5dvh, 56px) !important;
     z-index: 25 !important;
     pointer-events: auto !important;
@@ -205,7 +235,6 @@
     pointer-events: auto !important;
   }
 
-  /* Close tabs belong to the drawer shell, outside and attached to its bottom. */
   body.single-player-v2.generated-sheet-ready .tlr-pull-wrap,
   body.single-player-v2.generated-sheet-ready #invWrap {
     overflow: visible !important;
