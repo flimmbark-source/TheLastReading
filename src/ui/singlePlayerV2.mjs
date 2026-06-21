@@ -21,7 +21,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
   const ensureAssetLayer=()=>{
     ensureStylesheet('single-player-v2-assets','src/styles/singlePlayerV2Assets.css?v=clean-tiles-1');
     ensureStylesheet('single-player-v2-slot-match','src/styles/singlePlayerV2SlotMatch.css?v=2');
-    ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=6');
+    ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=7');
   };
 
   const refreshCompositionLayer=()=>{
@@ -57,16 +57,16 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     if(kind==='archive')closeArchive();
   };
 
-  const drawerDeskFor=kind=>{
-    if(kind==='settings')return doc.getElementById('menuPullDesk');
-    if(kind==='reference')return doc.getElementById('scoringPullDesk');
-    if(kind==='ability')return doc.getElementById('abilitiesPullDesk');
-    if(kind==='archive')return doc.getElementById('invDesk');
+  const drawerWrapFor=kind=>{
+    if(kind==='settings')return doc.getElementById('menuPullWrap');
+    if(kind==='reference')return doc.getElementById('scoringPullWrap');
+    if(kind==='ability')return doc.getElementById('abilitiesPullWrap');
+    if(kind==='archive')return doc.getElementById('invWrap');
     return null;
   };
 
   const createCloseTab=(kind,id)=>{
-    const parent=drawerDeskFor(kind);
+    const parent=drawerWrapFor(kind);
     if(!parent||parent.querySelector(`#${id}`))return;
     const button=doc.createElement('button');
     button.id=id;
@@ -117,7 +117,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     if(target.__tlrSinglePlayerMenuObserverInstalled)return;
     target.__tlrSinglePlayerMenuObserverInstalled=true;
     const observer=new MutationObserver(()=>ensureMenuCloseTabs());
-    ['menuPullDesk','scoringPullDesk','abilitiesPullDesk','invDesk'].forEach(id=>{
+    ['menuPullWrap','scoringPullWrap','abilitiesPullWrap','invWrap'].forEach(id=>{
       const node=doc.getElementById(id);
       if(node)observer.observe(node,{childList:true,subtree:false});
     });
