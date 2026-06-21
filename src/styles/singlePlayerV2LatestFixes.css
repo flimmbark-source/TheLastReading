@@ -3,7 +3,7 @@
      buttons derive their vertical position from this shared variable, so the
      entire upper cluster moves together. */
   html body.single-player-v2.generated-sheet-ready {
-    --spv2-hud-top: 6px !important;
+    --spv2-hud-top: 12px !important;
   }
 
   /* Rebalance the five-card fan around the available viewport width. Slots 2
