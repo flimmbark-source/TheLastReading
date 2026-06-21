@@ -1,4 +1,4 @@
-/* Keep the five spread targets exactly the same physical size as live hand cards. */
+/* Final mobile shell corrections layered after the generated art styles. */
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-live-card-w: clamp(78px, 22vw, 96px);
@@ -43,5 +43,106 @@
     display: block;
     order: 2;
     line-height: 1;
+  }
+
+  /* Restore the missing title even when the extracted title tile is too faint. */
+  body.single-player-v2.generated-sheet-ready #titleWrap {
+    z-index: 34;
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
+    opacity: .45;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap::after {
+    content: "THE\A LAST READING";
+    white-space: pre;
+    position: absolute;
+    inset: .35dvh 18% auto;
+    text-align: center;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(8px, 2.25vw, 12px);
+    line-height: .9;
+    letter-spacing: .18em;
+    color: #b68a48;
+    text-shadow: 0 1px 0 #000, 0 0 10px rgba(192, 133, 55, .24);
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap::after::first-line {
+    font-size: .65em;
+  }
+
+  /* Replace the old text tabs with the intended round utility controls. */
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready .actions button {
+    color: transparent !important;
+    font-size: 0 !important;
+    text-indent: -9999px;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+  body.single-player-v2.generated-sheet-ready #mullBtn,
+  body.single-player-v2.generated-sheet-ready #invTab {
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    display: block !important;
+    width: clamp(44px, 11.5vw, 56px) !important;
+    height: clamp(44px, 11.5vw, 56px) !important;
+    border-radius: 50% !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .actions {
+    left: 3.8vw !important;
+    top: 23.7dvh !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    right: 3.8vw !important;
+    top: 23.7dvh !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    opacity: .96;
+    transform: translateY(-.5dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock {
+    height: 31dvh;
+    background-size: 100% 24dvh !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand {
+    height: 26dvh;
+    transform: translateY(.4dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions {
+    z-index: 40 !important;
+    bottom: max(1.2dvh, env(safe-area-inset-bottom)) !important;
+    height: clamp(66px, 17vw, 82px);
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions button {
+    pointer-events: auto;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions::before {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    width: clamp(58px, 15.5vw, 72px) !important;
+    height: clamp(66px, 17.5vw, 80px) !important;
   }
 }
