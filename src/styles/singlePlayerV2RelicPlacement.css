@@ -33,7 +33,7 @@
       var(--spv2-hud-top) +
       var(--spv2-compact-hud-h) +
       .35dvh +
-      (var(--spv2-control-size, clamp(46px,12vw,58px)) - 34px) / 2
+      clamp(6px,1.55vw,12px)
     ) !important;
     left: 50% !important;
     right: auto !important;
