@@ -1,7 +1,0 @@
-@import url('./singlePlayerV2SpreadHandPass2.css?v=1');
-
-@media (max-width: 640px) {
-  body.single-player-v2.generated-sheet-ready #spv2HandDragLabel {
-    display: none !important;
-  }
-}
