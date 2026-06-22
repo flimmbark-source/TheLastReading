@@ -66,22 +66,38 @@
     --spv2-compact-hud-h: clamp(140px, 17.5dvh, 162px) !important;
   }
 
-  /* Move settings + archive below the pills, centered side by side. */
+  /* Keep settings and archives as a compact top-left utility pair, with
+     Archives immediately to the right of Menu. */
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
+    top: .8dvh !important;
+    right: auto !important;
+    transform: none !important;
   }
 
   body.single-player-v2.generated-sheet-ready #menuBtn {
-    left: 50% !important;
-    right: auto !important;
-    transform: translateX(calc(-100% - 5px)) !important;
+    left: 3.8vw !important;
   }
 
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    left: 50% !important;
-    right: auto !important;
-    transform: translateX(5px) !important;
+    left: calc(3.8vw + var(--spv2-control-size, clamp(46px, 12vw, 58px)) + 1.2vw) !important;
+  }
+
+  /* Place Scoring and Abilities together on the right edge, preserving their
+     side-by-side spacing while freeing the left edge for Menu/Archives. */
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
+    left: auto !important;
+    transform: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn {
+    right: calc(3.8vw + var(--spv2-control-size, clamp(46px, 12vw, 58px)) + 1.2vw) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    right: 3.8vw !important;
   }
 
   /* Drop the hand fan down so its base nests inside the dock tray banner
