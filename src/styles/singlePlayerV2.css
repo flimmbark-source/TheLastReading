@@ -196,10 +196,11 @@ body.single-player-v2 {
     display: block;
     justify-self: auto;
     color: #efe5ce;
-    font-family: 'VT323', 'Courier New', monospace;
+    font-family: 'Cinzel', Georgia, serif;
+    font-weight: 700;
     font-size: clamp(25px,7.4vw,31px);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: .015em;
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: .01em;
     line-height: .9;
     text-shadow: 0 2px 8px #000;
   }
