@@ -180,7 +180,7 @@ body.single-player-v2 {
      genre convention and stays clear of the gold score / violet threshold. */
   body.single-player-v2 #spv2ScoreMult {
     position: absolute;
-    top: 34px;
+    top: 41px;
     left: 61%;
     display: none;
     color: #f2564a;
@@ -211,6 +211,51 @@ body.single-player-v2 {
     white-space: nowrap;
     text-overflow: clip;
   }
+
+  /* The Score/Threshold labels are baked into the panel art, so shortening the
+     panels squished them. Block out the baked label band with a panel-matched
+     gradient and drive crisp live Cinzel text instead. High specificity + !
+     important overrides the art-mode suppression (ArtIntegration / SlotMatch /
+     VisualFix / HudTablePass all set this label display:none !important). */
+  html body.single-player-v2.generated-sheet-ready .score-stack .pill .spv2-label {
+    display: block !important;
+    position: absolute;
+    top: 4px;
+    left: 5px;
+    right: 5px;
+    height: 31px;
+    margin: 0;
+    padding-top: 9px;
+    box-sizing: border-box;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    border-radius: 9px 9px 4px 4px;
+    border-bottom: 1px solid rgba(227, 190, 114, 0.3);
+    font: 700 clamp(14px, 4vw, 17px)/1 'Cinzel', Georgia, serif !important;
+    letter-spacing: .14em !important;
+    text-transform: uppercase;
+    text-shadow: 0 1px 3px #000;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* Solid (opaque) plate fully hides the squished baked label beneath, with an
+     inset recess so it reads as an intentional nameplate rather than a patch. */
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill .spv2-label {
+    color: #e7c98c !important;
+    background: linear-gradient(180deg, #241809, #150d05);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.55);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill .spv2-label {
+    color: #d2c2ff !important;
+    background: linear-gradient(180deg, #1d1430, #110b1d);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.55);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill .spv2-label::before { content: "✦ "; }
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill .spv2-label::before { content: "⚖ "; }
 
   body.single-player-v2 .score-stack .pill b {
     display: block;
