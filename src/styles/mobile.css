@@ -223,3 +223,5 @@ body:has(.hand-scroll-dragging) .handDock *{cursor:grabbing!important}
 #spread.drag-active .slot{transition:none!important;will-change:transform}
 /* end hand card gestures patch */
 
+
+body.candlelight-off #roomAmbient{display:none!important;animation:none!important}
