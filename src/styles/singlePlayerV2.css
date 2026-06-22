@@ -449,6 +449,19 @@ body.single-player-v2 {
     z-index: 27;
   }
 
+  /* #5: the gesture hint is onboarding chrome. Fade it out (and keep it out)
+     once the player first interacts, so it stops competing with the table.
+     singlePlayerV2.mjs toggles the body flag and persists it across sessions.
+     The existing hint system shows it via `#handSwipeZone.has-overflow
+     .hand-swipe-hint { opacity:1 !important }` (RequestedFixes), so the dismiss
+     must out-specify that (id + 5 classes) and use !important. It keeps the
+     base rule's opacity transition, so the hint fades rather than snapping. */
+  html body.single-player-v2.spv2-hand-hint-dismissed.generated-sheet-ready
+    #handSwipeZone.hand-swipe-zone .hand-swipe-hint {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
   body.single-player-v2 #constellationPill {
     z-index: 29;
   }

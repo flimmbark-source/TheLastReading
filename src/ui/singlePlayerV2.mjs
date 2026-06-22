@@ -181,6 +181,33 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     },true);
   };
 
+  const HAND_HINT_KEY='tlr_spv2_hand_hint_seen';
+
+  const dismissHandHint=(persist)=>{
+    doc.body?.classList.add('spv2-hand-hint-dismissed');
+    if(persist){try{target.localStorage.setItem(HAND_HINT_KEY,'1');}catch{}}
+  };
+
+  const installHandHintDismiss=()=>{
+    // The swipe/pinch/pull gesture hint is onboarding chrome. Fade it out on
+    // the player's first play interaction and remember it, so the gesture copy
+    // stops competing with the composition after the first session.
+    if(target.__tlrHandHintInstalled)return;
+    target.__tlrHandHintInstalled=true;
+    let seen=false;
+    try{seen=!!target.localStorage.getItem(HAND_HINT_KEY);}catch{}
+    if(seen){dismissHandHint(false);return;}
+    const onFirst=event=>{
+      const el=event.target instanceof Element?event.target:null;
+      if(!el)return;
+      if(el.closest('#hand')||el.closest('.handDock')||el.closest('#handSwipeZone')||el.closest('#spread')){
+        doc.removeEventListener('pointerdown',onFirst,true);
+        dismissHandHint(true);
+      }
+    };
+    doc.addEventListener('pointerdown',onFirst,true);
+  };
+
   const enable=()=>{
     doc.body?.classList.add('single-player-v2');
     doc.body?.classList.remove('reference-sheet-ready','reference-sheet-failed');
@@ -189,6 +216,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     ensureUtilityControls();
     installMenuObservers();
     installOutsideClose();
+    installHandHintDismiss();
     installGeneratedSheetAssets(target);
   };
 
