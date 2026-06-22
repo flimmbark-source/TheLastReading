@@ -11,6 +11,26 @@ let bootAction = null;
 
 installMarketAudioRotation(window);
 
+const CANDLELIGHT_KEY = 'tlr_candlelight_lighting';
+
+function candlelightEnabled(storage = window.localStorage) {
+  try {
+    return storage?.getItem(CANDLELIGHT_KEY) !== '0';
+  } catch {
+    return true;
+  }
+}
+
+function applyCandlelightLighting(enabled) {
+  document.body.classList.toggle('candlelight-off', !enabled);
+  const toggle = document.getElementById('mainMenuCandlelight');
+  if (toggle) toggle.checked = enabled;
+}
+
+function syncCandlelightToggle() {
+  applyCandlelightLighting(candlelightEnabled(window.localStorage));
+}
+
 function hasSavedProgress(storage) {
   try {
     const raw = storage?.getItem('tlr_save');
@@ -21,7 +41,7 @@ function hasSavedProgress(storage) {
     const reserve = Number(p.reserve ?? p.pool ?? 0);
     const upgrades = p.upgrades || p.up || {};
     return (reserve > 0) || (p.relics?.length > 0) || Object.values(upgrades).some(v => v > 0);
-  } catch (_) {
+  } catch {
     return false;
   }
 }
@@ -64,6 +84,7 @@ function clearBusy() {
     }
   }
   syncContinueButton();
+  syncCandlelightToggle();
 }
 
 function scheduleDeferredAssets() {
@@ -144,11 +165,20 @@ window.tlrMainMenuMultiplayer = function () {
   launch('tlrMainMenuMultiplayer');
 };
 
+window.tlrSetCandlelightLighting = function (enabled) {
+  const next = !!enabled;
+  try {
+    window.localStorage.setItem(CANDLELIGHT_KEY, next ? '1' : '0');
+  } catch {}
+  applyCandlelightLighting(next);
+};
+
 window.tlrReturnToMenu = window.tlrShowMainMenu;
 
 requestAnimationFrame(() => {
   requestAnimationFrame(() => {
     document.body.classList.remove('tlr-loading');
+    syncCandlelightToggle();
     window.tlrShowMainMenu();
   });
 });
@@ -159,3 +189,4 @@ for (const btn of buttons()) {
 }
 
 syncContinueButton();
+syncCandlelightToggle();
