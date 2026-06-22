@@ -392,6 +392,26 @@ body.single-player-v2 {
     height: 100%;
   }
 
+  /* #4: empty reading positions should read as part of the table, not as
+     cool-blue cards floating on it. Remove the lift drop-shadow, recess the
+     slot with an inset shadow, and mute/darken the compass tile so its gold
+     lines etch into the warm wood. High specificity (id + .empty) wins over
+     the .spread .slot rules spread across the override sheets. */
+  html body.single-player-v2.generated-sheet-ready #spread
+    .slot.empty:not(.target):not(.drop-target):not(:hover):not(.ability-target-slot):not(.ability-picked-slot) {
+    background-color: rgba(9, 6, 4, 0.55);
+    border: 1px solid rgba(227, 190, 114, 0.14);
+    /* !important to override the lift drop-shadow set with !important in the
+       FinalPlacement/SlotMatch slot rules; the :not() guards keep this off the
+       target/hover states so the green placement glow is untouched. */
+    box-shadow:
+      inset 0 3px 9px rgba(0, 0, 0, 0.62),
+      inset 0 -1px 0 rgba(227, 190, 114, 0.08),
+      inset 0 0 0 1px rgba(0, 0, 0, 0.45) !important;
+    opacity: 0.86;
+    filter: saturate(0.45) brightness(0.66);
+  }
+
   /* Existing discard and purge actions become the lower action rail. */
   body.single-player-v2 .spread-actions {
     position: fixed;
