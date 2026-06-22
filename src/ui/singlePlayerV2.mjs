@@ -292,12 +292,55 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     badge.style.display=value===''?'none':'';
   };
 
+  const formatMult=m=>{
+    const v=Math.round(m*100)/100;
+    return Number.isInteger(v)?String(v):String(v).replace(/0+$/,'').replace(/\.$/,'');
+  };
+
+  // The multiplier of the cards currently placed in the reading, via the same
+  // legacy scoring used to drive the score counter (so the badge stays
+  // consistent with the displayed score). Defaults to 1 when nothing is placed.
+  const currentSpreadMult=()=>{
+    const state=target.tlrRuntime?.state||target.state;
+    const cards=(state?.spread||[]).filter(Boolean);
+    if(!cards.length||typeof target._scoreLegacy!=='function')return 1;
+    try{const res=target._scoreLegacy(cards);return res&&typeof res.mult==='number'?res.mult:1;}catch{return 1;}
+  };
+
+  const ensureScoreMultBadge=()=>{
+    const pill=doc.querySelector('.score-pill');
+    if(!pill)return null;
+    let badge=doc.getElementById('spv2ScoreMult');
+    if(!badge){
+      badge=doc.createElement('span');
+      badge.id='spv2ScoreMult';
+      badge.setAttribute('aria-hidden','true');
+    }
+    if(badge.parentElement!==pill)pill.appendChild(badge);
+    return badge;
+  };
+
+  // Show the current reading multiplier in red at the score number's corner,
+  // but only when it is actually above 1 so it reads as a reward signal.
+  const updateScoreMult=()=>{
+    const badge=ensureScoreMultBadge();
+    if(!badge)return;
+    const mult=currentSpreadMult();
+    if(mult>1){
+      badge.textContent='×'+formatMult(mult);
+      badge.classList.add('show');
+    }else{
+      badge.classList.remove('show');
+    }
+  };
+
   const observeValues=()=>{
     const ids=['pool','current','threshold','discards'];
     const observer=new MutationObserver(()=>{
       ensureHudStructure();
       updateProgress();
       updateDiscardBadge();
+      updateScoreMult();
     });
     ids.forEach(id=>{
       const el=doc.getElementById(id);
@@ -313,6 +356,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     }
     updateProgress();
     updateDiscardBadge();
+    updateScoreMult();
     observeValues();
   };
 
