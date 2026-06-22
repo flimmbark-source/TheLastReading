@@ -181,6 +181,33 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     },true);
   };
 
+  const HAND_HINT_KEY='tlr_spv2_hand_hint_seen';
+
+  const dismissHandHint=(persist)=>{
+    doc.body?.classList.add('spv2-hand-hint-dismissed');
+    if(persist){try{target.localStorage.setItem(HAND_HINT_KEY,'1');}catch{}}
+  };
+
+  const installHandHintDismiss=()=>{
+    // The swipe/pinch/pull gesture hint is onboarding chrome. Fade it out on
+    // the player's first play interaction and remember it, so the gesture copy
+    // stops competing with the composition after the first session.
+    if(target.__tlrHandHintInstalled)return;
+    target.__tlrHandHintInstalled=true;
+    let seen=false;
+    try{seen=!!target.localStorage.getItem(HAND_HINT_KEY);}catch{}
+    if(seen){dismissHandHint(false);return;}
+    const onFirst=event=>{
+      const el=event.target instanceof Element?event.target:null;
+      if(!el)return;
+      if(el.closest('#hand')||el.closest('.handDock')||el.closest('#handSwipeZone')||el.closest('#spread')){
+        doc.removeEventListener('pointerdown',onFirst,true);
+        dismissHandHint(true);
+      }
+    };
+    doc.addEventListener('pointerdown',onFirst,true);
+  };
+
   const enable=()=>{
     doc.body?.classList.add('single-player-v2');
     doc.body?.classList.remove('reference-sheet-ready','reference-sheet-failed');
@@ -189,6 +216,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     ensureUtilityControls();
     installMenuObservers();
     installOutsideClose();
+    installHandHintDismiss();
     installGeneratedSheetAssets(target);
   };
 
@@ -264,12 +292,55 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     badge.style.display=value===''?'none':'';
   };
 
+  const formatMult=m=>{
+    const v=Math.round(m*100)/100;
+    return Number.isInteger(v)?String(v):String(v).replace(/0+$/,'').replace(/\.$/,'');
+  };
+
+  // The multiplier of the cards currently placed in the reading, via the same
+  // legacy scoring used to drive the score counter (so the badge stays
+  // consistent with the displayed score). Defaults to 1 when nothing is placed.
+  const currentSpreadMult=()=>{
+    const state=target.tlrRuntime?.state||target.state;
+    const cards=(state?.spread||[]).filter(Boolean);
+    if(!cards.length||typeof target._scoreLegacy!=='function')return 1;
+    try{const res=target._scoreLegacy(cards);return res&&typeof res.mult==='number'?res.mult:1;}catch{return 1;}
+  };
+
+  const ensureScoreMultBadge=()=>{
+    const pill=doc.querySelector('.score-pill');
+    if(!pill)return null;
+    let badge=doc.getElementById('spv2ScoreMult');
+    if(!badge){
+      badge=doc.createElement('span');
+      badge.id='spv2ScoreMult';
+      badge.setAttribute('aria-hidden','true');
+    }
+    if(badge.parentElement!==pill)pill.appendChild(badge);
+    return badge;
+  };
+
+  // Show the current reading multiplier in red at the score number's corner,
+  // but only when it is actually above 1 so it reads as a reward signal.
+  const updateScoreMult=()=>{
+    const badge=ensureScoreMultBadge();
+    if(!badge)return;
+    const mult=currentSpreadMult();
+    if(mult>1){
+      badge.textContent='×'+formatMult(mult);
+      badge.classList.add('show');
+    }else{
+      badge.classList.remove('show');
+    }
+  };
+
   const observeValues=()=>{
     const ids=['pool','current','threshold','discards'];
     const observer=new MutationObserver(()=>{
       ensureHudStructure();
       updateProgress();
       updateDiscardBadge();
+      updateScoreMult();
     });
     ids.forEach(id=>{
       const el=doc.getElementById(id);
@@ -285,6 +356,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     }
     updateProgress();
     updateDiscardBadge();
+    updateScoreMult();
     observeValues();
   };
 
