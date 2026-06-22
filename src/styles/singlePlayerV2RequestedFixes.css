@@ -66,8 +66,8 @@
       drop-shadow(0 0 14px rgba(85,156,255,.72)) !important;
   }
 
-  /* Reorder the four upper utility controls from left to right as:
-     Settings, Scoring, Ability, Archives. */
+  /* Group the upper utility controls into two compact pairs:
+     Menu + Archives on the left, Scoring + Abilities on the right. */
   html body.single-player-v2.generated-sheet-ready #menuBtn {
     top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh + 4px) !important;
     left: 3.8vw !important;
@@ -77,26 +77,26 @@
     transform: none !important;
   }
 
+  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh + 4px) !important;
+    left: calc(3.8vw + clamp(40px,10.5vw,50px) + 8px) !important;
+    right: auto !important;
+    width: clamp(40px,10.5vw,50px) !important;
+    height: clamp(40px,10.5vw,50px) !important;
+    transform: none !important;
+  }
+
   html body.single-player-v2.generated-sheet-ready #scoringBtn {
     top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
-    left: 50% !important;
-    right: auto !important;
-    transform: translateX(calc(-100% - 5px)) !important;
+    left: auto !important;
+    right: calc(3.8vw + clamp(40px,10.5vw,50px) + 8px) !important;
+    transform: none !important;
   }
 
   html body.single-player-v2.generated-sheet-ready #abilitiesBtn {
     top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
-    left: 50% !important;
-    right: auto !important;
-    transform: translateX(5px) !important;
-  }
-
-  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh + 4px) !important;
     left: auto !important;
     right: 3.8vw !important;
-    width: clamp(40px,10.5vw,50px) !important;
-    height: clamp(40px,10.5vw,50px) !important;
     transform: none !important;
   }
 
