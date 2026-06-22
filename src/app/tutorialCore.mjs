@@ -50,7 +50,7 @@ const TUT_STEPS = [
   { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', waitFor: 'cardPlaced', text: 'Tap an empty slot to place it.' },
   { sel: '#current', fallbackSel: '.score-pill', arrow: 'up', text: 'That card added points to your total.' },
   { sel: '#hand .card[data-uid] .seal.tr', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The red circle on each card shows how many points it adds.' },
-  { sel: '#threshold', fallbackSel: '.threshold-pill', arrow: 'up', key: TUT_THRESHOLD_KEY, text: 'Complete spreads to build your <b>Score</b>. Beat the <b>Threshold</b> to advance.' },
+  { sel: '#threshold', fallbackSel: '.threshold-pill', arrow: 'up', key: TUT_THRESHOLD_KEY, text: 'You have a set of 2 Spreads in which to beat the Threshold and advance.' },
   { sel: '#discardBtn', arrow: 'down', key: TUT_DISCARD_KEY, text: '<b>Discard</b> a card to use its <b>Ability</b> instead of placing it.' },
   { sel: '#hand .card[data-hint], #hand .card.hint-complete, #hand .card.hint-card', fallbackSel: '#hand .card[data-uid]', arrow: 'down', key: TUT_PATTERN_KEY, text: 'Some of your cards may work together.' },
   { center: true, text: 'Each cleared Threshold makes the next one harder. Clear the 10th Threshold to win.' },
@@ -130,6 +130,13 @@ function scheduleQueuedTips(delay = 180) {
 function queueTip(step, delay = 180) {
   if (!canShowStep(step)) return;
   if (!queuedTipSteps.includes(step)) queuedTipSteps.push(step);
+  scheduleQueuedTips(delay);
+}
+
+function queuePriorityTip(step, delay = 180) {
+  if (!canShowStep(step)) return;
+  queuedTipSteps = queuedTipSteps.filter(queuedStep => queuedStep !== step);
+  queuedTipSteps.unshift(step);
   scheduleQueuedTips(delay);
 }
 
@@ -223,7 +230,19 @@ export function tutNext() {
   const s = TUT_STEPS[tutStep];
   if (!s || s.waitFor) return;
   if (tutStep < TUT_STEP.SELECT_CARD) { tutShow(tutStep + 1); return; }
+  if (tutStep === TUT_STEP.DISCARD_ABILITY) {
+    markStepSeen(tutStep);
+    if (canShowStep(TUT_STEP.PATTERN_NOTICE)) tutShow(TUT_STEP.PATTERN_NOTICE);
+    else { tutHide(); scheduleQueuedTips(260); }
+    return;
+  }
   if (tutStep === TUT_STEP.PATTERN_NOTICE) { tutShow(TUT_STEP.PATTERN_SCORING); return; }
+  if (tutStep === TUT_STEP.PATTERN_SCORING) {
+    markStepSeen(tutStep);
+    if (canShowStep(TUT_STEP.THRESHOLD)) tutShow(TUT_STEP.THRESHOLD);
+    else { tutHide(); scheduleQueuedTips(260); }
+    return;
+  }
   const marketIndex = MARKET_TUT_STEPS.indexOf(tutStep);
   if (marketIndex >= 0 && marketIndex < MARKET_TUT_STEPS.length - 1) {
     tutShow(MARKET_TUT_STEPS[marketIndex + 1]);
@@ -236,8 +255,8 @@ export function tutNext() {
 
 function onPlacement() {
   placementCount++;
-  if (!tutDone || localStorage.getItem(TUT_THRESHOLD_KEY)) return;
-  if (placementCount === 3) queueTip(TUT_STEP.THRESHOLD, 400);
+  if (!tutDone || localStorage.getItem(TUT_DISCARD_KEY)) return;
+  queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
 }
 
 export function tutSignal(eventName) {
@@ -248,27 +267,14 @@ export function tutSignal(eventName) {
   tutIgnoreClicksUntil = Date.now() + 180;
   if (tutStep < TUT_STEP.PLACE_CARD) { tutShow(tutStep + 1); return; }
   finishIntro();
-  scheduleQueuedTips(260);
+  queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
 }
 
-function hasPatternOpportunity() {
-  const st = window.state;
-  if (!st || !Array.isArray(st.hand) || !st.hand.length || typeof window.cardHints !== 'function') return false;
-  return st.hand.some(card => (window.cardHints(card) || []).some(h => h && (h.level === 'near' || h.level === 'complete')));
-}
-
-export function maybeShowPatternTutorial() {
-  if (!tutDone || tutStep >= 0 || localStorage.getItem(TUT_PATTERN_KEY)) return;
-  if (hasPatternOpportunity()) queueTip(TUT_STEP.PATTERN_NOTICE, 220);
-}
+export function maybeShowPatternTutorial() { }
 
 export function maybeShowReadingCompletionTutorial() { }
 
-export function maybeShowDiscardTutorial() {
-  const st = window.state;
-  if (!tutDone || tutStep >= 0 || localStorage.getItem(TUT_DISCARD_KEY) || !st) return;
-  if (st.discards > 0 && !st.busy) queueTip(TUT_STEP.DISCARD_ABILITY);
-}
+export function maybeShowDiscardTutorial() { }
 
 export function maybeShowPurgeTutorial() {
   const st = window.state;
