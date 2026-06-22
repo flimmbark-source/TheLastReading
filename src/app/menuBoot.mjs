@@ -23,7 +23,7 @@ function candlelightEnabled(storage = window.localStorage) {
 
 function applyCandlelightLighting(enabled) {
   document.body.classList.toggle('candlelight-off', !enabled);
-  const toggle = document.getElementById('candlelightLighting');
+  const toggle = document.getElementById('mainMenuCandlelight');
   if (toggle) toggle.checked = enabled;
 }
 
