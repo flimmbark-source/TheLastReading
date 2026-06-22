@@ -110,15 +110,10 @@ function applyCourtPatterns(result, cards, upgrades) {
   const full = SCORING_PATTERNS.FULL_COURT;
   const royal = SCORING_PATTERNS.ROYAL_COURT;
 
-  if (royalSuit) {
-    for (let tier = 3; tier <= Math.min(4, royalCount); tier += 1) {
+  for (let tier = 3; tier <= 4; tier += 1) {
+    if (royalSuit && royalCount >= tier) {
       addPatternMeld(result, `Royal Court (${tier}, ${royalSuit})`, upgradedChips(royal, upgrades), upgradedMult(royal, upgrades));
-    }
-    return;
-  }
-
-  if (distinctRanks >= 3) {
-    for (let tier = 3; tier <= Math.min(4, distinctRanks); tier += 1) {
+    } else if (distinctRanks >= tier) {
       addPatternMeld(result, `Full Court (${tier})`, upgradedChips(full, upgrades), upgradedMult(full, upgrades));
     }
   }

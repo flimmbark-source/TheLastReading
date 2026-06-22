@@ -73,6 +73,12 @@ result = score(['court_Cups_Page', 'court_Cups_Knight', 'court_Cups_Queen']);
 assertMeld(result, 'Royal Court (3, Cups)');
 assertNoMeld(result, 'Full Court (3)');
 
+result = score(['court_Cups_Page', 'court_Cups_Knight', 'court_Cups_Queen', 'court_Wands_King']);
+assertMeld(result, 'Royal Court (3, Cups)');
+assertMeld(result, 'Full Court (4)');
+assertNoMeld(result, 'Royal Court (4, Cups)');
+assertNoMeld(result, 'Full Court (3)');
+
 result = score(['court_Cups_Page', 'court_Cups_Knight', 'court_Cups_Queen', 'court_Cups_King']);
 assertMeld(result, 'Royal Court (3, Cups)');
 assertMeld(result, 'Royal Court (4, Cups)');

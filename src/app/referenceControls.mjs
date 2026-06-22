@@ -27,14 +27,13 @@ export function renderScoringSheet(target = window){
   const rankBonus=(u.rank||0)*5;
   const rankMult=+(1.25+(u.rank_mult||0)*0.25).toFixed(2);
   const courtChips=(u.court_chips||0)*8;
-  const courtMult=+(1.5+(u.court_mult||0)*0.25).toFixed(2);
+  const courtMult=+(1.25+(u.court_mult||0)*0.25).toFixed(2);
   const seqBonus=(u.sequence||0)*5;
   const seqMult=+(1.25+(u.seq_mult||0)*0.5).toFixed(2);
   const pathChips=(u.path_chips||0)*15;
   const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
   const rows=[
-    ['Three of a Kind','3 matching court ranks',`+${5+rankBonus}`,fmtBonus(rankMult)],
-    ['Four of a Kind','4 matching court ranks',`+${7+rankBonus}`,fmtBonus(rankMult)],
+    ['(3/4)) of a Kind','Matching ranks',`+${5+rankBonus}`,fmtBonus(rankMult)],
     ['Full Court (3/4)','Consecutive ranks',`+${10+courtChips}`,fmtBonus(courtMult)],
     ['Royal Court (3/4)','Consecutive ranks, same suit',`+${10+courtChips}`,fmtBonus(courtMult)],
     ['Sequence (3/4/5)','Consecutive major arcana',`+${10+seqBonus}`,fmtBonus(seqMult)],
