@@ -135,8 +135,7 @@ export function installGestureDrawers(target = window){
     const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
     const rows=[
       ['arc','Minor Arcana','',''],
-      ['Three of a Kind','3 matching court ranks','+'+(5+rankBonus),fmtBonus(rankMult-1)],
-      ['Four of a Kind','4 matching court ranks','+'+(7+rankBonus),fmtBonus(rankMult-1)],
+      ['(3/4)) of a Kind','Matching ranks','+'+(5+rankBonus),fmtBonus(rankMult-1)],
       ['Full Court (3/4)','Consecutive ranks','+'+(10+courtChips),fmtBonus(courtMult-1)],
       ['Royal Court (3/4)','Consecutive ranks, same suit','+'+(10+courtChips),fmtBonus(courtMult-1)],
       ['arc','Major Arcana','',''],
