@@ -1,6 +1,45 @@
 /* Phase 1 single-player layout.
    Placeholder materials only: final transparent art replaces these shells in Phase 2. */
 
+/* ---------------------------------------------------------------------------
+   Single-player-v2 design tokens (single source of truth).
+   Palette is the approved Phase 2 art direction. Consolidation target: new and
+   touched rules reference these instead of hard-coding values, so the look can
+   be tuned in one place instead of across the override stylesheets.
+   --------------------------------------------------------------------------- */
+body.single-player-v2 {
+  /* Base materials */
+  --spv2-ink: #0d0a08;
+  --spv2-wood: #17100b;
+  --spv2-leather: #191512;
+  --spv2-parchment: #d5bd8b;
+
+  /* Metal ramp */
+  --spv2-brass: #6f4c20;
+  --spv2-gold: #a87935;
+  --spv2-gold-hi: #e3be72;
+  --spv2-gold-edge: rgba(227, 190, 114, 0.5);
+
+  /* State accents */
+  --spv2-score: #e0a847;
+  --spv2-violet: #8f74d9;
+  --spv2-valid: #79c778;
+  --spv2-warn: #c75454;
+
+  /* Spacing + shape scale */
+  --spv2-gap: 8px;
+  --spv2-r-sm: 6px;
+  --spv2-r-md: 12px;
+  --spv2-r-lg: 17px;
+
+  /* Elevation. Coin shadow seats a transparent medallion on the table; it
+     follows the coin's alpha (drop-shadow), so it must not be a box-shadow. */
+  --spv2-coin-shadow: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.6))
+    drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45));
+  --spv2-panel-shadow: 0 9px 28px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 2px rgba(205, 155, 73, 0.06);
+}
+
 @media (max-width: 640px) {
   body.single-player-v2 {
     --spv2-side: 9px;
@@ -252,6 +291,19 @@
   body.single-player-v2 #scoringBtn::before { content: "✦"; font-size: 19px; }
   body.single-player-v2 #abilitiesBtn::before { content: "◉"; font-size: 18px; }
   body.single-player-v2 #mullBtn::before { content: "↻"; font-size: 20px; }
+
+  /* Seat the top utility medallions on the table with the same coin shadow the
+     bottom action medallions already carry, so all controls read as physical
+     objects rather than flat stickers floating on bare wood. (Consolidation:
+     unifies the top/bottom medallion treatment; nothing else sets `filter`
+     on these buttons.) */
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    background-color: transparent;
+    filter: var(--spv2-coin-shadow);
+  }
 
   /* Reading field and five-card horizontal spread. */
   body.single-player-v2 .spread-wrap {
