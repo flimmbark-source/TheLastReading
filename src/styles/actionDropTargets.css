@@ -34,6 +34,8 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
   html body.single-player-v2.generated-sheet-ready #scoringBtn{right:calc(4vw + var(--spv2-control-size,clamp(46px,12vw,58px)) + 1.2vw)!important}
   html body.single-player-v2.generated-sheet-ready #abilitiesBtn{right:4vw!important}
 
+  html body.single-player-v2.generated-sheet-ready:has(#purgePrompt.show) #purgeBtn{opacity:1!important;box-shadow:0 0 0 3px rgba(255,217,120,.9),0 0 18px rgba(255,200,84,.82),0 0 36px rgba(100,168,255,.45)!important;filter:brightness(2.45) contrast(1.12) saturate(1.28) drop-shadow(0 0 8px rgba(255,220,132,.88)) drop-shadow(0 0 14px rgba(85,156,255,.72))!important}
+
   html body.single-player-v2.generated-sheet-ready #discardBtn.card-drop-target,
   html body.single-player-v2.generated-sheet-ready #purgeBtn.card-drop-target{transform:scale(1.08)!important;overflow:visible!important}
   html body.single-player-v2.generated-sheet-ready #discardBtn.card-drop-target{filter:brightness(2) contrast(1.06) saturate(1.12) drop-shadow(0 0 7px rgba(255,139,66,.95)) drop-shadow(0 0 18px rgba(255,94,46,.78))!important}
