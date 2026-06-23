@@ -31,7 +31,7 @@ export const RELICS = Object.freeze({
     name: 'Mirror Shard',
     icon: '🪞',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'Each pair of matching ranks or major numbers adds +1 Mult.',
+    description: 'Each pair of matching Court ranks adds +0.5 Mult.',
   },
   still_pool: {
     id: 'still_pool',
@@ -39,7 +39,7 @@ export const RELICS = Object.freeze({
     name: 'The Still Pool',
     icon: '🪷',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'If no Discards were used this reading, add +1 Mult.',
+    description: 'If no Discards were used this set, add +0.75 Mult.',
   },
   loaded_die: {
     id: 'loaded_die',
@@ -79,7 +79,7 @@ export const RELICS = Object.freeze({
     name: 'Court Favor',
     icon: '👑',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'Each Court card in the spread adds +1 Mult.',
+    description: 'Each Court card in the spread adds +0.25 Mult.',
   },
   hanged_coin: {
     id: 'hanged_coin',
@@ -87,7 +87,7 @@ export const RELICS = Object.freeze({
     name: "Hanged Man's Coin",
     icon: '🪙',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'Discarded cards contribute half their base Chips to the score.',
+    description: 'Discarded cards contribute their full base Chips to the score.',
   },
   miser: {
     id: 'miser',
@@ -111,7 +111,7 @@ export const RELICS = Object.freeze({
     name: "The Lovers' Knot",
     icon: '🔗',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'For each rank that appears 2 or more times in the spread, gain +1.5 Mult.',
+    description: 'If a Court rank appears 3 or more times, add +1 Mult.',
   },
   temperance_flask: {
     id: 'temperance_flask',
@@ -119,7 +119,7 @@ export const RELICS = Object.freeze({
     name: 'Temperance Flask',
     icon: '⚗',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'Using exactly 1 Discard per reading grants +1.5 Mult when scoring.',
+    description: 'Using exactly 1 Discard this set grants +1 Mult when scoring.',
   },
   strengths_grip: {
     id: 'strengths_grip',
@@ -127,7 +127,7 @@ export const RELICS = Object.freeze({
     name: 'Strength',
     icon: '💪',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'If the spread contains 3 or more Court cards, gain +3 Mult.',
+    description: 'If the spread contains exactly 3 Court cards, gain +1 Mult.',
   },
   the_world: {
     id: 'the_world',
@@ -135,7 +135,7 @@ export const RELICS = Object.freeze({
     name: 'The World',
     icon: '🌍',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: '10% of chips scored above the threshold carry over as bonus chips next reading.',
+    description: '10% of Chips scored above the threshold carry into the first set of the next reading.',
   },
   fool_reversed: {
     id: 'fool_reversed',
@@ -152,7 +152,7 @@ export const RELICS = Object.freeze({
     icon: '👁',
     event: RELIC_EVENT_TYPES.READING_START,
     active: true,
-    description: 'Once per session: reveal the top 3 cards of your deck, take 1, return the rest to the bottom.',
+    description: 'Once per reading: reveal the top 3 cards of your deck, take 1, return the rest to the bottom.',
   },
 });
 

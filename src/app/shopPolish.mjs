@@ -1,3 +1,5 @@
+import { installMarketRebalance } from './marketRebalance.mjs';
+
 function audioCtx(target = window) {
   try {
     return target._tlrACtx || (target._tlrACtx = new (target.AudioContext || target.webkitAudioContext)());
@@ -174,4 +176,6 @@ export function installShopPolish(target = window) {
     if (result !== false) playShopBuySound('relic', target);
     return result;
   });
+
+  installMarketRebalance(target);
 }

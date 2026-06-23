@@ -3,6 +3,7 @@ import './validate-bridge.mjs';
 import './validate-scoring-cases.mjs';
 import './validate-modifier-cases.mjs';
 import './validate-economy-cases.mjs';
+import './validate-market-rebalance.mjs';
 import './validate-multiplayer.mjs';
 import './validate-personas.mjs';
 import './validate-table-view.mjs';

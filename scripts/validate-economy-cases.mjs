@@ -4,9 +4,11 @@ import { ACTIONS } from '../src/game/actions.mjs';
 import { createGameState } from '../src/game/state.mjs';
 import { reducer } from '../src/game/reducer.mjs';
 import { RELICS, relicsForEvent, RELIC_EVENT_TYPES } from '../src/data/relics.mjs';
+import { SHOP } from '../src/data/legacyMarket.mjs';
 import { getShopItem } from '../src/data/shopItems.mjs';
-import { buildShopOffer, buyShopItem, shopItemCost } from '../src/systems/shop.mjs';
+import { buildShopOffer, buyShopItem, packRefreshCost, shopItemCost } from '../src/systems/shop.mjs';
 import { firstDiscardIsFree, marketCostAfterRelics, startingHandBonusFromRelics } from '../src/systems/relics.mjs';
+import { ACTIVE_MARKET_PACK_IDS, VESSEL_OFFER_CHANCE } from '../src/app/marketRebalance.mjs';
 
 assert.equal(RELICS.gilded_fool.name, 'The Gilded Fool');
 assert.ok(relicsForEvent(RELIC_EVENT_TYPES.SCORING).some(relic => relic.id === 'gilded_fool'));
@@ -16,6 +18,17 @@ assert.equal(startingHandBonusFromRelics(['threadbare_tarot']), 1, 'Threadbare T
 assert.equal(startingHandBonusFromRelics([]), 0, 'No relic should mean no starting hand bonus');
 assert.equal(marketCostAfterRelics(30, ['merchants_scale']), 27, "Merchant's Scale should discount by 3");
 assert.equal(marketCostAfterRelics(2, ['merchants_scale']), 0, 'Market costs should not go below zero');
+
+assert.deepEqual(
+  [0, 1, 2, 3, 4, 8].map(packRefreshCost),
+  [10, 20, 30, 40, 50, 90],
+  'market refreshes should continue escalating by 10 Reserve without a cap',
+);
+assert.deepEqual(ACTIVE_MARKET_PACK_IDS, ['foundation', 'innate', 'restless', 'second_sight']);
+assert.equal(VESSEL_OFFER_CHANCE, 0.30, 'Relic Vessel should use a 30% offer chance');
+assert.equal(SHOP.number_chips[5], 'retired', 'Numbered Cards should not appear in active packs');
+assert.equal(SHOP.deep_current[5], 'retired', 'Deep Current should not duplicate Wider Hand in active packs');
+assert.equal(SHOP.peek_plus[5], 'retired', 'Deeper Peek should not compete with broader Lens Mastery');
 
 const rankItem = getShopItem('upgrade_rank');
 assert.equal(rankItem.upgradeKey, 'rank');

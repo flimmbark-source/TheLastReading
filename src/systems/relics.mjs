@@ -43,11 +43,11 @@ export function getScoringRelicMelds(cards, relics = [], context = {}) {
   }
 
   if (hasRelic(relics, RELICS.mirror_shard.id)) {
-    melds.push(additiveMultMeld(RELICS.mirror_shard.name, matchingPairCount(cards)));
+    melds.push(additiveMultMeld(RELICS.mirror_shard.name, matchingPairCount(courtCards(cards)) * 0.5));
   }
 
   if (hasRelic(relics, RELICS.still_pool.id) && !(context.discardedCount || 0)) {
-    melds.push(additiveMultMeld(RELICS.still_pool.name, 1));
+    melds.push(additiveMultMeld(RELICS.still_pool.name, 0.75));
   }
 
   if (hasRelic(relics, RELICS.loaded_die.id)) {
@@ -55,36 +55,35 @@ export function getScoringRelicMelds(cards, relics = [], context = {}) {
   }
 
   if (hasRelic(relics, RELICS.court_favor.id)) {
-    melds.push(additiveMultMeld(RELICS.court_favor.name, courtCards(cards).length));
+    melds.push(additiveMultMeld(RELICS.court_favor.name, courtCards(cards).length * 0.25));
   }
 
   if (hasRelic(relics, RELICS.arcana_codex.id)) {
     const upgrades = context.upgrades || {};
-    const owned = SCORING_UPGRADE_KEYS.filter(key => (upgrades[key] || 0) > 0).length;
+    const owned = SCORING_UPGRADE_GROUPS.filter(group => group.some(key => (upgrades[key] || 0) > 0)).length;
     melds.push(additiveMultMeld(RELICS.arcana_codex.name, Number((owned * 0.1).toFixed(2))));
   }
 
   if (hasRelic(relics, RELICS.hanged_coin.id) && (context.discardedCards || []).length) {
-    const bonus = Math.floor(context.discardedCards.reduce((sum, card) => sum + card.points, 0) / 2);
+    const bonus = context.discardedCards.reduce((sum, card) => sum + card.points, 0);
     melds.push(chipMeld(RELICS.hanged_coin.name, bonus));
   }
 
   if (hasRelic(relics, RELICS.lovers_knot.id)) {
     const counts = new Map();
-    for (const card of cards) {
-      const key = card.rank || String(card.number ?? card.num);
-      counts.set(key, (counts.get(key) || 0) + 1);
+    for (const card of courtCards(cards)) {
+      counts.set(card.rank, (counts.get(card.rank) || 0) + 1);
     }
-    const groups = [...counts.values()].filter(count => count >= 2).length;
-    melds.push(additiveMultMeld(RELICS.lovers_knot.name, Number((groups * 1.5).toFixed(1))));
+    const groups = [...counts.values()].filter(count => count >= 3).length;
+    melds.push(additiveMultMeld(RELICS.lovers_knot.name, groups));
   }
 
   if (hasRelic(relics, RELICS.temperance_flask.id) && (context.discardedCount || 0) === 1) {
-    melds.push(additiveMultMeld(RELICS.temperance_flask.name, 1.5));
+    melds.push(additiveMultMeld(RELICS.temperance_flask.name, 1));
   }
 
-  if (hasRelic(relics, RELICS.strengths_grip.id) && courtCards(cards).length >= 3) {
-    melds.push(additiveMultMeld(RELICS.strengths_grip.name, 3));
+  if (hasRelic(relics, RELICS.strengths_grip.id) && courtCards(cards).length === 3) {
+    melds.push(additiveMultMeld(RELICS.strengths_grip.name, 1));
   }
 
   if (hasRelic(relics, RELICS.fool_reversed.id)) {
@@ -98,13 +97,20 @@ export function getScoringRelicMelds(cards, relics = [], context = {}) {
   return melds.filter(Boolean);
 }
 
-// Upgrade keys that count as "scoring upgrades" for the Arcana Codex relic.
-const SCORING_UPGRADE_KEYS = [
-  'rank', 'rank_mult', 'sequence', 'seq_mult', 'court_chips', 'court_mult',
-  'path_chips', 'path_mult', 'omen', 'resonance', 'minor_chips', 'major_chips',
-  'number_chips', 'cups_chips', 'wands_chips', 'swords_chips', 'pentacles_chips',
-  'flat_mult', 'major_mult', 'minor_mult', 'court_mult_base',
-  'cups_mult', 'wands_mult', 'swords_mult', 'pentacles_mult',
+// Logical scoring upgrades. Paired Chip/Mult keys count once for Arcana Codex,
+// matching how the player sees a direct pattern purchase in the market.
+const SCORING_UPGRADE_GROUPS = [
+  ['rank', 'rank_mult'],
+  ['sequence', 'seq_mult'],
+  ['court_chips', 'court_mult'],
+  ['royal_court_chips', 'royal_court_mult'],
+  ['path_chips', 'path_mult'],
+  ['balanced_reading', 'balanced_reading_mult'],
+  ['elemental_harmony', 'elemental_harmony_mult'],
+  ['omen'], ['resonance'], ['minor_chips'], ['major_chips'], ['number_chips'],
+  ['cups_chips'], ['wands_chips'], ['swords_chips'], ['pentacles_chips'],
+  ['flat_mult'], ['major_mult'], ['minor_mult'], ['court_mult_base'],
+  ['cups_mult'], ['wands_mult'], ['swords_mult'], ['pentacles_mult'],
 ];
 
 export function thresholdClearBonusFromRelics(relics = []) {

@@ -48,14 +48,15 @@ export function canAffordShopItem(item, persist) {
 // escalation, escalating refresh costs, and a rarity-weighted relic cache.
 
 export const PACK_REBUY_INCREMENT = 8;
-export const PACK_REFRESH_COSTS = Object.freeze([5, 8, 12, 17, 23]);
+export const PACK_REFRESH_COSTS = Object.freeze([10, 20, 30, 40, 50]);
 
 export function packCost(baseCost, timesBought = 0, relics = []) {
   return marketCostAfterRelics(baseCost + timesBought * PACK_REBUY_INCREMENT, relics);
 }
 
 export function packRefreshCost(refreshCount = 0) {
-  return PACK_REFRESH_COSTS[Math.min(refreshCount, PACK_REFRESH_COSTS.length - 1)];
+  const count = Math.max(0, Math.floor(Number(refreshCount) || 0));
+  return (count + 1) * 10;
 }
 
 function shuffledByRng(values, rng) {
