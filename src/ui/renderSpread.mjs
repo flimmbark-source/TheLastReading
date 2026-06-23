@@ -3,7 +3,55 @@ import { cardHTML, applyCardPhoto, CARD_SHEET } from './renderCard.mjs';
 import { applyHint } from './renderHints.mjs';
 import { installCardDetailGestures } from './cardDetailGestures.mjs';
 
-if (typeof window !== 'undefined') installCardDetailGestures(window);
+function cleanupDetachedHandCards(target = window) {
+  const doc = target.document;
+  const hand = doc?.getElementById('hand');
+  if (!doc || !hand || typeof state === 'undefined') return;
+
+  const handState = state.hand || [];
+  const handIds = new Set(handState.map(card => card.uid));
+  let restored = false;
+
+  doc.querySelectorAll('body > .card[data-uid]').forEach(cardEl => {
+    if (cardEl.classList.contains('hand-card-dragging')) return;
+
+    const uid = Number(cardEl.dataset.uid);
+    cardEl.style.removeProperty('transform');
+    cardEl.style.removeProperty('position');
+    cardEl.style.removeProperty('left');
+    cardEl.style.removeProperty('top');
+    cardEl.style.removeProperty('width');
+    cardEl.style.removeProperty('height');
+    cardEl.style.removeProperty('margin');
+    cardEl.style.removeProperty('z-index');
+
+    if (!handIds.has(uid)) {
+      cardEl.remove();
+      return;
+    }
+
+    const desiredIndex = handState.findIndex(card => card.uid === uid);
+    const currentCards = [...hand.querySelectorAll(':scope > .card[data-uid]')];
+    hand.insertBefore(cardEl, currentCards[desiredIndex] || null);
+    restored = true;
+  });
+
+  if (restored && typeof target.__handTriggerLayout === 'function') target.__handTriggerLayout();
+}
+
+function installDetachedHandCardCleanup(target = window) {
+  if (!target?.document || target.__tlrDetachedHandCardCleanupInstalled) return;
+  target.__tlrDetachedHandCardCleanupInstalled = true;
+  const scheduleCleanup = () => target.setTimeout(() => cleanupDetachedHandCards(target), 0);
+  target.document.addEventListener('pointerup', scheduleCleanup, true);
+  target.document.addEventListener('pointercancel', scheduleCleanup, true);
+  target.addEventListener('blur', scheduleCleanup);
+}
+
+if (typeof window !== 'undefined') {
+  installCardDetailGestures(window);
+  installDetachedHandCardCleanup(window);
+}
 
 function placeIntoSlot(index, view) {
   if (view && view.onPlaceCard) view.onPlaceCard(index);
@@ -23,6 +71,7 @@ function clearHintVisual(element) {
 }
 
 export function renderSpread(ability, inPurge, view = null) {
+  cleanupDetachedHandCards(window);
   if (document.body.classList.contains('mp-game-active') && !window.__tlrMpUsingSingleAbilityFlow) return;
   const displaySpread = view && view.spread ? view.spread : state.spread;
   const displayHand = view ? (view.hand || []) : state.hand;
