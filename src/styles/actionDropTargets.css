@@ -29,7 +29,7 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
 /* Contextual surfaces must always sit above the fixed table controls. */
 .modal.show{z-index:10080!important}
 .ability-prompt.show{z-index:10070!important}
-#tutTip.show{z-index:10100!important}
+#tutTip.show{z-index:10130!important}
 .card-detail-backdrop{z-index:10120!important}
 .refs-layer:has(.ref:not(.hidden)){z-index:10080!important}
 #titleWrap:has(#settingsPanel:not(.hidden)){z-index:10090!important}
