@@ -20,12 +20,12 @@ body.hand-card-action-drag-active .hand .card.hand-card-dragging{z-index:10042!i
   html body.single-player-v2.generated-sheet-ready #purgeBtn{top:calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh)!important;bottom:auto!important;left:auto!important;right:max(24px,6.5vw)!important}
 
   html body.single-player-v2.generated-sheet-ready #menuBtn,
-  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn{top:auto!important;bottom:max(1.2dvh,env(safe-area-inset-bottom))!important;right:auto!important}
+  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn{top:auto!important;bottom:max(24px,3dvh,calc(env(safe-area-inset-bottom) + 14px))!important;right:auto!important}
   html body.single-player-v2.generated-sheet-ready #menuBtn{left:4vw!important}
   html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn{left:calc(4vw + var(--spv2-control-size,clamp(46px,12vw,58px)) + 1.2vw)!important}
 
   html body.single-player-v2.generated-sheet-ready #scoringBtn,
-  html body.single-player-v2.generated-sheet-ready #abilitiesBtn{top:auto!important;bottom:max(1.2dvh,env(safe-area-inset-bottom))!important;left:auto!important}
+  html body.single-player-v2.generated-sheet-ready #abilitiesBtn{top:auto!important;bottom:max(24px,3dvh,calc(env(safe-area-inset-bottom) + 14px))!important;left:auto!important}
   html body.single-player-v2.generated-sheet-ready #scoringBtn{right:calc(4vw + var(--spv2-control-size,clamp(46px,12vw,58px)) + 1.2vw)!important}
   html body.single-player-v2.generated-sheet-ready #abilitiesBtn{right:4vw!important}
 
