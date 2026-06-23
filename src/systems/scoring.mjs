@@ -2,29 +2,29 @@ import { RANKS, SUITS } from '../data/cards.mjs';
 import { DEFAULT_UPGRADES, SCORING_PATTERNS, upgradedChips, upgradedMult } from '../data/scoringPatterns.mjs';
 import { applyRelicMeldsToScore, getScoringRelicMelds } from './relics.mjs';
 
-function addChipMeld(result, name, chips) {
+function addChipMeld(result, name, chips, source = 'upgrade') {
   if (!chips) return;
-  result.melds.push({ name, chips, mult: 0, mode: 'chips' });
+  result.melds.push({ name, chips, mult: 0, mode: 'chips', source });
   result.chips += chips;
 }
 
-function addAdditiveMultMeld(result, name, mult) {
+function addAdditiveMultMeld(result, name, mult, source = 'upgrade') {
   if (!mult) return;
   const rounded = Number(mult.toFixed(2));
-  result.melds.push({ name, chips: 0, mult: rounded, mode: 'add' });
+  result.melds.push({ name, chips: 0, mult: rounded, mode: 'add', source });
   result.mult += rounded;
 }
 
-function addPatternMeld(result, name, chips, patternMult) {
-  result.melds.push({ name, chips, mult: patternMult, mode: 'pattern' });
+function addPatternMeld(result, name, chips, patternMult, source = 'pattern') {
+  result.melds.push({ name, chips, mult: patternMult, mode: 'pattern', source });
   result.chips += chips;
   result.mult += patternMult - 1;
 }
 
 // Balanced Reading and Elemental Harmony multiply the running mult instead of
 // adding to it (matches the live game).
-function addMultiplicativePatternMeld(result, name, chips, patternMult) {
-  result.melds.push({ name, chips, mult: patternMult, mode: 'pattern' });
+function addMultiplicativePatternMeld(result, name, chips, patternMult, source = 'pattern') {
+  result.melds.push({ name, chips, mult: patternMult, mode: 'pattern', source });
   result.chips += chips;
   result.mult *= patternMult;
 }
@@ -76,7 +76,7 @@ function applyConstellationScoreAdjustments(result, cards, context) {
   if (!lost) return;
   result.baseChips -= lost;
   result.chips -= lost;
-  result.melds.push({ name: 'The Ashen Hand', chips: -lost, mult: 0, mode: 'chips' });
+  result.melds.push({ name: 'The Ashen Hand', chips: -lost, mult: 0, mode: 'chips', source: 'constellation' });
 }
 
 function applyRankPatterns(result, cards, upgrades) {
@@ -159,7 +159,7 @@ function applySpecialUpgradePatterns(result, cards, upgrades) {
     if (hasMajor && hasMinor) {
       const chips = upgrades.balanced_reading * 5;
       const mult = Number((1.25 + (upgrades.balanced_reading_mult || 0) * 0.25).toFixed(2));
-      addMultiplicativePatternMeld(result, 'Balanced Reading', chips, mult);
+      addMultiplicativePatternMeld(result, 'Balanced Reading', chips, mult, 'upgrade');
     }
   }
 
@@ -168,7 +168,7 @@ function applySpecialUpgradePatterns(result, cards, upgrades) {
     if (suitCount >= 4) {
       const chips = upgrades.elemental_harmony * 10;
       const mult = Number((1.25 + (upgrades.elemental_harmony_mult || 0) * 0.5).toFixed(2));
-      addMultiplicativePatternMeld(result, 'Elemental Harmony', chips, mult);
+      addMultiplicativePatternMeld(result, 'Elemental Harmony', chips, mult, 'upgrade');
     }
   }
 }
@@ -186,7 +186,7 @@ function applyContextBonuses(result, cards, upgrades, context) {
   // Resonation bonuses accumulate during play and join the final score.
   const resonation = context.resonationBonus;
   if (resonation && (resonation.chips || resonation.mult)) {
-    result.melds.push({ name: `⚷ ${resonation.name || 'Resonation'}`, chips: resonation.chips || 0, mult: resonation.mult || 0, mode: 'add' });
+    result.melds.push({ name: `⚷ ${resonation.name || 'Resonation'}`, chips: resonation.chips || 0, mult: resonation.mult || 0, mode: 'add', source: 'resonation' });
     result.chips += resonation.chips || 0;
     result.mult += resonation.mult || 0;
   }

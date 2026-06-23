@@ -16,8 +16,12 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
 #abilityCancel:hover{filter:brightness(1.08)}
 #abilityCancel[hidden]{display:none!important}
 
-/* Card hint labels must escape the rotated slot stacking contexts. */
-#spread .slot:has(> .card[data-hint]){z-index:8!important}
+/* Keep placed spread cards and their hint labels above the slot frames. */
+#spread .slot:has(> .card){z-index:20!important}
+#spread .slot > .card{position:relative!important;z-index:21!important}
+#spread .slot:has(> .card[data-hint]){z-index:30!important;overflow:visible!important}
+#spread .slot > .card[data-hint]{overflow:visible!important}
+#spread .slot > .card[data-hint]::after{z-index:31!important}
 #spread .slot:has(> .card[data-hint]:active),
 #spread .slot:has(> .card[data-hint].press-highlight),
 #spread .slot:has(> .card[data-hint].ability-picked){z-index:50!important}
@@ -25,14 +29,16 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
 /* Contextual surfaces must always sit above the fixed table controls. */
 .modal.show{z-index:10080!important}
 .ability-prompt.show{z-index:10070!important}
-#tutTip.show{z-index:10100!important}
+#tutTip.show{z-index:10130!important}
 .card-detail-backdrop{z-index:10120!important}
+#packAnim.pack-anim-overlay{z-index:10140!important}
 .refs-layer:has(.ref:not(.hidden)){z-index:10080!important}
 #titleWrap:has(#settingsPanel:not(.hidden)){z-index:10090!important}
 #settingsPanel:not(.hidden){z-index:10091!important}
 .spread-wrap:has(#scorePreview:not(.hidden)){z-index:10060!important}
 #scorePreview:not(.hidden){position:relative;z-index:10080!important}
-.relic-callout,.store-relic-callout,.store-pack-callout,.inv-tut{z-index:10090!important}
+.relic-callout,.inv-tut{z-index:10090!important}
+.store-relic-callout,.store-pack-callout{z-index:10150!important}
 #summary.modal.show:has(.tarot-shop),#summary.modal.show:has(.store-front-shell){z-index:10110!important}
 body:has(#summary .tarot-shop) #discardBtn,
 body:has(#summary .tarot-shop) #purgeBtn,
@@ -50,6 +56,9 @@ body:has(#summary .store-front-shell) #spv2ArchiveBtn{z-index:10!important}
   html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone{z-index:43!important}
   html body.single-player-v2.generated-sheet-ready #handSwipeZone .hand-swipe-hint{position:relative!important;z-index:2!important}
   html body.single-player-v2.generated-sheet-ready .hand .card[data-hint]::after{z-index:60!important}
+
+  /* Lift the ability target prompt slightly clear of the spread. */
+  html body.single-player-v2.generated-sheet-ready #abilityPrompt.ability-prompt{bottom:354px!important}
 
   html body.single-player-v2.generated-sheet-ready #discardBtn,
   html body.single-player-v2.generated-sheet-ready #purgeBtn,
