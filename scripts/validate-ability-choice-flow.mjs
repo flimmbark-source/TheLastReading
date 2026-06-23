@@ -35,4 +35,24 @@ assert.deepEqual(choice.anchorUids, [chosenFirst.uid, firstPossible.uid], 'Betwe
 assert.deepEqual(choice.heldCardUids, [onlyResult.uid], 'Between holds only the available result');
 assert.equal(choice.takenCardUid, onlyResult.uid, 'Between takes the chosen result card');
 
+// The Cancel button resolves the targeting promise with no cards; this must exit
+// the ability builder cleanly instead of treating an empty array as a valid pick.
+{
+  let choiceOpened = false;
+  const cancelled = await buildAbilityChoiceAsync(
+    { type: ABILITY_TYPES.BETWEEN, count: 2, title: 'Between' },
+    { deck: [onlyResult], hand: [firstPossible, chosenFirst, invalidSecond], spread: [], sourceCardUid: null },
+    {
+      showChoice: async () => { choiceOpened = true; return onlyResult; },
+      selectTargets: async () => [],
+      sortCards: cards => cards.slice().sort((a, b) => a.number - b.number),
+      cleanName: card => card.name,
+      shuffleDeck: cards => cards,
+      isTargetable: () => true,
+    },
+  );
+  assert.equal(cancelled, null, 'empty target selection is treated as cancellation');
+  assert.equal(choiceOpened, false, 'cancellation never opens the result-card choice');
+}
+
 console.log('Ability choice flow checks passed.');
