@@ -3,6 +3,37 @@ import { cardHTML, applyCardPhoto, CARD_SHEET } from './renderCard.mjs';
 import { applyHint } from './renderHints.mjs';
 import { installCardDetailGestures } from './cardDetailGestures.mjs';
 
+function installSelectedHintLayerFix(target = window) {
+  const doc = target.document;
+  if (!doc || doc.getElementById('selected-hint-layer-fix')) return;
+  const style = doc.createElement('style');
+  style.id = 'selected-hint-layer-fix';
+  style.textContent = `
+    @media(max-width:640px){
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.sel[data-hint]) .handDock,
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.ability-picked[data-hint]) .handDock,
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.purge-picked[data-hint]) .handDock,
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.press-highlight[data-hint]) .handDock{
+        z-index:64!important;
+      }
+      html body.single-player-v2.generated-sheet-ready #hand .card.sel[data-hint],
+      html body.single-player-v2.generated-sheet-ready #hand .card.ability-picked[data-hint],
+      html body.single-player-v2.generated-sheet-ready #hand .card.purge-picked[data-hint],
+      html body.single-player-v2.generated-sheet-ready #hand .card.press-highlight[data-hint]{
+        overflow:visible!important;
+        z-index:1001!important;
+      }
+      html body.single-player-v2.generated-sheet-ready #hand .card.sel[data-hint]::after,
+      html body.single-player-v2.generated-sheet-ready #hand .card.ability-picked[data-hint]::after,
+      html body.single-player-v2.generated-sheet-ready #hand .card.purge-picked[data-hint]::after,
+      html body.single-player-v2.generated-sheet-ready #hand .card.press-highlight[data-hint]::after{
+        z-index:1002!important;
+      }
+    }
+  `;
+  doc.head.appendChild(style);
+}
+
 function cleanupDetachedHandCards(target = window) {
   const doc = target.document;
   const hand = doc?.getElementById('hand');
@@ -50,6 +81,7 @@ function installDetachedHandCardCleanup(target = window) {
 
 if (typeof window !== 'undefined') {
   installCardDetailGestures(window);
+  installSelectedHintLayerFix(window);
   installDetachedHandCardCleanup(window);
 }
 
