@@ -107,7 +107,10 @@ export function installAbilityTargetBridge(target = window) {
   };
 
   target.tlrCanCancelAbilitySelection = function () {
-    return !!storeTargeting(target) && pendingCallbacks.canCancel;
+    return !!storeTargeting(target)
+      && pendingCallbacks.canCancel
+      && typeof target.canCancelPendingDiscardAbility === 'function'
+      && target.canCancelPendingDiscardAbility();
   };
 
   target.handleAbilityHandClick = function (card) {
@@ -139,10 +142,13 @@ export function installAbilityTargetBridge(target = window) {
     if (!targeting || !pendingCallbacks.canCancel) return false;
     const cb = pendingCallbacks.cb;
     clearPendingCallbacks();
-    target.tlrStore.dispatch({ type: CLEAR_ABILITY_TARGETING });
     const rolledBack = typeof target.cancelPendingDiscardAbility === 'function'
       && target.cancelPendingDiscardAbility();
-    if (!rolledBack && typeof target.render === 'function') target.render();
+    if (!rolledBack) {
+      target.tlrStore.dispatch({ type: CLEAR_ABILITY_TARGETING });
+      if (typeof target.render === 'function') target.render();
+    }
+    // Resolving with zero selected cards lets the async ability builder exit as a cancellation.
     if (typeof cb === 'function') cb();
     return !!rolledBack;
   };
