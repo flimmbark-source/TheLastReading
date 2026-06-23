@@ -106,7 +106,7 @@ function startMatch(player0) {
   assert.equal(dispatched?.action?.abilityChoice?.takenCardUid, found.uid, 'NEIGHBOR carries the taken card');
 }
 
-// --- BETWEEN: two visible anchors (count 2) ---
+// --- BETWEEN: first anchor, then a valid second anchor ---
 {
   const source = { ...cardById('major_14', 9020), ability: 'BETWEEN_2' };
   const low = cardById('major_5', 9021);
@@ -120,13 +120,20 @@ function startMatch(player0) {
   w.tlrMpInvoke();
   await wait();
 
-  assert.ok(w.document.getElementById('abilityPrompt').classList.contains('show'), 'BETWEEN shows the ability prompt');
+  assert.ok(w.document.getElementById('abilityPrompt').classList.contains('show'), 'BETWEEN shows the first-anchor prompt');
   click(handCard(low.uid));
   await wait();
-  assert.ok(w.document.getElementById('abilityConfirm').disabled, 'BETWEEN keeps confirm disabled with one anchor');
+  assert.ok(!w.document.getElementById('abilityConfirm').disabled, 'BETWEEN enables first-anchor confirmation');
+
+  click(w.document.getElementById('abilityConfirm'));
+  await wait();
+  assert.ok(w.document.getElementById('abilityPrompt').classList.contains('show'), 'BETWEEN shows the second-anchor prompt');
+  assert.ok(handCard(high.uid).classList.contains('ability-target'), 'BETWEEN offers the valid second anchor');
+  assert.ok(handCard(low.uid).classList.contains('ability-disabled'), 'BETWEEN does not allow the first anchor to be selected twice');
+
   click(handCard(high.uid));
   await wait();
-  assert.ok(!w.document.getElementById('abilityConfirm').disabled, 'BETWEEN enables confirm with both anchors');
+  assert.ok(!w.document.getElementById('abilityConfirm').disabled, 'BETWEEN enables confirmation for the valid pair');
 
   click(w.document.getElementById('abilityConfirm'));
   await wait();
@@ -136,7 +143,7 @@ function startMatch(player0) {
 
   const dispatched = getDispatched();
   assert.equal(dispatched?.action?.type, MP_ACTIONS.MP_INVOKE_ABILITY, 'BETWEEN invokes the ability');
-  assert.deepEqual(dispatched?.action?.abilityChoice?.anchorUids?.slice().sort(), [low.uid, high.uid].sort(), 'BETWEEN carries both anchors');
+  assert.deepEqual(dispatched?.action?.abilityChoice?.anchorUids, [low.uid, high.uid], 'BETWEEN carries both anchors in selection order');
   assert.equal(dispatched?.action?.abilityChoice?.takenCardUid, found.uid, 'BETWEEN carries the taken card');
 }
 

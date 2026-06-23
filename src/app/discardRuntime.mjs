@@ -14,6 +14,17 @@ function call(target,name,...args){
   return undefined;
 }
 
+export function canDiscardCard(cardUid,target = window){
+  const state=stateOf(target),persist=persistOf(target);
+  const run=target.tlrStore?.getState?.()?.run;
+  if(!state||!persist||(run?.busy??state.busy))return false;
+  if((run?.ability?.targeting||state.abilitySelect)||(run?.purge??state.purgeSelect)!==null)return false;
+  const hand=run?.hand||state.hand||[];
+  if(!hand.some(card=>card.uid===cardUid))return false;
+  const free=(persist.relics||[]).includes('gilded_discard')&&!(run?.freeDiscardUsed??state.freeDiscardUsed);
+  return free||((run?.discards??state.discards)>0);
+}
+
 export function discardSelected(target = window){
   const state=stateOf(target),persist=persistOf(target);
   const _run=target.tlrStore?.getState?.()?.run;
@@ -64,10 +75,26 @@ export function discardSelected(target = window){
   return true;
 }
 
+export function discardCardByUid(cardUid,target = window){
+  if(!canDiscardCard(cardUid,target))return false;
+  const state=stateOf(target);
+  const storeReady=target.tlrStore&&target.tlrActions&&typeof target.tlrStore.getState==='function';
+  if(storeReady){
+    call(target,'tlrSyncRunToStore');
+    target.tlrStore.dispatch({type:target.tlrActions.SELECT_CARD,cardId:cardUid});
+    state.selected=target.tlrStore.getState().run.selectedCardId;
+  }else{
+    state.selected=cardUid;
+  }
+  return discardSelected(target);
+}
+
 export function installDiscardRuntime(target = window){
   if(!target || target.__tlrDiscardRuntimeInstalled)return;
   target.__tlrDiscardRuntimeInstalled=true;
-  target.tlrDiscardRuntime={discardSelected};
+  target.tlrDiscardRuntime={discardSelected,discardCardByUid,canDiscardCard};
   target.discardSelected=()=>discardSelected(target);
+  target.discardCardUid=cardUid=>discardCardByUid(cardUid,target);
+  target.canDiscardCardUid=cardUid=>canDiscardCard(cardUid,target);
   installPurgeRuntime(target);
 }

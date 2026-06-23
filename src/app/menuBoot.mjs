@@ -1,6 +1,7 @@
 // Lightweight first-paint boot.
 // Keeps the main menu responsive before loading the full game module graph.
 import { installMarketAudioRotation } from './marketAudioRotation.mjs';
+import { installActionDropGestures } from '../ui/gestureActionDrops.mjs';
 
 const GAME_MODULE = './main.mjs?v=choice-polish-1';
 const DEFERRED_ASSETS_MODULE = './deferredAssets.mjs?v=lazy-boot-1';
@@ -10,6 +11,7 @@ let deferredAssetsPromise = null;
 let bootAction = null;
 
 installMarketAudioRotation(window);
+installActionDropGestures(window);
 
 const CANDLELIGHT_KEY = 'tlr_candlelight_lighting';
 

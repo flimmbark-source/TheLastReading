@@ -127,8 +127,10 @@ export function installGestureDrawers(target = window){
     const u=persist.up||{};
     const rankBonus=(u.rank||0)*5;
     const rankMult=+(1.25+(u.rank_mult||0)*0.25).toFixed(2);
-    const courtChips=(u.court_chips||0)*8;
-    const courtMult=+(1.5+(u.court_mult||0)*0.25).toFixed(2);
+    const fullCourtChips=(u.court_chips||0)*8;
+    const fullCourtMult=+(1.25+(u.court_mult||0)*0.25).toFixed(2);
+    const royalCourtChips=(u.royal_court_chips||0)*8;
+    const royalCourtMult=+(1.5+(u.royal_court_mult||0)*0.25).toFixed(2);
     const seqBonus=(u.sequence||0)*5;
     const seqMult=+(1.25+(u.seq_mult||0)*0.5).toFixed(2);
     const pathChips=(u.path_chips||0)*15;
@@ -136,8 +138,8 @@ export function installGestureDrawers(target = window){
     const rows=[
       ['arc','Minor Arcana','',''],
       ['(3/4)) of a Kind','Matching ranks','+'+(5+rankBonus),fmtBonus(rankMult-1)],
-      ['Full Court (3/4)','Consecutive ranks','+'+(10+courtChips),fmtBonus(courtMult-1)],
-      ['Royal Court (3/4)','Consecutive ranks, same suit','+'+(10+courtChips),fmtBonus(courtMult-1)],
+      ['Full Court (3/4)','Consecutive ranks','+'+(10+fullCourtChips),fmtBonus(fullCourtMult-1)],
+      ['Royal Court (3/4)','Consecutive ranks, same suit','+'+(10+royalCourtChips),fmtBonus(royalCourtMult-1)],
       ['arc','Major Arcana','',''],
       ['Sequence (3/4/5)','Consecutive major arcana','+'+(10+seqBonus),fmtBonus(seqMult-1)],
       ['Path of the Magi','0·I·XXI in spread','+'+(10+pathChips),fmtBonus(pathMult-1)]

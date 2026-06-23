@@ -25,6 +25,17 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 }
 
 @media (max-width: 640px) {
+  /* Use the same full-page background as desktop instead of the generated
+     mobile table skin and its extra texture/vignette overlay. */
+  html body.single-player-v2 {
+    background: url('../../background.png') center top / cover no-repeat fixed !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready::before {
+    content: none !important;
+    display: none !important;
+  }
+
   /* Leave a small breathing gap above the score/threshold HUD. The four utility
      buttons derive their vertical position from this shared variable, so the
      entire upper cluster moves together. */

@@ -68,19 +68,39 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
   if (type === ABILITY_TYPES.BETWEEN) {
     const betweenDef = { type: ABILITY_TYPES.BETWEEN };
     const inPlay = sortCards([...hand.filter(c => c.uid !== sourceCardUid), ...spread].filter(isTargetable));
-    const validAnchors = inPlay.filter(a => inPlay.some(b => b.uid !== a.uid && abilityHeldCards(deck, betweenDef, [a, b]).length > 0));
+    const resultCards = (a, b) => abilityHeldCards(deck, betweenDef, [a, b]);
+    const validAnchors = inPlay.filter(a => inPlay.some(b => b.uid !== a.uid && resultCards(a, b).length > 0));
     if (!validAnchors.length) return { kind: 'fallback', count: 1 };
-    const anchorPrompt = `Choose 2 cards. Between reveals up to ${count} cards whose values fall between them in sequence.`;
-    const previewFn = (a, b) => {
-      if (!b) return '';
-      const n = abilityHeldCards(deck, betweenDef, [a, b]).length;
-      return n ? `Between these anchors: ${n} card${n === 1 ? '' : 's'}` : 'No cards between these anchors.';
-    };
-    const pickedAnchors = await selectTargets('Between', anchorPrompt, validAnchors, 2, previewFn);
-    if (!pickedAnchors) return null;
-    const [first, second] = pickedAnchors;
-    const found = sortCards(abilityHeldCards(deck, betweenDef, [first, second])).slice(0, count);
-    if (!found.length) return { kind: 'fallback', count: 1 };
+
+    const firstPick = await selectTargets(
+      'Between',
+      `Choose the first card. Between reveals up to ${count} cards whose values fall between the two selected cards.`,
+      validAnchors,
+      1,
+      first => {
+        if (!first) return '';
+        const n = inPlay.filter(second => second.uid !== first.uid && resultCards(first, second).length > 0).length;
+        return `${cleanName(first)}: ${n} valid second card${n === 1 ? '' : 's'}`;
+      },
+    );
+    if (!firstPick) return null;
+    const [first] = firstPick;
+    const validSeconds = inPlay.filter(second => second.uid !== first.uid && resultCards(first, second).length > 0);
+
+    const secondPick = await selectTargets(
+      `Between — ${cleanName(first)}`,
+      'Choose the second card. Only cards with a current result can be selected.',
+      validSeconds,
+      1,
+      second => {
+        if (!second) return '';
+        const n = resultCards(first, second).length;
+        return `Between these anchors: ${n} card${n === 1 ? '' : 's'}`;
+      },
+    );
+    if (!secondPick) return null;
+    const [second] = secondPick;
+    const found = sortCards(resultCards(first, second)).slice(0, count);
     const pickedCard = await showChoice(
       `Between — ${cleanName(first)} / ${cleanName(second)}`,
       'Cards found between them. Take 1. Unchosen revealed cards go to the bottom.',

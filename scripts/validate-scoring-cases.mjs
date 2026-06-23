@@ -63,14 +63,17 @@ assertMeld(result, 'Four of a Kind (Pages)');
 
 result = score(['court_Cups_Page', 'court_Wands_Knight', 'court_Swords_Queen']);
 assertMeld(result, 'Full Court (3)');
+assert.equal(meld(result, 'Full Court (3)').mult, 1.25);
 assertNoMeld(result, 'Royal Court (3, Cups)');
 
 result = score(['court_Cups_Page', 'court_Wands_Knight', 'court_Swords_Queen', 'court_Pentacles_King']);
 assertMeld(result, 'Full Court (3)');
 assertMeld(result, 'Full Court (4)');
+assert.equal(meld(result, 'Full Court (4)').mult, 1.25);
 
 result = score(['court_Cups_Page', 'court_Cups_Knight', 'court_Cups_Queen']);
 assertMeld(result, 'Royal Court (3, Cups)');
+assert.equal(meld(result, 'Royal Court (3, Cups)').mult, 1.5);
 assertNoMeld(result, 'Full Court (3)');
 
 result = score(['court_Cups_Page', 'court_Cups_Knight', 'court_Cups_Queen', 'court_Wands_King']);
@@ -82,6 +85,7 @@ assertNoMeld(result, 'Full Court (3)');
 result = score(['court_Cups_Page', 'court_Cups_Knight', 'court_Cups_Queen', 'court_Cups_King']);
 assertMeld(result, 'Royal Court (3, Cups)');
 assertMeld(result, 'Royal Court (4, Cups)');
+assert.equal(meld(result, 'Royal Court (4, Cups)').mult, 1.5);
 
 result = score(['major_17', 'court_Cups_Page'], {
   upgrades: { balanced_reading: 1 },

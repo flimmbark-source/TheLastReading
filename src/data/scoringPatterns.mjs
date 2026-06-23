@@ -74,7 +74,7 @@ export const SCORING_PATTERNS = Object.freeze({
     label: 'Full Court',
     appliesTo: 'court',
     baseChips: 10,
-    baseMult: 1.5,
+    baseMult: 1.25,
     chipUpgradeKey: 'court_chips',
     chipUpgradeScale: 8,
     multUpgradeKey: 'court_mult',
