@@ -14,9 +14,10 @@ export function toggleModalCollapse(){let m=$('#modal');if(!m.classList.contains
 export function renderAbilityPrompt(){
   const el=$('#abilityPrompt');
   if(!el)return;
+  const cancel=$('#abilityCancel');
   const storeState=window.tlrStore?.getState?.()??null;
   const a=storeState?selectAbilityTargetView(storeState):null;
-  if(!a){el.classList.remove('show');return}
+  if(!a){el.classList.remove('show');if(cancel)cancel.hidden=true;return}
   $('#abilityPromptTitle').textContent=a.title;
   let preview='';
   const previewFn=storeState?getPendingPreviewFn():a.previewFn;
@@ -27,6 +28,7 @@ export function renderAbilityPrompt(){
   }
   $('#abilityPromptText').innerHTML=preview?a.prompt+'<br><b>'+preview+'</b>':a.prompt;
   $('#abilityConfirm').disabled=a.picked.length<a.count;
+  if(cancel)cancel.hidden=!(typeof window.tlrCanCancelAbilitySelection==='function'&&window.tlrCanCancelAbilitySelection());
   el.classList.add('show');
 }
 
