@@ -11,7 +11,7 @@ function cardUid(card) {
   return Number.isFinite(uid) ? uid : null;
 }
 
-function animateCard(element, entry, target) {
+function animateCard(element, entry) {
   if (!element?.isConnected) return;
   element.classList.remove('card-draw-dealt');
   element.style.setProperty('--draw-delay', `${entry.delayMs}ms`);
@@ -35,15 +35,18 @@ function flushQueuedHandAnimations(target) {
   }
   cards.forEach(element => {
     const entry = consumeDrawAnimation(Number(element.dataset.uid), target);
-    if (entry) animateCard(element, entry, target);
+    if (entry) animateCard(element, entry);
   });
 }
 
 function scheduleHandAnimationFlush(target) {
   const state = queueState(target);
-  if (state.flushQueued) return;
+  if (state.flushQueued || !target.document) return;
   state.flushQueued = true;
-  target.requestAnimationFrame(() => flushQueuedHandAnimations(target));
+  const schedule = typeof target.requestAnimationFrame === 'function'
+    ? target.requestAnimationFrame.bind(target)
+    : callback => target.setTimeout(callback, 0);
+  schedule(() => flushQueuedHandAnimations(target));
 }
 
 function wrapFullHandDeal(target, name) {
