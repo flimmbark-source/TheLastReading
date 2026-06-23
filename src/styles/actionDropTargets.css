@@ -12,7 +12,8 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
 .spread-actions .sbtn-purge.card-drop-target::after{color:#e6ccff;border:1px solid rgba(183,126,255,.7);text-shadow:0 0 8px rgba(147,91,230,.62)}
 
 @media(max-width:640px){
-  html body.single-player-v2.generated-sheet-ready{--spv2-action-edge-gap:max(24px,6.5vw)}
+  html body.single-player-v2.generated-sheet-ready{--spv2-action-edge-gap:max(24px,6.5vw);background-color:#0b0805!important;background-image:url('/background.png')!important;background-position:center top!important;background-size:cover!important;background-repeat:no-repeat!important;background-attachment:fixed!important}
+  html body.single-player-v2.generated-sheet-ready::before{content:none!important;display:none!important;background:none!important}
 
   html body.single-player-v2.generated-sheet-ready #discardBtn,
   html body.single-player-v2.generated-sheet-ready #purgeBtn,
