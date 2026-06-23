@@ -16,7 +16,7 @@ body.hand-card-action-drag-active .hand .card.hand-card-dragging{z-index:10042!i
   html body.single-player-v2.generated-sheet-ready #scoringBtn,
   html body.single-player-v2.generated-sheet-ready #abilitiesBtn{position:fixed!important;z-index:65!important}
 
-  html body.single-player-v2.generated-sheet-ready #discardBtn{top:.8dvh!important;bottom:auto!important;left:3.8vw!important;right:auto!important}
+  html body.single-player-v2.generated-sheet-ready #discardBtn{top:calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh)!important;bottom:auto!important;left:3.8vw!important;right:auto!important}
   html body.single-player-v2.generated-sheet-ready #purgeBtn{top:calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh)!important;bottom:auto!important;left:auto!important;right:3.8vw!important}
 
   html body.single-player-v2.generated-sheet-ready #menuBtn,
