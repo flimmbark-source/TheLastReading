@@ -21,10 +21,19 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
 #spread .slot > .card{position:relative!important;z-index:21!important}
 #spread .slot:has(> .card[data-hint]){z-index:30!important;overflow:visible!important}
 #spread .slot > .card[data-hint]{overflow:visible!important}
-#spread .slot > .card[data-hint]::after{z-index:31!important}
-#spread .slot:has(> .card[data-hint]:active),
+#spread .slot > .card[data-hint]::after{z-index:140!important}
 #spread .slot:has(> .card[data-hint].press-highlight),
-#spread .slot:has(> .card[data-hint].ability-picked){z-index:50!important}
+#spread .slot:has(> .card[data-hint].ability-picked),
+#spread .slot:has(> .card[data-hint].sel){z-index:50!important}
+/* The card actually being pressed must outrank every other lifted slot so its
+   (often wider) hint label is never clipped by a later-DOM sibling slot that
+   also reached z-index:50. */
+#spread .slot:has(> .card[data-hint]:active){z-index:60!important}
+/* Re-assert the overflow escape with an html/body-anchored selector so it wins
+   even against the V2 @media(max-width:640px) `.slot > .card{overflow:hidden}`
+   rules, in every state that reveals the hint label. */
+html body #spread .slot:has(> .card[data-hint]),
+html body #spread .slot > .card[data-hint]{overflow:visible!important}
 
 /* Contextual surfaces must always sit above the fixed table controls. */
 .modal.show{z-index:10080!important}
