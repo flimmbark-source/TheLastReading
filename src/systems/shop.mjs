@@ -55,7 +55,8 @@ export function packCost(baseCost, timesBought = 0, relics = []) {
 }
 
 export function packRefreshCost(refreshCount = 0) {
-  return PACK_REFRESH_COSTS[Math.min(refreshCount, PACK_REFRESH_COSTS.length - 1)];
+  const count = Math.max(0, Math.floor(Number(refreshCount) || 0));
+  return (count + 1) * 10;
 }
 
 function shuffledByRng(values, rng) {
