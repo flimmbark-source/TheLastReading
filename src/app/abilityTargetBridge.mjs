@@ -6,8 +6,8 @@ const CLEAR_ABILITY_TARGETING = 'CLEAR_ABILITY_TARGETING';
 // count). The confirm callback and preview function cannot live in the store, so
 // they are held here while a pick is active and the store-derived
 // `state.abilitySelect` mirror points at them for the renderer.
-let pendingCallbacks = { cb: null, previewFn: null };
-function clearPendingCallbacks() { pendingCallbacks = { cb: null, previewFn: null }; }
+let pendingCallbacks = { cb: null, previewFn: null, canCancel: false };
+function clearPendingCallbacks() { pendingCallbacks = { cb: null, previewFn: null, canCancel: false }; }
 export function getPendingPreviewFn() { return pendingCallbacks.previewFn; }
 
 function runtime(target) { return target.tlrRuntime || {}; }
@@ -94,7 +94,9 @@ export function installAbilityTargetBridge(target = window) {
   // callback/preview are held locally. The legacy mirror is still produced for
   // the current renderer via syncStoreSelectionToLegacy.
   target.tlrStartAbilityTargeting = function ({ title, prompt, validCardIds = [], count = 1, cb = null, previewFn = null }) {
-    pendingCallbacks = { cb, previewFn };
+    const canCancel = typeof target.claimPendingDiscardAbilityCancel === 'function'
+      && target.claimPendingDiscardAbilityCancel();
+    pendingCallbacks = { cb, previewFn, canCancel };
     if (storeReady(target)) {
       target.tlrStore.dispatch({
         type: START_ABILITY_TARGETING,
@@ -102,6 +104,10 @@ export function installAbilityTargetBridge(target = window) {
       });
     }
     if (typeof target.render === 'function') target.render();
+  };
+
+  target.tlrCanCancelAbilitySelection = function () {
+    return !!storeTargeting(target) && pendingCallbacks.canCancel;
   };
 
   target.handleAbilityHandClick = function (card) {
@@ -126,5 +132,18 @@ export function installAbilityTargetBridge(target = window) {
     target.tlrStore.dispatch({ type: CLEAR_ABILITY_TARGETING });
     if (typeof target.render === 'function') target.render();
     if (typeof cb === 'function') cb(...picked);
+  };
+
+  target.cancelAbilitySelection = function () {
+    const targeting = storeTargeting(target);
+    if (!targeting || !pendingCallbacks.canCancel) return false;
+    const cb = pendingCallbacks.cb;
+    clearPendingCallbacks();
+    target.tlrStore.dispatch({ type: CLEAR_ABILITY_TARGETING });
+    const rolledBack = typeof target.cancelPendingDiscardAbility === 'function'
+      && target.cancelPendingDiscardAbility();
+    if (!rolledBack && typeof target.render === 'function') target.render();
+    if (typeof cb === 'function') cb();
+    return !!rolledBack;
   };
 }
