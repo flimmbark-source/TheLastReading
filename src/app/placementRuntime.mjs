@@ -51,6 +51,11 @@ function tlrPlacementDiag(target, slotIndex, uid){
   });
   const matches=[...doc.querySelectorAll('.card[data-uid="'+uid+'"]')];
   lines.push('uid '+uid+' appears '+matches.length+'x: '+matches.map(el=>el.closest('#spread')?'SPREAD':el.closest('#hand')?'HAND':'OTHER').join(',')||'none');
+  // Which CSS is actually loaded? (stale-asset check)
+  const adt=doc.getElementById('action-drop-target-styles');
+  lines.push('actionDropTargets href: '+(adt?adt.getAttribute('href'):'(link missing!)'));
+  const sheets=[...doc.querySelectorAll('link[rel=stylesheet]')].filter(l=>/actionDropTargets|spreadFrameLayer/i.test(l.href));
+  lines.push('spread CSS links: '+sheets.length+' -> '+sheets.map(l=>l.getAttribute('href')).join(' , '));
   let panel=doc.getElementById('tlrDebugPanel');
   if(!panel){
     panel=doc.createElement('div');
