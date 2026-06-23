@@ -110,9 +110,11 @@
     opacity: 1 !important;
   }
 
-  /* Retain only the subtle environmental lighting from the polish pass. */
+  /* Keep one continuous candlelight pass over both the table background and the
+     spread. The spread is z-index 12; 13 lights its slots and placed cards while
+     remaining safely below the HUD, hand, controls, prompts, and drawers. */
   body.single-player-v2.generated-sheet-ready #roomAmbient {
-    z-index: 1 !important;
+    z-index: 13 !important;
     mix-blend-mode: screen !important;
     background:
       radial-gradient(circle at 7% 56%,rgba(255,190,88,.2),rgba(255,137,48,.06) 18%,transparent 34%),
