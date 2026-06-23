@@ -49,9 +49,18 @@ function clearPendingRefund(target,sourceCardUid=null){
   target.__tlrPendingDiscardAbilityRefund=null;
 }
 
+export function claimPendingDiscardAbilityCancel(target = window){
+  const pending=target.__tlrPendingDiscardAbilityRefund;
+  if(!pending||pending.targetingClaimed)return false;
+  const run=target.tlrStore?.getState?.()?.run;
+  if(run?.sourceCardId!=null&&run.sourceCardId!==pending.sourceCardUid)return false;
+  pending.targetingClaimed=true;
+  return true;
+}
+
 export function canCancelPendingDiscardAbility(target = window){
   const pending=target.__tlrPendingDiscardAbilityRefund;
-  if(!pending)return false;
+  if(!pending||!pending.targetingClaimed)return false;
   const state=stateOf(target);
   const run=target.tlrStore?.getState?.()?.run;
   const targeting=run?.ability?.targeting||state?.abilitySelect;
@@ -69,6 +78,7 @@ export function cancelPendingDiscardAbility(target = window){
     target.tlrStore.dispatch({type:target.tlrActions.CANCEL_ABILITY});
     target.tlrStore.dispatch({type:target.tlrActions.SYNC_LEGACY_RUN,run:snapshot});
     syncLegacyFromRun(state,target.tlrStore.getState().run);
+    state.lastDiscardedCard=snapshot.lastDiscardedCard;
   }else{
     state.hand=[...snapshot.hand];
     state.selected=snapshot.selectedCardId;
@@ -138,7 +148,7 @@ export function discardSelected(target = window){
   call(target,'haptic',16);
 
   if(card.ability){
-    target.__tlrPendingDiscardAbilityRefund={sourceCardUid:card.uid,snapshot};
+    target.__tlrPendingDiscardAbilityRefund={sourceCardUid:card.uid,snapshot,targetingClaimed:false};
   }
 
   const finish=()=>{
@@ -170,11 +180,12 @@ export function discardCardByUid(cardUid,target = window){
 export function installDiscardRuntime(target = window){
   if(!target || target.__tlrDiscardRuntimeInstalled)return;
   target.__tlrDiscardRuntimeInstalled=true;
-  target.tlrDiscardRuntime={discardSelected,discardCardByUid,canDiscardCard,cancelPendingDiscardAbility,canCancelPendingDiscardAbility};
+  target.tlrDiscardRuntime={discardSelected,discardCardByUid,canDiscardCard,cancelPendingDiscardAbility,canCancelPendingDiscardAbility,claimPendingDiscardAbilityCancel};
   target.discardSelected=()=>discardSelected(target);
   target.discardCardUid=cardUid=>discardCardByUid(cardUid,target);
   target.canDiscardCardUid=cardUid=>canDiscardCard(cardUid,target);
   target.cancelPendingDiscardAbility=()=>cancelPendingDiscardAbility(target);
   target.canCancelPendingDiscardAbility=()=>canCancelPendingDiscardAbility(target);
+  target.claimPendingDiscardAbilityCancel=()=>claimPendingDiscardAbilityCancel(target);
   installPurgeRuntime(target);
 }
