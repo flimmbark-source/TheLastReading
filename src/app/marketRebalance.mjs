@@ -35,14 +35,6 @@ const PACK_CALLOUT_COPY = Object.freeze({
   ],
 });
 
-const SCORING_OFFER_COPY = Object.freeze({
-  rank: 'Each completed Rank tier: +5 Chips / +0.25 Mult',
-  sequence: 'Each completed Sequence tier: +5 Chips / +0.25 Mult',
-  court_chips: 'Each completed Full Court tier: +8 Chips / +0.25 Mult',
-  royal_court_chips: 'Each completed Royal Court tier: +8 Chips / +0.25 Mult',
-  path_chips: '+15 Chips / +0.5 Mult',
-});
-
 function runtime(target = window) {
   return target.tlrRuntime || {};
 }
@@ -76,14 +68,6 @@ function sanitizePackOffer(target = window) {
   const replacement = activePackChoice(target);
   offers.pack = replacement ? [replacement] : [];
   return true;
-}
-
-function applyScoringOfferCopy(target = window) {
-  const key = target._storeFrontOffers?.scoring?.[0];
-  const desc = SCORING_OFFER_COPY[key];
-  if (!desc) return;
-  const node = target.document?.querySelector('.store-offer-row .store-card:nth-child(1) .store-card-desc');
-  if (node) node.textContent = desc;
 }
 
 function currentRelicSlots(target = window) {
@@ -158,7 +142,6 @@ function installStoreOfferRules(target = window) {
   wrapMethod(target, 'openShopMain', function (original, ...args) {
     let result = original.apply(this, args);
     if (sanitizePackOffer(target)) result = original.apply(this, args);
-    applyScoringOfferCopy(target);
     renderVesselOffer(target);
     return result;
   });
