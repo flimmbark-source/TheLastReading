@@ -4,6 +4,26 @@
 /* global state, $, handleAbilityHandClick, togglePurgeCard, refreshHandState */
 import { cardHTML, applyCardPhoto, CARD_SHEET } from './renderCard.mjs';
 import { applyHint } from './renderHints.mjs';
+import { consumeDrawAnimation } from './drawAnimation.mjs';
+
+function startQueuedDrawAnimations(elements) {
+  if (!elements.length) return;
+  requestAnimationFrame(() => {
+    elements.forEach(({ element, delayMs }) => {
+      if (!element.isConnected) return;
+      element.classList.remove('card-draw-dealt');
+      element.style.setProperty('--draw-delay', `${delayMs}ms`);
+      // Force a fresh animation even if a card with the same uid was just dealt
+      // by a reshuffle/mulligan and its DOM node was reused.
+      void element.offsetWidth;
+      element.classList.add('card-draw-dealt');
+      element.addEventListener('animationend', () => {
+        element.classList.remove('card-draw-dealt');
+        element.style.removeProperty('--draw-delay');
+      }, { once: true });
+    });
+  });
+}
 
 export function renderHand(ability, inPurge, view = null) {
   // Display data (hand list, selection, purge picks) comes from `view` when
@@ -17,6 +37,7 @@ export function renderHand(ability, inPurge, view = null) {
   const handLen=v.hand.length;
   const hintState={spread:v.spread||[],hand:v.hand||[]};
   const hintPool=[...hintState.spread.filter(Boolean),...hintState.hand];
+  const queuedDraws=[];
   // Suppress the swipe handler's MutationObserver during the loop.
   // Each insertBefore fires it synchronously with an intermediate card count,
   // causing applySlots() to assign wrong --slot values that then animate.
@@ -52,6 +73,9 @@ export function renderHand(ability, inPurge, view = null) {
     if(!inPurge)applyHint(e,c,hintPool,hintState);
     e.style.zIndex=handLen-i;
     e.style.setProperty('--a',((i-(handLen-1)/2)*5)+'deg');
+    e.style.removeProperty('--draw-delay');
+    const drawEntry=consumeDrawAnimation(c.uid,window);
+    if(drawEntry)queuedDraws.push({element:e,delayMs:drawEntry.delayMs});
     // onclick captures the current render's ability/inPurge snapshot, so
     // rebind every render even for reused nodes.
     e.onclick=()=>{
@@ -88,4 +112,5 @@ export function renderHand(ability, inPurge, view = null) {
   // the final DOM shape is in place.
   window.__handRenderActive=false;
   if(typeof window.__handTriggerLayout==='function')window.__handTriggerLayout();
+  startQueuedDrawAnimations(queuedDraws);
 }
