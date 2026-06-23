@@ -31,6 +31,7 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
 .ability-prompt.show{z-index:10070!important}
 #tutTip.show{z-index:10130!important}
 .card-detail-backdrop{z-index:10120!important}
+#packAnim.pack-anim-overlay{z-index:10140!important}
 .refs-layer:has(.ref:not(.hidden)){z-index:10080!important}
 #titleWrap:has(#settingsPanel:not(.hidden)){z-index:10090!important}
 #settingsPanel:not(.hidden){z-index:10091!important}
@@ -54,6 +55,9 @@ body:has(#summary .store-front-shell) #spv2ArchiveBtn{z-index:10!important}
   html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone{z-index:43!important}
   html body.single-player-v2.generated-sheet-ready #handSwipeZone .hand-swipe-hint{position:relative!important;z-index:2!important}
   html body.single-player-v2.generated-sheet-ready .hand .card[data-hint]::after{z-index:60!important}
+
+  /* Lift the ability target prompt slightly clear of the spread. */
+  html body.single-player-v2.generated-sheet-ready #abilityPrompt.ability-prompt{bottom:354px!important}
 
   html body.single-player-v2.generated-sheet-ready #discardBtn,
   html body.single-player-v2.generated-sheet-ready #purgeBtn,
