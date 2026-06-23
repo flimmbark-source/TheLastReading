@@ -26,7 +26,7 @@ export function scoreLegacy(cards,{skipRelics=false,skipFlatBonuses=false}={},ta
       constellationId:state.constellationId||null,
     },
   });
-  return {...result,melds:result.melds.map(m=>[m.name,m.chips,m.mult,m.mode])};
+  return {...result,melds:result.melds.map(m=>[m.name,m.chips,m.mult,m.mode,m.source||null])};
 }
 
 export function getPlacedScore(target = window){
