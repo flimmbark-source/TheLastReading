@@ -21,6 +21,11 @@ export function installHandCardGestures(target = window){
   const SLOT_HIT_PAD=28;
 
   let g=null;
+  // The spread fan transform now lives on each slot's .slot-frame child (so cards
+  // can layer above all frames, see spreadFrameLayer.css). That means the slot box
+  // itself is un-transformed, so drop hit-testing must measure the frame, which
+  // carries the real on-screen position. Falls back to the slot for legacy layouts.
+  const slotHitRect=el=>(el.querySelector(':scope > .slot-frame')||el).getBoundingClientRect();
   const handEl=()=>document.querySelector('.hand');
   const handCards=()=>{const h=handEl();return h?[...h.querySelectorAll(':scope > .card[data-uid]')]:[]};
   const storeState=()=>target.tlrStore?.getState?.()??null;
@@ -45,7 +50,7 @@ export function installHandCardGestures(target = window){
   //    to avoid forced layout on every pointermove). ──
   const hitTestSpreadSlots=(cardCX,cardCY)=>{
     const rects=g&&g.slotRects?g.slotRects:
-      [...document.querySelectorAll('#spread .slot')].map((el,i)=>({el,idx:i,r:el.getBoundingClientRect()}));
+      [...document.querySelectorAll('#spread .slot')].map((el,i)=>({el,idx:i,r:slotHitRect(el)}));
     for(const{el,idx,r}of rects){
       // Occupied check: `state.spread` is authoritative in singleplayer, but in
       // multiplayer the piles live in match state, so also treat any slot whose
@@ -151,7 +156,7 @@ export function installHandCardGestures(target = window){
     // Cache spread geometry so hit-tests during drag don't force layout recalc.
     const spEl=document.querySelector('#spread');
     g.spreadRect=spEl?spEl.getBoundingClientRect():null;
-    g.slotRects=[...document.querySelectorAll('#spread .slot')].map((el,i)=>({el,idx:i,r:el.getBoundingClientRect()}));
+    g.slotRects=[...document.querySelectorAll('#spread .slot')].map((el,i)=>({el,idx:i,r:slotHitRect(el)}));
     target.__handReorderActive=true;
     if(h)h.classList.add('hand-parting');
     const spEl2=document.querySelector('#spread');if(spEl2)spEl2.classList.add('drag-active');

@@ -26,6 +26,8 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=clean-
     ensureStylesheet('single-player-v2-hud-table-pass','src/styles/singlePlayerV2HudTablePass.css?v=1');
     ensureStylesheet('single-player-v2-correction-pass','src/styles/singlePlayerV2CorrectionPass.css?v=2');
     ensureStylesheet('single-player-v2-art-integration','src/styles/singlePlayerV2ArtIntegration.css?v=art-2');
+    // Loaded last: flattens each spread slot so the card layers above every frame.
+    ensureStylesheet('single-player-v2-spread-frame-layer','src/styles/spreadFrameLayer.css?v=1');
   };
 
   const refreshCompositionLayer=()=>{
