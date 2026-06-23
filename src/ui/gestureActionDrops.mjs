@@ -35,7 +35,7 @@ export function installActionDropGestures(target = window) {
     const link = doc.createElement('link');
     link.id = 'action-drop-target-styles';
     link.rel = 'stylesheet';
-    link.href = 'src/styles/actionDropTargets.css?v=3';
+    link.href = 'src/styles/actionDropTargets.css?v=4';
     doc.head.appendChild(link);
   }
 
