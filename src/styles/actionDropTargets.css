@@ -16,6 +16,18 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
 #abilityCancel:hover{filter:brightness(1.08)}
 #abilityCancel[hidden]{display:none!important}
 
+/* Contextual surfaces must always sit above the fixed table controls. */
+.modal.show{z-index:10080!important}
+.ability-prompt.show{z-index:10070!important}
+#tutTip.show{z-index:10100!important}
+.card-detail-backdrop{z-index:10120!important}
+.refs-layer:has(.ref:not(.hidden)){z-index:10080!important}
+#titleWrap:has(#settingsPanel:not(.hidden)){z-index:10090!important}
+#settingsPanel:not(.hidden){z-index:10091!important}
+.spread-wrap:has(#scorePreview:not(.hidden)){z-index:10060!important}
+#scorePreview:not(.hidden){position:relative;z-index:10080!important}
+.relic-callout,.store-relic-callout,.store-pack-callout,.inv-tut{z-index:10090!important}
+
 @media(max-width:640px){
   html body.single-player-v2.generated-sheet-ready{--spv2-action-edge-gap:max(24px,6.5vw);background-color:#0b0805!important;background-image:url('/background.png')!important;background-position:center top!important;background-size:cover!important;background-repeat:no-repeat!important;background-attachment:fixed!important}
   html body.single-player-v2.generated-sheet-ready::before{content:none!important;display:none!important;background:none!important}
