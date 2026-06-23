@@ -1,4 +1,5 @@
 const QUEUE_KEY = '__tlrDrawAnimationQueue';
+const FULL_HAND_ACTIONS = ['startReading', 'continueSet', 'flushHand', 'mulligan'];
 
 function queueState(target) {
   if (!target[QUEUE_KEY]) {
@@ -13,6 +14,19 @@ function queueState(target) {
 function cardUid(card) {
   const uid = Number(card?.uid ?? card);
   return Number.isFinite(uid) ? uid : null;
+}
+
+function wrapFullHandDeal(target, name) {
+  const original = target[name];
+  if (typeof original !== 'function' || original.__tlrDrawAnimationWrapped) return;
+  const wrapped = function (...args) {
+    target.__tlrAnimateFullHandOnNextRender = true;
+    const result = original.apply(this, args);
+    if (result === false) target.__tlrAnimateFullHandOnNextRender = false;
+    return result;
+  };
+  wrapped.__tlrDrawAnimationWrapped = true;
+  target[name] = wrapped;
 }
 
 export function queueDrawAnimation(cards, target = window, { staggerMs = 72 } = {}) {
@@ -43,8 +57,16 @@ export function consumeDrawAnimation(cardOrUid, target = window) {
   return entry;
 }
 
+export function queueFullHandDrawIfRequested(cards, target = window) {
+  if (!target.__tlrAnimateFullHandOnNextRender) return false;
+  target.__tlrAnimateFullHandOnNextRender = false;
+  queueDrawAnimation(cards, target, { staggerMs: 78 });
+  return true;
+}
+
 export function clearDrawAnimations(target = window) {
   queueState(target).entries.clear();
+  target.__tlrAnimateFullHandOnNextRender = false;
 }
 
 export function installDrawAnimation(target = window) {
@@ -60,9 +82,12 @@ export function installDrawAnimation(target = window) {
     doc.head.appendChild(link);
   }
 
+  FULL_HAND_ACTIONS.forEach(name => wrapFullHandDeal(target, name));
+
   target.tlrDrawAnimation = {
     queue: cards => queueDrawAnimation(cards, target),
     consume: uid => consumeDrawAnimation(uid, target),
+    queueFullHandIfRequested: cards => queueFullHandDrawIfRequested(cards, target),
     clear: () => clearDrawAnimations(target),
   };
   target.tlrQueueDrawAnimation = cards => queueDrawAnimation(cards, target);
