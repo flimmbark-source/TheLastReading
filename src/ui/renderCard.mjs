@@ -31,13 +31,19 @@ export const CARD_SHEET={
   court_Wands_King:[10,0],court_Cups_King:[10,1],court_Swords_King:[10,2],court_Pentacles_King:[10,3],
 };
 
-export function applyCardPhoto(el,card){
+// Table cards render at ~100-130px, so they use the offline-downscaled
+// table-res sheets (sheetNN.small.webp, 300x450 per tile) which are sharper
+// under the hand's rotate transforms and far lighter than the full sheets.
+// The card-detail modal renders large, so it passes {full:true} to get the
+// original 512x768 tiles. background-size:200% 200% is sheet-size agnostic.
+export function applyCardPhoto(el,card,{full=false}={}){
   const s=CARD_SHEET[card.id];
   if(!s)return;
   const[sheet,pos]=s;
   const col=pos%2,row=Math.floor(pos/2);
+  const num=String(sheet).padStart(2,'0');
   el.classList.add('photo');
-  el.style.backgroundImage=`url(sheet${String(sheet).padStart(2,'0')}.png)`;
+  el.style.backgroundImage=full?`url(sheet${num}.png)`:`url(sheet${num}.small.webp)`;
   el.style.backgroundPosition=`${col*100}% ${row*100}%`;
 }
 
@@ -109,7 +115,7 @@ export function expandCard(card,target=window){
   target.document.body.appendChild(backdrop);
   target.__tlrCardDetailOpen=true;
   const rendered=backdrop.querySelector('.card-detail-card .card');
-  if(rendered)applyCardPhoto(rendered,card);
+  if(rendered)applyCardPhoto(rendered,card,{full:true});
   backdrop.addEventListener('click',ev=>{if(ev.target===backdrop)closeCardDetail(target);});
   backdrop.querySelector('.card-detail-close')?.addEventListener('click',()=>closeCardDetail(target));
   const onKey=ev=>{if(ev.key==='Escape'){closeCardDetail(target);target.document.removeEventListener('keydown',onKey,true);}};
