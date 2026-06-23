@@ -15,34 +15,51 @@ function syncBeforePurgeAction(target) {
   if (typeof target.tlrSyncRunToStore === 'function') target.tlrSyncRunToStore();
 }
 
+export function canStartPurgeWithCard(uid, target = window) {
+  const state = stateOf(target);
+  const run = target.tlrStore?.getState?.()?.run;
+  if (!state || (run?.busy ?? state.busy)) return false;
+  if ((run?.ability?.targeting || state.abilitySelect) || (run?.purge ?? state.purgeSelect) !== null) return false;
+  const hand = run?.hand || state.hand || [];
+  return hand.length >= 3 && hand.some(card => card.uid === uid);
+}
+
 export function startPurge(target = window) {
   const state = stateOf(target);
   if (!storeReady(target)) {
-    if (state.busy || state.hand.length < 3 || state.abilitySelect || state.purgeSelect !== null) return;
+    if (state.busy || state.hand.length < 3 || state.abilitySelect || state.purgeSelect !== null) return false;
     state.purgeSelect = [];
     state.selected = null;
     if (typeof target.render === 'function') target.render();
-    return;
+    return true;
   }
   syncBeforePurgeAction(target);
   target.tlrStore.dispatch({ type: target.tlrActions.START_PURGE });
   syncRunToLegacy(target);
   if (typeof target.render === 'function') target.render();
+  return Array.isArray(state.purgeSelect);
 }
 
 export function togglePurgeCard(uid, target = window) {
   const state = stateOf(target);
   if (!storeReady(target)) {
-    if (state.purgeSelect === null) return;
+    if (state.purgeSelect === null) return false;
     const idx = state.purgeSelect.indexOf(uid);
     if (idx >= 0) state.purgeSelect.splice(idx, 1);
     else if (state.purgeSelect.length < 3) state.purgeSelect.push(uid);
     if (typeof target.refreshHandState === 'function') target.refreshHandState();
-    return;
+    return true;
   }
   target.tlrStore.dispatch({ type: target.tlrActions.TOGGLE_PURGE_CARD, cardId: uid });
   syncRunToLegacy(target);
   if (typeof target.refreshHandState === 'function') target.refreshHandState();
+  return Array.isArray(state.purgeSelect) && state.purgeSelect.includes(uid);
+}
+
+export function startPurgeWithCard(uid, target = window) {
+  if (!canStartPurgeWithCard(uid, target)) return false;
+  if (!startPurge(target)) return false;
+  return togglePurgeCard(uid, target);
 }
 
 export function confirmPurge(target = window) {
@@ -77,8 +94,10 @@ export function cancelPurge(target = window) {
 export function installPurgeRuntime(target = window) {
   if (!target || target.__tlrPurgeRuntimeInstalled) return;
   target.__tlrPurgeRuntimeInstalled = true;
-  target.tlrPurgeRuntime = { startPurge, togglePurgeCard, confirmPurge, cancelPurge };
+  target.tlrPurgeRuntime = { startPurge, startPurgeWithCard, canStartPurgeWithCard, togglePurgeCard, confirmPurge, cancelPurge };
   target.startPurge = () => startPurge(target);
+  target.startPurgeWithCardUid = uid => startPurgeWithCard(uid, target);
+  target.canStartPurgeWithCardUid = uid => canStartPurgeWithCard(uid, target);
   target.togglePurgeCard = uid => togglePurgeCard(uid, target);
   target.confirmPurge = () => confirmPurge(target);
   target.cancelPurge = () => cancelPurge(target);
