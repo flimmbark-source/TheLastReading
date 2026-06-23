@@ -16,8 +16,12 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
 #abilityCancel:hover{filter:brightness(1.08)}
 #abilityCancel[hidden]{display:none!important}
 
-/* Card hint labels must escape the rotated slot stacking contexts. */
-#spread .slot:has(> .card[data-hint]){z-index:8!important}
+/* Keep placed spread cards and their hint labels above the slot frames. */
+#spread .slot:has(> .card){z-index:20!important}
+#spread .slot > .card{position:relative!important;z-index:21!important}
+#spread .slot:has(> .card[data-hint]){z-index:30!important;overflow:visible!important}
+#spread .slot > .card[data-hint]{overflow:visible!important}
+#spread .slot > .card[data-hint]::after{z-index:31!important}
 #spread .slot:has(> .card[data-hint]:active),
 #spread .slot:has(> .card[data-hint].press-highlight),
 #spread .slot:has(> .card[data-hint].ability-picked){z-index:50!important}
