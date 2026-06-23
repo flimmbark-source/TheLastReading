@@ -12,6 +12,7 @@ import {
   drawToHandSize,
   uniqueCards as uniqueCardsPure,
 } from '../systems/deck.mjs';
+import { queueDrawAnimation } from '../ui/drawAnimation.mjs';
 import { installMulliganRuntime } from './mulliganRuntime.mjs';
 
 function runtime(target){return target.tlrRuntime || {};}
@@ -34,16 +35,22 @@ export function maxMull(target = window){return maxMulliganCount(persistOf(targe
 export function uniqueCards(cards){return uniqueCardsPure(cards);}
 
 export function drawN(count,target = window){
-  return drawNIntoRun(stateOf(target),count,{
+  const state=stateOf(target);
+  const drew=drawNIntoRun(state,count,{
     shuffle:target.shuffle,
     onDraw:()=>{if(typeof target.playSound==='function')target.playSound('draw');},
   });
+  if(drew>0)queueDrawAnimation(state.hand.slice(-drew),target);
+  return drew;
 }
 
 export function drawTo(count,target = window){
-  return drawToHandSize(stateOf(target),count,{
+  const state=stateOf(target);
+  const drew=drawToHandSize(state,count,{
     onDraw:()=>{if(typeof target.playSound==='function')target.playSound('draw');},
   });
+  if(drew>0)queueDrawAnimation(state.hand.slice(-drew),target);
+  return drew;
 }
 
 export function installDeckRuntime(target = window){
