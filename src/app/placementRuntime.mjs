@@ -32,36 +32,6 @@ export function shouldAnnounceMeld(meld,target = window){
   return name!=='Omen'&&name!=='Resonance';
 }
 
-// TEMP DIAGNOSTIC — uses elementsFromPoint to report, in true paint order, what
-// is actually drawn over the placed card. Names the covering element directly so
-// there is nothing to misread. On-screen (no devtools). Remove once fixed.
-function tlrPlacementDiag(target, slotIndex, uid, label){
-  const doc=target.document; if(!doc||!doc.body)return;
-  let panel=doc.getElementById('tlrDebugPanel');
-  if(!panel){
-    panel=doc.createElement('div');
-    panel.id='tlrDebugPanel';
-    panel.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(0,0,0,.95);color:#6f6;font:13px/1.45 monospace;padding:10px;white-space:pre-wrap;word-break:break-all;max-height:72vh;overflow:auto;border-top:2px solid #6f6';
-    panel.addEventListener('click',()=>panel.remove());
-    doc.body.appendChild(panel);
-    panel.textContent='';
-  }
-  const tag=el=>el.tagName.toLowerCase()+(el.id?('#'+el.id):'')+(typeof el.className==='string'&&el.className?('.'+el.className.trim().split(/\s+/).slice(0,3).join('.')):'');
-  const lines=['── '+label+' · uid '+uid+' slot '+slotIndex+' (tap to dismiss) ──'];
-  const card=doc.querySelector('#spread .slot > .card[data-uid="'+uid+'"]');
-  if(!card){ lines.push('!! card NOT in #spread'); }
-  else{
-    const r=card.getBoundingClientRect();
-    const cx=Math.round(r.left+r.width/2), cy=Math.round(r.top+r.height/2);
-    const stack=doc.elementsFromPoint(cx,cy);
-    const idx=stack.indexOf(card);
-    lines.push('paint stack @card center (TOP first):');
-    stack.slice(0,7).forEach((el,i)=>lines.push((el===card?'>> ':'   ')+i+' '+tag(el)));
-    lines.push(idx<=0?'=> card is ON TOP' : '=> card BURIED under '+idx+' element(s) ^^^');
-  }
-  panel.textContent+=(panel.textContent?'\n\n':'')+lines.join('\n');
-}
-
 export function placeCard(slotIndex,target = window, explicitCardUid = null){
   if(target.__tlrCardDetailOpen)return false;
   const state=stateOf(target);
@@ -104,10 +74,6 @@ export function placeCard(slotIndex,target = window, explicitCardUid = null){
       landEl.addEventListener('animationend',()=>landEl.classList.remove('landing'),{once:true});
     }
     call(target,'ghost',slotIndex,'+'+card.points);
-    // TEMP DIAGNOSTIC — snapshot mid-animation (catches the transient sink) and
-    // again once settled. Remove once the stacking bug is found.
-    target.setTimeout?.(()=>{try{tlrPlacementDiag(target,slotIndex,card.uid,'~130ms (mid-drop)');}catch(e){}},130);
-    target.setTimeout?.(()=>{try{tlrPlacementDiag(target,slotIndex,card.uid,'~700ms (settled)');}catch(e){}},700);
   });
 
   const after=typeof target._getPlacedScore==='function'
