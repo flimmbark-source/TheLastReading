@@ -10,6 +10,7 @@ import './validate-purge-reducer.mjs';
 import './validate-ability-targeting.mjs';
 import './validate-ability-targeting-bridge.mjs';
 import './validate-ability-choice-flow.mjs';
+import './validate-action-card-drops.mjs';
 import './validate-hints.mjs';
 import './validate-card-detail-placement.mjs';
 // jsdom-based UI checks run last: they populate a jsdom window on globalThis.
