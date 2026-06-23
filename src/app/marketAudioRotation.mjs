@@ -2,6 +2,7 @@ const MARKET_AMBIENCE_FILES = Object.freeze([
   'soundreality-bell-fx-410608.mp3',
   'izafi-gong-sound-419930.mp3',
   'olenchic-psycho-1-155031.mp3',
+  'alex_jauk-witch-laugh-256450.mp3',
 ]);
 
 function fileNameFromSource(src) {
