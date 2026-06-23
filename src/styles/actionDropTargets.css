@@ -35,6 +35,8 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
   html body.single-player-v2.generated-sheet-ready #scoringBtn{right:calc(4vw + var(--spv2-control-size,clamp(46px,12vw,58px)) + 1.2vw)!important}
   html body.single-player-v2.generated-sheet-ready #abilitiesBtn{right:4vw!important}
 
+  html body.single-player-v2.generated-sheet-ready #discardBtn:disabled{opacity:.74!important;box-shadow:none!important}
+  html body.single-player-v2.generated-sheet-ready #discardBtn:disabled::before{filter:brightness(1.45) contrast(1.02) saturate(.92) drop-shadow(0 0 3px rgba(0,0,0,.42))!important}
   html body.single-player-v2.generated-sheet-ready #discardBtn:not(:disabled){box-shadow:0 0 0 1px rgba(255,217,120,.48),0 0 7px rgba(255,200,84,.34),0 0 13px rgba(100,168,255,.14)!important}
   html body.single-player-v2.generated-sheet-ready #discardBtn:not(:disabled)::before{filter:brightness(2) contrast(1.06) saturate(1.12) drop-shadow(0 0 3px rgba(255,220,132,.42)) drop-shadow(0 0 6px rgba(85,156,255,.25))!important}
   html body.single-player-v2.generated-sheet-ready:has(#purgePrompt.show) #purgeBtn{opacity:1!important;box-shadow:0 0 0 1px rgba(255,217,120,.48),0 0 7px rgba(255,200,84,.34),0 0 13px rgba(100,168,255,.14)!important;filter:brightness(1.55) contrast(1.05) saturate(1.08) drop-shadow(0 0 3px rgba(255,220,132,.4)) drop-shadow(0 0 6px rgba(85,156,255,.24))!important}
