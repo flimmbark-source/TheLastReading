@@ -32,30 +32,30 @@ export function shouldAnnounceMeld(meld,target = window){
   return name!=='Omen'&&name!=='Resonance';
 }
 
-// TEMP DIAGNOSTIC — shows where a just-placed card landed (DOM parent chain,
-// classes, inline style, computed z-index). On-screen so no devtools needed.
-// Remove this function and its caller once the stacking bug is identified.
+// TEMP DIAGNOSTIC — dumps all five spread slots in DOM/paint order with their
+// z-indexes once the placement has settled, so an equal-z paint-order problem is
+// visible. On-screen (no devtools). Remove once the bug is identified.
 function tlrPlacementDiag(target, slotIndex, uid){
   const doc=target.document; if(!doc||!doc.body)return;
   const z=el=>{try{return el?target.getComputedStyle(el).zIndex:'-';}catch(e){return '?';}};
-  const desc=el=>el?(el.tagName.toLowerCase()+(el.id?('#'+el.id):'')+(el.className&&typeof el.className==='string'?('.'+el.className.trim().split(/\s+/).join('.')):'')):'-';
-  const chain=el=>{const out=[];let n=el;for(let i=0;i<6&&n&&n!==doc.body;i++){out.push(desc(n)+'[z='+z(n)+']');n=n.parentElement;}return out.join('  <  ');};
-  const matches=[...doc.querySelectorAll('.card[data-uid="'+uid+'"]')];
+  const sp=doc.getElementById('spread');
   const lines=[];
-  lines.push('PLACEMENT DIAG — slotIdx '+slotIndex+' — uid '+uid+'  (tap to dismiss)');
-  lines.push('selected legacy='+(target.state?target.state.selected:'?')+'  store='+(target.tlrStore?.getState?.()?.run?.selectedCardId));
-  lines.push('elements with this uid: '+matches.length);
-  matches.forEach((el,i)=>{
-    const inSpread=!!el.closest('#spread');
-    const inHand=!!el.closest('#hand');
-    lines.push('['+i+'] '+(inSpread?'SPREAD':inHand?'HAND':'OTHER')+' style="'+(el.getAttribute('style')||'')+'"');
-    lines.push('    '+chain(el));
+  lines.push('DIAG settled — placed slotIdx '+slotIndex+' uid '+uid+'  (tap to dismiss)');
+  lines.push('selected legacy='+(target.state?target.state.selected:'?')+' store='+(target.tlrStore?.getState?.()?.run?.selectedCardId));
+  const slots=sp?[...sp.children].filter(c=>c.classList&&c.classList.contains('slot')):[];
+  slots.forEach((s,i)=>{
+    const c=s.querySelector(':scope > .card');
+    const mark=(c&&Number(c.dataset.uid)===uid)?' <-- PLACED':'';
+    lines.push('domSlot#'+i+' z='+z(s)+' ['+s.className.replace(/^slot ?/,'')+']'+mark);
+    lines.push('   card: '+(c?('uid='+c.dataset.uid+' z='+z(c)+' ['+c.className.replace(/^card ?/,'')+'] style="'+(c.getAttribute('style')||'')+'"'):'(empty)'));
   });
+  const matches=[...doc.querySelectorAll('.card[data-uid="'+uid+'"]')];
+  lines.push('uid '+uid+' appears '+matches.length+'x: '+matches.map(el=>el.closest('#spread')?'SPREAD':el.closest('#hand')?'HAND':'OTHER').join(',')||'none');
   let panel=doc.getElementById('tlrDebugPanel');
   if(!panel){
     panel=doc.createElement('div');
     panel.id='tlrDebugPanel';
-    panel.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(0,0,0,.92);color:#5f5;font:10px/1.4 monospace;padding:8px;white-space:pre-wrap;word-break:break-all;max-height:55vh;overflow:auto;border-top:2px solid #5f5';
+    panel.style.cssText='position:fixed;left:0;right:0;bottom:0;z-index:2147483647;background:rgba(0,0,0,.93);color:#5f5;font:10px/1.35 monospace;padding:8px;white-space:pre-wrap;word-break:break-all;max-height:60vh;overflow:auto;border-top:2px solid #5f5';
     panel.addEventListener('click',()=>panel.remove());
     doc.body.appendChild(panel);
   }
@@ -104,8 +104,9 @@ export function placeCard(slotIndex,target = window, explicitCardUid = null){
       landEl.addEventListener('animationend',()=>landEl.classList.remove('landing'),{once:true});
     }
     call(target,'ghost',slotIndex,'+'+card.points);
-    // TEMP DIAGNOSTIC — remove once the select-then-drag stacking bug is found.
-    requestAnimationFrame(()=>{try{tlrPlacementDiag(target,slotIndex,card.uid);}catch(e){}});
+    // TEMP DIAGNOSTIC — fire after the dust settles (covers the select path's
+    // extra re-render). Remove once the stacking bug is found.
+    target.setTimeout?.(()=>{try{tlrPlacementDiag(target,slotIndex,card.uid);}catch(e){}},650);
   });
 
   const after=typeof target._getPlacedScore==='function'
