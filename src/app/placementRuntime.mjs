@@ -24,6 +24,14 @@ function scorePillBase(target,state){
   return Number.isFinite(round)?round:0;
 }
 
+export function shouldAnnounceMeld(meld,target = window){
+  const name=meld?.[0];
+  if(!name)return false;
+  if(meld[4]==='upgrade')return false;
+  if(target._relicMeldNames?.has?.(name))return false;
+  return name!=='Omen'&&name!=='Resonance';
+}
+
 export function placeCard(slotIndex,target = window, explicitCardUid = null){
   if(target.__tlrCardDetailOpen)return false;
   const state=stateOf(target);
@@ -76,7 +84,7 @@ export function placeCard(slotIndex,target = window, explicitCardUid = null){
     if(!beforeMelds.has(m[0]))return [m];
     const before=beforeMelds.get(m[0]);
     const chips=m[1]-before[1],mult=m[2]-before[2];
-    return chips>0||mult>0?[[m[0],chips,mult,m[3]]]:[];
+    return chips>0||mult>0?[[m[0],chips,mult,m[3],m[4]]]:[];
   });
 
   let delay=420,announceOffset=0;
@@ -87,8 +95,7 @@ export function placeCard(slotIndex,target = window, explicitCardUid = null){
     const ghostDelay=delay+slots.length*130+120;
     const relicKey=target._relicMeldNameToKey?.get?.(meld[0])||null;
     setTimeout(()=>call(target,'ghost',anchor,call(target,'meldStr',meld),true,relicKey),ghostDelay);
-    const isRelicMeld=target._relicMeldNames?.has?.(meld[0]);
-    if(!isRelicMeld&&meld[0]!=='Omen'&&meld[0]!=='Resonance'){
+    if(shouldAnnounceMeld(meld,target)){
       setTimeout(()=>{
         call(target,'centerGhost',call(target,'normMeldName',meld[0]),meld[2]>1.5||(meld[3]==='add'&&meld[2]>=1.5));
         call(target,'playSound','meld');
@@ -118,7 +125,7 @@ export function placeCardByUid(cardUid,slotIndex,target = window){
 export function installPlacementRuntime(target = window){
   if(!target || target.__tlrPlacementRuntimeInstalled)return;
   target.__tlrPlacementRuntimeInstalled=true;
-  target.tlrPlacementRuntime={placeCard,placeCardByUid};
+  target.tlrPlacementRuntime={placeCard,placeCardByUid,shouldAnnounceMeld};
   target.placeCard=index=>placeCard(index,target);
   target.placeCardUid=(cardUid,index)=>placeCardByUid(cardUid,index,target);
 }
