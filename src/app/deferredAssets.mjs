@@ -1,4 +1,21 @@
-const CARD_SHEETS = Object.freeze([
+// Table-res sheets used by every on-table card (hand/spread/market/MP). These
+// are tiny (~180KB each) so they warm first for a sharp, fast first paint.
+const TABLE_SHEETS = Object.freeze([
+  'sheet01.small.webp',
+  'sheet02.small.webp',
+  'sheet03.small.webp',
+  'sheet04.small.webp',
+  'sheet05.small.webp',
+  'sheet06.small.webp',
+  'sheet07.small.webp',
+  'sheet08.small.webp',
+  'sheet09.small.webp',
+  'sheet10.small.webp',
+]);
+
+// Full-res sheets are only needed by the card-detail modal. Warm them after the
+// table sheets so opening a card later is snappy without delaying first paint.
+const DETAIL_SHEETS = Object.freeze([
   'sheet01.png',
   'sheet02.png',
   'sheet03.png',
@@ -33,7 +50,8 @@ function warmImage(src, target = window) {
 function warmSheets(target = window) {
   if (target.__tlrCardSheetsWarmStarted) return;
   target.__tlrCardSheetsWarmStarted = true;
-  CARD_SHEETS.forEach((src, index) => {
+  const order = [...TABLE_SHEETS, ...DETAIL_SHEETS];
+  order.forEach((src, index) => {
     target.setTimeout(() => warmImage(src, target), index * SHEET_GAP_MS);
   });
 }

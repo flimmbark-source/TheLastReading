@@ -45,13 +45,24 @@ body {
   ) !important;
 }
 
-/* ── Pixelated card-art sprites ── */
-.card.photo,
+/* ── Pixelated UI icons (genuine pixel-art) ── */
 .isp,
 [class^='isp-'],
 [class*=' isp-'] {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+
+/* ── Painted card tiles: smooth downscale ──────────────────────────────────
+   The card sprites are 512×768 painted art rendered at ~100–130px on the
+   table — roughly a 4× downscale. Nearest-neighbor (pixelated) crunches that
+   painted detail into shimmer/aliasing. Let the browser do a proper
+   bilinear/trilinear downscale so the cards read crisp while the PS1 mood
+   (vignette, flicker, grain, pixel-art icons) stays intact. */
+.card.photo {
+  image-rendering: auto;
+  image-rendering: smooth;
+  image-rendering: high-quality;
 }
 
 /* ── Deepen card backgrounds (Inscryption-dark) ── */
