@@ -39,15 +39,42 @@ const card = uid => ({ uid, id: `major_${uid}`, type: 'major' });
   assert.equal(consumeDrawAnimation(drawnB.uid, target).index, 1, 'second new card is queued second');
 }
 
-// Full-hand actions mark the next hand render, but rejected actions clear it.
+// Opening and later set deals both queue the entire newly dealt hand.
+{
+  let run = { hand: [] };
+  const openingHand = [card(20), card(21), card(22)];
+  const nextSetHand = [card(30), card(31), card(32)];
+  const store = {
+    getState: () => ({ run }),
+    dispatch(action) {
+      if (action.type === 'START_READING') run = { hand: openingHand };
+      if (action.type === 'START_NEXT_SET') run = { hand: nextSetHand };
+      return action;
+    },
+  };
+  const target = { tlrStore: store };
+  installDrawAnimation(target);
+
+  store.dispatch({ type: 'START_READING' });
+  assert.equal(consumeDrawAnimation(openingHand[0].uid, target).delayMs, 0, 'opening set deals the first card immediately');
+  assert.equal(consumeDrawAnimation(openingHand[1].uid, target).delayMs, 78, 'opening set staggers the second card');
+  assert.equal(consumeDrawAnimation(openingHand[2].uid, target).delayMs, 156, 'opening set staggers the third card');
+
+  store.dispatch({ type: 'START_NEXT_SET' });
+  assert.equal(consumeDrawAnimation(nextSetHand[0].uid, target).delayMs, 0, 'next set deals the first card immediately');
+  assert.equal(consumeDrawAnimation(nextSetHand[1].uid, target).delayMs, 78, 'next set staggers the second card');
+  assert.equal(consumeDrawAnimation(nextSetHand[2].uid, target).delayMs, 156, 'next set staggers the third card');
+}
+
+// Other full-hand actions still mark the next hand render, but rejected actions clear it.
 {
   const target = {
-    startReading() { return true; },
+    flushHand() { return true; },
     mulligan() { return false; },
   };
   installDrawAnimation(target);
-  target.startReading();
-  assert.equal(target.__tlrAnimateFullHandOnNextRender, true, 'new reading marks the next hand as a full deal');
+  target.flushHand();
+  assert.equal(target.__tlrAnimateFullHandOnNextRender, true, 'flush marks the next hand as a full deal');
   clearDrawAnimations(target);
   target.mulligan();
   assert.equal(target.__tlrAnimateFullHandOnNextRender, false, 'failed mulligan does not leave a stale deal marker');
