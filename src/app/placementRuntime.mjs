@@ -25,6 +25,7 @@ function scorePillBase(target,state){
 }
 
 export function placeCard(slotIndex,target = window, explicitCardUid = null){
+  if(target.__tlrCardDetailOpen)return false;
   const state=stateOf(target);
   const cardUid=explicitCardUid ?? selectedCardId(target,state);
   if(!state || cardUid===null || state.spread[slotIndex])return false;
