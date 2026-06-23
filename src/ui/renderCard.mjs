@@ -87,6 +87,7 @@ function ensureCardDetailStyles(target=window){
 
 export function closeCardDetail(target=window){
   target.document?.querySelector('.card-detail-backdrop')?.remove();
+  target.__tlrCardDetailOpen=false;
 }
 
 export function expandCard(card,target=window){
@@ -106,6 +107,7 @@ export function expandCard(card,target=window){
     <div class="card-detail-meaning"><div>${escapeHtml(upright||'')}</div><div>${escapeHtml(reversed||'')}</div></div>
   </div>`;
   target.document.body.appendChild(backdrop);
+  target.__tlrCardDetailOpen=true;
   const rendered=backdrop.querySelector('.card-detail-card .card');
   if(rendered)applyCardPhoto(rendered,card);
   backdrop.addEventListener('click',ev=>{if(ev.target===backdrop)closeCardDetail(target);});
