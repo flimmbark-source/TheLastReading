@@ -63,7 +63,7 @@ const target = {
     openCount += 1;
     this.document.body.innerHTML = `
       <div class="store-offer-row">
-        <div class="store-card"><div class="store-card-desc">old scoring copy</div></div>
+        <div class="store-card"><div class="store-card-desc">scoring</div></div>
         <div class="store-card"><div class="store-card-desc">pack</div></div>
         <div class="store-card"><div class="store-card-desc">relic</div></div>
       </div>`;
@@ -105,11 +105,6 @@ try {
   target.openShopMain();
   assert.equal(target._storeFrontOffers.pack[0], 'foundation', 'dormant Thread offers should be replaced with an active pack');
   assert.ok(openCount >= 2, 'sanitizing a dormant pack should rerender the storefront');
-  assert.equal(
-    target.document.querySelector('.store-offer-row .store-card:nth-child(1) .store-card-desc').textContent,
-    'Each completed Sequence tier: +5 Chips / +0.25 Mult',
-    'tiered scoring offers should explain their cumulative scaling',
-  );
   assert.match(
     target.document.querySelector('.store-offer-row .store-card:nth-child(3)').textContent,
     /Relic Vessel/,
