@@ -21,8 +21,8 @@ assert.equal(marketCostAfterRelics(2, ['merchants_scale']), 0, 'Market costs sho
 
 assert.deepEqual(
   [0, 1, 2, 3, 4, 8].map(packRefreshCost),
-  [10, 20, 30, 40, 50, 50],
-  'market refreshes should escalate sharply and cap at 50 Reserve',
+  [10, 20, 30, 40, 50, 90],
+  'market refreshes should continue escalating by 10 Reserve without a cap',
 );
 assert.deepEqual(ACTIVE_MARKET_PACK_IDS, ['foundation', 'innate', 'restless', 'second_sight']);
 assert.equal(VESSEL_OFFER_CHANCE, 0.30, 'Relic Vessel should use a 30% offer chance');
