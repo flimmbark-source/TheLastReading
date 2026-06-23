@@ -24,7 +24,8 @@ export function renderSpread(ability, inPurge, view = null) {
   const displaySpread = view && view.spread ? view.spread : state.spread;
   const displayHand = view ? (view.hand || []) : state.hand;
   const selected = view && Object.prototype.hasOwnProperty.call(view, 'selected') ? view.selected : state.selected;
-  const hintState={spread:displaySpread||[],hand:displayHand||[]};
+  const dragActive = typeof window !== 'undefined' && window.__handReorderActive;
+  const hintState = { spread: displaySpread || [], hand: displayHand || [] };
   const hintPool=[...hintState.spread.filter(Boolean),...hintState.hand];
   const sp = $('#spread');
   if (!_slotEls || _slotEls.length !== 5 || !sp.contains(_slotEls[0])) {
@@ -41,7 +42,7 @@ export function renderSpread(ability, inPurge, view = null) {
     const card = displaySpread[i];
     const s = _slotEls[i];
     clearHintVisual(s);
-    let cls = 'slot ' + (card ? 'filled' : 'empty') + (selected !== null && !card ? ' target' : '');
+    let cls = 'slot ' + (card ? 'filled' : 'empty') + ((selected !== null && !card && !dragActive) ? ' target' : '');
     if (card) {
       const validSpread = ability && ability.validIds.has(card.uid);
       const pickedSpread = ability && validSpread && ability.picked.includes(card.uid);
