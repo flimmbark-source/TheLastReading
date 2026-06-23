@@ -1,0 +1,3 @@
+.hand-card-action-drag-active .handDock{z-index:10040!important}
+.hand-card-action-drag-active .hand-card-dragging{z-index:10042!important}
+.card-drop-target{transform:scale(1.08)!important;box-shadow:0 0 18px #ffd978!important}
