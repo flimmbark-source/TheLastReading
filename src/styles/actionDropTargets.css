@@ -10,6 +10,11 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
 .spread-actions .sbtn-discard.card-drop-target::after{color:#ffd1a4;border:1px solid rgba(255,135,72,.58);text-shadow:0 0 5px rgba(255,108,52,.38)}
 .spread-actions .sbtn-purge.card-drop-target{filter:brightness(1.16)!important;box-shadow:0 0 4px rgba(189,130,255,.52),0 0 11px rgba(126,76,225,.34)!important}
 .spread-actions .sbtn-purge.card-drop-target::after{color:#e6ccff;border:1px solid rgba(183,126,255,.56);text-shadow:0 0 5px rgba(147,91,230,.4)}
+#abilityPrompt .ability-prompt-actions{margin-left:auto;display:flex;align-items:center;gap:8px;flex:0 0 auto}
+#abilityPrompt .ability-prompt-actions button{margin-left:0!important}
+#abilityCancel{background:rgba(33,22,17,.94)!important;color:#cdbb98!important;border:1px solid rgba(133,101,54,.78)!important;box-shadow:none!important}
+#abilityCancel:hover{filter:brightness(1.08)}
+#abilityCancel[hidden]{display:none!important}
 
 @media(max-width:640px){
   html body.single-player-v2.generated-sheet-ready{--spv2-action-edge-gap:max(24px,6.5vw);background-color:#0b0805!important;background-image:url('/background.png')!important;background-position:center top!important;background-size:cover!important;background-repeat:no-repeat!important;background-attachment:fixed!important}
@@ -49,6 +54,9 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
   html body.single-player-v2.generated-sheet-ready #purgeBtn.card-drop-target::after{content:attr(data-drop-label)!important;display:block!important;position:absolute!important;top:calc(100% + 8px)!important;bottom:auto!important;left:50%!important;transform:translateX(-50%)!important;min-width:max-content!important;padding:5px 9px!important;border-radius:999px!important;background:rgba(18,10,7,.96)!important;font:800 10px/1 system-ui,Segoe UI,sans-serif!important;letter-spacing:.05em!important;text-transform:uppercase!important;white-space:nowrap!important;pointer-events:none!important;box-shadow:0 7px 18px rgba(0,0,0,.68)!important}
   html body.single-player-v2.generated-sheet-ready #discardBtn.card-drop-target::after{color:#ffd1a4!important;border:1px solid rgba(255,135,72,.58)!important;text-shadow:0 0 5px rgba(255,108,52,.38)!important}
   html body.single-player-v2.generated-sheet-ready #purgeBtn.card-drop-target::after{color:#e6ccff!important;border:1px solid rgba(183,126,255,.56)!important;text-shadow:0 0 5px rgba(147,91,230,.4)!important}
+
+  #abilityPrompt .ability-prompt-actions{flex-direction:column;gap:6px;align-items:stretch}
+  #abilityPrompt .ability-prompt-actions button{min-width:74px}
 }
 
 @media(prefers-reduced-motion:reduce){.spread-actions .sbtn.card-drop-target{transition:none!important}}
