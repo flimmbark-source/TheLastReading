@@ -5,6 +5,28 @@
 import { abilityTargetView as selectAbilityTargetView } from '../game/selectors.mjs';
 import { getPendingPreviewFn } from '../app/abilityTargetBridge.mjs';
 
+function ensureAbilityCancelButton(){
+  let cancel=$('#abilityCancel');
+  if(cancel)return cancel;
+  const confirm=$('#abilityConfirm');
+  if(!confirm)return null;
+  let actions=confirm.closest('.ability-prompt-actions');
+  if(!actions){
+    actions=document.createElement('div');
+    actions.className='ability-prompt-actions';
+    confirm.parentNode.insertBefore(actions,confirm);
+    actions.appendChild(confirm);
+  }
+  cancel=document.createElement('button');
+  cancel.id='abilityCancel';
+  cancel.type='button';
+  cancel.textContent='Cancel';
+  cancel.hidden=true;
+  cancel.addEventListener('click',()=>window.cancelAbilitySelection?.());
+  actions.appendChild(cancel);
+  return cancel;
+}
+
 export function choice(title,prompt,cards,cb){$('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';let ch=$('#choices');ch.innerHTML='';cards.forEach(c=>{let e=document.createElement('div');e.className='card choice-card '+(c.type==='major'?'major':'');applyHint(e,c,uniqueCards([...state.spread.filter(Boolean),...state.hand,c]));e.innerHTML=cardHTML(c);applyCardPhoto(e,c);e.onclick=()=>{$('#modal').classList.remove('show','collapsed');cb(c)};ch.appendChild(e)});$('#modal').classList.remove('collapsed');$('#modal').classList.add('show');playSound('flip');tlrArchitectureSync()}
 
 export function choiceAsync(title,prompt,cards){return new Promise(resolve=>choice(title,prompt,cards,resolve))}
@@ -14,7 +36,7 @@ export function toggleModalCollapse(){let m=$('#modal');if(!m.classList.contains
 export function renderAbilityPrompt(){
   const el=$('#abilityPrompt');
   if(!el)return;
-  const cancel=$('#abilityCancel');
+  const cancel=ensureAbilityCancelButton();
   const storeState=window.tlrStore?.getState?.()??null;
   const a=storeState?selectAbilityTargetView(storeState):null;
   if(!a){el.classList.remove('show');if(cancel)cancel.hidden=true;return}
