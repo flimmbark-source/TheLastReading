@@ -95,6 +95,24 @@ export function installHandCardGestures(target = window){
     if(g)g.hoverIndex=g.origIndex;
   };
 
+  const restoreCardToHand=()=>{
+    if(!g||!g.cardEl||!g.originalParent)return;
+    const cardEl=g.cardEl;
+    if(cardEl.parentNode===g.originalParent)return;
+    cardEl.style.removeProperty('position');
+    cardEl.style.removeProperty('left');
+    cardEl.style.removeProperty('top');
+    cardEl.style.removeProperty('width');
+    cardEl.style.removeProperty('height');
+    cardEl.style.removeProperty('margin');
+    cardEl.style.removeProperty('z-index');
+    if(g.originalNextSibling&&g.originalNextSibling.parentNode===g.originalParent){
+      g.originalParent.insertBefore(cardEl,g.originalNextSibling);
+    }else{
+      g.originalParent.appendChild(cardEl);
+    }
+  };
+
   // ── Transition pending → select-drag (ability/purge multi-target sweep) ──
   const startSelectDrag=ev=>{
     if(!g||g.mode!=='pending')return;
@@ -136,14 +154,15 @@ export function installHandCardGestures(target = window){
       state.selected=null;
       if(typeof refreshHandState==='function')refreshHandState();
     }
-    // Capture card centre and finger-to-centre offset at grab time.
+    // Capture card offset from pointer to card top-left at grab time.
     const rect=g.cardEl.getBoundingClientRect();
-    g.grabOffsetX=ev.clientX-(rect.left+rect.width/2);
-    g.grabOffsetY=ev.clientY-(rect.top+rect.height/2);
+    g.grabOffsetX=ev.clientX-rect.left;
+    g.grabOffsetY=ev.clientY-rect.top;
     const h=handEl();
     const hRect=h?h.getBoundingClientRect():{left:0,top:0,width:target.innerWidth,height:200};
     g.handCenterX=hRect.left+hRect.width/2;
     g.handTop=hRect.top;
+    g.cardHalfW=rect.width/2;
     g.cardHalfH=rect.height/2;
     g.prevX=ev.clientX;
     g.tiltDeg=0;
@@ -156,6 +175,17 @@ export function installHandCardGestures(target = window){
     if(h)h.classList.add('hand-parting');
     const spEl2=document.querySelector('#spread');if(spEl2)spEl2.classList.add('drag-active');
     g.cardEl.classList.add('hand-card-dragging');
+    g.cardRect = rect;
+    g.dragOriginLeft = rect.left;
+    g.dragOriginTop = rect.top;
+    if (g.cardEl.parentNode !== document.body) document.body.appendChild(g.cardEl);
+    g.cardEl.style.setProperty('position','fixed','important');
+    g.cardEl.style.setProperty('left', `${rect.left}px`, 'important');
+    g.cardEl.style.setProperty('top', `${rect.top}px`, 'important');
+    g.cardEl.style.setProperty('width', `${rect.width}px`, 'important');
+    g.cardEl.style.setProperty('height', `${rect.height}px`, 'important');
+    g.cardEl.style.setProperty('margin', '0', 'important');
+    g.cardEl.style.setProperty('z-index', '100000', 'important');
     try{g.cardEl.setPointerCapture(g.pointerId);}catch(e){}
     target.__handGestureSuppressClickUntil=performance.now()+800;
     stepDrag(ev);
@@ -164,10 +194,10 @@ export function installHandCardGestures(target = window){
   // ── Slot highlight geometry — pure math, no DOM writes.
   //    Returns {inSpread, hit, hover} for the rAF to apply.
   const calcDropTarget=(x,y)=>{
-    const dx=(x-g.grabOffsetX)-g.handCenterX;
-    const dy=(y-g.grabOffsetY)-(g.handTop+g.cardHalfH);
-    const cardCX=g.handCenterX+dx;
-    const cardCY=g.handTop+dy+g.cardHalfH;
+    const cardLeft=x-g.grabOffsetX;
+    const cardTop=y-g.grabOffsetY;
+    const cardCX=cardLeft+g.cardHalfW;
+    const cardCY=cardTop+g.cardHalfH;
     if(isInSpreadZone(cardCY)){
       return{inSpread:true,hit:hitTestSpreadSlots(cardCX,cardCY)};
     }else{
@@ -211,9 +241,11 @@ export function installHandCardGestures(target = window){
       const targetTilt=Math.max(-TILT_MAX,Math.min(TILT_MAX,deltaX*TILT_SCALE));
       g.tiltDeg+=(targetTilt-g.tiltDeg)*TILT_LERP;
       g.prevX=x;
-      const dx=(x-g.grabOffsetX)-g.handCenterX;
-      const dy=(y-g.grabOffsetY)-(g.handTop+g.cardHalfH);
-      g.cardEl.style.setProperty('transform','translate(calc(-50% + '+dx.toFixed(1)+'px),'+dy.toFixed(1)+'px) rotate('+g.tiltDeg.toFixed(2)+'deg)','important');
+      const cardLeft = x - g.grabOffsetX;
+      const cardTop = y - g.grabOffsetY;
+      const moveX = cardLeft - g.dragOriginLeft;
+      const moveY = cardTop - g.dragOriginTop;
+      g.cardEl.style.setProperty('transform','translate('+moveX.toFixed(1)+'px,'+moveY.toFixed(1)+'px) rotate('+g.tiltDeg.toFixed(2)+'deg)','important');
     });
   };
 
@@ -267,6 +299,13 @@ export function installHandCardGestures(target = window){
     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
     cardEl.classList.remove('hand-card-dragging');
     cardEl.style.removeProperty('transform');
+    cardEl.style.removeProperty('position');
+    cardEl.style.removeProperty('left');
+    cardEl.style.removeProperty('top');
+    cardEl.style.removeProperty('width');
+    cardEl.style.removeProperty('height');
+    cardEl.style.removeProperty('margin');
+    cardEl.style.removeProperty('z-index');
     if(g.dropSlot)g.dropSlot.slotEl.classList.remove('drop-target');
     const h=handEl();if(h)h.classList.remove('hand-parting');
     const spEl3=document.querySelector('#spread');if(spEl3)spEl3.classList.remove('drag-active');
@@ -369,23 +408,9 @@ export function installHandCardGestures(target = window){
       tiltDeg:0,
       dragRafId:null,
       lastDragEv:null,
+      originalParent:cardEl.parentNode,
+      originalNextSibling:cardEl.nextSibling,
     };
-    // Hold-to-expand: 400ms press selects the card and opens detail view (normal mode only).
-    if(!inSelectionMode()){
-      g.holdTimer=setTimeout(()=>{
-        if(!g||g.mode!=='pending')return;
-        const _hand=storeState()?.run?.hand||state.hand;
-        const card=_hand.find(c=>c.uid===uid);
-        g=null;
-        if(card&&typeof expandCard==='function'){
-          target.__handGestureSuppressClickUntil=performance.now()+800;
-          state.selected=uid;
-          if(target.tlrStore&&target.tlrActions)target.tlrStore.dispatch({type:target.tlrActions.SELECT_CARD,cardId:uid});
-          if(typeof refreshHandState==='function')refreshHandState();
-          expandCard(card);
-        }
-      },HOLD_MS);
-    }
   },true);
 
   document.addEventListener('pointermove',ev=>{

@@ -13,6 +13,20 @@ document.addEventListener('pointerdown', () => {
   const _c = _ac(); if (_c && _c.state === 'suspended') _c.resume();
 }, true);
 
+const MELD_SOUND_FILE = new URL('./freesound_community-chinese-fanfare-107737.mp3', import.meta.url).href;
+const _meldSoundBufferPromise = (async () => {
+  try {
+    const response = await fetch(MELD_SOUND_FILE, { cache: 'reload' });
+    if (!response.ok) return null;
+    const arrayBuffer = await response.arrayBuffer();
+    const ctx = _ac();
+    if (!ctx) return null;
+    return await new Promise((resolve, reject) => ctx.decodeAudioData(arrayBuffer, resolve, reject));
+  } catch (e) {
+    return null;
+  }
+})();
+
 export function playSound(type){
   const ctx=_ac();if(!ctx)return;
   if(ctx.state==='suspended')ctx.resume();
@@ -26,12 +40,34 @@ export function playSound(type){
       const g=ctx.createGain();g.gain.setValueAtTime(0.22*_sfxVol,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+.07);
       src.connect(f);f.connect(g);g.connect(ctx.destination);src.start();src.onended=()=>{src.disconnect();f.disconnect();g.disconnect();};
     }else if(type==='meld'){
-      [[523,0],[659,.05],[784,.11]].forEach(([freq,t])=>{
-        const o=ctx.createOscillator(),g=ctx.createGain();
-        o.type='sine';o.frequency.value=freq;
-        const at=ctx.currentTime+t;
-        g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(0.18*_sfxVol,at+.01);g.gain.exponentialRampToValueAtTime(0.001,at+.55);
-        o.connect(g);g.connect(ctx.destination);o.start(at);o.stop(at+.6);o.onended=()=>{o.disconnect();g.disconnect();};
+      const fallbackSynth = () => {
+        [[523,0],[659,.05],[784,.11]].forEach(([freq,t])=>{
+          const o=ctx.createOscillator(),g=ctx.createGain();
+          o.type='sine';o.frequency.value=freq;
+          const at=ctx.currentTime+t;
+          g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(0.55*_sfxVol,at+.01);g.gain.exponentialRampToValueAtTime(0.001,at+.55);
+          o.connect(g);g.connect(ctx.destination);o.start(at);o.stop(at+.6);o.onended=()=>{o.disconnect();g.disconnect();};
+        });
+      };
+      _meldSoundBufferPromise.then(buffer => {
+        if (!buffer) {
+          fallbackSynth();
+          return;
+        }
+        try {
+          const src = ctx.createBufferSource();
+          src.buffer = buffer;
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(0.85*_sfxVol, ctx.currentTime);
+          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 4);
+          src.connect(g); g.connect(ctx.destination);
+          src.start();
+          src.stop(ctx.currentTime + 4.01);
+        } catch (e) {
+          fallbackSynth();
+        }
+      }).catch(() => {
+        fallbackSynth();
       });
     }else if(type==='resonation'){
       [[220,0,.28],[440,.07,.2],[880,.14,.14],[330,.2,.1]].map(([f,t,v])=>[f,t,v*_sfxVol]).forEach(([freq,t,vol])=>{

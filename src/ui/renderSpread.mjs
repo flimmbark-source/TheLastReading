@@ -1,6 +1,95 @@
 /* global state, $, _slotEls, handleAbilityHandClick */
 import { cardHTML, applyCardPhoto, CARD_SHEET } from './renderCard.mjs';
 import { applyHint } from './renderHints.mjs';
+import { installCardDetailGestures } from './cardDetailGestures.mjs';
+
+function installSelectedHintLayerFix(target = window) {
+  const doc = target.document;
+  if (!doc || doc.getElementById('selected-hint-layer-fix')) return;
+  const style = doc.createElement('style');
+  style.id = 'selected-hint-layer-fix';
+  style.textContent = `
+    @media(max-width:640px){
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.sel[data-hint]) .spread-wrap:has(#scorePreview:not(.hidden)),
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.ability-picked[data-hint]) .spread-wrap:has(#scorePreview:not(.hidden)),
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.purge-picked[data-hint]) .spread-wrap:has(#scorePreview:not(.hidden)),
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.press-highlight[data-hint]) .spread-wrap:has(#scorePreview:not(.hidden)){
+        z-index:60!important;
+      }
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.sel[data-hint]) .handDock,
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.ability-picked[data-hint]) .handDock,
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.purge-picked[data-hint]) .handDock,
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.press-highlight[data-hint]) .handDock{
+        z-index:64!important;
+      }
+      html body.single-player-v2.generated-sheet-ready #hand .card.sel[data-hint],
+      html body.single-player-v2.generated-sheet-ready #hand .card.ability-picked[data-hint],
+      html body.single-player-v2.generated-sheet-ready #hand .card.purge-picked[data-hint],
+      html body.single-player-v2.generated-sheet-ready #hand .card.press-highlight[data-hint]{
+        overflow:visible!important;
+        z-index:1001!important;
+      }
+      html body.single-player-v2.generated-sheet-ready #hand .card.sel[data-hint]::after,
+      html body.single-player-v2.generated-sheet-ready #hand .card.ability-picked[data-hint]::after,
+      html body.single-player-v2.generated-sheet-ready #hand .card.purge-picked[data-hint]::after,
+      html body.single-player-v2.generated-sheet-ready #hand .card.press-highlight[data-hint]::after{
+        z-index:1002!important;
+      }
+    }
+  `;
+  doc.head.appendChild(style);
+}
+
+function cleanupDetachedHandCards(target = window) {
+  const doc = target.document;
+  const hand = doc?.getElementById('hand');
+  if (!doc || !hand || typeof state === 'undefined') return;
+
+  const handState = state.hand || [];
+  const handIds = new Set(handState.map(card => card.uid));
+  let restored = false;
+
+  doc.querySelectorAll('body > .card[data-uid]').forEach(cardEl => {
+    if (cardEl.classList.contains('hand-card-dragging')) return;
+
+    const uid = Number(cardEl.dataset.uid);
+    cardEl.style.removeProperty('transform');
+    cardEl.style.removeProperty('position');
+    cardEl.style.removeProperty('left');
+    cardEl.style.removeProperty('top');
+    cardEl.style.removeProperty('width');
+    cardEl.style.removeProperty('height');
+    cardEl.style.removeProperty('margin');
+    cardEl.style.removeProperty('z-index');
+
+    if (!handIds.has(uid)) {
+      cardEl.remove();
+      return;
+    }
+
+    const desiredIndex = handState.findIndex(card => card.uid === uid);
+    const currentCards = [...hand.querySelectorAll(':scope > .card[data-uid]')];
+    hand.insertBefore(cardEl, currentCards[desiredIndex] || null);
+    restored = true;
+  });
+
+  if (restored && typeof target.__handTriggerLayout === 'function') target.__handTriggerLayout();
+}
+
+function installDetachedHandCardCleanup(target = window) {
+  if (!target?.document || target.__tlrDetachedHandCardCleanupInstalled) return;
+  target.__tlrDetachedHandCardCleanupInstalled = true;
+  const scheduleCleanup = () => target.setTimeout(() => cleanupDetachedHandCards(target), 0);
+  target.document.addEventListener('pointerup', scheduleCleanup, true);
+  target.document.addEventListener('pointercancel', scheduleCleanup, true);
+  target.addEventListener('blur', scheduleCleanup);
+}
+
+if (typeof window !== 'undefined') {
+  installCardDetailGestures(window);
+  installSelectedHintLayerFix(window);
+  installDetachedHandCardCleanup(window);
+}
 
 function placeIntoSlot(index, view) {
   if (view && view.onPlaceCard) view.onPlaceCard(index);
@@ -20,11 +109,13 @@ function clearHintVisual(element) {
 }
 
 export function renderSpread(ability, inPurge, view = null) {
+  cleanupDetachedHandCards(window);
   if (document.body.classList.contains('mp-game-active') && !window.__tlrMpUsingSingleAbilityFlow) return;
   const displaySpread = view && view.spread ? view.spread : state.spread;
   const displayHand = view ? (view.hand || []) : state.hand;
   const selected = view && Object.prototype.hasOwnProperty.call(view, 'selected') ? view.selected : state.selected;
-  const hintState={spread:displaySpread||[],hand:displayHand||[]};
+  const dragActive = typeof window !== 'undefined' && window.__handReorderActive;
+  const hintState = { spread: displaySpread || [], hand: displayHand || [] };
   const hintPool=[...hintState.spread.filter(Boolean),...hintState.hand];
   const sp = $('#spread');
   if (!_slotEls || _slotEls.length !== 5 || !sp.contains(_slotEls[0])) {
@@ -41,7 +132,7 @@ export function renderSpread(ability, inPurge, view = null) {
     const card = displaySpread[i];
     const s = _slotEls[i];
     clearHintVisual(s);
-    let cls = 'slot ' + (card ? 'filled' : 'empty') + (selected !== null && !card ? ' target' : '');
+    let cls = 'slot ' + (card ? 'filled' : 'empty') + ((selected !== null && !card && !dragActive) ? ' target' : '');
     if (card) {
       const validSpread = ability && ability.validIds.has(card.uid);
       const pickedSpread = ability && validSpread && ability.picked.includes(card.uid);
