@@ -26,24 +26,27 @@ export function renderScoringSheet(target = window){
   const u=persistOf(target).up || {};
   const rankBonus=(u.rank||0)*5;
   const rankMult=+(1.25+(u.rank_mult||0)*0.25).toFixed(2);
-  const courtChips=(u.court_chips||0)*8;
-  const courtMult=+(1.25+(u.court_mult||0)*0.25).toFixed(2);
+  const fullCourtChips=(u.court_chips||0)*8;
+  const fullCourtMult=+(1.25+(u.court_mult||0)*0.25).toFixed(2);
+  const royalCourtChips=(u.royal_court_chips||0)*8;
+  const royalCourtMult=+(1.5+(u.royal_court_mult||0)*0.25).toFixed(2);
   const seqBonus=(u.sequence||0)*5;
   const seqMult=+(1.25+(u.seq_mult||0)*0.5).toFixed(2);
   const pathChips=(u.path_chips||0)*15;
   const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
   const rows=[
     ['(3/4)) of a Kind','Matching ranks',`+${5+rankBonus}`,fmtBonus(rankMult)],
-    ['Full Court (3/4)','Consecutive ranks',`+${10+courtChips}`,fmtBonus(courtMult)],
-    ['Royal Court (3/4)','Consecutive ranks, same suit',`+${10+courtChips}`,fmtBonus(courtMult)],
+    ['Full Court (3/4)','Consecutive ranks',`+${10+fullCourtChips}`,fmtBonus(fullCourtMult)],
+    ['Royal Court (3/4)','Consecutive ranks, same suit',`+${10+royalCourtChips}`,fmtBonus(royalCourtMult)],
     ['Sequence (3/4/5)','Consecutive major arcana',`+${10+seqBonus}`,fmtBonus(seqMult)],
     ['Path of the Magi','0·I·XXI in spread',`+${10+pathChips}`,fmtBonus(pathMult)],
   ];
   const upgrades=[];
-  if(u.rank)upgrades.push(`Rank +${rankBonus}chips ${fmtBonus(rankMult)}mult`);
-  if(u.court_chips)upgrades.push(`Court +${courtChips}chips ${fmtBonus(courtMult)}mult`);
-  if(u.sequence)upgrades.push(`Seq +${seqBonus}chips ${fmtBonus(seqMult)}mult`);
-  if(u.path_chips)upgrades.push(`Path +${pathChips}chips ${fmtBonus(pathMult)}mult`);
+  if(u.rank||u.rank_mult)upgrades.push(`Rank +${rankBonus}chips ${fmtBonus(rankMult)}mult`);
+  if(u.court_chips||u.court_mult)upgrades.push(`Full Court +${fullCourtChips}chips ${fmtBonus(fullCourtMult)}mult`);
+  if(u.royal_court_chips||u.royal_court_mult)upgrades.push(`Royal Court +${royalCourtChips}chips ${fmtBonus(royalCourtMult)}mult`);
+  if(u.sequence||u.seq_mult)upgrades.push(`Seq +${seqBonus}chips ${fmtBonus(seqMult)}mult`);
+  if(u.path_chips||u.path_mult)upgrades.push(`Path +${pathChips}chips ${fmtBonus(pathMult)}mult`);
   const minorRows=rows.slice(0,4);
   const majorRows=rows.slice(4);
   let html='<table class="ref-table"><thead><tr><th>Pattern</th><th>Condition</th><th>Chips</th><th>Mult</th></tr></thead><tbody>';
