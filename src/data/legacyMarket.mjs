@@ -27,12 +27,10 @@ export const SHOP = Object.freeze({
   pentacles_mult:  ['Pentacles Mult',    'Each Pentacles card in the spread adds <span class="up-mult">+0.05 Mult</span>',                                                    16,1.7, '⚜','ritual'],
 
   // ── Pattern upgrades ──
-  // Tiered patterns intentionally score every completed tier. The wording makes
-  // that cumulative behaviour explicit instead of implying a one-time bonus.
-  rank:            ['Rank of a Kind',    'Each completed Rank tier gains <span class="up-chips">+5 Chips</span> and <span class="up-mult">+0.25 Mult</span>',                 26,1.8, '⚜','pattern','rank_mult'],
-  sequence:        ['Sequence',          'Each completed Sequence tier gains <span class="up-chips">+5 Chips</span> and <span class="up-mult">+0.25 Mult</span>',             30,1.85,'🌙','pattern','seq_mult'],
-  court_chips:     ['Full Court',        'Each completed Full Court tier gains <span class="up-chips">+8 Chips</span> and <span class="up-mult">+0.25 Mult</span>',          20,1.6, '👑','pattern','court_mult'],
-  royal_court_chips:['Royal Court',      'Each completed Royal Court tier gains <span class="up-chips">+8 Chips</span> and <span class="up-mult">+0.25 Mult</span>',         20,1.6, '👑','pattern','royal_court_mult'],
+  rank:            ['Rank of a Kind',    '<span class="up-chips">+5 Chips</span> and <span class="up-mult">+0.25 Mult</span>',                                               26,1.8, '⚜','pattern','rank_mult'],
+  sequence:        ['Sequence',          '<span class="up-chips">+5 Chips</span> and <span class="up-mult">+0.25 Mult</span>',                                               30,1.85,'🌙','pattern','seq_mult'],
+  court_chips:     ['Full Court',        '<span class="up-chips">+8 Chips</span> and <span class="up-mult">+0.25 Mult</span>',                                               20,1.6, '👑','pattern','court_mult'],
+  royal_court_chips:['Royal Court',      '<span class="up-chips">+8 Chips</span> and <span class="up-mult">+0.25 Mult</span>',                                               20,1.6, '👑','pattern','royal_court_mult'],
   path_chips:      ['Path of the Magi',  '<span class="up-chips">+15 Chips</span> and <span class="up-mult">+0.5 Mult</span>',                                                30,1.9, '✨','pattern','path_mult'],
   balanced_reading:['Balanced Reading',  'Major &amp; Minor Arcana both present: <span class="up-chips">+5 Chips</span> and <span class="up-mult">+0.25 Mult</span>',           24,1.8, '🌙','pattern','balanced_reading_mult'],
   elemental_harmony:['Elemental Harmony','All 4 suits present: <span class="up-chips">+10 Chips</span> and <span class="up-mult">+0.5 Mult</span>',                            28,1.85,'⚜','pattern','elemental_harmony_mult'],
