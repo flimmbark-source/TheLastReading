@@ -16,6 +16,12 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
 #abilityCancel:hover{filter:brightness(1.08)}
 #abilityCancel[hidden]{display:none!important}
 
+/* Card hint labels must escape the rotated slot stacking contexts. */
+#spread .slot:has(> .card[data-hint]){z-index:8!important}
+#spread .slot:has(> .card[data-hint]:active),
+#spread .slot:has(> .card[data-hint].press-highlight),
+#spread .slot:has(> .card[data-hint].ability-picked){z-index:50!important}
+
 /* Contextual surfaces must always sit above the fixed table controls. */
 .modal.show{z-index:10080!important}
 .ability-prompt.show{z-index:10070!important}
@@ -27,10 +33,23 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
 .spread-wrap:has(#scorePreview:not(.hidden)){z-index:10060!important}
 #scorePreview:not(.hidden){position:relative;z-index:10080!important}
 .relic-callout,.store-relic-callout,.store-pack-callout,.inv-tut{z-index:10090!important}
+#summary.modal.show:has(.tarot-shop),#summary.modal.show:has(.store-front-shell){z-index:10110!important}
+body:has(#summary .tarot-shop) #discardBtn,
+body:has(#summary .tarot-shop) #purgeBtn,
+body:has(#summary .tarot-shop) #spv2ArchiveBtn,
+body:has(#summary .store-front-shell) #discardBtn,
+body:has(#summary .store-front-shell) #purgeBtn,
+body:has(#summary .store-front-shell) #spv2ArchiveBtn{z-index:10!important}
 
 @media(max-width:640px){
   html body.single-player-v2.generated-sheet-ready{--spv2-action-edge-gap:max(24px,6.5vw);background-color:#0b0805!important;background-image:url('/background.png')!important;background-position:center top!important;background-size:cover!important;background-repeat:no-repeat!important;background-attachment:fixed!important}
   html body.single-player-v2.generated-sheet-ready::before{content:none!important;display:none!important;background:none!important}
+
+  /* Keep both gesture-instruction text and lifted card hint labels above slots. */
+  html body.single-player-v2.generated-sheet-ready .handDock{z-index:44!important}
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone{z-index:45!important}
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone .hand-swipe-hint{position:relative!important;z-index:2!important}
+  html body.single-player-v2.generated-sheet-ready .hand .card[data-hint]::after{z-index:60!important}
 
   html body.single-player-v2.generated-sheet-ready #discardBtn,
   html body.single-player-v2.generated-sheet-ready #purgeBtn,
@@ -51,6 +70,13 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
   html body.single-player-v2.generated-sheet-ready #abilitiesBtn{top:auto!important;bottom:max(24px,3dvh,calc(env(safe-area-inset-bottom) + 14px))!important;left:auto!important}
   html body.single-player-v2.generated-sheet-ready #scoringBtn{right:calc(4vw + var(--spv2-control-size,clamp(46px,12vw,58px)) + 1.2vw)!important}
   html body.single-player-v2.generated-sheet-ready #abilitiesBtn{right:4vw!important}
+
+  html body.single-player-v2.generated-sheet-ready:has(#summary .tarot-shop) #discardBtn,
+  html body.single-player-v2.generated-sheet-ready:has(#summary .tarot-shop) #purgeBtn,
+  html body.single-player-v2.generated-sheet-ready:has(#summary .tarot-shop) #spv2ArchiveBtn,
+  html body.single-player-v2.generated-sheet-ready:has(#summary .store-front-shell) #discardBtn,
+  html body.single-player-v2.generated-sheet-ready:has(#summary .store-front-shell) #purgeBtn,
+  html body.single-player-v2.generated-sheet-ready:has(#summary .store-front-shell) #spv2ArchiveBtn{z-index:10!important}
 
   html body.single-player-v2.generated-sheet-ready #discardBtn:disabled{opacity:.74!important;box-shadow:none!important}
   html body.single-player-v2.generated-sheet-ready #discardBtn:disabled::before{filter:brightness(1.45) contrast(1.02) saturate(.92) drop-shadow(0 0 3px rgba(0,0,0,.42))!important}
