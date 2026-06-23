@@ -14,6 +14,7 @@ import './validate-action-card-drops.mjs';
 import './validate-draw-animation.mjs';
 import './validate-hints.mjs';
 import './validate-card-detail-placement.mjs';
+import './validate-upgrade-announcements.mjs';
 // jsdom-based UI checks run last: they populate a jsdom window on globalThis.
 import './validate-menu.mjs';
 import './validate-render.mjs';
