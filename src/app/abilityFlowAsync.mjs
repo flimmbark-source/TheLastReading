@@ -51,7 +51,7 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
       return n ? `${cleanName(anchor)}: ${n} card${n === 1 ? '' : 's'} found` : 'No matching cards.';
     };
     const anchors = await selectTargets(title, anchorPrompt, candidates, 1, previewFn);
-    if (!anchors) return null;
+    if (!anchors?.length || !anchors[0]) return null;
     const [anchor] = anchors;
     const found = sortCards(abilityHeldCards(deck, ability, [anchor])).slice(0, count);
     if (!found.length) return { kind: 'fallback', count: 1 };
@@ -83,7 +83,7 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
         return `${cleanName(first)}: ${n} valid second card${n === 1 ? '' : 's'}`;
       },
     );
-    if (!firstPick) return null;
+    if (!firstPick?.length || !firstPick[0]) return null;
     const [first] = firstPick;
     const validSeconds = inPlay.filter(second => second.uid !== first.uid && resultCards(first, second).length > 0);
 
@@ -98,7 +98,7 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
         return `Between these anchors: ${n} card${n === 1 ? '' : 's'}`;
       },
     );
-    if (!secondPick) return null;
+    if (!secondPick?.length || !secondPick[0]) return null;
     const [second] = secondPick;
     const found = sortCards(resultCards(first, second)).slice(0, count);
     const pickedCard = await showChoice(

@@ -77,4 +77,34 @@ function targeting(target) {
   assert.equal(firstCalls, 0, 'the abandoned first callback is never invoked');
 }
 
+// --- Only the first discard-funded targeting step exposes Cancel ---
+{
+  const { target, cardA, cardB } = makeTarget();
+  let claims = 0;
+  let rollbacks = 0;
+  let cancelledArgs = null;
+  target.claimPendingDiscardAbilityCancel = () => claims++ === 0;
+  target.canCancelPendingDiscardAbility = () => true;
+  target.cancelPendingDiscardAbility = () => {
+    rollbacks += 1;
+    target.tlrStore.dispatch({ type: 'CANCEL_ABILITY' });
+    return true;
+  };
+
+  target.tlrStore.dispatch({ type: 'START_ABILITY', abilityId: 'BETWEEN_2', sourceCardId: 99 });
+  target.tlrStartAbilityTargeting({
+    title: 'Between', validCardIds: [cardA.uid, cardB.uid], count: 1,
+    cb: (...picked) => { cancelledArgs = picked; },
+  });
+  assert.equal(target.tlrCanCancelAbilitySelection(), true, 'first targeting step exposes the discard refund');
+  assert.equal(target.cancelAbilitySelection(), true, 'Cancel invokes the discard rollback');
+  assert.equal(rollbacks, 1, 'discard rollback runs exactly once');
+  assert.deepEqual(cancelledArgs, [], 'Cancel resolves targeting with no selected cards');
+  assert.equal(targeting(target), null, 'Cancel closes targeting');
+
+  target.tlrStore.dispatch({ type: 'START_ABILITY', abilityId: 'BETWEEN_2', sourceCardId: 99 });
+  target.tlrStartAbilityTargeting({ title: 'Between step 2', validCardIds: [cardB.uid], count: 1, cb: () => {} });
+  assert.equal(target.tlrCanCancelAbilitySelection(), false, 'later targeting steps do not offer a full discard refund');
+}
+
 console.log('Ability targeting bridge checks passed.');

@@ -3,6 +3,7 @@
 // present. The globals are intentionally overwritten on install so stale inline
 // helpers cannot push old state back into the reducer.
 import { constellationThreshold } from '../systems/constellations.mjs';
+import { queueDrawAnimation } from '../ui/drawAnimation.mjs';
 
 function runtime(target){return target.tlrRuntime || {};}
 function stateOf(target){return runtime(target).state;}
@@ -54,6 +55,7 @@ export function syncPersistToStore(target = window){
 export function resolveAbilityThroughStore(result,target = window){
   if(!storeReady(target))return false;
   const state=stateOf(target);
+  const beforeHandIds=new Set((state.hand||[]).map(card=>card.uid));
   syncPersistToStore(target);
   target.tlrStore.dispatch({type:target.tlrActions.RESOLVE_ABILITY,result});
   const run=target.tlrStore.getState().run;
@@ -62,6 +64,11 @@ export function resolveAbilityThroughStore(result,target = window){
   state.discard=run.discard.slice();
   state.abilityTakenUids=new Set(run.abilityTakenCardIds||[]);
   if(run.resonationBonus)state.resonationBonus=Object.assign({},run.resonationBonus);
+  if(result?.kind==='draw'){
+    queueDrawAnimation(state.hand.filter(card=>!beforeHandIds.has(card.uid)),target);
+  }else if(result?.kind==='world'){
+    queueDrawAnimation(state.hand,target);
+  }
   return true;
 }
 
