@@ -10,6 +10,12 @@ function installSelectedHintLayerFix(target = window) {
   style.id = 'selected-hint-layer-fix';
   style.textContent = `
     @media(max-width:640px){
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.sel[data-hint]) .spread-wrap:has(#scorePreview:not(.hidden)),
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.ability-picked[data-hint]) .spread-wrap:has(#scorePreview:not(.hidden)),
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.purge-picked[data-hint]) .spread-wrap:has(#scorePreview:not(.hidden)),
+      html body.single-player-v2.generated-sheet-ready:has(#hand .card.press-highlight[data-hint]) .spread-wrap:has(#scorePreview:not(.hidden)){
+        z-index:60!important;
+      }
       html body.single-player-v2.generated-sheet-ready:has(#hand .card.sel[data-hint]) .handDock,
       html body.single-player-v2.generated-sheet-ready:has(#hand .card.ability-picked[data-hint]) .handDock,
       html body.single-player-v2.generated-sheet-ready:has(#hand .card.purge-picked[data-hint]) .handDock,
