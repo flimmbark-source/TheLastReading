@@ -12,7 +12,7 @@ import {
   drawToHandSize,
   uniqueCards as uniqueCardsPure,
 } from '../systems/deck.mjs';
-import { queueDrawAnimation } from '../ui/drawAnimation.mjs';
+import { installDrawAnimation, queueDrawAnimation } from '../ui/drawAnimation.mjs';
 import { installMulliganRuntime } from './mulliganRuntime.mjs';
 
 function runtime(target){return target.tlrRuntime || {};}
@@ -69,4 +69,5 @@ export function installDeckRuntime(target = window){
   if(typeof target.drawTo!=='function')target.drawTo=count=>drawTo(count,target);
   if(typeof target.uniqueCards!=='function')target.uniqueCards=uniqueCards;
   installMulliganRuntime(target);
+  installDrawAnimation(target);
 }
