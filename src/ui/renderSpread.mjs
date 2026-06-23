@@ -1,6 +1,9 @@
 /* global state, $, _slotEls, handleAbilityHandClick */
 import { cardHTML, applyCardPhoto, CARD_SHEET } from './renderCard.mjs';
 import { applyHint } from './renderHints.mjs';
+import { installCardDetailGestures } from './cardDetailGestures.mjs';
+
+if (typeof window !== 'undefined') installCardDetailGestures(window);
 
 function placeIntoSlot(index, view) {
   if (view && view.onPlaceCard) view.onPlaceCard(index);
