@@ -20,13 +20,13 @@ import './validate-upgrade-announcements.mjs';
 import './validate-menu.mjs';
 import './validate-render.mjs';
 
-// The multiplayer ability-flow check installs the whole game and leaves a
-// MutationObserver + jsdom timers running, so run it as an isolated child
-// process. execFileSync throws on a non-zero exit, failing the suite.
+// These checks install whole-window gesture/runtime state and leave DOM globals
+// or observers behind, so run them as isolated child processes.
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url));
+execFileSync(process.execPath, [join(here, 'validate-card-detail-hold.mjs')], { stdio: 'inherit' });
 execFileSync(process.execPath, [join(here, 'validate-mp-ability-flow.mjs')], { stdio: 'inherit' });
 
 console.log('All architecture validation checks passed.');
