@@ -16,24 +16,34 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
 #abilityCancel:hover{filter:brightness(1.08)}
 #abilityCancel[hidden]{display:none!important}
 
-/* Keep placed spread cards and their hint labels above the slot frames. */
-#spread .slot:has(> .card){z-index:20!important}
-#spread .slot > .card{position:relative!important;z-index:21!important}
-#spread .slot:has(> .card[data-hint]){z-index:30!important;overflow:visible!important}
-#spread .slot > .card[data-hint]{overflow:visible!important}
-#spread .slot > .card[data-hint]::after{z-index:140!important}
-#spread .slot:has(> .card[data-hint].press-highlight),
-#spread .slot:has(> .card[data-hint].ability-picked),
-#spread .slot:has(> .card[data-hint].sel){z-index:50!important}
-/* The card actually being pressed must outrank every other lifted slot so its
-   (often wider) hint label is never clipped by a later-DOM sibling slot that
-   also reached z-index:50. */
-#spread .slot:has(> .card[data-hint]:active){z-index:60!important}
-/* Re-assert the overflow escape with an html/body-anchored selector so it wins
-   even against the V2 @media(max-width:640px) `.slot > .card{overflow:hidden}`
-   rules, in every state that reveals the hint label. */
-html body #spread .slot:has(> .card[data-hint]),
+/* Placed cards form a symmetric fan (outer cards rotated out, center upright and
+   scaled up). Stack them POSITIONALLY -- center on top, outer cards behind -- so
+   the overlap is consistent and intentional.
+
+   Previously the stack was driven by hint PRESENCE: any slot whose card had a
+   hint jumped to z-index:30, above the plain card slots at z-index:20. When the
+   inner cards formed a pattern (hinted) but the first/last cards did not, the
+   inner slot frames painted over the un-hinted outer cards -- so the first and
+   last card appeared to duck under the slots, but only in that arrangement.
+   Stacking must not depend on card content. */
+#spread .slot{overflow:visible!important}
+#spread .slot > .card{position:relative!important;z-index:2!important}
+#spread .slot:nth-child(1){z-index:21!important}
+#spread .slot:nth-child(2){z-index:23!important}
+#spread .slot:nth-child(3){z-index:25!important}
+#spread .slot:nth-child(4){z-index:23!important}
+#spread .slot:nth-child(5){z-index:21!important}
+/* The card being pressed/picked/selected rises above the whole fan so its
+   floating hint label is never clipped by a neighbouring slot. */
+#spread .slot:has(> .card.press-highlight),
+#spread .slot:has(> .card.ability-picked),
+#spread .slot:has(> .card.sel),
+#spread .slot:has(> .card:active){z-index:60!important}
+/* Let the hint label escape the card box (the V2 layout clips card art to its
+   rounded corners) and sit above the fan. html/body anchor so it also wins
+   against the V2 @media(max-width:640px) `.slot > .card{overflow:hidden}` rule. */
 html body #spread .slot > .card[data-hint]{overflow:visible!important}
+#spread .slot > .card[data-hint]::after{z-index:140!important}
 
 /* Contextual surfaces must always sit above the fixed table controls. */
 .modal.show{z-index:10080!important}
