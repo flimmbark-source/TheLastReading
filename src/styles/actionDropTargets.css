@@ -23,15 +23,21 @@ body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging{position
 #abilityCancel:hover{filter:brightness(1.08)}
 #abilityCancel[hidden]{display:none!important}
 
-/* Keep placed spread cards and their hint labels above the slot frames. */
+/* Keep empty slot frames below placed cards. Filled cards use a stable fan order. */
+#spread .slot{overflow:visible!important;z-index:1!important}
+#spread .slot > .card{position:relative!important;z-index:2!important}
 #spread .slot:has(> .card){z-index:20!important}
-#spread .slot > .card{position:relative!important;z-index:21!important}
-#spread .slot:has(> .card[data-hint]){z-index:30!important;overflow:visible!important}
-#spread .slot > .card[data-hint]{overflow:visible!important}
-#spread .slot > .card[data-hint]::after{z-index:31!important}
-#spread .slot:has(> .card[data-hint]:active),
-#spread .slot:has(> .card[data-hint].press-highlight),
-#spread .slot:has(> .card[data-hint].ability-picked){z-index:50!important}
+#spread .slot:nth-child(1):has(> .card){z-index:21!important}
+#spread .slot:nth-child(2):has(> .card){z-index:23!important}
+#spread .slot:nth-child(3):has(> .card){z-index:25!important}
+#spread .slot:nth-child(4):has(> .card){z-index:23!important}
+#spread .slot:nth-child(5):has(> .card){z-index:21!important}
+#spread .slot:has(> .card.press-highlight),
+#spread .slot:has(> .card.ability-picked),
+#spread .slot:has(> .card.sel),
+#spread .slot:has(> .card:active){z-index:60!important}
+html body #spread .slot > .card[data-hint]{overflow:visible!important}
+#spread .slot > .card[data-hint]::after{z-index:140!important}
 
 /* Contextual surfaces must always sit above the fixed table controls. */
 .modal.show{z-index:10080!important}
