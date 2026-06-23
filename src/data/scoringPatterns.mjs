@@ -100,7 +100,9 @@ export const SCORING_PATTERNS = Object.freeze({
     chipUpgradeKey: 'sequence',
     chipUpgradeScale: 5,
     multUpgradeKey: 'seq_mult',
-    multUpgradeScale: 0.5,
+    // A long sequence scores every completed tier, so each tier receives a
+    // smaller Mult increase than the old one-time-looking description implied.
+    multUpgradeScale: 0.25,
   },
   PATH_OF_THE_MAGI: {
     id: 'path_of_the_magi',
