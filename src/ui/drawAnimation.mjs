@@ -1,5 +1,6 @@
 const QUEUE_KEY = '__tlrDrawAnimationQueue';
-const FULL_HAND_ACTIONS = ['startReading', 'continueSet', 'flushHand', 'mulligan'];
+const FULL_HAND_ACTIONS = ['flushHand', 'mulligan'];
+const SET_DEAL_ACTIONS = new Set(['START_READING', 'START_NEXT_SET']);
 
 function queueState(target) {
   if (!target[QUEUE_KEY]) target[QUEUE_KEY] = { batchId: 0, entries: new Map(), flushQueued: false };
@@ -63,6 +64,21 @@ function wrapFullHandDeal(target, name) {
   target[name] = wrapped;
 }
 
+function installSetDealDispatchHook(target) {
+  const store = target.tlrStore;
+  if (!store || typeof store.dispatch !== 'function' || store.__tlrDrawAnimationDispatchWrapped) return;
+  const originalDispatch = store.dispatch.bind(store);
+  store.dispatch = action => {
+    const result = originalDispatch(action);
+    if (SET_DEAL_ACTIONS.has(action?.type)) {
+      const hand = store.getState?.()?.run?.hand || [];
+      queueDrawAnimation(hand, target, { staggerMs: 78 });
+    }
+    return result;
+  };
+  store.__tlrDrawAnimationDispatchWrapped = true;
+}
+
 export function queueDrawAnimation(cards, target = window, { staggerMs = 72 } = {}) {
   const list = (Array.isArray(cards) ? cards : [cards]).map(cardUid).filter(uid => uid !== null);
   if (!list.length) return [];
@@ -103,6 +119,7 @@ export function installDrawAnimation(target = window) {
     link.href = 'src/styles/drawAnimation.css?v=1';
     doc.head.appendChild(link);
   }
+  installSetDealDispatchHook(target);
   FULL_HAND_ACTIONS.forEach(name => wrapFullHandDeal(target, name));
   const hand = doc?.getElementById('hand');
   if (hand && target.MutationObserver) {
