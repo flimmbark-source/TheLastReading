@@ -20,6 +20,7 @@ import './validate-upgrade-announcements.mjs';
 // jsdom-based UI checks run last: they populate a jsdom window on globalThis.
 import './validate-menu.mjs';
 import './validate-render.mjs';
+import './validate-adventure-ui.mjs';
 
 // These checks install whole-window gesture/runtime state and leave DOM globals
 // or observers behind, so run them as isolated child processes.
