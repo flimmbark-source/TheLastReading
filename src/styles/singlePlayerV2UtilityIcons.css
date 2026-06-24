@@ -1,0 +1,54 @@
+/* Art-directed utility medallions (single-player V2, mobile).
+
+   Replaces the earlier runtime hue-rotate recolor of a single shared gold coin
+   with the proper, art-directed discs sliced from Options-Discs.png. Each disc
+   is its own design with baked color and shading:
+     Menu      steel gear
+     Scoring   teal book (sun + moon)
+     Abilities blue tarot cards
+     Archive   green eye
+
+   Because the color now lives in the art, there is NO hue/saturation filter
+   here — that would fight the baked palette. The only filter is the neutral
+   "raised" elevation drop-shadow (the look that tested well), and the discs are
+   shown as the button background with no competing CSS frame/border.
+
+   Loaded after ArtIntegration so the background-image override wins. Assets are
+   preloaded via generatedSheetAssets.mjs so the skin doesn't flash. Mobile
+   generated-sheet layout only. */
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    background-color: transparent !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    /* Raised look: neutral dark elevation only — no color. Layered contact +
+       cast shadow so the disc pops off the table. drop-shadow (not box-shadow)
+       follows the disc's circular alpha instead of the square button box. */
+    filter:
+      drop-shadow(0 5px 7px rgba(0, 0, 0, 0.78))
+      drop-shadow(0 2px 2px rgba(0, 0, 0, 0.6)) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    background-image: var(--spv2-option-menu-art) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn {
+    background-image: var(--spv2-option-scoring-art) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    background-image: var(--spv2-option-abilities-art) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    background-image: var(--spv2-option-archive-art) !important;
+  }
+}
