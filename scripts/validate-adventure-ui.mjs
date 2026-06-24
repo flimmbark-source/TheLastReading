@@ -26,17 +26,22 @@ const overlay = () => window.document.getElementById('adventureMode');
 window.tlrStartAdventure();
 const el = overlay();
 assert.ok(el.classList.contains('adv-open'), 'overlay opens');
-assert.equal(el.querySelectorAll('.adv-hand .adv-card').length, 8, 'hand is dealt');
+assert.ok(document.body.classList.contains('single-player-v2'), 'reuses the V2 body skin');
+assert.ok(document.body.classList.contains('mode-adventure'), 'flags Adventure mode on the body');
+assert.ok(el.querySelector('.adv-event-deck'), 'event deck replaces the score/threshold area');
+assert.ok(el.querySelector('.spread-wrap .spread .slot'), 'reuses the V2 spread/slot markup');
+assert.ok(el.querySelector('.handDock .hand'), 'reuses the V2 hand dock markup');
+assert.equal(el.querySelectorAll('.handDock .hand .card').length, 8, 'hand is dealt');
 assert.ok(el.querySelector('[data-act=cast]').disabled, 'cannot cast an empty spread');
 
 function playOneEvent() {
   // Fill the spread, then cast and walk through outcome + rewards/recovery.
   for (let i = 0; i < 5; i += 1) {
-    const card = overlay().querySelector('.adv-hand .adv-card');
+    const card = overlay().querySelector('.handDock .hand .card');
     assert.ok(card, 'a hand card is available to place');
     click(card);
   }
-  assert.equal(overlay().querySelectorAll('.adv-spread .adv-card').length, 5, 'spread filled');
+  assert.equal(overlay().querySelectorAll('.spread .slot .card').length, 5, 'spread filled');
   assert.ok(!overlay().querySelector('[data-act=cast]').disabled, 'cast enabled at 5 cards');
   click(overlay().querySelector('[data-act=cast]'));
   assert.ok(overlay().querySelector('.adv-result'), 'outcome screen shows a result');
@@ -59,7 +64,7 @@ while (guard < 12) {
   const recovery = overlay().querySelector('[data-recovery]');
   if (recovery) { click(recovery); continue; }
   if (overlay().querySelector('.adv-bigmsg')) break; // win/lose screen
-  if (overlay().querySelector('.adv-hand')) { playOneEvent(); continue; }
+  if (overlay().querySelector('.handDock .hand')) { playOneEvent(); continue; }
   break;
 }
 assert.ok(overlay().querySelector('.adv-bigmsg'), 'the run reaches an end screen');
@@ -70,6 +75,7 @@ assert.ok(leaveBtn, 'end screen offers Leave');
 click(leaveBtn);
 assert.ok(returned, 'leaving Adventure Mode returns to the main menu');
 assert.ok(!overlay().classList.contains('adv-open'), 'overlay is closed on leave');
+assert.ok(!document.body.classList.contains('mode-adventure'), 'Adventure body flag cleared on leave');
 
 // Debug panel is gated off in production.
 const { isAdventureDebugEnabled } = await import('../src/ui/adventure/adventureHud.mjs');
