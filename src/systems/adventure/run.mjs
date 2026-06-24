@@ -91,10 +91,13 @@ export function selectOutcome(event, meanings) {
  * Resolve a reading against an event. Pure: computes everything that *will*
  * happen and returns it; applyResolution mutates the run.
  */
-export function resolveEvent({ event, spread, run }) {
+export function resolveEvent({ event, spread, run, score: scoreOverride }) {
   const cards = (spread || []).filter(Boolean);
-  const scoreBreakdown = computeScore(cards);
-  const score = scoreBreakdown.finalScore;
+  // When the screen runs on the real table, the live engine already produced
+  // the displayed score; reuse it so the result matches exactly. Otherwise grade
+  // the spread with the shared scoring engine.
+  const scoreBreakdown = scoreOverride == null ? computeScore(cards) : null;
+  const score = scoreOverride == null ? scoreBreakdown.finalScore : scoreOverride;
   const meanings = calculateSpreadMeanings(spread, run.statuses);
 
   let tier;

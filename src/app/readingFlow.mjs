@@ -344,7 +344,18 @@ function relation(title,prompt,poolFn,n,done){
 export function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;waitForCounterThenScore()}
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
 
-export function scoreReading(){let cards=state.spread.filter(Boolean),res=_scoreLegacy(cards),total=res.finalScore,curTH=TH[state.th]+(state.thBonus||0),pass=total>=curTH;
+export function scoreReading(){
+// Adventure Mode runs on this same table but resolves Events instead of score
+// thresholds. When it is active, hand the scored spread to its resolver and
+// skip the threshold/store progression entirely. Guarded by a flag so Score
+// Mode is completely unaffected.
+if(typeof window!=='undefined'&&window.__tlrAdventureActive&&typeof window.tlrAdventureResolveReading==='function'){
+  const advCards=state.spread.filter(Boolean);
+  const advRes=_scoreLegacy(advCards);
+  window.tlrAdventureResolveReading(advRes.finalScore,advCards);
+  return;
+}
+let cards=state.spread.filter(Boolean),res=_scoreLegacy(cards),total=res.finalScore,curTH=TH[state.th]+(state.thBonus||0),pass=total>=curTH;
 tlSyncBeforeScore();
 window.tlrStore.dispatch({type:window.tlrActions.SCORE_READING});
 let needsNext=false,roundTotal=total,setNumber=(state.setIndex||0)+1,setsPerRound=state.setsPerRound||2;
