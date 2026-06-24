@@ -1,91 +1,64 @@
 /* Per-function color identity for the four utility medallions (single-player
-   V2, mobile). The painted art already gives each a distinct emblem
-   (Menu = gear, Scoring = ledger/compass, Abilities = cards, Archive = eye),
-   but they share one gold-on-dark coin frame, so at a glance they read as four
-   identical discs. This pass adds a meaning-coded color to each — a colored
-   halo plus a soft rim tint — while leaving the gold medallion art intact.
+   V2, mobile). The painted art gives each a distinct emblem (Menu = gear,
+   Scoring = ledger/compass, Abilities = cards, Archive = eye) but they share
+   one gold-on-dark coin frame, so at a glance they read as four identical
+   coins.
 
-   Colors echo the rest of the board so the hue carries meaning:
-     Scoring   gold/amber  (the Score panel is gold)
+   v2: the first pass (a soft halo + faint rim) was far too subtle to read on a
+   ~50px coin against the dark wooden frame. This version recolors the whole
+   medallion by hue-shifting the gold metal and adds a strong colored glow, so
+   the hue itself carries the meaning:
+
+     Scoring   gold/amber  (the Score panel is gold; kept gold, strong glow)
      Abilities green       (the on-board placement / "valid" green)
      Archive   blue        (the discards-left badge is blue; cool = memory)
-     Menu      silver      (a system control, deliberately not a "game" color)
+     Menu      silver      (desaturated: a system control, not a "game" color)
 
-   Loaded after ArtIntegration so it wins the cascade. The seating coin-shadow
-   (var(--spv2-coin-shadow)) is preserved in each filter so the medallions keep
-   sitting on the table rather than floating. */
+   How the filter chain works: the black seating shadow comes first (black is
+   unaffected by hue-rotate, so the coin keeps sitting on the table); then the
+   gold-colored glow drop-shadows; then saturate + hue-rotate, which rotate BOTH
+   the coin art AND the gold glow to the target hue in one consistent move.
+   Scoring and Menu set their glow color directly since they don't hue-rotate.
+
+   Loaded after ArtIntegration so it wins the cascade. Mobile generated-sheet
+   layout only. */
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready #scoringBtn,
   body.single-player-v2.generated-sheet-ready #abilitiesBtn,
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn,
   body.single-player-v2.generated-sheet-ready #menuBtn {
-    position: relative !important;
     overflow: visible !important;
   }
 
-  /* Soft colored rim drawn over the coin edge. Sits above the art but below the
-     emblem's center; no blend mode, so the result is predictable on any
-     backdrop. Inset so it tracks the coin, not the button's transparent box. */
-  body.single-player-v2.generated-sheet-ready #scoringBtn::after,
-  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after,
-  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after,
-  body.single-player-v2.generated-sheet-ready #menuBtn::after {
-    content: "" !important;
-    position: absolute !important;
-    inset: 4% !important;
-    border-radius: 50% !important;
-    pointer-events: none !important;
-    z-index: 2 !important;
-    mix-blend-mode: normal !important;
-  }
-
-  /* Scoring — gold/amber */
+  /* Scoring — gold/amber (no hue-rotate; glow set directly). */
   body.single-player-v2.generated-sheet-ready #scoringBtn {
     filter: var(--spv2-coin-shadow)
-      drop-shadow(0 0 7px rgba(235, 175, 70, 0.55)) !important;
-  }
-  body.single-player-v2.generated-sheet-ready #scoringBtn::after {
-    background: radial-gradient(circle,
-      transparent 44%,
-      rgba(235, 175, 70, 0.26) 63%,
-      rgba(235, 175, 70, 0) 82%) !important;
+      drop-shadow(0 0 8px rgba(255, 196, 84, 0.95))
+      drop-shadow(0 0 16px rgba(255, 178, 56, 0.6))
+      saturate(1.35) !important;
   }
 
-  /* Abilities — green */
+  /* Abilities — green (rotate gold ~+92deg). */
   body.single-player-v2.generated-sheet-ready #abilitiesBtn {
     filter: var(--spv2-coin-shadow)
-      drop-shadow(0 0 7px rgba(121, 199, 120, 0.58)) !important;
-  }
-  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after {
-    background: radial-gradient(circle,
-      transparent 44%,
-      rgba(121, 199, 120, 0.30) 63%,
-      rgba(121, 199, 120, 0) 82%) !important;
+      drop-shadow(0 0 8px rgba(255, 196, 84, 0.95))
+      drop-shadow(0 0 16px rgba(255, 178, 56, 0.6))
+      saturate(1.7) hue-rotate(92deg) !important;
   }
 
-  /* Archive — blue */
+  /* Archive — blue (rotate gold ~+178deg). */
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
     filter: var(--spv2-coin-shadow)
-      drop-shadow(0 0 7px rgba(106, 168, 238, 0.58)) !important;
-  }
-  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
-    background: radial-gradient(circle,
-      transparent 44%,
-      rgba(106, 168, 238, 0.30) 63%,
-      rgba(106, 168, 238, 0) 82%) !important;
+      drop-shadow(0 0 8px rgba(255, 196, 84, 0.95))
+      drop-shadow(0 0 16px rgba(255, 178, 56, 0.62))
+      saturate(1.7) hue-rotate(178deg) !important;
   }
 
-  /* Menu — desaturated silver. saturate() pulls the gold gear toward steel so
-     it reads as a neutral system control next to the three colored coins. */
+  /* Menu — desaturated silver (no hue-rotate; cool-white glow set directly). */
   body.single-player-v2.generated-sheet-ready #menuBtn {
     filter: var(--spv2-coin-shadow)
-      saturate(0.5) brightness(1.06)
-      drop-shadow(0 0 6px rgba(206, 212, 232, 0.42)) !important;
-  }
-  body.single-player-v2.generated-sheet-ready #menuBtn::after {
-    background: radial-gradient(circle,
-      transparent 46%,
-      rgba(206, 212, 232, 0.22) 64%,
-      rgba(206, 212, 232, 0) 82%) !important;
+      drop-shadow(0 0 7px rgba(214, 220, 238, 0.78))
+      drop-shadow(0 0 14px rgba(190, 198, 220, 0.45))
+      saturate(0.12) brightness(1.12) !important;
   }
 }
