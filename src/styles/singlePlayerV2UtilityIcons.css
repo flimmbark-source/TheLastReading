@@ -1,0 +1,91 @@
+/* Per-function color identity for the four utility medallions (single-player
+   V2, mobile). The painted art already gives each a distinct emblem
+   (Menu = gear, Scoring = ledger/compass, Abilities = cards, Archive = eye),
+   but they share one gold-on-dark coin frame, so at a glance they read as four
+   identical discs. This pass adds a meaning-coded color to each — a colored
+   halo plus a soft rim tint — while leaving the gold medallion art intact.
+
+   Colors echo the rest of the board so the hue carries meaning:
+     Scoring   gold/amber  (the Score panel is gold)
+     Abilities green       (the on-board placement / "valid" green)
+     Archive   blue        (the discards-left badge is blue; cool = memory)
+     Menu      silver      (a system control, deliberately not a "game" color)
+
+   Loaded after ArtIntegration so it wins the cascade. The seating coin-shadow
+   (var(--spv2-coin-shadow)) is preserved in each filter so the medallions keep
+   sitting on the table rather than floating. */
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn,
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    position: relative !important;
+    overflow: visible !important;
+  }
+
+  /* Soft colored rim drawn over the coin edge. Sits above the art but below the
+     emblem's center; no blend mode, so the result is predictable on any
+     backdrop. Inset so it tracks the coin, not the button's transparent box. */
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after,
+  body.single-player-v2.generated-sheet-ready #menuBtn::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 4% !important;
+    border-radius: 50% !important;
+    pointer-events: none !important;
+    z-index: 2 !important;
+    mix-blend-mode: normal !important;
+  }
+
+  /* Scoring — gold/amber */
+  body.single-player-v2.generated-sheet-ready #scoringBtn {
+    filter: var(--spv2-coin-shadow)
+      drop-shadow(0 0 7px rgba(235, 175, 70, 0.55)) !important;
+  }
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after {
+    background: radial-gradient(circle,
+      transparent 44%,
+      rgba(235, 175, 70, 0.26) 63%,
+      rgba(235, 175, 70, 0) 82%) !important;
+  }
+
+  /* Abilities — green */
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    filter: var(--spv2-coin-shadow)
+      drop-shadow(0 0 7px rgba(121, 199, 120, 0.58)) !important;
+  }
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after {
+    background: radial-gradient(circle,
+      transparent 44%,
+      rgba(121, 199, 120, 0.30) 63%,
+      rgba(121, 199, 120, 0) 82%) !important;
+  }
+
+  /* Archive — blue */
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    filter: var(--spv2-coin-shadow)
+      drop-shadow(0 0 7px rgba(106, 168, 238, 0.58)) !important;
+  }
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
+    background: radial-gradient(circle,
+      transparent 44%,
+      rgba(106, 168, 238, 0.30) 63%,
+      rgba(106, 168, 238, 0) 82%) !important;
+  }
+
+  /* Menu — desaturated silver. saturate() pulls the gold gear toward steel so
+     it reads as a neutral system control next to the three colored coins. */
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    filter: var(--spv2-coin-shadow)
+      saturate(0.5) brightness(1.06)
+      drop-shadow(0 0 6px rgba(206, 212, 232, 0.42)) !important;
+  }
+  body.single-player-v2.generated-sheet-ready #menuBtn::after {
+    background: radial-gradient(circle,
+      transparent 46%,
+      rgba(206, 212, 232, 0.22) 64%,
+      rgba(206, 212, 232, 0) 82%) !important;
+  }
+}
