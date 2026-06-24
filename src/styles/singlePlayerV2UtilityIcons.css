@@ -72,4 +72,26 @@
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
     background-image: var(--spv2-option-archive-art) !important;
   }
+
+  /* Suppress the mobile blue tap-highlight / selection flash on EVERY
+     single-player button (Discard, Purge, pull tabs, etc.), so a tap never
+     paints a selection box — not just the utility discs above. */
+  body.single-player-v2.generated-sheet-ready button {
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+  }
+
+  /* Pressed feedback for the Discard / Purge action medallions, matching the
+     utility discs (the disc dips in instead of flashing a selection box). */
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    transition: transform .08s ease !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn:active,
+  body.single-player-v2.generated-sheet-ready #purgeBtn:active {
+    transform: translateY(1px) scale(0.94) !important;
+  }
 }
