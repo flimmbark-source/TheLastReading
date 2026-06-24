@@ -28,9 +28,12 @@
     border: 0 !important;
     box-shadow: none !important;
     overflow: visible !important;
-    /* Raised look: neutral dark elevation only — no color. */
-    filter: var(--spv2-coin-shadow)
-      drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5)) !important;
+    /* Raised look: neutral dark elevation only — no color. Layered contact +
+       cast shadow so the disc pops off the table. drop-shadow (not box-shadow)
+       follows the disc's circular alpha instead of the square button box. */
+    filter:
+      drop-shadow(0 5px 7px rgba(0, 0, 0, 0.78))
+      drop-shadow(0 2px 2px rgba(0, 0, 0, 0.6)) !important;
   }
 
   body.single-player-v2.generated-sheet-ready #menuBtn {
