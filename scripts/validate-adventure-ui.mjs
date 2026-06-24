@@ -33,13 +33,45 @@ assert.ok(el.querySelector('.spread-wrap .spread .slot'), 'reuses the V2 spread/
 assert.ok(el.querySelector('.handDock .hand'), 'reuses the V2 hand dock markup');
 assert.equal(el.querySelectorAll('.handDock .hand .card').length, 5, 'hand is dealt (5 cards)');
 assert.ok(el.querySelector('[data-act=cast]').disabled, 'cannot cast an empty spread');
+// The four bottom utility medallions + the top discard/remove pair.
+assert.equal(el.querySelectorAll('.adv-util-bar [data-act]').length, 4, 'bottom row has four utility buttons');
+for (const act of ['menu', 'archive', 'scoring', 'abilities']) {
+  assert.ok(el.querySelector(`.adv-util-bar [data-act=${act}]`), `utility button: ${act}`);
+}
+assert.ok(el.querySelector('.adv-action-bar [data-act=discard]'), 'discard medallion up top');
+assert.ok(el.querySelector('.adv-action-bar [data-act=purge]'), 'remove medallion up top');
+
+// Utility panels open and close back to the event screen.
+click(el.querySelector('[data-act=scoring]'));
+assert.ok(overlay().textContent.includes('Scoring Patterns'), 'scoring panel opens');
+click(overlay().querySelector('[data-act=closePanel]'));
+assert.ok(overlay().querySelector('.handDock .hand'), 'closing a panel returns to the event');
+
+// Discard swaps a card (replacement drawn); Remove thins the deck.
+click(overlay().querySelector('.handDock .hand .card')); // select
+const discardsBefore = Number(overlay().querySelector('.adv-action-bar [data-act=discard] .adv-medallion__badge').textContent);
+click(overlay().querySelector('[data-act=discard]'));
+assert.equal(overlay().querySelectorAll('.handDock .hand .card').length, 5, 'discard draws a replacement (hand stays 5)');
+assert.equal(
+  Number(overlay().querySelector('.adv-action-bar [data-act=discard] .adv-medallion__badge').textContent),
+  discardsBefore - 1, 'discard spends a charge',
+);
+click(overlay().querySelector('.handDock .hand .card')); // select
+click(overlay().querySelector('[data-act=purge]'));
+assert.equal(overlay().querySelectorAll('.handDock .hand .card').length, 4, 'remove takes the card out without a redraw');
+
+// Restart for a clean full run-through (deck/hand reset).
+window.tlrStartAdventure();
 
 function playOneEvent() {
-  // Fill the spread, then cast and walk through outcome + rewards/recovery.
+  // Pick up each hand card, then lay it into the first empty slot.
   for (let i = 0; i < 5; i += 1) {
     const card = overlay().querySelector('.handDock .hand .card');
     assert.ok(card, 'a hand card is available to place');
-    click(card);
+    click(card); // select
+    const slot = overlay().querySelector('.spread .slot.empty');
+    assert.ok(slot, 'an empty slot is available');
+    click(slot); // lay
   }
   assert.equal(overlay().querySelectorAll('.spread .slot .card').length, 5, 'spread filled');
   assert.ok(!overlay().querySelector('[data-act=cast]').disabled, 'cast enabled at 5 cards');
