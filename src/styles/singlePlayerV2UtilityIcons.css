@@ -28,12 +28,33 @@
     border: 0 !important;
     box-shadow: none !important;
     overflow: visible !important;
+    /* Kill the mobile blue tap-highlight / text-selection flash so a tap reads
+       as a press, not a "selected" box. */
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+    outline: none !important;
     /* Raised look: neutral dark elevation only — no color. Layered contact +
        cast shadow so the disc pops off the table. drop-shadow (not box-shadow)
        follows the disc's circular alpha instead of the square button box. */
     filter:
       drop-shadow(0 5px 7px rgba(0, 0, 0, 0.78))
       drop-shadow(0 2px 2px rgba(0, 0, 0, 0.6)) !important;
+    transition: transform .08s ease, filter .08s ease !important;
+  }
+
+  /* Real pressed feedback: the disc dips toward the table (smaller, shadow
+     collapses) instead of the browser painting a selection square. */
+  body.single-player-v2.generated-sheet-ready #menuBtn:active,
+  body.single-player-v2.generated-sheet-ready #scoringBtn:active,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn:active,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn:active {
+    transform: translateY(1px) scale(0.94) !important;
+    filter:
+      drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7))
+      drop-shadow(0 1px 1px rgba(0, 0, 0, 0.55))
+      brightness(1.08) !important;
   }
 
   body.single-player-v2.generated-sheet-ready #menuBtn {
@@ -50,5 +71,27 @@
 
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
     background-image: var(--spv2-option-archive-art) !important;
+  }
+
+  /* Suppress the mobile blue tap-highlight / selection flash on EVERY
+     single-player button (Discard, Purge, pull tabs, etc.), so a tap never
+     paints a selection box — not just the utility discs above. */
+  body.single-player-v2.generated-sheet-ready button {
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+  }
+
+  /* Pressed feedback for the Discard / Purge action medallions, matching the
+     utility discs (the disc dips in instead of flashing a selection box). */
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    transition: transform .08s ease !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn:active,
+  body.single-player-v2.generated-sheet-ready #purgeBtn:active {
+    transform: translateY(1px) scale(0.94) !important;
   }
 }
