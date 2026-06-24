@@ -1,13 +1,12 @@
-// Adventure Mode — minimal HUD and developer debug panel.
+// Adventure Mode — developer debug panel + dev-mode gate.
 //
-// The HUD shows only player-facing run state (Resolve, Statuses, the current
-// event, and its target/triumph scores). It MUST NOT surface hidden meanings.
-//
-// The debug panel renders the hidden meaning record and is gated behind
-// development mode so it can never appear in a production build.
+// Adventure Mode runs on the real Single-Player table, so player-facing run
+// state (Resolve, Statuses, the current event) is shown by the live chrome that
+// adventureMode.mjs mounts. The only thing left here is the developer debug
+// panel that surfaces the hidden interpretation values, gated behind dev mode
+// so it can never appear in a production build.
 
 import { MEANING_TAGS } from '../../data/adventure/interpretations.mjs';
-import { getStatus } from '../../data/adventure/statuses.mjs';
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, ch => (
@@ -28,37 +27,6 @@ export function isAdventureDebugEnabled(env = globalThis) {
   return host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host === '';
 }
 
-// --- Player-facing HUD -----------------------------------------------------
-
-/** Pure HTML for the HUD. Hidden meanings never appear here by construction. */
-export function buildHudHtml({ run, event } = {}) {
-  if (!run) return '';
-  const resolve = `${run.resolve} / ${run.maxResolve}`;
-  const statuses = (run.statuses || [])
-    .map(id => getStatus(id)?.name || id)
-    .map(name => `<span class="adv-hud__status">${escapeHtml(name)}</span>`)
-    .join('');
-  const eventTitle = event ? escapeHtml(event.title) : '—';
-  const target = event ? event.targetScore : '—';
-  const triumph = event ? event.triumphScore : '—';
-
-  return [
-    '<div class="adv-hud">',
-    `  <div class="adv-hud__resolve" title="Resolve">❤ Resolve: <strong>${escapeHtml(resolve)}</strong></div>`,
-    `  <div class="adv-hud__statuses">${statuses || '<span class="adv-hud__status adv-hud__status--none">No statuses</span>'}</div>`,
-    `  <div class="adv-hud__event">${eventTitle}</div>`,
-    `  <div class="adv-hud__scores">Target <strong>${escapeHtml(target)}</strong> · Triumph <strong>${escapeHtml(triumph)}</strong></div>`,
-    '</div>',
-  ].join('\n');
-}
-
-export function mountAdventureHud(container, props, doc = globalThis.document) {
-  if (!container || !doc) return;
-  container.innerHTML = buildHudHtml(props);
-}
-
-// --- Developer debug panel -------------------------------------------------
-
 /** Pure HTML for the debug panel listing every hidden meaning value. */
 export function buildDebugPanelHtml({ meanings, outcome } = {}) {
   const rows = MEANING_TAGS.map(tag => {
@@ -74,18 +42,4 @@ export function buildDebugPanelHtml({ meanings, outcome } = {}) {
     `  ${dominant}`,
     '</div>',
   ].join('\n');
-}
-
-/**
- * Mount the debug panel — a no-op (and explicit teardown) outside dev mode, so
- * it can never leak into production.
- */
-export function mountAdventureDebugPanel(container, props, { env = globalThis, doc = globalThis.document } = {}) {
-  if (!container) return false;
-  if (!isAdventureDebugEnabled(env)) {
-    container.innerHTML = '';
-    return false;
-  }
-  if (doc) container.innerHTML = buildDebugPanelHtml(props);
-  return true;
 }

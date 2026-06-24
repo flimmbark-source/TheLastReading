@@ -20,7 +20,7 @@ import {
   ADVENTURE_RESULTS,
 } from '../src/systems/adventure/run.mjs';
 import { REWARD_TYPES } from '../src/data/adventure/rewards.mjs';
-import { buildHudHtml, buildDebugPanelHtml, isAdventureDebugEnabled } from '../src/ui/adventure/adventureHud.mjs';
+import { buildDebugPanelHtml, isAdventureDebugEnabled } from '../src/ui/adventure/adventureHud.mjs';
 
 const deck = buildDeck();
 const byId = new Map(deck.map(card => [card.id, card]));
@@ -181,17 +181,6 @@ while (run.currentEventIndex < run.events.length && !isRunLost(run) && safety < 
   advanceEvent(run, event.id);
 }
 assert.equal(run.completedEvents.length, 3, 'all three events completed');
-
-// --- HUD never leaks hidden meanings ----------------------------------------
-
-const hudEvent = ADVENTURE_EVENTS[0];
-const hudRun = createAdventureRunState({ statuses: ['haunted'] });
-const hud = buildHudHtml({ run: hudRun, event: hudEvent });
-for (const tag of MEANING_TAGS) {
-  assert.ok(!hud.toLowerCase().includes(tag), `HUD must not mention hidden meaning "${tag}"`);
-}
-assert.ok(hud.includes('Resolve'), 'HUD shows Resolve');
-assert.ok(hud.includes(hudEvent.title), 'HUD shows the current event');
 
 // --- Debug panel shows meanings, and is dev-gated ---------------------------
 
