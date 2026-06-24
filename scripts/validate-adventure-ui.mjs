@@ -31,7 +31,7 @@ assert.ok(document.body.classList.contains('mode-adventure'), 'flags Adventure m
 assert.ok(el.querySelector('.adv-event-deck'), 'event deck replaces the score/threshold area');
 assert.ok(el.querySelector('.spread-wrap .spread .slot'), 'reuses the V2 spread/slot markup');
 assert.ok(el.querySelector('.handDock .hand'), 'reuses the V2 hand dock markup');
-assert.equal(el.querySelectorAll('.handDock .hand .card').length, 8, 'hand is dealt');
+assert.equal(el.querySelectorAll('.handDock .hand .card').length, 5, 'hand is dealt (5 cards)');
 assert.ok(el.querySelector('[data-act=cast]').disabled, 'cannot cast an empty spread');
 
 function playOneEvent() {

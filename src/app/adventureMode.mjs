@@ -34,7 +34,7 @@ import { REWARD_TYPES } from '../data/adventure/rewards.mjs';
 import { getStatus } from '../data/adventure/statuses.mjs';
 import { buildDebugPanelHtml, isAdventureDebugEnabled } from '../ui/adventure/adventureHud.mjs';
 
-const HAND_SIZE = 8;
+const HAND_SIZE = 5;
 const SPREAD_SIZE = 5;
 const STYLE_ID = 'adventure-mode-style';
 const OVERLAY_ID = 'adventureMode';
@@ -79,6 +79,12 @@ function ensureStyles(doc) {
     body.mode-adventure > #titleWrap,
     body.mode-adventure > .tlr-pull-wrap,
     body.mode-adventure > #invWrap,
+    body.mode-adventure > #handSwipeZone,
+    body.mode-adventure > #abilityPrompt,
+    body.mode-adventure > #purgePrompt,
+    body.mode-adventure > #tutTip,
+    body.mode-adventure > #summary,
+    body.mode-adventure > #modal,
     body.mode-adventure > #sophiaVeil { display:none !important; }
 
     #adventureMode{position:fixed;inset:0;z-index:38;display:none}
