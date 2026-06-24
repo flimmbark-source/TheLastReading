@@ -1,64 +1,88 @@
 /* Per-function color identity for the four utility medallions (single-player
-   V2, mobile). The painted art gives each a distinct emblem (Menu = gear,
-   Scoring = ledger/compass, Abilities = cards, Archive = eye) but they share
-   one gold-on-dark coin frame, so at a glance they read as four identical
-   coins.
+   V2, mobile). The painted art already gives each a distinct emblem
+   (Menu = gear, Scoring = ledger/compass, Abilities = cards, Archive = eye);
+   they just share one gold-on-dark coin frame, so they read as four identical
+   coins at a glance.
 
-   v2: the first pass (a soft halo + faint rim) was far too subtle to read on a
-   ~50px coin against the dark wooden frame. This version recolors the whole
-   medallion by hue-shifting the gold metal and adds a strong colored glow, so
-   the hue itself carries the meaning:
+   v3: no colored glow, no full metal recolor. The coins stay the gold
+   medallions they are. Two separable things are kept:
+     - the RAISED look (a neutral dark elevation drop-shadow — no color), and
+     - a tasteful colored accent ring around the rim (+ faint center wash) so
+       each is identifiable by hue.
+   Small, incremental.
 
-     Scoring   gold/amber  (the Score panel is gold; kept gold, strong glow)
-     Abilities green       (the on-board placement / "valid" green)
-     Archive   blue        (the discards-left badge is blue; cool = memory)
-     Menu      silver      (desaturated: a system control, not a "game" color)
-
-   How the filter chain works: the black seating shadow comes first (black is
-   unaffected by hue-rotate, so the coin keeps sitting on the table); then the
-   gold-colored glow drop-shadows; then saturate + hue-rotate, which rotate BOTH
-   the coin art AND the gold glow to the target hue in one consistent move.
-   Scoring and Menu set their glow color directly since they don't hue-rotate.
+     Scoring   gold/amber
+     Abilities green
+     Archive   blue
+     Menu      silver (slightly desaturated so it reads as a system control)
 
    Loaded after ArtIntegration so it wins the cascade. Mobile generated-sheet
-   layout only. */
+   layout only. The filter keeps the seating coin-shadow + a neutral elevation
+   shadow (the "raised" look); the only hue work is the ::after ring and a
+   gentle desaturate on Menu. No drop-shadow glow. */
 @media (max-width: 640px) {
+  /* Raised look: neutral dark elevation, no color. */
   body.single-player-v2.generated-sheet-ready #scoringBtn,
   body.single-player-v2.generated-sheet-ready #abilitiesBtn,
-  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    overflow: visible !important;
+    filter: var(--spv2-coin-shadow)
+      drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5)) !important;
+  }
+
+  /* Colored accent ring over the coin's rim + a faint center wash. No blend
+     mode, so it's predictable on any backdrop; inset so it tracks the coin. */
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after,
+  body.single-player-v2.generated-sheet-ready #menuBtn::after {
+    content: "" !important;
+    position: absolute !important;
+    inset: 5% !important;
+    border-radius: 50% !important;
+    pointer-events: none !important;
+    z-index: 2 !important;
+    mix-blend-mode: normal !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after {
+    background: radial-gradient(circle,
+      rgba(240, 180, 75, 0.16) 0%,
+      transparent 42%,
+      rgba(240, 180, 75, 0.48) 72%,
+      transparent 90%) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after {
+    background: radial-gradient(circle,
+      rgba(121, 199, 120, 0.18) 0%,
+      transparent 42%,
+      rgba(121, 199, 120, 0.52) 72%,
+      transparent 90%) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
+    background: radial-gradient(circle,
+      rgba(106, 168, 238, 0.18) 0%,
+      transparent 42%,
+      rgba(106, 168, 238, 0.52) 72%,
+      transparent 90%) !important;
+  }
+
+  /* Menu: same raised elevation, plus a gentle desaturate so the gear reads as
+     steel. Soft silver ring below. No glow. */
   body.single-player-v2.generated-sheet-ready #menuBtn {
     overflow: visible !important;
+    filter: var(--spv2-coin-shadow)
+      drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5))
+      saturate(0.5) !important;
   }
 
-  /* Scoring — gold/amber (no hue-rotate; glow set directly). */
-  body.single-player-v2.generated-sheet-ready #scoringBtn {
-    filter: var(--spv2-coin-shadow)
-      drop-shadow(0 0 8px rgba(255, 196, 84, 0.95))
-      drop-shadow(0 0 16px rgba(255, 178, 56, 0.6))
-      saturate(1.35) !important;
-  }
-
-  /* Abilities — green (rotate gold ~+92deg). */
-  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
-    filter: var(--spv2-coin-shadow)
-      drop-shadow(0 0 8px rgba(255, 196, 84, 0.95))
-      drop-shadow(0 0 16px rgba(255, 178, 56, 0.6))
-      saturate(1.7) hue-rotate(92deg) !important;
-  }
-
-  /* Archive — blue (rotate gold ~+178deg). */
-  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    filter: var(--spv2-coin-shadow)
-      drop-shadow(0 0 8px rgba(255, 196, 84, 0.95))
-      drop-shadow(0 0 16px rgba(255, 178, 56, 0.62))
-      saturate(1.7) hue-rotate(178deg) !important;
-  }
-
-  /* Menu — desaturated silver (no hue-rotate; cool-white glow set directly). */
-  body.single-player-v2.generated-sheet-ready #menuBtn {
-    filter: var(--spv2-coin-shadow)
-      drop-shadow(0 0 7px rgba(214, 220, 238, 0.78))
-      drop-shadow(0 0 14px rgba(190, 198, 220, 0.45))
-      saturate(0.12) brightness(1.12) !important;
+  body.single-player-v2.generated-sheet-ready #menuBtn::after {
+    background: radial-gradient(circle,
+      rgba(210, 216, 236, 0.14) 0%,
+      transparent 42%,
+      rgba(210, 216, 236, 0.40) 72%,
+      transparent 90%) !important;
   }
 }
