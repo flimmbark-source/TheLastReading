@@ -4,100 +4,61 @@
    they just share one gold-on-dark coin frame, so they read as four identical
    coins at a glance.
 
-   v5: balance the four so each gets a treatment of *comparable* visible
-   strength. The earlier pass over- and under-shot because it ignored that the
-   coin is already gold:
-     - a gold tint over a gold coin is a no-op (Scoring showed nothing), and a
-       gentle desaturate barely registers (Menu showed nothing), while
-     - green/blue are far from gold so the same alpha read far louder.
+   v6: ONE technique for all four. The previous pass mixed two:
+     - a CSS filter (hue-rotate/saturate) recolors every pixel -> whole coin
+       takes the hue ("totally covered"), but
+     - a translucent ::after wash only tints the bright gold ring; it can't
+       colorize the near-black recessed center -> "colored ring, black center".
+   So the two pairs could never match.
 
-   So: pull green/blue down to a moderate wash, and give Scoring and Menu
-   treatments that actually show on gold:
-     Scoring   warm amber  — a wash + a small warm hue/brightness lift, so it
-                             reads as richer/warmer gold than the untreated coin
-     Abilities green       — moderate wash
-     Archive   blue        — moderate wash
-     Menu      steel        — a strong desaturate (clearly the grey one)
+   This version uses the filter on all four and drops the overlay wash, so the
+   whole coin (ring, field, emblem) shifts together and coverage is identical
+   across the set. Moderate saturation = tinted metal, not neon. No glow.
 
-   Kept from before: the RAISED look (neutral dark elevation drop-shadow, no
-   color) and no colored glow. Washes use `circle closest-side` so they're
-   sized to the coin's inscribed circle, not the square button's corners.
+     Scoring   warm amber (slight warm shift + saturation)
+     Abilities green       (hue-rotate ~+88deg)
+     Archive   blue        (hue-rotate ~+174deg)
+     Menu      steel        (strong desaturate)
+
+   Kept: the RAISED look (neutral dark elevation drop-shadow, no color). The
+   black seating shadow comes first in each chain (black is unaffected by
+   hue-rotate, so the coin still seats); the hue/saturation work comes after.
 
    Loaded after ArtIntegration so it wins the cascade. Mobile generated-sheet
    layout only. */
 @media (max-width: 640px) {
-  /* Raised look: neutral dark elevation, no color. Per-coin filters below add
-     their hue/desaturate work on top of this. */
-  body.single-player-v2.generated-sheet-ready #scoringBtn {
-    overflow: visible !important;
-    filter: var(--spv2-coin-shadow)
-      drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5))
-      saturate(1.4) brightness(1.08) hue-rotate(-12deg) !important;
-  }
-
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
   body.single-player-v2.generated-sheet-ready #abilitiesBtn,
-  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    overflow: visible !important;
-    filter: var(--spv2-coin-shadow)
-      drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5)) !important;
-  }
-
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn,
   body.single-player-v2.generated-sheet-ready #menuBtn {
     overflow: visible !important;
+  }
+
+  /* Scoring — warm amber. */
+  body.single-player-v2.generated-sheet-ready #scoringBtn {
+    filter: var(--spv2-coin-shadow)
+      drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5))
+      saturate(1.3) brightness(1.05) hue-rotate(-10deg) !important;
+  }
+
+  /* Abilities — green. */
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    filter: var(--spv2-coin-shadow)
+      drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5))
+      saturate(1.2) hue-rotate(88deg) !important;
+  }
+
+  /* Archive — blue. */
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    filter: var(--spv2-coin-shadow)
+      drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5))
+      saturate(1.2) hue-rotate(174deg) !important;
+  }
+
+  /* Menu — steel. */
+  body.single-player-v2.generated-sheet-ready #menuBtn {
     filter: var(--spv2-coin-shadow)
       drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5))
       saturate(0.18) brightness(1.08) !important;
-  }
-
-  /* Colored field wash, sized to the coin (closest-side) and fading at the rim.
-     No blend mode, so it's predictable on any backdrop. */
-  body.single-player-v2.generated-sheet-ready #scoringBtn::after,
-  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after,
-  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after,
-  body.single-player-v2.generated-sheet-ready #menuBtn::after {
-    content: "" !important;
-    position: absolute !important;
-    inset: 5% !important;
-    border-radius: 50% !important;
-    pointer-events: none !important;
-    z-index: 2 !important;
-    mix-blend-mode: normal !important;
-  }
-
-  /* Scoring — warm amber (the filter above already warms/brightens the gold;
-     this nudges it a touch further). */
-  body.single-player-v2.generated-sheet-ready #scoringBtn::after {
-    background: radial-gradient(circle closest-side,
-      rgba(255, 150, 45, 0.20) 0%,
-      rgba(255, 150, 45, 0.28) 58%,
-      rgba(255, 150, 45, 0.16) 82%,
-      transparent 100%) !important;
-  }
-
-  /* Abilities — green (moderate). */
-  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after {
-    background: radial-gradient(circle closest-side,
-      rgba(121, 199, 120, 0.18) 0%,
-      rgba(121, 199, 120, 0.27) 58%,
-      rgba(121, 199, 120, 0.15) 82%,
-      transparent 100%) !important;
-  }
-
-  /* Archive — blue (moderate). */
-  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
-    background: radial-gradient(circle closest-side,
-      rgba(96, 160, 235, 0.18) 0%,
-      rgba(96, 160, 235, 0.27) 58%,
-      rgba(96, 160, 235, 0.15) 82%,
-      transparent 100%) !important;
-  }
-
-  /* Menu — cool steel wash (desaturate filter does most of the work). */
-  body.single-player-v2.generated-sheet-ready #menuBtn::after {
-    background: radial-gradient(circle closest-side,
-      rgba(205, 214, 238, 0.16) 0%,
-      rgba(205, 214, 238, 0.24) 58%,
-      rgba(205, 214, 238, 0.12) 82%,
-      transparent 100%) !important;
   }
 }
