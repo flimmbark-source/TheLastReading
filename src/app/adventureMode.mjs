@@ -116,17 +116,26 @@ function ensureStyles(doc) {
     .adv-event-desc{max-width:300px;text-align:center;font:500 11px Georgia,serif;line-height:1.4;color:#d8c8a6;
       background:rgba(18,12,9,.66);border-radius:8px;padding:6px 10px}
 
-    /* The cast action floats just above the hand dock, centred. */
-    .adv-cast-wrap{position:fixed;left:0;right:0;bottom:268px;z-index:42;display:flex;justify-content:center;pointer-events:none}
+    /* The hand: its own absolutely-positioned fan so it does not depend on the
+       live gesture-hand JS (which the isolated screen does not run). Sits above
+       the bottom utility row. */
+    #adventureMode .adv-handdock{position:fixed;left:0;right:0;bottom:86px;height:184px;z-index:20;pointer-events:none;
+      background:var(--spv2-hand-dock-art,none) center bottom/auto 100% no-repeat}
+    #adventureMode .adv-hand{position:relative;width:100%;height:100%;pointer-events:auto}
+    #adventureMode .adv-hand .card{position:absolute;left:50%;bottom:12px;width:98px;height:147px;margin:0;
+      transform:translateX(calc(-50% + var(--x))) translateY(var(--y)) rotate(var(--r));transform-origin:50% 130%;
+      transition:transform .15s cubic-bezier(.2,.8,.2,1),box-shadow .14s ease;z-index:1}
+    #adventureMode .adv-hand .card:hover{transform:translateX(calc(-50% + var(--x))) translateY(-18px) rotate(0deg);z-index:10}
+
+    /* The cast action floats just above the hand. */
+    .adv-cast-wrap{position:fixed;left:0;right:0;bottom:286px;z-index:42;display:flex;justify-content:center;pointer-events:none}
     .adv-cast{pointer-events:auto;border:1px solid #f3c969;background:linear-gradient(180deg,#3a2a1a,#241810);color:#f2dfb8;
       border-radius:999px;padding:11px 26px;cursor:pointer;font:800 15px Georgia,serif;letter-spacing:.04em;box-shadow:0 0 18px rgba(243,201,105,.28)}
     .adv-cast:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
 
-    /* Discard + Remove action medallions, up top (as in Single-Player V2). */
-    .adv-action-bar{position:fixed;top:176px;left:50%;transform:translateX(-50%);z-index:43;display:flex;gap:22px;align-items:flex-start;pointer-events:auto}
     /* Bottom row of four utility medallions: Menu · Archive · Scoring · Abilities. */
-    .adv-util-bar{position:fixed;bottom:204px;left:50%;transform:translateX(-50%);z-index:43;display:flex;gap:18px;align-items:flex-start;pointer-events:auto}
-    .adv-medallion{position:relative;width:54px;height:54px;border:0;border-radius:50%;cursor:pointer;
+    .adv-util-bar{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:43;display:flex;gap:20px;align-items:flex-start;pointer-events:auto}
+    .adv-medallion{position:relative;width:52px;height:52px;border:0;border-radius:50%;cursor:pointer;
       background-color:#181009;background-position:center;background-repeat:no-repeat;background-size:contain;
       filter:drop-shadow(0 5px 7px rgba(0,0,0,.78)) drop-shadow(0 2px 2px rgba(0,0,0,.6));
       transition:transform .08s ease,filter .08s ease,opacity .12s ease}
@@ -134,8 +143,6 @@ function ensureStyles(doc) {
     .adv-medallion:disabled{opacity:.35;cursor:not-allowed;filter:grayscale(.6) drop-shadow(0 3px 4px rgba(0,0,0,.6))}
     .adv-medallion__label{position:absolute;left:50%;bottom:-13px;transform:translateX(-50%);font:700 9px system-ui,sans-serif;
       letter-spacing:.04em;color:#cdb47a;white-space:nowrap;text-shadow:0 1px 2px #000;pointer-events:none}
-    .adv-medallion__badge{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;border-radius:999px;background:#3a2a1a;
-      border:1px solid #f3c969;color:#f3c969;font:800 10px system-ui,sans-serif;display:flex;align-items:center;justify-content:center;padding:0 3px}
     .adv-ref{display:flex;flex-direction:column;gap:7px;font:500 13px/1.4 Georgia,serif;color:#e0cfa8}
     .adv-ref b{color:#f3c969}
     .adv-ref-table{width:100%;border-collapse:collapse;font:500 12px/1.35 system-ui,sans-serif;color:#e0cfa8}
@@ -258,17 +265,6 @@ export function installAdventureMode(target = window) {
       </div>`;
   }
 
-  // Discard + Remove medallions (top), matching Single-Player V2's action pair.
-  function actionBarHtml() {
-    const canAct = session.selectedUid != null;
-    return `<div class="adv-action-bar">`
-      + medallion('discard', 'url("/public/ui/single-player-v2/elements/Discard.png")', 'Discard',
-        { disabled: !canAct || session.discards < 1, badge: session.discards })
-      + medallion('purge', 'var(--spv2-action-center-art)', 'Remove',
-        { disabled: !canAct || session.purges < 1, badge: session.purges })
-      + `</div>`;
-  }
-
   // The four bottom utility medallions, matching Single-Player V2.
   function utilityBarHtml() {
     return `<div class="adv-util-bar">`
@@ -291,21 +287,18 @@ export function installAdventureMode(target = window) {
         : `<div class="slot empty" data-slot="${i}"><span class="num">${i + 1}</span></div>`
     )).join('');
 
+    // Fan the hand: each card offset from centre with a slight arc + rotation.
     const n = session.hand.length;
+    const spacing = n > 5 ? 44 : 52;
     const hand = session.hand.map((card, i) => {
-      const angle = n > 1 ? (i - (n - 1) / 2) * 6 : 0;
-      const selected = card.uid === session.selectedUid;
-      return cardEl(card, { extraClass: selected ? 'sel' : '', style: `--a:${angle.toFixed(1)}deg` });
+      const off = i - (n - 1) / 2;
+      const style = `--x:${(off * spacing).toFixed(1)}px;--y:${(Math.abs(off) * 6).toFixed(1)}px;--r:${(off * 6).toFixed(1)}deg`;
+      return cardEl(card, { style });
     }).join('');
-
-    const hint = session.selectedUid != null
-      ? 'Tap a slot to lay the card · Discard or Remove it · or tap it again to deselect'
-      : 'Tap a card to pick it up';
 
     el.innerHTML = `
       ${stripHtml()}
       ${eventDeckHtml(event)}
-      ${actionBarHtml()}
       <div class="spread-wrap"><div class="spread">${slots}</div></div>
       <div class="adv-cast-wrap">
         <button class="adv-cast" type="button" data-act="cast" ${filled === SPREAD_SIZE ? '' : 'disabled'}>
@@ -313,8 +306,7 @@ export function installAdventureMode(target = window) {
         </button>
       </div>
       ${utilityBarHtml()}
-      <div class="handDock"><div class="hand">${hand}</div></div>
-      <div class="adv-hint" style="position:fixed;bottom:190px;left:0;right:0;z-index:42;pointer-events:none">${hint}</div>`;
+      <div class="adv-handdock"><div class="adv-hand">${hand}</div></div>`;
     paintPhotos(el);
   }
 
@@ -435,14 +427,8 @@ export function installAdventureMode(target = window) {
 
   // --- Flow ---
   function dealHand() {
-    const pile = shuffle(session.deckCards, rng);
     session.spread = Array(SPREAD_SIZE).fill(null);
-    session.hand = pile.slice(0, HAND_SIZE);
-    session.drawPile = pile.slice(HAND_SIZE);
-    session.discardPile = [];
-    session.discards = 3;
-    session.purges = 1;
-    session.selectedUid = null;
+    session.hand = shuffle(session.deckCards, rng).slice(0, HAND_SIZE);
   }
 
   function nextStep() {
@@ -471,20 +457,15 @@ export function installAdventureMode(target = window) {
     renderEvent();
   }
 
-  // --- Interaction (tap a hand card to pick it up, then tap a slot / Discard /
-  // Remove; tap a laid card to take it back) ---
-  function selectHandCard(uid) {
-    session.selectedUid = session.selectedUid === uid ? null : uid;
-    renderEvent();
-  }
-
-  function placeSelected(slotIndex) {
-    if (session.selectedUid == null || session.spread[slotIndex]) return;
-    const idx = session.hand.findIndex(c => c.uid === session.selectedUid);
+  // --- Interaction: tap a hand card to lay it in the next open slot; tap a
+  // laid card to take it back. ---
+  function placeFromHand(uid) {
+    const idx = session.hand.findIndex(c => c.uid === uid);
     if (idx < 0) return;
-    session.spread[slotIndex] = session.hand[idx];
+    const slot = session.spread.findIndex(c => !c);
+    if (slot < 0) return;
+    session.spread[slot] = session.hand[idx];
     session.hand.splice(idx, 1);
-    session.selectedUid = null;
     renderEvent();
   }
 
@@ -493,33 +474,6 @@ export function installAdventureMode(target = window) {
     if (slot < 0) return;
     session.hand.push(session.spread[slot]);
     session.spread[slot] = null;
-    renderEvent();
-  }
-
-  // Discard the selected hand card and draw a replacement (limited charges).
-  function discardSelected() {
-    if (session.selectedUid == null || session.discards < 1) return;
-    const idx = session.hand.findIndex(c => c.uid === session.selectedUid);
-    if (idx < 0) return;
-    const [card] = session.hand.splice(idx, 1);
-    session.discardPile.push(card);
-    if (session.drawPile.length) session.hand.push(session.drawPile.shift());
-    session.discards -= 1;
-    session.selectedUid = null;
-    renderEvent();
-  }
-
-  // Remove the selected card from the run's deck permanently (deck thinning).
-  function purgeSelected() {
-    if (session.selectedUid == null || session.purges < 1) return;
-    const idx = session.hand.findIndex(c => c.uid === session.selectedUid);
-    if (idx < 0) return;
-    const [card] = session.hand.splice(idx, 1);
-    const di = session.deckCards.findIndex(c => c.uid === card.uid);
-    if (di >= 0) session.deckCards.splice(di, 1);
-    session.byUid.delete(card.uid);
-    session.purges -= 1;
-    session.selectedUid = null;
     renderEvent();
   }
 
@@ -603,13 +557,11 @@ export function installAdventureMode(target = window) {
   }
 
   function onClick(ev) {
-    const t = ev.target.closest('[data-act],[data-reward],[data-recovery],[data-slot],.card[data-uid]');
+    const t = ev.target.closest('[data-act],[data-reward],[data-recovery],.card[data-uid]');
     if (!t) return;
     if (t.dataset.act) {
       switch (t.dataset.act) {
         case 'cast': cast(); return;
-        case 'discard': discardSelected(); return;
-        case 'purge': purgeSelected(); return;
         case 'menu': openMenu(); return;
         case 'archive': openArchive(); return;
         case 'scoring': openScoring(); return;
@@ -635,11 +587,7 @@ export function installAdventureMode(target = window) {
     if (t.classList.contains('card')) {
       const uid = Number(t.getAttribute('data-uid'));
       if (t.getAttribute('data-where') === 'spread') returnToHand(uid);
-      else selectHandCard(uid);
-      return;
-    }
-    if (t.dataset.slot != null && t.classList.contains('empty')) {
-      placeSelected(Number(t.dataset.slot));
+      else placeFromHand(uid);
     }
   }
 
