@@ -46,8 +46,8 @@
     background: none !important;
   }
 
-  /* Remove the reserve and discards pills; keep Score and Threshold (with the
-     VS divider between them). Discards still show on the discard-button badge. */
+  /* Remove the reserve and discards pills; keep Score and Threshold side by
+     side. Discards still show on the discard-button badge. */
   body.single-player-v2.generated-sheet-ready .score-stack .reserve-pill,
   body.single-player-v2.generated-sheet-ready .score-stack .discards-pill {
     display: none !important;
@@ -167,11 +167,19 @@
     overflow: visible !important;
   }
 
-  /* Purge: medallion art + brightness on the element itself. */
-  body.single-player-v2.generated-sheet-ready #purgeBtn {
+  /* Purge: art + brightness live on ::before (mirroring Discard) so the
+     caption child below is not washed out by an element-level filter. */
+  body.single-player-v2.generated-sheet-ready #purgeBtn::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
     background-image: var(--spv2-action-center-art) !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: contain !important;
     filter: brightness(1.45) contrast(1.05) saturate(1.08)
       drop-shadow(0 0 6px rgba(0, 0, 0, .6)) !important;
+    pointer-events: none !important;
   }
 
   /* Discard: art + brightness live on ::before so the count badge child is
@@ -196,10 +204,30 @@
     opacity: .85 !important;
   }
 
+  /* Small text caption beneath each action medallion. These two are limited,
+     destructive actions, so the icon should not be the only thing naming them.
+     Lives on ::after under the circle; the medallions keep overflow:visible so
+     it shows, and their art now lives on ::before so this child stays crisp. */
   body.single-player-v2.generated-sheet-ready #discardBtn::after,
   body.single-player-v2.generated-sheet-ready #purgeBtn::after {
-    content: none !important;
+    position: absolute !important;
+    top: 100% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    margin-top: 3px !important;
+    display: block !important;
+    font: 800 clamp(8px, 2.4vw, 10px)/1 system-ui, sans-serif !important;
+    letter-spacing: .09em !important;
+    text-transform: uppercase !important;
+    color: #cdb079 !important;
+    text-shadow: 0 1px 3px #000 !important;
+    white-space: nowrap !important;
+    text-indent: 0 !important;
+    pointer-events: none !important;
   }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn::after { content: "Discard" !important; }
+  body.single-player-v2.generated-sheet-ready #purgeBtn::after { content: "Purge" !important; }
 
   /* Discards-left count badge in the discard button's top-right corner. */
   body.single-player-v2.generated-sheet-ready #spv2DiscardBadge {
