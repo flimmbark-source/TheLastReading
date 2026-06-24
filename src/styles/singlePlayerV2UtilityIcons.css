@@ -45,28 +45,32 @@
     mix-blend-mode: normal !important;
   }
 
+  /* `closest-side` sizes the gradient to the coin's inscribed circle, so the
+     stops land on the coin body (not out at the square box's corners, which is
+     what made the tint nearly invisible on-device). Fill the field, fading at
+     the rim, rather than relying on a precisely placed ring. */
   body.single-player-v2.generated-sheet-ready #scoringBtn::after {
-    background: radial-gradient(circle,
-      rgba(240, 180, 75, 0.16) 0%,
-      transparent 42%,
-      rgba(240, 180, 75, 0.48) 72%,
-      transparent 90%) !important;
+    background: radial-gradient(circle closest-side,
+      rgba(240, 180, 75, 0.30) 0%,
+      rgba(240, 180, 75, 0.40) 58%,
+      rgba(240, 180, 75, 0.22) 82%,
+      transparent 100%) !important;
   }
 
   body.single-player-v2.generated-sheet-ready #abilitiesBtn::after {
-    background: radial-gradient(circle,
-      rgba(121, 199, 120, 0.18) 0%,
-      transparent 42%,
-      rgba(121, 199, 120, 0.52) 72%,
-      transparent 90%) !important;
+    background: radial-gradient(circle closest-side,
+      rgba(121, 199, 120, 0.34) 0%,
+      rgba(121, 199, 120, 0.46) 58%,
+      rgba(121, 199, 120, 0.24) 82%,
+      transparent 100%) !important;
   }
 
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
-    background: radial-gradient(circle,
-      rgba(106, 168, 238, 0.18) 0%,
-      transparent 42%,
-      rgba(106, 168, 238, 0.52) 72%,
-      transparent 90%) !important;
+    background: radial-gradient(circle closest-side,
+      rgba(106, 168, 238, 0.34) 0%,
+      rgba(106, 168, 238, 0.46) 58%,
+      rgba(106, 168, 238, 0.24) 82%,
+      transparent 100%) !important;
   }
 
   /* Menu: same raised elevation, plus a gentle desaturate so the gear reads as
@@ -79,10 +83,10 @@
   }
 
   body.single-player-v2.generated-sheet-ready #menuBtn::after {
-    background: radial-gradient(circle,
-      rgba(210, 216, 236, 0.14) 0%,
-      transparent 42%,
-      rgba(210, 216, 236, 0.40) 72%,
-      transparent 90%) !important;
+    background: radial-gradient(circle closest-side,
+      rgba(210, 216, 236, 0.20) 0%,
+      rgba(210, 216, 236, 0.26) 58%,
+      rgba(210, 216, 236, 0.14) 82%,
+      transparent 100%) !important;
   }
 }
