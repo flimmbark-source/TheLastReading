@@ -1,64 +1,51 @@
-/* Per-function color identity for the four utility medallions (single-player
-   V2, mobile). The painted art already gives each a distinct emblem
-   (Menu = gear, Scoring = ledger/compass, Abilities = cards, Archive = eye);
-   they just share one gold-on-dark coin frame, so they read as four identical
-   coins at a glance.
+/* Art-directed utility medallions (single-player V2, mobile).
 
-   v6: ONE technique for all four. The previous pass mixed two:
-     - a CSS filter (hue-rotate/saturate) recolors every pixel -> whole coin
-       takes the hue ("totally covered"), but
-     - a translucent ::after wash only tints the bright gold ring; it can't
-       colorize the near-black recessed center -> "colored ring, black center".
-   So the two pairs could never match.
+   Replaces the earlier runtime hue-rotate recolor of a single shared gold coin
+   with the proper, art-directed discs sliced from Options-Discs.png. Each disc
+   is its own design with baked color and shading:
+     Menu      steel gear
+     Scoring   teal book (sun + moon)
+     Abilities blue tarot cards
+     Archive   green eye
 
-   This version uses the filter on all four and drops the overlay wash, so the
-   whole coin (ring, field, emblem) shifts together and coverage is identical
-   across the set. Moderate saturation = tinted metal, not neon. No glow.
+   Because the color now lives in the art, there is NO hue/saturation filter
+   here — that would fight the baked palette. The only filter is the neutral
+   "raised" elevation drop-shadow (the look that tested well), and the discs are
+   shown as the button background with no competing CSS frame/border.
 
-     Scoring   warm amber (slight warm shift + saturation)
-     Abilities green       (hue-rotate ~+88deg)
-     Archive   blue        (hue-rotate ~+174deg)
-     Menu      steel        (strong desaturate)
-
-   Kept: the RAISED look (neutral dark elevation drop-shadow, no color). The
-   black seating shadow comes first in each chain (black is unaffected by
-   hue-rotate, so the coin still seats); the hue/saturation work comes after.
-
-   Loaded after ArtIntegration so it wins the cascade. Mobile generated-sheet
-   layout only. */
+   Loaded after ArtIntegration so the background-image override wins. Assets are
+   preloaded via generatedSheetAssets.mjs so the skin doesn't flash. Mobile
+   generated-sheet layout only. */
 @media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready #scoringBtn,
   body.single-player-v2.generated-sheet-ready #abilitiesBtn,
-  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn,
-  body.single-player-v2.generated-sheet-ready #menuBtn {
-    overflow: visible !important;
-  }
-
-  /* Scoring — warm amber. */
-  body.single-player-v2.generated-sheet-ready #scoringBtn {
-    filter: var(--spv2-coin-shadow)
-      drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5))
-      saturate(1.3) brightness(1.05) hue-rotate(-10deg) !important;
-  }
-
-  /* Abilities — green. */
-  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
-    filter: var(--spv2-coin-shadow)
-      drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5))
-      saturate(1.2) hue-rotate(88deg) !important;
-  }
-
-  /* Archive — blue. */
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    background-color: transparent !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    /* Raised look: neutral dark elevation only — no color. */
     filter: var(--spv2-coin-shadow)
-      drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5))
-      saturate(1.2) hue-rotate(174deg) !important;
+      drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5)) !important;
   }
 
-  /* Menu — steel. */
   body.single-player-v2.generated-sheet-ready #menuBtn {
-    filter: var(--spv2-coin-shadow)
-      drop-shadow(0 3px 5px rgba(0, 0, 0, 0.5))
-      saturate(0.18) brightness(1.08) !important;
+    background-image: var(--spv2-option-menu-art) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn {
+    background-image: var(--spv2-option-scoring-art) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    background-image: var(--spv2-option-abilities-art) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    background-image: var(--spv2-option-archive-art) !important;
   }
 }
