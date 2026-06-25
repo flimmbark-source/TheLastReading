@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { ALL_CARD_DEFINITIONS } from '../src/data/cards.mjs';
 import { ADVENTURE_EVENTS } from '../src/data/adventure/events.mjs';
+import { ACTION_NODE_LIST } from '../src/data/adventure/nodes.mjs';
 import { missingCardNodeIds, cardAdventureProfile } from '../src/data/adventure/cardNodes.mjs';
+import { NODE_VISUALS } from '../src/app/adventureInteractionFx.mjs';
 import { routeNode } from '../src/systems/adventure/nodeGraph.mjs';
 import {
   SINGLE_CARD_RESULTS,
@@ -11,6 +13,16 @@ import {
 } from '../src/systems/adventure/singleCardRun.mjs';
 
 assert.deepEqual(missingCardNodeIds(ALL_CARD_DEFINITIONS), [], 'every current card needs exactly one authored Adventure node');
+assert.deepEqual(
+  ACTION_NODE_LIST.filter(node => !NODE_VISUALS[node]),
+  [],
+  'every Adventure node needs a visible interaction item',
+);
+assert.equal(
+  new Set(ACTION_NODE_LIST.map(node => NODE_VISUALS[node].icon)).size,
+  ACTION_NODE_LIST.length,
+  'Adventure node items should have distinct silhouettes',
+);
 
 const strength = ALL_CARD_DEFINITIONS.find(card => card.id === 'major_8');
 assert.deepEqual(cardAdventureProfile(strength), { node: 'physical', potency: 1 }, 'potency must remain the printed card number');
