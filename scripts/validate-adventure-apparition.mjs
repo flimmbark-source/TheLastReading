@@ -8,8 +8,9 @@ import { NODE_APPARITION_SPECS } from '../src/app/apparitions/nodeApparitions.mj
 import { ACTION_NODES } from '../src/data/adventure/nodes.mjs';
 import {
   playAdventureInteractionFx,
-  installAdventureInteractionFxV8,
-} from '../src/app/adventureInteractionFxV8.mjs';
+  installAdventureInteractionFxV9,
+} from '../src/app/adventureInteractionFxV9.mjs';
+import { playEventOutcome } from '../src/app/apparitions/outcomes.mjs';
 
 // Apparitions are generated from code rather than baked sprites/WebP, so we
 // validate the runtime contract instead of image bytes.
@@ -19,8 +20,15 @@ assert.ok(
   'aggression should advertise its full on-screen duration',
 );
 
-assert.equal(typeof playAdventureInteractionFx, 'function', 'V8 must export the FX entry point');
-assert.equal(typeof installAdventureInteractionFxV8, 'function', 'V8 must export its installer');
+assert.equal(typeof playAdventureInteractionFx, 'function', 'V9 must export the FX entry point');
+assert.equal(typeof installAdventureInteractionFxV9, 'function', 'V9 must export its installer');
+
+// Code-driven Event outcomes degrade gracefully without a host document.
+assert.equal(typeof playEventOutcome, 'function', 'outcomes must export a play function');
+for (const tier of ['failure', 'success', 'great_success']) {
+  const ran = await playEventOutcome({}, { root: null, card: null, rect: { left: 0, top: 0, width: 100, height: 140 }, tier });
+  assert.equal(ran, false, `outcome ${tier} should no-op without a host`);
+}
 
 // Every action node must resolve to an apparition play function, and each must
 // degrade gracefully (return false, not throw) without a host document.

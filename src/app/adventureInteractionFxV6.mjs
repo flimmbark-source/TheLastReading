@@ -221,7 +221,7 @@ async function playFramesCrossfade(target, sprite, sheetUrl, frames, {
   if (holdLastMs) await wait(target, holdLastMs);
 }
 
-function captureEventSnapshot(doc, event) {
+export function captureEventSnapshot(doc, event) {
   const card = doc.querySelector('#advEventDeck .adv-deck__top');
   if (!card) return null;
   const rect = card.getBoundingClientRect();
@@ -233,13 +233,13 @@ function captureEventSnapshot(doc, event) {
   };
 }
 
-function findSlot(target, slotIndex) {
+export function findSlot(target, slotIndex) {
   return target._slotEls?.[slotIndex]
     || target.document?.querySelectorAll?.('#spread > .slot')?.[slotIndex]
     || null;
 }
 
-function createEventClone(doc, snapshot) {
+export function createEventClone(doc, snapshot) {
   const clone = doc.createElement('div');
   clone.className = 'adv-deck__top adv-sprite-event-card';
   clone.innerHTML = snapshot.html;
