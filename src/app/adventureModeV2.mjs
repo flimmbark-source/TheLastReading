@@ -84,14 +84,6 @@ function ensureStyles(doc) {
     .adv-pip{width:10px;height:10px;border-radius:50%;border:1px solid rgba(243,201,105,.45)}
     .adv-pip--full{background:radial-gradient(circle at 38% 32%,#ffeab2,#dd9f33);border-color:#f3c969;box-shadow:0 0 6px rgba(243,201,105,.55)}
     .adv-pip--empty{background:rgba(243,201,105,.05)}
-    .adv-hud__stats{display:flex;gap:11px;font:700 11px/1 'Cinzel',Georgia,serif;color:#c4ab7c;
-      border-left:1px solid rgba(228,188,111,.2);padding-left:11px}
-    .adv-hud__stats span{white-space:nowrap}
-    .adv-hud__stats b{color:#f3c969;font-weight:800}.adv-hud__stats i{color:#94815f;font-style:normal}
-    .adv-hud__leave{margin-left:1px;border:1px solid rgba(228,188,111,.28);background:rgba(0,0,0,.25);
-      color:#bda377;border-radius:8px;padding:5px 9px;font:800 9px/1 'Cinzel',Georgia,serif;letter-spacing:.12em;
-      text-transform:uppercase;cursor:pointer}
-    .adv-hud__leave:hover{border-color:#f3c969;color:#f3c969}
     .adv-hud__statuses{display:flex;flex-wrap:wrap;gap:5px;padding-left:2px}
     .adv-hud__statuses:empty{display:none}
     #advHud .adv-status{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px 3px 8px;
@@ -116,7 +108,7 @@ function ensureStyles(doc) {
 
     @media(max-width:640px){
       #advEventDeck{top:6px}.adv-event-desc{max-width:245px;font-size:10px}
-      #advHud{max-width:64vw}.adv-hud__main{gap:8px;padding:6px 9px}.adv-hud__stats{gap:8px;padding-left:8px}
+      #advHud{max-width:64vw}.adv-hud__main{padding:6px 9px}
       .adv-deck{transform:scale(.92);transform-origin:top center}
     }
   `;
@@ -258,8 +250,6 @@ export function installAdventureModeV2(target = window) {
       hud.innerHTML = `
         <div class="adv-hud__main">
           <div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div>
-          <div class="adv-hud__stats"><span>Set <b>${run.setIndex + 1}</b><i>/${TOTAL_SETS}</i></span><span title="Cards in your deck">Deck <b>${run.deck.length}</b></span></div>
-          <button class="adv-hud__leave" type="button" data-adv-leave>Leave</button>
         </div>
         <div class="adv-hud__statuses">${statuses}</div>`;
     }

@@ -172,6 +172,10 @@ window.tlrMainMenuMultiplayer = function () {
   launch('tlrMainMenuMultiplayer');
 };
 
+window.tlrMainMenuAdventure = function () {
+  launch('tlrMainMenuAdventure');
+};
+
 window.tlrSetCandlelightLighting = function (enabled) {
   const next = !!enabled;
   try {
