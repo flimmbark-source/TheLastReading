@@ -1,0 +1,538 @@
+// Adventure Mode V2 — one card resolves one Event; five Events fill one Set.
+// This controller deliberately reuses the existing table, hand, abilities,
+// discard system and card deck while replacing only Adventure resolution and
+// progression.
+
+import { installGeneratedSheetAssets } from '../ui/generatedSheetAssets.mjs';
+import { createInitialPersist, createInitialState } from './runtimeState.mjs';
+import { ALL_CARD_DEFINITIONS } from '../data/cards.mjs';
+import { RECOVERY_EVENT } from '../data/adventure/events.mjs';
+import { getStatus } from '../data/adventure/statuses.mjs';
+import { REWARD_TYPES } from '../data/adventure/rewards.mjs';
+import {
+  applyResolution,
+  generateRewardOffers,
+  applyReward,
+  applyRecoveryChoice,
+  randomUnownedRelic,
+} from '../systems/adventure/run.mjs';
+import {
+  SINGLE_CARD_RESULTS,
+  EVENTS_PER_SET,
+  TOTAL_SETS,
+  createSingleCardRunState,
+  currentSingleCardEvent,
+  addCardToAdventureDeck,
+  removeCardFromAdventureDeck,
+  resolveSingleCardEvent,
+  recordSingleCardPlay,
+  isCurrentSetComplete,
+  completeCurrentSet,
+  beginNextSet,
+  isAdventureRunComplete,
+  setEchoText,
+} from '../systems/adventure/singleCardRun.mjs';
+
+const STYLE_ID = 'adventure-mode-v2-style';
+const MODE_CLASS = 'mode-adventure';
+const TABLE_CLASSES = ['single-player-v2', 'generated-sheet-ready', 'mode-reading'];
+const CARD_BY_ID = new Map(ALL_CARD_DEFINITIONS.map(card => [card.id, card]));
+
+function esc(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+  ));
+}
+
+function ensureStyles(doc) {
+  if (!doc || doc.getElementById(STYLE_ID)) return;
+  const style = doc.createElement('style');
+  style.id = STYLE_ID;
+  style.textContent = `
+    body.mode-adventure .score-stack,
+    body.mode-adventure #constellationPill,
+    body.mode-adventure #scoringBtn{display:none!important}
+
+    #advEventDeck{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:26;
+      display:none;flex-direction:column;align-items:center;gap:6px;pointer-events:none;
+      font-family:Georgia,serif;color:#f2dfb8}
+    body.mode-adventure #advEventDeck{display:flex}
+    .adv-deck{position:relative;width:132px;height:124px}
+    .adv-deck__back{position:absolute;width:88px;height:116px;border-radius:8px;left:50%;top:3px;
+      background:linear-gradient(160deg,#3a2a1a,#160d07);border:1px solid rgba(228,188,111,.45);box-shadow:0 4px 10px rgba(0,0,0,.5)}
+    .adv-deck__top{position:absolute;left:50%;top:-2px;transform:translateX(-50%);width:104px;height:122px;border-radius:9px;
+      background:linear-gradient(165deg,#2a1810,#140907);border:2px solid #9a7842;
+      box-shadow:0 8px 20px rgba(0,0,0,.6),0 0 18px rgba(243,201,105,.2);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px}
+    .adv-deck__trait{font:800 8px system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#d19c51}
+    .adv-deck__title{font:800 13px Georgia,serif;line-height:1.1;margin-top:5px}
+    .adv-deck__progress{font:800 8px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#a99878;margin-top:8px}
+    .adv-event-desc{max-width:310px;text-align:center;font:500 11px Georgia,serif;line-height:1.4;color:#d8c8a6;
+      background:rgba(18,12,9,.66);border-radius:8px;padding:6px 10px}
+    .adv-next-event{font:700 9px system-ui,sans-serif;color:#d19c51;opacity:.9}
+
+    #advHud{position:fixed;top:8px;left:8px;z-index:42;display:none;gap:8px;align-items:center;flex-wrap:wrap;
+      font:700 12px system-ui,sans-serif;color:#ead9b5;max-width:46vw}
+    body.mode-adventure #advHud{display:flex}
+    #advHud .adv-pill{background:rgba(18,12,9,.82);border:1px solid rgba(228,188,111,.5);border-radius:999px;padding:5px 11px}
+    #advHud .adv-pill b{color:#f3c969}
+    #advHud .adv-status{background:rgba(228,188,111,.1);border:1px solid rgba(228,188,111,.5);border-radius:999px;padding:3px 8px;font-size:11px}
+    #advHud .adv-leave{border:1px solid rgba(228,188,111,.5);background:rgba(18,12,9,.82);color:#e7c07c;border-radius:999px;
+      padding:5px 11px;cursor:pointer;font:700 11px system-ui,sans-serif}
+
+    .adv-narrative{line-height:1.5;font-size:15px;color:#e6d6b4;margin:8px 0 4px;text-align:center}
+    .adv-played-card{text-align:center;color:#a99878;font:700 11px system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase}
+    .adv-statuschg{font:700 12px system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;text-align:center;margin-top:4px}
+    .adv-statuschg--gain{color:#f3c969}.adv-statuschg--lose{color:#b6a07a}
+    .adv-rewards{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:6px 0}
+    .adv-reward{flex:1 1 150px;min-width:140px;border:1px solid rgba(228,188,111,.4);border-radius:10px;padding:13px;cursor:pointer;
+      background:rgba(255,255,255,.03);text-align:center;font:700 13px system-ui,sans-serif;color:#eadbb9}
+    .adv-reward:hover{border-color:#f3c969}
+    .adv-reward--picked{border-color:#9fd17f;background:rgba(159,209,127,.12)}
+    .adv-reward--disabled{opacity:.35;pointer-events:none}
+
+    @media(max-width:640px){
+      #advEventDeck{top:6px}.adv-event-desc{max-width:245px;font-size:10px}
+      #advHud{max-width:42vw;gap:5px}.adv-deck{transform:scale(.92);transform-origin:top center}
+    }
+  `;
+  doc.head.appendChild(style);
+}
+
+export function installAdventureModeV2(target = window) {
+  if (!target || target.__tlrAdventureV2Installed) return;
+  target.__tlrAdventureV2Installed = true;
+  const doc = target.document;
+  const rng = () => (target.__tlrAdvRng || Math.random)();
+
+  let session = null;
+  let liveBackup = null;
+
+  function setBusy(value) {
+    if (target.state) target.state.busy = value;
+    if (target.tlrStore && target.tlrActions) {
+      target.tlrStore.dispatch({ type: target.tlrActions.SET_BUSY, busy: value });
+    }
+  }
+
+  function captureLiveBackupOnce() {
+    if (liveBackup) return;
+    liveBackup = {
+      persist: target.persist,
+      state: target.state,
+      runtimePersist: target.tlrRuntime?.persist,
+      runtimeState: target.tlrRuntime?.state,
+      storePersist: target.tlrStore?.getState?.().persist || null,
+      storeRun: target.tlrStore?.getState?.().run || null,
+    };
+  }
+
+  function installFreshProfile() {
+    target.persist = createInitialPersist();
+    target.state = createInitialState();
+    if (target.tlrRuntime) {
+      target.tlrRuntime.persist = target.persist;
+      target.tlrRuntime.state = target.state;
+    }
+  }
+
+  function restoreLiveBackup() {
+    if (!liveBackup) return;
+    target.persist = liveBackup.persist;
+    target.state = liveBackup.state;
+    if (target.tlrRuntime) {
+      target.tlrRuntime.persist = liveBackup.runtimePersist || liveBackup.persist;
+      target.tlrRuntime.state = liveBackup.runtimeState || liveBackup.state;
+    }
+    if (target.tlrStore && target.tlrActions) {
+      if (liveBackup.storePersist) {
+        target.tlrStore.dispatch({ type: target.tlrActions.SYNC_LEGACY_PERSIST, persist: liveBackup.storePersist });
+      }
+      if (liveBackup.storeRun) {
+        target.tlrStore.dispatch({ type: target.tlrActions.SYNC_LEGACY_RUN, run: liveBackup.storeRun });
+      }
+    }
+    liveBackup = null;
+  }
+
+  function forceTable() {
+    if (!doc || !session) return;
+    const body = doc.body;
+    body.classList.remove('mp-game-active', 'mode-attic', 'mode-to-attic', 'mode-to-table', 'mode-table-return', 'mode-return-hard-hide');
+    session.addedClasses = [];
+    for (const cls of [...TABLE_CLASSES, MODE_CLASS]) {
+      if (!body.classList.contains(cls)) {
+        body.classList.add(cls);
+        session.addedClasses.push(cls);
+      }
+    }
+    for (const [id, cls] of [['mpGame', 'mp-hidden'], ['loadoutScreen', 'loadout-hidden'], ['matchmakingScreen', 'mm-screen-hidden']]) {
+      doc.getElementById(id)?.classList.add(cls);
+    }
+    doc.getElementById('atticScene')?.setAttribute('aria-hidden', 'true');
+    try { if (target.Image) installGeneratedSheetAssets(target); } catch { /* asset layer is optional */ }
+  }
+
+  function ensureChrome() {
+    if (!doc) return;
+    if (!doc.getElementById('advEventDeck')) {
+      const deck = doc.createElement('div');
+      deck.id = 'advEventDeck';
+      doc.body.appendChild(deck);
+    }
+    if (!doc.getElementById('advHud')) {
+      const hud = doc.createElement('div');
+      hud.id = 'advHud';
+      doc.body.appendChild(hud);
+      hud.addEventListener('click', event => {
+        if (event.target.closest('[data-adv-leave]')) leave();
+      });
+    }
+  }
+
+  function currentEvent() {
+    return session ? currentSingleCardEvent(session.run) : null;
+  }
+
+  function updateChrome() {
+    if (!doc || !session) return;
+    const run = session.run;
+    const event = currentEvent();
+    const deck = doc.getElementById('advEventDeck');
+    if (deck) {
+      if (!event) {
+        deck.innerHTML = '';
+      } else {
+        const remaining = Math.max(1, EVENTS_PER_SET - run.eventIndexInSet);
+        const backs = [...Array(Math.min(3, remaining)).keys()]
+          .map(i => `<div class="adv-deck__back" style="transform:translate(calc(-50% + ${i * 4}px),${i * 3}px) rotate(${i * 2 - 2}deg)"></div>`)
+          .join('');
+        const prepared = run.statuses.includes('prepared');
+        const nextId = run.eventDeck[run.eventIndexInSet + 1];
+        const next = prepared && nextId
+          ? `<div class="adv-next-event">Next: ${esc(nextId.replaceAll('_', ' '))}</div>` : '';
+        deck.innerHTML = `
+          <div class="adv-deck">${backs}
+            <div class="adv-deck__top">
+              <div class="adv-deck__trait">${esc((event.traits || []).join(' · '))}</div>
+              <div class="adv-deck__title">${esc(event.title)}</div>
+              <div class="adv-deck__progress">Event ${run.eventIndexInSet + 1} / ${EVENTS_PER_SET}</div>
+            </div>
+          </div>
+          <div class="adv-event-desc">${esc(event.description)}</div>${next}`;
+      }
+    }
+
+    const hud = doc.getElementById('advHud');
+    if (hud) {
+      const statuses = run.statuses
+        .map(id => `<span class="adv-status" title="${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</span>`)
+        .join('');
+      hud.innerHTML = `<span class="adv-pill">Resolve <b>${run.resolve}</b> / ${run.maxResolve}</span>`
+        + `<span class="adv-pill">Set <b>${run.setIndex + 1}</b> / ${TOTAL_SETS}</span>`
+        + `<span class="adv-pill" title="Cards in your deck">Deck <b>${run.deck.length}</b></span>`
+        + statuses + `<button class="adv-leave" type="button" data-adv-leave>Leave</button>`;
+    }
+  }
+
+  function show(html) {
+    if (typeof target.showOverlay === 'function') target.showOverlay(html);
+    else {
+      const summary = doc.getElementById('summary');
+      if (summary) { summary.className = 'modal show'; summary.innerHTML = html; }
+    }
+  }
+
+  function clear() {
+    if (typeof target.clearOverlay === 'function') target.clearOverlay();
+    else {
+      const summary = doc.getElementById('summary');
+      if (summary) { summary.className = ''; summary.innerHTML = ''; }
+    }
+  }
+
+  function showOutcome(resolution, card) {
+    const failed = resolution.tier === SINGLE_CARD_RESULTS.FAILURE;
+    const great = resolution.tier === SINGLE_CARD_RESULTS.GREAT_SUCCESS;
+    const label = failed ? 'Failure' : great ? 'Great Success' : 'Success';
+    const statusBits = [
+      ...resolution.gainStatuses.map(id => `<span class="adv-statuschg adv-statuschg--gain">+ ${esc(getStatus(id)?.name || id)}</span>`),
+      ...resolution.removeStatuses.map(id => `<span class="adv-statuschg adv-statuschg--lose">− ${esc(getStatus(id)?.name || id)}</span>`),
+    ].join(' ');
+    const resolveBit = resolution.resolveChange
+      ? `<div class="adv-statuschg ${resolution.resolveChange > 0 ? 'adv-statuschg--gain' : 'adv-statuschg--lose'}">Resolve ${resolution.resolveChange > 0 ? '+' : ''}${resolution.resolveChange}</div>`
+      : '';
+    show(`<div class="result-panel ${failed ? 'fail' : 'pass'}">
+      <div class="rhead"><h3 class="${failed ? 'fail' : 'pass'}">${label}</h3></div>
+      <div class="adv-played-card">${esc(card.name)} · Potency ${card.points}</div>
+      <p class="adv-narrative">${esc(resolution.narrative)}</p>
+      ${statusBits ? `<div>${statusBits}</div>` : ''}${resolveBit}
+      <div class="rbtns"><button class="btn-gold" onclick="tlrAdventureV2AfterOutcome()">Continue</button></div>
+    </div>`);
+  }
+
+  function showRewards() {
+    const { offers, choose, picked } = session.rewardState;
+    const cards = offers.map((offer, index) => {
+      const selected = picked.includes(index);
+      const disabled = !selected && picked.length >= choose;
+      return `<div class="adv-reward${selected ? ' adv-reward--picked' : ''}${disabled ? ' adv-reward--disabled' : ''}" onclick="tlrAdventureV2PickReward(${index})">${esc(offer.label)}</div>`;
+    }).join('');
+    show(`<div class="result-panel pass">
+      <div class="rhead"><h3 class="pass">Choose your reward${choose > 1 ? `s (${picked.length}/${choose})` : ''}</h3></div>
+      <div class="adv-rewards">${cards}</div>
+      <div class="rbtns"><button class="btn-gold" onclick="tlrAdventureV2ConfirmRewards()" ${picked.length === choose ? '' : 'disabled'}>Confirm</button></div>
+    </div>`);
+  }
+
+  function showRecovery() {
+    const choices = RECOVERY_EVENT.choices
+      .map(choice => `<div class="adv-reward" onclick="tlrAdventureV2Recovery('${choice.id}')">${esc(choice.label)}</div>`)
+      .join('');
+    show(`<div class="result-panel pass">
+      <div class="rhead"><h3 class="pass">${esc(RECOVERY_EVENT.title)}</h3></div>
+      <p class="adv-narrative">${esc(RECOVERY_EVENT.description)}</p>
+      <div class="adv-rewards">${choices}</div>
+    </div>`);
+  }
+
+  function showSetTransition(profile) {
+    show(`<div class="result-panel pass">
+      <div class="rhead"><h3 class="pass">The Spread Is Complete</h3></div>
+      <p class="adv-narrative">${esc(setEchoText(profile))}</p>
+      <div class="rbtns"><button class="btn-gold" onclick="tlrAdventureV2ShowRecovery()">Continue</button></div>
+    </div>`);
+  }
+
+  function showEnd(won) {
+    setBusy(true);
+    show(`<div class="result-panel ${won ? 'pass' : 'fail'}">
+      <div class="rhead"><h3 class="${won ? 'pass' : 'fail'}">${won ? 'The Road Remembers You' : 'Your Resolve Fails'}</h3></div>
+      <p class="adv-narrative">${won
+        ? 'Two completed spreads have changed the road behind you and the road ahead.'
+        : 'The journey ends here, but the cards remember how you travelled.'}</p>
+      <div class="rbtns"><button class="btn-gold" onclick="tlrAdventureV2Restart()">New Run</button><button onclick="tlrAdventureV2Leave()">Leave</button></div>
+    </div>`);
+  }
+
+  function buildAdventureDeckCards() {
+    return session.run.deck.map((id, uid) => ({ ...CARD_BY_ID.get(id), uid }));
+  }
+
+  function addPool(size = 3) {
+    const pool = [];
+    const used = new Set();
+    let guard = 0;
+    while (pool.length < size && guard < 100) {
+      guard += 1;
+      const definition = ALL_CARD_DEFINITIONS[Math.floor(rng() * ALL_CARD_DEFINITIONS.length)];
+      if (!definition || used.has(definition.id)) continue;
+      used.add(definition.id);
+      pool.push({ ...definition, uid: 9000 + pool.length });
+    }
+    return pool;
+  }
+
+  function pickCardToRemove(done) {
+    const cards = buildAdventureDeckCards();
+    if (typeof target.choice !== 'function' || !cards.length) { done(); return; }
+    const ordered = typeof target.sortCards === 'function' ? target.sortCards(cards) : cards;
+    clear();
+    target.choice('Remove a Card', 'Choose a card to remove from your deck.', ordered, picked => {
+      removeCardFromAdventureDeck(session.run, picked.id);
+      updateChrome();
+      done();
+    });
+  }
+
+  function pickCardToAdd(done) {
+    const pool = addPool();
+    if (typeof target.choice !== 'function' || !pool.length) { done(); return; }
+    clear();
+    target.choice('Add a Card', 'Choose a card to add to your deck.', pool, picked => {
+      addCardToAdventureDeck(session.run, picked.id);
+      updateChrome();
+      done();
+    });
+  }
+
+  function applyRewardsSequentially(rewards, index) {
+    if (index >= rewards.length) { session.rewardState = null; advanceAfterResolution(); return; }
+    const reward = rewards[index];
+    const next = () => applyRewardsSequentially(rewards, index + 1);
+    if (reward.type === REWARD_TYPES.REMOVE_CARD) { pickCardToRemove(next); return; }
+    if (reward.type === REWARD_TYPES.ADD_CARD) { pickCardToAdd(next); return; }
+    applyReward(session.run, reward, { relicId: randomUnownedRelic(session.run, rng) }, rng);
+    updateChrome();
+    next();
+  }
+
+  function advanceAfterResolution() {
+    if (!session) return;
+    if (session.run.lost || session.run.resolve <= 0) { showEnd(false); return; }
+
+    if (isCurrentSetComplete(session.run)) {
+      const profile = completeCurrentSet(session.run);
+      session.pendingSetProfile = profile;
+      if (isAdventureRunComplete(session.run)) { showEnd(true); return; }
+      showSetTransition(profile);
+      return;
+    }
+
+    session.awaitingOutcome = false;
+    clear();
+    updateChrome();
+    setBusy(false);
+  }
+
+  function afterOutcome() {
+    if (!session?.lastResolution) return;
+    const resolution = session.lastResolution;
+    if (resolution.rewardTier && resolution.rewardShow > 0) {
+      const offers = generateRewardOffers(session.run, resolution.rewardShow, rng);
+      session.rewardState = {
+        offers,
+        choose: Math.min(resolution.rewardChoose, offers.length),
+        picked: [],
+      };
+      showRewards();
+      return;
+    }
+    advanceAfterResolution();
+  }
+
+  function pickReward(index) {
+    const state = session?.rewardState;
+    if (!state) return;
+    const at = state.picked.indexOf(index);
+    if (at >= 0) state.picked.splice(at, 1);
+    else if (state.picked.length < state.choose) state.picked.push(index);
+    showRewards();
+  }
+
+  function confirmRewards() {
+    const state = session?.rewardState;
+    if (!state || state.picked.length !== state.choose) return;
+    const chosen = state.picked.map(index => state.offers[index]);
+    applyRewardsSequentially(chosen, 0);
+  }
+
+  function chooseRecovery(choiceId) {
+    if (!session?.pendingSetProfile) return;
+    applyRecoveryChoice(session.run, choiceId, rng);
+    const profile = session.pendingSetProfile;
+    session.pendingSetProfile = null;
+    beginNextSet(session.run, profile, rng);
+    session.awaitingOutcome = false;
+    clear();
+    updateChrome();
+    setBusy(false);
+    if (typeof target.startReading === 'function') target.startReading();
+  }
+
+  function onCardPlaced(card, slotIndex) {
+    if (!session || session.awaitingOutcome || !card) return false;
+    const event = currentEvent();
+    if (!event) return false;
+    session.awaitingOutcome = true;
+    setBusy(true);
+    const resolution = resolveSingleCardEvent({ event, card, run: session.run });
+    applyResolution(session.run, resolution);
+    recordSingleCardPlay(session.run, event, card, resolution);
+    session.lastEvent = event;
+    session.lastResolution = resolution;
+    session.lastSlotIndex = slotIndex;
+    updateChrome();
+    showOutcome(resolution, card);
+    return true;
+  }
+
+  function newSession() {
+    return {
+      run: createSingleCardRunState(rng),
+      lastEvent: null,
+      lastResolution: null,
+      rewardState: null,
+      pendingSetProfile: null,
+      awaitingOutcome: false,
+      addedClasses: [],
+    };
+  }
+
+  function wrapReturnToMenuOnce() {
+    if (target.__tlrAdventureV2ReturnWrapped || typeof target.tlrReturnToMenu !== 'function') return;
+    target.__tlrAdventureV2ReturnWrapped = true;
+    const original = target.tlrReturnToMenu;
+    target.__tlrAdventureV2ReturnOriginal = original;
+    target.tlrReturnToMenu = function (...args) {
+      cleanupAdventure();
+      return original.apply(this, args);
+    };
+  }
+
+  function startRun() {
+    captureLiveBackupOnce();
+    wrapReturnToMenuOnce();
+    target.__tlrAdventureActive = true;
+    installFreshProfile();
+    session = newSession();
+    ensureStyles(doc);
+    ensureChrome();
+    forceTable();
+    updateChrome();
+    clear();
+    setBusy(false);
+    if (typeof target.startReading === 'function') target.startReading();
+  }
+
+  function restartRun() {
+    if (!target.__tlrAdventureActive) { startRun(); return; }
+    installFreshProfile();
+    session = newSession();
+    ensureChrome();
+    forceTable();
+    updateChrome();
+    clear();
+    setBusy(false);
+    if (typeof target.startReading === 'function') target.startReading();
+  }
+
+  function cleanupAdventure() {
+    if (!target.__tlrAdventureActive) return;
+    target.__tlrAdventureActive = false;
+    restoreLiveBackup();
+    if (doc) {
+      doc.body.classList.remove(MODE_CLASS);
+      for (const cls of session?.addedClasses || []) if (cls !== MODE_CLASS) doc.body.classList.remove(cls);
+      doc.getElementById('advEventDeck')?.remove();
+      doc.getElementById('advHud')?.remove();
+    }
+    session = null;
+    clear();
+  }
+
+  function leave() {
+    cleanupAdventure();
+    const navigate = target.__tlrAdventureV2ReturnOriginal || target.tlrReturnToMenu || target.tlrShowMainMenu;
+    if (typeof navigate === 'function') navigate();
+  }
+
+  // Override the original Adventure public surface after adventureMode.mjs has
+  // installed. Score Mode remains untouched because placement checks the active
+  // flag before calling the one-card hook.
+  target.tlrStartAdventure = startRun;
+  target.tlrAdventureBuildDeck = () => (session ? buildAdventureDeckCards() : null);
+  target.tlrAdventureOnCardPlaced = onCardPlaced;
+  target.tlrAdventureResolveReading = () => {};
+  target.tlrAdventureV2AfterOutcome = afterOutcome;
+  target.tlrAdventureV2PickReward = pickReward;
+  target.tlrAdventureV2ConfirmRewards = confirmRewards;
+  target.tlrAdventureV2ShowRecovery = showRecovery;
+  target.tlrAdventureV2Recovery = chooseRecovery;
+  target.tlrAdventureV2Restart = restartRun;
+  target.tlrAdventureV2Leave = leave;
+  target.tlrAdventureRestart = restartRun;
+  target.tlrAdventureLeave = leave;
+}
+
+if (typeof window !== 'undefined') installAdventureModeV2(window);
