@@ -41,11 +41,23 @@ function findPlacedCard(target, slotIndex) {
   return slot?.querySelector?.(':scope > .card') || slot || null;
 }
 
-function anchorRectFor(target, slotIndex) {
-  const card = findPlacedCard(target, slotIndex);
+function rectOf(card) {
   const rect = card?.getBoundingClientRect?.();
   if (!rect || !rect.width || !rect.height) return null;
   return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+}
+
+// A short directional recoil + flash on the played card when the slash lands,
+// so the blade reads as actually striking the Event rather than passing over it.
+function joltCard(card) {
+  if (!card?.animate) return;
+  card.animate([
+    { transform: 'translate(0,0) rotate(0deg)', filter: 'brightness(1)' },
+    { transform: 'translate(4px,5px) rotate(1.4deg)', filter: 'brightness(1.45)', offset: 0.22 },
+    { transform: 'translate(-3px,-2px) rotate(-.8deg)', filter: 'brightness(1.12)', offset: 0.5 },
+    { transform: 'translate(2px,1px) rotate(.4deg)', filter: 'brightness(1.04)', offset: 0.75 },
+    { transform: 'translate(0,0) rotate(0deg)', filter: 'brightness(1)' },
+  ], { duration: 340, easing: 'cubic-bezier(.3,.7,.3,1)' });
 }
 
 export function installAdventureInteractionFxV8(target = window) {
@@ -63,12 +75,16 @@ export async function playAdventureInteractionFx(options) {
     return playAdventureInteractionFxV6(options);
   }
 
-  const anchor = anchorRectFor(target, options.slotIndex);
+  const card = findPlacedCard(target, options.slotIndex);
+  const anchor = rectOf(card);
   if (!anchor) return playAdventureInteractionFxV6(options);
 
   const reduced = target.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
   target.document.body.classList.add('adv-aggression-code-active');
-  const apparition = playAggressionApparition(target, anchor, { reduced }).catch(() => false);
+  const apparition = playAggressionApparition(target, anchor, {
+    reduced,
+    onImpact: () => joltCard(card),
+  }).catch(() => false);
   try {
     const result = await playAdventureInteractionFxV6(options);
     await apparition;
