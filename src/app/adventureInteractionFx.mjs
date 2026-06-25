@@ -79,7 +79,11 @@ export function installAdventureInteractionFx(target = window) {
         originalShowOverlay.call(target, pendingOverlay.html, ...pendingOverlay.args);
         return handled;
       }
-      const potency = cardAdventureProfile(card)?.potency ?? null;
+      const profile = cardAdventureProfile(card);
+      const potency = profile?.potency ?? null;
+      // The apparition reflects the card the player actually summoned (its own
+      // node), while the resolved node still drives the Event's outcome reaction.
+      const cardNode = profile?.node ?? node;
 
       const eventHtmlAfter = deck?.innerHTML || '';
       if (deck && eventHtmlBefore) deck.innerHTML = eventHtmlBefore;
@@ -88,7 +92,7 @@ export function installAdventureInteractionFx(target = window) {
         slotIndex,
         card,
         event,
-        resolution: { tier, resolvedNode: node, potency },
+        resolution: { tier, resolvedNode: node, cardNode, potency },
       });
       if (deck) deck.innerHTML = eventHtmlAfter;
 

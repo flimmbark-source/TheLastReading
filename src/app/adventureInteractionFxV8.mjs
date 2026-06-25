@@ -76,7 +76,11 @@ export async function playAdventureInteractionFx(options) {
   const target = options?.target || window;
   installAdventureInteractionFxV8(target);
 
-  const play = apparitionFor(options?.resolution?.resolvedNode);
+  // The apparition is chosen by the played card's own node (falling back to the
+  // resolved node), so every card shows its characteristic summon; V6 still uses
+  // the resolved node + tier for the Event's outcome reaction.
+  const apparitionNode = options?.resolution?.cardNode ?? options?.resolution?.resolvedNode;
+  const play = apparitionFor(apparitionNode);
   if (!play) return playAdventureInteractionFxV6(options);
 
   const card = findPlacedCard(target, options.slotIndex);
