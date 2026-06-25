@@ -11,6 +11,33 @@ import {
 
 export { NODE_VISUALS, OUTCOME_VISUALS, playAdventureInteractionFx };
 
+const NODE_ASSET_URL = '/public/ui/single-player-v2/Event-Visuals-Node.png';
+const OUTCOME_ASSET_URL = '/public/ui/single-player-v2/Event-Outcome-Sheet.png';
+const ASSET_FIX_STYLE_ID = 'adventure-sprite-public-path-fix';
+
+function ensureSpriteAssetPaths(doc) {
+  if (!doc || doc.getElementById(ASSET_FIX_STYLE_ID)) return;
+  const style = doc.createElement('style');
+  style.id = ASSET_FIX_STYLE_ID;
+  style.textContent = `
+    .adv-node-sprite-frame{
+      background-image:url("${NODE_ASSET_URL}")!important;
+    }
+    .adv-outcome-sprite-frame{
+      background-image:url("${OUTCOME_ASSET_URL}")!important;
+    }
+  `;
+  doc.head.appendChild(style);
+}
+
+function preloadCorrectAssets(target) {
+  if (!target?.Image) return;
+  for (const url of [NODE_ASSET_URL, OUTCOME_ASSET_URL]) {
+    const image = new target.Image();
+    image.src = url;
+  }
+}
+
 function tierFromHtml(html) {
   const match = String(html || '').match(/<div class="rhead"><h3[^>]*>(Great Success|Success|Failure)<\/h3>/i);
   if (!match) return null;
@@ -33,6 +60,8 @@ function resolvedNode(card, event) {
 export function installAdventureInteractionFx(target = window) {
   if (!target?.document || target.__tlrAdventureInteractionBridgeInstalled) return;
   target.__tlrAdventureInteractionBridgeInstalled = true;
+  ensureSpriteAssetPaths(target.document);
+  preloadCorrectAssets(target);
   installAdventureInteractionFxV5(target);
 
   const attach = () => {
@@ -80,9 +109,6 @@ export function installAdventureInteractionFx(target = window) {
         return handled;
       }
 
-      // Adventure advances its internal Event index before requesting the result
-      // overlay. Restore the just-resolved Event only long enough for V5 to take
-      // a visual snapshot, then immediately put the newly advanced deck back.
       const eventHtmlAfter = deck?.innerHTML || '';
       if (deck && eventHtmlBefore) deck.innerHTML = eventHtmlBefore;
       const animation = playAdventureInteractionFx({
