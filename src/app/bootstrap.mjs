@@ -12,6 +12,9 @@ export function createArchitectureRuntime(options = {}) {
 
   if (storage && options.autosave !== false) {
     store.subscribe(state => {
+      // Adventure Mode runs on a throwaway, fresh profile. Never let its store
+      // changes overwrite the player's persisted Score Mode save.
+      if (globalThis.__tlrAdventureActive) return;
       savePersistState(storage, state.persist, options.saveKey);
     });
   }

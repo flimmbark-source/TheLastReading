@@ -11,6 +11,7 @@
 // Score Mode is untouched: every hook is gated on window.__tlrAdventureActive.
 
 import { installGeneratedSheetAssets } from '../ui/generatedSheetAssets.mjs';
+import { createInitialPersist, createInitialState } from './runtimeState.mjs';
 import {
   createAdventureRunState,
   currentEvent,
@@ -101,6 +102,49 @@ export function installAdventureMode(target = window) {
   const rng = () => (target.__tlrAdvRng || Math.random)();
 
   let session = null;
+  // Snapshot of the live Score Mode persist/run, taken when Adventure starts and
+  // restored when it ends. Adventure never reads or writes Score Mode state.
+  let liveBackup = null;
+
+  // Stash the live Score Mode profile + run once, on first entry. Adventure
+  // swaps the globals to fresh objects rather than mutating these, so keeping the
+  // original references is safe and restores them exactly on leave.
+  function captureLiveBackupOnce() {
+    if (liveBackup) return;
+    liveBackup = {
+      persist: target.persist,
+      state: target.state,
+      storeRun: target.tlrStore ? target.tlrStore.getState().run : null,
+    };
+  }
+
+  // Swap the globals to a fresh, throwaway Adventure profile: default upgrades,
+  // no relics, empty reserve. Scoring, hand size and discards all fall back to
+  // their defaults — the live deck/upgrades/relics are never used.
+  function installFreshProfile() {
+    target.persist = createInitialPersist();
+    target.state = createInitialState();
+    if (target.console && typeof target.console.assert === 'function') {
+      const up = target.persist.up || {};
+      const clean = !Object.values(up).some(Boolean) && !(target.persist.relics || []).length;
+      target.console.assert(clean, '[Adventure] expected a fresh profile with no Score-Mode upgrades/relics');
+    }
+  }
+
+  // Put the live Score Mode persist/run back exactly as they were, and resync the
+  // architecture store. The on-disk save was never touched while Adventure ran.
+  function restoreLiveBackup() {
+    if (!liveBackup) return;
+    target.persist = liveBackup.persist;
+    target.state = liveBackup.state;
+    if (target.tlrStore && target.tlrActions) {
+      if (typeof target.tlrSyncPersistToStore === 'function') target.tlrSyncPersistToStore();
+      if (liveBackup.storeRun) {
+        target.tlrStore.dispatch({ type: target.tlrActions.SYNC_LEGACY_RUN, run: liveBackup.storeRun });
+      }
+    }
+    liveBackup = null;
+  }
 
   // --- Chrome (Event deck + Resolve HUD) -----------------------------------
   function ensureChrome() {
@@ -302,8 +346,13 @@ export function installAdventureMode(target = window) {
   }
 
   function startRun() {
-    session = { run: createAdventureRunState(), lastEvent: null, lastResolution: null, rewardState: null, addedClasses: [] };
+    // Isolate from Score Mode BEFORE the flag flips on and any reading is dealt:
+    // capture the live profile once, then swap to a fresh Adventure profile.
+    captureLiveBackupOnce();
+    wrapReturnToMenuOnce();
     target.__tlrAdventureActive = true;
+    installFreshProfile();
+    session = { run: createAdventureRunState(), lastEvent: null, lastResolution: null, rewardState: null, addedClasses: [] };
     ensureStyles(doc);
     ensureChrome();
     forceTable();
@@ -312,8 +361,14 @@ export function installAdventureMode(target = window) {
     if (typeof target.startReading === 'function') target.startReading();
   }
 
-  function leave() {
+  // Tear down an active Adventure run and restore Score Mode. Idempotent, so it
+  // is safe whether the player exits via the Adventure "Leave" button or the
+  // in-game settings "Return to Menu".
+  function cleanupAdventure() {
+    if (!target.__tlrAdventureActive) return;
+    // Flag off first so the restored Score Mode persist autosaves normally again.
     target.__tlrAdventureActive = false;
+    restoreLiveBackup();
     if (doc) {
       doc.body.classList.remove(MODE_CLASS);
       for (const cls of session?.addedClasses || []) if (cls !== MODE_CLASS) doc.body.classList.remove(cls);
@@ -322,8 +377,22 @@ export function installAdventureMode(target = window) {
     }
     session = null;
     clear();
-    if (typeof target.tlrReturnToMenu === 'function') target.tlrReturnToMenu();
-    else if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu();
+  }
+
+  // Route the menu's own "Return to Menu" through cleanup, so leaving Adventure
+  // by any path restores the Score Mode profile.
+  function wrapReturnToMenuOnce() {
+    if (target.__tlrAdvReturnWrapped || typeof target.tlrReturnToMenu !== 'function') return;
+    target.__tlrAdvReturnWrapped = true;
+    const original = target.tlrReturnToMenu;
+    target.__tlrReturnToMenuOriginal = original;
+    target.tlrReturnToMenu = function (...args) { cleanupAdventure(); return original.apply(this, args); };
+  }
+
+  function leave() {
+    cleanupAdventure();
+    const nav = target.__tlrReturnToMenuOriginal || target.tlrReturnToMenu || target.tlrShowMainMenu;
+    if (typeof nav === 'function') nav();
   }
 
   // --- Public hooks (called from the menu and the readingFlow scoring hook) --

@@ -21,6 +21,12 @@ window.clearOverlay = () => { const s = window.document.getElementById('summary'
 let returned = false;
 window.tlrReturnToMenu = () => { returned = true; };
 
+// A live Score Mode profile + run that Adventure must NOT read or write.
+const LIVE_PERSIST = { pool: 99, up: { hand: 3, discards: 2, omen: 4 }, relics: ['gilded_fool'], relicUsed: { a: 1 } };
+const LIVE_STATE = { deck: [{ uid: 1 }], hand: [{ uid: 2 }], th: 5, discards: 6 };
+window.persist = LIVE_PERSIST;
+window.state = LIVE_STATE;
+
 const { installAdventureMode } = await import('../src/app/adventureMode.mjs');
 installAdventureMode(window);
 
@@ -50,6 +56,14 @@ assert.ok(window.document.getElementById('advHud'), 'resolve HUD mounted');
 assert.ok(readingDeals >= 1, 'a reading is dealt on the real table');
 assert.ok(deckText().includes('Iron Gate'), 'event deck shows the first event');
 
+// Isolation: Adventure runs on a FRESH profile, not the live Score Mode one.
+assert.notEqual(window.persist, LIVE_PERSIST, 'live persist is swapped out, not mutated');
+assert.equal(window.persist.up.hand, 0, 'fresh profile ignores Score-Mode hand upgrade');
+assert.equal(window.persist.up.omen, 0, 'fresh profile ignores Score-Mode scoring upgrades');
+assert.equal((window.persist.relics || []).length, 0, 'fresh profile has no Score-Mode relics');
+assert.equal(window.persist.pool, 0, 'fresh profile has no Score-Mode reserve');
+assert.deepEqual(LIVE_PERSIST.relics, ['gilded_fool'], 'the live persist object is untouched');
+
 // --- Event 1: Triumph -------------------------------------------------------
 window.tlrAdventureResolveReading(40, spread); // Iron Gate triumph is 38
 assert.ok(summary().innerHTML.includes('Triumph'), 'triumph outcome shown');
@@ -74,16 +88,24 @@ window.tlrAdventureAfterOutcome();
 resolveRewards();
 assert.ok(summary().innerHTML.includes('Breathe'), 'recovery event appears after event 3');
 
+// Rewards (incl. any gained relic) only touch the Adventure run, never persist.
+assert.equal((window.persist.relics || []).length, 0, 'Adventure relics never land in the live persist');
+
 // Recovery → run complete (victory).
 window.tlrAdventureRecovery('rest');
 assert.ok(summary().innerHTML.includes('road is yours'), 'completing the run shows the victory screen');
 
-// --- Leaving restores the menu ---------------------------------------------
+// --- Leaving restores the menu and the live Score Mode profile -------------
 window.tlrAdventureLeave();
 assert.equal(window.__tlrAdventureActive, false, 'adventure flag cleared so Score Mode scoring resumes');
 assert.ok(!window.document.getElementById('advEventDeck'), 'event deck removed on leave');
 assert.ok(!window.document.body.classList.contains('mode-adventure'), 'mode-adventure cleared on leave');
 assert.ok(returned, 'returns to the main menu');
+assert.equal(window.persist, LIVE_PERSIST, 'the exact live persist object is restored on leave');
+assert.equal(window.persist.up.hand, 3, 'Score-Mode upgrades restored unchanged');
+assert.deepEqual(window.persist.relics, ['gilded_fool'], 'Score-Mode relics restored unchanged');
+assert.equal(window.persist.pool, 99, 'Score-Mode reserve restored unchanged');
+assert.equal(window.state, LIVE_STATE, 'Score-Mode run restored unchanged');
 
 // --- A failed reading costs Resolve ----------------------------------------
 window.tlrStartAdventure();
