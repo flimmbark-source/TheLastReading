@@ -23,10 +23,16 @@ export const ADVENTURE_RESULTS = Object.freeze({
 export const INITIAL_RESOLVE = 4;
 export const MAX_RESOLVE = 6;
 
-// The slice run: three standard events, then the recovery beat. The boss is
-// authored later; the schema and bossInterpretationHistory tracker are ready.
+// A run is six standard events (recovery falls after the third) followed by the
+// boss. This curated order keeps a varied trait pace; later this can be
+// randomised from the full pool.
+export const RUN_EVENT_IDS = Object.freeze([
+  'iron_gate', 'ambush', 'strange_shrine',
+  'traveling_merchant', 'whispering_tree', 'cornered_beast',
+]);
+
 function defaultEventOrder() {
-  return ADVENTURE_EVENTS.map(event => event.id);
+  return [...RUN_EVENT_IDS];
 }
 
 // The Adventure run owns its own deck as a list of card ids. It starts as the
@@ -354,12 +360,30 @@ export function applyRecoveryChoice(run, choiceId, rng = Math.random) {
   return run;
 }
 
-// --- Boss tracking (scaffold for the Woman In The Well) --------------------
+// --- Boss tracking (the Woman In The Well) ---------------------------------
 
 export function recordBossPhase(run, meanings) {
   const dominant = dominantMeaning(meanings);
   if (dominant) run.bossInterpretationHistory.push(dominant);
   return run;
+}
+
+// Score the boss spread against a phase. Triumph/Success/Failure, same tiers as
+// a normal event.
+export function resolveBossPhase({ phase, score }) {
+  if (score >= phase.triumphScore) return ADVENTURE_RESULTS.TRIUMPH;
+  if (score >= phase.targetScore) return ADVENTURE_RESULTS.SUCCESS;
+  return ADVENTURE_RESULTS.FAILURE;
+}
+
+// Pick the final outcome from the dominant meanings accumulated across phases.
+export function resolveBossFinal(run, boss) {
+  const tally = run.bossInterpretationHistory.reduce((acc, tag) => {
+    acc[tag] = (acc[tag] || 0) + 1;
+    return acc;
+  }, {});
+  const { outcome } = selectOutcome({ outcomes: boss.finals }, tally);
+  return outcome || boss.finals[boss.finals.length - 1] || null;
 }
 
 export function bossLeaningTags(run) {

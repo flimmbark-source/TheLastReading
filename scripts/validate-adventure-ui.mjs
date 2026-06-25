@@ -72,7 +72,7 @@ assert.equal((window.persist.relics || []).length, 0, 'fresh profile has no Scor
 assert.equal(window.persist.pool, 0, 'fresh profile has no Score-Mode reserve');
 assert.deepEqual(LIVE_PERSIST.relics, ['gilded_fool'], 'the live persist object is untouched');
 
-// --- Event 1: Triumph -------------------------------------------------------
+// --- Event 1: Triumph outcome + reward shape --------------------------------
 window.tlrAdventureResolveReading(40, spread); // Iron Gate triumph is 38
 assert.ok(summary().innerHTML.includes('Triumph'), 'triumph outcome shown');
 assert.ok(summary().querySelector('.adv-debug'), 'hidden meanings shown in dev debug panel');
@@ -83,25 +83,38 @@ resolveRewards();
 assert.ok(readingDeals > deals, 'a fresh reading is dealt for the next event');
 assert.ok(deckText().includes('Ambush'), 'advanced to the second event');
 
-// --- Event 2: Success ------------------------------------------------------
-window.tlrAdventureResolveReading(30, spread); // Ambush target 24, triumph 40
-assert.ok(summary().innerHTML.includes('Success'), 'success outcome shown');
-window.tlrAdventureAfterOutcome();
-resolveRewards();
-assert.ok(deckText().includes('Strange Shrine'), 'advanced to the third event');
+// --- Play out the rest of the run: 6 events (recovery after #3), then boss ---
+function resolveOneEvent(score) {
+  window.tlrAdventureResolveReading(score, spread);
+  window.tlrAdventureAfterOutcome(); // outcome → rewards
+  resolveRewards();                  // confirm → advance to the next beat
+}
 
-// --- Event 3: Triumph, then the recovery beat ------------------------------
-window.tlrAdventureResolveReading(40, spread);
-window.tlrAdventureAfterOutcome();
-resolveRewards();
-assert.ok(summary().innerHTML.includes('Breathe'), 'recovery event appears after event 3');
-
-// Rewards (incl. any gained relic) only touch the Adventure run, never persist.
+let eventsPlayed = 1; // event 1 already played above
+let guard = 0;
+while (!summary().innerHTML.includes('Woman in the Well') && guard < 24) {
+  guard += 1;
+  if (summary().innerHTML.includes('Breathe')) { window.tlrAdventureRecovery('rest'); continue; }
+  resolveOneEvent(40);
+  eventsPlayed += 1;
+}
+assert.equal(eventsPlayed, 6, 'six standard events precede the boss');
+assert.ok(summary().innerHTML.includes('Woman in the Well'), 'the boss appears after the run');
+// Across the whole run, Adventure rewards never leak into the live persist.
 assert.equal((window.persist.relics || []).length, 0, 'Adventure relics never land in the live persist');
 
-// Recovery → run complete (victory).
-window.tlrAdventureRecovery('rest');
-assert.ok(summary().innerHTML.includes('road is yours'), 'completing the run shows the victory screen');
+// --- The boss: three phases, then a meaning-driven victory ------------------
+window.tlrAdventureAfterOutcome(); // descend → deal phase 1
+assert.ok(deckText().includes('Descent'), 'boss deck shows phase 1');
+window.tlrAdventureResolveReading(40, spread); // phase 1 (target 24)
+assert.ok(summary().innerHTML.includes('Descent'), 'phase 1 resolves');
+window.tlrAdventureAfterOutcome(); // → phase 2
+window.tlrAdventureResolveReading(46, spread); // phase 2 (target 30)
+window.tlrAdventureAfterOutcome(); // → phase 3
+window.tlrAdventureResolveReading(54, spread); // phase 3 (target 36)
+window.tlrAdventureAfterOutcome(); // complete → final outcome
+assert.ok(summary().innerHTML.includes('New Run'), 'the boss resolves to a victory screen');
+assert.ok(!summary().innerHTML.includes('Resolve fails'), 'the boss was completed, not lost');
 
 // --- Leaving restores the menu and the live Score Mode profile -------------
 window.tlrAdventureLeave();

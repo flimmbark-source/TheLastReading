@@ -20,8 +20,12 @@ import {
   defaultAdventureDeck,
   addCardToDeck,
   removeCardFromDeck,
+  recordBossPhase,
+  resolveBossPhase,
+  resolveBossFinal,
   ADVENTURE_RESULTS,
 } from '../src/systems/adventure/run.mjs';
+import { ADVENTURE_BOSS } from '../src/data/adventure/events.mjs';
 import { REWARD_TYPES } from '../src/data/adventure/rewards.mjs';
 import { buildDebugPanelHtml, isAdventureDebugEnabled } from '../src/ui/adventure/adventureHud.mjs';
 
@@ -166,13 +170,17 @@ applyRecoveryChoice(run, 'rest', rng);
 assert.equal(run.resolve, 3, 'recovery rest restores 1 Resolve');
 assert.ok(run.flags.recoveryDone, 'recovery is marked done');
 
-// --- Full loop smoke: play the three events ---------------------------------
+// --- Full loop smoke: play every event in a run -----------------------------
 
 run = createAdventureRunState();
+const eventById = new Map(ADVENTURE_EVENTS.map(e => [e.id, e]));
+const totalEvents = run.events.length;
+assert.equal(totalEvents, 6, 'a run is six standard events');
 let safety = 0;
-while (run.currentEventIndex < run.events.length && !isRunLost(run) && safety < 20) {
+while (run.currentEventIndex < run.events.length && !isRunLost(run) && safety < 30) {
   safety += 1;
-  const event = ADVENTURE_EVENTS[run.currentEventIndex];
+  const event = eventById.get(run.events[run.currentEventIndex]);
+  assert.ok(event, `run event exists: ${run.events[run.currentEventIndex]}`);
   // A strong, varied spread to clear the target.
   const spread = [card('major_8'), card('major_16'), card('court_Swords_King'), card('court_Swords_Queen'), card('court_Swords_Knight')];
   const r = resolveEvent({ event, spread, run });
@@ -183,7 +191,7 @@ while (run.currentEventIndex < run.events.length && !isRunLost(run) && safety < 
   }
   advanceEvent(run, event.id);
 }
-assert.equal(run.completedEvents.length, 3, 'all three events completed');
+assert.equal(run.completedEvents.length, totalEvents, 'all run events completed');
 
 // --- Adventure deck: persistent and evolving --------------------------------
 
@@ -199,6 +207,29 @@ assert.equal(deckRun.deck.filter(id => id === 'major_16').length, 2, 'duplicates
 // The run owns the deck — mutating one run never affects another.
 const otherRun = createAdventureRunState();
 assert.equal(otherRun.deck.length, 38, 'a separate run keeps its own full deck');
+
+// --- Boss: phase tiers + final outcome from accumulated meanings ------------
+
+assert.equal(ADVENTURE_BOSS.phases.length, 3, 'the boss has three phases');
+const [p1, p2, p3] = ADVENTURE_BOSS.phases;
+assert.deepEqual([p1.targetScore, p2.targetScore, p3.targetScore], [24, 30, 36], 'boss phase targets');
+assert.equal(resolveBossPhase({ phase: p1, score: 50 }), ADVENTURE_RESULTS.TRIUMPH, 'over triumph is a triumph');
+assert.equal(resolveBossPhase({ phase: p1, score: 24 }), ADVENTURE_RESULTS.SUCCESS, 'meeting target is success');
+assert.equal(resolveBossPhase({ phase: p1, score: 10 }), ADVENTURE_RESULTS.FAILURE, 'under target fails');
+
+// A compassion/intuition run reaches the mercy ending.
+const mercyRun = createAdventureRunState();
+recordBossPhase(mercyRun, { compassion: 5, intuition: 1 });
+recordBossPhase(mercyRun, { intuition: 5 });
+recordBossPhase(mercyRun, { compassion: 4 });
+assert.equal(resolveBossFinal(mercyRun, ADVENTURE_BOSS).id, 'final_mercy', 'compassion-leaning run earns the mercy ending');
+
+// A violent run reaches the force ending.
+const forceRun = createAdventureRunState();
+recordBossPhase(forceRun, { violence: 5 });
+recordBossPhase(forceRun, { courage: 5 });
+recordBossPhase(forceRun, { violence: 4 });
+assert.equal(resolveBossFinal(forceRun, ADVENTURE_BOSS).id, 'final_force', 'violence-leaning run earns the force ending');
 
 // --- Debug panel shows meanings, and is dev-gated ---------------------------
 

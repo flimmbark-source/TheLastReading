@@ -27,10 +27,14 @@ import {
   isRecoveryDue,
   applyRecoveryChoice,
   randomUnownedRelic,
+  recordBossPhase,
+  resolveBossPhase,
+  resolveBossFinal,
   ADVENTURE_RESULTS,
 } from '../systems/adventure/run.mjs';
+import { calculateSpreadMeanings } from '../systems/adventure/meanings.mjs';
 import { REWARD_TYPES } from '../data/adventure/rewards.mjs';
-import { RECOVERY_EVENT } from '../data/adventure/events.mjs';
+import { RECOVERY_EVENT, ADVENTURE_BOSS } from '../data/adventure/events.mjs';
 import { getStatus } from '../data/adventure/statuses.mjs';
 import { buildDebugPanelHtml, isAdventureDebugEnabled } from '../ui/adventure/adventureHud.mjs';
 
@@ -172,11 +176,26 @@ export function installAdventureMode(target = window) {
   function updateChrome() {
     if (!doc || !session) return;
     const run = session.run;
-    const event = currentEvent(run);
+    // During the boss, the "event" the deck shows is the current phase.
+    const bossPhase = (session.boss && session.boss.phaseIndex < ADVENTURE_BOSS.phases.length)
+      ? ADVENTURE_BOSS.phases[session.boss.phaseIndex] : null;
+    const event = session.boss ? null : currentEvent(run);
     const deck = doc.getElementById('advEventDeck');
     if (deck) {
-      if (!event) { deck.innerHTML = ''; }
-      else {
+      if (bossPhase) {
+        deck.innerHTML = `
+          <div class="adv-deck">
+            <div class="adv-deck__back" style="transform:translate(calc(-50% + 4px),3px) rotate(2deg)"></div>
+            <div class="adv-deck__top">
+              <div class="adv-deck__trait">Boss · ${esc(bossPhase.label)}</div>
+              <div class="adv-deck__title">${esc(ADVENTURE_BOSS.title)}</div>
+              <div class="adv-deck__scores">▲ ${bossPhase.targetScore} · ★ ${bossPhase.triumphScore}</div>
+            </div>
+          </div>
+          <div class="adv-event-desc">${esc(bossPhase.description)}</div>`;
+      } else if (!event) {
+        deck.innerHTML = '';
+      } else {
         const remaining = Math.max(1, run.events.length - run.currentEventIndex);
         const backs = [...Array(Math.min(3, remaining)).keys()]
           .map(i => `<div class="adv-deck__back" style="transform:translate(calc(-50% + ${i * 4}px),${i * 3}px) rotate(${i * 2 - 2}deg)"></div>`)
@@ -273,6 +292,7 @@ export function installAdventureMode(target = window) {
   // --- Flow ----------------------------------------------------------------
   function resolveReading(score, cards) {
     if (!session) return;
+    if (session.boss) { resolveBossReading(score, cards); return; }
     const event = currentEvent(session.run);
     if (!event) return;
     session.lastEvent = event;
@@ -283,7 +303,68 @@ export function installAdventureMode(target = window) {
     showOutcome(resolution);
   }
 
+  // --- Boss (the Woman in the Well) ----------------------------------------
+  function enterBoss() {
+    session.boss = { phaseIndex: 0, complete: false };
+    updateChrome();
+    show(`<div class="result-panel">
+      <div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3>${esc(ADVENTURE_BOSS.title)}</h3></div>
+      <p class="adv-narrative">${esc(ADVENTURE_BOSS.description)}</p>
+      <div class="rbtns"><button class="btn-gold" onclick="tlrAdventureAfterOutcome()">Descend into the well</button></div>
+    </div>`);
+  }
+
+  function resolveBossReading(score, cards) {
+    const boss = session.boss;
+    const phase = ADVENTURE_BOSS.phases[boss.phaseIndex];
+    const meanings = calculateSpreadMeanings(cards, session.run.statuses);
+    recordBossPhase(session.run, meanings); // tracked silently for the final outcome
+    const tier = resolveBossPhase({ phase, score });
+    const debug = isAdventureDebugEnabled(target) ? buildDebugPanelHtml({ meanings }) : '';
+
+    if (tier === ADVENTURE_RESULTS.FAILURE) {
+      applyResolution(session.run, { resolveChange: -1, gainStatuses: [], removeStatuses: [], notes: [] });
+      updateChrome();
+      if (isRunLost(session.run)) { showEnd(false); return; }
+      showBossPhaseOutcome(phase, 'Held', 'fail', score, debug); // retry the same phase
+      return;
+    }
+
+    boss.phaseIndex += 1;
+    if (boss.phaseIndex >= ADVENTURE_BOSS.phases.length) boss.complete = true;
+    const triumph = tier === ADVENTURE_RESULTS.TRIUMPH;
+    showBossPhaseOutcome(phase, triumph ? 'Triumph' : 'Success', triumph ? 'triumph' : 'pass', score,
+      debug, triumph && phase.triumphText ? phase.triumphText : phase.text);
+  }
+
+  function showBossPhaseOutcome(phase, label, cls, score, debug, narrative) {
+    show(`<div class="result-panel ${cls === 'fail' ? 'fail' : 'pass'}">
+      <div class="rhead"><h3 class="${cls === 'fail' ? 'fail' : 'pass'}">${esc(label)} · ${esc(phase.label)}</h3></div>
+      <div class="rscore"><span class="rsf${cls === 'fail' ? ' fail' : ''}">${score}</span><span class="rop">/</span><span class="rsm">${phase.targetScore}</span></div>
+      <p class="adv-narrative">${esc(narrative || phase.failureText)}</p>
+      <div class="rbtns"><button class="btn-gold" onclick="tlrAdventureAfterOutcome()">Continue</button></div>
+      ${debug}
+    </div>`);
+  }
+
+  function bossContinue() {
+    if (session.boss.complete) {
+      const final = resolveBossFinal(session.run, ADVENTURE_BOSS);
+      show(`<div class="result-panel pass">
+        <div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">${esc(ADVENTURE_BOSS.title)}</h3></div>
+        <p class="adv-narrative">${esc(final ? final.text : 'The well is quiet now.')}</p>
+        <div class="rbtns"><button class="btn-gold" onclick="tlrAdventureRestart()">New Run</button><button onclick="tlrAdventureLeave()">Leave</button></div>
+      </div>`);
+      return;
+    }
+    // Deal the next (or retried) phase on the real table.
+    clear();
+    updateChrome();
+    if (typeof target.startReading === 'function') target.startReading();
+  }
+
   function afterOutcome() {
+    if (session.boss) { bossContinue(); return; }
     const resolution = session.lastResolution;
     if (resolution && resolution.rewardTier) {
       const offers = generateRewardOffers(session.run, resolution.rewardShow, rng);
@@ -371,7 +452,7 @@ export function installAdventureMode(target = window) {
     const run = session.run;
     if (isRunLost(run)) { showEnd(false); return; }
     if (isRecoveryDue(run)) { showRecovery(); return; }
-    if (run.currentEventIndex >= run.events.length) { showEnd(true); return; }
+    if (run.currentEventIndex >= run.events.length) { enterBoss(); return; }
     // Next event: refresh the deck card and deal a fresh reading on the table.
     updateChrome();
     clear();
@@ -382,7 +463,7 @@ export function installAdventureMode(target = window) {
     applyRecoveryChoice(session.run, choiceId, rng);
     updateChrome();
     const run = session.run;
-    if (run.currentEventIndex >= run.events.length) { showEnd(true); return; }
+    if (run.currentEventIndex >= run.events.length) { enterBoss(); return; }
     clear();
     if (typeof target.startReading === 'function') target.startReading();
   }
@@ -410,7 +491,7 @@ export function installAdventureMode(target = window) {
     wrapReturnToMenuOnce();
     target.__tlrAdventureActive = true;
     installFreshProfile();
-    session = { run: createAdventureRunState(), lastEvent: null, lastResolution: null, rewardState: null, addedClasses: [] };
+    session = { run: createAdventureRunState(), lastEvent: null, lastResolution: null, rewardState: null, boss: null, addedClasses: [] };
     ensureStyles(doc);
     ensureChrome();
     forceTable();

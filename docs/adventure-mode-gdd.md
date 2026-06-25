@@ -42,9 +42,9 @@ Reveal Event → Build Spread → Resolve Score → Resolve Interpretation
 Event → Event → Event → Recovery → Event → Event → Event → Boss → Victory
 ```
 
-- 6 standard events, 1 recovery, 1 boss (full prototype target).
-- **Vertical slice (current build): 3 standard events + recovery.** The boss and
-  the remaining events are authored against the same schema.
+- 6 standard events, 1 recovery, 1 boss (full prototype target — **implemented**).
+- The run draws 6 events from a pool of 10 (recovery falls after the third),
+  then the three-phase boss, The Woman in the Well.
 
 ## Resolve
 
@@ -134,12 +134,14 @@ the scoring formula.
 Occurs once (after event 3). No spread. Choose one: Restore 1 Resolve, Remove 1
 Status, or Gain a Random Relic.
 
-## Boss event — The Woman In The Well *(scaffolded)*
+## Boss event — The Woman In The Well *(implemented)*
 
-Three phases with target scores 24 / 30 / 36. The boss records the dominant
-meaning from each phase (`bossInterpretationHistory`); the final outcome depends
-on the accumulated leanings. The tracker (`recordBossPhase`, `bossLeaningTags`)
-exists; phase content is authored after the slice is validated.
+Three phases with target scores 24 / 30 / 36, each graded by the live engine
+like any reading. The boss silently records the dominant meaning of each phase
+(`recordBossPhase` → `bossInterpretationHistory`); after the third phase the
+final outcome is chosen from the accumulated leanings (`resolveBossFinal`) —
+mercy (compassion/intuition), force (violence/courage), or secrets
+(secrets/fear/change). Failing a phase costs Resolve and re-deals that phase.
 
 ## Resolution presentation
 
@@ -178,4 +180,5 @@ scripts/validate-adventure.mjs        node validation for the whole loop
 - Rewards function. ✓
 - Resolve loss and loss condition function. ✓
 - Hidden meanings are debug-visible but player-hidden. ✓
-- Boss architecture is in place (content pending). ✓
+- The boss can be completed; its ending reflects the run's accumulated meanings. ✓
+- The deck persists and evolves across a run (ADD_CARD / REMOVE_CARD). ✓
