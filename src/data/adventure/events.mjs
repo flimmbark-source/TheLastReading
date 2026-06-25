@@ -73,6 +73,7 @@ export const ADVENTURE_EVENTS = Object.freeze([
         triggerMeanings: ['curiosity', 'change', 'compassion'],
         text: 'You follow the wall instead of fighting it and find a gap where the stone has slumped.',
         triumphText: 'The detour reveals a sheltered hollow with supplies left by an earlier traveler.',
+        gainStatuses: ['prepared'],
       },
       {
         id: 'outlast',
@@ -109,6 +110,7 @@ export const ADVENTURE_EVENTS = Object.freeze([
         triggerMeanings: ['violence', 'courage'],
         text: 'You meet them head on. It is brief and ugly, and you are the one left standing.',
         triumphText: 'You break them so thoroughly the survivors flee and spread your name as a warning.',
+        gainStatuses: ['distrusted'],
       },
       {
         id: 'parley',
@@ -179,6 +181,7 @@ export const ADVENTURE_EVENTS = Object.freeze([
         triggerMeanings: ['curiosity', 'change'],
         text: 'You set a coin on the altar and let chance decide. The shrine takes the wager, and the road answers in your favor.',
         triumphText: 'The odds bend impossibly your way. Whatever sleeps here has decided, for now, to be generous.',
+        gainStatuses: ['blessed'],
       },
       {
         id: 'transmute',
@@ -352,6 +355,7 @@ export const ADVENTURE_EVENTS = Object.freeze([
         triggerMeanings: ['courage', 'curiosity', 'change'],
         text: 'You give them a reading they will talk about for a season, and suspicion turns to wonder.',
         triumphText: 'They send you off with gifts and a name that will open the next door for you.',
+        gainStatuses: ['prepared'],
       },
       {
         id: 'cow',
@@ -402,6 +406,7 @@ export const ADVENTURE_EVENTS = Object.freeze([
         triggerMeanings: ['curiosity', 'secrets', 'authority'],
         text: 'You read the stones and the soil and learn more than the burier meant to leave behind.',
         triumphText: 'The truth of this grave is a key. You do not know yet which door it opens.',
+        gainStatuses: ['prepared'],
       },
       {
         id: 'disturb',
@@ -446,6 +451,7 @@ export const ADVENTURE_EVENTS = Object.freeze([
         triggerMeanings: ['courage', 'violence', 'authority'],
         text: 'You tear up the boards and face what waits below before it can choose the moment.',
         triumphText: 'You face it down so completely that it sinks back into the dark and does not rise again.',
+        gainStatuses: ['haunted'],
       },
       {
         id: 'commune',
@@ -489,12 +495,14 @@ export const ADVENTURE_EVENTS = Object.freeze([
         triggerMeanings: ['intuition', 'curiosity', 'change'],
         text: 'You sit beneath it and let the whispers in. What they tell you reshapes the road ahead.',
         triumphText: 'The tree gives you a secret worth more than the journey to reach it.',
+        gainStatuses: ['haunted'],
       },
       {
         id: 'silence',
         triggerMeanings: ['violence', 'courage', 'authority'],
         text: 'You take an axe to it. The whispers rise to a scream, then nothing.',
         triumphText: 'You fell it clean, and the silence afterward is the sweetest sound on the road.',
+        gainStatuses: ['haunted'],
       },
       {
         id: 'offering',

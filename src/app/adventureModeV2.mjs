@@ -71,14 +71,37 @@ function ensureStyles(doc) {
       background:rgba(18,12,9,.66);border-radius:8px;padding:6px 10px}
     .adv-next-event{font:700 9px system-ui,sans-serif;color:#d19c51;opacity:.9}
 
-    #advHud{position:fixed;top:8px;left:8px;z-index:42;display:none;gap:8px;align-items:center;flex-wrap:wrap;
-      font:700 12px system-ui,sans-serif;color:#ead9b5;max-width:46vw}
+    #advHud{position:fixed;top:10px;left:10px;z-index:42;display:none;flex-direction:column;gap:6px;
+      color:#ead9b5;max-width:min(360px,46vw)}
     body.mode-adventure #advHud{display:flex}
-    #advHud .adv-pill{background:rgba(18,12,9,.82);border:1px solid rgba(228,188,111,.5);border-radius:999px;padding:5px 11px}
-    #advHud .adv-pill b{color:#f3c969}
-    #advHud .adv-status{background:rgba(228,188,111,.1);border:1px solid rgba(228,188,111,.5);border-radius:999px;padding:3px 8px;font-size:11px}
-    #advHud .adv-leave{border:1px solid rgba(228,188,111,.5);background:rgba(18,12,9,.82);color:#e7c07c;border-radius:999px;
-      padding:5px 11px;cursor:pointer;font:700 11px system-ui,sans-serif}
+    .adv-hud__main{display:flex;align-items:center;gap:11px;
+      background:linear-gradient(180deg,rgba(30,21,13,.93),rgba(17,11,7,.92));
+      border:1px solid rgba(228,188,111,.34);border-radius:12px;padding:7px 11px;
+      box-shadow:0 6px 18px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,225,170,.07)}
+    .adv-hud__resolve{display:flex;align-items:center;gap:8px}
+    .adv-hud__label{font:800 9px/1 'Cinzel',Georgia,serif;letter-spacing:.17em;text-transform:uppercase;color:#bd9c63}
+    .adv-pips{display:flex;gap:3px}
+    .adv-pip{width:10px;height:10px;border-radius:50%;border:1px solid rgba(243,201,105,.45)}
+    .adv-pip--full{background:radial-gradient(circle at 38% 32%,#ffeab2,#dd9f33);border-color:#f3c969;box-shadow:0 0 6px rgba(243,201,105,.55)}
+    .adv-pip--empty{background:rgba(243,201,105,.05)}
+    .adv-hud__stats{display:flex;gap:11px;font:700 11px/1 'Cinzel',Georgia,serif;color:#c4ab7c;
+      border-left:1px solid rgba(228,188,111,.2);padding-left:11px}
+    .adv-hud__stats span{white-space:nowrap}
+    .adv-hud__stats b{color:#f3c969;font-weight:800}.adv-hud__stats i{color:#94815f;font-style:normal}
+    .adv-hud__leave{margin-left:1px;border:1px solid rgba(228,188,111,.28);background:rgba(0,0,0,.25);
+      color:#bda377;border-radius:8px;padding:5px 9px;font:800 9px/1 'Cinzel',Georgia,serif;letter-spacing:.12em;
+      text-transform:uppercase;cursor:pointer}
+    .adv-hud__leave:hover{border-color:#f3c969;color:#f3c969}
+    .adv-hud__statuses{display:flex;flex-wrap:wrap;gap:5px;padding-left:2px}
+    .adv-hud__statuses:empty{display:none}
+    #advHud .adv-status{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px 3px 8px;
+      font:700 10px/1 'Cinzel',Georgia,serif;letter-spacing:.05em;border:1px solid;background:rgba(16,11,7,.82)}
+    #advHud .adv-status::before{content:'';width:7px;height:7px;border-radius:50%}
+    .adv-status--blessed{color:#f6d488;border-color:rgba(243,201,105,.5)}.adv-status--blessed::before{background:#f3c969;box-shadow:0 0 6px #f3c969}
+    .adv-status--haunted{color:#c7adef;border-color:rgba(169,139,214,.5)}.adv-status--haunted::before{background:#a98bd6;box-shadow:0 0 6px #a98bd6}
+    .adv-status--prepared{color:#9fcdf2;border-color:rgba(127,182,224,.5)}.adv-status--prepared::before{background:#7fb6e0;box-shadow:0 0 6px #7fb6e0}
+    .adv-status--distrusted{color:#e89e96;border-color:rgba(210,104,95,.5)}.adv-status--distrusted::before{background:#d2685f;box-shadow:0 0 6px #d2685f}
+    .adv-status--exposed{color:#f0b078;border-color:rgba(224,154,90,.5)}.adv-status--exposed::before{background:#e09a5a;box-shadow:0 0 6px #e09a5a}
 
     .adv-narrative{line-height:1.5;font-size:15px;color:#e6d6b4;margin:8px 0 4px;text-align:center}
     .adv-played-card{text-align:center;color:#a99878;font:700 11px system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase}
@@ -93,7 +116,8 @@ function ensureStyles(doc) {
 
     @media(max-width:640px){
       #advEventDeck{top:6px}.adv-event-desc{max-width:245px;font-size:10px}
-      #advHud{max-width:42vw;gap:5px}.adv-deck{transform:scale(.92);transform-origin:top center}
+      #advHud{max-width:64vw}.adv-hud__main{gap:8px;padding:6px 9px}.adv-hud__stats{gap:8px;padding-left:8px}
+      .adv-deck{transform:scale(.92);transform-origin:top center}
     }
   `;
   doc.head.appendChild(style);
@@ -225,13 +249,19 @@ export function installAdventureModeV2(target = window) {
 
     const hud = doc.getElementById('advHud');
     if (hud) {
-      const statuses = run.statuses
-        .map(id => `<span class="adv-status" title="${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</span>`)
+      const pips = [...Array(Math.max(0, run.maxResolve)).keys()]
+        .map(i => `<span class="adv-pip adv-pip--${i < run.resolve ? 'full' : 'empty'}"></span>`)
         .join('');
-      hud.innerHTML = `<span class="adv-pill">Resolve <b>${run.resolve}</b> / ${run.maxResolve}</span>`
-        + `<span class="adv-pill">Set <b>${run.setIndex + 1}</b> / ${TOTAL_SETS}</span>`
-        + `<span class="adv-pill" title="Cards in your deck">Deck <b>${run.deck.length}</b></span>`
-        + statuses + `<button class="adv-leave" type="button" data-adv-leave>Leave</button>`;
+      const statuses = run.statuses
+        .map(id => `<span class="adv-status adv-status--${esc(id)}" title="${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</span>`)
+        .join('');
+      hud.innerHTML = `
+        <div class="adv-hud__main">
+          <div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div>
+          <div class="adv-hud__stats"><span>Set <b>${run.setIndex + 1}</b><i>/${TOTAL_SETS}</i></span><span title="Cards in your deck">Deck <b>${run.deck.length}</b></span></div>
+          <button class="adv-hud__leave" type="button" data-adv-leave>Leave</button>
+        </div>
+        <div class="adv-hud__statuses">${statuses}</div>`;
     }
   }
 
