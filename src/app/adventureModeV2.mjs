@@ -38,6 +38,18 @@ const MODE_CLASS = 'mode-adventure';
 const TABLE_CLASSES = ['single-player-v2', 'generated-sheet-ready', 'mode-reading'];
 const CARD_BY_ID = new Map(ALL_CARD_DEFINITIONS.map(card => [card.id, card]));
 
+// Painted Event card faces (sliced from Events-page1-3). Each face already
+// carries the title, art and node glyph, so the deck just renders the image.
+const EVENT_ART_BASE = '/public/ui/single-player-v2/events/';
+const EVENT_ART_IDS = new Set([
+  'iron_gate', 'ambush', 'strange_shrine', 'flooded_road',
+  'cornered_beast', 'traveling_merchant', 'suspicious_villagers', 'unmarked_grave',
+  'beneath_the_floor', 'whispering_tree', 'recovery_camp', 'woman_in_the_well',
+]);
+function eventArtUrl(id) {
+  return EVENT_ART_IDS.has(id) ? `${EVENT_ART_BASE}${id}.webp` : null;
+}
+
 function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, ch => (
     { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
@@ -57,16 +69,16 @@ function ensureStyles(doc) {
       display:none;flex-direction:column;align-items:center;gap:6px;pointer-events:none;
       font-family:Georgia,serif;color:#f2dfb8}
     body.mode-adventure #advEventDeck{display:flex}
-    .adv-deck{position:relative;width:132px;height:124px}
-    .adv-deck__back{position:absolute;width:88px;height:116px;border-radius:8px;left:50%;top:3px;
+    .adv-deck{position:relative;width:128px;height:178px}
+    .adv-deck__back{position:absolute;width:96px;height:150px;border-radius:8px;left:50%;top:10px;
       background:linear-gradient(160deg,#3a2a1a,#160d07);border:1px solid rgba(228,188,111,.45);box-shadow:0 4px 10px rgba(0,0,0,.5)}
-    .adv-deck__top{position:absolute;left:50%;top:-2px;transform:translateX(-50%);width:104px;height:122px;border-radius:9px;
-      background:linear-gradient(165deg,#2a1810,#140907);border:2px solid #9a7842;
-      box-shadow:0 8px 20px rgba(0,0,0,.6),0 0 18px rgba(243,201,105,.2);
-      display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px}
-    .adv-deck__trait{font:800 8px system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#d19c51}
-    .adv-deck__title{font:800 13px Georgia,serif;line-height:1.1;margin-top:5px}
-    .adv-deck__progress{font:800 8px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#a99878;margin-top:8px}
+    .adv-deck__top{position:absolute;left:50%;top:0;transform:translateX(-50%);width:110px;height:170px;border-radius:10px;
+      overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.6),0 0 18px rgba(243,201,105,.18)}
+    .adv-deck__art{display:block;width:100%;height:100%;object-fit:cover}
+    .adv-deck__top--text{background:linear-gradient(165deg,#2a1810,#140907);border:2px solid #9a7842;
+      display:flex;align-items:center;justify-content:center;text-align:center;padding:8px}
+    .adv-deck__title{font:800 13px Georgia,serif;line-height:1.1;color:#f2dfb8}
+    .adv-deck__progress{font:800 8px system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#bca27a}
     .adv-event-desc{max-width:310px;text-align:center;font:500 11px Georgia,serif;line-height:1.4;color:#d8c8a6;
       background:rgba(18,12,9,.66);border-radius:8px;padding:6px 10px}
     .adv-next-event{font:700 9px system-ui,sans-serif;color:#d19c51;opacity:.9}
@@ -227,14 +239,13 @@ export function installAdventureModeV2(target = window) {
         const nextId = run.eventDeck[run.eventIndexInSet + 1];
         const next = prepared && nextId
           ? `<div class="adv-next-event">Next: ${esc(nextId.replaceAll('_', ' '))}</div>` : '';
+        const art = eventArtUrl(event.id);
+        const top = art
+          ? `<div class="adv-deck__top"><img class="adv-deck__art" src="${art}" alt="${esc(event.title)}" decoding="async"></div>`
+          : `<div class="adv-deck__top adv-deck__top--text"><div class="adv-deck__title">${esc(event.title)}</div></div>`;
         deck.innerHTML = `
-          <div class="adv-deck">${backs}
-            <div class="adv-deck__top">
-              <div class="adv-deck__trait">${esc((event.traits || []).join(' · '))}</div>
-              <div class="adv-deck__title">${esc(event.title)}</div>
-              <div class="adv-deck__progress">Event ${run.eventIndexInSet + 1} / ${EVENTS_PER_SET}</div>
-            </div>
-          </div>
+          <div class="adv-deck">${backs}${top}</div>
+          <div class="adv-deck__progress">${esc((event.traits || []).join(' · '))} · Event ${run.eventIndexInSet + 1} / ${EVENTS_PER_SET}</div>
           <div class="adv-event-desc">${esc(event.description)}</div>${next}`;
       }
     }
