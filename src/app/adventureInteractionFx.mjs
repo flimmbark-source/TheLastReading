@@ -5,9 +5,9 @@ import { routeNode } from '../systems/adventure/nodeGraph.mjs';
 import {
   NODE_VISUALS,
   OUTCOME_VISUALS,
-  installAdventureInteractionFxV6,
+  installAdventureInteractionFxV7,
   playAdventureInteractionFx,
-} from './adventureInteractionFxV6.mjs';
+} from './adventureInteractionFxV7.mjs';
 
 export { NODE_VISUALS, OUTCOME_VISUALS, playAdventureInteractionFx };
 
@@ -33,7 +33,7 @@ function resolvedNode(card, event) {
 export function installAdventureInteractionFx(target = window) {
   if (!target?.document || target.__tlrAdventureInteractionBridgeInstalled) return;
   target.__tlrAdventureInteractionBridgeInstalled = true;
-  installAdventureInteractionFxV6(target);
+  installAdventureInteractionFxV7(target);
 
   const attach = () => {
     const originalPlacement = target.tlrAdventureOnCardPlaced;
