@@ -55,7 +55,9 @@ function render(target) {
 
   const score = currentAdventureScore(target);
   const { target: successTarget, triumph } = parseTargets(scores);
-  live.querySelector('.adv-deck__live-score-value').textContent = String(score);
+  const value = live.querySelector('.adv-deck__live-score-value');
+  const nextText = String(score);
+  if (value && value.textContent !== nextText) value.textContent = nextText;
   live.classList.toggle('is-success', score >= successTarget && score < triumph);
   live.classList.toggle('is-triumph', score >= triumph);
 }
