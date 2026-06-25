@@ -1,19 +1,17 @@
-import { ACTION_NODES } from '../data/adventure/nodes.mjs';
 import {
   NODE_VISUALS,
   OUTCOME_VISUALS,
   installAdventureInteractionFxV6,
   playAdventureInteractionFx as playAdventureInteractionFxV6,
 } from './adventureInteractionFxV6.mjs';
-import {
-  playAggressionApparition,
-} from './apparitions/aggressionApparition.mjs';
+import { apparitionFor } from './apparitions/registry.mjs';
 
-// V8 replaces the baked WebP apparition used in V7 with a fully code-driven
-// spectral blade (see ./apparitions/aggressionApparition.mjs). The orchestration
-// is otherwise identical: the apparition plays above the played card while the
-// shared V6 sequence handles the event's outcome reaction, and the bridge keeps
-// the result panel hidden until both have finished.
+// V8 replaces V6's baked sprite-sheet node animation with fully code-driven
+// apparitions: each action node summons a ghostly object that acts on the Event
+// (see ./apparitions/). The apparition plays above the played card while the
+// shared V6 sequence handles the outcome reaction, and the bridge keeps the
+// result panel hidden until both have finished. Any node without an apparition
+// falls back to V6's original sprite.
 
 const STYLE_ID = 'adventure-interaction-fx-v8-style';
 
@@ -23,11 +21,11 @@ function ensureStyle(doc) {
   if (!doc || doc.getElementById(STYLE_ID)) return;
   const style = doc.createElement('style');
   style.id = STYLE_ID;
-  // While the code apparition is on screen we hide V6's own static blade sprite
-  // and its label so the two don't fight for the same space above the card.
+  // While a code apparition is on screen we hide V6's own static node sprite and
+  // its label so the two don't fight for the same space above the card.
   style.textContent = `
-    body.adv-aggression-code-active #advInteractionFxV6 .adv-node-sprite-stage,
-    body.adv-aggression-code-active #advInteractionFxV6 .adv-node-sprite-label{
+    body.adv-apparition-active #advInteractionFxV6 .adv-node-sprite-stage,
+    body.adv-apparition-active #advInteractionFxV6 .adv-node-sprite-label{
       visibility:hidden!important;
     }
   `;
@@ -78,9 +76,8 @@ export async function playAdventureInteractionFx(options) {
   const target = options?.target || window;
   installAdventureInteractionFxV8(target);
 
-  if (options?.resolution?.resolvedNode !== ACTION_NODES.AGGRESSION) {
-    return playAdventureInteractionFxV6(options);
-  }
+  const play = apparitionFor(options?.resolution?.resolvedNode);
+  if (!play) return playAdventureInteractionFxV6(options);
 
   const card = findPlacedCard(target, options.slotIndex);
   const anchor = rectOf(card);
@@ -89,18 +86,18 @@ export async function playAdventureInteractionFx(options) {
   const potency = options.resolution.potency;
   const reduced = target.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
   const amp = joltAmplitude(potency);
-  target.document.body.classList.add('adv-aggression-code-active');
-  const apparition = playAggressionApparition(target, anchor, {
+  target.document.body.classList.add('adv-apparition-active');
+  const apparition = Promise.resolve(play(target, anchor, {
     reduced,
     potency,
     onImpact: () => joltCard(card, amp),
-  }).catch(() => false);
+  })).catch(() => false);
   try {
     const result = await playAdventureInteractionFxV6(options);
     await apparition;
     return result;
   } finally {
-    target.document.body.classList.remove('adv-aggression-code-active');
+    target.document.body.classList.remove('adv-apparition-active');
   }
 }
 

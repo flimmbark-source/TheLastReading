@@ -3,28 +3,45 @@ import {
   playAggressionApparition,
   AGGRESSION_APPARITION_DURATION_MS,
 } from '../src/app/apparitions/aggressionApparition.mjs';
+import { apparitionFor } from '../src/app/apparitions/registry.mjs';
+import { NODE_APPARITION_SPECS } from '../src/app/apparitions/nodeApparitions.mjs';
+import { ACTION_NODES } from '../src/data/adventure/nodes.mjs';
 import {
   playAdventureInteractionFx,
   installAdventureInteractionFxV8,
 } from '../src/app/adventureInteractionFxV8.mjs';
 
-// The Aggression apparition is now generated from code rather than a baked
-// WebP/sprite sheet, so we validate the runtime contract instead of image bytes.
-assert.equal(typeof playAggressionApparition, 'function', 'apparition must export a play function');
+// Apparitions are generated from code rather than baked sprites/WebP, so we
+// validate the runtime contract instead of image bytes.
+assert.equal(typeof playAggressionApparition, 'function', 'aggression must export a play function');
 assert.ok(
   Number.isFinite(AGGRESSION_APPARITION_DURATION_MS) && AGGRESSION_APPARITION_DURATION_MS >= 1000,
-  'apparition should advertise its full on-screen duration',
+  'aggression should advertise its full on-screen duration',
 );
 
 assert.equal(typeof playAdventureInteractionFx, 'function', 'V8 must export the FX entry point');
 assert.equal(typeof installAdventureInteractionFxV8, 'function', 'V8 must export its installer');
 
-// It must degrade gracefully when there is no host document / valid anchor,
-// returning false rather than throwing so the outcome animation can proceed.
-const ranWithoutDoc = await playAggressionApparition({}, { left: 0, top: 0, width: 100, height: 140 });
-assert.equal(ranWithoutDoc, false, 'apparition should no-op without a document');
+// Every action node must resolve to an apparition play function, and each must
+// degrade gracefully (return false, not throw) without a host document.
+const anchor = { left: 0, top: 0, width: 100, height: 140 };
+for (const node of Object.values(ACTION_NODES)) {
+  const play = apparitionFor(node);
+  assert.equal(typeof play, 'function', `node ${node} must have an apparition`);
+  const ran = await play({}, anchor, { potency: 3 });
+  assert.equal(ran, false, `node ${node} apparition should no-op without a document`);
+}
 
-const ranWithoutRect = await playAggressionApparition({ document: {} }, { width: 0, height: 0 });
-assert.equal(ranWithoutRect, false, 'apparition should no-op without a sized anchor');
+// Each non-Aggression spec must declare a tone, a build and a run step.
+for (const [node, spec] of Object.entries(NODE_APPARITION_SPECS)) {
+  assert.ok(spec.tone && spec.tone.accent, `spec ${node} must declare a tone`);
+  assert.equal(typeof spec.build, 'function', `spec ${node} must declare build()`);
+  assert.equal(typeof spec.run, 'function', `spec ${node} must declare run()`);
+}
+
+assert.equal(
+  apparitionFor('definitely-not-a-node'), null,
+  'unknown nodes should have no apparition (so V6 can take over)',
+);
 
 console.log('Adventure apparition validation passed.');
