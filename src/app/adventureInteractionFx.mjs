@@ -1,7 +1,8 @@
 // Compatibility entry point for the current Adventure interaction sequence.
-// V3 keeps the node item near the played card, gives that item its own motion,
-// then plays a separate outcome visual over the Event before showing results.
+// V4 crops and plays the authored node and outcome sprite sheets, then defers
+// the result overlay until both sprite phases have fully completed.
 export {
   NODE_VISUALS,
-  installAdventureInteractionFxV3 as installAdventureInteractionFx,
-} from './adventureInteractionFxV3.mjs';
+  OUTCOME_VISUALS,
+  installAdventureInteractionFxV4 as installAdventureInteractionFx,
+} from './adventureInteractionFxV4.mjs';
