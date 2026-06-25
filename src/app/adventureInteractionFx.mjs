@@ -79,6 +79,7 @@ export function installAdventureInteractionFx(target = window) {
         originalShowOverlay.call(target, pendingOverlay.html, ...pendingOverlay.args);
         return handled;
       }
+      const potency = cardAdventureProfile(card)?.potency ?? null;
 
       const eventHtmlAfter = deck?.innerHTML || '';
       if (deck && eventHtmlBefore) deck.innerHTML = eventHtmlBefore;
@@ -87,7 +88,7 @@ export function installAdventureInteractionFx(target = window) {
         slotIndex,
         card,
         event,
-        resolution: { tier, resolvedNode: node },
+        resolution: { tier, resolvedNode: node, potency },
       });
       if (deck) deck.innerHTML = eventHtmlAfter;
 

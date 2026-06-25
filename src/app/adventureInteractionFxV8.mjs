@@ -49,15 +49,22 @@ function rectOf(card) {
 
 // A short directional recoil + flash on the played card when the slash lands,
 // so the blade reads as actually striking the Event rather than passing over it.
-function joltCard(card) {
+// The amplitude scales subtly with potency (1 at the baseline of 3).
+function joltCard(card, amp = 1) {
   if (!card?.animate) return;
+  const x = (v) => (v * amp).toFixed(2);
   card.animate([
     { transform: 'translate(0,0) rotate(0deg)', filter: 'brightness(1)' },
-    { transform: 'translate(4px,5px) rotate(1.4deg)', filter: 'brightness(1.45)', offset: 0.22 },
-    { transform: 'translate(-3px,-2px) rotate(-.8deg)', filter: 'brightness(1.12)', offset: 0.5 },
-    { transform: 'translate(2px,1px) rotate(.4deg)', filter: 'brightness(1.04)', offset: 0.75 },
+    { transform: `translate(${x(4)}px,${x(5)}px) rotate(${x(1.4)}deg)`, filter: 'brightness(1.45)', offset: 0.22 },
+    { transform: `translate(${x(-3)}px,${x(-2)}px) rotate(${x(-0.8)}deg)`, filter: 'brightness(1.12)', offset: 0.5 },
+    { transform: `translate(${x(2)}px,${x(1)}px) rotate(${x(0.4)}deg)`, filter: 'brightness(1.04)', offset: 0.75 },
     { transform: 'translate(0,0) rotate(0deg)', filter: 'brightness(1)' },
   ], { duration: 340, easing: 'cubic-bezier(.3,.7,.3,1)' });
+}
+
+function joltAmplitude(potency) {
+  const level = Math.max(1, Math.min(5, Math.round(Number(potency) || 3)));
+  return 1 + ((level - 3) / 2) * 0.35; // ~0.65 .. 1.35
 }
 
 export function installAdventureInteractionFxV8(target = window) {
@@ -79,11 +86,14 @@ export async function playAdventureInteractionFx(options) {
   const anchor = rectOf(card);
   if (!anchor) return playAdventureInteractionFxV6(options);
 
+  const potency = options.resolution.potency;
   const reduced = target.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+  const amp = joltAmplitude(potency);
   target.document.body.classList.add('adv-aggression-code-active');
   const apparition = playAggressionApparition(target, anchor, {
     reduced,
-    onImpact: () => joltCard(card),
+    potency,
+    onImpact: () => joltCard(card, amp),
   }).catch(() => false);
   try {
     const result = await playAdventureInteractionFxV6(options);

@@ -92,6 +92,23 @@ function ensureStyle(doc) {
   doc.head.appendChild(style);
 }
 
+// Derives a small set of multipliers from card potency (1–5) so the apparition
+// ramps subtly with the card's strength. Everything is anchored at potency 3,
+// which reproduces the baseline look; the spread is deliberately gentle.
+function potencyProfile(potency) {
+  const level = Math.max(1, Math.min(5, Math.round(Number(potency) || 3)));
+  const lf = (level - 3) / 2; // -1 .. +1, 0 at the baseline
+  return {
+    level,
+    size: 1 + lf * 0.09,    // blade / reach scale: ~0.91 .. 1.09
+    energy: 1 + lf * 0.16,  // trail + bloom intensity: ~0.84 .. 1.16
+    echo: 1 + lf * 0.24,    // afterimage strength
+    snap: 1 - lf * 0.10,    // slash duration multiplier (stronger = faster)
+    motes: 8 + Math.round(lf * 3), // fray-out particle count: 5 .. 11
+    jolt: 1 + lf * 0.35,    // card recoil amplitude
+  };
+}
+
 function animate(target, el, keyframes, options) {
   if (!el?.animate) {
     return new Promise(resolve => target.setTimeout(resolve, Number(options?.duration || 0)));
@@ -146,18 +163,18 @@ function buildBlade(doc, bladeW, layerH, { detailed }) {
   return { layer, edge };
 }
 
-function buildApparition(doc, boxW, boxH) {
+function buildApparition(doc, boxW, boxH, power) {
   const root = el(doc, '', { width: `${boxW}px`, height: `${boxH}px` });
   root.id = ROOT_ID;
   root.className = '';
 
   const pivotX = boxW / 2;
   const pivotY = boxH * 0.92;
-  const reach = boxH * 0.66;
-  const layerH = boxH * 0.84;
-  const bladeW = boxW * 0.16;
+  const reach = boxH * 0.66 * power.size;
+  const layerH = boxH * 0.84 * power.size;
+  const bladeW = boxW * 0.16 * power.size;
 
-  const aura = el(doc, 'tlr-appar-aura', sizeAround(boxW, boxH, boxW * 0.82));
+  const aura = el(doc, 'tlr-appar-aura', sizeAround(boxW, boxH, boxW * 0.82 * power.size));
   root.appendChild(aura);
 
   // Smoke wisps that birth the blade, plus a couple reused on dissolve.
@@ -185,12 +202,12 @@ function buildApparition(doc, boxW, boxH) {
   glow.setAttribute('class', 'tlr-appar-trail-glow');
   glow.setAttribute('d', d);
   glow.setAttribute('stroke', 'rgba(255,72,48,.92)');
-  glow.setAttribute('stroke-width', String(Math.max(5, boxW * 0.06)));
+  glow.setAttribute('stroke-width', String(Math.max(5, boxW * 0.06 * power.energy)));
   const core = doc.createElementNS(SVG_NS, 'path');
   core.setAttribute('class', 'tlr-appar-trail-core');
   core.setAttribute('d', d);
   core.setAttribute('stroke', 'rgba(255,238,206,.95)');
-  core.setAttribute('stroke-width', String(Math.max(2, boxW * 0.022)));
+  core.setAttribute('stroke-width', String(Math.max(2, boxW * 0.022 * power.energy)));
   trail.append(glow, core);
   root.appendChild(trail);
 
@@ -218,8 +235,9 @@ function buildApparition(doc, boxW, boxH) {
 
   // Motes seeded along the blade's settled position, for the fray-out.
   const motes = [];
-  for (let i = 0; i < 8; i += 1) {
-    const t = 0.22 + (i / 8) * 0.78;
+  const moteCount = Math.max(4, power.motes);
+  for (let i = 0; i < moteCount; i += 1) {
+    const t = 0.22 + (i / moteCount) * 0.78;
     const p = tipPoint(pivotX, pivotY, reach * t, ANGLE_SETTLE);
     const size = boxW * (0.025 + jitter(i + 11) * 0.04);
     const mote = el(doc, 'tlr-appar-mote', {
@@ -254,8 +272,10 @@ function sizeAround(boxW, boxH, size) {
   };
 }
 
-async function playFull(p, target, onImpact) {
+async function playFull(p, target, onImpact, power) {
   const { sword, edge, ghost1, ghost2, aura, wisps, flash, motes, trailGlow, trailCore, trailLength } = p;
+  const auraPeak = Math.min(.92, .7 * power.energy);
+  const flashPeak = Math.min(1, .92 * power.energy);
 
   // 1. Manifest through smoke. Wisps drift up and dissipate while the sword
   //    condenses out of blur into a raised guard.
@@ -268,7 +288,7 @@ async function playFull(p, target, onImpact) {
     { opacity: 0, transform: `translateY(${-18 - jitter(i + 2) * 12}px) scale(1.4)` },
   ], { duration: 420 + jitter(i) * 120, delay: i * 28, easing: 'ease-out', fill: 'forwards' }));
   await Promise.all([
-    animate(target, aura, [{ opacity: 0 }, { opacity: .7 }], { duration: 320, fill: 'forwards' }),
+    animate(target, aura, [{ opacity: 0 }, { opacity: auraPeak }], { duration: 320, fill: 'forwards' }),
     animate(target, sword,
       [{ opacity: 0, filter: 'blur(10px) brightness(1.6)' },
        { opacity: 1, filter: 'blur(.3px) brightness(1.05)' }],
@@ -283,7 +303,7 @@ async function playFull(p, target, onImpact) {
 
   // 3. The slash. Hard acceleration; afterimages trail with delay; the energy
   //    trail draws and the cutting edge flares hot; impact flash + card recoil.
-  const slashMs = 210;
+  const slashMs = Math.round(210 * power.snap);
   const ease = 'cubic-bezier(.7,0,.84,.25)';
   const ghostKeys = (peak) => [
     { transform: `${rot(ANGLE_WINDUP)} scale(1.04)`, opacity: 0 },
@@ -291,8 +311,8 @@ async function playFull(p, target, onImpact) {
     { transform: rot(ANGLE_FOLLOW), opacity: peak * 0.6, offset: 0.86 },
     { transform: rot(ANGLE_FOLLOW), opacity: 0 },
   ];
-  animate(target, ghost1, ghostKeys(.46), { duration: slashMs + 80, delay: 24, easing: ease, fill: 'forwards' });
-  animate(target, ghost2, ghostKeys(.28), { duration: slashMs + 120, delay: 50, easing: ease, fill: 'forwards' });
+  animate(target, ghost1, ghostKeys(Math.min(.6, .46 * power.echo)), { duration: slashMs + 80, delay: 24, easing: ease, fill: 'forwards' });
+  animate(target, ghost2, ghostKeys(Math.min(.42, .28 * power.echo)), { duration: slashMs + 120, delay: 50, easing: ease, fill: 'forwards' });
   animate(target, trailGlow,
     [{ strokeDashoffset: trailLength, opacity: 1 }, { strokeDashoffset: 0, opacity: 1, offset: 0.85 }, { strokeDashoffset: 0, opacity: 1 }],
     { duration: slashMs, easing: ease, fill: 'forwards' });
@@ -306,7 +326,7 @@ async function playFull(p, target, onImpact) {
     { duration: slashMs, easing: ease, fill: 'forwards' });
   animate(target, flash,
     [{ opacity: 0, transform: 'scale(.4)' }, { opacity: 0, transform: 'scale(.4)', offset: 0.6 },
-     { opacity: .92, transform: 'scale(1)', offset: 0.78 }, { opacity: 0, transform: 'scale(1.35)' }],
+     { opacity: flashPeak, transform: 'scale(1)', offset: 0.78 }, { opacity: 0, transform: 'scale(1.35)' }],
     { duration: slashMs + 150, easing: 'ease-out', fill: 'forwards' });
   target.setTimeout(() => { try { onImpact?.(); } catch { /* host */ } }, slashMs - 30);
   await animate(target, sword,
@@ -335,7 +355,7 @@ async function playFull(p, target, onImpact) {
       [{ opacity: 1, filter: 'blur(0px)', transform: `${rot(ANGLE_SETTLE)} scale(1)` },
        { opacity: 0, filter: 'blur(8px)', transform: `${rot(ANGLE_SETTLE)} scale(1.05)` }],
       { duration: 380, easing: 'ease-in', fill: 'forwards' }),
-    animate(target, aura, [{ opacity: .7 }, { opacity: 0 }], { duration: 360, fill: 'forwards' }),
+    animate(target, aura, [{ opacity: auraPeak }, { opacity: 0 }], { duration: 360, fill: 'forwards' }),
     ...moteOut, ...fogOut,
   ]);
 }
@@ -367,6 +387,7 @@ async function playReduced(p, target, onImpact) {
  * Resolves once manifest → slash → dissolve has fully finished.
  * @param {object} [options]
  * @param {boolean} [options.reduced] force the reduced-motion variant.
+ * @param {number} [options.potency] card potency 1–5; subtly ramps the apparition's scale and energy (3 = baseline).
  * @param {() => void} [options.onImpact] fired at the slash impact (e.g. to jolt the card).
  * @returns {Promise<boolean>} true if it ran, false if the environment could not host it.
  */
@@ -377,9 +398,10 @@ export async function playAggressionApparition(target, anchorRect, options = {})
   ensureStyle(doc);
   doc.getElementById(ROOT_ID)?.remove();
 
+  const power = potencyProfile(options.potency);
   const boxW = Math.max(120, anchorRect.width * 2.1);
   const boxH = Math.max(150, anchorRect.height * 1.75);
-  const parts = buildApparition(doc, boxW, boxH);
+  const parts = buildApparition(doc, boxW, boxH, power);
 
   parts.root.style.left = `${anchorRect.left + anchorRect.width / 2}px`;
   parts.root.style.top = `${anchorRect.top - boxH * 0.5}px`;
@@ -391,7 +413,7 @@ export async function playAggressionApparition(target, anchorRect, options = {})
 
   try {
     if (reduced) await playReduced(parts, target, options.onImpact);
-    else await playFull(parts, target, options.onImpact);
+    else await playFull(parts, target, options.onImpact, power);
     return true;
   } finally {
     parts.root.remove();
