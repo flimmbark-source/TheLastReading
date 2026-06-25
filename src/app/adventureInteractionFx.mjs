@@ -5,38 +5,11 @@ import { routeNode } from '../systems/adventure/nodeGraph.mjs';
 import {
   NODE_VISUALS,
   OUTCOME_VISUALS,
-  installAdventureInteractionFxV5,
+  installAdventureInteractionFxV6,
   playAdventureInteractionFx,
-} from './adventureInteractionFxV5.mjs';
+} from './adventureInteractionFxV6.mjs';
 
 export { NODE_VISUALS, OUTCOME_VISUALS, playAdventureInteractionFx };
-
-const NODE_ASSET_URL = '/public/ui/single-player-v2/Event-Visuals-Node.png';
-const OUTCOME_ASSET_URL = '/public/ui/single-player-v2/Event-Outcome-Sheet.png';
-const ASSET_FIX_STYLE_ID = 'adventure-sprite-public-path-fix';
-
-function ensureSpriteAssetPaths(doc) {
-  if (!doc || doc.getElementById(ASSET_FIX_STYLE_ID)) return;
-  const style = doc.createElement('style');
-  style.id = ASSET_FIX_STYLE_ID;
-  style.textContent = `
-    .adv-node-sprite-frame{
-      background-image:url("${NODE_ASSET_URL}")!important;
-    }
-    .adv-outcome-sprite-frame{
-      background-image:url("${OUTCOME_ASSET_URL}")!important;
-    }
-  `;
-  doc.head.appendChild(style);
-}
-
-function preloadCorrectAssets(target) {
-  if (!target?.Image) return;
-  for (const url of [NODE_ASSET_URL, OUTCOME_ASSET_URL]) {
-    const image = new target.Image();
-    image.src = url;
-  }
-}
 
 function tierFromHtml(html) {
   const match = String(html || '').match(/<div class="rhead"><h3[^>]*>(Great Success|Success|Failure)<\/h3>/i);
@@ -60,9 +33,7 @@ function resolvedNode(card, event) {
 export function installAdventureInteractionFx(target = window) {
   if (!target?.document || target.__tlrAdventureInteractionBridgeInstalled) return;
   target.__tlrAdventureInteractionBridgeInstalled = true;
-  ensureSpriteAssetPaths(target.document);
-  preloadCorrectAssets(target);
-  installAdventureInteractionFxV5(target);
+  installAdventureInteractionFxV6(target);
 
   const attach = () => {
     const originalPlacement = target.tlrAdventureOnCardPlaced;
