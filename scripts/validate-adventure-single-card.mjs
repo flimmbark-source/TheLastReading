@@ -48,6 +48,13 @@ for (const [eventId, approaches] of Object.entries(EVENT_APPROACHES)) {
     assert.ok(outcomeIds.has(approach.outcomeId), `${eventId} approach must bind to a real outcome: ${approach.outcomeId}`);
     acceptedNodeCounts[approach.node] = (acceptedNodeCounts[approach.node] || 0) + 1;
   }
+  // Every Event authors exactly three tiered solutions: one Easy (req 1), one
+  // Medium (req 2-3), one Hard (req 4-5).
+  assert.equal(approaches.length, 3, `${eventId} must author exactly three approaches`);
+  const reqs = approaches.map(approach => approach.requirement).sort((a, b) => a - b);
+  assert.equal(reqs[0], 1, `${eventId} needs an Easy approach at requirement 1`);
+  assert.ok(reqs[1] >= 2 && reqs[1] <= 3, `${eventId} needs a Medium approach at requirement 2-3`);
+  assert.ok(reqs[2] >= 4 && reqs[2] <= 5, `${eventId} needs a Hard approach at requirement 4-5`);
 }
 // Every action node must be a valid approach somewhere, so every card and every
 // apparition is reachable through real gameplay.
@@ -68,23 +75,27 @@ assert.equal(indirect.resolvedNode, 'aggression');
 assert.equal(indirect.exact, false);
 assert.equal(indirect.distance, 1);
 
+// Ambush now accepts exactly three tiers: Protection (Easy, req 1),
+// Deception (Medium, req 3), Aggression (Hard, req 5).
 const ambush = ADVENTURE_EVENTS.find(event => event.id === 'ambush');
 const run = createSingleCardRunState(() => 0.5);
 
+// The intended Easy approach succeeds cleanly at potency 1.
+const temperance = ALL_CARD_DEFINITIONS.find(card => card.id === 'major_14'); // Protection, potency 1
+const easyGreat = resolveSingleCardEvent({ event: ambush, card: temperance, run });
+assert.equal(easyGreat.resolvedNode, 'protection');
+assert.equal(easyGreat.tier, SINGLE_CARD_RESULTS.GREAT_SUCCESS, 'the intended Easy approach succeeds at potency 1');
+
+// The Hard approach matches exactly but needs potency 5; a 3 is not enough.
 const swordKnight = ALL_CARD_DEFINITIONS.find(card => card.id === 'court_Swords_Knight');
-const indirectSuccess = resolveSingleCardEvent({ event: ambush, card: swordKnight, run });
-assert.equal(indirectSuccess.potency, 3, 'graph distance must never reduce potency');
-assert.equal(indirectSuccess.resolvedNode, 'aggression');
-assert.equal(indirectSuccess.tier, SINGLE_CARD_RESULTS.GREAT_SUCCESS, 'an exact Aggression node with enough potency is a Great Success');
+const hardTooWeak = resolveSingleCardEvent({ event: ambush, card: swordKnight, run });
+assert.equal(hardTooWeak.potency, 3, 'graph distance must never reduce potency');
+assert.equal(hardTooWeak.resolvedNode, 'aggression');
+assert.equal(hardTooWeak.tier, SINGLE_CARD_RESULTS.FAILURE, 'the Hard approach needs potency 5; a 3 cannot carry it');
 
-const wandKnight = ALL_CARD_DEFINITIONS.find(card => card.id === 'court_Wands_Knight');
-const routedSuccess = resolveSingleCardEvent({ event: ambush, card: wandKnight, run });
-assert.equal(routedSuccess.potency, 3);
-assert.equal(routedSuccess.resolvedNode, 'aggression');
-assert.equal(routedSuccess.tier, SINGLE_CARD_RESULTS.SUCCESS, 'a nearby node with enough potency is a normal Success');
-
+// A weak routed approach still fails below its tier requirement.
 const weakStrength = resolveSingleCardEvent({ event: ambush, card: strength, run });
-assert.equal(weakStrength.tier, SINGLE_CARD_RESULTS.FAILURE, 'an exact or routed idea still fails when potency is below the branch requirement');
+assert.equal(weakStrength.tier, SINGLE_CARD_RESULTS.FAILURE, 'a routed approach still fails without enough potency');
 
 const secondSet = buildSetEventDeck({
   setIndex: 1,
