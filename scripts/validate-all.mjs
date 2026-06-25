@@ -16,6 +16,7 @@ import './validate-draw-animation.mjs';
 import './validate-hints.mjs';
 import './validate-adventure.mjs';
 import './validate-adventure-single-card.mjs';
+import './validate-adventure-apparition.mjs';
 import './validate-adventure-isolation.mjs';
 import './validate-card-detail-placement.mjs';
 import './validate-upgrade-announcements.mjs';
