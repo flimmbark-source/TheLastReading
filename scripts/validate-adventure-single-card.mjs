@@ -3,7 +3,7 @@ import { ALL_CARD_DEFINITIONS } from '../src/data/cards.mjs';
 import { ADVENTURE_EVENTS } from '../src/data/adventure/events.mjs';
 import { ACTION_NODE_LIST } from '../src/data/adventure/nodes.mjs';
 import { missingCardNodeIds, cardAdventureProfile } from '../src/data/adventure/cardNodes.mjs';
-import { NODE_VISUALS } from '../src/app/adventureInteractionFx.mjs';
+import { NODE_VISUALS, OUTCOME_VISUALS } from '../src/app/adventureInteractionFx.mjs';
 import { routeNode } from '../src/systems/adventure/nodeGraph.mjs';
 import {
   SINGLE_CARD_RESULTS,
@@ -23,6 +23,17 @@ assert.equal(
   ACTION_NODE_LIST.length,
   'Adventure node items should have distinct silhouettes',
 );
+for (const node of ACTION_NODE_LIST) {
+  assert.equal(NODE_VISUALS[node].frames.length, 3, `${node} should use all three authored node frames`);
+}
+assert.deepEqual(
+  Object.keys(OUTCOME_VISUALS).sort(),
+  ['failure', 'great_success', 'success'],
+  'Adventure needs authored Failure, Success, and Great Success outcomes',
+);
+for (const outcome of Object.values(OUTCOME_VISUALS)) {
+  assert.equal(outcome.frames.length, 4, `${outcome.label} should use all four authored outcome frames`);
+}
 
 const strength = ALL_CARD_DEFINITIONS.find(card => card.id === 'major_8');
 assert.deepEqual(cardAdventureProfile(strength), { node: 'physical', potency: 1 }, 'potency must remain the printed card number');
