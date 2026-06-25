@@ -20,6 +20,8 @@ window.showOverlay = html => { const s = window.document.getElementById('summary
 window.clearOverlay = () => { const s = window.document.getElementById('summary'); s.className = ''; s.innerHTML = ''; };
 let returned = false;
 window.tlrReturnToMenu = () => { returned = true; };
+// The reusable card picker (used by add/remove-card rewards): auto-pick first.
+window.choice = (title, prompt, cards, cb) => cb(cards[0]);
 
 // A live Score Mode profile + run that Adventure must NOT read or write.
 const LIVE_PERSIST = { pool: 99, up: { hand: 3, discards: 2, omen: 4 }, relics: ['gilded_fool'], relicUsed: { a: 1 } };
@@ -55,6 +57,12 @@ assert.ok(window.document.getElementById('advEventDeck'), 'event deck mounted (r
 assert.ok(window.document.getElementById('advHud'), 'resolve HUD mounted');
 assert.ok(readingDeals >= 1, 'a reading is dealt on the real table');
 assert.ok(deckText().includes('Iron Gate'), 'event deck shows the first event');
+
+// The Adventure run owns an evolving deck, dealt into each reading.
+const advDeck = window.tlrAdventureBuildDeck();
+assert.equal(advDeck.length, 38, 'reading is dealt from the full Adventure deck');
+assert.equal(new Set(advDeck.map(c => c.uid)).size, 38, 'deck cards get unique uids');
+assert.ok(window.document.getElementById('advHud').innerHTML.includes('Deck'), 'HUD shows the deck count');
 
 // Isolation: Adventure runs on a FRESH profile, not the live Score Mode one.
 assert.notEqual(window.persist, LIVE_PERSIST, 'live persist is swapped out, not mutated');

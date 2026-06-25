@@ -12,6 +12,7 @@
 
 import { installGeneratedSheetAssets } from '../ui/generatedSheetAssets.mjs';
 import { createInitialPersist, createInitialState } from './runtimeState.mjs';
+import { ALL_CARD_DEFINITIONS } from '../data/cards.mjs';
 import {
   createAdventureRunState,
   currentEvent,
@@ -19,6 +20,8 @@ import {
   applyResolution,
   generateRewardOffers,
   applyReward,
+  addCardToDeck,
+  removeCardFromDeck,
   advanceEvent,
   isRunLost,
   isRecoveryDue,
@@ -26,6 +29,7 @@ import {
   randomUnownedRelic,
   ADVENTURE_RESULTS,
 } from '../systems/adventure/run.mjs';
+import { REWARD_TYPES } from '../data/adventure/rewards.mjs';
 import { RECOVERY_EVENT } from '../data/adventure/events.mjs';
 import { getStatus } from '../data/adventure/statuses.mjs';
 import { buildDebugPanelHtml, isAdventureDebugEnabled } from '../ui/adventure/adventureHud.mjs';
@@ -33,6 +37,7 @@ import { buildDebugPanelHtml, isAdventureDebugEnabled } from '../ui/adventure/ad
 const STYLE_ID = 'adventure-mode-style';
 const MODE_CLASS = 'mode-adventure';
 const TABLE_CLASSES = ['single-player-v2', 'generated-sheet-ready', 'mode-reading'];
+const CARD_BY_ID = new Map(ALL_CARD_DEFINITIONS.map(card => [card.id, card]));
 
 function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, ch => (
@@ -192,6 +197,7 @@ export function installAdventureMode(target = window) {
       const statuses = (run.statuses || [])
         .map(id => `<span class="adv-status">${esc(getStatus(id)?.name || id)}</span>`).join('');
       hud.innerHTML = `<span class="adv-resolve">Resolve <b>${run.resolve}</b> / ${run.maxResolve}</span>`
+        + `<span class="adv-resolve" title="Cards in your deck">Deck <b>${run.deck.length}</b></span>`
         + statuses + `<button class="adv-leave" type="button" data-adv-leave>Leave</button>`;
     }
   }
@@ -300,12 +306,64 @@ export function installAdventureMode(target = window) {
   function confirmRewards() {
     const state = session.rewardState;
     if (!state || state.picked.length !== state.choose) return;
-    for (const i of state.picked) {
-      applyReward(session.run, state.offers[i], { relicId: randomUnownedRelic(session.run, rng) }, rng);
-    }
+    const chosen = state.picked.map(i => state.offers[i]);
     session.rewardState = null;
-    updateChrome();
-    advance();
+    applyRewardsSequentially(chosen, 0);
+  }
+
+  // Apply chosen rewards one at a time. Deck rewards open the card picker, so
+  // they have to resolve before the next reward / the next event.
+  function applyRewardsSequentially(rewards, idx) {
+    if (idx >= rewards.length) { updateChrome(); advance(); return; }
+    const reward = rewards[idx];
+    const next = () => applyRewardsSequentially(rewards, idx + 1);
+    if (reward.type === REWARD_TYPES.REMOVE_CARD) { pickCardToRemove(next); return; }
+    if (reward.type === REWARD_TYPES.ADD_CARD) { pickCardToAdd(next); return; }
+    applyReward(session.run, reward, { relicId: randomUnownedRelic(session.run, rng) }, rng);
+    next();
+  }
+
+  // The current Adventure deck as renderable card objects (fresh uids per call).
+  function buildAdventureDeckCards() {
+    return session.run.deck.map((id, uid) => ({ ...CARD_BY_ID.get(id), uid }));
+  }
+
+  // A small pool of distinct candidate cards to add to the deck.
+  function adventureAddPool(size = 3) {
+    const pool = [];
+    const used = new Set();
+    let guard = 0;
+    while (pool.length < size && guard < 80) {
+      guard += 1;
+      const def = ALL_CARD_DEFINITIONS[Math.floor(rng() * ALL_CARD_DEFINITIONS.length)];
+      if (used.has(def.id)) continue;
+      used.add(def.id);
+      pool.push({ ...def, uid: 9000 + pool.length });
+    }
+    return pool;
+  }
+
+  function pickCardToRemove(done) {
+    const cards = buildAdventureDeckCards();
+    if (typeof target.choice !== 'function' || !cards.length) { done(); return; }
+    const ordered = typeof target.sortCards === 'function' ? target.sortCards(cards) : cards;
+    clear();
+    target.choice('Remove a Card', 'Choose a card to remove from your deck.', ordered, picked => {
+      removeCardFromDeck(session.run, picked.id);
+      updateChrome();
+      done();
+    });
+  }
+
+  function pickCardToAdd(done) {
+    const pool = adventureAddPool();
+    if (typeof target.choice !== 'function' || !pool.length) { done(); return; }
+    clear();
+    target.choice('Add a Card', 'Choose a card to add to your deck.', pool, picked => {
+      addCardToDeck(session.run, picked.id);
+      updateChrome();
+      done();
+    });
   }
 
   function advance() {
@@ -397,6 +455,9 @@ export function installAdventureMode(target = window) {
 
   // --- Public hooks (called from the menu and the readingFlow scoring hook) --
   target.tlrStartAdventure = function () { startRun(); };
+  // Used by readingFlow.startReading to deal each Adventure reading from the
+  // run's own evolving deck.
+  target.tlrAdventureBuildDeck = function () { return session ? buildAdventureDeckCards() : null; };
   target.tlrAdventureResolveReading = function (score, cards) { resolveReading(score, cards); };
   target.tlrAdventureAfterOutcome = function () { afterOutcome(); };
   target.tlrAdventurePickReward = function (i) { pickReward(i); };

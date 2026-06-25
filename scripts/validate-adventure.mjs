@@ -17,6 +17,9 @@ import {
   applyRecoveryChoice,
   isRunLost,
   advanceEvent,
+  defaultAdventureDeck,
+  addCardToDeck,
+  removeCardFromDeck,
   ADVENTURE_RESULTS,
 } from '../src/systems/adventure/run.mjs';
 import { REWARD_TYPES } from '../src/data/adventure/rewards.mjs';
@@ -181,6 +184,21 @@ while (run.currentEventIndex < run.events.length && !isRunLost(run) && safety < 
   advanceEvent(run, event.id);
 }
 assert.equal(run.completedEvents.length, 3, 'all three events completed');
+
+// --- Adventure deck: persistent and evolving --------------------------------
+
+assert.equal(defaultAdventureDeck().length, 38, 'adventure deck starts as the full standard set');
+const deckRun = createAdventureRunState();
+assert.equal(deckRun.deck.length, 38, 'a new run owns a full deck');
+removeCardFromDeck(deckRun, 'major_0');
+assert.equal(deckRun.deck.length, 37, 'REMOVE_CARD thins the deck');
+assert.ok(!deckRun.deck.includes('major_0'), 'the chosen card is gone');
+addCardToDeck(deckRun, 'major_16');
+assert.equal(deckRun.deck.length, 38, 'ADD_CARD grows the deck');
+assert.equal(deckRun.deck.filter(id => id === 'major_16').length, 2, 'duplicates are allowed');
+// The run owns the deck — mutating one run never affects another.
+const otherRun = createAdventureRunState();
+assert.equal(otherRun.deck.length, 38, 'a separate run keeps its own full deck');
 
 // --- Debug panel shows meanings, and is dev-gated ---------------------------
 

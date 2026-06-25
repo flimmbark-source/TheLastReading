@@ -74,7 +74,10 @@ export function flushHand(){
 export function startReading(){
   if(window.tlrCloseArchives)window.tlrCloseArchives();
   tlrSyncPersistToStore();
-  window.tlrStore.dispatch({type:window.tlrActions.START_READING,deck:shuffle(buildDeck())});
+  // Adventure Mode deals from its own evolving deck; Score Mode uses the
+  // standard deck. Guarded so Score Mode is unaffected when the flag is off.
+  const _advDeck=(typeof window!=='undefined'&&window.__tlrAdventureActive&&typeof window.tlrAdventureBuildDeck==='function')?window.tlrAdventureBuildDeck():null;
+  window.tlrStore.dispatch({type:window.tlrActions.START_READING,deck:shuffle(_advDeck||buildDeck())});
   const _st=window.tlrStore.getState(),_run=_st.run;
   state.deck=_run.deck.slice();state.hand=_run.hand.slice();state.discard=[];
   state.spread=_run.spread.slice();state.purgeSelect=null;state.abilitySelect=null;state.selected=null;

@@ -6,6 +6,7 @@
 // state is never touched.
 
 import { computeScore } from '../scoring.mjs';
+import { ALL_CARD_DEFINITIONS } from '../../data/cards.mjs';
 import { calculateSpreadMeanings, rankedMeanings, dominantMeaning } from './meanings.mjs';
 import { getStatus } from '../../data/adventure/statuses.mjs';
 import { getRelic } from '../../data/adventure/relics.mjs';
@@ -28,12 +29,31 @@ function defaultEventOrder() {
   return ADVENTURE_EVENTS.map(event => event.id);
 }
 
+// The Adventure run owns its own deck as a list of card ids. It starts as the
+// full standard set and evolves across events via ADD_CARD / REMOVE_CARD
+// rewards — Score Mode's deck is never read or touched.
+export function defaultAdventureDeck() {
+  return ALL_CARD_DEFINITIONS.map(card => card.id);
+}
+
+export function addCardToDeck(run, cardId) {
+  if (cardId) run.deck.push(cardId);
+  return run;
+}
+
+export function removeCardFromDeck(run, cardId) {
+  const i = run.deck.indexOf(cardId);
+  if (i >= 0) run.deck.splice(i, 1);
+  return run;
+}
+
 export function createAdventureRunState(overrides = {}) {
   return {
     resolve: INITIAL_RESOLVE,
     maxResolve: MAX_RESOLVE,
     currentEventIndex: 0,
     events: defaultEventOrder(),
+    deck: defaultAdventureDeck(),
     statuses: [],
     relics: [],
     completedEvents: [],
