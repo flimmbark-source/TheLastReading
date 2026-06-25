@@ -7,6 +7,18 @@ import { ACTION_NODES } from './nodes.mjs';
 export const EVENT_APPROACHES = Object.freeze({
   iron_gate: Object.freeze([
     {
+      node: ACTION_NODES.ENDURANCE,
+      outcomeId: 'outlast',
+      requirement: 1,
+      failure: { text: 'You set yourself against the gate and wait it out. The gate, it turns out, is better at waiting than you are.', resolveChange: -1 },
+    },
+    {
+      node: ACTION_NODES.CREATION,
+      outcomeId: 'contrive',
+      requirement: 2,
+      failure: { text: 'You try to build a way over, but the timber is rotten and the stone betrays your weight at the worst moment.', resolveChange: -1 },
+    },
+    {
       node: ACTION_NODES.AGGRESSION,
       outcomeId: 'force',
       requirement: 3,
@@ -27,6 +39,18 @@ export const EVENT_APPROACHES = Object.freeze({
   ]),
 
   ambush: Object.freeze([
+    {
+      node: ACTION_NODES.PROTECTION,
+      outcomeId: 'guard',
+      requirement: 2,
+      failure: { text: 'You cover up and hold, but there are too many of them, and one finds the gap your guard cannot close.', resolveChange: -1 },
+    },
+    {
+      node: ACTION_NODES.FORTUNE,
+      outcomeId: 'scatter',
+      requirement: 2,
+      failure: { text: 'You gamble on the chaos. The chaos sides with them, and you pay for the wager in blood.', resolveChange: -1 },
+    },
     {
       node: ACTION_NODES.AGGRESSION,
       outcomeId: 'fight',
@@ -49,6 +73,18 @@ export const EVENT_APPROACHES = Object.freeze({
 
   strange_shrine: Object.freeze([
     {
+      node: ACTION_NODES.FORTUNE,
+      outcomeId: 'wager',
+      requirement: 2,
+      failure: { text: 'You leave your luck to the shrine. It keeps the coin and gives back nothing but a colder wind.', resolveChange: -1 },
+    },
+    {
+      node: ACTION_NODES.TRANSFORMATION,
+      outcomeId: 'transmute',
+      requirement: 2,
+      failure: { text: 'You reach to change what the shrine is, and it changes you instead, just slightly, just enough to notice.', resolveChange: -1, gainStatuses: ['haunted'] },
+    },
+    {
       node: ACTION_NODES.MYSTERY,
       outcomeId: 'commune',
       requirement: 1,
@@ -69,6 +105,18 @@ export const EVENT_APPROACHES = Object.freeze({
   ]),
 
   flooded_road: Object.freeze([
+    {
+      node: ACTION_NODES.TRANSFORMATION,
+      outcomeId: 'adapt',
+      requirement: 2,
+      failure: { text: 'You try to give yourself to the current. It takes the gift greedily and nearly does not give you back.', resolveChange: -1 },
+    },
+    {
+      node: ACTION_NODES.CREATION,
+      outcomeId: 'raft',
+      requirement: 2,
+      failure: { text: 'Your raft comes apart in the first hard pull of the current, and you with it.', resolveChange: -1 },
+    },
     {
       node: ACTION_NODES.PHYSICAL,
       outcomeId: 'ford',
@@ -91,6 +139,18 @@ export const EVENT_APPROACHES = Object.freeze({
 
   cornered_beast: Object.freeze([
     {
+      node: ACTION_NODES.PROTECTION,
+      outcomeId: 'brace',
+      requirement: 2,
+      failure: { text: 'You set yourself to weather it, but a wounded thing has nothing left to lose, and it comes through your guard.', resolveChange: -1 },
+    },
+    {
+      node: ACTION_NODES.PHYSICAL,
+      outcomeId: 'restrain',
+      requirement: 2,
+      failure: { text: 'You close to pin it and learn how strong fear makes a cornered animal. It throws you off, hard.', resolveChange: -1 },
+    },
+    {
       node: ACTION_NODES.AGGRESSION,
       outcomeId: 'put_down',
       requirement: 3,
@@ -111,6 +171,12 @@ export const EVENT_APPROACHES = Object.freeze({
   ]),
 
   traveling_merchant: Object.freeze([
+    {
+      node: ACTION_NODES.FORTUNE,
+      outcomeId: 'dice',
+      requirement: 2,
+      failure: { text: 'You stake the bargain on a game of chance. The merchant has played this game far longer than you have.', resolveChange: -1 },
+    },
     {
       node: ACTION_NODES.AUTHORITY,
       outcomeId: 'bargain',
@@ -133,6 +199,18 @@ export const EVENT_APPROACHES = Object.freeze({
 
   suspicious_villagers: Object.freeze([
     {
+      node: ACTION_NODES.ENDURANCE,
+      outcomeId: 'abide',
+      requirement: 1,
+      failure: { text: 'You stay and wait for trust to grow. It does not, and every day you linger sharpens their unease.', resolveChange: -1 },
+    },
+    {
+      node: ACTION_NODES.DECEPTION,
+      outcomeId: 'blend',
+      requirement: 2,
+      failure: { text: 'You try to pass as one of them. A child notices what the elders missed, and says so, loudly.', resolveChange: -1, gainStatuses: ['exposed'] },
+    },
+    {
       node: ACTION_NODES.COMPASSION,
       outcomeId: 'reassure',
       requirement: 2,
@@ -154,6 +232,18 @@ export const EVENT_APPROACHES = Object.freeze({
 
   unmarked_grave: Object.freeze([
     {
+      node: ACTION_NODES.TRANSFORMATION,
+      outcomeId: 'release',
+      requirement: 2,
+      failure: { text: 'You try to free what lingers, but you do not understand what binds it, and it clings to you instead.', resolveChange: -1, gainStatuses: ['haunted'] },
+    },
+    {
+      node: ACTION_NODES.AUTHORITY,
+      outcomeId: 'command',
+      requirement: 2,
+      failure: { text: 'You order the grave to keep its dead. The dead, it seems, do not answer to you.', resolveChange: -1, gainStatuses: ['haunted'] },
+    },
+    {
       node: ACTION_NODES.COMPASSION,
       outcomeId: 'honor',
       requirement: 1,
@@ -174,6 +264,12 @@ export const EVENT_APPROACHES = Object.freeze({
   ]),
 
   beneath_the_floor: Object.freeze([
+    {
+      node: ACTION_NODES.PHYSICAL,
+      outcomeId: 'haul',
+      requirement: 3,
+      failure: { text: 'You tear at the boards to drag it up, but it is heavier than the whole house, and it pulls back.', resolveChange: -1, gainStatuses: ['haunted'] },
+    },
     {
       node: ACTION_NODES.AGGRESSION,
       outcomeId: 'confront',

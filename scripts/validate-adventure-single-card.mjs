@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { ALL_CARD_DEFINITIONS } from '../src/data/cards.mjs';
 import { ADVENTURE_EVENTS } from '../src/data/adventure/events.mjs';
+import { EVENT_APPROACHES } from '../src/data/adventure/eventApproaches.mjs';
 import { ACTION_NODE_LIST } from '../src/data/adventure/nodes.mjs';
 import { missingCardNodeIds, cardAdventureProfile } from '../src/data/adventure/cardNodes.mjs';
 import { NODE_VISUALS, OUTCOME_VISUALS } from '../src/app/adventureInteractionFx.mjs';
@@ -34,6 +35,27 @@ assert.deepEqual(
 for (const outcome of Object.values(OUTCOME_VISUALS)) {
   assert.equal(outcome.frames.length, 4, `${outcome.label} should use all four authored outcome frames`);
 }
+
+// Every approach must bind to a real outcome in its Event — a missing id would
+// silently fall back to the first outcome and ship mismatched prose.
+const eventsById = new Map(ADVENTURE_EVENTS.map(event => [event.id, event]));
+const acceptedNodeCounts = {};
+for (const [eventId, approaches] of Object.entries(EVENT_APPROACHES)) {
+  const event = eventsById.get(eventId);
+  assert.ok(event, `approaches reference a real Event: ${eventId}`);
+  const outcomeIds = new Set(event.outcomes.map(outcome => outcome.id));
+  for (const approach of approaches) {
+    assert.ok(outcomeIds.has(approach.outcomeId), `${eventId} approach must bind to a real outcome: ${approach.outcomeId}`);
+    acceptedNodeCounts[approach.node] = (acceptedNodeCounts[approach.node] || 0) + 1;
+  }
+}
+// Every action node must be a valid approach somewhere, so every card and every
+// apparition is reachable through real gameplay.
+assert.deepEqual(
+  ACTION_NODE_LIST.filter(node => !acceptedNodeCounts[node]),
+  [],
+  'every Adventure node must be an accepted approach in at least one Event',
+);
 
 const strength = ALL_CARD_DEFINITIONS.find(card => card.id === 'major_8');
 assert.deepEqual(cardAdventureProfile(strength), { node: 'physical', potency: 1 }, 'potency must remain the printed card number');

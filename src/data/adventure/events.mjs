@@ -74,6 +74,18 @@ export const ADVENTURE_EVENTS = Object.freeze([
         text: 'You follow the wall instead of fighting it and find a gap where the stone has slumped.',
         triumphText: 'The detour reveals a sheltered hollow with supplies left by an earlier traveler.',
       },
+      {
+        id: 'outlast',
+        triggerMeanings: ['persistence'],
+        text: 'You set your weight against the gate and refuse to tire. Hinge by hinge, the old iron yields to a patience older than its makers.',
+        triumphText: 'You outlast the gate itself. Nothing on this road, you decide, is going to simply wait you out.',
+      },
+      {
+        id: 'contrive',
+        triggerMeanings: ['curiosity', 'change'],
+        text: 'You gather fallen timber and slumped stone and build your own way over the wall the gate was meant to hold.',
+        triumphText: 'What you raise beside the gate is sturdy enough that the next traveler will bless your name for it.',
+      },
     ],
     failure: {
       id: 'iron_gate_fail',
@@ -110,6 +122,18 @@ export const ADVENTURE_EVENTS = Object.freeze([
         triggerMeanings: ['secrets', 'fear', 'change'],
         text: 'You let the dusk and their nerves do your work, slipping away before the trap fully closes.',
         triumphText: 'Not one of them is sure you were ever real. You leave them arguing in the dark.',
+      },
+      {
+        id: 'guard',
+        triggerMeanings: ['persistence', 'courage'],
+        text: 'You give them no opening, turning every rush aside until their nerve runs out before your arm does.',
+        triumphText: 'You hold so well they break themselves against you, and the survivors limp away with nothing.',
+      },
+      {
+        id: 'scatter',
+        triggerMeanings: ['change', 'curiosity'],
+        text: 'You trust the dusk and a startled horse and the chaos of bad ground, and the ambush comes apart around you.',
+        triumphText: 'Everything that could go wrong for them does. You walk out untouched and almost laughing.',
       },
     ],
     failure: {
@@ -150,6 +174,18 @@ export const ADVENTURE_EVENTS = Object.freeze([
         triumphText: 'You strip the shrine clean and nothing strikes you down. Maybe nothing was watching.',
         gainStatuses: ['distrusted'],
       },
+      {
+        id: 'wager',
+        triggerMeanings: ['curiosity', 'change'],
+        text: 'You set a coin on the altar and let chance decide. The shrine takes the wager, and the road answers in your favor.',
+        triumphText: 'The odds bend impossibly your way. Whatever sleeps here has decided, for now, to be generous.',
+      },
+      {
+        id: 'transmute',
+        triggerMeanings: ['change', 'persistence'],
+        text: 'You read the shrine not as it is but as it could be, and something in it shifts to meet you halfway.',
+        triumphText: 'You leave the shrine altered and the better for it, carrying a little of its strangeness onward.',
+      },
     ],
     failure: {
       id: 'strange_shrine_fail',
@@ -185,6 +221,18 @@ export const ADVENTURE_EVENTS = Object.freeze([
         triggerMeanings: ['curiosity', 'authority', 'secrets'],
         text: 'You follow the bank until an old half-sunk bridge offers a way over.',
         triumphText: 'The forgotten bridge leads somewhere better than the road ever would have.',
+      },
+      {
+        id: 'adapt',
+        triggerMeanings: ['change', 'intuition'],
+        text: 'You stop fighting the river and become something it will carry, riding the current to a calmer bank.',
+        triumphText: 'You read the flood so well it feels less like crossing water than changing your mind about where the road should be.',
+      },
+      {
+        id: 'raft',
+        triggerMeanings: ['curiosity', 'persistence'],
+        text: 'You lash driftwood into a raft and let the ruined road ferry you across the water it drowned in.',
+        triumphText: 'Your raft holds so well you keep it, and the next river will be no obstacle at all.',
       },
     ],
     failure: {
@@ -222,6 +270,18 @@ export const ADVENTURE_EVENTS = Object.freeze([
         text: 'You wait for its attention to waver and slip past while it watches the wrong shadow.',
         triumphText: 'You move like you were never there at all.',
       },
+      {
+        id: 'brace',
+        triggerMeanings: ['persistence', 'courage'],
+        text: 'You stand your ground and weather its lunges until the fight goes out of it and it lets you pass.',
+        triumphText: 'You give it nothing to break against, and in the end it lies down rather than spend itself on you.',
+      },
+      {
+        id: 'restrain',
+        triggerMeanings: ['courage', 'persistence'],
+        text: 'You close the distance and pin it without a blade, holding on until the panic drains and it goes still.',
+        triumphText: 'You master it with your hands alone, and for a while afterward it follows you like it has chosen you.',
+      },
     ],
     failure: {
       id: 'cornered_beast_fail',
@@ -258,6 +318,12 @@ export const ADVENTURE_EVENTS = Object.freeze([
         triumphText: 'You leave clean and unseen — but a story like that travels faster than you do.',
         gainStatuses: ['distrusted'],
       },
+      {
+        id: 'dice',
+        triggerMeanings: ['curiosity', 'change'],
+        text: 'You turn the haggling into a game of chance, and luck leaves you richer than any bargain would have.',
+        triumphText: 'You clean the merchant out at their own game, and they laugh because there is nothing else to do.',
+      },
     ],
     failure: {
       id: 'traveling_merchant_fail',
@@ -293,6 +359,18 @@ export const ADVENTURE_EVENTS = Object.freeze([
         text: 'You make it plain that crossing you would cost more than it is worth. They stand aside.',
         triumphText: 'No one will meet your eye, and no one will stop you. It works. It always works, for a while.',
         gainStatuses: ['distrusted'],
+      },
+      {
+        id: 'abide',
+        triggerMeanings: ['persistence', 'compassion'],
+        text: 'You make no demands and simply stay, lending your hands where they are needed, until the suspicion wears thin.',
+        triumphText: 'By the time you leave, they have half forgotten you were ever a stranger at all.',
+      },
+      {
+        id: 'blend',
+        triggerMeanings: ['secrets', 'change'],
+        text: 'You become someone they expected to see, and cross the wary square as if you had always belonged in it.',
+        triumphText: 'No one will remember a stranger passed through, which is exactly how you wanted it.',
       },
     ],
     failure: {
@@ -332,6 +410,19 @@ export const ADVENTURE_EVENTS = Object.freeze([
         triumphText: 'You take what was buried and leave before the consequences arrive.',
         gainStatuses: ['haunted'],
       },
+      {
+        id: 'release',
+        triggerMeanings: ['change', 'intuition'],
+        text: 'You give whatever lingers here the change it could not make alone, and the restless earth goes quiet.',
+        triumphText: 'What was bound to this grave moves on, and leaves a warmth behind that walks with you a while.',
+        gainStatuses: ['blessed'],
+      },
+      {
+        id: 'command',
+        triggerMeanings: ['authority', 'persistence'],
+        text: 'You speak to the grave as one who expects to be obeyed, and what stirred beneath it settles back into rest.',
+        triumphText: 'Even the dead defer to you here. You leave certain they will stay exactly where you put them.',
+      },
     ],
     failure: {
       id: 'unmarked_grave_fail',
@@ -368,6 +459,12 @@ export const ADVENTURE_EVENTS = Object.freeze([
         triggerMeanings: ['persistence', 'compassion', 'change'],
         text: 'You work until the boards are nailed fast and the signs are drawn, and the shifting goes quiet.',
         triumphText: 'You seal it so well that the house itself seems to sigh in relief.',
+      },
+      {
+        id: 'haul',
+        triggerMeanings: ['courage', 'violence'],
+        text: 'You tear the boards up with your bare hands and drag the thing beneath into the light before it is ready.',
+        triumphText: 'You haul it up and out by main strength, and whatever it expected, it did not expect to lose.',
       },
     ],
     failure: {
