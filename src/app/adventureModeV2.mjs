@@ -65,7 +65,7 @@ function ensureStyles(doc) {
     body.mode-adventure #constellationPill,
     body.mode-adventure #scoringBtn{display:none!important}
 
-    #advEventDeck{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:26;
+    #advEventDeck{position:fixed;top:28px;left:50%;transform:translateX(-50%);z-index:26;
       display:none;flex-direction:column;align-items:center;gap:6px;pointer-events:none;
       font-family:Georgia,serif;color:#f2dfb8}
     body.mode-adventure #advEventDeck{display:flex}
@@ -118,7 +118,7 @@ function ensureStyles(doc) {
     .adv-reward--disabled{opacity:.35;pointer-events:none}
 
     @media(max-width:640px){
-      #advEventDeck{top:6px}.adv-event-desc{max-width:245px;font-size:10px}
+      #advEventDeck{top:20px}.adv-event-desc{max-width:245px;font-size:10px}
       #advHud{max-width:64vw}.adv-hud__main{padding:6px 9px}
       .adv-deck{transform:scale(.92);transform-origin:top center}
     }
