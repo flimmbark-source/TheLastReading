@@ -33,9 +33,17 @@ function ensureStyle(doc) {
       --adv-encounter-width:min(720px,calc(100vw - 8px));
       --adv-scene-height:clamp(136px,39vw,174px);
       --adv-title-height:clamp(38px,10vw,46px);
+      --adv-title-overlap:20px;
       --adv-copy-min-height:clamp(58px,15vw,72px);
-      --adv-action-top:clamp(286px,78vw,334px);
-      --adv-spread-top:clamp(348px,94vw,404px);
+      --adv-action-top:calc(
+        var(--adv-encounter-top) +
+        var(--adv-scene-height) +
+        var(--adv-title-height) -
+        var(--adv-title-overlap) +
+        var(--adv-copy-min-height) +
+        18px
+      );
+      --adv-spread-top:calc(var(--adv-action-top) + 62px);
     }
 
     body.mode-adventure #advEventDeck{
@@ -55,7 +63,6 @@ function ensureStyle(doc) {
     }
     body.mode-adventure #advEventDeck{display:block!important}
 
-    /* Resolve now reads as the encounter's top rail rather than a detached pill. */
     body.mode-adventure #advHud{
       top:6px!important;
       left:7px!important;
@@ -87,7 +94,6 @@ function ensureStyle(doc) {
     body.mode-adventure #advHud .adv-pip{width:9px;height:9px}
     body.mode-adventure #advHud .adv-hud__statuses{margin-top:3px}
 
-    /* One outer object, but three genuinely separate content layers. */
     .adv-encounter{
       position:relative;
       width:100%;
@@ -137,7 +143,7 @@ function ensureStyle(doc) {
       z-index:7;
       width:86%;
       min-height:var(--adv-title-height);
-      margin:calc(var(--adv-title-height) * -.46) auto 0;
+      margin:calc(0px - var(--adv-title-overlap)) auto 0;
       padding:9px 18px 8px;
       display:flex;
       align-items:center;
@@ -146,8 +152,7 @@ function ensureStyle(doc) {
       border:1px solid rgba(222,177,94,.54);
       border-radius:7px 7px 4px 4px;
       color:#f1ddb3;
-      background:
-        linear-gradient(90deg,rgba(20,14,9,.96),rgba(11,8,6,.98) 18%,rgba(11,8,6,.98) 82%,rgba(20,14,9,.96));
+      background:linear-gradient(90deg,rgba(20,14,9,.96),rgba(11,8,6,.98) 18%,rgba(11,8,6,.98) 82%,rgba(20,14,9,.96));
       box-shadow:0 6px 16px rgba(0,0,0,.52),inset 0 1px 0 rgba(255,226,172,.07);
       text-align:center;
       font:800 clamp(15px,4.7vw,24px)/1.05 'Cinzel',Georgia,serif;
@@ -200,7 +205,6 @@ function ensureStyle(doc) {
       text-transform:capitalize;
     }
 
-    /* The two actions get a dedicated row beneath the complete encounter frame. */
     html body.mode-adventure .spread-actions{
       position:fixed!important;
       z-index:44!important;
@@ -218,7 +222,6 @@ function ensureStyle(doc) {
     }
     html body.mode-adventure .spread-actions button{pointer-events:auto!important}
 
-    /* Keep the reading beneath the encounter/action composition. */
     html body.mode-adventure .spread-wrap{
       top:var(--adv-spread-top)!important;
       margin:0!important;
@@ -230,9 +233,8 @@ function ensureStyle(doc) {
         --adv-encounter-width:calc(100vw - 8px);
         --adv-scene-height:clamp(134px,40vw,156px);
         --adv-title-height:clamp(38px,10.5vw,44px);
+        --adv-title-overlap:20px;
         --adv-copy-min-height:clamp(60px,16vw,70px);
-        --adv-action-top:clamp(282px,79vw,318px);
-        --adv-spread-top:clamp(344px,96vw,382px);
       }
       body.mode-adventure #advHud{left:5px!important;right:5px!important}
       body.mode-adventure #advHud::after{left:126px;right:6px}
@@ -248,11 +250,7 @@ function ensureStyle(doc) {
     }
 
     @media(min-width:760px){
-      body.mode-adventure{
-        --adv-encounter-top:43px;
-        --adv-action-top:342px;
-        --adv-spread-top:408px;
-      }
+      body.mode-adventure{--adv-encounter-top:43px}
       .adv-encounter__scene{height:186px}
     }
   `;
