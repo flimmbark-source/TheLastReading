@@ -7,7 +7,7 @@ import {
   OUTCOME_VISUALS,
   installAdventureInteractionFxV9,
   playAdventureInteractionFx,
-} from './adventureInteractionFxV9.mjs';
+} from './adventureInteractionFxV9.mjs?v=full-width-panel-1';
 
 export { NODE_VISUALS, OUTCOME_VISUALS, playAdventureInteractionFx };
 
@@ -25,8 +25,7 @@ function eventFromDeck(doc) {
     const byId = ADVENTURE_EVENTS.find(event => event.id === id);
     if (byId) return byId;
   }
-  // Fallback for the text card face, which still renders a title.
-  const title = deck?.querySelector('.adv-deck__title')?.textContent?.trim() || '';
+  const title = deck?.querySelector('.adv-event-hero__title, .adv-deck__title')?.textContent?.trim() || '';
   return ADVENTURE_EVENTS.find(event => event.title === title) || null;
 }
 
@@ -88,8 +87,6 @@ export function installAdventureInteractionFx(target = window) {
       }
       const profile = cardAdventureProfile(card);
       const potency = profile?.potency ?? null;
-      // The apparition reflects the card the player actually summoned (its own
-      // node), while the resolved node still drives the Event's outcome reaction.
       const cardNode = profile?.node ?? node;
 
       const eventHtmlAfter = deck?.innerHTML || '';
