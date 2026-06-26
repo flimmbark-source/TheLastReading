@@ -29,7 +29,7 @@ function ensureStyle(doc) {
   style.id = STYLE_ID;
   style.textContent = `
     body.mode-adventure #advEventDeck{
-      top:42px!important;
+      top:20px!important;
       left:8px!important;
       right:8px!important;
       width:auto!important;
@@ -129,7 +129,7 @@ function ensureStyle(doc) {
     }
 
     @media(max-width:640px){
-      body.mode-adventure #advEventDeck{top:40px!important;left:5px!important;right:5px!important}
+      body.mode-adventure #advEventDeck{top:18px!important;left:5px!important;right:5px!important}
       .adv-event-hero{height:clamp(128px,38vw,156px);border-radius:7px}
       .adv-event-hero__title{top:7px;left:10px;right:10px}
       .adv-event-hero__copy{left:8px;right:8px;bottom:7px;padding:7px 9px 6px}
@@ -137,7 +137,7 @@ function ensureStyle(doc) {
     }
 
     @media(min-width:760px){
-      body.mode-adventure #advEventDeck{top:50px!important}
+      body.mode-adventure #advEventDeck{top:24px!important}
       .adv-event-hero{height:184px}
     }
   `;
