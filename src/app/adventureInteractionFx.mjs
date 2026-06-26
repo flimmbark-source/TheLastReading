@@ -7,7 +7,7 @@ import {
   OUTCOME_VISUALS,
   installAdventureInteractionFxV9,
   playAdventureInteractionFx,
-} from './adventureInteractionFxV9.mjs?v=full-width-panel-1';
+} from './adventureInteractionFxV9.mjs?v=adventure-v3-1';
 
 export { NODE_VISUALS, OUTCOME_VISUALS, playAdventureInteractionFx };
 
@@ -29,11 +29,15 @@ function eventFromDeck(doc) {
   return ADVENTURE_EVENTS.find(event => event.title === title) || null;
 }
 
+function sourceNode(card) {
+  return card?.adventureNodeOverride || cardAdventureProfile(card)?.node || null;
+}
+
 function resolvedNode(card, event) {
-  const profile = cardAdventureProfile(card);
-  if (!profile || !event) return profile?.node || null;
+  const node = sourceNode(card);
+  if (!node || !event) return node;
   const accepted = getEventApproaches(event).map(approach => approach.node);
-  return routeNode(profile.node, accepted)?.resolvedNode || profile.node;
+  return routeNode(node, accepted)?.resolvedNode || node;
 }
 
 export function installAdventureInteractionFx(target = window) {
@@ -85,9 +89,8 @@ export function installAdventureInteractionFx(target = window) {
         originalShowOverlay.call(target, pendingOverlay.html, ...pendingOverlay.args);
         return handled;
       }
-      const profile = cardAdventureProfile(card);
-      const potency = profile?.potency ?? null;
-      const cardNode = profile?.node ?? node;
+      const potency = Number(card.points ?? cardAdventureProfile(card)?.potency ?? 0);
+      const cardNode = sourceNode(card) || node;
 
       const eventHtmlAfter = deck?.innerHTML || '';
       if (deck && eventHtmlBefore) deck.innerHTML = eventHtmlBefore;
