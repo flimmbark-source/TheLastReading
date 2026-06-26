@@ -52,7 +52,7 @@ function ensureStyle(doc) {
       border-radius:9px;
       background-color:#17120d;
       background-repeat:no-repeat;
-      background-size:100% 400%;
+      background-size:auto 400%;
       background-position:center var(--adv-event-row,0%);
       box-shadow:0 10px 26px rgba(0,0,0,.62),inset 0 0 0 1px rgba(255,224,164,.08);
       isolation:isolate;
