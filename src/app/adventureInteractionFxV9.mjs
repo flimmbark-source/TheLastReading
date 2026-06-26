@@ -1,3 +1,4 @@
+import './adventureModeV3.mjs?v=1';
 import {
   NODE_VISUALS,
   OUTCOME_VISUALS,
