@@ -228,6 +228,9 @@ export function installAdventureModeV2(target = window) {
     const event = currentEvent();
     const deck = doc.getElementById('advEventDeck');
     if (deck) {
+      // The interaction-FX bridge identifies the Event from here; expose the id
+      // directly so it never depends on the card face's rendered text.
+      deck.dataset.eventId = event?.id || '';
       if (!event) {
         deck.innerHTML = '';
       } else {

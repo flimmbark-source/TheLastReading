@@ -19,7 +19,14 @@ function tierFromHtml(html) {
 }
 
 function eventFromDeck(doc) {
-  const title = doc.querySelector('#advEventDeck .adv-deck__title')?.textContent?.trim() || '';
+  const deck = doc.getElementById('advEventDeck');
+  const id = deck?.dataset?.eventId;
+  if (id) {
+    const byId = ADVENTURE_EVENTS.find(event => event.id === id);
+    if (byId) return byId;
+  }
+  // Fallback for the text card face, which still renders a title.
+  const title = deck?.querySelector('.adv-deck__title')?.textContent?.trim() || '';
   return ADVENTURE_EVENTS.find(event => event.title === title) || null;
 }
 
