@@ -31,19 +31,9 @@ function ensureStyle(doc) {
     body.mode-adventure{
       --adv-encounter-top:38px;
       --adv-encounter-width:min(720px,calc(100vw - 8px));
-      --adv-scene-height:clamp(136px,39vw,174px);
-      --adv-title-height:clamp(38px,10vw,46px);
-      --adv-title-overlap:20px;
-      --adv-copy-min-height:clamp(58px,15vw,72px);
-      --adv-action-top:calc(
-        var(--adv-encounter-top) +
-        var(--adv-scene-height) +
-        var(--adv-title-height) -
-        var(--adv-title-overlap) +
-        var(--adv-copy-min-height) +
-        18px
-      );
-      --adv-spread-top:calc(var(--adv-action-top) + 62px);
+      --adv-scene-height:clamp(152px,42vw,184px);
+      --adv-action-top:calc(var(--adv-encounter-top) + var(--adv-scene-height) + 18px);
+      --adv-spread-top:calc(var(--adv-action-top) + 66px);
     }
 
     body.mode-adventure #advEventDeck{
@@ -56,12 +46,11 @@ function ensureStyle(doc) {
       max-width:none!important;
       margin:0!important;
       transform:translateX(-50%)!important;
-      display:none;
+      display:block!important;
       color:#f3dfb5;
       pointer-events:none;
       font-family:Georgia,serif;
     }
-    body.mode-adventure #advEventDeck{display:block!important}
 
     body.mode-adventure #advHud{
       top:6px!important;
@@ -97,11 +86,12 @@ function ensureStyle(doc) {
     .adv-encounter{
       position:relative;
       width:100%;
-      overflow:visible;
-      padding:4px 4px 7px;
+      overflow:hidden;
+      padding:4px;
+      box-sizing:border-box;
       border:1px solid rgba(202,157,81,.78);
       border-radius:11px;
-      background:linear-gradient(180deg,#100c09,#090705);
+      background:#100c09;
       box-shadow:
         0 12px 30px rgba(0,0,0,.66),
         0 0 0 1px rgba(31,20,12,.94),
@@ -113,7 +103,7 @@ function ensureStyle(doc) {
       position:absolute;
       inset:8px;
       z-index:5;
-      border:1px solid rgba(229,190,114,.13);
+      border:1px solid rgba(229,190,114,.17);
       border-radius:7px;
       pointer-events:none;
     }
@@ -122,7 +112,7 @@ function ensureStyle(doc) {
       position:relative;
       height:var(--adv-scene-height);
       overflow:hidden;
-      border-radius:7px 7px 4px 4px;
+      border-radius:7px;
       background-color:#17120d;
       background-repeat:no-repeat;
       background-size:auto 400%;
@@ -134,67 +124,63 @@ function ensureStyle(doc) {
       position:absolute;
       inset:0;
       background:
-        linear-gradient(180deg,rgba(4,5,6,.35) 0%,rgba(5,6,7,.02) 28%,rgba(6,6,6,.02) 66%,rgba(8,6,5,.48) 100%),
-        linear-gradient(90deg,rgba(3,4,5,.22),transparent 18%,transparent 82%,rgba(3,4,5,.22));
+        linear-gradient(180deg,rgba(5,5,5,.82) 0%,rgba(6,6,6,.58) 34%,rgba(6,6,6,.08) 62%,rgba(8,6,5,.34) 100%),
+        linear-gradient(90deg,rgba(3,4,5,.24),transparent 18%,transparent 82%,rgba(3,4,5,.24));
     }
 
     .adv-encounter__title{
-      position:relative;
-      z-index:7;
-      width:86%;
-      min-height:var(--adv-title-height);
-      margin:calc(0px - var(--adv-title-overlap)) auto 0;
-      padding:9px 18px 8px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
+      position:absolute;
+      z-index:8;
+      top:10px;
+      left:16px;
+      right:16px;
+      width:auto;
+      min-height:0;
+      margin:0;
+      padding:4px 10px 3px;
+      display:block;
       box-sizing:border-box;
-      border:1px solid rgba(222,177,94,.54);
-      border-radius:7px 7px 4px 4px;
+      border:0;
+      border-radius:0;
       color:#f1ddb3;
-      background:linear-gradient(90deg,rgba(20,14,9,.96),rgba(11,8,6,.98) 18%,rgba(11,8,6,.98) 82%,rgba(20,14,9,.96));
-      box-shadow:0 6px 16px rgba(0,0,0,.52),inset 0 1px 0 rgba(255,226,172,.07);
+      background:linear-gradient(90deg,transparent,rgba(10,8,6,.80) 18%,rgba(10,8,6,.80) 82%,transparent);
+      box-shadow:none;
       text-align:center;
-      font:800 clamp(15px,4.7vw,24px)/1.05 'Cinzel',Georgia,serif;
+      font:800 clamp(15px,4.6vw,23px)/1.08 'Cinzel',Georgia,serif;
       letter-spacing:.055em;
       text-transform:uppercase;
-      text-shadow:0 2px 3px #000;
+      text-shadow:0 2px 3px #000,0 0 12px rgba(0,0,0,.9);
     }
     .adv-encounter__title::before,
-    .adv-encounter__title::after{
-      content:'✦';
-      flex:0 0 auto;
-      margin:0 9px;
-      color:#bd8b44;
-      font-size:8px;
-      text-shadow:0 0 7px rgba(242,193,96,.42);
-    }
+    .adv-encounter__title::after{content:none}
 
     .adv-encounter__copy{
-      position:relative;
-      z-index:6;
-      min-height:var(--adv-copy-min-height);
-      margin:3px 7px 0;
-      padding:10px 15px 9px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
+      position:absolute;
+      z-index:7;
+      top:42px;
+      left:20px;
+      right:20px;
+      min-height:0;
+      margin:0;
+      padding:5px 10px 8px;
+      display:block;
       box-sizing:border-box;
       color:#eadcc0;
-      background:linear-gradient(180deg,rgba(20,14,10,.88),rgba(9,7,5,.97));
-      border:1px solid rgba(222,177,94,.28);
-      border-radius:4px 4px 7px 7px;
-      box-shadow:inset 0 1px 0 rgba(255,227,176,.04);
+      background:linear-gradient(90deg,transparent,rgba(9,7,5,.68) 12%,rgba(9,7,5,.68) 88%,transparent);
+      border:0;
+      border-radius:0;
+      box-shadow:none;
       text-align:center;
-      font:500 clamp(10.5px,2.9vw,13.5px)/1.38 Georgia,serif;
-      text-shadow:0 1px 2px #000;
+      font:500 clamp(10px,2.75vw,13px)/1.34 Georgia,serif;
+      text-shadow:0 1px 2px #000,0 0 9px rgba(0,0,0,.95);
     }
 
     .adv-encounter__next{
       position:absolute;
       z-index:9;
       right:10px;
-      top:10px;
+      top:auto;
+      bottom:10px;
       padding:3px 7px;
       border:1px solid rgba(213,170,92,.30);
       border-radius:999px;
@@ -231,27 +217,23 @@ function ensureStyle(doc) {
       body.mode-adventure{
         --adv-encounter-top:37px;
         --adv-encounter-width:calc(100vw - 8px);
-        --adv-scene-height:clamp(134px,40vw,156px);
-        --adv-title-height:clamp(38px,10.5vw,44px);
-        --adv-title-overlap:20px;
-        --adv-copy-min-height:clamp(60px,16vw,70px);
+        --adv-scene-height:clamp(150px,43vw,170px);
       }
       body.mode-adventure #advHud{left:5px!important;right:5px!important}
       body.mode-adventure #advHud::after{left:126px;right:6px}
       body.mode-adventure #advHud .adv-hud__main{padding:5px 9px}
-      .adv-encounter{padding:3px 3px 6px;border-radius:8px}
+      .adv-encounter{padding:3px;border-radius:8px}
       .adv-encounter::after{inset:6px;border-radius:6px}
-      .adv-encounter__scene{border-radius:5px 5px 3px 3px}
-      .adv-encounter__title{width:88%;padding:8px 10px 7px;font-size:clamp(14px,4.8vw,20px)}
-      .adv-encounter__title::before,.adv-encounter__title::after{margin:0 6px;font-size:7px}
-      .adv-encounter__copy{margin:3px 5px 0;padding:9px 10px 8px}
-      .adv-encounter__next{top:8px;right:8px}
+      .adv-encounter__scene{border-radius:5px}
+      .adv-encounter__title{top:8px;left:10px;right:10px;padding:4px 8px 3px;font-size:clamp(14px,4.7vw,19px)}
+      .adv-encounter__copy{top:36px;left:12px;right:12px;padding:4px 8px 7px;font-size:clamp(9.5px,2.8vw,11.5px)}
+      .adv-encounter__next{right:8px;bottom:8px}
       html body.mode-adventure .spread-actions{height:55px!important;padding:0 15px!important}
     }
 
     @media(min-width:760px){
       body.mode-adventure{--adv-encounter-top:43px}
-      .adv-encounter__scene{height:186px}
+      .adv-encounter__scene{height:190px}
     }
   `;
   doc.head.appendChild(style);
