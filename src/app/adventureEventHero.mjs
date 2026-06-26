@@ -1,5 +1,5 @@
 const STYLE_LINK_ID = 'adventure-event-hero-v2-style';
-const STYLE_HREF = '/src/styles/adventureEventHeroV2.css?v=1';
+const STYLE_HREF = '/src/styles/adventureEventHeroV2.css?v=2';
 
 export const EVENT_HERO_SPRITES = Object.freeze({
   iron_gate: { page: 1, row: 0 },
@@ -25,7 +25,12 @@ function esc(value) {
 }
 
 function ensureStylesheet(doc) {
-  if (!doc || doc.getElementById(STYLE_LINK_ID)) return;
+  if (!doc) return;
+  const existing = doc.getElementById(STYLE_LINK_ID);
+  if (existing) {
+    if (!existing.href.endsWith('adventureEventHeroV2.css?v=2')) existing.href = STYLE_HREF;
+    return;
+  }
   const link = doc.createElement('link');
   link.id = STYLE_LINK_ID;
   link.rel = 'stylesheet';
@@ -62,8 +67,9 @@ function syncLayout(target, deck) {
   const rect = encounter.getBoundingClientRect();
   if (!rect.height) return;
 
-  const actionTop = Math.ceil(rect.bottom + 12);
-  const actionHeight = target.innerWidth <= 640 ? 58 : 64;
+  const actionGap = target.innerWidth <= 640 ? 18 : 22;
+  const actionHeight = target.innerWidth <= 640 ? 66 : 72;
+  const actionTop = Math.ceil(rect.bottom + actionGap);
   target.document.body.style.setProperty('--adv-action-top', `${actionTop}px`);
   target.document.body.style.setProperty('--adv-spread-top', `${actionTop + actionHeight}px`);
 }
