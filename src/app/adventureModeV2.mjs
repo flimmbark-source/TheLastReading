@@ -78,7 +78,6 @@ function ensureStyles(doc) {
     .adv-deck__top--text{background:linear-gradient(165deg,#2a1810,#140907);border:2px solid #9a7842;
       display:flex;align-items:center;justify-content:center;text-align:center;padding:8px}
     .adv-deck__title{font:800 13px Georgia,serif;line-height:1.1;color:#f2dfb8}
-    .adv-deck__progress{font:800 8px system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#bca27a}
     .adv-event-desc{max-width:310px;text-align:center;font:500 11px Georgia,serif;line-height:1.4;color:#d8c8a6;
       background:rgba(18,12,9,.66);border-radius:8px;padding:6px 10px}
     .adv-next-event{font:700 9px system-ui,sans-serif;color:#d19c51;opacity:.9}
@@ -248,7 +247,6 @@ export function installAdventureModeV2(target = window) {
           : `<div class="adv-deck__top adv-deck__top--text"><div class="adv-deck__title">${esc(event.title)}</div></div>`;
         deck.innerHTML = `
           <div class="adv-deck">${backs}${top}</div>
-          <div class="adv-deck__progress">${esc((event.traits || []).join(' · '))} · Event ${run.eventIndexInSet + 1} / ${EVENTS_PER_SET}</div>
           <div class="adv-event-desc">${esc(event.description)}</div>${next}`;
       }
     }
