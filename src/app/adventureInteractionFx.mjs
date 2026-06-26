@@ -1,5 +1,6 @@
 import './adventureCardSigils.mjs?v=1';
 import './adventureSetHandFlow.mjs?v=1';
+import './adventureItemPopups.mjs?v=1';
 import { ADVENTURE_EVENTS } from '../data/adventure/events.mjs';
 import { getEventApproaches } from '../data/adventure/eventApproaches.mjs';
 import { cardAdventureProfile } from '../data/adventure/cardNodes.mjs';
