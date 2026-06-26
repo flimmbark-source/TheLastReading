@@ -2,6 +2,13 @@ import { ADVENTURE_ITEMS } from '../data/adventure/adventureContentV3.mjs';
 
 const STYLE_ID = 'adventure-item-popup-style';
 const ITEM_LIST = Object.freeze(Object.values(ADVENTURE_ITEMS));
+const DIRECT_ACTIVE_EFFECTS = new Set([
+  'skip_event',
+  'great_moon_crown',
+  'great_serpent',
+  'great_blade_supernatural',
+  'reorder_events',
+]);
 
 const TIMING_TEXT = Object.freeze({
   before: 'Use before playing a card.',
@@ -51,10 +58,7 @@ function hasOpenOverlay(doc) {
 
 function captureOverlay(doc) {
   const summary = doc?.getElementById('summary');
-  return {
-    html: summary?.innerHTML || '',
-    className: summary?.className || '',
-  };
+  return { html: summary?.innerHTML || '' };
 }
 
 function restoreOverlay(target, snapshot) {
@@ -72,13 +76,34 @@ function directConsumable(item) {
 function contextualHint(item) {
   if (item?.id === 'marked_coin') return 'After a Success, use the Marked Coin button on the result screen.';
   if (item?.id === 'lucky_token') return 'On a reward screen, press Replace beneath the offer you want to reroll.';
+  if (['lucky_bones', 'merchants_signet'].includes(item?.id)) return 'On a reward screen, press Replace beneath the offer you want to reroll.';
+  if (item?.id === 'loaded_dice') return 'Use the Loaded Dice button on a reward screen.';
   return '';
 }
 
 function activePassive(item, button) {
   if (!item || item.kind === 'consumable') return false;
-  if (item.active) return true;
+  if (DIRECT_ACTIVE_EFFECTS.has(item.active)) return true;
   return item.id === 'freed_spirit' && button?.querySelector('.adv-inventory-ready')?.textContent?.trim() === 'Ready';
+}
+
+function canUseAtCurrentState(target, item) {
+  if (target.state?.busy) return false;
+  const doc = target.document;
+  if (item.id === 'purifying_water' && !doc.querySelector('#advHud .adv-status')) return false;
+  if (item.id === 'disguise_kit' && !doc.querySelector('#advHud .adv-status--distrusted, #advHud .adv-status--exposed')) return false;
+  if (item.id === 'blessed_oil' && doc.querySelector('#advHud .adv-status--blessed')) return false;
+  return true;
+}
+
+function unavailableReason(target, item, overlayAlreadyOpen, hasDirectAction) {
+  if (!hasDirectAction) return '';
+  if (overlayAlreadyOpen) return 'Finish the current result or reward choice before using this item.';
+  if (target.state?.busy) return 'Wait for the current action to finish.';
+  if (item.id === 'purifying_water') return 'You have no Status to remove.';
+  if (item.id === 'disguise_kit') return 'You are not Distrusted or Exposed.';
+  if (item.id === 'blessed_oil') return 'You are already Blessed.';
+  return '';
 }
 
 export function installAdventureItemPopups(target = window) {
@@ -105,15 +130,13 @@ export function installAdventureItemPopups(target = window) {
       const progress = button?.querySelector('.adv-inventory-ready')?.textContent?.trim() || '';
       const contextHint = contextualHint(item);
       const overlayAlreadyOpen = hasOpenOverlay(doc);
-      const canUseConsumable = directConsumable(item) && !overlayAlreadyOpen;
-      const canActivatePassive = activePassive(item, button) && !overlayAlreadyOpen;
-      const actionLabel = item.kind === 'consumable' ? 'Use' : 'Activate';
-      const action = canUseConsumable || canActivatePassive
+      const hasDirectAction = directConsumable(item) || activePassive(item, button);
+      const allowedNow = hasDirectAction && !overlayAlreadyOpen && canUseAtCurrentState(target, item);
+      const actionLabel = item.kind === 'consumable' || item.id === 'freed_spirit' ? 'Use' : 'Activate';
+      const action = allowedNow
         ? `<button class="btn-gold" onclick="tlrAdventureV3ConfirmItemUse()">${actionLabel}</button>`
         : '';
-      const unavailable = (directConsumable(item) || activePassive(item, button)) && overlayAlreadyOpen
-        ? 'Finish the current result or reward choice before using this item.'
-        : '';
+      const unavailable = unavailableReason(target, item, overlayAlreadyOpen, hasDirectAction);
       const timing = item.timing ? TIMING_TEXT[item.timing] || '' : '';
 
       target.showOverlay(`<div class="result-panel pass adv-item-popup">
