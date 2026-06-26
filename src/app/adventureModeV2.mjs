@@ -65,11 +65,11 @@ function ensureStyles(doc) {
     body.mode-adventure #constellationPill,
     body.mode-adventure #scoringBtn{display:none!important}
 
-    #advEventDeck{position:fixed;top:28px;left:50%;transform:translateX(-50%);z-index:26;
-      display:none;flex-direction:column;align-items:center;gap:6px;pointer-events:none;
+    #advEventDeck{position:fixed;top:48px;left:50%;transform:translateX(-50%);z-index:26;
+      display:none;flex-direction:column;align-items:center;gap:0;pointer-events:none;
       font-family:Georgia,serif;color:#f2dfb8}
     body.mode-adventure #advEventDeck{display:flex}
-    .adv-deck{position:relative;width:128px;height:178px}
+    .adv-deck{position:relative;width:128px;height:170px}
     .adv-deck__back{position:absolute;width:96px;height:150px;border-radius:8px;left:50%;top:10px;
       background:linear-gradient(160deg,#3a2a1a,#160d07);border:1px solid rgba(228,188,111,.45);box-shadow:0 4px 10px rgba(0,0,0,.5)}
     .adv-deck__top{position:absolute;left:50%;top:0;transform:translateX(-50%);width:110px;height:170px;border-radius:10px;
@@ -79,7 +79,7 @@ function ensureStyles(doc) {
       display:flex;align-items:center;justify-content:center;text-align:center;padding:8px}
     .adv-deck__title{font:800 13px Georgia,serif;line-height:1.1;color:#f2dfb8}
     .adv-event-desc{max-width:310px;text-align:center;font:500 11px Georgia,serif;line-height:1.4;color:#d8c8a6;
-      background:rgba(18,12,9,.66);border-radius:8px;padding:6px 10px}
+      background:rgba(18,12,9,.66);border-radius:8px;padding:6px 10px;margin-top:-14px}
     .adv-next-event{font:700 9px system-ui,sans-serif;color:#d19c51;opacity:.9}
 
     #advHud{position:fixed;top:10px;left:10px;z-index:42;display:none;flex-direction:column;gap:6px;
