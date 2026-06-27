@@ -8,7 +8,7 @@ function ensureStyle(doc) {
   const style = doc.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
-    body.mode-adventure .card .adv-sigil-seal{
+    body.mode-adventure .card > .adv-sigil-seal{
       display:flex!important;
       position:absolute;
       width:19px;
@@ -16,26 +16,26 @@ function ensureStyle(doc) {
       top:7px;
       left:7px;
       border-radius:50%;
-      z-index:8;
+      z-index:20;
       align-items:center;
       justify-content:center;
       color:#d9edff;
       font:900 11px/1 Georgia,serif;
       background:radial-gradient(circle at 34% 30%,#4d9bd4 0%,#1c5f98 46%,#0a3159 76%,#061c35 100%);
-      border:1px solid rgba(164,215,247,.72);
-      box-shadow:0 1px 3px #000,inset 0 0 0 1px rgba(255,255,255,.12),0 0 5px rgba(60,142,205,.45);
+      border:1px solid rgba(164,215,247,.82);
+      box-shadow:0 1px 3px #000,inset 0 0 0 1px rgba(255,255,255,.14),0 0 7px rgba(60,142,205,.62);
       transform:none!important;
       pointer-events:none;
     }
-    body.mode-adventure .card .adv-sigil-seal::after{
+    body.mode-adventure .card > .adv-sigil-seal::after{
       content:'';
       position:absolute;
       inset:2px;
-      border:1px solid rgba(214,239,255,.19);
+      border:1px solid rgba(214,239,255,.22);
       border-radius:50%;
     }
     @media(max-width:640px){
-      body.mode-adventure .card .adv-sigil-seal{
+      body.mode-adventure .card > .adv-sigil-seal{
         width:17px;
         height:17px;
         top:4px;
@@ -87,15 +87,14 @@ function decorate(target = window) {
     const sigil = sigilForCard(card);
     if (!sigil) return;
 
-    const art = element.querySelector('.art');
-    if (!art) return;
+    element.querySelectorAll('.art > .adv-sigil-seal[data-adv-runtime-sigil="1"]').forEach(hidden => hidden.remove());
 
-    let seal = art.querySelector('.adv-sigil-seal');
+    let seal = element.querySelector(':scope > .adv-sigil-seal[data-adv-runtime-sigil="1"]');
     if (!seal) {
       seal = doc.createElement('div');
-      seal.className = 'seal tl adv-sigil-seal';
+      seal.className = 'adv-sigil-seal';
       seal.dataset.advRuntimeSigil = '1';
-      art.prepend(seal);
+      element.prepend(seal);
     }
     seal.textContent = sigil.glyph;
     seal.title = `${sigil.name} Sigil`;
