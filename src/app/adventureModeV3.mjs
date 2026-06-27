@@ -506,16 +506,10 @@ export function installAdventureModeV3(target = window) {
 
   function adventureApplyHint(el, card) {
     if (!session) return;
-    const event = currentEvent();
-    if (!event) return;
     const node = cardNode(card);
     if (!node) return;
-    const approaches = getEventApproaches(event);
-    if (!approaches || !approaches.length) return;
-    const route = routeNode(node, approaches.map(a => a.node));
-    if (!route) return;
-    const sigil = sigilForNode(route.resolvedNode);
-    el.dataset.hint = sigil ? `${sigil.glyph} ${sigil.name}` : route.resolvedNode;
+    const sigil = sigilForNode(node);
+    el.dataset.hint = sigil ? `${sigil.glyph} ${sigil.name}` : node;
   }
 
   function decorateCards() {
