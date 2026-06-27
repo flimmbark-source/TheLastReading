@@ -18,6 +18,7 @@ import {
   getAdventureEventV3,
   getOutcomeRewardProfile,
 } from '../data/adventure/adventureContentV3.mjs';
+import { NODE_GRAPH } from '../data/adventure/nodes.mjs';
 import { routeNode } from '../systems/adventure/nodeGraph.mjs';
 import {
   EVENTS_PER_SET,
@@ -62,8 +63,20 @@ function ensureStyles(doc) {
   style.id = STYLE_ID;
   style.textContent = `
     body.mode-adventure .score-stack,
-    body.mode-adventure #constellationPill,
-    body.mode-adventure #scoringBtn{display:none!important}
+    body.mode-adventure #constellationPill{display:none!important}
+
+    #advApproachWeb{position:fixed;z-index:30;background:#16100d;border:1px solid #5f4c29;border-radius:8px;
+      padding:10px 12px;box-shadow:0 12px 34px rgba(0,0,0,.55);color:#e6d29a;
+      font-family:system-ui,sans-serif;font-size:13px;max-width:320px;display:none}
+    body.mode-adventure #advApproachWeb{display:block}
+    #advApproachWeb.hidden{display:none!important}
+    .adv-web-title{font:800 10px system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;
+      color:#cdb883;margin-bottom:8px;text-align:center}
+    .adv-web-approaches{margin-top:8px;display:flex;flex-direction:column;gap:4px;
+      border-top:1px solid rgba(95,76,41,.4);padding-top:6px}
+    .adv-web-row{display:flex;justify-content:space-between;align-items:center;padding:1px 0}
+    .adv-web-sigil{color:#f3c969;font:600 12px Georgia,serif}
+    .adv-web-req{font:700 9px system-ui,sans-serif;color:#9a8060;letter-spacing:.05em}
 
     #advEventDeck{position:fixed;top:48px;left:50%;transform:translateX(-50%);z-index:26;
       display:none;flex-direction:column;align-items:center;gap:0;pointer-events:none;
@@ -334,6 +347,8 @@ export function installAdventureModeV3(target = window) {
     }
     renderInventory();
     setTimeout(decorateCards, 0);
+    const web = doc.getElementById('advApproachWeb');
+    if (web && !web.classList.contains('hidden')) web.innerHTML = renderApproachWebHTML();
   }
 
   function show(html) {
@@ -424,6 +439,91 @@ export function installAdventureModeV3(target = window) {
       }
     }
     return bonus;
+  }
+
+  // Clockwise from top — arranged so most graph-adjacent nodes are circle-adjacent.
+  const APPROACH_WEB_NODE_ORDER = ['physical','aggression','authority','protection','compassion','creation','fortune','transformation','endurance','investigation','mystery','deception'];
+
+  function renderApproachWebHTML() {
+    const event = currentEvent();
+    if (!event) return '<p style="color:#e6d29a;padding:4px">No active event.</p>';
+    const approaches = getEventApproaches(event);
+    if (!approaches || !approaches.length) return '';
+    const accepted = new Set(approaches.map(a => a.node));
+
+    const W = 300, H = 300, CX = 150, CY = 150, R = 110, NR = 19;
+    const pos = {};
+    APPROACH_WEB_NODE_ORDER.forEach((node, i) => {
+      const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+      pos[node] = { x: +(CX + R * Math.cos(angle)).toFixed(1), y: +(CY + R * Math.sin(angle)).toFixed(1) };
+    });
+
+    const seenEdges = new Set();
+    let edgeSvg = '';
+    for (const [a, neighbors] of Object.entries(NODE_GRAPH)) {
+      for (const b of neighbors) {
+        const key = a < b ? `${a}:${b}` : `${b}:${a}`;
+        if (seenEdges.has(key)) continue;
+        seenEdges.add(key);
+        const pa = pos[a], pb = pos[b];
+        if (!pa || !pb) continue;
+        const bothAcc = accepted.has(a) && accepted.has(b);
+        const eitherAcc = accepted.has(a) || accepted.has(b);
+        const stroke = bothAcc ? 'rgba(243,201,105,.8)' : eitherAcc ? 'rgba(243,201,105,.32)' : 'rgba(200,180,140,.12)';
+        edgeSvg += `<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="${stroke}" stroke-width="${bothAcc ? 2 : 1}"/>`;
+      }
+    }
+
+    let nodesSvg = '';
+    for (const node of APPROACH_WEB_NODE_ORDER) {
+      const p = pos[node];
+      const sigil = sigilForNode(node);
+      const isAcc = accepted.has(node);
+      nodesSvg += `<g>
+        <circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${isAcc ? 'rgba(36,22,8,.97)' : 'rgba(18,11,7,.9)'}" stroke="${isAcc ? 'rgba(243,201,105,.9)' : 'rgba(200,180,140,.2)'}" stroke-width="${isAcc ? 1.5 : 1}"/>
+        <text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="central" fill="${isAcc ? '#f3c969' : 'rgba(200,180,140,.3)'}" font-size="13" font-weight="900" font-family="Georgia,serif">${esc(sigil?.glyph || '?')}</text>
+      </g>`;
+    }
+
+    const svg = `<svg viewBox="0 0 ${W} ${H}" style="width:${W}px;max-width:100%;height:auto;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">${edgeSvg}${nodesSvg}</svg>`;
+    const approachRows = approaches.map(a => {
+      const s = sigilForNode(a.node);
+      return `<div class="adv-web-row"><span class="adv-web-sigil">${esc(s ? `${s.glyph} ${s.name}` : a.node)}</span><span class="adv-web-req">req ${a.requirement}</span></div>`;
+    }).join('');
+
+    return `<div class="adv-web-title">${esc(event.title)}</div>${svg}<div class="adv-web-approaches">${approachRows}</div>`;
+  }
+
+  function ensureApproachWebEl() {
+    if (!doc || doc.getElementById('advApproachWeb')) return;
+    const el = doc.createElement('div');
+    el.id = 'advApproachWeb';
+    el.className = 'hidden';
+    doc.body.appendChild(el);
+    doc.addEventListener('click', e => {
+      if (!target.__tlrAdventureActive) return;
+      const web = doc.getElementById('advApproachWeb');
+      if (!web || web.classList.contains('hidden')) return;
+      const btn = doc.getElementById('scoringBtn');
+      if (web.contains(e.target) || (btn && btn.contains(e.target))) return;
+      web.classList.add('hidden');
+    }, true);
+  }
+
+  function toggleApproachRef(event) {
+    if (event) event.stopPropagation();
+    const el = doc.getElementById('advApproachWeb');
+    if (!el) return;
+    const wasHidden = el.classList.contains('hidden');
+    if (!wasHidden) { el.classList.add('hidden'); return; }
+    el.innerHTML = renderApproachWebHTML();
+    const btn = doc.getElementById('scoringBtn');
+    if (btn) {
+      const r = btn.getBoundingClientRect();
+      el.style.top = (r.bottom + 4) + 'px';
+      el.style.left = Math.max(8, Math.min(r.left, (doc.documentElement.clientWidth || 600) - 330)) + 'px';
+    }
+    el.classList.remove('hidden');
   }
 
   function adventureApplyHint(el, card) {
@@ -1182,6 +1282,14 @@ export function installAdventureModeV3(target = window) {
     target.tlrReturnToMenu = function (...args) { cleanupAdventure(); return original.apply(this, args); };
   }
 
+  function installApproachWebControls() {
+    ensureApproachWebEl();
+    const scoringBtn = doc.getElementById('scoringBtn');
+    if (scoringBtn) scoringBtn.textContent = 'Approach';
+    if (!target.__tlrOriginalToggleRef) target.__tlrOriginalToggleRef = target.toggleRef;
+    target.toggleRef = toggleApproachRef;
+  }
+
   function startRun() {
     captureLiveBackupOnce();
     wrapReturnToMenuOnce();
@@ -1190,6 +1298,7 @@ export function installAdventureModeV3(target = window) {
     installFreshProfile();
     session = newSession();
     ensureStyles(doc); ensureChrome(); forceTable(); installCardSigilBridge(); installPreviewListener();
+    installApproachWebControls();
     updateChrome(); clear(); setBusy(false);
     if (typeof target.startReading === 'function') target.startReading();
   }
@@ -1200,6 +1309,7 @@ export function installAdventureModeV3(target = window) {
     installFreshProfile();
     session = newSession();
     ensureChrome(); forceTable(); installCardSigilBridge();
+    installApproachWebControls();
     updateChrome(); clear(); setBusy(false);
     if (typeof target.startReading === 'function') target.startReading();
   }
@@ -1208,6 +1318,13 @@ export function installAdventureModeV3(target = window) {
     if (!target.__tlrAdventureActive) return;
     target.__tlrAdventureActive = false;
     delete target.__tlrAdventureApplyHint;
+    doc?.getElementById('advApproachWeb')?.remove();
+    const scoringBtn = doc?.getElementById('scoringBtn');
+    if (scoringBtn) scoringBtn.textContent = 'Scoring';
+    if (target.__tlrOriginalToggleRef !== undefined) {
+      target.toggleRef = target.__tlrOriginalToggleRef;
+      delete target.__tlrOriginalToggleRef;
+    }
     restoreLiveBackup();
     if (doc) {
       doc.body.classList.remove(MODE_CLASS);
