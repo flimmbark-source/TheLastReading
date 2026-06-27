@@ -115,3 +115,5 @@ export function installCardDetailGestures(target=window){
     ev.stopImmediatePropagation();
   },true);
 }
+
+if(typeof window!=='undefined')installCardDetailGestures(window);
