@@ -19,28 +19,35 @@ function ensureStyle(doc) {
       z-index:20;
       align-items:center;
       justify-content:center;
-      color:#d9edff;
-      font:900 8px/1 Georgia,serif;
-      background:radial-gradient(circle at 34% 30%,#4d9bd4 0%,#1c5f98 46%,#0a3159 76%,#061c35 100%);
-      border:1px solid rgba(164,215,247,.82);
-      box-shadow:0 1px 3px #000,inset 0 0 0 1px rgba(255,255,255,.14),0 0 7px rgba(60,142,205,.62);
+      color:#fff;
+      font:900 11px/1 Arial,sans-serif;
+      background:#164f7d;
+      border:1px solid rgba(230,246,255,.95);
+      box-shadow:0 1px 2px #000,0 0 0 1px rgba(0,0,0,.72),0 0 4px rgba(65,158,220,.55);
+      text-shadow:0 1px 1px #000,-1px 0 #000,1px 0 #000,0 -1px #000;
       transform:none!important;
       pointer-events:none;
     }
-    body.mode-adventure .card > .adv-sigil-seal::after{
-      content:'';
-      position:absolute;
-      inset:2px;
-      border:1px solid rgba(214,239,255,.22);
-      border-radius:50%;
-    }
+    body.mode-adventure .card > .adv-sigil-seal::after{display:none}
+    body.mode-adventure .card > .adv-sigil-seal[data-sigil-id="might"]{background:#2d69a8}
+    body.mode-adventure .card > .adv-sigil-seal[data-sigil-id="blade"]{background:#a73535}
+    body.mode-adventure .card > .adv-sigil-seal[data-sigil-id="shield"]{background:#3f6f92}
+    body.mode-adventure .card > .adv-sigil-seal[data-sigil-id="mountain"]{background:#6b5b46}
+    body.mode-adventure .card > .adv-sigil-seal[data-sigil-id="heart"]{background:#a33d62}
+    body.mode-adventure .card > .adv-sigil-seal[data-sigil-id="crown"]{background:#8b6a20}
+    body.mode-adventure .card > .adv-sigil-seal[data-sigil-id="moon"]{background:#584c9b}
+    body.mode-adventure .card > .adv-sigil-seal[data-sigil-id="mask"]{background:#6c4b78}
+    body.mode-adventure .card > .adv-sigil-seal[data-sigil-id="eye"]{background:#2f7a72}
+    body.mode-adventure .card > .adv-sigil-seal[data-sigil-id="serpent"]{background:#4d7b3b}
+    body.mode-adventure .card > .adv-sigil-seal[data-sigil-id="forge"]{background:#a45a25}
+    body.mode-adventure .card > .adv-sigil-seal[data-sigil-id="wheel"]{background:#8a7730}
     @media(max-width:640px){
       body.mode-adventure .card > .adv-sigil-seal{
         width:13px;
         height:13px;
         top:2px;
         left:2px;
-        font-size:7px;
+        font-size:10px;
       }
     }
   `;
@@ -96,6 +103,7 @@ function decorate(target = window) {
       seal.dataset.advRuntimeSigil = '1';
       element.prepend(seal);
     }
+    seal.dataset.sigilId = sigil.id;
     seal.textContent = sigil.glyph;
     seal.title = `${sigil.name} Sigil`;
     seal.setAttribute('aria-label', `${sigil.name} Sigil`);
