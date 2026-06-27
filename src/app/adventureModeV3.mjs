@@ -497,21 +497,18 @@ export function installAdventureModeV3(target = window) {
       const ly = +(CY + LABEL_R * Math.sin(angle)).toFixed(1);
       const dx = p.x - CX;
       const anchor = Math.abs(dx) < 18 ? 'middle' : dx > 0 ? 'start' : 'end';
-      // Gold = event approach, teal = hand card approach, dim = neither
-      const textFill = isAcc ? '#f3c969' : inHand ? '#7fd4c8' : 'rgba(200,180,140,.88)';
-      const circleStroke = isAcc ? '#f3c969' : inHand ? '#7fd4c8' : 'rgba(180,150,90,.55)';
-      const circleFill = isAcc ? 'rgba(36,22,8,.97)' : inHand ? 'rgba(8,28,28,.97)' : 'rgba(22,13,7,.95)';
-      const cardColor = isAcc ? '#f3c969' : '#7fd4c8';
-      const cardFill = isAcc ? 'rgba(60,30,0,.85)' : 'rgba(8,32,30,.85)';
+      const textFill = isAcc ? '#f3c969' : 'rgba(200,180,140,.88)';
+      const circleStroke = isAcc ? '#f3c969' : 'rgba(180,150,90,.55)';
+      const circleFill = isAcc ? 'rgba(36,22,8,.97)' : 'rgba(22,13,7,.95)';
       const handIcon = inHand ? `<g transform="translate(${p.x},${p.y})">
-        <rect x="-5" y="-7" width="10" height="14" rx="1" fill="${cardFill}" stroke="${cardColor}" stroke-width="1" transform="rotate(-14,0,7)"/>
-        <rect x="-5" y="-7" width="10" height="14" rx="1" fill="${cardFill}" stroke="${cardColor}" stroke-width="1"/>
-        <rect x="-5" y="-7" width="10" height="14" rx="1" fill="${cardFill}" stroke="${cardColor}" stroke-width="1" transform="rotate(14,0,7)"/>
+        <rect x="-5" y="-7" width="10" height="14" rx="1" fill="rgba(22,13,7,.95)" stroke="rgba(200,180,140,.88)" stroke-width="1" transform="rotate(-14,0,7)"/>
+        <rect x="-5" y="-7" width="10" height="14" rx="1" fill="rgba(22,13,7,.95)" stroke="rgba(200,180,140,.88)" stroke-width="1"/>
+        <rect x="-5" y="-7" width="10" height="14" rx="1" fill="rgba(22,13,7,.95)" stroke="rgba(200,180,140,.88)" stroke-width="1" transform="rotate(14,0,7)"/>
       </g>` : '';
       nodesSvg += `<g>
-        <circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${circleFill}" stroke="${circleStroke}" stroke-width="${isAcc || inHand ? 1.5 : 1}"/>
+        <circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${circleFill}" stroke="${circleStroke}" stroke-width="${isAcc ? 1.5 : 1}"/>
         ${handIcon}
-        <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" fill="${textFill}" stroke="rgba(18,10,4,.8)" stroke-width="3" paint-order="stroke" font-size="14" font-weight="${isAcc || inHand ? 700 : 400}" font-family="system-ui,sans-serif">${esc(node.charAt(0).toUpperCase() + node.slice(1))}</text>
+        <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" fill="${textFill}" stroke="rgba(18,10,4,.8)" stroke-width="3" paint-order="stroke" font-size="14" font-weight="${isAcc ? 700 : 400}" font-family="system-ui,sans-serif">${esc(node.charAt(0).toUpperCase() + node.slice(1))}</text>
       </g>`;
     }
 
