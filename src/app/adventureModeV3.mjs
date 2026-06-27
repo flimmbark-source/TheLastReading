@@ -72,7 +72,7 @@ function ensureStyles(doc) {
     body.mode-adventure #advApproachWeb{display:flex}
     #advApproachWeb.hidden{display:none!important}
     .adv-web-panel{background:#16100d;border:1px solid #5f4c29;border-radius:10px;
-      padding:14px 50px 16px;box-shadow:0 20px 60px rgba(0,0,0,.8);max-width:min(460px,96vw);width:100%;overflow:visible}
+      padding:14px 18px 16px;box-shadow:0 20px 60px rgba(0,0,0,.8);max-width:min(420px,92vw);width:100%;overflow:visible}
     .adv-web-title{font:800 10px system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;
       color:#cdb883;margin-bottom:4px;text-align:center}
     .adv-web-approaches{margin-top:8px;display:flex;flex-direction:column;gap:4px;
@@ -448,8 +448,8 @@ export function installAdventureModeV3(target = window) {
     return bonus;
   }
 
-  // Clockwise from top — arranged so most graph-adjacent nodes are circle-adjacent.
-  const APPROACH_WEB_NODE_ORDER = ['physical','aggression','authority','protection','compassion','creation','fortune','transformation','endurance','investigation','mystery','deception'];
+  // Long names at top/bottom (centered label), short names at 3/9 o'clock (side labels).
+  const APPROACH_WEB_NODE_ORDER = ['transformation','aggression','authority','fortune','compassion','creation','investigation','protection','endurance','mystery','physical','deception'];
 
   function renderApproachWebHTML() {
     const event = currentEvent();
