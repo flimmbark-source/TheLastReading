@@ -72,7 +72,7 @@ function ensureStyles(doc) {
     body.mode-adventure #advApproachWeb{display:flex}
     #advApproachWeb.hidden{display:none!important}
     .adv-web-panel{background:#16100d;border:1px solid #5f4c29;border-radius:10px;
-      padding:14px 18px 16px;box-shadow:0 20px 60px rgba(0,0,0,.8);max-width:min(420px,92vw);width:100%}
+      padding:14px 50px 16px;box-shadow:0 20px 60px rgba(0,0,0,.8);max-width:min(460px,96vw);width:100%;overflow:visible}
     .adv-web-title{font:800 10px system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;
       color:#cdb883;margin-bottom:4px;text-align:center}
     .adv-web-approaches{margin-top:8px;display:flex;flex-direction:column;gap:4px;
@@ -512,7 +512,7 @@ export function installAdventureModeV3(target = window) {
       </g>`;
     }
 
-    const svg = `<svg viewBox="-50 -15 480 410" style="width:${W}px;max-width:100%;height:auto;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">${edgeSvg}${nodesSvg}</svg>`;
+    const svg = `<svg viewBox="0 0 ${W} ${H}" overflow="visible" style="width:${W}px;max-width:100%;height:auto;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">${edgeSvg}${nodesSvg}</svg>`;
     return `<div class="adv-web-panel"><div class="adv-web-title">${esc(event.title)}</div>${svg}</div>`;
   }
 
