@@ -1,27 +1,29 @@
-/* Main menu — styled to match the in-game starfield + parchment look */
-#mainMenu{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background-color:#080503;background-image:url(../../background.png);background-size:cover;background-position:center top;transition:opacity .35s ease}
-#mainMenu::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center 40%,transparent 0%,rgba(8,5,3,.55) 100%);pointer-events:none}
+/* Main menu — preserve the full-screen atmosphere and clarify the choice hierarchy */
+#mainMenu{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));overflow-y:auto;background-color:#080503;background-image:url(../../background.png);background-size:cover;background-position:center top;transition:opacity .35s ease}
+#mainMenu::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center 40%,transparent 0%,rgba(8,5,3,.55) 100%);pointer-events:none}
 #mainMenu.mm-hidden{opacity:0;pointer-events:none}
 #mainMenu[hidden]{display:none!important}
-
-.main-menu-inner{position:relative;display:flex;flex-direction:column;align-items:center;gap:26px;padding:40px 28px 36px;min-width:min(340px,92vw)}
-
-.main-menu-title{font:700 34px/1.1 Georgia,serif;color:#f0d58a;text-shadow:0 0 24px rgba(240,213,138,.55),0 2px 6px rgba(0,0,0,.8);margin:0;letter-spacing:.05em;text-align:center}
-.main-menu-subtitle{font:400 12px/1.4 system-ui,sans-serif;color:#b09060;margin:-14px 0 0;text-align:center;letter-spacing:.22em;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.8)}
-
-.main-menu-section{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
-.main-menu-section-label{font:700 10px/1 system-ui,sans-serif;color:#8a7551;letter-spacing:.2em;text-transform:uppercase;margin:0 0 2px;text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.8)}
-
-/* Ornate sunburst divider art between sections */
-.main-menu-divider{width:min(300px,80vw);height:30px;background:url(../../divider_sunburst.png) center/contain no-repeat;margin:0;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
-
-/* Buttons: parchment plaque for the primary action, dark pill for the rest */
-.main-menu-btn{width:100%;max-width:240px;height:54px;padding:0 22px;font:700 15px/1 Georgia,serif;letter-spacing:.05em;background:url(../../pill_dark_medium.png) center/100% 100% no-repeat;border:none;border-radius:0;color:#ddc98a;cursor:pointer;transition:transform .12s,filter .15s;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
+.main-menu-inner{position:relative;display:flex;flex-direction:column;align-items:center;width:min(340px,92vw);box-sizing:border-box;padding:28px 20px 26px}
+.main-menu-title{width:100%;margin:0;color:#f0d58a;font:700 clamp(36px,9vw,42px)/1.05 Georgia,serif;letter-spacing:.05em;text-align:center;text-shadow:0 0 24px rgba(240,213,138,.55),0 2px 6px rgba(0,0,0,.8)}
+.main-menu-subtitle{margin:7px 0 0;color:#b09060;font:400 11px/1.4 system-ui,sans-serif;letter-spacing:.22em;text-align:center;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+.main-menu-divider{width:min(280px,78vw);height:28px;margin:19px 0 18px;background:url(../../divider_sunburst.png) center/contain no-repeat;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
+.main-menu-section+.main-menu-divider{display:none}
+.main-menu-section{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+.main-menu-section-label{display:none}
+.main-menu-inner>.main-menu-section:nth-child(6){margin-top:27px}
+.main-menu-inner>.main-menu-section:nth-child(6)::before{content:'Other Modes';margin-bottom:3px;color:#8a7551;font:700 10px/1 system-ui,sans-serif;letter-spacing:.2em;text-align:center;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.main-menu-inner>.main-menu-section:nth-child(8){margin-top:10px}
+.main-menu-btn{width:100%;max-width:250px;height:54px;padding:0 22px;border:none;border-radius:0;background:url(../../pill_dark_medium.png) center/100% 100% no-repeat;color:#ddc98a;font:700 15px/1 Georgia,serif;letter-spacing:.05em;text-shadow:0 1px 3px rgba(0,0,0,.8);cursor:pointer;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5));transition:transform .12s ease,filter .15s ease}
 .main-menu-btn:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.15)}
+.main-menu-btn:focus-visible{outline:2px solid #e0c36d;outline-offset:3px}
 .main-menu-btn:disabled{opacity:.4;cursor:not-allowed}
-.main-menu-btn-primary{background-image:url(../../parchment_plaque_large_center.png);color:#3a1a06;height:58px}
+.main-menu-btn-primary{height:58px;background-image:url(../../parchment_plaque_large_center.png);color:#3a1a06;text-shadow:none}
 .main-menu-btn-primary:hover:not(:disabled){filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
-
-.main-menu-coming-soon{font:400 11px/1 system-ui,sans-serif;color:#5a4828;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
-.main-menu-toggle{display:flex;align-items:center;gap:8px;margin-top:2px;font:700 11px/1.2 system-ui,sans-serif;color:#b09060;letter-spacing:.08em;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.8);cursor:pointer;user-select:none}
+#mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled{display:none}
+#mainMenu:not(.main-menu-busy) .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue:disabled) .main-menu-btn:last-child{height:58px;background-image:url(../../parchment_plaque_large_center.png);color:#3a1a06;text-shadow:none}
+#mainMenu:not(.main-menu-busy) .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue:disabled) .main-menu-btn:last-child:hover{filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
+.main-menu-coming-soon{margin-top:2px;color:#5a4828;font:400 11px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.main-menu-toggle{display:flex;align-items:center;gap:8px;margin-top:2px;color:#b09060;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.8);cursor:pointer;user-select:none}
 .main-menu-toggle input{accent-color:#d9b35f;cursor:pointer}
+@media(max-height:620px){#mainMenu{align-items:flex-start}.main-menu-inner{margin:auto 0;padding-top:18px;padding-bottom:18px}.main-menu-divider{height:22px;margin-top:12px;margin-bottom:12px}.main-menu-inner>.main-menu-section:nth-child(6){margin-top:19px}.main-menu-btn{height:50px}.main-menu-btn-primary,#mainMenu:not(.main-menu-busy) .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue:disabled) .main-menu-btn:last-child{height:54px}}
+@media(prefers-reduced-motion:reduce){#mainMenu,.main-menu-btn{transition:none}}

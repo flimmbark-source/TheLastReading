@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="src/styles/attic.css?v=mobile-load-fix-1">
 <link rel="stylesheet" href="src/styles/drawers.css?v=mobile-load-fix-1">
 <link rel="stylesheet" href="src/styles/performance.css?v=mobile-load-fix-1">
-<link rel="stylesheet" href="src/styles/mainMenu.css?v=render-boot-1">
+<link rel="stylesheet" href="src/styles/mainMenu.css?v=title-center-1">
 <link rel="stylesheet" href="src/styles/loadout.css?v=portrait-4">
 <link rel="stylesheet" href="src/styles/matchmaking.css?v=1">
 <link rel="stylesheet" href="src/styles/mpGame.css?v=mp-pills-1">
@@ -58,7 +58,7 @@
 <div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-zone-lower" aria-hidden="true"></div><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
 <div class="handDock"><div id="hand" class="hand"></div></div>
 <div id="tutTip"><span class="tut-arrow"></span><p id="tutText"></p><div class="tut-foot"><span class="tut-tap-prompt">Tap to proceed</span><button id="tutSkipBtn" onclick="tutSkip();event.stopPropagation()">Skip tutorial</button></div></div>
-<div id="packAnim" class="pack-anim-overlay" aria-hidden="true"><div class="pack-anim-rays" id="packAnimRays"></div><div class="pack-anim-card" id="packAnimCard"><div class="pack-anim-glow" id="packAnimGlow"></div><span class="isp isp-56" id="packAnimIcon"></span><div id="packAnimLabel" class="pack-anim-label"></div></div><div id="packAnimBurst" class="pack-anim-burst"></div></div>
+<div id="packAnim" class="pack-anim-overlay" aria-hidden="true"><div id="packAnimRays" class="pack-anim-rays"></div><div id="packAnimCard" class="pack-anim-card"><div id="packAnimGlow" class="pack-anim-glow"></div><span id="packAnimIcon" class="isp isp-56"></span><div id="packAnimLabel" class="pack-anim-label"></div></div><div id="packAnimBurst" class="pack-anim-burst"></div></div>
 <div id="atticScene" aria-hidden="true"><div id="atticTutorial"></div><div id="atticPan"><div id="atticRoom"><div id="atticObjects"></div></div></div><div id="obalsHud"></div><button id="atticTableReturn" type="button" aria-label="Return to the table"><span>Return to Table</span></button><div id="atticWhisper"></div></div>
 <div id="summary"></div>
 <div id="modal" class="modal"><div class="box"><div class="modalHead"><h2 id="modalTitle"></h2><button id="modalToggle" onclick="toggleModalCollapse()">Hide</button></div><p id="modalPrompt"></p><div id="choices" class="choices"></div></div></div>
@@ -105,6 +105,11 @@
     </div>
     <div class="main-menu-divider"></div>
     <div class="main-menu-section">
+      <span class="main-menu-section-label">Adventure</span>
+      <button class="main-menu-btn" onclick="tlrMainMenuAdventure()">Adventure Mode</button>
+    </div>
+    <div class="main-menu-divider"></div>
+    <div class="main-menu-section">
       <span class="main-menu-section-label">Multiplayer</span>
       <button class="main-menu-btn" onclick="tlrMainMenuMultiplayer()">Duel</button>
     </div>
@@ -113,7 +118,11 @@
 <script type="module" src="src/ui/flushBoundaryGuard.mjs?v=1"></script>
 <script type="module" src="src/ui/singlePlayerV2.mjs?v=phase1-2"></script>
 <script type="module" src="src/app/mpModeClassGuard.mjs?v=1"></script>
-<script type="module" src="src/app/menuBoot.mjs?v=choice-polish-2"></script>
+<script type="module" src="src/app/menuBoot.mjs?v=adventure-tutorial-1"></script>
+<script type="module" src="src/app/adventureMode.mjs?v=adventure-9"></script>
+<script type="module" src="src/app/adventureModeV2.mjs?v=8"></script>
+<script type="module" src="src/app/adventureEventHero.mjs?v=resolve-below-1"></script>
+<script type="module" src="src/app/adventureInteractionFx.mjs?v=17"></script>
 <script type="module" src="src/app/mpMatchSettings.mjs?v=shuffle-mode-1"></script>
 </body>
 </html>

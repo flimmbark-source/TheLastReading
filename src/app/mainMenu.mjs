@@ -215,6 +215,23 @@ export function installMainMenu(target = window) {
     startSingleplayer({ fresh: false });
   };
 
+  target.tlrMainMenuAdventure = function () {
+    // Hand off to the self-contained Adventure Mode overlay. It restores the
+    // main menu itself (via tlrReturnToMenu) when the player leaves.
+    hide();
+    if (typeof target.tlrStartAdventure === 'function') {
+      target.tlrStartAdventure();
+      target.setTimeout(() => {
+        if (target.__tlrAdventureActive && typeof target.maybeShowAdventureTutorial === 'function') {
+          target.maybeShowAdventureTutorial();
+        }
+      }, 500);
+    } else {
+      console.error('The Last Reading: Adventure Mode is not available.');
+      show();
+    }
+  };
+
   target.tlrMainMenuMultiplayer = function () {
     // Hide main menu, show loadout screen
     hide();
@@ -224,6 +241,7 @@ export function installMainMenu(target = window) {
   };
 
   target.tlrReturnToMenu = function () {
+    if (typeof target.tutHide === 'function') target.tutHide();
     // Close any open sub-panels before showing the menu
     const panel = target.document.getElementById('settingsPanel');
     if (panel) panel.classList.add('hidden');

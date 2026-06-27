@@ -20,7 +20,7 @@ import { installAbilityTargetBridge } from './abilityTargetBridge.mjs';
 import { installSpreadPlacementBridge } from './spreadPlacementBridge.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
-import { installMainMenu } from './mainMenu.mjs';
+import { installMainMenu } from './mainMenu.mjs?v=adventure-tutorial-1';
 import { installLoadoutScreen } from './loadoutScreen.mjs';
 import { installMatchmakingScreen } from './matchmakingScreen.mjs';
 import { installMpGame } from './mpGameHost.mjs';
@@ -52,7 +52,7 @@ import * as handRenderer from '../ui/renderHand.mjs';
 import * as tableRenderer from '../ui/renderTable.mjs';
 import * as atticRenderer from '../ui/renderAttic.mjs';
 import * as effectsModule from './effects.mjs';
-import * as tutorialModule from './tutorialCore.mjs';
+import * as tutorialModule from './tutorialCore.mjs?v=adventure-tutorial-1';
 import * as readingFlowModule from './readingFlow.mjs';
 import * as archivesModule from './archives.mjs';
 

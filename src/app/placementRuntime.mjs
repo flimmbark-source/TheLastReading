@@ -36,11 +36,12 @@ export function placeCard(slotIndex,target = window, explicitCardUid = null){
   if(target.__tlrCardDetailOpen)return false;
   const state=stateOf(target);
   const cardUid=explicitCardUid ?? selectedCardId(target,state);
-  if(!state || cardUid===null || state.spread[slotIndex])return false;
+  if(!state || state.busy || cardUid===null || state.spread[slotIndex])return false;
   const handIndex=state.hand.findIndex(card=>card.uid===cardUid);
   if(handIndex<0)return false;
 
-  const beforeScore=typeof target._scoreLegacy==='function'
+  const adventureActive=!!target.__tlrAdventureActive;
+  const beforeScore=!adventureActive&&typeof target._scoreLegacy==='function'
     ? target._scoreLegacy(state.spread.filter(Boolean))
     : {melds:[],finalScore:0};
   const beforeMelds=new Map((beforeScore.melds||[]).map(m=>[m[0],m]));
@@ -73,8 +74,16 @@ export function placeCard(slotIndex,target = window, explicitCardUid = null){
       landEl.classList.add('landing');
       landEl.addEventListener('animationend',()=>landEl.classList.remove('landing'),{once:true});
     }
-    call(target,'ghost',slotIndex,'+'+card.points);
+    if(!adventureActive)call(target,'ghost',slotIndex,'+'+card.points);
   });
+
+  // Adventure resolves this single played card immediately. It keeps the card
+  // in the spread, keeps the remaining hand, and deliberately skips all normal
+  // score/meld/checkEnd behavior.
+  if(adventureActive&&typeof target.tlrAdventureOnCardPlaced==='function'){
+    const handled=target.tlrAdventureOnCardPlaced(card,slotIndex);
+    if(handled!==false)return true;
+  }
 
   const after=typeof target._getPlacedScore==='function'
     ? target._getPlacedScore()
