@@ -4,7 +4,7 @@ import { installMarketAudioRotation } from './marketAudioRotation.mjs';
 import { installActionDropGestures } from '../ui/gestureActionDrops.mjs';
 import { installCardDetailGestures } from '../ui/cardDetailGestures.mjs?v=double-tap-1';
 
-const GAME_MODULE = './main.mjs?v=choice-polish-1';
+const GAME_MODULE = './main.mjs?v=adventure-tutorial-1';
 const DEFERRED_ASSETS_MODULE = './deferredAssets.mjs?v=lazy-boot-1';
 
 let gamePromise = null;
