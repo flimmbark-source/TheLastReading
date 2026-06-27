@@ -458,6 +458,10 @@ export function installAdventureModeV3(target = window) {
     if (!approaches || !approaches.length) return '';
     const accepted = new Set(approaches.map(a => a.node));
 
+    const handNodes = new Set(
+      (target.state?.hand || []).map(c => cardNode(c)).filter(Boolean)
+    );
+
     const W = 380, H = 380, CX = 190, CY = 190, R = 120, NR = 11;
     const LABEL_R = R + NR + 13;
     const pos = {};
@@ -477,7 +481,6 @@ export function installAdventureModeV3(target = window) {
         if (!pa || !pb) continue;
         const bothAcc = accepted.has(a) && accepted.has(b);
         const eitherAcc = accepted.has(a) || accepted.has(b);
-        // Colors chosen to be visible on both dark (#16100d) and parchment (drawer) backgrounds.
         const stroke = bothAcc ? '#f3c969' : eitherAcc ? 'rgba(243,175,60,.82)' : 'rgba(120,90,45,.55)';
         edgeSvg += `<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="${stroke}" stroke-width="${bothAcc ? 2 : eitherAcc ? 1.5 : 1}"/>`;
       }
@@ -488,15 +491,19 @@ export function installAdventureModeV3(target = window) {
       const p = pos[node];
       const sigil = sigilForNode(node);
       const isAcc = accepted.has(node);
+      const inHand = handNodes.has(node);
       const angle = Math.atan2(p.y - CY, p.x - CX);
       const lx = +(CX + LABEL_R * Math.cos(angle)).toFixed(1);
       const ly = +(CY + LABEL_R * Math.sin(angle)).toFixed(1);
       const dx = p.x - CX;
       const anchor = Math.abs(dx) < 18 ? 'middle' : dx > 0 ? 'start' : 'end';
-      const textFill = isAcc ? '#f3c969' : 'rgba(200,180,140,.88)';
+      // Gold = event approach, teal = hand card approach, dim = neither
+      const textFill = isAcc ? '#f3c969' : inHand ? '#7fd4c8' : 'rgba(200,180,140,.88)';
+      const circleStroke = isAcc ? '#f3c969' : inHand ? '#7fd4c8' : 'rgba(180,150,90,.55)';
+      const circleFill = isAcc ? 'rgba(36,22,8,.97)' : inHand ? 'rgba(8,28,28,.97)' : 'rgba(22,13,7,.95)';
       nodesSvg += `<g>
-        <circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${isAcc ? 'rgba(36,22,8,.97)' : 'rgba(22,13,7,.95)'}" stroke="${isAcc ? '#f3c969' : 'rgba(180,150,90,.55)'}" stroke-width="${isAcc ? 1.5 : 1}"/>
-        <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" fill="${textFill}" stroke="rgba(18,10,4,.8)" stroke-width="3" paint-order="stroke" font-size="14" font-weight="${isAcc ? 700 : 400}" font-family="system-ui,sans-serif">${esc(sigil?.name || node)}</text>
+        <circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${circleFill}" stroke="${circleStroke}" stroke-width="${isAcc || inHand ? 1.5 : 1}"/>
+        <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" fill="${textFill}" stroke="rgba(18,10,4,.8)" stroke-width="3" paint-order="stroke" font-size="14" font-weight="${isAcc || inHand ? 700 : 400}" font-family="system-ui,sans-serif">${esc(sigil?.name || node)}</text>
       </g>`;
     }
 
