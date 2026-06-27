@@ -436,18 +436,8 @@ export function installAdventureModeV3(target = window) {
     if (!approaches || !approaches.length) return;
     const route = routeNode(node, approaches.map(a => a.node));
     if (!route) return;
-    const approach = approaches.find(a => a.node === route.resolvedNode);
-    if (!approach) return;
-    const setBonus = Number(session.run.setIndex || 0);
-    const requirement = Math.min(5, Math.max(1, Number(approach.requirement || 1) + setBonus));
-    const bonus = nextCardBonus(card, event, { preview: true });
-    const potency = Number(card.points || 0) + bonus;
-    if (potency < requirement) return;
     const sigil = sigilForNode(route.resolvedNode);
-    const label = sigil ? `${sigil.glyph} ${sigil.name}` : route.resolvedNode;
-    el.classList.add(route.exact ? 'hint-complete' : 'hint-card', 'adv-approach');
-    el.style.setProperty('--hint-rgb', route.exact ? '243,201,105' : '80,160,240');
-    el.dataset.hint = label;
+    el.dataset.hint = sigil ? `${sigil.glyph} ${sigil.name}` : route.resolvedNode;
   }
 
   function decorateCards() {
