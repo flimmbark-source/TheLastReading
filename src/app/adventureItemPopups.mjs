@@ -122,6 +122,7 @@ function ensureStyle(doc) {
     .adv-item-art--reward{width:82px;height:62px;border-radius:9px;margin:0 auto 9px}.adv-item-art--reward .adv-item-art__glyph{font:900 38px/1 Arial,sans-serif}
     .adv-item-art--popup{width:min(210px,64vw);height:128px;border-radius:12px;margin:2px auto 12px}.adv-item-art--popup .adv-item-art__glyph{font:900 66px/1 Arial,sans-serif}
     .adv-inventory-icon{display:flex!important;align-items:center;justify-content:center;max-width:none!important;overflow:visible!important;font-size:0!important}
+    #relicRack.adv-inventory-rack .adv-inventory-kind{display:none!important}
     .adv-inventory-slot .adv-item-art{pointer-events:none}
     .adv-reward>.adv-item-art{flex:none}
     .adv-item-popup{max-width:430px;margin:0 auto;text-align:center}
@@ -163,6 +164,7 @@ function decorateInventory(doc) {
     if (!item) return;
     button.dataset.itemId = item.id;
     button.setAttribute('aria-label', `${item.name}. ${item.text}`);
+    button.querySelector('.adv-inventory-kind')?.remove();
     icon.dataset.itemName = item.name;
     if (!icon.querySelector('.adv-item-art')) icon.innerHTML = itemArtMarkup(item, 'compact');
   });
