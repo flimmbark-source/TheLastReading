@@ -512,7 +512,7 @@ export function installAdventureModeV3(target = window) {
       </g>`;
     }
 
-    const svg = `<svg viewBox="0 0 ${W} ${H}" style="width:${W}px;max-width:100%;height:auto;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">${edgeSvg}${nodesSvg}</svg>`;
+    const svg = `<svg viewBox="-50 -15 480 410" style="width:${W}px;max-width:100%;height:auto;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">${edgeSvg}${nodesSvg}</svg>`;
     return `<div class="adv-web-panel"><div class="adv-web-title">${esc(event.title)}</div>${svg}</div>`;
   }
 
