@@ -347,7 +347,9 @@ export function installAdventureModeV3(target = window) {
       const pips = [...Array(Math.max(0, run.maxResolve)).keys()]
         .map(i => `<span class="adv-pip adv-pip--${i < run.resolve ? 'full' : 'empty'}"></span>`).join('');
       const statuses = run.statuses.map(id => `<span class="adv-status adv-status--${esc(id)}" title="${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</span>`).join('');
-      hud.innerHTML = `<div class="adv-hud__main"><div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div></div><button class="adv-approach-btn" type="button" onclick="tlrAdvToggleApproach()">Approach</button><div class="adv-hud__statuses">${statuses}</div>`;
+      hud.innerHTML = `<div class="adv-hud__main"><div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div></div><button class="adv-approach-btn" type="button">Approach</button><div class="adv-hud__statuses">${statuses}</div>`;
+      const approachBtn = hud.querySelector('.adv-approach-btn');
+      if (approachBtn) approachBtn.addEventListener('click', e => { e.stopPropagation(); toggleApproachRef(); });
     }
     renderInventory();
     setTimeout(decorateCards, 0);
@@ -1272,10 +1274,9 @@ export function installAdventureModeV3(target = window) {
       if (!target.__tlrAdventureActive) return;
       const web = doc.getElementById('advApproachWeb');
       if (!web || web.classList.contains('hidden')) return;
-      const btn = doc.getElementById('scoringBtn');
-      if (web.contains(e.target) || (btn && btn.contains(e.target))) return;
+      if (web.contains(e.target)) return;
       web.classList.add('hidden');
-    }, true);
+    });
   }
 
   function toggleApproachRef(e) {
