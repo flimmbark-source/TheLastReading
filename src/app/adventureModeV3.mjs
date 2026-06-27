@@ -496,7 +496,7 @@ export function installAdventureModeV3(target = window) {
       const textFill = isAcc ? '#f3c969' : 'rgba(200,180,140,.88)';
       nodesSvg += `<g>
         <circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${isAcc ? 'rgba(36,22,8,.97)' : 'rgba(22,13,7,.95)'}" stroke="${isAcc ? '#f3c969' : 'rgba(180,150,90,.55)'}" stroke-width="${isAcc ? 1.5 : 1}"/>
-        <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" fill="${textFill}" stroke="rgba(18,10,4,.8)" stroke-width="3" paint-order="stroke" font-size="10" font-weight="${isAcc ? 700 : 400}" font-family="system-ui,sans-serif">${esc(sigil?.name || node)}</text>
+        <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" fill="${textFill}" stroke="rgba(18,10,4,.8)" stroke-width="3" paint-order="stroke" font-size="14" font-weight="${isAcc ? 700 : 400}" font-family="system-ui,sans-serif">${esc(sigil?.name || node)}</text>
       </g>`;
     }
 
