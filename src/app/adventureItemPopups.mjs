@@ -80,14 +80,13 @@ function visualForItem(item) {
   return ITEM_VISUALS[item?.id] || DEFAULT_VISUALS[item?.kind] || DEFAULT_VISUALS.passive;
 }
 
-function itemArtMarkup(item, size = 'reward') {
+function itemArtMarkup(item, size = 'compact') {
   const visual = visualForItem(item);
-  return `<div class="adv-item-art adv-item-art--${size}" data-tone="${esc(visual.tone)}" aria-hidden="true"><span class="adv-item-art__glyph">${esc(visual.glyph)}</span></div>`;
+  return `<span class="adv-item-art adv-item-art--${size}" data-tone="${esc(visual.tone)}" aria-hidden="true"><span class="adv-item-art__glyph">${esc(visual.glyph)}</span></span>`;
 }
 
 function itemByVisibleName(value) {
-  const raw = String(value || '').trim();
-  const name = raw.startsWith('Replace ') ? raw.slice(8).trim() : raw;
+  const name = String(value || '').trim();
   return ITEM_LIST.find(item => item.name === name) || null;
 }
 
@@ -97,12 +96,12 @@ function ensureStyle(doc) {
   style.id = STYLE_ID;
   style.textContent = `
     .adv-item-art{--art-a:#24435b;--art-b:#0c1822;--art-glow:rgba(105,188,237,.36);position:relative;overflow:hidden;
-      display:flex;align-items:center;justify-content:center;border:1px solid rgba(225,236,240,.58);
+      display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(225,236,240,.58);
       background:radial-gradient(circle at 34% 26%,var(--art-glow),transparent 43%),linear-gradient(145deg,var(--art-a),var(--art-b));
-      box-shadow:inset 0 0 18px rgba(0,0,0,.42),0 4px 12px rgba(0,0,0,.38)}
-    .adv-item-art::before{content:'';position:absolute;inset:5px;border:1px solid rgba(255,255,255,.14);border-radius:inherit}
-    .adv-item-art::after{content:'';position:absolute;inset:0;opacity:.16;background:repeating-linear-gradient(118deg,transparent 0 8px,rgba(255,255,255,.12) 9px,transparent 10px)}
-    .adv-item-art__glyph{position:relative;z-index:2;color:#f5ead0;text-shadow:0 2px 2px #000,-1px 0 #000,1px 0 #000,0 -1px #000;filter:drop-shadow(0 0 4px var(--art-glow));line-height:1}
+      box-shadow:inset 0 0 12px rgba(0,0,0,.42),0 2px 6px rgba(0,0,0,.38);flex:none}
+    .adv-item-art::before{content:'';position:absolute;inset:3px;border:1px solid rgba(255,255,255,.14);border-radius:inherit}
+    .adv-item-art::after{content:'';position:absolute;inset:0;opacity:.14;background:repeating-linear-gradient(118deg,transparent 0 7px,rgba(255,255,255,.12) 8px,transparent 9px)}
+    .adv-item-art__glyph{position:relative;z-index:2;color:#f5ead0;text-shadow:0 1px 2px #000,-1px 0 #000,1px 0 #000;filter:drop-shadow(0 0 3px var(--art-glow));line-height:1}
     .adv-item-art[data-tone="potion"]{--art-a:#375e58;--art-b:#101f21;--art-glow:rgba(100,224,194,.42)}
     .adv-item-art[data-tone="iron"]{--art-a:#586671;--art-b:#171d22;--art-glow:rgba(192,219,234,.3)}
     .adv-item-art[data-tone="shadow"]{--art-a:#493d58;--art-b:#130f19;--art-glow:rgba(172,130,216,.38)}
@@ -119,26 +118,17 @@ function ensureStyle(doc) {
     .adv-item-art[data-tone="forge"]{--art-a:#934b25;--art-b:#2d1007;--art-glow:rgba(250,132,59,.45)}
     .adv-item-art[data-tone="silver"]{--art-a:#687884;--art-b:#202a31;--art-glow:rgba(211,232,242,.44)}
     .adv-item-art--compact{width:32px;height:32px;border-radius:7px}.adv-item-art--compact .adv-item-art__glyph{font:900 20px/1 Arial,sans-serif}
-    .adv-item-art--reward{width:82px;height:62px;border-radius:9px;margin:0 auto 9px}.adv-item-art--reward .adv-item-art__glyph{font:900 38px/1 Arial,sans-serif}
-    .adv-item-art--popup{width:min(210px,64vw);height:128px;border-radius:12px;margin:2px auto 12px}.adv-item-art--popup .adv-item-art__glyph{font:900 66px/1 Arial,sans-serif}
+    .adv-item-art--callout{width:24px;height:24px;border-radius:5px;vertical-align:middle;margin-right:5px}.adv-item-art--callout .adv-item-art__glyph{font:900 15px/1 Arial,sans-serif}
     .adv-inventory-icon{display:flex!important;align-items:center;justify-content:center;max-width:none!important;overflow:visible!important;font-size:0!important}
     #relicRack.adv-inventory-rack .adv-inventory-kind{display:none!important}
     .adv-inventory-slot .adv-item-art{pointer-events:none}
-    .adv-reward>.adv-item-art{flex:none}
-    .adv-item-popup{max-width:430px;margin:0 auto;text-align:center}
-    .adv-item-popup__kind{display:inline-block;margin:0 0 9px;padding:4px 10px;border-radius:999px;
-      border:1px solid rgba(127,182,224,.46);background:rgba(22,54,79,.72);color:#a9d5f2;
-      font:800 9px/1 system-ui,sans-serif;letter-spacing:.13em;text-transform:uppercase}
-    .adv-item-popup__effect{margin:12px auto 8px;max-width:350px;color:#f0dfbb;font:700 16px/1.45 Georgia,serif}
-    .adv-item-popup__timing{margin:7px auto 0;color:#b5a483;font:700 11px/1.4 system-ui,sans-serif}
-    .adv-item-popup__state{display:inline-block;margin-top:10px;padding:5px 9px;border-radius:8px;
-      background:rgba(215,167,46,.14);border:1px solid rgba(215,167,46,.4);color:#e6c56a;
-      font:900 10px/1 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase}
-    .adv-item-popup__hint{margin:10px auto 0;max-width:340px;color:#c4ad84;font:600 11px/1.45 system-ui,sans-serif}
+    .adv-item-callout{z-index:10020;max-width:240px}
+    .adv-item-callout .relic-callout-name{display:flex;align-items:center}
+    .adv-item-callout__timing,.adv-item-callout__hint{margin-top:6px;color:#a99878;font:600 10px/1.35 system-ui,sans-serif}
+    .adv-item-callout__hint{color:#c5a66d}
     @media(max-width:640px){
       .adv-item-art--compact{width:29px;height:29px}.adv-item-art--compact .adv-item-art__glyph{font-size:18px}
-      .adv-item-art--reward{width:72px;height:54px}.adv-item-art--reward .adv-item-art__glyph{font-size:32px}
-      .adv-item-art--popup{height:108px}.adv-item-art--popup .adv-item-art__glyph{font-size:54px}
+      .adv-item-callout{max-width:min(240px,calc(100vw - 16px))}
     }
   `;
   doc.head.appendChild(style);
@@ -170,32 +160,9 @@ function decorateInventory(doc) {
   });
 }
 
-function decorateRewardItems(doc) {
-  doc?.querySelectorAll('.adv-reward').forEach(card => {
-    if (card.querySelector(':scope > .adv-item-art')) return;
-    const nameElement = card.querySelector('.adv-reward__name');
-    const item = itemByVisibleName(nameElement?.textContent);
-    if (!item || !nameElement) return;
-    nameElement.insertAdjacentHTML('beforebegin', itemArtMarkup(item, 'reward'));
-  });
-}
-
 function hasOpenOverlay(doc) {
   const summary = doc?.getElementById('summary');
   return Boolean(summary?.innerHTML?.trim());
-}
-
-function captureOverlay(doc) {
-  const summary = doc?.getElementById('summary');
-  return { html: summary?.innerHTML || '' };
-}
-
-function restoreOverlay(target, snapshot) {
-  if (snapshot?.html && typeof target.showOverlay === 'function') {
-    target.showOverlay(snapshot.html);
-    return;
-  }
-  if (typeof target.clearOverlay === 'function') target.clearOverlay();
 }
 
 function directConsumable(item) {
@@ -203,10 +170,10 @@ function directConsumable(item) {
 }
 
 function contextualHint(item) {
-  if (item?.id === 'marked_coin') return 'After a Success, use the Marked Coin button on the result screen.';
-  if (item?.id === 'lucky_token') return 'On a reward screen, press Replace beneath the offer you want to reroll.';
-  if (['lucky_bones', 'merchants_signet'].includes(item?.id)) return 'On a reward screen, press Replace beneath the offer you want to reroll.';
-  if (item?.id === 'loaded_dice') return 'Use the Loaded Dice button on a reward screen.';
+  if (item?.id === 'marked_coin') return 'Use Marked Coin from the Success result.';
+  if (item?.id === 'lucky_token') return 'Use Replace beneath a reward offer.';
+  if (['lucky_bones', 'merchants_signet'].includes(item?.id)) return 'Use Replace beneath a reward offer.';
+  if (item?.id === 'loaded_dice') return 'Use Loaded Dice on the reward screen.';
   return '';
 }
 
@@ -227,12 +194,34 @@ function canUseAtCurrentState(target, item) {
 
 function unavailableReason(target, item, overlayAlreadyOpen, hasDirectAction) {
   if (!hasDirectAction) return '';
-  if (overlayAlreadyOpen) return 'Finish the current result or reward choice before using this item.';
+  if (overlayAlreadyOpen) return 'Finish the current result or reward choice first.';
   if (target.state?.busy) return 'Wait for the current action to finish.';
   if (item.id === 'purifying_water') return 'You have no Status to remove.';
   if (item.id === 'disguise_kit') return 'You are not Distrusted or Exposed.';
   if (item.id === 'blessed_oil') return 'You are already Blessed.';
   return '';
+}
+
+function closeItemCallout(target) {
+  target.document?.querySelectorAll('.relic-callout.adv-item-callout').forEach(element => element.remove());
+  target.__tlrAdventureItemPopup = null;
+}
+
+function positionCallout(target, callout, button) {
+  const rect = button.getBoundingClientRect();
+  callout.style.top = `${rect.bottom + 6}px`;
+  callout.style.left = '0px';
+  target.requestAnimationFrame(() => {
+    const width = callout.offsetWidth;
+    const height = callout.offsetHeight;
+    const margin = 8;
+    let left = rect.right - width;
+    left = Math.max(margin, Math.min(target.innerWidth - width - margin, left));
+    let top = rect.bottom + 6;
+    if (top + height > target.innerHeight - margin) top = Math.max(margin, rect.top - height - 6);
+    callout.style.left = `${left}px`;
+    callout.style.top = `${top}px`;
+  });
 }
 
 export function installAdventureItemPopups(target = window) {
@@ -247,11 +236,16 @@ export function installAdventureItemPopups(target = window) {
     decorationFrame = target.requestAnimationFrame(() => {
       decorationFrame = 0;
       decorateInventory(doc);
-      decorateRewardItems(doc);
     });
   };
   new target.MutationObserver(decorate).observe(doc.body, { childList: true, subtree: true });
   decorate();
+
+  doc.addEventListener('pointerdown', event => {
+    const callout = doc.querySelector('.relic-callout.adv-item-callout');
+    if (!callout || callout.contains(event.target) || event.target.closest?.('.adv-inventory-slot')) return;
+    closeItemCallout(target);
+  }, true);
 
   const attach = () => {
     const originalUse = target.tlrAdventureV3UseItem;
@@ -263,49 +257,47 @@ export function installAdventureItemPopups(target = window) {
     target.tlrAdventureV3UseItem = function showAdventureItem(index) {
       const button = itemButton(doc, index);
       const item = itemFromButton(button);
-      if (!item) return false;
+      if (!button || !item) return false;
 
-      const previous = captureOverlay(doc);
-      target.__tlrAdventureItemPopup = { index, previous };
+      const current = target.__tlrAdventureItemPopup;
+      closeItemCallout(target);
+      if (current?.index === index) return true;
 
-      const progress = button?.querySelector('.adv-inventory-ready')?.textContent?.trim() || '';
+      doc.querySelectorAll('.relic-callout').forEach(element => element.remove());
+      const progress = button.querySelector('.adv-inventory-ready')?.textContent?.trim() || '';
       const contextHint = contextualHint(item);
       const overlayAlreadyOpen = hasOpenOverlay(doc);
       const hasDirectAction = directConsumable(item) || activePassive(item, button);
       const allowedNow = hasDirectAction && !overlayAlreadyOpen && canUseAtCurrentState(target, item);
       const actionLabel = item.kind === 'consumable' || item.id === 'freed_spirit' ? 'Use' : 'Activate';
-      const action = allowedNow
-        ? `<button class="btn-gold" onclick="tlrAdventureV3ConfirmItemUse()">${actionLabel}</button>`
-        : '';
       const unavailable = unavailableReason(target, item, overlayAlreadyOpen, hasDirectAction);
       const timing = item.timing ? TIMING_TEXT[item.timing] || '' : '';
 
-      target.showOverlay(`<div class="result-panel pass adv-item-popup">
-        <div class="rhead"><h3 class="pass">${esc(item.name)}</h3></div>
-        ${itemArtMarkup(item, 'popup')}
-        <div class="adv-item-popup__kind">${esc(item.kind)}</div>
-        <p class="adv-item-popup__effect">${esc(item.text)}</p>
-        ${timing ? `<p class="adv-item-popup__timing">${esc(timing)}</p>` : ''}
-        ${progress ? `<div class="adv-item-popup__state">${esc(progress)}</div>` : ''}
-        ${contextHint ? `<p class="adv-item-popup__hint">${esc(contextHint)}</p>` : ''}
-        ${unavailable ? `<p class="adv-item-popup__hint">${esc(unavailable)}</p>` : ''}
-        <div class="rbtns"><button onclick="tlrAdventureV3CloseItemPopup()">Close</button>${action}</div>
-      </div>`);
+      const callout = doc.createElement('div');
+      callout.className = 'relic-callout adv-item-callout';
+      callout.innerHTML = `<div class="relic-callout-name">${itemArtMarkup(item, 'callout')}<span>${esc(item.name)}</span></div>
+        <div class="relic-callout-desc">${esc(item.text)}</div>
+        ${timing ? `<div class="adv-item-callout__timing">${esc(timing)}</div>` : ''}
+        ${progress ? `<div class="adv-item-callout__hint">${esc(progress)}</div>` : ''}
+        ${contextHint ? `<div class="adv-item-callout__hint">${esc(contextHint)}</div>` : ''}
+        ${unavailable ? `<div class="adv-item-callout__hint">${esc(unavailable)}</div>` : ''}
+        ${allowedNow ? `<button class="relic-activate-btn" onclick="tlrAdventureV3ConfirmItemUse()">${actionLabel}</button>` : ''}`;
+      doc.body.appendChild(callout);
+      target.__tlrAdventureItemPopup = { index };
+      positionCallout(target, callout, button);
       return true;
     };
 
     target.tlrAdventureV3CloseItemPopup = function closeAdventureItemPopup() {
-      const popup = target.__tlrAdventureItemPopup;
-      target.__tlrAdventureItemPopup = null;
-      restoreOverlay(target, popup?.previous);
+      closeItemCallout(target);
     };
 
     target.tlrAdventureV3ConfirmItemUse = function confirmAdventureItemUse() {
       const popup = target.__tlrAdventureItemPopup;
       if (!popup) return;
-      target.__tlrAdventureItemPopup = null;
-      if (typeof target.clearOverlay === 'function') target.clearOverlay();
-      originalUse(popup.index);
+      const index = popup.index;
+      closeItemCallout(target);
+      originalUse(index);
     };
 
     return true;
