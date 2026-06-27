@@ -213,7 +213,7 @@ function heroMarkup(deck) {
   const description = deck.querySelector('.adv-event-desc')?.textContent || '';
   const nextText = deck.querySelector('.adv-next-event')?.textContent || '';
   const row = ROW_POSITIONS[sprite.row] || '0%';
-  const image = `/Events-page${sprite.page}.png`;
+  const image = `/assets/Events-page${sprite.page}.png`;
 
   return `<section class="adv-event-hero" aria-label="${esc(title)}" style="background-image:url('${image}');--adv-event-row:${row}">
     <h2 class="adv-event-hero__title">${esc(title)}</h2>
