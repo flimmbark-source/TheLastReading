@@ -63,7 +63,8 @@ function ensureStyles(doc) {
   style.id = STYLE_ID;
   style.textContent = `
     body.mode-adventure .score-stack,
-    body.mode-adventure #constellationPill{display:none!important}
+    body.mode-adventure #constellationPill,
+    body.mode-adventure #scoringPullWrap{display:none!important}
 
     #advApproachWeb{position:fixed;top:80px;left:10px;z-index:30;background:#16100d;border:1px solid #5f4c29;border-radius:8px;
       padding:10px 14px 12px;box-shadow:0 12px 34px rgba(0,0,0,.65);max-width:min(360px,90vw);display:none}
