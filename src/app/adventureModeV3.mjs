@@ -81,11 +81,6 @@ function ensureStyles(doc) {
       font:700 9px/1 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;
       border-radius:4px;cursor:pointer;flex-shrink:0;margin-left:auto}
     .adv-approach-btn:hover{border-color:#f3c969;color:#f3c969}
-    .adv-approaches-line{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:2px}
-    .adv-approach-tag{background:rgba(243,201,105,.1);border:1px solid rgba(243,201,105,.38);
-      color:#f3c969;font:700 9px/1 system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;
-      padding:3px 9px;border-radius:4px}
-    .adv-approach-req{color:#9a8060;font-weight:400}
 
     #advEventDeck{position:fixed;top:48px;left:50%;transform:translateX(-50%);z-index:26;
       display:none;flex-direction:column;align-items:center;gap:0;pointer-events:none;
@@ -342,12 +337,7 @@ export function installAdventureModeV3(target = window) {
         const top = art
           ? `<div class="adv-deck__top"><img class="adv-deck__art" src="${art}" alt="${esc(event.title)}" decoding="async"></div>`
           : `<div class="adv-deck__top adv-deck__top--text"><div class="adv-deck__title">${esc(event.title)}</div></div>`;
-        const approaches = getEventApproaches(event);
-        const approachTags = (approaches || []).map(a => {
-          const s = sigilForNode(a.node);
-          return `<span class="adv-approach-tag">${esc(s?.name || a.node)}<span class="adv-approach-req"> ${a.requirement}</span></span>`;
-        }).join('');
-        deck.innerHTML = `<div class="adv-deck">${backs}${top}</div><div class="adv-event-desc">${esc(event.description)}</div>${approachTags ? `<div class="adv-approaches-line">${approachTags}</div>` : ''}${next}`;
+        deck.innerHTML = `<div class="adv-deck">${backs}${top}</div><div class="adv-event-desc">${esc(event.description)}</div>${next}`;
         setTimeout(decorateHero, 0);
       }
     }
@@ -1318,7 +1308,6 @@ export function installAdventureModeV3(target = window) {
     ensureStyles(doc); ensureChrome(); forceTable(); installCardSigilBridge(); installPreviewListener();
     installApproachWebControls();
     updateChrome(); clear(); setBusy(false);
-    setTimeout(toggleApproachRef, 200);
     if (typeof target.startReading === 'function') target.startReading();
   }
 
