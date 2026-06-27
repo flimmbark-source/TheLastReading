@@ -3,7 +3,7 @@
 import { installMarketAudioRotation } from './marketAudioRotation.mjs';
 import { installActionDropGestures } from '../ui/gestureActionDrops.mjs';
 import { installCardDetailGestures } from '../ui/cardDetailGestures.mjs?v=double-tap-1';
-import './adventureCardSigils.mjs?v=2';
+import './adventureCardSigils.mjs?v=3';
 
 const GAME_MODULE = './main.mjs?v=adventure-tutorial-2';
 const DEFERRED_ASSETS_MODULE = './deferredAssets.mjs?v=lazy-boot-1';
