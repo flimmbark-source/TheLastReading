@@ -89,6 +89,10 @@ export function colorKeyRGB(key){
 export function hintColor(h){return colorKeyRGB(h.colorKey)||hintRGB(h.group||hintGroup(h.label))}
 
 export function applyHint(el,card,poolCards=null,hintState=null){
+  if(typeof window!=='undefined'&&window.__tlrAdventureActive){
+    if(typeof window.__tlrAdventureApplyHint==='function')window.__tlrAdventureApplyHint(el,card);
+    return;
+  }
   let hints=[];
   try{
     hints=dedupeHints(hintsForCard(card,poolCards,hintState));

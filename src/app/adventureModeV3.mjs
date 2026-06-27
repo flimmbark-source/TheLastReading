@@ -426,6 +426,30 @@ export function installAdventureModeV3(target = window) {
     return bonus;
   }
 
+  function adventureApplyHint(el, card) {
+    if (!session) return;
+    const event = currentEvent();
+    if (!event) return;
+    const node = cardNode(card);
+    if (!node) return;
+    const approaches = getEventApproaches(event);
+    if (!approaches || !approaches.length) return;
+    const route = routeNode(node, approaches.map(a => a.node));
+    if (!route) return;
+    const approach = approaches.find(a => a.node === route.resolvedNode);
+    if (!approach) return;
+    const setBonus = Number(session.run.setIndex || 0);
+    const requirement = Math.min(5, Math.max(1, Number(approach.requirement || 1) + setBonus));
+    const bonus = nextCardBonus(card, event, { preview: true });
+    const potency = Number(card.points || 0) + bonus;
+    if (potency < requirement) return;
+    const sigil = sigilForNode(route.resolvedNode);
+    const label = sigil ? `${sigil.glyph} ${sigil.name}` : route.resolvedNode;
+    el.classList.add(route.exact ? 'hint-complete' : 'hint-card', 'adv-approach');
+    el.style.setProperty('--hint-rgb', route.exact ? '243,201,105' : '80,160,240');
+    el.dataset.hint = label;
+  }
+
   function decorateCards() {
     if (!session || !target.__tlrAdventureActive) return;
     doc.querySelectorAll('.card[data-uid]').forEach(el => {
@@ -1172,6 +1196,7 @@ export function installAdventureModeV3(target = window) {
     captureLiveBackupOnce();
     wrapReturnToMenuOnce();
     target.__tlrAdventureActive = true;
+    target.__tlrAdventureApplyHint = adventureApplyHint;
     installFreshProfile();
     session = newSession();
     ensureStyles(doc); ensureChrome(); forceTable(); installCardSigilBridge(); installPreviewListener();
@@ -1181,6 +1206,7 @@ export function installAdventureModeV3(target = window) {
 
   function restartRun() {
     if (!target.__tlrAdventureActive) { startRun(); return; }
+    target.__tlrAdventureApplyHint = adventureApplyHint;
     installFreshProfile();
     session = newSession();
     ensureChrome(); forceTable(); installCardSigilBridge();
@@ -1191,6 +1217,7 @@ export function installAdventureModeV3(target = window) {
   function cleanupAdventure() {
     if (!target.__tlrAdventureActive) return;
     target.__tlrAdventureActive = false;
+    delete target.__tlrAdventureApplyHint;
     restoreLiveBackup();
     if (doc) {
       doc.body.classList.remove(MODE_CLASS);
