@@ -2,6 +2,7 @@
 // Keeps the main menu responsive before loading the full game module graph.
 import { installMarketAudioRotation } from './marketAudioRotation.mjs';
 import { installActionDropGestures } from '../ui/gestureActionDrops.mjs';
+import { installCardDetailGestures } from '../ui/cardDetailGestures.mjs?v=double-tap-1';
 
 const GAME_MODULE = './main.mjs?v=choice-polish-1';
 const DEFERRED_ASSETS_MODULE = './deferredAssets.mjs?v=lazy-boot-1';
@@ -12,6 +13,7 @@ let bootAction = null;
 
 installMarketAudioRotation(window);
 installActionDropGestures(window);
+installCardDetailGestures(window);
 
 const CANDLELIGHT_KEY = 'tlr_candlelight_lighting';
 
