@@ -65,8 +65,12 @@ function ensureStyles(doc) {
     body.mode-adventure .score-stack,
     body.mode-adventure #constellationPill{display:none!important}
 
+    #advApproachWeb{position:fixed;z-index:30;background:#16100d;border:1px solid #5f4c29;border-radius:8px;
+      padding:10px 14px 12px;box-shadow:0 12px 34px rgba(0,0,0,.65);max-width:min(360px,90vw);display:none}
+    body.mode-adventure #advApproachWeb{display:block}
+    #advApproachWeb.hidden{display:none!important}
     .adv-web-title{font:800 10px system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;
-      color:#cdb883;margin-bottom:8px;text-align:center}
+      color:#cdb883;margin-bottom:4px;text-align:center}
     .adv-web-approaches{margin-top:8px;display:flex;flex-direction:column;gap:4px;
       border-top:1px solid rgba(95,76,41,.4);padding-top:6px}
     .adv-web-row{display:flex;justify-content:space-between;align-items:center;padding:1px 0}
@@ -160,7 +164,6 @@ export function installAdventureModeV3(target = window) {
   let liveBackup = null;
   let cardHtmlOriginal = null;
   let clickPreviewInstalled = false;
-  let _approachWebObserver = null;
 
   function setBusy(value) {
     if (target.state) target.state.busy = value;
@@ -343,6 +346,8 @@ export function installAdventureModeV3(target = window) {
     }
     renderInventory();
     setTimeout(decorateCards, 0);
+    const web = doc.getElementById('advApproachWeb');
+    if (web && !web.classList.contains('hidden')) web.innerHTML = renderApproachWebHTML();
   }
 
   function show(html) {
@@ -1252,19 +1257,45 @@ export function installAdventureModeV3(target = window) {
     target.tlrReturnToMenu = function (...args) { cleanupAdventure(); return original.apply(this, args); };
   }
 
-  function installApproachWebControls() {
-    const scoringBtn = doc.getElementById('scoringBtn');
-    if (scoringBtn) scoringBtn.textContent = 'Approach';
-    if (_approachWebObserver || !doc) return;
-    const ref = doc.getElementById('ref');
-    if (!ref) return;
-    _approachWebObserver = new MutationObserver(() => {
+  function ensureApproachWebEl() {
+    if (!doc || doc.getElementById('advApproachWeb')) return;
+    const el = doc.createElement('div');
+    el.id = 'advApproachWeb';
+    el.className = 'hidden';
+    doc.body.appendChild(el);
+    doc.addEventListener('click', e => {
       if (!target.__tlrAdventureActive) return;
-      if (ref.querySelector('.adv-web-title')) return;
-      const html = renderApproachWebHTML();
-      if (html) ref.innerHTML = html;
-    });
-    _approachWebObserver.observe(ref, { childList: true });
+      const web = doc.getElementById('advApproachWeb');
+      if (!web || web.classList.contains('hidden')) return;
+      const btn = doc.getElementById('scoringBtn');
+      if (web.contains(e.target) || (btn && btn.contains(e.target))) return;
+      web.classList.add('hidden');
+    }, true);
+  }
+
+  function toggleApproachRef(e) {
+    if (e) e.stopPropagation();
+    const el = doc.getElementById('advApproachWeb');
+    if (!el) return;
+    if (!el.classList.contains('hidden')) { el.classList.add('hidden'); return; }
+    el.innerHTML = renderApproachWebHTML();
+    const btn = doc.getElementById('scoringBtn');
+    if (btn) {
+      const r = btn.getBoundingClientRect();
+      el.style.top = (r.bottom + 6) + 'px';
+      el.style.left = Math.max(8, Math.min(r.left, (doc.documentElement.clientWidth || 600) - 376)) + 'px';
+    }
+    el.classList.remove('hidden');
+  }
+
+  function installApproachWebControls() {
+    ensureApproachWebEl();
+    const scoringBtn = doc.getElementById('scoringBtn');
+    if (scoringBtn) {
+      scoringBtn.textContent = 'Approach';
+      scoringBtn.__tlrOriginalOnclick = scoringBtn.onclick;
+      scoringBtn.onclick = toggleApproachRef;
+    }
   }
 
   function startRun() {
@@ -1295,9 +1326,15 @@ export function installAdventureModeV3(target = window) {
     if (!target.__tlrAdventureActive) return;
     target.__tlrAdventureActive = false;
     delete target.__tlrAdventureApplyHint;
-    if (_approachWebObserver) { _approachWebObserver.disconnect(); _approachWebObserver = null; }
+    doc?.getElementById('advApproachWeb')?.remove();
     const scoringBtn = doc?.getElementById('scoringBtn');
-    if (scoringBtn) scoringBtn.textContent = 'Scoring';
+    if (scoringBtn) {
+      scoringBtn.textContent = 'Scoring';
+      if (scoringBtn.__tlrOriginalOnclick !== undefined) {
+        scoringBtn.onclick = scoringBtn.__tlrOriginalOnclick;
+        delete scoringBtn.__tlrOriginalOnclick;
+      }
+    }
     restoreLiveBackup();
     if (doc) {
       doc.body.classList.remove(MODE_CLASS);
