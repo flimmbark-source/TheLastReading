@@ -501,12 +501,7 @@ export function installAdventureModeV3(target = window) {
     }
 
     const svg = `<svg viewBox="0 0 ${W} ${H}" style="width:${W}px;max-width:100%;height:auto;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">${edgeSvg}${nodesSvg}</svg>`;
-    const approachRows = approaches.map(a => {
-      const s = sigilForNode(a.node);
-      return `<div class="adv-web-row"><span class="adv-web-sigil">${esc(s?.name || a.node)}</span><span class="adv-web-req">req ${a.requirement}</span></div>`;
-    }).join('');
-
-    return `<div class="adv-web-panel"><div class="adv-web-title">${esc(event.title)}</div>${svg}<div class="adv-web-approaches">${approachRows}</div></div>`;
+    return `<div class="adv-web-panel"><div class="adv-web-title">${esc(event.title)}</div>${svg}</div>`;
   }
 
   function adventureApplyHint(el, card) {
