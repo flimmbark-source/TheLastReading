@@ -354,8 +354,8 @@ body.single-player-v2 {
     box-shadow: 0 7px 20px rgba(0,0,0,.55), inset 0 0 0 3px rgba(183,139,67,.08);
   }
 
-  body.single-player-v2 #scoringBtn::before { content: "◉"; font-size: 18px; }
-  body.single-player-v2 #abilitiesBtn::before { content: "✦"; font-size: 19px; }
+  body.single-player-v2 #scoringBtn::before { content: "✦"; font-size: 19px; }
+  body.single-player-v2 #abilitiesBtn::before { content: "◉"; font-size: 18px; }
   body.single-player-v2 #mullBtn::before { content: "↻"; font-size: 20px; }
 
   /* Seat the top utility medallions on the table with the same coin shadow the

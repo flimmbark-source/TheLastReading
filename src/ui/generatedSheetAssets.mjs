@@ -22,8 +22,8 @@ const ELEMENT_ART = {
   '--spv2-action-deck-art': 'action-deck.png',
   // Art-directed utility medallions (sliced from Options-Discs.png).
   '--spv2-option-menu-art': 'option-menu.png',
-  '--spv2-option-scoring-art': 'option-scoring.png',
-  '--spv2-option-abilities-art': 'option-abilities.png',
+  '--spv2-option-scoring-art': 'option-abilities.png',
+  '--spv2-option-abilities-art': 'option-scoring.png',
   '--spv2-option-archive-art': 'option-archive.png'
 };
 
