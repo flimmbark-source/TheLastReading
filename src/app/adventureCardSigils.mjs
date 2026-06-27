@@ -41,6 +41,15 @@ function ensureStyle(doc) {
     body.mode-adventure .card > .adv-sigil-seal[data-sigil-id="serpent"]{background:#4d7b3b}
     body.mode-adventure .card > .adv-sigil-seal[data-sigil-id="forge"]{background:#a45a25}
     body.mode-adventure .card > .adv-sigil-seal[data-sigil-id="wheel"]{background:#8a7730}
+    body.mode-adventure .card-detail-card .card > .adv-sigil-seal{
+      width:24px;
+      height:24px;
+      top:7px;
+      left:7px;
+      font-size:18px;
+      border-width:2px;
+      box-shadow:0 2px 4px #000,0 0 0 1px rgba(0,0,0,.78),0 0 7px rgba(65,158,220,.65);
+    }
     @media(max-width:640px){
       body.mode-adventure .card > .adv-sigil-seal{
         width:13px;
