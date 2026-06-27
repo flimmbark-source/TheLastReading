@@ -501,8 +501,16 @@ export function installAdventureModeV3(target = window) {
       const textFill = isAcc ? '#f3c969' : inHand ? '#7fd4c8' : 'rgba(200,180,140,.88)';
       const circleStroke = isAcc ? '#f3c969' : inHand ? '#7fd4c8' : 'rgba(180,150,90,.55)';
       const circleFill = isAcc ? 'rgba(36,22,8,.97)' : inHand ? 'rgba(8,28,28,.97)' : 'rgba(22,13,7,.95)';
+      const cardColor = isAcc ? '#f3c969' : '#7fd4c8';
+      const cardFill = isAcc ? 'rgba(60,30,0,.85)' : 'rgba(8,32,30,.85)';
+      const handIcon = inHand ? `<g transform="translate(${p.x},${p.y})">
+        <rect x="-2.2" y="-5.5" width="4" height="5.5" rx="0.5" fill="${cardFill}" stroke="${cardColor}" stroke-width="0.75" transform="rotate(-22,0,2.5)"/>
+        <rect x="-2.2" y="-5.5" width="4" height="5.5" rx="0.5" fill="${cardFill}" stroke="${cardColor}" stroke-width="0.75"/>
+        <rect x="-2.2" y="-5.5" width="4" height="5.5" rx="0.5" fill="${cardFill}" stroke="${cardColor}" stroke-width="0.75" transform="rotate(22,0,2.5)"/>
+      </g>` : '';
       nodesSvg += `<g>
         <circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${circleFill}" stroke="${circleStroke}" stroke-width="${isAcc || inHand ? 1.5 : 1}"/>
+        ${handIcon}
         <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" fill="${textFill}" stroke="rgba(18,10,4,.8)" stroke-width="3" paint-order="stroke" font-size="14" font-weight="${isAcc || inHand ? 700 : 400}" font-family="system-ui,sans-serif">${esc(sigil?.name || node)}</text>
       </g>`;
     }
