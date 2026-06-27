@@ -504,9 +504,9 @@ export function installAdventureModeV3(target = window) {
       const cardColor = isAcc ? '#f3c969' : '#7fd4c8';
       const cardFill = isAcc ? 'rgba(60,30,0,.85)' : 'rgba(8,32,30,.85)';
       const handIcon = inHand ? `<g transform="translate(${p.x},${p.y})">
-        <rect x="-2.75" y="-7.5" width="5.5" height="7.5" rx="0.6" fill="${cardFill}" stroke="${cardColor}" stroke-width="0.85" transform="rotate(-22,0,3)"/>
-        <rect x="-2.75" y="-7.5" width="5.5" height="7.5" rx="0.6" fill="${cardFill}" stroke="${cardColor}" stroke-width="0.85"/>
-        <rect x="-2.75" y="-7.5" width="5.5" height="7.5" rx="0.6" fill="${cardFill}" stroke="${cardColor}" stroke-width="0.85" transform="rotate(22,0,3)"/>
+        <rect x="-5" y="-7" width="10" height="14" rx="1" fill="${cardFill}" stroke="${cardColor}" stroke-width="1" transform="rotate(-14,0,7)"/>
+        <rect x="-5" y="-7" width="10" height="14" rx="1" fill="${cardFill}" stroke="${cardColor}" stroke-width="1"/>
+        <rect x="-5" y="-7" width="10" height="14" rx="1" fill="${cardFill}" stroke="${cardColor}" stroke-width="1" transform="rotate(14,0,7)"/>
       </g>` : '';
       nodesSvg += `<g>
         <circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${circleFill}" stroke="${circleStroke}" stroke-width="${isAcc || inHand ? 1.5 : 1}"/>
