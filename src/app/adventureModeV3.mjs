@@ -445,7 +445,8 @@ export function installAdventureModeV3(target = window) {
     if (!approaches || !approaches.length) return '';
     const accepted = new Set(approaches.map(a => a.node));
 
-    const W = 300, H = 300, CX = 150, CY = 150, R = 110, NR = 19;
+    const W = 380, H = 380, CX = 190, CY = 190, R = 120, NR = 11;
+    const LABEL_R = R + NR + 13;
     const pos = {};
     APPROACH_WEB_NODE_ORDER.forEach((node, i) => {
       const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
@@ -474,16 +475,22 @@ export function installAdventureModeV3(target = window) {
       const p = pos[node];
       const sigil = sigilForNode(node);
       const isAcc = accepted.has(node);
+      const angle = Math.atan2(p.y - CY, p.x - CX);
+      const lx = +(CX + LABEL_R * Math.cos(angle)).toFixed(1);
+      const ly = +(CY + LABEL_R * Math.sin(angle)).toFixed(1);
+      const dx = p.x - CX;
+      const anchor = Math.abs(dx) < 18 ? 'middle' : dx > 0 ? 'start' : 'end';
+      const textFill = isAcc ? '#f3c969' : 'rgba(200,180,140,.88)';
       nodesSvg += `<g>
         <circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${isAcc ? 'rgba(36,22,8,.97)' : 'rgba(22,13,7,.95)'}" stroke="${isAcc ? '#f3c969' : 'rgba(180,150,90,.55)'}" stroke-width="${isAcc ? 1.5 : 1}"/>
-        <text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="central" fill="${isAcc ? '#f3c969' : 'rgba(200,180,140,.78)'}" font-size="13" font-weight="900" font-family="Georgia,serif">${esc(sigil?.glyph || '?')}</text>
+        <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" fill="${textFill}" stroke="rgba(18,10,4,.8)" stroke-width="3" paint-order="stroke" font-size="10" font-weight="${isAcc ? 700 : 400}" font-family="system-ui,sans-serif">${esc(sigil?.name || node)}</text>
       </g>`;
     }
 
     const svg = `<svg viewBox="0 0 ${W} ${H}" style="width:${W}px;max-width:100%;height:auto;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">${edgeSvg}${nodesSvg}</svg>`;
     const approachRows = approaches.map(a => {
       const s = sigilForNode(a.node);
-      return `<div class="adv-web-row"><span class="adv-web-sigil">${esc(s ? `${s.glyph} ${s.name}` : a.node)}</span><span class="adv-web-req">req ${a.requirement}</span></div>`;
+      return `<div class="adv-web-row"><span class="adv-web-sigil">${esc(s?.name || a.node)}</span><span class="adv-web-req">req ${a.requirement}</span></div>`;
     }).join('');
 
     return `<div class="adv-web-title">${esc(event.title)}</div>${svg}<div class="adv-web-approaches">${approachRows}</div>`;
