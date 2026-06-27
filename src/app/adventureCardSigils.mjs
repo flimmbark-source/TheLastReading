@@ -11,8 +11,8 @@ function ensureStyle(doc) {
     body.mode-adventure .card > .adv-sigil-seal{
       display:flex!important;
       position:absolute;
-      width:16px;
-      height:16px;
+      width:15px;
+      height:15px;
       top:4px;
       left:4px;
       border-radius:50%;
@@ -20,7 +20,7 @@ function ensureStyle(doc) {
       align-items:center;
       justify-content:center;
       color:#d9edff;
-      font:900 9px/1 Georgia,serif;
+      font:900 8px/1 Georgia,serif;
       background:radial-gradient(circle at 34% 30%,#4d9bd4 0%,#1c5f98 46%,#0a3159 76%,#061c35 100%);
       border:1px solid rgba(164,215,247,.82);
       box-shadow:0 1px 3px #000,inset 0 0 0 1px rgba(255,255,255,.14),0 0 7px rgba(60,142,205,.62);
@@ -36,11 +36,11 @@ function ensureStyle(doc) {
     }
     @media(max-width:640px){
       body.mode-adventure .card > .adv-sigil-seal{
-        width:14px;
-        height:14px;
+        width:13px;
+        height:13px;
         top:2px;
         left:2px;
-        font-size:8px;
+        font-size:7px;
       }
     }
   `;
