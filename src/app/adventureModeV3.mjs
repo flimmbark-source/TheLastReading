@@ -65,7 +65,7 @@ function ensureStyles(doc) {
     body.mode-adventure .score-stack,
     body.mode-adventure #constellationPill{display:none!important}
 
-    #advApproachWeb{position:fixed;z-index:30;background:#16100d;border:1px solid #5f4c29;border-radius:8px;
+    #advApproachWeb{position:fixed;top:80px;left:10px;z-index:30;background:#16100d;border:1px solid #5f4c29;border-radius:8px;
       padding:10px 14px 12px;box-shadow:0 12px 34px rgba(0,0,0,.65);max-width:min(360px,90vw);display:none}
     body.mode-adventure #advApproachWeb{display:block}
     #advApproachWeb.hidden{display:none!important}
@@ -346,7 +346,7 @@ export function installAdventureModeV3(target = window) {
       const pips = [...Array(Math.max(0, run.maxResolve)).keys()]
         .map(i => `<span class="adv-pip adv-pip--${i < run.resolve ? 'full' : 'empty'}"></span>`).join('');
       const statuses = run.statuses.map(id => `<span class="adv-status adv-status--${esc(id)}" title="${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</span>`).join('');
-      hud.innerHTML = `<div class="adv-hud__main"><div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div><button class="adv-approach-btn" type="button" onclick="tlrAdvToggleApproach()">Approach</button></div><div class="adv-hud__statuses">${statuses}</div>`;
+      hud.innerHTML = `<div class="adv-hud__main"><div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div></div><button class="adv-approach-btn" type="button" onclick="tlrAdvToggleApproach()">Approach</button><div class="adv-hud__statuses">${statuses}</div>`;
     }
     renderInventory();
     setTimeout(decorateCards, 0);
@@ -1283,11 +1283,11 @@ export function installAdventureModeV3(target = window) {
     if (!el) return;
     if (!el.classList.contains('hidden')) { el.classList.add('hidden'); return; }
     el.innerHTML = renderApproachWebHTML();
-    const btn = doc.querySelector('.adv-approach-btn');
-    if (btn) {
-      const r = btn.getBoundingClientRect();
+    const hud = doc.getElementById('advHud');
+    if (hud) {
+      const r = hud.getBoundingClientRect();
       el.style.top = (r.bottom + 6) + 'px';
-      el.style.left = Math.max(8, Math.min(r.left, (doc.documentElement.clientWidth || 600) - 376)) + 'px';
+      el.style.left = Math.max(8, r.left) + 'px';
     }
     el.classList.remove('hidden');
   }
