@@ -7,7 +7,10 @@ const TUT_MARKET_KEY = 'tlr_tut_oracle_market';
 const TUT_CONSTELLATION_KEY = 'tlr_tut_constellation';
 const TUT_THRESHOLD_KEY = 'tlr_tut_threshold';
 const TUT_DISCARD_KEY = 'tlr_tut_discard';
+const TUT_ADVENTURE_KEY = 'tlr_tut_adventure';
 const INTRO_LAST_STEP = 2;
+const ADVENTURE_FIRST_STEP = 21;
+const ADVENTURE_LAST_STEP = 27;
 
 export const TUT_STEP = Object.freeze({
   INTRO: 0,
@@ -31,6 +34,13 @@ export const TUT_STEP = Object.freeze({
   MARKET_REFRESH: 18,
   MARKET_NEXT: 19,
   CONSTELLATION: 20,
+  ADVENTURE_INTRO: 21,
+  ADVENTURE_EVENT: 22,
+  ADVENTURE_SIGIL: 23,
+  ADVENTURE_POTENCY: 24,
+  ADVENTURE_PLACE: 25,
+  ADVENTURE_RESOLVE: 26,
+  ADVENTURE_COMPLETE: 27,
 });
 
 let tutStep = -1;
@@ -66,6 +76,13 @@ const TUT_STEPS = [
   { sel: '.store-refresh', arrow: 'up', key: TUT_MARKET_KEY, text: '<b>Refresh</b><br>Spend Reserve to replace the Market offers.' },
   { sel: '.store-proceed', arrow: 'up', key: TUT_MARKET_KEY, text: '<b>Next Reading</b><br>Leave the Market and start the next reading.' },
   { sel: '#constellationPill:not(.hidden)', arrow: 'up', key: TUT_CONSTELLATION_KEY, text: '<b>Constellation</b><br>A constellation changes this reading. Tap its sign to see the rule.' },
+  { center: true, text: 'In Adventure Mode, each Event is resolved by playing one card.' },
+  { sel: '#advEventDeck .adv-event-hero', fallbackSel: '#advEventDeck', arrow: 'up', text: 'Read the Event and decide how you want to respond.' },
+  { sel: '#hand .card[data-uid] .adv-sigil-seal', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The blue symbol shows the kind of response this card represents.' },
+  { sel: '#hand .card[data-uid] .seal.tr', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The red number shows how strong that response is.' },
+  { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', text: 'Place one card to face the Event and see what happens.' },
+  { sel: '#advHud .adv-hud__main', fallbackSel: '#advHud', arrow: 'up', text: 'A failed response costs Resolve. If your Resolve reaches zero, the run ends.' },
+  { center: true, text: 'Complete 5 Events to finish a Spread. Complete 2 Spreads to finish the adventure.' },
 ];
 
 const MARKET_TUT_STEPS = [
@@ -76,6 +93,7 @@ const MARKET_TUT_STEPS = [
 function q(sel) { return document.querySelector(sel); }
 function stepKey(step) { return TUT_STEPS[step] && TUT_STEPS[step].key ? TUT_STEPS[step].key : null; }
 function markStepSeen(step) { const key = stepKey(step); if (key) localStorage.setItem(key, '1'); }
+function isAdventureTutorialStep(step) { return step >= ADVENTURE_FIRST_STEP && step <= ADVENTURE_LAST_STEP; }
 
 function isVisibleTarget(element) {
   if (!element || !element.isConnected) return false;
@@ -98,6 +116,7 @@ function canShowStep(step, force = false) {
   const s = TUT_STEPS[step];
   if (!s) return false;
   if (!force && step <= INTRO_LAST_STEP && tutDone) return false;
+  if (!force && isAdventureTutorialStep(step) && localStorage.getItem(TUT_ADVENTURE_KEY)) return false;
   const key = stepKey(step);
   if (!force && key && localStorage.getItem(key)) return false;
   return true;
@@ -141,6 +160,11 @@ function queuePriorityTip(step, delay = 180) {
 }
 
 export function tutSkip() {
+  if (isAdventureTutorialStep(tutStep)) {
+    localStorage.setItem(TUT_ADVENTURE_KEY, '1');
+    tutHide();
+    return;
+  }
   markStepSeen(tutStep);
   localStorage.setItem(TUT_KEY, '1');
   tutDone = true;
@@ -148,6 +172,15 @@ export function tutSkip() {
 }
 
 export function replayTutorial() {
+  if (window.__tlrAdventureActive) {
+    localStorage.removeItem(TUT_ADVENTURE_KEY);
+    queuedTipSteps = [];
+    clearTimeout(queuedTipTimer);
+    queuedTipTimer = null;
+    tutHide();
+    maybeShowAdventureTutorial({ force: true });
+    return;
+  }
   [
     TUT_KEY,
     'tlr_tut_relic',
@@ -229,6 +262,15 @@ export function tutNext() {
   if (tutStep < 0) return;
   const s = TUT_STEPS[tutStep];
   if (!s || s.waitFor) return;
+  if (isAdventureTutorialStep(tutStep)) {
+    if (tutStep < ADVENTURE_LAST_STEP) {
+      tutShow(tutStep + 1, { force: true });
+    } else {
+      localStorage.setItem(TUT_ADVENTURE_KEY, '1');
+      tutHide();
+    }
+    return;
+  }
   if (tutStep < TUT_STEP.SELECT_CARD) { tutShow(tutStep + 1); return; }
   if (tutStep === TUT_STEP.DISCARD_ABILITY) {
     markStepSeen(tutStep);
@@ -254,6 +296,7 @@ export function tutNext() {
 }
 
 function onPlacement() {
+  if (window.__tlrAdventureActive) return;
   placementCount++;
   if (!tutDone || localStorage.getItem(TUT_DISCARD_KEY)) return;
   queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
@@ -268,6 +311,17 @@ export function tutSignal(eventName) {
   if (tutStep < TUT_STEP.PLACE_CARD) { tutShow(tutStep + 1); return; }
   finishIntro();
   queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
+}
+
+export function maybeShowAdventureTutorial(options = {}) {
+  if (!window.__tlrAdventureActive) return;
+  const force = !!options.force;
+  if (!force && localStorage.getItem(TUT_ADVENTURE_KEY)) return;
+  queuedTipSteps = [];
+  clearTimeout(queuedTipTimer);
+  queuedTipTimer = null;
+  tutHide();
+  tutShow(TUT_STEP.ADVENTURE_INTRO, { force: true });
 }
 
 export function maybeShowPatternTutorial() { }
