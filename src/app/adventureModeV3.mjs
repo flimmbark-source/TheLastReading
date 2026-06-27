@@ -64,8 +64,8 @@ function ensureStyles(doc) {
   style.id = STYLE_ID;
   style.textContent = `
     body.mode-adventure .score-stack,
-    body.mode-adventure #constellationPill{display:none!important}
-    body.mode-adventure #scoringPullWrap.open{transform:translateY(calc(-1 * var(--tlr-drawer-h)))!important}
+    body.mode-adventure #constellationPill,
+    body.mode-adventure #scoringPullWrap{display:none!important}
 
     #advApproachWeb{position:fixed;top:80px;left:10px;z-index:30;background:#16100d;border:1px solid #5f4c29;border-radius:8px;
       padding:10px 14px 12px;box-shadow:0 12px 34px rgba(0,0,0,.65);max-width:min(360px,90vw);display:none}
@@ -1296,15 +1296,8 @@ export function installAdventureModeV3(target = window) {
   function installApproachWebControls() {
     ensureApproachWebEl();
     target.tlrAdvToggleApproach = toggleApproachRef;
-    if (!target.__tlrAdvOrigTogglePullTab && typeof target.tlrTogglePullTab === 'function') {
-      target.__tlrAdvOrigTogglePullTab = target.tlrTogglePullTab;
-    }
-    target.tlrTogglePullTab = function(id) {
-      if (id === 'scoring' && target.__tlrAdventureActive) { toggleApproachRef(); return; }
-      if (target.__tlrAdvOrigTogglePullTab) target.__tlrAdvOrigTogglePullTab(id);
-    };
-    const tab = doc?.getElementById('scoringPullTab');
-    if (tab) tab.innerHTML = '&#9660; Approach';
+    target.__tlrAdvOrigToggleRef = target.toggleRef;
+    target.toggleRef = function(e) { if (e) e.stopPropagation(); toggleApproachRef(); };
   }
 
   function startRun() {
@@ -1336,12 +1329,8 @@ export function installAdventureModeV3(target = window) {
     target.__tlrAdventureActive = false;
     delete target.__tlrAdventureApplyHint;
     delete target.tlrAdvToggleApproach;
-    if (target.__tlrAdvOrigTogglePullTab) {
-      target.tlrTogglePullTab = target.__tlrAdvOrigTogglePullTab;
-      delete target.__tlrAdvOrigTogglePullTab;
-    }
-    const scoringTab = doc?.getElementById('scoringPullTab');
-    if (scoringTab) scoringTab.innerHTML = '&#9660; Scoring';
+    target.toggleRef = target.__tlrAdvOrigToggleRef;
+    delete target.__tlrAdvOrigToggleRef;
     doc?.getElementById('advApproachWeb')?.remove();
     restoreLiveBackup();
     if (doc) {
