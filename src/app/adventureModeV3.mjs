@@ -463,8 +463,9 @@ export function installAdventureModeV3(target = window) {
         if (!pa || !pb) continue;
         const bothAcc = accepted.has(a) && accepted.has(b);
         const eitherAcc = accepted.has(a) || accepted.has(b);
-        const stroke = bothAcc ? 'rgba(243,201,105,.8)' : eitherAcc ? 'rgba(243,201,105,.32)' : 'rgba(200,180,140,.12)';
-        edgeSvg += `<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="${stroke}" stroke-width="${bothAcc ? 2 : 1}"/>`;
+        // Colors chosen to be visible on both dark (#16100d) and parchment (drawer) backgrounds.
+        const stroke = bothAcc ? '#f3c969' : eitherAcc ? 'rgba(243,175,60,.82)' : 'rgba(120,90,45,.55)';
+        edgeSvg += `<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="${stroke}" stroke-width="${bothAcc ? 2 : eitherAcc ? 1.5 : 1}"/>`;
       }
     }
 
@@ -474,8 +475,8 @@ export function installAdventureModeV3(target = window) {
       const sigil = sigilForNode(node);
       const isAcc = accepted.has(node);
       nodesSvg += `<g>
-        <circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${isAcc ? 'rgba(36,22,8,.97)' : 'rgba(18,11,7,.9)'}" stroke="${isAcc ? 'rgba(243,201,105,.9)' : 'rgba(200,180,140,.2)'}" stroke-width="${isAcc ? 1.5 : 1}"/>
-        <text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="central" fill="${isAcc ? '#f3c969' : 'rgba(200,180,140,.3)'}" font-size="13" font-weight="900" font-family="Georgia,serif">${esc(sigil?.glyph || '?')}</text>
+        <circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${isAcc ? 'rgba(36,22,8,.97)' : 'rgba(22,13,7,.95)'}" stroke="${isAcc ? '#f3c969' : 'rgba(180,150,90,.55)'}" stroke-width="${isAcc ? 1.5 : 1}"/>
+        <text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="central" fill="${isAcc ? '#f3c969' : 'rgba(200,180,140,.78)'}" font-size="13" font-weight="900" font-family="Georgia,serif">${esc(sigil?.glyph || '?')}</text>
       </g>`;
     }
 
