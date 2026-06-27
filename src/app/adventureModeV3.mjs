@@ -693,14 +693,14 @@ export function installAdventureModeV3(target = window) {
     const marked = !failed && !great && hasItem('marked_coin')
       ? `<button class="adv-mini-btn" onclick="tlrAdventureV3UseMarkedCoin()">Use Marked Coin</button>` : '';
     show(`<div class="result-panel ${failed ? 'fail' : 'pass'}"><div class="rhead"><h3 class="${failed ? 'fail' : 'pass'}">${label}</h3></div>
-      <div class="adv-played-card">${esc(card.name)} · ${esc(sigilName(resolution.sourceNode))} · ${resolution.potency}${resolution.potencyBonus ? ` (${resolution.potencyBonus > 0 ? '+' : ''}${resolution.potencyBonus})` : ''}</div>
+      <div class="adv-played-card">${esc(card.name)} · ${esc(resolution.sourceNode.charAt(0).toUpperCase()+resolution.sourceNode.slice(1))} · ${resolution.potency}${resolution.potencyBonus ? ` (${resolution.potencyBonus > 0 ? '+' : ''}${resolution.potencyBonus})` : ''}</div>
       <p class="adv-narrative">${esc(resolution.narrative)}</p>${statusBits ? `<div>${statusBits}</div>` : ''}${resolveBit}
       <div class="rbtns">${marked}<button class="btn-gold" onclick="tlrAdventureV3AfterOutcome()">Continue</button></div></div>`);
   }
 
   function rewardLabel(offer) {
-    if (offer.type === 'ADD_SIGIL_CARD') return `Add a ${offer.nodes.map(sigilName).join(' or ')} card`;
-    if (offer.type === 'UPGRADE_CARD') return offer.nodes?.length ? `Upgrade a ${offer.nodes.map(sigilName).join(' or ')} card` : 'Upgrade any card';
+    if (offer.type === 'ADD_SIGIL_CARD') return `Add a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card`;
+    if (offer.type === 'UPGRADE_CARD') return offer.nodes?.length ? `Upgrade a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card` : 'Upgrade any card';
     if (offer.type === 'REMOVE_CARD') return 'Remove 1 card';
     if (offer.type === 'RESTORE_RESOLVE') return `Restore ${offer.amount || 1} Resolve`;
     if (offer.type === 'CHOOSE_CONSUMABLE') return 'Choose 1 of 3 Consumables';
