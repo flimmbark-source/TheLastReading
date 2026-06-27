@@ -58,13 +58,14 @@ function unique(values) {
 }
 
 function ensureStyles(doc) {
-  if (!doc || doc.getElementById(STYLE_ID)) return;
+  if (!doc) return;
+  doc.getElementById(STYLE_ID)?.remove();
   const style = doc.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
     body.mode-adventure .score-stack,
-    body.mode-adventure #constellationPill,
-    body.mode-adventure #scoringPullWrap{display:none!important}
+    body.mode-adventure #constellationPill{display:none!important}
+    body.mode-adventure #scoringPullWrap.open{transform:translateY(calc(-1 * var(--tlr-drawer-h)))!important}
 
     #advApproachWeb{position:fixed;top:80px;left:10px;z-index:30;background:#16100d;border:1px solid #5f4c29;border-radius:8px;
       padding:10px 14px 12px;box-shadow:0 12px 34px rgba(0,0,0,.65);max-width:min(360px,90vw);display:none}
@@ -347,9 +348,7 @@ export function installAdventureModeV3(target = window) {
       const pips = [...Array(Math.max(0, run.maxResolve)).keys()]
         .map(i => `<span class="adv-pip adv-pip--${i < run.resolve ? 'full' : 'empty'}"></span>`).join('');
       const statuses = run.statuses.map(id => `<span class="adv-status adv-status--${esc(id)}" title="${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</span>`).join('');
-      hud.innerHTML = `<div class="adv-hud__main"><div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div></div><button class="adv-approach-btn" type="button">Approach</button><div class="adv-hud__statuses">${statuses}</div>`;
-      const approachBtn = hud.querySelector('.adv-approach-btn');
-      if (approachBtn) approachBtn.addEventListener('click', e => { e.stopPropagation(); toggleApproachRef(); });
+      hud.innerHTML = `<div class="adv-hud__main"><div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div></div><div class="adv-hud__statuses">${statuses}</div>`;
     }
     renderInventory();
     setTimeout(decorateCards, 0);
@@ -1297,6 +1296,15 @@ export function installAdventureModeV3(target = window) {
   function installApproachWebControls() {
     ensureApproachWebEl();
     target.tlrAdvToggleApproach = toggleApproachRef;
+    if (!target.__tlrAdvOrigTogglePullTab && typeof target.tlrTogglePullTab === 'function') {
+      target.__tlrAdvOrigTogglePullTab = target.tlrTogglePullTab;
+    }
+    target.tlrTogglePullTab = function(id) {
+      if (id === 'scoring' && target.__tlrAdventureActive) { toggleApproachRef(); return; }
+      if (target.__tlrAdvOrigTogglePullTab) target.__tlrAdvOrigTogglePullTab(id);
+    };
+    const tab = doc?.getElementById('scoringPullTab');
+    if (tab) tab.innerHTML = '&#9660; Approach';
   }
 
   function startRun() {
@@ -1328,6 +1336,12 @@ export function installAdventureModeV3(target = window) {
     target.__tlrAdventureActive = false;
     delete target.__tlrAdventureApplyHint;
     delete target.tlrAdvToggleApproach;
+    if (target.__tlrAdvOrigTogglePullTab) {
+      target.tlrTogglePullTab = target.__tlrAdvOrigTogglePullTab;
+      delete target.__tlrAdvOrigTogglePullTab;
+    }
+    const scoringTab = doc?.getElementById('scoringPullTab');
+    if (scoringTab) scoringTab.innerHTML = '&#9660; Scoring';
     doc?.getElementById('advApproachWeb')?.remove();
     restoreLiveBackup();
     if (doc) {
