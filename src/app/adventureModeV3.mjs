@@ -67,10 +67,12 @@ function ensureStyles(doc) {
     body.mode-adventure #constellationPill,
     body.mode-adventure #scoringPullWrap{display:none!important}
 
-    #advApproachWeb{position:fixed;top:80px;left:10px;z-index:30;background:#16100d;border:1px solid #5f4c29;border-radius:8px;
-      padding:10px 14px 12px;box-shadow:0 12px 34px rgba(0,0,0,.65);max-width:min(360px,90vw);display:none}
-    body.mode-adventure #advApproachWeb{display:block}
+    #advApproachWeb{position:fixed;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,.55);display:none}
+    body.mode-adventure #advApproachWeb{display:flex}
     #advApproachWeb.hidden{display:none!important}
+    .adv-web-panel{background:#16100d;border:1px solid #5f4c29;border-radius:10px;
+      padding:14px 18px 16px;box-shadow:0 20px 60px rgba(0,0,0,.8);max-width:min(420px,92vw);width:100%}
     .adv-web-title{font:800 10px system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;
       color:#cdb883;margin-bottom:4px;text-align:center}
     .adv-web-approaches{margin-top:8px;display:flex;flex-direction:column;gap:4px;
@@ -504,7 +506,7 @@ export function installAdventureModeV3(target = window) {
       return `<div class="adv-web-row"><span class="adv-web-sigil">${esc(s?.name || a.node)}</span><span class="adv-web-req">req ${a.requirement}</span></div>`;
     }).join('');
 
-    return `<div class="adv-web-title">${esc(event.title)}</div>${svg}<div class="adv-web-approaches">${approachRows}</div>`;
+    return `<div class="adv-web-panel"><div class="adv-web-title">${esc(event.title)}</div>${svg}<div class="adv-web-approaches">${approachRows}</div></div>`;
   }
 
   function adventureApplyHint(el, card) {
@@ -1273,8 +1275,7 @@ export function installAdventureModeV3(target = window) {
       if (!target.__tlrAdventureActive) return;
       const web = doc.getElementById('advApproachWeb');
       if (!web || web.classList.contains('hidden')) return;
-      if (web.contains(e.target)) return;
-      web.classList.add('hidden');
+      if (e.target === web) web.classList.add('hidden');
     });
   }
 
@@ -1284,12 +1285,6 @@ export function installAdventureModeV3(target = window) {
     if (!el) return;
     if (!el.classList.contains('hidden')) { el.classList.add('hidden'); return; }
     el.innerHTML = renderApproachWebHTML();
-    const hud = doc.getElementById('advHud');
-    if (hud) {
-      const r = hud.getBoundingClientRect();
-      el.style.top = (r.bottom + 6) + 'px';
-      el.style.left = Math.max(8, r.left) + 'px';
-    }
     el.classList.remove('hidden');
   }
 
