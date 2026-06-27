@@ -511,7 +511,7 @@ export function installAdventureModeV3(target = window) {
       nodesSvg += `<g>
         <circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${circleFill}" stroke="${circleStroke}" stroke-width="${isAcc || inHand ? 1.5 : 1}"/>
         ${handIcon}
-        <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" fill="${textFill}" stroke="rgba(18,10,4,.8)" stroke-width="3" paint-order="stroke" font-size="14" font-weight="${isAcc || inHand ? 700 : 400}" font-family="system-ui,sans-serif">${esc(sigil?.name || node)}</text>
+        <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" fill="${textFill}" stroke="rgba(18,10,4,.8)" stroke-width="3" paint-order="stroke" font-size="14" font-weight="${isAcc || inHand ? 700 : 400}" font-family="system-ui,sans-serif">${esc(node.charAt(0).toUpperCase() + node.slice(1))}</text>
       </g>`;
     }
 
@@ -523,8 +523,7 @@ export function installAdventureModeV3(target = window) {
     if (!session) return;
     const node = cardNode(card);
     if (!node) return;
-    const sigil = sigilForNode(node);
-    el.dataset.hint = sigil ? `${sigil.glyph} ${sigil.name}` : node;
+    el.dataset.hint = node.charAt(0).toUpperCase() + node.slice(1);
   }
 
   function decorateCards() {
