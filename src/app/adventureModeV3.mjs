@@ -18,6 +18,7 @@ import {
   getAdventureEventV3,
   getOutcomeRewardProfile,
 } from '../data/adventure/adventureContentV3.mjs';
+import { NODE_GRAPH } from '../data/adventure/nodes.mjs';
 import { routeNode } from '../systems/adventure/nodeGraph.mjs';
 import {
   EVENTS_PER_SET,
@@ -57,13 +58,32 @@ function unique(values) {
 }
 
 function ensureStyles(doc) {
-  if (!doc || doc.getElementById(STYLE_ID)) return;
+  if (!doc) return;
+  doc.getElementById(STYLE_ID)?.remove();
   const style = doc.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
     body.mode-adventure .score-stack,
     body.mode-adventure #constellationPill,
-    body.mode-adventure #scoringBtn{display:none!important}
+    body.mode-adventure #scoringPullWrap{display:none!important}
+
+    #advApproachWeb{position:fixed;inset:0;z-index:900;display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,.55);display:none}
+    body.mode-adventure #advApproachWeb{display:flex}
+    #advApproachWeb.hidden{display:none!important}
+    .adv-web-panel{background:#16100d;border:1px solid #5f4c29;border-radius:10px;
+      padding:14px 18px 16px;box-shadow:0 20px 60px rgba(0,0,0,.8);max-width:min(420px,92vw);width:100%;overflow:visible}
+    .adv-web-title{font:800 10px system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;
+      color:#cdb883;margin-bottom:4px;text-align:center}
+    .adv-web-approaches{margin-top:8px;display:flex;flex-direction:column;gap:4px;
+      border-top:1px solid rgba(95,76,41,.4);padding-top:6px}
+    .adv-web-row{display:flex;justify-content:space-between;align-items:center;padding:1px 0}
+    .adv-web-sigil{color:#f3c969;font:600 12px Georgia,serif}
+    .adv-web-req{font:700 9px system-ui,sans-serif;color:#9a8060;letter-spacing:.05em}
+    .adv-approach-btn{background:transparent;border:1px solid rgba(228,188,111,.38);color:#cdb883;
+      font:700 9px/1 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;
+      border-radius:4px;cursor:pointer;flex-shrink:0;margin-left:auto}
+    .adv-approach-btn:hover{border-color:#f3c969;color:#f3c969}
 
     #advEventDeck{position:fixed;top:48px;left:50%;transform:translateX(-50%);z-index:26;
       display:none;flex-direction:column;align-items:center;gap:0;pointer-events:none;
@@ -334,6 +354,8 @@ export function installAdventureModeV3(target = window) {
     }
     renderInventory();
     setTimeout(decorateCards, 0);
+    const web = doc.getElementById('advApproachWeb');
+    if (web && !web.classList.contains('hidden')) web.innerHTML = renderApproachWebHTML();
   }
 
   function show(html) {
@@ -424,6 +446,81 @@ export function installAdventureModeV3(target = window) {
       }
     }
     return bonus;
+  }
+
+  // Long names at top/bottom (centered label), short names at 3/9 o'clock (side labels).
+  const APPROACH_WEB_NODE_ORDER = ['transformation','aggression','authority','fortune','compassion','creation','investigation','protection','endurance','mystery','physical','deception'];
+
+  function renderApproachWebHTML() {
+    const event = currentEvent();
+    if (!event) return '<p style="color:#e6d29a;padding:4px">No active event.</p>';
+    const approaches = getEventApproaches(event);
+    if (!approaches || !approaches.length) return '';
+    const accepted = new Set(approaches.map(a => a.node));
+
+    const handNodes = new Set(
+      (target.state?.hand || []).map(c => cardNode(c)).filter(Boolean)
+    );
+
+    const W = 380, H = 380, CX = 190, CY = 190, R = 120, NR = 11;
+    const LABEL_R = R + NR + 13;
+    const pos = {};
+    APPROACH_WEB_NODE_ORDER.forEach((node, i) => {
+      const angle = (i / 12) * Math.PI * 2 - Math.PI / 2;
+      pos[node] = { x: +(CX + R * Math.cos(angle)).toFixed(1), y: +(CY + R * Math.sin(angle)).toFixed(1) };
+    });
+
+    const seenEdges = new Set();
+    let edgeSvg = '';
+    for (const [a, neighbors] of Object.entries(NODE_GRAPH)) {
+      for (const b of neighbors) {
+        const key = a < b ? `${a}:${b}` : `${b}:${a}`;
+        if (seenEdges.has(key)) continue;
+        seenEdges.add(key);
+        const pa = pos[a], pb = pos[b];
+        if (!pa || !pb) continue;
+        const bothAcc = accepted.has(a) && accepted.has(b);
+        const eitherAcc = accepted.has(a) || accepted.has(b);
+        const stroke = bothAcc ? '#f3c969' : eitherAcc ? 'rgba(243,175,60,.82)' : 'rgba(120,90,45,.55)';
+        edgeSvg += `<line x1="${pa.x}" y1="${pa.y}" x2="${pb.x}" y2="${pb.y}" stroke="${stroke}" stroke-width="${bothAcc ? 2 : eitherAcc ? 1.5 : 1}"/>`;
+      }
+    }
+
+    let nodesSvg = '';
+    for (const node of APPROACH_WEB_NODE_ORDER) {
+      const p = pos[node];
+      const sigil = sigilForNode(node);
+      const isAcc = accepted.has(node);
+      const inHand = handNodes.has(node);
+      const angle = Math.atan2(p.y - CY, p.x - CX);
+      const lx = +(CX + LABEL_R * Math.cos(angle)).toFixed(1);
+      const ly = +(CY + LABEL_R * Math.sin(angle)).toFixed(1);
+      const dx = p.x - CX;
+      const anchor = Math.abs(dx) < 18 ? 'middle' : dx > 0 ? 'start' : 'end';
+      const textFill = isAcc ? '#f3c969' : 'rgba(200,180,140,.88)';
+      const circleStroke = isAcc ? '#f3c969' : 'rgba(180,150,90,.55)';
+      const circleFill = isAcc ? 'rgba(36,22,8,.97)' : 'rgba(22,13,7,.95)';
+      const handIcon = inHand ? `<g transform="translate(${p.x},${p.y})">
+        <rect x="-5" y="-7" width="10" height="14" rx="1" fill="rgba(22,13,7,.95)" stroke="rgba(200,180,140,.88)" stroke-width="1" transform="rotate(-14,0,7)"/>
+        <rect x="-5" y="-7" width="10" height="14" rx="1" fill="rgba(22,13,7,.95)" stroke="rgba(200,180,140,.88)" stroke-width="1"/>
+        <rect x="-5" y="-7" width="10" height="14" rx="1" fill="rgba(22,13,7,.95)" stroke="rgba(200,180,140,.88)" stroke-width="1" transform="rotate(14,0,7)"/>
+      </g>` : '';
+      nodesSvg += `<g>
+        <circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${circleFill}" stroke="${circleStroke}" stroke-width="${isAcc ? 1.5 : 1}"/>
+        ${handIcon}
+        <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" fill="${textFill}" stroke="rgba(18,10,4,.8)" stroke-width="3" paint-order="stroke" font-size="14" font-weight="${isAcc ? 700 : 400}" font-family="system-ui,sans-serif">${esc(node.charAt(0).toUpperCase() + node.slice(1))}</text>
+      </g>`;
+    }
+
+    const svg = `<svg viewBox="0 0 ${W} ${H}" overflow="visible" style="width:${W}px;max-width:100%;height:auto;display:block;margin:0 auto" xmlns="http://www.w3.org/2000/svg">${edgeSvg}${nodesSvg}</svg>`;
+    return `<div class="adv-web-panel"><div class="adv-web-title">${esc(event.title)}</div>${svg}</div>`;
+  }
+
+  function adventureApplyHint(el, card) {
+    if (!session) return;
+    const node = cardNode(card);
+    if (!node) return;
+    el.dataset.hint = node.charAt(0).toUpperCase() + node.slice(1);
   }
 
   function decorateCards() {
@@ -596,14 +693,14 @@ export function installAdventureModeV3(target = window) {
     const marked = !failed && !great && hasItem('marked_coin')
       ? `<button class="adv-mini-btn" onclick="tlrAdventureV3UseMarkedCoin()">Use Marked Coin</button>` : '';
     show(`<div class="result-panel ${failed ? 'fail' : 'pass'}"><div class="rhead"><h3 class="${failed ? 'fail' : 'pass'}">${label}</h3></div>
-      <div class="adv-played-card">${esc(card.name)} · ${esc(sigilName(resolution.sourceNode))} · ${resolution.potency}${resolution.potencyBonus ? ` (${resolution.potencyBonus > 0 ? '+' : ''}${resolution.potencyBonus})` : ''}</div>
+      <div class="adv-played-card">${esc(card.name)} · ${esc(resolution.sourceNode.charAt(0).toUpperCase()+resolution.sourceNode.slice(1))} · ${resolution.potency}${resolution.potencyBonus ? ` (${resolution.potencyBonus > 0 ? '+' : ''}${resolution.potencyBonus})` : ''}</div>
       <p class="adv-narrative">${esc(resolution.narrative)}</p>${statusBits ? `<div>${statusBits}</div>` : ''}${resolveBit}
       <div class="rbtns">${marked}<button class="btn-gold" onclick="tlrAdventureV3AfterOutcome()">Continue</button></div></div>`);
   }
 
   function rewardLabel(offer) {
-    if (offer.type === 'ADD_SIGIL_CARD') return `Add a ${offer.nodes.map(sigilName).join(' or ')} card`;
-    if (offer.type === 'UPGRADE_CARD') return offer.nodes?.length ? `Upgrade a ${offer.nodes.map(sigilName).join(' or ')} card` : 'Upgrade any card';
+    if (offer.type === 'ADD_SIGIL_CARD') return `Add a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card`;
+    if (offer.type === 'UPGRADE_CARD') return offer.nodes?.length ? `Upgrade a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card` : 'Upgrade any card';
     if (offer.type === 'REMOVE_CARD') return 'Remove 1 card';
     if (offer.type === 'RESTORE_RESOLVE') return `Restore ${offer.amount || 1} Resolve`;
     if (offer.type === 'CHOOSE_CONSUMABLE') return 'Choose 1 of 3 Consumables';
@@ -1168,22 +1265,56 @@ export function installAdventureModeV3(target = window) {
     target.tlrReturnToMenu = function (...args) { cleanupAdventure(); return original.apply(this, args); };
   }
 
+  function ensureApproachWebEl() {
+    if (!doc || doc.getElementById('advApproachWeb')) return;
+    const el = doc.createElement('div');
+    el.id = 'advApproachWeb';
+    el.className = 'hidden';
+    doc.body.appendChild(el);
+    doc.addEventListener('click', e => {
+      if (!target.__tlrAdventureActive) return;
+      const web = doc.getElementById('advApproachWeb');
+      if (!web || web.classList.contains('hidden')) return;
+      if (e.target === web) web.classList.add('hidden');
+    });
+  }
+
+  function toggleApproachRef(e) {
+    if (e) e.stopPropagation();
+    const el = doc.getElementById('advApproachWeb');
+    if (!el) return;
+    if (!el.classList.contains('hidden')) { el.classList.add('hidden'); return; }
+    el.innerHTML = renderApproachWebHTML();
+    el.classList.remove('hidden');
+  }
+
+  function installApproachWebControls() {
+    ensureApproachWebEl();
+    target.tlrAdvToggleApproach = toggleApproachRef;
+    target.__tlrAdvOrigToggleRef = target.toggleRef;
+    target.toggleRef = function(e) { if (e) e.stopPropagation(); toggleApproachRef(); };
+  }
+
   function startRun() {
     captureLiveBackupOnce();
     wrapReturnToMenuOnce();
     target.__tlrAdventureActive = true;
+    target.__tlrAdventureApplyHint = adventureApplyHint;
     installFreshProfile();
     session = newSession();
     ensureStyles(doc); ensureChrome(); forceTable(); installCardSigilBridge(); installPreviewListener();
+    installApproachWebControls();
     updateChrome(); clear(); setBusy(false);
     if (typeof target.startReading === 'function') target.startReading();
   }
 
   function restartRun() {
     if (!target.__tlrAdventureActive) { startRun(); return; }
+    target.__tlrAdventureApplyHint = adventureApplyHint;
     installFreshProfile();
     session = newSession();
     ensureChrome(); forceTable(); installCardSigilBridge();
+    installApproachWebControls();
     updateChrome(); clear(); setBusy(false);
     if (typeof target.startReading === 'function') target.startReading();
   }
@@ -1191,6 +1322,11 @@ export function installAdventureModeV3(target = window) {
   function cleanupAdventure() {
     if (!target.__tlrAdventureActive) return;
     target.__tlrAdventureActive = false;
+    delete target.__tlrAdventureApplyHint;
+    delete target.tlrAdvToggleApproach;
+    target.toggleRef = target.__tlrAdvOrigToggleRef;
+    delete target.__tlrAdvOrigToggleRef;
+    doc?.getElementById('advApproachWeb')?.remove();
     restoreLiveBackup();
     if (doc) {
       doc.body.classList.remove(MODE_CLASS);
