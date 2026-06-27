@@ -1,4 +1,4 @@
-// Press-and-hold card detail support for both hand and spread cards.
+// Double-tap card detail support for both hand and spread cards.
 /* global state, expandCard, refreshHandState */
 
 function legacyState(target=window){
@@ -55,66 +55,63 @@ export function installCardDetailGestures(target=window){
   if(!target||target.__cardDetailGesturesInstalled)return;
   target.__cardDetailGesturesInstalled=true;
 
-  const HOLD_MS=400;
-  const MOVE_CANCEL=10;
-  let hold=null;
+  const DOUBLE_TAP_MS=380;
+  let lastTap=null;
+  const now=()=>target.performance?.now?.()??performance.now();
 
-  const clear=()=>{
-    if(hold&&hold.timer)target.clearTimeout(hold.timer);
-    hold=null;
-  };
-
-  target.document.addEventListener('pointerdown',ev=>{
-    if(target.__handPinchSynthetic||target.__handPinchActive)return;
-    if(ev.button!==undefined&&ev.button!==0)return;
-    const source=ev.target instanceof Element?ev.target:null;
-    const cardEl=source?.closest?.('#hand .card[data-uid],#spread .card[data-uid]');
-    if(!cardEl||inSelectionMode(cardEl,target))return;
-    const uid=Number(cardEl.dataset.uid);
-    if(!Number.isFinite(uid))return;
-    clear();
-    hold={
-      pointerId:ev.pointerId,
-      startX:ev.clientX,
-      startY:ev.clientY,
-      cardEl,
-      isHand:!!cardEl.closest('#hand'),
-      timer:null,
-    };
-    hold.timer=target.setTimeout(()=>{
-      const current=hold;
-      if(!current||current.pointerId!==ev.pointerId||!current.cardEl.isConnected)return;
-      const card=cardByUid(uid,target);
-      clear();
-      const showDetail=typeof target.expandCard==='function'
-        ? target.expandCard
-        : (typeof expandCard==='function'?expandCard:null);
-      if(!card||!showDetail)return;
-      target.__handGestureSuppressClickUntil=performance.now()+800;
-      if(current.isHand)selectHandCard(uid,target);
-      showDetail(card,target);
-    },HOLD_MS);
-  },true);
-
-  target.document.addEventListener('pointermove',ev=>{
-    if(!hold||ev.pointerId!==hold.pointerId)return;
-    if(Math.hypot(ev.clientX-hold.startX,ev.clientY-hold.startY)>MOVE_CANCEL)clear();
-  },true);
-
-  const end=ev=>{if(hold&&ev.pointerId===hold.pointerId)clear();};
-  target.document.addEventListener('pointerup',end,true);
-  target.document.addEventListener('pointercancel',end,true);
-
-  // Prevent the click generated after a completed hold from also selecting,
-  // placing, or targeting the card underneath the detail overlay.
   target.document.addEventListener('click',ev=>{
-    const until=target.__handGestureSuppressClickUntil||0;
-    if(performance.now()>until)return;
-    const source=ev.target instanceof Element?ev.target:null;
-    if(source?.closest?.('#hand .card[data-uid],#spread .card[data-uid]')){
-      ev.preventDefault();
-      ev.stopPropagation();
-      ev.stopImmediatePropagation();
+    if(target.__handPinchSynthetic||target.__handPinchActive){lastTap=null;return;}
+
+    const time=now();
+    // Drag/reorder gestures already mark their generated click for suppression.
+    // Never let that click become one half of a double tap.
+    if(time<=(target.__handGestureSuppressClickUntil||0)){lastTap=null;return;}
+    if(ev.button!==undefined&&ev.button!==0){lastTap=null;return;}
+
+    const source=target.Element&&ev.target instanceof target.Element?ev.target:null;
+    const cardEl=source?.closest?.('#hand .card[data-uid],#spread .card[data-uid]');
+    if(!cardEl||inSelectionMode(cardEl,target)){lastTap=null;return;}
+
+    const uid=Number(cardEl.dataset.uid);
+    if(!Number.isFinite(uid)){lastTap=null;return;}
+
+    const isDoubleTap=!!(
+      lastTap&&
+      lastTap.uid===uid&&
+      time-lastTap.time<=DOUBLE_TAP_MS
+    );
+
+    if(!isDoubleTap){
+      // Let the first tap continue through the normal card click path. It still
+      // selects/deselects and does not wait for the double-tap window to expire.
+      lastTap={uid,time};
+      return;
     }
+
+    lastTap=null;
+    const card=cardByUid(uid,target);
+    const showDetail=typeof target.expandCard==='function'
+      ? target.expandCard
+      : (typeof expandCard==='function'?expandCard:null);
+    if(!card||!showDetail)return;
+
+    // Consume only the second tap so it cannot also deselect/place/target the
+    // card beneath the detail view. The first tap retained normal behavior.
+    ev.preventDefault();
+    ev.stopPropagation();
+    ev.stopImmediatePropagation();
+    target.__handGestureSuppressClickUntil=time+800;
+    if(cardEl.closest('#hand'))selectHandCard(uid,target);
+    showDetail(card,target);
+  },true);
+
+  // Prevent native desktop double-click behavior after the second click has
+  // opened the detail view. Touch devices normally do not emit this event.
+  target.document.addEventListener('dblclick',ev=>{
+    const source=target.Element&&ev.target instanceof target.Element?ev.target:null;
+    if(!source?.closest?.('#hand .card[data-uid],#spread .card[data-uid]'))return;
+    ev.preventDefault();
+    ev.stopPropagation();
+    ev.stopImmediatePropagation();
   },true);
 }
