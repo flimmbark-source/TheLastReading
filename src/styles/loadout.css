@@ -13,7 +13,7 @@
   position:fixed;inset:0;z-index:10200;
   display:flex;align-items:stretch;justify-content:center;
   background-color:#05070d;
-  background-image:url(../../background.png);
+  background-image:url(../../assets/background.png);
   background-size:cover;background-position:center top;
   transition:opacity .3s ease;
   overflow:hidden;
@@ -108,7 +108,7 @@
 
 /* Footer / Ready */
 .loadout-footer{grid-area:footer;display:flex;align-items:center;justify-content:center}
-.loadout-ready-btn{width:100%;max-width:300px;height:clamp(44px,7vh,58px);padding:0 24px;font:700 clamp(15px,4.4vw,19px)/1 Georgia,serif;letter-spacing:.1em;text-transform:uppercase;background:url(../../parchment_plaque_large_center.png) center/100% 100% no-repeat;border:none;color:#2a1404;cursor:pointer;transition:transform .12s,filter .15s;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
+.loadout-ready-btn{width:100%;max-width:300px;height:clamp(44px,7vh,58px);padding:0 24px;font:700 clamp(15px,4.4vw,19px)/1 Georgia,serif;letter-spacing:.1em;text-transform:uppercase;background:url(../../assets/parchment_plaque_large_center.png) center/100% 100% no-repeat;border:none;color:#2a1404;cursor:pointer;transition:transform .12s,filter .15s;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
 .loadout-ready-btn:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
 .loadout-ready-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 

@@ -137,12 +137,12 @@
 .hand .card.purge-picked{transform:translate3d(0,-92px,0) rotate(0deg)!important;z-index:999!important;box-shadow:0 10px 28px rgba(0,0,0,.75),0 0 0 2px #c06060!important}
 @media(max-width:640px){.hand .card.purge-picked{transform:translateY(-86px) rotate(0deg)!important}}
 /* Tarot shop redesign */
-.tarot-shop{max-width:880px;width:min(92vw,880px);background-image:url("../../Market Background.png");background-size:100% 100%;background-repeat:no-repeat;border:none!important;padding:26px 40px 50px!important}
+.tarot-shop{max-width:880px;width:min(92vw,880px);background-image:url("../../assets/market_background.png");background-size:100% 100%;background-repeat:no-repeat;border:none!important;padding:26px 40px 50px!important}
 .shop-header{text-align:center;border-bottom:1px solid #5f4c29;padding-bottom:12px;margin-bottom:16px}
 .shop-header h3{margin:0;font:700 20px Georgia,serif;color:#f0d58a;letter-spacing:.04em}
 .shop-reserve-display{color:#b99a5d;font-size:13px;margin:5px 0 0}
 .shop-reserve-display b{color:#ffd978}
-.shop-section-title{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#d4af6a;margin:0 0 12px;text-align:center;height:30px;line-height:30px;padding:0;background-image:url(../../divider_sunburst.png);background-size:auto 100%;background-position:center;background-repeat:no-repeat}
+.shop-section-title{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#d4af6a;margin:0 0 12px;text-align:center;height:30px;line-height:30px;padding:0;background-image:url(../../assets/divider_sunburst.png);background-size:auto 100%;background-position:center;background-repeat:no-repeat}
 .shop-section-title::before,.shop-section-title::after{display:none}
 .shop-items-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
 .shop-item-card{width:130px;background:linear-gradient(160deg,#231510,#140907);border:1px solid #705530;border-radius:8px;padding:0 0 10px;display:flex;flex-direction:column;overflow:hidden;transition:transform .15s,box-shadow .15s}
@@ -182,8 +182,8 @@
 .pack-picker-header p{margin:4px 0 0;color:#b99a5d;font-size:12px}
 .pack-pick-btn{padding:4px 12px;font-size:12px;background:#c0a060;border-color:#8a6030}
 .pack-pick-btn:hover{filter:brightness(1.1)}
-/* ── Sprite Buttons (buttons.png 1448×1086) ── */
-.sbtn{background-image:url(../../buttons.png);background-repeat:no-repeat;background-color:transparent;border:none;font-size:0;color:transparent;cursor:pointer;padding:0;display:inline-block;flex-shrink:0;transition:filter .1s}
+/* ── Sprite Buttons (assets/buttons.png 1448×1086) ── */
+.sbtn{background-image:url(../../assets/buttons.png);background-repeat:no-repeat;background-color:transparent;border:none;font-size:0;color:transparent;cursor:pointer;padding:0;display:inline-block;flex-shrink:0;transition:filter .1s}
 .sbtn:hover:not(:disabled){filter:brightness(1.1)}
 .sbtn:active:not(:disabled){filter:brightness(.9)}
 .sbtn:disabled{cursor:not-allowed;filter:none;opacity:1}
@@ -205,8 +205,8 @@
 .sbtn-pick:active{background-position:-153px -137px}
 /* Leave Market — 1222×116, scale 40/116 */
 .sbtn-leave{width:421px;height:40px;background-size:499px 374px;background-position:-38px -267px;max-width:calc(100vw - 40px);display:block;margin:0 auto}
-/* ── Icon Sprites (icons.png 1448×1086, icons 184×188 each) ── */
-.isp{background-image:url(../../icons.png);background-repeat:no-repeat;display:inline-block;flex-shrink:0}
+/* ── Icon Sprites (assets/icons.png 1448×1086, icons 184×188 each) ── */
+.isp{background-image:url(../../assets/icons.png);background-repeat:no-repeat;display:inline-block;flex-shrink:0}
 /* 56px pack banners — scale 56/188 */
 .isp-56{width:56px;height:56px;background-size:431px 323px}
 .isp-56.isp-draw{background-position:-21px -57px}.isp-56.isp-peek{background-position:-88px -57px}.isp-56.isp-mirror{background-position:-155px -57px}.isp-56.isp-neighbor{background-position:-221px -57px}.isp-56.isp-between{background-position:-288px -57px}.isp-56.isp-kin{background-position:-355px -57px}
@@ -221,22 +221,22 @@
 .isp-32.isp-search{background-position:-12px -75px}.isp-32.isp-reshuffle{background-position:-50px -75px}.isp-32.isp-scoring{background-position:-89px -75px}.isp-32.isp-abilities{background-position:-127px -75px}.isp-32.isp-disc{background-position:-165px -75px}.isp-32.isp-purge-ic{background-position:-203px -75px}
 .shop-pack-banner .isp,.upg-art .isp{position:relative;z-index:1}
 .shop-pack-banner .isp{display:block;margin:0 auto}
-/* ── Pack icon sprites (Card_packs1.png 612×408, tiles 204×204, display 56×56) ── */
-.isp-56.isp-foundation,.isp-56.isp-ritual,.isp-56.isp-pattern,.isp-56.isp-innate,.isp-56.isp-restless,.isp-56.isp-relic-cache{background-image:url(../../Card_packs1.png);background-size:168px 112px}
+/* ── Pack icon sprites (assets/Card_packs1.png 612×408, tiles 204×204, display 56×56) ── */
+.isp-56.isp-foundation,.isp-56.isp-ritual,.isp-56.isp-pattern,.isp-56.isp-innate,.isp-56.isp-restless,.isp-56.isp-relic-cache{background-image:url(../../assets/Card_packs1.png);background-size:168px 112px}
 .isp-56.isp-foundation{background-position:0px 0px}.isp-56.isp-ritual{background-position:-56px 0px}.isp-56.isp-pattern{background-position:-112px 0px}
 .isp-56.isp-innate{background-position:0px -56px}.isp-56.isp-restless{background-position:-56px -56px}.isp-56.isp-relic-cache{background-position:-112px -56px}
-/* ── Pack icon sprites (Card_packs2.png 707×353, tiles 353×353, display 56×56) ── */
-.isp-56.isp-second-sight,.isp-56.isp-thread{background-image:url(../../Card_packs2.png);background-size:112px 56px}
+/* ── Pack icon sprites (assets/Card_packs2.png 707×353, tiles 353×353, display 56×56) ── */
+.isp-56.isp-second-sight,.isp-56.isp-thread{background-image:url(../../assets/Card_packs2.png);background-size:112px 56px}
 .isp-56.isp-second-sight{background-position:0px 0px}.isp-56.isp-thread{background-position:-56px 0px}
 /* ── Pack icon sprites at 108px (used in shop banner) ── */
 .isp-108{width:108px;height:108px}
-.isp-108.isp-foundation,.isp-108.isp-ritual,.isp-108.isp-pattern,.isp-108.isp-innate,.isp-108.isp-restless,.isp-108.isp-relic-cache{background-image:url(../../Card_packs1.png);background-size:324px 216px}
+.isp-108.isp-foundation,.isp-108.isp-ritual,.isp-108.isp-pattern,.isp-108.isp-innate,.isp-108.isp-restless,.isp-108.isp-relic-cache{background-image:url(../../assets/Card_packs1.png);background-size:324px 216px}
 .isp-108.isp-foundation{background-position:0px 0px}.isp-108.isp-ritual{background-position:-108px 0px}.isp-108.isp-pattern{background-position:-216px 0px}
 .isp-108.isp-innate{background-position:0px -108px}.isp-108.isp-restless{background-position:-108px -108px}.isp-108.isp-relic-cache{background-position:-216px -108px}
-.isp-108.isp-second-sight,.isp-108.isp-thread{background-image:url(../../Card_packs2.png);background-size:216px 108px}
+.isp-108.isp-second-sight,.isp-108.isp-thread{background-image:url(../../assets/Card_packs2.png);background-size:216px 108px}
 .isp-108.isp-second-sight{background-position:0px 0px}.isp-108.isp-thread{background-position:-108px 0px}
 /* ── Main icon sprites at 108px (scoring/ability icons from icons.png) ── */
-.isp-108.isp-draw,.isp-108.isp-peek,.isp-108.isp-mirror,.isp-108.isp-neighbor,.isp-108.isp-between,.isp-108.isp-kin,.isp-108.isp-search,.isp-108.isp-reshuffle,.isp-108.isp-scoring,.isp-108.isp-abilities,.isp-108.isp-disc,.isp-108.isp-purge-ic{background-image:url(../../icons.png);background-size:832px 624px}
+.isp-108.isp-draw,.isp-108.isp-peek,.isp-108.isp-mirror,.isp-108.isp-neighbor,.isp-108.isp-between,.isp-108.isp-kin,.isp-108.isp-search,.isp-108.isp-reshuffle,.isp-108.isp-scoring,.isp-108.isp-abilities,.isp-108.isp-disc,.isp-108.isp-purge-ic{background-image:url(../../assets/icons.png);background-size:832px 624px}
 .isp-108.isp-draw{background-position:-41px -110px}.isp-108.isp-peek{background-position:-170px -110px}.isp-108.isp-mirror{background-position:-299px -110px}.isp-108.isp-neighbor{background-position:-426px -110px}.isp-108.isp-between{background-position:-555px -110px}.isp-108.isp-kin{background-position:-685px -110px}
 .isp-108.isp-search{background-position:-41px -253px}.isp-108.isp-reshuffle{background-position:-170px -253px}.isp-108.isp-scoring{background-position:-299px -253px}.isp-108.isp-abilities{background-position:-426px -253px}.isp-108.isp-disc{background-position:-555px -253px}.isp-108.isp-purge-ic{background-position:-685px -253px}
 @media(max-width:640px){
@@ -352,7 +352,7 @@
 .relic-rarity-badge.common{color:#8a9a5d}
 .relic-rarity-badge.rare{color:#c4882a}
 .relic-art{display:flex;align-items:center;justify-content:center;height:64px;background:transparent}.relic-art-sprite{width:64px;height:64px;image-rendering:pixelated}
-@media(max-width:640px){.tarot-shop{width:calc(100vw - 20px);padding:20px 16px 18px!important;background-image:url("../../Pack_Background_Mobile.png")}.shop-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header p{font-size:10px;margin:8px 0 0}.shop-packs-row{gap:8px;flex-wrap:nowrap;justify-content:center}.shop-pack{flex:1;min-width:0;min-height:230px}.shop-pack-banner{min-height:74px;font-size:36px}.shop-items-row{gap:8px}.upg-card{width:110px}.upg-art{height:66px;font-size:30px}.upg-title-strip span{font-size:6.5px}.result-panel{padding:16px 16px 20px}.rscore .rsc,.rscore .rsm{font-size:22px}.rscore .rsf{font-size:32px}}
+@media(max-width:640px){.tarot-shop{width:calc(100vw - 20px);padding:20px 16px 18px!important;background-image:url("../../assets/Pack_Background_Mobile.png")}.shop-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header p{font-size:10px;margin:8px 0 0}.shop-packs-row{gap:8px;flex-wrap:nowrap;justify-content:center}.shop-pack{flex:1;min-width:0;min-height:230px}.shop-pack-banner{min-height:74px;font-size:36px}.shop-items-row{gap:8px}.upg-card{width:110px}.upg-art{height:66px;font-size:30px}.upg-title-strip span{font-size:6.5px}.result-panel{padding:16px 16px 20px}.rscore .rsc,.rscore .rsm{font-size:22px}.rscore .rsf{font-size:32px}}
 #sophiaVeil{position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0}
 #sophiaVeil.active{animation:sophia-veil 4s ease forwards}
 @keyframes sophia-veil{

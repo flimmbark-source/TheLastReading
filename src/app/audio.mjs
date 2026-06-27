@@ -1,10 +1,10 @@
 // Background music and volume controls extracted from the legacy inline tail.
 
 const TRACKS=[
-  'boopul-misty-dawn-singing-bowls-amp-sitar-anxiety-relief-music-538675.mp3',
-  'boopul-singing-bowls-amp-sitar-bhairav-raga-for-deep-sleep-538666.mp3',
-  'boopul-sitar-amp-tanpura-meditation-yoga-flow-ahir-bhairav-raga-538665.mp3',
-  'boopul-dreamy-sitar-amp-tanpura-late-night-calm-music-538721.mp3',
+  'assets/audio/boopul-misty-dawn-singing-bowls-amp-sitar-anxiety-relief-music-538675.mp3',
+  'assets/audio/boopul-singing-bowls-amp-sitar-bhairav-raga-for-deep-sleep-538666.mp3',
+  'assets/audio/boopul-sitar-amp-tanpura-meditation-yoga-flow-ahir-bhairav-raga-538665.mp3',
+  'assets/audio/boopul-dreamy-sitar-amp-tanpura-late-night-calm-music-538721.mp3',
 ];
 const FADE=6; // crossfade seconds
 

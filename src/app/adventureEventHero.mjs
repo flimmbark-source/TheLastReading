@@ -164,7 +164,28 @@ function ensureStyle(doc) {
       body.mode-adventure #advEventDeck{top:18px!important;left:5px!important;right:5px!important}
       body.mode-adventure #advHud{
         top:calc(18px + clamp(128px,38vw,156px) + 3px)!important;
-        max-width:76vw!important;
+        left:0!important;
+        right:0!important;
+        width:100%!important;
+        max-width:none!important;
+        transform:none!important;
+        align-items:center!important;
+        padding-top:38px!important;
+        pointer-events:none!important;
+      }
+      body.mode-adventure #advHud .adv-hud__main{
+        position:fixed!important;
+        top:auto!important;
+        left:50%!important;
+        right:auto!important;
+        bottom:max(7px,env(safe-area-inset-bottom))!important;
+        transform:translateX(-50%)!important;
+        z-index:47!important;
+        padding:5px 12px 6px!important;
+        pointer-events:none!important;
+      }
+      body.mode-adventure #advHud .adv-hud__statuses{
+        position:static!important;
       }
       .adv-event-hero{height:clamp(128px,38vw,156px);border-radius:7px}
       .adv-event-hero__title{top:7px;left:10px;right:10px}
@@ -192,7 +213,7 @@ function heroMarkup(deck) {
   const description = deck.querySelector('.adv-event-desc')?.textContent || '';
   const nextText = deck.querySelector('.adv-next-event')?.textContent || '';
   const row = ROW_POSITIONS[sprite.row] || '0%';
-  const image = `/Events-page${sprite.page}.png`;
+  const image = `/assets/Events-page${sprite.page}.png`;
 
   return `<section class="adv-event-hero" aria-label="${esc(title)}" style="background-image:url('${image}');--adv-event-row:${row}">
     <h2 class="adv-event-hero__title">${esc(title)}</h2>

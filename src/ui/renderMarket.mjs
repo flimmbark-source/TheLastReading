@@ -448,10 +448,10 @@ export function storeExitToNextReading(target = window) {
 }
 
 const MARKET_AMBIENCE_FILES = Object.freeze([
-  { file: 'soundreality-bell-fx-410608.mp3', vol: 0.24 },
-  { file: 'izafi-gong-sound-419930.mp3',     vol: 0.7  },
-  { file: 'olenchic-psycho-1-155031.mp3',    vol: 0.7  },
-  { file: 'alex_jauk-witch-laugh-256450.mp3', vol: 1.0  },
+  { file: 'assets/audio/soundreality-bell-fx-410608.mp3', vol: 0.24 },
+  { file: 'assets/audio/izafi-gong-sound-419930.mp3',     vol: 0.7  },
+  { file: 'assets/audio/olenchic-psycho-1-155031.mp3',    vol: 0.7  },
+  { file: 'assets/audio/alex_jauk-witch-laugh-256450.mp3', vol: 1.0  },
 ]);
 
 function playMarketAmbience(target = window) {
@@ -639,7 +639,7 @@ export function confirmStoreVessel(cost,target = window){
 
 export function relicIconStyle(key,size){
   const p=RELIC_SPRITE[key];if(!p)return'';
-  return`background-image:url('relic%20icons.png');background-size:${size*6}px ${size*4}px;background-position:${-p[0]*size}px ${-p[1]*size}px;background-repeat:no-repeat;`;
+  return`background-image:url('assets/relic_icons.png');background-size:${size*6}px ${size*4}px;background-position:${-p[0]*size}px ${-p[1]*size}px;background-repeat:no-repeat;`;
 }
 
 export function renderRelicRack(){

@@ -1,31 +1,31 @@
 // Table-res sheets used by every on-table card (hand/spread/market/MP). These
 // are tiny (~180KB each) so they warm first for a sharp, fast first paint.
 const TABLE_SHEETS = Object.freeze([
-  'sheet01.small.webp',
-  'sheet02.small.webp',
-  'sheet03.small.webp',
-  'sheet04.small.webp',
-  'sheet05.small.webp',
-  'sheet06.small.webp',
-  'sheet07.small.webp',
-  'sheet08.small.webp',
-  'sheet09.small.webp',
-  'sheet10.small.webp',
+  'assets/sheets/sheet01.small.webp',
+  'assets/sheets/sheet02.small.webp',
+  'assets/sheets/sheet03.small.webp',
+  'assets/sheets/sheet04.small.webp',
+  'assets/sheets/sheet05.small.webp',
+  'assets/sheets/sheet06.small.webp',
+  'assets/sheets/sheet07.small.webp',
+  'assets/sheets/sheet08.small.webp',
+  'assets/sheets/sheet09.small.webp',
+  'assets/sheets/sheet10.small.webp',
 ]);
 
 // Full-res sheets are only needed by the card-detail modal. Warm them after the
 // table sheets so opening a card later is snappy without delaying first paint.
 const DETAIL_SHEETS = Object.freeze([
-  'sheet01.png',
-  'sheet02.png',
-  'sheet03.png',
-  'sheet04.png',
-  'sheet05.png',
-  'sheet06.png',
-  'sheet07.png',
-  'sheet08.png',
-  'sheet09.png',
-  'sheet10.png',
+  'assets/sheets/sheet01.png',
+  'assets/sheets/sheet02.png',
+  'assets/sheets/sheet03.png',
+  'assets/sheets/sheet04.png',
+  'assets/sheets/sheet05.png',
+  'assets/sheets/sheet06.png',
+  'assets/sheets/sheet07.png',
+  'assets/sheets/sheet08.png',
+  'assets/sheets/sheet09.png',
+  'assets/sheets/sheet10.png',
 ]);
 
 const IDLE_DELAY_MS = 1600;

@@ -2,16 +2,16 @@ import { allPersonas } from '../multiplayer/personas.mjs';
 import { SCORE_TARGETS } from '../multiplayer/mpState.mjs';
 
 const PROFILE_KEY = 'tlr_mp_profile';
-const SWITCH_CUE_FILE = 'soundreality-bell-fx-410608.mp3';
+const SWITCH_CUE_FILE = 'assets/audio/soundreality-bell-fx-410608.mp3';
 
 // Per-persona portrait art (relative to the document root). `tile` is the
 // half-body card used in the slot carousel; `full` is the full-body display.
 const PERSONA_ART = {
-  cleaner: { tile: 'Cleaner_Tile.png', full: 'Cleaner_Full.png' },
-  hoarder: { tile: 'Hoarder_Tile.png', full: 'Hoarder_Full.png' },
-  anchor:  { tile: 'Anchor_Tile.png',  full: 'Anchor_Full.png' },
-  gambit:  { tile: 'Gambit_Tile.png',  full: 'Gambit_Full.png' },
-  surgeon: { tile: 'Surgeon_Tile.png', full: 'Surgeon_Full.png' },
+  cleaner: { tile: 'assets/Cleaner_Tile.png', full: 'assets/Cleaner_Full.png' },
+  hoarder: { tile: 'assets/Hoarder_Tile.png', full: 'assets/Hoarder_Full.png' },
+  anchor:  { tile: 'assets/Anchor_Tile.png',  full: 'assets/Anchor_Full.png' },
+  gambit:  { tile: 'assets/Gambit_Tile.png',  full: 'assets/Gambit_Full.png' },
+  surgeon: { tile: 'assets/Surgeon_Tile.png', full: 'assets/Surgeon_Full.png' },
 };
 function personaArt(p) { return PERSONA_ART[p?.id] || null; }
 

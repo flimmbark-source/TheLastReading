@@ -28,7 +28,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   /* Use the same full-page background as desktop instead of the generated
      mobile table skin and its extra texture/vignette overlay. */
   html body.single-player-v2 {
-    background: url('../../background.png') center top / cover no-repeat fixed !important;
+    background: url('../../assets/background.png') center top / cover no-repeat fixed !important;
   }
 
   html body.single-player-v2.generated-sheet-ready::before {
