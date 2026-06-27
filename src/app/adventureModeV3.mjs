@@ -1285,9 +1285,11 @@ export function installAdventureModeV3(target = window) {
   function installApproachWebControls() {
     ensureApproachWebEl();
     const scoringBtn = doc.getElementById('scoringBtn');
-    if (scoringBtn) scoringBtn.textContent = 'Approach';
-    if (!target.__tlrOriginalToggleRef) target.__tlrOriginalToggleRef = target.toggleRef;
-    target.toggleRef = toggleApproachRef;
+    if (scoringBtn) {
+      scoringBtn.textContent = 'Approach';
+      scoringBtn.__tlrOriginalOnclick = scoringBtn.onclick;
+      scoringBtn.onclick = toggleApproachRef;
+    }
   }
 
   function startRun() {
@@ -1320,10 +1322,12 @@ export function installAdventureModeV3(target = window) {
     delete target.__tlrAdventureApplyHint;
     doc?.getElementById('advApproachWeb')?.remove();
     const scoringBtn = doc?.getElementById('scoringBtn');
-    if (scoringBtn) scoringBtn.textContent = 'Scoring';
-    if (target.__tlrOriginalToggleRef !== undefined) {
-      target.toggleRef = target.__tlrOriginalToggleRef;
-      delete target.__tlrOriginalToggleRef;
+    if (scoringBtn) {
+      scoringBtn.textContent = 'Scoring';
+      if (scoringBtn.__tlrOriginalOnclick !== undefined) {
+        scoringBtn.onclick = scoringBtn.__tlrOriginalOnclick;
+        delete scoringBtn.__tlrOriginalOnclick;
+      }
     }
     restoreLiveBackup();
     if (doc) {
