@@ -1,4 +1,4 @@
-import './adventureCardSigils.mjs?v=2';
+import './adventureCardSigils.mjs?v=5';
 import './adventureSetHandFlow.mjs?v=1';
 import './adventureItemPopups.mjs?v=2';
 import { ADVENTURE_EVENTS } from '../data/adventure/events.mjs';
