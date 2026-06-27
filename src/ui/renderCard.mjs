@@ -14,9 +14,31 @@ function interactionMeaning(c){return c?.abilityType==='mp_banish'
   ? ['Remove the opponent\'s last played card from their spread.','']
   : ['Silence a card in the opponent\'s spread.',''];}
 
-export function title(c){if(isInteraction(c))return c.name;if(c.type==='major')return ROMAN[c.num]+' · '+c.name.replace(/^[IVXLCDM\d]+\s+/,'');if(c.type==='court')return c.rank+' of '+c.suit;return c.name}
+function majorNumber(c){
+  const direct=c?.num??c?.number;
+  if(Number.isInteger(direct))return direct;
+  const parsed=String(c?.id||'').match(/^major_(\d+)$/);
+  return parsed?Number(parsed[1]):null;
+}
+
+function majorName(c){
+  const raw=String(c?.name||'').trim();
+  return raw.replace(/^(?:[IVXLCDM]+|\d+)\s*(?:[·\-–—:]\s*)?/i,'').trim()||raw;
+}
+
+export function title(c){
+  if(isInteraction(c))return c.name;
+  if(c?.type==='major'){
+    const num=majorNumber(c);
+    const numeral=num!==null?ROMAN[num]:'';
+    const name=majorName(c);
+    return numeral?`${numeral} · ${name}`:name;
+  }
+  if(c?.type==='court')return c.rank+' of '+c.suit;
+  return c?.name||'';
+}
 export function meanings(c){if(isInteraction(c))return interactionMeaning(c);if(c.type==='major')return MEAN[c.id]||['',''];if(c.type==='court')return COURT_MEAN[c.rank]||['',''];return SUIT_MEAN[c.suit]||['','']}
-export function symbol(c){if(isInteraction(c))return interactionSymbol(c);return c.type==='major'?(MAJOR_G[c.num]||'✦'):GLYPH[c.suit]}
+export function symbol(c){if(isInteraction(c))return interactionSymbol(c);if(c.type==='major'){const num=majorNumber(c);return(num!==null?MAJOR_G[num]:null)||'✦'}return GLYPH[c.suit]}
 
 export const CARD_SHEET={
   major_0:[1,0],major_1:[1,1],major_2:[1,2],major_3:[1,3],
@@ -55,11 +77,17 @@ export function cardHTML(c){
   return html;
 }
 
-export function sortCards(cards){return [...cards].sort((a,b)=>{let o={major:0,court:1,interaction:2};if(o[a.type]!==o[b.type])return o[a.type]-o[b.type];if(a.type==='major')return a.num-b.num;if(a.type==='interaction')return String(a.name).localeCompare(String(b.name));return(a.suit||'').localeCompare(b.suit)||RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank)})}
+export function sortCards(cards){return [...cards].sort((a,b)=>{let o={major:0,court:1,interaction:2};if(o[a.type]!==o[b.type])return o[a.type]-o[b.type];if(a.type==='major')return(majorNumber(a)??0)-(majorNumber(b)??0);if(a.type==='interaction')return String(a.name).localeCompare(String(b.name));return(a.suit||'').localeCompare(b.suit)||RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank)})}
 
-export function cleanName(c){return c.type==='major'?c.name.split(' ').slice(1).join(' '):c.name}
+export function cleanName(c){return c?.type==='major'?majorName(c):(c?.name||'')}
 
-export function cardDisplayName(c){return c.type==='major'?ROMAN[c.num]+' - '+cleanName(c):cleanName(c)}
+export function cardDisplayName(c){
+  if(c?.type!=='major')return cleanName(c);
+  const num=majorNumber(c);
+  const numeral=num!==null?ROMAN[num]:'';
+  const name=cleanName(c);
+  return numeral?`${numeral} - ${name}`:name;
+}
 
 function escapeHtml(value){
   return String(value ?? '')
