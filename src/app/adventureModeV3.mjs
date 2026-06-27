@@ -76,6 +76,10 @@ function ensureStyles(doc) {
     .adv-web-row{display:flex;justify-content:space-between;align-items:center;padding:1px 0}
     .adv-web-sigil{color:#f3c969;font:600 12px Georgia,serif}
     .adv-web-req{font:700 9px system-ui,sans-serif;color:#9a8060;letter-spacing:.05em}
+    .adv-approach-btn{background:transparent;border:1px solid rgba(228,188,111,.38);color:#cdb883;
+      font:700 9px/1 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;
+      border-radius:4px;cursor:pointer;flex-shrink:0;margin-left:auto}
+    .adv-approach-btn:hover{border-color:#f3c969;color:#f3c969}
 
     #advEventDeck{position:fixed;top:48px;left:50%;transform:translateX(-50%);z-index:26;
       display:none;flex-direction:column;align-items:center;gap:0;pointer-events:none;
@@ -342,7 +346,7 @@ export function installAdventureModeV3(target = window) {
       const pips = [...Array(Math.max(0, run.maxResolve)).keys()]
         .map(i => `<span class="adv-pip adv-pip--${i < run.resolve ? 'full' : 'empty'}"></span>`).join('');
       const statuses = run.statuses.map(id => `<span class="adv-status adv-status--${esc(id)}" title="${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</span>`).join('');
-      hud.innerHTML = `<div class="adv-hud__main"><div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div></div><div class="adv-hud__statuses">${statuses}</div>`;
+      hud.innerHTML = `<div class="adv-hud__main"><div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div><button class="adv-approach-btn" type="button" onclick="tlrAdvToggleApproach()">Approach</button></div><div class="adv-hud__statuses">${statuses}</div>`;
     }
     renderInventory();
     setTimeout(decorateCards, 0);
@@ -1279,7 +1283,7 @@ export function installAdventureModeV3(target = window) {
     if (!el) return;
     if (!el.classList.contains('hidden')) { el.classList.add('hidden'); return; }
     el.innerHTML = renderApproachWebHTML();
-    const btn = doc.getElementById('scoringBtn');
+    const btn = doc.querySelector('.adv-approach-btn');
     if (btn) {
       const r = btn.getBoundingClientRect();
       el.style.top = (r.bottom + 6) + 'px';
@@ -1290,12 +1294,7 @@ export function installAdventureModeV3(target = window) {
 
   function installApproachWebControls() {
     ensureApproachWebEl();
-    const scoringBtn = doc.getElementById('scoringBtn');
-    if (scoringBtn) {
-      scoringBtn.textContent = 'Approach';
-      scoringBtn.__tlrOriginalOnclick = scoringBtn.onclick;
-      scoringBtn.onclick = toggleApproachRef;
-    }
+    target.tlrAdvToggleApproach = toggleApproachRef;
   }
 
   function startRun() {
@@ -1326,15 +1325,8 @@ export function installAdventureModeV3(target = window) {
     if (!target.__tlrAdventureActive) return;
     target.__tlrAdventureActive = false;
     delete target.__tlrAdventureApplyHint;
+    delete target.tlrAdvToggleApproach;
     doc?.getElementById('advApproachWeb')?.remove();
-    const scoringBtn = doc?.getElementById('scoringBtn');
-    if (scoringBtn) {
-      scoringBtn.textContent = 'Scoring';
-      if (scoringBtn.__tlrOriginalOnclick !== undefined) {
-        scoringBtn.onclick = scoringBtn.__tlrOriginalOnclick;
-        delete scoringBtn.__tlrOriginalOnclick;
-      }
-    }
     restoreLiveBackup();
     if (doc) {
       doc.body.classList.remove(MODE_CLASS);
