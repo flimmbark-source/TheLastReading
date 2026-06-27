@@ -65,11 +65,6 @@ function ensureStyles(doc) {
     body.mode-adventure .score-stack,
     body.mode-adventure #constellationPill{display:none!important}
 
-    #advApproachWeb{position:fixed;z-index:30;background:#16100d;border:1px solid #5f4c29;border-radius:8px;
-      padding:10px 12px;box-shadow:0 12px 34px rgba(0,0,0,.55);color:#e6d29a;
-      font-family:system-ui,sans-serif;font-size:13px;max-width:320px;display:none}
-    body.mode-adventure #advApproachWeb{display:block}
-    #advApproachWeb.hidden{display:none!important}
     .adv-web-title{font:800 10px system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;
       color:#cdb883;margin-bottom:8px;text-align:center}
     .adv-web-approaches{margin-top:8px;display:flex;flex-direction:column;gap:4px;
@@ -165,6 +160,7 @@ export function installAdventureModeV3(target = window) {
   let liveBackup = null;
   let cardHtmlOriginal = null;
   let clickPreviewInstalled = false;
+  let _approachWebObserver = null;
 
   function setBusy(value) {
     if (target.state) target.state.busy = value;
@@ -347,8 +343,6 @@ export function installAdventureModeV3(target = window) {
     }
     renderInventory();
     setTimeout(decorateCards, 0);
-    const web = doc.getElementById('advApproachWeb');
-    if (web && !web.classList.contains('hidden')) web.innerHTML = renderApproachWebHTML();
   }
 
   function show(html) {
@@ -492,38 +486,6 @@ export function installAdventureModeV3(target = window) {
     }).join('');
 
     return `<div class="adv-web-title">${esc(event.title)}</div>${svg}<div class="adv-web-approaches">${approachRows}</div>`;
-  }
-
-  function ensureApproachWebEl() {
-    if (!doc || doc.getElementById('advApproachWeb')) return;
-    const el = doc.createElement('div');
-    el.id = 'advApproachWeb';
-    el.className = 'hidden';
-    doc.body.appendChild(el);
-    doc.addEventListener('click', e => {
-      if (!target.__tlrAdventureActive) return;
-      const web = doc.getElementById('advApproachWeb');
-      if (!web || web.classList.contains('hidden')) return;
-      const btn = doc.getElementById('scoringBtn');
-      if (web.contains(e.target) || (btn && btn.contains(e.target))) return;
-      web.classList.add('hidden');
-    }, true);
-  }
-
-  function toggleApproachRef(event) {
-    if (event) event.stopPropagation();
-    const el = doc.getElementById('advApproachWeb');
-    if (!el) return;
-    const wasHidden = el.classList.contains('hidden');
-    if (!wasHidden) { el.classList.add('hidden'); return; }
-    el.innerHTML = renderApproachWebHTML();
-    const btn = doc.getElementById('scoringBtn');
-    if (btn) {
-      const r = btn.getBoundingClientRect();
-      el.style.top = (r.bottom + 4) + 'px';
-      el.style.left = Math.max(8, Math.min(r.left, (doc.documentElement.clientWidth || 600) - 330)) + 'px';
-    }
-    el.classList.remove('hidden');
   }
 
   function adventureApplyHint(el, card) {
@@ -1283,13 +1245,18 @@ export function installAdventureModeV3(target = window) {
   }
 
   function installApproachWebControls() {
-    ensureApproachWebEl();
     const scoringBtn = doc.getElementById('scoringBtn');
-    if (scoringBtn) {
-      scoringBtn.textContent = 'Approach';
-      scoringBtn.__tlrOriginalOnclick = scoringBtn.onclick;
-      scoringBtn.onclick = toggleApproachRef;
-    }
+    if (scoringBtn) scoringBtn.textContent = 'Approach';
+    if (_approachWebObserver || !doc) return;
+    const ref = doc.getElementById('ref');
+    if (!ref) return;
+    _approachWebObserver = new MutationObserver(() => {
+      if (!target.__tlrAdventureActive) return;
+      if (ref.querySelector('.adv-web-title')) return;
+      const html = renderApproachWebHTML();
+      if (html) ref.innerHTML = html;
+    });
+    _approachWebObserver.observe(ref, { childList: true });
   }
 
   function startRun() {
@@ -1320,15 +1287,9 @@ export function installAdventureModeV3(target = window) {
     if (!target.__tlrAdventureActive) return;
     target.__tlrAdventureActive = false;
     delete target.__tlrAdventureApplyHint;
-    doc?.getElementById('advApproachWeb')?.remove();
+    if (_approachWebObserver) { _approachWebObserver.disconnect(); _approachWebObserver = null; }
     const scoringBtn = doc?.getElementById('scoringBtn');
-    if (scoringBtn) {
-      scoringBtn.textContent = 'Scoring';
-      if (scoringBtn.__tlrOriginalOnclick !== undefined) {
-        scoringBtn.onclick = scoringBtn.__tlrOriginalOnclick;
-        delete scoringBtn.__tlrOriginalOnclick;
-      }
-    }
+    if (scoringBtn) scoringBtn.textContent = 'Scoring';
     restoreLiveBackup();
     if (doc) {
       doc.body.classList.remove(MODE_CLASS);
