@@ -1,6 +1,6 @@
 const STYLE_ID = 'stamp-sigils-style';
 
-const SUIT_BADGE_CHAR = Object.freeze({ Cups: 'C', Wands: 'W', Swords: 'S', Pentacles: 'P' });
+const SUIT_GLYPH = Object.freeze({ Cups: '🍷', Wands: '🪄', Swords: '🗡', Pentacles: '𖤐' });
 const SUIT_COLOR = Object.freeze({
   Cups: '#1e6fd4',
   Wands: '#d46a08',
@@ -24,9 +24,9 @@ function ensureStyle(doc) {
       display: flex;
       align-items: center;
       justify-content: center;
-      font: 900 9px/1 Arial, sans-serif;
+      font: 400 12px/1 "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
       color: #fff;
-      text-shadow: 0 1px 2px rgba(0,0,0,.9);
+      text-shadow: 0 1px 3px rgba(0,0,0,1);
       border: 2px solid rgba(255,255,255,.75);
       box-shadow: 0 1px 5px rgba(0,0,0,1), 0 0 0 1px rgba(0,0,0,.6);
       pointer-events: none;
@@ -37,7 +37,7 @@ function ensureStyle(doc) {
       height: 26px;
       top: 7px;
       left: 7px;
-      font-size: 11px;
+      font-size: 15px;
       border-width: 2px;
     }
     .stamp-suit-badge {
@@ -98,9 +98,8 @@ function decorate(target = window) {
 
     const suits = card.suits;
     const primarySuit = suits[0];
-    const badge = suits.map(s => SUIT_BADGE_CHAR[s] || s[0]).join('/');
     seal.style.background = SUIT_COLOR[primarySuit] || '#888';
-    seal.textContent = badge;
+    seal.textContent = SUIT_GLYPH[primarySuit] || primarySuit[0];
     seal.title = `Suit Stamp: ${suits.join(', ')}`;
     seal.setAttribute('aria-label', `Suit Stamp: ${suits.join(', ')}`);
   });

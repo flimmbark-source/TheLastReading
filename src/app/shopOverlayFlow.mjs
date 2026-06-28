@@ -198,7 +198,7 @@ export function buyPack(packId,cost,target = window){
   return true;
 }
 
-const SUIT_BADGE = Object.freeze({ Cups: 'C', Wands: 'W', Swords: 'S', Pentacles: 'P' });
+const SUIT_GLYPH = Object.freeze({ Cups: '🍷', Wands: '🪄', Swords: '🗡', Pentacles: '𖤐' });
 
 export function buildStampPicker(target = window) {
   const persist = persistOf(target);
@@ -224,7 +224,7 @@ export function buildStampPicker(target = window) {
   if (eligible.length) {
     html += '<div class="shop-items-row stamp-picker-row">';
     for (const card of eligible) {
-      const badge = (card.suits || []).map(s => SUIT_BADGE[s] || s[0]).join('/');
+      const badge = (card.suits || []).map(s => SUIT_GLYPH[s] || s[0]).join('');
       const suitsLabel = (card.suits || []).join(', ');
       html += `<div class="upg-card stamp-option" onclick="applyStampTarget('${card.id}')">
         <div class="upg-title-strip"><span>${card.name || card.id}</span></div>
