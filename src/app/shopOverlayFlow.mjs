@@ -255,6 +255,61 @@ export function openStampPicker(slotIndex, target = window) {
   if (typeof target.showOverlay === 'function') target.showOverlay(html);
 }
 
+export function buildFiveStampPicker(target = window) {
+  const persist = persistOf(target);
+  const state = stateOf(target);
+  const stampedFive = new Set(persist.stampedFive || []);
+  const allCards = [
+    ...(state.deck || []),
+    ...(state.hand || []),
+    ...(state.discard || []),
+    ...(state.spread || []).filter(Boolean),
+  ];
+  const seen = new Set();
+  const eligible = allCards.filter(card => {
+    if (stampedFive.has(card.id)) return false;
+    if (seen.has(card.id)) return false;
+    seen.add(card.id);
+    return true;
+  });
+  let html = '<div class="summary tarot-shop">';
+  html += '<div class="pack-picker-header"><h3>Five Star Stamp</h3><p>Choose any card. It slots into Sequences as a multiple of 5 (5, 10, 15, 20).</p></div>';
+  if (eligible.length) {
+    html += '<div class="shop-items-row stamp-picker-row">';
+    for (const card of eligible) {
+      const typeLabel = card.type === 'major' ? 'Major' : card.type === 'court' ? 'Court' : 'Minor';
+      html += `<div class="upg-card stamp-option" onclick="applyFiveStampTarget('${card.id}')">
+        <div class="upg-title-strip"><span>${card.name || card.id}</span></div>
+        <div class="upg-art"><span class="stamp-suit-badge" style="background:radial-gradient(circle at 35% 35%,#d4a017,#7a5800 72%,#2a1c00);color:#f5e0b4;font-family:Georgia,serif;font-size:14px;line-height:36px">5★</span></div>
+        <div class="upg-body"><div class="upg-desc">${typeLabel} · ${card.points} Chips</div></div>
+        <div class="upg-footer"><button class="sbtn sbtn-pick" aria-label="Stamp" onclick="applyFiveStampTarget('${card.id}');event.stopPropagation()"></button></div>
+      </div>`;
+    }
+    html += '</div>';
+  } else {
+    html += '<p style="text-align:center;color:#8a7551;padding:20px 0">No eligible cards to stamp.</p>';
+  }
+  html += '<div style="text-align:center;margin-top:10px"><button onclick="openShopMain()" style="background:transparent;border:none;color:#8a7551;font-size:12px;cursor:pointer;text-decoration:underline">Cancel</button></div>';
+  html += '</div>';
+  return html;
+}
+
+export function openFiveStampPicker(slotIndex, target = window) {
+  const html = buildFiveStampPicker(target);
+  if (typeof target.showOverlay === 'function') target.showOverlay(html);
+}
+
+export function applyFiveStampTarget(cardId, target = window) {
+  if (!cardId) return false;
+  const persist = persistOf(target);
+  if (!Array.isArray(persist.stampedFive)) persist.stampedFive = [];
+  if (!persist.stampedFive.includes(cardId)) persist.stampedFive.push(cardId);
+  if (typeof target.tlrSyncPersistToStore === 'function') target.tlrSyncPersistToStore();
+  if (typeof target.render === 'function') target.render();
+  if (typeof target.openShopMain === 'function') target.openShopMain();
+  return true;
+}
+
 export function applyStampTarget(cardId, target = window) {
   if (!cardId) return false;
   const persist = persistOf(target);
@@ -269,11 +324,13 @@ export function applyStampTarget(cardId, target = window) {
 export function installShopOverlayFlow(target = window){
   if(!target || target.__tlrShopOverlayFlowInstalled)return;
   target.__tlrShopOverlayFlowInstalled=true;
-  const api={packAccent,animatePackOpen,buildUpgradePicker,pickPackUpgrade,buyPack,buildStampPicker,openStampPicker,applyStampTarget};
+  const api={packAccent,animatePackOpen,buildUpgradePicker,pickPackUpgrade,buyPack,buildStampPicker,openStampPicker,applyStampTarget,buildFiveStampPicker,openFiveStampPicker,applyFiveStampTarget};
   target.tlrShopOverlayFlow=api;
   if(typeof target.animatePackOpen!=='function')target.animatePackOpen=(packId,callback)=>animatePackOpen(packId,callback,target);
   if(typeof target.buyPack!=='function')target.buyPack=(packId,cost)=>buyPack(packId,cost,target);
   if(typeof target.pickPackUpgrade!=='function')target.pickPackUpgrade=upgradeKey=>pickPackUpgrade(upgradeKey,target);
   if(typeof target.openStampPicker!=='function')target.openStampPicker=idx=>openStampPicker(idx,target);
   if(typeof target.applyStampTarget!=='function')target.applyStampTarget=cardId=>applyStampTarget(cardId,target);
+  if(typeof target.openFiveStampPicker!=='function')target.openFiveStampPicker=idx=>openFiveStampPicker(idx,target);
+  if(typeof target.applyFiveStampTarget!=='function')target.applyFiveStampTarget=cardId=>applyFiveStampTarget(cardId,target);
 }

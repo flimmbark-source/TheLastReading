@@ -31,6 +31,7 @@ const STORE_SCORING_COPY = Object.freeze({
   royal_court_chips: { name: 'Royal Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin' },
   path_chips: { name: 'Path of the Magi', desc: '+15 Chips / +0.5 Mult', icon: 'isp-scoring' },
   suit_stamp: { name: 'Suit Stamp', desc: 'Major Arcana only. Scores in Royal Court for its suit.', icon: 'isp-scoring' },
+  five_stamp: { name: 'Five Star', desc: 'All Cards. Sequences score as multiples of 5.', icon: 'isp-scoring' },
 });
 
 const STORE_RELIC_COPY = Object.freeze({
@@ -207,7 +208,7 @@ function shuffleValues(values, target = window) {
   return copy.map(value => ({ value, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ value }) => value);
 }
 
-const STORE_SCORING_UPGRADES = Object.freeze(['rank', 'sequence', 'court_chips', 'royal_court_chips', 'path_chips', 'suit_stamp']);
+const STORE_SCORING_UPGRADES = Object.freeze(['rank', 'sequence', 'court_chips', 'royal_court_chips', 'path_chips', 'suit_stamp', 'five_stamp']);
 
 function pickScoringUpgrades(count, target = window) {
   const shop = target.SHOP || {};
@@ -562,6 +563,10 @@ export function buyStoreScoringUpgrade(index,upgradeKey,cost,target = window){
   if(typeof target.render==='function')target.render();
   if(upgradeKey==='suit_stamp'){
     if(typeof target.openStampPicker==='function')target.openStampPicker(index);
+    return true;
+  }
+  if(upgradeKey==='five_stamp'){
+    if(typeof target.openFiveStampPicker==='function')target.openFiveStampPicker(index);
     return true;
   }
   const pairedKey=pairedUpgradeKey(upgradeKey,target);

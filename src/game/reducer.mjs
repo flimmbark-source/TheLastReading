@@ -121,7 +121,7 @@ function scoreReading(state) {
   const score = computeScore(cards, {
     upgrades: persist.upgrades,
     relics: persist.relics,
-    context: { ...scoringContext(run), stampedMajors: persist.stampedMajors || [] },
+    context: { ...scoringContext(run), stampedMajors: persist.stampedMajors || [], stampedFive: persist.stampedFive || [] },
   });
 
   const threshold = constellationThreshold(currentThreshold(run.thresholdIndex, run.thresholdBonus), run);

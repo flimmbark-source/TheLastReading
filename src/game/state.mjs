@@ -26,6 +26,7 @@ export function createInitialPersistState(overrides = {}) {
     seenTutorials: { ...(overrides.seenTutorials || {}) },
     obals: numberOr(0, overrides.obals),
     stampedMajors: [...(overrides.stampedMajors || [])],
+    stampedFive: [...(overrides.stampedFive || [])],
   };
 }
 
