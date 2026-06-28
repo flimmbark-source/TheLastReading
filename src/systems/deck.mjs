@@ -1,4 +1,8 @@
-import { ALL_CARD_DEFINITIONS, ROMAN, SUIT_GLYPHS } from '../data/cards.mjs';
+import { ALL_CARD_DEFINITIONS, MAJOR_ARCANA, ROMAN, SUIT_GLYPHS } from '../data/cards.mjs';
+
+const MAJOR_SUITS_BY_ID = Object.fromEntries(
+  MAJOR_ARCANA.filter(c => c.suits).map(c => [c.id, c.suits])
+);
 
 export function buildDeck() {
   return ALL_CARD_DEFINITIONS.map((card, uid) => ({ ...card, uid }));
@@ -12,17 +16,20 @@ export function buildLegacyDeck({ majors, courts, suits, roman } = {}) {
   let uid = 0;
   const deck = [];
   for (const [num, name, points, trull, ability] of majorRows) {
-    deck.push({
+    const id = 'major_' + num;
+    const card = {
       uid: uid++,
       type: 'major',
-      id: 'major_' + num,
+      id,
       num,
       number: num,
       name: numerals[num] + ' ' + name,
       points,
       trull,
       ability,
-    });
+    };
+    if (MAJOR_SUITS_BY_ID[id]) card.suits = MAJOR_SUITS_BY_ID[id];
+    deck.push(card);
   }
   for (const suit of suitRows) {
     for (const [rank, points, ability] of courtRows) {
