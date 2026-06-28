@@ -282,6 +282,11 @@ function storeVesselCost(target = window) {
   return typeof target.shopCost === 'function' ? target.shopCost('relicSlot') : 35;
 }
 
+const STAMP_ART = Object.freeze({
+  suit_stamp: '<div style="width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#3a6bbf,#152a5c 72%,#070e1e);display:flex;align-items:center;justify-content:center;font:900 24px/1 Georgia,serif;color:#f5e0b4;text-shadow:0 2px 4px rgba(0,0,0,.9);border:2px solid rgba(210,175,100,.65);box-shadow:0 2px 8px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.5)">♡</div>',
+  five_stamp: '<div style="width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d4a017,#7a5800 72%,#2a1c00);display:flex;align-items:center;justify-content:center;font:900 16px/1 Georgia,serif;color:#f5e0b4;text-shadow:0 2px 4px rgba(0,0,0,.9);border:2px solid rgba(210,175,100,.65);box-shadow:0 2px 8px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.5)">5★</div>',
+});
+
 function renderScoringCard(index, upgradeKey, target = window) {
   if (!upgradeKey) return '<div class="store-card disabled"><div class="store-card-tag">Scoring</div><div class="store-card-name">—</div></div>';
   const item = (target.SHOP || {})[upgradeKey];
@@ -290,9 +295,12 @@ function renderScoringCard(index, upgradeKey, target = window) {
   const cost = scoringCostFor(upgradeKey, target);
   const ok = (persistOf(target).pool || 0) >= cost;
   const level = (persistOf(target).up || {})[upgradeKey] || 0;
+  const art = STAMP_ART[upgradeKey]
+    ? `<div class="store-card-art">${STAMP_ART[upgradeKey]}</div>`
+    : `<div class="store-card-art"><span class="isp isp-108 ${copy.icon}"></span></div>`;
   return `<div class="store-card ${ok ? '' : 'disabled'}">
     <div class="store-card-tag">Scoring</div>
-    <div class="store-card-art"><span class="isp isp-108 ${copy.icon}"></span></div>
+    ${art}
     <div class="store-card-name">${escapeHtml(copy.name)}</div>
     <div class="store-card-desc">${escapeHtml(copy.desc)}</div>
     <div class="store-card-lv">Lv ${level} → ${level + 1}</div>
