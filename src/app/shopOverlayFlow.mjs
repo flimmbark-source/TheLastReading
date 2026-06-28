@@ -210,6 +210,7 @@ export function buildStampPicker(target = window) {
   const persist = persistOf(target);
   const state = stateOf(target);
   const stampedIds = new Set(persist.stampedMajors || []);
+  const stampedFiveIds = new Set(persist.stampedFive || []);
   const allCards = [
     ...(state.deck || []),
     ...(state.hand || []),
@@ -221,6 +222,7 @@ export function buildStampPicker(target = window) {
     if (card.type !== 'major') return false;
     if (!Array.isArray(card.suits) || !card.suits.length) return false;
     if (stampedIds.has(card.id)) return false;
+    if (stampedFiveIds.has(card.id)) return false;
     if (seen.has(card.id)) return false;
     seen.add(card.id);
     return true;
@@ -259,6 +261,7 @@ export function buildFiveStampPicker(target = window) {
   const persist = persistOf(target);
   const state = stateOf(target);
   const stampedFive = new Set(persist.stampedFive || []);
+  const stampedMajorIds = new Set(persist.stampedMajors || []);
   const allCards = [
     ...(state.deck || []),
     ...(state.hand || []),
@@ -268,6 +271,7 @@ export function buildFiveStampPicker(target = window) {
   const seen = new Set();
   const eligible = allCards.filter(card => {
     if (stampedFive.has(card.id)) return false;
+    if (stampedMajorIds.has(card.id)) return false;
     if (seen.has(card.id)) return false;
     seen.add(card.id);
     return true;
@@ -304,6 +308,7 @@ export function applyFiveStampTarget(cardId, target = window) {
   const persist = persistOf(target);
   if (!Array.isArray(persist.stampedFive)) persist.stampedFive = [];
   if (!persist.stampedFive.includes(cardId)) persist.stampedFive.push(cardId);
+  if (Array.isArray(persist.stampedMajors)) persist.stampedMajors = persist.stampedMajors.filter(id => id !== cardId);
   if (typeof target.tlrSyncPersistToStore === 'function') target.tlrSyncPersistToStore();
   if (typeof target.render === 'function') target.render();
   if (typeof target.openShopMain === 'function') target.openShopMain();
@@ -315,6 +320,7 @@ export function applyStampTarget(cardId, target = window) {
   const persist = persistOf(target);
   if (!Array.isArray(persist.stampedMajors)) persist.stampedMajors = [];
   if (!persist.stampedMajors.includes(cardId)) persist.stampedMajors.push(cardId);
+  if (Array.isArray(persist.stampedFive)) persist.stampedFive = persist.stampedFive.filter(id => id !== cardId);
   if (typeof target.tlrSyncPersistToStore === 'function') target.tlrSyncPersistToStore();
   if (typeof target.render === 'function') target.render();
   if (typeof target.openShopMain === 'function') target.openShopMain();
