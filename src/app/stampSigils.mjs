@@ -15,7 +15,7 @@ function ensureStyle(doc) {
   style.textContent = `
     .card > .stamp-sigil {
       position: absolute;
-      bottom: 4px;
+      top: 4px;
       left: 4px;
       width: 15px;
       height: 15px;
@@ -34,7 +34,7 @@ function ensureStyle(doc) {
     .card-detail-card .card > .stamp-sigil {
       width: 22px;
       height: 22px;
-      bottom: 7px;
+      top: 7px;
       left: 7px;
       font-size: 10px;
       border-width: 2px;
