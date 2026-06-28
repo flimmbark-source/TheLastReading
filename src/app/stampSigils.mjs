@@ -19,7 +19,7 @@ function ensureStyle(doc) {
   style.textContent = `
     .card > .stamp-sigil {
       position: absolute;
-      top: 4px;
+      top: 7px;
       left: 4px;
       width: 20px;
       height: 20px;
