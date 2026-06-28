@@ -9,6 +9,7 @@ const TUT_THRESHOLD_KEY = 'tlr_tut_threshold';
 const TUT_DISCARD_KEY = 'tlr_tut_discard';
 const TUT_ADVENTURE_KEY = 'tlr_tut_adventure';
 const TUT_ADV_APPROACH_KEY = 'tlr_tut_adv_approach';
+const TUT_ADV_APPROACH_CHAIN_KEY = 'tlr_tut_adv_approach_chain';
 const TUT_ADV_REWARD_KEY = 'tlr_tut_adv_reward';
 const TUT_ADV_ITEMS_KEY = 'tlr_tut_adv_items';
 const TUT_ADV_COMPLETE_KEY = 'tlr_tut_adv_complete';
@@ -46,9 +47,10 @@ export const TUT_STEP = Object.freeze({
   ADVENTURE_PLACE: 26,
   ADVENTURE_RESOLVE: 27,
   ADVENTURE_APPROACH_WEB: 28,
-  ADVENTURE_REWARD: 29,
-  ADVENTURE_ITEMS: 30,
-  ADVENTURE_COMPLETE: 31,
+  ADVENTURE_APPROACH_CHAIN: 29,
+  ADVENTURE_REWARD: 30,
+  ADVENTURE_ITEMS: 31,
+  ADVENTURE_COMPLETE: 32,
 });
 
 let tutStep = -1;
@@ -92,6 +94,7 @@ const TUT_STEPS = [
   { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', waitFor: 'advCardPlaced', text: 'Place one card to face the Event and see what happens.' },
   { sel: '#advHud .adv-hud__main', fallbackSel: '#advHud', arrow: 'up', text: 'A failed response costs Resolve. Reach zero and the run ends.' },
   { center: true, key: TUT_ADV_APPROACH_KEY, text: 'Gold nodes show the approaches this Event accepts. Card icons show which approaches you\'re holding.' },
+  { center: true, key: TUT_ADV_APPROACH_CHAIN_KEY, text: 'If your approach isn\'t an exact match, it chains to the nearest accepted node. An exact match earns a Great Success — a better reward.' },
   { sel: '.adv-rewards', fallbackSel: '.result-panel', arrow: 'up', key: TUT_ADV_REWARD_KEY, text: 'When you succeed, pick a reward. Rewards shape your run.' },
   { sel: '#relicRack', arrow: 'up', key: TUT_ADV_ITEMS_KEY, text: 'Items you earn are carried here. Tap a consumable to use it.' },
   { center: true, key: TUT_ADV_COMPLETE_KEY, text: "You finished a Set. Complete one more to win the adventure." },
@@ -190,7 +193,7 @@ export function tutSkip() {
 
 export function replayTutorial() {
   if (window.__tlrAdventureActive) {
-    [TUT_ADVENTURE_KEY, TUT_ADV_APPROACH_KEY, TUT_ADV_REWARD_KEY, TUT_ADV_ITEMS_KEY, TUT_ADV_COMPLETE_KEY].forEach(k => localStorage.removeItem(k));
+    [TUT_ADVENTURE_KEY, TUT_ADV_APPROACH_KEY, TUT_ADV_APPROACH_CHAIN_KEY, TUT_ADV_REWARD_KEY, TUT_ADV_ITEMS_KEY, TUT_ADV_COMPLETE_KEY].forEach(k => localStorage.removeItem(k));
     queuedTipSteps = [];
     clearTimeout(queuedTipTimer);
     queuedTipTimer = null;
@@ -321,7 +324,7 @@ function onPlacement() {
 
 export function tutSignal(eventName) {
   if (eventName === 'cardPlaced') onPlacement();
-  if (eventName === 'advApproachWebOpened') { queueTip(TUT_STEP.ADVENTURE_APPROACH_WEB, 300); return; }
+  if (eventName === 'advApproachWebOpened') { queueTip(TUT_STEP.ADVENTURE_APPROACH_WEB, 300); queueTip(TUT_STEP.ADVENTURE_APPROACH_CHAIN, 300); return; }
   if (eventName === 'advRewardShown') { queueTip(TUT_STEP.ADVENTURE_REWARD, 350); return; }
   if (eventName === 'advItemGained') { queueTip(TUT_STEP.ADVENTURE_ITEMS, 350); return; }
   if (eventName === 'advSetComplete') { queueTip(TUT_STEP.ADVENTURE_COMPLETE, 350); return; }
