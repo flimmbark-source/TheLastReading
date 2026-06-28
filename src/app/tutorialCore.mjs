@@ -93,7 +93,7 @@ const TUT_STEPS = [
   { sel: '#scoringBtn', fallbackSel: '#scoringPullTab', arrow: 'up', text: 'Tap here to see an approach map — which approaches this Event accepts and which you\'re holding.' },
   { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', waitFor: 'advCardPlaced', text: 'Place one card to face the Event and see what happens.' },
   { sel: '#advHud .adv-hud__main', fallbackSel: '#advHud', arrow: 'up', text: 'A failed response costs Resolve. Reach zero and the run ends.' },
-  { center: true, key: TUT_ADV_APPROACH_KEY, text: 'Gold nodes show this Event\'s three accepted approaches — easy, medium, and hard. Card icons show which you\'re holding.' },
+  { center: true, key: TUT_ADV_APPROACH_KEY, text: 'Gold nodes show this Event\'s three accepted approaches: easy, medium, and hard. Card icons show which you\'re holding.' },
   { center: true, key: TUT_ADV_APPROACH_CHAIN_KEY, text: 'Cards chain to the nearest accepted node. An exact match earns a Great Success.' },
   { sel: '.adv-rewards', fallbackSel: '.result-panel', arrow: 'up', key: TUT_ADV_REWARD_KEY, text: 'When you succeed, pick a reward. Rewards shape your run.' },
   { sel: '#relicRack', arrow: 'up', key: TUT_ADV_ITEMS_KEY, text: 'Items you earn are carried here. Tap a consumable to use it.' },
