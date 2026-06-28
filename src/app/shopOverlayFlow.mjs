@@ -198,15 +198,9 @@ export function buyPack(packId,cost,target = window){
   return true;
 }
 
-const SUIT_GLYPH    = Object.freeze({ Cups: '♥', Wands: '✦', Swords: '✠', Pentacles: '★' });
-const SUIT_GRADIENT = Object.freeze({
-  Cups:      'radial-gradient(circle at 35% 35%,#3a6bbf,#152a5c 72%,#070e1e)',
-  Wands:     'radial-gradient(circle at 35% 35%,#b85e10,#5c2804 72%,#200e00)',
-  Swords:    'radial-gradient(circle at 35% 35%,#4a5f70,#1e2f3c 72%,#0a1218)',
-  Pentacles: 'radial-gradient(circle at 35% 35%,#2a6e36,#103018 72%,#051408)',
-});
 
-export function buildStampPicker(target = window) {
+export function openStampPicker(slotIndex, target = window) {
+  if (typeof target.choice !== 'function') return;
   const persist = persistOf(target);
   const state = stateOf(target);
   const stampedIds = new Set(persist.stampedMajors || []);
@@ -227,37 +221,14 @@ export function buildStampPicker(target = window) {
     seen.add(card.id);
     return true;
   });
-  let html = '<div class="summary tarot-shop">';
-  html += '<div class="pack-picker-header"><h3>Suit Stamp</h3><p>Choose a Major Arcana. Its suit counts toward Royal Court.</p></div>';
-  if (eligible.length) {
-    html += '<div class="shop-items-row stamp-picker-row">';
-    for (const card of eligible) {
-      const primarySuit = (card.suits || [])[0] || '';
-      const allGlyphs = (card.suits || []).map(s => SUIT_GLYPH[s] || s[0]).join(' ');
-      const gradient = SUIT_GRADIENT[primarySuit] || '#555';
-      const suitsLabel = (card.suits || []).join(', ');
-      html += `<div class="upg-card stamp-option" onclick="applyStampTarget('${card.id}')">
-        <div class="upg-title-strip"><span>${card.name || card.id}</span></div>
-        <div class="upg-art"><span class="stamp-suit-badge" style="background:${gradient};color:#f5e0b4;font-family:Georgia,serif;font-size:16px;line-height:36px">${allGlyphs}</span></div>
-        <div class="upg-body"><div class="upg-desc">${suitsLabel}</div></div>
-        <div class="upg-footer"><button class="sbtn sbtn-pick" aria-label="Stamp" onclick="applyStampTarget('${card.id}');event.stopPropagation()"></button></div>
-      </div>`;
-    }
-    html += '</div>';
-  } else {
-    html += '<p style="text-align:center;color:#8a7551;padding:20px 0">No eligible Majors to stamp.</p>';
-  }
-  html += '<div style="text-align:center;margin-top:10px"><button onclick="openShopMain()" style="background:transparent;border:none;color:#8a7551;font-size:12px;cursor:pointer;text-decoration:underline">Cancel</button></div>';
-  html += '</div>';
-  return html;
+  if (!eligible.length) return;
+  target.choice('Suit Stamp', 'Choose a Major Arcana — its suit counts toward Royal Court.', eligible, card => {
+    applyStampTarget(card.id, target);
+  });
 }
 
-export function openStampPicker(slotIndex, target = window) {
-  const html = buildStampPicker(target);
-  if (typeof target.showOverlay === 'function') target.showOverlay(html);
-}
-
-export function buildFiveStampPicker(target = window) {
+export function openFiveStampPicker(slotIndex, target = window) {
+  if (typeof target.choice !== 'function') return;
   const persist = persistOf(target);
   const state = stateOf(target);
   const stampedFive = new Set(persist.stampedFive || []);
@@ -276,31 +247,10 @@ export function buildFiveStampPicker(target = window) {
     seen.add(card.id);
     return true;
   });
-  let html = '<div class="summary tarot-shop">';
-  html += '<div class="pack-picker-header"><h3>Five Star Stamp</h3><p>Choose any card. It slots into Sequences as a multiple of 5 (5, 10, 15, 20).</p></div>';
-  if (eligible.length) {
-    html += '<div class="shop-items-row stamp-picker-row">';
-    for (const card of eligible) {
-      const typeLabel = card.type === 'major' ? 'Major' : card.type === 'court' ? 'Court' : 'Minor';
-      html += `<div class="upg-card stamp-option" onclick="applyFiveStampTarget('${card.id}')">
-        <div class="upg-title-strip"><span>${card.name || card.id}</span></div>
-        <div class="upg-art"><span class="stamp-suit-badge" style="background:radial-gradient(circle at 35% 35%,#d4a017,#7a5800 72%,#2a1c00);color:#f5e0b4;font-family:Georgia,serif;font-size:14px;line-height:36px">5★</span></div>
-        <div class="upg-body"><div class="upg-desc">${typeLabel} · ${card.points} Chips</div></div>
-        <div class="upg-footer"><button class="sbtn sbtn-pick" aria-label="Stamp" onclick="applyFiveStampTarget('${card.id}');event.stopPropagation()"></button></div>
-      </div>`;
-    }
-    html += '</div>';
-  } else {
-    html += '<p style="text-align:center;color:#8a7551;padding:20px 0">No eligible cards to stamp.</p>';
-  }
-  html += '<div style="text-align:center;margin-top:10px"><button onclick="openShopMain()" style="background:transparent;border:none;color:#8a7551;font-size:12px;cursor:pointer;text-decoration:underline">Cancel</button></div>';
-  html += '</div>';
-  return html;
-}
-
-export function openFiveStampPicker(slotIndex, target = window) {
-  const html = buildFiveStampPicker(target);
-  if (typeof target.showOverlay === 'function') target.showOverlay(html);
+  if (!eligible.length) return;
+  target.choice('Five Star Stamp', 'Choose any card — it slots into Sequences as a multiple of 5 (5, 10, 15, 20).', eligible, card => {
+    applyFiveStampTarget(card.id, target);
+  });
 }
 
 export function applyFiveStampTarget(cardId, target = window) {
@@ -330,7 +280,7 @@ export function applyStampTarget(cardId, target = window) {
 export function installShopOverlayFlow(target = window){
   if(!target || target.__tlrShopOverlayFlowInstalled)return;
   target.__tlrShopOverlayFlowInstalled=true;
-  const api={packAccent,animatePackOpen,buildUpgradePicker,pickPackUpgrade,buyPack,buildStampPicker,openStampPicker,applyStampTarget,buildFiveStampPicker,openFiveStampPicker,applyFiveStampTarget};
+  const api={packAccent,animatePackOpen,buildUpgradePicker,pickPackUpgrade,buyPack,openStampPicker,applyStampTarget,openFiveStampPicker,applyFiveStampTarget};
   target.tlrShopOverlayFlow=api;
   if(typeof target.animatePackOpen!=='function')target.animatePackOpen=(packId,callback)=>animatePackOpen(packId,callback,target);
   if(typeof target.buyPack!=='function')target.buyPack=(packId,cost)=>buyPack(packId,cost,target);
