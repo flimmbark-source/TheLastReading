@@ -49,6 +49,7 @@ export function syncPersistToStore(target = window){
   target.tlrStore.dispatch({type:target.tlrActions.SYNC_LEGACY_PERSIST,persist:{
     reserve:persist.pool,totalScore:persist.totalScore||0,
     upgrades:persist.up,relics:persist.relics,relicUsed:persist.relicUsed,
+    stampedMajors:persist.stampedMajors||[],
   }});
 }
 
@@ -85,6 +86,7 @@ export function marketPurchase(purchase,target = window){
   target.tlrStore.dispatch({type:target.tlrActions.SYNC_LEGACY_PERSIST,persist:{
     reserve:persist.pool,totalScore:persist.totalScore||0,
     upgrades:persist.up,relics:persist.relics,relicUsed:persist.relicUsed,
+    stampedMajors:persist.stampedMajors||[],
   }});
   target.tlrStore.dispatch({type:target.tlrActions.BUY_MARKET_ITEM,purchase});
   const st=target.tlrStore.getState();
@@ -92,6 +94,7 @@ export function marketPurchase(purchase,target = window){
   persist.pool=st.persist.reserve;
   persist.up=Object.assign({},st.persist.upgrades);
   persist.relics=st.persist.relics.slice();
+  persist.stampedMajors=(st.persist.stampedMajors||[]).slice();
   return true;
 }
 

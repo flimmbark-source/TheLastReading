@@ -90,18 +90,23 @@ function applyRankPatterns(result, cards, upgrades) {
   }
 }
 
-function applyCourtPatterns(result, cards, upgrades) {
+function applyCourtPatterns(result, cards, upgrades, context = {}) {
   const courts = courtCards(cards);
+  const stampedIds = new Set(context.stampedMajors || []);
+  const stampedMajorsInPlay = majorCards(cards).filter(
+    card => stampedIds.has(card.id) && Array.isArray(card.suits) && card.suits.length > 0
+  );
   const distinctRanks = new Set(courts.map(card => card.rank)).size;
   let royalSuit = null;
   let royalCount = 0;
 
-  if (distinctRanks >= 3) {
+  if (distinctRanks >= 3 || (stampedMajorsInPlay.length > 0 && distinctRanks + stampedMajorsInPlay.length >= 3)) {
     for (const suit of SUITS) {
-      const ranksInSuit = new Set(courts.filter(card => card.suit === suit).map(card => card.rank));
-      if (ranksInSuit.size >= 3) {
+      const tokensInSuit = new Set(courts.filter(card => card.suit === suit).map(card => card.rank));
+      stampedMajorsInPlay.filter(card => card.suits.includes(suit)).forEach(card => tokensInSuit.add(card.id));
+      if (tokensInSuit.size >= 3) {
         royalSuit = suit;
-        royalCount = ranksInSuit.size;
+        royalCount = tokensInSuit.size;
         break;
       }
     }
@@ -207,7 +212,7 @@ export function computeScore(cards, options = {}) {
   applyConstellationScoreAdjustments(result, cards, context);
   if (!options.skipFlatBonuses) applyFlatUpgradeBonuses(result, cards, upgrades, context);
   applyRankPatterns(result, cards, upgrades);
-  applyCourtPatterns(result, cards, upgrades);
+  applyCourtPatterns(result, cards, upgrades, context);
   applyMajorPatterns(result, cards, upgrades);
   applySpecialUpgradePatterns(result, cards, upgrades);
   applyContextBonuses(result, cards, upgrades, context);

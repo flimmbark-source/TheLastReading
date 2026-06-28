@@ -4,6 +4,7 @@
 
 function runtime(target){return target.tlrRuntime || {};}
 function persistOf(target){return runtime(target).persist || {};}
+function stateOf(target){return runtime(target).state || target.state || {};}
 function market(target){return target.tlrMarketFlow || {};}
 
 const SHORT_UPGRADE_COPY = Object.freeze({
@@ -197,12 +198,74 @@ export function buyPack(packId,cost,target = window){
   return true;
 }
 
+const SUIT_BADGE = Object.freeze({ Cups: 'C', Wands: 'W', Swords: 'S', Pentacles: 'P' });
+
+export function buildStampPicker(target = window) {
+  const persist = persistOf(target);
+  const state = stateOf(target);
+  const stampedIds = new Set(persist.stampedMajors || []);
+  const allCards = [
+    ...(state.deck || []),
+    ...(state.hand || []),
+    ...(state.discard || []),
+    ...(state.spread || []).filter(Boolean),
+  ];
+  const seen = new Set();
+  const eligible = allCards.filter(card => {
+    if (card.type !== 'major') return false;
+    if (!Array.isArray(card.suits) || !card.suits.length) return false;
+    if (stampedIds.has(card.id)) return false;
+    if (seen.has(card.id)) return false;
+    seen.add(card.id);
+    return true;
+  });
+  let html = '<div class="summary tarot-shop">';
+  html += '<div class="pack-picker-header"><h3>Suit Stamp</h3><p>Choose a Major Arcana. Its suit counts toward Royal Court.</p></div>';
+  if (eligible.length) {
+    html += '<div class="shop-items-row stamp-picker-row">';
+    for (const card of eligible) {
+      const badge = (card.suits || []).map(s => SUIT_BADGE[s] || s[0]).join('/');
+      const suitsLabel = (card.suits || []).join(', ');
+      html += `<div class="upg-card stamp-option" onclick="applyStampTarget('${card.id}')">
+        <div class="upg-title-strip"><span>${card.name || card.id}</span></div>
+        <div class="upg-art"><span class="stamp-suit-badge">${badge}</span></div>
+        <div class="upg-body"><div class="upg-desc">${suitsLabel}</div></div>
+        <div class="upg-footer"><button class="sbtn sbtn-pick" aria-label="Stamp" onclick="applyStampTarget('${card.id}');event.stopPropagation()"></button></div>
+      </div>`;
+    }
+    html += '</div>';
+  } else {
+    html += '<p style="text-align:center;color:#8a7551;padding:20px 0">No eligible Majors to stamp.</p>';
+  }
+  html += '<div style="text-align:center;margin-top:10px"><button onclick="openShopMain()" style="background:transparent;border:none;color:#8a7551;font-size:12px;cursor:pointer;text-decoration:underline">Cancel</button></div>';
+  html += '</div>';
+  return html;
+}
+
+export function openStampPicker(slotIndex, target = window) {
+  const html = buildStampPicker(target);
+  if (typeof target.showOverlay === 'function') target.showOverlay(html);
+}
+
+export function applyStampTarget(cardId, target = window) {
+  if (!cardId) return false;
+  const persist = persistOf(target);
+  if (!Array.isArray(persist.stampedMajors)) persist.stampedMajors = [];
+  if (!persist.stampedMajors.includes(cardId)) persist.stampedMajors.push(cardId);
+  if (typeof target.tlrSyncPersistToStore === 'function') target.tlrSyncPersistToStore();
+  if (typeof target.render === 'function') target.render();
+  if (typeof target.openShopMain === 'function') target.openShopMain();
+  return true;
+}
+
 export function installShopOverlayFlow(target = window){
   if(!target || target.__tlrShopOverlayFlowInstalled)return;
   target.__tlrShopOverlayFlowInstalled=true;
-  const api={packAccent,animatePackOpen,buildUpgradePicker,pickPackUpgrade,buyPack};
+  const api={packAccent,animatePackOpen,buildUpgradePicker,pickPackUpgrade,buyPack,buildStampPicker,openStampPicker,applyStampTarget};
   target.tlrShopOverlayFlow=api;
   if(typeof target.animatePackOpen!=='function')target.animatePackOpen=(packId,callback)=>animatePackOpen(packId,callback,target);
   if(typeof target.buyPack!=='function')target.buyPack=(packId,cost)=>buyPack(packId,cost,target);
   if(typeof target.pickPackUpgrade!=='function')target.pickPackUpgrade=upgradeKey=>pickPackUpgrade(upgradeKey,target);
+  if(typeof target.openStampPicker!=='function')target.openStampPicker=idx=>openStampPicker(idx,target);
+  if(typeof target.applyStampTarget!=='function')target.applyStampTarget=cardId=>applyStampTarget(cardId,target);
 }

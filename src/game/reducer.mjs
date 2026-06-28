@@ -121,7 +121,7 @@ function scoreReading(state) {
   const score = computeScore(cards, {
     upgrades: persist.upgrades,
     relics: persist.relics,
-    context: scoringContext(run),
+    context: { ...scoringContext(run), stampedMajors: persist.stampedMajors || [] },
   });
 
   const threshold = constellationThreshold(currentThreshold(run.thresholdIndex, run.thresholdBonus), run);
@@ -418,6 +418,7 @@ function syncLegacyPersist(state, persist = {}) {
   if ('unlockedFragments' in persist) next.unlockedFragments = [...persist.unlockedFragments];
   if ('discoveredArchiveItems' in persist) next.discoveredArchiveItems = [...persist.discoveredArchiveItems];
   if ('seenTutorials' in persist) next.seenTutorials = { ...persist.seenTutorials };
+  if ('stampedMajors' in persist) next.stampedMajors = [...persist.stampedMajors];
   return replacePersist(state, next);
 }
 
