@@ -73,16 +73,27 @@ export function installHandCardGestures(target = window){
     const cards=handCards();
     const n=cards.length;
     if(!n)return;
+    // When the dragged card has been moved to document.body it is no longer
+    // in the hand DOM, so handCards() returns n-1 cards. We must account for
+    // that missing slot when computing centre offsets and recovering each
+    // remaining card's original hand position.
+    const inHand=cards.includes(g.cardEl);
+    const total=inHand?n:n+1;
     cards.forEach((el,i)=>{
-      let ni=i;
+      let ni;
       if(el===g.cardEl){
         ni=hoverIndex;
-      }else if(i<g.origIndex){
-        if(i>=hoverIndex)ni=i+1;
-      }else if(i>g.origIndex){
-        if(i<=hoverIndex)ni=i-1;
+      }else{
+        // Recover the card's original hand index. When the dragged card is on
+        // body, every card after origIndex shifted down by one in the DOM.
+        const orig=inHand?i:(i<g.origIndex?i:i+1);
+        if(orig<g.origIndex){
+          ni=orig>=hoverIndex?orig+1:orig;
+        }else{
+          ni=orig<=hoverIndex?orig-1:orig;
+        }
       }
-      el.style.setProperty('--slot',(ni-(n-1)/2).toString());
+      el.style.setProperty('--slot',(ni-(total-1)/2).toString());
     });
     g.hoverIndex=hoverIndex;
   };
