@@ -94,7 +94,7 @@ const TUT_STEPS = [
   { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', waitFor: 'advCardPlaced', text: 'Place one card to face the Event and see what happens.' },
   { sel: '#advHud .adv-hud__main', fallbackSel: '#advHud', arrow: 'up', text: 'A failed response costs Resolve. Reach zero and the run ends.' },
   { center: true, key: TUT_ADV_APPROACH_KEY, text: 'Gold nodes show the approaches this Event accepts. Card icons show which approaches you\'re holding.' },
-  { center: true, key: TUT_ADV_APPROACH_CHAIN_KEY, text: 'If your approach isn\'t an exact match, it chains to the nearest accepted node. An exact match earns a Great Success — a better reward.' },
+  { center: true, key: TUT_ADV_APPROACH_CHAIN_KEY, text: 'If your approach isn\'t an exact match, it chains to the nearest accepted node.' },
   { sel: '.adv-rewards', fallbackSel: '.result-panel', arrow: 'up', key: TUT_ADV_REWARD_KEY, text: 'When you succeed, pick a reward. Rewards shape your run.' },
   { sel: '#relicRack', arrow: 'up', key: TUT_ADV_ITEMS_KEY, text: 'Items you earn are carried here. Tap a consumable to use it.' },
   { center: true, key: TUT_ADV_COMPLETE_KEY, text: "You finished a Set. Complete one more to win the adventure." },
