@@ -8,9 +8,12 @@ const TUT_CONSTELLATION_KEY = 'tlr_tut_constellation';
 const TUT_THRESHOLD_KEY = 'tlr_tut_threshold';
 const TUT_DISCARD_KEY = 'tlr_tut_discard';
 const TUT_ADVENTURE_KEY = 'tlr_tut_adventure';
+const TUT_ADV_REWARD_KEY = 'tlr_tut_adv_reward';
+const TUT_ADV_ITEMS_KEY = 'tlr_tut_adv_items';
+const TUT_ADV_COMPLETE_KEY = 'tlr_tut_adv_complete';
 const INTRO_LAST_STEP = 2;
 const ADVENTURE_FIRST_STEP = 21;
-const ADVENTURE_LAST_STEP = 27;
+const ADVENTURE_LAST_STEP = 26;
 
 export const TUT_STEP = Object.freeze({
   INTRO: 0,
@@ -40,7 +43,9 @@ export const TUT_STEP = Object.freeze({
   ADVENTURE_POTENCY: 24,
   ADVENTURE_PLACE: 25,
   ADVENTURE_RESOLVE: 26,
-  ADVENTURE_COMPLETE: 27,
+  ADVENTURE_REWARD: 27,
+  ADVENTURE_ITEMS: 28,
+  ADVENTURE_COMPLETE: 29,
 });
 
 let tutStep = -1;
@@ -80,9 +85,11 @@ const TUT_STEPS = [
   { sel: '#advEventDeck .adv-event-hero', fallbackSel: '#advEventDeck', arrow: 'up', text: 'Read the Event and decide how you want to respond.' },
   { sel: '#hand .card[data-uid] .adv-sigil-seal', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The blue symbol shows the kind of response this card represents.' },
   { sel: '#hand .card[data-uid] .seal.tr', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The red number shows how strong that response is.' },
-  { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', text: 'Place one card to face the Event and see what happens.' },
-  { sel: '#advHud .adv-hud__main', fallbackSel: '#advHud', arrow: 'up', text: 'A failed response costs Resolve. If your Resolve reaches zero, the run ends.' },
-  { center: true, text: 'Complete 5 Events to finish a Spread. Complete 2 Spreads to finish the adventure.' },
+  { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', waitFor: 'advCardPlaced', text: 'Place one card to face the Event and see what happens.' },
+  { sel: '#advHud .adv-hud__main', fallbackSel: '#advHud', arrow: 'up', text: 'A failed response costs Resolve. Reach zero and the run ends.' },
+  { sel: '.adv-rewards', fallbackSel: '.result-panel', arrow: 'up', key: TUT_ADV_REWARD_KEY, text: 'When you succeed, pick a reward. Rewards shape your run.' },
+  { sel: '#relicRack', arrow: 'up', key: TUT_ADV_ITEMS_KEY, text: 'Items you earn are carried here. Tap a consumable to use it.' },
+  { center: true, key: TUT_ADV_COMPLETE_KEY, text: "You finished a Spread. Complete one more to win the adventure." },
 ];
 
 const MARKET_TUT_STEPS = [
@@ -165,6 +172,11 @@ export function tutSkip() {
     tutHide();
     return;
   }
+  if (window.__tlrAdventureActive) {
+    markStepSeen(tutStep);
+    tutHide();
+    return;
+  }
   markStepSeen(tutStep);
   localStorage.setItem(TUT_KEY, '1');
   tutDone = true;
@@ -173,7 +185,7 @@ export function tutSkip() {
 
 export function replayTutorial() {
   if (window.__tlrAdventureActive) {
-    localStorage.removeItem(TUT_ADVENTURE_KEY);
+    [TUT_ADVENTURE_KEY, TUT_ADV_REWARD_KEY, TUT_ADV_ITEMS_KEY, TUT_ADV_COMPLETE_KEY].forEach(k => localStorage.removeItem(k));
     queuedTipSteps = [];
     clearTimeout(queuedTipTimer);
     queuedTipTimer = null;
@@ -304,10 +316,18 @@ function onPlacement() {
 
 export function tutSignal(eventName) {
   if (eventName === 'cardPlaced') onPlacement();
+  if (eventName === 'advRewardShown') { queueTip(TUT_STEP.ADVENTURE_REWARD, 350); return; }
+  if (eventName === 'advItemGained') { queueTip(TUT_STEP.ADVENTURE_ITEMS, 350); return; }
+  if (eventName === 'advSetComplete') { queueTip(TUT_STEP.ADVENTURE_COMPLETE, 350); return; }
   if (tutStep < 0) return;
   const s = TUT_STEPS[tutStep];
   if (!s || s.waitFor !== eventName) return;
   tutIgnoreClicksUntil = Date.now() + 180;
+  if (isAdventureTutorialStep(tutStep)) {
+    if (tutStep < ADVENTURE_LAST_STEP) { tutShow(tutStep + 1, { force: true }); }
+    else { localStorage.setItem(TUT_ADVENTURE_KEY, '1'); tutHide(); }
+    return;
+  }
   if (tutStep < TUT_STEP.PLACE_CARD) { tutShow(tutStep + 1); return; }
   finishIntro();
   queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
