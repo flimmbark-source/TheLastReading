@@ -1291,6 +1291,7 @@ export function installAdventureModeV3(target = window) {
     if (!el.classList.contains('hidden')) { el.classList.add('hidden'); return; }
     el.innerHTML = renderApproachWebHTML();
     el.classList.remove('hidden');
+    target.tutSignal?.('advApproachWebOpened');
   }
 
   function installApproachWebControls() {
