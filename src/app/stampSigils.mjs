@@ -1,11 +1,15 @@
 const STYLE_ID = 'stamp-sigils-style';
 
-const SUIT_GLYPH = Object.freeze({ Cups: '🍷', Wands: '🪄', Swords: '🗡', Pentacles: '𖤐' });
-const SUIT_COLOR = Object.freeze({
-  Cups: '#1e6fd4',
-  Wands: '#d46a08',
-  Swords: '#3a6aa0',
-  Pentacles: '#2e7d42',
+// Simple thematic glyphs — rendered as text (no color emoji) so they read
+// cleanly at small sizes in the wax-seal style.
+const SUIT_GLYPH = Object.freeze({ Cups: '♥', Wands: '✦', Swords: '✠', Pentacles: '★' });
+
+// Dark, rich radial-gradient backgrounds matching the .seal.tr wax-seal look.
+const SUIT_GRADIENT = Object.freeze({
+  Cups:      'radial-gradient(circle at 35% 35%,#3a6bbf,#152a5c 72%,#070e1e)',
+  Wands:     'radial-gradient(circle at 35% 35%,#b85e10,#5c2804 72%,#200e00)',
+  Swords:    'radial-gradient(circle at 35% 35%,#4a5f70,#1e2f3c 72%,#0a1218)',
+  Pentacles: 'radial-gradient(circle at 35% 35%,#2a6e36,#103018 72%,#051408)',
 });
 
 function ensureStyle(doc) {
@@ -24,11 +28,11 @@ function ensureStyle(doc) {
       display: flex;
       align-items: center;
       justify-content: center;
-      font: 400 12px/1 "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
-      color: #fff;
-      text-shadow: 0 1px 3px rgba(0,0,0,1);
-      border: 2px solid rgba(255,255,255,.75);
-      box-shadow: 0 1px 5px rgba(0,0,0,1), 0 0 0 1px rgba(0,0,0,.6);
+      font: 900 10px/1 Georgia, serif;
+      color: #f5e0b4;
+      text-shadow: 0 1px 2px rgba(0,0,0,.9);
+      border: 1.5px solid rgba(210,175,100,.65);
+      box-shadow: 0 1px 4px rgba(0,0,0,.9), 0 0 0 1px rgba(0,0,0,.5);
       pointer-events: none;
       letter-spacing: 0;
     }
@@ -37,7 +41,7 @@ function ensureStyle(doc) {
       height: 26px;
       top: 7px;
       left: 7px;
-      font-size: 15px;
+      font-size: 13px;
       border-width: 2px;
     }
     .stamp-suit-badge {
@@ -45,11 +49,13 @@ function ensureStyle(doc) {
       width: 36px;
       height: 36px;
       border-radius: 50%;
-      background: #c97c2a;
-      color: #fff;
-      font: 900 13px/36px Arial, sans-serif;
+      background: radial-gradient(circle at 35% 35%,#555,#222 72%,#111);
+      color: #f5e0b4;
+      font: 900 14px/36px Georgia, serif;
       text-align: center;
       letter-spacing: 0;
+      border: 1.5px solid rgba(210,175,100,.5);
+      box-shadow: 0 1px 4px rgba(0,0,0,.8);
     }
   `;
   doc.head.appendChild(style);
@@ -98,7 +104,7 @@ function decorate(target = window) {
 
     const suits = card.suits;
     const primarySuit = suits[0];
-    seal.style.background = SUIT_COLOR[primarySuit] || '#888';
+    seal.style.background = SUIT_GRADIENT[primarySuit] || 'radial-gradient(circle at 35% 35%,#555,#222 72%,#111)';
     seal.textContent = SUIT_GLYPH[primarySuit] || primarySuit[0];
     seal.title = `Suit Stamp: ${suits.join(', ')}`;
     seal.setAttribute('aria-label', `Suit Stamp: ${suits.join(', ')}`);

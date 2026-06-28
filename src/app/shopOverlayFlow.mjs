@@ -198,7 +198,13 @@ export function buyPack(packId,cost,target = window){
   return true;
 }
 
-const SUIT_GLYPH = Object.freeze({ Cups: '🍷', Wands: '🪄', Swords: '🗡', Pentacles: '𖤐' });
+const SUIT_GLYPH    = Object.freeze({ Cups: '♥', Wands: '✦', Swords: '✠', Pentacles: '★' });
+const SUIT_GRADIENT = Object.freeze({
+  Cups:      'radial-gradient(circle at 35% 35%,#3a6bbf,#152a5c 72%,#070e1e)',
+  Wands:     'radial-gradient(circle at 35% 35%,#b85e10,#5c2804 72%,#200e00)',
+  Swords:    'radial-gradient(circle at 35% 35%,#4a5f70,#1e2f3c 72%,#0a1218)',
+  Pentacles: 'radial-gradient(circle at 35% 35%,#2a6e36,#103018 72%,#051408)',
+});
 
 export function buildStampPicker(target = window) {
   const persist = persistOf(target);
@@ -224,11 +230,13 @@ export function buildStampPicker(target = window) {
   if (eligible.length) {
     html += '<div class="shop-items-row stamp-picker-row">';
     for (const card of eligible) {
-      const badge = (card.suits || []).map(s => SUIT_GLYPH[s] || s[0]).join('');
+      const primarySuit = (card.suits || [])[0] || '';
+      const allGlyphs = (card.suits || []).map(s => SUIT_GLYPH[s] || s[0]).join(' ');
+      const gradient = SUIT_GRADIENT[primarySuit] || '#555';
       const suitsLabel = (card.suits || []).join(', ');
       html += `<div class="upg-card stamp-option" onclick="applyStampTarget('${card.id}')">
         <div class="upg-title-strip"><span>${card.name || card.id}</span></div>
-        <div class="upg-art"><span class="stamp-suit-badge">${badge}</span></div>
+        <div class="upg-art"><span class="stamp-suit-badge" style="background:${gradient};color:#f5e0b4;font-family:Georgia,serif;font-size:16px;line-height:36px">${allGlyphs}</span></div>
         <div class="upg-body"><div class="upg-desc">${suitsLabel}</div></div>
         <div class="upg-footer"><button class="sbtn sbtn-pick" aria-label="Stamp" onclick="applyStampTarget('${card.id}');event.stopPropagation()"></button></div>
       </div>`;
