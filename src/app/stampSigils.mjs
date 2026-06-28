@@ -2,10 +2,10 @@ const STYLE_ID = 'stamp-sigils-style';
 
 const SUIT_BADGE_CHAR = Object.freeze({ Cups: 'C', Wands: 'W', Swords: 'S', Pentacles: 'P' });
 const SUIT_COLOR = Object.freeze({
-  Cups: '#3a7fd5',
-  Wands: '#c97c2a',
-  Swords: '#6b8fa8',
-  Pentacles: '#4a8f5a',
+  Cups: '#1e6fd4',
+  Wands: '#d46a08',
+  Swords: '#3a6aa0',
+  Pentacles: '#2e7d42',
 });
 
 function ensureStyle(doc) {
@@ -17,26 +17,27 @@ function ensureStyle(doc) {
       position: absolute;
       top: 4px;
       left: 4px;
-      width: 15px;
-      height: 15px;
+      width: 20px;
+      height: 20px;
       border-radius: 50%;
       z-index: 20;
       display: flex;
       align-items: center;
       justify-content: center;
-      font: 900 7px/1 Arial, sans-serif;
+      font: 900 9px/1 Arial, sans-serif;
       color: #fff;
-      border: 1px solid rgba(255,255,255,.55);
-      box-shadow: 0 1px 3px rgba(0,0,0,.8);
+      text-shadow: 0 1px 2px rgba(0,0,0,.9);
+      border: 2px solid rgba(255,255,255,.75);
+      box-shadow: 0 1px 5px rgba(0,0,0,1), 0 0 0 1px rgba(0,0,0,.6);
       pointer-events: none;
       letter-spacing: 0;
     }
     .card-detail-card .card > .stamp-sigil {
-      width: 22px;
-      height: 22px;
+      width: 26px;
+      height: 26px;
       top: 7px;
       left: 7px;
-      font-size: 10px;
+      font-size: 11px;
       border-width: 2px;
     }
     .stamp-suit-badge {
