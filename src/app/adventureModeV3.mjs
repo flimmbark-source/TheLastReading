@@ -1228,17 +1228,23 @@ export function installAdventureModeV3(target = window) {
     if (!event) return false;
     session.awaitingOutcome = true;
     setBusy(true);
-    const liveCard = cardWithRunChanges(CARD_BY_ID.get(card.id) || card, card.uid);
-    const resolution = resolveCard(event, liveCard);
-    applyResolutionAndCounters(resolution);
-    recordSingleCardPlay(session.run, event, liveCard, resolution);
-    session.lastEvent = event;
-    session.lastResolution = resolution;
-    session.lastCard = liveCard;
-    session.lastSlotIndex = slotIndex;
-    updateChrome();
-    showOutcome(resolution, liveCard);
-    return true;
+    try {
+      const liveCard = cardWithRunChanges(CARD_BY_ID.get(card.id) || card, card.uid);
+      const resolution = resolveCard(event, liveCard);
+      applyResolutionAndCounters(resolution);
+      recordSingleCardPlay(session.run, event, liveCard, resolution);
+      session.lastEvent = event;
+      session.lastResolution = resolution;
+      session.lastCard = liveCard;
+      session.lastSlotIndex = slotIndex;
+      updateChrome();
+      showOutcome(resolution, liveCard);
+      return true;
+    } catch (err) {
+      session.awaitingOutcome = false;
+      setBusy(false);
+      throw err;
+    }
   }
 
   function newSession() {

@@ -106,8 +106,8 @@ export function installAdventureInteractionFx(target = window) {
       });
       if (deck) deck.innerHTML = eventHtmlAfter;
 
-      Promise.resolve(animation)
-        .catch(() => false)
+      const safetyTimeout = new Promise(resolve => target.setTimeout(resolve, 8000));
+      Promise.race([Promise.resolve(animation).catch(() => false), safetyTimeout])
         .finally(() => {
           originalShowOverlay.call(target, pendingOverlay.html, ...pendingOverlay.args);
         });

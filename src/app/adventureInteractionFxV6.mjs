@@ -128,10 +128,11 @@ function preloadImage(target, url) {
       settled = true;
       resolve(value);
     };
-    image.onload = () => done(true);
-    image.onerror = () => done(false);
+    const timer = (target.setTimeout || setTimeout)(() => done(false), 6000);
+    image.onload = () => { (target.clearTimeout || clearTimeout)(timer); done(true); };
+    image.onerror = () => { (target.clearTimeout || clearTimeout)(timer); done(false); };
     image.src = url;
-    if (image.complete && image.naturalWidth > 0) done(true);
+    if (image.complete && image.naturalWidth > 0) { (target.clearTimeout || clearTimeout)(timer); done(true); }
   });
 }
 
