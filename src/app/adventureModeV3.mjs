@@ -793,6 +793,10 @@ export function installAdventureModeV3(target = window) {
   function isOfferUseful(offer) {
     if (!offer) return false;
     if (offer.type === 'RESTORE_RESOLVE') return session.run.resolve < session.run.maxResolve;
+    if (offer.type === 'UPGRADE_CARD') {
+      const nodes = offer.nodes || [];
+      return buildAdventureDeckCards().some(card => (!nodes.length || nodes.includes(cardNode(card))) && card.points < 5);
+    }
     if (offer.type === 'CONSUMABLE') {
       const statuses = session.run.statuses || [];
       if (offer.itemId === 'purifying_water') return statuses.length > 0;
@@ -835,9 +839,8 @@ export function installAdventureModeV3(target = window) {
       );
       if (hasEligible) reinforce.type = 'SEAL_CARD';
     }
-    let provision = cloneOffer(profile.provision);
+    const provision = cloneOffer(profile.provision);
     let crossroads = cloneOffer(profile.crossroads);
-    if (!isOfferUseful(provision)) provision = randomOrdinaryOffer([rewardLabel(reinforce)]);
     if (!isOfferUseful(crossroads)) crossroads = randomOrdinaryOffer([rewardLabel(reinforce), rewardLabel(provision)]);
     const offers = [reinforce, provision, crossroads];
     if (resolution.tier === RESULT.GREAT_SUCCESS) {

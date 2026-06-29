@@ -172,28 +172,27 @@ const add = (...nodes) => Object.freeze({ type: 'ADD_SIGIL_CARD', nodes });
 const upgrade = (...nodes) => Object.freeze({ type: 'UPGRADE_CARD', nodes });
 const consume = id => Object.freeze({ type: 'CONSUMABLE', itemId: id });
 const banishTwo = Object.freeze({ type: 'BANISH_TWO' });
-const restoreOne = Object.freeze({ type: 'RESTORE_RESOLVE', amount: 1 });
 const chooseConsumable = Object.freeze({ type: 'CHOOSE_CONSUMABLE' });
 const signature = itemId => Object.freeze({ type: 'SIGNATURE_ITEM', itemId });
 
 export const OUTCOME_REWARDS = Object.freeze({
-  'iron_gate:wander':              Object.freeze({ reinforce: add(N.INVESTIGATION),               provision: consume('spyglass'),           crossroads: banishTwo,                             signature: signature('old_road_map') }),
+  'iron_gate:wander':              Object.freeze({ reinforce: add(N.INVESTIGATION),               provision: consume('spyglass'),           crossroads: upgrade(N.FORTUNE, N.MYSTERY),          signature: signature('old_road_map') }),
   'iron_gate:decipher':            Object.freeze({ reinforce: add(N.MYSTERY),                     provision: consume('black_salt'),          crossroads: upgrade(N.MYSTERY, N.AUTHORITY),        signature: signature('gatekeepers_ring') }),
   'iron_gate:force':               Object.freeze({ reinforce: add(N.PHYSICAL, N.AGGRESSION),      provision: consume('whetstone'),           crossroads: upgrade(N.INVESTIGATION, N.ENDURANCE),  signature: signature('broken_chain') }),
   'ambush:guard':                  Object.freeze({ reinforce: add(N.PROTECTION),                  provision: consume('iron_ward'),           crossroads: upgrade(N.PROTECTION, N.ENDURANCE),     signature: signature('bandits_buckler') }),
   'ambush:vanish':                 Object.freeze({ reinforce: upgrade(N.DECEPTION),               provision: consume('smoke_bomb'),          crossroads: banishTwo,                             signature: signature('smoke_cloth_cloak') }),
-  'ambush:fight':                  Object.freeze({ reinforce: add(N.AGGRESSION),                  provision: consume('whetstone'),           crossroads: banishTwo,                             signature: signature('notched_blade') }),
+  'ambush:fight':                  Object.freeze({ reinforce: add(N.AGGRESSION),                  provision: consume('whetstone'),           crossroads: upgrade(N.PROTECTION, N.INVESTIGATION), signature: signature('notched_blade') }),
   'strange_shrine:commune':        Object.freeze({ reinforce: add(N.MYSTERY),                     provision: consume('black_salt'),          crossroads: banishTwo,                             signature: signature('shrine_spirit') }),
   'strange_shrine:honor':          Object.freeze({ reinforce: add(N.COMPASSION),                  provision: consume('blessed_oil'),         crossroads: consume('purifying_water'),             signature: signature('prayer_beads') }),
-  'strange_shrine:wager':          Object.freeze({ reinforce: add(N.FORTUNE),                     provision: consume('marked_coin'),         crossroads: banishTwo,                             signature: signature('lucky_bones') }),
+  'strange_shrine:wager':          Object.freeze({ reinforce: add(N.FORTUNE),                     provision: consume('marked_coin'),         crossroads: upgrade(N.MYSTERY),                    signature: signature('lucky_bones') }),
   'flooded_road:wait':             Object.freeze({ reinforce: add(N.ENDURANCE),                   provision: consume('healing_draught'),     crossroads: consume('spyglass'),                    signature: signature('riverwatch_charm') }),
   'flooded_road:adapt':            Object.freeze({ reinforce: upgrade(N.TRANSFORMATION),          provision: consume('transmutation_dust'),  crossroads: banishTwo,                             signature: signature('river_stone_charm') }),
-  'flooded_road:ford':             Object.freeze({ reinforce: add(N.PHYSICAL),                    provision: consume('whetstone'),           crossroads: banishTwo,                             signature: signature('ferrymans_boots') }),
+  'flooded_road:ford':             Object.freeze({ reinforce: add(N.PHYSICAL),                    provision: consume('whetstone'),           crossroads: upgrade(N.ENDURANCE),                  signature: signature('ferrymans_boots') }),
   'cornered_beast:soothe':         Object.freeze({ reinforce: add(N.COMPASSION),                  provision: consume('purifying_water'),     crossroads: banishTwo,                             signature: signature('greyfang') }),
-  'cornered_beast:brace':          Object.freeze({ reinforce: add(N.PROTECTION),                  provision: consume('iron_ward'),           crossroads: banishTwo,                             signature: signature('hide_mantle') }),
+  'cornered_beast:brace':          Object.freeze({ reinforce: add(N.PROTECTION),                  provision: consume('iron_ward'),           crossroads: upgrade(N.AGGRESSION),                 signature: signature('hide_mantle') }),
   'cornered_beast:put_down':       Object.freeze({ reinforce: add(N.AGGRESSION),                  provision: consume('whetstone'),           crossroads: banishTwo,                             signature: signature('beast_fang_knife') }),
   'traveling_merchant:bargain':    Object.freeze({ reinforce: upgrade(N.AUTHORITY),               provision: consume('lucky_token'),         crossroads: banishTwo,                             signature: signature('merchants_signet') }),
-  'traveling_merchant:dice':       Object.freeze({ reinforce: add(N.FORTUNE),                     provision: consume('marked_coin'),         crossroads: banishTwo,                             signature: signature('loaded_dice') }),
+  'traveling_merchant:dice':       Object.freeze({ reinforce: add(N.FORTUNE),                     provision: consume('marked_coin'),         crossroads: upgrade(N.DECEPTION),                  signature: signature('loaded_dice') }),
   'traveling_merchant:rob':        Object.freeze({ reinforce: add(N.AGGRESSION, N.DECEPTION),     provision: consume('whetstone'),           crossroads: chooseConsumable,                       signature: signature('stolen_strongbox') }),
   'suspicious_villagers:reassure': Object.freeze({ reinforce: add(N.COMPASSION),                  provision: consume('purifying_water'),     crossroads: upgrade(N.AUTHORITY, N.INVESTIGATION),  signature: signature('village_token') }),
   'suspicious_villagers:impress':  Object.freeze({ reinforce: add(N.CREATION),                    provision: consume('disguise_kit'),        crossroads: upgrade(),                              signature: signature('artisans_favor') }),
