@@ -813,8 +813,10 @@ export function installAdventureModeV3(target = window) {
     const loaded = hasItem('loaded_dice') && !itemState().usedSet.loaded_dice && !state.altOffers
       ? `<button class="adv-mini-btn" onclick="tlrAdventureV3LoadedDice()">Use Loaded Dice</button>` : '';
     const tabs = state.altOffers ? `<div class="adv-offer-tabs"><button aria-pressed="${state.selectedSet !== 'alt'}" onclick="tlrAdventureV3OfferSet('base')">Original</button><button aria-pressed="${state.selectedSet === 'alt'}" onclick="tlrAdventureV3OfferSet('alt')">Rerolled</button></div>` : '';
+    const canSkip = !isTriumph && session.run.resolve < session.run.maxResolve;
+    const skip = canSkip ? `<button class="adv-mini-btn" onclick="tlrAdventureV3SkipRewards()">Skip — Restore 1 Resolve</button>` : '';
     show(`<div class="result-panel pass"><div class="rhead"><h3 class="pass">Choose your reward${state.choose > 1 ? `s (${state.picked.length}/${state.choose})` : ''}</h3></div>
-      ${tabs}<div class="adv-reward-tools">${loaded}</div><div class="adv-rewards">${cards}</div>
+      ${tabs}<div class="adv-reward-tools">${loaded}${skip}</div><div class="adv-rewards">${cards}</div>
       <div class="rbtns"><button class="btn-gold" onclick="tlrAdventureV3ConfirmRewards()" ${state.picked.length === state.choose ? '' : 'disabled'}>Confirm</button></div></div>`);
   }
 
@@ -1028,6 +1030,14 @@ export function installAdventureModeV3(target = window) {
     if (!state || state.picked.length !== state.choose) return;
     const offers = state.selectedSet === 'alt' && state.altOffers ? state.altOffers : state.offers;
     applyRewardsSequentially(state.picked.map(index => offers[index]), 0);
+  }
+
+  function skipRewards() {
+    if (!session?.rewardState) return;
+    session.rewardState = null;
+    session.run.resolve = clampResolve(session.run.resolve + 1, session.run.maxResolve);
+    updateChrome();
+    advanceAfterResolution();
   }
 
   function rerollOffer(index, sourceId) {
@@ -1363,6 +1373,7 @@ export function installAdventureModeV3(target = window) {
   target.tlrAdventureV3AfterOutcome = afterOutcome;
   target.tlrAdventureV3PickReward = pickReward;
   target.tlrAdventureV3ConfirmRewards = confirmRewards;
+  target.tlrAdventureV3SkipRewards = skipRewards;
   target.tlrAdventureV3RerollOffer = rerollOffer;
   target.tlrAdventureV3LoadedDice = useLoadedDice;
   target.tlrAdventureV3OfferSet = selectOfferSet;
