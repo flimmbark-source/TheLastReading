@@ -770,7 +770,18 @@ export function installAdventureModeV3(target = window) {
     if (offer.type === 'CONSUMABLE' || offer.type === 'SIGNATURE_ITEM') return ADVENTURE_ITEMS[offer.itemId]?.text || '';
     if (offer.type === 'ADD_SIGIL_CARD') return 'Choose a matching card — add a second copy to your deck.';
     if (offer.type === 'SEAL_CARD') return 'This card appears in every opening hand. Costs one draw slot.';
-    if (offer.type === 'UPGRADE_CARD') return 'Increase its printed value by 1.';
+    if (offer.type === 'UPGRADE_CARD') {
+      if (!session) return 'Increase its printed value by 1.';
+      const nodes = offer.nodes || [];
+      const eligible = buildAdventureDeckCards().filter(card =>
+        (!nodes.length || nodes.includes(cardNode(card))) && card.points < 5
+      );
+      if (!eligible.length) return 'No eligible cards to upgrade.';
+      const potencies = eligible.map(c => c.points);
+      const lo = Math.min(...potencies), hi = Math.max(...potencies);
+      const range = lo === hi ? `${lo} → ${lo + 1}` : `${lo}–${hi} → ${lo + 1}–${hi + 1}`;
+      return `Increase its printed value by 1. Current potency: ${range}.`;
+    }
     if (offer.type === 'BANISH_TWO') return 'Permanently remove two cards from this run.';
     return '';
   }
