@@ -768,11 +768,12 @@ export function installAdventureModeV3(target = window) {
     const outcomeId = resolution.successOutcome?.id || resolution.outcome?.id;
     const profile = getOutcomeRewardProfile(event.id, outcomeId);
     if (!profile) return [];
-    const offers = profile.ordinary.map(cloneOffer);
+    const offers = [cloneOffer(profile.reinforce), cloneOffer(profile.provision), cloneOffer(profile.crossroads)];
     if (resolution.tier === RESULT.GREAT_SUCCESS) {
       const sig = cloneOffer(profile.signature);
-      if (sig.itemId && hasItem(sig.itemId) && ADVENTURE_ITEMS[sig.itemId]?.kind !== 'cache') offers.push({ type: 'CHOOSE_CONSUMABLE' });
-      else offers.push(sig);
+      const trophy = (sig.itemId && hasItem(sig.itemId) && ADVENTURE_ITEMS[sig.itemId]?.kind !== 'cache')
+        ? { type: 'CHOOSE_CONSUMABLE' } : sig;
+      offers.unshift(trophy);
     }
     while (offers.length < resolution.rewardShow) offers.push(randomOrdinaryOffer(offers.map(rewardLabel)));
     return offers.slice(0, resolution.rewardShow);
