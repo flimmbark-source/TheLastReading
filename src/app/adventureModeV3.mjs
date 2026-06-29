@@ -727,7 +727,7 @@ export function installAdventureModeV3(target = window) {
   }
 
   function rewardLabel(offer) {
-    if (offer.type === 'ADD_SIGIL_CARD') return `Add a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card`;
+    if (offer.type === 'ADD_SIGIL_CARD') return `Echo a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card`;
     if (offer.type === 'UPGRADE_CARD') return offer.nodes?.length ? `Upgrade a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card` : 'Upgrade any card';
     if (offer.type === 'REMOVE_CARD') return 'Remove 1 card';
     if (offer.type === 'RESTORE_RESOLVE') return `Restore ${offer.amount || 1} Resolve`;
@@ -738,7 +738,7 @@ export function installAdventureModeV3(target = window) {
 
   function rewardDescription(offer) {
     if (offer.type === 'CONSUMABLE' || offer.type === 'SIGNATURE_ITEM') return ADVENTURE_ITEMS[offer.itemId]?.text || '';
-    if (offer.type === 'ADD_SIGIL_CARD') return 'Choose 1 of 3 matching cards.';
+    if (offer.type === 'ADD_SIGIL_CARD') return 'Choose a matching card — add a second copy to your deck.';
     if (offer.type === 'UPGRADE_CARD') return 'Increase its printed value by 1.';
     if (offer.type === 'REMOVE_CARD') return 'Permanently remove it from this run.';
     return '';
@@ -928,7 +928,7 @@ export function installAdventureModeV3(target = window) {
   }
 
   function pickCardToAdd(nodes, done) {
-    pickCard('Add a Card', 'Choose a card to add to your deck.', addPool(nodes), picked => {
+    pickCard('Echo a Card', 'Choose a card — a second copy will be added to your deck.', addPool(nodes), picked => {
       if (picked) addCardToAdventureDeck(session.run, picked.id);
       updateChrome(); done();
     });
