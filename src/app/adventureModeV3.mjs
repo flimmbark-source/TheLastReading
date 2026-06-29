@@ -829,9 +829,13 @@ export function installAdventureModeV3(target = window) {
     const event = session.lastEvent;
     const outcomeId = resolution.successOutcome?.id || resolution.outcome?.id;
     const profile = getOutcomeRewardProfile(event.id, outcomeId);
-    if (!profile) return [];
+    if (!profile) {
+      const fallback = [];
+      while (fallback.length < resolution.rewardShow) fallback.push(randomOrdinaryOffer(fallback.map(rewardLabel)));
+      return fallback;
+    }
     const reinforce = cloneOffer(profile.reinforce);
-    if (resolution.tier === RESULT.GREAT_SUCCESS && reinforce.type === 'ADD_SIGIL_CARD') {
+    if (resolution.tier === RESULT.GREAT_SUCCESS && (reinforce.type === 'ADD_SIGIL_CARD' || reinforce.type === 'UPGRADE_CARD')) {
       const nodes = reinforce.nodes || [];
       const alreadySealed = new Set(session.run.sealedCards || []);
       const hasEligible = buildAdventureDeckCards().some(
