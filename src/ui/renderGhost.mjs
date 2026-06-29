@@ -19,7 +19,7 @@ export function ghost(i,t,big=false,relicKey=null){const s=_slots()[i];if(!s)ret
 
 export function centerGhost(name,rare=false){const g=document.createElement('div');g.className='meld-announce'+(rare?' rare':'');g.textContent=name;document.body.appendChild(g);setTimeout(()=>g.remove(),1900)}
 
-export function bump(i){const s=_slots()[i];if(!s)return;s.classList.remove('bump');void s.offsetWidth;s.classList.add('bump')}
+export function bump(i){const s=_slots()[i];if(!s)return;s.classList.remove('bump');requestAnimationFrame(()=>requestAnimationFrame(()=>s.classList.add('bump')));}
 
 export function fireScoreGhost(){const pill=document.querySelector('.score-stack .score-pill');if(!pill)return;const r=pill.getBoundingClientRect();const g=document.createElement('span');g.className='score-ghost';g.textContent='+1';const centerX=r.left+r.width/2;const horizontalDrift=Math.min(28,r.width*.18);g.style.left=(centerX+(Math.random()-.5)*horizontalDrift)+'px';g.style.top=(r.top+r.height*.48)+'px';document.body.appendChild(g);setTimeout(()=>g.remove(),950)}
 

@@ -13,14 +13,14 @@ function startQueuedDrawAnimations(elements) {
       if (!element.isConnected) return;
       element.classList.remove('card-draw-dealt');
       element.style.setProperty('--draw-delay', `${delayMs}ms`);
-      // Force a fresh animation even if a card with the same uid was just dealt
-      // by a reshuffle/mulligan and its DOM node was reused.
-      void element.offsetWidth;
-      element.classList.add('card-draw-dealt');
-      element.addEventListener('animationend', () => {
-        element.classList.remove('card-draw-dealt');
-        element.style.removeProperty('--draw-delay');
-      }, { once: true });
+      requestAnimationFrame(() => {
+        if (!element.isConnected) return;
+        element.classList.add('card-draw-dealt');
+        element.addEventListener('animationend', () => {
+          element.classList.remove('card-draw-dealt');
+          element.style.removeProperty('--draw-delay');
+        }, { once: true });
+      });
     });
   });
 }

@@ -16,12 +16,14 @@ function animateCard(element, entry) {
   if (!element?.isConnected) return;
   element.classList.remove('card-draw-dealt');
   element.style.setProperty('--draw-delay', `${entry.delayMs}ms`);
-  void element.offsetWidth;
-  element.classList.add('card-draw-dealt');
-  element.addEventListener('animationend', () => {
-    element.classList.remove('card-draw-dealt');
-    element.style.removeProperty('--draw-delay');
-  }, { once: true });
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (!element?.isConnected) return;
+    element.classList.add('card-draw-dealt');
+    element.addEventListener('animationend', () => {
+      element.classList.remove('card-draw-dealt');
+      element.style.removeProperty('--draw-delay');
+    }, { once: true });
+  }));
 }
 
 function flushQueuedHandAnimations(target) {
