@@ -326,41 +326,49 @@ export function installAdventureModeV3(target = window) {
     const event = currentEvent();
     const deck = doc.getElementById('advEventDeck');
     if (deck) {
-      deck.dataset.eventId = event?.id || '';
-      deck.dataset.eventCrest = event?.crest || '';
-      if (!event) deck.innerHTML = '';
-      else {
-        const remaining = Math.max(1, EVENTS_PER_SET - run.eventIndexInSet);
-        const backs = [...Array(Math.min(3, remaining)).keys()]
-          .map(i => `<div class="adv-deck__back" style="transform:translate(calc(-50% + ${i * 4}px),${i * 3}px) rotate(${i * 2 - 2}deg)"></div>`)
-          .join('');
-        const revealCount = Math.max(run.statuses.includes('prepared') ? 1 : 0, run.revealedEventCount || 0);
-        const revealed = remainingEventIds().slice(0, revealCount).map(id => getAdventureEventV3(id)?.title || id.replaceAll('_', ' '));
-        const next = revealed.length ? `<div class="adv-next-event">Next: ${esc(revealed.join(' · '))}</div>` : '';
-        const art = eventArtUrl(event.id);
-        const top = art
-          ? `<div class="adv-deck__top"><img class="adv-deck__art" src="${art}" alt="${esc(event.title)}" decoding="async"></div>`
-          : `<div class="adv-deck__top adv-deck__top--text"><div class="adv-deck__title">${esc(event.title)}</div></div>`;
-        deck.innerHTML = `<div class="adv-deck">${backs}${top}</div><div class="adv-event-desc">${esc(event.description)}</div>${next}`;
-        setTimeout(decorateHero, 0);
+      const revealCount = Math.max(run.statuses.includes('prepared') ? 1 : 0, run.revealedEventCount || 0);
+      const deckKey = `${event?.id || ''}|${run.eventIndexInSet}|${revealCount}`;
+      if (deck.__advKey !== deckKey) {
+        deck.__advKey = deckKey;
+        deck.dataset.eventId = event?.id || '';
+        deck.dataset.eventCrest = event?.crest || '';
+        if (!event) deck.innerHTML = '';
+        else {
+          const remaining = Math.max(1, EVENTS_PER_SET - run.eventIndexInSet);
+          const backs = [...Array(Math.min(3, remaining)).keys()]
+            .map(i => `<div class="adv-deck__back" style="transform:translate(calc(-50% + ${i * 4}px),${i * 3}px) rotate(${i * 2 - 2}deg)"></div>`)
+            .join('');
+          const revealed = remainingEventIds().slice(0, revealCount).map(id => getAdventureEventV3(id)?.title || id.replaceAll('_', ' '));
+          const next = revealed.length ? `<div class="adv-next-event">Next: ${esc(revealed.join(' · '))}</div>` : '';
+          const art = eventArtUrl(event.id);
+          const top = art
+            ? `<div class="adv-deck__top"><img class="adv-deck__art" src="${art}" alt="${esc(event.title)}" decoding="async"></div>`
+            : `<div class="adv-deck__top adv-deck__top--text"><div class="adv-deck__title">${esc(event.title)}</div></div>`;
+          deck.innerHTML = `<div class="adv-deck">${backs}${top}</div><div class="adv-event-desc">${esc(event.description)}</div>${next}`;
+          setTimeout(decorateHero, 0);
+        }
       }
     }
 
     const hud = doc.getElementById('advHud');
     if (hud) {
-      const pips = [...Array(Math.max(0, run.maxResolve)).keys()]
-        .map(i => `<span class="adv-pip adv-pip--${i < run.resolve ? 'full' : 'empty'}"></span>`).join('');
-      const pill = id => `<span class="adv-status adv-status--${esc(id)}" title="${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</span>`;
-      const s = run.statuses;
-      const rows = s.length === 0 ? [] :
-        s.length <= 2 ? [s] :
-        s.length === 3 ? [[s[2]], [s[0], s[1]]] :
-        [[s[2], s[3]], [s[0], s[1]]];
-      const statusHtml = rows.map(row => `<div class="adv-hud__status-row">${row.map(pill).join('')}</div>`).join('');
-      hud.innerHTML = `<div class="adv-hud__statuses">${statusHtml}</div><div class="adv-hud__main"><div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div></div>`;
+      const hudKey = `${run.resolve}|${run.maxResolve}|${run.statuses.join(',')}`;
+      if (hud.__advKey !== hudKey) {
+        hud.__advKey = hudKey;
+        const pips = [...Array(Math.max(0, run.maxResolve)).keys()]
+          .map(i => `<span class="adv-pip adv-pip--${i < run.resolve ? 'full' : 'empty'}"></span>`).join('');
+        const pill = id => `<span class="adv-status adv-status--${esc(id)}" title="${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</span>`;
+        const s = run.statuses;
+        const rows = s.length === 0 ? [] :
+          s.length <= 2 ? [s] :
+          s.length === 3 ? [[s[2]], [s[0], s[1]]] :
+          [[s[2], s[3]], [s[0], s[1]]];
+        const statusHtml = rows.map(row => `<div class="adv-hud__status-row">${row.map(pill).join('')}</div>`).join('');
+        hud.innerHTML = `<div class="adv-hud__statuses">${statusHtml}</div><div class="adv-hud__main"><div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div></div>`;
+      }
     }
     renderInventory();
-    setTimeout(decorateCards, 0);
+    scheduleDecorateCards();
     const web = doc.getElementById('advApproachWeb');
     if (web && !web.classList.contains('hidden')) web.innerHTML = renderApproachWebHTML();
   }
@@ -530,17 +538,27 @@ export function installAdventureModeV3(target = window) {
     el.dataset.hint = node.charAt(0).toUpperCase() + node.slice(1);
   }
 
+  let _decorateScheduled = false;
+  function scheduleDecorateCards() {
+    if (_decorateScheduled) return;
+    _decorateScheduled = true;
+    setTimeout(() => { _decorateScheduled = false; decorateCards(); }, 0);
+  }
+
   function decorateCards() {
     if (!session || !target.__tlrAdventureActive) return;
+    const all = [...(target.state?.hand || []), ...(target.state?.spread || []).filter(Boolean), ...(target.state?.deck || [])];
+    const byUid = new Map(all.map(c => [String(c.uid), c]));
+    const event = currentEvent();
+    const baseVisible = Number(itemState().nextCardBonus || 0) + (itemState().greyfangReady ? 2 : 0);
     doc.querySelectorAll('.card[data-uid]').forEach(el => {
-      const card = findRuntimeCard(el.dataset.uid);
+      const card = byUid.get(el.dataset.uid);
       if (!card) return;
       const art = el.querySelector('.art');
       if (art && !art.querySelector('.adv-sigil-seal')) art.insertAdjacentHTML('afterbegin', sigilSeal(card));
       art?.querySelector('.adv-card-bonus')?.remove();
-      const event = currentEvent();
       if (!art || !event) return;
-      const visible = passivePotencyBonus(card, event) + Number(itemState().nextCardBonus || 0) + (itemState().greyfangReady ? 2 : 0);
+      const visible = passivePotencyBonus(card, event) + baseVisible;
       if (visible) art.insertAdjacentHTML('beforeend', `<span class="adv-card-bonus">${visible > 0 ? '+' : ''}${visible}</span>`);
     });
   }
@@ -821,6 +839,9 @@ export function installAdventureModeV3(target = window) {
     if (!rack || !session) return;
     rack.classList.add('adv-inventory-rack');
     const state = itemState();
+    const invKey = `${session.run.inventory.join(',')}|${state.armedItem}|${state.greyfang}|${state.greyfangReady}|${state.freedSpirit}|${state.freedSpiritReady}`;
+    if (rack.__advKey === invKey) return;
+    rack.__advKey = invKey;
     const slots = [];
     for (let i = 0; i < session.run.inventoryCapacity; i += 1) {
       const item = itemAt(i);
