@@ -69,7 +69,7 @@ export function installCardDetailGestures(target=window){
     if(ev.button!==undefined&&ev.button!==0){lastTap=null;return;}
 
     const source=target.Element&&ev.target instanceof target.Element?ev.target:null;
-    const cardEl=source?.closest?.('#spread .card[data-uid]');
+    const cardEl=source?.closest?.('#hand .card[data-uid], #spread .card[data-uid]');
     if(!cardEl||inSelectionMode(cardEl,target)){lastTap=null;return;}
 
     const uid=Number(cardEl.dataset.uid);
