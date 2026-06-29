@@ -155,8 +155,7 @@ export function installMainMenu(target = window) {
   function syncContinueBtn() {
     const btn = target.document.getElementById('mainMenuContinue');
     if (!btn) return;
-    const available = gameStarted || hasSavedProgress(target.localStorage);
-    btn.disabled = !available;
+    btn.disabled = false;
   }
 
   function startFresh() {

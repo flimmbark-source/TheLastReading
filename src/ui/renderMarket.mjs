@@ -30,6 +30,8 @@ const STORE_SCORING_COPY = Object.freeze({
   court_chips: { name: 'Full Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin' },
   royal_court_chips: { name: 'Royal Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin' },
   path_chips: { name: 'Path of the Magi', desc: '+15 Chips / +0.5 Mult', icon: 'isp-scoring' },
+  suit_stamp: { name: 'Suit Stamp', desc: 'Major Arcana. Its suit counts toward Royal Court.', icon: 'isp-scoring' },
+  five_stamp: { name: 'Five Star', desc: 'Any card. Slots into Sequences as a multiple of 5.', icon: 'isp-scoring' },
 });
 
 const STORE_RELIC_COPY = Object.freeze({
@@ -206,7 +208,7 @@ function shuffleValues(values, target = window) {
   return copy.map(value => ({ value, sort: Math.random() })).sort((a, b) => a.sort - b.sort).map(({ value }) => value);
 }
 
-const STORE_SCORING_UPGRADES = Object.freeze(['rank', 'sequence', 'court_chips', 'royal_court_chips', 'path_chips']);
+const STORE_SCORING_UPGRADES = Object.freeze(['rank', 'sequence', 'court_chips', 'royal_court_chips', 'path_chips', 'suit_stamp', 'five_stamp']);
 
 function pickScoringUpgrades(count, target = window) {
   const shop = target.SHOP || {};
@@ -280,6 +282,11 @@ function storeVesselCost(target = window) {
   return typeof target.shopCost === 'function' ? target.shopCost('relicSlot') : 35;
 }
 
+const STAMP_ART = Object.freeze({
+  suit_stamp: '<div style="width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#3a6bbf,#152a5c 72%,#070e1e);display:flex;align-items:center;justify-content:center;font:900 24px/1 Georgia,serif;color:#f5e0b4;text-shadow:0 2px 4px rgba(0,0,0,.9);border:2px solid rgba(210,175,100,.65);box-shadow:0 2px 8px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.5)">♡</div>',
+  five_stamp: '<div style="width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d4a017,#7a5800 72%,#2a1c00);display:flex;align-items:center;justify-content:center;font:900 16px/1 Georgia,serif;color:#f5e0b4;text-shadow:0 2px 4px rgba(0,0,0,.9);border:2px solid rgba(210,175,100,.65);box-shadow:0 2px 8px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.5)">5★</div>',
+});
+
 function renderScoringCard(index, upgradeKey, target = window) {
   if (!upgradeKey) return '<div class="store-card disabled"><div class="store-card-tag">Scoring</div><div class="store-card-name">—</div></div>';
   const item = (target.SHOP || {})[upgradeKey];
@@ -288,9 +295,12 @@ function renderScoringCard(index, upgradeKey, target = window) {
   const cost = scoringCostFor(upgradeKey, target);
   const ok = (persistOf(target).pool || 0) >= cost;
   const level = (persistOf(target).up || {})[upgradeKey] || 0;
+  const art = STAMP_ART[upgradeKey]
+    ? `<div class="store-card-art">${STAMP_ART[upgradeKey]}</div>`
+    : `<div class="store-card-art"><span class="isp isp-108 ${copy.icon}"></span></div>`;
   return `<div class="store-card ${ok ? '' : 'disabled'}">
     <div class="store-card-tag">Scoring</div>
-    <div class="store-card-art"><span class="isp isp-108 ${copy.icon}"></span></div>
+    ${art}
     <div class="store-card-name">${escapeHtml(copy.name)}</div>
     <div class="store-card-desc">${escapeHtml(copy.desc)}</div>
     <div class="store-card-lv">Lv ${level} → ${level + 1}</div>
@@ -557,11 +567,19 @@ export function buyStoreScoringUpgrade(index,upgradeKey,cost,target = window){
   if((p.pool||0)<cost)return false;
   const charged=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'pack',packId:'scoringUpgrade',cost}):false;
   if(charged!==true)return charged;
+  if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.scoring))target._storeFrontOffers.scoring[index]=null;
+  if(typeof target.render==='function')target.render();
+  if(upgradeKey==='suit_stamp'){
+    if(typeof target.openStampPicker==='function')target.openStampPicker(index);
+    return true;
+  }
+  if(upgradeKey==='five_stamp'){
+    if(typeof target.openFiveStampPicker==='function')target.openFiveStampPicker(index);
+    return true;
+  }
   const pairedKey=pairedUpgradeKey(upgradeKey,target);
   const upgraded=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'upgrade',upgradeKey,pairedKey}):false;
   if(upgraded!==true)return upgraded;
-  if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.scoring))target._storeFrontOffers.scoring[index]=null;
-  if(typeof target.render==='function')target.render();
   markCardPurchased(0,target);
   return true;
 }

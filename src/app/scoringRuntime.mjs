@@ -24,6 +24,8 @@ export function scoreLegacy(cards,{skipRelics=false,skipFlatBonuses=false}={},ta
       abilityTakenCardIds:state.abilityTakenUids?[...state.abilityTakenUids]:[],
       resonationBonus:state.resonationBonus||null,
       constellationId:state.constellationId||null,
+      stampedMajors:persist.stampedMajors||[],
+      stampedFive:persist.stampedFive||[],
     },
   });
   return {...result,melds:result.melds.map(m=>[m.name,m.chips,m.mult,m.mode,m.source||null])};

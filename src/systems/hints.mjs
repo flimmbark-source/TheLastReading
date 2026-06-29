@@ -124,18 +124,29 @@ function addNearMajorHints({ hints, seen, card, allCards }) {
   }
 }
 
-function addNearCourtHints({ hints, seen, card, allCards }) {
-  if (card.type !== 'court') return;
+function addNearCourtHints({ hints, seen, card, allCards, stampedMajors = [] }) {
+  const stampedIds = new Set(stampedMajors);
+  const isStampedMajor = card.type === 'major' && stampedIds.has(card.id) && Array.isArray(card.suits) && card.suits.length > 0;
 
-  const sameRank = allCards.filter(other => other.type === 'court' && other.rank === card.rank);
-  if (sameRank.length >= 4) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.FOUR_OF_A_KIND.label, `rank:${card.rank}`);
-  else if (sameRank.length >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.THREE_OF_A_KIND.label, `rank:${card.rank}`);
+  if (card.type !== 'court' && !isStampedMajor) return;
 
-  const sameSuitRanks = new Set(allCards.filter(other => other.type === 'court' && other.suit === card.suit).map(other => other.rank));
-  if (sameSuitRanks.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.ROYAL_COURT.label, `flush:${card.suit}`);
+  if (card.type === 'court') {
+    const sameRank = allCards.filter(other => other.type === 'court' && other.rank === card.rank);
+    if (sameRank.length >= 4) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.FOUR_OF_A_KIND.label, `rank:${card.rank}`);
+    else if (sameRank.length >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.THREE_OF_A_KIND.label, `rank:${card.rank}`);
+  }
 
-  const ranks = new Set(allCards.filter(other => other.type === 'court').map(other => other.rank));
-  if (ranks.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.FULL_COURT.label);
+  const cardSuits = card.type === 'court' ? [card.suit] : (card.suits || []);
+  for (const suit of cardSuits) {
+    const tokens = new Set(allCards.filter(other => other.type === 'court' && other.suit === suit).map(other => other.rank));
+    allCards.filter(other => other.type === 'major' && stampedIds.has(other.id) && (other.suits || []).includes(suit)).forEach(other => tokens.add(other.id));
+    if (tokens.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.ROYAL_COURT.label, `flush:${suit}`);
+  }
+
+  if (card.type === 'court') {
+    const ranks = new Set(allCards.filter(other => other.type === 'court').map(other => other.rank));
+    if (ranks.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.FULL_COURT.label);
+  }
 }
 
 export function getCardHints(card, state, options = {}) {
@@ -149,12 +160,13 @@ export function getCardHints(card, state, options = {}) {
     relics: options.includeRelics ? options.relics || [] : [],
     skipRelics: !options.includeRelics,
     skipFlatBonuses: true,
+    context: { stampedMajors: options.stampedMajors || [] },
   };
 
   if (options.patterns !== false) {
     addCompletionHints({ hints, seen, card, spreadCards, scoringOptions });
     addNearMajorHints({ hints, seen, card, allCards });
-    addNearCourtHints({ hints, seen, card, allCards });
+    addNearCourtHints({ hints, seen, card, allCards, stampedMajors: options.stampedMajors || [] });
   }
 
   return hints;

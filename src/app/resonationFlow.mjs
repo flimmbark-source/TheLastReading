@@ -61,7 +61,7 @@ export function triggerResonation(res,target = window){
   if(typeof target.holdEffects==='function')target.holdEffects(2000);
   if(res.id==='sophias_fall'){
     const veil=document.getElementById('sophiaVeil');
-    if(veil){veil.classList.remove('active');void veil.offsetWidth;veil.classList.add('active');setTimeout(()=>veil.classList.remove('active'),4100);}
+    if(veil){veil.classList.remove('active');requestAnimationFrame(()=>requestAnimationFrame(()=>{veil.classList.add('active');setTimeout(()=>veil.classList.remove('active'),4100);}));}
   }
   if(!state.resonationBonus)state.resonationBonus={chips:0,mult:0,name:res.name};
   state.resonationBonus.chips+=res.chips;

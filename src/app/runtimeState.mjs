@@ -14,6 +14,8 @@ export function createInitialPersist(){
     },
     relics:[],
     relicUsed:{},
+    stampedMajors:[],
+    stampedFive:[],
   };
 }
 

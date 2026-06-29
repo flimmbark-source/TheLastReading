@@ -82,7 +82,7 @@ function ensureStyles(doc) {
       background:rgba(18,12,9,.66);border-radius:8px;padding:6px 10px;margin-top:-14px}
     .adv-next-event{font:700 9px system-ui,sans-serif;color:#d19c51;opacity:.9}
 
-    #advHud{position:fixed;top:10px;left:10px;z-index:42;display:none;flex-direction:column;gap:6px;
+    #advHud{position:fixed;top:10px;left:10px;z-index:42;display:none;flex-direction:column;gap:4px;
       color:#ead9b5;max-width:min(360px,46vw)}
     body.mode-adventure #advHud{display:flex}
     .adv-hud__main{display:flex;align-items:center;gap:11px;
@@ -95,8 +95,9 @@ function ensureStyles(doc) {
     .adv-pip{width:10px;height:10px;border-radius:50%;border:1px solid rgba(243,201,105,.45)}
     .adv-pip--full{background:radial-gradient(circle at 38% 32%,#ffeab2,#dd9f33);border-color:#f3c969;box-shadow:0 0 6px rgba(243,201,105,.55)}
     .adv-pip--empty{background:rgba(243,201,105,.05)}
-    .adv-hud__statuses{display:flex;flex-wrap:wrap;gap:5px;padding-left:2px}
+    .adv-hud__statuses{display:flex;flex-direction:column;align-items:center;gap:5px}
     .adv-hud__statuses:empty{display:none}
+    .adv-hud__status-row{display:flex;gap:5px;justify-content:center}
     #advHud .adv-status{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px 3px 8px;
       font:700 10px/1 'Cinzel',Georgia,serif;letter-spacing:.05em;border:1px solid;background:rgba(16,11,7,.82)}
     #advHud .adv-status::before{content:'';width:7px;height:7px;border-radius:50%}
@@ -256,14 +257,18 @@ export function installAdventureModeV2(target = window) {
       const pips = [...Array(Math.max(0, run.maxResolve)).keys()]
         .map(i => `<span class="adv-pip adv-pip--${i < run.resolve ? 'full' : 'empty'}"></span>`)
         .join('');
-      const statuses = run.statuses
-        .map(id => `<span class="adv-status adv-status--${esc(id)}" title="${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</span>`)
-        .join('');
+      const pill = id => `<span class="adv-status adv-status--${esc(id)}" title="${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</span>`;
+      const s = run.statuses;
+      const rows = s.length === 0 ? [] :
+        s.length <= 2 ? [s] :
+        s.length === 3 ? [[s[2]], [s[0], s[1]]] :
+        [[s[2], s[3]], [s[0], s[1]]];
+      const statusHtml = rows.map(row => `<div class="adv-hud__status-row">${row.map(pill).join('')}</div>`).join('');
       hud.innerHTML = `
+        <div class="adv-hud__statuses">${statusHtml}</div>
         <div class="adv-hud__main">
           <div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div>
-        </div>
-        <div class="adv-hud__statuses">${statuses}</div>`;
+        </div>`;
     }
   }
 

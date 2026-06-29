@@ -354,22 +354,22 @@
 .relic-art{display:flex;align-items:center;justify-content:center;height:64px;background:transparent}.relic-art-sprite{width:64px;height:64px;image-rendering:pixelated}
 @media(max-width:640px){.tarot-shop{width:calc(100vw - 20px);padding:20px 16px 18px!important;background-image:url("../../assets/Pack_Background_Mobile.png")}.shop-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header h3{font-size:17px;letter-spacing:.03em}.pack-picker-header p{font-size:10px;margin:8px 0 0}.shop-packs-row{gap:8px;flex-wrap:nowrap;justify-content:center}.shop-pack{flex:1;min-width:0;min-height:230px}.shop-pack-banner{min-height:74px;font-size:36px}.shop-items-row{gap:8px}.upg-card{width:110px}.upg-art{height:66px;font-size:30px}.upg-title-strip span{font-size:6.5px}.result-panel{padding:16px 16px 20px}.rscore .rsc,.rscore .rsm{font-size:22px}.rscore .rsf{font-size:32px}}
 #sophiaVeil{position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0}
-#sophiaVeil.active{animation:sophia-veil 4s ease forwards}
+#sophiaVeil.active{animation:sophia-veil 4s ease forwards;backdrop-filter:blur(2px)}
 @keyframes sophia-veil{
-  0%  {opacity:0;backdrop-filter:blur(0px);background:radial-gradient(ellipse at 50% 50%,transparent 60%,rgba(0,0,0,0) 100%)}
-  8%  {opacity:1;backdrop-filter:blur(0px);background:radial-gradient(ellipse at 50% 50%,transparent 40%,rgba(0,0,0,.55) 100%)}
-  18% {backdrop-filter:blur(4px);background:radial-gradient(ellipse at 50% 50%,transparent 30%,rgba(0,0,0,.72) 100%)}
-  26% {backdrop-filter:blur(0px);background:radial-gradient(ellipse at 50% 50%,transparent 38%,rgba(0,0,0,.6) 100%)}
-  38% {backdrop-filter:blur(5px);background:radial-gradient(ellipse at 50% 50%,transparent 28%,rgba(0,0,0,.78) 100%)}
-  48% {backdrop-filter:blur(0.5px);background:radial-gradient(ellipse at 50% 50%,transparent 40%,rgba(0,0,0,.55) 100%)}
-  60% {backdrop-filter:blur(3px);background:radial-gradient(ellipse at 50% 50%,transparent 35%,rgba(0,0,0,.65) 100%)}
-  74% {backdrop-filter:blur(0px);background:radial-gradient(ellipse at 50% 50%,transparent 45%,rgba(0,0,0,.45) 100%)}
-  88% {opacity:.6;backdrop-filter:blur(0px)}
-  100%{opacity:0;backdrop-filter:blur(0px)}
+  0%  {opacity:0;background:radial-gradient(ellipse at 50% 50%,transparent 60%,rgba(0,0,0,0) 100%)}
+  8%  {opacity:1;background:radial-gradient(ellipse at 50% 50%,transparent 40%,rgba(0,0,0,.55) 100%)}
+  18% {background:radial-gradient(ellipse at 50% 50%,transparent 30%,rgba(0,0,0,.72) 100%)}
+  26% {background:radial-gradient(ellipse at 50% 50%,transparent 38%,rgba(0,0,0,.6) 100%)}
+  38% {background:radial-gradient(ellipse at 50% 50%,transparent 28%,rgba(0,0,0,.78) 100%)}
+  48% {background:radial-gradient(ellipse at 50% 50%,transparent 40%,rgba(0,0,0,.55) 100%)}
+  60% {background:radial-gradient(ellipse at 50% 50%,transparent 35%,rgba(0,0,0,.65) 100%)}
+  74% {background:radial-gradient(ellipse at 50% 50%,transparent 45%,rgba(0,0,0,.45) 100%)}
+  88% {opacity:.6}
+  100%{opacity:0}
 }
 .meld-announce{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);font:900 28px Georgia,serif;color:#ffd978;text-shadow:0 0 18px rgba(255,200,80,.7),0 2px 8px rgba(0,0,0,.9);letter-spacing:.06em;text-align:center;white-space:nowrap;pointer-events:none;z-index:200;animation:meld-announce 2s forwards}.meld-announce.rare{color:#ffb36b;text-shadow:0 0 22px rgba(255,160,60,.8),0 2px 8px rgba(0,0,0,.9)}@keyframes meld-announce{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}10%{opacity:1;transform:translate(-50%,-50%) scale(1.18)}20%{transform:translate(-50%,-50%) scale(.96)}28%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}36%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-72%) scale(.88)}}
-/* ── Hand sway ── */
 .hand{transform-origin:50% 140%;}
+/* ── Hand sway ── */
 @keyframes card-wave{0%{translate:0 0px}100%{translate:0 5px}}
 .hand .card:not(.sel):not(.ability-picked):not(.hand-card-dragging){animation:card-wave 4.4s ease-in-out infinite alternate}
 .hand .card:not(.sel):not(.ability-picked):nth-child(1){animation-delay:0ms}

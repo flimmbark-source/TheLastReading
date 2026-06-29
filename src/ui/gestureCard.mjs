@@ -73,16 +73,27 @@ export function installHandCardGestures(target = window){
     const cards=handCards();
     const n=cards.length;
     if(!n)return;
+    // When the dragged card has been moved to document.body it is no longer
+    // in the hand DOM, so handCards() returns n-1 cards. We must account for
+    // that missing slot when computing centre offsets and recovering each
+    // remaining card's original hand position.
+    const inHand=cards.includes(g.cardEl);
+    const total=inHand?n:n+1;
     cards.forEach((el,i)=>{
-      let ni=i;
+      let ni;
       if(el===g.cardEl){
         ni=hoverIndex;
-      }else if(i<g.origIndex){
-        if(i>=hoverIndex)ni=i+1;
-      }else if(i>g.origIndex){
-        if(i<=hoverIndex)ni=i-1;
+      }else{
+        // Recover the card's original hand index. When the dragged card is on
+        // body, every card after origIndex shifted down by one in the DOM.
+        const orig=inHand?i:(i<g.origIndex?i:i+1);
+        if(orig<g.origIndex){
+          ni=orig>=hoverIndex?orig+1:orig;
+        }else{
+          ni=orig<=hoverIndex?orig-1:orig;
+        }
       }
-      el.style.setProperty('--slot',(ni-(n-1)/2).toString());
+      el.style.setProperty('--slot',(ni-(total-1)/2).toString());
     });
     g.hoverIndex=hoverIndex;
   };
@@ -166,6 +177,11 @@ export function installHandCardGestures(target = window){
     g.cardHalfH=rect.height/2;
     g.prevX=ev.clientX;
     g.tiltDeg=0;
+    g.swirlArc=0;
+    g.swirlLastDir=null;
+    g.swirlDetected=false;
+    g.swirlPrevX=ev.clientX;
+    g.swirlPrevY=ev.clientY;
     g.mode='drag';
     // Cache spread geometry so hit-tests during drag don't force layout recalc.
     const spEl=document.querySelector('#spread');
@@ -281,7 +297,7 @@ export function installHandCardGestures(target = window){
   const endDrag=committed=>{
     if(!g)return;
     cancelHold();
-    const{uid,cardEl,origIndex,hoverIndex,mode,pendingUids=[]}=g;
+    const{uid,cardEl,origIndex,hoverIndex,mode,pendingUids=[],swirlDetected=false,originalParent,originalNextSibling}=g;
     let dropSlot=g.dropSlot;
     const wasDrag=mode==='drag';
     const wasSelectDrag=mode==='select-drag';
@@ -311,6 +327,30 @@ export function installHandCardGestures(target = window){
     const spEl3=document.querySelector('#spread');if(spEl3)spEl3.classList.remove('drag-active');
     target.__handReorderActive=false;
     g=null;
+
+    // ── Swirl gesture → open card detail view ──
+    if(wasDrag&&committed&&swirlDetected){
+      cardEl.classList.remove('hand-card-swirl-ready');
+      // Return card to its original hand slot immediately (before the modal opens).
+      if(cardEl.parentNode!==originalParent){
+        if(originalNextSibling&&originalNextSibling.parentNode===originalParent){
+          originalParent.insertBefore(cardEl,originalNextSibling);
+        }else{
+          originalParent.appendChild(cardEl);
+        }
+      }
+      applyNaturalSlots();
+      slideLanding(cardEl,firstRect);
+      const s=storeState();
+      const hand=[...((s?.run?.hand)||state?.hand||[])];
+      const card=hand.find(c=>c.uid===uid)||null;
+      if(card){
+        const showDetail=typeof target.expandCard==='function'?target.expandCard:(typeof expandCard==='function'?expandCard:null);
+        if(showDetail)showDetail(card,target);
+      }
+      target.__handGestureSuppressClickUntil=performance.now()+800;
+      return;
+    }
 
     // ── Commit ability/purge selection from sweep ──
     if(wasSelectDrag){
@@ -426,7 +466,28 @@ export function installHandCardGestures(target = window){
       startDrag(ev);
       return;
     }
-    if(g.mode==='drag'){ev.preventDefault();stepDrag(ev);return;}
+    if(g.mode==='drag'){
+      // Swirl detection: accumulate signed angular arc from consecutive direction vectors.
+      // Cheap — no layout reads, just trig on the pointer delta.
+      const sdx=ev.clientX-g.swirlPrevX,sdy=ev.clientY-g.swirlPrevY;
+      const sMag=Math.hypot(sdx,sdy);
+      if(sMag>4&&!g.swirlDetected){
+        if(g.swirlLastDir){
+          const nx=sdx/sMag,ny=sdy/sMag;
+          const cross=g.swirlLastDir.x*ny-g.swirlLastDir.y*nx;
+          const dot  =g.swirlLastDir.x*nx+g.swirlLastDir.y*ny;
+          g.swirlArc+=Math.atan2(cross,dot);
+        }
+        g.swirlLastDir={x:sdx/sMag,y:sdy/sMag};
+        g.swirlPrevX=ev.clientX;
+        g.swirlPrevY=ev.clientY;
+        if(Math.abs(g.swirlArc)>=Math.PI*1.5){
+          g.swirlDetected=true;
+          g.cardEl.classList.add('hand-card-swirl-ready');
+        }
+      }
+      ev.preventDefault();stepDrag(ev);return;
+    }
     if(g.mode==='select-drag'){stepSelectDrag(ev);}
   },{capture:true,passive:false});
 

@@ -4,6 +4,7 @@
 
 function runtime(target){return target.tlrRuntime || {};}
 function persistOf(target){return runtime(target).persist || {};}
+function stateOf(target){return runtime(target).state || target.state || {};}
 function market(target){return target.tlrMarketFlow || {};}
 
 const SHORT_UPGRADE_COPY = Object.freeze({
@@ -197,12 +198,95 @@ export function buyPack(packId,cost,target = window){
   return true;
 }
 
+
+export function openStampPicker(slotIndex, target = window) {
+  if (typeof target.choice !== 'function') return;
+  const persist = persistOf(target);
+  const state = stateOf(target);
+  const stampedIds = new Set(persist.stampedMajors || []);
+  const stampedFiveIds = new Set(persist.stampedFive || []);
+  const allCards = [
+    ...(state.deck || []),
+    ...(state.hand || []),
+    ...(state.discard || []),
+    ...(state.spread || []).filter(Boolean),
+  ];
+  const seen = new Set();
+  const eligible = allCards.filter(card => {
+    if (card.type !== 'major') return false;
+    if (!Array.isArray(card.suits) || !card.suits.length) return false;
+    if (stampedIds.has(card.id)) return false;
+    if (stampedFiveIds.has(card.id)) return false;
+    if (seen.has(card.id)) return false;
+    seen.add(card.id);
+    return true;
+  });
+  if (!eligible.length) return;
+  target.choice('Suit Stamp', 'Choose a Major Arcana — its suit counts toward Royal Court.', eligible, card => {
+    applyStampTarget(card.id, target);
+  });
+}
+
+export function openFiveStampPicker(slotIndex, target = window) {
+  if (typeof target.choice !== 'function') return;
+  const persist = persistOf(target);
+  const state = stateOf(target);
+  const stampedFive = new Set(persist.stampedFive || []);
+  const stampedMajorIds = new Set(persist.stampedMajors || []);
+  const allCards = [
+    ...(state.deck || []),
+    ...(state.hand || []),
+    ...(state.discard || []),
+    ...(state.spread || []).filter(Boolean),
+  ];
+  const seen = new Set();
+  const eligible = allCards.filter(card => {
+    if (stampedFive.has(card.id)) return false;
+    if (stampedMajorIds.has(card.id)) return false;
+    if (seen.has(card.id)) return false;
+    seen.add(card.id);
+    return true;
+  });
+  if (!eligible.length) return;
+  target.choice('Five Star Stamp', 'Choose any card — it slots into Sequences as a multiple of 5 (5, 10, 15, 20).', eligible, card => {
+    applyFiveStampTarget(card.id, target);
+  });
+}
+
+export function applyFiveStampTarget(cardId, target = window) {
+  if (!cardId) return false;
+  const persist = persistOf(target);
+  if (!Array.isArray(persist.stampedFive)) persist.stampedFive = [];
+  if (!persist.stampedFive.includes(cardId)) persist.stampedFive.push(cardId);
+  if (Array.isArray(persist.stampedMajors)) persist.stampedMajors = persist.stampedMajors.filter(id => id !== cardId);
+  if (typeof target.tlrSyncPersistToStore === 'function') target.tlrSyncPersistToStore();
+  if (typeof target.render === 'function') target.render();
+  if (typeof target.openShopMain === 'function') target.openShopMain();
+  return true;
+}
+
+export function applyStampTarget(cardId, target = window) {
+  if (!cardId) return false;
+  const persist = persistOf(target);
+  if (!Array.isArray(persist.stampedMajors)) persist.stampedMajors = [];
+  if (!persist.stampedMajors.includes(cardId)) persist.stampedMajors.push(cardId);
+  if (Array.isArray(persist.stampedFive)) persist.stampedFive = persist.stampedFive.filter(id => id !== cardId);
+  if (typeof target.tlrSyncPersistToStore === 'function') target.tlrSyncPersistToStore();
+  if (typeof target.render === 'function') target.render();
+  if (typeof target.openShopMain === 'function') target.openShopMain();
+  return true;
+}
+
 export function installShopOverlayFlow(target = window){
   if(!target || target.__tlrShopOverlayFlowInstalled)return;
   target.__tlrShopOverlayFlowInstalled=true;
-  const api={packAccent,animatePackOpen,buildUpgradePicker,pickPackUpgrade,buyPack};
+  const api={packAccent,animatePackOpen,buildUpgradePicker,pickPackUpgrade,buyPack,openStampPicker,applyStampTarget,openFiveStampPicker,applyFiveStampTarget};
   target.tlrShopOverlayFlow=api;
   if(typeof target.animatePackOpen!=='function')target.animatePackOpen=(packId,callback)=>animatePackOpen(packId,callback,target);
   if(typeof target.buyPack!=='function')target.buyPack=(packId,cost)=>buyPack(packId,cost,target);
   if(typeof target.pickPackUpgrade!=='function')target.pickPackUpgrade=upgradeKey=>pickPackUpgrade(upgradeKey,target);
+  if(typeof target.openStampPicker!=='function')target.openStampPicker=idx=>openStampPicker(idx,target);
+  if(typeof target.applyStampTarget!=='function')target.applyStampTarget=cardId=>applyStampTarget(cardId,target);
+  if(typeof target.openFiveStampPicker!=='function')target.openFiveStampPicker=idx=>openFiveStampPicker(idx,target);
+  if(typeof target.applyFiveStampTarget!=='function')target.applyFiveStampTarget=cardId=>applyFiveStampTarget(cardId,target);
 }

@@ -24,7 +24,7 @@ export function installAtticFlow(target = window){
   function foundItems(){try{return JSON.parse(target.localStorage.getItem('tlr_attic_found_items')||'[]')}catch(e){return []}}
   function candlesFromScore(score){if(score>=1000)return 7;if(score>=700)return 6;if(score>=450)return 5;if(score>=250)return 4;if(score>=100)return 3;if(score>=50)return 2;return 1;}
   function renderCandles(){if(target.renderAtticObals)target.renderAtticObals(candleCount);}
-  function candleSpend(){const h=document.getElementById('obalsHud');if(!h)return;h.classList.remove('spend');void h.offsetWidth;h.classList.add('spend');setTimeout(function(){h.classList.remove('spend')},460);}
+  function candleSpend(){const h=document.getElementById('obalsHud');if(!h)return;h.classList.remove('spend');requestAnimationFrame(()=>requestAnimationFrame(()=>{h.classList.add('spend');setTimeout(function(){h.classList.remove('spend')},460);}));}
   function whisper(text,duration){const w=document.getElementById('atticWhisper');if(!w)return;w.textContent=text;w.classList.add('show');clearTimeout(whisper.t);whisper.t=setTimeout(function(){w.classList.remove('show')},duration||2600);}
   function renderObjects(){if(target.renderAtticObjects)target.renderAtticObjects({objects:objects,searchedMap:searched,foundItemIds:foundItems(),onRummage:rummage});}
   function saveFound(itemId){

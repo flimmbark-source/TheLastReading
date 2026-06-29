@@ -32,6 +32,8 @@ export const SHOP = Object.freeze({
   court_chips:     ['Full Court',        '<span class="up-chips">+8 Chips</span> and <span class="up-mult">+0.25 Mult</span>',                                               20,1.6, '👑','pattern','court_mult'],
   royal_court_chips:['Royal Court',      '<span class="up-chips">+8 Chips</span> and <span class="up-mult">+0.25 Mult</span>',                                               20,1.6, '👑','pattern','royal_court_mult'],
   path_chips:      ['Path of the Magi',  '<span class="up-chips">+15 Chips</span> and <span class="up-mult">+0.5 Mult</span>',                                                30,1.9, '✨','pattern','path_mult'],
+  suit_stamp:      ['Suit Stamp',        'Pick a Major — its suit counts toward Royal Court.',                                                                                  30,1,   '♡', 'scoring'],
+  five_stamp:      ['Five Star Stamp',   'Pick any card — while in the spread, it slots into Sequences as a multiple of 5 (5, 10, 15, 20).',                               35,1,   '★', 'scoring'],
   balanced_reading:['Balanced Reading',  'Major &amp; Minor Arcana both present: <span class="up-chips">+5 Chips</span> and <span class="up-mult">+0.25 Mult</span>',           24,1.8, '🌙','pattern','balanced_reading_mult'],
   elemental_harmony:['Elemental Harmony','All 4 suits present: <span class="up-chips">+10 Chips</span> and <span class="up-mult">+0.5 Mult</span>',                            28,1.85,'⚜','pattern','elemental_harmony_mult'],
 
@@ -88,6 +90,8 @@ export const SHOP_ICON = Object.freeze({
   blessed_start:'isp-scoring',first_light:'isp-scoring',deep_reserve:'isp-draw',
   nimble_fingers:'isp-draw',quick_release:'isp-disc',
   balanced_reading:'isp-scoring',elemental_harmony:'isp-scoring',
+  suit_stamp:'isp-scoring',
+  five_stamp:'isp-scoring',
 });
 
 export const REFRESH_COSTS = Object.freeze([10,20,30,40,50]);

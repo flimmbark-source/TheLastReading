@@ -64,6 +64,7 @@ function sanitizePackOffer(target = window) {
   const offers = target._storeFrontOffers;
   if (!offers || !Array.isArray(offers.pack)) return false;
   const current = offers.pack[0];
+  if (!current) return false; // null/undefined = purchased slot, leave it empty
   if (ACTIVE_MARKET_PACK_IDS.includes(current)) return false;
   const replacement = activePackChoice(target);
   offers.pack = replacement ? [replacement] : [];

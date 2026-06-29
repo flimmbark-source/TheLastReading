@@ -114,6 +114,10 @@ function ensureCardDetailStyles(target=window){
     .card-detail-meaning{display:grid;gap:8px;text-align:left;margin-top:10px}
     .card-detail-meaning div{border:1px solid rgba(210,161,94,.22);border-radius:10px;background:rgba(255,255,255,.035);padding:10px;color:#dfcfb0;font:600 13px/1.35 system-ui,Segoe UI,sans-serif}
     .card-detail-close{position:absolute;right:10px;top:8px;border:0;background:transparent;color:#e7c07c;font-size:22px;line-height:1;cursor:pointer}
+    .card-detail-stamps{display:flex;flex-direction:column;gap:6px;margin:0 0 12px}
+    .card-detail-stamp{display:flex;align-items:center;gap:8px;border-radius:8px;padding:7px 10px;font:700 12px/1.2 system-ui,Segoe UI,sans-serif;text-align:left}
+    .card-detail-stamp.suit-stamp{background:rgba(60,107,191,.18);border:1px solid rgba(100,148,255,.3);color:#a8c4ff}
+    .card-detail-stamp.five-stamp{background:rgba(212,160,23,.15);border:1px solid rgba(212,160,23,.35);color:#f0c84a}
     @keyframes cardDetailFade{from{opacity:0}to{opacity:1}}
   `;
   doc.head.appendChild(style);
@@ -133,12 +137,23 @@ export function expandCard(card,target=window){
   backdrop.className='card-detail-backdrop';
   const cardClass='card '+(card.type==='major'?'major ':'')+(CARD_SHEET[card.id]?'photo ':'')+(isInteraction(card)?'mp-interaction ':'');
   const ability=isInteraction(card)?interactionLabel(card):(TXT[card.ability]||card.ability||'—');
+  const persist=target.persist||{};
+  const stampedMajors=new Set(persist.stampedMajors||[]);
+  const stampedFive=new Set(persist.stampedFive||[]);
+  const stampParts=[];
+  if(card.type==='major'&&stampedMajors.has(card.id)&&Array.isArray(card.suits)&&card.suits.length){
+    stampParts.push(`<span class="card-detail-stamp suit-stamp">♡ Suit Stamp — counts as ${escapeHtml(card.suits.join(', '))} toward Royal Court</span>`);
+  }
+  if(stampedFive.has(card.id)){
+    stampParts.push(`<span class="card-detail-stamp five-stamp">5★ Five Star Stamp — slots into Sequences as a multiple of 5 (5, 10, 15, 20)</span>`);
+  }
+  const stampsHtml=stampParts.length?`<div class="card-detail-stamps">${stampParts.join('')}</div>`:'';
   backdrop.innerHTML=`<div class="card-detail-panel" role="dialog" aria-modal="true" aria-label="${escapeHtml(title(card))}">
     <button class="card-detail-close" type="button" aria-label="Close">×</button>
     <div class="card-detail-card"><div class="${cardClass}" data-uid="${card.uid}">${cardHTML(card)}</div></div>
     <div class="card-detail-title">${escapeHtml(title(card))}</div>
     <div class="card-detail-meta"><span>${escapeHtml(String(card.points))} Chips</span><span>${escapeHtml(ability)}</span></div>
-    <div class="card-detail-meaning"><div>${escapeHtml(upright||'')}</div><div>${escapeHtml(reversed||'')}</div></div>
+    ${stampsHtml}<div class="card-detail-meaning"><div>${escapeHtml(upright||'')}</div><div>${escapeHtml(reversed||'')}</div></div>
   </div>`;
   target.document.body.appendChild(backdrop);
   target.__tlrCardDetailOpen=true;

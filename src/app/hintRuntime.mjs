@@ -36,6 +36,7 @@ export function cardHints(card,poolCards=null,target = window){
     relics:persist.relics,
     includeRelics:settings.relics,
     upgrades:persist.up,
+    stampedMajors:persist.stampedMajors||[],
   });
   if(!poolCards){
     if(!caches.unlockedFragments){
@@ -82,7 +83,13 @@ export function slotsForMeld(name,target = window){
   }
   if(name.startsWith('Royal Court')||name.startsWith('Flush')){
     const suit=(target.SUITS||[]).find(s=>name.includes(s));const limit=tierFrom()||4;
-    return suit?filled.filter(x=>x.c.suit===suit).slice(0,limit).map(x=>x.i):[];
+    if(!suit)return[];
+    const stampedIds=new Set((persistOf(target)?.stampedMajors)||[]);
+    const matches=filled.filter(x=>
+      x.c.suit===suit||
+      (x.c.type==='major'&&stampedIds.has(x.c.id)&&(x.c.suits||[]).includes(suit))
+    );
+    return matches.slice(0,limit).map(x=>x.i);
   }
   if(name.startsWith('Sequence')){
     const tr=filled.filter(x=>x.c.type==='major').sort((a,b)=>a.c.num-b.c.num);

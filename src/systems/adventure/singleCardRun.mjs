@@ -80,7 +80,14 @@ function eventAffinityWeight(event, previousNodes = [], completedEventIds = []) 
 }
 
 export function buildSetEventDeck({ setIndex = 0, previousNodes = [], completedEventIds = [], rng = Math.random } = {}) {
-  if (setIndex === 0) return [...FIRST_SET_IDS];
+  if (setIndex === 0) {
+    const deck = [...FIRST_SET_IDS];
+    for (let i = deck.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    return deck;
+  }
   const entries = ADVENTURE_EVENTS.map(event => ({
     id: event.id,
     weight: eventAffinityWeight(event, previousNodes, completedEventIds),

@@ -69,7 +69,7 @@ export function installCardDetailGestures(target=window){
     if(ev.button!==undefined&&ev.button!==0){lastTap=null;return;}
 
     const source=target.Element&&ev.target instanceof target.Element?ev.target:null;
-    const cardEl=source?.closest?.('#hand .card[data-uid],#spread .card[data-uid]');
+    const cardEl=source?.closest?.('#hand .card[data-uid], #spread .card[data-uid]');
     if(!cardEl||inSelectionMode(cardEl,target)){lastTap=null;return;}
 
     const uid=Number(cardEl.dataset.uid);
@@ -109,7 +109,7 @@ export function installCardDetailGestures(target=window){
   // opened the detail view. Touch devices normally do not emit this event.
   target.document.addEventListener('dblclick',ev=>{
     const source=target.Element&&ev.target instanceof target.Element?ev.target:null;
-    if(!source?.closest?.('#hand .card[data-uid],#spread .card[data-uid]'))return;
+    if(!source?.closest?.('#spread .card[data-uid]'))return;
     ev.preventDefault();
     ev.stopPropagation();
     ev.stopImmediatePropagation();

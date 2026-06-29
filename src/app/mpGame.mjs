@@ -1006,8 +1006,7 @@ export function installMpGame(target = window) {
 
   function bumpSlot(slot) {
     slot.classList.remove('bump');
-    void slot.offsetWidth;
-    slot.classList.add('bump');
+    requestAnimationFrame(() => requestAnimationFrame(() => slot.classList.add('bump')));
   }
 
   function slotGhost(slot, text, big = false) {

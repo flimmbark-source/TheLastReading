@@ -696,6 +696,7 @@ export function installAdventureModeV3(target = window) {
       <div class="adv-played-card">${esc(card.name)} · ${esc(resolution.sourceNode.charAt(0).toUpperCase()+resolution.sourceNode.slice(1))} · ${resolution.potency}${resolution.potencyBonus ? ` (${resolution.potencyBonus > 0 ? '+' : ''}${resolution.potencyBonus})` : ''}</div>
       <p class="adv-narrative">${esc(resolution.narrative)}</p>${statusBits ? `<div>${statusBits}</div>` : ''}${resolveBit}
       <div class="rbtns">${marked}<button class="btn-gold" onclick="tlrAdventureV3AfterOutcome()">Continue</button></div></div>`);
+    target.tutSignal?.('advCardPlaced');
   }
 
   function rewardLabel(offer) {
@@ -763,6 +764,7 @@ export function installAdventureModeV3(target = window) {
   }
 
   function showRewards() {
+    target.tutSignal?.('advRewardShown');
     const state = session.rewardState;
     const offers = state.selectedSet === 'alt' && state.altOffers ? state.altOffers : state.offers;
     const cards = offers.map((offer, index) => {
@@ -787,6 +789,7 @@ export function installAdventureModeV3(target = window) {
   }
 
   function showSetRewards(profile) {
+    target.tutSignal?.('advSetComplete');
     session.pendingSetProfile = profile;
     const options = [
       { id: 'heart', name: 'Stronger Heart', text: '+1 maximum Resolve. Restore 1 Resolve.' },
@@ -836,6 +839,7 @@ export function installAdventureModeV3(target = window) {
     if (session.run.inventory.length < session.run.inventoryCapacity) {
       session.run.inventory.push(itemId);
       renderInventory();
+      target.tutSignal?.('advItemGained');
       done();
       return;
     }
@@ -853,6 +857,7 @@ export function installAdventureModeV3(target = window) {
     const done = session.pendingInventoryDone || (() => {});
     session.pendingInventoryDone = null;
     renderInventory();
+    target.tutSignal?.('advItemGained');
     done();
   }
 
@@ -1286,6 +1291,7 @@ export function installAdventureModeV3(target = window) {
     if (!el.classList.contains('hidden')) { el.classList.add('hidden'); return; }
     el.innerHTML = renderApproachWebHTML();
     el.classList.remove('hidden');
+    target.tutSignal?.('advApproachWebOpened');
   }
 
   function installApproachWebControls() {

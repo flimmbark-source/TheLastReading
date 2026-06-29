@@ -90,18 +90,23 @@ function applyRankPatterns(result, cards, upgrades) {
   }
 }
 
-function applyCourtPatterns(result, cards, upgrades) {
+function applyCourtPatterns(result, cards, upgrades, context = {}) {
   const courts = courtCards(cards);
+  const stampedIds = new Set(context.stampedMajors || []);
+  const stampedMajorsInPlay = majorCards(cards).filter(
+    card => stampedIds.has(card.id) && Array.isArray(card.suits) && card.suits.length > 0
+  );
   const distinctRanks = new Set(courts.map(card => card.rank)).size;
   let royalSuit = null;
   let royalCount = 0;
 
-  if (distinctRanks >= 3) {
+  if (distinctRanks >= 3 || (stampedMajorsInPlay.length > 0 && distinctRanks + stampedMajorsInPlay.length >= 3)) {
     for (const suit of SUITS) {
-      const ranksInSuit = new Set(courts.filter(card => card.suit === suit).map(card => card.rank));
-      if (ranksInSuit.size >= 3) {
+      const tokensInSuit = new Set(courts.filter(card => card.suit === suit).map(card => card.rank));
+      stampedMajorsInPlay.filter(card => card.suits.includes(suit)).forEach(card => tokensInSuit.add(card.id));
+      if (tokensInSuit.size >= 3) {
         royalSuit = suit;
-        royalCount = ranksInSuit.size;
+        royalCount = tokensInSuit.size;
         break;
       }
     }
@@ -119,27 +124,44 @@ function applyCourtPatterns(result, cards, upgrades) {
   }
 }
 
-export function bestMajorRunLength(cards) {
-  const nums = [...new Set(majorCards(cards).map(card => card.number ?? card.num))].sort((a, b) => a - b);
-  let best = nums.length ? 1 : 0;
-  let current = nums.length ? 1 : 0;
-
-  for (let i = 1; i < nums.length; i += 1) {
-    if (nums[i] === nums[i - 1] + 1) {
-      current += 1;
-      best = Math.max(best, current);
-    } else {
-      current = 1;
-    }
+function calcRunLength(sortedNums) {
+  if (!sortedNums.length) return 0;
+  let best = 1, current = 1;
+  for (let i = 1; i < sortedNums.length; i += 1) {
+    if (sortedNums[i] === sortedNums[i - 1] + 1) { current += 1; best = Math.max(best, current); }
+    else { current = 1; }
   }
-
   return best;
 }
 
-function applyMajorPatterns(result, cards, upgrades) {
+export function bestMajorRunLength(cards) {
+  const nums = [...new Set(majorCards(cards).map(card => card.number ?? card.num))].sort((a, b) => a - b);
+  return calcRunLength(nums);
+}
+
+// Five Star Stamp: each stamped card in the spread acts as a wildcard that
+// can slot into a sequence as any multiple of 5 (5, 10, 15, 20).
+// We try each candidate position and return the best possible run length.
+function bestMajorRunLengthWithStamp(cards, stampedFiveIds) {
+  const baseNums = [...new Set(majorCards(cards).map(card => card.number ?? card.num))].sort((a, b) => a - b);
+  let best = calcRunLength(baseNums);
+  const wildcards = cards.filter(card => stampedFiveIds.has(card.id)).length;
+  if (!wildcards) return best;
+  for (const candidate of [5, 10, 15, 20]) {
+    if (baseNums.includes(candidate)) continue;
+    const augmented = [...baseNums, candidate].sort((a, b) => a - b);
+    best = Math.max(best, calcRunLength(augmented));
+  }
+  return best;
+}
+
+function applyMajorPatterns(result, cards, upgrades, context = {}) {
   const sequence = SCORING_PATTERNS.SEQUENCE;
   const path = SCORING_PATTERNS.PATH_OF_THE_MAGI;
-  const bestRun = bestMajorRunLength(cards);
+  const stampedFive = new Set(context.stampedFive || []);
+  const bestRun = stampedFive.size > 0
+    ? bestMajorRunLengthWithStamp(cards, stampedFive)
+    : bestMajorRunLength(cards);
 
   if (bestRun >= 3) {
     for (let tier = 3; tier <= bestRun; tier += 1) {
@@ -207,8 +229,8 @@ export function computeScore(cards, options = {}) {
   applyConstellationScoreAdjustments(result, cards, context);
   if (!options.skipFlatBonuses) applyFlatUpgradeBonuses(result, cards, upgrades, context);
   applyRankPatterns(result, cards, upgrades);
-  applyCourtPatterns(result, cards, upgrades);
-  applyMajorPatterns(result, cards, upgrades);
+  applyCourtPatterns(result, cards, upgrades, context);
+  applyMajorPatterns(result, cards, upgrades, context);
   applySpecialUpgradePatterns(result, cards, upgrades);
   applyContextBonuses(result, cards, upgrades, context);
   if (!options.skipRelics) applyRelicMeldsToScore(result, getScoringRelicMelds(cards, options.relics || [], { ...context, upgrades }));

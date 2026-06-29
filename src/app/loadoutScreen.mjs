@@ -213,9 +213,7 @@ export function installLoadoutScreen(target = window) {
     }
 
     artEl.className = 'loadout-portrait-art';
-    // Restart the switch animation while preserving the node and decoded image cache.
-    void artEl.offsetWidth;
-    artEl.className = `loadout-portrait-art${enterClass}`;
+    requestAnimationFrame(() => requestAnimationFrame(() => { artEl.className = `loadout-portrait-art${enterClass}`; }));
     if (art) {
       artEl.style.backgroundImage = `url("${art.full}")`;
       artEl.innerHTML = '';

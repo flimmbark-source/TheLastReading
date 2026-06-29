@@ -31,6 +31,7 @@ import { installMpAutoAdvanceDelay } from './mpAutoAdvanceDelay.mjs';
 import { installMenuControls } from './menuControls.mjs';
 import { installResonationFlow } from './resonationFlow.mjs';
 import { installHintRuntime } from './hintRuntime.mjs';
+import { installStampSigils } from './stampSigils.mjs';
 import { installAmbientEffects } from '../ui/ambientEffects.mjs';
 import { installHandSwipeScroll } from '../ui/gestureHand.mjs';
 import { installHandCardGestures } from '../ui/gestureCard.mjs';
@@ -271,6 +272,7 @@ export function startApp(target = window) {
   installResonationFlow(target);
   installReferenceControls(target);
   installHintRuntime(target);
+  installStampSigils(target);
   installPlacementRuntime(target);
   installDiscardRuntime(target);
   installAbilityTargetBridge(target);
