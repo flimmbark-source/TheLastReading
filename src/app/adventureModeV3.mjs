@@ -590,7 +590,7 @@ export function installAdventureModeV3(target = window) {
   }
 
   function beginReading() {
-    beginReading();
+    if (typeof target.startReading === 'function') target.startReading();
     injectSealedCards();
   }
 
