@@ -813,20 +813,6 @@ export function installAdventureModeV3(target = window) {
     show(`<div class="result-panel pass"><div class="rhead"><h3 class="pass">${esc(RECOVERY_EVENT_V3.title)}</h3></div><p class="adv-narrative">${esc(RECOVERY_EVENT_V3.description)}</p><div class="adv-rewards">${choices}</div></div>`);
   }
 
-  function showSetRewards(profile) {
-    target.tutSignal?.('advSetComplete');
-    session.pendingSetProfile = profile;
-    const options = [
-      { id: 'heart', name: 'Stronger Heart', text: '+1 maximum Resolve. Restore 1 Resolve.' },
-      { id: 'temper', name: 'Tempered Reading', text: 'Upgrade 2 different cards by +1.' },
-      { id: 'curate', name: 'Curated Deck', text: 'Remove 2 cards. Add 1 of 3 Major Arcana.' },
-      { id: 'supplies', name: 'Prepared Journey', text: 'Choose 2 Consumables.' },
-    ];
-    session.setRewardOptions = options.sort(() => rng() - .5).slice(0, 3);
-    const cards = session.setRewardOptions.map(option => `<div class="adv-reward" onclick="tlrAdventureV3SetReward('${option.id}')"><div class="adv-reward__name">${esc(option.name)}</div><div class="adv-reward__desc">${esc(option.text)}</div></div>`).join('');
-    show(`<div class="result-panel pass"><div class="rhead"><h3 class="pass">The Spread Is Complete</h3></div><p class="adv-narrative">${esc(setEchoText(profile))}</p><div class="adv-rewards">${cards}</div></div>`);
-  }
-
   function showEnd(won) {
     setBusy(true);
     show(`<div class="result-panel ${won ? 'pass' : 'fail'}"><div class="rhead"><h3 class="${won ? 'pass' : 'fail'}">${won ? 'The Road Remembers You' : 'Your Resolve Fails'}</h3></div>
@@ -1089,7 +1075,9 @@ export function installAdventureModeV3(target = window) {
     if (isCurrentSetComplete(session.run)) {
       const profile = completeCurrentSet(session.run);
       if (isAdventureRunComplete(session.run)) { showEnd(true); return; }
-      showSetRewards(profile);
+      target.tutSignal?.('advSetComplete');
+      session.pendingSetProfile = profile;
+      showRecovery();
       return;
     }
     session.awaitingOutcome = false;
@@ -1125,35 +1113,6 @@ export function installAdventureModeV3(target = window) {
     session.awaitingOutcome = false;
     clear(); updateChrome(); setBusy(false);
     if (typeof target.startReading === 'function') target.startReading();
-  }
-
-  function chooseSetReward(id) {
-    if (!session?.pendingSetProfile) return;
-    if (id === 'heart') {
-      session.run.maxResolve += 1;
-      session.run.resolve = clampResolve(session.run.resolve + 1, session.run.maxResolve);
-      showRecovery();
-      return;
-    }
-    if (id === 'temper') {
-      pickCardToUpgrade([], () => pickCardToUpgrade([], showRecovery));
-      return;
-    }
-    if (id === 'curate') {
-      pickCardToRemove(() => pickCardToRemove(() => {
-        const majors = ALL_CARD_DEFINITIONS.filter(card => card.type === 'major').sort(() => rng() - .5).slice(0, 3).map((card, i) => cardWithRunChanges(card, 9900 + i));
-        pickCard('Choose a Major Arcana', 'Add one Major Arcana to your deck.', majors, picked => {
-          if (picked) addCardToAdventureDeck(session.run, picked.id);
-          showRecovery();
-        });
-      }));
-      return;
-    }
-    if (id === 'supplies') {
-      chooseConsumable(3, () => chooseConsumable(3, showRecovery));
-      return;
-    }
-    showRecovery();
   }
 
   function skipCurrentEvent(sourceId, trackUse = true) {
@@ -1393,7 +1352,6 @@ export function installAdventureModeV3(target = window) {
   target.tlrAdventureV3OfferSet = selectOfferSet;
   target.tlrAdventureV3UseMarkedCoin = useMarkedCoin;
   target.tlrAdventureV3Recovery = chooseRecovery;
-  target.tlrAdventureV3SetReward = chooseSetReward;
   target.tlrAdventureV3UseItem = useInventoryItem;
   target.tlrAdventureV3ReplaceItem = replaceInventoryItem;
   target.tlrAdventureV3DeclineItem = declineInventoryItem;
