@@ -508,4 +508,23 @@ export function installHandCardGestures(target = window){
       ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
     }
   },true);
+
+  // Cancel an in-progress card drag and return the card to its original hand
+  // slot with a FLIP slide animation. No-ops when no drag is active.
+  target.tlrCancelHandDrag=function(){
+    if(!g||g.mode!=='drag')return false;
+    const{cardEl,originalParent,originalNextSibling}=g;
+    const firstRect=cardEl.getBoundingClientRect();
+    endDrag(false);
+    if(originalParent&&cardEl.parentNode!==originalParent){
+      if(originalNextSibling&&originalNextSibling.parentNode===originalParent){
+        originalParent.insertBefore(cardEl,originalNextSibling);
+      }else{
+        originalParent.appendChild(cardEl);
+      }
+    }
+    applyNaturalSlots();
+    slideLanding(cardEl,firstRect);
+    return true;
+  };
 }

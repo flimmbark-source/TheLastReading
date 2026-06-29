@@ -1286,6 +1286,7 @@ export function installAdventureModeV3(target = window) {
 
   function toggleApproachRef(e) {
     if (e) e.stopPropagation();
+    typeof target.tlrCancelHandDrag === 'function' && target.tlrCancelHandDrag();
     const el = doc.getElementById('advApproachWeb');
     if (!el) return;
     if (!el.classList.contains('hidden')) { el.classList.add('hidden'); return; }
