@@ -216,14 +216,14 @@ body:has(.hand-scroll-dragging) .handDock *{cursor:grabbing!important}
 .hand .card.hand-card-landing{
   transition:transform .3s cubic-bezier(.15,.85,.25,1)!important;
 }
-.hand-card-swirl-ready{
-  box-shadow:0 22px 52px rgba(0,0,0,.78),0 0 0 3px #f2c94c,0 0 28px rgba(242,201,76,.65)!important;
-  animation:swirlReadyPulse .22s ease-out forwards!important;
+.hand-card-detail-pull{
+  box-shadow:0 22px 52px rgba(0,0,0,.78),0 0 0 3px #a8d8f0,0 0 28px rgba(168,216,240,.65)!important;
+  animation:detailPullPulse .22s ease-out forwards!important;
 }
-@keyframes swirlReadyPulse{
-  0%{box-shadow:0 22px 52px rgba(0,0,0,.78),0 0 0 0px #f2c94c,0 0 0 rgba(242,201,76,0)}
-  55%{box-shadow:0 22px 52px rgba(0,0,0,.78),0 0 0 6px #f2c94c,0 0 36px rgba(242,201,76,.75)}
-  100%{box-shadow:0 22px 52px rgba(0,0,0,.78),0 0 0 3px #f2c94c,0 0 28px rgba(242,201,76,.65)}
+@keyframes detailPullPulse{
+  0%{box-shadow:0 22px 52px rgba(0,0,0,.78),0 0 0 0px #a8d8f0,0 0 0 rgba(168,216,240,0)}
+  55%{box-shadow:0 22px 52px rgba(0,0,0,.78),0 0 0 6px #a8d8f0,0 0 36px rgba(168,216,240,.75)}
+  100%{box-shadow:0 22px 52px rgba(0,0,0,.78),0 0 0 3px #a8d8f0,0 0 28px rgba(168,216,240,.65)}
 }
 .hand.hand-parting .card:not(.hand-card-dragging){
   transition:transform .22s cubic-bezier(.2,.85,.25,1)!important;
