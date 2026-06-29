@@ -729,7 +729,7 @@ export function installAdventureModeV3(target = window) {
   function rewardLabel(offer) {
     if (offer.type === 'ADD_SIGIL_CARD') return `Echo a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card`;
     if (offer.type === 'UPGRADE_CARD') return offer.nodes?.length ? `Upgrade a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card` : 'Upgrade any card';
-    if (offer.type === 'REMOVE_CARD') return 'Remove 1 card';
+    if (offer.type === 'BANISH_TWO') return 'Banish 2 cards';
     if (offer.type === 'RESTORE_RESOLVE') return `Restore ${offer.amount || 1} Resolve`;
     if (offer.type === 'CHOOSE_CONSUMABLE') return 'Choose 1 of 3 Consumables';
     if (offer.type === 'CONSUMABLE' || offer.type === 'SIGNATURE_ITEM') return ADVENTURE_ITEMS[offer.itemId]?.name || offer.itemId;
@@ -740,7 +740,7 @@ export function installAdventureModeV3(target = window) {
     if (offer.type === 'CONSUMABLE' || offer.type === 'SIGNATURE_ITEM') return ADVENTURE_ITEMS[offer.itemId]?.text || '';
     if (offer.type === 'ADD_SIGIL_CARD') return 'Choose a matching card — add a second copy to your deck.';
     if (offer.type === 'UPGRADE_CARD') return 'Increase its printed value by 1.';
-    if (offer.type === 'REMOVE_CARD') return 'Permanently remove it from this run.';
+    if (offer.type === 'BANISH_TWO') return 'Permanently remove two cards from this run.';
     return '';
   }
 
@@ -758,7 +758,7 @@ export function installAdventureModeV3(target = window) {
     const choices = [
       randomConsumableOffer(),
       { type: 'RESTORE_RESOLVE', amount: 1 },
-      { type: 'REMOVE_CARD' },
+      { type: 'BANISH_TWO' },
       { type: 'CHOOSE_CONSUMABLE' },
     ];
     const available = choices.filter(offer => !excludeLabels.includes(rewardLabel(offer)));
@@ -937,7 +937,7 @@ export function installAdventureModeV3(target = window) {
   }
 
   function pickCardToRemove(done) {
-    pickCard('Remove a Card', 'Choose a card to remove from your deck.', buildAdventureDeckCards(), picked => {
+    pickCard('Banish a Card', 'Choose a card to permanently remove from your deck.', buildAdventureDeckCards(), picked => {
       if (picked) removeCardFromAdventureDeck(session.run, picked.id);
       updateChrome(); done();
     });
@@ -986,7 +986,7 @@ export function installAdventureModeV3(target = window) {
 
   function applyRewardOffer(offer, done) {
     if (offer.type === 'ADD_SIGIL_CARD') { pickCardToAdd(offer.nodes || [], done); return; }
-    if (offer.type === 'REMOVE_CARD') { pickCardToRemove(done); return; }
+    if (offer.type === 'BANISH_TWO') { pickCardToRemove(() => pickCardToRemove(done)); return; }
     if (offer.type === 'UPGRADE_CARD') { pickCardToUpgrade(offer.nodes || [], done); return; }
     if (offer.type === 'RESTORE_RESOLVE') {
       session.run.resolve = clampResolve(session.run.resolve + (offer.amount || 1), session.run.maxResolve);
