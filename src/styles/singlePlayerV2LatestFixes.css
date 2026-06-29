@@ -211,45 +211,52 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     --spv2-hud-top: 12px !important;
   }
 
-  /* Center the spread vertically */
+  /* Center the spread vertically; become containing block for absolute slots */
   html body.single-player-v2.generated-sheet-ready .spread {
     position: fixed !important;
     top: 45dvh !important;
     left: 0 !important;
     right: 0 !important;
     bottom: auto !important;
-    transform: translateY(calc(-50% + 7px)) !important;
+    height: 160px !important;
+    transform: translateY(-50%) !important;
+    overflow: visible !important;
   }
 
-  /* Five-card fan slot positions */
+  /* All slots: absolute within the 430px spread, sized to 72×126px */
+  html body.single-player-v2.generated-sheet-ready .spread .slot {
+    position: absolute !important;
+    top: 17px !important;
+    width: 72px !important;
+    height: 126px !important;
+    flex: 0 0 72px !important;
+    margin-left: 0 !important;
+  }
+
+  /* Five-card fan — slots pinned from spread edges (spread = 430px wide) */
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
-    left: 18px !important;
-    right: auto !important;
+    left: 14px !important; right: auto !important;
     transform: translateY(14px) rotate(-8deg) !important;
     --spv2-contact-shadow: 0 5px 4px rgba(0,0,0,.70), 0 14px 17px rgba(0,0,0,.52);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
-    left: 32.5% !important;
-    right: auto !important;
-    transform: translateX(-50%) translateY(5px) rotate(-4deg) !important;
+    left: 96px !important; right: auto !important;
+    transform: translateY(5px) rotate(-4deg) !important;
     --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
-    left: 50% !important;
-    right: auto !important;
-    transform: translateX(-50%) scale(1.025) !important;
+    left: 179px !important; right: auto !important;
+    transform: scale(1.025) !important;
     --spv2-contact-shadow: 0 7px 5px rgba(0,0,0,.82), 0 19px 22px rgba(0,0,0,.62);
     box-shadow: var(--spv2-contact-shadow) !important;
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
-    left: 67.5% !important;
-    right: auto !important;
-    transform: translateX(-50%) translateY(5px) rotate(4deg) !important;
+    left: 262px !important; right: auto !important;
+    transform: translateY(5px) rotate(4deg) !important;
     --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
-    left: auto !important;
-    right: 18px !important;
+    left: auto !important; right: 14px !important;
     transform: translateY(14px) rotate(8deg) !important;
     --spv2-contact-shadow: 0 5px 4px rgba(0,0,0,.70), 0 14px 17px rgba(0,0,0,.52);
   }
@@ -543,7 +550,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   /* Generated-sheet-ready variable overrides and layout refinements */
   html body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 12px !important;
-    --spv2-hud-h: 16.39dvh !important;
+    --spv2-hud-h: clamp(140px, 17.5dvh, 162px) !important;
     --spv2-slot-w: 72px !important;
     --spv2-slot-h: calc(72px * 1.75) !important;
     --spv2-hand-clearance: 34dvh !important;
@@ -617,5 +624,188 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   body.single-player-v2 .tlr-pull-wrap,
   body.single-player-v2 #invWrap {
     display: none !important;
+  }
+
+  /* ── Art layer: mirrors singlePlayerV2Assets + ArtIntegration + UtilityIcons ──
+     Those files load inside @media (max-width:640px) so they don't fire on the
+     1280px desktop viewport. Replicate the same art rules here so the phone-
+     column gets the identical generated-sheet visual treatment as mobile.       */
+
+  /* Body: generated table-cloth background replaces the plain fallback image */
+  html body.single-player-v2.generated-sheet-ready {
+    background-color: #0b0805 !important;
+    background-image: var(--spv2-table-bg-art) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+  }
+
+  /* Title wrap: art integration hides all title graphics/text */
+  html body.single-player-v2.generated-sheet-ready #titleWrap::before,
+  html body.single-player-v2.generated-sheet-ready #titleWrap::after {
+    content: none !important;
+    background: none !important;
+  }
+
+  /* HUD: 2-column art frame (Score + Threshold only) */
+  html body.single-player-v2.generated-sheet-ready .score-stack {
+    background-color: transparent !important;
+    background-image: var(--spv2-hud-frame-art) !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+    overflow: visible !important;
+    height: var(--spv2-hud-h) !important;
+  }
+
+  /* Reserve and discards are baked into the table-background art */
+  html body.single-player-v2.generated-sheet-ready .score-stack .reserve-pill,
+  html body.single-player-v2.generated-sheet-ready .score-stack .discards-pill {
+    display: none !important;
+  }
+
+  /* Art supplies its own dividers — remove the DOM pill borders */
+  html body.single-player-v2.generated-sheet-ready .score-stack > .pill,
+  html body.single-player-v2.generated-sheet-ready .score-stack > .th-pill-wrap {
+    border-right: 0 !important;
+  }
+
+  /* Labels and icons are baked into pill art — hide DOM versions */
+  html body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
+    display: none !important;
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .pill::before {
+    content: none !important;
+  }
+
+  /* Pill art backgrounds with room for baked header at the top */
+  html body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    padding-top: 30px !important;
+    background-position: center !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    border-radius: 14px !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill {
+    background-image: var(--spv2-hud-score-art) !important;
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill {
+    background-image: var(--spv2-hud-threshold-art) !important;
+  }
+
+  /* Spread slots: ornate art frame tile */
+  html body.single-player-v2.generated-sheet-ready .spread .slot {
+    background-image: var(--spv2-spread-slot-art) !important;
+    background-position: center !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
+  }
+
+  /* Hand dock: art tray banner */
+  html body.single-player-v2.generated-sheet-ready .handDock {
+    background-image: var(--spv2-hand-dock-art) !important;
+    background-color: transparent !important;
+  }
+
+  /* Utility buttons: art medallion discs (menu / scoring / abilities) */
+  html body.single-player-v2.generated-sheet-ready #menuBtn,
+  html body.single-player-v2.generated-sheet-ready #scoringBtn,
+  html body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    background-color: transparent !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    font-size: 0 !important;
+    filter: drop-shadow(0 5px 7px rgba(0,0,0,.78)) drop-shadow(0 2px 2px rgba(0,0,0,.6)) !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #menuBtn::before,
+  html body.single-player-v2.generated-sheet-ready #scoringBtn::before,
+  html body.single-player-v2.generated-sheet-ready #abilitiesBtn::before {
+    content: none !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #menuBtn {
+    background-image: var(--spv2-option-menu-art) !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #scoringBtn {
+    background-image: var(--spv2-option-scoring-art) !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    background-image: var(--spv2-option-abilities-art) !important;
+  }
+
+  /* Discard / Purge: medallion art on ::before, caption on ::after */
+  html body.single-player-v2.generated-sheet-ready #discardBtn,
+  html body.single-player-v2.generated-sheet-ready #purgeBtn {
+    width: 74px !important;
+    height: 74px !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    font-size: 0 !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #discardBtn::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background-image: url("/public/ui/single-player-v2/elements/Discard.png") !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: contain !important;
+    filter: brightness(1.85) contrast(1.06) saturate(1.12) drop-shadow(0 0 6px rgba(0,0,0,.6)) !important;
+    pointer-events: none !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #purgeBtn::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background-image: var(--spv2-action-center-art) !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: contain !important;
+    filter: brightness(1.45) contrast(1.05) saturate(1.08) drop-shadow(0 0 6px rgba(0,0,0,.6)) !important;
+    pointer-events: none !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #discardBtn::after,
+  html body.single-player-v2.generated-sheet-ready #purgeBtn::after {
+    position: absolute !important;
+    top: 100% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    margin-top: 3px !important;
+    display: block !important;
+    font: 800 10px/1 system-ui, sans-serif !important;
+    letter-spacing: .09em !important;
+    text-transform: uppercase !important;
+    color: #cdb079 !important;
+    text-shadow: 0 1px 3px #000 !important;
+    white-space: nowrap !important;
+    pointer-events: none !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #discardBtn::after { content: "Discard" !important; }
+  html body.single-player-v2.generated-sheet-ready #purgeBtn::after { content: "Purge" !important; }
+
+  /* Spread-wrap overlays: table-bg art has the reading circle — suppress extra layers */
+  html body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    background: none !important;
+    filter: none !important;
+    box-shadow: none !important;
+  }
+  html body.single-player-v2.generated-sheet-ready .spread-wrap::after {
+    content: none !important;
   }
 }
