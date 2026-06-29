@@ -157,6 +157,7 @@ function ensureStyles(doc) {
     .adv-offer-tabs{display:flex;justify-content:center;gap:6px;margin:5px 0 8px}.adv-offer-tabs button[aria-pressed="true"]{border-color:#f3c969;color:#f3c969}
     .adv-reward__lane{font:700 8px/1 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#9a8060;margin-bottom:5px}
     .adv-reward__lane--trophy{color:#f3c969}
+    body.mode-adventure .card.adv-card-sealed{box-shadow:0 0 0 2px rgba(168,216,240,.7),0 8px 20px rgba(0,0,0,.5)!important}
 
     @media(max-width:640px){
       #advEventDeck{top:20px}.adv-event-desc{max-width:245px;font-size:10px}#advHud{max-width:64vw}.adv-hud__main{padding:6px 9px}
@@ -227,6 +228,7 @@ export function installAdventureModeV3(target = window) {
     run.inventoryCapacity = inventoryCapacity();
     run.cardBonuses = {};
     run.sigilOverrides = {};
+    run.sealedCards = [];
     run.revealedEventCount = 0;
     run.itemState = {
       usedSet: {},
@@ -553,9 +555,11 @@ export function installAdventureModeV3(target = window) {
     const byUid = new Map(all.map(c => [String(c.uid), c]));
     const event = currentEvent();
     const baseVisible = Number(itemState().nextCardBonus || 0) + (itemState().greyfangReady ? 2 : 0);
+    const sealed = new Set(session.run.sealedCards || []);
     doc.querySelectorAll('.card[data-uid]').forEach(el => {
       const card = byUid.get(el.dataset.uid);
       if (!card) return;
+      el.classList.toggle('adv-card-sealed', sealed.has(card.id));
       const art = el.querySelector('.art');
       if (art && !art.querySelector('.adv-sigil-seal')) art.insertAdjacentHTML('afterbegin', sigilSeal(card));
       art?.querySelector('.adv-card-bonus')?.remove();
@@ -563,6 +567,31 @@ export function installAdventureModeV3(target = window) {
       const visible = passivePotencyBonus(card, event) + baseVisible;
       if (visible) art.insertAdjacentHTML('beforeend', `<span class="adv-card-bonus">${visible > 0 ? '+' : ''}${visible}</span>`);
     });
+  }
+
+  function injectSealedCards() {
+    const sealed = session?.run?.sealedCards;
+    if (!sealed?.length || !target.state) return;
+    const hand = target.state.hand;
+    const deck = target.state.deck;
+    if (!Array.isArray(hand) || !Array.isArray(deck)) return;
+    for (const cardId of sealed) {
+      if (hand.some(c => c.id === cardId)) continue;
+      const deckIdx = deck.findIndex(c => c.id === cardId);
+      if (deckIdx < 0) continue;
+      const nonSealedIdx = hand.findIndex(c => !sealed.includes(c.id));
+      if (nonSealedIdx < 0) continue;
+      const [displaced] = hand.splice(nonSealedIdx, 1);
+      deck.push(displaced);
+      const [sealedCard] = deck.splice(deckIdx, 1);
+      hand.push(sealedCard);
+    }
+    scheduleDecorateCards();
+  }
+
+  function beginReading() {
+    beginReading();
+    injectSealedCards();
   }
 
   function eligibleForcedGreat(itemId, card, event) {
@@ -728,6 +757,7 @@ export function installAdventureModeV3(target = window) {
 
   function rewardLabel(offer) {
     if (offer.type === 'ADD_SIGIL_CARD') return `Echo a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card`;
+    if (offer.type === 'SEAL_CARD') return offer.nodes?.length ? `Seal a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card` : 'Seal a card';
     if (offer.type === 'UPGRADE_CARD') return offer.nodes?.length ? `Upgrade a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card` : 'Upgrade any card';
     if (offer.type === 'BANISH_TWO') return 'Banish 2 cards';
     if (offer.type === 'RESTORE_RESOLVE') return `Restore ${offer.amount || 1} Resolve`;
@@ -739,6 +769,7 @@ export function installAdventureModeV3(target = window) {
   function rewardDescription(offer) {
     if (offer.type === 'CONSUMABLE' || offer.type === 'SIGNATURE_ITEM') return ADVENTURE_ITEMS[offer.itemId]?.text || '';
     if (offer.type === 'ADD_SIGIL_CARD') return 'Choose a matching card — add a second copy to your deck.';
+    if (offer.type === 'SEAL_CARD') return 'This card appears in every opening hand. Costs one draw slot.';
     if (offer.type === 'UPGRADE_CARD') return 'Increase its printed value by 1.';
     if (offer.type === 'BANISH_TWO') return 'Permanently remove two cards from this run.';
     return '';
@@ -770,7 +801,16 @@ export function installAdventureModeV3(target = window) {
     const outcomeId = resolution.successOutcome?.id || resolution.outcome?.id;
     const profile = getOutcomeRewardProfile(event.id, outcomeId);
     if (!profile) return [];
-    const offers = [cloneOffer(profile.reinforce), cloneOffer(profile.provision), cloneOffer(profile.crossroads)];
+    const reinforce = cloneOffer(profile.reinforce);
+    if (resolution.tier === RESULT.GREAT_SUCCESS && reinforce.type === 'ADD_SIGIL_CARD') {
+      const nodes = reinforce.nodes || [];
+      const alreadySealed = new Set(session.run.sealedCards || []);
+      const hasEligible = buildAdventureDeckCards().some(
+        card => (!nodes.length || nodes.includes(cardNode(card))) && !alreadySealed.has(card.id)
+      );
+      if (hasEligible) reinforce.type = 'SEAL_CARD';
+    }
+    const offers = [reinforce, cloneOffer(profile.provision), cloneOffer(profile.crossroads)];
     if (resolution.tier === RESULT.GREAT_SUCCESS) {
       const sig = cloneOffer(profile.signature);
       const trophy = (sig.itemId && hasItem(sig.itemId) && ADVENTURE_ITEMS[sig.itemId]?.kind !== 'cache')
@@ -951,6 +991,20 @@ export function installAdventureModeV3(target = window) {
     });
   }
 
+  function pickCardToSeal(nodes, done) {
+    const alreadySealed = new Set(session.run.sealedCards || []);
+    const cards = buildAdventureDeckCards().filter(card =>
+      (!nodes?.length || nodes.includes(cardNode(card))) && !alreadySealed.has(card.id)
+    );
+    pickCard('Seal a Card', 'This card will always appear in your opening hand.', cards, picked => {
+      if (picked) {
+        if (!session.run.sealedCards) session.run.sealedCards = [];
+        if (!session.run.sealedCards.includes(picked.id)) session.run.sealedCards.push(picked.id);
+      }
+      updateChrome(); done();
+    });
+  }
+
   function pickCardSigilOverride(done) {
     pickCard('Transmutation Dust', 'Choose a card to give the Serpent sigil.', buildAdventureDeckCards(), picked => {
       if (picked) session.run.sigilOverrides[picked.id] = NODES.TRANSFORMATION;
@@ -986,6 +1040,7 @@ export function installAdventureModeV3(target = window) {
 
   function applyRewardOffer(offer, done) {
     if (offer.type === 'ADD_SIGIL_CARD') { pickCardToAdd(offer.nodes || [], done); return; }
+    if (offer.type === 'SEAL_CARD') { pickCardToSeal(offer.nodes || [], done); return; }
     if (offer.type === 'BANISH_TWO') { pickCardToRemove(() => pickCardToRemove(done)); return; }
     if (offer.type === 'UPGRADE_CARD') { pickCardToUpgrade(offer.nodes || [], done); return; }
     if (offer.type === 'RESTORE_RESOLVE') {
@@ -1103,7 +1158,7 @@ export function installAdventureModeV3(target = window) {
     session.awaitingOutcome = false;
     session.lastResolution = null;
     clear(); updateChrome(); setBusy(false);
-    if (typeof target.startReading === 'function') target.startReading();
+    beginReading();
   }
 
   function chooseRecovery(choiceId) {
@@ -1132,7 +1187,7 @@ export function installAdventureModeV3(target = window) {
     session.run.revealedEventCount = 0;
     session.awaitingOutcome = false;
     clear(); updateChrome(); setBusy(false);
-    if (typeof target.startReading === 'function') target.startReading();
+    beginReading();
   }
 
   function skipCurrentEvent(sourceId, trackUse = true) {
@@ -1143,7 +1198,7 @@ export function installAdventureModeV3(target = window) {
     session.run.eventDeck.push(id);
     if (trackUse) itemState().usedSet[sourceId] = true;
     updateChrome();
-    if (typeof target.startReading === 'function') target.startReading();
+    beginReading();
     return true;
   }
 
@@ -1325,7 +1380,7 @@ export function installAdventureModeV3(target = window) {
     ensureStyles(doc); ensureChrome(); forceTable(); installCardSigilBridge(); installPreviewListener();
     installApproachWebControls();
     updateChrome(); clear(); setBusy(false);
-    if (typeof target.startReading === 'function') target.startReading();
+    beginReading();
   }
 
   function restartRun() {
@@ -1336,7 +1391,7 @@ export function installAdventureModeV3(target = window) {
     ensureChrome(); forceTable(); installCardSigilBridge();
     installApproachWebControls();
     updateChrome(); clear(); setBusy(false);
-    if (typeof target.startReading === 'function') target.startReading();
+    beginReading();
   }
 
   function cleanupAdventure() {
