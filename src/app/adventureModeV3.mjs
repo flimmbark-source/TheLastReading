@@ -155,6 +155,8 @@ function ensureStyles(doc) {
     .adv-reward--disabled{opacity:.35;pointer-events:none}.adv-reward__name{font-weight:900}.adv-reward__desc{margin-top:5px;color:#bfae8d;font-size:11px;line-height:1.3}
     .adv-reward-tools{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:8px 0}.adv-mini-btn{font-size:10px;padding:5px 8px}
     .adv-offer-tabs{display:flex;justify-content:center;gap:6px;margin:5px 0 8px}.adv-offer-tabs button[aria-pressed="true"]{border-color:#f3c969;color:#f3c969}
+    .adv-reward__lane{font:700 8px/1 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#9a8060;margin-bottom:5px}
+    .adv-reward__lane--trophy{color:#f3c969}
 
     @media(max-width:640px){
       #advEventDeck{top:20px}.adv-event-desc{max-width:245px;font-size:10px}#advHud{max-width:64vw}.adv-hud__main{padding:6px 9px}
@@ -789,17 +791,24 @@ export function installAdventureModeV3(target = window) {
     return null;
   }
 
+  const SUCCESS_LANES = ['Reinforce', 'Provision', 'Crossroads'];
+  const TRIUMPH_LANES = ['Trophy', 'Reinforce', 'Provision', 'Crossroads'];
+
   function showRewards() {
     target.tutSignal?.('advRewardShown');
     const state = session.rewardState;
     const offers = state.selectedSet === 'alt' && state.altOffers ? state.altOffers : state.offers;
+    const isTriumph = state.choose >= 2;
+    const lanes = isTriumph ? TRIUMPH_LANES : SUCCESS_LANES;
     const cards = offers.map((offer, index) => {
       const selected = state.picked.includes(index);
       const disabled = !selected && state.picked.length >= state.choose;
       const rerollSource = sourceForOneReroll();
       const reroll = rerollSource ? `<button class="adv-mini-btn" onclick="event.stopPropagation();tlrAdventureV3RerollOffer(${index},'${rerollSource}')">Replace</button>` : '';
+      const lane = lanes[index] || '';
+      const laneHtml = lane ? `<div class="adv-reward__lane${lane === 'Trophy' ? ' adv-reward__lane--trophy' : ''}">${esc(lane)}</div>` : '';
       return `<div class="adv-reward${selected ? ' adv-reward--picked' : ''}${disabled ? ' adv-reward--disabled' : ''}" onclick="tlrAdventureV3PickReward(${index})">
-        <div class="adv-reward__name">${esc(rewardLabel(offer))}</div><div class="adv-reward__desc">${esc(rewardDescription(offer))}</div>${reroll}</div>`;
+        ${laneHtml}<div class="adv-reward__name">${esc(rewardLabel(offer))}</div><div class="adv-reward__desc">${esc(rewardDescription(offer))}</div>${reroll}</div>`;
     }).join('');
     const loaded = hasItem('loaded_dice') && !itemState().usedSet.loaded_dice && !state.altOffers
       ? `<button class="adv-mini-btn" onclick="tlrAdventureV3LoadedDice()">Use Loaded Dice</button>` : '';
