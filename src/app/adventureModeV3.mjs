@@ -790,9 +790,23 @@ export function installAdventureModeV3(target = window) {
     return { ...offer, nodes: offer.nodes ? [...offer.nodes] : undefined };
   }
 
+  function isOfferUseful(offer) {
+    if (!offer) return false;
+    if (offer.type === 'RESTORE_RESOLVE') return session.run.resolve < session.run.maxResolve;
+    if (offer.type === 'CONSUMABLE') {
+      const statuses = session.run.statuses || [];
+      if (offer.itemId === 'purifying_water') return statuses.length > 0;
+      if (offer.itemId === 'blessed_oil') return !statuses.includes('blessed');
+      if (offer.itemId === 'disguise_kit') return statuses.includes('distrusted') || statuses.includes('exposed');
+    }
+    return true;
+  }
+
   function randomConsumableOffer(exclude = []) {
     const pool = CONSUMABLE_LIST.filter(item => !exclude.includes(item.id));
-    const item = pool[Math.floor(rng() * pool.length)] || CONSUMABLE_LIST[0];
+    const useful = pool.filter(item => isOfferUseful({ type: 'CONSUMABLE', itemId: item.id }));
+    const candidates = useful.length ? useful : pool;
+    const item = candidates[Math.floor(rng() * candidates.length)] || CONSUMABLE_LIST[0];
     return { type: 'CONSUMABLE', itemId: item.id };
   }
 
@@ -802,9 +816,9 @@ export function installAdventureModeV3(target = window) {
       { type: 'RESTORE_RESOLVE', amount: 1 },
       { type: 'BANISH_TWO' },
       { type: 'CHOOSE_CONSUMABLE' },
-    ];
+    ].filter(isOfferUseful);
     const available = choices.filter(offer => !excludeLabels.includes(rewardLabel(offer)));
-    return cloneOffer(available[Math.floor(rng() * available.length)] || choices[0]);
+    return cloneOffer(available[Math.floor(rng() * available.length)] || { type: 'CHOOSE_CONSUMABLE' });
   }
 
   function buildRewardOffers(resolution) {
@@ -821,7 +835,11 @@ export function installAdventureModeV3(target = window) {
       );
       if (hasEligible) reinforce.type = 'SEAL_CARD';
     }
-    const offers = [reinforce, cloneOffer(profile.provision), cloneOffer(profile.crossroads)];
+    let provision = cloneOffer(profile.provision);
+    let crossroads = cloneOffer(profile.crossroads);
+    if (!isOfferUseful(provision)) provision = randomOrdinaryOffer([rewardLabel(reinforce)]);
+    if (!isOfferUseful(crossroads)) crossroads = randomOrdinaryOffer([rewardLabel(reinforce), rewardLabel(provision)]);
+    const offers = [reinforce, provision, crossroads];
     if (resolution.tier === RESULT.GREAT_SUCCESS) {
       const sig = cloneOffer(profile.signature);
       const trophy = (sig.itemId && hasItem(sig.itemId) && ADVENTURE_ITEMS[sig.itemId]?.kind !== 'cache')
