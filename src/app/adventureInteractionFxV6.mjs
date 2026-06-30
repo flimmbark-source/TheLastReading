@@ -418,4 +418,3 @@ export async function playAdventureInteractionFx({
   }
 }
 
-if (typeof window !== 'undefined') installAdventureInteractionFxV6(window);

@@ -1,6 +1,6 @@
-import './adventureCardSigils.mjs?v=5';
-import './adventureSetHandFlow.mjs?v=1';
-import './adventureItemPopups.mjs?v=5';
+import { installAdventureCardSigils } from './adventureCardSigils.mjs?v=5';
+import { installAdventureSetHandFlow } from './adventureSetHandFlow.mjs?v=1';
+import { installAdventureItemPopups } from './adventureItemPopups.mjs?v=5';
 import { ADVENTURE_EVENTS } from '../data/adventure/events.mjs';
 import { getEventApproaches } from '../data/adventure/eventApproaches.mjs';
 import { cardAdventureProfile } from '../data/adventure/cardNodes.mjs';
@@ -47,6 +47,9 @@ export function installAdventureInteractionFx(target = window) {
   if (!target?.document || target.__tlrAdventureInteractionBridgeInstalled) return;
   target.__tlrAdventureInteractionBridgeInstalled = true;
   installAdventureInteractionFxV9(target);
+  installAdventureCardSigils(target);
+  installAdventureSetHandFlow(target);
+  installAdventureItemPopups(target);
 
   const attach = () => {
     const originalPlacement = target.tlrAdventureOnCardPlaced;
@@ -124,4 +127,3 @@ export function installAdventureInteractionFx(target = window) {
   }
 }
 
-if (typeof window !== 'undefined') installAdventureInteractionFx(window);

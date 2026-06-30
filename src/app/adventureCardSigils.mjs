@@ -121,9 +121,14 @@ function decorate(target = window) {
 
 export function installAdventureCardSigils(target = window) {
   const doc = target?.document;
-  if (!doc || target.__tlrAdventureCardSigilsInstalled) return;
-  target.__tlrAdventureCardSigilsInstalled = true;
+  if (!doc) return;
   ensureStyle(doc);
+
+  if (target.__tlrAdventureCardSigilsInstalled) {
+    target.__tlrAdventureCardSigilsSchedule?.();
+    return;
+  }
+  target.__tlrAdventureCardSigilsInstalled = true;
 
   let frame = 0;
   const schedule = () => {
@@ -133,14 +138,42 @@ export function installAdventureCardSigils(target = window) {
       decorate(target);
     });
   };
+  target.__tlrAdventureCardSigilsSchedule = schedule;
 
-  const contentObserver = new target.MutationObserver(schedule);
-  contentObserver.observe(doc.body, { childList: true, subtree: true });
+  const roots = () => [
+    doc.getElementById('hand'),
+    doc.getElementById('spread'),
+    doc.getElementById('summary'),
+  ].filter(Boolean);
 
-  const modeObserver = new target.MutationObserver(schedule);
+  const disconnectContent = () => {
+    target.__tlrAdventureCardSigilsContentObservers?.forEach(observer => observer.disconnect());
+    target.__tlrAdventureCardSigilsContentObservers = [];
+  };
+
+  const observeContent = () => {
+    disconnectContent();
+    if (!target.__tlrAdventureActive && !doc.body.classList.contains('mode-adventure')) return;
+    target.__tlrAdventureCardSigilsContentObservers = roots().map(root => {
+      const observer = new target.MutationObserver(schedule);
+      observer.observe(root, { childList: true, subtree: true });
+      return observer;
+    });
+    schedule();
+  };
+
+  const syncMode = () => {
+    if (target.__tlrAdventureActive || doc.body.classList.contains('mode-adventure')) observeContent();
+    else {
+      disconnectContent();
+      removeSigils(doc);
+    }
+  };
+
+  target.__tlrAdventureCardSigilsModeObserver?.disconnect?.();
+  const modeObserver = new target.MutationObserver(syncMode);
   modeObserver.observe(doc.body, { attributes: true, attributeFilter: ['class'] });
+  target.__tlrAdventureCardSigilsModeObserver = modeObserver;
 
-  schedule();
+  syncMode();
 }
-
-if (typeof window !== 'undefined') installAdventureCardSigils(window);

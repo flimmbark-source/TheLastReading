@@ -47,4 +47,3 @@ export function installAdventureSetHandFlow(target = window) {
   }
 }
 
-if (typeof window !== 'undefined') installAdventureSetHandFlow(window);

@@ -146,4 +146,3 @@ export async function playAdventureInteractionFx(options) {
   }
 }
 
-if (typeof window !== 'undefined') installAdventureInteractionFxV9(window);
