@@ -648,6 +648,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     align-items: flex-start;
     background-position: center bottom !important;
     background-size: 100% auto !important;
+    background-repeat: no-repeat !important;
   }
   body.single-player-v2.generated-sheet-ready .handDock .hand {
     height: 31dvh;
