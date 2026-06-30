@@ -103,16 +103,15 @@ export function fireChipProjectile(i,chipValue){
     setTimeout(()=>{
       g.remove();
       if(!pill.isConnected||!pill.animate)return;
-      // Slam: squish wide-flat then bounce upright
+      // Polished score-pill acknowledgement: a restrained pop, not a squashy slam.
       pill.animate(
-        [{transform:'scale(1)',       filter:'brightness(1)'},
-         {transform:'scale(1.32,.66)',filter:'brightness(1.6)', offset:.17},
-         {transform:'scale(.91,1.10)',filter:'brightness(1.1)', offset:.40},
-         {transform:'scale(1.03,.98)',filter:'brightness(1)',   offset:.62},
-         {transform:'scale(1)',       filter:'brightness(1)'}],
-        {duration:380,easing:'ease-out'}
+        [{transform:'scale(1)',        filter:'brightness(1)'},
+         {transform:'scale(1.08,.96)', filter:'brightness(1.22)', offset:.24},
+         {transform:'scale(.99,1.015)',filter:'brightness(1.08)', offset:.56},
+         {transform:'scale(1)',        filter:'brightness(1)'}],
+        {duration:260,easing:'cubic-bezier(.2,.75,.25,1)'}
       );
-      spark(targetX,targetY,'#ff9b52',6,26,3.5);
+      spark(targetX,targetY,'#ff9b52',4,20,3);
       try{haptic([0,8,50]);}catch{}
     },flyDur);
   },flyDelay);
