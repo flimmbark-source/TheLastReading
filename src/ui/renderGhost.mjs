@@ -1,7 +1,7 @@
 // Shared ghost-text renderer (Phase 15.8). Moved verbatim from index.html.
 // Reads legacy globals (_slots, relicIconStyle) and writes the global
 // effectsUntil timer that score sequencing waits on.
-/* global _slots, relicIconStyle, effectsUntil */
+/* global _slots, relicIconStyle, effectsUntil, haptic */
 
 function signed(v){const n=Number(v);return (n>=0?'+':'')+n.toFixed(2).replace(/\.?0+$/,'')}
 
@@ -26,3 +26,73 @@ export function fireScoreGhost(){const pill=document.querySelector('.score-stack
 export function fireMultGhost(label){const pill=document.querySelector('.score-stack .score-pill');if(!pill)return;const r=pill.getBoundingClientRect();const g=document.createElement('span');g.className='score-ghost mult';g.textContent=label;g.style.left=(r.left+8+Math.random()*(r.width-16))+'px';g.style.top=(r.top+r.height*0.25)+'px';document.body.appendChild(g);if(pill.animate&&!reducedMotion())pill.animate([{filter:'brightness(1)'},{filter:'brightness(1.25)'},{filter:'brightness(1)'}],{duration:260,easing:'ease-out'});setTimeout(()=>g.remove(),950)}
 
 export function fireThresholdBonusGhost(amount){const pill=document.querySelector('.th-pill-wrap .threshold-pill');if(!pill)return;const r=pill.getBoundingClientRect();const g=document.createElement('span');g.className='score-ghost';g.textContent='+'+(amount||10);g.style.cssText+='color:#ffd978;font-size:14px;text-shadow:0 0 8px rgba(255,217,120,.6),0 1px 3px rgba(0,0,0,.9);';g.style.left=(r.left+r.width/2)+'px';g.style.top=(r.top+r.height*0.25)+'px';document.body.appendChild(g);if(pill.animate&&!reducedMotion())pill.animate([{filter:'brightness(1)'},{filter:'brightness(1.4)'},{filter:'brightness(1)'}],{duration:340,easing:'ease-out'});setTimeout(()=>g.remove(),950)}
+
+export function fireChipProjectile(i,chipValue){
+  const s=_slots()[i];
+  if(!s)return;
+
+  // Flash the card on placement (same as ghost())
+  const card=s.querySelector('.card');
+  if(card&&card.animate&&!reducedMotion())
+    card.animate([{filter:'brightness(1)'},{filter:'brightness(1.22)'},{filter:'brightness(1)'}],{duration:220,easing:'ease-out'});
+
+  const pill=document.querySelector('.score-stack .score-pill');
+  if(reducedMotion()||!pill){ghost(i,'+'+chipValue);return;}
+
+  const sr=s.getBoundingClientRect();
+  const pr=pill.getBoundingClientRect();
+  const startX=sr.left+sr.width/2;
+  const startY=sr.top-10;
+  const targetX=pr.left+pr.width/2;
+  const targetY=pr.top+pr.height/2;
+
+  const g=document.createElement('div');
+  g.className='chip-projectile';
+  g.textContent='+'+chipValue;
+  g.style.cssText=`position:fixed;left:${startX}px;top:${startY}px;z-index:99999;pointer-events:none;will-change:transform;`;
+  document.body.appendChild(g);
+
+  holdEffects(900);
+
+  // Phase 1: pop in above the card (280ms hold)
+  g.animate(
+    [{transform:'translate(-50%,-50%) scale(0.2)',opacity:0},
+     {transform:'translate(-50%,-50%) scale(1.28)',opacity:1,offset:.32},
+     {transform:'translate(-50%,-50%) scale(1)',opacity:1}],
+    {duration:280,easing:'ease-out',fill:'forwards'}
+  );
+
+  // Phase 2: arc to score pill (420ms) — starts after hold
+  setTimeout(()=>{
+    if(!g.isConnected)return;
+    const dx=targetX-startX;
+    const dy=targetY-startY;
+    // Apex 100px above the pill so the chip overshoots and falls into it
+    const apexX=dx*0.45;
+    const apexY=dy-100;
+    const flyDur=420;
+
+    g.animate(
+      [{transform:`translate(-50%,-50%) scale(1) rotate(0deg)`,opacity:1},
+       {transform:`translate(calc(-50% + ${apexX.toFixed(0)}px),calc(-50% + ${apexY.toFixed(0)}px)) scale(1.12) rotate(-16deg)`,opacity:1,offset:.40},
+       {transform:`translate(calc(-50% + ${dx.toFixed(0)}px),calc(-50% + ${dy.toFixed(0)}px)) scale(0.25) rotate(24deg)`,opacity:0.7}],
+      {duration:flyDur,easing:'cubic-bezier(0.15,0,0.85,1)',fill:'forwards'}
+    );
+
+    setTimeout(()=>{
+      g.remove();
+      if(!pill.isConnected||!pill.animate)return;
+      // Slam: squish wide-flat then bounce upright
+      pill.animate(
+        [{transform:'scale(1)',       filter:'brightness(1)'},
+         {transform:'scale(1.32,.66)',filter:'brightness(1.6)', offset:.17},
+         {transform:'scale(.91,1.10)',filter:'brightness(1.1)', offset:.40},
+         {transform:'scale(1.03,.98)',filter:'brightness(1)',   offset:.62},
+         {transform:'scale(1)',       filter:'brightness(1)'}],
+        {duration:380,easing:'ease-out'}
+      );
+      spark(targetX,targetY,'#ff9b52',6,26,3.5);
+      try{haptic([0,8,50]);}catch(e){}
+    },flyDur);
+  },280);
+}

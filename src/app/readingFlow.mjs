@@ -9,7 +9,7 @@
    _scoreLegacy, _getPlacedScore, _cachedPlacedScore, _resStateKey,
    _relicMeldNameToKey, _relicMeldNames, _packBuys, _shopPacks, _shopRefreshCount,
    getUnlockedFragments, render, refreshHandState,
-   ghost, bump, centerGhost, fireMultGhost, fireScoreGhost, holdEffects,
+   ghost, bump, centerGhost, fireMultGhost, fireScoreGhost, holdEffects, fireChipProjectile,
    meldStr, normMeldName, sortCards, cardDisplayName, cleanName, choice,
    buildDeck, shuffle, drawN, slotsForMeld,
    tlrSyncPersistToStore, tlrStoreReady, tlrResolveAbilityThroughStore,
@@ -124,7 +124,7 @@ export function placeCard(i){
   requestAnimationFrame(()=>{
     const _landEl=_slotEls?.[i]?.querySelector('.card');
     if(_landEl){_landEl.classList.add('landing');_landEl.addEventListener('animationend',()=>_landEl.classList.remove('landing'),{once:true});}
-    ghost(i,'+'+c.points);
+    fireChipProjectile(i,c.points);
   });
   let after=_getPlacedScore();
   let newMelds=after.melds.flatMap(x=>{
