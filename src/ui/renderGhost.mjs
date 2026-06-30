@@ -103,15 +103,14 @@ export function fireChipProjectile(i,chipValue){
     setTimeout(()=>{
       g.remove();
       if(!pill.isConnected||!pill.animate)return;
-      // Polished score-pill acknowledgement: a restrained pop, not a squashy slam.
+      // Keep the score target stable; acknowledge the hit with a subtle light pulse only.
       pill.animate(
-        [{transform:'scale(1)',        filter:'brightness(1)'},
-         {transform:'scale(1.08,.96)', filter:'brightness(1.22)', offset:.24},
-         {transform:'scale(.99,1.015)',filter:'brightness(1.08)', offset:.56},
-         {transform:'scale(1)',        filter:'brightness(1)'}],
-        {duration:260,easing:'cubic-bezier(.2,.75,.25,1)'}
+        [{filter:'brightness(1) drop-shadow(0 0 0 rgba(255,217,120,0))'},
+         {filter:'brightness(1.12) drop-shadow(0 0 5px rgba(255,217,120,.28))',offset:.38},
+         {filter:'brightness(1) drop-shadow(0 0 0 rgba(255,217,120,0))'}],
+        {duration:180,easing:'ease-out'}
       );
-      spark(targetX,targetY,'#ff9b52',4,20,3);
+      spark(targetX,targetY,'#ff9b52',2,14,2.4);
       try{haptic([0,8,50]);}catch{}
     },flyDur);
   },flyDelay);
