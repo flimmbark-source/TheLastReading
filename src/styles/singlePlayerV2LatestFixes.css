@@ -295,10 +295,13 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
   /* Menu button becomes a floating circular medallion */
   body.single-player-v2 #menuBtn {
+    display: block !important;
     position: fixed !important;
     z-index: 31;
-    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 10px);
-    right: 13px;
+    top: auto;
+    bottom: max(24px, 3dvh);
+    left: 13px;
+    right: auto;
     width: 44px;
     height: 44px;
     min-width: 44px;
@@ -485,16 +488,23 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     background: linear-gradient(90deg, #a87528, #f0c96e);
   }
 
-  /* Scoring/Abilities become icon medallions at lower-left; Mulligan likewise */
+  /* Scoring/Abilities become icon medallions at lower-right; Mulligan likewise */
   body.single-player-v2 .actions {
     position: fixed !important;
     z-index: 31;
-    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 10px);
-    left: 13px;
+    top: auto;
+    bottom: max(24px, 3dvh);
+    right: 13px;
+    left: auto;
     margin: 0;
     display: flex !important;
     gap: 7px;
     pointer-events: auto;
+  }
+  /* drawers.css hides these globally — un-hide them for the desktop phone-column */
+  body.single-player-v2 #scoringBtn,
+  body.single-player-v2 #abilitiesBtn {
+    display: block !important;
   }
   body.single-player-v2 .actions button {
     width: 44px;
@@ -519,20 +529,53 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     filter: var(--spv2-coin-shadow);
   }
 
-  /* Discard/Purge action rail at screen bottom */
+  /* Archive button — JS-injected, needs full desktop positioning */
+  body.single-player-v2 #spv2ArchiveBtn {
+    position: fixed !important;
+    z-index: 31;
+    top: auto;
+    bottom: max(24px, 3dvh);
+    left: 63px;
+    right: auto;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid #8f6a34;
+    background: radial-gradient(circle at 45% 38%, #342414, #100b08 70%);
+    color: #dfbd73;
+    font-size: 0;
+    pointer-events: auto;
+    box-shadow: 0 7px 20px rgba(0,0,0,.55), inset 0 0 0 3px rgba(183,139,67,.08);
+  }
+  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    left: 63px !important;
+    background-image: var(--spv2-option-archive-art) !important;
+    background-color: transparent !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    filter: drop-shadow(0 5px 7px rgba(0,0,0,.78)) drop-shadow(0 2px 2px rgba(0,0,0,.6)) !important;
+  }
+
+  /* Discard/Purge action rail between HUD and spread */
   body.single-player-v2 .spread-actions {
     position: fixed !important;
     z-index: 27;
     left: 0;
     right: 0;
-    top: auto;
-    bottom: max(10px, env(safe-area-inset-bottom));
+    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 8px);
+    bottom: auto;
     transform: none;
     display: flex !important;
     justify-content: space-between;
-    align-items: flex-end;
+    align-items: center;
     gap: 0;
-    padding: 0 18px;
+    padding: 0 13px;
     pointer-events: none;
   }
   body.single-player-v2 .spread-actions button { pointer-events: auto; }
@@ -573,7 +616,8 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready .actions {
-    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 10px);
+    top: auto;
+    bottom: max(24px, 3dvh);
   }
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready .actions button {
@@ -581,11 +625,12 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     height: 44px;
     min-width: 0;
   }
-  body.single-player-v2.generated-sheet-ready #menuBtn { right: 9px; }
-  body.single-player-v2.generated-sheet-ready .actions { left: 9px; gap: 5px; }
+  body.single-player-v2.generated-sheet-ready #menuBtn { left: 9px; right: auto; }
+  body.single-player-v2.generated-sheet-ready .actions { right: 9px; left: auto; gap: 5px; }
   body.single-player-v2.generated-sheet-ready .spread-actions {
-    bottom: max(1.35dvh, env(safe-area-inset-bottom));
-    padding: 0 20px;
+    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 8px) !important;
+    bottom: auto !important;
+    padding: 0 13px;
     align-items: center;
   }
   body.single-player-v2.generated-sheet-ready #discardBtn,
@@ -594,9 +639,8 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     height: 74px;
   }
   body.single-player-v2.generated-sheet-ready .spread-actions::before {
-    bottom: -.2dvh;
-    width: 92px;
-    height: 92px;
+    content: none !important;
+    display: none !important;
   }
   body.single-player-v2.generated-sheet-ready .handDock {
     height: 34dvh;
@@ -746,6 +790,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   /* Discard / Purge: medallion art on ::before, caption on ::after */
   html body.single-player-v2.generated-sheet-ready #discardBtn,
   html body.single-player-v2.generated-sheet-ready #purgeBtn {
+    position: relative !important;
     width: 74px !important;
     height: 74px !important;
     border: 0 !important;
@@ -762,7 +807,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     content: "" !important;
     position: absolute !important;
     inset: 0 !important;
-    background-image: url("/public/ui/single-player-v2/elements/Discard.png") !important;
+    background-image: var(--spv2-action-eye-art) !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
     background-size: contain !important;
@@ -773,7 +818,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     content: "" !important;
     position: absolute !important;
     inset: 0 !important;
-    background-image: var(--spv2-action-center-art) !important;
+    background-image: var(--spv2-action-deck-art) !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
     background-size: contain !important;
