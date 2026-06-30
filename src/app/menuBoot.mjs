@@ -137,6 +137,7 @@ async function launch(actionName) {
     const action = window[actionName];
     if (typeof action === 'function') {
       action();
+      if (actionStartsSingleplayer(actionName)) await waitForSinglePlayerSkin();
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           document.body.classList.remove('main-menu-mode-booting');
@@ -157,6 +158,20 @@ async function launch(actionName) {
     document.body.classList.remove('main-menu-mode-booting');
     clearBusy();
   }
+}
+
+
+function waitForSinglePlayerSkin() {
+  const ready = window.__tlrSinglePlayerV2Ready;
+  if (!ready || typeof ready.then !== 'function') return Promise.resolve();
+  return Promise.race([
+    ready.catch(() => false),
+    new Promise(resolve => window.setTimeout(resolve, 2500)),
+  ]);
+}
+
+function actionStartsSingleplayer(actionName) {
+  return actionName === 'tlrMainMenuNewGame' || actionName === 'tlrMainMenuContinue';
 }
 
 function warmGame() {
