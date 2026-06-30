@@ -20,7 +20,7 @@ const STORE_PACK_CALLOUT = Object.freeze({
   foundation: { desc: 'Choose one chip bonus for your spread cards.', upgrades: ['Omen — all cards +1 Chip', 'Resonance — Majors +3 Chips', 'Suit bonuses — +1 Chip per matching card', 'Offering — +5 Reserve per reading'] },
   innate:     { desc: 'Choose one starting-hand improvement.', upgrades: ['Wider Hand — +1 hand size', 'Deep Current — draw +1 per reading', 'Blessed Start — +0.25 Mult on entry', 'First Light — first placed card +3 Chips', 'Deep Reserve — held cards +2 Chips'] },
   restless:   { desc: 'Choose one draw or discard enhancement.', upgrades: ['Extra Discard — +1 discard/reading', 'Mulligan — +1 mulligan charge', 'Nimble Fingers — draw after each discard', 'Quick Release — discards add +3 Chips', 'Ritual Depth — ability draws +1 extra'] },
-  second_sight:{ desc: 'Choose one ability or reveal upgrade.', upgrades: ['Lens Mastery — abilities reveal +1 extra', 'Deeper Peek — Peek shows +1 more', 'Sight Discount — sight abilities free once/reading', 'Chosen — ability-taken cards +5 Chips'] },
+  second_sight:{ desc: 'Choose one ability or reveal upgrade.', upgrades: ['Lens Mastery — abilities reveal +1 extra', 'Deeper Peek — Peek shows +1 more', "Seer's Grace — Peek/Search/Mirror free once per reading", 'Chosen — ability-taken cards +5 Chips'] },
   thread:     { desc: 'Choose one relational ability upgrade.', upgrades: ['Deeper Threads — Kin/Between/Neighbor reveal +1 more', 'Thread Bond — thread-taken cards +1 Chip each'] },
 });
 
@@ -461,11 +461,22 @@ const MARKET_AMBIENCE_FILES = Object.freeze([
   { file: 'assets/audio/soundreality-bell-fx-410608.mp3', vol: 0.24 },
   { file: 'assets/audio/izafi-gong-sound-419930.mp3',     vol: 0.7  },
   { file: 'assets/audio/olenchic-psycho-1-155031.mp3',    vol: 0.7  },
-  { file: 'assets/audio/alex_jauk-witch-laugh-256450.mp3', vol: 1.0  },
+  { file: 'assets/audio/alex_jauk-witch-laugh-256450.mp3', vol: 0.4 },
 ]);
 
+export function selectMarketAmbienceEntry(target = window) {
+  const previous = target._lastMarketAmbienceFile || null;
+  const pool = MARKET_AMBIENCE_FILES.length > 1
+    ? MARKET_AMBIENCE_FILES.filter(entry => entry.file !== previous)
+    : MARKET_AMBIENCE_FILES;
+  const rng = target.Math?.random || Math.random;
+  const entry = pool[Math.floor(rng() * pool.length)] || MARKET_AMBIENCE_FILES[0];
+  target._lastMarketAmbienceFile = entry.file;
+  return entry;
+}
+
 function playMarketAmbience(target = window) {
-  const entry = MARKET_AMBIENCE_FILES[Math.floor(Math.random() * MARKET_AMBIENCE_FILES.length)];
+  const entry = selectMarketAmbienceEntry(target);
   try {
     const vol = typeof target._sfxVol === 'number' ? target._sfxVol : 1;
     const a = new (target.Audio || Audio)(entry.file);

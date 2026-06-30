@@ -102,16 +102,23 @@ function enhanceWhenReady(target = window) {
 
 function installContentWatcher(target = window) {
   const doc = target.document;
-  if (!doc || target.__tlrMpMatchSettingsWatcherInstalled) return;
-  target.__tlrMpMatchSettingsWatcherInstalled = true;
+  if (!doc) return;
   const content = doc.getElementById('mmContent');
   if (!content) {
-    target.setTimeout?.(() => installContentWatcher(target), 200);
+    if (!target.__tlrMpMatchSettingsFindTimer) {
+      target.__tlrMpMatchSettingsFindTimer = target.setTimeout?.(() => {
+        target.__tlrMpMatchSettingsFindTimer = null;
+        installContentWatcher(target);
+      }, 200);
+    }
     return;
   }
+  if (target.__tlrMpMatchSettingsWatcherRoot === content) return;
+  target.__tlrMpMatchSettingsWatcher?.disconnect?.();
   const observer = new MutationObserver(() => enhanceWhenReady(target));
   observer.observe(content, { childList: true, subtree: false });
   target.__tlrMpMatchSettingsWatcher = observer;
+  target.__tlrMpMatchSettingsWatcherRoot = content;
 }
 
 export function installMpMatchSettings(target = window) {
@@ -176,11 +183,3 @@ export function installMpMatchSettings(target = window) {
   target.setTimeout?.(wrapDispatch, 3000);
 }
 
-if (typeof window !== 'undefined') {
-  const install = () => installMpMatchSettings(window);
-  install();
-  window.setTimeout?.(install, 0);
-  window.setTimeout?.(install, 500);
-  window.setTimeout?.(install, 1500);
-  window.setTimeout?.(install, 3000);
-}

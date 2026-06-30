@@ -1,6 +1,6 @@
 import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=option-discs-1';
 
-(function installSinglePlayerV2(target = window){
+export function installSinglePlayerV2(target = window) {
   if(!target || target.__tlrSinglePlayerV2Installed)return;
   target.__tlrSinglePlayerV2Installed=true;
 
@@ -144,11 +144,13 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=option
   const installMenuObservers=()=>{
     if(target.__tlrSinglePlayerMenuObserverInstalled)return;
     target.__tlrSinglePlayerMenuObserverInstalled=true;
+    target.__tlrSinglePlayerMenuObserver?.disconnect?.();
     const observer=new MutationObserver(()=>ensureMenuCloseTabs());
     ['menuPullWrap','scoringPullWrap','abilitiesPullWrap','invWrap'].forEach(id=>{
       const node=doc.getElementById(id);
       if(node)observer.observe(node,{childList:true,subtree:false});
     });
+    target.__tlrSinglePlayerMenuObserver=observer;
   };
 
   const installOutsideClose=()=>{
@@ -218,7 +220,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=option
     installMenuObservers();
     installOutsideClose();
     installHandHintDismiss();
-    installGeneratedSheetAssets(target);
+    target.__tlrSinglePlayerV2Ready = installGeneratedSheetAssets(target);
   };
 
   const wrapLabel=(pill,label)=>{
@@ -336,6 +338,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=option
   };
 
   const observeValues=()=>{
+    if(target.__tlrSinglePlayerValueObserver)return;
     const ids=['pool','current','threshold','discards'];
     const observer=new MutationObserver(()=>{
       ensureHudStructure();
@@ -347,6 +350,7 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=option
       const el=doc.getElementById(id);
       if(el)observer.observe(el,{subtree:true,childList:true,characterData:true});
     });
+    target.__tlrSinglePlayerValueObserver=observer;
   };
 
   const boot=()=>{
@@ -363,4 +367,4 @@ import { installGeneratedSheetAssets } from './generatedSheetAssets.mjs?v=option
 
   if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
-})(window);
+}

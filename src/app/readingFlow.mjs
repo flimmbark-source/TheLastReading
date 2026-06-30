@@ -9,7 +9,7 @@
    _scoreLegacy, _getPlacedScore, _cachedPlacedScore, _resStateKey,
    _relicMeldNameToKey, _relicMeldNames, _packBuys, _shopPacks, _shopRefreshCount,
    getUnlockedFragments, render, refreshHandState,
-   ghost, bump, centerGhost, fireMultGhost, fireScoreGhost, holdEffects,
+   ghost, bump, centerGhost, fireMultGhost, fireScoreGhost, holdEffects, fireChipProjectile,
    meldStr, normMeldName, sortCards, cardDisplayName, cleanName, choice,
    buildDeck, shuffle, drawN, slotsForMeld,
    tlrSyncPersistToStore, tlrStoreReady, tlrResolveAbilityThroughStore,
@@ -22,6 +22,7 @@ import { choiceAsync } from '../ui/renderAbility.mjs';
 
 let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 let scorePillSetBase=0;
+const SCORE_COUNTER_AFTER_CHIP_MS=980;
 function setBusy(v){state.busy=v;if(tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.SET_BUSY,busy:v});}
 function syncPurgeFromStore(){const run=window.tlrStore.getState().run;state.purgeSelect=Array.isArray(run.purge)?run.purge.slice():null;state.hand=run.hand.slice();state.discards=run.discards;}
 
@@ -124,7 +125,7 @@ export function placeCard(i){
   requestAnimationFrame(()=>{
     const _landEl=_slotEls?.[i]?.querySelector('.card');
     if(_landEl){_landEl.classList.add('landing');_landEl.addEventListener('animationend',()=>_landEl.classList.remove('landing'),{once:true});}
-    ghost(i,'+'+c.points);
+    fireChipProjectile(i,c.points);
   });
   let after=_getPlacedScore();
   let newMelds=after.melds.flatMap(x=>{
@@ -153,9 +154,9 @@ export function placeCard(i){
   checkEnd();
 }
 
-export function setCounterTarget(v){const floor=Math.max(counterShown,counterTarget,visibleCounterValue());counterTarget=Math.max(v,floor);if(counterTimer)clearTimeout(counterTimer);counterTimer=setTimeout(()=>{if(counterCancel)counterCancel();const from=Math.max(counterShown,visibleCounterValue());const to=Math.max(counterTarget,from);counterCancel=rollCounter(from,to,650);counterShown=to;counterTimer=null},700)}
+export function setCounterTarget(v){const floor=Math.max(counterShown,counterTarget,visibleCounterValue());counterTarget=Math.max(v,floor);if(counterTimer)clearTimeout(counterTimer);counterTimer=setTimeout(()=>{if(counterCancel)counterCancel();const from=Math.max(counterShown,visibleCounterValue());const to=Math.max(counterTarget,from);counterCancel=rollCounter(from,to,650);counterShown=to;counterTimer=null},SCORE_COUNTER_AFTER_CHIP_MS)}
 export function snapCounter(v){if(counterTimer){clearTimeout(counterTimer);counterTimer=null}if(counterCancel){counterCancel();counterCancel=null}counterShown=counterTarget=v;_cacheEls();_elCurrent.textContent=v;_elCurrent.style.color=''}
-export function rollCounter(from,to,dur){_cacheEls();let el=_elCurrent,start=performance.now(),dead=false,lastVal=from,popAnim=null;if(to<=from){el.textContent=from;el.style.color='';return()=>{dead=true}}function step(now){if(dead)return;let t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++){fireScoreGhost();}if(val!==lastVal){if(popAnim)popAnim.cancel();popAnim=el.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});}lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color='';holdEffects(1000);}}requestAnimationFrame(step);return()=>{dead=true;if(popAnim)popAnim.cancel();el.style.color=''}}
+export function rollCounter(from,to,dur){_cacheEls();const threshold=Number(_elThreshold?.textContent)||Infinity;let el=_elCurrent,start=performance.now(),dead=false,lastVal=from,popAnim=null,thCrossed=from>=threshold;if(to<=from){el.textContent=from;el.style.color='';return()=>{dead=true}}function step(now){if(dead)return;let t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++){fireScoreGhost();}if(val!==lastVal){if(popAnim)popAnim.cancel();popAnim=el.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});}if(!thCrossed&&val>=threshold){thCrossed=true;const thPill=_elThreshold?.closest('.pill');if(thPill)thPill.animate([{boxShadow:'inset 0 -3px 0 rgba(154,111,235,.62)',filter:'brightness(1)'},{boxShadow:'inset 0 -3px 0 rgba(80,220,100,.9), 0 0 24px 6px rgba(80,220,100,.55)',filter:'brightness(1.45)',offset:.2},{boxShadow:'inset 0 -3px 0 rgba(154,111,235,.62)',filter:'brightness(1)'}],{duration:750,easing:'ease-out',fill:'none'});try{haptic([0,15,60,25,80]);}catch(e){}}lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color='';holdEffects(1000);}}requestAnimationFrame(step);return()=>{dead=true;if(popAnim)popAnim.cancel();el.style.color=''}}
 
 export function startPurge(){
   const _run=tlrStoreReady()?window.tlrStore.getState().run:null;
@@ -407,8 +408,20 @@ export function showOverlay(html){let s=$('#summary');s.className='modal show';s
 export function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML='';tlrArchitectureSync()}
 function summaryIsFailedReading(){const s=$('#summary');if(!s||!s.classList.contains('show'))return false;return !!s.querySelector('.result-panel.fail')}
 
+// Called when the player enters the market. Advances the round state (reading
+// counter, worldCarry, pendingReserve) immediately so the HUD reflects the new
+// round while the player shops. The hand is not drawn until continueReading().
+export function enterMarket(){
+  window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});
+  const _run=window.tlrStore.getState().run;
+  state.reading=_run.reading;
+  state.constellationId=_run.constellationId||null;
+  state.untargetableCardUids=(_run.untargetableCardIds||[]).slice();
+}
+
 export function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount=0;const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;
-window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});state.reading=window.tlrStore.getState().run.reading;
+// Fallback: if enterMarket() wasn't called at store entry (legacy path), advance now.
+if(window.tlrStore.getState().run.phase==='market'){window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});const _run=window.tlrStore.getState().run;state.reading=_run.reading;state.constellationId=_run.constellationId||null;state.untargetableCardUids=(_run.untargetableCardIds||[]).slice();}
 startReading();if(pendingRelic){setTimeout(()=>tutShow(9),400)}}
 
 export function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;

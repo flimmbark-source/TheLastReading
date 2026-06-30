@@ -3,7 +3,6 @@
 import { installMarketAudioRotation } from './marketAudioRotation.mjs';
 import { installActionDropGestures } from '../ui/gestureActionDrops.mjs';
 import { installCardDetailGestures } from '../ui/cardDetailGestures.mjs?v=double-tap-1';
-import './adventureCardSigils.mjs?v=5';
 
 const GAME_MODULE = './main.mjs?v=major-title-fix-1';
 const DEFERRED_ASSETS_MODULE = './deferredAssets.mjs?v=lazy-boot-1';
@@ -70,7 +69,10 @@ function continueButton() {
 
 function syncContinueButton() {
   const btn = continueButton();
-  if (btn) btn.disabled = !hasSavedProgress(window.localStorage);
+  if (!btn) return;
+  const available = hasSavedProgress(window.localStorage);
+  btn.disabled = !available;
+  btn.classList.toggle('main-menu-continue-unavailable', !available);
 }
 
 function setBusy(actionName) {
@@ -125,12 +127,22 @@ function loadGame() {
 async function launch(actionName) {
   if (bootAction) return;
   bootAction = actionName;
+  document.body.classList.add('main-menu-mode-booting');
   setBusy(actionName);
   try {
     await loadGame();
+    if (actionName === 'tlrMainMenuAdventure' && typeof window.__tlrInstallAdventureModules === 'function') {
+      await window.__tlrInstallAdventureModules();
+    }
     const action = window[actionName];
     if (typeof action === 'function') {
       action();
+      if (actionStartsSingleplayer(actionName)) await waitForSinglePlayerSkin();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document.body.classList.remove('main-menu-mode-booting');
+        });
+      });
       // Reset the boot state and re-enable the menu buttons. The full game took
       // over the menu (and usually hid it) but if the user ever returns here the
       // buttons must not be left disabled from setBusy().
@@ -143,8 +155,23 @@ async function launch(actionName) {
     console.error('The Last Reading could not load the full game.', err);
     bootAction = null;
     gamePromise = null;
+    document.body.classList.remove('main-menu-mode-booting');
     clearBusy();
   }
+}
+
+
+function waitForSinglePlayerSkin() {
+  const ready = window.__tlrSinglePlayerV2Ready;
+  if (!ready || typeof ready.then !== 'function') return Promise.resolve();
+  return Promise.race([
+    ready.catch(() => false),
+    new Promise(resolve => window.setTimeout(resolve, 2500)),
+  ]);
+}
+
+function actionStartsSingleplayer(actionName) {
+  return actionName === 'tlrMainMenuNewGame' || actionName === 'tlrMainMenuContinue';
 }
 
 function warmGame() {

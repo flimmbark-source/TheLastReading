@@ -44,6 +44,7 @@ export function installSpreadPlacementBridge(target = window){
       const idx=slotIndexFromElement(el);
       if(idx<0)continue;
       if(placeSelectedInto(idx,target)){
+        target.__handGestureSuppressClickUntil=(target.performance||performance).now()+600;
         event.preventDefault();
         event.stopPropagation();
       }

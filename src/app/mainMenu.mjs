@@ -158,6 +158,24 @@ export function installMainMenu(target = window) {
     btn.disabled = false;
   }
 
+
+  function waitForSinglePlayerSkin() {
+    const ready = target.__tlrSinglePlayerV2Ready;
+    if (!ready || typeof ready.then !== 'function') return Promise.resolve();
+    return Promise.race([
+      ready.catch(() => false),
+      new Promise(resolve => target.setTimeout(resolve, 2500)),
+    ]);
+  }
+
+  function clearSingleplayerBootVeil() {
+    target.requestAnimationFrame(() => {
+      target.requestAnimationFrame(() => {
+        target.document.body.classList.remove('main-menu-mode-booting');
+      });
+    });
+  }
+
   function startFresh() {
     try { target.localStorage.removeItem('tlr_save'); } catch (_) {}
 
@@ -182,7 +200,8 @@ export function installMainMenu(target = window) {
     gameStarted = false;
   }
 
-  function startSingleplayer({ fresh = false } = {}) {
+  async function startSingleplayer({ fresh = false } = {}) {
+    target.document.body.classList.add('main-menu-mode-booting');
     try {
       if (fresh) startFresh();
       forceSingleplayerTable();
@@ -191,15 +210,19 @@ export function installMainMenu(target = window) {
         gameStarted = true;
         forceSingleplayerTable();
         hide();
+        await waitForSinglePlayerSkin();
+        clearSingleplayerBootVeil();
         if (!target.localStorage.getItem('tlr_tut_done') && typeof target.tutShow === 'function') {
           target.setTimeout(() => target.tutShow(0), 400);
         }
       } else {
         console.error('The Last Reading: startReading is not available from the main menu.');
+        target.document.body.classList.remove('main-menu-mode-booting');
         show();
       }
     } catch (err) {
       console.error('The Last Reading: failed to start singleplayer from the main menu.', err);
+      target.document.body.classList.remove('main-menu-mode-booting');
       show();
     }
   }

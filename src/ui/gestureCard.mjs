@@ -19,6 +19,8 @@ export function installHandCardGestures(target = window){
   const SPREAD_ZONE_SLACK=72;
   // Padding applied around each slot rect for hit detection.
   const SLOT_HIT_PAD=28;
+  // How far down from drag-start (in px) before the card enters detail-view zone.
+  const DETAIL_DRAG_DOWN_PX=80;
 
   let g=null;
   const handEl=()=>document.querySelector('.hand');
@@ -165,23 +167,28 @@ export function installHandCardGestures(target = window){
       state.selected=null;
       if(typeof refreshHandState==='function')refreshHandState();
     }
-    // Capture card offset from pointer to card top-left at grab time.
+    // Capture card offset from pointer to card centre at grab time.
+    // offsetWidth/offsetHeight give the natural (pre-transform) dimensions;
+    // getBoundingClientRect on a fan-rotated card returns an inflated
+    // axis-aligned bounding box, which causes size jumps at drag start.
     const rect=g.cardEl.getBoundingClientRect();
-    g.grabOffsetX=ev.clientX-rect.left;
-    g.grabOffsetY=ev.clientY-rect.top;
+    const naturalW=g.cardEl.offsetWidth;
+    const naturalH=g.cardEl.offsetHeight;
+    const centerX=rect.left+rect.width/2;
+    const centerY=rect.top+rect.height/2;
+    const fixedLeft=centerX-naturalW/2;
+    const fixedTop=centerY-naturalH/2;
+    g.grabOffsetX=ev.clientX-fixedLeft;
+    g.grabOffsetY=ev.clientY-fixedTop;
     const h=handEl();
     const hRect=h?h.getBoundingClientRect():{left:0,top:0,width:target.innerWidth,height:200};
     g.handCenterX=hRect.left+hRect.width/2;
     g.handTop=hRect.top;
-    g.cardHalfW=rect.width/2;
-    g.cardHalfH=rect.height/2;
+    g.cardHalfW=naturalW/2;
+    g.cardHalfH=naturalH/2;
     g.prevX=ev.clientX;
     g.tiltDeg=0;
-    g.swirlArc=0;
-    g.swirlLastDir=null;
-    g.swirlDetected=false;
-    g.swirlPrevX=ev.clientX;
-    g.swirlPrevY=ev.clientY;
+    g.inDetailZone=false;
     g.mode='drag';
     // Cache spread geometry so hit-tests during drag don't force layout recalc.
     const spEl=document.querySelector('#spread');
@@ -191,15 +198,14 @@ export function installHandCardGestures(target = window){
     if(h)h.classList.add('hand-parting');
     const spEl2=document.querySelector('#spread');if(spEl2)spEl2.classList.add('drag-active');
     g.cardEl.classList.add('hand-card-dragging');
-    g.cardRect = rect;
-    g.dragOriginLeft = rect.left;
-    g.dragOriginTop = rect.top;
+    g.dragOriginLeft = fixedLeft;
+    g.dragOriginTop = fixedTop;
     if (g.cardEl.parentNode !== document.body) document.body.appendChild(g.cardEl);
     g.cardEl.style.setProperty('position','fixed','important');
-    g.cardEl.style.setProperty('left', `${rect.left}px`, 'important');
-    g.cardEl.style.setProperty('top', `${rect.top}px`, 'important');
-    g.cardEl.style.setProperty('width', `${rect.width}px`, 'important');
-    g.cardEl.style.setProperty('height', `${rect.height}px`, 'important');
+    g.cardEl.style.setProperty('left', `${fixedLeft}px`, 'important');
+    g.cardEl.style.setProperty('top', `${fixedTop}px`, 'important');
+    g.cardEl.style.setProperty('width', `${naturalW}px`, 'important');
+    g.cardEl.style.setProperty('height', `${naturalH}px`, 'important');
     g.cardEl.style.setProperty('margin', '0', 'important');
     g.cardEl.style.setProperty('z-index', '100000', 'important');
     try{g.cardEl.setPointerCapture(g.pointerId);}catch(e){}
@@ -219,8 +225,10 @@ export function installHandCardGestures(target = window){
     }else{
       const cards=handCards();
       const n=cards.length;
+      const inHand=cards.includes(g.cardEl);
+      const total=inHand?n:n+1;
       const frac=xToFracSlot(x);
-      const hover=Math.max(0,Math.min(n-1,Math.round(frac+(n-1)/2)));
+      const hover=Math.max(0,Math.min(total-1,Math.round(frac+(total-1)/2)));
       return{inSpread:false,hover};
     }
   };
@@ -262,6 +270,11 @@ export function installHandCardGestures(target = window){
       const moveX = cardLeft - g.dragOriginLeft;
       const moveY = cardTop - g.dragOriginTop;
       g.cardEl.style.setProperty('transform','translate('+moveX.toFixed(1)+'px,'+moveY.toFixed(1)+'px) rotate('+g.tiltDeg.toFixed(2)+'deg)','important');
+
+      // Drag-down-to-detail: highlight when card is pulled below its start point.
+      const cardCY=cardTop+g.cardHalfH;
+      const nowDetail=(y-g.startY)>DETAIL_DRAG_DOWN_PX&&!isInSpreadZone(cardCY);
+      if(nowDetail!==g.inDetailZone){g.inDetailZone=nowDetail;g.cardEl.classList.toggle('hand-card-detail-pull',nowDetail);}
     });
   };
 
@@ -297,7 +310,7 @@ export function installHandCardGestures(target = window){
   const endDrag=committed=>{
     if(!g)return;
     cancelHold();
-    const{uid,cardEl,origIndex,hoverIndex,mode,pendingUids=[],swirlDetected=false,originalParent,originalNextSibling}=g;
+    const{uid,cardEl,origIndex,hoverIndex,mode,pendingUids=[],inDetailZone=false,originalParent,originalNextSibling}=g;
     let dropSlot=g.dropSlot;
     const wasDrag=mode==='drag';
     const wasSelectDrag=mode==='select-drag';
@@ -314,6 +327,7 @@ export function installHandCardGestures(target = window){
     if(g.dragRafId){cancelAnimationFrame(g.dragRafId);g.dragRafId=null;}
     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
     cardEl.classList.remove('hand-card-dragging');
+    cardEl.classList.remove('hand-card-detail-pull');
     cardEl.style.removeProperty('transform');
     cardEl.style.removeProperty('position');
     cardEl.style.removeProperty('left');
@@ -328,9 +342,8 @@ export function installHandCardGestures(target = window){
     target.__handReorderActive=false;
     g=null;
 
-    // ── Swirl gesture → open card detail view ──
-    if(wasDrag&&committed&&swirlDetected){
-      cardEl.classList.remove('hand-card-swirl-ready');
+    // ── Drag-down → open card detail view ──
+    if(wasDrag&&committed&&inDetailZone){
       // Return card to its original hand slot immediately (before the modal opens).
       if(cardEl.parentNode!==originalParent){
         if(originalNextSibling&&originalNextSibling.parentNode===originalParent){
@@ -466,28 +479,7 @@ export function installHandCardGestures(target = window){
       startDrag(ev);
       return;
     }
-    if(g.mode==='drag'){
-      // Swirl detection: accumulate signed angular arc from consecutive direction vectors.
-      // Cheap — no layout reads, just trig on the pointer delta.
-      const sdx=ev.clientX-g.swirlPrevX,sdy=ev.clientY-g.swirlPrevY;
-      const sMag=Math.hypot(sdx,sdy);
-      if(sMag>4&&!g.swirlDetected){
-        if(g.swirlLastDir){
-          const nx=sdx/sMag,ny=sdy/sMag;
-          const cross=g.swirlLastDir.x*ny-g.swirlLastDir.y*nx;
-          const dot  =g.swirlLastDir.x*nx+g.swirlLastDir.y*ny;
-          g.swirlArc+=Math.atan2(cross,dot);
-        }
-        g.swirlLastDir={x:sdx/sMag,y:sdy/sMag};
-        g.swirlPrevX=ev.clientX;
-        g.swirlPrevY=ev.clientY;
-        if(Math.abs(g.swirlArc)>=Math.PI*1.5){
-          g.swirlDetected=true;
-          g.cardEl.classList.add('hand-card-swirl-ready');
-        }
-      }
-      ev.preventDefault();stepDrag(ev);return;
-    }
+    if(g.mode==='drag'){ev.preventDefault();stepDrag(ev);return;}
     if(g.mode==='select-drag'){stepSelectDrag(ev);}
   },{capture:true,passive:false});
 
@@ -508,4 +500,23 @@ export function installHandCardGestures(target = window){
       ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
     }
   },true);
+
+  // Cancel an in-progress card drag and return the card to its original hand
+  // slot with a FLIP slide animation. No-ops when no drag is active.
+  target.tlrCancelHandDrag=function(){
+    if(!g||g.mode!=='drag')return false;
+    const{cardEl,originalParent,originalNextSibling}=g;
+    const firstRect=cardEl.getBoundingClientRect();
+    endDrag(false);
+    if(originalParent&&cardEl.parentNode!==originalParent){
+      if(originalNextSibling&&originalNextSibling.parentNode===originalParent){
+        originalParent.insertBefore(cardEl,originalNextSibling);
+      }else{
+        originalParent.appendChild(cardEl);
+      }
+    }
+    applyNaturalSlots();
+    slideLanding(cardEl,firstRect);
+    return true;
+  };
 }

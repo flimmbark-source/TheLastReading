@@ -30,7 +30,7 @@ const PACK_CALLOUT_COPY = Object.freeze({
   ],
   second_sight: [
     'Lens Mastery — Peek, Kin, Neighbor, and Mirror reveal +1 extra',
-    'Sight Discount — sight abilities free once/reading',
+    "Seer's Grace — Peek/Search/Mirror free once per reading",
     'Chosen — ability-taken cards +5 Chips',
   ],
 });

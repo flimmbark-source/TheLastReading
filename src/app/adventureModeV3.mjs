@@ -105,7 +105,7 @@ function ensureStyles(doc) {
       border:1px solid rgba(116,169,213,.48);background:rgba(16,40,64,.82);color:#b9dcf4;
       font:800 8px/1.2 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
 
-    #advHud{position:fixed;top:10px;left:10px;z-index:42;display:none;flex-direction:column;gap:6px;
+    #advHud{position:fixed;top:10px;left:10px;z-index:42;display:none;flex-direction:column;gap:4px;
       color:#ead9b5;max-width:min(360px,46vw)}
     body.mode-adventure #advHud{display:flex}
     .adv-hud__main{display:flex;align-items:center;gap:11px;background:linear-gradient(180deg,rgba(30,21,13,.93),rgba(17,11,7,.92));
@@ -116,7 +116,8 @@ function ensureStyles(doc) {
     .adv-pips{display:flex;gap:3px}.adv-pip{width:10px;height:10px;border-radius:50%;border:1px solid rgba(243,201,105,.45)}
     .adv-pip--full{background:radial-gradient(circle at 38% 32%,#ffeab2,#dd9f33);border-color:#f3c969;box-shadow:0 0 6px rgba(243,201,105,.55)}
     .adv-pip--empty{background:rgba(243,201,105,.05)}
-    .adv-hud__statuses{display:flex;flex-wrap:wrap;gap:5px;padding-left:2px}.adv-hud__statuses:empty{display:none}
+    .adv-hud__statuses{display:flex;flex-direction:column;align-items:center;gap:5px}.adv-hud__statuses:empty{display:none}
+    .adv-hud__status-row{display:flex;gap:5px;justify-content:center}
     #advHud .adv-status{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px 3px 8px;
       font:700 10px/1 'Cinzel',Georgia,serif;letter-spacing:.05em;border:1px solid;background:rgba(16,11,7,.82)}
     #advHud .adv-status::before{content:'';width:7px;height:7px;border-radius:50%}
@@ -154,6 +155,9 @@ function ensureStyles(doc) {
     .adv-reward--disabled{opacity:.35;pointer-events:none}.adv-reward__name{font-weight:900}.adv-reward__desc{margin-top:5px;color:#bfae8d;font-size:11px;line-height:1.3}
     .adv-reward-tools{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:8px 0}.adv-mini-btn{font-size:10px;padding:5px 8px}
     .adv-offer-tabs{display:flex;justify-content:center;gap:6px;margin:5px 0 8px}.adv-offer-tabs button[aria-pressed="true"]{border-color:#f3c969;color:#f3c969}
+    .adv-reward__lane{font:700 8px/1 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#9a8060;margin-bottom:5px}
+    .adv-reward__lane--trophy{color:#f3c969}
+    body.mode-adventure .card.adv-card-sealed{box-shadow:0 0 0 2px rgba(168,216,240,.7),0 8px 20px rgba(0,0,0,.5)!important}
 
     @media(max-width:640px){
       #advEventDeck{top:20px}.adv-event-desc{max-width:245px;font-size:10px}#advHud{max-width:64vw}.adv-hud__main{padding:6px 9px}
@@ -224,6 +228,7 @@ export function installAdventureModeV3(target = window) {
     run.inventoryCapacity = inventoryCapacity();
     run.cardBonuses = {};
     run.sigilOverrides = {};
+    run.sealedCards = [];
     run.revealedEventCount = 0;
     run.itemState = {
       usedSet: {},
@@ -325,35 +330,49 @@ export function installAdventureModeV3(target = window) {
     const event = currentEvent();
     const deck = doc.getElementById('advEventDeck');
     if (deck) {
-      deck.dataset.eventId = event?.id || '';
-      deck.dataset.eventCrest = event?.crest || '';
-      if (!event) deck.innerHTML = '';
-      else {
-        const remaining = Math.max(1, EVENTS_PER_SET - run.eventIndexInSet);
-        const backs = [...Array(Math.min(3, remaining)).keys()]
-          .map(i => `<div class="adv-deck__back" style="transform:translate(calc(-50% + ${i * 4}px),${i * 3}px) rotate(${i * 2 - 2}deg)"></div>`)
-          .join('');
-        const revealCount = Math.max(run.statuses.includes('prepared') ? 1 : 0, run.revealedEventCount || 0);
-        const revealed = remainingEventIds().slice(0, revealCount).map(id => getAdventureEventV3(id)?.title || id.replaceAll('_', ' '));
-        const next = revealed.length ? `<div class="adv-next-event">Next: ${esc(revealed.join(' · '))}</div>` : '';
-        const art = eventArtUrl(event.id);
-        const top = art
-          ? `<div class="adv-deck__top"><img class="adv-deck__art" src="${art}" alt="${esc(event.title)}" decoding="async"></div>`
-          : `<div class="adv-deck__top adv-deck__top--text"><div class="adv-deck__title">${esc(event.title)}</div></div>`;
-        deck.innerHTML = `<div class="adv-deck">${backs}${top}</div><div class="adv-event-desc">${esc(event.description)}</div>${next}`;
-        setTimeout(decorateHero, 0);
+      const revealCount = Math.max(run.statuses.includes('prepared') ? 1 : 0, run.revealedEventCount || 0);
+      const deckKey = `${event?.id || ''}|${run.eventIndexInSet}|${revealCount}`;
+      if (deck.__advKey !== deckKey) {
+        deck.__advKey = deckKey;
+        deck.dataset.eventId = event?.id || '';
+        deck.dataset.eventCrest = event?.crest || '';
+        if (!event) deck.innerHTML = '';
+        else {
+          const remaining = Math.max(1, EVENTS_PER_SET - run.eventIndexInSet);
+          const backs = [...Array(Math.min(3, remaining)).keys()]
+            .map(i => `<div class="adv-deck__back" style="transform:translate(calc(-50% + ${i * 4}px),${i * 3}px) rotate(${i * 2 - 2}deg)"></div>`)
+            .join('');
+          const revealed = remainingEventIds().slice(0, revealCount).map(id => getAdventureEventV3(id)?.title || id.replaceAll('_', ' '));
+          const next = revealed.length ? `<div class="adv-next-event">Next: ${esc(revealed.join(' · '))}</div>` : '';
+          const art = eventArtUrl(event.id);
+          const top = art
+            ? `<div class="adv-deck__top"><img class="adv-deck__art" src="${art}" alt="${esc(event.title)}" decoding="async"></div>`
+            : `<div class="adv-deck__top adv-deck__top--text"><div class="adv-deck__title">${esc(event.title)}</div></div>`;
+          deck.innerHTML = `<div class="adv-deck">${backs}${top}</div><div class="adv-event-desc">${esc(event.description)}</div>${next}`;
+          setTimeout(decorateHero, 0);
+        }
       }
     }
 
     const hud = doc.getElementById('advHud');
     if (hud) {
-      const pips = [...Array(Math.max(0, run.maxResolve)).keys()]
-        .map(i => `<span class="adv-pip adv-pip--${i < run.resolve ? 'full' : 'empty'}"></span>`).join('');
-      const statuses = run.statuses.map(id => `<span class="adv-status adv-status--${esc(id)}" title="${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</span>`).join('');
-      hud.innerHTML = `<div class="adv-hud__main"><div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div></div><div class="adv-hud__statuses">${statuses}</div>`;
+      const hudKey = `${run.resolve}|${run.maxResolve}|${run.statuses.join(',')}`;
+      if (hud.__advKey !== hudKey) {
+        hud.__advKey = hudKey;
+        const pips = [...Array(Math.max(0, run.maxResolve)).keys()]
+          .map(i => `<span class="adv-pip adv-pip--${i < run.resolve ? 'full' : 'empty'}"></span>`).join('');
+        const pill = id => `<span class="adv-status adv-status--${esc(id)}" title="${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</span>`;
+        const s = run.statuses;
+        const rows = s.length === 0 ? [] :
+          s.length <= 2 ? [s] :
+          s.length === 3 ? [[s[2]], [s[0], s[1]]] :
+          [[s[2], s[3]], [s[0], s[1]]];
+        const statusHtml = rows.map(row => `<div class="adv-hud__status-row">${row.map(pill).join('')}</div>`).join('');
+        hud.innerHTML = `<div class="adv-hud__statuses">${statusHtml}</div><div class="adv-hud__main"><div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div></div>`;
+      }
     }
     renderInventory();
-    setTimeout(decorateCards, 0);
+    scheduleDecorateCards();
     const web = doc.getElementById('advApproachWeb');
     if (web && !web.classList.contains('hidden')) web.innerHTML = renderApproachWebHTML();
   }
@@ -523,19 +542,56 @@ export function installAdventureModeV3(target = window) {
     el.dataset.hint = node.charAt(0).toUpperCase() + node.slice(1);
   }
 
+  let _decorateScheduled = false;
+  function scheduleDecorateCards() {
+    if (_decorateScheduled) return;
+    _decorateScheduled = true;
+    setTimeout(() => { _decorateScheduled = false; decorateCards(); }, 0);
+  }
+
   function decorateCards() {
     if (!session || !target.__tlrAdventureActive) return;
+    const all = [...(target.state?.hand || []), ...(target.state?.spread || []).filter(Boolean), ...(target.state?.deck || [])];
+    const byUid = new Map(all.map(c => [String(c.uid), c]));
+    const event = currentEvent();
+    const baseVisible = Number(itemState().nextCardBonus || 0) + (itemState().greyfangReady ? 2 : 0);
+    const sealed = new Set(session.run.sealedCards || []);
     doc.querySelectorAll('.card[data-uid]').forEach(el => {
-      const card = findRuntimeCard(el.dataset.uid);
+      const card = byUid.get(el.dataset.uid);
       if (!card) return;
+      el.classList.toggle('adv-card-sealed', sealed.has(card.id));
       const art = el.querySelector('.art');
       if (art && !art.querySelector('.adv-sigil-seal')) art.insertAdjacentHTML('afterbegin', sigilSeal(card));
       art?.querySelector('.adv-card-bonus')?.remove();
-      const event = currentEvent();
       if (!art || !event) return;
-      const visible = passivePotencyBonus(card, event) + Number(itemState().nextCardBonus || 0) + (itemState().greyfangReady ? 2 : 0);
+      const visible = passivePotencyBonus(card, event) + baseVisible;
       if (visible) art.insertAdjacentHTML('beforeend', `<span class="adv-card-bonus">${visible > 0 ? '+' : ''}${visible}</span>`);
     });
+  }
+
+  function injectSealedCards() {
+    const sealed = session?.run?.sealedCards;
+    if (!sealed?.length || !target.state) return;
+    const hand = target.state.hand;
+    const deck = target.state.deck;
+    if (!Array.isArray(hand) || !Array.isArray(deck)) return;
+    for (const cardId of sealed) {
+      if (hand.some(c => c.id === cardId)) continue;
+      const deckIdx = deck.findIndex(c => c.id === cardId);
+      if (deckIdx < 0) continue;
+      const nonSealedIdx = hand.findIndex(c => !sealed.includes(c.id));
+      if (nonSealedIdx < 0) continue;
+      const [displaced] = hand.splice(nonSealedIdx, 1);
+      deck.push(displaced);
+      const [sealedCard] = deck.splice(deckIdx, 1);
+      hand.push(sealedCard);
+    }
+    scheduleDecorateCards();
+  }
+
+  function beginReading() {
+    if (typeof target.startReading === 'function') target.startReading();
+    injectSealedCards();
   }
 
   function eligibleForcedGreat(itemId, card, event) {
@@ -700,9 +756,10 @@ export function installAdventureModeV3(target = window) {
   }
 
   function rewardLabel(offer) {
-    if (offer.type === 'ADD_SIGIL_CARD') return `Add a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card`;
+    if (offer.type === 'ADD_SIGIL_CARD') return `Echo a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card`;
+    if (offer.type === 'SEAL_CARD') return offer.nodes?.length ? `Seal a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card` : 'Seal a card';
     if (offer.type === 'UPGRADE_CARD') return offer.nodes?.length ? `Upgrade a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card` : 'Upgrade any card';
-    if (offer.type === 'REMOVE_CARD') return 'Remove 1 card';
+    if (offer.type === 'BANISH_TWO') return 'Banish 2 cards';
     if (offer.type === 'RESTORE_RESOLVE') return `Restore ${offer.amount || 1} Resolve`;
     if (offer.type === 'CHOOSE_CONSUMABLE') return 'Choose 1 of 3 Consumables';
     if (offer.type === 'CONSUMABLE' || offer.type === 'SIGNATURE_ITEM') return ADVENTURE_ITEMS[offer.itemId]?.name || offer.itemId;
@@ -711,9 +768,21 @@ export function installAdventureModeV3(target = window) {
 
   function rewardDescription(offer) {
     if (offer.type === 'CONSUMABLE' || offer.type === 'SIGNATURE_ITEM') return ADVENTURE_ITEMS[offer.itemId]?.text || '';
-    if (offer.type === 'ADD_SIGIL_CARD') return 'Choose 1 of 3 matching cards.';
-    if (offer.type === 'UPGRADE_CARD') return 'Increase its printed value by 1.';
-    if (offer.type === 'REMOVE_CARD') return 'Permanently remove it from this run.';
+    if (offer.type === 'ADD_SIGIL_CARD') return 'Choose a matching card — add a second copy to your deck.';
+    if (offer.type === 'SEAL_CARD') return 'This card appears in every opening hand. Costs one draw slot.';
+    if (offer.type === 'UPGRADE_CARD') {
+      if (!session) return 'Increase its printed value by 1.';
+      const nodes = offer.nodes || [];
+      const eligible = buildAdventureDeckCards().filter(card =>
+        (!nodes.length || nodes.includes(cardNode(card))) && card.points < 5
+      );
+      if (!eligible.length) return 'No eligible cards to upgrade.';
+      const potencies = eligible.map(c => c.points);
+      const lo = Math.min(...potencies), hi = Math.max(...potencies);
+      const range = lo === hi ? `${lo} → ${lo + 1}` : `${lo}–${hi} → ${lo + 1}–${hi + 1}`;
+      return `Increase its printed value by 1. Current potency: ${range}.`;
+    }
+    if (offer.type === 'BANISH_TWO') return 'Permanently remove two cards from this run.';
     return '';
   }
 
@@ -721,9 +790,27 @@ export function installAdventureModeV3(target = window) {
     return { ...offer, nodes: offer.nodes ? [...offer.nodes] : undefined };
   }
 
+  function isOfferUseful(offer) {
+    if (!offer) return false;
+    if (offer.type === 'RESTORE_RESOLVE') return session.run.resolve < session.run.maxResolve;
+    if (offer.type === 'UPGRADE_CARD') {
+      const nodes = offer.nodes || [];
+      return buildAdventureDeckCards().some(card => (!nodes.length || nodes.includes(cardNode(card))) && card.points < 5);
+    }
+    if (offer.type === 'CONSUMABLE') {
+      const statuses = session.run.statuses || [];
+      if (offer.itemId === 'purifying_water') return statuses.length > 0;
+      if (offer.itemId === 'blessed_oil') return !statuses.includes('blessed');
+      if (offer.itemId === 'disguise_kit') return statuses.includes('distrusted') || statuses.includes('exposed');
+    }
+    return true;
+  }
+
   function randomConsumableOffer(exclude = []) {
     const pool = CONSUMABLE_LIST.filter(item => !exclude.includes(item.id));
-    const item = pool[Math.floor(rng() * pool.length)] || CONSUMABLE_LIST[0];
+    const useful = pool.filter(item => isOfferUseful({ type: 'CONSUMABLE', itemId: item.id }));
+    const candidates = useful.length ? useful : pool;
+    const item = candidates[Math.floor(rng() * candidates.length)] || CONSUMABLE_LIST[0];
     return { type: 'CONSUMABLE', itemId: item.id };
   }
 
@@ -731,23 +818,40 @@ export function installAdventureModeV3(target = window) {
     const choices = [
       randomConsumableOffer(),
       { type: 'RESTORE_RESOLVE', amount: 1 },
-      { type: 'REMOVE_CARD' },
+      { type: 'BANISH_TWO' },
       { type: 'CHOOSE_CONSUMABLE' },
-    ];
+    ].filter(isOfferUseful);
     const available = choices.filter(offer => !excludeLabels.includes(rewardLabel(offer)));
-    return cloneOffer(available[Math.floor(rng() * available.length)] || choices[0]);
+    return cloneOffer(available[Math.floor(rng() * available.length)] || { type: 'CHOOSE_CONSUMABLE' });
   }
 
   function buildRewardOffers(resolution) {
     const event = session.lastEvent;
     const outcomeId = resolution.successOutcome?.id || resolution.outcome?.id;
     const profile = getOutcomeRewardProfile(event.id, outcomeId);
-    if (!profile) return [];
-    const offers = profile.ordinary.map(cloneOffer);
+    if (!profile) {
+      const fallback = [];
+      while (fallback.length < resolution.rewardShow) fallback.push(randomOrdinaryOffer(fallback.map(rewardLabel)));
+      return fallback;
+    }
+    const reinforce = cloneOffer(profile.reinforce);
+    if (resolution.tier === RESULT.GREAT_SUCCESS && (reinforce.type === 'ADD_SIGIL_CARD' || reinforce.type === 'UPGRADE_CARD')) {
+      const nodes = reinforce.nodes || [];
+      const alreadySealed = new Set(session.run.sealedCards || []);
+      const hasEligible = buildAdventureDeckCards().some(
+        card => (!nodes.length || nodes.includes(cardNode(card))) && !alreadySealed.has(card.id)
+      );
+      if (hasEligible) reinforce.type = 'SEAL_CARD';
+    }
+    const provision = cloneOffer(profile.provision);
+    let crossroads = cloneOffer(profile.crossroads);
+    if (!isOfferUseful(crossroads)) crossroads = randomOrdinaryOffer([rewardLabel(reinforce), rewardLabel(provision)]);
+    const offers = [reinforce, provision, crossroads];
     if (resolution.tier === RESULT.GREAT_SUCCESS) {
       const sig = cloneOffer(profile.signature);
-      if (sig.itemId && hasItem(sig.itemId) && ADVENTURE_ITEMS[sig.itemId]?.kind !== 'cache') offers.push({ type: 'CHOOSE_CONSUMABLE' });
-      else offers.push(sig);
+      const trophy = (sig.itemId && hasItem(sig.itemId) && ADVENTURE_ITEMS[sig.itemId]?.kind !== 'cache')
+        ? { type: 'CHOOSE_CONSUMABLE' } : sig;
+      offers.unshift(trophy);
     }
     while (offers.length < resolution.rewardShow) offers.push(randomOrdinaryOffer(offers.map(rewardLabel)));
     return offers.slice(0, resolution.rewardShow);
@@ -763,43 +867,38 @@ export function installAdventureModeV3(target = window) {
     return null;
   }
 
+  const SUCCESS_LANES = ['Reinforce', 'Provision', 'Crossroads'];
+  const TRIUMPH_LANES = ['Trophy', 'Reinforce', 'Provision', 'Crossroads'];
+
   function showRewards() {
     target.tutSignal?.('advRewardShown');
     const state = session.rewardState;
     const offers = state.selectedSet === 'alt' && state.altOffers ? state.altOffers : state.offers;
+    const isTriumph = state.choose >= 2;
+    const lanes = isTriumph ? TRIUMPH_LANES : SUCCESS_LANES;
     const cards = offers.map((offer, index) => {
       const selected = state.picked.includes(index);
       const disabled = !selected && state.picked.length >= state.choose;
       const rerollSource = sourceForOneReroll();
       const reroll = rerollSource ? `<button class="adv-mini-btn" onclick="event.stopPropagation();tlrAdventureV3RerollOffer(${index},'${rerollSource}')">Replace</button>` : '';
+      const lane = lanes[index] || '';
+      const laneHtml = lane ? `<div class="adv-reward__lane${lane === 'Trophy' ? ' adv-reward__lane--trophy' : ''}">${esc(lane)}</div>` : '';
       return `<div class="adv-reward${selected ? ' adv-reward--picked' : ''}${disabled ? ' adv-reward--disabled' : ''}" onclick="tlrAdventureV3PickReward(${index})">
-        <div class="adv-reward__name">${esc(rewardLabel(offer))}</div><div class="adv-reward__desc">${esc(rewardDescription(offer))}</div>${reroll}</div>`;
+        ${laneHtml}<div class="adv-reward__name">${esc(rewardLabel(offer))}</div><div class="adv-reward__desc">${esc(rewardDescription(offer))}</div>${reroll}</div>`;
     }).join('');
     const loaded = hasItem('loaded_dice') && !itemState().usedSet.loaded_dice && !state.altOffers
       ? `<button class="adv-mini-btn" onclick="tlrAdventureV3LoadedDice()">Use Loaded Dice</button>` : '';
     const tabs = state.altOffers ? `<div class="adv-offer-tabs"><button aria-pressed="${state.selectedSet !== 'alt'}" onclick="tlrAdventureV3OfferSet('base')">Original</button><button aria-pressed="${state.selectedSet === 'alt'}" onclick="tlrAdventureV3OfferSet('alt')">Rerolled</button></div>` : '';
+    const canSkip = !isTriumph && session.run.resolve < session.run.maxResolve;
+    const skip = canSkip ? `<button class="adv-mini-btn" onclick="tlrAdventureV3SkipRewards()">Skip — Restore 1 Resolve</button>` : '';
     show(`<div class="result-panel pass"><div class="rhead"><h3 class="pass">Choose your reward${state.choose > 1 ? `s (${state.picked.length}/${state.choose})` : ''}</h3></div>
-      ${tabs}<div class="adv-reward-tools">${loaded}</div><div class="adv-rewards">${cards}</div>
+      ${tabs}<div class="adv-reward-tools">${loaded}${skip}</div><div class="adv-rewards">${cards}</div>
       <div class="rbtns"><button class="btn-gold" onclick="tlrAdventureV3ConfirmRewards()" ${state.picked.length === state.choose ? '' : 'disabled'}>Confirm</button></div></div>`);
   }
 
   function showRecovery() {
     const choices = RECOVERY_EVENT_V3.choices.map(choice => `<div class="adv-reward" onclick="tlrAdventureV3Recovery('${choice.id}')"><div class="adv-reward__name">${esc(choice.label)}</div></div>`).join('');
     show(`<div class="result-panel pass"><div class="rhead"><h3 class="pass">${esc(RECOVERY_EVENT_V3.title)}</h3></div><p class="adv-narrative">${esc(RECOVERY_EVENT_V3.description)}</p><div class="adv-rewards">${choices}</div></div>`);
-  }
-
-  function showSetRewards(profile) {
-    target.tutSignal?.('advSetComplete');
-    session.pendingSetProfile = profile;
-    const options = [
-      { id: 'heart', name: 'Stronger Heart', text: '+1 maximum Resolve. Restore 1 Resolve.' },
-      { id: 'temper', name: 'Tempered Reading', text: 'Upgrade 2 different cards by +1.' },
-      { id: 'curate', name: 'Curated Deck', text: 'Remove 2 cards. Add 1 of 3 Major Arcana.' },
-      { id: 'supplies', name: 'Prepared Journey', text: 'Choose 2 Consumables.' },
-    ];
-    session.setRewardOptions = options.sort(() => rng() - .5).slice(0, 3);
-    const cards = session.setRewardOptions.map(option => `<div class="adv-reward" onclick="tlrAdventureV3SetReward('${option.id}')"><div class="adv-reward__name">${esc(option.name)}</div><div class="adv-reward__desc">${esc(option.text)}</div></div>`).join('');
-    show(`<div class="result-panel pass"><div class="rhead"><h3 class="pass">The Spread Is Complete</h3></div><p class="adv-narrative">${esc(setEchoText(profile))}</p><div class="adv-rewards">${cards}</div></div>`);
   }
 
   function showEnd(won) {
@@ -814,6 +913,9 @@ export function installAdventureModeV3(target = window) {
     if (!rack || !session) return;
     rack.classList.add('adv-inventory-rack');
     const state = itemState();
+    const invKey = `${session.run.inventory.join(',')}|${state.armedItem}|${state.greyfang}|${state.greyfangReady}|${state.freedSpirit}|${state.freedSpiritReady}`;
+    if (rack.__advKey === invKey) return;
+    rack.__advKey = invKey;
     const slots = [];
     for (let i = 0; i < session.run.inventoryCapacity; i += 1) {
       const item = itemAt(i);
@@ -904,14 +1006,14 @@ export function installAdventureModeV3(target = window) {
   }
 
   function pickCardToAdd(nodes, done) {
-    pickCard('Add a Card', 'Choose a card to add to your deck.', addPool(nodes), picked => {
+    pickCard('Echo a Card', 'Choose a card — a second copy will be added to your deck.', addPool(nodes), picked => {
       if (picked) addCardToAdventureDeck(session.run, picked.id);
       updateChrome(); done();
     });
   }
 
   function pickCardToRemove(done) {
-    pickCard('Remove a Card', 'Choose a card to remove from your deck.', buildAdventureDeckCards(), picked => {
+    pickCard('Banish a Card', 'Choose a card to permanently remove from your deck.', buildAdventureDeckCards(), picked => {
       if (picked) removeCardFromAdventureDeck(session.run, picked.id);
       updateChrome(); done();
     });
@@ -921,6 +1023,20 @@ export function installAdventureModeV3(target = window) {
     const cards = buildAdventureDeckCards().filter(card => (!nodes?.length || nodes.includes(cardNode(card))) && card.points < 5);
     pickCard('Upgrade a Card', 'Increase one card’s value by 1.', cards, picked => {
       if (picked) session.run.cardBonuses[picked.id] = Number(session.run.cardBonuses[picked.id] || 0) + 1;
+      updateChrome(); done();
+    });
+  }
+
+  function pickCardToSeal(nodes, done) {
+    const alreadySealed = new Set(session.run.sealedCards || []);
+    const cards = buildAdventureDeckCards().filter(card =>
+      (!nodes?.length || nodes.includes(cardNode(card))) && !alreadySealed.has(card.id)
+    );
+    pickCard('Seal a Card', 'This card will always appear in your opening hand.', cards, picked => {
+      if (picked) {
+        if (!session.run.sealedCards) session.run.sealedCards = [];
+        if (!session.run.sealedCards.includes(picked.id)) session.run.sealedCards.push(picked.id);
+      }
       updateChrome(); done();
     });
   }
@@ -960,7 +1076,8 @@ export function installAdventureModeV3(target = window) {
 
   function applyRewardOffer(offer, done) {
     if (offer.type === 'ADD_SIGIL_CARD') { pickCardToAdd(offer.nodes || [], done); return; }
-    if (offer.type === 'REMOVE_CARD') { pickCardToRemove(done); return; }
+    if (offer.type === 'SEAL_CARD') { pickCardToSeal(offer.nodes || [], done); return; }
+    if (offer.type === 'BANISH_TWO') { pickCardToRemove(() => pickCardToRemove(done)); return; }
     if (offer.type === 'UPGRADE_CARD') { pickCardToUpgrade(offer.nodes || [], done); return; }
     if (offer.type === 'RESTORE_RESOLVE') {
       session.run.resolve = clampResolve(session.run.resolve + (offer.amount || 1), session.run.maxResolve);
@@ -1004,6 +1121,14 @@ export function installAdventureModeV3(target = window) {
     if (!state || state.picked.length !== state.choose) return;
     const offers = state.selectedSet === 'alt' && state.altOffers ? state.altOffers : state.offers;
     applyRewardsSequentially(state.picked.map(index => offers[index]), 0);
+  }
+
+  function skipRewards() {
+    if (!session?.rewardState) return;
+    session.rewardState = null;
+    session.run.resolve = clampResolve(session.run.resolve + 1, session.run.maxResolve);
+    updateChrome();
+    advanceAfterResolution();
   }
 
   function rerollOffer(index, sourceId) {
@@ -1061,13 +1186,15 @@ export function installAdventureModeV3(target = window) {
     if (isCurrentSetComplete(session.run)) {
       const profile = completeCurrentSet(session.run);
       if (isAdventureRunComplete(session.run)) { showEnd(true); return; }
-      showSetRewards(profile);
+      target.tutSignal?.('advSetComplete');
+      session.pendingSetProfile = profile;
+      showRecovery();
       return;
     }
     session.awaitingOutcome = false;
     session.lastResolution = null;
     clear(); updateChrome(); setBusy(false);
-    if (typeof target.startReading === 'function') target.startReading();
+    beginReading();
   }
 
   function chooseRecovery(choiceId) {
@@ -1096,36 +1223,7 @@ export function installAdventureModeV3(target = window) {
     session.run.revealedEventCount = 0;
     session.awaitingOutcome = false;
     clear(); updateChrome(); setBusy(false);
-    if (typeof target.startReading === 'function') target.startReading();
-  }
-
-  function chooseSetReward(id) {
-    if (!session?.pendingSetProfile) return;
-    if (id === 'heart') {
-      session.run.maxResolve += 1;
-      session.run.resolve = clampResolve(session.run.resolve + 1, session.run.maxResolve);
-      showRecovery();
-      return;
-    }
-    if (id === 'temper') {
-      pickCardToUpgrade([], () => pickCardToUpgrade([], showRecovery));
-      return;
-    }
-    if (id === 'curate') {
-      pickCardToRemove(() => pickCardToRemove(() => {
-        const majors = ALL_CARD_DEFINITIONS.filter(card => card.type === 'major').sort(() => rng() - .5).slice(0, 3).map((card, i) => cardWithRunChanges(card, 9900 + i));
-        pickCard('Choose a Major Arcana', 'Add one Major Arcana to your deck.', majors, picked => {
-          if (picked) addCardToAdventureDeck(session.run, picked.id);
-          showRecovery();
-        });
-      }));
-      return;
-    }
-    if (id === 'supplies') {
-      chooseConsumable(3, () => chooseConsumable(3, showRecovery));
-      return;
-    }
-    showRecovery();
+    beginReading();
   }
 
   function skipCurrentEvent(sourceId, trackUse = true) {
@@ -1136,7 +1234,7 @@ export function installAdventureModeV3(target = window) {
     session.run.eventDeck.push(id);
     if (trackUse) itemState().usedSet[sourceId] = true;
     updateChrome();
-    if (typeof target.startReading === 'function') target.startReading();
+    beginReading();
     return true;
   }
 
@@ -1241,17 +1339,23 @@ export function installAdventureModeV3(target = window) {
     if (!event) return false;
     session.awaitingOutcome = true;
     setBusy(true);
-    const liveCard = cardWithRunChanges(CARD_BY_ID.get(card.id) || card, card.uid);
-    const resolution = resolveCard(event, liveCard);
-    applyResolutionAndCounters(resolution);
-    recordSingleCardPlay(session.run, event, liveCard, resolution);
-    session.lastEvent = event;
-    session.lastResolution = resolution;
-    session.lastCard = liveCard;
-    session.lastSlotIndex = slotIndex;
-    updateChrome();
-    showOutcome(resolution, liveCard);
-    return true;
+    try {
+      const liveCard = cardWithRunChanges(CARD_BY_ID.get(card.id) || card, card.uid);
+      const resolution = resolveCard(event, liveCard);
+      applyResolutionAndCounters(resolution);
+      recordSingleCardPlay(session.run, event, liveCard, resolution);
+      session.lastEvent = event;
+      session.lastResolution = resolution;
+      session.lastCard = liveCard;
+      session.lastSlotIndex = slotIndex;
+      updateChrome();
+      showOutcome(resolution, liveCard);
+      return true;
+    } catch (err) {
+      session.awaitingOutcome = false;
+      setBusy(false);
+      throw err;
+    }
   }
 
   function newSession() {
@@ -1286,6 +1390,7 @@ export function installAdventureModeV3(target = window) {
 
   function toggleApproachRef(e) {
     if (e) e.stopPropagation();
+    typeof target.tlrCancelHandDrag === 'function' && target.tlrCancelHandDrag();
     const el = doc.getElementById('advApproachWeb');
     if (!el) return;
     if (!el.classList.contains('hidden')) { el.classList.add('hidden'); return; }
@@ -1311,7 +1416,7 @@ export function installAdventureModeV3(target = window) {
     ensureStyles(doc); ensureChrome(); forceTable(); installCardSigilBridge(); installPreviewListener();
     installApproachWebControls();
     updateChrome(); clear(); setBusy(false);
-    if (typeof target.startReading === 'function') target.startReading();
+    beginReading();
   }
 
   function restartRun() {
@@ -1322,7 +1427,7 @@ export function installAdventureModeV3(target = window) {
     ensureChrome(); forceTable(); installCardSigilBridge();
     installApproachWebControls();
     updateChrome(); clear(); setBusy(false);
-    if (typeof target.startReading === 'function') target.startReading();
+    beginReading();
   }
 
   function cleanupAdventure() {
@@ -1359,12 +1464,12 @@ export function installAdventureModeV3(target = window) {
   target.tlrAdventureV3AfterOutcome = afterOutcome;
   target.tlrAdventureV3PickReward = pickReward;
   target.tlrAdventureV3ConfirmRewards = confirmRewards;
+  target.tlrAdventureV3SkipRewards = skipRewards;
   target.tlrAdventureV3RerollOffer = rerollOffer;
   target.tlrAdventureV3LoadedDice = useLoadedDice;
   target.tlrAdventureV3OfferSet = selectOfferSet;
   target.tlrAdventureV3UseMarkedCoin = useMarkedCoin;
   target.tlrAdventureV3Recovery = chooseRecovery;
-  target.tlrAdventureV3SetReward = chooseSetReward;
   target.tlrAdventureV3UseItem = useInventoryItem;
   target.tlrAdventureV3ReplaceItem = replaceInventoryItem;
   target.tlrAdventureV3DeclineItem = declineInventoryItem;
@@ -1378,4 +1483,3 @@ export function installAdventureModeV3(target = window) {
   target.tlrAdventureLeave = leave;
 }
 
-if (typeof window !== 'undefined') installAdventureModeV3(window);

@@ -171,42 +171,41 @@ export const PASSIVE_ITEM_LIST = Object.freeze(Object.values(SIGNATURE_ITEMS).fi
 const add = (...nodes) => Object.freeze({ type: 'ADD_SIGIL_CARD', nodes });
 const upgrade = (...nodes) => Object.freeze({ type: 'UPGRADE_CARD', nodes });
 const consume = id => Object.freeze({ type: 'CONSUMABLE', itemId: id });
-const removeCard = Object.freeze({ type: 'REMOVE_CARD' });
-const restoreOne = Object.freeze({ type: 'RESTORE_RESOLVE', amount: 1 });
+const banishTwo = Object.freeze({ type: 'BANISH_TWO' });
 const chooseConsumable = Object.freeze({ type: 'CHOOSE_CONSUMABLE' });
 const signature = itemId => Object.freeze({ type: 'SIGNATURE_ITEM', itemId });
 
 export const OUTCOME_REWARDS = Object.freeze({
-  'iron_gate:wander': Object.freeze({ ordinary: [add(N.INVESTIGATION), consume('spyglass'), removeCard], signature: signature('old_road_map') }),
-  'iron_gate:decipher': Object.freeze({ ordinary: [add(N.MYSTERY), consume('black_salt'), upgrade(N.MYSTERY, N.AUTHORITY)], signature: signature('gatekeepers_ring') }),
-  'iron_gate:force': Object.freeze({ ordinary: [add(N.PHYSICAL, N.AGGRESSION), consume('whetstone'), restoreOne], signature: signature('broken_chain') }),
-  'ambush:guard': Object.freeze({ ordinary: [add(N.PROTECTION), consume('iron_ward'), upgrade(N.PROTECTION, N.ENDURANCE)], signature: signature('bandits_buckler') }),
-  'ambush:vanish': Object.freeze({ ordinary: [add(N.DECEPTION), consume('smoke_bomb'), consume('disguise_kit')], signature: signature('smoke_cloth_cloak') }),
-  'ambush:fight': Object.freeze({ ordinary: [add(N.AGGRESSION), consume('whetstone'), restoreOne], signature: signature('notched_blade') }),
-  'strange_shrine:commune': Object.freeze({ ordinary: [add(N.MYSTERY), consume('black_salt'), removeCard], signature: signature('shrine_spirit') }),
-  'strange_shrine:honor': Object.freeze({ ordinary: [add(N.COMPASSION), consume('blessed_oil'), consume('purifying_water')], signature: signature('prayer_beads') }),
-  'strange_shrine:wager': Object.freeze({ ordinary: [add(N.FORTUNE), consume('marked_coin'), consume('lucky_token')], signature: signature('lucky_bones') }),
-  'flooded_road:wait': Object.freeze({ ordinary: [add(N.ENDURANCE), consume('healing_draught'), consume('spyglass')], signature: signature('riverwatch_charm') }),
-  'flooded_road:adapt': Object.freeze({ ordinary: [add(N.TRANSFORMATION), consume('transmutation_dust'), removeCard], signature: signature('river_stone_charm') }),
-  'flooded_road:ford': Object.freeze({ ordinary: [add(N.PHYSICAL), consume('whetstone'), consume('healing_draught')], signature: signature('ferrymans_boots') }),
-  'cornered_beast:soothe': Object.freeze({ ordinary: [add(N.COMPASSION), consume('purifying_water'), consume('healing_draught')], signature: signature('greyfang') }),
-  'cornered_beast:brace': Object.freeze({ ordinary: [add(N.PROTECTION), consume('iron_ward'), restoreOne], signature: signature('hide_mantle') }),
-  'cornered_beast:put_down': Object.freeze({ ordinary: [add(N.AGGRESSION), consume('whetstone'), removeCard], signature: signature('beast_fang_knife') }),
-  'traveling_merchant:bargain': Object.freeze({ ordinary: [add(N.AUTHORITY), consume('lucky_token'), upgrade(N.AUTHORITY, N.INVESTIGATION)], signature: signature('merchants_signet') }),
-  'traveling_merchant:dice': Object.freeze({ ordinary: [add(N.FORTUNE), consume('marked_coin'), consume('lucky_token')], signature: signature('loaded_dice') }),
-  'traveling_merchant:rob': Object.freeze({ ordinary: [add(N.AGGRESSION, N.DECEPTION), consume('whetstone'), chooseConsumable], signature: signature('stolen_strongbox') }),
-  'suspicious_villagers:reassure': Object.freeze({ ordinary: [add(N.COMPASSION), consume('purifying_water'), restoreOne], signature: signature('village_token') }),
-  'suspicious_villagers:impress': Object.freeze({ ordinary: [add(N.CREATION), upgrade(), chooseConsumable], signature: signature('artisans_favor') }),
-  'suspicious_villagers:cow': Object.freeze({ ordinary: [add(N.AUTHORITY, N.AGGRESSION), consume('whetstone'), removeCard], signature: signature('black_iron_seal') }),
-  'unmarked_grave:honor': Object.freeze({ ordinary: [add(N.COMPASSION), consume('blessed_oil'), consume('purifying_water')], signature: signature('gravekeepers_candle') }),
-  'unmarked_grave:investigate': Object.freeze({ ordinary: [add(N.INVESTIGATION), consume('spyglass'), upgrade(N.INVESTIGATION)], signature: signature('soldiers_insignia') }),
-  'unmarked_grave:release': Object.freeze({ ordinary: [add(N.TRANSFORMATION, N.COMPASSION), consume('purifying_water'), consume('black_salt')], signature: signature('freed_spirit') }),
-  'beneath_the_floor:commune': Object.freeze({ ordinary: [add(N.MYSTERY), consume('black_salt'), consume('spyglass')], signature: signature('house_whisper') }),
-  'beneath_the_floor:seal': Object.freeze({ ordinary: [add(N.PROTECTION, N.CREATION), consume('iron_ward'), upgrade(N.PROTECTION, N.CREATION)], signature: signature('warded_iron_nails') }),
-  'beneath_the_floor:confront': Object.freeze({ ordinary: [add(N.AGGRESSION), consume('whetstone'), consume('healing_draught')], signature: signature('black_claw') }),
-  'whispering_tree:heed': Object.freeze({ ordinary: [add(N.MYSTERY, N.INVESTIGATION), consume('spyglass'), consume('black_salt')], signature: signature('whispering_leaf') }),
-  'whispering_tree:offering': Object.freeze({ ordinary: [add(N.COMPASSION), consume('blessed_oil'), consume('purifying_water')], signature: signature('silver_leaf') }),
-  'whispering_tree:silence': Object.freeze({ ordinary: [add(N.AGGRESSION, N.CREATION), consume('whetstone'), removeCard], signature: signature('palewood_axe') }),
+  'iron_gate:wander':              Object.freeze({ reinforce: add(N.INVESTIGATION),               provision: consume('spyglass'),           crossroads: upgrade(N.FORTUNE, N.MYSTERY),          signature: signature('old_road_map') }),
+  'iron_gate:decipher':            Object.freeze({ reinforce: add(N.MYSTERY),                     provision: consume('black_salt'),          crossroads: upgrade(N.AUTHORITY),                   signature: signature('gatekeepers_ring') }),
+  'iron_gate:force':               Object.freeze({ reinforce: add(N.PHYSICAL, N.AGGRESSION),      provision: consume('whetstone'),           crossroads: upgrade(N.INVESTIGATION, N.ENDURANCE),  signature: signature('broken_chain') }),
+  'ambush:guard':                  Object.freeze({ reinforce: add(N.PROTECTION),                  provision: consume('iron_ward'),           crossroads: upgrade(N.ENDURANCE),                   signature: signature('bandits_buckler') }),
+  'ambush:vanish':                 Object.freeze({ reinforce: upgrade(N.DECEPTION),               provision: consume('smoke_bomb'),          crossroads: banishTwo,                             signature: signature('smoke_cloth_cloak') }),
+  'ambush:fight':                  Object.freeze({ reinforce: add(N.AGGRESSION),                  provision: consume('whetstone'),           crossroads: upgrade(N.PROTECTION, N.INVESTIGATION), signature: signature('notched_blade') }),
+  'strange_shrine:commune':        Object.freeze({ reinforce: add(N.MYSTERY),                     provision: consume('black_salt'),          crossroads: banishTwo,                             signature: signature('shrine_spirit') }),
+  'strange_shrine:honor':          Object.freeze({ reinforce: add(N.COMPASSION),                  provision: consume('blessed_oil'),         crossroads: consume('purifying_water'),             signature: signature('prayer_beads') }),
+  'strange_shrine:wager':          Object.freeze({ reinforce: add(N.FORTUNE),                     provision: consume('marked_coin'),         crossroads: upgrade(N.MYSTERY),                    signature: signature('lucky_bones') }),
+  'flooded_road:wait':             Object.freeze({ reinforce: add(N.ENDURANCE),                   provision: consume('healing_draught'),     crossroads: consume('spyglass'),                    signature: signature('riverwatch_charm') }),
+  'flooded_road:adapt':            Object.freeze({ reinforce: upgrade(N.TRANSFORMATION),          provision: consume('transmutation_dust'),  crossroads: banishTwo,                             signature: signature('river_stone_charm') }),
+  'flooded_road:ford':             Object.freeze({ reinforce: add(N.PHYSICAL),                    provision: consume('whetstone'),           crossroads: upgrade(N.ENDURANCE),                  signature: signature('ferrymans_boots') }),
+  'cornered_beast:soothe':         Object.freeze({ reinforce: add(N.COMPASSION),                  provision: consume('purifying_water'),     crossroads: banishTwo,                             signature: signature('greyfang') }),
+  'cornered_beast:brace':          Object.freeze({ reinforce: add(N.PROTECTION),                  provision: consume('iron_ward'),           crossroads: upgrade(N.AGGRESSION),                 signature: signature('hide_mantle') }),
+  'cornered_beast:put_down':       Object.freeze({ reinforce: add(N.AGGRESSION),                  provision: consume('whetstone'),           crossroads: banishTwo,                             signature: signature('beast_fang_knife') }),
+  'traveling_merchant:bargain':    Object.freeze({ reinforce: upgrade(N.AUTHORITY),               provision: consume('lucky_token'),         crossroads: banishTwo,                             signature: signature('merchants_signet') }),
+  'traveling_merchant:dice':       Object.freeze({ reinforce: add(N.FORTUNE),                     provision: consume('marked_coin'),         crossroads: upgrade(N.DECEPTION),                  signature: signature('loaded_dice') }),
+  'traveling_merchant:rob':        Object.freeze({ reinforce: add(N.AGGRESSION, N.DECEPTION),     provision: consume('whetstone'),           crossroads: chooseConsumable,                       signature: signature('stolen_strongbox') }),
+  'suspicious_villagers:reassure': Object.freeze({ reinforce: add(N.COMPASSION),                  provision: consume('purifying_water'),     crossroads: upgrade(N.AUTHORITY, N.INVESTIGATION),  signature: signature('village_token') }),
+  'suspicious_villagers:impress':  Object.freeze({ reinforce: add(N.CREATION),                    provision: consume('disguise_kit'),        crossroads: upgrade(N.AUTHORITY),                   signature: signature('artisans_favor') }),
+  'suspicious_villagers:cow':      Object.freeze({ reinforce: add(N.AUTHORITY, N.AGGRESSION),     provision: consume('whetstone'),           crossroads: banishTwo,                             signature: signature('black_iron_seal') }),
+  'unmarked_grave:honor':          Object.freeze({ reinforce: add(N.COMPASSION),                  provision: consume('blessed_oil'),         crossroads: consume('purifying_water'),             signature: signature('gravekeepers_candle') }),
+  'unmarked_grave:investigate':    Object.freeze({ reinforce: add(N.INVESTIGATION),               provision: consume('spyglass'),            crossroads: upgrade(N.COMPASSION, N.MYSTERY),       signature: signature('soldiers_insignia') }),
+  'unmarked_grave:release':        Object.freeze({ reinforce: add(N.TRANSFORMATION, N.COMPASSION),provision: consume('purifying_water'),     crossroads: consume('black_salt'),                  signature: signature('freed_spirit') }),
+  'beneath_the_floor:commune':     Object.freeze({ reinforce: add(N.MYSTERY),                     provision: consume('black_salt'),          crossroads: consume('spyglass'),                    signature: signature('house_whisper') }),
+  'beneath_the_floor:seal':        Object.freeze({ reinforce: add(N.PROTECTION, N.CREATION),      provision: consume('iron_ward'),           crossroads: banishTwo,                             signature: signature('warded_iron_nails') }),
+  'beneath_the_floor:confront':    Object.freeze({ reinforce: add(N.AGGRESSION),                  provision: consume('whetstone'),           crossroads: banishTwo,                             signature: signature('black_claw') }),
+  'whispering_tree:heed':          Object.freeze({ reinforce: add(N.MYSTERY, N.INVESTIGATION),    provision: consume('spyglass'),            crossroads: consume('black_salt'),                  signature: signature('whispering_leaf') }),
+  'whispering_tree:offering':      Object.freeze({ reinforce: add(N.COMPASSION),                  provision: consume('blessed_oil'),         crossroads: consume('purifying_water'),             signature: signature('silver_leaf') }),
+  'whispering_tree:silence':       Object.freeze({ reinforce: add(N.AGGRESSION, N.CREATION),      provision: consume('whetstone'),           crossroads: banishTwo,                             signature: signature('palewood_axe') }),
 });
 
 export function getAdventureEventV3(id) {
