@@ -69,7 +69,10 @@ function continueButton() {
 
 function syncContinueButton() {
   const btn = continueButton();
-  if (btn) btn.disabled = !hasSavedProgress(window.localStorage);
+  if (!btn) return;
+  const available = hasSavedProgress(window.localStorage);
+  btn.disabled = !available;
+  btn.classList.toggle('main-menu-continue-unavailable', !available);
 }
 
 function setBusy(actionName) {
@@ -124,6 +127,7 @@ function loadGame() {
 async function launch(actionName) {
   if (bootAction) return;
   bootAction = actionName;
+  document.body.classList.add('main-menu-mode-booting');
   setBusy(actionName);
   try {
     await loadGame();
@@ -133,6 +137,11 @@ async function launch(actionName) {
     const action = window[actionName];
     if (typeof action === 'function') {
       action();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document.body.classList.remove('main-menu-mode-booting');
+        });
+      });
       // Reset the boot state and re-enable the menu buttons. The full game took
       // over the menu (and usually hid it) but if the user ever returns here the
       // buttons must not be left disabled from setBusy().
@@ -145,6 +154,7 @@ async function launch(actionName) {
     console.error('The Last Reading could not load the full game.', err);
     bootAction = null;
     gamePromise = null;
+    document.body.classList.remove('main-menu-mode-booting');
     clearBusy();
   }
 }

@@ -20,8 +20,13 @@
 .main-menu-btn-primary{height:58px;background-image:url(../../assets/parchment_plaque_large_center.png);color:#3a1a06;text-shadow:none}
 .main-menu-btn-primary:hover:not(:disabled){filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
 #mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled{display:none}
+#mainMenu #mainMenuContinue.main-menu-continue-unavailable{display:none}
 #mainMenu:not(.main-menu-busy) .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue:disabled) .main-menu-btn:last-child{height:58px;background-image:url(../../assets/parchment_plaque_large_center.png);color:#3a1a06;text-shadow:none}
 #mainMenu:not(.main-menu-busy) .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue:disabled) .main-menu-btn:last-child:hover{filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
+#mainMenu .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue.main-menu-continue-unavailable) .main-menu-btn:last-child{height:58px;background-image:url(../../assets/parchment_plaque_large_center.png);color:#3a1a06;text-shadow:none}
+#mainMenu .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue.main-menu-continue-unavailable) .main-menu-btn:last-child:hover{filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
+body.tlr-loading :where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal),
+body.main-menu-mode-booting :where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal){visibility:hidden;pointer-events:none}
 .main-menu-coming-soon{margin-top:2px;color:#5a4828;font:400 11px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
 .main-menu-toggle{display:flex;align-items:center;gap:8px;margin-top:2px;color:#b09060;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.8);cursor:pointer;user-select:none}
 .main-menu-toggle input{accent-color:#d9b35f;cursor:pointer}
