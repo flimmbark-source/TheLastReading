@@ -72,28 +72,33 @@ export function fireChipProjectile(i,chipValue){
     const dx=targetX-startX;
     const dy=targetY-startY;
     const margin=34;
-    const safeX=x=>Math.max(margin,Math.min(window.innerWidth-margin,x));
-    const safeY=y=>Math.max(margin,Math.min(window.innerHeight-margin,y));
-    const side=(Math.random()<.5?-1:1);
-    const distance=Math.hypot(dx,dy);
-    const bend=Math.min(110,Math.max(36,distance*.16))*(.65+Math.random()*.7)*side;
-    const lift=Math.min(90,Math.max(28,distance*.12))*(.7+Math.random()*.55);
-    const midX=safeX((startX+targetX)/2+bend);
-    const midY=safeY(Math.min(startY,targetY)-lift);
-    const rotMid=(-10-Math.random()*18)*side;
-    const rotEnd=(18+Math.random()*18)*side;
+    const clamp=(value,min,max)=>Math.max(min,Math.min(max,value));
+    const safeX=x=>clamp(x,margin,window.innerWidth-margin);
+    const safeY=y=>clamp(y,margin,window.innerHeight-margin);
+    const distance=Math.max(1,Math.hypot(dx,dy));
+    const side=Math.random()<.5?-1:1;
+    const normalX=(-dy/distance)*side;
+    const normalY=(dx/distance)*side;
+    const curve=Math.min(180,Math.max(84,distance*.28))*(.85+Math.random()*.45);
+    const lift=Math.min(120,Math.max(54,distance*.18))*(.85+Math.random()*.35);
+    const peakX=safeX((startX+targetX)/2+normalX*curve);
+    const peakY=safeY((startY+targetY)/2+normalY*curve-lift);
+    const rotMid=(-18-Math.random()*22)*side;
+    const rotEnd=(24+Math.random()*24)*side;
     const keys=[];
-    for(let step=0;step<=5;step++){
-      const t=step/5;
+    for(let step=0;step<=12;step++){
+      const t=step/12;
       const inv=1-t;
-      const x=safeX(inv*inv*startX+2*inv*t*midX+t*t*targetX)-startX;
-      const y=safeY(inv*inv*startY+2*inv*t*midY+t*t*targetY)-startY;
-      const scale=t<.72?1+.12*Math.sin(Math.PI*t):1-(t-.72)/.28*.75;
+      // Quadratic Bezier samples with a deliberately offset peak so the
+      // number visibly travels along an arc instead of linearly to the pill.
+      const x=safeX(inv*inv*startX+2*inv*t*peakX+t*t*targetX)-startX;
+      const y=safeY(inv*inv*startY+2*inv*t*peakY+t*t*targetY)-startY;
+      const scale=t<.72?1+.14*Math.sin(Math.PI*t):1-(t-.72)/.28*.75;
       const rot=rotMid*Math.sin(Math.PI*t)+rotEnd*t*t;
       keys.push({transform:`translate(calc(-50% + ${x.toFixed(0)}px),calc(-50% + ${y.toFixed(0)}px)) scale(${scale.toFixed(2)}) rotate(${rot.toFixed(0)}deg)`,opacity:t<1?1:.7,offset:t});
     }
 
-    g.animate(keys,{duration:flyDur,easing:'cubic-bezier(.2,.05,.25,1)',fill:'forwards'});
+    g.animate(keys,{duration:flyDur,easing:'linear',fill:'forwards'});
 
     setTimeout(()=>{
       g.remove();
