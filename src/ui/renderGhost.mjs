@@ -55,7 +55,7 @@ export function fireChipProjectile(i,chipValue){
   const popDur=260;
   const beatDelay=360;
   const flyDelay=popDur+beatDelay;
-  const flyDur=460;
+  const flyDur=330;
   holdEffects(flyDelay+flyDur+180);
 
   // Phase 1: pop in above the card, then linger for a readable beat.
