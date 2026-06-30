@@ -70,10 +70,13 @@ export function choice(title,prompt,cards,cb){
     e.onclick=()=>{activeChoiceCancel=null;$('#modal').classList.remove('show','collapsed','ability-reveal');cb(c)};
     ch.appendChild(e);
   });
+  // Reaching this modal always means an ability is actively resolving, so
+  // Cancel is unconditionally available — it never touches the discard,
+  // just resolves with no card taken so resolveAbility's retry loop can
+  // re-show targeting from the start.
   const cancelBtn=ensureModalCancelButton();
-  const canCancel=typeof window.canCancelPendingDiscardAbility==='function'&&window.canCancelPendingDiscardAbility();
-  if(cancelBtn)cancelBtn.hidden=!canCancel;
-  activeChoiceCancel=canCancel?()=>{window.cancelPendingDiscardAbility?.();cb(null)}:null;
+  if(cancelBtn)cancelBtn.hidden=false;
+  activeChoiceCancel=()=>cb(null);
   $('#modal').classList.remove('collapsed');
   $('#modal').classList.add('show','ability-reveal');
   playSound('flip');tlrArchitectureSync()

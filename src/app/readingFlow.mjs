@@ -229,20 +229,26 @@ export async function resolveAbility(ab, done, sourceCard = null) {
 
   setBusy(true);
 
-  const abilityChoice = await buildAbilityChoiceAsync(
-    ability,
-    { deck: state.deck, hand: state.hand, spread: state.spread.filter(Boolean), sourceCardUid: sourceCard?.uid ?? null },
-    {
-      showChoice:    (t, p, cards) => choiceAsync(t, p, cards),
-      selectTargets: (t, p, cards, count, previewFn) => new Promise(resolve => selectFromHand(t, p, cards, count, (...picked) => resolve(picked), previewFn)),
-      sortCards:     cards => sortCards(cards.slice()),
-      cleanName:     card => cleanName(card),
-      shuffleDeck:   cards => shuffle([...cards]),
-      isTargetable:  card => !isTargetBlocked(card),
-    },
-  );
-
-  if (!abilityChoice) { setBusy(false); return; }
+  // The source card is already discarded — that commitment doesn't undo.
+  // Cancelling a step (null) means "let me reconsider", so it loops back to
+  // a fresh targeting attempt rather than aborting the ability. Bounded:
+  // each iteration requires an explicit player action, and "no valid
+  // targets" resolves truthy via the fallback branch below, not null.
+  let abilityChoice = null;
+  while (!abilityChoice) {
+    abilityChoice = await buildAbilityChoiceAsync(
+      ability,
+      { deck: state.deck, hand: state.hand, spread: state.spread.filter(Boolean), sourceCardUid: sourceCard?.uid ?? null },
+      {
+        showChoice:    (t, p, cards) => choiceAsync(t, p, cards),
+        selectTargets: (t, p, cards, count, previewFn) => new Promise(resolve => selectFromHand(t, p, cards, count, (...picked) => resolve(picked), previewFn)),
+        sortCards:     cards => sortCards(cards.slice()),
+        cleanName:     card => cleanName(card),
+        shuffleDeck:   cards => shuffle([...cards]),
+        isTargetable:  card => !isTargetBlocked(card),
+      },
+    );
+  }
 
   if (abilityChoice.kind === 'fallback') {
     // fallbackAbility draws 1, shows it, then calls done() and setBusy(false) internally.
@@ -263,7 +269,28 @@ export async function resolveAbility(ab, done, sourceCard = null) {
   done();
 }
 
-function peek(n, done) { setBusy(true); let cards = []; for (let i = 0; i < n; i++) { if (!state.deck.length && state.discard.length) state.deck = shuffle(state.discard.splice(0)); if (!state.deck.length) break; cards.push(state.deck.shift()); } if (!cards.length) { setBusy(false); done(); return; } choice('Peek ' + n, 'Pick one. The rest go to the bottom.', cards, p => { if (!p) { setBusy(false); return; } tlrResolveAbilityThroughStore({ kind: 'take', heldCards: cards, takenCardId: p.uid }); setBusy(false); done(); }); }
+// Cancelling restores the peeked cards to the deck and re-peeks, matching
+// resolveAbility's "never abandon, always loop back to a fresh decision"
+// rule — Peek shifts cards off the deck eagerly (before the modal opens),
+// so without this the cards would be lost on cancel instead of returned.
+function peek(n, done) {
+  setBusy(true);
+  function attempt() {
+    let cards = [];
+    for (let i = 0; i < n; i++) {
+      if (!state.deck.length && state.discard.length) state.deck = shuffle(state.discard.splice(0));
+      if (!state.deck.length) break;
+      cards.push(state.deck.shift());
+    }
+    if (!cards.length) { setBusy(false); done(); return; }
+    choice('Peek ' + n, 'Pick one. The rest go to the bottom.', cards, p => {
+      if (!p) { state.deck.unshift(...cards); attempt(); return; }
+      tlrResolveAbilityThroughStore({ kind: 'take', heldCards: cards, takenCardId: p.uid });
+      setBusy(false); done();
+    });
+  }
+  attempt();
+}
 function fallbackAbility(done, title = 'No valid ability result') { tlrAbilityDraw(1); choice(title, 'No valid target was available. Draw 1 instead.', state.hand.slice(-1), () => { setBusy(false); done(); }); }
 
 export function selectFromHand(title, prompt, cards, count, cb, previewFn = null) {

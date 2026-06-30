@@ -1,12 +1,6 @@
 import assert from 'node:assert/strict';
 
-import {
-  discardCardByUid,
-  canDiscardCard,
-  claimPendingDiscardAbilityCancel,
-  canCancelPendingDiscardAbility,
-  cancelPendingDiscardAbility,
-} from '../src/app/discardRuntime.mjs';
+import { discardCardByUid, canDiscardCard } from '../src/app/discardRuntime.mjs';
 import { startPurgeWithCard, canStartPurgeWithCard } from '../src/app/purgeRuntime.mjs';
 
 function card(uid, ability = null) {
@@ -42,43 +36,28 @@ function card(uid, ability = null) {
   assert.equal(rendered, 1, 'discard finishes through the normal render path');
 }
 
-// Cancelling the first targeting step restores the whole pre-discard transaction.
+// Discarding an ability card is a committed transaction at this layer — there
+// is no rollback path here. Reconsidering which target/result to take during
+// the ability flow itself is handled by abilityTargetBridge's retry loop
+// (see validate-ability-targeting-bridge.mjs), not by undoing the discard.
 {
   const source = card(21, 'KIN_2');
   const other = card(22);
-  const previousDiscard = card(90);
-  let rendered = 0;
   const state = {
-    hand: [source, other], spread: Array(5).fill(null), discard: [previousDiscard], discardedCards: [previousDiscard],
+    hand: [source, other], spread: Array(5).fill(null), discard: [], discardedCards: [],
     selected: null, discards: 2, busy: false, abilitySelect: null, purgeSelect: null,
-    freeDiscardUsed: false, sightChargesUsed: 1, roundDiscardCount: 4, lastDiscardedCard: previousDiscard,
+    freeDiscardUsed: false,
   };
   const target = {
     tlrRuntime: { state, persist: { relics: [], up: {} } },
-    resolveAbility() {}, render() { rendered += 1; }, checkEnd() {}, playSound() {}, haptic() {},
+    resolveAbility() {}, render() {}, checkEnd() {}, playSound() {}, haptic() {},
   };
 
-  assert.equal(discardCardByUid(source.uid, target), true, 'targeting card is initially discarded');
-  assert.deepEqual(state.hand, [other], 'source card leaves the hand before targeting');
-  assert.equal(state.discards, 1, 'targeting initially spends a discard');
-  assert.equal(claimPendingDiscardAbilityCancel(target), true, 'first targeting step claims the refund option');
-  assert.equal(claimPendingDiscardAbilityCancel(target), false, 'later targeting steps cannot claim the same refund');
-  state.busy = true;
-  state.abilitySelect = { title: 'Kin', validIds: new Set([other.uid]), picked: [], count: 1 };
-  assert.equal(canCancelPendingDiscardAbility(target), true, 'refund is available while first targeting is open');
-  assert.equal(cancelPendingDiscardAbility(target), true, 'cancel restores the discard transaction');
-  assert.deepEqual(state.hand, [source, other], 'cancel returns the source card to its original hand position');
-  assert.deepEqual(state.discard, [previousDiscard], 'cancel removes the source card from discard');
-  assert.deepEqual(state.discardedCards, [previousDiscard], 'cancel restores discard-history tracking');
-  assert.equal(state.selected, source.uid, 'cancel restores the source card selection');
-  assert.equal(state.discards, 2, 'cancel refunds the spent discard');
-  assert.equal(state.freeDiscardUsed, false, 'cancel restores free-discard relic state');
-  assert.equal(state.sightChargesUsed, 1, 'cancel restores Sight charge tracking');
-  assert.equal(state.roundDiscardCount, 4, 'cancel restores round discard tracking');
-  assert.equal(state.lastDiscardedCard, previousDiscard, 'cancel restores the previous last-discarded card');
-  assert.equal(state.busy, false, 'cancel leaves the table interactive');
-  assert.equal(state.abilitySelect, null, 'cancel closes targeting');
-  assert.equal(rendered, 1, 'cancel rerenders the restored table once');
+  assert.equal(discardCardByUid(source.uid, target), true, 'targeting card is discarded');
+  assert.deepEqual(state.hand, [other], 'source card leaves the hand once discarded');
+  assert.deepEqual(state.discard, [source], 'source card moves to discard');
+  assert.equal(state.discards, 1, 'discard spends a charge');
+  assert.equal(typeof target.cancelPendingDiscardAbility, 'undefined', 'no discard-rollback affordance exists at this layer');
 }
 
 // Drag-to-purge starts the three-card selection with the dragged card preselected.

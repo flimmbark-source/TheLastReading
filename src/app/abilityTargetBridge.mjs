@@ -6,8 +6,8 @@ const CLEAR_ABILITY_TARGETING = 'CLEAR_ABILITY_TARGETING';
 // count). The confirm callback and preview function cannot live in the store, so
 // they are held here while a pick is active and the store-derived
 // `state.abilitySelect` mirror points at them for the renderer.
-let pendingCallbacks = { cb: null, previewFn: null, canCancel: false };
-function clearPendingCallbacks() { pendingCallbacks = { cb: null, previewFn: null, canCancel: false }; }
+let pendingCallbacks = { cb: null, previewFn: null };
+function clearPendingCallbacks() { pendingCallbacks = { cb: null, previewFn: null }; }
 export function getPendingPreviewFn() { return pendingCallbacks.previewFn; }
 
 // Auto-confirm beat: once a tap fills the last required pick, give the
@@ -106,9 +106,7 @@ export function installAbilityTargetBridge(target = window) {
   // the current renderer via syncStoreSelectionToLegacy.
   target.tlrStartAbilityTargeting = function ({ title, prompt, validCardIds = [], count = 1, cb = null, previewFn = null }) {
     clearPendingAutoConfirm();
-    const canCancel = typeof target.claimPendingDiscardAbilityCancel === 'function'
-      && target.claimPendingDiscardAbilityCancel();
-    pendingCallbacks = { cb, previewFn, canCancel };
+    pendingCallbacks = { cb, previewFn };
     if (storeReady(target)) {
       target.tlrStore.dispatch({
         type: START_ABILITY_TARGETING,
@@ -118,11 +116,11 @@ export function installAbilityTargetBridge(target = window) {
     if (typeof target.render === 'function') target.render();
   };
 
+  // Cancelling never costs anything (the source card stays discarded either
+  // way — see resolveAbility's retry loop), so it's available at every step,
+  // not just the first.
   target.tlrCanCancelAbilitySelection = function () {
-    return !!storeTargeting(target)
-      && pendingCallbacks.canCancel
-      && typeof target.canCancelPendingDiscardAbility === 'function'
-      && target.canCancelPendingDiscardAbility();
+    return !!storeTargeting(target);
   };
 
   target.handleAbilityHandClick = function (card) {
@@ -163,20 +161,19 @@ export function installAbilityTargetBridge(target = window) {
     if (typeof cb === 'function') cb(...picked);
   };
 
+  // Cancel backs out of the current targeting step without touching the
+  // discard — the source card stays spent. Resolving the pending callback
+  // with no picks signals cancellation up through buildAbilityChoiceAsync,
+  // and resolveAbility's retry loop re-shows targeting from the start.
   target.cancelAbilitySelection = function () {
     clearPendingAutoConfirm();
     const targeting = storeTargeting(target);
-    if (!targeting || !pendingCallbacks.canCancel) return false;
+    if (!targeting) return false;
     const cb = pendingCallbacks.cb;
     clearPendingCallbacks();
-    const rolledBack = typeof target.cancelPendingDiscardAbility === 'function'
-      && target.cancelPendingDiscardAbility();
-    if (!rolledBack) {
-      target.tlrStore.dispatch({ type: CLEAR_ABILITY_TARGETING });
-      if (typeof target.render === 'function') target.render();
-    }
-    // Resolving with zero selected cards lets the async ability builder exit as a cancellation.
+    target.tlrStore.dispatch({ type: CLEAR_ABILITY_TARGETING });
+    if (typeof target.render === 'function') target.render();
     if (typeof cb === 'function') cb();
-    return !!rolledBack;
+    return true;
   };
 }
