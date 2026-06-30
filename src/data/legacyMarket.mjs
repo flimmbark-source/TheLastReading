@@ -58,7 +58,7 @@ export const SHOP = Object.freeze({
 
   // ── Second Sight Pack (sight) ──
   lens_mastery:    ['Lens Mastery',      'Peek, Kin, Neighbor, and Mirror reveal +1 extra card',                                                                             30,1.8, '🔭','sight'],
-  sight_cost:      ['Sight Discount',    'Peek, Search, and Mirror abilities cost no Discard charge once per reading',                                                        28,1.8, '🔭','sight'],
+  sight_cost:      ["Seer's Grace",      'Once per reading, use Peek, Search, or Mirror without spending a Discard',                                                         28,1.8, '🔭','sight'],
   chosen:          ['Chosen',            'Cards taken via abilities each gain +5 Chips in the spread',                                                                       26,1.8, '🔭','sight'],
 
   // Retired because Lens Mastery was a broader version of the same effect.

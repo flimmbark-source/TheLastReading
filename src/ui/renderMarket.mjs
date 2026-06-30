@@ -20,7 +20,7 @@ const STORE_PACK_CALLOUT = Object.freeze({
   foundation: { desc: 'Choose one chip bonus for your spread cards.', upgrades: ['Omen — all cards +1 Chip', 'Resonance — Majors +3 Chips', 'Suit bonuses — +1 Chip per matching card', 'Offering — +5 Reserve per reading'] },
   innate:     { desc: 'Choose one starting-hand improvement.', upgrades: ['Wider Hand — +1 hand size', 'Deep Current — draw +1 per reading', 'Blessed Start — +0.25 Mult on entry', 'First Light — first placed card +3 Chips', 'Deep Reserve — held cards +2 Chips'] },
   restless:   { desc: 'Choose one draw or discard enhancement.', upgrades: ['Extra Discard — +1 discard/reading', 'Mulligan — +1 mulligan charge', 'Nimble Fingers — draw after each discard', 'Quick Release — discards add +3 Chips', 'Ritual Depth — ability draws +1 extra'] },
-  second_sight:{ desc: 'Choose one ability or reveal upgrade.', upgrades: ['Lens Mastery — abilities reveal +1 extra', 'Deeper Peek — Peek shows +1 more', 'Sight Discount — sight abilities free once/reading', 'Chosen — ability-taken cards +5 Chips'] },
+  second_sight:{ desc: 'Choose one ability or reveal upgrade.', upgrades: ['Lens Mastery — abilities reveal +1 extra', 'Deeper Peek — Peek shows +1 more', "Seer's Grace — Peek/Search/Mirror free once per reading", 'Chosen — ability-taken cards +5 Chips'] },
   thread:     { desc: 'Choose one relational ability upgrade.', upgrades: ['Deeper Threads — Kin/Between/Neighbor reveal +1 more', 'Thread Bond — thread-taken cards +1 Chip each'] },
 });
 

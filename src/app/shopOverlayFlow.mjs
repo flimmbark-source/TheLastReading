@@ -20,7 +20,7 @@ const SHORT_UPGRADE_COPY = Object.freeze({
   quick_release: 'Discarded cards add Chips.',
   lens_mastery: '+1 card reveal for abilities.',
   peek_plus: '+1 card reveal for Peek.',
-  sight_cost: 'One sight Discard is free.',
+  sight_cost: 'Once per reading, Peek/Search/Mirror costs no Discard.',
   chosen: 'Taken cards gain +5 Chips.',
   relation_plus: '+1 card reveal for abilities.',
   relation_chips: 'Taken relation cards gain Chips.',
