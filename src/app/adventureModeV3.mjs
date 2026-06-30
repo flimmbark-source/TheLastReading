@@ -1483,4 +1483,3 @@ export function installAdventureModeV3(target = window) {
   target.tlrAdventureLeave = leave;
 }
 
-if (typeof window !== 'undefined') installAdventureModeV3(window);

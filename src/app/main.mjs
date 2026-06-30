@@ -38,6 +38,13 @@ import { installHandCardGestures } from '../ui/gestureCard.mjs';
 import { installGestureDrawers } from '../ui/gestureDrawers.mjs';
 import { installPressHighlight } from '../ui/gesturePressHighlight.mjs';
 import { installHandSelectionVisuals } from '../ui/handSelectionVisuals.mjs';
+import { installSinglePlayerV2 } from '../ui/singlePlayerV2.mjs?v=phase1-2';
+import { installAdventureModeV3 } from './adventureModeV3.mjs?v=1';
+import { installAdventureEventHero } from './adventureEventHero.mjs?v=resolve-below-1';
+import { installAdventureInteractionFx } from './adventureInteractionFx.mjs?v=17';
+import { installAdventureItemPopups } from './adventureItemPopups.mjs?v=5';
+import { installAdventureCardSigils } from './adventureCardSigils.mjs?v=5';
+import { installMpMatchSettings } from './mpMatchSettings.mjs?v=shuffle-mode-1';
 import * as abilitySystem from '../systems/abilities.mjs';
 import * as shopSystem from '../systems/shop.mjs';
 import * as scoringSystem from '../systems/scoring.mjs';
@@ -223,7 +230,11 @@ function installMarketTutorialTrigger(target = window) {
     if (!isOpen) marketReadyPromise = null;
     wasOpen = isOpen;
   };
-  new MutationObserver(check).observe(doc.body, { childList: true, subtree: true });
+  target.__marketTutorialTriggerObserver?.disconnect?.();
+  const observer = new MutationObserver(check);
+  const root = doc.getElementById('summary') || doc.querySelector('main') || doc.body;
+  observer.observe(root, { childList: true, subtree: true });
+  target.__marketTutorialTriggerObserver = observer;
 }
 
 export function startApp(target = window) {
@@ -253,6 +264,13 @@ export function startApp(target = window) {
   installMpAbilitySurfaceCleanup(target);
   installMpScoreGhostParity(target);
   installMpAutoAdvanceDelay(target);
+  installSinglePlayerV2(target);
+  installAdventureModeV3(target);
+  installAdventureEventHero(target);
+  installAdventureInteractionFx(target);
+  installAdventureItemPopups(target);
+  installAdventureCardSigils(target);
+  installMpMatchSettings(target);
   installStoreFrontTuning(target);
   installMarketTutorialTrigger(target);
 

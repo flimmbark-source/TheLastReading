@@ -238,8 +238,43 @@ export function installAdventureItemPopups(target = window) {
       decorateInventory(doc);
     });
   };
-  new target.MutationObserver(decorate).observe(doc.body, { childList: true, subtree: true });
-  decorate();
+  const disconnectDecorationObservers = () => {
+    target.__tlrAdventureItemPopupsDecorationObserver?.disconnect?.();
+    target.__tlrAdventureItemPopupsRackWaitObserver?.disconnect?.();
+    target.__tlrAdventureItemPopupsDecorationObserver = null;
+    target.__tlrAdventureItemPopupsRackWaitObserver = null;
+  };
+
+  const observeRack = rack => {
+    if (!rack) return false;
+    target.__tlrAdventureItemPopupsRackWaitObserver?.disconnect?.();
+    target.__tlrAdventureItemPopupsRackWaitObserver = null;
+    target.__tlrAdventureItemPopupsDecorationObserver?.disconnect?.();
+    const observer = new target.MutationObserver(decorate);
+    observer.observe(rack, { childList: true, subtree: true, attributes: true });
+    target.__tlrAdventureItemPopupsDecorationObserver = observer;
+    decorate();
+    return true;
+  };
+
+  if (!observeRack(doc.getElementById('relicRack'))) {
+    const waitObserver = new target.MutationObserver(() => {
+      observeRack(doc.getElementById('relicRack'));
+    });
+    waitObserver.observe(doc.body, { childList: true, subtree: true });
+    target.__tlrAdventureItemPopupsRackWaitObserver = waitObserver;
+  }
+
+  const closeWhenAdventureEnds = () => {
+    if (target.__tlrAdventureActive || doc.body.classList.contains('mode-adventure')) {
+      if (!target.__tlrAdventureItemPopupsDecorationObserver) observeRack(doc.getElementById('relicRack'));
+      return;
+    }
+    disconnectDecorationObservers();
+  };
+  const modeObserver = new target.MutationObserver(closeWhenAdventureEnds);
+  modeObserver.observe(doc.body, { attributes: true, attributeFilter: ['class'] });
+  target.__tlrAdventureItemPopupsModeObserver = modeObserver;
 
   doc.addEventListener('pointerdown', event => {
     const callout = doc.querySelector('.relic-callout.adv-item-callout');
@@ -310,4 +345,3 @@ export function installAdventureItemPopups(target = window) {
   }
 }
 
-if (typeof window !== 'undefined') installAdventureItemPopups(window);

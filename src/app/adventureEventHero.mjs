@@ -234,17 +234,47 @@ export function installAdventureEventHero(target = window) {
   target.__tlrAdventureEventHeroInstalled = true;
   ensureStyle(doc);
 
-  const observeDeck = deck => {
-    if (!deck || deck.__tlrAdventureHeroObserved) return;
-    deck.__tlrAdventureHeroObserved = true;
-    const observer = new target.MutationObserver(() => upgradeDeck(deck));
-    observer.observe(deck, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-event-id'] });
-    upgradeDeck(deck);
+  const disconnectDeck = () => {
+    target.__tlrAdventureEventHeroDeckObserver?.disconnect?.();
+    if (target.__tlrAdventureEventHeroDeckRoot) target.__tlrAdventureEventHeroDeckRoot.__tlrAdventureHeroObserved = false;
+    target.__tlrAdventureEventHeroDeckObserver = null;
+    target.__tlrAdventureEventHeroDeckRoot = null;
   };
 
-  const mountObserver = new target.MutationObserver(() => observeDeck(doc.getElementById('advEventDeck')));
-  mountObserver.observe(doc.body, { childList: true, subtree: true });
-  observeDeck(doc.getElementById('advEventDeck'));
+  const observeDeck = deck => {
+    if (!deck) return false;
+    if (deck.__tlrAdventureHeroObserved) {
+      upgradeDeck(deck);
+      return true;
+    }
+    deck.__tlrAdventureHeroObserved = true;
+    disconnectDeck();
+    const observer = new target.MutationObserver(() => upgradeDeck(deck));
+    observer.observe(deck, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-event-id'] });
+    target.__tlrAdventureEventHeroDeckObserver = observer;
+    target.__tlrAdventureEventHeroDeckRoot = deck;
+    upgradeDeck(deck);
+    return true;
+  };
+
+  if (!observeDeck(doc.getElementById('advEventDeck'))) {
+    const mountObserver = new target.MutationObserver(() => {
+      if (observeDeck(doc.getElementById('advEventDeck'))) {
+        mountObserver.disconnect();
+        target.__tlrAdventureEventHeroMountObserver = null;
+      }
+    });
+    const root = doc.getElementById('summary') || doc.body;
+    mountObserver.observe(root, { childList: true, subtree: true });
+    target.__tlrAdventureEventHeroMountObserver = mountObserver;
+  }
+
+  target.__tlrAdventureEventHeroModeObserver?.disconnect?.();
+  const modeObserver = new target.MutationObserver(() => {
+    if (target.__tlrAdventureActive || doc.body.classList.contains('mode-adventure')) observeDeck(doc.getElementById('advEventDeck'));
+    else disconnectDeck();
+  });
+  modeObserver.observe(doc.body, { attributes: true, attributeFilter: ['class'] });
+  target.__tlrAdventureEventHeroModeObserver = modeObserver;
 }
 
-if (typeof window !== 'undefined') installAdventureEventHero(window);
