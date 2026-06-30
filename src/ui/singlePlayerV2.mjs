@@ -220,7 +220,7 @@ export function installSinglePlayerV2(target = window) {
     installMenuObservers();
     installOutsideClose();
     installHandHintDismiss();
-    installGeneratedSheetAssets(target);
+    target.__tlrSinglePlayerV2Ready = installGeneratedSheetAssets(target);
   };
 
   const wrapLabel=(pill,label)=>{
