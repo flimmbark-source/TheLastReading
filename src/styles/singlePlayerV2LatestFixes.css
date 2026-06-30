@@ -646,8 +646,8 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     height: 34dvh;
     bottom: 0 !important;
     align-items: flex-start;
-    background-position: center bottom !important;
-    background-size: 100% auto !important;
+    background-position: center bottom calc(2dvh - 5px) !important;
+    background-size: auto clamp(144px, 17.6dvh, 155.2px) !important;
     background-repeat: no-repeat !important;
   }
   body.single-player-v2.generated-sheet-ready .handDock .hand {
@@ -808,7 +808,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     content: "" !important;
     position: absolute !important;
     inset: 0 !important;
-    background-image: var(--spv2-action-eye-art) !important;
+    background-image: url("/public/ui/single-player-v2/elements/Discard.png") !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
     background-size: contain !important;
@@ -819,7 +819,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     content: "" !important;
     position: absolute !important;
     inset: 0 !important;
-    background-image: var(--spv2-action-deck-art) !important;
+    background-image: var(--spv2-action-center-art) !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
     background-size: contain !important;
@@ -844,6 +844,12 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
   html body.single-player-v2.generated-sheet-ready #discardBtn::after { content: "Discard" !important; }
   html body.single-player-v2.generated-sheet-ready #purgeBtn::after { content: "Purge" !important; }
+
+  /* Threshold progress bar is baked into the mobile art at mobile pill dimensions.
+     At desktop pill dimensions the bar floats visibly below the number — hide it. */
+  html body.single-player-v2.generated-sheet-ready .spv2-threshold-progress {
+    display: none !important;
+  }
 
   /* Spread-wrap overlays: table-bg art has the reading circle — suppress extra layers */
   html body.single-player-v2.generated-sheet-ready .spread-wrap::before {
