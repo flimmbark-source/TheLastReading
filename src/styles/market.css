@@ -287,6 +287,10 @@
 .rtable td{padding:5px 2px;font-size:12px;color:#a09060;border-bottom:1px solid rgba(255,255,255,.04)}
 .rtable td.r{text-align:right;color:#ccb870;font-variant-numeric:tabular-nums;white-space:nowrap}
 .rtable .mrow td{color:#d4a050}.rtable .mrow td.r{color:#ffbe40}
+.rtable .grouprow td{padding:8px 2px 2px;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:#7a6840;border-bottom:none}
+.rtable .grouprow:first-child td{padding-top:0}
+.rtable .multrow td{color:#c9a8ff;font-weight:600;padding-top:8px}
+.rtable .multrow td.r{color:#dcc2ff}
 .rtable .totrow td{color:#f0d58a;font-weight:700;font-size:13px;border-bottom:none;padding-top:9px}
 .rtable .totrow td.r{color:#ffd978;font-size:16px}
 .rbtns{margin-top:18px;display:flex;justify-content:center;gap:8px;flex-wrap:wrap}

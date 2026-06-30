@@ -26,7 +26,7 @@ const SCORE_COUNTER_AFTER_CHIP_MS=980;
 function setBusy(v){state.busy=v;if(tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.SET_BUSY,busy:v});}
 function syncPurgeFromStore(){const run=window.tlrStore.getState().run;state.purgeSelect=Array.isArray(run.purge)?run.purge.slice():null;state.hand=run.hand.slice();state.discards=run.discards;}
 
-function legacyScore(score){return {...score,melds:(score.melds||[]).map(m=>Array.isArray(m)?m:[m.name,m.chips,m.mult,m.mode])}}
+function legacyScore(score){return {...score,melds:(score.melds||[]).map(m=>Array.isArray(m)?m:[m.name,m.chips,m.mult,m.mode,m.source||null])}}
 function syncRoundFields(_run){
   state.th=_run.thresholdIndex??state.th??0;
   state.setIndex=_run.setIndex||0;
@@ -410,11 +410,25 @@ let html=`<div class="result-panel ${pass?'pass':'fail'}">`;
 html+=`<div class="rhead"><h3 class="${pass?'pass':'fail'}">${title}</h3></div>`;
 html+=`<div class="rscore"><span class="rsc">${previousRoundScore}</span><span class="rop">+</span><span class="rsm">${total}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${roundTotal}</span></div>`;
 html+='<hr class="rdiv"><table class="rtable">';
-const _regMelds=res.melds.filter(m=>!m[0].startsWith('⚷'));const _resMelds=res.melds.filter(m=>m[0].startsWith('⚷'));
-if(_regMelds.length||_resMelds.length){
-  _regMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);
-  _resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});
+// Three conceptual layers instead of one flat list: card points & patterns
+// (including hidden Resonance reveals), relics & status, then the combined
+// multiplier as its own line right before the total. meld.source already
+// distinguishes relic melds (see relics.mjs) from pattern/upgrade ones.
+const _relicMelds=res.melds.filter(m=>m[4]==='relic');
+const _patternMelds=res.melds.filter(m=>m[4]!=='relic'&&!m[0].startsWith('⚷'));
+const _resMelds=res.melds.filter(m=>m[4]!=='relic'&&m[0].startsWith('⚷'));
+if(_patternMelds.length||_resMelds.length||_relicMelds.length){
+  if(_patternMelds.length||_resMelds.length){
+    html+='<tr class="grouprow"><td colspan="2">Card Points &amp; Patterns</td></tr>';
+    _patternMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);
+    _resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});
+  }
+  if(_relicMelds.length){
+    html+='<tr class="grouprow"><td colspan="2">Relics &amp; Status</td></tr>';
+    _relicMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);
+  }
 }else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}
+if(res.mult>1)html+=`<tr class="multrow"><td>Multiplier</td><td class="r">×${res.mult.toFixed(2)}</td></tr>`;
 html+=`<tr class="totrow"><td>Round total</td><td class="r">${roundTotal} / ${curTH}</td></tr>`;
 if(pass){const miserBonus=persist.relics.includes('miser')?5:0;
 {const _st=window.tlrStore.getState();
