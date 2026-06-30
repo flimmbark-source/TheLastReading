@@ -74,7 +74,7 @@ export function placeCard(slotIndex,target = window, explicitCardUid = null){
       landEl.classList.add('landing');
       landEl.addEventListener('animationend',()=>landEl.classList.remove('landing'),{once:true});
     }
-    if(!adventureActive)call(target,'ghost',slotIndex,'+'+card.points);
+    if(!adventureActive)call(target,'fireChipProjectile',slotIndex,card.points);
   });
 
   // Adventure resolves this single played card immediately. It keeps the card
