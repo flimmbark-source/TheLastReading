@@ -428,7 +428,8 @@ function startReading(state, deck, rng = Math.random) {
   const handSize = handSizeForSet(persist);
   const { drawn: hand, deck: remainingDeck } = drawCards(nextDeck, handSize);
   const offeringReserve = (persist.upgrades.offering || 0) * 5;
-  const constellation = constellationForRound(run.thresholdIndex || 0, rng);
+  // Reuse constellation already chosen at market entry; pick fresh for game-start path.
+  const constellationId = run.constellationId ?? constellationForRound(run.thresholdIndex || 0, rng).id;
   return replacePersist(
     replaceRun(state, {
       phase: GAME_PHASES.TABLE,
@@ -443,7 +444,7 @@ function startReading(state, deck, rng = Math.random) {
       setScores: [],
       roundDiscardCount: 0,
       roundPatternCount: 0,
-      constellationId: constellation.id,
+      constellationId,
       untargetableCardIds: [],
       awaitingNextSet: false,
       lastOutcome: null,
@@ -466,13 +467,17 @@ function startReading(state, deck, rng = Math.random) {
   );
 }
 
-function leaveMarket(state) {
+function leaveMarket(state, rng = Math.random) {
+  const { run } = state;
+  const constellation = constellationForRound(run.thresholdIndex || 0, rng);
   return replaceRun(state, {
     phase: GAME_PHASES.TABLE,
     pendingReserve: 0,
-    worldCarry: runWorldCarry(state.run),
-    reading: state.run.reading + 1,
+    worldCarry: runWorldCarry(run),
+    reading: (run.reading || 1) + 1,
     relicEarned: false,
+    constellationId: constellation.id,
+    untargetableCardIds: [],
   });
 }
 
@@ -516,7 +521,7 @@ export function reducer(state, action) {
       if (action.itemId) return buyMarketItem(state, action.itemId);
       return buyMarketPurchase(state, action.purchase || {});
     case ACTIONS.LEAVE_MARKET:
-      return leaveMarket(state);
+      return leaveMarket(state, action.rng || Math.random);
     case ACTIONS.ENTER_ATTIC:
       return replacePersist(replaceRun(state, { phase: GAME_PHASES.ATTIC }), { obals: action.obals ?? state.persist.obals });
     case ACTIONS.LEAVE_ATTIC:
