@@ -150,20 +150,25 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
   transition:transform .32s cubic-bezier(.2,.85,.25,1);
 }
 .hand.hand-scroll-dragging .card,.hand.hand-undulating .card{transition:none}
-/* ability-target shares this rule with .sel/.ability-picked/.purge-picked —
-   one raise route, one height. Valid targets lift to full height as soon as
-   targeting starts (while the player is still reading/deciding, so the .32s
-   transition has plenty of time to finish); tapping one to pick it changes
-   no transform at all, so there's nothing for the auto-confirm timer to cut
-   off mid-animation. Only the full ability resolving (all classes cleared)
-   triggers the drop back down. */
-.hand .card.sel,.hand .card.ability-target,.hand .card.ability-picked,.hand .card.purge-picked{
+.hand .card.sel,.hand .card.purge-picked{
   --lift-y:-92px;
   --total-rot:0deg;
   --lag:0deg!important;
   --drift-x:0px!important;
   --drift-y:0px!important;
   z-index:999!important;
+}
+/* Ability targeting (deciding, then picking) stays flat — no lift either
+   way. State reads entirely through the ring color (green target, gold
+   picked; see hand.css). Settled (no idle wave) so the ring doesn't drift,
+   but never animates position, so there's nothing for the auto-confirm
+   timer to interrupt mid-transition. */
+.hand .card.ability-target,.hand .card.ability-picked{
+  --total-rot:0deg;
+  --lag:0deg!important;
+  --drift-x:0px!important;
+  --drift-y:0px!important;
+  z-index:300!important;
 }
 @media(hover:hover){
   .hand:not(.has-selected-card) .card:hover{
@@ -189,7 +194,7 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
   .hand:not(.has-selected-card) .card:hover::before{pointer-events:auto}
 }
 @media(max-width:640px){
-  .hand .card.sel,.hand .card.ability-target,.hand .card.ability-picked,.hand .card.purge-picked{--lift-y:-86px}
+  .hand .card.sel,.hand .card.purge-picked{--lift-y:-86px}
   @media(hover:hover){.hand:not(.has-selected-card) .card:hover{--lift-y:-86px}}
 }
 /* Stop the old swipe handler from also nudging the whole hand sideways. */

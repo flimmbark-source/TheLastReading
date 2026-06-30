@@ -10,12 +10,11 @@ let pendingCallbacks = { cb: null, previewFn: null, canCancel: false };
 function clearPendingCallbacks() { pendingCallbacks = { cb: null, previewFn: null, canCancel: false }; }
 export function getPendingPreviewFn() { return pendingCallbacks.previewFn; }
 
-// Auto-confirm beat: once a tap fills the last required pick, give the pick
-// one frame to register before resolving, so the tap reads as "selected,
-// then resolved" rather than an instant cut. Valid targets are already at
-// full lift before this fires (see .ability-target in mobile.css) — picking
-// one changes no transform, so there's no lift animation for this delay to
-// race or cut off.
+// Auto-confirm beat: once a tap fills the last required pick, give the
+// picked-card ring color a moment to register before resolving, so the tap
+// reads as "selected, then resolved" rather than an instant cut. Ability
+// targeting never lifts/moves cards (see .ability-target in mobile.css), so
+// there's no position animation for this delay to race or cut off.
 const AUTO_CONFIRM_DELAY_MS = 120;
 let pendingAutoConfirmTimer = null;
 function clearPendingAutoConfirm() {
