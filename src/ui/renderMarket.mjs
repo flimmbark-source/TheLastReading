@@ -464,8 +464,19 @@ const MARKET_AMBIENCE_FILES = Object.freeze([
   { file: 'assets/audio/alex_jauk-witch-laugh-256450.mp3', vol: 0.4 },
 ]);
 
+export function selectMarketAmbienceEntry(target = window) {
+  const previous = target._lastMarketAmbienceFile || null;
+  const pool = MARKET_AMBIENCE_FILES.length > 1
+    ? MARKET_AMBIENCE_FILES.filter(entry => entry.file !== previous)
+    : MARKET_AMBIENCE_FILES;
+  const rng = target.Math?.random || Math.random;
+  const entry = pool[Math.floor(rng() * pool.length)] || MARKET_AMBIENCE_FILES[0];
+  target._lastMarketAmbienceFile = entry.file;
+  return entry;
+}
+
 function playMarketAmbience(target = window) {
-  const entry = MARKET_AMBIENCE_FILES[Math.floor(Math.random() * MARKET_AMBIENCE_FILES.length)];
+  const entry = selectMarketAmbienceEntry(target);
   try {
     const vol = typeof target._sfxVol === 'number' ? target._sfxVol : 1;
     const a = new (target.Audio || Audio)(entry.file);
