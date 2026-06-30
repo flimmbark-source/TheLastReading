@@ -27,7 +27,8 @@ function scorePillBase(target,state){
 export function shouldAnnounceMeld(meld,target = window){
   const name=meld?.[0];
   if(!name)return false;
-  if(meld[4]==='upgrade')return false;
+  const source=meld?.[4];
+  if(source==='upgrade'||source==='constellation')return false;
   if(target._relicMeldNames?.has?.(name))return false;
   return name!=='Omen'&&name!=='Resonance';
 }

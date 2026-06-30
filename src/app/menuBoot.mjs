@@ -127,6 +127,9 @@ async function launch(actionName) {
   setBusy(actionName);
   try {
     await loadGame();
+    if (actionName === 'tlrMainMenuAdventure' && typeof window.__tlrInstallAdventureModules === 'function') {
+      await window.__tlrInstallAdventureModules();
+    }
     const action = window[actionName];
     if (typeof action === 'function') {
       action();

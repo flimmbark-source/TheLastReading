@@ -39,11 +39,6 @@ import { installGestureDrawers } from '../ui/gestureDrawers.mjs';
 import { installPressHighlight } from '../ui/gesturePressHighlight.mjs';
 import { installHandSelectionVisuals } from '../ui/handSelectionVisuals.mjs';
 import { installSinglePlayerV2 } from '../ui/singlePlayerV2.mjs?v=phase1-2';
-import { installAdventureModeV3 } from './adventureModeV3.mjs?v=1';
-import { installAdventureEventHero } from './adventureEventHero.mjs?v=resolve-below-1';
-import { installAdventureInteractionFx } from './adventureInteractionFx.mjs?v=17';
-import { installAdventureItemPopups } from './adventureItemPopups.mjs?v=5';
-import { installAdventureCardSigils } from './adventureCardSigils.mjs?v=5';
 import { installMpMatchSettings } from './mpMatchSettings.mjs?v=shuffle-mode-1';
 import * as abilitySystem from '../systems/abilities.mjs';
 import * as shopSystem from '../systems/shop.mjs';
@@ -63,6 +58,30 @@ import * as effectsModule from './effects.mjs';
 import * as tutorialModule from './tutorialCore.mjs?v=adventure-tutorial-1';
 import * as readingFlowModule from './readingFlow.mjs';
 import * as archivesModule from './archives.mjs';
+
+
+function installAdventureFeatureModules(target = window) {
+  if (!target || target.__tlrAdventureFeatureModulesPromise) return target?.__tlrAdventureFeatureModulesPromise;
+  target.__tlrAdventureFeatureModulesPromise = Promise.all([
+    import('./adventureModeV3.mjs?v=1'),
+    import('./adventureEventHero.mjs?v=resolve-below-1'),
+    import('./adventureInteractionFx.mjs?v=17'),
+    import('./adventureItemPopups.mjs?v=5'),
+    import('./adventureCardSigils.mjs?v=5'),
+  ]).then(([mode, hero, interaction, itemPopups, sigils]) => {
+    mode.installAdventureModeV3(target);
+    hero.installAdventureEventHero(target);
+    interaction.installAdventureInteractionFx(target);
+    itemPopups.installAdventureItemPopups(target);
+    sigils.installAdventureCardSigils(target);
+    return true;
+  }).catch(error => {
+    target.__tlrAdventureFeatureModulesPromise = null;
+    console.error('The Last Reading adventure modules failed to load', error);
+    throw error;
+  });
+  return target.__tlrAdventureFeatureModulesPromise;
+}
 
 function installStoreFrontTuning(target = window) {
   const doc = target.document;
@@ -265,12 +284,8 @@ export function startApp(target = window) {
   installMpScoreGhostParity(target);
   installMpAutoAdvanceDelay(target);
   installSinglePlayerV2(target);
-  installAdventureModeV3(target);
-  installAdventureEventHero(target);
-  installAdventureInteractionFx(target);
-  installAdventureItemPopups(target);
-  installAdventureCardSigils(target);
   installMpMatchSettings(target);
+  target.__tlrInstallAdventureModules = () => installAdventureFeatureModules(target);
   installStoreFrontTuning(target);
   installMarketTutorialTrigger(target);
 
