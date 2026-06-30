@@ -407,8 +407,17 @@ export function showOverlay(html){let s=$('#summary');s.className='modal show';s
 export function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML='';tlrArchitectureSync()}
 function summaryIsFailedReading(){const s=$('#summary');if(!s||!s.classList.contains('show'))return false;return !!s.querySelector('.result-panel.fail')}
 
+// Called when the player enters the market. Advances the round state (reading
+// counter, worldCarry, pendingReserve) immediately so the HUD reflects the new
+// round while the player shops. The hand is not drawn until continueReading().
+export function enterMarket(){
+  window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});
+  state.reading=window.tlrStore.getState().run.reading;
+}
+
 export function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount=0;const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;
-window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});state.reading=window.tlrStore.getState().run.reading;
+// Fallback: if enterMarket() wasn't called at store entry (legacy path), advance now.
+if(window.tlrStore.getState().run.phase==='market'){window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});state.reading=window.tlrStore.getState().run.reading;}
 startReading();if(pendingRelic){setTimeout(()=>tutShow(9),400)}}
 
 export function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;

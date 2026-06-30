@@ -133,6 +133,10 @@ function refreshStorefrontOnEntry(target = window){
 export function openShop(target = window){
   const state=stateOf(target),persist=persistOf(target);
   clearSpreadForMarket(target);
+  // Advance round state immediately (reading counter, pendingReserve, worldCarry)
+  // so the HUD reflects the new round while the player shops.
+  // The hand is not drawn until the player exits (continueReading).
+  if(typeof target.enterMarket==='function')target.enterMarket();
   refreshStorefrontOnEntry(target);
   preloadMarketImages(target);
   if(!state.relicEarned){if(typeof target.openShopMain==='function')target.openShopMain();return;}
