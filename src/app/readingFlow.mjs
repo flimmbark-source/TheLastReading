@@ -22,7 +22,7 @@ import { choiceAsync } from '../ui/renderAbility.mjs';
 
 let counterShown=0,counterTarget=0,counterTimer=null,counterCancel=null;
 let scorePillSetBase=0;
-const SCORE_COUNTER_AFTER_CHIP_MS=1120;
+const SCORE_COUNTER_AFTER_CHIP_MS=980;
 function setBusy(v){state.busy=v;if(tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.SET_BUSY,busy:v});}
 function syncPurgeFromStore(){const run=window.tlrStore.getState().run;state.purgeSelect=Array.isArray(run.purge)?run.purge.slice():null;state.hand=run.hand.slice();state.discards=run.discards;}
 

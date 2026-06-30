@@ -461,7 +461,7 @@ const MARKET_AMBIENCE_FILES = Object.freeze([
   { file: 'assets/audio/soundreality-bell-fx-410608.mp3', vol: 0.24 },
   { file: 'assets/audio/izafi-gong-sound-419930.mp3',     vol: 0.7  },
   { file: 'assets/audio/olenchic-psycho-1-155031.mp3',    vol: 0.7  },
-  { file: 'assets/audio/alex_jauk-witch-laugh-256450.mp3', vol: 1.0  },
+  { file: 'assets/audio/alex_jauk-witch-laugh-256450.mp3', vol: 0.4 },
 ]);
 
 function playMarketAmbience(target = window) {
