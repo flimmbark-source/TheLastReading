@@ -70,9 +70,9 @@ body:has(#summary .store-front-shell) #spv2ArchiveBtn{z-index:10!important}
   html body.single-player-v2.generated-sheet-ready #handSwipeZone .hand-swipe-hint{position:relative!important;z-index:2!important}
   html body.single-player-v2.generated-sheet-ready .hand .card[data-hint]::after{z-index:60!important}
 
-  /* Clear of the spread (ends ~465px from viewport top on a 390x844 layout)
-     and clear of the hand (starts ~568px) — verified directly, not guessed. */
-  html body.single-player-v2.generated-sheet-ready #abilityPrompt.ability-prompt{bottom:300px!important}
+  /* Clear of the HUD (.score-stack bottom ~130px on a 390x844 layout) above
+     and the spread (top ~308px) below — verified directly, not guessed. */
+  html body.single-player-v2.generated-sheet-ready #abilityPrompt.ability-prompt{top:142px!important;bottom:auto!important}
 
   html body.single-player-v2.generated-sheet-ready #discardBtn,
   html body.single-player-v2.generated-sheet-ready #purgeBtn,

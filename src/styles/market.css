@@ -73,7 +73,7 @@
   .handDock{height:152px}
   .hand .card{margin-left:clamp(-48px,-11vw,-38px)}
   .hand .card:hover,.hand .card.sel,.hand .card.ability-picked{transform:translate3d(0,-86px,0) rotate(0deg)}
-  .ability-prompt{bottom:330px;width:calc(100vw - 16px);padding:8px 10px;gap:8px;align-items:flex-start}
+  .ability-prompt{top:142px;width:calc(100vw - 16px);padding:8px 10px;gap:8px;align-items:flex-start}
   .ability-prompt h3{font-size:13px}
   .ability-prompt p{font-size:11px;line-height:1.25}
   .ability-prompt button{margin-left:auto;flex:0 0 auto}
