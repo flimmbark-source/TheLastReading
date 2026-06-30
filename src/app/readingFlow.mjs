@@ -263,7 +263,7 @@ export async function resolveAbility(ab, done, sourceCard = null) {
   done();
 }
 
-function peek(n, done) { setBusy(true); let cards = []; for (let i = 0; i < n; i++) { if (!state.deck.length && state.discard.length) state.deck = shuffle(state.discard.splice(0)); if (!state.deck.length) break; cards.push(state.deck.shift()); } if (!cards.length) { setBusy(false); done(); return; } choice('Peek ' + n, 'Pick one. The rest go to the bottom.', cards, p => { tlrResolveAbilityThroughStore({ kind: 'take', heldCards: cards, takenCardId: p.uid }); setBusy(false); done(); }); }
+function peek(n, done) { setBusy(true); let cards = []; for (let i = 0; i < n; i++) { if (!state.deck.length && state.discard.length) state.deck = shuffle(state.discard.splice(0)); if (!state.deck.length) break; cards.push(state.deck.shift()); } if (!cards.length) { setBusy(false); done(); return; } choice('Peek ' + n, 'Pick one. The rest go to the bottom.', cards, p => { if (!p) { setBusy(false); return; } tlrResolveAbilityThroughStore({ kind: 'take', heldCards: cards, takenCardId: p.uid }); setBusy(false); done(); }); }
 function fallbackAbility(done, title = 'No valid ability result') { tlrAbilityDraw(1); choice(title, 'No valid target was available. Draw 1 instead.', state.hand.slice(-1), () => { setBusy(false); done(); }); }
 
 export function selectFromHand(title, prompt, cards, count, cb, previewFn = null) {

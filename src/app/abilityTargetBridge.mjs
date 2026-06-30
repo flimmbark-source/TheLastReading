@@ -10,6 +10,15 @@ let pendingCallbacks = { cb: null, previewFn: null, canCancel: false };
 function clearPendingCallbacks() { pendingCallbacks = { cb: null, previewFn: null, canCancel: false }; }
 export function getPendingPreviewFn() { return pendingCallbacks.previewFn; }
 
+// Auto-confirm beat: once a tap fills the last required pick, give the
+// picked-card highlight one frame to render before resolving, so the tap
+// reads as "selected, then resolved" instead of an instant cut.
+const AUTO_CONFIRM_DELAY_MS = 110;
+let pendingAutoConfirmTimer = null;
+function clearPendingAutoConfirm() {
+  if (pendingAutoConfirmTimer) { clearTimeout(pendingAutoConfirmTimer); pendingAutoConfirmTimer = null; }
+}
+
 function runtime(target) { return target.tlrRuntime || {}; }
 function stateOf(target) { return runtime(target).state || target.state; }
 function storeReady(target) { return !!(target.tlrStore && target.tlrStore.getState && target.tlrStore.dispatch); }
@@ -94,6 +103,7 @@ export function installAbilityTargetBridge(target = window) {
   // callback/preview are held locally. The legacy mirror is still produced for
   // the current renderer via syncStoreSelectionToLegacy.
   target.tlrStartAbilityTargeting = function ({ title, prompt, validCardIds = [], count = 1, cb = null, previewFn = null }) {
+    clearPendingAutoConfirm();
     const canCancel = typeof target.claimPendingDiscardAbilityCancel === 'function'
       && target.claimPendingDiscardAbilityCancel();
     pendingCallbacks = { cb, previewFn, canCancel };
@@ -118,9 +128,23 @@ export function installAbilityTargetBridge(target = window) {
     syncBoth(target);
     target.tlrStore.dispatch({ type: TOGGLE_ABILITY_TARGET, cardId: card.uid });
     if (typeof target.refreshHandState === 'function') target.refreshHandState();
+
+    // If this tap just filled the last required pick (added, not removed),
+    // resolve automatically instead of waiting for a separate Choose tap.
+    const targeting = storeTargeting(target);
+    const justPicked = !!targeting && targeting.pickedCardIds.includes(card.uid);
+    const complete = !!targeting && targeting.pickedCardIds.length >= (targeting.count || 1);
+    clearPendingAutoConfirm();
+    if (justPicked && complete) {
+      pendingAutoConfirmTimer = setTimeout(() => {
+        pendingAutoConfirmTimer = null;
+        target.confirmAbilitySelection?.();
+      }, AUTO_CONFIRM_DELAY_MS);
+    }
   };
 
   target.confirmAbilitySelection = function () {
+    clearPendingAutoConfirm();
     const targeting = storeTargeting(target);
     if (!targeting) return;
     syncBoth(target);
@@ -138,6 +162,7 @@ export function installAbilityTargetBridge(target = window) {
   };
 
   target.cancelAbilitySelection = function () {
+    clearPendingAutoConfirm();
     const targeting = storeTargeting(target);
     if (!targeting || !pendingCallbacks.canCancel) return false;
     const cb = pendingCallbacks.cb;

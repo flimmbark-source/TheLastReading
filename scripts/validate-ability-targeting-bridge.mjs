@@ -107,4 +107,31 @@ function targeting(target) {
   assert.equal(target.tlrCanCancelAbilitySelection(), false, 'later targeting steps do not offer a full discard refund');
 }
 
+// --- Filling the last required pick auto-confirms without an explicit confirm call ---
+{
+  const { target, cardA } = makeTarget();
+  let received = null;
+  target.tlrStartAbilityTargeting({ title: 'Mirror', validCardIds: [cardA.uid], count: 1, cb: (...picked) => { received = picked; } });
+
+  target.handleAbilityHandClick(cardA);
+  assert.equal(received, null, 'the pick is not resolved on the same tick — it gets a beat to render first');
+  assert.deepEqual(targeting(target).pickedCardIds, [cardA.uid], 'the pick is recorded immediately');
+
+  await new Promise(resolve => setTimeout(resolve, 150));
+  assert.deepEqual(received, [cardA], 'auto-confirm fires shortly after the last required pick lands');
+  assert.equal(targeting(target), null, 'auto-confirm clears the store targeting');
+}
+
+// --- Deselecting (not completing) a pick never schedules an auto-confirm ---
+{
+  const { target, cardA, cardB } = makeTarget();
+  let calls = 0;
+  target.tlrStartAbilityTargeting({ title: 'Between', validCardIds: [cardA.uid, cardB.uid], count: 2, cb: () => { calls += 1; } });
+
+  target.handleAbilityHandClick(cardA);
+  target.handleAbilityHandClick(cardA); // deselect before the set is ever complete
+  await new Promise(resolve => setTimeout(resolve, 150));
+  assert.equal(calls, 0, 'an incomplete, abandoned pick never auto-confirms');
+}
+
 console.log('Ability targeting bridge checks passed.');

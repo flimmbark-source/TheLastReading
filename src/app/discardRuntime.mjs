@@ -19,6 +19,7 @@ function discardSnapshot(run,state){
   const source=run||state||{};
   return {
     hand:[...(source.hand||[])],
+    deck:[...(source.deck||[])],
     discard:[...(source.discard||[])],
     discardedCards:[...(source.discardedCards||[])],
     selectedCardId:run?run.selectedCardId:(state?.selected??null),
@@ -32,6 +33,7 @@ function discardSnapshot(run,state){
 
 function syncLegacyFromRun(state,run){
   state.hand=[...(run.hand||[])];
+  state.deck=[...(run.deck||[])];
   state.selected=run.selectedCardId??null;
   state.discard=[...(run.discard||[])];
   state.discardedCards=[...(run.discardedCards||[])];
@@ -63,9 +65,14 @@ export function canCancelPendingDiscardAbility(target = window){
   if(!pending||!pending.targetingClaimed)return false;
   const state=stateOf(target);
   const run=target.tlrStore?.getState?.()?.run;
-  const targeting=run?.ability?.targeting||state?.abilitySelect;
+  // run.ability stays populated ({id, sourceCardId}, optionally + targeting)
+  // for the whole resolution — targeting, then the reveal/"take" step — and is
+  // only cleared by CANCEL_ABILITY/RESOLVE_ABILITY. Checking ability rather
+  // than ability.targeting keeps Cancel available through the reveal modal,
+  // not just the anchor-pick phase.
+  const abilityActive=run?.ability||state?.abilitySelect;
   const sourceCardUid=run?.sourceCardId??pending.sourceCardUid;
-  return !!targeting&&sourceCardUid===pending.sourceCardUid;
+  return !!abilityActive&&sourceCardUid===pending.sourceCardUid;
 }
 
 export function cancelPendingDiscardAbility(target = window){
@@ -81,6 +88,7 @@ export function cancelPendingDiscardAbility(target = window){
     state.lastDiscardedCard=snapshot.lastDiscardedCard;
   }else{
     state.hand=[...snapshot.hand];
+    state.deck=[...snapshot.deck];
     state.selected=snapshot.selectedCardId;
     state.discard=[...snapshot.discard];
     state.discardedCards=[...snapshot.discardedCards];
