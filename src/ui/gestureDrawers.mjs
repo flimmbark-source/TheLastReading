@@ -141,8 +141,8 @@ export function installGestureDrawers(target = window){
       ['Full Court (3/4)','Consecutive ranks','+'+(10+fullCourtChips),fmtBonus(fullCourtMult-1)],
       ['Royal Court (3/4)','Consecutive ranks, same suit','+'+(10+royalCourtChips),fmtBonus(royalCourtMult-1)],
       ['arc','Major Arcana','',''],
-      ['Sequence (3/4/5)','Consecutive major arcana','+'+(10+seqBonus),fmtBonus(seqMult-1)],
-      ['Path of the Magi','0·I·XXI in spread','+'+(10+pathChips),fmtBonus(pathMult-1)]
+      ['Sequence (3/4/5)','Consecutive major arcana','+'+(15+seqBonus),fmtBonus(seqMult-1)],
+      ['Path of the Magi','0·I·XXI in spread','+'+(15+pathChips),fmtBonus(pathMult-1)]
     ];
     let out='<table><tbody>';
     out+='<tr><td></td><td></td><td class="score-head r"><span class="chips">Bonus</span><span class="mult">Mult</span></td></tr>';
