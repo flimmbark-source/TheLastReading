@@ -382,7 +382,7 @@
 .hand{transform-origin:50% 140%;}
 /* ── Hand sway ── */
 @keyframes card-wave{0%{translate:0 0px}100%{translate:0 5px}}
-.hand .card:not(.sel):not(.ability-picked):not(.hand-card-dragging){animation:card-wave 4.4s ease-in-out infinite alternate}
+.hand .card:not(.sel):not(.ability-target):not(.ability-picked):not(.hand-card-dragging){animation:card-wave 4.4s ease-in-out infinite alternate}
 .hand .card:not(.sel):not(.ability-picked):nth-child(1){animation-delay:0ms}
 .hand .card:not(.sel):not(.ability-picked):nth-child(2){animation-delay:-400ms}
 .hand .card:not(.sel):not(.ability-picked):nth-child(3){animation-delay:-800ms}

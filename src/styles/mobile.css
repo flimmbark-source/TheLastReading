@@ -158,16 +158,16 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
   --drift-y:0px!important;
   z-index:999!important;
 }
-/* Ability targeting (deciding, then picking) stays flat — no lift either
-   way. State reads entirely through the ring color (green target, gold
-   picked; see hand.css). Settled (no idle wave) so the ring doesn't drift,
-   but never animates position, so there's nothing for the auto-confirm
-   timer to interrupt mid-transition. */
+/* Ability targeting (deciding, then picking): the card never moves — no
+   lift, no rotation reset, no lag/drift override. It stays at exactly its
+   normal resting position/tilt in the fan; state reads entirely through the
+   ring color (green target, gold picked; see hand.css). The idle wave is
+   excluded for these classes too (see card-wave/handCardIdleCycle), so
+   there's truly zero transform animation during the whole pick decision —
+   nothing for the auto-confirm timer to interrupt mid-transition. z-index
+   only (not a position change) so the ring isn't clipped by an overlapping
+   neighbor. */
 .hand .card.ability-target,.hand .card.ability-picked{
-  --total-rot:0deg;
-  --lag:0deg!important;
-  --drift-x:0px!important;
-  --drift-y:0px!important;
   z-index:300!important;
 }
 @media(hover:hover){
