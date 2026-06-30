@@ -176,4 +176,20 @@ export function installAbilityTargetBridge(target = window) {
     if (typeof cb === 'function') cb();
     return true;
   };
+
+  // Hard abandon for navigation (e.g. Return to Menu): unlike
+  // cancelAbilitySelection, this never resolves the pending callback, so
+  // resolveAbility's retry loop does not fire and re-prompt. It just drops
+  // the whole in-flight ability — including run.ability itself, not only
+  // .targeting — so a resumed session ("Continue") never finds a stale
+  // half-active ability still sitting in the store.
+  target.tlrForceCloseAbilityTargeting = function () {
+    clearPendingAutoConfirm();
+    clearPendingCallbacks();
+    if (storeReady(target) && target.tlrActions) {
+      target.tlrStore.dispatch({ type: target.tlrActions.CANCEL_ABILITY });
+    }
+    const state = stateOf(target);
+    if (state) { state.abilitySelect = null; state.busy = false; }
+  };
 }

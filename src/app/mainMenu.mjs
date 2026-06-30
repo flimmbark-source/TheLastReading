@@ -262,6 +262,35 @@ export function installMainMenu(target = window) {
     }
   };
 
+  function closeAllOverlays() {
+    const doc = target.document;
+    if (!doc) return;
+
+    // Ability targeting: a hard abandon, not Cancel — it must not resolve the
+    // pending callback (that would re-trigger resolveAbility's retry loop and
+    // re-prompt targeting underneath the menu) and must clear run.ability
+    // itself so a resumed session ("Continue") never finds a stale half-active
+    // ability still sitting in the store.
+    if (typeof target.tlrForceCloseAbilityTargeting === 'function') target.tlrForceCloseAbilityTargeting();
+    doc.getElementById('abilityPrompt')?.classList.remove('show');
+
+    // The reveal/take modal — shared by Search/Peek/Neighbor/Kin/Mirror/Between,
+    // the Watcher relic, and the shop's relic-vision reveal.
+    doc.getElementById('modal')?.classList.remove('show', 'collapsed', 'ability-reveal');
+
+    if (typeof target.cancelPurge === 'function') target.cancelPurge();
+    doc.getElementById('purgePrompt')?.classList.remove('show');
+
+    // Reading results / shop / session-end overlay.
+    if (typeof target.clearOverlay === 'function') target.clearOverlay();
+
+    if (typeof target.closeCardDetail === 'function') target.closeCardDetail();
+    if (typeof target.tlrCloseArchives === 'function') target.tlrCloseArchives();
+
+    const packAnim = doc.getElementById('packAnim');
+    if (packAnim) packAnim.setAttribute('aria-hidden', 'true');
+  }
+
   target.tlrReturnToMenu = function () {
     if (typeof target.tutHide === 'function') target.tutHide();
     // Close any open sub-panels before showing the menu
@@ -273,6 +302,7 @@ export function installMainMenu(target = window) {
       const mt = target.document.getElementById('menuPullTab');
       if (mt) mt.innerHTML = '&#9660; Menu';
     }
+    closeAllOverlays();
     syncContinueBtn();
     show();
   };
