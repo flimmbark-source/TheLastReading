@@ -117,7 +117,7 @@ function targeting(target) {
   assert.equal(received, null, 'the pick is not resolved on the same tick — it gets a beat to render first');
   assert.deepEqual(targeting(target).pickedCardIds, [cardA.uid], 'the pick is recorded immediately');
 
-  await new Promise(resolve => setTimeout(resolve, 150));
+  await new Promise(resolve => setTimeout(resolve, 250));
   assert.deepEqual(received, [cardA], 'auto-confirm fires shortly after the last required pick lands');
   assert.equal(targeting(target), null, 'auto-confirm clears the store targeting');
 }

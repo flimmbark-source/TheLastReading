@@ -158,6 +158,24 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
   --drift-y:0px!important;
   z-index:999!important;
 }
+/* Valid-but-unpicked ability targets get a smaller raise so the table reads
+   as "these are reachable" while an ability is active, distinct from the
+   full lift a tap-to-pick commits to. */
+.hand .card.ability-target{
+  --lift-y:-26px;
+  --total-rot:0deg;
+  --lag:0deg!important;
+  --drift-x:0px!important;
+  --drift-y:0px!important;
+  z-index:200!important;
+}
+/* Picks auto-confirm shortly after landing (see AUTO_CONFIRM_DELAY_MS in
+   abilityTargetBridge.mjs), so the lift needs to finish well inside that
+   window — the base .32s hand-reflow transition is too slow and gets cut
+   off mid-rise, reading as a glitch/snap instead of a clean lift-then-drop. */
+.hand .card.ability-target,.hand .card.ability-picked{
+  transition:transform .12s cubic-bezier(.2,.85,.25,1);
+}
 @media(hover:hover){
   .hand:not(.has-selected-card) .card:hover{
     --lift-y:-92px;
@@ -183,6 +201,7 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
 }
 @media(max-width:640px){
   .hand .card.sel,.hand .card.ability-picked,.hand .card.purge-picked{--lift-y:-86px}
+  .hand .card.ability-target{--lift-y:-20px}
   @media(hover:hover){.hand:not(.has-selected-card) .card:hover{--lift-y:-86px}}
 }
 /* Stop the old swipe handler from also nudging the whole hand sideways. */

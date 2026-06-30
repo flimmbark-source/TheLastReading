@@ -11,9 +11,10 @@ function clearPendingCallbacks() { pendingCallbacks = { cb: null, previewFn: nul
 export function getPendingPreviewFn() { return pendingCallbacks.previewFn; }
 
 // Auto-confirm beat: once a tap fills the last required pick, give the
-// picked-card highlight one frame to render before resolving, so the tap
-// reads as "selected, then resolved" instead of an instant cut.
-const AUTO_CONFIRM_DELAY_MS = 110;
+// picked-card highlight time to finish lifting before resolving, so the tap
+// reads as "selected, then resolved" instead of a snap mid-rise. Must clear
+// the .ability-picked lift transition (.12s, see mobile.css) with margin.
+const AUTO_CONFIRM_DELAY_MS = 170;
 let pendingAutoConfirmTimer = null;
 function clearPendingAutoConfirm() {
   if (pendingAutoConfirmTimer) { clearTimeout(pendingAutoConfirmTimer); pendingAutoConfirmTimer = null; }
