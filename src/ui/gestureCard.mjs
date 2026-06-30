@@ -167,16 +167,25 @@ export function installHandCardGestures(target = window){
       state.selected=null;
       if(typeof refreshHandState==='function')refreshHandState();
     }
-    // Capture card offset from pointer to card top-left at grab time.
+    // Capture card offset from pointer to card centre at grab time.
+    // offsetWidth/offsetHeight give the natural (pre-transform) dimensions;
+    // getBoundingClientRect on a fan-rotated card returns an inflated
+    // axis-aligned bounding box, which causes size jumps at drag start.
     const rect=g.cardEl.getBoundingClientRect();
-    g.grabOffsetX=ev.clientX-rect.left;
-    g.grabOffsetY=ev.clientY-rect.top;
+    const naturalW=g.cardEl.offsetWidth;
+    const naturalH=g.cardEl.offsetHeight;
+    const centerX=rect.left+rect.width/2;
+    const centerY=rect.top+rect.height/2;
+    const fixedLeft=centerX-naturalW/2;
+    const fixedTop=centerY-naturalH/2;
+    g.grabOffsetX=ev.clientX-fixedLeft;
+    g.grabOffsetY=ev.clientY-fixedTop;
     const h=handEl();
     const hRect=h?h.getBoundingClientRect():{left:0,top:0,width:target.innerWidth,height:200};
     g.handCenterX=hRect.left+hRect.width/2;
     g.handTop=hRect.top;
-    g.cardHalfW=rect.width/2;
-    g.cardHalfH=rect.height/2;
+    g.cardHalfW=naturalW/2;
+    g.cardHalfH=naturalH/2;
     g.prevX=ev.clientX;
     g.tiltDeg=0;
     g.inDetailZone=false;
@@ -189,15 +198,14 @@ export function installHandCardGestures(target = window){
     if(h)h.classList.add('hand-parting');
     const spEl2=document.querySelector('#spread');if(spEl2)spEl2.classList.add('drag-active');
     g.cardEl.classList.add('hand-card-dragging');
-    g.cardRect = rect;
-    g.dragOriginLeft = rect.left;
-    g.dragOriginTop = rect.top;
+    g.dragOriginLeft = fixedLeft;
+    g.dragOriginTop = fixedTop;
     if (g.cardEl.parentNode !== document.body) document.body.appendChild(g.cardEl);
     g.cardEl.style.setProperty('position','fixed','important');
-    g.cardEl.style.setProperty('left', `${rect.left}px`, 'important');
-    g.cardEl.style.setProperty('top', `${rect.top}px`, 'important');
-    g.cardEl.style.setProperty('width', `${rect.width}px`, 'important');
-    g.cardEl.style.setProperty('height', `${rect.height}px`, 'important');
+    g.cardEl.style.setProperty('left', `${fixedLeft}px`, 'important');
+    g.cardEl.style.setProperty('top', `${fixedTop}px`, 'important');
+    g.cardEl.style.setProperty('width', `${naturalW}px`, 'important');
+    g.cardEl.style.setProperty('height', `${naturalH}px`, 'important');
     g.cardEl.style.setProperty('margin', '0', 'important');
     g.cardEl.style.setProperty('z-index', '100000', 'important');
     try{g.cardEl.setPointerCapture(g.pointerId);}catch(e){}
@@ -217,8 +225,10 @@ export function installHandCardGestures(target = window){
     }else{
       const cards=handCards();
       const n=cards.length;
+      const inHand=cards.includes(g.cardEl);
+      const total=inHand?n:n+1;
       const frac=xToFracSlot(x);
-      const hover=Math.max(0,Math.min(n-1,Math.round(frac+(n-1)/2)));
+      const hover=Math.max(0,Math.min(total-1,Math.round(frac+(total-1)/2)));
       return{inSpread:false,hover};
     }
   };
