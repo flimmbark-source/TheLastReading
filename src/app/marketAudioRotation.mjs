@@ -1,3 +1,5 @@
+import { installPackOpeningSafety } from './packOpeningSafety.mjs';
+
 const MARKET_AMBIENCE_FILES = Object.freeze([
   'assets/audio/soundreality-bell-fx-410608.mp3',
   'assets/audio/izafi-gong-sound-419930.mp3',
@@ -33,6 +35,7 @@ function rotatedMarketSource(src, target = window) {
 }
 
 export function installMarketAudioRotation(target = window) {
+  installPackOpeningSafety(target);
   if (!target || target.__tlrMarketAudioRotationInstalled) return;
   const NativeAudio = target.Audio || globalThis.Audio;
   if (typeof NativeAudio !== 'function') return;
