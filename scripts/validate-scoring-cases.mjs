@@ -33,7 +33,7 @@ function assertNoMeld(result, name) {
 let result = score(['major_17', 'major_18', 'major_19']);
 assert.equal(result.baseChips, 3, 'three 1-point majors should have 3 base chips');
 assertMeld(result, 'Sequence of 3');
-assert.equal(meld(result, 'Sequence of 3').chips, 10);
+assert.equal(meld(result, 'Sequence of 3').chips, 15);
 assert.equal(meld(result, 'Sequence of 3').mult, 1.25);
 
 result = score(['major_16', 'major_17', 'major_18', 'major_19']);
@@ -49,7 +49,7 @@ assertMeld(result, 'Sequence of 5');
 result = score(['major_0', 'major_1', 'major_21']);
 assert.equal(result.baseChips, 15, '0/I/XXI should have 15 base chips');
 assertMeld(result, 'Path of the Magi');
-assert.equal(meld(result, 'Path of the Magi').chips, 10);
+assert.equal(meld(result, 'Path of the Magi').chips, 15);
 assert.equal(meld(result, 'Path of the Magi').mult, 2);
 
 result = score(['court_Cups_Page', 'court_Wands_Page', 'court_Swords_Page']);

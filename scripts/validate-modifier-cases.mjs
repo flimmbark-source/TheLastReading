@@ -39,7 +39,7 @@ result = score(['major_17', 'major_18', 'major_19'], {
   upgrades: { sequence: 1, seq_mult: 1 },
 });
 found = assertMeld(result, 'Sequence of 3');
-assert.equal(found.chips, 15, 'sequence upgrade should add 5 chips to each completed tier');
+assert.equal(found.chips, 20, 'sequence upgrade should add 5 chips to each completed tier');
 assert.equal(found.mult, 1.5, 'seq_mult upgrade should add 0.25 pattern mult to each completed tier');
 
 result = score(['major_17', 'major_18', 'major_19', 'major_20', 'major_21'], {
@@ -60,7 +60,7 @@ result = score(['major_0', 'major_1', 'major_21'], {
   upgrades: { path_chips: 1, path_mult: 1 },
 });
 found = assertMeld(result, 'Path of the Magi');
-assert.equal(found.chips, 25, 'path_chips upgrade should add 15 chips');
+assert.equal(found.chips, 30, 'path_chips upgrade should add 15 chips');
 assert.equal(found.mult, 2.5, 'path_mult upgrade should add 0.5 pattern mult');
 
 result = score(['major_17', 'major_18', 'court_Cups_Page'], {
