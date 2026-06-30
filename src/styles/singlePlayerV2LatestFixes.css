@@ -218,18 +218,18 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     left: 0 !important;
     right: 0 !important;
     bottom: auto !important;
-    height: 160px !important;
+    height: 178px !important;
     transform: translateY(-50%) !important;
     overflow: visible !important;
   }
 
-  /* All slots: absolute within the 430px spread, sized to 72×126px */
+  /* All slots: absolute within the 430px spread, sized to match hand cards (96×144px) */
   html body.single-player-v2.generated-sheet-ready .spread .slot {
     position: absolute !important;
     top: 17px !important;
-    width: 72px !important;
-    height: 126px !important;
-    flex: 0 0 72px !important;
+    width: 96px !important;
+    height: 144px !important;
+    flex: 0 0 96px !important;
     margin-left: 0 !important;
   }
 
@@ -240,18 +240,18 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     --spv2-contact-shadow: 0 5px 4px rgba(0,0,0,.70), 0 14px 17px rgba(0,0,0,.52);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
-    left: 96px !important; right: auto !important;
+    left: 91px !important; right: auto !important;
     transform: translateY(5px) rotate(-4deg) !important;
     --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
-    left: 179px !important; right: auto !important;
+    left: 167px !important; right: auto !important;
     transform: scale(1.025) !important;
     --spv2-contact-shadow: 0 7px 5px rgba(0,0,0,.82), 0 19px 22px rgba(0,0,0,.62);
     box-shadow: var(--spv2-contact-shadow) !important;
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
-    left: 262px !important; right: auto !important;
+    left: 243px !important; right: auto !important;
     transform: translateY(5px) rotate(4deg) !important;
     --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
   }
@@ -594,8 +594,8 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   html body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 12px !important;
     --spv2-hud-h: clamp(140px, 17.5dvh, 162px) !important;
-    --spv2-slot-w: 72px !important;
-    --spv2-slot-h: calc(72px * 1.75) !important;
+    --spv2-slot-w: 96px !important;
+    --spv2-slot-h: calc(96px * 1.5) !important;
     --spv2-hand-clearance: 34dvh !important;
   }
   body.single-player-v2.generated-sheet-ready #titleWrap {
