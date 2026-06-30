@@ -184,7 +184,6 @@
   }
 
   body.mp-game-active .hand .card.sel,
-  body.mp-game-active .hand .card.ability-picked,
   body.mp-game-active .hand .card.purge-picked {
     --lift-y: -72px !important;
   }

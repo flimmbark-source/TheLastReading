@@ -55,6 +55,10 @@ installMpGame(w);
 
 const cardById = (id, uid) => ({ ...buildDeck().find(c => c.id === id), uid });
 const wait = () => new Promise(r => w.setTimeout(r, 5));
+// Targeting now auto-confirms ~120ms after the last required pick (mirrors
+// singleplayer's abilityTargetBridge.mjs) instead of waiting for a Confirm
+// tap — give it comfortable margin to fire.
+const waitForAutoConfirm = () => new Promise(r => w.setTimeout(r, 200));
 const click = el => el?.dispatchEvent(new w.MouseEvent('click', { bubbles: true, cancelable: true }));
 const handCard = uid => w.document.querySelector(`#hand .card[data-uid="${uid}"]`);
 
@@ -86,17 +90,15 @@ function startMatch(player0) {
   assert.ok(handCard(anchor.uid).classList.contains('ability-target'), 'NEIGHBOR glows the valid anchor');
   assert.ok(handCard(source.uid).classList.contains('ability-disabled'), 'NEIGHBOR disables the source card');
 
+  // Picking the anchor auto-confirms (no Confirm tap) and, since there's
+  // only one matching deck card, the take modal auto-resolves too (no pop).
   click(handCard(anchor.uid));
   await wait();
   assert.ok(handCard(anchor.uid).classList.contains('ability-picked'), 'tapping the anchor marks it picked');
-  assert.ok(!w.document.getElementById('abilityConfirm').disabled, 'confirm enables once the anchor is picked');
+  await waitForAutoConfirm();
 
-  click(w.document.getElementById('abilityConfirm'));
-  await wait();
-  const choices = [...w.document.querySelectorAll('#choices .card')];
-  assert.ok(choices.length >= 1, 'take modal lists the revealed card');
-  click(choices.find(el => Number(el.querySelector?.('[data-uid]')?.dataset?.uid) === found.uid) || choices[0]);
-  await wait();
+  assert.ok(!w.document.getElementById('abilityPrompt').classList.contains('show'), 'NEIGHBOR auto-confirm closes the ability prompt');
+  assert.ok(!w.document.getElementById('modal').classList.contains('show'), 'NEIGHBOR auto-resolves the single-candidate take modal');
 
   const dispatched = getDispatched();
   assert.equal(dispatched?.type, MP_ACTIONS.MP_SUBMIT_ACTION, 'NEIGHBOR submits an action');
@@ -122,24 +124,18 @@ function startMatch(player0) {
 
   assert.ok(w.document.getElementById('abilityPrompt').classList.contains('show'), 'BETWEEN shows the first-anchor prompt');
   click(handCard(low.uid));
-  await wait();
-  assert.ok(!w.document.getElementById('abilityConfirm').disabled, 'BETWEEN enables first-anchor confirmation');
-
-  click(w.document.getElementById('abilityConfirm'));
-  await wait();
-  assert.ok(w.document.getElementById('abilityPrompt').classList.contains('show'), 'BETWEEN shows the second-anchor prompt');
+  await waitForAutoConfirm();
+  assert.ok(w.document.getElementById('abilityPrompt').classList.contains('show'), 'BETWEEN auto-advances to the second-anchor prompt');
   assert.ok(handCard(high.uid).classList.contains('ability-target'), 'BETWEEN offers the valid second anchor');
   assert.ok(handCard(low.uid).classList.contains('ability-disabled'), 'BETWEEN does not allow the first anchor to be selected twice');
 
+  // Second anchor auto-confirms too, then the single-candidate take modal
+  // auto-resolves (no pop, no Confirm tap anywhere in this flow).
   click(handCard(high.uid));
-  await wait();
-  assert.ok(!w.document.getElementById('abilityConfirm').disabled, 'BETWEEN enables confirmation for the valid pair');
+  await waitForAutoConfirm();
 
-  click(w.document.getElementById('abilityConfirm'));
-  await wait();
-  const choices = [...w.document.querySelectorAll('#choices .card')];
-  click(choices.find(el => Number(el.querySelector?.('[data-uid]')?.dataset?.uid) === found.uid) || choices[0]);
-  await wait();
+  assert.ok(!w.document.getElementById('abilityPrompt').classList.contains('show'), 'BETWEEN auto-confirm closes the ability prompt');
+  assert.ok(!w.document.getElementById('modal').classList.contains('show'), 'BETWEEN auto-resolves the single-candidate take modal');
 
   const dispatched = getDispatched();
   assert.equal(dispatched?.action?.type, MP_ACTIONS.MP_INVOKE_ABILITY, 'BETWEEN invokes the ability');
@@ -176,15 +172,10 @@ function startMatch(player0) {
   assert.ok(handCard(anchor.uid)?.classList.contains('ability-target'), 'NEIGHBOR-peer: anchor still glows after peer action');
 
   click(handCard(anchor.uid));
-  await wait();
-  assert.ok(!w.document.getElementById('abilityConfirm').disabled, 'NEIGHBOR-peer: confirm button enabled after picking anchor post-peer-action');
+  await waitForAutoConfirm();
 
-  click(w.document.getElementById('abilityConfirm'));
-  await wait();
-  const choices = [...w.document.querySelectorAll('#choices .card')];
-  assert.ok(choices.length >= 1, 'NEIGHBOR-peer: card choice modal lists cards after peer action mid-targeting');
-  click(choices.find(el => Number(el.querySelector?.('[data-uid]')?.dataset?.uid) === found.uid) || choices[0]);
-  await wait();
+  assert.ok(!w.document.getElementById('abilityPrompt').classList.contains('show'), 'NEIGHBOR-peer: auto-confirm closes the prompt after peer action');
+  assert.ok(!w.document.getElementById('modal').classList.contains('show'), 'NEIGHBOR-peer: single-candidate take modal auto-resolves after peer action');
 
   const dispatched = getDispatched();
   assert.equal(dispatched?.action?.type, MP_ACTIONS.MP_INVOKE_ABILITY, 'NEIGHBOR-peer: ability invoked');
@@ -220,14 +211,10 @@ function startMatch(player0) {
   assert.ok(handCard(anchor.uid)?.classList.contains('ability-target'), 'NEIGHBOR-rhs: anchor glow survives refreshHandState call');
 
   click(handCard(anchor.uid));
-  await wait();
-  assert.ok(!w.document.getElementById('abilityConfirm').disabled, 'NEIGHBOR-rhs: confirm enabled after anchor pick');
+  await waitForAutoConfirm();
 
-  click(w.document.getElementById('abilityConfirm'));
-  await wait();
-  const choices = [...w.document.querySelectorAll('#choices .card')];
-  click(choices.find(el => Number(el.querySelector?.('[data-uid]')?.dataset?.uid) === found.uid) || choices[0]);
-  await wait();
+  assert.ok(!w.document.getElementById('abilityPrompt').classList.contains('show'), 'NEIGHBOR-rhs: auto-confirm closes the prompt');
+  assert.ok(!w.document.getElementById('modal').classList.contains('show'), 'NEIGHBOR-rhs: single-candidate take modal auto-resolves');
 
   const dispatched = getDispatched();
   assert.equal(dispatched?.action?.type, MP_ACTIONS.MP_INVOKE_ABILITY, 'NEIGHBOR-rhs: ability invoked');

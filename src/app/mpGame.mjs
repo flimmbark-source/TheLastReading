@@ -33,6 +33,16 @@ export function installMpGame(target = window) {
   let _abilityResolving = false;
   let _abilityTargeting = null; // visible hand/spread anchor-pick sub-phase
   let _abilityConfirmOriginalOnclick = null;
+  // Mirrors singleplayer's abilityTargetBridge.mjs: once a tap fills the
+  // last required pick, auto-confirm after a short beat instead of waiting
+  // for a manual Confirm tap. No card movement happens during MP targeting
+  // either (same shared .ability-target/.ability-picked CSS as singleplayer),
+  // so there's no animation for this delay to race or cut off.
+  const MP_AUTO_CONFIRM_DELAY_MS = 120;
+  let _abilityAutoConfirmTimer = null;
+  function clearAbilityAutoConfirmTimer() {
+    if (_abilityAutoConfirmTimer) { target.clearTimeout?.(_abilityAutoConfirmTimer); _abilityAutoConfirmTimer = null; }
+  }
   let _personaSwapRequested = false;
   let _origPlaceCard    = null;
   let _origRenderSpread = null;
@@ -1329,6 +1339,7 @@ export function installMpGame(target = window) {
 
   // ── Visible hand/spread anchor selection (folded from mpSingleplayerAbilityFlow) ──
   function selectAbilityTargets(title, prompt, cards, count, previewFn = null) {
+    clearAbilityAutoConfirmTimer();
     return new Promise(resolve => {
       _abilityTargeting = {
         title,
@@ -1360,9 +1371,21 @@ export function installMpGame(target = window) {
     }
     renderAbilityPrompt();
     refreshAbilityTargets();
+
+    // If this tap just filled the last required pick (added, not removed),
+    // resolve automatically instead of waiting for a separate Confirm tap.
+    clearAbilityAutoConfirmTimer();
+    const justPicked = index < 0;
+    if (justPicked && _abilityTargeting.picked.length >= _abilityTargeting.count) {
+      _abilityAutoConfirmTimer = target.setTimeout(() => {
+        _abilityAutoConfirmTimer = null;
+        confirmAbilityTargeting();
+      }, MP_AUTO_CONFIRM_DELAY_MS);
+    }
   }
 
   function confirmAbilityTargeting() {
+    clearAbilityAutoConfirmTimer();
     if (!_abilityTargeting || _abilityTargeting.picked.length < _abilityTargeting.count) return;
     const allCards = abilityTargetingCards();
     const pickedCards = _abilityTargeting.picked.map(uid => allCards.find(card => card.uid === uid)).filter(Boolean);
@@ -1372,6 +1395,7 @@ export function installMpGame(target = window) {
   }
 
   function cancelAbilityTargeting() {
+    clearAbilityAutoConfirmTimer();
     if (!_abilityTargeting) return;
     const resolve = _abilityTargeting.resolve;
     clearAbilityTargeting();
@@ -1501,6 +1525,8 @@ export function installMpGame(target = window) {
   }
   function showMpCardChoice(title, prompt, cards) {
     return new Promise(resolve => {
+      // A single candidate isn't a choice — hand it over without popping the modal.
+      if ((cards || []).length === 1) { target.playSound?.('flip'); resolve(cards[0]); return; }
       const modal = el('modal'), titleEl = el('modalTitle'), promptEl = el('modalPrompt'), choices = el('choices'), toggle = el('modalToggle');
       if (!modal || !titleEl || !promptEl || !choices) { resolve(null); return; }
       titleEl.textContent = title; promptEl.textContent = prompt; if (toggle) toggle.textContent = 'Hide'; choices.innerHTML = '';
