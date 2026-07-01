@@ -122,3 +122,10 @@ test('open menu drawer scrolls overflowing settings content', () => {
   assert.match(css, /#menuPullDesk\.tlr-pull-desk\{[^}]*overflow-y:auto!important/, 'open menu drawer should scroll overflowing settings content');
   assert.match(css, /#menuPullDesk\.tlr-pull-desk\{[^}]*overflow-x:hidden!important/, 'menu drawer should clip horizontal overflow');
 });
+
+
+test('drawer fitter keeps open menu overflow contained inline', () => {
+  const source = readFileSync(new URL('../src/ui/gestureDrawers.mjs', import.meta.url), 'utf8');
+
+  assert.match(source, /if\(d\.id==='menu'\)\{[\s\S]*overflow-x','hidden','important'[\s\S]*overflow-y','auto','important'/, 'menu drawer fitter should override visible inline overflow');
+});
