@@ -13,7 +13,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test:spv2-visual": "node scripts/validate-single-player-v2-visual-smoke.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

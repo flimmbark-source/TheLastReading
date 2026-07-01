@@ -1,0 +1,22 @@
+@layer spv2.components {
+  /* Single Player V2 mobile utility button visibility contract.
+
+     Keep display ownership for the utility medallions in one component: Menu,
+     Scoring, Abilities, and Archive are visible utilities; Mulligan remains the
+     hidden legacy button. Art and pressed-state styling still live in the
+     generated art/icon source sections until those rules are migrated here. */
+  @media (max-width: 640px) {
+    body.single-player-v2.generated-sheet-ready #mullBtn {
+      display: none !important;
+    }
+
+    body.single-player-v2.generated-sheet-ready #scoringBtn,
+    body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+    body.single-player-v2.generated-sheet-ready #menuBtn {
+      display: block !important;
+      width: clamp(44px, 11.5vw, 56px) !important;
+      height: clamp(44px, 11.5vw, 56px) !important;
+      border-radius: 50% !important;
+    }
+  }
+}

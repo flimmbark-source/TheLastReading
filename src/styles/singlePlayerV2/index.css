@@ -1,0 +1,3771 @@
+/* AUTO-GENERATED FILE. Do not edit directly.
+
+   Run `node scripts/generate-single-player-v2-cascade.mjs` after changing any
+   source stylesheet listed below. The generated file is the only stylesheet
+   game.html and the runtime installer should load for Single Player V2. It
+   preserves the previous direct-link cascade order while making the active
+   cascade traceable in one file. The layer order below is reserved for the next
+   migration step, where sections can be moved into component-owned layers
+   without changing the public loading surface. */
+@layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat;
+
+
+/* === singlePlayerV2/tokens.css: tokens === */
+@layer spv2.tokens {
+  /* ---------------------------------------------------------------------------
+     Single-player-v2 design tokens (single source of truth).
+     Palette is the approved Phase 2 art direction. Consolidation target: new and
+     touched rules reference these instead of hard-coding values, so the look can
+     be tuned in one place instead of across the override stylesheets.
+     --------------------------------------------------------------------------- */
+  body.single-player-v2 {
+    /* Base materials */
+    --spv2-ink: #0d0a08;
+    --spv2-wood: #17100b;
+    --spv2-leather: #191512;
+    --spv2-parchment: #d5bd8b;
+
+    /* Metal ramp */
+    --spv2-brass: #6f4c20;
+    --spv2-gold: #a87935;
+    --spv2-gold-hi: #e3be72;
+    --spv2-gold-edge: rgba(227, 190, 114, 0.5);
+
+    /* State accents */
+    --spv2-score: #e0a847;
+    --spv2-violet: #8f74d9;
+    --spv2-valid: #79c778;
+    --spv2-warn: #c75454;
+
+    /* Spacing + shape scale */
+    --spv2-gap: 8px;
+    --spv2-r-sm: 6px;
+    --spv2-r-md: 12px;
+    --spv2-r-lg: 17px;
+
+    /* Elevation. Coin shadow seats a transparent medallion on the table; it
+       follows the coin's alpha (drop-shadow), so it must not be a box-shadow. */
+    --spv2-coin-shadow: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.6))
+      drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45));
+    --spv2-panel-shadow: 0 9px 28px rgba(0, 0, 0, 0.62),
+      inset 0 0 0 2px rgba(205, 155, 73, 0.06);
+  }
+}
+
+
+/* === singlePlayerV2/base.css: base layout === */
+/* Phase 1 single-player layout.
+   Placeholder materials only: final transparent art replaces these shells in Phase 2. */
+
+
+/* Base mobile layout; design tokens have moved to singlePlayerV2/tokens.css. */
+@media (max-width: 640px) {
+  body.single-player-v2 {
+    --spv2-side: 9px;
+    --spv2-title-h: 38px;
+    --spv2-hud-top: 38px;
+    --spv2-hud-h: 112px;
+    --spv2-slot-w: clamp(64px, 18.3vw, 72px);
+    --spv2-slot-h: calc(var(--spv2-slot-w) * 1.5);
+    --spv2-hand-clearance: 222px;
+    min-height: 100dvh;
+    overflow: hidden;
+    padding: 0 !important;
+  }
+
+  /* Compact title strip. It stays decorative and never competes with values. */
+  body.single-player-v2 #titleWrap {
+    position: fixed;
+    z-index: 28;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--spv2-title-h);
+    pointer-events: none;
+    filter: none;
+  }
+
+  body.single-player-v2 #titleWrap::before {
+    content: "THE LAST READING";
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #b79761;
+    font: 700 17px/1 Georgia, serif;
+    letter-spacing: .11em;
+    text-shadow: 0 2px 8px #000;
+  }
+
+  body.single-player-v2 #titleRow {
+    position: static;
+    pointer-events: none;
+  }
+
+  body.single-player-v2 #titleContent {
+    position: static;
+  }
+
+  body.single-player-v2 #menuBtn {
+    position: fixed;
+    z-index: 31;
+    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 10px);
+    right: 13px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid #8f6a34;
+    background: radial-gradient(circle at 45% 38%, #342414, #100b08 70%);
+    color: #dfbd73;
+    font-size: 20px;
+    pointer-events: auto;
+    box-shadow: 0 7px 20px rgba(0,0,0,.55), inset 0 0 0 3px rgba(183,139,67,.08);
+  }
+
+  body.single-player-v2 #settingsPanel {
+    z-index: 70;
+  }
+
+  /* Four-part primary HUD using the existing live counters. */
+  body.single-player-v2 .score-stack {
+    position: fixed;
+    z-index: 25;
+    top: var(--spv2-hud-top);
+    left: var(--spv2-side);
+    right: var(--spv2-side);
+    width: auto;
+    height: var(--spv2-hud-h);
+    transform: none;
+    display: grid;
+    grid-template-columns: 21fr 29fr 29fr 21fr;
+    gap: 0;
+    align-items: stretch;
+    justify-content: stretch;
+    flex-wrap: nowrap;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #8e6832;
+    border-radius: 17px;
+    background: #0d0a08;
+    box-shadow: 0 9px 28px rgba(0,0,0,.62), inset 0 0 0 2px rgba(205,155,73,.06);
+    filter: none;
+  }
+
+  body.single-player-v2 .score-stack > .pill,
+  body.single-player-v2 .score-stack > .th-pill-wrap {
+    order: initial;
+    min-width: 0;
+    width: auto;
+    height: 100%;
+    margin: 0;
+    transform: none;
+    border-right: 1px solid rgba(153,111,51,.38);
+  }
+
+  body.single-player-v2 .score-stack > :last-child {
+    border-right: 0;
+  }
+
+  body.single-player-v2 .score-stack .pill {
+    position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+    padding: 12px 3px 10px;
+    align-items: center;
+    justify-content: center;
+    align-content: center;
+    gap: 7px;
+    grid-template-columns: none;
+    background-image: none;
+    background-color: transparent;
+    text-align: center;
+    border: 0;
+    border-radius: 0;
+    color: #c4ab7c;
+  }
+
+  body.single-player-v2 .score-stack .score-pill {
+    background: radial-gradient(circle at 50% 88%, rgba(213,151,44,.30), transparent 70%);
+    box-shadow: inset 0 -2px 0 rgba(234,181,79,.45);
+  }
+
+  /* Live reading multiplier, shown in red at the score number's upper corner
+     only when above 1 (toggled by singlePlayerV2.mjs). Mult red follows the
+     genre convention and stays clear of the gold score / violet threshold. */
+  body.single-player-v2 #spv2ScoreMult {
+    position: absolute;
+    top: 41px;
+    left: 61%;
+    display: none;
+    color: #f2564a;
+    font: 800 clamp(12px, 3.4vw, 15px)/1 'Cinzel', Georgia, serif;
+    letter-spacing: .01em;
+    text-shadow: 0 0 7px rgba(242, 86, 74, 0.55), 0 2px 4px #000;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  body.single-player-v2 #spv2ScoreMult.show {
+    display: block;
+  }
+
+  body.single-player-v2 .score-stack .threshold-pill {
+    background: radial-gradient(circle at 50% 88%, rgba(116,84,197,.34), transparent 70%);
+    box-shadow: inset 0 -2px 0 rgba(147,113,224,.48);
+  }
+
+  body.single-player-v2 .spv2-label {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    color: #c2a979;
+    font: 700 clamp(8px,2.45vw,10px)/1 system-ui,sans-serif;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-overflow: clip;
+  }
+
+  /* The Score/Threshold labels are baked into the panel art, so shortening the
+     panels squished them. Block out the baked label band with a panel-matched
+     gradient and drive crisp live Cinzel text instead. High specificity + !
+     important overrides the art-mode suppression (ArtIntegration / SlotMatch /
+     VisualFix / HudTablePass all set this label display:none !important). */
+  html body.single-player-v2.generated-sheet-ready .score-stack .pill .spv2-label {
+    display: block !important;
+    position: absolute;
+    top: 4px;
+    left: 5px;
+    right: 5px;
+    height: 31px;
+    margin: 0;
+    padding-top: 9px;
+    box-sizing: border-box;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    border-radius: 9px 9px 4px 4px;
+    border-bottom: 1px solid rgba(227, 190, 114, 0.3);
+    font: 700 clamp(14px, 4vw, 17px)/1 'Cinzel', Georgia, serif !important;
+    letter-spacing: .14em !important;
+    text-transform: uppercase;
+    text-shadow: 0 1px 3px #000;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* Solid (opaque) plate fully hides the squished baked label beneath, with an
+     inset recess so it reads as an intentional nameplate rather than a patch. */
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill .spv2-label {
+    color: #e7c98c !important;
+    background: linear-gradient(180deg, #241809, #150d05);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.55);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill .spv2-label {
+    color: #d2c2ff !important;
+    background: linear-gradient(180deg, #1d1430, #110b1d);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.55);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill .spv2-label::before { content: "✦ "; }
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill .spv2-label::before { content: "⚖ "; }
+
+  body.single-player-v2 .score-stack .pill b {
+    display: block;
+    justify-self: auto;
+    color: #efe5ce;
+    font-family: 'Cinzel', Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(25px,7.4vw,31px);
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: .01em;
+    line-height: .9;
+    text-shadow: 0 2px 8px #000;
+  }
+
+  body.single-player-v2 .score-stack .score-pill b {
+    color: #ffd98c;
+    font-size: clamp(29px,8.6vw,36px);
+    text-shadow: 0 0 12px rgba(235,175,70,.32), 0 2px 8px #000;
+  }
+
+  body.single-player-v2 .score-stack .threshold-pill b {
+    color: #cfbfff;
+    font-size: clamp(29px,8.6vw,36px);
+    text-shadow: 0 0 12px rgba(145,107,224,.34), 0 2px 8px #000;
+  }
+
+  body.single-player-v2 .th-pill-wrap {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    height: 100%;
+  }
+
+  body.single-player-v2 .spv2-threshold-progress {
+    position: absolute;
+    left: 14%;
+    right: 14%;
+    bottom: 12px;
+    height: 7px;
+    overflow: hidden;
+    border: 1px solid #6f5b9d;
+    border-radius: 999px;
+    background: #17111e;
+    box-shadow: inset 0 1px 3px #000;
+    pointer-events: none;
+  }
+
+  body.single-player-v2 .spv2-threshold-progress > span {
+    display: block;
+    width: calc(var(--spv2-progress, 0) * 100%);
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg,#6b4dbb,#ac8bf1);
+    transition: width .3s ease;
+  }
+
+  body.single-player-v2 .spv2-threshold-progress::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: calc(var(--spv2-progress, 0) * 100%);
+    width: 8px;
+    height: 8px;
+    border: 1px solid #e2d7ff;
+    background: #8e70d8;
+    transform: translate(-50%,-50%) rotate(45deg);
+    box-shadow: 0 0 7px rgba(194,168,255,.75);
+  }
+
+  body.single-player-v2 .spv2-threshold-progress.is-complete > span {
+    background: linear-gradient(90deg,#a87528,#f0c96e);
+  }
+
+  /* Existing Scoring and Abilities controls become the left utility cluster. */
+  body.single-player-v2 .actions {
+    position: fixed;
+    z-index: 31;
+    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 10px);
+    left: 13px;
+    margin: 0;
+    display: flex;
+    gap: 7px;
+    pointer-events: auto;
+  }
+
+  body.single-player-v2 .actions button {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    padding: 0 4px;
+    border-radius: 50%;
+    border: 1px solid #8f6a34;
+    background: radial-gradient(circle at 45% 38%,#342414,#100b08 70%);
+    color: #dfbd73;
+    font-size: 0;
+    box-shadow: 0 7px 20px rgba(0,0,0,.55), inset 0 0 0 3px rgba(183,139,67,.08);
+  }
+
+  body.single-player-v2 #scoringBtn::before { content: "✦"; font-size: 19px; }
+  body.single-player-v2 #abilitiesBtn::before { content: "◉"; font-size: 18px; }
+  body.single-player-v2 #mullBtn::before { content: "↻"; font-size: 20px; }
+
+  /* Seat the top utility medallions on the table with the same coin shadow the
+     bottom action medallions already carry, so all controls read as physical
+     objects rather than flat stickers floating on bare wood. (Consolidation:
+     unifies the top/bottom medallion treatment; nothing else sets `filter`
+     on these buttons.) */
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    background-color: transparent;
+    filter: var(--spv2-coin-shadow);
+  }
+
+  /* Reading field and five-card horizontal spread. */
+  body.single-player-v2 .spread-wrap {
+    position: fixed;
+    z-index: 12;
+    left: 0;
+    right: 0;
+    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 72px);
+    bottom: var(--spv2-hand-clearance);
+    margin: 0;
+    transform: none;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+  }
+
+  body.single-player-v2 .spread-wrap::before {
+    content: "";
+    position: absolute;
+    width: min(84vw, 330px);
+    aspect-ratio: 1;
+    border: 1px solid rgba(173,126,55,.22);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, transparent 0 35%, rgba(173,126,55,.10) 35.4% 35.8%, transparent 36.2%),
+      repeating-conic-gradient(from 0deg,rgba(184,136,62,.10) 0deg 1deg,transparent 1deg 30deg);
+    box-shadow: inset 0 0 0 18px rgba(173,126,55,.018);
+    pointer-events: none;
+  }
+
+  body.single-player-v2 .spread {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    width: 100%;
+    min-height: calc(var(--spv2-slot-h) + 20px);
+    padding: 0 6px;
+    align-items: flex-start;
+    justify-content: center;
+    overflow: visible;
+    pointer-events: auto;
+  }
+
+  body.single-player-v2 .slot {
+    flex: 0 0 var(--spv2-slot-w);
+    width: var(--spv2-slot-w);
+    height: var(--spv2-slot-h);
+    margin-left: -2px;
+    border: 1px solid #74552d;
+    border-radius: 6px;
+    background: linear-gradient(160deg,rgba(32,23,17,.88),rgba(10,7,6,.92));
+    box-shadow: 0 7px 18px rgba(0,0,0,.58), inset 0 0 0 3px rgba(183,139,67,.045);
+    transform-origin: 50% 140%;
+    transition: transform .18s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease;
+  }
+
+  body.single-player-v2 .slot:first-child { margin-left: 0; }
+  body.single-player-v2 .slot:nth-child(1) { transform: translateY(10px) rotate(-4deg); }
+  body.single-player-v2 .slot:nth-child(2) { transform: translateY(3px) rotate(-2deg); }
+  body.single-player-v2 .slot:nth-child(3) { transform: translateY(0) rotate(0); }
+  body.single-player-v2 .slot:nth-child(4) { transform: translateY(3px) rotate(2deg); }
+  body.single-player-v2 .slot:nth-child(5) { transform: translateY(10px) rotate(4deg); }
+
+  body.single-player-v2 .slot.empty::after {
+    content: "✦";
+    color: #5e4829;
+    font-size: 21px;
+  }
+
+  body.single-player-v2 .slot.empty:hover,
+  body.single-player-v2 .slot.target {
+    border-color: #9fc49b;
+    background: linear-gradient(160deg,rgba(48,70,45,.75),rgba(12,17,11,.92));
+    box-shadow: 0 0 0 2px rgba(126,190,126,.20),0 0 18px rgba(106,181,112,.22),0 7px 18px rgba(0,0,0,.58);
+  }
+
+  body.single-player-v2 .slot .num {
+    top: 4px;
+    left: 6px;
+    color: #866d48;
+    font-size: 9px;
+  }
+
+  body.single-player-v2 .slot > .card {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* #4: empty reading positions should read as part of the table, not as
+     cool-blue cards floating on it. Remove the lift drop-shadow, recess the
+     slot with an inset shadow, and mute/darken the compass tile so its gold
+     lines etch into the warm wood. High specificity (id + .empty) wins over
+     the .spread .slot rules spread across the override sheets. */
+  html body.single-player-v2.generated-sheet-ready #spread
+    .slot.empty:not(.target):not(.drop-target):not(:hover):not(.ability-target-slot):not(.ability-picked-slot) {
+    background-color: rgba(9, 6, 4, 0.55);
+    border: 1px solid rgba(227, 190, 114, 0.14);
+    /* !important to override the lift drop-shadow set with !important in the
+       FinalPlacement/SlotMatch slot rules; the :not() guards keep this off the
+       target/hover states so the green placement glow is untouched. */
+    box-shadow:
+      inset 0 3px 9px rgba(0, 0, 0, 0.62),
+      inset 0 -1px 0 rgba(227, 190, 114, 0.08),
+      inset 0 0 0 1px rgba(0, 0, 0, 0.45) !important;
+    opacity: 0.86;
+    filter: saturate(0.45) brightness(0.66);
+  }
+
+  /* Existing discard and purge actions become the lower action rail. */
+  body.single-player-v2 .spread-actions {
+    position: fixed;
+    z-index: 27;
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: max(10px,env(safe-area-inset-bottom));
+    transform: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 0;
+    padding: 0 18px;
+    pointer-events: none;
+  }
+
+  body.single-player-v2 .spread-actions button {
+    pointer-events: auto;
+  }
+
+  body.single-player-v2 .ability-prompt {
+    z-index: 35;
+  }
+
+  /* Keep the live hand over the HUD when the player lifts it. */
+  body.single-player-v2 .handDock {
+    z-index: 26 !important;
+    height: 166px;
+    bottom: 22px !important;
+    background: linear-gradient(transparent,rgba(0,0,0,.78)) !important;
+  }
+
+  body.single-player-v2 .hand-swipe-zone {
+    z-index: 27;
+  }
+
+  /* #5: the gesture hint is onboarding chrome. Fade it out (and keep it out)
+     once the player first interacts, so it stops competing with the table.
+     singlePlayerV2.mjs toggles the body flag and persists it across sessions.
+     The existing hint system shows it via `#handSwipeZone.has-overflow
+     .hand-swipe-hint { opacity:1 !important }` (RequestedFixes), so the dismiss
+     must out-specify that (id + 5 classes) and use !important. It keeps the
+     base rule's opacity transition, so the hint fades rather than snapping. */
+  html body.single-player-v2.spv2-hand-hint-dismissed.generated-sheet-ready
+    #handSwipeZone.hand-swipe-zone .hand-swipe-hint {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  body.single-player-v2 #constellationPill {
+    z-index: 29;
+  }
+
+  @media (max-height: 759px) {
+    body.single-player-v2 {
+      --spv2-title-h: 32px;
+      --spv2-hud-top: 32px;
+      --spv2-hud-h: 94px;
+      --spv2-slot-w: clamp(61px,17.8vw,66px);
+      --spv2-hand-clearance: 188px;
+    }
+
+    body.single-player-v2 .score-stack .pill {
+      padding-top: 8px;
+      padding-bottom: 7px;
+      gap: 4px;
+    }
+
+    body.single-player-v2 .spv2-threshold-progress {
+      bottom: 8px;
+      height: 6px;
+    }
+
+    body.single-player-v2 #menuBtn,
+    body.single-player-v2 .actions {
+      top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 7px);
+    }
+
+    body.single-player-v2 .spread-wrap {
+      top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 59px);
+    }
+
+    body.single-player-v2 .handDock {
+      height: 146px;
+      bottom: 14px !important;
+    }
+  }
+}
+
+
+/* === singlePlayerV2/compat.css: composition compatibility === */
+/* Compatibility overrides kept separate from the Phase 1 composition sheet. */
+
+@media (max-width: 640px) {
+  body.single-player-v2 #settingsPanel {
+    pointer-events: auto;
+  }
+
+  /* Keep the hand cards above the separate swipe surface. Empty space inside
+     the dock passes through to that surface, while every card remains directly
+     clickable and draggable. */
+  body.single-player-v2 .hand-swipe-zone {
+    z-index: 25;
+  }
+
+  body.single-player-v2 .handDock {
+    z-index: 26 !important;
+    pointer-events: none;
+  }
+
+  body.single-player-v2 .handDock .hand {
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  body.single-player-v2 .handDock .hand .card {
+    pointer-events: auto;
+  }
+
+  /* Bottom actions must remain tappable above the hand and swipe surface,
+     but still below reference sheets, modals, and tutorials. */
+  body.single-player-v2 .spread-actions {
+    z-index: 29;
+  }
+
+  /* Generated-sheet composition, matched to the approved 941 × 1672 layout. */
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-title-h: 6.58dvh;
+    --spv2-hud-top: 6.58dvh;
+    --spv2-hud-h: 16.39dvh;
+    --spv2-slot-w: clamp(56px,15.2vw,72px);
+    --spv2-slot-h: calc(var(--spv2-slot-w) * 1.75);
+    --spv2-hand-clearance: 34dvh;
+    background-position: center top;
+    background-size: 100% 100%;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap {
+    height: var(--spv2-title-h);
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
+    top: .55dvh;
+    left: 24%;
+    right: 24%;
+    height: 5.55dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    top: var(--spv2-hud-top);
+    left: max(4px,.45vw);
+    right: max(4px,.45vw);
+    height: var(--spv2-hud-h);
+    border-radius: clamp(14px,3.8vw,22px);
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready .actions {
+    top: 23.65dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready .actions button {
+    width: clamp(38px,9.3vw,48px);
+    height: clamp(38px,9.3vw,48px);
+    min-width: 0;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    right: 2.2vw;
+  }
+
+  body.single-player-v2.generated-sheet-ready .actions {
+    left: 2.2vw;
+    gap: 1.2vw;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap {
+    top: 28.2dvh;
+    bottom: 34dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    width: min(92vw,390px);
+    height: auto;
+    aspect-ratio: 380 / 348;
+    opacity: .9;
+    transform: translateY(-1.2dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread {
+    min-height: calc(var(--spv2-slot-h) + 24px);
+    padding: 0 4.5vw;
+    transform: translateY(4.1dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot {
+    margin-left: -1.25vw;
+    border-radius: clamp(5px,1.4vw,8px);
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(1) { transform: translateY(1.3dvh) rotate(-4deg); }
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(2) { transform: translateY(.45dvh) rotate(-2deg); }
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(3) { transform: translateY(0) rotate(0); }
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(4) { transform: translateY(.45dvh) rotate(2deg); }
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(5) { transform: translateY(1.3dvh) rotate(4deg); }
+
+  body.single-player-v2.generated-sheet-ready .handDock {
+    height: 34dvh;
+    bottom: 0 !important;
+    align-items: flex-start;
+    background-position: center bottom !important;
+    background-size: 100% auto !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand {
+    height: 31dvh;
+    --track-spacing: 6.5deg;
+    --track-radius: 560px;
+    transform: translateY(.8dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card {
+    width: clamp(78px,22vw,96px);
+    height: calc(clamp(78px,22vw,96px) * 1.5);
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+    bottom: 25.5dvh;
+    height: 7.5dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions {
+    bottom: max(1.35dvh,env(safe-area-inset-bottom));
+    padding: 0 5vw;
+    align-items: center;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    width: clamp(48px,13.8vw,64px);
+    height: clamp(55px,15.8vw,74px);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions::before {
+    bottom: -.2dvh;
+    width: clamp(70px,20.5vw,92px);
+    height: clamp(70px,20.5vw,92px);
+  }
+}
+
+@media (max-width: 640px) and (max-height: 759px) {
+  body.single-player-v2:not(.generated-sheet-ready) {
+    --spv2-title-h: 32px;
+    --spv2-hud-top: 32px;
+    --spv2-hud-h: 94px;
+    --spv2-slot-w: clamp(61px,17.8vw,66px);
+    --spv2-hand-clearance: 188px;
+  }
+
+  body.single-player-v2:not(.generated-sheet-ready) .score-stack .pill {
+    padding-top: 8px;
+    padding-bottom: 7px;
+    gap: 4px;
+  }
+
+  body.single-player-v2:not(.generated-sheet-ready) .spv2-threshold-progress {
+    bottom: 8px;
+    height: 6px;
+  }
+
+  body.single-player-v2:not(.generated-sheet-ready) #menuBtn,
+  body.single-player-v2:not(.generated-sheet-ready) .actions {
+    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 7px);
+  }
+
+  body.single-player-v2:not(.generated-sheet-ready) .spread-wrap {
+    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 59px);
+  }
+
+  body.single-player-v2:not(.generated-sheet-ready) .handDock {
+    height: 146px;
+    bottom: 14px !important;
+  }
+}
+
+/* Deprecated exact-sheet fallback. */
+@media (max-width: 640px) {
+  body.single-player-v2.reference-sheet-ready {
+    --spv2-title-h:6.58dvh;
+    --spv2-hud-top:6.58dvh;
+    --spv2-hud-h:16.39dvh;
+    --spv2-slot-w:15.2vw;
+    --spv2-slot-h:14.95dvh;
+  }
+
+  body.single-player-v2.reference-sheet-ready #menuBtn,
+  body.single-player-v2.reference-sheet-ready .actions button {
+    position:relative;
+    color:transparent !important;
+    font-size:0 !important;
+  }
+
+  body.single-player-v2.reference-sheet-ready #menuBtn::before,
+  body.single-player-v2.reference-sheet-ready .actions button::before {
+    content:none !important;
+  }
+
+  body.single-player-v2.reference-sheet-ready .handDock::before {
+    z-index:0;
+    pointer-events:none;
+  }
+
+  body.single-player-v2.reference-sheet-ready .handDock .hand {
+    z-index:2;
+  }
+}
+
+/* === Migrated requested fixes compatibility section === */
+@media (max-width: 640px) {
+  /* Keep the complete top HUD cluster closer to the top edge. Every pill and
+     upper utility button keys off these shared variables. */
+  html body.single-player-v2.generated-sheet-ready {
+    --spv2-hud-top: max(4.5dvh, env(safe-area-inset-top)) !important;
+    /* Shorter Score/Threshold panels: the previous clamp grew across several
+       override passes (76 -> 116 -> 140 -> 148) and left a lot of empty
+       vertical ornament. This is the authoritative height. */
+    --spv2-compact-hud-h: clamp(112px,14dvh,128px) !important;
+  }
+
+  /* Give the two live headline values more visual weight inside the slightly
+     taller Score and Threshold panels. */
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill > b,
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill > b {
+    font-size: clamp(40px,10.5vw,70px) !important;
+    line-height: .9 !important;
+  }
+
+  /* The replacement PNG has more breathing room around its frame. Overscale
+     the artwork inside the existing slot boxes rather than changing card or
+     spread geometry. Keep the slot open so a placed card's hint halo can render
+     outside the frame; the card itself still clips its artwork normally. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot {
+    background-size: 118% 118% !important;
+    overflow: visible !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot > .card {
+    overflow: hidden !important;
+  }
+
+  /* Drag highlighting must tint the existing slot art, not replace the entire
+     background shorthand and reset the PNG sizing. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.drop-target {
+    background-color: rgba(98,170,104,.28) !important;
+    background-image: var(--spv2-spread-slot-art) !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 118% 118% !important;
+    border-color: #79c778 !important;
+    box-shadow: 0 0 0 2px rgba(121,199,120,.55),0 0 32px rgba(121,199,120,.45) !important;
+  }
+
+  /* Preserve the dock artwork's aspect ratio while reducing the current art
+     size by 20 percent and moving the image down 10px. */
+  html body.single-player-v2.generated-sheet-ready .handDock {
+    background-size: auto clamp(144px,17.6dvh,155.2px) !important;
+    background-position: center bottom calc(2dvh - 5px) !important;
+  }
+
+  /* Make an available discard action visibly brighter than its disabled state. */
+  html body.single-player-v2.generated-sheet-ready #discardBtn:not(:disabled) {
+    box-shadow:
+      0 0 0 3px rgba(255,217,120,.9),
+      0 0 18px rgba(255,200,84,.82),
+      0 0 36px rgba(100,168,255,.45) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #discardBtn:not(:disabled)::before {
+    filter:
+      brightness(2.45)
+      contrast(1.12)
+      saturate(1.28)
+      drop-shadow(0 0 8px rgba(255,220,132,.88))
+      drop-shadow(0 0 14px rgba(85,156,255,.72)) !important;
+  }
+
+  /* Group the upper utility controls into two compact pairs:
+     Menu + Archives on the left, Scoring + Abilities on the right. */
+  html body.single-player-v2.generated-sheet-ready #menuBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh + 4px) !important;
+    left: 3.8vw !important;
+    right: auto !important;
+    width: clamp(40px,10.5vw,50px) !important;
+    height: clamp(40px,10.5vw,50px) !important;
+    transform: none !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh + 4px) !important;
+    left: calc(3.8vw + clamp(40px,10.5vw,50px) + 8px) !important;
+    right: auto !important;
+    width: clamp(40px,10.5vw,50px) !important;
+    height: clamp(40px,10.5vw,50px) !important;
+    transform: none !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #scoringBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
+    left: auto !important;
+    right: calc(3.8vw + clamp(40px,10.5vw,50px) + 8px) !important;
+    transform: none !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
+    left: auto !important;
+    right: 3.8vw !important;
+    transform: none !important;
+  }
+
+  /* Deliberate five-card fan. The slot dimensions remain unchanged; only their
+     position, rotation, overlap depth, and contact shadows change. The outer
+     translations use the reference values when space permits, but clamp inward
+     on narrow screens to preserve a safe gutter for the rotated top corners. */
+  html body.single-player-v2.generated-sheet-ready .spread {
+    top: calc(.4dvh + 52px) !important;
+    position: relative !important;
+    display: block !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    height: calc(var(--spv2-slot-h) + 28px) !important;
+    min-height: calc(var(--spv2-slot-h) + 28px) !important;
+    margin-inline: auto !important;
+    padding: 0 !important;
+    perspective: 900px !important;
+    overflow: visible !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot,
+  html body.single-player-v2.generated-sheet-ready .spread .slot:first-child {
+    position: absolute !important;
+    left: 50% !important;
+    top: 0 !important;
+    flex: 0 0 var(--spv2-slot-w) !important;
+    width: var(--spv2-slot-w) !important;
+    height: var(--spv2-slot-h) !important;
+    margin: 0 !important;
+    transform-origin: 50% 90% !important;
+    will-change: transform !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
+    transform: translateX(max(-265%, calc(-50vw + 14px))) translateY(14px) rotate(-8deg) !important;
+    z-index: 1 !important;
+    box-shadow:
+      0 5px 4px rgba(0,0,0,.70),
+      0 14px 17px rgba(0,0,0,.52),
+      inset 0 0 0 3px rgba(183,139,67,.045) !important;
+  }
+
+  /* Pull the two inner slots slightly toward the center. This redistributes the
+     small rotation-driven intersections evenly across the fan and creates more
+     clearance between the inner and outer pairs. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
+    transform: translateX(-153%) translateY(5px) rotate(-4deg) !important;
+    z-index: 2 !important;
+    box-shadow:
+      0 6px 4px rgba(0,0,0,.74),
+      0 16px 18px rgba(0,0,0,.56),
+      inset 0 0 0 3px rgba(183,139,67,.045) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
+    transform: translateX(-50%) translateY(0) rotate(0deg) scale(1.025) !important;
+    z-index: 3 !important;
+    box-shadow:
+      0 7px 5px rgba(0,0,0,.82),
+      0 19px 22px rgba(0,0,0,.62),
+      inset 0 0 0 3px rgba(183,139,67,.045) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
+    transform: translateX(53%) translateY(5px) rotate(4deg) !important;
+    z-index: 2 !important;
+    box-shadow:
+      0 6px 4px rgba(0,0,0,.74),
+      0 16px 18px rgba(0,0,0,.56),
+      inset 0 0 0 3px rgba(183,139,67,.045) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
+    transform: translateX(min(165%, calc(50vw - 14px - 100%))) translateY(14px) rotate(8deg) !important;
+    z-index: 1 !important;
+    box-shadow:
+      0 5px 4px rgba(0,0,0,.70),
+      0 14px 17px rgba(0,0,0,.52),
+      inset 0 0 0 3px rgba(183,139,67,.045) !important;
+  }
+
+  /* Interaction glows sit above the fan and temporarily replace the dark
+     contact-only treatment. They remain local to the active slot. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.drop-target,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-target-slot,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-picked-slot {
+    z-index: 5 !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-target-slot {
+    background-color: rgba(98,170,104,.18) !important;
+    background-image: var(--spv2-spread-slot-art) !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 118% 118% !important;
+    border-color: #79c778 !important;
+    box-shadow:
+      0 0 0 2px rgba(121,199,120,.72),
+      0 0 24px rgba(121,199,120,.42),
+      0 9px 14px rgba(0,0,0,.66) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-picked-slot {
+    background-color: rgba(212,175,106,.18) !important;
+    background-image: var(--spv2-spread-slot-art) !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 118% 118% !important;
+    border-color: #ffd978 !important;
+    box-shadow:
+      0 0 0 2px rgba(255,217,120,.88),
+      0 0 28px rgba(255,217,120,.48),
+      0 9px 14px rgba(0,0,0,.66) !important;
+  }
+}
+
+
+/* === singlePlayerV2/components/spreadHints.css: component: spread hints and choice polish === */
+@layer spv2.components {
+/* Spread hint and temporary choice-card polish migrated from latest fixes. */
+/* Temporary ability-choice cards inherit the same hint information as cards in
+   play, but use the restrained spread polish instead of the legacy broad card
+   glow from market.css. */
+html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-card,
+html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-complete,
+html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-multi {
+  border-color: rgb(var(--hint-rgb,232,196,96)) !important;
+  box-shadow:
+    0 0 0 1px rgba(var(--hint-rgb,232,196,96),.55),
+    0 0 10px rgba(var(--hint-rgb,232,196,96),.30),
+    0 8px 18px rgba(0,0,0,.55) !important;
+  filter: none !important;
+}
+
+@keyframes spv2-pattern-card-bump {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  42% {
+    transform: translateY(-12px) scale(1.06);
+  }
+  68% {
+    transform: translateY(2px) scale(.99);
+  }
+}
+
+@media (max-width: 640px) {
+  /* Use the same full-page background as desktop instead of the generated
+     mobile table skin and its extra texture/vignette overlay. */
+  html body.single-player-v2 {
+    background: url('../../assets/background.webp') center top / cover no-repeat fixed !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready::before {
+    content: none !important;
+    display: none !important;
+  }
+
+  /* Leave a small breathing gap above the score/threshold HUD. The four utility
+     buttons derive their vertical position from this shared variable, so the
+     entire upper cluster moves together. */
+  html body.single-player-v2.generated-sheet-ready {
+    --spv2-hud-top: 12px !important;
+  }
+
+  /* Center the visible five-card fan in the viewport rather than positioning it
+     beneath the upper HUD stack. The +7px correction accounts for the outer
+     cards extending 14px below the upright center card. */
+  html body.single-player-v2.generated-sheet-ready .spread {
+    position: fixed !important;
+    top: 45dvh !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+    transform: translateY(calc(-50% + 7px)) !important;
+  }
+
+  /* Rebalance the five-card fan around the available viewport width. Slots 2
+     and 4 move closer to the middle, while the outer cards anchor to protected
+     side gutters. This minimizes unavoidable overlap evenly across all four
+     card-to-card boundaries without changing any slot dimensions. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
+    left: 18px !important;
+    right: auto !important;
+    transform: translateY(14px) rotate(-8deg) !important;
+    --spv2-contact-shadow:
+      0 5px 4px rgba(0,0,0,.70),
+      0 14px 17px rgba(0,0,0,.52);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
+    left: 32.5% !important;
+    right: auto !important;
+    transform: translateX(-50%) translateY(5px) rotate(-4deg) !important;
+    --spv2-contact-shadow:
+      0 6px 4px rgba(0,0,0,.74),
+      0 16px 18px rgba(0,0,0,.56);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) scale(1.025) !important;
+    --spv2-contact-shadow:
+      0 7px 5px rgba(0,0,0,.82),
+      0 19px 22px rgba(0,0,0,.62);
+    box-shadow: var(--spv2-contact-shadow) !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
+    left: 67.5% !important;
+    right: auto !important;
+    transform: translateX(-50%) translateY(5px) rotate(4deg) !important;
+    --spv2-contact-shadow:
+      0 6px 4px rgba(0,0,0,.74),
+      0 16px 18px rgba(0,0,0,.56);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
+    left: auto !important;
+    right: 18px !important;
+    transform: translateY(14px) rotate(8deg) !important;
+    --spv2-contact-shadow:
+      0 5px 4px rgba(0,0,0,.70),
+      0 14px 17px rgba(0,0,0,.52);
+  }
+
+  /* Match the approved hand-card polish exactly: a restrained one-pixel rim
+     and a short ten-pixel halo. The center slot no longer receives a broader
+     treatment just because it sits on the highest layer. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-card:not(.drop-target):not(.ability-target-slot):not(.ability-picked-slot),
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-complete:not(.drop-target):not(.ability-target-slot):not(.ability-picked-slot),
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-multi:not(.drop-target):not(.ability-target-slot):not(.ability-picked-slot) {
+    box-shadow:
+      0 0 0 1px rgba(var(--hint-rgb,232,196,96),.55),
+      0 0 10px rgba(var(--hint-rgb,232,196,96),.30),
+      var(--spv2-contact-shadow) !important;
+  }
+
+  /* The older resonation system paints an animated amber ::before glow directly
+     on slots. When a card also has a normal hint, suppress that legacy layer so
+     the polished hint remains the only colored effect. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-card.res-1::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-card.res-2::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-card.res-3::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-complete.res-1::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-complete.res-2::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-complete.res-3::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-multi.res-1::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-multi.res-2::before,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-multi.res-3::before {
+    content: none !important;
+    display: none !important;
+    animation: none !important;
+  }
+
+  /* The slot owns the placed-card glow. Remove the old inner card glow so the
+     fan does not stack two effects on top of one another. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.hint-card:not(.ability-target):not(.ability-picked),
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.hint-complete:not(.ability-target):not(.ability-picked),
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.hint-multi:not(.ability-target):not(.ability-picked) {
+    border-color: #6b4f25 !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.major.hint-card:not(.ability-target):not(.ability-picked),
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.major.hint-complete:not(.ability-target):not(.ability-picked),
+  html body.single-player-v2.generated-sheet-ready #spread .slot > .card.major.hint-multi:not(.ability-target):not(.ability-picked) {
+    border-color: #9a7842 !important;
+  }
+
+  /* Pattern completion still adds .bump to each participating slot in a short
+     stagger. The old animation transformed the slot, but the fan now locks each
+     slot transform. Animate the card inside instead so the lift returns without
+     changing the fan's position or rotation. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.bump > .card {
+    animation: spv2-pattern-card-bump .42s cubic-bezier(.2,.85,.25,1) !important;
+    transform-origin: 50% 78% !important;
+    will-change: transform !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html body.single-player-v2.generated-sheet-ready #spread .slot.bump > .card {
+      animation: none !important;
+    }
+  }
+}
+}
+
+
+/* === singlePlayerV2/desktop.css: desktop phone-column layout === */
+/* ─── Desktop phone-column constraint ────────────────────────────────────── */
+/* On wide screens confine the entire game to a portrait phone column.        */
+/* CSS transform on body makes it the containing block for all               */
+/* position:fixed children, so they lay out within the 430px column.         */
+@media (min-width: 641px) {
+  html {
+    background: #030201;
+  }
+
+  body.single-player-v2 {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 430px;
+    height: 100%;
+    overflow: hidden;
+    box-shadow: -2px 0 40px rgba(0,0,0,.7), 2px 0 40px rgba(0,0,0,.7);
+    /* Mobile layout variables — vw is viewport-based so pin slot-w directly */
+    --spv2-side: 9px;
+    --spv2-title-h: 38px;
+    --spv2-hud-top: 38px;
+    --spv2-hud-h: 112px;
+    --spv2-slot-w: 72px;
+    --spv2-slot-h: calc(var(--spv2-slot-w) * 1.5);
+    --spv2-hand-clearance: 222px;
+    padding: 0 !important;
+    background: url('../../assets/background.webp') center top / cover no-repeat !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready::before {
+    content: none !important;
+    display: none !important;
+  }
+
+  /* Hide plain title text — generated sheet art serves as header */
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
+    content: none !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready {
+    --spv2-hud-top: 12px !important;
+  }
+
+  /* Center the spread vertically; become containing block for absolute slots */
+  html body.single-player-v2.generated-sheet-ready .spread {
+    position: fixed !important;
+    top: 45dvh !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+    height: 178px !important;
+    transform: translateY(-50%) !important;
+    overflow: visible !important;
+  }
+
+  /* All slots: absolute within the 430px spread, sized to match hand cards (96×144px) */
+  html body.single-player-v2.generated-sheet-ready .spread .slot {
+    position: absolute !important;
+    top: 17px !important;
+    width: 96px !important;
+    height: 144px !important;
+    flex: 0 0 96px !important;
+    margin-left: 0 !important;
+  }
+
+  /* Five-card fan — slots pinned from spread edges (spread = 430px wide) */
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
+    left: 14px !important; right: auto !important;
+    transform: translateY(14px) rotate(-8deg) !important;
+    --spv2-contact-shadow: 0 5px 4px rgba(0,0,0,.70), 0 14px 17px rgba(0,0,0,.52);
+  }
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
+    left: 91px !important; right: auto !important;
+    transform: translateY(5px) rotate(-4deg) !important;
+    --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
+  }
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
+    left: 167px !important; right: auto !important;
+    transform: scale(1.025) !important;
+    --spv2-contact-shadow: 0 7px 5px rgba(0,0,0,.82), 0 19px 22px rgba(0,0,0,.62);
+    box-shadow: var(--spv2-contact-shadow) !important;
+  }
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
+    left: 243px !important; right: auto !important;
+    transform: translateY(5px) rotate(4deg) !important;
+    --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
+  }
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
+    left: auto !important; right: 14px !important;
+    transform: translateY(14px) rotate(8deg) !important;
+    --spv2-contact-shadow: 0 5px 4px rgba(0,0,0,.70), 0 14px 17px rgba(0,0,0,.52);
+  }
+
+  /* ── Mobile-parity HUD and nav for desktop phone-column ─────────────────── */
+
+  /* Title bar becomes a thin decorative strip */
+  body.single-player-v2 #titleWrap {
+    position: fixed !important;
+    z-index: 28;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--spv2-title-h);
+    pointer-events: none;
+    filter: none;
+    overflow: hidden;
+  }
+  body.single-player-v2 #titleWrap::before {
+    content: "THE LAST READING";
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #b79761;
+    font: 700 17px/1 Georgia, serif;
+    letter-spacing: .11em;
+    text-shadow: 0 2px 8px #000;
+  }
+  body.single-player-v2 #titleRow {
+    position: static !important;
+    pointer-events: none;
+  }
+  body.single-player-v2 #titleContent {
+    position: static !important;
+  }
+  /* Menu button becomes a floating circular medallion */
+  body.single-player-v2 #menuBtn {
+    display: block !important;
+    position: fixed !important;
+    z-index: 31;
+    top: auto;
+    bottom: max(24px, 3dvh);
+    left: 13px;
+    right: auto;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid #8f6a34;
+    background: radial-gradient(circle at 45% 38%, #342414, #100b08 70%);
+    color: #dfbd73;
+    font-size: 20px;
+    pointer-events: auto;
+    box-shadow: 0 7px 20px rgba(0,0,0,.55), inset 0 0 0 3px rgba(183,139,67,.08);
+  }
+  body.single-player-v2 #settingsPanel { z-index: 70; pointer-events: auto !important; }
+
+  /* HUD: 4-cell grid with large Score and Threshold panels */
+  body.single-player-v2 .score-stack {
+    position: fixed !important;
+    z-index: 25;
+    top: var(--spv2-hud-top);
+    left: var(--spv2-side);
+    right: var(--spv2-side);
+    width: auto;
+    height: var(--spv2-hud-h);
+    transform: none;
+    display: grid !important;
+    grid-template-columns: 21fr 29fr 29fr 21fr;
+    gap: 0;
+    align-items: stretch;
+    justify-content: stretch;
+    flex-wrap: nowrap;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #8e6832;
+    border-radius: 17px;
+    background: #0d0a08;
+    box-shadow: 0 9px 28px rgba(0,0,0,.62), inset 0 0 0 2px rgba(205,155,73,.06);
+    filter: none;
+  }
+  body.single-player-v2 .score-stack > .pill,
+  body.single-player-v2 .score-stack > .th-pill-wrap {
+    order: initial;
+    min-width: 0;
+    width: auto;
+    height: 100%;
+    margin: 0;
+    transform: none;
+    border-right: 1px solid rgba(153,111,51,.38);
+  }
+  body.single-player-v2 .score-stack > :last-child { border-right: 0; }
+  body.single-player-v2 .score-stack .pill {
+    position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+    padding: 12px 3px 10px;
+    align-items: center;
+    justify-content: center;
+    align-content: center;
+    gap: 7px;
+    grid-template-columns: none;
+    background-image: none;
+    background-color: transparent;
+    text-align: center;
+    border: 0;
+    border-radius: 0;
+    color: #c4ab7c;
+  }
+  body.single-player-v2 .score-stack .score-pill {
+    background: radial-gradient(circle at 50% 88%, rgba(213,151,44,.30), transparent 70%);
+    box-shadow: inset 0 -2px 0 rgba(234,181,79,.45);
+  }
+  body.single-player-v2 .score-stack .threshold-pill {
+    background: radial-gradient(circle at 50% 88%, rgba(116,84,197,.34), transparent 70%);
+    box-shadow: inset 0 -2px 0 rgba(147,113,224,.48);
+  }
+  body.single-player-v2 .spv2-label {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    color: #c2a979;
+    font: 700 10px/1 system-ui, sans-serif;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-overflow: clip;
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .pill .spv2-label {
+    display: block !important;
+    position: absolute;
+    top: 4px;
+    left: 5px;
+    right: 5px;
+    height: 31px;
+    margin: 0;
+    padding-top: 9px;
+    box-sizing: border-box;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    border-radius: 9px 9px 4px 4px;
+    border-bottom: 1px solid rgba(227,190,114,.3);
+    font: 700 17px/1 'Cinzel', Georgia, serif !important;
+    letter-spacing: .14em !important;
+    text-transform: uppercase;
+    text-shadow: 0 1px 3px #000;
+    z-index: 1;
+    pointer-events: none;
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill .spv2-label {
+    color: #e7c98c !important;
+    background: linear-gradient(180deg, #241809, #150d05);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,.55);
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill .spv2-label {
+    color: #d2c2ff !important;
+    background: linear-gradient(180deg, #1d1430, #110b1d);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,.55);
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill .spv2-label::before { content: "✦ "; }
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill .spv2-label::before { content: "⚖ "; }
+  body.single-player-v2 .score-stack .pill b {
+    display: block;
+    color: #efe5ce;
+    font-family: 'Cinzel', Georgia, serif;
+    font-weight: 700;
+    font-size: 31px;
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: .01em;
+    line-height: .9;
+    text-shadow: 0 2px 8px #000;
+  }
+  body.single-player-v2 .score-stack .score-pill b {
+    color: #ffd98c;
+    font-size: 36px;
+    text-shadow: 0 0 12px rgba(235,175,70,.32), 0 2px 8px #000;
+  }
+  body.single-player-v2 .score-stack .threshold-pill b {
+    color: #cfbfff;
+    font-size: 36px;
+    text-shadow: 0 0 12px rgba(145,107,224,.34), 0 2px 8px #000;
+  }
+  body.single-player-v2 .th-pill-wrap {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    height: 100%;
+  }
+  body.single-player-v2 .spv2-threshold-progress {
+    position: absolute;
+    left: 14%;
+    right: 14%;
+    bottom: 12px;
+    height: 7px;
+    overflow: hidden;
+    border: 1px solid #6f5b9d;
+    border-radius: 999px;
+    background: #17111e;
+    box-shadow: inset 0 1px 3px #000;
+    pointer-events: none;
+  }
+  body.single-player-v2 .spv2-threshold-progress > span {
+    display: block;
+    width: calc(var(--spv2-progress, 0) * 100%);
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #6b4dbb, #ac8bf1);
+    transition: width .3s ease;
+  }
+  body.single-player-v2 .spv2-threshold-progress::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: calc(var(--spv2-progress, 0) * 100%);
+    width: 8px;
+    height: 8px;
+    border: 1px solid #e2d7ff;
+    background: #8e70d8;
+    transform: translate(-50%,-50%) rotate(45deg);
+    box-shadow: 0 0 7px rgba(194,168,255,.75);
+  }
+  body.single-player-v2 .spv2-threshold-progress.is-complete > span {
+    background: linear-gradient(90deg, #a87528, #f0c96e);
+  }
+
+  /* Scoring/Abilities become icon medallions at lower-right; Mulligan likewise */
+  body.single-player-v2 .actions {
+    position: fixed !important;
+    z-index: 31;
+    top: auto;
+    bottom: max(24px, 3dvh);
+    right: 13px;
+    left: auto;
+    margin: 0;
+    display: flex !important;
+    gap: 7px;
+    pointer-events: auto;
+  }
+  /* drawers.css hides these globally — un-hide them for the desktop phone-column */
+  body.single-player-v2 #scoringBtn,
+  body.single-player-v2 #abilitiesBtn {
+    display: block !important;
+  }
+  body.single-player-v2 .actions button {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    padding: 0 4px;
+    border-radius: 50%;
+    border: 1px solid #8f6a34;
+    background: radial-gradient(circle at 45% 38%, #342414, #100b08 70%);
+    color: #dfbd73;
+    font-size: 0;
+    box-shadow: 0 7px 20px rgba(0,0,0,.55), inset 0 0 0 3px rgba(183,139,67,.08);
+  }
+  body.single-player-v2 #scoringBtn::before { content: "✦"; font-size: 19px; }
+  body.single-player-v2 #abilitiesBtn::before { content: "◉"; font-size: 18px; }
+  body.single-player-v2 #mullBtn::before { content: "↻"; font-size: 20px; }
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    background-color: transparent;
+    filter: var(--spv2-coin-shadow);
+  }
+
+  /* Archive button — JS-injected, needs full desktop positioning */
+  body.single-player-v2 #spv2ArchiveBtn {
+    position: fixed !important;
+    z-index: 31;
+    top: auto;
+    bottom: max(24px, 3dvh);
+    left: 63px;
+    right: auto;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid #8f6a34;
+    background: radial-gradient(circle at 45% 38%, #342414, #100b08 70%);
+    color: #dfbd73;
+    font-size: 0;
+    pointer-events: auto;
+    box-shadow: 0 7px 20px rgba(0,0,0,.55), inset 0 0 0 3px rgba(183,139,67,.08);
+  }
+  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    left: 63px !important;
+    background-image: var(--spv2-option-archive-art) !important;
+    background-color: transparent !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    filter: drop-shadow(0 5px 7px rgba(0,0,0,.78)) drop-shadow(0 2px 2px rgba(0,0,0,.6)) !important;
+  }
+
+  /* Discard/Purge action rail between HUD and spread */
+  body.single-player-v2 .spread-actions {
+    position: fixed !important;
+    z-index: 27;
+    left: 0;
+    right: 0;
+    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 8px);
+    bottom: auto;
+    transform: none;
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0;
+    padding: 0 13px;
+    pointer-events: none;
+  }
+  body.single-player-v2 .spread-actions button { pointer-events: auto; }
+
+  /* HandDock */
+  body.single-player-v2 .handDock {
+    z-index: 26 !important;
+    height: 166px;
+    bottom: 22px !important;
+    background: linear-gradient(transparent, rgba(0,0,0,.78)) !important;
+  }
+  body.single-player-v2 .hand-swipe-zone { z-index: 27; }
+  body.single-player-v2 #constellationPill { z-index: 29; }
+
+  /* Generated-sheet-ready variable overrides and layout refinements */
+  html body.single-player-v2.generated-sheet-ready {
+    --spv2-hud-top: 12px !important;
+    --spv2-hud-h: clamp(140px, 17.5dvh, 162px) !important;
+    --spv2-slot-w: 96px !important;
+    --spv2-slot-h: calc(96px * 1.5) !important;
+    --spv2-hand-clearance: 34dvh !important;
+  }
+  body.single-player-v2.generated-sheet-ready #titleWrap {
+    height: var(--spv2-title-h);
+  }
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
+    top: .55dvh;
+    left: 24%;
+    right: 24%;
+    height: 5.55dvh;
+  }
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    top: var(--spv2-hud-top);
+    left: 4px;
+    right: 4px;
+    height: var(--spv2-hud-h);
+    border-radius: 17px;
+  }
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready .actions {
+    top: auto;
+    bottom: max(24px, 3dvh);
+  }
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready .actions button {
+    width: 44px;
+    height: 44px;
+    min-width: 0;
+  }
+  body.single-player-v2.generated-sheet-ready #menuBtn { left: 9px; right: auto; }
+  body.single-player-v2.generated-sheet-ready .actions { right: 9px; left: auto; gap: 5px; }
+  body.single-player-v2.generated-sheet-ready .spread-actions {
+    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 8px) !important;
+    bottom: auto !important;
+    padding: 0 13px;
+    align-items: center;
+  }
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    width: 64px;
+    height: 74px;
+  }
+  body.single-player-v2.generated-sheet-ready .spread-actions::before {
+    content: none !important;
+    display: none !important;
+  }
+  body.single-player-v2.generated-sheet-ready .handDock {
+    height: 34dvh;
+    bottom: 0 !important;
+    align-items: flex-start;
+    background-position: center bottom calc(2dvh - 5px) !important;
+    background-size: auto clamp(144px, 17.6dvh, 155.2px) !important;
+    background-repeat: no-repeat !important;
+  }
+  body.single-player-v2.generated-sheet-ready .handDock .hand {
+    height: 31dvh;
+    --track-spacing: 6.5deg;
+    --track-radius: 560px;
+    transform: translateY(.8dvh);
+  }
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card {
+    width: 96px;
+    height: calc(96px * 1.5);
+  }
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+    bottom: 25.5dvh;
+    height: 7.5dvh;
+  }
+
+  /* Hide pull drawer tabs — desktop phone-column uses icon medallion buttons instead */
+  body.single-player-v2 .tlr-pull-wrap,
+  body.single-player-v2 #invWrap {
+    display: none !important;
+  }
+
+  /* ── Art layer: mirrors singlePlayerV2Assets + ArtIntegration + UtilityIcons ──
+     Those files load inside @media (max-width:640px) so they don't fire on the
+     1280px desktop viewport. Replicate the same art rules here so the phone-
+     column gets the identical generated-sheet visual treatment as mobile.       */
+
+  /* Body: generated table-cloth background replaces the plain fallback image */
+  html body.single-player-v2.generated-sheet-ready {
+    background-color: #0b0805 !important;
+    background-image: var(--spv2-table-bg-art) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+  }
+
+  /* Title wrap: art integration hides all title graphics/text */
+  html body.single-player-v2.generated-sheet-ready #titleWrap::before,
+  html body.single-player-v2.generated-sheet-ready #titleWrap::after {
+    content: none !important;
+    background: none !important;
+  }
+
+  /* HUD: 2-column art frame (Score + Threshold only) */
+  html body.single-player-v2.generated-sheet-ready .score-stack {
+    background-color: transparent !important;
+    background-image: var(--spv2-hud-frame-art) !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+    overflow: visible !important;
+    height: var(--spv2-hud-h) !important;
+  }
+
+  /* Reserve and discards are baked into the table-background art */
+  html body.single-player-v2.generated-sheet-ready .score-stack .reserve-pill,
+  html body.single-player-v2.generated-sheet-ready .score-stack .discards-pill {
+    display: none !important;
+  }
+
+  /* Art supplies its own dividers — remove the DOM pill borders */
+  html body.single-player-v2.generated-sheet-ready .score-stack > .pill,
+  html body.single-player-v2.generated-sheet-ready .score-stack > .th-pill-wrap {
+    border-right: 0 !important;
+  }
+
+  /* Labels and icons are baked into pill art — hide DOM versions */
+  html body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
+    display: none !important;
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .pill::before {
+    content: none !important;
+  }
+
+  /* Pill art backgrounds with room for baked header at the top */
+  html body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    padding-top: 30px !important;
+    background-position: center !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    border-radius: 14px !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill {
+    background-image: var(--spv2-hud-score-art) !important;
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill {
+    background-image: var(--spv2-hud-threshold-art) !important;
+  }
+
+  /* Spread slots: ornate art frame tile */
+  html body.single-player-v2.generated-sheet-ready .spread .slot {
+    background-image: var(--spv2-spread-slot-art) !important;
+    background-position: center !important;
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
+  }
+
+  /* Hand dock: art tray banner */
+  html body.single-player-v2.generated-sheet-ready .handDock {
+    background-image: var(--spv2-hand-dock-art) !important;
+    background-color: transparent !important;
+  }
+
+  /* Utility buttons: art medallion discs (menu / scoring / abilities) */
+  html body.single-player-v2.generated-sheet-ready #menuBtn,
+  html body.single-player-v2.generated-sheet-ready #scoringBtn,
+  html body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    background-color: transparent !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    font-size: 0 !important;
+    filter: drop-shadow(0 5px 7px rgba(0,0,0,.78)) drop-shadow(0 2px 2px rgba(0,0,0,.6)) !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #menuBtn::before,
+  html body.single-player-v2.generated-sheet-ready #scoringBtn::before,
+  html body.single-player-v2.generated-sheet-ready #abilitiesBtn::before {
+    content: none !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #menuBtn {
+    background-image: var(--spv2-option-menu-art) !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #scoringBtn {
+    background-image: var(--spv2-option-scoring-art) !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    background-image: var(--spv2-option-abilities-art) !important;
+  }
+
+  /* Discard / Purge: medallion art on ::before, caption on ::after */
+  html body.single-player-v2.generated-sheet-ready #discardBtn,
+  html body.single-player-v2.generated-sheet-ready #purgeBtn {
+    position: relative !important;
+    width: 74px !important;
+    height: 74px !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    font-size: 0 !important;
+    overflow: visible !important;
+    opacity: 1 !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #discardBtn::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background-image: url("/public/ui/single-player-v2/elements/Discard.webp") !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: contain !important;
+    filter: brightness(1.85) contrast(1.06) saturate(1.12) drop-shadow(0 0 6px rgba(0,0,0,.6)) !important;
+    pointer-events: none !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #purgeBtn::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background-image: var(--spv2-action-center-art) !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: contain !important;
+    filter: brightness(1.45) contrast(1.05) saturate(1.08) drop-shadow(0 0 6px rgba(0,0,0,.6)) !important;
+    pointer-events: none !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #discardBtn::after,
+  html body.single-player-v2.generated-sheet-ready #purgeBtn::after {
+    position: absolute !important;
+    top: 100% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    margin-top: 3px !important;
+    display: block !important;
+    font: 800 10px/1 system-ui, sans-serif !important;
+    letter-spacing: .09em !important;
+    text-transform: uppercase !important;
+    color: #cdb079 !important;
+    text-shadow: 0 1px 3px #000 !important;
+    white-space: nowrap !important;
+    pointer-events: none !important;
+  }
+  html body.single-player-v2.generated-sheet-ready #discardBtn::after { content: "Discard" !important; }
+  html body.single-player-v2.generated-sheet-ready #purgeBtn::after { content: "Purge" !important; }
+
+  /* Threshold progress bar is baked into the mobile art at mobile pill dimensions.
+     At desktop pill dimensions the bar floats visibly below the number — hide it. */
+  html body.single-player-v2.generated-sheet-ready .spv2-threshold-progress {
+    display: none !important;
+  }
+
+  /* Spread-wrap overlays: table-bg art has the reading circle — suppress extra layers */
+  html body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    background: none !important;
+    filter: none !important;
+    box-shadow: none !important;
+  }
+  html body.single-player-v2.generated-sheet-ready .spread-wrap::after {
+    content: none !important;
+  }
+}
+
+
+/* === singlePlayerV2/components/relics.css: component: relic placement === */
+@layer spv2.components {
+  @media (max-width: 640px) {
+    /* Keep the horizontal relic row clearly above the centered spread. The
+       responsive half-card offset tracks the fan while the added clearance keeps
+       the slots visually separate from the card tops. */
+    html body.single-player-v2.generated-sheet-ready .relic-rack {
+      position: fixed !important;
+      top: calc(45dvh - clamp(49px,13.3vw,63px) - 72px) !important;
+      bottom: auto !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      margin: 0 !important;
+      transform: none !important;
+      flex-direction: row !important;
+      justify-content: center !important;
+      align-items: center !important;
+      gap: 8px !important;
+      z-index: 13 !important;
+    }
+
+    html body.single-player-v2.generated-sheet-ready .relic-rack .relic-btn,
+    html body.single-player-v2.generated-sheet-ready .relic-rack .relic-slot-empty {
+      width: 38px !important;
+      height: 38px !important;
+    }
+
+    /* Center the active constellation between the left and right utility pairs,
+       directly beneath the Score and Threshold panels and vertically aligned
+       with the surrounding controls. */
+    html body.single-player-v2.generated-sheet-ready #constellationPill {
+      position: fixed !important;
+      top: calc(
+        var(--spv2-hud-top) +
+        var(--spv2-compact-hud-h) +
+        .35dvh +
+        clamp(6px,1.55vw,12px)
+      ) !important;
+      left: 50% !important;
+      right: auto !important;
+      bottom: auto !important;
+      width: 34px !important;
+      height: 34px !important;
+      min-width: 34px !important;
+      min-height: 34px !important;
+      margin: 0 !important;
+      transform: translateX(-50%) !important;
+      z-index: 45 !important;
+    }
+  }
+}
+
+
+/* === singlePlayerV2/assets.css: generated assets === */
+/* Phase 2 generated-sheet art layer.
+   The existing SVG kit remains the fallback until the generated sprite is
+   decoded and body.generated-sheet-ready is applied. */
+
+@media (max-width: 640px) {
+  body.single-player-v2 .score-stack {
+    background-color: #0d0a08;
+    background-image: url('/public/ui/single-player-v2/hud-frame.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  body.single-player-v2 .reserve-pill {
+    background-image: url('/public/ui/single-player-v2/hud-reserve.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+  }
+
+  body.single-player-v2 .score-stack .score-pill {
+    background-image: url('/public/ui/single-player-v2/hud-score.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    box-shadow: none;
+  }
+
+  body.single-player-v2 .score-stack .threshold-pill {
+    background-image: url('/public/ui/single-player-v2/hud-threshold.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    box-shadow: none;
+  }
+
+  body.single-player-v2 .discards-pill {
+    background-image: url('/public/ui/single-player-v2/hud-discards.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+  }
+
+  body.single-player-v2 .spread-wrap::before {
+    border: 0;
+    background: url('/public/ui/single-player-v2/reading-circle.svg') center/contain no-repeat;
+    box-shadow: none;
+  }
+
+  body.single-player-v2 .slot {
+    background-color: #100b08;
+    background-image: url('/public/ui/single-player-v2/spread-slot.svg');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border-color: transparent;
+  }
+
+  body.single-player-v2 .slot.empty::after {
+    content: none;
+  }
+
+  body.single-player-v2 .slot.empty:hover,
+  body.single-player-v2 .slot.target {
+    background-image: url('/public/ui/single-player-v2/spread-slot.svg');
+    border-color: transparent;
+    box-shadow: 0 0 0 2px rgba(126,190,126,.62),0 0 20px rgba(106,181,112,.42),0 8px 20px rgba(0,0,0,.62);
+  }
+
+  body.single-player-v2 .handDock {
+    background-color: transparent !important;
+    background-image: url('/public/ui/single-player-v2/hand-dock.svg') !important;
+    background-position: center bottom !important;
+    background-size: 100% auto !important;
+    background-repeat: no-repeat !important;
+  }
+
+  body.single-player-v2 #menuBtn,
+  body.single-player-v2 .actions button {
+    background-color: #15100d;
+    background-image: url('/public/ui/single-player-v2/action-secondary.svg');
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  body.single-player-v2 .spread-actions::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -3px;
+    width: 58px;
+    height: 58px;
+    transform: translateX(-50%);
+    background: url('/public/ui/single-player-v2/action-primary.svg') center/contain no-repeat;
+    pointer-events: none;
+  }
+
+  /* Generated contact-sheet kit */
+  body.single-player-v2.generated-sheet-ready {
+    background-color: #0b0805;
+    background-image: var(--spv2-table-bg-art);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
+    content: "";
+    left: 15%;
+    right: 15%;
+    top: 1px;
+    width: auto;
+    height: calc(var(--spv2-title-h) + 18px);
+    background-image: var(--spv2-title-art);
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    filter: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    background-color: transparent;
+    background-image: var(--spv2-hud-frame-art);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    overflow: visible;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack > .pill,
+  body.single-player-v2.generated-sheet-ready .score-stack > .th-pill-wrap {
+    border-right-color: transparent;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border-radius: 14px;
+  }
+
+  body.single-player-v2.generated-sheet-ready .reserve-pill {
+    background-image: var(--spv2-hud-reserve-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .score-pill {
+    background-image: var(--spv2-hud-score-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill {
+    background-image: var(--spv2-hud-threshold-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready .discards-pill {
+    background-image: var(--spv2-hud-discards-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    background-image: var(--spv2-reading-circle-art);
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: .82;
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot,
+  body.single-player-v2.generated-sheet-ready .slot.empty:hover,
+  body.single-player-v2.generated-sheet-ready .slot.target {
+    background-color: transparent;
+    background-image: var(--spv2-spread-slot-art);
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock {
+    background-color: transparent !important;
+    background-image: var(--spv2-hand-dock-art) !important;
+    background-position: center bottom !important;
+    background-size: 100% auto !important;
+    background-repeat: no-repeat !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready .actions button {
+    position: relative;
+    overflow: hidden;
+    background-color: transparent;
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border-color: transparent;
+    color: transparent;
+    font-size: 0;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    background-image: var(--spv2-utility-settings-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+  body.single-player-v2.generated-sheet-ready #mullBtn {
+    background-image: var(--spv2-utility-reference-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn::before,
+  body.single-player-v2.generated-sheet-ready #scoringBtn::before,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::before,
+  body.single-player-v2.generated-sheet-ready #mullBtn::before {
+    content: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions::before {
+    background-image: var(--spv2-action-center-art);
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    background-color: transparent;
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn {
+    background-image: var(--spv2-action-eye-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    background-image: var(--spv2-action-deck-art);
+  }
+}
+
+
+/* === singlePlayerV2/layout.css: layout pass === */
+/* Final mobile shell corrections layered after the generated art styles. */
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-live-card-w: clamp(78px, 22vw, 96px);
+    --spv2-live-card-h: calc(var(--spv2-live-card-w) * 1.5);
+    --spv2-slot-w: var(--spv2-live-card-w);
+    --spv2-slot-h: var(--spv2-live-card-h);
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot,
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card {
+    width: var(--spv2-live-card-w);
+    height: var(--spv2-live-card-h);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread {
+    min-height: calc(var(--spv2-live-card-h) + 24px);
+    padding-inline: 1vw;
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot {
+    margin-left: -7.2vw;
+    flex: 0 0 var(--spv2-live-card-w);
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot:first-child {
+    margin-left: 0;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
+    display: block;
+    order: 1;
+    line-height: 1;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill > b {
+    display: block;
+    order: 2;
+    line-height: 1;
+  }
+
+  body.single-player-v2.generated-sheet-ready .tlr-pull-tab,
+  body.single-player-v2.generated-sheet-ready #invTab {
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap {
+    z-index: 34;
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
+    opacity: .6;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap::after {
+    content: "THE LAST READING";
+    position: absolute;
+    left: 15%;
+    right: 15%;
+    top: 1.2dvh;
+    text-align: center;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(15px, 4.5vw, 22px);
+    line-height: 1;
+    letter-spacing: .12em;
+    color: #b68a48;
+    text-shadow: 0 1px 0 #000, 0 0 10px rgba(192, 133, 55, .24);
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready .actions button {
+    color: transparent !important;
+    font-size: 0 !important;
+    text-indent: -9999px;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .actions {
+    left: 3.8vw !important;
+    right: auto !important;
+    top: 23.7dvh !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    left: auto !important;
+    right: 3.8vw !important;
+    top: 23.7dvh !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    opacity: .96;
+    transform: translateY(-.5dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock {
+    height: 31dvh;
+    background-size: 100% 24dvh !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand {
+    height: 26dvh;
+    transform: translateY(.4dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions {
+    position: fixed !important;
+    z-index: 40 !important;
+    top: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: max(1.2dvh, env(safe-area-inset-bottom)) !important;
+    width: 100% !important;
+    height: clamp(66px, 17vw, 82px);
+    padding: 0 5vw !important;
+    transform: none !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions button {
+    pointer-events: auto;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions::before {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    width: clamp(58px, 15.5vw, 72px) !important;
+    height: clamp(66px, 17.5vw, 80px) !important;
+    min-width: 0 !important;
+  }
+}
+
+
+/* === singlePlayerV2/mobile.css: mobile visual fixes === */
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-compact-hud-h: clamp(76px, 11dvh, 94px);
+    --spv2-hud-top: 8.2dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap {
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    top: var(--spv2-hud-top) !important;
+    height: var(--spv2-compact-hud-h) !important;
+    min-height: var(--spv2-compact-hud-h) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    padding: 6px 2px 5px !important;
+    gap: 2px !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
+    font-size: clamp(11px, 3vw, 14px) !important;
+    font-weight: 700 !important;
+    letter-spacing: .04em !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill > b {
+    font-size: clamp(24px, 6.5vw, 32px) !important;
+    font-weight: 800 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .actions {
+    position: static !important;
+    inset: auto !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    pointer-events: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    position: fixed !important;
+    z-index: 45 !important;
+    display: grid !important;
+    place-items: center;
+    width: clamp(46px, 12vw, 58px) !important;
+    height: clamp(46px, 12vw, 58px) !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    border: 2px solid #8f6a34 !important;
+    background-color: #17101f !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+    box-shadow:
+      0 3px 8px rgba(0, 0, 0, .75),
+      inset 0 0 0 2px rgba(218, 171, 91, .18),
+      inset 0 0 12px rgba(105, 61, 126, .35) !important;
+    color: transparent !important;
+    font-size: 0 !important;
+    text-indent: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    overflow: visible !important;
+    pointer-events: auto !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    top: .8dvh !important;
+    left: 3.8vw !important;
+    right: auto !important;
+    background-image: var(--spv2-utility-settings-art) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    top: .8dvh !important;
+    left: auto !important;
+    right: 3.8vw !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
+    left: 3.8vw !important;
+    right: auto !important;
+    background-image: var(--spv2-utility-reference-art) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
+    left: auto !important;
+    right: 3.8vw !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn::after,
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #d1a65f;
+    text-indent: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 700;
+    text-shadow: 0 1px 2px #000;
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn::after {
+    content: "⚙";
+    font-size: clamp(22px, 6vw, 29px);
+  }
+
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
+    content: "ARCH";
+    font-size: clamp(8px, 2.25vw, 11px);
+    letter-spacing: .05em;
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after {
+    content: "REF";
+    font-size: clamp(9px, 2.5vw, 12px);
+    letter-spacing: .08em;
+  }
+
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after {
+    content: "ABIL";
+    font-size: clamp(8px, 2.25vw, 11px);
+    letter-spacing: .05em;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap {
+    top: 25.4dvh !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread {
+    transform: translateY(2.2dvh) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions {
+    position: fixed !important;
+    z-index: 46 !important;
+    top: calc(25.4dvh + var(--spv2-live-card-h) + .8dvh) !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+    width: 100% !important;
+    height: clamp(62px, 16vw, 76px) !important;
+    padding: 0 !important;
+    transform: none !important;
+    display: block !important;
+    pointer-events: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions::before {
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    position: absolute !important;
+    top: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    width: clamp(62px, 16vw, 76px) !important;
+    height: clamp(62px, 16vw, 76px) !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    border: 2px solid #8f6a34 !important;
+    background-color: #17101f !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+    box-shadow:
+      0 4px 10px rgba(0,0,0,.72),
+      inset 0 0 0 2px rgba(218,171,91,.16),
+      inset 0 0 14px rgba(105,61,126,.32) !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    filter: none !important;
+    transform: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn {
+    left: 8vw !important;
+    right: auto !important;
+    background-image: var(--spv2-action-eye-art) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    left: auto !important;
+    right: 8vw !important;
+    background-image: var(--spv2-action-deck-art) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn::after,
+  body.single-player-v2.generated-sheet-ready #purgeBtn::after {
+    color: #d1a65f;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(9px, 2.6vw, 12px);
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-shadow: 0 1px 2px #000;
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn::after {
+    content: "DISCARD";
+  }
+
+  body.single-player-v2.generated-sheet-ready #purgeBtn::after {
+    content: "PURGE";
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 36dvh !important;
+    height: clamp(42px, 6.5dvh, 56px) !important;
+    z-index: 25 !important;
+    pointer-events: auto !important;
+    touch-action: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower {
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock {
+    z-index: 26 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card {
+    pointer-events: auto !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .tlr-pull-wrap,
+  body.single-player-v2.generated-sheet-ready #invWrap {
+    overflow: visible !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spv2-menu-close-tab {
+    position: absolute !important;
+    left: 50% !important;
+    z-index: 410 !important;
+    width: 42px !important;
+    height: 24px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: translateX(-50%) !important;
+    border: 1px solid #8f6a34 !important;
+    border-top: 0 !important;
+    border-radius: 0 0 10px 10px !important;
+    background: linear-gradient(180deg,#21162a,#130d19) !important;
+    color: #d7b36e !important;
+    font: 700 18px/22px Georgia,serif !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,.55) !important;
+    cursor: pointer;
+    pointer-events: auto !important;
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .tlr-pull-wrap.open > .spv2-menu-close-tab,
+  body.single-player-v2.generated-sheet-ready #invWrap.open > .spv2-menu-close-tab {
+    display: block !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .tlr-pull-wrap > .spv2-menu-close-tab {
+    top: var(--tlr-drawer-h) !important;
+    bottom: auto !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #invWrap > .spv2-menu-close-tab {
+    top: var(--inv-h) !important;
+    bottom: auto !important;
+  }
+}
+
+
+/* === singlePlayerV2/components/hand.css: component: hand gesture restore === */
+@layer spv2.components {
+@media (max-width: 640px) {
+  /* Restore the original full-width gesture surface over the hand. The hand
+     remains one layer above it, so cards stay selectable while swipes in the
+     open portions of the fan still reach gestureHand.mjs. */
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 25.5dvh !important;
+    width: auto !important;
+    height: 7.5dvh !important;
+    transform: none !important;
+    z-index: 25 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    pointer-events: auto !important;
+    touch-action: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone::before,
+  body.single-player-v2.generated-sheet-ready #spv2HandDragLabel {
+    content: none !important;
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* Keep the original tutorial state machine, but draw its current instruction
+     over the hand where the gesture surface actually lives. */
+  body.single-player-v2.generated-sheet-ready .hand-swipe-hint {
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock::after {
+    content: "✤  SWIPE TO DRIFT  ✤";
+    position: absolute;
+    left: 50%;
+    top: clamp(62px, 8dvh, 76px);
+    z-index: 20;
+    transform: translateX(-50%);
+    width: max-content;
+    color: rgba(232,196,96,.78);
+    font: 700 clamp(9px,2.55vw,11px)/1 Georgia,"Times New Roman",serif;
+    letter-spacing: .1em;
+    text-shadow: 0 1px 3px #000,0 0 8px rgba(210,154,63,.18);
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone[data-hint-step="2"]) .handDock::after {
+    content: "✤  PINCH TO CONSTRICT  ✤";
+  }
+
+  body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone[data-hint-step="3"]) .handDock::after {
+    content: "✤  PULL OPEN TO EXPAND  ✤";
+  }
+
+  body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone.has-swiped) .handDock::after,
+  body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone.hints-complete) .handDock::after,
+  body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone.dragging) .handDock::after,
+  body.single-player-v2.generated-sheet-ready:has(.hand-swipe-zone.pinching) .handDock::after {
+    content: none;
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Override the historical ID rule in attic.css. Preserve the old drag
+     region's relationship to the current hand dock: 52px above its top and
+     45px overlapping into it. */
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: calc(6.2dvh + 31dvh - 45px) !important;
+    width: auto !important;
+    height: 97px !important;
+    transform: none !important;
+    z-index: 19 !important;
+    pointer-events: auto !important;
+    touch-action: none !important;
+    cursor: grab !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone.dragging {
+    cursor: grabbing !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone.pinching {
+    cursor: ew-resize !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone::before,
+  html body.single-player-v2.generated-sheet-ready #spv2HandDragLabel,
+  html body.single-player-v2.generated-sheet-ready .handDock::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  /* Restore the original extension through the open parts of the hand, but
+     terminate it before the bottom action row. */
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone .hand-swipe-zone-lower {
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 100% !important;
+    height: calc(31dvh - 55px) !important;
+    display: block !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    touch-action: none !important;
+    background: transparent !important;
+    cursor: grab !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.dragging .hand-swipe-zone-lower,
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.pinching .hand-swipe-zone-lower {
+    cursor: grabbing !important;
+  }
+
+  /* Keep the original one-at-a-time tutorial inside the upper drag region. */
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone .hand-swipe-hint {
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    width: auto !important;
+    transform: translate(-50%,-50%) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    transition: opacity .4s !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.has-overflow .hand-swipe-hint {
+    opacity: 1 !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.dragging .hand-swipe-hint,
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.pinching .hand-swipe-hint {
+    opacity: 0 !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.has-swiped .hand-swipe-hint,
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone.hints-complete .hand-swipe-hint {
+    display: none !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone .swipe-hint-line {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    transform: none !important;
+    align-items: center !important;
+    gap: 14px !important;
+    visibility: visible !important;
+    font: 600 10px system-ui,"Segoe UI",sans-serif !important;
+    color: rgba(232,196,96,.55) !important;
+    letter-spacing: .18em !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    opacity: 1 !important;
+    animation: none !important;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #handSwipeZone .hand-swipe-hint span {
+    display: inline-block !important;
+    width: 30px !important;
+    height: 1px !important;
+    background: linear-gradient(90deg,transparent,rgba(232,196,96,.6),transparent) !important;
+  }
+}
+
+}
+
+
+/* === singlePlayerV2/components/spread.css: component: spread final placement === */
+
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-hud-top: 8.8dvh;
+    --spv2-control-size: clamp(46px, 12vw, 58px);
+    --spv2-spread-card-w: clamp(78px, 22vw, 96px);
+    --spv2-spread-card-h: calc(var(--spv2-spread-card-w) * 1.5);
+    --spv2-spread-top: calc(
+      var(--spv2-hud-top) +
+      var(--spv2-compact-hud-h) +
+      var(--spv2-control-size) +
+      .8dvh
+    );
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    top: var(--spv2-hud-top) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap {
+    top: var(--spv2-spread-top) !important;
+    display: block !important;
+    place-items: initial !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    top: -1.2dvh !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread {
+    position: absolute !important;
+    top: calc(.4dvh + 26px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+    min-height: calc(var(--spv2-spread-card-h) + 24px) !important;
+    padding-inline: 1vw !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot {
+    box-sizing: border-box !important;
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: var(--spv2-spread-card-w) !important;
+    min-width: var(--spv2-spread-card-w) !important;
+    max-width: var(--spv2-spread-card-w) !important;
+    height: var(--spv2-spread-card-h) !important;
+    min-height: var(--spv2-spread-card-h) !important;
+    max-height: var(--spv2-spread-card-h) !important;
+    flex: 0 0 var(--spv2-spread-card-w) !important;
+    margin-left: -7.2vw !important;
+    background-image: var(--spv2-spread-slot-art) !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 100% !important;
+    overflow: hidden !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot:first-child {
+    margin-left: 0 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
+    transform: translateY(1.3dvh) rotate(-4deg) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
+    transform: translateY(.45dvh) rotate(-2deg) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
+    transform: translateY(0) rotate(0) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
+    transform: translateY(.45dvh) rotate(2deg) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
+    transform: translateY(1.3dvh) rotate(4deg) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot > .card {
+    box-sizing: border-box !important;
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 100% !important;
+    min-height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    margin: 0 !important;
+    border-radius: inherit !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions {
+    top: auto !important;
+    bottom: max(1.2dvh, env(safe-area-inset-bottom)) !important;
+    height: clamp(46px, 12vw, 54px) !important;
+    z-index: 60 !important;
+    padding: 0 4vw !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    top: auto !important;
+    bottom: 0 !important;
+    width: clamp(108px, 29vw, 132px) !important;
+    height: clamp(44px, 11.5vw, 52px) !important;
+    border-radius: 999px !important;
+    border: 2px solid #8f6a34 !important;
+    background-image: none !important;
+    background-color: #17101f !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 7px !important;
+    color: #e4c47c !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    filter: none !important;
+    box-shadow:
+      0 4px 12px rgba(0,0,0,.78),
+      inset 0 0 0 2px rgba(218,171,91,.14),
+      inset 0 0 14px rgba(105,61,126,.28) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn {
+    left: 4vw !important;
+    right: auto !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    left: auto !important;
+    right: 4vw !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn::before,
+  body.single-player-v2.generated-sheet-ready #purgeBtn::before,
+  body.single-player-v2.generated-sheet-ready #discardBtn::after,
+  body.single-player-v2.generated-sheet-ready #purgeBtn::after {
+    position: static !important;
+    display: inline-block !important;
+    color: inherit !important;
+    text-indent: 0 !important;
+    text-shadow: 0 1px 2px #000 !important;
+    pointer-events: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn::before {
+    content: "↧" !important;
+    font: 700 20px/1 Georgia,serif !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn::after {
+    content: "DISCARD" !important;
+    font: 800 clamp(10px,2.8vw,13px)/1 system-ui,sans-serif !important;
+    letter-spacing: .06em !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #purgeBtn::before {
+    content: "✕" !important;
+    font: 700 17px/1 Georgia,serif !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #purgeBtn::after {
+    content: "PURGE" !important;
+    font: 800 clamp(10px,2.8vw,13px)/1 system-ui,sans-serif !important;
+    letter-spacing: .06em !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn:disabled,
+  body.single-player-v2.generated-sheet-ready #purgeBtn:disabled {
+    opacity: .58 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn::after,
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after {
+    content: none !important;
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after {
+    content: "ABIL" !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
+    content: "ARCH" !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spv2-menu-close-tab {
+    display: none !important;
+    pointer-events: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .tlr-pull-wrap.open > .spv2-menu-close-tab,
+  body.single-player-v2.generated-sheet-ready #invWrap.open > .spv2-menu-close-tab {
+    display: block !important;
+    pointer-events: auto !important;
+  }
+}
+
+
+/* === singlePlayerV2/components/scoreHud.css: component: score HUD table pass === */
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-hud-top: 7.6dvh;
+    --spv2-compact-hud-h: clamp(116px,14.5dvh,132px);
+    --spv2-control-size: clamp(46px,12vw,56px);
+    --spv2-spread-top: calc(
+      var(--spv2-hud-top) +
+      var(--spv2-compact-hud-h) +
+      var(--spv2-control-size) +
+      .75dvh
+    );
+    background-color: #090603 !important;
+    background-image:
+      radial-gradient(circle at 6% 58%,rgba(255,155,48,.18),transparent 20%),
+      radial-gradient(circle at 94% 48%,rgba(116,78,160,.12),transparent 22%),
+      radial-gradient(ellipse at 50% 54%,rgba(93,54,24,.18),transparent 44%),
+      linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.48)),
+      var(--spv2-table-bg-art) !important;
+    background-size:auto,auto,auto,auto,cover !important;
+    background-position:center !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready::before {
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    background:
+      repeating-linear-gradient(96deg,rgba(255,255,255,.012) 0 1px,transparent 1px 11px),
+      repeating-linear-gradient(4deg,rgba(78,43,16,.055) 0 2px,transparent 2px 15px),
+      radial-gradient(ellipse at center,transparent 48%,rgba(0,0,0,.66) 100%);
+    mix-blend-mode:screen,normal,normal;
+    opacity:.95;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
+    left:10% !important;
+    right:10% !important;
+    height:calc(var(--spv2-title-h) + 28px) !important;
+    filter:brightness(1.16) contrast(1.06) drop-shadow(0 3px 10px rgba(0,0,0,.8)) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    top:var(--spv2-hud-top) !important;
+    left:2vw !important;
+    right:2vw !important;
+    height:var(--spv2-compact-hud-h) !important;
+    min-height:var(--spv2-compact-hud-h) !important;
+    grid-template-columns:22fr 28fr 29fr 21fr !important;
+    overflow:visible !important;
+    border:2px solid rgba(174,122,52,.82) !important;
+    border-radius:clamp(16px,4vw,24px) !important;
+    background:
+      linear-gradient(180deg,rgba(255,196,91,.07),rgba(0,0,0,.1)),
+      var(--spv2-hud-frame-art) center/100% 100% no-repeat !important;
+    box-shadow:
+      0 12px 28px rgba(0,0,0,.72),
+      0 0 0 2px rgba(69,40,14,.85),
+      inset 0 0 0 1px rgba(255,206,119,.22),
+      inset 0 -14px 24px rgba(0,0,0,.28) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack::before {
+    content:"";
+    position:absolute;
+    inset:5px;
+    border:1px solid rgba(221,163,78,.3);
+    border-radius:inherit;
+    pointer-events:none;
+    box-shadow:inset 0 0 18px rgba(0,0,0,.55);
+    z-index:3;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack > .pill,
+  body.single-player-v2.generated-sheet-ready .score-stack > .th-pill-wrap {
+    position:relative;
+    height:100% !important;
+    overflow:hidden;
+    border-right:1px solid rgba(172,123,53,.28) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack > :last-child {
+    border-right:0 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    height:100% !important;
+    padding:27px 4px 15px !important;
+    gap:4px !important;
+    justify-content:center !important;
+    border-radius:clamp(13px,3.4vw,20px) !important;
+    background-size:100% 100% !important;
+    background-blend-mode:screen,normal !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .reserve-pill {
+    background-image:
+      linear-gradient(180deg,rgba(26,65,107,.18),rgba(3,9,16,.2)),
+      var(--spv2-hud-reserve-art) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .score-pill {
+    background-image:
+      radial-gradient(circle at 50% 88%,rgba(255,185,62,.28),transparent 66%),
+      var(--spv2-hud-score-art) !important;
+    box-shadow:inset 0 -3px 0 rgba(234,177,76,.62),inset 0 0 22px rgba(183,117,29,.13) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill {
+    background-image:
+      radial-gradient(circle at 50% 88%,rgba(132,82,224,.34),transparent 68%),
+      var(--spv2-hud-threshold-art) !important;
+    box-shadow:inset 0 -3px 0 rgba(154,111,235,.62),inset 0 0 22px rgba(102,66,175,.16) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .discards-pill {
+    background-image:
+      linear-gradient(180deg,rgba(90,28,28,.12),rgba(11,7,7,.18)),
+      var(--spv2-hud-discards-art) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill::before {
+    position:absolute;
+    top:11px;
+    left:12px;
+    color:#d0a85f;
+    font:700 clamp(15px,4vw,19px)/1 Georgia,serif;
+    text-shadow:0 1px 3px #000;
+    opacity:.95;
+  }
+
+  body.single-player-v2.generated-sheet-ready .reserve-pill::before { content:"◈"; }
+  body.single-player-v2.generated-sheet-ready .score-pill::before { content:"✦"; }
+  body.single-player-v2.generated-sheet-ready .threshold-pill::before { content:"⚖"; }
+  body.single-player-v2.generated-sheet-ready .discards-pill::before { content:"☠"; }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
+    font-size:clamp(10px,2.8vw,13px) !important;
+    line-height:1 !important;
+    color:#cfb581 !important;
+    letter-spacing:.06em !important;
+    text-shadow:0 1px 3px #000;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill > b {
+    font-size:clamp(31px,8.5vw,42px) !important;
+    line-height:.92 !important;
+    font-weight:800 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .score-pill > b,
+  body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill > b {
+    font-size:clamp(35px,9.5vw,47px) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spv2-threshold-progress {
+    left:13% !important;
+    right:13% !important;
+    bottom:12px !important;
+    height:7px !important;
+    border-color:#8067b2 !important;
+    background:#120d1a !important;
+    box-shadow:inset 0 1px 4px #000,0 0 8px rgba(147,104,224,.18) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    top:calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap {
+    top:var(--spv2-spread-top) !important;
+    bottom:31dvh !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    width:min(97vw,430px) !important;
+    height:auto !important;
+    aspect-ratio:1 / 1 !important;
+    top:5.5dvh !important;
+    left:50% !important;
+    transform:translateX(-50%) !important;
+    opacity:1 !important;
+    filter:brightness(1.42) contrast(1.18) saturate(1.08) drop-shadow(0 0 18px rgba(179,116,37,.18)) !important;
+    background-size:96% 96% !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::after {
+    content:"";
+    position:absolute;
+    left:50%;
+    top:8.5dvh;
+    width:min(91vw,400px);
+    aspect-ratio:1;
+    transform:translateX(-50%);
+    border-radius:50%;
+    background:
+      radial-gradient(circle,transparent 0 20%,rgba(177,117,46,.16) 20.4% 20.8%,transparent 21.2% 36%,rgba(177,117,46,.13) 36.4% 36.8%,transparent 37.2% 49%,rgba(177,117,46,.12) 49.4% 49.8%,transparent 50.2%),
+      repeating-conic-gradient(from -15deg,rgba(192,132,55,.12) 0deg 1deg,transparent 1deg 30deg);
+    box-shadow:inset 0 0 0 1px rgba(177,117,46,.17),0 0 35px rgba(110,67,27,.08);
+    opacity:.9;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread {
+    z-index:2 !important;
+  }
+}
+
+
+/* === singlePlayerV2/states.css: state correction pass === */
+@media (max-width: 640px) {
+  /* Spread slots keep their ornate frame and placed cards occupy that exact box. */
+  body.single-player-v2.generated-sheet-ready .spread {
+    top: calc(.4dvh + 10px) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot {
+    box-sizing: border-box !important;
+    width: var(--spv2-spread-card-w) !important;
+    height: var(--spv2-spread-card-h) !important;
+    flex-basis: var(--spv2-spread-card-w) !important;
+    background-image: var(--spv2-spread-slot-art) !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: 100% 100% !important;
+    overflow: hidden !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread .slot > .card {
+    box-sizing: border-box !important;
+    position: absolute !important;
+    inset: 0 !important;
+    width: var(--spv2-spread-card-w) !important;
+    height: var(--spv2-spread-card-h) !important;
+    min-width: var(--spv2-spread-card-w) !important;
+    min-height: var(--spv2-spread-card-h) !important;
+    max-width: var(--spv2-spread-card-w) !important;
+    max-height: var(--spv2-spread-card-h) !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: inherit !important;
+  }
+
+  /* Restore the earlier, wider hand fan instead of the compressed pass. */
+  body.single-player-v2.generated-sheet-ready .handDock {
+    height: 31dvh !important;
+    bottom: 6.2dvh !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand {
+    height: 28.5dvh !important;
+    --track-spacing: 6.5deg !important;
+    --track-radius: 560px !important;
+    transform: translateY(.6dvh) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card,
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card:nth-child(3) {
+    width: clamp(78px,22vw,96px) !important;
+    height: calc(clamp(78px,22vw,96px) * 1.5) !important;
+  }
+
+  /* Restore the original multi-step swipe/pinch tutorial above the hand. */
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+    left: 0 !important;
+    right: 0 !important;
+    bottom: calc(6.2dvh + 31dvh) !important;
+    width: auto !important;
+    height: 58px !important;
+    transform: none !important;
+    z-index: 25 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    pointer-events: auto !important;
+    touch-action: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone::before {
+    content: none !important;
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #spv2HandDragLabel {
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-hint {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone:not(.hints-complete):not(.has-swiped):not(.dragging):not(.pinching) .hand-swipe-hint {
+    opacity: 1 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone.has-swiped .hand-swipe-hint,
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone.hints-complete .hand-swipe-hint {
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .swipe-hint-line {
+    display: flex !important;
+    visibility: visible !important;
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone:not([data-hint-step]) .swipe-hint-line-1,
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone[data-hint-step="1"] .swipe-hint-line-1,
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone[data-hint-step="2"] .swipe-hint-line-2,
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone[data-hint-step="3"] .swipe-hint-line-3 {
+    opacity: 1 !important;
+  }
+
+  /* Keep the candlelight beneath the spread so it lights the table background
+     without washing over placed cards or spread slots. */
+  body.single-player-v2.generated-sheet-ready #roomAmbient {
+    z-index: 1 !important;
+    mix-blend-mode: screen !important;
+    background:
+      radial-gradient(circle at 7% 56%,rgba(255,190,88,.2),rgba(255,137,48,.06) 18%,transparent 34%),
+      radial-gradient(circle at 92% 47%,rgba(146,104,180,.1),transparent 29%),
+      radial-gradient(ellipse at 50% 69%,rgba(177,111,41,.08),transparent 45%) !important;
+    opacity: .82 !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #breathVignette {
+    z-index: 3 !important;
+    opacity: 1 !important;
+    background: radial-gradient(ellipse 78% 72% at 50% 50%,transparent 48%,rgba(0,0,0,.24) 78%,rgba(0,0,0,.58) 100%) !important;
+  }
+}
+
+
+/* === singlePlayerV2/components/artIntegration.css: component: art integration === */
+/* Reconciles the tuned single-player-v2 layout with the approved art tiles.
+   The four stat panels now carry their label text (RESERVE / SCORE / THRESHOLD
+   / DISCARDS) and their stat icons (bag / star / scales / skull) baked into the
+   art, so the CSS-generated duplicates are suppressed here. The live values, the
+   VS divider, and the threshold progress bar are NOT baked in and remain
+   CSS/DOM driven. */
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
+    display: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill::before {
+    content: none !important;
+  }
+
+  /* The art already supplies each panel's frame; drop the extra panel-edge
+     divider so the cards read as the discrete tiles the art intends. */
+  body.single-player-v2.generated-sheet-ready .score-stack > .pill,
+  body.single-player-v2.generated-sheet-ready .score-stack > .th-pill-wrap {
+    border-right: 0 !important;
+  }
+
+  /* Give the baked label room and re-center the live value beneath it. */
+  body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    padding-top: 30px !important;
+  }
+
+  /* The constellation circle is part of the table background art, so drop the
+     separately overlaid reading-circle tile and the procedural ring to avoid a
+     doubled circle floating over the spread. */
+  body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    background: none !important;
+    filter: none !important;
+    box-shadow: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::after {
+    content: none !important;
+  }
+
+  /* Title art removed per design; keep #titleWrap for the corner buttons it
+     hosts, but render no title graphic or text. */
+  body.single-player-v2.generated-sheet-ready #titleWrap::after,
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
+    content: none !important;
+    background: none !important;
+  }
+
+  /* Remove the reserve and discards pills; keep Score and Threshold side by
+     side. Discards still show on the discard-button badge. */
+  body.single-player-v2.generated-sheet-ready .score-stack .reserve-pill,
+  body.single-player-v2.generated-sheet-ready .score-stack .discards-pill {
+    display: none !important;
+  }
+
+  /* Separate the remaining panels so each card's rounded border reads as a
+     distinct tile rather than butting edge-to-edge. */
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+  }
+
+  /* Taller HUD pills (the bar height drives pill height; the button rows below
+     reference this var, so they shift down with it). */
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-compact-hud-h: clamp(140px, 17.5dvh, 162px) !important;
+  }
+
+  /* Keep settings and archives as a compact top-left utility pair, with
+     Archives immediately to the right of Menu. */
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    top: .8dvh !important;
+    right: auto !important;
+    transform: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    left: 3.8vw !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    left: calc(3.8vw + var(--spv2-control-size, clamp(46px, 12vw, 58px)) + 1.2vw) !important;
+  }
+
+  /* Place Scoring and Abilities together on the right edge, preserving their
+     side-by-side spacing while freeing the left edge for Menu/Archives. */
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
+    left: auto !important;
+    transform: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn {
+    right: calc(3.8vw + var(--spv2-control-size, clamp(46px, 12vw, 58px)) + 1.2vw) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    right: 3.8vw !important;
+  }
+
+  /* Drop the hand fan down so its base nests inside the dock tray banner
+     instead of floating above it. */
+  body.single-player-v2.generated-sheet-ready .handDock .hand {
+    transform: translateY(4.5dvh) !important;
+  }
+
+  /* Position the dock banner so most of it sits behind the fan and only its
+     bottom rim peeks out just below the hand cards. */
+  body.single-player-v2.generated-sheet-ready .handDock {
+    background-position: center bottom 2dvh !important;
+  }
+
+  /* Utility buttons carry their icon as art, so drop the text fallbacks
+     (⚙ / REF / ABIL / ARCH). The two without a dedicated tile reuse the
+     reference (book) art so none render blank. */
+  body.single-player-v2.generated-sheet-ready #menuBtn::after,
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
+    content: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+  }
+
+  /* Swap the two right-side utility icons:
+     abilities = deck, archive = eye. */
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    background-image: var(--spv2-action-deck-art) !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    background-image: var(--spv2-action-eye-art) !important;
+  }
+
+  /* Soften the pattern-hint halo on the hand so it reads as subtle guidance
+     rather than a bright glow. */
+  body.single-player-v2 .hand .card.hint-card,
+  body.single-player-v2 .hand .card.hint-complete {
+    box-shadow:
+      0 0 0 1px rgba(var(--hint-rgb, 232, 196, 96), .55),
+      0 0 10px rgba(var(--hint-rgb, 232, 196, 96), .30),
+      0 5px 14px rgba(0, 0, 0, .5) !important;
+  }
+
+  /* Bottom action buttons render as medallion art instead of text pills:
+     discard = crescent/cards medallion, purge = sun-compass medallion. */
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    width: clamp(58px, 16vw, 74px) !important;
+    height: clamp(58px, 16vw, 74px) !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background-color: transparent !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: contain !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    font-size: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Purge: art + brightness live on ::before (mirroring Discard) so the
+     caption child below is not washed out by an element-level filter. */
+  body.single-player-v2.generated-sheet-ready #purgeBtn::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background-image: var(--spv2-action-center-art) !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: contain !important;
+    filter: brightness(1.45) contrast(1.05) saturate(1.08)
+      drop-shadow(0 0 6px rgba(0, 0, 0, .6)) !important;
+    pointer-events: none !important;
+  }
+
+  /* Discard: art + brightness live on ::before so the count badge child is
+     not affected by the filter. */
+  body.single-player-v2.generated-sheet-ready #discardBtn::before {
+    content: "" !important;
+    position: absolute !important;
+    inset: 0 !important;
+    background-image: url("/public/ui/single-player-v2/elements/Discard.webp") !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-size: contain !important;
+    filter: brightness(1.85) contrast(1.06) saturate(1.12)
+      drop-shadow(0 0 6px rgba(0, 0, 0, .6)) !important;
+    pointer-events: none !important;
+  }
+
+  /* Don't fade the action buttons so heavily while disabled (their default
+     state at the start of a turn), so the medallions stay legible. */
+  body.single-player-v2.generated-sheet-ready #discardBtn:disabled,
+  body.single-player-v2.generated-sheet-ready #purgeBtn:disabled {
+    opacity: .85 !important;
+  }
+
+  /* Small text caption beneath each action medallion. These two are limited,
+     destructive actions, so the icon should not be the only thing naming them.
+     Lives on ::after under the circle; the medallions keep overflow:visible so
+     it shows, and their art now lives on ::before so this child stays crisp. */
+  body.single-player-v2.generated-sheet-ready #discardBtn::after,
+  body.single-player-v2.generated-sheet-ready #purgeBtn::after {
+    position: absolute !important;
+    top: 100% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    margin-top: 3px !important;
+    display: block !important;
+    font: 800 clamp(8px, 2.4vw, 10px)/1 system-ui, sans-serif !important;
+    letter-spacing: .09em !important;
+    text-transform: uppercase !important;
+    color: #cdb079 !important;
+    text-shadow: 0 1px 3px #000 !important;
+    white-space: nowrap !important;
+    text-indent: 0 !important;
+    pointer-events: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn::after { content: "Discard" !important; }
+  body.single-player-v2.generated-sheet-ready #purgeBtn::after { content: "Purge" !important; }
+
+  /* Discards-left count badge in the discard button's top-right corner. */
+  body.single-player-v2.generated-sheet-ready #spv2DiscardBadge {
+    position: absolute !important;
+    top: -2px !important;
+    right: -2px !important;
+    min-width: 19px !important;
+    height: 19px !important;
+    padding: 0 4px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(196, 224, 255, .8) !important;
+    background: radial-gradient(circle at 40% 32%, #6aa8ee, #1b4d99 78%) !important;
+    color: #fff !important;
+    font: 800 11px/1 system-ui, sans-serif !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .6) !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .55),
+      inset 0 1px 0 rgba(255, 255, 255, .25) !important;
+    z-index: 3 !important;
+    pointer-events: none !important;
+  }
+}
+
+
+/* === singlePlayerV2/components/utilityIcons.css: component: utility icons === */
+@layer spv2.components {
+  /* Art-directed utility medallions (single-player V2, mobile).
+
+     Replaces the earlier runtime hue-rotate recolor of a single shared gold coin
+     with the proper, art-directed discs sliced from Options-Discs.png. Each disc
+     is its own design with baked color and shading:
+       Menu      steel gear
+       Scoring   teal book (sun + moon)
+       Abilities blue tarot cards
+       Archive   green eye
+
+     Because the color now lives in the art, there is NO hue/saturation filter
+     here — that would fight the baked palette. The only filter is the neutral
+     "raised" elevation drop-shadow (the look that tested well), and the discs are
+     shown as the button background with no competing CSS frame/border.
+
+     Loaded after ArtIntegration so the background-image override wins. Assets are
+     preloaded via generatedSheetAssets.mjs so the skin doesn't flash. Mobile
+     generated-sheet layout only. */
+  @media (max-width: 640px) {
+    body.single-player-v2.generated-sheet-ready #menuBtn,
+    body.single-player-v2.generated-sheet-ready #scoringBtn,
+    body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+    body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+      background-color: transparent !important;
+      background-repeat: no-repeat !important;
+      background-position: center !important;
+      background-size: contain !important;
+      border: 0 !important;
+      box-shadow: none !important;
+      overflow: visible !important;
+      /* Kill the mobile blue tap-highlight / text-selection flash so a tap reads
+         as a press, not a "selected" box. */
+      -webkit-tap-highlight-color: transparent !important;
+      -webkit-touch-callout: none !important;
+      -webkit-user-select: none !important;
+      user-select: none !important;
+      outline: none !important;
+      /* Raised look: neutral dark elevation only — no color. Layered contact +
+         cast shadow so the disc pops off the table. drop-shadow (not box-shadow)
+         follows the disc's circular alpha instead of the square button box. */
+      filter:
+        drop-shadow(0 5px 7px rgba(0, 0, 0, 0.78))
+        drop-shadow(0 2px 2px rgba(0, 0, 0, 0.6)) !important;
+      transition: transform .08s ease, filter .08s ease !important;
+    }
+
+    /* Real pressed feedback: the disc dips toward the table (smaller, shadow
+       collapses) instead of the browser painting a selection square. */
+    body.single-player-v2.generated-sheet-ready #menuBtn:active,
+    body.single-player-v2.generated-sheet-ready #scoringBtn:active,
+    body.single-player-v2.generated-sheet-ready #abilitiesBtn:active,
+    body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn:active {
+      transform: translateY(1px) scale(0.94) !important;
+      filter:
+        drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7))
+        drop-shadow(0 1px 1px rgba(0, 0, 0, 0.55))
+        brightness(1.08) !important;
+    }
+
+    body.single-player-v2.generated-sheet-ready #menuBtn {
+      background-image: var(--spv2-option-menu-art) !important;
+    }
+
+    body.single-player-v2.generated-sheet-ready #scoringBtn {
+      background-image: var(--spv2-option-scoring-art) !important;
+    }
+
+    body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+      background-image: var(--spv2-option-abilities-art) !important;
+    }
+
+    body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+      background-image: var(--spv2-option-archive-art) !important;
+    }
+
+    /* Suppress the mobile blue tap-highlight / selection flash on EVERY
+       single-player button (Discard, Purge, pull tabs, etc.), so a tap never
+       paints a selection box — not just the utility discs above. */
+    body.single-player-v2.generated-sheet-ready button {
+      -webkit-tap-highlight-color: transparent !important;
+      -webkit-touch-callout: none !important;
+      -webkit-user-select: none !important;
+      user-select: none !important;
+    }
+
+    /* Pressed feedback for the Discard / Purge action medallions, matching the
+       utility discs (the disc dips in instead of flashing a selection box). */
+    body.single-player-v2.generated-sheet-ready #discardBtn,
+    body.single-player-v2.generated-sheet-ready #purgeBtn {
+      transition: transform .08s ease !important;
+    }
+
+    body.single-player-v2.generated-sheet-ready #discardBtn:active,
+    body.single-player-v2.generated-sheet-ready #purgeBtn:active {
+      transform: translateY(1px) scale(0.94) !important;
+    }
+  }
+}
+
+
+/* === singlePlayerV2/components/utilityButtons.css: component: utility button visibility === */
+@layer spv2.components {
+  /* Single Player V2 mobile utility button visibility contract.
+
+     Keep display ownership for the utility medallions in one component: Menu,
+     Scoring, Abilities, and Archive are visible utilities; Mulligan remains the
+     hidden legacy button. Art and pressed-state styling still live in the
+     generated art/icon source sections until those rules are migrated here. */
+  @media (max-width: 640px) {
+    body.single-player-v2.generated-sheet-ready #mullBtn {
+      display: none !important;
+    }
+
+    body.single-player-v2.generated-sheet-ready #scoringBtn,
+    body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+    body.single-player-v2.generated-sheet-ready #menuBtn {
+      display: block !important;
+      width: clamp(44px, 11.5vw, 56px) !important;
+      height: clamp(44px, 11.5vw, 56px) !important;
+      border-radius: 50% !important;
+    }
+  }
+}
