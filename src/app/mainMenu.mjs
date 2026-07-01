@@ -244,6 +244,16 @@ export function installMainMenu(target = window) {
         await waitForSinglePlayerSkin();
         clearSingleplayerBootVeil();
         hideCurtain();
+        // The initial deal already ran (and its draw animation already played
+        // out and was consumed) while it was hidden behind the curtain/veil —
+        // requestAnimationFrame keeps ticking regardless of visibility, so by
+        // the time the curtain lifts the animation is over and was never
+        // seen. Re-queue it for the dealt hand now that the table is visible
+        // so the player actually sees the cards get dealt.
+        if (typeof target.tlrQueueDrawAnimation === 'function') {
+          const dealtHand = target.tlrStore?.getState?.()?.run?.hand;
+          if (Array.isArray(dealtHand) && dealtHand.length) target.tlrQueueDrawAnimation(dealtHand);
+        }
         if (!target.localStorage.getItem('tlr_tut_done') && typeof target.tutShow === 'function') {
           target.setTimeout(() => target.tutShow(0), 400);
         }
@@ -264,11 +274,11 @@ export function installMainMenu(target = window) {
   target.tlrShowMainMenu = show;
 
   target.tlrMainMenuNewGame = function () {
-    startSingleplayer({ fresh: true });
+    return startSingleplayer({ fresh: true });
   };
 
   target.tlrMainMenuContinue = function () {
-    startSingleplayer({ fresh: false });
+    return startSingleplayer({ fresh: false });
   };
 
   target.tlrMainMenuAdventure = async function () {

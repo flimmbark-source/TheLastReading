@@ -1,7 +1,7 @@
 // Application entry point (Phase 16). index.html is becoming a shell: this
-// module mounts the architecture bridge, installs the UI modules as the
-// globals the legacy markup/script still calls, and then boots the game.
-import { bootGame } from './boot.mjs';
+// module mounts the architecture bridge and installs the UI modules as the
+// globals the legacy markup/script still calls. menuBoot.mjs owns showing
+// the main menu and invoking the menu action that triggered this load.
 import { installArchitectureBridge } from './bootstrap.mjs';
 import { installDataGlobals } from './dataGlobals.mjs';
 import { installRuntimeState } from './runtimeState.mjs';
@@ -325,12 +325,6 @@ export function startApp(target = window) {
   installAbilityTargetBridge(target);
   installSpreadPlacementBridge(target);
   installControlBindings(target);
-
-  try {
-    bootGame(target);
-  } catch (err) {
-    console.error('The Last Reading module boot failed', err);
-  }
 }
 
 startApp();

@@ -1,5 +1,5 @@
 // Installs src/data/ module exports on window under the legacy names that
-// the inline script uses for display. Called from main.mjs before tlrLegacyBoot()
+// the inline script uses for display. Called from main.mjs's startApp()
 // so every gameplay function that references these globals finds them on window.
 import {
   ROMAN, SUITS, RANKS, SUIT_GLYPHS, ABILITY_LABELS, MAJOR_GLYPHS,
