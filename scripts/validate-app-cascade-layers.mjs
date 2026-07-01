@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, legacy, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, legacy, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, legacy, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, legacy, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -31,7 +31,6 @@ const legacyLayeredFiles = [
   '../src/styles/cards.css',
   '../src/styles/market.css',
   '../src/styles/mobile.css',
-  '../src/styles/dragStability.css',
   '../src/styles/handDragFix.css',
   '../src/styles/attic.css',
   '../src/styles/drawers.css',
@@ -72,6 +71,16 @@ for (const path of legacyLayeredFiles) {
 const constellations = read('../src/styles/constellations.css');
 assert.match(constellations, /^@layer constellations \{/, 'constellations.css should live in its own constellations layer');
 assert.match(constellations.trimEnd(), /\}$/, 'constellations.css should close its layer wrapper');
+
+// dragStability.css: its only real interaction is mobile.css's own
+// !important transition on the exact same selector -- dragStability always
+// needs to win that fight (its whole purpose is disabling the transition
+// while a card is actively being dragged). Its other property (will-change)
+// is uncontested anywhere. Declared before `legacy` on purpose (see
+// game.html); the assertion above already locks that relative order in.
+const dragStability = read('../src/styles/dragStability.css');
+assert.match(dragStability, /^@layer dragStability \{/, 'dragStability.css should live in its own dragStability layer');
+assert.match(dragStability.trimEnd(), /\}$/, 'dragStability.css should close its layer wrapper');
 
 // Standalone screens: every selector is scoped to that screen's own classes
 // or ids (verified against the actual render/DOM-construction code, not

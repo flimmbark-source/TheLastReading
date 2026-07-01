@@ -28,8 +28,15 @@
      rules already win via higher specificity/!important, and putting
      constellations first keeps it that way (normal-tier layer order is
      compared before specificity, so declaring it any later would flip
-     those results regardless of specificity). */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, legacy, screens.main-menu, screens.loadout, screens.matchmaking;
+     those results regardless of specificity).
+
+     `dragStability` is the opposite direction: its one rule
+     (`.hand .card.hand-card-dragging { transition: none !important }`)
+     exists specifically to beat mobile.css's own !important transition on
+     the same selector while a card is actively being dragged. Declared
+     BEFORE legacy so it wins the !important tier (earlier-declared layer
+     wins for !important -- the reverse of the normal-tier rule above). */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, legacy, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
