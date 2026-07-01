@@ -49,7 +49,10 @@ export function installGestureDrawers(target = window){
     const opening=!w.classList.contains('open');
     w.classList.toggle('open',opening);
     t.innerHTML=(opening?'&#9650; ':'&#9660; ')+LABELS[id];
-    if(opening)closeOthers(id);
+    if(opening){
+      closeOthers(id);
+      target.requestAnimationFrame?.(fitDrawerHeights);
+    }
   }
   togglePullTab.__tlrGestureDrawersOwned=true;
 
@@ -114,7 +117,8 @@ export function installGestureDrawers(target = window){
       const measured=Math.ceil(desk.scrollHeight)+2;
       if(oldHeight)desk.style.setProperty('height',oldHeight);else desk.style.removeProperty('height');
       if(oldOverflow)desk.style.setProperty('overflow',oldOverflow);else desk.style.removeProperty('overflow');
-      const targetHeight=Math.max(d.min,Math.min(max,measured));
+      const desiredMin=d.id==='menu'?Math.min(max,360):d.min;
+      const targetHeight=Math.max(desiredMin,Math.min(max,measured));
       wrap.style.setProperty('--tlr-drawer-h',targetHeight+'px');
       desk.style.setProperty('overflow',measured>max?'auto':'visible','important');
       if(d.id==='menu'){

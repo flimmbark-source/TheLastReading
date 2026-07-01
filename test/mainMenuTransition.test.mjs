@@ -127,5 +127,12 @@ test('open menu drawer scrolls overflowing settings content', () => {
 test('drawer fitter keeps open menu overflow contained inline', () => {
   const source = readFileSync(new URL('../src/ui/gestureDrawers.mjs', import.meta.url), 'utf8');
 
+  assert.match(source, /desiredMin=d\.id==='menu'\?Math\.min\(max,360\):d\.min/, 'menu drawer should open tall enough to show settings content');
   assert.match(source, /if\(d\.id==='menu'\)\{[\s\S]*overflow-x','hidden','important'[\s\S]*overflow-y','auto','important'/, 'menu drawer fitter should override visible inline overflow');
+});
+
+test('opening a drawer schedules immediate height fitting', () => {
+  const source = readFileSync(new URL('../src/ui/gestureDrawers.mjs', import.meta.url), 'utf8');
+
+  assert.match(source, /if\(opening\)\{[\s\S]*requestAnimationFrame\?\.\(fitDrawerHeights\)/, 'opening a drawer should fit height immediately');
 });
