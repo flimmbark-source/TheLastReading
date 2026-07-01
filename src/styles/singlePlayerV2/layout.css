@@ -121,8 +121,8 @@
     padding: 0 5vw !important;
     transform: none !important;
     display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
+    justify-content: space-between;
+    align-items: center;
     pointer-events: none;
   }
 
@@ -141,6 +141,6 @@
   body.single-player-v2.generated-sheet-ready #purgeBtn {
     width: clamp(58px, 15.5vw, 72px) !important;
     height: clamp(66px, 17.5vw, 80px) !important;
-    min-width: 0 !important;
+    min-width: 0;
   }
 }

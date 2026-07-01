@@ -47,7 +47,7 @@
     right:2vw !important;
     height:var(--spv2-compact-hud-h) !important;
     min-height:var(--spv2-compact-hud-h) !important;
-    grid-template-columns:22fr 28fr 29fr 21fr !important;
+    grid-template-columns: 22fr 28fr 29fr 21fr;
     overflow:visible !important;
     border:2px solid rgba(174,122,52,.82) !important;
     border-radius:clamp(16px,4vw,24px) !important;
@@ -88,10 +88,10 @@
     height:100% !important;
     padding:27px 4px 15px !important;
     gap:4px !important;
-    justify-content:center !important;
+    justify-content: center;
     border-radius:clamp(13px,3.4vw,20px) !important;
     background-size:100% 100% !important;
-    background-blend-mode:screen,normal !important;
+    background-blend-mode: screen,normal;
   }
 
   body.single-player-v2.generated-sheet-ready .reserve-pill {

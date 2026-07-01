@@ -231,7 +231,7 @@
   /* Keep the complete top HUD cluster closer to the top edge. Every pill and
      upper utility button keys off these shared variables. */
   html body.single-player-v2.generated-sheet-ready {
-    --spv2-hud-top: max(4.5dvh, env(safe-area-inset-top)) !important;
+    --spv2-hud-top: max(4.5dvh, env(safe-area-inset-top));
     /* Shorter Score/Threshold panels: the previous clamp grew across several
        override passes (76 -> 116 -> 140 -> 148) and left a lot of empty
        vertical ornament. This is the authoritative height. */
@@ -337,13 +337,13 @@
     top: calc(.4dvh + 52px) !important;
     position: relative !important;
     display: block !important;
-    box-sizing: border-box !important;
+    box-sizing: border-box;
     width: 100% !important;
     height: calc(var(--spv2-slot-h) + 28px) !important;
     min-height: calc(var(--spv2-slot-h) + 28px) !important;
     margin-inline: auto !important;
     padding: 0 !important;
-    perspective: 900px !important;
+    perspective: 900px;
     overflow: visible !important;
   }
 

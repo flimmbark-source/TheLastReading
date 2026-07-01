@@ -25,7 +25,7 @@
   body.single-player-v2.generated-sheet-ready .spread-wrap {
     top: var(--spv2-spread-top) !important;
     display: block !important;
-    place-items: initial !important;
+    place-items: initial;
   }
 
   body.single-player-v2.generated-sheet-ready .spread-wrap::before {
@@ -45,18 +45,18 @@
   }
 
   body.single-player-v2.generated-sheet-ready .spread .slot {
-    box-sizing: border-box !important;
+    box-sizing: border-box;
     position: relative !important;
     display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    align-items: center;
+    justify-content: center;
     width: var(--spv2-spread-card-w) !important;
     min-width: var(--spv2-spread-card-w) !important;
     max-width: var(--spv2-spread-card-w) !important;
     height: var(--spv2-spread-card-h) !important;
     min-height: var(--spv2-spread-card-h) !important;
-    max-height: var(--spv2-spread-card-h) !important;
-    flex: 0 0 var(--spv2-spread-card-w) !important;
+    max-height: var(--spv2-spread-card-h);
+    flex: 0 0 var(--spv2-spread-card-w);
     margin-left: -7.2vw !important;
     background-image: var(--spv2-spread-slot-art) !important;
     background-position: center !important;
@@ -90,7 +90,7 @@
   }
 
   body.single-player-v2.generated-sheet-ready .spread .slot > .card {
-    box-sizing: border-box !important;
+    box-sizing: border-box;
     position: absolute !important;
     inset: 0 !important;
     width: 100% !important;
@@ -98,7 +98,7 @@
     min-width: 100% !important;
     min-height: 100% !important;
     max-width: 100% !important;
-    max-height: 100% !important;
+    max-height: 100%;
     margin: 0 !important;
     border-radius: inherit !important;
   }
@@ -123,7 +123,7 @@
     background-color: #17101f !important;
     display: flex !important;
     align-items: center !important;
-    justify-content: center !important;
+    justify-content: center;
     gap: 7px !important;
     color: #e4c47c !important;
     opacity: 1 !important;

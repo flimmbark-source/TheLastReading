@@ -424,10 +424,10 @@
   /* Generated-sheet-ready variable overrides and layout refinements */
   html body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 12px !important;
-    --spv2-hud-h: clamp(140px, 17.5dvh, 162px) !important;
-    --spv2-slot-w: 96px !important;
-    --spv2-slot-h: calc(96px * 1.5) !important;
-    --spv2-hand-clearance: 34dvh !important;
+    --spv2-hud-h: clamp(140px, 17.5dvh, 162px);
+    --spv2-slot-w: 96px;
+    --spv2-slot-h: calc(96px * 1.5);
+    --spv2-hand-clearance: 34dvh;
   }
   body.single-player-v2.generated-sheet-ready #titleWrap {
     height: var(--spv2-title-h);
@@ -470,7 +470,7 @@
     height: 74px;
   }
   body.single-player-v2.generated-sheet-ready .spread-actions::before {
-    content: none !important;
+    content: none;
     display: none !important;
   }
   body.single-player-v2.generated-sheet-ready .handDock {
