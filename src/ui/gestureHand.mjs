@@ -151,7 +151,12 @@ export function installHandSwipeScroll(target = window){
     h.style.setProperty('--track-offset',d.toFixed(3)+'deg');
     if(!target.__handHasBeenSwiped)updateOverflowHint();
   };
-  const applySpacing=d=>{const h=handEl();if(!h)return;h.style.setProperty('--track-spacing',d.toFixed(3)+'deg');};
+  const applySpacing=d=>{
+    const h=handEl();if(!h)return;
+    // Some late visual-pass styles define --track-spacing with !important;
+    // match that priority so the gesture/autofit controller remains authoritative.
+    h.style.setProperty('--track-spacing',d.toFixed(3)+'deg','important');
+  };
   const liftCap=()=>target.innerWidth<640?HAND_LIFT_PX_MOBILE:HAND_LIFT_PX;
   const clampLift=y=>Math.max(-liftCap(),Math.min(liftCap(),y));
   const softClampLift=y=>{const c=liftCap();if(y>c)return c+(y-c)*RUBBER;if(y<-c)return -c+(y+c)*RUBBER;return y;};
