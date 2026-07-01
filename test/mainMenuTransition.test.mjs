@@ -115,3 +115,10 @@ test('closed drawer contents are hidden even if drawer content overflows', () =>
   assert.match(css, /\.tlr-pull-wrap:not\(\.open\) \.tlr-pull-desk>\*\{visibility:hidden!important\}/, 'closed drawer contents should not bleed into other modes');
   assert.match(css, /\.tlr-pull-wrap\.open \.tlr-pull-desk>\*\{visibility:visible!important\}/, 'open drawer contents should remain visible');
 });
+
+test('open menu drawer scrolls overflowing settings content', () => {
+  const css = readFileSync(new URL('../src/styles/drawers.css', import.meta.url), 'utf8');
+
+  assert.match(css, /#menuPullDesk\.tlr-pull-desk\{[^}]*overflow-y:auto!important/, 'open menu drawer should scroll overflowing settings content');
+  assert.match(css, /#menuPullDesk\.tlr-pull-desk\{[^}]*overflow-x:hidden!important/, 'menu drawer should clip horizontal overflow');
+});

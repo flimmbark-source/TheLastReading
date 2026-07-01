@@ -70,3 +70,8 @@
 #abilitiesPullDesk td{padding:3px 5px!important;vertical-align:top!important;white-space:normal!important}
 #abilitiesPullDesk td:first-child{width:86px!important;font-weight:700!important;white-space:nowrap!important;color:#3a1a06!important}
 #menuPullDesk #settingsPanel{max-width:min(92vw,300px)!important;gap:9px!important}
+
+/* The menu drawer can be shorter than its settings content on small screens.
+   When it is open, keep the content inside the drawer and let the drawer scroll
+   instead of letting the settings controls spill over the table. */
+#menuPullDesk.tlr-pull-desk{overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain}
