@@ -50,7 +50,7 @@ export function getUpFromTable(){
   if(window.tlrCloseArchives)window.tlrCloseArchives();
   const panel=document.getElementById('settingsPanel');if(panel)panel.classList.add('hidden');
   const mw=document.getElementById('menuPullWrap');if(mw&&mw.classList.contains('open')){mw.classList.remove('open');const mt=document.getElementById('menuPullTab');if(mt)mt.innerHTML='&#9660; Menu';}
-  showOverlay(`<div class="result-panel"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3>Rise from the Table?</h3></div><p style="color:#8a7551;font-size:13px;text-align:center;margin:0 0 22px;line-height:1.5">The cards will be left as they are.<br>Your session ends here.</p><div class="rbtns"><button onclick="clearOverlay()">Stay</button><button class="btn-gold" onclick="clearOverlay();endSession()">Leave the Reading</button></div></div>`);
+  showOverlay(`<div class="result-panel"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3>Rise from the Table?</h3></div><p style="color:#8a7551;font-size:13px;text-align:center;margin:0 0 22px;line-height:1.5">The cards will be left as they are.<br>Your session ends here.</p><div class="rbtns"><button onclick="clearOverlay()">Stay</button><button class="btn-gold" onclick="clearOverlay();endSession(true)">Leave the Reading</button></div></div>`);
 }
 
 export function flushHand(){
@@ -468,9 +468,12 @@ export function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount
 if(window.tlrStore.getState().run.phase==='market'){window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});const _run=window.tlrStore.getState().run;state.reading=_run.reading;state.constellationId=_run.constellationId||null;state.untargetableCardUids=(_run.untargetableCardIds||[]).slice();}
 startReading();if(pendingRelic){setTimeout(()=>tutShow(9),400)}}
 
-export function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;
+export function endSession(skipSummary){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;
 window.tlrStore.dispatch({type:window.tlrActions.END_SESSION,totalScore:total,obals:candles});
-if(summaryIsFailedReading()){clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);return}
+// Getting up early is the player's own choice, not a payoff moment — skip
+// straight to the attic instead of making them tap through a score recap
+// they didn't ask for. A failed reading already skips this screen too.
+if(skipSummary||summaryIsFailedReading()){clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);return}
 showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Obals</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}
 
 export function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0,setIndex:0,setsPerRound:2,roundScore:0,setScores:[],roundDiscardCount:0,roundPatternCount:0,constellationId:null,untargetableCardUids:[],awaitingNextSet:false,lastOutcome:null};
