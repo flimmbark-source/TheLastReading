@@ -5,10 +5,10 @@
   }
 
   body.single-player-v2.generated-sheet-ready .spread .slot {
-    box-sizing: border-box !important;
+    box-sizing: border-box;
     width: var(--spv2-spread-card-w) !important;
     height: var(--spv2-spread-card-h) !important;
-    flex-basis: var(--spv2-spread-card-w) !important;
+    flex-basis: var(--spv2-spread-card-w);
     background-image: var(--spv2-spread-slot-art) !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
@@ -17,7 +17,7 @@
   }
 
   body.single-player-v2.generated-sheet-ready .spread .slot > .card {
-    box-sizing: border-box !important;
+    box-sizing: border-box;
     position: absolute !important;
     inset: 0 !important;
     width: var(--spv2-spread-card-w) !important;
@@ -25,7 +25,7 @@
     min-width: var(--spv2-spread-card-w) !important;
     min-height: var(--spv2-spread-card-h) !important;
     max-width: var(--spv2-spread-card-w) !important;
-    max-height: var(--spv2-spread-card-h) !important;
+    max-height: var(--spv2-spread-card-h);
     margin: 0 !important;
     border: 0 !important;
     border-radius: inherit !important;
@@ -64,7 +64,7 @@
     background: transparent !important;
     box-shadow: none !important;
     pointer-events: auto !important;
-    touch-action: none !important;
+    touch-action: none;
   }
 
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone::before {

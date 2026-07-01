@@ -235,7 +235,7 @@
     /* Shorter Score/Threshold panels: the previous clamp grew across several
        override passes (76 -> 116 -> 140 -> 148) and left a lot of empty
        vertical ornament. This is the authoritative height. */
-    --spv2-compact-hud-h: clamp(112px,14dvh,128px) !important;
+    --spv2-compact-hud-h: clamp(112px,14dvh,128px);
   }
 
   /* Give the two live headline values more visual weight inside the slightly

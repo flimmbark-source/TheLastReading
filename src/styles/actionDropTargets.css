@@ -62,7 +62,7 @@ body:has(#summary .store-front-shell) #spv2ArchiveBtn{z-index:10!important}
 
 @media(max-width:640px){
   html body.single-player-v2.generated-sheet-ready{--spv2-action-edge-gap:max(24px,6.5vw);background-color:#0b0805!important;background-image:url('/assets/background.webp')!important;background-position:center top!important;background-size:cover!important;background-repeat:no-repeat!important;background-attachment:fixed!important}
-  html body.single-player-v2.generated-sheet-ready::before{content:none!important;display:none!important;background:none!important}
+  html body.single-player-v2.generated-sheet-ready::before{content:none;display:none!important;background:none!important}
 
   /* Keep hint text above slots without placing the gesture surface over cards. */
   html body.single-player-v2.generated-sheet-ready .handDock{z-index:44!important}

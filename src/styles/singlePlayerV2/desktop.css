@@ -39,7 +39,7 @@
   }
 
   html body.single-player-v2.generated-sheet-ready {
-    --spv2-hud-top: 12px !important;
+    --spv2-hud-top: 12px;
   }
 
   /* Center the spread vertically; become containing block for absolute slots */
@@ -667,7 +667,7 @@
     display: block !important;
     font: 800 10px/1 system-ui, sans-serif !important;
     letter-spacing: .09em !important;
-    text-transform: uppercase !important;
+    text-transform: uppercase;
     color: #cdb079 !important;
     text-shadow: 0 1px 3px #000 !important;
     white-space: nowrap !important;

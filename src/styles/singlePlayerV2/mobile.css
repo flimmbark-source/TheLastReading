@@ -172,7 +172,7 @@
     place-items: center;
     width: clamp(62px, 16vw, 76px) !important;
     height: clamp(62px, 16vw, 76px) !important;
-    min-width: 0 !important;
+    min-width: 0;
     margin: 0 !important;
     padding: 0 !important;
     border-radius: 50%;

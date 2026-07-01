@@ -56,7 +56,7 @@
   /* Separate the remaining panels so each card's rounded border reads as a
      distinct tile rather than butting edge-to-edge. */
   body.single-player-v2.generated-sheet-ready .score-stack {
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: 1fr 1fr;
     gap: 6px !important;
   }
 

@@ -13,14 +13,14 @@
     display: flex !important;
     justify-content: center !important;
     align-items: flex-start !important;
-    box-sizing: border-box !important;
+    box-sizing: border-box;
     width: 100% !important;
     height: auto !important;
     min-height: 0 !important;
     margin: 0 auto !important;
     padding: 0 !important;
     gap: 0 !important;
-    perspective: none !important;
+    perspective: none;
     overflow: visible !important;
   }
 

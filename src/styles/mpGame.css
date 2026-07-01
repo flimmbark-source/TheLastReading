@@ -26,7 +26,7 @@ body.mp-game-active .spread-wrap {
 body.mp-game-active #spread {
   padding: 36px 6px 0 !important;
   min-height: 205px !important;
-  align-items: flex-start !important;
+  align-items: flex-start;
 }
 body.mp-game-active #spread .slot {
   flex: 0 0 130px !important;
@@ -151,10 +151,10 @@ body.mp-game-active #purgePrompt { display: none !important; }
 
 /* Uniform compact pill sizing — equal widths keep rows aligned */
 .mp-pill-score, .mp-pill-disc, .mp-pill-thresh {
-  min-width: 0 !important; width: 118px !important; box-sizing: border-box !important;
+  min-width: 0 !important; width: 118px !important; box-sizing: border-box;
   height: 32px !important; padding: 0 10px !important;
-  display: flex !important; align-items: center !important;
-  justify-content: center !important; gap: 5px !important;
+  display: flex !important; align-items: center;
+  justify-content: center !important; gap: 5px;
   font-size: 11px !important; letter-spacing: .03em;
   white-space: nowrap;
 }
@@ -177,8 +177,8 @@ body.mp-game-active #purgePrompt { display: none !important; }
   overflow: visible !important;
   border-radius: 999px !important;
   display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  align-items: center;
+  justify-content: center;
   background: rgba(28,18,10,.78) !important;
   border: 1px solid rgba(180,140,90,.38) !important;
   box-shadow: 0 6px 16px rgba(0,0,0,.34) !important;
