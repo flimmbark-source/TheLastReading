@@ -478,6 +478,18 @@ function leaveMarket(state, rng = Math.random) {
     relicEarned: false,
     constellationId: constellation.id,
     untargetableCardIds: [],
+    // The finished round's spread/score bookkeeping is done the moment the
+    // player leaves for the market — clear it here (not just on the legacy
+    // mirror) so the table behind the shop already reads as "next round
+    // pending" instead of jumping the instant the player steps away from
+    // the market. Hand/deck stay deferred to startReading()/startNextSet(),
+    // which deal fresh cards only once the player actually returns.
+    spread: Array(5).fill(null),
+    selectedCardId: null,
+    roundScore: 0,
+    setScores: [],
+    roundDiscardCount: 0,
+    roundPatternCount: 0,
   });
 }
 
