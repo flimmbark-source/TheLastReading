@@ -100,6 +100,7 @@ export function installMainMenu(target = window) {
     el.classList.add('mm-hidden');
     el.setAttribute('aria-hidden', 'true');
     if ('inert' in el) el.inert = true;
+    target.document.body.classList.remove('main-menu-active');
     // Delay display:none until after the 0.35s opacity fade-out finishes,
     // so the game never shows through while the overlay is still fading.
     setTimeout(() => { if (el.classList.contains('mm-hidden')) el.hidden = true; }, 400);
@@ -112,6 +113,9 @@ export function installMainMenu(target = window) {
     if ('inert' in el) el.inert = false;
     el.setAttribute('aria-hidden', 'false');
     el.classList.remove('mm-hidden', 'main-menu-busy');
+    target.document.body.classList.add('main-menu-active');
+    target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
+    hideCurtain();
     // The lightweight boot loader disables every menu button while it loads the
     // game module and only restores them on failure, so a button left disabled
     // there would make this menu dead when we return to it. Once the game is
@@ -159,6 +163,36 @@ export function installMainMenu(target = window) {
   }
 
 
+  // Full-screen black curtain for the New Game/Continue transition. The
+  // per-element opacity veil (see mainMenu.css) only fades individual table
+  // elements in over whatever's already visible behind them (the body's
+  // background art, not black) — it doesn't give the "fade to black, then
+  // fade in" cinematic cut the player actually asked for. This does: cover
+  // the screen in solid black first, do all the state/DOM setup safely
+  // hidden behind it, then lift it once the table is fully ready.
+  const CURTAIN_FADE_MS = 300;
+
+  function curtainEl() {
+    const doc = target.document;
+    let el = doc.getElementById('tlrBootCurtain');
+    if (!el) {
+      el = doc.createElement('div');
+      el.id = 'tlrBootCurtain';
+      el.setAttribute('aria-hidden', 'true');
+      doc.body.appendChild(el);
+    }
+    return el;
+  }
+
+  function showCurtain() {
+    curtainEl().classList.add('show');
+    return new Promise(resolve => target.setTimeout(resolve, CURTAIN_FADE_MS));
+  }
+
+  function hideCurtain() {
+    curtainEl().classList.remove('show');
+  }
+
   function waitForSinglePlayerSkin() {
     const ready = target.__tlrSinglePlayerV2Ready;
     if (!ready || typeof ready.then !== 'function') return Promise.resolve();
@@ -201,7 +235,10 @@ export function installMainMenu(target = window) {
   }
 
   async function startSingleplayer({ fresh = false } = {}) {
-    target.document.body.classList.add('main-menu-mode-booting');
+    resetModeTransitionUi();
+    target.document.body.classList.add('main-menu-mode-booting', 'main-menu-blackout');
+    hide();
+    await showCurtain();
     try {
       if (fresh) startFresh();
       forceSingleplayerTable();
@@ -209,70 +246,148 @@ export function installMainMenu(target = window) {
         if (!gameStarted || fresh) target.startReading();
         gameStarted = true;
         forceSingleplayerTable();
+        closeModeChrome();
         hide();
         await waitForSinglePlayerSkin();
         clearSingleplayerBootVeil();
+        hideCurtain();
+        target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
+        // The initial deal already ran (and its draw animation already played
+        // out and was consumed) while it was hidden behind the curtain/veil —
+        // requestAnimationFrame keeps ticking regardless of visibility, so by
+        // the time the curtain lifts the animation is over and was never
+        // seen. Re-queue it for the dealt hand now that the table is visible
+        // so the player actually sees the cards get dealt.
+        if (typeof target.tlrQueueDrawAnimation === 'function') {
+          const dealtHand = target.tlrStore?.getState?.()?.run?.hand;
+          if (Array.isArray(dealtHand) && dealtHand.length) target.tlrQueueDrawAnimation(dealtHand);
+        }
         if (!target.localStorage.getItem('tlr_tut_done') && typeof target.tutShow === 'function') {
           target.setTimeout(() => target.tutShow(0), 400);
         }
       } else {
         console.error('The Last Reading: startReading is not available from the main menu.');
-        target.document.body.classList.remove('main-menu-mode-booting');
+        target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
+        hideCurtain();
         show();
       }
     } catch (err) {
       console.error('The Last Reading: failed to start singleplayer from the main menu.', err);
-      target.document.body.classList.remove('main-menu-mode-booting');
+      target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
+      hideCurtain();
       show();
     }
   }
 
   target.tlrShowMainMenu = show;
+  target.tlrHideMainMenu = hide;
+
+  function resetTutorialTransientState() {
+    if (typeof target.tutResetTransient === 'function') target.tutResetTransient();
+    else if (typeof target.tutHide === 'function') target.tutHide();
+  }
+
+  function closeSettingsPanel() {
+    const panel = target.document.getElementById('settingsPanel');
+    if (panel) panel.classList.add('hidden');
+  }
+
+  function closePullTab(name) {
+    const wrap = target.document.getElementById(`${name}PullWrap`);
+    if (wrap) wrap.classList.remove('open');
+    const tab = target.document.getElementById(`${name}PullTab`);
+    if (tab) {
+      const label = name.charAt(0).toUpperCase() + name.slice(1);
+      tab.innerHTML = `&#9660; ${label}`;
+    }
+  }
+
+  function closeModeChrome() {
+    closeSettingsPanel();
+    closePullTab('menu');
+    closePullTab('scoring');
+    closePullTab('abilities');
+    if (typeof target.closeRefs === 'function') target.closeRefs();
+  }
+
+  function resetModeTransitionUi() {
+    resetTutorialTransientState();
+    closeModeChrome();
+  }
 
   target.tlrMainMenuNewGame = function () {
-    startSingleplayer({ fresh: true });
+    return startSingleplayer({ fresh: true });
   };
 
   target.tlrMainMenuContinue = function () {
-    startSingleplayer({ fresh: false });
+    return startSingleplayer({ fresh: false });
   };
 
   target.tlrMainMenuAdventure = async function () {
+    resetModeTransitionUi();
     // Hand off to the self-contained Adventure Mode overlay. It restores the
     // main menu itself (via tlrReturnToMenu) when the player leaves.
+    target.document.body.classList.add('main-menu-mode-booting', 'main-menu-blackout');
     hide();
-    // menuBoot.mjs's boot-time stub awaits __tlrInstallAdventureModules()
-    // before ever calling this function, but that stub only wraps the very
-    // first click through the cold-boot path — main.mjs's bulk install
-    // overwrites window.tlrMainMenuAdventure with this function directly, so
-    // any later click (e.g. after tlrReturnToMenu()) reaches here without
-    // that await ever having happened. Load the adventure modules here too
-    // so this function is self-sufficient regardless of how it was reached.
-    if (typeof target.tlrStartAdventure !== 'function' && typeof target.__tlrInstallAdventureModules === 'function') {
-      try {
-        await target.__tlrInstallAdventureModules();
-      } catch (err) {
-        console.error('The Last Reading: Adventure Mode failed to load.', err);
-      }
-    }
-    if (typeof target.tlrStartAdventure === 'function') {
-      target.tlrStartAdventure();
-      target.setTimeout(() => {
-        if (target.__tlrAdventureActive && typeof target.maybeShowAdventureTutorial === 'function') {
-          target.maybeShowAdventureTutorial();
+    await showCurtain();
+    try {
+      // menuBoot.mjs's boot-time stub awaits __tlrInstallAdventureModules()
+      // before ever calling this function, but that stub only wraps the very
+      // first click through the cold-boot path — main.mjs's bulk install
+      // overwrites window.tlrMainMenuAdventure with this function directly, so
+      // any later click (e.g. after tlrReturnToMenu()) reaches here without
+      // that await ever having happened. Load the adventure modules here too
+      // so this function is self-sufficient regardless of how it was reached.
+      if (typeof target.tlrStartAdventure !== 'function' && typeof target.__tlrInstallAdventureModules === 'function') {
+        try {
+          await target.__tlrInstallAdventureModules();
+        } catch (err) {
+          console.error('The Last Reading: Adventure Mode failed to load.', err);
         }
-      }, 500);
-    } else {
-      console.error('The Last Reading: Adventure Mode is not available.');
+      }
+      if (typeof target.tlrStartAdventure === 'function') {
+        target.tlrStartAdventure();
+        closeModeChrome();
+        hideCurtain();
+        target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
+        target.setTimeout(() => {
+          if (target.__tlrAdventureActive && typeof target.maybeShowAdventureTutorial === 'function') {
+            target.maybeShowAdventureTutorial();
+          }
+        }, 500);
+      } else {
+        console.error('The Last Reading: Adventure Mode is not available.');
+        hideCurtain();
+        target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
+        show();
+      }
+    } catch (err) {
+      console.error('The Last Reading: Adventure Mode failed to start.', err);
+      hideCurtain();
+      target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
       show();
     }
   };
 
-  target.tlrMainMenuMultiplayer = function () {
-    // Hide main menu, show loadout screen
+  target.tlrMainMenuMultiplayer = async function () {
+    resetModeTransitionUi();
+    // Hide main menu, show loadout screen. Same self-sufficiency concern as
+    // tlrMainMenuAdventure above: main.mjs's bulk install overwrites this
+    // function directly after the first game load via any path, so this
+    // can't rely on menuBoot.mjs's boot-time await ever having run.
     hide();
+    if (typeof target.tlrShowLoadout !== 'function' && typeof target.__tlrInstallMultiplayerModules === 'function') {
+      try {
+        await target.__tlrInstallMultiplayerModules();
+      } catch (err) {
+        console.error('The Last Reading: Duel mode failed to load.', err);
+      }
+    }
     if (typeof target.tlrShowLoadout === 'function') {
       target.tlrShowLoadout();
+    } else {
+      console.error('The Last Reading: Duel mode is not available.');
+      show();
     }
   };
 
@@ -306,16 +421,11 @@ export function installMainMenu(target = window) {
   }
 
   target.tlrReturnToMenu = function () {
-    if (typeof target.tutHide === 'function') target.tutHide();
-    // Close any open sub-panels before showing the menu
-    const panel = target.document.getElementById('settingsPanel');
-    if (panel) panel.classList.add('hidden');
-    const mw = target.document.getElementById('menuPullWrap');
-    if (mw && mw.classList.contains('open')) {
-      mw.classList.remove('open');
-      const mt = target.document.getElementById('menuPullTab');
-      if (mt) mt.innerHTML = '&#9660; Menu';
+    if (typeof target.tlrMpLeave === 'function' && target.document.body.classList.contains('mp-game-active')) {
+      return target.tlrMpLeave();
     }
+    // Close any open sub-panels before showing the menu or starting another mode.
+    resetModeTransitionUi();
     closeAllOverlays();
     syncContinueBtn();
     show();

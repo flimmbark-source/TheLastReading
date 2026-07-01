@@ -136,8 +136,7 @@ async function launch(actionName) {
     }
     const action = window[actionName];
     if (typeof action === 'function') {
-      action();
-      if (actionStartsSingleplayer(actionName)) await waitForSinglePlayerSkin();
+      await action();
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           document.body.classList.remove('main-menu-mode-booting');
@@ -160,20 +159,6 @@ async function launch(actionName) {
   }
 }
 
-
-function waitForSinglePlayerSkin() {
-  const ready = window.__tlrSinglePlayerV2Ready;
-  if (!ready || typeof ready.then !== 'function') return Promise.resolve();
-  return Promise.race([
-    ready.catch(() => false),
-    new Promise(resolve => window.setTimeout(resolve, 2500)),
-  ]);
-}
-
-function actionStartsSingleplayer(actionName) {
-  return actionName === 'tlrMainMenuNewGame' || actionName === 'tlrMainMenuContinue';
-}
-
 function warmGame() {
   loadGame().catch(err => {
     console.warn('The Last Reading game preload did not complete.', err);
@@ -187,6 +172,9 @@ window.tlrShowMainMenu = function () {
   el.hidden = false;
   el.setAttribute('aria-hidden', 'false');
   el.classList.remove('mm-hidden');
+  document.body.classList.add('main-menu-active');
+  document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
+  document.getElementById('tlrBootCurtain')?.classList.remove('show');
   syncContinueButton();
 };
 

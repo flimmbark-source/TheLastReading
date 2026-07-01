@@ -2,8 +2,8 @@ import { ACTION_NODES } from '../data/adventure/nodes.mjs';
 
 const STYLE_ID = 'adventure-interaction-fx-v6-style';
 const ROOT_ID = 'advInteractionFxV6';
-const NODE_SHEET_URL = '/public/ui/single-player-v2/Event-Visuals-Node.png';
-const OUTCOME_SHEET_URL = '/public/ui/single-player-v2/Event-Outcome-Sheet.png';
+const NODE_SHEET_URL = '/public/ui/single-player-v2/Event-Visuals-Node.webp';
+const OUTCOME_SHEET_URL = '/public/ui/single-player-v2/Event-Outcome-Sheet.webp';
 const SHEET_WIDTH = 1491;
 const SHEET_HEIGHT = 1055;
 

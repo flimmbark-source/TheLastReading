@@ -72,7 +72,7 @@ const TUT_STEPS = [
   { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', waitFor: 'cardPlaced', text: 'Tap an empty slot to place it.' },
   { sel: '#current', fallbackSel: '.score-pill', arrow: 'up', text: 'That card added points to your total.' },
   { sel: '#hand .card[data-uid] .seal.tr', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The red circle on each card shows how many points it adds.' },
-  { sel: '#threshold', fallbackSel: '.threshold-pill', arrow: 'up', key: TUT_THRESHOLD_KEY, text: 'You have a set of 2 Spreads in which to beat the Threshold and advance.' },
+  { sel: '#threshold', fallbackSel: '.threshold-pill', arrow: 'up', key: TUT_THRESHOLD_KEY, text: 'You have 2 sets in which to beat the Threshold and advance.' },
   { sel: '#discardBtn', arrow: 'down', key: TUT_DISCARD_KEY, text: '<b>Discard</b> a card to use its <b>Ability</b> instead of placing it.' },
   { sel: '#hand .card[data-hint], #hand .card.hint-complete, #hand .card.hint-card', fallbackSel: '#hand .card[data-uid]', arrow: 'down', key: TUT_PATTERN_KEY, text: 'Some of your cards may work together.' },
   { center: true, text: 'Each cleared Threshold makes the next one harder. Clear the 10th Threshold to win.' },
@@ -238,6 +238,13 @@ export function tutHide() {
   if (!tip) return;
   tip.classList.remove('show', 'tut-center');
   tip.style.cssText = '';
+}
+
+export function tutResetTransient() {
+  queuedTipSteps = [];
+  clearTimeout(queuedTipTimer);
+  queuedTipTimer = null;
+  tutHide();
 }
 
 function positionActiveTip() {
