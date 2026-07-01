@@ -83,7 +83,7 @@ function ensureStyles(doc) {
     .adv-next-event{font:700 9px system-ui,sans-serif;color:#d19c51;opacity:.9}
 
     #advHud{position:fixed;top:10px;left:10px;z-index:42;display:none;flex-direction:column;gap:4px;
-      color:#ead9b5;max-width:min(360px,46vw)}
+      color:#ead9b5;max-width:min(360px,46cqw)}
     body.mode-adventure #advHud{display:flex}
     .adv-hud__main{display:flex;align-items:center;gap:11px;
       background:linear-gradient(180deg,rgba(30,21,13,.93),rgba(17,11,7,.92));
@@ -120,7 +120,7 @@ function ensureStyles(doc) {
 
     @media(max-width:640px){
       #advEventDeck{top:20px}.adv-event-desc{max-width:245px;font-size:10px}
-      #advHud{max-width:64vw}.adv-hud__main{padding:6px 9px}
+      #advHud{max-width:64cqw}.adv-hud__main{padding:6px 9px}
       .adv-deck{transform:scale(.92);transform-origin:top center}
     }
   `;

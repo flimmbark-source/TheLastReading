@@ -60,8 +60,8 @@ body:has(#summary .store-front-shell) #discardBtn,
 body:has(#summary .store-front-shell) #purgeBtn,
 body:has(#summary .store-front-shell) #spv2ArchiveBtn{z-index:10!important}
 
-@media(max-width:640px){
-  html body.single-player-v2.generated-sheet-ready{--spv2-action-edge-gap:max(24px,6.5vw);background-color:#0b0805!important;background-image:url('/assets/background.webp')!important;background-position:center top!important;background-size:cover!important;background-repeat:no-repeat!important;background-attachment:fixed!important}
+@media(max-width:999999px){
+  html body.single-player-v2.generated-sheet-ready{--spv2-action-edge-gap:max(24px,6.5cqw);background-color:#0b0805!important;background-image:url('/assets/background.webp')!important;background-position:center top!important;background-size:cover!important;background-repeat:no-repeat!important;background-attachment:fixed!important}
   html body.single-player-v2.generated-sheet-ready::before{content:none!important;display:none!important;background:none!important}
 
   /* Keep hint text above slots without placing the gesture surface over cards. */
@@ -86,13 +86,13 @@ body:has(#summary .store-front-shell) #spv2ArchiveBtn{z-index:10!important}
 
   html body.single-player-v2.generated-sheet-ready #menuBtn,
   html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn{top:auto!important;bottom:max(24px,3dvh,calc(env(safe-area-inset-bottom) + 14px))!important;right:auto!important}
-  html body.single-player-v2.generated-sheet-ready #menuBtn{left:4vw!important}
-  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn{left:calc(4vw + var(--spv2-control-size,clamp(46px,12vw,58px)) + 1.2vw)!important}
+  html body.single-player-v2.generated-sheet-ready #menuBtn{left:4cqw!important}
+  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn{left:calc(4cqw + var(--spv2-control-size,clamp(46px,12cqw,58px)) + 1.2cqw)!important}
 
   html body.single-player-v2.generated-sheet-ready #scoringBtn,
   html body.single-player-v2.generated-sheet-ready #abilitiesBtn{top:auto!important;bottom:max(24px,3dvh,calc(env(safe-area-inset-bottom) + 14px))!important;left:auto!important}
-  html body.single-player-v2.generated-sheet-ready #scoringBtn{right:calc(4vw + var(--spv2-control-size,clamp(46px,12vw,58px)) + 1.2vw)!important}
-  html body.single-player-v2.generated-sheet-ready #abilitiesBtn{right:4vw!important}
+  html body.single-player-v2.generated-sheet-ready #scoringBtn{right:calc(4cqw + var(--spv2-control-size,clamp(46px,12cqw,58px)) + 1.2cqw)!important}
+  html body.single-player-v2.generated-sheet-ready #abilitiesBtn{right:4cqw!important}
 
   html body.single-player-v2.generated-sheet-ready:has(#summary .tarot-shop) #discardBtn,
   html body.single-player-v2.generated-sheet-ready:has(#summary .tarot-shop) #purgeBtn,

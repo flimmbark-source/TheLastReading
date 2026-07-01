@@ -1,4 +1,4 @@
-@media (max-width: 640px) {
+@media (max-width:999999px) {
   /* Keep the complete top HUD cluster closer to the top edge. Every pill and
      upper utility button keys off these shared variables. */
   html body.single-player-v2.generated-sheet-ready {
@@ -13,7 +13,7 @@
      taller Score and Threshold panels. */
   html body.single-player-v2.generated-sheet-ready .score-stack .score-pill > b,
   html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill > b {
-    font-size: clamp(40px,10.5vw,70px) !important;
+    font-size: clamp(40px,10.5cqw,70px) !important;
     line-height: .9 !important;
   }
 
@@ -70,33 +70,33 @@
      Menu + Archives on the left, Scoring + Abilities on the right. */
   html body.single-player-v2.generated-sheet-ready #menuBtn {
     top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh + 4px) !important;
-    left: 3.8vw !important;
+    left: 3.8cqw !important;
     right: auto !important;
-    width: clamp(40px,10.5vw,50px) !important;
-    height: clamp(40px,10.5vw,50px) !important;
+    width: clamp(40px,10.5cqw,50px) !important;
+    height: clamp(40px,10.5cqw,50px) !important;
     transform: none !important;
   }
 
   html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
     top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh + 4px) !important;
-    left: calc(3.8vw + clamp(40px,10.5vw,50px) + 8px) !important;
+    left: calc(3.8cqw + clamp(40px,10.5cqw,50px) + 8px) !important;
     right: auto !important;
-    width: clamp(40px,10.5vw,50px) !important;
-    height: clamp(40px,10.5vw,50px) !important;
+    width: clamp(40px,10.5cqw,50px) !important;
+    height: clamp(40px,10.5cqw,50px) !important;
     transform: none !important;
   }
 
   html body.single-player-v2.generated-sheet-ready #scoringBtn {
     top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
     left: auto !important;
-    right: calc(3.8vw + clamp(40px,10.5vw,50px) + 8px) !important;
+    right: calc(3.8cqw + clamp(40px,10.5cqw,50px) + 8px) !important;
     transform: none !important;
   }
 
   html body.single-player-v2.generated-sheet-ready #abilitiesBtn {
     top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
     left: auto !important;
-    right: 3.8vw !important;
+    right: 3.8cqw !important;
     transform: none !important;
   }
 
@@ -132,7 +132,7 @@
   }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
-    transform: translateX(max(-265%, calc(-50vw + 14px))) translateY(14px) rotate(-8deg) !important;
+    transform: translateX(max(-265%, calc(-50cqw + 14px))) translateY(14px) rotate(-8deg) !important;
     z-index: 1 !important;
     box-shadow:
       0 5px 4px rgba(0,0,0,.70),
@@ -171,7 +171,7 @@
   }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
-    transform: translateX(min(165%, calc(50vw - 14px - 100%))) translateY(14px) rotate(8deg) !important;
+    transform: translateX(min(165%, calc(50cqw - 14px - 100%))) translateY(14px) rotate(8deg) !important;
     z-index: 1 !important;
     box-shadow:
       0 5px 4px rgba(0,0,0,.70),

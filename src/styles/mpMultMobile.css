@@ -3,7 +3,7 @@
    mobile they should read as a separate label immediately to the left of that
    score pill. */
 
-@media (max-width: 640px) {
+@media (max-width:999999px) {
   body.mp-game-active .mp-pills-opp,
   body.mp-game-active .mp-pills-self {
     padding-left: 24px;

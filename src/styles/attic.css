@@ -37,7 +37,7 @@ body.mode-table-return #titleWrap,body.mode-table-return .score-stack,body.mode-
 .obals-icon{width:34px;height:34px;background-size:contain;background-position:center;background-repeat:no-repeat;transition:opacity .25s ease,transform .25s ease}
 .obals-icon.on{background-image:url('../../ui/candle_flame_on.png')}
 .obals-icon.off{background-image:url('../../ui/candle_flame_off.png');opacity:.48;transform:scale(.92)}
-#atticWhisper{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:16;min-width:min(82vw,420px);max-width:min(90vw,560px);min-height:62px;padding:18px 28px 20px;background:url('../../ui/attic_whisper_plaque.png') center/100% 100% no-repeat;color:#ead9b5;text-align:center;font:700 14px Georgia,serif;text-shadow:0 2px 8px rgba(0,0,0,.9);opacity:0;pointer-events:none;transition:opacity .25s ease}
+#atticWhisper{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:16;min-width:min(82cqw,420px);max-width:min(90cqw,560px);min-height:62px;padding:18px 28px 20px;background:url('../../ui/attic_whisper_plaque.png') center/100% 100% no-repeat;color:#ead9b5;text-align:center;font:700 14px Georgia,serif;text-shadow:0 2px 8px rgba(0,0,0,.9);opacity:0;pointer-events:none;transition:opacity .25s ease}
 #atticWhisper.show{opacity:1}
 #atticPickup{position:absolute;left:50%;top:55%;z-index:18;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 20px;background:rgba(18,11,6,.88);border:1px solid rgba(194,148,75,.65);border-radius:12px;box-shadow:0 22px 60px rgba(0,0,0,.75),0 0 24px rgba(255,202,101,.2);cursor:pointer;animation:atticPickupIn .34s ease forwards}
 #atticPickup img{width:112px;height:112px;object-fit:cover;border-radius:4px;box-shadow:0 8px 22px rgba(0,0,0,.6)}
@@ -138,13 +138,13 @@ body.mode-table-return #invTab{
 #atticObjects .attic-prop.spend{animation:none!important}
 body.mode-return-hard-hide #titleWrap,body.mode-return-hard-hide .score-stack,body.mode-return-hard-hide .spread-wrap,body.mode-return-hard-hide .handDock,body.mode-return-hard-hide #relicRack,body.mode-to-table #titleWrap,body.mode-to-table .score-stack,body.mode-to-table .spread-wrap,body.mode-to-table .handDock,body.mode-to-table #relicRack{opacity:0!important;transition:none!important;pointer-events:none!important}
 body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:translateY(calc(-1 * var(--inv-h)))!important;pointer-events:none!important}
-@media (min-width:981px){#atticPan{overflow:hidden;display:flex;justify-content:center;align-items:flex-start}#atticRoom{margin:0 auto}}
-@media (max-width:980px){#atticPan{display:block;cursor:grab}#atticPan.dragging{cursor:grabbing}#atticRoom{margin:0}.attic-pan-hint{position:absolute;left:50%;top:86px;z-index:20;transform:translateX(-50%);padding:8px 12px;border:1px solid rgba(197,149,74,.55);border-radius:999px;background:rgba(20,12,7,.78);color:#f0d99b;font:800 10px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;pointer-events:none;box-shadow:0 10px 28px rgba(0,0,0,.5);opacity:0;animation:atticPanHint 3.4s ease forwards}@keyframes atticPanHint{0%{opacity:0;transform:translateX(-50%) translateY(-8px)}14%{opacity:1;transform:translateX(-50%) translateY(0)}78%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-8px)}}}
+@media (min-width:999999px){#atticPan{overflow:hidden;display:flex;justify-content:center;align-items:flex-start}#atticRoom{margin:0 auto}}
+@media (max-width:999999px){#atticPan{display:block;cursor:grab}#atticPan.dragging{cursor:grabbing}#atticRoom{margin:0}.attic-pan-hint{position:absolute;left:50%;top:86px;z-index:20;transform:translateX(-50%);padding:8px 12px;border:1px solid rgba(197,149,74,.55);border-radius:999px;background:rgba(20,12,7,.78);color:#f0d99b;font:800 10px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;pointer-events:none;box-shadow:0 10px 28px rgba(0,0,0,.5);opacity:0;animation:atticPanHint 3.4s ease forwards}@keyframes atticPanHint{0%{opacity:0;transform:translateX(-50%) translateY(-8px)}14%{opacity:1;transform:translateX(-50%) translateY(0)}78%{opacity:1;transform:translateX(-50%) translateY(0)}100%{opacity:0;transform:translateX(-50%) translateY(-8px)}}}
 
 /* Attic tutorial callout patch */
 #atticTutorial{position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;padding:0 0 120px;pointer-events:none;opacity:0;transition:opacity .45s ease}
 #atticTutorial.show{opacity:1;pointer-events:auto}
-.attic-tut-card{background:rgba(14,8,4,.90);border:1px solid rgba(194,148,75,.6);border-radius:12px;padding:18px 24px;max-width:min(86vw,420px);width:100%;box-shadow:0 18px 52px rgba(0,0,0,.72),0 0 24px rgba(255,196,80,.12);text-align:center;margin-bottom:14px}
+.attic-tut-card{background:rgba(14,8,4,.90);border:1px solid rgba(194,148,75,.6);border-radius:12px;padding:18px 24px;max-width:min(86cqw,420px);width:100%;box-shadow:0 18px 52px rgba(0,0,0,.72),0 0 24px rgba(255,196,80,.12);text-align:center;margin-bottom:14px}
 .attic-tut-card h4{margin:0 0 8px;font:700 15px Georgia,serif;color:#ffd978;text-shadow:0 2px 8px rgba(0,0,0,.8);letter-spacing:.02em}
 .attic-tut-card p{margin:0;font:400 13px Georgia,serif;color:#c8ae82;line-height:1.55}
 .attic-tut-card em{color:#ffd978;font-style:normal;font-weight:700}
@@ -158,7 +158,7 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 #atticScene #obalsHud .obals-icon{display:none!important}
 .attic-obal-label{font:800 10px system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#b99a5d}
 .attic-obal-count{font:900 18px Georgia,serif;color:#ffd978;text-shadow:0 2px 8px rgba(0,0,0,.85);font-variant-numeric:tabular-nums}
-#atticTableReturn{position:absolute;left:50%;bottom:-10px;z-index:28;width:min(84vw,560px);height:76px;transform:translateX(-50%);border:1px solid rgba(117,70,33,.9);border-bottom:0;border-radius:52% 52% 0 0/78% 78% 0 0;background:radial-gradient(ellipse at center top,rgba(139,83,42,.96),rgba(73,38,18,.98) 62%,rgba(28,14,8,1));box-shadow:0 -9px 30px rgba(0,0,0,.62),inset 0 8px 18px rgba(255,196,105,.12),inset 0 -14px 22px rgba(0,0,0,.42);color:#f3d79a;cursor:pointer;font:900 11px system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;text-shadow:0 2px 8px rgba(0,0,0,.9);-webkit-tap-highlight-color:transparent;outline:none;appearance:none;-webkit-appearance:none;user-select:none;touch-action:manipulation}
+#atticTableReturn{position:absolute;left:50%;bottom:-10px;z-index:28;width:min(84cqw,560px);height:76px;transform:translateX(-50%);border:1px solid rgba(117,70,33,.9);border-bottom:0;border-radius:52% 52% 0 0/78% 78% 0 0;background:radial-gradient(ellipse at center top,rgba(139,83,42,.96),rgba(73,38,18,.98) 62%,rgba(28,14,8,1));box-shadow:0 -9px 30px rgba(0,0,0,.62),inset 0 8px 18px rgba(255,196,105,.12),inset 0 -14px 22px rgba(0,0,0,.42);color:#f3d79a;cursor:pointer;font:900 11px system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;text-shadow:0 2px 8px rgba(0,0,0,.9);-webkit-tap-highlight-color:transparent;outline:none;appearance:none;-webkit-appearance:none;user-select:none;touch-action:manipulation}
 #atticTableReturn::before{content:'';position:absolute;left:8%;right:8%;top:14px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,210,130,.34),transparent)}
 #atticTableReturn span{position:relative;top:-4px}
 #atticTableReturn:hover,#atticTableReturn:active{filter:brightness(1.08);background:radial-gradient(ellipse at center top,rgba(139,83,42,.96),rgba(73,38,18,.98) 62%,rgba(28,14,8,1))}
@@ -166,9 +166,9 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 /* Attic tutorial copy cleanup patch */
 
 /* Pill mobile spread patch */
-@media (max-width: 640px) {
-  .reserve-pill{transform:translateX(calc(-25vw + 57px))}
-  .discards-pill{transform:translateX(calc(25vw - 57px))}
+@media (max-width:999999px) {
+  .reserve-pill{transform:translateX(calc(-25cqw + 57px))}
+  .discards-pill{transform:translateX(calc(25cqw - 57px))}
 }
 
 /* physical hand controls patch */
@@ -176,7 +176,7 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 
 /* Get up and swipe hint patch */
 #handSwipeZone.hand-swipe-zone{height:121px!important;bottom:197px!important}
-@media(max-width:640px){#handSwipeZone.hand-swipe-zone{height:97px!important;bottom:152px!important}}
+@media(max-width:999999px){#handSwipeZone.hand-swipe-zone{height:97px!important;bottom:152px!important}}
 /* Show one swipe-help step at a time. Each one advances only after its matching gesture. */
 #handSwipeZone .hand-swipe-hint{display:flex!important;align-items:center;justify-content:center;transform:translate(-50%,-50%)!important}
 #handSwipeZone .swipe-hint-line{position:static!important;transform:none!important;animation:none!important;opacity:1!important;display:none!important}
@@ -185,7 +185,7 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 #settingsPanel .settings-action.get-up-action{margin-top:6px;background:rgba(194,148,75,.18);color:#ffd978;border-color:rgba(194,148,75,.7)}
 
 /* relic rack below-spread mobile patch */
-@media (max-width: 640px) {
+@media (max-width:999999px) {
   .relic-rack{position:fixed!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;width:100%!important;left:0!important;right:0!important;top:calc(46vh + 72px)!important;bottom:auto!important;transform:none!important;margin:0!important;gap:8px!important;z-index:11!important}
   .relic-rack .relic-btn{width:38px!important;height:38px!important}
   .relic-rack .relic-slot-empty{width:38px!important;height:38px!important}

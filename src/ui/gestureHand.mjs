@@ -24,7 +24,6 @@ export function installHandSwipeScroll(target = window){
   const OFFSET_LIMIT=30;                             // hard cap on slide deg
   const DEG_PER_PX_SWIPE=0.11;                       // swipe pixels -> degrees of slide
   const DEG_PER_PX_PINCH=0.013;                      // pinch pixels -> degrees of spacing
-  const HAND_LIFT_PX=38;
   const HAND_LIFT_PX_MOBILE=30;
   const DEG_PER_SIDE_SCROLL=0.08;
   let momentumRaf=null,liftMomentumRaf=null,driftLiftRaf=null;
@@ -132,7 +131,7 @@ export function installHandSwipeScroll(target = window){
     const halfSpan=(n-1)/2*spacing;
     const R=trackRadius();
     const view=dockW();
-    const cardW=target.innerWidth<640?100:130;
+    const cardW=100; // mobile card width is forced everywhere
     const halfFit=Math.max(0,(view-cardW)/2);
     const fitAngleRad=Math.asin(Math.min(.95,halfFit/R));
     const fitAngleDeg=fitAngleRad*180/Math.PI;
@@ -157,7 +156,7 @@ export function installHandSwipeScroll(target = window){
     // match that priority so the gesture/autofit controller remains authoritative.
     h.style.setProperty('--track-spacing',d.toFixed(3)+'deg','important');
   };
-  const liftCap=()=>target.innerWidth<640?HAND_LIFT_PX_MOBILE:HAND_LIFT_PX;
+  const liftCap=()=>HAND_LIFT_PX_MOBILE; // mobile lift cap is forced everywhere
   const clampLift=y=>Math.max(-liftCap(),Math.min(liftCap(),y));
   const softClampLift=y=>{const c=liftCap();if(y>c)return c+(y-c)*RUBBER;if(y<-c)return -c+(y+c)*RUBBER;return y;};
   const applyLift=y=>{const h=handEl();if(!h)return;lift=y;h.style.setProperty('--hand-lift-y',y.toFixed(1)+'px');};
@@ -179,7 +178,7 @@ export function installHandSwipeScroll(target = window){
     const n=cardCount();
     if(n<=1)return null;
     const R=trackRadius();
-    if(cachedCardW==null)cachedCardW=h.querySelector('.card')?.offsetWidth||(target.innerWidth<640?100:130);
+    if(cachedCardW==null)cachedCardW=h.querySelector('.card')?.offsetWidth||100;
     const cardW=cachedCardW;
     const view=dockW();
     const halfWidth=(view-cardW-16)/2;
@@ -372,9 +371,9 @@ export function installHandSwipeScroll(target = window){
     const dy=(ev.clientY||startY)-startY;
     // Flush gesture: drag 2/3 of the hand dock below the screen edge.
     if(dy>startDockH*2/3&&typeof target.flushHand==='function'){endGesture();target.flushHand();return;}
-    const _desktopDir=target.matchMedia('(pointer:fine)').matches?-1:1;const targetOffset=softClamp(startOffset+dx*DEG_PER_PX_SWIPE*_desktopDir);
+    const targetOffset=softClamp(startOffset+dx*DEG_PER_PX_SWIPE);
     if(Math.abs(targetOffset-startOffset)>1.15)completeHandHintStep(1);
-    const _desktopYDir=target.matchMedia('(pointer:fine)').matches?-1:1;const y=softClampLift(startLift+dy*_desktopYDir);
+    const y=softClampLift(startLift+dy);
     applyOffset(targetOffset);
     applyLift(y);
     const now=performance.now();
@@ -524,7 +523,7 @@ export function installHandSwipeScroll(target = window){
   };
   // ── Desktop scroll-wheel: scroll down = constrict, scroll up = expand ──
   (function(){
-    const isDesktop=()=>target.matchMedia('(pointer:fine)').matches;
+    const isDesktop=()=>false; // mobile layout/behavior is forced everywhere
     // Swap hint text for desktop on first opportunity
     const setHintText=()=>{
       const l2=document.getElementById('handHintLine2');
@@ -540,7 +539,6 @@ export function installHandSwipeScroll(target = window){
     };
     if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',setHintText);}
     else{setHintText();}
-    target.matchMedia('(pointer:fine)').addEventListener('change',setHintText);
 
     // Scroll to adjust spacing; horizontal scroll drifts the hand side-to-side.
     const DEG_PER_SCROLL=0.012;  // degrees of spacing per pixel of vertical scroll delta

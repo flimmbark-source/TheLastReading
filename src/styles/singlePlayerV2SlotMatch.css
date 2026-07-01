@@ -1,7 +1,7 @@
 /* Final mobile shell corrections layered after the generated art styles. */
-@media (max-width: 640px) {
+@media (max-width:999999px) {
   body.single-player-v2.generated-sheet-ready {
-    --spv2-live-card-w: clamp(78px, 22vw, 96px);
+    --spv2-live-card-w: clamp(78px, 22cqw, 96px);
     --spv2-live-card-h: calc(var(--spv2-live-card-w) * 1.5);
     --spv2-slot-w: var(--spv2-live-card-w);
     --spv2-slot-h: var(--spv2-live-card-h);
@@ -15,11 +15,11 @@
 
   body.single-player-v2.generated-sheet-ready .spread {
     min-height: calc(var(--spv2-live-card-h) + 24px);
-    padding-inline: 1vw;
+    padding-inline: 1cqw;
   }
 
   body.single-player-v2.generated-sheet-ready .slot {
-    margin-left: -7.2vw;
+    margin-left: -7.2cqw;
     flex: 0 0 var(--spv2-live-card-w);
   }
 
@@ -66,7 +66,7 @@
     top: 1.2dvh;
     text-align: center;
     font-family: Georgia, "Times New Roman", serif;
-    font-size: clamp(15px, 4.5vw, 22px);
+    font-size: clamp(15px, 4.5cqw, 22px);
     line-height: 1;
     letter-spacing: .12em;
     color: #b68a48;
@@ -90,20 +90,20 @@
   body.single-player-v2.generated-sheet-ready #scoringBtn,
   body.single-player-v2.generated-sheet-ready #menuBtn {
     display: block !important;
-    width: clamp(44px, 11.5vw, 56px) !important;
-    height: clamp(44px, 11.5vw, 56px) !important;
+    width: clamp(44px, 11.5cqw, 56px) !important;
+    height: clamp(44px, 11.5cqw, 56px) !important;
     border-radius: 50% !important;
   }
 
   body.single-player-v2.generated-sheet-ready .actions {
-    left: 3.8vw !important;
+    left: 3.8cqw !important;
     right: auto !important;
     top: 23.7dvh !important;
   }
 
   body.single-player-v2.generated-sheet-ready #menuBtn {
     left: auto !important;
-    right: 3.8vw !important;
+    right: 3.8cqw !important;
     top: 23.7dvh !important;
   }
 
@@ -130,8 +130,8 @@
     right: 0 !important;
     bottom: max(1.2dvh, env(safe-area-inset-bottom)) !important;
     width: 100% !important;
-    height: clamp(66px, 17vw, 82px);
-    padding: 0 5vw !important;
+    height: clamp(66px, 17cqw, 82px);
+    padding: 0 5cqw !important;
     transform: none !important;
     display: flex !important;
     justify-content: space-between !important;
@@ -152,8 +152,8 @@
 
   body.single-player-v2.generated-sheet-ready #discardBtn,
   body.single-player-v2.generated-sheet-ready #purgeBtn {
-    width: clamp(58px, 15.5vw, 72px) !important;
-    height: clamp(66px, 17.5vw, 80px) !important;
+    width: clamp(58px, 15.5cqw, 72px) !important;
+    height: clamp(66px, 17.5cqw, 80px) !important;
     min-width: 0 !important;
   }
 }

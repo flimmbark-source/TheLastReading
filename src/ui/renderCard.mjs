@@ -106,8 +106,8 @@ function ensureCardDetailStyles(target=window){
   style.id='card-detail-style';
   style.textContent=`
     .card-detail-backdrop{position:fixed;inset:0;z-index:10020;background:rgba(0,0,0,.58);display:flex;align-items:center;justify-content:center;padding:18px;animation:cardDetailFade .14s ease-out both}
-    .card-detail-panel{position:relative;width:min(92vw,420px);max-height:min(88vh,720px);overflow:auto;border:1px solid rgba(228,188,111,.52);border-radius:16px;background:linear-gradient(180deg,rgba(38,28,21,.97),rgba(15,12,11,.98));box-shadow:0 24px 64px rgba(0,0,0,.72),inset 0 0 24px rgba(224,176,89,.08);color:#eadbb9;font-family:Georgia,serif;padding:16px;text-align:center}
-    .card-detail-card{width:min(58vw,190px);aspect-ratio:2.5/3.5;margin:0 auto 12px;border-radius:12px;overflow:hidden;box-shadow:0 12px 28px rgba(0,0,0,.56)}
+    .card-detail-panel{position:relative;width:min(92cqw,420px);max-height:min(88vh,720px);overflow:auto;border:1px solid rgba(228,188,111,.52);border-radius:16px;background:linear-gradient(180deg,rgba(38,28,21,.97),rgba(15,12,11,.98));box-shadow:0 24px 64px rgba(0,0,0,.72),inset 0 0 24px rgba(224,176,89,.08);color:#eadbb9;font-family:Georgia,serif;padding:16px;text-align:center}
+    .card-detail-card{width:min(58cqw,190px);aspect-ratio:2.5/3.5;margin:0 auto 12px;border-radius:12px;overflow:hidden;box-shadow:0 12px 28px rgba(0,0,0,.56)}
     .card-detail-card .card{width:100%;height:100%;transform:none!important;position:relative!important;left:auto!important;top:auto!important;pointer-events:none}
     .card-detail-title{font-size:23px;line-height:1.08;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#f2dfb8;text-shadow:0 2px 3px #000;margin:8px 0 6px}
     .card-detail-meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:0 0 12px;font:800 11px system-ui,Segoe UI,sans-serif;text-transform:uppercase;letter-spacing:.08em;color:#d19c51}

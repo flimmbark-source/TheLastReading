@@ -7,7 +7,7 @@
 
 @keyframes tlr-card-deal-in{
   0%{
-    translate:calc(100vw + 180px) -16dvh;
+    translate:calc(100cqw + 180px) -16dvh;
     rotate:16deg;
     scale:.88;
     opacity:0;
@@ -35,14 +35,14 @@
   }
 }
 
-@media(max-width:640px){
+@media(max-width:999999px){
   .hand .card.card-draw-dealt{
     animation-duration:520ms!important;
   }
 
   @keyframes tlr-card-deal-in{
     0%{
-      translate:calc(100vw + 140px) -11dvh;
+      translate:calc(100cqw + 140px) -11dvh;
       rotate:14deg;
       scale:.9;
       opacity:0;

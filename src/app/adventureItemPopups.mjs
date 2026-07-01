@@ -128,7 +128,7 @@ function ensureStyle(doc) {
     .adv-item-callout__hint{color:#c5a66d}
     @media(max-width:640px){
       .adv-item-art--compact{width:29px;height:29px}.adv-item-art--compact .adv-item-art__glyph{font-size:18px}
-      .adv-item-callout{max-width:min(240px,calc(100vw - 16px))}
+      .adv-item-callout{max-width:min(240px,calc(100cqw - 16px))}
     }
   `;
   doc.head.appendChild(style);

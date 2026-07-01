@@ -42,7 +42,7 @@ function installHandIdleAnimation(target){
   const maxUpwardLift=()=>{
     const dock=document.querySelector('.handDock');
     const dockTop=dock?.getBoundingClientRect().top??target.innerHeight;
-    const safeTop=target.innerWidth<640?72:96;
+    const safeTop=72; // mobile safe-top offset is forced everywhere
     return Math.max(30,dockTop-safeTop);
   };
   const clampUserLift=value=>Math.max(-maxUpwardLift(),Math.min(0,Number.isFinite(value)?value:0));
@@ -224,7 +224,7 @@ function installAmbientMotes(target){
 
   target.__tlrAmbientMotesInstalled=true;
 
-  const isMobile=()=>target.innerWidth<=640;
+  const isMobile=()=>true; // mobile layout/behavior is forced everywhere
   const maxMotes=()=>isMobile()?8:16;
 
   function makeMote(seed=false){
