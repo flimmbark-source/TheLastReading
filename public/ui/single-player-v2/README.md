@@ -28,7 +28,7 @@ Do not bake labels, values, progress bars, button counts, or live cards into the
 
 The prepared integration layer is:
 
-`src/styles/singlePlayerV2Assets.css`
+`src/styles/singlePlayerV2/assets.css`
 
 It is intentionally not loaded until the asset files exist and Batch A has passed review.
 
@@ -60,7 +60,7 @@ Live **values** (Reserve/Score counts, the VS divider, the threshold progress
 bar, card faces) are drawn by the DOM on top — they must not be baked in. The
 panel **labels and stat icons** are intentionally baked into the panel art, so
 the CSS-generated duplicates are suppressed in
-`src/styles/singlePlayerV2ArtIntegration.css`.
+`src/styles/singlePlayerV2/components/artIntegration.css`.
 
 ### Regenerating the tiles
 
