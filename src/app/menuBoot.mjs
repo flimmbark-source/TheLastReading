@@ -172,6 +172,9 @@ window.tlrShowMainMenu = function () {
   el.hidden = false;
   el.setAttribute('aria-hidden', 'false');
   el.classList.remove('mm-hidden');
+  document.body.classList.add('main-menu-active');
+  document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
+  document.getElementById('tlrBootCurtain')?.classList.remove('show');
   syncContinueButton();
 };
 

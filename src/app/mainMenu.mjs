@@ -100,6 +100,7 @@ export function installMainMenu(target = window) {
     el.classList.add('mm-hidden');
     el.setAttribute('aria-hidden', 'true');
     if ('inert' in el) el.inert = true;
+    target.document.body.classList.remove('main-menu-active');
     // Delay display:none until after the 0.35s opacity fade-out finishes,
     // so the game never shows through while the overlay is still fading.
     setTimeout(() => { if (el.classList.contains('mm-hidden')) el.hidden = true; }, 400);
@@ -112,6 +113,9 @@ export function installMainMenu(target = window) {
     if ('inert' in el) el.inert = false;
     el.setAttribute('aria-hidden', 'false');
     el.classList.remove('mm-hidden', 'main-menu-busy');
+    target.document.body.classList.add('main-menu-active');
+    target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
+    hideCurtain();
     // The lightweight boot loader disables every menu button while it loads the
     // game module and only restores them on failure, so a button left disabled
     // there would make this menu dead when we return to it. Once the game is
@@ -231,7 +235,8 @@ export function installMainMenu(target = window) {
   }
 
   async function startSingleplayer({ fresh = false } = {}) {
-    target.document.body.classList.add('main-menu-mode-booting');
+    target.document.body.classList.add('main-menu-mode-booting', 'main-menu-blackout');
+    hide();
     await showCurtain();
     try {
       if (fresh) startFresh();
@@ -244,6 +249,7 @@ export function installMainMenu(target = window) {
         await waitForSinglePlayerSkin();
         clearSingleplayerBootVeil();
         hideCurtain();
+        target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
         // The initial deal already ran (and its draw animation already played
         // out and was consumed) while it was hidden behind the curtain/veil —
         // requestAnimationFrame keeps ticking regardless of visibility, so by
@@ -259,19 +265,20 @@ export function installMainMenu(target = window) {
         }
       } else {
         console.error('The Last Reading: startReading is not available from the main menu.');
-        target.document.body.classList.remove('main-menu-mode-booting');
+        target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
         hideCurtain();
         show();
       }
     } catch (err) {
       console.error('The Last Reading: failed to start singleplayer from the main menu.', err);
-      target.document.body.classList.remove('main-menu-mode-booting');
+      target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
       hideCurtain();
       show();
     }
   }
 
   target.tlrShowMainMenu = show;
+  target.tlrHideMainMenu = hide;
 
   target.tlrMainMenuNewGame = function () {
     return startSingleplayer({ fresh: true });
@@ -284,30 +291,43 @@ export function installMainMenu(target = window) {
   target.tlrMainMenuAdventure = async function () {
     // Hand off to the self-contained Adventure Mode overlay. It restores the
     // main menu itself (via tlrReturnToMenu) when the player leaves.
+    target.document.body.classList.add('main-menu-mode-booting', 'main-menu-blackout');
     hide();
-    // menuBoot.mjs's boot-time stub awaits __tlrInstallAdventureModules()
-    // before ever calling this function, but that stub only wraps the very
-    // first click through the cold-boot path — main.mjs's bulk install
-    // overwrites window.tlrMainMenuAdventure with this function directly, so
-    // any later click (e.g. after tlrReturnToMenu()) reaches here without
-    // that await ever having happened. Load the adventure modules here too
-    // so this function is self-sufficient regardless of how it was reached.
-    if (typeof target.tlrStartAdventure !== 'function' && typeof target.__tlrInstallAdventureModules === 'function') {
-      try {
-        await target.__tlrInstallAdventureModules();
-      } catch (err) {
-        console.error('The Last Reading: Adventure Mode failed to load.', err);
-      }
-    }
-    if (typeof target.tlrStartAdventure === 'function') {
-      target.tlrStartAdventure();
-      target.setTimeout(() => {
-        if (target.__tlrAdventureActive && typeof target.maybeShowAdventureTutorial === 'function') {
-          target.maybeShowAdventureTutorial();
+    await showCurtain();
+    try {
+      // menuBoot.mjs's boot-time stub awaits __tlrInstallAdventureModules()
+      // before ever calling this function, but that stub only wraps the very
+      // first click through the cold-boot path — main.mjs's bulk install
+      // overwrites window.tlrMainMenuAdventure with this function directly, so
+      // any later click (e.g. after tlrReturnToMenu()) reaches here without
+      // that await ever having happened. Load the adventure modules here too
+      // so this function is self-sufficient regardless of how it was reached.
+      if (typeof target.tlrStartAdventure !== 'function' && typeof target.__tlrInstallAdventureModules === 'function') {
+        try {
+          await target.__tlrInstallAdventureModules();
+        } catch (err) {
+          console.error('The Last Reading: Adventure Mode failed to load.', err);
         }
-      }, 500);
-    } else {
-      console.error('The Last Reading: Adventure Mode is not available.');
+      }
+      if (typeof target.tlrStartAdventure === 'function') {
+        target.tlrStartAdventure();
+        hideCurtain();
+        target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
+        target.setTimeout(() => {
+          if (target.__tlrAdventureActive && typeof target.maybeShowAdventureTutorial === 'function') {
+            target.maybeShowAdventureTutorial();
+          }
+        }, 500);
+      } else {
+        console.error('The Last Reading: Adventure Mode is not available.');
+        hideCurtain();
+        target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
+        show();
+      }
+    } catch (err) {
+      console.error('The Last Reading: Adventure Mode failed to start.', err);
+      hideCurtain();
+      target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
       show();
     }
   };
@@ -363,6 +383,9 @@ export function installMainMenu(target = window) {
   }
 
   target.tlrReturnToMenu = function () {
+    if (typeof target.tlrMpLeave === 'function' && target.document.body.classList.contains('mp-game-active')) {
+      return target.tlrMpLeave();
+    }
     if (typeof target.tutHide === 'function') target.tutHide();
     // Close any open sub-panels before showing the menu
     const panel = target.document.getElementById('settingsPanel');

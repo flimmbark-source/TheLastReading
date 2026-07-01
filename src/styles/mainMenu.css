@@ -8,6 +8,7 @@
 @media(prefers-reduced-motion:reduce){#tlrBootCurtain{transition:none}}
 /* Main menu — preserve the full-screen atmosphere and clarify the choice hierarchy */
 #mainMenu{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));overflow-y:auto;background-color:#080503;background-image:url(../../assets/background.webp);background-size:cover;background-position:center top;transition:opacity .35s ease}
+body.main-menu-active #mainMenu{z-index:2147484000}
 #mainMenu::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center 40%,transparent 0%,rgba(8,5,3,.55) 100%);pointer-events:none}
 #mainMenu.mm-hidden{opacity:0;pointer-events:none}
 #mainMenu[hidden]{display:none!important}
@@ -43,6 +44,9 @@ body.tlr-loading :where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-la
    the "single-player-v2" skin assets finish loading is masked, and lifting
    the veil once they're ready reads as a fade-in instead of a hard pop. */
 body.main-menu-mode-booting :where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,.spread-actions,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal){opacity:0;pointer-events:none}
+body.main-menu-blackout #mainMenu{opacity:0;transition:opacity .3s ease}
+body.main-menu-blackout #mainMenu::before{opacity:0;transition:opacity .3s ease}
+body.main-menu-blackout #tlrBootCurtain{opacity:1;pointer-events:auto}
 .main-menu-coming-soon{margin-top:2px;color:#5a4828;font:400 11px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
 .main-menu-toggle{display:flex;align-items:center;gap:8px;margin-top:2px;color:#b09060;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.8);cursor:pointer;user-select:none}
 .main-menu-toggle input{accent-color:#d9b35f;cursor:pointer}
