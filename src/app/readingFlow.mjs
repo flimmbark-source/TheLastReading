@@ -11,7 +11,7 @@
    getUnlockedFragments, render, refreshHandState,
    ghost, bump, centerGhost, fireMultGhost, fireScoreGhost, holdEffects, fireChipProjectile,
    meldStr, normMeldName, sortCards, cardDisplayName, cleanName, choice,
-   buildDeck, shuffle, drawN, slotsForMeld,
+   buildDeck, shuffle, drawN, slotsForMeld, playSound, haptic, meldMagnitude,
    tlrSyncPersistToStore, tlrStoreReady, tlrResolveAbilityThroughStore,
    tlrAbilityDraw, openShop,
    maxHand, hasMull, tlrArchitectureSync, tlrScoreToObals */
@@ -26,7 +26,7 @@ const SCORE_COUNTER_AFTER_CHIP_MS=980;
 function setBusy(v){state.busy=v;if(tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.SET_BUSY,busy:v});}
 function syncPurgeFromStore(){const run=window.tlrStore.getState().run;state.purgeSelect=Array.isArray(run.purge)?run.purge.slice():null;state.hand=run.hand.slice();state.discards=run.discards;}
 
-function legacyScore(score){return {...score,melds:(score.melds||[]).map(m=>Array.isArray(m)?m:[m.name,m.chips,m.mult,m.mode])}}
+function legacyScore(score){return {...score,melds:(score.melds||[]).map(m=>Array.isArray(m)?m:[m.name,m.chips,m.mult,m.mode,m.source||null])}}
 function syncRoundFields(_run){
   state.th=_run.thresholdIndex??state.th??0;
   state.setIndex=_run.setIndex||0;
@@ -50,7 +50,7 @@ export function getUpFromTable(){
   if(window.tlrCloseArchives)window.tlrCloseArchives();
   const panel=document.getElementById('settingsPanel');if(panel)panel.classList.add('hidden');
   const mw=document.getElementById('menuPullWrap');if(mw&&mw.classList.contains('open')){mw.classList.remove('open');const mt=document.getElementById('menuPullTab');if(mt)mt.innerHTML='&#9660; Menu';}
-  showOverlay(`<div class="result-panel"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3>Rise from the Table?</h3></div><p style="color:#8a7551;font-size:13px;text-align:center;margin:0 0 22px;line-height:1.5">The cards will be left as they are.<br>Your session ends here.</p><div class="rbtns"><button onclick="clearOverlay()">Stay</button><button class="btn-gold" onclick="clearOverlay();endSession()">Leave the Reading</button></div></div>`);
+  showOverlay(`<div class="result-panel"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3>Rise from the Table?</h3></div><p style="color:#8a7551;font-size:13px;text-align:center;margin:0 0 22px;line-height:1.5">The cards will be left as they are.<br>Your session ends here.</p><div class="rbtns"><button onclick="clearOverlay()">Stay</button><button class="btn-gold" onclick="clearOverlay();endSession(true)">Leave the Reading</button></div></div>`);
 }
 
 export function flushHand(){
@@ -143,8 +143,11 @@ export function placeCard(i){
     let ghostDelay=delay+slots.length*130+120;
     const _rk=_relicMeldNameToKey.get(m[0])||null;
     setTimeout(()=>ghost(anchor,meldStr(m),true,_rk),ghostDelay);
-    if(!_relicMeldNames.has(m[0])&&m[0]!=='Omen'&&m[0]!=='Resonance')
-      setTimeout(()=>{centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5);playSound('meld');haptic([0,10,35,12]);},delay+announceOffset);
+    if(_relicMeldNames.has(m[0])){
+      setTimeout(()=>{playSound('relic');haptic([0,14,30]);},ghostDelay);
+    }else if(m[0]!=='Omen'&&m[0]!=='Resonance'){
+      setTimeout(()=>{centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5);playSound('meld',meldMagnitude(m[1],m[2],m[3]==='add'));haptic([0,10,35,12]);},delay+announceOffset);
+    }
     if(m[2]>0){const _mg=m[3]==='add'?m[2]:m[2]-1;const multLabel=('+'+Number(_mg).toFixed(2)).replace(/\.?0+$/,'');setTimeout(()=>fireMultGhost(multLabel),ghostDelay+200);}
     holdEffects(ghostDelay+1700);
     delay+=slots.length*130+700;announceOffset+=600;
@@ -229,20 +232,26 @@ export async function resolveAbility(ab, done, sourceCard = null) {
 
   setBusy(true);
 
-  const abilityChoice = await buildAbilityChoiceAsync(
-    ability,
-    { deck: state.deck, hand: state.hand, spread: state.spread.filter(Boolean), sourceCardUid: sourceCard?.uid ?? null },
-    {
-      showChoice:    (t, p, cards) => choiceAsync(t, p, cards),
-      selectTargets: (t, p, cards, count, previewFn) => new Promise(resolve => selectFromHand(t, p, cards, count, (...picked) => resolve(picked), previewFn)),
-      sortCards:     cards => sortCards(cards.slice()),
-      cleanName:     card => cleanName(card),
-      shuffleDeck:   cards => shuffle([...cards]),
-      isTargetable:  card => !isTargetBlocked(card),
-    },
-  );
-
-  if (!abilityChoice) { setBusy(false); return; }
+  // The source card is already discarded — that commitment doesn't undo.
+  // Cancelling a step (null) means "let me reconsider", so it loops back to
+  // a fresh targeting attempt rather than aborting the ability. Bounded:
+  // each iteration requires an explicit player action, and "no valid
+  // targets" resolves truthy via the fallback branch below, not null.
+  let abilityChoice = null;
+  while (!abilityChoice) {
+    abilityChoice = await buildAbilityChoiceAsync(
+      ability,
+      { deck: state.deck, hand: state.hand, spread: state.spread.filter(Boolean), sourceCardUid: sourceCard?.uid ?? null },
+      {
+        showChoice:    (t, p, cards) => choiceAsync(t, p, cards),
+        selectTargets: (t, p, cards, count, previewFn) => new Promise(resolve => selectFromHand(t, p, cards, count, (...picked) => resolve(picked), previewFn)),
+        sortCards:     cards => sortCards(cards.slice()),
+        cleanName:     card => cleanName(card),
+        shuffleDeck:   cards => shuffle([...cards]),
+        isTargetable:  card => !isTargetBlocked(card),
+      },
+    );
+  }
 
   if (abilityChoice.kind === 'fallback') {
     // fallbackAbility draws 1, shows it, then calls done() and setBusy(false) internally.
@@ -263,7 +272,28 @@ export async function resolveAbility(ab, done, sourceCard = null) {
   done();
 }
 
-function peek(n, done) { setBusy(true); let cards = []; for (let i = 0; i < n; i++) { if (!state.deck.length && state.discard.length) state.deck = shuffle(state.discard.splice(0)); if (!state.deck.length) break; cards.push(state.deck.shift()); } if (!cards.length) { setBusy(false); done(); return; } choice('Peek ' + n, 'Pick one. The rest go to the bottom.', cards, p => { tlrResolveAbilityThroughStore({ kind: 'take', heldCards: cards, takenCardId: p.uid }); setBusy(false); done(); }); }
+// Cancelling restores the peeked cards to the deck and re-peeks, matching
+// resolveAbility's "never abandon, always loop back to a fresh decision"
+// rule — Peek shifts cards off the deck eagerly (before the modal opens),
+// so without this the cards would be lost on cancel instead of returned.
+function peek(n, done) {
+  setBusy(true);
+  function attempt() {
+    let cards = [];
+    for (let i = 0; i < n; i++) {
+      if (!state.deck.length && state.discard.length) state.deck = shuffle(state.discard.splice(0));
+      if (!state.deck.length) break;
+      cards.push(state.deck.shift());
+    }
+    if (!cards.length) { setBusy(false); done(); return; }
+    choice('Peek ' + n, 'Pick one. The rest go to the bottom.', cards, p => {
+      if (!p) { state.deck.unshift(...cards); attempt(); return; }
+      tlrResolveAbilityThroughStore({ kind: 'take', heldCards: cards, takenCardId: p.uid });
+      setBusy(false); done();
+    });
+  }
+  attempt();
+}
 function fallbackAbility(done, title = 'No valid ability result') { tlrAbilityDraw(1); choice(title, 'No valid target was available. Draw 1 instead.', state.hand.slice(-1), () => { setBusy(false); done(); }); }
 
 export function selectFromHand(title, prompt, cards, count, cb, previewFn = null) {
@@ -383,11 +413,25 @@ let html=`<div class="result-panel ${pass?'pass':'fail'}">`;
 html+=`<div class="rhead"><h3 class="${pass?'pass':'fail'}">${title}</h3></div>`;
 html+=`<div class="rscore"><span class="rsc">${previousRoundScore}</span><span class="rop">+</span><span class="rsm">${total}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${roundTotal}</span></div>`;
 html+='<hr class="rdiv"><table class="rtable">';
-const _regMelds=res.melds.filter(m=>!m[0].startsWith('⚷'));const _resMelds=res.melds.filter(m=>m[0].startsWith('⚷'));
-if(_regMelds.length||_resMelds.length){
-  _regMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);
-  _resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});
+// Three conceptual layers instead of one flat list: card points & patterns
+// (including hidden Resonance reveals), relics & status, then the combined
+// multiplier as its own line right before the total. meld.source already
+// distinguishes relic melds (see relics.mjs) from pattern/upgrade ones.
+const _relicMelds=res.melds.filter(m=>m[4]==='relic');
+const _patternMelds=res.melds.filter(m=>m[4]!=='relic'&&!m[0].startsWith('⚷'));
+const _resMelds=res.melds.filter(m=>m[4]!=='relic'&&m[0].startsWith('⚷'));
+if(_patternMelds.length||_resMelds.length||_relicMelds.length){
+  if(_patternMelds.length||_resMelds.length){
+    html+='<tr class="grouprow"><td colspan="2">Card Points &amp; Patterns</td></tr>';
+    _patternMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);
+    _resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});
+  }
+  if(_relicMelds.length){
+    html+='<tr class="grouprow"><td colspan="2">Relics &amp; Status</td></tr>';
+    _relicMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);
+  }
 }else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}
+if(res.mult>1)html+=`<tr class="multrow"><td>Multiplier</td><td class="r">×${res.mult.toFixed(2)}</td></tr>`;
 html+=`<tr class="totrow"><td>Round total</td><td class="r">${roundTotal} / ${curTH}</td></tr>`;
 if(pass){const miserBonus=persist.relics.includes('miser')?5:0;
 {const _st=window.tlrStore.getState();
@@ -401,7 +445,7 @@ html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${roundTotal}$
 html+='</table><div class="rbtns">';
 if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}
 else{html+='<button onclick="endSession()">End Session</button>';}
-html+='</div></div>';showOverlay(html);render();}
+html+='</div></div>';playSound(pass?'pass':'fail');haptic(pass?[0,18,40,18,90]:[0,50]);showOverlay(html);render();}
 function tlSyncBeforeScore(){tlrSyncPersistToStore()}
 
 export function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html;tlrArchitectureSync()}
@@ -424,9 +468,12 @@ export function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount
 if(window.tlrStore.getState().run.phase==='market'){window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});const _run=window.tlrStore.getState().run;state.reading=_run.reading;state.constellationId=_run.constellationId||null;state.untargetableCardUids=(_run.untargetableCardIds||[]).slice();}
 startReading();if(pendingRelic){setTimeout(()=>tutShow(9),400)}}
 
-export function endSession(){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;
+export function endSession(skipSummary){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;
 window.tlrStore.dispatch({type:window.tlrActions.END_SESSION,totalScore:total,obals:candles});
-if(summaryIsFailedReading()){clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);return}
+// Getting up early is the player's own choice, not a payoff moment — skip
+// straight to the attic instead of making them tap through a score recap
+// they didn't ask for. A failed reading already skips this screen too.
+if(skipSummary||summaryIsFailedReading()){clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);return}
 showOverlay(`<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">${total}</span></div><span class="rverdict pass">Total Score</span><div class="rscore" style="margin-top:10px"><span class="rsf" style="font-size:32px">${candles}</span></div><span class="rverdict pass">Obals</span><p style="margin:16px 0 0;color:#8a7551;font-size:12px;text-align:center">Tap to close.</p></div>`);const s=document.getElementById('summary');const openedAt=Date.now();const go=function(){if(Date.now()-openedAt<250)return;s.removeEventListener('click',go);clearOverlay();if(window.tlrDebugEnterAttic)window.tlrDebugEnterAttic(candles,true);};s.addEventListener('click',go)}
 
 export function resetSession(){state={deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,thBonus:0,thBonusPending:0,discards:3,mullCharges:0,busy:false,abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0,setIndex:0,setsPerRound:2,roundScore:0,setScores:[],roundDiscardCount:0,roundPatternCount:0,constellationId:null,untargetableCardUids:[],awaitingNextSet:false,lastOutcome:null};

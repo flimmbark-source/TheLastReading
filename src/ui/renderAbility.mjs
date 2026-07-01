@@ -5,6 +5,36 @@
 import { abilityTargetView as selectAbilityTargetView } from '../game/selectors.mjs';
 import { getPendingPreviewFn } from '../app/abilityTargetBridge.mjs';
 
+let activeChoiceCancel=null;
+
+function ensureModalCancelButton(){
+  let cancel=$('#modalCancel');
+  if(cancel)return cancel;
+  const toggle=$('#modalToggle');
+  if(!toggle)return null;
+  let actions=toggle.closest('.modal-head-actions');
+  if(!actions){
+    actions=document.createElement('div');
+    actions.className='modal-head-actions';
+    toggle.parentNode.insertBefore(actions,toggle);
+    actions.appendChild(toggle);
+  }
+  cancel=document.createElement('button');
+  cancel.id='modalCancel';
+  cancel.type='button';
+  cancel.className='modal-cancel';
+  cancel.textContent='Cancel';
+  cancel.hidden=true;
+  cancel.addEventListener('click',()=>{
+    $('#modal').classList.remove('show','collapsed','ability-reveal');
+    const fn=activeChoiceCancel;
+    activeChoiceCancel=null;
+    fn?.();
+  });
+  actions.insertBefore(cancel,toggle);
+  return cancel;
+}
+
 function ensureAbilityCancelButton(){
   let cancel=$('#abilityCancel');
   if(cancel)return cancel;
@@ -27,7 +57,30 @@ function ensureAbilityCancelButton(){
   return cancel;
 }
 
-export function choice(title,prompt,cards,cb){$('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';let ch=$('#choices');ch.innerHTML='';cards.forEach(c=>{let e=document.createElement('div');e.className='card choice-card '+(c.type==='major'?'major':'');applyHint(e,c,uniqueCards([...state.spread.filter(Boolean),...state.hand,c]));e.innerHTML=cardHTML(c);applyCardPhoto(e,c);e.onclick=()=>{$('#modal').classList.remove('show','collapsed');cb(c)};ch.appendChild(e)});$('#modal').classList.remove('collapsed');$('#modal').classList.add('show');playSound('flip');tlrArchitectureSync()}
+export function choice(title,prompt,cards,cb){
+  // A single candidate isn't a choice — hand it over without popping the modal.
+  if(cards.length===1){activeChoiceCancel=null;playSound('flip');cb(cards[0]);return}
+  $('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';
+  let ch=$('#choices');ch.innerHTML='';
+  cards.forEach(c=>{
+    let e=document.createElement('div');
+    e.className='card choice-card '+(c.type==='major'?'major':'');
+    applyHint(e,c,uniqueCards([...state.spread.filter(Boolean),...state.hand,c]));
+    e.innerHTML=cardHTML(c);applyCardPhoto(e,c);
+    e.onclick=()=>{activeChoiceCancel=null;$('#modal').classList.remove('show','collapsed','ability-reveal');cb(c)};
+    ch.appendChild(e);
+  });
+  // Reaching this modal always means an ability is actively resolving, so
+  // Cancel is unconditionally available — it never touches the discard,
+  // just resolves with no card taken so resolveAbility's retry loop can
+  // re-show targeting from the start.
+  const cancelBtn=ensureModalCancelButton();
+  if(cancelBtn)cancelBtn.hidden=false;
+  activeChoiceCancel=()=>cb(null);
+  $('#modal').classList.remove('collapsed');
+  $('#modal').classList.add('show','ability-reveal');
+  playSound('flip');tlrArchitectureSync()
+}
 
 export function choiceAsync(title,prompt,cards){return new Promise(resolve=>choice(title,prompt,cards,resolve))}
 

@@ -77,34 +77,58 @@ function targeting(target) {
   assert.equal(firstCalls, 0, 'the abandoned first callback is never invoked');
 }
 
-// --- Only the first discard-funded targeting step exposes Cancel ---
+// --- Cancel never rolls back the discard — it's available at every step and
+// just resolves with no picks, so resolveAbility's retry loop re-shows
+// targeting fresh. No claim/gating: the source card stays discarded either way. ---
 {
   const { target, cardA, cardB } = makeTarget();
-  let claims = 0;
-  let rollbacks = 0;
   let cancelledArgs = null;
-  target.claimPendingDiscardAbilityCancel = () => claims++ === 0;
-  target.canCancelPendingDiscardAbility = () => true;
-  target.cancelPendingDiscardAbility = () => {
-    rollbacks += 1;
-    target.tlrStore.dispatch({ type: 'CANCEL_ABILITY' });
-    return true;
-  };
 
   target.tlrStore.dispatch({ type: 'START_ABILITY', abilityId: 'BETWEEN_2', sourceCardId: 99 });
   target.tlrStartAbilityTargeting({
     title: 'Between', validCardIds: [cardA.uid, cardB.uid], count: 1,
     cb: (...picked) => { cancelledArgs = picked; },
   });
-  assert.equal(target.tlrCanCancelAbilitySelection(), true, 'first targeting step exposes the discard refund');
-  assert.equal(target.cancelAbilitySelection(), true, 'Cancel invokes the discard rollback');
-  assert.equal(rollbacks, 1, 'discard rollback runs exactly once');
-  assert.deepEqual(cancelledArgs, [], 'Cancel resolves targeting with no selected cards');
-  assert.equal(targeting(target), null, 'Cancel closes targeting');
+  assert.equal(target.tlrCanCancelAbilitySelection(), true, 'cancel is available on the first targeting step');
+  assert.equal(typeof target.cancelPendingDiscardAbility, 'undefined', 'no rollback affordance to call');
+  assert.equal(target.cancelAbilitySelection(), true, 'cancel succeeds');
+  assert.deepEqual(cancelledArgs, [], 'cancel resolves targeting with no selected cards');
+  assert.equal(targeting(target), null, 'cancel closes targeting');
 
+  // A later step (e.g. Between's second pick) offers the exact same Cancel —
+  // no "only the first step" restriction now that nothing is being refunded.
   target.tlrStore.dispatch({ type: 'START_ABILITY', abilityId: 'BETWEEN_2', sourceCardId: 99 });
   target.tlrStartAbilityTargeting({ title: 'Between step 2', validCardIds: [cardB.uid], count: 1, cb: () => {} });
-  assert.equal(target.tlrCanCancelAbilitySelection(), false, 'later targeting steps do not offer a full discard refund');
+  assert.equal(target.tlrCanCancelAbilitySelection(), true, 'later targeting steps also expose Cancel');
+  assert.equal(target.cancelAbilitySelection(), true, 'cancel succeeds on a later step too');
+  assert.equal(targeting(target), null, 'cancel closes targeting on a later step too');
+}
+
+// --- Filling the last required pick auto-confirms without an explicit confirm call ---
+{
+  const { target, cardA } = makeTarget();
+  let received = null;
+  target.tlrStartAbilityTargeting({ title: 'Mirror', validCardIds: [cardA.uid], count: 1, cb: (...picked) => { received = picked; } });
+
+  target.handleAbilityHandClick(cardA);
+  assert.equal(received, null, 'the pick is not resolved on the same tick — it gets a beat to render first');
+  assert.deepEqual(targeting(target).pickedCardIds, [cardA.uid], 'the pick is recorded immediately');
+
+  await new Promise(resolve => setTimeout(resolve, 250));
+  assert.deepEqual(received, [cardA], 'auto-confirm fires shortly after the last required pick lands');
+  assert.equal(targeting(target), null, 'auto-confirm clears the store targeting');
+}
+
+// --- Deselecting (not completing) a pick never schedules an auto-confirm ---
+{
+  const { target, cardA, cardB } = makeTarget();
+  let calls = 0;
+  target.tlrStartAbilityTargeting({ title: 'Between', validCardIds: [cardA.uid, cardB.uid], count: 2, cb: () => { calls += 1; } });
+
+  target.handleAbilityHandClick(cardA);
+  target.handleAbilityHandClick(cardA); // deselect before the set is ever complete
+  await new Promise(resolve => setTimeout(resolve, 150));
+  assert.equal(calls, 0, 'an incomplete, abandoned pick never auto-confirms');
 }
 
 console.log('Ability targeting bridge checks passed.');

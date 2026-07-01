@@ -65,7 +65,7 @@ export function applyCardPhoto(el,card,{full=false}={}){
   const col=pos%2,row=Math.floor(pos/2);
   const num=String(sheet).padStart(2,'0');
   el.classList.add('photo');
-  el.style.backgroundImage=full?`url(assets/sheets/sheet${num}.png)`:`url(assets/sheets/sheet${num}.small.webp)`;
+  el.style.backgroundImage=full?`url(assets/sheets/sheet${num}.webp)`:`url(assets/sheets/sheet${num}.small.webp)`;
   el.style.backgroundPosition=`${col*100}% ${row*100}%`;
 }
 

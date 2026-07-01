@@ -14,12 +14,12 @@ export function hasRelic(relics, id) {
 
 function chipMeld(name, chips) {
   if (!chips) return null;
-  return { name, chips, mult: 0, mode: 'chips' };
+  return { name, chips, mult: 0, mode: 'chips', source: 'relic' };
 }
 
 function additiveMultMeld(name, mult) {
   if (!mult) return null;
-  return { name, chips: 0, mult: Number(mult.toFixed(2)), mode: 'add' };
+  return { name, chips: 0, mult: Number(mult.toFixed(2)), mode: 'add', source: 'relic' };
 }
 
 function matchingPairCount(cards) {

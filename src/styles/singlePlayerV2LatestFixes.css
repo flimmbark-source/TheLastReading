@@ -28,7 +28,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   /* Use the same full-page background as desktop instead of the generated
      mobile table skin and its extra texture/vignette overlay. */
   html body.single-player-v2 {
-    background: url('../../assets/background.png') center top / cover no-repeat fixed !important;
+    background: url('../../assets/background.webp') center top / cover no-repeat fixed !important;
   }
 
   html body.single-player-v2.generated-sheet-ready::before {
@@ -194,7 +194,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     --spv2-slot-h: calc(var(--spv2-slot-w) * 1.5);
     --spv2-hand-clearance: 222px;
     padding: 0 !important;
-    background: url('../../assets/background.png') center top / cover no-repeat !important;
+    background: url('../../assets/background.webp') center top / cover no-repeat !important;
   }
 
   html body.single-player-v2.generated-sheet-ready::before {

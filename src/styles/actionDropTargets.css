@@ -61,7 +61,7 @@ body:has(#summary .store-front-shell) #purgeBtn,
 body:has(#summary .store-front-shell) #spv2ArchiveBtn{z-index:10!important}
 
 @media(max-width:640px){
-  html body.single-player-v2.generated-sheet-ready{--spv2-action-edge-gap:max(24px,6.5vw);background-color:#0b0805!important;background-image:url('/assets/background.png')!important;background-position:center top!important;background-size:cover!important;background-repeat:no-repeat!important;background-attachment:fixed!important}
+  html body.single-player-v2.generated-sheet-ready{--spv2-action-edge-gap:max(24px,6.5vw);background-color:#0b0805!important;background-image:url('/assets/background.webp')!important;background-position:center top!important;background-size:cover!important;background-repeat:no-repeat!important;background-attachment:fixed!important}
   html body.single-player-v2.generated-sheet-ready::before{content:none!important;display:none!important;background:none!important}
 
   /* Keep hint text above slots without placing the gesture surface over cards. */
@@ -70,8 +70,9 @@ body:has(#summary .store-front-shell) #spv2ArchiveBtn{z-index:10!important}
   html body.single-player-v2.generated-sheet-ready #handSwipeZone .hand-swipe-hint{position:relative!important;z-index:2!important}
   html body.single-player-v2.generated-sheet-ready .hand .card[data-hint]::after{z-index:60!important}
 
-  /* Lift the ability target prompt slightly clear of the spread. */
-  html body.single-player-v2.generated-sheet-ready #abilityPrompt.ability-prompt{bottom:354px!important}
+  /* Clear of the HUD (.score-stack bottom ~130px on a 390x844 layout) above
+     and the spread (top ~308px) below — verified directly, not guessed. */
+  html body.single-player-v2.generated-sheet-ready #abilityPrompt.ability-prompt{top:142px!important;bottom:auto!important}
 
   html body.single-player-v2.generated-sheet-ready #discardBtn,
   html body.single-player-v2.generated-sheet-ready #purgeBtn,

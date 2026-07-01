@@ -437,6 +437,15 @@ export function installHandCardGestures(target = window){
 
   // ── Pointer event handlers ──────────────────────────────────────
 
+  // A button press (e.g. via a second touch point while the first is mid-drag)
+  // shouldn't leave a card floating mid-drag while its own action runs. Snap
+  // the card back to hand first, before the button's own click handler fires.
+  document.addEventListener('pointerdown',ev=>{
+    if(!g||g.mode!=='drag')return;
+    const t=ev.target instanceof Element?ev.target:null;
+    if(t&&t.closest('button'))target.tlrCancelHandDrag();
+  },true);
+
   document.addEventListener('pointerdown',ev=>{
     if(target.__handPinchSynthetic||target.__handPinchActive)return;
     const t=ev.target instanceof Element?ev.target:null;

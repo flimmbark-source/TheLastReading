@@ -179,7 +179,7 @@ function installMarketTutorialTrigger(target = window) {
       else done();
     };
     img.onerror = done;
-    img.src = './assets/Store_Front.png';
+    img.src = './assets/Store_Front.webp';
     if (img.complete) {
       if (typeof img.decode === 'function') img.decode().catch(() => {}).then(done);
       else done();

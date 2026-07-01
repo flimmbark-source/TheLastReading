@@ -4,7 +4,8 @@
 :root{--inv-h:300px}
 body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!important}
 #invWrap{position:fixed;top:0;left:0;right:0;z-index:150;transform:translateY(calc(-1 * var(--inv-h)));transition:transform .45s cubic-bezier(.34,1.28,.64,1);pointer-events:none}
-#invWrap.open{transform:translateY(0);pointer-events:auto;z-index:400}
+/* See drawers.css for why this needs to clear .spread-wrap's scorePreview-driven z-index:10060. */
+#invWrap.open{transform:translateY(0);pointer-events:auto;z-index:10095!important}
 #invDesk{height:var(--inv-h);background:linear-gradient(180deg,#0e0704 0%,#1c1008 55%,#150d06 100%);border-bottom:2px solid #6a4c24;position:relative;overflow:hidden;pointer-events:auto}
 #invDesk::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 110%,rgba(90,45,5,.35),transparent 65%);pointer-events:none;z-index:0}
 #invDesk::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px),repeating-linear-gradient(0deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px);pointer-events:none;z-index:0}
@@ -150,13 +151,25 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
   transition:transform .32s cubic-bezier(.2,.85,.25,1);
 }
 .hand.hand-scroll-dragging .card,.hand.hand-undulating .card{transition:none}
-.hand .card.sel,.hand .card.ability-picked,.hand .card.purge-picked{
+.hand .card.sel,.hand .card.purge-picked{
   --lift-y:-92px;
   --total-rot:0deg;
   --lag:0deg!important;
   --drift-x:0px!important;
   --drift-y:0px!important;
   z-index:999!important;
+}
+/* Ability targeting (deciding, then picking): the card never moves — no
+   lift, no rotation reset, no lag/drift override. It stays at exactly its
+   normal resting position/tilt in the fan; state reads entirely through the
+   ring color (green target, gold picked; see hand.css). The idle wave is
+   excluded for these classes too (see card-wave/handCardIdleCycle), so
+   there's truly zero transform animation during the whole pick decision —
+   nothing for the auto-confirm timer to interrupt mid-transition. z-index
+   only (not a position change) so the ring isn't clipped by an overlapping
+   neighbor. */
+.hand .card.ability-target,.hand .card.ability-picked{
+  z-index:300!important;
 }
 @media(hover:hover){
   .hand:not(.has-selected-card) .card:hover{
@@ -182,7 +195,7 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
   .hand:not(.has-selected-card) .card:hover::before{pointer-events:auto}
 }
 @media(max-width:640px){
-  .hand .card.sel,.hand .card.ability-picked,.hand .card.purge-picked{--lift-y:-86px}
+  .hand .card.sel,.hand .card.purge-picked{--lift-y:-86px}
   @media(hover:hover){.hand:not(.has-selected-card) .card:hover{--lift-y:-86px}}
 }
 /* Stop the old swipe handler from also nudging the whole hand sideways. */
