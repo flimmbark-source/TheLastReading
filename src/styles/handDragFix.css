@@ -39,7 +39,7 @@
   cursor: grabbing;
 }
 
-@media (max-width:999999px) {
+@media (max-width: 640px) {
   .hand-swipe-zone-lower {
     height: 200px;
   }

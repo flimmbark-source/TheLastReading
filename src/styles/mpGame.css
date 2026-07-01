@@ -268,7 +268,7 @@ body.mp-game-active.mp-overlay-active #mpGame { z-index: 99999 !important; }
   padding: 28px 24px;
   background: rgba(20,12,8,.95);
   border: 1px solid rgba(180,140,70,.3); border-radius: 12px;
-  min-width: min(300px,86cqw); text-align: center;
+  min-width: min(300px,86vw); text-align: center;
 }
 .mp-ov-title  { font: 700 17px/1.1 Georgia,serif; color: #f0d58a; margin: 0; letter-spacing: .04em; }
 .mp-ov-scores { display: grid; grid-template-columns: 1fr auto 1fr; gap: 6px 14px; align-items: center; width: 100%; }

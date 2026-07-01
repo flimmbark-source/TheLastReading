@@ -93,7 +93,7 @@ function ensureStoreFrontStyles(target = window) {
     .store-candle.lit .candle-on{opacity:1}
     @keyframes storeCandleIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 
-    .store-front{position:relative;width:min(96cqw,560px);font-family:Georgia,serif;color:#eadbb9;z-index:1;opacity:0;transition:opacity 280ms ease-out}
+    .store-front{position:relative;width:min(96vw,560px);font-family:Georgia,serif;color:#eadbb9;z-index:1;opacity:0;transition:opacity 280ms ease-out}
     .store-front.store-visible{opacity:1}
     .store-front button{font-family:Georgia,serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
     .store-front button:disabled{cursor:not-allowed;opacity:.4}
@@ -148,7 +148,7 @@ function ensureStoreFrontStyles(target = window) {
       .summary.store-front-shell.store-exiting{animation:none;opacity:0}
     }
     @media(max-width:480px){
-      .store-front{width:min(98cqw,380px)}
+      .store-front{width:min(98vw,380px)}
       .store-offer-row{gap:8px}
       .store-card{padding:10px 8px 50px;min-height:160px}
       .store-card-art{width:48px;height:48px;margin-bottom:6px}

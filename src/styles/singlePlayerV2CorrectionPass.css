@@ -1,4 +1,4 @@
-@media (max-width:999999px) {
+@media (max-width: 640px) {
   /* Spread slots keep their ornate frame and placed cards occupy that exact box. */
   body.single-player-v2.generated-sheet-ready .spread {
     top: calc(.4dvh + 10px) !important;
@@ -46,8 +46,8 @@
 
   body.single-player-v2.generated-sheet-ready .handDock .hand .card,
   body.single-player-v2.generated-sheet-ready .handDock .hand .card:nth-child(3) {
-    width: clamp(78px,22cqw,96px) !important;
-    height: calc(clamp(78px,22cqw,96px) * 1.5) !important;
+    width: clamp(78px,22vw,96px) !important;
+    height: calc(clamp(78px,22vw,96px) * 1.5) !important;
   }
 
   /* Restore the original multi-step swipe/pinch tutorial above the hand. */

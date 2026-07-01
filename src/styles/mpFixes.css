@@ -66,7 +66,7 @@ body.mp-game-active .spread-wrap {
   bottom: 334px !important;
 }
 
-@media (max-width:999999px) {
+@media (max-width: 640px) {
   body.mp-game-active .mp-mid-wrap {
     top: 280px !important;
     bottom: auto !important;
@@ -130,7 +130,7 @@ body.mp-game-active .spread-wrap {
   }
 
   body.mp-game-active .mp-action-panel {
-    width: min(300px, 88cqw) !important;
+    width: min(300px, 88vw) !important;
     min-height: 24px !important;
     padding: 3px 8px 4px !important;
     background: rgba(8, 5, 3, .58) !important;
@@ -139,7 +139,7 @@ body.mp-game-active .spread-wrap {
   }
 }
 
-@media (max-width:999999px) and (max-height: 740px) {
+@media (max-width: 380px) and (max-height: 740px) {
   body.mp-game-active .mp-mid-wrap {
     top: 233px !important;
   }
@@ -165,16 +165,16 @@ body.mp-game-active .spread-wrap {
    screens. On desktop, lay the duel out horizontally: the player's spread on
    the left, the opponent's on the right, both tilted inward, with the score /
    threshold pills centered between them. The player's hand stays at the bottom. */
-@media (min-width:999999px) {
+@media (min-width: 641px) {
   /* Player spread → far left, full-size cards, tilted inward toward the centre. */
   body.mp-game-active .spread-wrap {
     position: fixed !important;
     top: 34% !important;
     bottom: auto !important;
-    left: -2cqw !important;
+    left: -2vw !important;
     right: auto !important;
     width: 680px !important;
-    max-width: 50cqw !important;
+    max-width: 50vw !important;
     height: auto !important;
     padding: 0 !important;
     transform: translateY(-50%) rotate(15deg) !important;
@@ -194,9 +194,9 @@ body.mp-game-active .spread-wrap {
     top: 34% !important;
     bottom: auto !important;
     left: auto !important;
-    right: -2cqw !important;
+    right: -2vw !important;
     width: 680px !important;
-    max-width: 50cqw !important;
+    max-width: 50vw !important;
     height: auto !important;
     margin: 0 !important;
     overflow: visible !important;
@@ -265,6 +265,6 @@ body.mp-game-active .spread-wrap {
 
   /* Shift the player hand left to align with the player's spread side. */
   body.mp-game-active .handDock {
-    transform: translateX(-12cqw) !important;
+    transform: translateX(-12vw) !important;
   }
 }

@@ -40,13 +40,13 @@ body.single-player-v2 {
     inset 0 0 0 2px rgba(205, 155, 73, 0.06);
 }
 
-@media (max-width:999999px) {
+@media (max-width: 640px) {
   body.single-player-v2 {
     --spv2-side: 9px;
     --spv2-title-h: 38px;
     --spv2-hud-top: 38px;
     --spv2-hud-h: 112px;
-    --spv2-slot-w: clamp(64px, 18.3cqw, 72px);
+    --spv2-slot-w: clamp(64px, 18.3vw, 72px);
     --spv2-slot-h: calc(var(--spv2-slot-w) * 1.5);
     --spv2-hand-clearance: 222px;
     min-height: 100dvh;
@@ -184,7 +184,7 @@ body.single-player-v2 {
     left: 61%;
     display: none;
     color: #f2564a;
-    font: 800 clamp(12px, 3.4cqw, 15px)/1 'Cinzel', Georgia, serif;
+    font: 800 clamp(12px, 3.4vw, 15px)/1 'Cinzel', Georgia, serif;
     letter-spacing: .01em;
     text-shadow: 0 0 7px rgba(242, 86, 74, 0.55), 0 2px 4px #000;
     pointer-events: none;
@@ -205,7 +205,7 @@ body.single-player-v2 {
     max-width: 100%;
     overflow: hidden;
     color: #c2a979;
-    font: 700 clamp(8px,2.45cqw,10px)/1 system-ui,sans-serif;
+    font: 700 clamp(8px,2.45vw,10px)/1 system-ui,sans-serif;
     letter-spacing: .08em;
     text-transform: uppercase;
     white-space: nowrap;
@@ -232,7 +232,7 @@ body.single-player-v2 {
     overflow: hidden;
     border-radius: 9px 9px 4px 4px;
     border-bottom: 1px solid rgba(227, 190, 114, 0.3);
-    font: 700 clamp(14px, 4cqw, 17px)/1 'Cinzel', Georgia, serif !important;
+    font: 700 clamp(14px, 4vw, 17px)/1 'Cinzel', Georgia, serif !important;
     letter-spacing: .14em !important;
     text-transform: uppercase;
     text-shadow: 0 1px 3px #000;
@@ -263,7 +263,7 @@ body.single-player-v2 {
     color: #efe5ce;
     font-family: 'Cinzel', Georgia, serif;
     font-weight: 700;
-    font-size: clamp(25px,7.4cqw,31px);
+    font-size: clamp(25px,7.4vw,31px);
     font-variant-numeric: tabular-nums lining-nums;
     letter-spacing: .01em;
     line-height: .9;
@@ -272,13 +272,13 @@ body.single-player-v2 {
 
   body.single-player-v2 .score-stack .score-pill b {
     color: #ffd98c;
-    font-size: clamp(29px,8.6cqw,36px);
+    font-size: clamp(29px,8.6vw,36px);
     text-shadow: 0 0 12px rgba(235,175,70,.32), 0 2px 8px #000;
   }
 
   body.single-player-v2 .score-stack .threshold-pill b {
     color: #cfbfff;
-    font-size: clamp(29px,8.6cqw,36px);
+    font-size: clamp(29px,8.6vw,36px);
     text-shadow: 0 0 12px rgba(145,107,224,.34), 0 2px 8px #000;
   }
 
@@ -389,7 +389,7 @@ body.single-player-v2 {
   body.single-player-v2 .spread-wrap::before {
     content: "";
     position: absolute;
-    width: min(84cqw, 330px);
+    width: min(84vw, 330px);
     aspect-ratio: 1;
     border: 1px solid rgba(173,126,55,.22);
     border-radius: 50%;
@@ -537,7 +537,7 @@ body.single-player-v2 {
       --spv2-title-h: 32px;
       --spv2-hud-top: 32px;
       --spv2-hud-h: 94px;
-      --spv2-slot-w: clamp(61px,17.8cqw,66px);
+      --spv2-slot-w: clamp(61px,17.8vw,66px);
       --spv2-hand-clearance: 188px;
     }
 

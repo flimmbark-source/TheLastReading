@@ -4,7 +4,7 @@
    art, so the CSS-generated duplicates are suppressed here. The live values, the
    VS divider, and the threshold progress bar are NOT baked in and remain
    CSS/DOM driven. */
-@media (max-width:999999px) {
+@media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
     display: none !important;
   }
@@ -76,11 +76,11 @@
   }
 
   body.single-player-v2.generated-sheet-ready #menuBtn {
-    left: 3.8cqw !important;
+    left: 3.8vw !important;
   }
 
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    left: calc(3.8cqw + var(--spv2-control-size, clamp(46px, 12cqw, 58px)) + 1.2cqw) !important;
+    left: calc(3.8vw + var(--spv2-control-size, clamp(46px, 12vw, 58px)) + 1.2vw) !important;
   }
 
   /* Place Scoring and Abilities together on the right edge, preserving their
@@ -93,11 +93,11 @@
   }
 
   body.single-player-v2.generated-sheet-ready #scoringBtn {
-    right: calc(3.8cqw + var(--spv2-control-size, clamp(46px, 12cqw, 58px)) + 1.2cqw) !important;
+    right: calc(3.8vw + var(--spv2-control-size, clamp(46px, 12vw, 58px)) + 1.2vw) !important;
   }
 
   body.single-player-v2.generated-sheet-ready #abilitiesBtn {
-    right: 3.8cqw !important;
+    right: 3.8vw !important;
   }
 
   /* Drop the hand fan down so its base nests inside the dock tray banner
@@ -153,8 +153,8 @@
      discard = crescent/cards medallion, purge = sun-compass medallion. */
   body.single-player-v2.generated-sheet-ready #discardBtn,
   body.single-player-v2.generated-sheet-ready #purgeBtn {
-    width: clamp(58px, 16cqw, 74px) !important;
-    height: clamp(58px, 16cqw, 74px) !important;
+    width: clamp(58px, 16vw, 74px) !important;
+    height: clamp(58px, 16vw, 74px) !important;
     border: 0 !important;
     border-radius: 50% !important;
     background-color: transparent !important;
@@ -216,7 +216,7 @@
     transform: translateX(-50%) !important;
     margin-top: 3px !important;
     display: block !important;
-    font: 800 clamp(8px, 2.4cqw, 10px)/1 system-ui, sans-serif !important;
+    font: 800 clamp(8px, 2.4vw, 10px)/1 system-ui, sans-serif !important;
     letter-spacing: .09em !important;
     text-transform: uppercase !important;
     color: #cdb079 !important;

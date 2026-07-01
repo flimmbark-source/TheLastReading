@@ -107,7 +107,7 @@ export function installGestureDrawers(target = window){
       const wrap=document.getElementById(d.id+'PullWrap');
       const desk=document.getElementById(d.id+'PullDesk');
       if(!wrap||!desk)continue;
-      const viewportScale=0.72; // mobile viewport scale is forced everywhere
+      const viewportScale=target.innerWidth<641?0.72:0.62;
       const maxByViewport=Math.max(d.min,Math.floor(target.innerHeight*viewportScale));
       const max=Math.min(d.max,maxByViewport);
       const oldHeight=desk.style.getPropertyValue('height');
@@ -186,7 +186,7 @@ export function installGestureDrawers(target = window){
     const found=existingFanTabs();
     if(found.length<2)return;
     const byId={};found.forEach(t=>byId[t.id]=t);
-    const isDesktop=false; // mobile layout/behavior is forced everywhere
+    const isDesktop=target.matchMedia('(min-width:641px)').matches;
     if(isDesktop){
       let x=14;
       for(const id of ['menuPullTab','scoringPullTab','abilitiesPullTab']){

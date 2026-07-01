@@ -1,10 +1,10 @@
-@import url('./singlePlayerV2GestureRestore.css?v=2');
+@import url('./singlePlayerV2GestureRestore.css?v=1');
 
-@media (max-width:999999px) {
+@media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 8.8dvh;
-    --spv2-control-size: clamp(46px, 12cqw, 58px);
-    --spv2-spread-card-w: clamp(78px, 22cqw, 96px);
+    --spv2-control-size: clamp(46px, 12vw, 58px);
+    --spv2-spread-card-w: clamp(78px, 22vw, 96px);
     --spv2-spread-card-h: calc(var(--spv2-spread-card-w) * 1.5);
     --spv2-spread-top: calc(
       var(--spv2-hud-top) +
@@ -42,7 +42,7 @@
     right: 0 !important;
     transform: none !important;
     min-height: calc(var(--spv2-spread-card-h) + 24px) !important;
-    padding-inline: 1cqw !important;
+    padding-inline: 1vw !important;
   }
 
   body.single-player-v2.generated-sheet-ready .spread .slot {
@@ -58,7 +58,7 @@
     min-height: var(--spv2-spread-card-h) !important;
     max-height: var(--spv2-spread-card-h) !important;
     flex: 0 0 var(--spv2-spread-card-w) !important;
-    margin-left: -7.2cqw !important;
+    margin-left: -7.2vw !important;
     background-image: var(--spv2-spread-slot-art) !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
@@ -107,17 +107,17 @@
   body.single-player-v2.generated-sheet-ready .spread-actions {
     top: auto !important;
     bottom: max(1.2dvh, env(safe-area-inset-bottom)) !important;
-    height: clamp(46px, 12cqw, 54px) !important;
+    height: clamp(46px, 12vw, 54px) !important;
     z-index: 60 !important;
-    padding: 0 4cqw !important;
+    padding: 0 4vw !important;
   }
 
   body.single-player-v2.generated-sheet-ready #discardBtn,
   body.single-player-v2.generated-sheet-ready #purgeBtn {
     top: auto !important;
     bottom: 0 !important;
-    width: clamp(108px, 29cqw, 132px) !important;
-    height: clamp(44px, 11.5cqw, 52px) !important;
+    width: clamp(108px, 29vw, 132px) !important;
+    height: clamp(44px, 11.5vw, 52px) !important;
     border-radius: 999px !important;
     border: 2px solid #8f6a34 !important;
     background-image: none !important;
@@ -137,13 +137,13 @@
   }
 
   body.single-player-v2.generated-sheet-ready #discardBtn {
-    left: 4cqw !important;
+    left: 4vw !important;
     right: auto !important;
   }
 
   body.single-player-v2.generated-sheet-ready #purgeBtn {
     left: auto !important;
-    right: 4cqw !important;
+    right: 4vw !important;
   }
 
   body.single-player-v2.generated-sheet-ready #discardBtn::before,
@@ -165,7 +165,7 @@
 
   body.single-player-v2.generated-sheet-ready #discardBtn::after {
     content: "DISCARD" !important;
-    font: 800 clamp(10px,2.8cqw,13px)/1 system-ui,sans-serif !important;
+    font: 800 clamp(10px,2.8vw,13px)/1 system-ui,sans-serif !important;
     letter-spacing: .06em !important;
   }
 
@@ -176,7 +176,7 @@
 
   body.single-player-v2.generated-sheet-ready #purgeBtn::after {
     content: "PURGE" !important;
-    font: 800 clamp(10px,2.8cqw,13px)/1 system-ui,sans-serif !important;
+    font: 800 clamp(10px,2.8vw,13px)/1 system-ui,sans-serif !important;
     letter-spacing: .06em !important;
   }
 

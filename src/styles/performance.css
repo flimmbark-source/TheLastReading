@@ -1,5 +1,5 @@
-@media(max-width:999999px){
-  body,#tlr-viewport{background-attachment:scroll!important;background-size:cover!important;}
+@media(max-width:640px){
+  body{background-attachment:scroll!important;background-size:cover!important;}
   #roomAmbient{animation:none!important;opacity:.42!important;transform:none!important;}
   #ambientFX{display:block!important;}
   .mote{display:block!important;filter:blur(.35px)!important;}
@@ -10,6 +10,6 @@
   .mote{display:none!important;}
 }
 
-@media(max-width:999999px),(prefers-reduced-motion:reduce){
+@media(max-width:640px),(prefers-reduced-motion:reduce){
   .slot.res-1::before,.slot.res-2::before,.slot.res-3::before{animation:none!important;}
 }

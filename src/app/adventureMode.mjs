@@ -77,7 +77,7 @@ function ensureStyles(doc) {
 
     /* Resolve + statuses + Leave, top-left, clear of the utility cluster. */
     #advHud{position:fixed;top:8px;left:8px;z-index:42;display:none;gap:8px;align-items:center;flex-wrap:wrap;
-      font:700 12px system-ui,sans-serif;color:#ead9b5;max-width:46cqw}
+      font:700 12px system-ui,sans-serif;color:#ead9b5;max-width:46vw}
     body.mode-adventure #advHud{display:flex}
     #advHud .adv-resolve{background:rgba(18,12,9,.82);border:1px solid rgba(228,188,111,.5);border-radius:999px;padding:5px 11px}
     #advHud .adv-resolve b{color:#f3c969}

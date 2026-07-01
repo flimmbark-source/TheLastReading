@@ -1,10 +1,10 @@
-@media (max-width:999999px) {
+@media (max-width: 640px) {
   /* Keep the horizontal relic row clearly above the centered spread. The
      responsive half-card offset tracks the fan while the added clearance keeps
      the slots visually separate from the card tops. */
   html body.single-player-v2.generated-sheet-ready .relic-rack {
     position: fixed !important;
-    top: calc(45dvh - clamp(49px,13.3cqw,63px) - 72px) !important;
+    top: calc(45dvh - clamp(49px,13.3vw,63px) - 72px) !important;
     bottom: auto !important;
     left: 0 !important;
     right: 0 !important;
@@ -33,7 +33,7 @@
       var(--spv2-hud-top) +
       var(--spv2-compact-hud-h) +
       .35dvh +
-      clamp(6px,1.55cqw,12px)
+      clamp(6px,1.55vw,12px)
     ) !important;
     left: 50% !important;
     right: auto !important;

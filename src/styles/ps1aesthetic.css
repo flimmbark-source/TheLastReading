@@ -120,7 +120,7 @@ body {
   padding-bottom: 238px !important; /* 202px + 36px */
 }
 
-@media (max-width:999999px) {
+@media (max-width: 640px) {
   .handDock {
     bottom: 24px !important;
   }

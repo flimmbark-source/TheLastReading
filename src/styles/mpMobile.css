@@ -3,7 +3,7 @@
    my spread, my hand. These overrides intentionally only apply while the
    multiplayer game is active so singleplayer mobile remains unchanged. */
 
-@media (max-width:999999px) {
+@media (max-width: 640px) {
   body.mp-game-active {
     overflow: hidden !important;
   }
@@ -88,7 +88,7 @@
   body.mp-game-active .mp-pill-score,
   body.mp-game-active .mp-pill-disc,
   body.mp-game-active .mp-pill-thresh {
-    width: min(96px, 28cqw) !important;
+    width: min(96px, 28vw) !important;
     height: 24px !important;
     padding: 0 7px !important;
     gap: 4px !important;
@@ -103,7 +103,7 @@
   }
 
   body.mp-game-active .mp-pill-thresh {
-    width: min(116px, 36cqw) !important;
+    width: min(116px, 36vw) !important;
   }
 
   body.mp-game-active .mp-pills-actions {
@@ -114,7 +114,7 @@
   }
 
   body.mp-game-active .mp-pills-actions .sbtn {
-    width: min(86px, 30cqw) !important;
+    width: min(86px, 30vw) !important;
     height: 30px !important;
     min-height: 30px !important;
     padding: 0 8px !important;
@@ -123,7 +123,7 @@
   }
 
   body.mp-game-active .mp-action-panel {
-    width: min(290px, 84cqw);
+    width: min(290px, 84vw);
     min-height: 22px;
     padding: 2px 8px 3px;
     background: rgba(8, 5, 3, .56);
@@ -211,7 +211,7 @@
   }
 }
 
-@media (max-width:999999px) and (max-height: 740px) {
+@media (max-width: 380px) and (max-height: 740px) {
   body.mp-game-active .mp-opp-spread-clip {
     height: 133px;
     transform: scale(.68);

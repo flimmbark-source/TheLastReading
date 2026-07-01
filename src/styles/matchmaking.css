@@ -93,4 +93,4 @@
 .mm-cpu-btn:hover{border-color:rgba(140,110,210,.55)!important;color:#c0a8f0}
 .mm-cpu-btn .mm-mode-label{color:rgba(140,110,200,.5)}
 
-@media(max-width:999999px){.mm-inner{padding:20px 14px 40px}}
+@media(max-width:420px){.mm-inner{padding:20px 14px 40px}}

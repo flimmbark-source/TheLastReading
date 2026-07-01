@@ -22,7 +22,7 @@ body.mp-game-active #mpOppSpread .slot > .card .title {
   line-height: 17px !important;
 }
 
-@media (max-width:999999px) {
+@media (max-width: 640px) {
   body.mp-game-active #spread .slot > .card,
   body.mp-game-active #mpOppSpread .slot > .card {
     width: 100% !important;

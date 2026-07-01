@@ -44,11 +44,11 @@ function ensureStyle(doc) {
     body.mode-adventure #advEventDeck{display:block!important}
 
     body.mode-adventure #advHud{
-      top:calc(20px + clamp(132px,36cqw,178px) + 3px)!important;
+      top:calc(20px + clamp(132px,36vw,178px) + 3px)!important;
       left:50%!important;
       right:auto!important;
       width:auto!important;
-      max-width:70cqw!important;
+      max-width:70vw!important;
       transform:translateX(-50%)!important;
       align-items:center!important;
       z-index:42!important;
@@ -78,7 +78,7 @@ function ensureStyle(doc) {
     .adv-event-hero{
       position:relative;
       width:100%;
-      height:clamp(132px,36cqw,178px);
+      height:clamp(132px,36vw,178px);
       overflow:hidden;
       border:1px solid rgba(202,157,81,.68);
       border-radius:9px;
@@ -116,7 +116,7 @@ function ensureStyle(doc) {
       margin:0;
       color:#f3dfb5;
       text-align:center;
-      font:800 clamp(16px,4.8cqw,25px)/1.05 'Cinzel',Georgia,serif;
+      font:800 clamp(16px,4.8vw,25px)/1.05 'Cinzel',Georgia,serif;
       letter-spacing:.045em;
       text-transform:uppercase;
       text-shadow:0 2px 3px #000,0 0 16px rgba(0,0,0,.95);
@@ -124,13 +124,13 @@ function ensureStyle(doc) {
     .adv-event-hero__copy{
       position:absolute;
       z-index:2;
-      left:clamp(12px,4cqw,30px);
-      right:clamp(12px,4cqw,30px);
+      left:clamp(12px,4vw,30px);
+      right:clamp(12px,4vw,30px);
       bottom:10px;
       padding:8px 12px 7px;
       color:#eadcc0;
       text-align:center;
-      font:600 clamp(10px,2.8cqw,13px)/1.32 Georgia,serif;
+      font:600 clamp(10px,2.8vw,13px)/1.32 Georgia,serif;
       text-shadow:0 1px 2px #000;
       background:linear-gradient(180deg,rgba(16,12,9,.28),rgba(13,9,7,.78));
       border-top:1px solid rgba(226,187,110,.2);
@@ -154,7 +154,7 @@ function ensureStyle(doc) {
     }
 
     body.mode-adventure .spread-wrap{
-      margin-top:clamp(28px,7cqw,48px)!important;
+      margin-top:clamp(28px,7vw,48px)!important;
     }
     body.mode-adventure .spread-actions{
       z-index:29;
@@ -163,7 +163,7 @@ function ensureStyle(doc) {
     @media(max-width:640px){
       body.mode-adventure #advEventDeck{top:18px!important;left:5px!important;right:5px!important}
       body.mode-adventure #advHud{
-        top:calc(18px + clamp(128px,38cqw,156px) + 3px)!important;
+        top:calc(18px + clamp(128px,38vw,156px) + 3px)!important;
         left:0!important;
         right:0!important;
         width:100%!important;
@@ -187,7 +187,7 @@ function ensureStyle(doc) {
       body.mode-adventure #advHud .adv-hud__statuses{
         position:static!important;
       }
-      .adv-event-hero{height:clamp(128px,38cqw,156px);border-radius:7px}
+      .adv-event-hero{height:clamp(128px,38vw,156px);border-radius:7px}
       .adv-event-hero__title{top:7px;left:10px;right:10px}
       .adv-event-hero__copy{left:8px;right:8px;bottom:7px;padding:7px 9px 6px}
       .adv-event-hero__next{top:34px;right:8px}

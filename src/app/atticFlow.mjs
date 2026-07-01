@@ -79,7 +79,7 @@ export function installAtticFlow(target = window){
   function showAtticTutorial(){
     try{if(target.localStorage.getItem('tlr_attic_tutored_obals'))return;}catch(e){}
     const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=false; // mobile layout/behavior is forced everywhere
+    const isDesktop=target.matchMedia('(pointer:fine)').matches;
     const searchLine=isDesktop
       ?'<em>Click</em> glowing objects to search them.'
       :'<em>Tap</em> glowing objects to search them.';
@@ -122,7 +122,7 @@ export function installAtticFlow(target = window){
   }
 
   function positionAtticView(){const pan=document.getElementById('atticPan');if(!pan)return;requestAnimationFrame(function(){const maxX=Math.max(0,pan.scrollWidth-pan.clientWidth);pan.scrollLeft=Math.round(maxX*.34);pan.scrollTop=0;});}
-  function showPanHint(){try{if(target.localStorage.getItem('tlr_attic_pan_hint'))return;target.localStorage.setItem('tlr_attic_pan_hint','1');}catch(e){}const scene=document.getElementById('atticScene');if(!scene)return;const hint=document.createElement('div');hint.className='attic-pan-hint';hint.textContent='Swipe to look around';scene.appendChild(hint);setTimeout(function(){hint.remove();},3600);}
+  function showPanHint(){if(target.innerWidth>980)return;try{if(target.localStorage.getItem('tlr_attic_pan_hint'))return;target.localStorage.setItem('tlr_attic_pan_hint','1');}catch(e){}const scene=document.getElementById('atticScene');if(!scene)return;const hint=document.createElement('div');hint.className='attic-pan-hint';hint.textContent='Swipe to look around';scene.appendChild(hint);setTimeout(function(){hint.remove();},3600);}
   function installDragPan(){const pan=document.getElementById('atticPan');if(!pan||pan.__tlrDragPan)return;pan.__tlrDragPan=true;let active=false,startX=0,startLeft=0;pan.addEventListener('pointerdown',function(e){if(e.target&&e.target.closest&&e.target.closest('.attic-prop,#atticPickup'))return;active=true;startX=e.clientX;startLeft=pan.scrollLeft;pan.classList.add('dragging');});pan.addEventListener('pointermove',function(e){if(!active)return;pan.scrollLeft=startLeft-(e.clientX-startX);});function end(){active=false;pan.classList.remove('dragging');}pan.addEventListener('pointerup',end);pan.addEventListener('pointercancel',end);}
 
   target.tlrCloseArchives=closeArchives;

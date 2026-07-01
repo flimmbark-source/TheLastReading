@@ -30,11 +30,11 @@
 .tlr-pull-wrap.menu-brown .tlr-pull-desk{background:linear-gradient(180deg,#0e0704 0%,#1c1008 55%,#150d06 100%);color:#e4c189;border-bottom-color:#6a4c24}
 .tlr-pull-wrap.menu-brown .tlr-pull-tab{background:linear-gradient(180deg,#2e1e0e,#1e1208);color:#a07838;border-color:#6a4c24}
 .tlr-pull-wrap.menu-brown .tlr-pull-tab:hover{background:linear-gradient(180deg,#3e2814,#281810);color:#ffd978}
-#scoringPullDesk .ref,#abilitiesPullDesk .ref{display:block!important;max-width:min(92cqw,760px)!important;margin:0 auto!important;background:transparent!important;border:none!important;border-radius:0!important;box-shadow:none!important;padding:8px 6px 4px!important;color:#2a160a!important;font-family:Georgia,serif!important;pointer-events:auto!important}
+#scoringPullDesk .ref,#abilitiesPullDesk .ref{display:block!important;max-width:min(92vw,760px)!important;margin:0 auto!important;background:transparent!important;border:none!important;border-radius:0!important;box-shadow:none!important;padding:8px 6px 4px!important;color:#2a160a!important;font-family:Georgia,serif!important;pointer-events:auto!important}
 #scoringPullDesk .ref.hidden,#abilitiesPullDesk .ref.hidden{display:block!important}
 #scoringPullDesk .ref table,#scoringPullDesk .ref td,#scoringPullDesk .ref th,#abilitiesPullDesk .ref table,#abilitiesPullDesk .ref td,#abilitiesPullDesk .ref th{color:#2a160a!important;border-color:rgba(77,45,18,.22)!important}
 #scoringPullDesk .ref .r,#scoringPullDesk .scoring-sheet .r,#scoringPullDesk .scoring-sheet .score-head,#scoringPullDesk .scoring-sheet .arcana-row td,#abilitiesPullDesk .ref .r{color:#5b3515!important}
-#menuPullDesk #settingsPanel{display:flex!important;position:relative!important;top:auto!important;left:auto!important;min-width:min(260px,86cqw)!important;margin:0 auto!important;background:transparent!important;border:none!important;border-radius:0!important;box-shadow:none!important;color:#e4c189!important;padding:0!important;z-index:auto!important}
+#menuPullDesk #settingsPanel{display:flex!important;position:relative!important;top:auto!important;left:auto!important;min-width:min(260px,86vw)!important;margin:0 auto!important;background:transparent!important;border:none!important;border-radius:0!important;box-shadow:none!important;color:#e4c189!important;padding:0!important;z-index:auto!important}
 #menuPullDesk #settingsPanel.hidden{display:flex!important}
 #menuPullDesk #settingsPanel .settings-title{color:#f0d58a!important;border-bottom-color:rgba(228,193,137,.22)!important}
 #menuPullDesk #settingsPanel .settings-action{background:rgba(180,140,90,.18)!important;border-color:rgba(180,140,90,.45)!important;color:#e6c89a!important}
@@ -48,7 +48,7 @@
 /* tab spacing and desktop vertical drift patch */
 #invTab,.tlr-pull-tab{will-change:left}
 /* Restore the desktop space that Scoring/Abilities buttons used to occupy before becoming drawer tabs. */
-@media(min-width:999999px){#titleContent .actions{height:37px!important;min-height:37px!important;margin-bottom:10px!important}}
+@media(min-width:641px){#titleContent .actions{height:37px!important;min-height:37px!important;margin-bottom:10px!important}}
 
 /* drawer content fit patch */
 /* Pull drawers now size themselves to the content instead of dropping a fixed tall panel. */
@@ -56,7 +56,7 @@
 .tlr-pull-wrap.open{transform:translateY(0)!important}
 .tlr-pull-desk{height:var(--tlr-drawer-h)!important;padding:10px 14px 12px!important;overflow:visible!important}
 .tlr-pull-tab{top:var(--tlr-drawer-h)!important}
-@media(max-width:999999px){.tlr-pull-desk{padding:9px 7px 11px!important}}
+@media(max-width:640px){.tlr-pull-desk{padding:9px 7px 11px!important}}
 #scoringPullDesk .scoring-sheet{display:block!important;width:fit-content!important;max-width:100%!important;margin:0 auto!important;padding:0!important}
 #scoringPullDesk .scoring-sheet table{width:auto!important;max-width:100%!important;border-collapse:collapse!important}
 #scoringPullDesk .scoring-sheet td{font-size:10.5px!important;line-height:1.08!important;padding:1px 4px!important;white-space:nowrap!important}
@@ -65,11 +65,11 @@
 #scoringPullDesk .scoring-sheet .arcana-row td{font-size:9px!important;letter-spacing:.08em!important;padding-top:5px!important;padding-bottom:1px!important}
 #scoringPullDesk .scoring-sheet .r .chips{width:42px!important}
 #scoringPullDesk .scoring-sheet .r .mult{width:32px!important;margin-left:4px!important}
-#abilitiesPullDesk .ref{max-width:min(94cqw,720px)!important;padding:0!important}
+#abilitiesPullDesk .ref{max-width:min(94vw,720px)!important;padding:0!important}
 #abilitiesPullDesk table{width:100%!important;border-collapse:collapse!important;font-size:11.5px!important;line-height:1.2!important}
 #abilitiesPullDesk td{padding:3px 5px!important;vertical-align:top!important;white-space:normal!important}
 #abilitiesPullDesk td:first-child{width:86px!important;font-weight:700!important;white-space:nowrap!important;color:#3a1a06!important}
-#menuPullDesk #settingsPanel{max-width:min(92cqw,300px)!important;gap:9px!important}
+#menuPullDesk #settingsPanel{max-width:min(92vw,300px)!important;gap:9px!important}
 
 /* The menu drawer can be shorter than its settings content on small screens.
    When it is open, keep the content inside the drawer and let the drawer scroll

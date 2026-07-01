@@ -839,7 +839,7 @@ export function installMpGame(target = window) {
 
   function moveMultPillsOutside() {
     if (!doc.body.classList.contains('mp-game-active')) return;
-    const isDesktop = false; // mobile layout is forced everywhere, regardless of viewport width
+    const isDesktop = target.matchMedia?.('(min-width: 641px)').matches ?? false;
     doc.querySelectorAll('.mp-pill-score').forEach(pill => {
       const parent = pill.parentElement;
       if (!parent) return;

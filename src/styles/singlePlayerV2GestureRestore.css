@@ -1,4 +1,4 @@
-@media (max-width:999999px) {
+@media (max-width: 640px) {
   /* Restore the original full-width gesture surface over the hand. The hand
      remains one layer above it, so cards stay selectable while swipes in the
      open portions of the fan still reach gestureHand.mjs. */
@@ -44,7 +44,7 @@
     transform: translateX(-50%);
     width: max-content;
     color: rgba(232,196,96,.78);
-    font: 700 clamp(9px,2.55cqw,11px)/1 Georgia,"Times New Roman",serif;
+    font: 700 clamp(9px,2.55vw,11px)/1 Georgia,"Times New Roman",serif;
     letter-spacing: .1em;
     text-shadow: 0 1px 3px #000,0 0 8px rgba(210,154,63,.18);
     pointer-events: none;

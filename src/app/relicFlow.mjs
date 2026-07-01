@@ -122,7 +122,7 @@ export function activateRelic(key,target = window){
     document.querySelectorAll('.relic-callout').forEach(el=>el.remove());
     const rt=market(target).marketRuntime?market(target).marketRuntime(target):target.__tlrMarketRuntime;
     if(rt)rt.openRelicKey=null;
-    let html='<div class="box" style="max-width:520px;width:min(90cqw,520px)">';
+    let html='<div class="box" style="max-width:520px;width:min(90vw,520px)">';
     html+='<div class="modalHead"><h2>The Watcher</h2></div>';
     html+='<p style="color:#b99a5d;font-size:12px">Choose one card to take into your hand. The rest return to the bottom of your deck.</p>';
     html+='<div class="choices">';

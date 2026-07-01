@@ -112,7 +112,7 @@ function installOverlayLayerFix(doc) {
     body.mp-game-active.mp-overlay-active #mpOvBox{position:relative!important;z-index:2147483510!important}
     body.mp-game-active .mp-bar{justify-content:flex-start!important;position:relative!important;padding-right:230px!important}
     body.mp-game-active .mp-leave-btn{flex:0 0 auto!important}
-    body.mp-game-active .mp-turn-badge{flex:0 1 auto!important;text-align:left!important;margin-left:8px!important;margin-right:auto!important;max-width:calc(100cqw - 340px)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+    body.mp-game-active .mp-turn-badge{flex:0 1 auto!important;text-align:left!important;margin-left:8px!important;margin-right:auto!important;max-width:calc(100vw - 340px)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
     body.mp-game-active .mp-round-label{display:none!important}
     body.mp-game-active #mpOverlay.mp-hide-between-results{display:none!important;pointer-events:none!important}
     body.mp-game-active #mpOverlay:not(.mp-ov-hidden){position:fixed!important;inset:0!important;z-index:2147483000!important}
@@ -120,8 +120,8 @@ function installOverlayLayerFix(doc) {
     body.mp-game-active .refs-layer .ref:not(.hidden){pointer-events:auto!important}
     body.mp-game-active #scoringPullWrap,
     body.mp-game-active #abilitiesPullWrap{display:block!important;z-index:2147483200!important}
-    body.mp-game-active #scoringPullTab{left:calc(100cqw - 196px)!important}
-    body.mp-game-active #abilitiesPullTab{left:calc(100cqw - 100px)!important}
+    body.mp-game-active #scoringPullTab{left:calc(100vw - 196px)!important}
+    body.mp-game-active #abilitiesPullTab{left:calc(100vw - 100px)!important}
     body.mp-game-active #scoringPullWrap .tlr-pull-tab,
     body.mp-game-active #abilitiesPullWrap .tlr-pull-tab{pointer-events:auto!important}
     body.mp-game-active #scoringPullWrap.open,
@@ -372,7 +372,7 @@ function syncOneMultSpan(target, doc, scoreId, player) {
   const text = `${formatMult(player?.roundMult ?? 1)}x`;
   if (mult.textContent !== text) mult.textContent = text;
 
-  const isDesktop = false; // mobile layout is forced everywhere, regardless of viewport width
+  const isDesktop = target.matchMedia?.('(min-width: 641px)').matches ?? false;
   const putRight = isDesktop && pill.classList.contains('mp-pill-opp-score');
   if (putRight) {
     if (mult.parentElement !== parent || pill.nextElementSibling !== mult) parent.insertBefore(mult, pill.nextSibling);

@@ -2,7 +2,7 @@
    Multiplayer deliberately reuses #spread, #hand, .handDock, and .spread, while
    the opponent has a second .spread inside #mpGame. The single-player fan rules
    are loaded later and otherwise pin both spreads to the same fixed position. */
-@media (max-width:999999px) {
+@media (max-width: 640px) {
   html body.mp-game-active.single-player-v2.generated-sheet-ready #spread,
   html body.mp-game-active.single-player-v2.generated-sheet-ready #mpOppSpread {
     position: relative !important;
@@ -115,7 +115,7 @@
   }
 }
 
-@media (max-width:999999px) and (max-height: 740px) {
+@media (max-width: 380px) and (max-height: 740px) {
   html body.mp-game-active.single-player-v2.generated-sheet-ready #spread {
     transform: scale(.68) !important;
   }

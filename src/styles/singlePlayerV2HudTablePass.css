@@ -1,8 +1,8 @@
-@media (max-width:999999px) {
+@media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 7.6dvh;
     --spv2-compact-hud-h: clamp(116px,14.5dvh,132px);
-    --spv2-control-size: clamp(46px,12cqw,56px);
+    --spv2-control-size: clamp(46px,12vw,56px);
     --spv2-spread-top: calc(
       var(--spv2-hud-top) +
       var(--spv2-compact-hud-h) +
@@ -43,14 +43,14 @@
 
   body.single-player-v2.generated-sheet-ready .score-stack {
     top:var(--spv2-hud-top) !important;
-    left:2cqw !important;
-    right:2cqw !important;
+    left:2vw !important;
+    right:2vw !important;
     height:var(--spv2-compact-hud-h) !important;
     min-height:var(--spv2-compact-hud-h) !important;
     grid-template-columns:22fr 28fr 29fr 21fr !important;
     overflow:visible !important;
     border:2px solid rgba(174,122,52,.82) !important;
-    border-radius:clamp(16px,4cqw,24px) !important;
+    border-radius:clamp(16px,4vw,24px) !important;
     background:
       linear-gradient(180deg,rgba(255,196,91,.07),rgba(0,0,0,.1)),
       var(--spv2-hud-frame-art) center/100% 100% no-repeat !important;
@@ -89,7 +89,7 @@
     padding:27px 4px 15px !important;
     gap:4px !important;
     justify-content:center !important;
-    border-radius:clamp(13px,3.4cqw,20px) !important;
+    border-radius:clamp(13px,3.4vw,20px) !important;
     background-size:100% 100% !important;
     background-blend-mode:screen,normal !important;
   }
@@ -125,7 +125,7 @@
     top:11px;
     left:12px;
     color:#d0a85f;
-    font:700 clamp(15px,4cqw,19px)/1 Georgia,serif;
+    font:700 clamp(15px,4vw,19px)/1 Georgia,serif;
     text-shadow:0 1px 3px #000;
     opacity:.95;
   }
@@ -136,7 +136,7 @@
   body.single-player-v2.generated-sheet-ready .discards-pill::before { content:"☠"; }
 
   body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
-    font-size:clamp(10px,2.8cqw,13px) !important;
+    font-size:clamp(10px,2.8vw,13px) !important;
     line-height:1 !important;
     color:#cfb581 !important;
     letter-spacing:.06em !important;
@@ -144,14 +144,14 @@
   }
 
   body.single-player-v2.generated-sheet-ready .score-stack .pill > b {
-    font-size:clamp(31px,8.5cqw,42px) !important;
+    font-size:clamp(31px,8.5vw,42px) !important;
     line-height:.92 !important;
     font-weight:800 !important;
   }
 
   body.single-player-v2.generated-sheet-ready .score-stack .score-pill > b,
   body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill > b {
-    font-size:clamp(35px,9.5cqw,47px) !important;
+    font-size:clamp(35px,9.5vw,47px) !important;
   }
 
   body.single-player-v2.generated-sheet-ready .spv2-threshold-progress {
@@ -175,7 +175,7 @@
   }
 
   body.single-player-v2.generated-sheet-ready .spread-wrap::before {
-    width:min(97cqw,430px) !important;
+    width:min(97vw,430px) !important;
     height:auto !important;
     aspect-ratio:1 / 1 !important;
     top:5.5dvh !important;
@@ -191,7 +191,7 @@
     position:absolute;
     left:50%;
     top:8.5dvh;
-    width:min(91cqw,400px);
+    width:min(91vw,400px);
     aspect-ratio:1;
     transform:translateX(-50%);
     border-radius:50%;
