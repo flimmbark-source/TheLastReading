@@ -118,7 +118,7 @@ export function installDrawAnimation(target = window) {
     const link = doc.createElement('link');
     link.id = 'draw-animation-styles';
     link.rel = 'stylesheet';
-    link.href = 'src/styles/drawAnimation.css?v=1';
+    link.href = 'src/styles/drawAnimation.css?v=2';
     doc.head.appendChild(link);
   }
   installSetDealDispatchHook(target);

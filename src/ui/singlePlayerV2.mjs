@@ -19,21 +19,21 @@ export function installSinglePlayerV2(target = window) {
   };
 
   const ensureAssetLayer=()=>{
-    ensureStylesheet('single-player-v2-assets','src/styles/singlePlayerV2Assets.css?v=clean-tiles-1');
-    ensureStylesheet('single-player-v2-slot-match','src/styles/singlePlayerV2SlotMatch.css?v=2');
-    ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=8');
-    ensureStylesheet('single-player-v2-final-placement','src/styles/singlePlayerV2FinalPlacement.css?v=6');
-    ensureStylesheet('single-player-v2-hud-table-pass','src/styles/singlePlayerV2HudTablePass.css?v=2');
-    ensureStylesheet('single-player-v2-correction-pass','src/styles/singlePlayerV2CorrectionPass.css?v=2');
-    ensureStylesheet('single-player-v2-art-integration','src/styles/singlePlayerV2ArtIntegration.css?v=art-3');
-    ensureStylesheet('single-player-v2-utility-icons','src/styles/singlePlayerV2UtilityIcons.css?v=10');
+    ensureStylesheet('single-player-v2-assets','src/styles/singlePlayerV2Assets.css?v=clean-tiles-2');
+    ensureStylesheet('single-player-v2-slot-match','src/styles/singlePlayerV2SlotMatch.css?v=3');
+    ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=9');
+    ensureStylesheet('single-player-v2-final-placement','src/styles/singlePlayerV2FinalPlacement.css?v=7');
+    ensureStylesheet('single-player-v2-hud-table-pass','src/styles/singlePlayerV2HudTablePass.css?v=3');
+    ensureStylesheet('single-player-v2-correction-pass','src/styles/singlePlayerV2CorrectionPass.css?v=3');
+    ensureStylesheet('single-player-v2-art-integration','src/styles/singlePlayerV2ArtIntegration.css?v=art-4');
+    ensureStylesheet('single-player-v2-utility-icons','src/styles/singlePlayerV2UtilityIcons.css?v=11');
   };
 
   const refreshCompositionLayer=()=>{
     const link=[...doc.querySelectorAll('link[rel="stylesheet"]')]
       .find(node=>node.getAttribute('href')?.includes('singlePlayerV2Compat.css'));
     if(!link)return;
-    const next='src/styles/singlePlayerV2Compat.css?v=composition-1';
+    const next='src/styles/singlePlayerV2Compat.css?v=composition-2';
     if(link.getAttribute('href')!==next)link.setAttribute('href',next);
   };
 
