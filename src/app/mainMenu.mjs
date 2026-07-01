@@ -237,10 +237,24 @@ export function installMainMenu(target = window) {
     startSingleplayer({ fresh: false });
   };
 
-  target.tlrMainMenuAdventure = function () {
+  target.tlrMainMenuAdventure = async function () {
     // Hand off to the self-contained Adventure Mode overlay. It restores the
     // main menu itself (via tlrReturnToMenu) when the player leaves.
     hide();
+    // menuBoot.mjs's boot-time stub awaits __tlrInstallAdventureModules()
+    // before ever calling this function, but that stub only wraps the very
+    // first click through the cold-boot path — main.mjs's bulk install
+    // overwrites window.tlrMainMenuAdventure with this function directly, so
+    // any later click (e.g. after tlrReturnToMenu()) reaches here without
+    // that await ever having happened. Load the adventure modules here too
+    // so this function is self-sufficient regardless of how it was reached.
+    if (typeof target.tlrStartAdventure !== 'function' && typeof target.__tlrInstallAdventureModules === 'function') {
+      try {
+        await target.__tlrInstallAdventureModules();
+      } catch (err) {
+        console.error('The Last Reading: Adventure Mode failed to load.', err);
+      }
+    }
     if (typeof target.tlrStartAdventure === 'function') {
       target.tlrStartAdventure();
       target.setTimeout(() => {
