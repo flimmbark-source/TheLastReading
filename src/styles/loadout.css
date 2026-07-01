@@ -1,4 +1,4 @@
-@layer legacy {
+@layer screens.loadout {
 /* Multiplayer loadout / profile screen.
    Layout is a single CSS grid with named regions (header / slots / main /
    ability / footer). The slot row is a fixed 5-tile persona carousel; the main

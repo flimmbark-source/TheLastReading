@@ -1,4 +1,26 @@
+/* This file is deliberately split across two layers. Most of it only ever
+   touches #mainMenu/.main-menu-* elements and nothing else in the app reads
+   or writes those, so it lives in its own `screens.main-menu` layer below.
+   The "boot veil" block, though, reaches into gameplay elements owned by
+   other files (#titleWrap, .score-stack, .spread-wrap, .handDock, etc.) to
+   fade the table out while a game boots -- that's a real cross-cutting
+   dependency, not something that can be proven independent, so it stays in
+   the shared `legacy` layer where those other files' rules live too. */
 @layer legacy {
+body.tlr-loading :where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,.spread-actions,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal){visibility:hidden;pointer-events:none}
+/* Low-specificity default so the boot veil below can fade in instead of
+   popping; any rule elsewhere that sets its own transition for these
+   elements (attic mode, tutorial tips, etc.) still wins over this. */
+:where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,.spread-actions,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal){transition:opacity .4s ease}
+/* Entering singleplayer hides the table/HUD behind an opacity veil (rather
+   than an instant visibility cut) so any not-yet-fully-styled frame while
+   the "single-player-v2" skin assets finish loading is masked, and lifting
+   the veil once they're ready reads as a fade-in instead of a hard pop. */
+body.main-menu-mode-booting :where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,.spread-actions,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal){opacity:0;pointer-events:none}
+@media(prefers-reduced-motion:reduce){:where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,.spread-actions,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal){transition:none}}
+}
+
+@layer screens.main-menu {
 /* Full-screen black curtain for the New Game/Continue transition — sits
    above everything (including #mainMenu and the "contextual surfaces"
    tier in actionDropTargets.css, which tops out at 10150) so the cut to
@@ -35,16 +57,6 @@ body.main-menu-active #mainMenu{z-index:2147484000}
 #mainMenu:not(.main-menu-busy) .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue:disabled) .main-menu-btn:last-child:hover{filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
 #mainMenu .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue.main-menu-continue-unavailable) .main-menu-btn:last-child{height:58px;background-image:url(../../assets/parchment_plaque_large_center.png);color:#3a1a06;text-shadow:none}
 #mainMenu .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue.main-menu-continue-unavailable) .main-menu-btn:last-child:hover{filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
-body.tlr-loading :where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,.spread-actions,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal){visibility:hidden;pointer-events:none}
-/* Low-specificity default so the boot veil below can fade in instead of
-   popping; any rule elsewhere that sets its own transition for these
-   elements (attic mode, tutorial tips, etc.) still wins over this. */
-:where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,.spread-actions,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal){transition:opacity .4s ease}
-/* Entering singleplayer hides the table/HUD behind an opacity veil (rather
-   than an instant visibility cut) so any not-yet-fully-styled frame while
-   the "single-player-v2" skin assets finish loading is masked, and lifting
-   the veil once they're ready reads as a fade-in instead of a hard pop. */
-body.main-menu-mode-booting :where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,.spread-actions,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal){opacity:0;pointer-events:none}
 body.main-menu-blackout #mainMenu{opacity:0;transition:opacity .3s ease}
 body.main-menu-blackout #mainMenu::before{opacity:0;transition:opacity .3s ease}
 body.main-menu-blackout #tlrBootCurtain{opacity:1;pointer-events:auto}
@@ -52,5 +64,5 @@ body.main-menu-blackout #tlrBootCurtain{opacity:1;pointer-events:auto}
 .main-menu-toggle{display:flex;align-items:center;gap:8px;margin-top:2px;color:#b09060;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.8);cursor:pointer;user-select:none}
 .main-menu-toggle input{accent-color:#d9b35f;cursor:pointer}
 @media(max-height:620px){#mainMenu{align-items:flex-start}.main-menu-inner{margin:auto 0;padding-top:18px;padding-bottom:18px}.main-menu-divider{height:22px;margin-top:12px;margin-bottom:12px}.main-menu-inner>.main-menu-section:nth-child(6){margin-top:19px}.main-menu-btn{height:50px}.main-menu-btn-primary,#mainMenu:not(.main-menu-busy) .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue:disabled) .main-menu-btn:last-child{height:54px}}
-@media(prefers-reduced-motion:reduce){#mainMenu,.main-menu-btn,:where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,.spread-actions,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal){transition:none}}
+@media(prefers-reduced-motion:reduce){#mainMenu,.main-menu-btn{transition:none}}
 }

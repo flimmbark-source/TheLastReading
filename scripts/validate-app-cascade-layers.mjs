@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, legacy;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, then legacy) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, legacy, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, legacy, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -37,9 +37,6 @@ const legacyLayeredFiles = [
   '../src/styles/attic.css',
   '../src/styles/drawers.css',
   '../src/styles/performance.css',
-  '../src/styles/mainMenu.css',
-  '../src/styles/loadout.css',
-  '../src/styles/matchmaking.css',
   '../src/styles/mpGame.css',
   '../src/styles/mpMobile.css',
   '../src/styles/mpSpreadCards.css',
@@ -67,5 +64,28 @@ for (const path of legacyLayeredFiles) {
   assert.match(text, /^@layer legacy \{/, `${path} should be wrapped in the app-wide legacy cascade layer`);
   assert.match(text.trimEnd(), /\}$/, `${path} should close its legacy layer wrapper`);
 }
+
+// Standalone screens: every selector is scoped to that screen's own classes
+// or ids (verified against the actual render/DOM-construction code, not
+// inferred), so they don't need to sit in the shared legacy pile. They live
+// in their own `screens.*` layer instead.
+const loadout = read('../src/styles/loadout.css');
+assert.match(loadout, /^@layer screens\.loadout \{/, 'loadout.css should live in its own screens.loadout layer');
+assert.match(loadout.trimEnd(), /\}$/, 'loadout.css should close its layer wrapper');
+
+const matchmaking = read('../src/styles/matchmaking.css');
+assert.match(matchmaking, /^@layer screens\.matchmaking \{/, 'matchmaking.css should live in its own screens.matchmaking layer');
+assert.match(matchmaking.trimEnd(), /\}$/, 'matchmaking.css should close its layer wrapper');
+
+// mainMenu.css is split: the "boot veil" rules reach into gameplay elements
+// owned by other legacy files (a real cross-file dependency), so those stay
+// in `legacy`. Everything else only ever touches #mainMenu/.main-menu-* and
+// moves to its own screens.main-menu layer.
+const mainMenu = read('../src/styles/mainMenu.css');
+assert.match(mainMenu, /^@layer legacy \{/m, 'mainMenu.css should keep its boot-veil rules in the shared legacy layer');
+assert.match(mainMenu, /@layer screens\.main-menu \{/, 'mainMenu.css should move its self-contained #mainMenu rules to screens.main-menu');
+const mainMenuLegacyBlock = mainMenu.slice(mainMenu.indexOf('@layer legacy {'), mainMenu.indexOf('@layer screens.main-menu {'));
+assert.match(mainMenuLegacyBlock, /#titleWrap/, 'the boot-veil block should still cover the shared gameplay elements it fades');
+assert.doesNotMatch(mainMenuLegacyBlock, /#mainMenu\{/, 'the legacy block should not also contain the standalone #mainMenu overlay rules');
 
 console.log('App-wide cascade layer checks passed.');
