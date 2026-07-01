@@ -94,4 +94,57 @@
   body.single-player-v2.generated-sheet-ready #purgeBtn:active {
     transform: translateY(1px) scale(0.94) !important;
   }
+
+  /* Short function labels under each utility disc, matching the caption
+     treatment already used on Discard/Purge (::after, positioned below the
+     disc). ArtIntegration.css clears these to `content: none`; this file
+     loads after it, so the content set here wins. Labels name what each
+     button actually does (Settings / Scoring reference / Abilities glossary /
+     Archives), not the icon art, since the two aren't always the same thing.
+     Adjacent icon centers are only ~55px apart (much tighter than the Discard/
+     Purge medallions), so this uses a smaller size and tighter tracking than
+     that pattern to keep neighboring labels from touching. */
+  body.single-player-v2.generated-sheet-ready #menuBtn::after,
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
+    position: absolute !important;
+    top: 100% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    margin-top: 3px !important;
+    display: block !important;
+    font: 800 clamp(6px, 1.6vw, 7.5px)/1 system-ui, sans-serif !important;
+    letter-spacing: .02em !important;
+    text-transform: uppercase !important;
+    color: #cdb079 !important;
+    text-shadow: 0 1px 3px #000 !important;
+    white-space: nowrap !important;
+    text-indent: 0 !important;
+    pointer-events: none !important;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn::after { content: "Settings" !important; }
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after { content: "Scoring" !important; }
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after { content: "Abilities" !important; }
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after { content: "Archives" !important; }
+
+  /* Second caption line under Discard ("N Left"), mirroring the count badge's
+     JS-driven update in singlePlayerV2.mjs (ensureDiscardCaption /
+     updateDiscardCaption). Stacks directly below the existing "Discard"
+     ::after label. */
+  body.single-player-v2.generated-sheet-ready #discardBtn #spv2DiscardCaption {
+    position: absolute !important;
+    top: calc(100% + 14px) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    display: block !important;
+    font: 800 clamp(8px, 2.2vw, 9px)/1 system-ui, sans-serif !important;
+    letter-spacing: .07em !important;
+    text-transform: uppercase !important;
+    color: #a4906a !important;
+    text-shadow: 0 1px 3px #000 !important;
+    white-space: nowrap !important;
+    pointer-events: none !important;
+  }
 }

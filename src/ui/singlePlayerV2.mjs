@@ -295,6 +295,28 @@ export function installSinglePlayerV2(target = window) {
     badge.style.display=value===''?'none':'';
   };
 
+  const ensureDiscardCaption=()=>{
+    const button=doc.getElementById('discardBtn');
+    if(!button)return null;
+    let caption=doc.getElementById('spv2DiscardCaption');
+    if(!caption){
+      caption=doc.createElement('span');
+      caption.id='spv2DiscardCaption';
+      caption.setAttribute('aria-hidden','true');
+    }
+    if(caption.parentElement!==button)button.appendChild(caption);
+    return caption;
+  };
+
+  const updateDiscardCaption=()=>{
+    const caption=ensureDiscardCaption();
+    if(!caption)return;
+    const raw=doc.getElementById('discards')?.textContent??'';
+    const value=String(raw).replace(/[^0-9]/g,'');
+    caption.textContent=value===''?'':`${value} Left`;
+    caption.style.display=value===''?'none':'';
+  };
+
   const formatMult=m=>{
     const v=Math.round(m*100)/100;
     return Number.isInteger(v)?String(v):String(v).replace(/0+$/,'').replace(/\.$/,'');
@@ -344,6 +366,7 @@ export function installSinglePlayerV2(target = window) {
       ensureHudStructure();
       updateProgress();
       updateDiscardBadge();
+      updateDiscardCaption();
       updateScoreMult();
     });
     ids.forEach(id=>{
@@ -361,6 +384,7 @@ export function installSinglePlayerV2(target = window) {
     }
     updateProgress();
     updateDiscardBadge();
+    updateDiscardCaption();
     updateScoreMult();
     observeValues();
   };
