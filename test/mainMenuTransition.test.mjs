@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
+import { readFileSync } from 'node:fs';
 import { installMainMenu } from '../src/app/mainMenu.mjs';
 
 function createHarness() {
@@ -105,4 +106,12 @@ test('return to menu routes through multiplayer leave when mp is active', () => 
 
   target.tlrReturnToMenu();
   assert.equal(left, true, 'tlrReturnToMenu should route through tlrMpLeave when multiplayer is active');
+});
+
+
+test('closed drawer contents are hidden even if drawer content overflows', () => {
+  const css = readFileSync(new URL('../src/styles/drawers.css', import.meta.url), 'utf8');
+
+  assert.match(css, /\.tlr-pull-wrap:not\(\.open\) \.tlr-pull-desk>\*\{visibility:hidden!important\}/, 'closed drawer contents should not bleed into other modes');
+  assert.match(css, /\.tlr-pull-wrap\.open \.tlr-pull-desk>\*\{visibility:visible!important\}/, 'open drawer contents should remain visible');
 });
