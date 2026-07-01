@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, legacy, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, legacy, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, legacy, handDragFix, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, legacy, handDragFix, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -31,7 +31,6 @@ const legacyLayeredFiles = [
   '../src/styles/cards.css',
   '../src/styles/market.css',
   '../src/styles/mobile.css',
-  '../src/styles/handDragFix.css',
   '../src/styles/attic.css',
   '../src/styles/drawers.css',
   '../src/styles/performance.css',
@@ -81,6 +80,17 @@ assert.match(constellations.trimEnd(), /\}$/, 'constellations.css should close i
 const dragStability = read('../src/styles/dragStability.css');
 assert.match(dragStability, /^@layer dragStability \{/, 'dragStability.css should live in its own dragStability layer');
 assert.match(dragStability.trimEnd(), /\}$/, 'dragStability.css should close its layer wrapper');
+
+// handDragFix.css: its .handDock z-index needs to keep losing to
+// actionDropTargets.css/mpGame.css's higher, state-gated z-index overrides
+// in legacy. Its other declarations either have no competing declaration
+// anywhere, or are already dominated unconditionally by an existing
+// spv2.components !important rule -- checked individually. Declared AFTER
+// `legacy` on purpose (opposite direction from dragStability); the
+// assertion above already locks that relative order in.
+const handDragFix = read('../src/styles/handDragFix.css');
+assert.match(handDragFix, /^@layer handDragFix \{/, 'handDragFix.css should live in its own handDragFix layer');
+assert.match(handDragFix.trimEnd(), /\}$/, 'handDragFix.css should close its layer wrapper');
 
 // Standalone screens: every selector is scoped to that screen's own classes
 // or ids (verified against the actual render/DOM-construction code, not
