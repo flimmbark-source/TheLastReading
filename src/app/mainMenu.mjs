@@ -235,6 +235,8 @@ export function installMainMenu(target = window) {
   }
 
   async function startSingleplayer({ fresh = false } = {}) {
+    resetTutorialTransientState();
+    closeSettingsPanel();
     target.document.body.classList.add('main-menu-mode-booting', 'main-menu-blackout');
     hide();
     await showCurtain();
@@ -280,6 +282,16 @@ export function installMainMenu(target = window) {
   target.tlrShowMainMenu = show;
   target.tlrHideMainMenu = hide;
 
+  function resetTutorialTransientState() {
+    if (typeof target.tutResetTransient === 'function') target.tutResetTransient();
+    else if (typeof target.tutHide === 'function') target.tutHide();
+  }
+
+  function closeSettingsPanel() {
+    const panel = target.document.getElementById('settingsPanel');
+    if (panel) panel.classList.add('hidden');
+  }
+
   target.tlrMainMenuNewGame = function () {
     return startSingleplayer({ fresh: true });
   };
@@ -289,6 +301,8 @@ export function installMainMenu(target = window) {
   };
 
   target.tlrMainMenuAdventure = async function () {
+    resetTutorialTransientState();
+    closeSettingsPanel();
     // Hand off to the self-contained Adventure Mode overlay. It restores the
     // main menu itself (via tlrReturnToMenu) when the player leaves.
     target.document.body.classList.add('main-menu-mode-booting', 'main-menu-blackout');
@@ -333,6 +347,8 @@ export function installMainMenu(target = window) {
   };
 
   target.tlrMainMenuMultiplayer = async function () {
+    resetTutorialTransientState();
+    closeSettingsPanel();
     // Hide main menu, show loadout screen. Same self-sufficiency concern as
     // tlrMainMenuAdventure above: main.mjs's bulk install overwrites this
     // function directly after the first game load via any path, so this
@@ -386,7 +402,7 @@ export function installMainMenu(target = window) {
     if (typeof target.tlrMpLeave === 'function' && target.document.body.classList.contains('mp-game-active')) {
       return target.tlrMpLeave();
     }
-    if (typeof target.tutHide === 'function') target.tutHide();
+    resetTutorialTransientState();
     // Close any open sub-panels before showing the menu
     const panel = target.document.getElementById('settingsPanel');
     if (panel) panel.classList.add('hidden');
