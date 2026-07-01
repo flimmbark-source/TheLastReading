@@ -235,6 +235,7 @@ export function installMainMenu(target = window) {
   }
 
   async function startSingleplayer({ fresh = false } = {}) {
+    resetModeTransitionUi();
     target.document.body.classList.add('main-menu-mode-booting', 'main-menu-blackout');
     hide();
     await showCurtain();
@@ -245,6 +246,7 @@ export function installMainMenu(target = window) {
         if (!gameStarted || fresh) target.startReading();
         gameStarted = true;
         forceSingleplayerTable();
+        closeModeChrome();
         hide();
         await waitForSinglePlayerSkin();
         clearSingleplayerBootVeil();
@@ -280,6 +282,39 @@ export function installMainMenu(target = window) {
   target.tlrShowMainMenu = show;
   target.tlrHideMainMenu = hide;
 
+  function resetTutorialTransientState() {
+    if (typeof target.tutResetTransient === 'function') target.tutResetTransient();
+    else if (typeof target.tutHide === 'function') target.tutHide();
+  }
+
+  function closeSettingsPanel() {
+    const panel = target.document.getElementById('settingsPanel');
+    if (panel) panel.classList.add('hidden');
+  }
+
+  function closePullTab(name) {
+    const wrap = target.document.getElementById(`${name}PullWrap`);
+    if (wrap) wrap.classList.remove('open');
+    const tab = target.document.getElementById(`${name}PullTab`);
+    if (tab) {
+      const label = name.charAt(0).toUpperCase() + name.slice(1);
+      tab.innerHTML = `&#9660; ${label}`;
+    }
+  }
+
+  function closeModeChrome() {
+    closeSettingsPanel();
+    closePullTab('menu');
+    closePullTab('scoring');
+    closePullTab('abilities');
+    if (typeof target.closeRefs === 'function') target.closeRefs();
+  }
+
+  function resetModeTransitionUi() {
+    resetTutorialTransientState();
+    closeModeChrome();
+  }
+
   target.tlrMainMenuNewGame = function () {
     return startSingleplayer({ fresh: true });
   };
@@ -289,6 +324,7 @@ export function installMainMenu(target = window) {
   };
 
   target.tlrMainMenuAdventure = async function () {
+    resetModeTransitionUi();
     // Hand off to the self-contained Adventure Mode overlay. It restores the
     // main menu itself (via tlrReturnToMenu) when the player leaves.
     target.document.body.classList.add('main-menu-mode-booting', 'main-menu-blackout');
@@ -311,6 +347,7 @@ export function installMainMenu(target = window) {
       }
       if (typeof target.tlrStartAdventure === 'function') {
         target.tlrStartAdventure();
+        closeModeChrome();
         hideCurtain();
         target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
         target.setTimeout(() => {
@@ -333,6 +370,7 @@ export function installMainMenu(target = window) {
   };
 
   target.tlrMainMenuMultiplayer = async function () {
+    resetModeTransitionUi();
     // Hide main menu, show loadout screen. Same self-sufficiency concern as
     // tlrMainMenuAdventure above: main.mjs's bulk install overwrites this
     // function directly after the first game load via any path, so this
@@ -386,16 +424,8 @@ export function installMainMenu(target = window) {
     if (typeof target.tlrMpLeave === 'function' && target.document.body.classList.contains('mp-game-active')) {
       return target.tlrMpLeave();
     }
-    if (typeof target.tutHide === 'function') target.tutHide();
-    // Close any open sub-panels before showing the menu
-    const panel = target.document.getElementById('settingsPanel');
-    if (panel) panel.classList.add('hidden');
-    const mw = target.document.getElementById('menuPullWrap');
-    if (mw && mw.classList.contains('open')) {
-      mw.classList.remove('open');
-      const mt = target.document.getElementById('menuPullTab');
-      if (mt) mt.innerHTML = '&#9660; Menu';
-    }
+    // Close any open sub-panels before showing the menu or starting another mode.
+    resetModeTransitionUi();
     closeAllOverlays();
     syncContinueBtn();
     show();
