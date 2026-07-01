@@ -159,6 +159,36 @@ export function installMainMenu(target = window) {
   }
 
 
+  // Full-screen black curtain for the New Game/Continue transition. The
+  // per-element opacity veil (see mainMenu.css) only fades individual table
+  // elements in over whatever's already visible behind them (the body's
+  // background art, not black) — it doesn't give the "fade to black, then
+  // fade in" cinematic cut the player actually asked for. This does: cover
+  // the screen in solid black first, do all the state/DOM setup safely
+  // hidden behind it, then lift it once the table is fully ready.
+  const CURTAIN_FADE_MS = 300;
+
+  function curtainEl() {
+    const doc = target.document;
+    let el = doc.getElementById('tlrBootCurtain');
+    if (!el) {
+      el = doc.createElement('div');
+      el.id = 'tlrBootCurtain';
+      el.setAttribute('aria-hidden', 'true');
+      doc.body.appendChild(el);
+    }
+    return el;
+  }
+
+  function showCurtain() {
+    curtainEl().classList.add('show');
+    return new Promise(resolve => target.setTimeout(resolve, CURTAIN_FADE_MS));
+  }
+
+  function hideCurtain() {
+    curtainEl().classList.remove('show');
+  }
+
   function waitForSinglePlayerSkin() {
     const ready = target.__tlrSinglePlayerV2Ready;
     if (!ready || typeof ready.then !== 'function') return Promise.resolve();
@@ -202,6 +232,7 @@ export function installMainMenu(target = window) {
 
   async function startSingleplayer({ fresh = false } = {}) {
     target.document.body.classList.add('main-menu-mode-booting');
+    await showCurtain();
     try {
       if (fresh) startFresh();
       forceSingleplayerTable();
@@ -212,17 +243,20 @@ export function installMainMenu(target = window) {
         hide();
         await waitForSinglePlayerSkin();
         clearSingleplayerBootVeil();
+        hideCurtain();
         if (!target.localStorage.getItem('tlr_tut_done') && typeof target.tutShow === 'function') {
           target.setTimeout(() => target.tutShow(0), 400);
         }
       } else {
         console.error('The Last Reading: startReading is not available from the main menu.');
         target.document.body.classList.remove('main-menu-mode-booting');
+        hideCurtain();
         show();
       }
     } catch (err) {
       console.error('The Last Reading: failed to start singleplayer from the main menu.', err);
       target.document.body.classList.remove('main-menu-mode-booting');
+      hideCurtain();
       show();
     }
   }
