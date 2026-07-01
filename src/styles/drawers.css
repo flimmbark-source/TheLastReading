@@ -13,6 +13,14 @@
 .tlr-pull-desk{height:var(--inv-h);border-bottom:2px solid #6a4c24;position:relative;overflow:auto;pointer-events:auto;padding:18px 18px 24px;box-shadow:0 16px 38px rgba(0,0,0,.45)}
 .tlr-pull-desk::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 90% 70% at 50% 110%,rgba(90,45,5,.22),transparent 65%)}
 .tlr-pull-desk>*{position:relative;z-index:1}
+/* Closed drawers are translated up by their fitted drawer height. If the menu
+   content is taller than that fitted height (for example after returning from
+   multiplayer before the drawer is remeasured), visible overflow can protrude
+   back onto the next mode even though the drawer itself is closed. Hide desk
+   contents unless the drawer is actually open so stale menu/settings content
+   cannot bleed into Adventure or other modes. */
+.tlr-pull-wrap:not(.open) .tlr-pull-desk>*{visibility:hidden!important}
+.tlr-pull-wrap.open .tlr-pull-desk>*{visibility:visible!important}
 .tlr-pull-tab{position:absolute;top:var(--inv-h);left:calc(50% - 40px);width:86px;height:28px;background:linear-gradient(180deg,#2e1e0e,#1e1208);border:1px solid #6a4c24;border-top:none;border-radius:0 0 10px 10px;cursor:grab;color:#a07838;font-size:10px;font-weight:700;letter-spacing:.07em;text-align:center;line-height:28px;pointer-events:auto;transition:background .15s,color .15s,box-shadow .15s;padding:0;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.5);touch-action:none;user-select:none;font-family:system-ui,Segoe UI,sans-serif}
 .tlr-pull-tab:hover{background:linear-gradient(180deg,#3e2814,#281810);color:#ffd978;box-shadow:0 4px 14px rgba(0,0,0,.6)}
 .tlr-pull-tab:active{cursor:grabbing}
