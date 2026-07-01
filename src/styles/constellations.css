@@ -1,4 +1,4 @@
-@layer legacy {
+@layer constellations {
 .constellation-pill{position:fixed;right:18px;top:50vh;transform:translateY(-50%);z-index:120;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;border:1px solid rgba(255,217,120,.24);border-radius:50%;background:rgba(10,6,4,.08);box-shadow:none;color:#ffe09a;display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer;user-select:none;appearance:none;-webkit-appearance:none}
 .constellation-pill.hidden{display:none}
 .constellation-pill:hover,.constellation-pill.open{border-color:rgba(255,217,120,.62);background:rgba(255,217,120,.06);box-shadow:0 0 18px rgba(255,217,120,.18)}

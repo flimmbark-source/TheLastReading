@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, legacy, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, legacy, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, legacy, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, legacy, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -30,7 +30,6 @@ const legacyLayeredFiles = [
   '../src/styles/hand.css',
   '../src/styles/cards.css',
   '../src/styles/market.css',
-  '../src/styles/constellations.css',
   '../src/styles/mobile.css',
   '../src/styles/dragStability.css',
   '../src/styles/handDragFix.css',
@@ -64,6 +63,15 @@ for (const path of legacyLayeredFiles) {
   assert.match(text, /^@layer legacy \{/, `${path} should be wrapped in the app-wide legacy cascade layer`);
   assert.match(text.trimEnd(), /\}$/, `${path} should close its legacy layer wrapper`);
 }
+
+// constellations.css: self-namespaced (.constellation-*) but NOT independent
+// -- its #constellationPill/.constellation-pill element is also targeted by
+// mainMenu.css's boot veil and by SPv2's base.css/relics.css for z-index and
+// position. Declared before `legacy` in the master order on purpose (see
+// game.html); the assertion above already locks that relative order in.
+const constellations = read('../src/styles/constellations.css');
+assert.match(constellations, /^@layer constellations \{/, 'constellations.css should live in its own constellations layer');
+assert.match(constellations.trimEnd(), /\}$/, 'constellations.css should close its layer wrapper');
 
 // Standalone screens: every selector is scoped to that screen's own classes
 // or ids (verified against the actual render/DOM-construction code, not

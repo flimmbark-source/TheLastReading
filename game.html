@@ -18,8 +18,18 @@
      to that screen's own classes/ids, verified by reading the actual
      render code, not inferred from naming. They never interact with
      `legacy` or with each other, so their position here is arbitrary; they
-     just don't need to live in the shared pile anymore. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, legacy, screens.main-menu, screens.loadout, screens.matchmaking;
+     just don't need to live in the shared pile anymore.
+
+     `constellations` is NOT independent the way screens.* is: its own
+     #constellationPill/.constellation-pill element is also targeted by
+     mainMenu.css's boot veil (legacy) and by SPv2's base.css/relics.css for
+     z-index and position. It's declared BEFORE legacy on purpose, so it
+     stays the lowest-priority normal-tier layer here -- today those other
+     rules already win via higher specificity/!important, and putting
+     constellations first keeps it that way (normal-tier layer order is
+     compared before specificity, so declaring it any later would flip
+     those results regardless of specificity). */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, legacy, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
