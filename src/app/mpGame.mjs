@@ -1658,7 +1658,19 @@ export function installMpGame(target = window) {
   target.tlrMpCancelAction = function () { if (mySubmitted(_state)) return; cancelAbilityTargeting(); _invokeCard = null; _swapFirst = null; _purgeSelect = null; _selected = null; _abilityResolving = false; _personaSwapRequested = false; target.refreshHandState?.(); render(); };
   target.tlrMpStartSwap = function () { if (!_state || !canSwapSpread(_state, _myIndex)) return; _swapFirst = -1; _personaSwapRequested = true; render(); };
   target.tlrMpNextRound = function () { if (_state && _myIndex === 0) { clearOpponentRevealQueues(); target.tlrMpDispatch?.({ type: MP_ACTIONS.MP_NEW_ROUND, playerIndex: 0 }); } };
-  target.tlrMpLeave = function () { if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; } if (_autoRoundTimer) { target.clearTimeout(_autoRoundTimer); _autoRoundTimer = null; } cancelAbilityTargeting(); restoreAbilityConfirm(); _state = null; resetTransientActionState(); _lastScoringState = null; _latestEffectsUntil = 0; _delayedNextRoundQueued = false; clearOpponentRevealQueues(); restorePlaceCard(); restoreRenderSpread(); restoreRenderHandOverride(); restorePurgeOverride(); restoreRefreshHandStateOverride(); clearPendingPlacementPreview(); syncPersonaPrompt(); doc.body.classList.remove('mp-game-active', 'mp-ability-flow-active', 'mp-persona-ability-active', 'mp-purge-flow-active'); el('mpGame')?.classList.add('mp-hidden'); target._slotEls = null; const sp = el('spread'); if (sp) { sp._mpSlots = null; sp.replaceChildren(); } target.tlrHideMatchmaking?.(); if (typeof target.tlrReturnToMenu === 'function') target.tlrReturnToMenu(); else if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu(); };
+  function closeSharedChromeForMpLeave() {
+    doc.getElementById('settingsPanel')?.classList.add('hidden');
+    for (const name of ['menu', 'scoring', 'abilities']) {
+      const wrap = doc.getElementById(`${name}PullWrap`);
+      if (wrap) wrap.classList.remove('open');
+      const tab = doc.getElementById(`${name}PullTab`);
+      if (tab) tab.innerHTML = `&#9660; ${name.charAt(0).toUpperCase()}${name.slice(1)}`;
+    }
+    target.closeRefs?.();
+    target.tutResetTransient?.();
+  }
+
+  target.tlrMpLeave = function () { if (_autoScoreTimer) { target.clearTimeout(_autoScoreTimer); _autoScoreTimer = null; } if (_autoRoundTimer) { target.clearTimeout(_autoRoundTimer); _autoRoundTimer = null; } closeSharedChromeForMpLeave(); cancelAbilityTargeting(); restoreAbilityConfirm(); _state = null; resetTransientActionState(); _lastScoringState = null; _latestEffectsUntil = 0; _delayedNextRoundQueued = false; clearOpponentRevealQueues(); restorePlaceCard(); restoreRenderSpread(); restoreRenderHandOverride(); restorePurgeOverride(); restoreRefreshHandStateOverride(); clearPendingPlacementPreview(); syncPersonaPrompt(); doc.body.classList.remove('mp-game-active', 'mp-ability-flow-active', 'mp-persona-ability-active', 'mp-purge-flow-active'); el('mpGame')?.classList.add('mp-hidden'); target._slotEls = null; const sp = el('spread'); if (sp) { sp._mpSlots = null; sp.replaceChildren(); } target.tlrHideMatchmaking?.(); if (typeof target.tlrReturnToMenu === 'function') target.tlrReturnToMenu(); else if (typeof target.tlrShowMainMenu === 'function') target.tlrShowMainMenu(); };
 }
 
 function esc(str) {

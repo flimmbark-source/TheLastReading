@@ -240,6 +240,13 @@ export function tutHide() {
   tip.style.cssText = '';
 }
 
+export function tutResetTransient() {
+  queuedTipSteps = [];
+  clearTimeout(queuedTipTimer);
+  queuedTipTimer = null;
+  tutHide();
+}
+
 function positionActiveTip() {
   if (tutStep < 0 || !activeTutTarget) return;
   posTutTip(activeTutTarget, activeTutArrow);

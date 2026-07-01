@@ -117,6 +117,14 @@ export function installGestureDrawers(target = window){
       const targetHeight=Math.max(d.min,Math.min(max,measured));
       wrap.style.setProperty('--tlr-drawer-h',targetHeight+'px');
       desk.style.setProperty('overflow',measured>max?'auto':'visible','important');
+      if(d.id==='menu'){
+        // The settings panel can be taller than its measured drawer height on
+        // narrow screens after mode transitions. Never allow the open menu
+        // drawer to use visible overflow; keep the controls contained and let
+        // the drawer scroll instead.
+        desk.style.setProperty('overflow-x','hidden','important');
+        desk.style.setProperty('overflow-y','auto','important');
+      }
     }
   }
 
