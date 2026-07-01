@@ -4,7 +4,8 @@
 :root{--inv-h:300px}
 body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!important}
 #invWrap{position:fixed;top:0;left:0;right:0;z-index:150;transform:translateY(calc(-1 * var(--inv-h)));transition:transform .45s cubic-bezier(.34,1.28,.64,1);pointer-events:none}
-#invWrap.open{transform:translateY(0);pointer-events:auto;z-index:400}
+/* See drawers.css for why this needs to clear .spread-wrap's scorePreview-driven z-index:10060. */
+#invWrap.open{transform:translateY(0);pointer-events:auto;z-index:10095!important}
 #invDesk{height:var(--inv-h);background:linear-gradient(180deg,#0e0704 0%,#1c1008 55%,#150d06 100%);border-bottom:2px solid #6a4c24;position:relative;overflow:hidden;pointer-events:auto}
 #invDesk::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 110%,rgba(90,45,5,.35),transparent 65%);pointer-events:none;z-index:0}
 #invDesk::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px),repeating-linear-gradient(0deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px);pointer-events:none;z-index:0}
