@@ -44,8 +44,18 @@
      regardless of tier). Its other rules either have no competing
      declaration anywhere, or are already dominated by an existing
      spv2.components !important rule that wins unconditionally regardless
-     of where handDragFix sits -- checked all of them individually. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, legacy, handDragFix, screens.main-menu, screens.loadout, screens.matchmaking;
+     of where handDragFix sits -- checked all of them individually.
+
+     `performance` is also AFTER legacy, same direction as handDragFix: its
+     mobile/reduced-motion overrides (body background-attachment, #roomAmbient
+     animation/opacity/transform) need to keep losing to actionDropTargets.css's
+     SPv2-mode background-attachment override and to ps1aesthetic.css's
+     explicit "re-enable candle glow on mobile" override, both still in
+     legacy. Its #ambientFX/.mote/.slot.res-* rules either have no competing
+     declaration, are already dominated unconditionally (their target
+     properties are !important here against a plain normal-tier rule
+     elsewhere), or match the competing value exactly -- checked individually. */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, legacy, handDragFix, performance, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">

@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, legacy, handDragFix, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, legacy, handDragFix, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, legacy, handDragFix, performance, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, legacy, handDragFix, performance, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -33,7 +33,6 @@ const legacyLayeredFiles = [
   '../src/styles/mobile.css',
   '../src/styles/attic.css',
   '../src/styles/drawers.css',
-  '../src/styles/performance.css',
   '../src/styles/mpGame.css',
   '../src/styles/mpMobile.css',
   '../src/styles/mpSpreadCards.css',
@@ -91,6 +90,15 @@ assert.match(dragStability.trimEnd(), /\}$/, 'dragStability.css should close its
 const handDragFix = read('../src/styles/handDragFix.css');
 assert.match(handDragFix, /^@layer handDragFix \{/, 'handDragFix.css should live in its own handDragFix layer');
 assert.match(handDragFix.trimEnd(), /\}$/, 'handDragFix.css should close its layer wrapper');
+
+// performance.css: its mobile/reduced-motion overrides need to keep losing to
+// actionDropTargets.css's SPv2-mode background-attachment override and to
+// ps1aesthetic.css's explicit "re-enable candle glow on mobile" override,
+// both still in legacy. Declared AFTER `legacy` on purpose, same direction as
+// handDragFix; the assertion above already locks that relative order in.
+const performance_ = read('../src/styles/performance.css');
+assert.match(performance_, /^@layer performance \{/, 'performance.css should live in its own performance layer');
+assert.match(performance_.trimEnd(), /\}$/, 'performance.css should close its layer wrapper');
 
 // Standalone screens: every selector is scoped to that screen's own classes
 // or ids (verified against the actual render/DOM-construction code, not

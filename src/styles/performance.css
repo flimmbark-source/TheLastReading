@@ -1,4 +1,4 @@
-@layer legacy {
+@layer performance {
 @media(max-width:640px){
   body{background-attachment:scroll!important;background-size:cover!important;}
   #roomAmbient{animation:none!important;opacity:.42!important;transform:none!important;}
