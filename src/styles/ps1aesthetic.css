@@ -1,3 +1,4 @@
+@layer legacy {
 /* ═══════════════════════════════════════════════════════════════
    PS1 / LOFI DARK AESTHETIC
    Inspired by Inscryption · Lunacid · Dread Delusion · You Must Feed It
@@ -170,4 +171,5 @@ h1 {
   font-family: 'VT323', 'Courier New', monospace;
   font-size: 18px;
   letter-spacing: .05em;
+}
 }

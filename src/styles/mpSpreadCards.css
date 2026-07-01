@@ -1,3 +1,4 @@
+@layer legacy {
 /* Multiplayer spread cards should fill their slots.
    This file loads after mpGame.css and mpMobile.css so mobile/global card sizing
    cannot shrink placed cards inside spread slots. */
@@ -30,4 +31,5 @@ body.mp-game-active #mpOppSpread .slot > .card .title {
     min-width: 100% !important;
     min-height: 100% !important;
   }
+}
 }

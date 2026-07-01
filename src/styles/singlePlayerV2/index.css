@@ -4,9 +4,12 @@
    source stylesheet listed below. The generated file is the only stylesheet
    game.html and the runtime installer should load for Single Player V2. It
    preserves the previous direct-link cascade order while making the active
-   cascade traceable in one file. The layer order below is reserved for the next
-   migration step, where sections can be moved into component-owned layers
-   without changing the public loading surface. */
+   cascade traceable in one file. tokens/utilityIcons/utilityButtons/relics/
+   hand/spreadHints own real cascade layers; the remaining sources here still
+   live in the app-wide `legacy` layer declared in game.html (see that file's
+   layer statement for why -- their !important declarations are load-bearing
+   against other legacy-layer files elsewhere in the app in ways that aren't
+   yet safe to split further without per-component visual verification). */
 @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat;
 
 
@@ -54,6 +57,7 @@
 
 
 /* === singlePlayerV2/base.css: base layout === */
+@layer legacy {
 /* Phase 1 single-player layout.
    Placeholder materials only: final transparent art replaces these shells in Phase 2. */
 
@@ -586,9 +590,11 @@
     }
   }
 }
+}
 
 
 /* === singlePlayerV2/compat.css: composition compatibility === */
+@layer legacy {
 /* Compatibility overrides kept separate from the Phase 1 composition sheet. */
 
 @media (max-width: 640px) {
@@ -1033,6 +1039,7 @@
       0 9px 14px rgba(0,0,0,.66) !important;
   }
 }
+}
 
 
 /* === singlePlayerV2/components/spreadHints.css: component: spread hints and choice polish === */
@@ -1210,6 +1217,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 
 
 /* === singlePlayerV2/desktop.css: desktop phone-column layout === */
+@layer legacy {
 /* ─── Desktop phone-column constraint ────────────────────────────────────── */
 /* On wide screens confine the entire game to a portrait phone column.        */
 /* CSS transform on body makes it the containing block for all               */
@@ -1904,6 +1912,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     content: none !important;
   }
 }
+}
 
 
 /* === singlePlayerV2/components/relics.css: component: relic placement === */
@@ -1961,6 +1970,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 
 
 /* === singlePlayerV2/assets.css: generated assets === */
+@layer legacy {
 /* Phase 2 generated-sheet art layer.
    The existing SVG kit remains the fallback until the generated sprite is
    decoded and body.generated-sheet-ready is applied. */
@@ -2197,9 +2207,11 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     background-image: var(--spv2-action-deck-art);
   }
 }
+}
 
 
 /* === singlePlayerV2/layout.css: layout pass === */
+@layer legacy {
 /* Final mobile shell corrections layered after the generated art styles. */
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
@@ -2346,9 +2358,11 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     min-width: 0;
   }
 }
+}
 
 
 /* === singlePlayerV2/mobile.css: mobile visual fixes === */
+@layer legacy {
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-compact-hud-h: clamp(76px, 11dvh, 94px);
@@ -2637,6 +2651,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     bottom: auto !important;
   }
 }
+}
 
 
 /* === singlePlayerV2/components/hand.css: component: hand gesture restore === */
@@ -2829,6 +2844,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 
 
 /* === singlePlayerV2/components/spread.css: component: spread final placement === */
+@layer legacy {
 
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
@@ -3040,9 +3056,11 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     pointer-events: auto !important;
   }
 }
+}
 
 
 /* === singlePlayerV2/components/scoreHud.css: component: score HUD table pass === */
+@layer legacy {
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 7.6dvh;
@@ -3253,9 +3271,11 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     z-index:2 !important;
   }
 }
+}
 
 
 /* === singlePlayerV2/states.css: state correction pass === */
+@layer legacy {
 @media (max-width: 640px) {
   /* Spread slots keep their ornate frame and placed cards occupy that exact box. */
   body.single-player-v2.generated-sheet-ready .spread {
@@ -3386,9 +3406,11 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     background: radial-gradient(ellipse 78% 72% at 50% 50%,transparent 48%,rgba(0,0,0,.24) 78%,rgba(0,0,0,.58) 100%) !important;
   }
 }
+}
 
 
 /* === singlePlayerV2/components/artIntegration.css: component: art integration === */
+@layer legacy {
 /* Reconciles the tuned single-player-v2 layout with the approved art tiles.
    The four stat panels now carry their label text (RESERVE / SCORE / THRESHOLD
    / DISCARDS) and their stat icons (bag / star / scales / skull) baked into the
@@ -3641,6 +3663,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     z-index: 3 !important;
     pointer-events: none !important;
   }
+}
 }
 
 

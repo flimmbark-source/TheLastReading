@@ -1,3 +1,4 @@
+@layer legacy {
 /* Mobile-only multiplayer layout tuning.
    Keeps the MP screen as: opponent hand, opponent spread, middle controls,
    my spread, my hand. These overrides intentionally only apply while the
@@ -236,4 +237,5 @@
     width: 100px !important;
     height: 150px !important;
   }
+}
 }

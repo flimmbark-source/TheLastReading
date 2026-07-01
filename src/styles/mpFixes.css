@@ -1,3 +1,4 @@
+@layer legacy {
 /* Multiplayer UI overrides that must load after mpGame.css and mpMobile.css. */
 
 body.mp-game-active .hand-swipe-hint,
@@ -267,4 +268,5 @@ body.mp-game-active .spread-wrap {
   body.mp-game-active .handDock {
     transform: translateX(-12vw) !important;
   }
+}
 }

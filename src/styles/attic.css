@@ -1,3 +1,4 @@
+@layer legacy {
 /* Extracted from index.html (Phase 17). Files split in original rule order;
    link order in index.html must stay base,spread,hand,cards,market,mobile,attic,drawers
    to preserve the cascade. Some sections span themes because order wins over purity. */
@@ -190,5 +191,4 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
   .relic-rack .relic-btn{width:38px!important;height:38px!important}
   .relic-rack .relic-slot-empty{width:38px!important;height:38px!important}
 }
-
-
+}

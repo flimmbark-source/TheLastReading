@@ -1,3 +1,4 @@
+@layer legacy {
 @media (max-width: 640px) {
   /* Spread slots keep their ornate frame and placed cards occupy that exact box. */
   body.single-player-v2.generated-sheet-ready .spread {
@@ -127,4 +128,5 @@
     opacity: 1 !important;
     background: radial-gradient(ellipse 78% 72% at 50% 50%,transparent 48%,rgba(0,0,0,.24) 78%,rgba(0,0,0,.58) 100%) !important;
   }
+}
 }

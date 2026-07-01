@@ -1,3 +1,4 @@
+@layer legacy {
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-compact-hud-h: clamp(76px, 11dvh, 94px);
@@ -285,4 +286,5 @@
     top: var(--inv-h) !important;
     bottom: auto !important;
   }
+}
 }

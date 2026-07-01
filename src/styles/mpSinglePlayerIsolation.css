@@ -1,3 +1,4 @@
+@layer legacy {
 /* Keep the mobile single-player fan/HUD overrides from leaking into multiplayer.
    Multiplayer deliberately reuses #spread, #hand, .handDock, and .spread, while
    the opponent has a second .spread inside #mpGame. The single-player fan rules
@@ -119,4 +120,5 @@
   html body.mp-game-active.single-player-v2.generated-sheet-ready #spread {
     transform: scale(.68) !important;
   }
+}
 }

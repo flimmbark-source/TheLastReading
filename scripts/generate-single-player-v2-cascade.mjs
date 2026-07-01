@@ -33,9 +33,12 @@ export function buildSinglePlayerV2Cascade() {
    source stylesheet listed below. The generated file is the only stylesheet
    game.html and the runtime installer should load for Single Player V2. It
    preserves the previous direct-link cascade order while making the active
-   cascade traceable in one file. The layer order below is reserved for the next
-   migration step, where sections can be moved into component-owned layers
-   without changing the public loading surface. */
+   cascade traceable in one file. tokens/utilityIcons/utilityButtons/relics/
+   hand/spreadHints own real cascade layers; the remaining sources here still
+   live in the app-wide \`legacy\` layer declared in game.html (see that file's
+   layer statement for why -- their !important declarations are load-bearing
+   against other legacy-layer files elsewhere in the app in ways that aren't
+   yet safe to split further without per-component visual verification). */
 @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat;
 `];
 

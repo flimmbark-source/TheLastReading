@@ -1,3 +1,4 @@
+@layer legacy {
 /* Reconciles the tuned single-player-v2 layout with the approved art tiles.
    The four stat panels now carry their label text (RESERVE / SCORE / THRESHOLD
    / DISCARDS) and their stat icons (bag / star / scales / skull) baked into the
@@ -250,4 +251,5 @@
     z-index: 3 !important;
     pointer-events: none !important;
   }
+}
 }

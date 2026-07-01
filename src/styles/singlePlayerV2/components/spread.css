@@ -1,3 +1,4 @@
+@layer legacy {
 
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
@@ -208,4 +209,5 @@
     display: block !important;
     pointer-events: auto !important;
   }
+}
 }

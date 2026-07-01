@@ -1,3 +1,4 @@
+@layer legacy {
 /* Extracted from index.html (Phase 17). Files split in original rule order;
    link order in index.html must stay base,spread,hand,cards,market,mobile,attic,drawers
    to preserve the cascade. Some sections span themes because order wins over purity. */
@@ -75,3 +76,4 @@
    When it is open, keep the content inside the drawer and let the drawer scroll
    instead of letting the settings controls spill over the table. */
 #menuPullDesk.tlr-pull-desk{overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain}
+}

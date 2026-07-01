@@ -1,3 +1,4 @@
+@layer legacy {
 /* Extracted from index.html (Phase 17). Files split in original rule order;
    link order in index.html must stay base,spread,hand,cards,market,mobile,attic,drawers
    to preserve the cascade. Some sections span themes because order wins over purity. */
@@ -406,3 +407,4 @@
 .card-zoom-bg{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;cursor:pointer}
 .card-zoom-inner{transform:scale(2.4);transform-origin:center;pointer-events:none;box-shadow:0 24px 70px rgba(0,0,0,.95),0 0 0 1px rgba(212,175,106,.18)!important;animation:none!important;transition:none!important}
 @media(max-width:640px){.card-zoom-inner{transform:scale(2)}}
+}

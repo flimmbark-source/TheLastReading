@@ -1,3 +1,4 @@
+@layer legacy {
 /* Keep the hand above the score pills (z-index:25) while leaving references,
    modals, and tutorials above it. */
 .handDock {
@@ -43,4 +44,5 @@
   .hand-swipe-zone-lower {
     height: 200px;
   }
+}
 }

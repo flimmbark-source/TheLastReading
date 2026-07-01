@@ -1,3 +1,4 @@
+@layer legacy {
 /* Mobile-only placement for the multiplayer score multipliers.
    The multiplier spans are still injected into each score pill by JS, but on
    mobile they should read as a separate label immediately to the left of that
@@ -23,4 +24,5 @@
     margin-left: 0 !important;
     pointer-events: none;
   }
+}
 }

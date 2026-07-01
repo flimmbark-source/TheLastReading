@@ -1,3 +1,4 @@
+@layer legacy {
 /* Full-screen black curtain for the New Game/Continue transition — sits
    above everything (including #mainMenu and the "contextual surfaces"
    tier in actionDropTargets.css, which tops out at 10150) so the cut to
@@ -52,3 +53,4 @@ body.main-menu-blackout #tlrBootCurtain{opacity:1;pointer-events:auto}
 .main-menu-toggle input{accent-color:#d9b35f;cursor:pointer}
 @media(max-height:620px){#mainMenu{align-items:flex-start}.main-menu-inner{margin:auto 0;padding-top:18px;padding-bottom:18px}.main-menu-divider{height:22px;margin-top:12px;margin-bottom:12px}.main-menu-inner>.main-menu-section:nth-child(6){margin-top:19px}.main-menu-btn{height:50px}.main-menu-btn-primary,#mainMenu:not(.main-menu-busy) .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue:disabled) .main-menu-btn:last-child{height:54px}}
 @media(prefers-reduced-motion:reduce){#mainMenu,.main-menu-btn,:where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,.spread-actions,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal){transition:none}}
+}

@@ -1,3 +1,4 @@
+@layer legacy {
 body.hand-card-action-drag-active .handDock{z-index:10040!important}
 body.hand-card-action-drag-active .hand{position:relative;z-index:10041!important}
 body.hand-card-action-drag-active .hand .card.hand-card-dragging,
@@ -122,3 +123,4 @@ body:has(#summary .store-front-shell) #spv2ArchiveBtn{z-index:10!important}
 }
 
 @media(prefers-reduced-motion:reduce){.spread-actions .sbtn.card-drop-target{transition:none!important}}
+}

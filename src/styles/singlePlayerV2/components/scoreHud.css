@@ -1,3 +1,4 @@
+@layer legacy {
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 7.6dvh;
@@ -207,4 +208,5 @@
   body.single-player-v2.generated-sheet-ready .spread {
     z-index:2 !important;
   }
+}
 }

@@ -4,6 +4,16 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>The Last Reading</title>
+<style>
+  /* Pre-declares the whole app's cascade layer order in one place, before any
+     stylesheet loads. Everything that isn't already SPv2-owned (see
+     singlePlayerV2/index.css's own layer statement) shares one "legacy"
+     layer, in the same relative order the files already load in today --
+     this makes the existing implicit "unlayered beats spv2.tokens/components
+     for normal declarations, loses to them for !important" behavior explicit
+     instead of accidental, without changing what actually wins anywhere. */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, legacy;
+</style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
 <link rel="stylesheet" href="src/styles/hand.css?v=mobile-load-fix-1">

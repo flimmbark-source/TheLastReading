@@ -1,3 +1,4 @@
+@layer legacy {
 /* Phase 1 single-player layout.
    Placeholder materials only: final transparent art replaces these shells in Phase 2. */
 
@@ -529,4 +530,5 @@
       bottom: 14px !important;
     }
   }
+}
 }
