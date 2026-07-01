@@ -268,11 +268,24 @@ export function installMainMenu(target = window) {
     }
   };
 
-  target.tlrMainMenuMultiplayer = function () {
-    // Hide main menu, show loadout screen
+  target.tlrMainMenuMultiplayer = async function () {
+    // Hide main menu, show loadout screen. Same self-sufficiency concern as
+    // tlrMainMenuAdventure above: main.mjs's bulk install overwrites this
+    // function directly after the first game load via any path, so this
+    // can't rely on menuBoot.mjs's boot-time await ever having run.
     hide();
+    if (typeof target.tlrShowLoadout !== 'function' && typeof target.__tlrInstallMultiplayerModules === 'function') {
+      try {
+        await target.__tlrInstallMultiplayerModules();
+      } catch (err) {
+        console.error('The Last Reading: Duel mode failed to load.', err);
+      }
+    }
     if (typeof target.tlrShowLoadout === 'function') {
       target.tlrShowLoadout();
+    } else {
+      console.error('The Last Reading: Duel mode is not available.');
+      show();
     }
   };
 

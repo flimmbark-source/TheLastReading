@@ -21,13 +21,6 @@ import { installSpreadPlacementBridge } from './spreadPlacementBridge.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
 import { installMainMenu } from './mainMenu.mjs?v=adventure-tutorial-1';
-import { installLoadoutScreen } from './loadoutScreen.mjs';
-import { installMatchmakingScreen } from './matchmakingScreen.mjs';
-import { installMpGame } from './mpGameHost.mjs';
-import { installMpCpuSafety } from './mpCpuSafety.mjs';
-import { installMpAbilitySurfaceCleanup } from './mpAbilitySurfaceCleanup.mjs';
-import { installMpScoreGhostParity } from './mpScoreGhostParity.mjs';
-import { installMpAutoAdvanceDelay } from './mpAutoAdvanceDelay.mjs';
 import { installMenuControls } from './menuControls.mjs';
 import { installResonationFlow } from './resonationFlow.mjs';
 import { installHintRuntime } from './hintRuntime.mjs';
@@ -39,7 +32,6 @@ import { installGestureDrawers } from '../ui/gestureDrawers.mjs';
 import { installPressHighlight } from '../ui/gesturePressHighlight.mjs';
 import { installHandSelectionVisuals } from '../ui/handSelectionVisuals.mjs';
 import { installSinglePlayerV2 } from '../ui/singlePlayerV2.mjs?v=phase1-2';
-import { installMpMatchSettings } from './mpMatchSettings.mjs?v=shuffle-mode-1';
 import * as abilitySystem from '../systems/abilities.mjs';
 import * as shopSystem from '../systems/shop.mjs';
 import * as scoringSystem from '../systems/scoring.mjs';
@@ -81,6 +73,35 @@ function installAdventureFeatureModules(target = window) {
     throw error;
   });
   return target.__tlrAdventureFeatureModulesPromise;
+}
+
+function installMultiplayerFeatureModules(target = window) {
+  if (!target || target.__tlrMultiplayerFeatureModulesPromise) return target?.__tlrMultiplayerFeatureModulesPromise;
+  target.__tlrMultiplayerFeatureModulesPromise = Promise.all([
+    import('./loadoutScreen.mjs'),
+    import('./matchmakingScreen.mjs'),
+    import('./mpGameHost.mjs'),
+    import('./mpCpuSafety.mjs'),
+    import('./mpAbilitySurfaceCleanup.mjs'),
+    import('./mpScoreGhostParity.mjs'),
+    import('./mpAutoAdvanceDelay.mjs'),
+    import('./mpMatchSettings.mjs?v=shuffle-mode-1'),
+  ]).then(([loadout, matchmaking, mpGame, mpCpuSafety, mpAbilitySurfaceCleanup, mpScoreGhostParity, mpAutoAdvanceDelay, mpMatchSettings]) => {
+    loadout.installLoadoutScreen(target);
+    matchmaking.installMatchmakingScreen(target);
+    mpGame.installMpGame(target);
+    mpCpuSafety.installMpCpuSafety(target);
+    mpAbilitySurfaceCleanup.installMpAbilitySurfaceCleanup(target);
+    mpScoreGhostParity.installMpScoreGhostParity(target);
+    mpAutoAdvanceDelay.installMpAutoAdvanceDelay(target);
+    mpMatchSettings.installMpMatchSettings(target);
+    return true;
+  }).catch(error => {
+    target.__tlrMultiplayerFeatureModulesPromise = null;
+    console.error('The Last Reading multiplayer modules failed to load', error);
+    throw error;
+  });
+  return target.__tlrMultiplayerFeatureModulesPromise;
 }
 
 function installStoreFrontTuning(target = window) {
@@ -276,16 +297,9 @@ export function startApp(target = window) {
   installAudioControls(target);
   installMenuControls(target);
   installMainMenu(target);
-  installLoadoutScreen(target);
-  installMatchmakingScreen(target);
-  installMpGame(target);
-  installMpCpuSafety(target);
-  installMpAbilitySurfaceCleanup(target);
-  installMpScoreGhostParity(target);
-  installMpAutoAdvanceDelay(target);
   installSinglePlayerV2(target);
-  installMpMatchSettings(target);
   target.__tlrInstallAdventureModules = () => installAdventureFeatureModules(target);
+  target.__tlrInstallMultiplayerModules = () => installMultiplayerFeatureModules(target);
   installStoreFrontTuning(target);
   installMarketTutorialTrigger(target);
 
