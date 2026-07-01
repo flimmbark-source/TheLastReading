@@ -11,7 +11,7 @@
    getUnlockedFragments, render, refreshHandState,
    ghost, bump, centerGhost, fireMultGhost, fireScoreGhost, holdEffects, fireChipProjectile,
    meldStr, normMeldName, sortCards, cardDisplayName, cleanName, choice,
-   buildDeck, shuffle, drawN, slotsForMeld,
+   buildDeck, shuffle, drawN, slotsForMeld, playSound, haptic, meldMagnitude,
    tlrSyncPersistToStore, tlrStoreReady, tlrResolveAbilityThroughStore,
    tlrAbilityDraw, openShop,
    maxHand, hasMull, tlrArchitectureSync, tlrScoreToObals */
@@ -143,8 +143,11 @@ export function placeCard(i){
     let ghostDelay=delay+slots.length*130+120;
     const _rk=_relicMeldNameToKey.get(m[0])||null;
     setTimeout(()=>ghost(anchor,meldStr(m),true,_rk),ghostDelay);
-    if(!_relicMeldNames.has(m[0])&&m[0]!=='Omen'&&m[0]!=='Resonance')
-      setTimeout(()=>{centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5);playSound('meld');haptic([0,10,35,12]);},delay+announceOffset);
+    if(_relicMeldNames.has(m[0])){
+      setTimeout(()=>{playSound('relic');haptic([0,14,30]);},ghostDelay);
+    }else if(m[0]!=='Omen'&&m[0]!=='Resonance'){
+      setTimeout(()=>{centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5);playSound('meld',meldMagnitude(m[1],m[2],m[3]==='add'));haptic([0,10,35,12]);},delay+announceOffset);
+    }
     if(m[2]>0){const _mg=m[3]==='add'?m[2]:m[2]-1;const multLabel=('+'+Number(_mg).toFixed(2)).replace(/\.?0+$/,'');setTimeout(()=>fireMultGhost(multLabel),ghostDelay+200);}
     holdEffects(ghostDelay+1700);
     delay+=slots.length*130+700;announceOffset+=600;
@@ -442,7 +445,7 @@ html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${roundTotal}$
 html+='</table><div class="rbtns">';
 if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}
 else{html+='<button onclick="endSession()">End Session</button>';}
-html+='</div></div>';showOverlay(html);render();}
+html+='</div></div>';playSound(pass?'pass':'fail');haptic(pass?[0,18,40,18,90]:[0,50]);showOverlay(html);render();}
 function tlSyncBeforeScore(){tlrSyncPersistToStore()}
 
 export function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html;tlrArchitectureSync()}

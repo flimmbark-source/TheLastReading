@@ -27,7 +27,17 @@ const _meldSoundBufferPromise = (async () => {
   }
 })();
 
-export function playSound(type){
+// Normalizes a meld's chip/mult contribution to 0..1 so playback can scale
+// with how big the meld actually is, rather than sounding identical for a
+// minor pair and a huge pattern. Either dimension can carry a meld to "big".
+export function meldMagnitude(chips,mult,additive){
+  const multGain=additive?(mult||0):Math.max(0,(mult||1)-1);
+  const chipsPart=Math.min(1,Math.max(0,chips||0)/40);
+  const multPart=Math.min(1,multGain/3);
+  return Math.max(chipsPart,multPart);
+}
+
+export function playSound(type,magnitude){
   const ctx=_ac();if(!ctx)return;
   if(ctx.state==='suspended')ctx.resume();
   try{
@@ -40,12 +50,14 @@ export function playSound(type){
       const g=ctx.createGain();g.gain.setValueAtTime(0.22*_sfxVol,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+.07);
       src.connect(f);f.connect(g);g.connect(ctx.destination);src.start();src.onended=()=>{src.disconnect();f.disconnect();g.disconnect();};
     }else if(type==='meld'){
+      const mag=Math.max(0,Math.min(1,magnitude||0));
+      const rate=1+mag*.16;
       const fallbackSynth = () => {
         [[523,0],[659,.05],[784,.11]].forEach(([freq,t])=>{
           const o=ctx.createOscillator(),g=ctx.createGain();
-          o.type='sine';o.frequency.value=freq;
+          o.type='sine';o.frequency.value=freq*rate;
           const at=ctx.currentTime+t;
-          g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(0.55*_sfxVol,at+.01);g.gain.exponentialRampToValueAtTime(0.001,at+.55);
+          g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime((0.55+mag*.25)*_sfxVol,at+.01);g.gain.exponentialRampToValueAtTime(0.001,at+.55);
           o.connect(g);g.connect(ctx.destination);o.start(at);o.stop(at+.6);o.onended=()=>{o.disconnect();g.disconnect();};
         });
       };
@@ -57,8 +69,9 @@ export function playSound(type){
         try {
           const src = ctx.createBufferSource();
           src.buffer = buffer;
+          src.playbackRate.value = rate;
           const g = ctx.createGain();
-          g.gain.setValueAtTime(0.85*_sfxVol, ctx.currentTime);
+          g.gain.setValueAtTime((0.85+mag*.2)*_sfxVol, ctx.currentTime);
           g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 4);
           src.connect(g); g.connect(ctx.destination);
           src.start();
@@ -68,6 +81,39 @@ export function playSound(type){
         }
       }).catch(() => {
         fallbackSynth();
+      });
+    }else if(type==='relic'){
+      [[880,0],[1318.5,.055]].forEach(([freq,t])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine';o.frequency.setValueAtTime(freq,ctx.currentTime+t);
+        o.frequency.exponentialRampToValueAtTime(freq*1.5,ctx.currentTime+t+.16);
+        const at=ctx.currentTime+t;
+        g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(0.26*_sfxVol,at+.012);g.gain.exponentialRampToValueAtTime(0.001,at+.2);
+        o.connect(g);g.connect(ctx.destination);o.start(at);o.stop(at+.22);o.onended=()=>{o.disconnect();g.disconnect();};
+      });
+    }else if(type==='purchase'){
+      [[1600,0,.05],[2400,.045,.07]].forEach(([freq,t,dur])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='triangle';o.frequency.value=freq;
+        const at=ctx.currentTime+t;
+        g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(0.22*_sfxVol,at+.008);g.gain.exponentialRampToValueAtTime(0.001,at+dur);
+        o.connect(g);g.connect(ctx.destination);o.start(at);o.stop(at+dur+.02);o.onended=()=>{o.disconnect();g.disconnect();};
+      });
+    }else if(type==='pass'){
+      [[659,0],[880,.09],[1318.5,.18]].forEach(([freq,t])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='triangle';o.frequency.value=freq;
+        const at=ctx.currentTime+t;
+        g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(0.32*_sfxVol,at+.015);g.gain.exponentialRampToValueAtTime(0.001,at+.5);
+        o.connect(g);g.connect(ctx.destination);o.start(at);o.stop(at+.55);o.onended=()=>{o.disconnect();g.disconnect();};
+      });
+    }else if(type==='fail'){
+      [[311,0],[220,.12]].forEach(([freq,t])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine';o.frequency.value=freq;
+        const at=ctx.currentTime+t;
+        g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(0.24*_sfxVol,at+.02);g.gain.exponentialRampToValueAtTime(0.001,at+.42);
+        o.connect(g);g.connect(ctx.destination);o.start(at);o.stop(at+.46);o.onended=()=>{o.disconnect();g.disconnect();};
       });
     }else if(type==='resonation'){
       [[220,0,.28],[440,.07,.2],[880,.14,.14],[330,.2,.1]].map(([f,t,v])=>[f,t,v*_sfxVol]).forEach(([freq,t,vol])=>{
