@@ -16,16 +16,16 @@ const TABLE_SHEETS = Object.freeze([
 // Full-res sheets are only needed by the card-detail modal. Warm them after the
 // table sheets so opening a card later is snappy without delaying first paint.
 const DETAIL_SHEETS = Object.freeze([
-  'assets/sheets/sheet01.png',
-  'assets/sheets/sheet02.png',
-  'assets/sheets/sheet03.png',
-  'assets/sheets/sheet04.png',
-  'assets/sheets/sheet05.png',
-  'assets/sheets/sheet06.png',
-  'assets/sheets/sheet07.png',
-  'assets/sheets/sheet08.png',
-  'assets/sheets/sheet09.png',
-  'assets/sheets/sheet10.png',
+  'assets/sheets/sheet01.webp',
+  'assets/sheets/sheet02.webp',
+  'assets/sheets/sheet03.webp',
+  'assets/sheets/sheet04.webp',
+  'assets/sheets/sheet05.webp',
+  'assets/sheets/sheet06.webp',
+  'assets/sheets/sheet07.webp',
+  'assets/sheets/sheet08.webp',
+  'assets/sheets/sheet09.webp',
+  'assets/sheets/sheet10.webp',
 ]);
 
 const IDLE_DELAY_MS = 1600;

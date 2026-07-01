@@ -7,11 +7,11 @@ const SWITCH_CUE_FILE = 'assets/audio/soundreality-bell-fx-410608.mp3';
 // Per-persona portrait art (relative to the document root). `tile` is the
 // half-body card used in the slot carousel; `full` is the full-body display.
 const PERSONA_ART = {
-  cleaner: { tile: 'assets/Cleaner_Tile.png', full: 'assets/Cleaner_Full.png' },
-  hoarder: { tile: 'assets/Hoarder_Tile.png', full: 'assets/Hoarder_Full.png' },
-  anchor:  { tile: 'assets/Anchor_Tile.png',  full: 'assets/Anchor_Full.png' },
-  gambit:  { tile: 'assets/Gambit_Tile.png',  full: 'assets/Gambit_Full.png' },
-  surgeon: { tile: 'assets/Surgeon_Tile.png', full: 'assets/Surgeon_Full.png' },
+  cleaner: { tile: 'assets/Cleaner_Tile.webp', full: 'assets/Cleaner_Full.webp' },
+  hoarder: { tile: 'assets/Hoarder_Tile.webp', full: 'assets/Hoarder_Full.webp' },
+  anchor:  { tile: 'assets/Anchor_Tile.webp',  full: 'assets/Anchor_Full.webp' },
+  gambit:  { tile: 'assets/Gambit_Tile.webp',  full: 'assets/Gambit_Full.webp' },
+  surgeon: { tile: 'assets/Surgeon_Tile.webp', full: 'assets/Surgeon_Full.webp' },
 };
 function personaArt(p) { return PERSONA_ART[p?.id] || null; }
 

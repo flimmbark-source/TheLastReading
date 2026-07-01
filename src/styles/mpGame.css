@@ -2,7 +2,7 @@
 #mpGame {
   position: fixed; inset: 0; z-index: 9300;
   display: flex; flex-direction: column;
-  background: url(../../assets/background.png) center top/cover no-repeat;
+  background: url(../../assets/background.webp) center top/cover no-repeat;
   transition: opacity .3s;
   overflow: hidden;
 }

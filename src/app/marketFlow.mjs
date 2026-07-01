@@ -109,7 +109,7 @@ export function openRelicVisionShop(options,target = window){
 function preloadMarketImages(target = window){
   if(!target||target.__tlrMarketImagesPreloaded)return;
   target.__tlrMarketImagesPreloaded=true;
-  ['assets/Store_Front.png','assets/Refresh_Button.png','assets/Proceed_Button.png'].forEach(src=>{
+  ['assets/Store_Front.webp','assets/Refresh_Button.webp','assets/Proceed_Button.webp'].forEach(src=>{
     const img=new (target.Image||Image)();img.src=src;
   });
 }

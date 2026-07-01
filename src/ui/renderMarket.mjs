@@ -668,7 +668,7 @@ export function confirmStoreVessel(cost,target = window){
 
 export function relicIconStyle(key,size){
   const p=RELIC_SPRITE[key];if(!p)return'';
-  return`background-image:url('assets/relic_icons.png');background-size:${size*6}px ${size*4}px;background-position:${-p[0]*size}px ${-p[1]*size}px;background-repeat:no-repeat;`;
+  return`background-image:url('assets/relic_icons.webp');background-size:${size*6}px ${size*4}px;background-position:${-p[0]*size}px ${-p[1]*size}px;background-repeat:no-repeat;`;
 }
 
 export function renderRelicRack(){
