@@ -7,27 +7,27 @@
 const ELEMENT_BASE = '/public/ui/single-player-v2/elements/';
 
 const ELEMENT_ART = {
-  '--spv2-title-art': 'title.png',
-  '--spv2-hud-frame-art': 'hud-frame.png',
-  '--spv2-hud-reserve-art': 'hud-reserve.png',
-  '--spv2-hud-score-art': 'hud-score.png',
-  '--spv2-hud-threshold-art': 'hud-threshold.png',
-  '--spv2-hud-discards-art': 'hud-discards.png',
-  '--spv2-utility-reference-art': 'utility-reference.png',
-  '--spv2-utility-settings-art': 'utility-settings.png',
-  '--spv2-spread-slot-art': 'spread-slot.png',
-  '--spv2-hand-dock-art': 'hand-dock.png',
-  '--spv2-action-eye-art': 'action-eye.png',
-  '--spv2-action-center-art': 'action-center.png',
-  '--spv2-action-deck-art': 'action-deck.png',
+  '--spv2-title-art': 'title.webp',
+  '--spv2-hud-frame-art': 'hud-frame.webp',
+  '--spv2-hud-reserve-art': 'hud-reserve.webp',
+  '--spv2-hud-score-art': 'hud-score.webp',
+  '--spv2-hud-threshold-art': 'hud-threshold.webp',
+  '--spv2-hud-discards-art': 'hud-discards.webp',
+  '--spv2-utility-reference-art': 'utility-reference.webp',
+  '--spv2-utility-settings-art': 'utility-settings.webp',
+  '--spv2-spread-slot-art': 'spread-slot.webp',
+  '--spv2-hand-dock-art': 'hand-dock.webp',
+  '--spv2-action-eye-art': 'action-eye.webp',
+  '--spv2-action-center-art': 'action-center.webp',
+  '--spv2-action-deck-art': 'action-deck.webp',
   // Art-directed utility medallions (sliced from Options-Discs.png).
-  '--spv2-option-menu-art': 'option-menu.png',
-  '--spv2-option-scoring-art': 'option-abilities.png',
-  '--spv2-option-abilities-art': 'option-scoring.png',
-  '--spv2-option-archive-art': 'option-archive.png'
+  '--spv2-option-menu-art': 'option-menu.webp',
+  '--spv2-option-scoring-art': 'option-abilities.webp',
+  '--spv2-option-abilities-art': 'option-scoring.webp',
+  '--spv2-option-archive-art': 'option-archive.webp'
 };
 
-const TABLE_BG = '/public/ui/single-player-v2/table-bg.png';
+const TABLE_BG = '/public/ui/single-player-v2/table-bg.webp';
 
 let applied = null;
 
