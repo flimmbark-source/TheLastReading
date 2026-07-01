@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs';
 import { installRuntimeState } from '../src/app/runtimeState.mjs';
 import { installMainMenu } from '../src/app/mainMenu.mjs';
 
-const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../game.html', import.meta.url), 'utf8');
 const dom = new JSDOM(html, { url: 'https://example.com/' });
 const { window } = dom;
 globalThis.window = window;

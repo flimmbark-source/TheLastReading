@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>The Last Reading</title>
+<link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
+<link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/hand.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/cards.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/market.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/constellations.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/mobile.css?v=hand-hover-1">
+<link rel="stylesheet" href="src/styles/dragStability.css?v=1">
+<link rel="stylesheet" href="src/styles/handDragFix.css?v=2">
+<link rel="stylesheet" href="src/styles/attic.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/drawers.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/performance.css?v=mobile-load-fix-1">
+<link rel="stylesheet" href="src/styles/mainMenu.css?v=title-center-1">
+<link rel="stylesheet" href="src/styles/loadout.css?v=portrait-4">
+<link rel="stylesheet" href="src/styles/matchmaking.css?v=1">
+<link rel="stylesheet" href="src/styles/mpGame.css?v=mp-pills-1">
+<link rel="stylesheet" href="src/styles/mpMobile.css?v=mp-ui-8">
+<link rel="stylesheet" href="src/styles/mpSpreadCards.css?v=1">
+<link rel="stylesheet" href="src/styles/mpFixes.css?v=mp-pills-1">
+<link rel="stylesheet" href="src/styles/mpMultMobile.css?v=mult-left-1">
+<link rel="stylesheet" href="src/styles/assetLazy.css?v=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=VT323&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=VT323&display=swap"></noscript>
+<link rel="stylesheet" href="src/styles/ps1aesthetic.css?v=4">
+<link rel="stylesheet" href="src/styles/singlePlayerV2.css?v=phase1-1">
+<link rel="stylesheet" href="src/styles/singlePlayerV2Compat.css?v=composition-1">
+<link rel="stylesheet" href="src/styles/singlePlayerV2RequestedFixes.css?v=13">
+<link rel="stylesheet" href="src/styles/singlePlayerV2LatestFixes.css?v=22">
+<link rel="stylesheet" href="src/styles/singlePlayerV2RelicPlacement.css?v=3">
+<link id="single-player-v2-assets" rel="stylesheet" href="src/styles/singlePlayerV2Assets.css?v=clean-tiles-1">
+<link id="single-player-v2-slot-match" rel="stylesheet" href="src/styles/singlePlayerV2SlotMatch.css?v=2">
+<link id="single-player-v2-visual-fix" rel="stylesheet" href="src/styles/singlePlayerV2VisualFix.css?v=8">
+<link id="single-player-v2-final-placement" rel="stylesheet" href="src/styles/singlePlayerV2FinalPlacement.css?v=6">
+<link id="single-player-v2-hud-table-pass" rel="stylesheet" href="src/styles/singlePlayerV2HudTablePass.css?v=2">
+<link id="single-player-v2-correction-pass" rel="stylesheet" href="src/styles/singlePlayerV2CorrectionPass.css?v=2">
+<link id="single-player-v2-art-integration" rel="stylesheet" href="src/styles/singlePlayerV2ArtIntegration.css?v=art-3">
+<link id="single-player-v2-utility-icons" rel="stylesheet" href="src/styles/singlePlayerV2UtilityIcons.css?v=10">
+<link rel="stylesheet" href="src/styles/mpSinglePlayerIsolation.css?v=1">
+</head>
+<body class="tlr-loading">
+<div id="roomAmbient"></div>
+<div id="ambientFX"></div>
+<div id="breathVignette"></div>
+<div id="scoringPullWrap" class="tlr-pull-wrap parchment" style="transition:none"><div id="scoringPullDesk" class="tlr-pull-desk"></div><button id="scoringPullTab" type="button" class="tlr-pull-tab" onclick="tlrTogglePullTab('scoring')">&#9660; Scoring</button></div>
+<div id="abilitiesPullWrap" class="tlr-pull-wrap parchment" style="transition:none"><div id="abilitiesPullDesk" class="tlr-pull-desk"></div><button id="abilitiesPullTab" type="button" class="tlr-pull-tab" onclick="tlrTogglePullTab('abilities')">&#9660; Abilities</button></div>
+<div id="menuPullWrap" class="tlr-pull-wrap menu-brown" style="transition:none"><div id="menuPullDesk" class="tlr-pull-desk"></div><button id="menuPullTab" type="button" class="tlr-pull-tab" onclick="tlrTogglePullTab('menu')">&#9660; Menu</button></div>
+<div id="invWrap"><div id="invDesk"></div><button id="invTab">&#9660; Archives</button></div>
+<div id="titleWrap"><div id="titleRow"><button id="menuBtn" onclick="toggleMenu()" aria-label="Settings">&#9776;</button><div id="titleContent"><div class="actions"><button id="scoringBtn" onclick="toggleRef(event)">Scoring</button><button id="abilitiesBtn" onclick="toggleAbilityRef(event)">Abilities</button><button id="mullBtn" onclick="mulligan()" style="display:none">Mulligan</button></div></div><div id="settingsPanel" class="settings-panel hidden"><h2 class="settings-title">The Last Reading</h2><label>Music<input type="range" id="musicVol" min="0" max="1" step="0.05" value="0.3" oninput="setMusicVol(+this.value)"></label><label>Effects<input type="range" id="sfxVol" min="0" max="1" step="0.05" value="1" oninput="setSfxVol(+this.value)"></label><hr><label class="settings-check"><input type="checkbox" id="hintPatterns" checked onchange="toggleHintSetting('patterns',this.checked)">Pattern hints</label><label class="settings-check"><input type="checkbox" id="hintRelics" onchange="toggleHintSetting('relics',this.checked)">Relic hints</label><label class="settings-check"><input type="checkbox" id="candlelightLighting" onchange="tlrSetCandlelightLighting(this.checked)" checked>Candlelight lighting</label><hr><button id="replayTutorialBtn" type="button" class="settings-action" onclick="replayTutorial()">Replay Tutorial</button><button id="getUpBtn" type="button" class="settings-action get-up-action" onclick="getUpFromTable()">Get Up</button><button id="returnToMenuBtn" type="button" class="settings-action" onclick="tlrReturnToMenu()">Return to Menu</button></div></div></div>
+<div class="bar"></div>
+<div id="sophiaVeil"></div>
+<div class="score-stack"><div class="pill reserve-pill">Reserve <b id="pool">0</b></div><div class="pill score-pill">Score <b id="current">0</b></div><div class="th-pill-wrap"><div class="pill threshold-pill">Threshold <b id="threshold">30</b></div><span id="thNext"></span></div><div class="pill discards-pill">Discards <b id="discards">3</b></div></div>
+<button type="button" id="constellationPill" class="constellation-pill hidden" aria-label="Constellation"></button>
+<div class="refs-layer"><div id="ref" class="ref hidden scoring-sheet"></div><div id="abilityRef" class="ref hidden"><table><tr><td><b>Ability</b></td><td class="r"><b>What it does</b></td></tr><tr><td>Draw</td><td class="r">Draw that many cards.</td></tr><tr><td>Peek</td><td class="r">Look at that many cards. Take 1. Put the rest on the bottom.</td></tr><tr><td>Search</td><td class="r">Take any card from the deck, then shuffle.</td></tr><tr><td>Reshuffle</td><td class="r">Shuffle your discard, hand, and deck, then draw a full hand.</td></tr><tr><td>Neighbor</td><td class="r">Reveal 2 adjacent cards from the deck. Take 1.</td></tr><tr><td>Kin</td><td class="r">Reveal 2 cards of the same Arcana from the deck. Take 1.</td></tr><tr><td>Mirror</td><td class="r">Take the opposite card across the Arcana centerline.</td></tr><tr><td>Between</td><td class="r">Choose 2 cards. Reveal 2 cards between them. Take 1.</td></tr></table></div></div>
+<div class="spread-wrap"><div id="scorePreview" class="score-preview hidden"></div><div class="spread-actions"><button id="discardBtn" class="sbtn sbtn-discard" aria-label="Discard" onclick="discardSelected()" disabled></button><button id="purgeBtn" class="sbtn sbtn-purge" aria-label="Remove" onclick="startPurge()" disabled></button></div><div id="spread" class="spread"></div></div>
+<div id="relicRack" class="relic-rack"></div>
+<div id="abilityPrompt" class="ability-prompt"><div><h3 id="abilityPromptTitle"></h3><p id="abilityPromptText"></p></div><button id="abilityConfirm" onclick="confirmAbilitySelection()" disabled>Choose</button></div>
+<div id="purgePrompt" class="ability-prompt"><div><h3>Remove Cards</h3><p>Select 3 cards for 1 Discard. <b><span id="purgeCount">0</span>/3</b> selected.</p></div><button id="purgeConfirm" onclick="confirmPurge()" disabled>Confirm</button><button id="purgeCancel" onclick="cancelPurge()">Cancel</button></div>
+<div id="handSwipeZone" class="hand-swipe-zone"><div class="hand-swipe-zone-lower" aria-hidden="true"></div><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div></div>
+<div class="handDock"><div id="hand" class="hand"></div></div>
+<div id="tutTip"><span class="tut-arrow"></span><p id="tutText"></p><div class="tut-foot"><span class="tut-tap-prompt">Tap to proceed</span><button id="tutSkipBtn" onclick="tutSkip();event.stopPropagation()">Skip tutorial</button></div></div>
+<div id="packAnim" class="pack-anim-overlay" aria-hidden="true"><div id="packAnimRays" class="pack-anim-rays"></div><div id="packAnimCard" class="pack-anim-card"><div id="packAnimGlow" class="pack-anim-glow"></div><span id="packAnimIcon" class="isp isp-56"></span><div id="packAnimLabel" class="pack-anim-label"></div></div><div id="packAnimBurst" class="pack-anim-burst"></div></div>
+<div id="atticScene" aria-hidden="true"><div id="atticTutorial"></div><div id="atticPan"><div id="atticRoom"><div id="atticObjects"></div></div></div><div id="obalsHud"></div><button id="atticTableReturn" type="button" aria-label="Return to the table"><span>Return to Table</span></button><div id="atticWhisper"></div></div>
+<div id="summary"></div>
+<div id="modal" class="modal"><div class="box"><div class="modalHead"><h2 id="modalTitle"></h2><button id="modalToggle" onclick="toggleModalCollapse()">Hide</button></div><p id="modalPrompt"></p><div id="choices" class="choices"></div></div></div>
+<div id="mpGame" class="mp-hidden"></div>
+<div id="matchmakingScreen" class="mm-screen-hidden">
+  <div class="mm-inner">
+    <div class="mm-header">
+      <button class="mm-back" onclick="tlrMmBack()" type="button">&#8592; Back</button>
+      <h2 class="mm-title">Matchmaking</h2>
+    </div>
+    <div id="mmContent"></div>
+  </div>
+</div>
+<div id="loadoutScreen" class="loadout-hidden">
+  <div class="loadout-inner">
+    <header class="loadout-header">
+      <button class="loadout-back" data-loadout-action="back" type="button" aria-label="Back">&#8592;</button>
+      <h2 class="loadout-title">Loadout</h2>
+    </header>
+    <nav class="loadout-slots-row" aria-label="Persona select">
+      <button class="loadout-arrow prev" data-loadout-action="prev" type="button" aria-label="Previous persona">&#8249;</button>
+      <div id="loadoutSlots" class="loadout-slots"></div>
+      <button class="loadout-arrow next" data-loadout-action="next" type="button" aria-label="Next persona">&#8250;</button>
+    </nav>
+    <section id="loadoutMain" class="loadout-main" aria-live="polite">
+      <div id="loadoutPortrait" class="loadout-portrait loadout-frame"></div>
+      <aside id="loadoutDetails" class="loadout-details loadout-frame"></aside>
+    </section>
+    <div id="loadoutPersonaDescBox" class="loadout-ability-bar loadout-frame" aria-live="polite"></div>
+    <footer class="loadout-footer">
+      <button class="loadout-ready-btn" id="loadoutReadyBtn" data-loadout-action="ready" type="button">Ready</button>
+    </footer>
+  </div>
+</div>
+<div id="mainMenu" class="main-menu-overlay">
+  <div class="main-menu-inner">
+    <h1 class="main-menu-title">The Last Reading</h1>
+    <p class="main-menu-subtitle">A tarot card game</p>
+    <div class="main-menu-divider"></div>
+    <div class="main-menu-section">
+      <span class="main-menu-section-label">Singleplayer</span>
+      <button id="mainMenuContinue" class="main-menu-btn main-menu-btn-primary" onclick="tlrMainMenuContinue()" disabled>Continue</button>
+      <button class="main-menu-btn" onclick="tlrMainMenuNewGame()">New Game</button>
+    </div>
+    <div class="main-menu-divider"></div>
+    <div class="main-menu-section">
+      <span class="main-menu-section-label">Adventure</span>
+      <button class="main-menu-btn" onclick="tlrMainMenuAdventure()">Adventure Mode</button>
+    </div>
+    <div class="main-menu-divider"></div>
+    <div class="main-menu-section">
+      <span class="main-menu-section-label">Multiplayer</span>
+      <button class="main-menu-btn" onclick="tlrMainMenuMultiplayer()">Duel</button>
+    </div>
+  </div>
+</div>
+<script type="module" src="src/ui/flushBoundaryGuard.mjs?v=1"></script>
+<script type="module" src="src/app/mpModeClassGuard.mjs?v=1"></script>
+<script type="module" src="src/app/menuBoot.mjs?v=adventure-tutorial-1"></script>
+</body>
+</html>

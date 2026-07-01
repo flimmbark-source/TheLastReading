@@ -372,9 +372,9 @@ export function installHandSwipeScroll(target = window){
     const dy=(ev.clientY||startY)-startY;
     // Flush gesture: drag 2/3 of the hand dock below the screen edge.
     if(dy>startDockH*2/3&&typeof target.flushHand==='function'){endGesture();target.flushHand();return;}
-    const _desktopDir=target.matchMedia('(pointer:fine)').matches?-1:1;const targetOffset=softClamp(startOffset+dx*DEG_PER_PX_SWIPE*_desktopDir);
+    const targetOffset=softClamp(startOffset+dx*DEG_PER_PX_SWIPE);
     if(Math.abs(targetOffset-startOffset)>1.15)completeHandHintStep(1);
-    const _desktopYDir=target.matchMedia('(pointer:fine)').matches?-1:1;const y=softClampLift(startLift+dy*_desktopYDir);
+    const y=softClampLift(startLift+dy);
     applyOffset(targetOffset);
     applyLift(y);
     const now=performance.now();
@@ -524,7 +524,7 @@ export function installHandSwipeScroll(target = window){
   };
   // ── Desktop scroll-wheel: scroll down = constrict, scroll up = expand ──
   (function(){
-    const isDesktop=()=>target.matchMedia('(pointer:fine)').matches;
+    const isDesktop=()=>false; // mobile touch-style hint text/behavior is used even for a real mouse
     // Swap hint text for desktop on first opportunity
     const setHintText=()=>{
       const l2=document.getElementById('handHintLine2');
@@ -540,7 +540,6 @@ export function installHandSwipeScroll(target = window){
     };
     if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',setHintText);}
     else{setHintText();}
-    target.matchMedia('(pointer:fine)').addEventListener('change',setHintText);
 
     // Scroll to adjust spacing; horizontal scroll drifts the hand side-to-side.
     const DEG_PER_SCROLL=0.012;  // degrees of spacing per pixel of vertical scroll delta

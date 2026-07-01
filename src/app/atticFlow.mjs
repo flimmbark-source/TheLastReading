@@ -79,7 +79,7 @@ export function installAtticFlow(target = window){
   function showAtticTutorial(){
     try{if(target.localStorage.getItem('tlr_attic_tutored_obals'))return;}catch(e){}
     const t=document.getElementById('atticTutorial');if(!t)return;
-    const isDesktop=target.matchMedia('(pointer:fine)').matches;
+    const isDesktop=false; // mobile touch-style hint text is used even for a real mouse
     const searchLine=isDesktop
       ?'<em>Click</em> glowing objects to search them.'
       :'<em>Tap</em> glowing objects to search them.';
