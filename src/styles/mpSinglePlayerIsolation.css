@@ -11,8 +11,8 @@
     right: auto !important;
     bottom: auto !important;
     display: flex !important;
-    justify-content: center !important;
-    align-items: flex-start !important;
+    justify-content: center;
+    align-items: flex-start;
     box-sizing: border-box;
     width: 100% !important;
     height: auto !important;

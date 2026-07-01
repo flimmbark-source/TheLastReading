@@ -18,8 +18,8 @@ body.mp-game-active .mp-pills-actions {
 body.mp-game-active .mp-pills-actions .sbtn {
   overflow: visible !important;
   display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  align-items: center;
+  justify-content: center;
 }
 
 body.mp-game-active .mp-action-panel {
@@ -121,7 +121,7 @@ body.mp-game-active .spread-wrap {
 
   body.mp-game-active .mp-pills-actions {
     width: 100% !important;
-    justify-content: center !important;
+    justify-content: center;
   }
 
   body.mp-game-active .mp-pills-actions .sbtn {
@@ -227,7 +227,7 @@ body.mp-game-active .spread-wrap {
     transform: translate(-50%, -50%) !important;
     display: grid !important;
     grid-template-columns: auto 118px auto 118px auto;
-    grid-template-rows: auto auto auto auto !important;
+    grid-template-rows: auto auto auto auto;
     gap: 5px 6px !important;
     align-items: center;
     width: auto !important;
@@ -247,7 +247,7 @@ body.mp-game-active .spread-wrap {
   body.mp-game-active .mp-mult-inline.mp-mult-left  { grid-row: 3; grid-column: 1; justify-self: end !important; }
   body.mp-game-active .mp-pill-my-score  { grid-row: 3; grid-column: 2; }
   body.mp-game-active .mp-pill-opp-score { grid-row: 3; grid-column: 4; }
-  body.mp-game-active .mp-mult-inline.mp-mult-right { grid-row: 3 !important; grid-column: 5 !important; justify-self: start !important; }
+  body.mp-game-active .mp-mult-inline.mp-mult-right { grid-row: 3; grid-column: 5; justify-self: start !important; }
   /* Row 4+ — actions and action panel span full width. */
   body.mp-game-active .mp-pills-actions  { grid-row: 4; grid-column: 1 / -1; }
   body.mp-game-active .mp-action-panel   { grid-column: 1 / -1; }

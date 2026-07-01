@@ -41,7 +41,7 @@ for (const file of legacyReferenceFiles) {
 }
 
 
-const importantBudget = 926;
+const importantBudget = 921;
 const sourceImportantCount = singlePlayerV2CascadeSources
   .map(([path]) => read(`../src/styles/${path}`).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);

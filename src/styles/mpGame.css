@@ -154,7 +154,7 @@ body.mp-game-active #purgePrompt { display: none !important; }
   min-width: 0 !important; width: 118px !important; box-sizing: border-box;
   height: 32px !important; padding: 0 10px !important;
   display: flex !important; align-items: center;
-  justify-content: center !important; gap: 5px;
+  justify-content: center; gap: 5px;
   font-size: 11px !important; letter-spacing: .03em;
   white-space: nowrap;
 }

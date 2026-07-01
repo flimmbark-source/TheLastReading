@@ -156,7 +156,7 @@
     width: clamp(58px, 16vw, 74px) !important;
     height: clamp(58px, 16vw, 74px) !important;
     border: 0 !important;
-    border-radius: 50% !important;
+    border-radius: 50%;
     background-color: transparent !important;
     background-repeat: no-repeat !important;
     background-position: center !important;

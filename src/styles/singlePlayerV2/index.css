@@ -1241,7 +1241,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
 
   html body.single-player-v2.generated-sheet-ready::before {
-    content: none !important;
+    content: none;
     display: none !important;
   }
 
@@ -1635,7 +1635,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 
   /* Generated-sheet-ready variable overrides and layout refinements */
   html body.single-player-v2.generated-sheet-ready {
-    --spv2-hud-top: 12px !important;
+    --spv2-hud-top: 12px;
     --spv2-hud-h: clamp(140px, 17.5dvh, 162px);
     --spv2-slot-w: 96px;
     --spv2-slot-h: calc(96px * 1.5);
@@ -1743,7 +1743,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     background-repeat: no-repeat !important;
     border-color: transparent !important;
     box-shadow: none !important;
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: 1fr 1fr;
     gap: 6px !important;
     overflow: visible !important;
     height: var(--spv2-hud-h) !important;
@@ -1838,7 +1838,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     width: 74px !important;
     height: 74px !important;
     border: 0 !important;
-    border-radius: 50% !important;
+    border-radius: 50%;
     background-color: transparent !important;
     background-image: none !important;
     box-shadow: none !important;
@@ -3547,7 +3547,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     width: clamp(58px, 16vw, 74px) !important;
     height: clamp(58px, 16vw, 74px) !important;
     border: 0 !important;
-    border-radius: 50% !important;
+    border-radius: 50%;
     background-color: transparent !important;
     background-repeat: no-repeat !important;
     background-position: center !important;
