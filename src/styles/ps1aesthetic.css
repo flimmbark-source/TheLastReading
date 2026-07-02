@@ -97,10 +97,6 @@ body {
   border-color: #496946 !important;
 }
 
-#handSwipeZone {
-  touch-action: none;
-}
-
 /* ── Float the hand above the bottom edge ──────────────────────────────────
    bottom: 0 pins the dock to the screen edge, making cards look like they're
    sinking out of frame. Lifting it reveals the table background below, giving
@@ -114,9 +110,6 @@ body {
   bottom: 36px !important;
   background: linear-gradient(transparent, rgba(0,0,0,.70)) !important;
 }
-.hand-swipe-zone {
-  bottom: 233px !important; /* 197px dock + 36px float */
-}
 body {
   padding-bottom: 238px !important; /* 202px + 36px */
 }
@@ -124,9 +117,6 @@ body {
 @media (max-width: 640px) {
   .handDock {
     bottom: 24px !important;
-  }
-  .hand-swipe-zone {
-    bottom: 176px !important; /* 152px dock + 24px float */
   }
   body {
     padding-bottom: 181px !important; /* 157px + 24px */

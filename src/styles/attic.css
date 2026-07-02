@@ -175,14 +175,7 @@ body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:transl
 /* physical hand controls patch */
 /* hand float release patch */
 
-/* Get up and swipe hint patch */
-#handSwipeZone.hand-swipe-zone{height:121px!important;bottom:197px!important}
-@media(max-width:640px){#handSwipeZone.hand-swipe-zone{height:97px!important;bottom:152px!important}}
-/* Show one swipe-help step at a time. Each one advances only after its matching gesture. */
-#handSwipeZone .hand-swipe-hint{display:flex!important;align-items:center;justify-content:center;transform:translate(-50%,-50%)!important}
-#handSwipeZone .swipe-hint-line{position:static!important;transform:none!important;animation:none!important;opacity:1!important;display:none!important}
-#handSwipeZone[data-hint-step="1"] .swipe-hint-line-1,#handSwipeZone[data-hint-step="2"] .swipe-hint-line-2,#handSwipeZone[data-hint-step="3"] .swipe-hint-line-3{display:flex!important}
-#handSwipeZone.hints-complete .hand-swipe-hint{display:none!important}
+/* Get up and swipe hint patch moved to components/handSwipeZone.css. */
 #settingsPanel .settings-action.get-up-action{margin-top:6px;background:rgba(194,148,75,.18);color:#ffd978;border-color:rgba(194,148,75,.7)}
 
 }

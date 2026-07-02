@@ -533,3 +533,32 @@ For empirical checks, serve the app and drive it with Playwright:
 node scripts/serve.mjs 8123 &
 # chromium.launch({ executablePath: '/opt/pw-browsers/chromium' }) in this sandbox
 ```
+
+## Component consolidation pilots
+
+### `relicRack.css` pilot
+
+`src/styles/components/relicRack.css` is the first standing component-owned
+pilot. It gathers the relic rack's base market rules, classic/mobile patch,
+attic mobile row patch, PS1 tone, and SPv2 mobile override into one
+`@layer relicRack` stylesheet. This makes the component's priority explicit by
+source order inside one file instead of by cross-file specificity and link order.
+
+### `handSwipeZone.css` pilot
+
+`src/styles/components/handSwipeZone.css` is the next small consolidation pilot.
+It gathers the classic hand swipe surface, PS1 float offset, attic tutorial hint
+geometry, and lower swipe-capture extension into one `@layer handSwipeZone`
+stylesheet. The cascade probe `scripts/probes/handSwipeZoneCascadeProbe.mjs`
+checks classic mobile/desktop, attic tutorial hints, completed hints, SPv2
+mobile, and MP+SPv2 mobile samples before/after the move.
+
+## Dead-declaration candidate scanner
+
+`scripts/find-css-dead-declaration-candidates.mjs` performs a deliberately
+conservative first-pass static scan for declarations that may be dead because a
+later declaration in the same layer uses the same property with equal-or-higher
+specificity. Run `npm run css:dead-candidates` for markdown output or
+`node scripts/find-css-dead-declaration-candidates.mjs --json` for full machine
+readable output. Its output is only a candidate list: every deletion still needs
+state-specific cascade-probe confirmation before removal and budget ratcheting.
