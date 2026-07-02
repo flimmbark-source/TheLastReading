@@ -294,8 +294,36 @@ or a couple of splittable rules; they span ~10 interleaved state rules on
 each side, and layer separation removes specificity from the comparison
 entirely. Files joined by a ladder must stay co-resident in one layer
 unless the ladder itself is redesigned (e.g. equalizing specificity or
-merging the state styling into one file). Assume market ↔ hand ↔ mobile
-are ladder-joined until proven otherwise.
+merging the state styling into one file).
+
+**The ladder is the whole remaining pile.** Spot checks confirmed the
+same structure everywhere in what's left of `legacy`, so this is the
+terminal finding for the layer-move phase, not a per-file quirk:
+
+- attic.css's mobile `.relic-rack{...!important}` must beat mobile.css's
+  same-specificity `column!important` (via source order) while LOSING to
+  the SPv2 bundle's higher-specificity
+  `html body.single-player-v2.generated-sheet-ready .relic-rack{...!important}`
+  (different `top`/`z-index` values — SPv2 mobile is the primary mode).
+- attic.css's `#handSwipeZone.hand-swipe-zone{...!important}` must beat
+  ps1aesthetic.css's `.hand-swipe-zone` (via ID specificity) while LOSING
+  to mpSinglePlayerIsolation.css's
+  `html body.mp-game-active... #handSwipeZone.hand-swipe-zone` override.
+- ps1aesthetic.css's `.card:not(.photo)` reskin must beat the base card
+  files while LOSING to the SPv2/mp bundles' higher-specificity card
+  styling.
+
+The intra-legacy hierarchy is a deliberate four-story specificity ladder:
+SPv2/mp mode bundles (highest, `html body.<mode>` prefixes) > attic's
+ID/mode-gated patches > market/mobile's mid-specificity patches >
+base-level rules. Every rung relies on out-specifying the rung below
+across file boundaries. Layers can't cut between rungs; the remaining
+files must stay co-resident in `legacy` until someone redesigns the
+ladder itself (a much bigger, behavior-risking refactor). What CAN still
+be safely harvested inside the pile: dead-declaration deletions (two done
+so far — hand.css's and market.css's `.sel`/`.ability-picked` z-index
+tie-breakers — budget now 693) and the budget ratchet that locks each one
+in.
 
 ## Probe-design lessons (hard-won, follow these)
 
