@@ -38,7 +38,8 @@
      wins for !important -- the reverse of the normal-tier rule above).
 
      `handDragFix` goes back to AFTER legacy: its .handDock z-index needs to
-     keep losing to actionDropTargets.css/mpGame.css's higher, state-gated
+     keep losing to actionDropTargets.css's higher state-gated z-index in the
+     earlier actionDropTargets layer and to mpGame.css's higher state-gated
      z-index overrides in legacy (they only apply during specific drag/mp
      states; when they don't apply, nothing competes and handDragFix wins
      regardless of tier). Its other rules either have no competing
@@ -49,13 +50,20 @@
      `performance` is also AFTER legacy, same direction as handDragFix: its
      mobile/reduced-motion overrides (body background-attachment, #roomAmbient
      animation/opacity/transform) need to keep losing to actionDropTargets.css's
-     SPv2-mode background-attachment override and to ps1aesthetic.css's
-     explicit "re-enable candle glow on mobile" override, both still in
-     legacy. Its #ambientFX/.mote/.slot.res-* rules either have no competing
+     SPv2-mode background-attachment override in the earlier actionDropTargets
+     layer and to ps1aesthetic.css's explicit "re-enable candle glow on mobile"
+     override still in legacy. Its #ambientFX/.mote/.slot.res-* rules either have no competing
      declaration, are already dominated unconditionally (their target
      properties are !important here against a plain normal-tier rule
-     elsewhere), or match the competing value exactly -- checked individually. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, legacy, handDragFix, performance, screens.main-menu, screens.loadout, screens.matchmaking;
+     elsewhere), or match the competing value exactly -- checked individually.
+
+     `actionDropTargets` is dynamically appended by gestureActionDrops.mjs after
+     the initial stylesheet set. Its real cross-file conflicts are all
+     !important-tier z-index/position/visibility fixes that must continue to
+     beat the remaining legacy pile; its normal-tier selector hits were checked
+     as non-conflicts (different pseudo-elements/properties, identical values,
+     or newly introduced card-drop-target/ability-prompt-actions state). */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, legacy, handDragFix, performance, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
