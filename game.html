@@ -214,8 +214,32 @@
      directions, so the pair was split. Verified via a full computed-style
      A/B diff against the pre-extraction baseline for both files together
      (identical before/after, including mid-transition sampling for the
-     attic fade). */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+     attic fade).
+
+     `titleWrap` (src/styles/components/titleWrap.css) takes #titleWrap and
+     .score-stack's share of that same shared 7-element fade rule. The
+     selector list is partitioned, not duplicated (no selector now appears
+     in both this file and the remaining rule in attic.css/legacy, which
+     still covers .spread-wrap/.handDock/#relicRack/#invWrap/.refs-layer),
+     but the declaration values ARE duplicated -- both rules need their
+     own full copy of the same opacity/transform/filter/pointer-events/
+     transition values, which is why the !important budget goes up by 5
+     here unlike every prior pilot's net-zero move. The other five elements
+     were left behind because they have far more remaining cross-file
+     touches (mostly the multiplayer cluster) than #titleWrap/.score-stack
+     do, making them a bigger, riskier pilot -- see the migration doc's
+     "audited candidates" section. Declared AFTER legacy, same direction
+     as tutTip/invTab: ps1aesthetic.css's unconditional
+     `.score-stack{filter:saturate(.68)}`/`#titleWrap{filter:saturate(.74)}`
+     (still in legacy) must keep losing to this file's mode-gated
+     filter:blur() during attic transitions, previously decided by the
+     fade rule's higher specificity within the shared layer. base.css's
+     unconditional `.score-stack{transform:translateX(-50%)}` needs the
+     same outcome but is trivially satisfied since base is declared far
+     earlier than legacy already. Verified via the same full computed-style
+     A/B diff as invWrap/invTab, across all five mode-transition states
+     plus classic, sampled both mid-transition and settled. */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
@@ -251,6 +275,7 @@
 <link rel="stylesheet" href="src/styles/components/tutTip.css?v=1">
 <link rel="stylesheet" href="src/styles/components/invWrap.css?v=1">
 <link rel="stylesheet" href="src/styles/components/invTab.css?v=1">
+<link rel="stylesheet" href="src/styles/components/titleWrap.css?v=1">
 </head>
 <body class="tlr-loading">
 <div id="roomAmbient"></div>

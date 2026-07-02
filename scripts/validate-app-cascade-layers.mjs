@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -234,6 +234,25 @@ assert.match(html, /components\/invTab\.css/, 'game.html should load the extract
 assert.doesNotMatch(read('../src/styles/mobile.css'), /#invWrap\{position:fixed/, 'mobile.css should no longer own the invWrap base geometry');
 assert.doesNotMatch(read('../src/styles/mobile.css'), /#invTab\{position:absolute/, 'mobile.css should no longer own the invTab base geometry');
 assert.doesNotMatch(read('../src/styles/attic.css'), /#invWrap,\nbody\.mode-attic #invWrap,/, 'attic.css should no longer own the invWrap-only mode-transition block (its shared 7-element fade rule mentioning #invWrap inline is expected to remain)');
+
+// titleWrap.css: #titleWrap and .score-stack's share of that same shared
+// fade rule. The selector list is partitioned, not duplicated (no selector
+// appears in both places), but the declaration values ARE duplicated --
+// see the file's own header comment and validate-app-important-budget.mjs
+// for why that raises the tracked budget by 5. The other five elements
+// (.spread-wrap/.handDock/#relicRack/#invWrap/.refs-layer) stay in legacy;
+// they have far more remaining cross-file touches than titleWrap/score-stack
+// do, making them a bigger pilot -- see the migration doc's "audited
+// candidates" section. Declared AFTER legacy, same direction as tutTip/
+// invTab: ps1aesthetic.css's unconditional filter:saturate() on both
+// elements (still in legacy) must keep losing to this file's mode-gated
+// filter:blur() during attic transitions, previously decided by the fade
+// rule's higher specificity within the shared layer.
+const titleWrap = read('../src/styles/components/titleWrap.css');
+assert.match(titleWrap, /^@layer titleWrap \{/, 'titleWrap.css should live in its own titleWrap layer');
+assert.match(titleWrap.trimEnd(), /\}$/, 'titleWrap.css should close its layer wrapper');
+assert.match(html, /components\/titleWrap\.css/, 'game.html should load the extracted titleWrap component stylesheet');
+assert.doesNotMatch(read('../src/styles/attic.css'), /#titleWrap|\.score-stack/, 'attic.css should no longer reference #titleWrap or .score-stack anywhere');
 
 // drawAnimation.css: must WIN the !important tie against drawers.css's
 // reduced-motion .hand .card{animation:none!important} (so its deal-in fade

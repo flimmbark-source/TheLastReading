@@ -1,0 +1,39 @@
+@layer titleWrap {
+/* #titleWrap and .score-stack's share of attic.css's mode-transition fade,
+   partitioned out of a shared comma-selector rule that also covers
+   .spread-wrap/.handDock/#relicRack/#invWrap/.refs-layer (left in legacy --
+   those five have far more remaining cross-file touches, mostly in the
+   multiplayer cluster, that make extracting them a much bigger pilot; see
+   docs/css-cascade-layer-migration.md's "audited candidates" section).
+   The selector list is partitioned, not duplicated (no selector appears
+   in both this file and attic.css's remaining rule), but the declaration
+   VALUES are necessarily duplicated -- both this file and the remaining
+   5-element rule need their own full copy of the same opacity/transform/
+   filter/pointer-events/transition values, since they were one shared
+   rule before this split. That duplication is why the app-wide
+   important-tier budget (validate-app-important-budget.mjs) goes up by 5
+   here, unlike every prior pilot's net-zero move -- keep both copies in
+   sync if the attic fade's timing ever changes.
+
+   Declared AFTER legacy: ps1aesthetic.css's unconditional
+   `.score-stack{filter:saturate(.68)}` / `#titleWrap{filter:saturate(.74)}`
+   (still in legacy) must keep LOSING to this file's mode-gated
+   `filter:blur()` during attic transitions, previously decided by the
+   higher (body-class-gated) specificity of the fade rule within the
+   shared legacy layer -- same direction and same reasoning as tutTip and
+   invTab, opposite of relicRack/handSwipeZone/invWrap. base.css's
+   unconditional `.score-stack{transform:translateX(-50%)}` also needs to
+   keep losing to this file's mode-gated `transform:scale()...`; base is
+   declared far earlier than legacy already, so any position after legacy
+   satisfies this trivially. mobile.css's `#titleWrap{position:relative}`,
+   actionDropTargets.css's important-tier `#titleWrap:has(#settingsPanel
+   :not(.hidden)){z-index:10090}`, mpGame.css's important-tier
+   `body.mp-game-active #titleWrap{display:none}`, and mainMenu.css's boot-veil
+   visibility/pointer-events/transition rules are all disjoint properties
+   or importance-dominant, so none of them constrain this either way. */
+body.mode-to-attic #titleWrap,body.mode-to-attic .score-stack{opacity:0;transform:scale(.9) translateY(14vh);filter:blur(2px);pointer-events:none;transition:opacity .75s ease,transform 1.1s ease,filter .75s ease}
+body.mode-attic #titleWrap,body.mode-attic .score-stack{opacity:0!important;pointer-events:none!important;filter:blur(3px);transform:scale(.88) translateY(18vh)}
+body.mode-to-table #titleWrap,body.mode-to-table .score-stack{opacity:0;transform:scale(.92) translateY(12vh);filter:blur(2px);pointer-events:none;transition:opacity .65s ease,transform .9s ease,filter .65s ease}
+body.mode-table-return #titleWrap,body.mode-table-return .score-stack{opacity:1;transform:none;filter:none;transition:opacity .8s ease,transform 1s ease,filter .8s ease}
+body.mode-return-hard-hide #titleWrap,body.mode-return-hard-hide .score-stack,body.mode-to-table #titleWrap,body.mode-to-table .score-stack{opacity:0!important;transition:none!important;pointer-events:none!important}
+}

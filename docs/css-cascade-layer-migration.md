@@ -105,7 +105,7 @@ rather than doing the harder per-selector/per-pair surgery. Only extract
 files that are cleanly one-directional or fully independent. This applies
 every time it comes up, not just once.
 
-## Done so far (16 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
+## Done so far (17 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
 
 Three methods are in play now, noted per row: **layer-move** (rename the
 file's `@layer legacy {` and place the new layer before/after `legacy`,
@@ -140,6 +140,7 @@ component became two files/layers instead of one.
 | `components/handSwipeZone.css` | consolidation | before `legacy` | Same technique: gathers the classic hand swipe surface, PS1 float offset, attic tutorial hint geometry, and lower swipe-capture extension — previously scattered across `mobile.css`, `ps1aesthetic.css`, `attic.css`, `handDragFix.css` — into one file in original order, then removes the scattered originals. **Also first placed after `legacy`, also wrong, same root cause:** mpMobile.css's `mp-game-active`-only height/bottom override (still in `legacy`) needs to keep losing to the consolidated file's ID-specific mobile-breakpoint rule; placing the layer after `legacy` let mpMobile.css win via layer order instead, changing computed height/bottom in plain multiplayer mode (no SPv2) from `97px`/`152px` to `46px`/`130px`, and separately let mpFixes.css's mp-mode hint-hiding rule beat the tutorial hint's ID-specific default the same way, making all three swipe-hint-line steps render at once instead of just the active one. Both fixed by the same before-`legacy` move; z-index was untouched either way (only ever set at normal-tier on the bare class inside the file, so `!important` always won regardless of position). Probed with `scripts/probes/handSwipeZoneCascadeProbe.mjs` across classic mobile/desktop, attic tutorial hints (in progress and completed), SPv2 mobile, and MP+SPv2 mobile samples (the last of which turned out to be an unreachable transient state — `body.mp-game-active` and `body.single-player-v2` are mutually exclusive at runtime via a class guard). |
 | `components/tutTip.css` | pulled whole | after `legacy` (opposite direction from its siblings) | The `#tutTip` tutorial popover cluster was never scattered — it already lived together in `market.css` — so this was a whole-block move, not a gather. Most remaining touches are safe regardless of layer position (mpGame.css's `display:none!important`, actionDropTargets.css's `z-index:10130!important`, mainMenu.css's boot-veil `visibility`/`pointer-events`/`transition` are each either importance-dominant or a disjoint property) — but one is not: market.css's own mobile-breakpoint `button{font-size:12px;padding:6px 9px}` reset (still in `legacy`) needs to keep *losing* to `#tutSkipBtn`'s higher ID-based specificity, previously decided inside the shared layer. **First placed before `legacy` (mirroring relicRack/handSwipeZone, on the assumption the position was unconstrained) — wrong, but the opposite failure mode from those two:** relicRack/handSwipeZone each needed `legacy` to keep winning against them; tutTip needed *itself* to keep winning against `legacy`'s generic reset. Before `legacy`, layer order let the low-specificity `button{}` rule beat the ID-specific `#tutSkipBtn` rule outright, changing its computed `font-size`/`padding` from `11px`/`3px 8px` to `12px`/`6px 9px` and growing the popover's total height from `134px` to `144px` — caught via a full computed-style diff (every property on `#tutTip` and its children, not a hand-picked subset) against a git-checkout-A/B pre-extraction baseline, after two rounds of guessing individual properties failed to find it. Fixed by moving to after `legacy` instead; checked for the reverse risk (some legacy rule needing to win against tutTip's own low-specificity `.tut-arrow`/`.tut-foot`/`.tut-tap-prompt` selectors) and found no bare `span{}`/`div{}`/`p{}` reset anywhere in `legacy` that would compete. |
 | `components/invWrap.css` + `components/invTab.css` | pulled whole, split in two | `invWrap` before `legacy`; `invTab` after `legacy` | The archive/inventory drawer (`#invWrap`/`#invDesk`) and its pull-tab (`#invTab`), pulled whole out of `mobile.css`'s base rules and `attic.css`'s mode-transition important-tier block — audited first (see "audited candidates" below) as a single "invWrap cluster" candidate, but that shape didn't survive contact with the actual rules. Two independent, opposite-direction constraints turned up: attic.css's shared 7-element mode-transition fade rule (still in `legacy`, also covers `#titleWrap`/`.score-stack`/`.spread-wrap`/`.handDock`/`#relicRack`/`.refs-layer` — so it can't be absorbed into either new file without duplicating a rule that isn't invWrap's alone) sets a normal-tier `transition` value on `#invWrap` that must keep winning via its higher specificity over `#invWrap`'s own base `transition:transform .45s...`, requiring `invWrap` *before* `legacy` (relicRack/handSwipeZone's direction) — while market.css's mobile-breakpoint `button{font-size:12px;padding:6px 9px}` reset (still in `legacy`) must keep losing to `#invTab`'s higher ID-based specificity, requiring `invTab` *after* `legacy` (tutTip's direction, the same failure mode `#tutSkipBtn` hit). One file could not satisfy both, so the pair was split before either shipped with a first-attempt regression the way the other three pilots did. Verified via a full computed-style A/B diff (every property, all three elements — `#invWrap`/`#invTab`/`#invDesk`) across seven states (classic closed/open, and all five attic mode-transition classes). First pass at a 60ms post-transition sample showed `transform`/`opacity`/`filter` diffs on `#invWrap` — re-run at a 1.5s settled-state wait (past the fade's full duration) came back byte-for-byte identical, confirming those were mid-animation sampling noise (same class of false-positive as the doc's other two documented cases), not a regression; the `transition` property itself and every `#invTab` property matched at both wait lengths, which was the actual signal. |
+| `components/titleWrap.css` | pulled whole, partitioned | after `legacy` | Takes `#titleWrap`/`.score-stack`'s share of the same shared 7-element fade rule that `invWrap.css` left behind — the selector list is *partitioned* out of it (no selector appears in both this file and the remaining rule in `attic.css`/`legacy`, which still covers `.spread-wrap`/`.handDock`/`#relicRack`/`#invWrap`/`.refs-layer`), but the declaration *values* are necessarily duplicated (both rules need their own full copy of the same opacity/transform/filter/pointer-events/transition values) — a genuine, deliberate `!important` budget increase of 5 (706 → 711), unlike every prior pilot's net-zero move. The other five elements were left behind: they have far more remaining cross-file touches (mostly the multiplayer cluster on `.spread-wrap`/`.handDock`) than `#titleWrap`/`.score-stack` do, so extracting them is a bigger, separate pilot (see "audited candidates" below). Declared after `legacy`, same direction as tutTip/invTab: ps1aesthetic.css's unconditional `filter:saturate()` on both elements (still in `legacy`) must keep losing to this file's mode-gated `filter:blur()` during attic transitions, previously decided by the fade rule's higher specificity within the shared layer; base.css's unconditional `.score-stack{transform:translateX(-50%)}` needs the same outcome but is trivially satisfied since base is declared far earlier than legacy already. Verified via the same full computed-style A/B diff technique as invWrap/invTab, across all five mode-transition states plus classic: a settled 1.5s-wait sample came back byte-for-byte identical; a 60ms mid-transition sample showed the same class of `opacity`/`filter` sampling noise as invWrap (and, reassuringly, identical noise values between `#titleWrap` and `.score-stack` within each run, since one rule drives both). |
 
 Also handled earlier (before this session, same branch): `loadout.css`,
 `matchmaking.css`, and part of `mainMenu.css` were split out as fully
@@ -662,9 +663,10 @@ handSwipeZone, and tutTip each shipped a first-attempt regression:
 ## Component consolidation pilots — audited candidates
 
 Three follow-on candidates were audited against this checklist before
-picking a next pilot. Two failed gate 2; one partially passed with a
-narrower scope than first assumed and has since shipped (see the Done
-table above for `components/invWrap.css` + `components/invTab.css`).
+picking a next pilot. One has since shipped in full
+(`components/invWrap.css` + `components/invTab.css`), one shipped a
+narrower slice than the audit assumed was possible
+(`components/titleWrap.css`), and one remains a real open candidate.
 
 - **`#invWrap` attic-mode cluster — shipped as two files, and the audit
   undersold the real complexity.** The narrower cut identified here
@@ -685,16 +687,41 @@ table above for `components/invWrap.css` + `components/invTab.css`).
   not to enumerate every constraint — still do the full checklist search
   once you commit to extracting, even for a candidate the audit called
   narrow. See the Done table entry above for the full before/after story.
-- **`#titleWrap`/`.score-stack` filter cluster — fails gate 2 as scoped.**
-  Unlike `#invWrap`, these two have no selector-specific carve-out
-  anywhere — their entire attic-mode behavior *is* that same shared
-  7-element rule. There's no way to extract "just titleWrap/score-stack"
-  without either duplicating the shared rule (drift risk) or extracting
-  the whole 7-element fade concern as one pilot — which would also mean
-  reconciling with the already-shipped `relicRack.css`, since `#relicRack`
-  is one of the seven targets and its fade behavior currently still lives
-  in `attic.css`, separate from `relicRack.css`'s own filter rule. Bigger
-  scope than a single pilot; not recommended next.
+- **`#titleWrap`/`.score-stack` filter cluster — shipped, but the original
+  "fails gate 2" verdict was wrong.** The original audit rejected this
+  because there's no selector-specific carve-out for these two anywhere —
+  their entire attic-mode behavior *is* the shared 7-element rule — and
+  assumed extracting them meant either duplicating the whole rule (drift
+  risk) or taking on all seven elements at once. Re-examined: **selectors**
+  can be partitioned out of a comma-list without duplication (no selector
+  needs to appear twice), even though the **declaration values** still
+  have to be copied into both the new file and the rule that keeps the
+  remaining five elements — a real cost (tracked as a deliberate `!important`
+  budget increase, not hidden), but a much smaller and more honest one than
+  "duplicate the whole rule" implied. That reframing is what unlocked
+  `components/titleWrap.css` as its own pilot without touching
+  `.spread-wrap`/`.handDock`/`#relicRack`/`#invWrap`/`.refs-layer` at all.
+  Lesson: a "fails gate 2" verdict can hide an unexamined middle option
+  between "duplicate nothing" and "duplicate everything" — check whether
+  the shared rule can be partitioned by selector before ruling out a
+  narrower cut entirely.
+- **The remaining five elements (`.spread-wrap`/`.handDock`/`#relicRack`/
+  `#invWrap`/`.refs-layer`) — still a real open candidate, still bigger
+  than a single pilot.** `#relicRack` and `#invWrap` already have their own
+  extracted files with their own layer-position reasoning, so touching this
+  rule again means reconciling with both. `.handDock` and `.spread-wrap` in
+  particular have far more remaining cross-file touches than `#titleWrap`/
+  `.score-stack` ever did — `.handDock` alone is referenced by
+  `actionDropTargets.css` (three `!important` z-index rules),
+  `mpGame.css`/`mpFixes.css`/`mpMobile.css`/`mpSinglePlayerIsolation.css`
+  (multiplayer z-index/geometry), `market.css`, `mobile.css`, and
+  `ps1aesthetic.css`, and its *base* geometry rule lives in `hand.css` — the
+  file already confirmed unextractable as a whole. None of those touches
+  were checked property-by-property against the fade rule's opacity/
+  transform/filter/pointer-events/transition set before this note was
+  written; that full check is the next step if this candidate is picked up,
+  not an extraction attempt on the strength of the titleWrap/score-stack
+  precedent alone.
 - **`hand.css` state-card ladder — real, but the largest and riskiest by
   far; confirmed hardest.** `.sel`/`.ability-picked`/`.ability-target`/
   `.press-highlight`/`.hint-card`/`.hint-complete`/`.hint-multi`/

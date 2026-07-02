@@ -38,6 +38,7 @@ const appStyleFiles = [
   '../src/styles/components/tutTip.css',
   '../src/styles/components/invWrap.css',
   '../src/styles/components/invTab.css',
+  '../src/styles/components/titleWrap.css',
 ];
 
 // Budget jumped 693 -> 706 not from new !important declarations but from
@@ -53,7 +54,14 @@ const appStyleFiles = [
 // components/invWrap.css (6) and components/invTab.css (1) split out of
 // mobile.css/attic.css, both already tracked -- another net wash, total
 // stays 706.
-const importantBudget = 706;
+// components/titleWrap.css (711, a REAL +5) is different: it partitions
+// #titleWrap/.score-stack's selectors out of a shared comma-selector rule
+// in attic.css, but the two rules still each need their own full copy of
+// the same opacity/transform/filter/pointer-events/transition values (the
+// remaining 5-element rule in attic.css keeps its copy; this file gets its
+// own). Selectors are partitioned, declaration values are duplicated -- so
+// this is a genuine, deliberate increase, not a tracking-gap artifact.
+const importantBudget = 711;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);
