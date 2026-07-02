@@ -105,7 +105,7 @@ rather than doing the harder per-selector/per-pair surgery. Only extract
 files that are cleanly one-directional or fully independent. This applies
 every time it comes up, not just once.
 
-## Done so far (7 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
+## Done so far (8 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
 
 | File | Direction | Why |
 |---|---|---|
@@ -116,6 +116,7 @@ every time it comes up, not just once.
 | `actionDropTargets.css` | before `legacy` | Dynamically appended by `gestureActionDrops.mjs`; all real cross-file conflicts that affect layer order are `!important` fixes that need to keep winning over the remaining `legacy` pile. Normal-tier hits from `rg` are non-conflicts (new state selectors/elements, different properties/pseudo-elements, identical values, or mode-exclusive branches). |
 | `drawers.css` | after `legacy` | Needs to keep LOSING two `!important` ties (SPv2 desktop.css's `display:block!important` un-hide of `#scoringBtn`/`#abilitiesBtn`/`#menuBtn`, and drawAnimation.css's reduced-motion deal-in fade, both still in `legacy`) while needing to keep WINNING two normal-tier ties (`handCardIdleCycle` vs market.css's `card-wave`, and `#settingsPanel` sizing vs mobile.css's base rule, both still in `legacy`) — both satisfied by the same "after legacy" placement. Verified empirically via `scripts/cascade-probe.mjs`, including a `prefers-reduced-motion` emulation check. |
 | `spread.css` | before `legacy` | Every real normal-tier interaction found (market.css's mobile `.ability-prompt`/`.spread`/`.slot`/`.slot .num` overrides, mobile.css's `.ability-target-slot`/`.ability-picked-slot` highlight colors, mpMobile.css's mobile `.slot .num`, and the SPv2 bundle's normal-tier mobile/generated-sheet layout overrides) requires spread's declarations to keep losing against files still in `legacy`; no interaction requires it to win against anything there. Verified empirically via `scripts/cascade-probe.mjs` — first attempt gave a false-positive diff from reading a live `.slot`'s `background-color` mid-`transition:.18s`, fixed by probing a freshly-created element instead. |
+| `base.css` | before `legacy` | It's the first file concatenated into `legacy`, so it already loses every normal-tier tie against every other still-in-`legacy` file by source order/specificity today (market.css's mobile `body`/`h1`/`.bar`/`.pill`/`.actions`/`button`/`.ref`/`.scoring-sheet` overrides, mobile.css's higher-specificity `.actions`/`touch-action` rules, attic.css's mode-gated `.score-stack` transform); moving it earlier just makes that load-order-proof instead of accidental. Its lone `!important` declaration (`.score-preview{display:none!important}`) has zero competing declarations anywhere in the tree. |
 
 Also handled earlier (before this session, same branch): `loadout.css`,
 `matchmaking.css`, and part of `mainMenu.css` were split out as fully
@@ -201,12 +202,6 @@ list.
 Remaining files still in the shared `legacy` layer, in the order they'll be
 attempted (skip-ahead rule applies throughout):
 
-- `base.css` — investigation complete (clean one-directional, before
-  `legacy`: it's the first file concatenated into `legacy`, so it already
-  loses every normal-tier tie against every other still-in-`legacy` file by
-  source order/specificity today; its lone `!important` declaration
-  (`.score-preview{display:none!important}`) has zero competitors anywhere).
-  Next up to implement.
 - `cards.css` (deprioritized, see above)
 - `market.css` (skipped, see above)
 - `ps1aesthetic.css` (skipped, see above)
