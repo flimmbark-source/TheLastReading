@@ -105,7 +105,7 @@ rather than doing the harder per-selector/per-pair surgery. Only extract
 files that are cleanly one-directional or fully independent. This applies
 every time it comes up, not just once.
 
-## Done so far (12 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
+## Done so far (11 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
 
 | File | Direction | Why |
 |---|---|---|
@@ -120,7 +120,6 @@ every time it comes up, not just once.
 | `cards.css` | before `legacy` | Zero `!important` declarations in the file. Every real normal-tier conflict (market.css's mobile `.title`/`.sym`/`.plaque`/`.seal` sizing, market.css's `.card.photo .title/.art{display:none}`, mpMobile.css's mp-mode `.seal` transform) needs cards to keep losing to files still in `legacy`, and nothing anywhere needs to lose to cards. The earlier "deprioritized" concern (its classes reused by market/mp files) turned out to be exactly this one-directional shape once actually checked. Verified empirically via `scripts/cascade-probe.mjs`. |
 | `assetLazy.css` | before `legacy` | All rules are `!important` and exist specifically to override attic.css's normal-tier background declarations on the same elements (`#atticScene::before`/`::after`, `#atticRoom`) — importance dominance already decides every current fight regardless of layer; declaring it before `legacy` keeps it winning even if a competing `!important` ever appears in the legacy pile. Its internal ungated-strip vs mode-gated-restore pair lives in one file and moves together. Verified empirically via `scripts/cascade-probe.mjs` (strip with no mode class, restore under `body.mode-attic`). |
 | `drawAnimation.css` | between `legacy` and `drawers` | Formerly a mixed-direction skip — it must WIN the `!important` tie against drawers.css's reduced-motion `.hand .card{animation:none!important}` but LOSE the `!important` ties against the SPv2 bundle's mobile `pointer-events:auto` override (still in `legacy`) and actionDropTargets' drag-lift z-index. Both directions were impossible while drawers.css shared `legacy`; once drawers got its own later layer, the slot between them satisfies everything. Verified empirically via `scripts/cascade-probe.mjs`: deal-in animation, drag-lift z-index (10042 wins over 10043), SPv2-mode pointer-events, and the reduced-motion fade all identical before/after. |
-| `hand.css` | before `legacy` (split file) | Formerly a mixed-direction skip; unlocked by both surgery techniques. (1) **Deletion**: its `.ability-picked` z-index tie-breakers (999/1000 `!important`) were provably dead — mobile.css's unconditional `.hand .card.ability-target,.hand .card.ability-picked{z-index:300!important}` has equal specificity and later source order, so the computed value was 300 everywhere already; verified with a cascade-probe A/B before deleting. (2) **Split**: its one genuinely legacy-bound rule — `.card.hint-multi`'s unscoped `!important` box-shadow, which must keep losing to mobile.css's higher-specificity `.spread`-scoped hint-multi state overrides and market.css's later-source `.spread .card` shadow — stays behind in a small `@layer legacy` block inside hand.css (mainMenu.css pattern). Everything else moved to a `hand` layer before `legacy`: all real normal-tier interactions need it to keep losing to market/mobile/SPv2 still in legacy, and its remaining `!important` rules are value-identical to mobile.css's winners (hover/sel z-index 999, hand/choices hint-multi combos) or win via specificity in a way the earlier position preserves. Verified via cascade-probe on both viewports incl. spread-side hint-multi states. `!important` budget ratcheted 695→694. |
 
 Also handled earlier (before this session, same branch): `loadout.css`,
 `matchmaking.css`, and part of `mainMenu.css` were split out as fully
@@ -174,13 +173,15 @@ Once actually checked per-interaction, every reuse was one-directional
   app's reducer structurally clears selection/ability/purge state in the
   same dispatch that precedes any queued draw animation, so those classes
   never co-occur with `.card-draw-dealt` on the same card.)
-- ~~`hand.css`~~ — **since extracted via declaration surgery** (see the Done
-  table): its blocking `!important` z-index tie-breakers turned out to be
-  provably dead (deleted), and its one genuinely legacy-bound rule
-  (`.card.hint-multi`'s unscoped box-shadow) stays behind in a residual
-  `@layer legacy` block, mainMenu.css-style. The normal-tier analysis in
-  the original skip verdict was correct and drove the "before legacy"
-  placement.
+- `hand.css` — needs `market.css`/`mobile.css` to win several normal-tier
+  ties (`.card` sizing, `.handDock` height, `.hand .card` transition timing,
+  `.spread .card.ability-disabled`, `.card.ability-target` box-shadow,
+  `.card[data-hint]::after` sizing, hint-glow box-shadow radii), which
+  requires hand's new layer **before** `legacy`, while also needing
+  `market.css`/`mobile.css` to win two `!important` ties (`.hand .card.sel`
+  z-index 999 vs market's 1000; `.hand .card.ability-picked` z-index 1000 vs
+  mobile's unconditional 300), which requires hand's new layer **after**
+  `legacy` — opposite placements, same shape as the others.
 - `mobile.css` — "the biggest hub," and it turns out to be one of the root
   causes of the `market.css` conflict above (their `.relic-rack`/
   `.ability-picked` ties are the same rules pulling opposite ways here too).
@@ -211,11 +212,9 @@ Once actually checked per-interaction, every reuse was one-directional
 Remaining files still in the shared `legacy` layer, in the order they'll be
 attempted (skip-ahead rule applies throughout):
 
-- `market.css` (skipped, see above; hand.css's extraction removed the dead
-  z-index side of the market↔hand contradiction, but market still needs to
-  lose `!important`/normal ties to mobile.css while beating hand's layer on
-  the normal tier — re-derive before retrying)
+- `market.css` (skipped, see above)
 - `ps1aesthetic.css` (skipped, see above)
+- `hand.css` (skipped, see above)
 - `mobile.css` (skipped, see above)
 - `attic.css` (skipped, see above)
 - The multiplayer cluster (skipped, see above — only revisit per-file/per-pair if asked)
@@ -225,11 +224,12 @@ attempted (skip-ahead rule applies throughout):
   `components/scoreHud.css`, `states.css`, `components/artIntegration.css`
 
 Every non-SPv2, non-multiplayer file has now been either extracted or
-confirmed mixed-direction. What remains in `legacy` is the interdependent
-core (`market`, `mobile`, `attic`, `ps1aesthetic` — `hand` has since been
-surgically extracted), the multiplayer cluster, and the 10 SPv2 files
-whose eventual home is the `spv2.*` tiers rather than a new standalone
-layer.
+confirmed mixed-direction. What remains in `legacy` is exactly the
+interdependent core the layer model can't split without per-selector
+surgery: the `hand → cards(✓) → market → mobile → attic → drawers(✓)`
+chain's unextractable middle (`hand`, `market`, `mobile`, `attic`,
+`ps1aesthetic`), the multiplayer cluster, and the 10 SPv2 files whose
+eventual home is the `spv2.*` tiers rather than a new standalone layer.
 
 ## Re-examine skips after every extraction
 
@@ -252,35 +252,23 @@ order without splitting rules).
 
 File-level moves are exhausted. The remaining cluster's contradictions
 hinge on a small number of specific `!important` declarations, and the
-next viable technique is declaration-level work, with two forms — **both
-now demonstrated end-to-end by the hand.css extraction**:
+next viable technique is declaration-level work, with two forms:
 
 1. **Delete provably-dead tie-breakers.** Some of the blocking
-   declarations never win anywhere today — hand.css's
-   `.hand .card.ability-picked{z-index:1000!important}` was always beaten
+   declarations never win anywhere today — e.g. hand.css's
+   `.hand .card.ability-picked{z-index:1000!important}` is always beaten
    by mobile.css's unconditional `z-index:300!important` (same
    specificity, later source), and hand.css's `.sel` z-index 999 ties
-   mobile.css's value exactly. Both were deleted after a cascade-probe A/B
-   proved the computed values unchanged (the baseline run itself showed
-   `.ability-picked` computing to 300 even with hand's 1000 present).
-   Removing dead/identical declarations shrinks the conflict graph, and
-   may leave files one-directional.
+   mobile.css's value exactly. Removing dead/identical declarations (with
+   cascade-probe verification, following the precedent of the earlier
+   "drop provably-redundant !important" commits on this branch) shrinks
+   the conflict graph, and may leave files one-directional.
 2. **Split minority-direction rules into a second layer block.** A file
-   can contain multiple `@layer` blocks (mainMenu.css and now hand.css
-   both do this). For a file whose conflicts point one way except for a
-   couple of rules, leave just those rules in a residual `@layer legacy`
-   block and move the rest — hand.css's `.card.hint-multi` box-shadow is
-   the worked example: it must keep losing to mobile.css/market.css
-   spread-side rules via intra-legacy specificity/source-order, so it
-   stayed behind while the other ~40 rules moved to the `hand` layer.
-
-Candidate order for continuing this surgery: `market.css` (fewest
-remaining conflicts now that hand's dead z-indexes are gone — its
-`.sel/.ability-picked` `!important` conflict partner no longer exists;
-re-derive its table), then `attic.css` (its two `!important` win-ties vs
-ps1aesthetic/mobile could move to a before-legacy block, keeping the
-mode-transition filter rules in a residual legacy block), then
-`ps1aesthetic.css` and `mobile.css` (densest).
+   can contain multiple `@layer` blocks (mainMenu.css already does this:
+   boot veil in `legacy`, the rest in `screens.main-menu`). For a file
+   whose conflicts point one way except for a couple of rules, move just
+   those rules into a separate block assigned to a layer on the other
+   side of `legacy`.
 
 The 10 SPv2 files are a separate job: their eventual home is the
 `spv2.*` tier system, which is declared earliest — so their normal-tier

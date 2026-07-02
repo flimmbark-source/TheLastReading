@@ -114,21 +114,6 @@
      ungated-strip vs mode-gated-restore pair lives in one file, so that
      relationship moves with it unchanged.
 
-     `hand` is BEFORE legacy (after actionDropTargets/dragStability, so their
-     drag !important rules keep winning the important tier): every real
-     normal-tier interaction needs hand's declarations to keep losing to
-     files still in legacy (market.css's mobile card/handDock/hint sizing,
-     mobile.css's arc-fan transform/transition, the SPv2 bundle), and its
-     remaining !important rules carry values identical to mobile.css's
-     same-element winners or win today via specificity in a way the earlier
-     position preserves. Two pieces of declaration surgery made this
-     possible: its dead ability-picked z-index tie-breakers were deleted
-     (mobile.css's unconditional 300!important always won), and its one
-     genuinely legacy-bound rule (.card.hint-multi's unscoped !important
-     box-shadow, which must keep losing to mobile.css/market.css spread-side
-     rules via specificity/source order) stays behind in a small
-     `@layer legacy` block inside hand.css, mainMenu.css-style.
-
      `drawAnimation` sits BETWEEN legacy and drawers -- it was unextractable
      while drawers.css still lived in legacy (it must WIN the !important tie
      against drawers' reduced-motion .hand .card{animation:none!important},
@@ -141,7 +126,7 @@
      layer), and its one normal declaration (will-change) keeps beating
      hand.css's via later-layer normal-tier order, same as it won via
      specificity before. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, hand, legacy, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
