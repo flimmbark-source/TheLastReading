@@ -1,3 +1,4 @@
+@layer legacy {
 @media (max-width: 640px) {
   /* Spread slots keep their ornate frame and placed cards occupy that exact box. */
   body.single-player-v2.generated-sheet-ready .spread {
@@ -5,10 +6,10 @@
   }
 
   body.single-player-v2.generated-sheet-ready .spread .slot {
-    box-sizing: border-box !important;
+    box-sizing: border-box;
     width: var(--spv2-spread-card-w) !important;
     height: var(--spv2-spread-card-h) !important;
-    flex-basis: var(--spv2-spread-card-w) !important;
+    flex-basis: var(--spv2-spread-card-w);
     background-image: var(--spv2-spread-slot-art) !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
@@ -17,7 +18,7 @@
   }
 
   body.single-player-v2.generated-sheet-ready .spread .slot > .card {
-    box-sizing: border-box !important;
+    box-sizing: border-box;
     position: absolute !important;
     inset: 0 !important;
     width: var(--spv2-spread-card-w) !important;
@@ -25,7 +26,7 @@
     min-width: var(--spv2-spread-card-w) !important;
     min-height: var(--spv2-spread-card-h) !important;
     max-width: var(--spv2-spread-card-w) !important;
-    max-height: var(--spv2-spread-card-h) !important;
+    max-height: var(--spv2-spread-card-h);
     margin: 0 !important;
     border: 0 !important;
     border-radius: inherit !important;
@@ -64,11 +65,11 @@
     background: transparent !important;
     box-shadow: none !important;
     pointer-events: auto !important;
-    touch-action: none !important;
+    touch-action: none;
   }
 
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone::before {
-    content: none !important;
+    content: none;
     display: none !important;
   }
 
@@ -114,7 +115,7 @@
      without washing over placed cards or spread slots. */
   body.single-player-v2.generated-sheet-ready #roomAmbient {
     z-index: 1 !important;
-    mix-blend-mode: screen !important;
+    mix-blend-mode: screen;
     background:
       radial-gradient(circle at 7% 56%,rgba(255,190,88,.2),rgba(255,137,48,.06) 18%,transparent 34%),
       radial-gradient(circle at 92% 47%,rgba(146,104,180,.1),transparent 29%),
@@ -127,4 +128,5 @@
     opacity: 1 !important;
     background: radial-gradient(ellipse 78% 72% at 50% 50%,transparent 48%,rgba(0,0,0,.24) 78%,rgba(0,0,0,.58) 100%) !important;
   }
+}
 }

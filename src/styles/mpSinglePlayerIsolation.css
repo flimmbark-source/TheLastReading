@@ -1,7 +1,18 @@
+@layer mpSinglePlayerIsolation {
 /* Keep the mobile single-player fan/HUD overrides from leaking into multiplayer.
    Multiplayer deliberately reuses #spread, #hand, .handDock, and .spread, while
    the opponent has a second .spread inside #mpGame. The single-player fan rules
-   are loaded later and otherwise pin both spreads to the same fixed position. */
+   are loaded later and otherwise pin both spreads to the same fixed position.
+
+   Every rule here is gated by body.mp-game-active.single-player-v2 (all
+   of them, no exception) -- and those two classes are enforced mutually
+   exclusive at runtime by src/app/mpModeClassGuard.mjs's MutationObserver:
+   the instant mp-game-active is added, the guard strips single-player-v2
+   on the same microtask, before the next paint. No other file in the app
+   references this combined gate. So this file's entire ruleset is
+   unreachable in any rendered frame -- its layer position genuinely
+   cannot affect real behavior regardless of where it's declared. Declared
+   before legacy for consistency with the other unconstrained layer-moves. */
 @media (max-width: 640px) {
   html body.mp-game-active.single-player-v2.generated-sheet-ready #spread,
   html body.mp-game-active.single-player-v2.generated-sheet-ready #mpOppSpread {
@@ -11,16 +22,16 @@
     right: auto !important;
     bottom: auto !important;
     display: flex !important;
-    justify-content: center !important;
-    align-items: flex-start !important;
-    box-sizing: border-box !important;
+    justify-content: center;
+    align-items: flex-start;
+    box-sizing: border-box;
     width: 100% !important;
     height: auto !important;
     min-height: 0 !important;
     margin: 0 auto !important;
     padding: 0 !important;
     gap: 0 !important;
-    perspective: none !important;
+    perspective: none;
     overflow: visible !important;
   }
 
@@ -119,4 +130,5 @@
   html body.mp-game-active.single-player-v2.generated-sheet-ready #spread {
     transform: scale(.68) !important;
   }
+}
 }

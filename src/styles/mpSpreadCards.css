@@ -1,6 +1,20 @@
+@layer mpSpreadCards {
 /* Multiplayer spread cards should fill their slots.
-   This file loads after mpGame.css and mpMobile.css so mobile/global card sizing
-   cannot shrink placed cards inside spread slots. */
+   Every declaration here is important-tier, and no other file sets that
+   tier on the same property for #spread .slot > .card / #mpOppSpread .slot
+   > .card (or their .photo/.title descendants) -- the closest touches are
+   actionDropTargets.css's position/z-index on the same selector (disjoint
+   properties), mpFixes.css's width/height on the .slot itself rather than
+   the .card inside it (different element), and market.css's unconditional,
+   normal-tier .card.photo{background-size:200% 200%} (importance
+   dominance protects this file regardless of layer, and the values happen
+   to match anyway). SPv2's own #spread .slot > .card hint rules are gated
+   by body.single-player-v2, mutually exclusive with body.mp-game-active at
+   runtime. So this file's layer position is genuinely unconstrained --
+   declared before legacy for consistency with the other unconstrained
+   layer-moves. The original "loads after mpGame.css/mpMobile.css" framing
+   predates this migration's importance-tier reasoning; importance
+   dominance already made load order moot for every real conflict found. */
 body.mp-game-active #spread .slot > .card,
 body.mp-game-active #mpOppSpread .slot > .card {
   width: 100% !important;
@@ -30,4 +44,5 @@ body.mp-game-active #mpOppSpread .slot > .card .title {
     min-width: 100% !important;
     min-height: 100% !important;
   }
+}
 }

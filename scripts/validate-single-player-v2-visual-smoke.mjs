@@ -52,10 +52,19 @@ async function main() {
 
     for (const width of widths) {
       const page = await browser.newPage({ viewport: { width, height }, isMobile: true });
-      await page.goto(`${baseUrl}/game.html`, { waitUntil: 'networkidle' });
-      await page.evaluate(() => {
-        document.body.classList.add('single-player-v2', 'generated-sheet-ready');
+      // Skip the first-run tutorial overlay so it can't intercept the clicks below.
+      await page.addInitScript(() => {
+        try { window.localStorage.setItem('tlr_tut_done', '1'); } catch {}
       });
+      await page.goto(`${baseUrl}/game.html`, { waitUntil: 'networkidle' });
+
+      // Drive the real main-menu boot path instead of forcing SPv2 body classes:
+      // the SPv2 game engine (gesture drawers, ability handlers, generated-sheet
+      // art) only loads once a game actually starts, so a synthetic class swap
+      // renders an empty shell and can't catch real interaction regressions.
+      await page.click('button[onclick="tlrMainMenuNewGame()"]');
+      await page.waitForFunction(() => document.body.classList.contains('generated-sheet-ready'));
+      await page.waitForFunction(() => document.getElementById('mainMenu')?.hidden === true);
       await page.waitForSelector('#abilitiesBtn');
 
       const snapshot = await page.evaluate(() => {

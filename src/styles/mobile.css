@@ -1,17 +1,9 @@
+@layer legacy {
 /* Extracted from index.html (Phase 17). Files split in original rule order;
    link order in index.html must stay base,spread,hand,cards,market,mobile,attic,drawers
    to preserve the cascade. Some sections span themes because order wins over purity. */
 :root{--inv-h:300px}
 body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!important}
-#invWrap{position:fixed;top:0;left:0;right:0;z-index:150;transform:translateY(calc(-1 * var(--inv-h)));transition:transform .45s cubic-bezier(.34,1.28,.64,1);pointer-events:none}
-/* See drawers.css for why this needs to clear .spread-wrap's scorePreview-driven z-index:10060. */
-#invWrap.open{transform:translateY(0);pointer-events:auto;z-index:10095!important}
-#invDesk{height:var(--inv-h);background:linear-gradient(180deg,#0e0704 0%,#1c1008 55%,#150d06 100%);border-bottom:2px solid #6a4c24;position:relative;overflow:hidden;pointer-events:auto}
-#invDesk::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 110%,rgba(90,45,5,.35),transparent 65%);pointer-events:none;z-index:0}
-#invDesk::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px),repeating-linear-gradient(0deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px);pointer-events:none;z-index:0}
-#invTab{position:absolute;top:var(--inv-h);left:calc(50% - 40px);width:80px;height:28px;background:linear-gradient(180deg,#2e1e0e,#1e1208);border:1px solid #6a4c24;border-top:none;border-radius:0 0 10px 10px;cursor:grab;color:#a07838;font-size:10px;font-weight:700;letter-spacing:.07em;text-align:center;line-height:28px;pointer-events:auto;transition:background .15s,color .15s,box-shadow .15s;padding:0;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.5);touch-action:none;user-select:none}
-#invTab:hover{background:linear-gradient(180deg,#3e2814,#281810);color:#ffd978;box-shadow:0 4px 14px rgba(0,0,0,.6)}
-#invTab:active{cursor:grabbing}
 .inv-item{position:absolute;cursor:grab;user-select:none;touch-action:none;z-index:1;transition:box-shadow .12s;will-change:transform}
 .inv-item:active{cursor:grabbing}
 .inv-item-paper{width:84px;background:linear-gradient(160deg,#ede2be,#d6c488);border:1px solid #9c7c30;border-radius:2px;padding:8px 7px 8px;box-shadow:2px 5px 14px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.28);display:flex;flex-direction:column;align-items:center;gap:5px;position:relative}
@@ -120,14 +112,6 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
 }
 @media(prefers-reduced-motion:reduce){.relic-vision-veil,.relic-vision-rays,.relic-vision-mote{animation:none;opacity:0;display:none}.relic-vision-enter{animation:none}}
 /* end relic vision transition patch */
-/* relic rack mobile right-side patch */
-.relic-rack{flex-direction:column!important;top:12px;right:12px;gap:6px;align-items:flex-end}
-@media(max-width:640px){
-  .relic-rack{top:54px;right:4px;gap:5px}
-  .relic-rack .relic-btn{width:34px;height:34px}
-  .relic-rack .relic-slot-empty{width:34px;height:34px}
-}
-/* end relic rack mobile right-side patch */
 /* hand swipe-scroll patch */
 .handDock{overflow-x:clip;overflow-y:visible}
 .hand{position:relative;display:block;max-width:none;width:100%;height:235px;--track-offset:0deg;--track-spacing:5deg;--track-radius:780px;--hand-lift-y:0px;transform:translateY(var(--hand-lift-y));transition:transform .22s cubic-bezier(.2,.85,.25,1)}
@@ -200,21 +184,9 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
 }
 /* Stop the old swipe handler from also nudging the whole hand sideways. */
 .hand{--hand-slide-x:0px;--hand-card-margin:0px}
-.hand-swipe-zone{position:fixed;left:0;right:0;bottom:197px;height:88px;z-index:19;pointer-events:auto;touch-action:none;cursor:grab;background:transparent}
 .hand-scroll-dragging~* .card,.hand-scroll-dragging .card{pointer-events:none!important}
 body:has(.hand-scroll-dragging){cursor:grabbing!important}
 body:has(.hand-scroll-dragging) .handDock *{cursor:grabbing!important}
-.hand-swipe-zone.dragging{cursor:grabbing}
-.hand-swipe-zone.pinching{cursor:ew-resize}
-@media(max-width:640px){.hand-swipe-zone{bottom:152px;height:74px}}
-.hand-swipe-hint{position:absolute;left:50%;top:50%;pointer-events:none;opacity:0;transition:opacity .4s}
-.hand-swipe-zone.has-overflow .hand-swipe-hint{opacity:1}
-.hand-swipe-zone.dragging .hand-swipe-hint,.hand-swipe-zone.pinching .hand-swipe-hint{opacity:0}
-.hand-swipe-zone.has-swiped .hand-swipe-hint{display:none!important}
-.swipe-hint-line{position:absolute;left:0;top:0;transform:translate(-50%,-50%);display:flex;align-items:center;gap:14px;font:600 10px system-ui,Segoe UI,sans-serif;color:rgba(232,196,96,.55);letter-spacing:.18em;text-transform:uppercase;white-space:nowrap;opacity:0;animation:hint-cycle 9s ease-in-out infinite}
-.swipe-hint-line-2{animation-delay:3s}.swipe-hint-line-3{animation-delay:6s}
-@keyframes hint-cycle{0%{opacity:0}5%{opacity:1}28%{opacity:1}33%{opacity:0}100%{opacity:0}}
-.hand-swipe-hint span{display:inline-block;width:30px;height:1px;background:linear-gradient(90deg,transparent,rgba(232,196,96,.6),transparent)}
 /* end hand swipe-scroll patch */
 /* hand card gestures patch */
 #hand .card[data-uid],#spread .card[data-uid]{touch-action:none;-webkit-user-select:none;user-select:none}
@@ -247,3 +219,4 @@ body:has(.hand-scroll-dragging) .handDock *{cursor:grabbing!important}
 
 
 body.candlelight-off #roomAmbient{display:none!important;animation:none!important}
+}

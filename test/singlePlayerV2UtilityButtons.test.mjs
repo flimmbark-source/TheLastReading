@@ -20,7 +20,7 @@ test('Single Player V2 runtime loader owns only the cascade entry point', () => 
 
 test('Abilities utility button is visible in Single Player V2 mobile contract', () => {
   const layout = read('../src/styles/singlePlayerV2/layout.css');
-  const utilityButtons = read('../src/styles/singlePlayerV2\/components\/utilityButtons.css');
+  const utilityButtons = read('../src/styles/singlePlayerV2/components/utilityButtons.css');
   const utilityIcons = read('../src/styles/singlePlayerV2/components/utilityIcons.css');
   assert.doesNotMatch(layout, /#abilitiesBtn,\s*\n\s*body\.single-player-v2\.generated-sheet-ready #mullBtn\s*\{\s*display:\s*none\s*!important/s, 'abilities must not share the legacy hidden-button rule');
   assert.doesNotMatch(layout, /#abilitiesBtn,[\s\S]*?#menuBtn\s*\{[\s\S]*?display:\s*block\s*!important/, 'layout CSS should not own utility-button display');

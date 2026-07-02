@@ -1,0 +1,38 @@
+@layer invWrap {
+/* The archive/inventory drawer (#invWrap/#invDesk), consolidated out of
+   mobile.css's base rules and attic.css's mode-transition important-tier
+   block. Declared BEFORE legacy: attic.css's #invWrap-only mode-transition
+   fade rule (still in legacy -- originally shared with #titleWrap/
+   .score-stack/.spread-wrap/.handDock/#relicRack/.refs-layer, since split
+   out into titleWrap.css and atticFade.css, leaving only #invWrap's line
+   behind) sets a normal-tier `transition` value on #invWrap during
+   mode-to-attic/mode-to-table/mode-table-return that must keep winning via
+   its higher (body-class-gated) specificity over this file's base
+   `transition:transform .45s...` -- otherwise the coordinated opacity/
+   transform/filter fade would lose its timing and those properties would
+   snap instead of animate. This file's own important-tier transform/
+   pointer-events/z-index block dominates that rule's non-important
+   transform regardless of layer position, so only the base rule's
+   `transition` forces the "before legacy" placement. See invTab.css for
+   why the sibling tab needed the opposite direction -- this pair could not
+   stay one file. (Now that the rule attic.css keeps is #invWrap-only
+   rather than shared, it could in principle be folded into this file with
+   its position then fully unconstrained -- left as attic.css's own
+   single-selector rule instead, since the current split is already
+   verified correct and that fold isn't required for anything.) */
+#invWrap{position:fixed;top:0;left:0;right:0;z-index:150;transform:translateY(calc(-1 * var(--inv-h)));transition:transform .45s cubic-bezier(.34,1.28,.64,1);pointer-events:none}
+/* See drawers.css for why this needs to clear .spread-wrap's scorePreview-driven z-index:10060. */
+#invWrap.open{transform:translateY(0);pointer-events:auto;z-index:10095!important}
+#invDesk{height:var(--inv-h);background:linear-gradient(180deg,#0e0704 0%,#1c1008 55%,#150d06 100%);border-bottom:2px solid #6a4c24;position:relative;overflow:hidden;pointer-events:auto}
+#invDesk::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 110%,rgba(90,45,5,.35),transparent 65%);pointer-events:none;z-index:0}
+#invDesk::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px),repeating-linear-gradient(0deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px);pointer-events:none;z-index:0}
+body.mode-to-attic #invWrap,
+body.mode-attic #invWrap,
+body.mode-to-table #invWrap,
+body.mode-table-return #invWrap{
+  transform:translateY(calc(-1 * var(--inv-h)))!important;
+  pointer-events:none!important;
+  z-index:150!important;
+}
+body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:translateY(calc(-1 * var(--inv-h)))!important;pointer-events:none!important}
+}
