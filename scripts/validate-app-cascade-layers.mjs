@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, legacy, handDragFix, performance, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, legacy, handDragFix, performance, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, legacy, handDragFix, performance, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, legacy, handDragFix, performance, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -41,7 +41,6 @@ const legacyLayeredFiles = [
   '../src/styles/assetLazy.css',
   '../src/styles/ps1aesthetic.css',
   '../src/styles/mpSinglePlayerIsolation.css',
-  '../src/styles/actionDropTargets.css',
   '../src/styles/drawAnimation.css',
   '../src/styles/singlePlayerV2/base.css',
   '../src/styles/singlePlayerV2/compat.css',
@@ -80,9 +79,24 @@ const dragStability = read('../src/styles/dragStability.css');
 assert.match(dragStability, /^@layer dragStability \{/, 'dragStability.css should live in its own dragStability layer');
 assert.match(dragStability.trimEnd(), /\}$/, 'dragStability.css should close its layer wrapper');
 
+
+// actionDropTargets.css: dynamically appended by gestureActionDrops.mjs, but
+// its real cross-file conflicts are all !important-tier fixes that must keep
+// beating the remaining legacy pile (drag lift z-index, contextual overlay
+// stacks, SPv2 mobile action-button/drop-target states, and the generated-sheet
+// background override). Normal-tier overlap hits were checked as non-conflicts:
+// different target properties/pseudo-elements, identical base values, or state
+// classes/elements introduced specifically for this behavior. Declared BEFORE
+// `legacy` so those !important fixes keep winning even when the link is loaded
+// dynamically after the initial stylesheet set.
+const actionDropTargets = read('../src/styles/actionDropTargets.css');
+assert.match(actionDropTargets, /^@layer actionDropTargets \{/, 'actionDropTargets.css should live in its own actionDropTargets layer');
+assert.match(actionDropTargets.trimEnd(), /\}$/, 'actionDropTargets.css should close its layer wrapper');
+
 // handDragFix.css: its .handDock z-index needs to keep losing to
-// actionDropTargets.css/mpGame.css's higher, state-gated z-index overrides
-// in legacy. Its other declarations either have no competing declaration
+// actionDropTargets.css's higher, state-gated z-index in the earlier
+// actionDropTargets layer and to mpGame.css's higher, state-gated z-index
+// overrides in legacy. Its other declarations either have no competing declaration
 // anywhere, or are already dominated unconditionally by an existing
 // spv2.components !important rule -- checked individually. Declared AFTER
 // `legacy` on purpose (opposite direction from dragStability); the
@@ -92,9 +106,9 @@ assert.match(handDragFix, /^@layer handDragFix \{/, 'handDragFix.css should live
 assert.match(handDragFix.trimEnd(), /\}$/, 'handDragFix.css should close its layer wrapper');
 
 // performance.css: its mobile/reduced-motion overrides need to keep losing to
-// actionDropTargets.css's SPv2-mode background-attachment override and to
-// ps1aesthetic.css's explicit "re-enable candle glow on mobile" override,
-// both still in legacy. Declared AFTER `legacy` on purpose, same direction as
+// actionDropTargets.css's SPv2-mode background-attachment override in the
+// earlier actionDropTargets layer and to ps1aesthetic.css's explicit
+// "re-enable candle glow on mobile" override still in legacy. Declared AFTER `legacy` on purpose, same direction as
 // handDragFix; the assertion above already locks that relative order in.
 const performance_ = read('../src/styles/performance.css');
 assert.match(performance_, /^@layer performance \{/, 'performance.css should live in its own performance layer');

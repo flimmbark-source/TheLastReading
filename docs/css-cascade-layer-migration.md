@@ -24,8 +24,8 @@ actually load in:
 
 ```
 @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states,
-       spv2.compat, constellations, dragStability, legacy, handDragFix,
-       performance, screens.main-menu, screens.loadout, screens.matchmaking;
+       spv2.compat, constellations, dragStability, actionDropTargets,
+       legacy, handDragFix, performance, screens.main-menu, screens.loadout, screens.matchmaking;
 ```
 
 `scripts/validate-app-cascade-layers.mjs` asserts this exact statement,
@@ -103,20 +103,23 @@ rather than doing the harder per-selector/per-pair surgery. Only extract
 files that are cleanly one-directional or fully independent. This applies
 every time it comes up, not just once.
 
-## Done so far (4 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
+## Done so far (5 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
 
 | File | Direction | Why |
 |---|---|---|
 | `constellations.css` | before `legacy` | Its own rules are all normal-tier and already lose via specificity to mainMenu.css's boot veil and SPv2's base/relics z-index rules on the same `#constellationPill` element; needs to keep losing. |
 | `dragStability.css` | before `legacy` | Its one rule (`transition:none!important` on `.hand .card.hand-card-dragging`) exists specifically to beat mobile.css's own `!important` transition on the same selector; needs to always win. |
-| `handDragFix.css` | after `legacy` | `.handDock{z-index:26!important}` needs to keep losing to actionDropTargets.css/mpGame.css's higher, state-gated z-index overrides still in legacy; its other rules are uncontested or already dominated by an existing `spv2.components` `!important` rule regardless of position. |
-| `performance.css` | after `legacy` | Its mobile/reduced-motion overrides (`body` background-attachment, `#roomAmbient` animation/opacity/transform) need to keep losing to actionDropTargets.css's SPv2-mode override and ps1aesthetic.css's explicit "re-enable candle glow on mobile" override, both still in legacy. `#ambientFX`/`.mote`/`.slot.res-*` rules checked individually: no real conflict (uncontested, unconditional importance dominance, or identical values). |
+| `handDragFix.css` | after `legacy` | `.handDock{z-index:26!important}` needs to keep losing to actionDropTargets.css's higher state-gated z-index in its earlier layer and mpGame.css's higher state-gated z-index overrides still in legacy; its other rules are uncontested or already dominated by an existing `spv2.components` `!important` rule regardless of position. |
+| `performance.css` | after `legacy` | Its mobile/reduced-motion overrides (`body` background-attachment, `#roomAmbient` animation/opacity/transform) need to keep losing to actionDropTargets.css's SPv2-mode override and ps1aesthetic.css's explicit "re-enable candle glow on mobile" override. `#ambientFX`/`.mote`/`.slot.res-*` rules checked individually: no real conflict (uncontested, unconditional importance dominance, or identical values). |
+| `actionDropTargets.css` | before `legacy` | Dynamically appended by `gestureActionDrops.mjs`; all real cross-file conflicts that affect layer order are `!important` fixes that need to keep winning over the remaining `legacy` pile. Normal-tier hits from `rg` are non-conflicts (new state selectors/elements, different properties/pseudo-elements, identical values, or mode-exclusive branches). |
 
 Also handled earlier (before this session, same branch): `loadout.css`,
 `matchmaking.css`, and part of `mainMenu.css` were split out as fully
 self-scoped standalone screens (`screens.*` layer) — the boot-veil portion
 of `mainMenu.css` stays in `legacy` since it's a real cross-file dependency
 (fades other files' elements, e.g. `#titleWrap`, `.spread-wrap`, `.handDock`).
+
+**Explicitly skipped (structural wall, not "fixed"):** `attic.css` was already handled/skipped as not a clean extraction target: it intentionally reaches across table UI surfaces (`#titleWrap`, `.score-stack`, `.spread-wrap`, `.handDock`, `#relicRack`, `#invWrap`, `.refs-layer`, `#handSwipeZone`, `#settingsPanel`) during mode transitions and mobile hint repair. Do not attempt it again without fresh interaction proof showing those cross-file dependencies are one-directional.
 
 **Explicitly skipped (structural wall, not "fixed"):** the multiplayer CSS
 cluster (`mpGame.css`, `mpMobile.css`, `mpSpreadCards.css`, `mpFixes.css`,
@@ -149,7 +152,6 @@ attempted (skip-ahead rule applies throughout):
   yet concluded one-directional or mixed; pick this back up first.
 - `drawers.css`
 - `ps1aesthetic.css`
-- `actionDropTargets.css`
 - `market.css`
 - `mobile.css`
 - `base.css`
@@ -161,6 +163,117 @@ attempted (skip-ahead rule applies throughout):
   `singlePlayerV2/base.css`, `compat.css`, `desktop.css`, `assets.css`,
   `layout.css`, `mobile.css`, `components/spread.css`,
   `components/scoreHud.css`, `states.css`, `components/artIntegration.css`
+
+
+### Extracted candidate: `actionDropTargets.css`
+
+Investigated after confirming `attic.css` should not be retried. The stylesheet
+is dynamically appended by `src/ui/gestureActionDrops.mjs`, so it previously
+won same-layer ties by source order. The real cross-file conflicts that matter
+for layer extraction are one-directional: candidate `!important` rules must keep
+winning, so the new `actionDropTargets` layer is declared before `legacy`.
+Normal-tier `rg` hits were checked as non-conflicts.
+
+Selector/property inventory (all declarations in the file):
+
+| Selector | Properties |
+|---|---|
+| `body.hand-card-action-drag-active .handDock` | `z-index:10040!important` |
+| `body.hand-card-action-drag-active .hand` | `position:relative`; `z-index:10041!important` |
+| `body.hand-card-action-drag-active .hand .card.hand-card-dragging`, `.hand-card-dragging` | `position:fixed!important`; `z-index:10042!important`; `pointer-events:none` |
+| `body:has(#hand .card.hand-card-dragging) .handDock` | `z-index:10040!important` |
+| `body:has(#hand .card.hand-card-dragging) .hand` | `position:relative`; `z-index:10041!important` |
+| `body:has(#hand .card.hand-card-dragging) #hand .card.hand-card-dragging` | `position:fixed!important`; `z-index:10042!important`; `pointer-events:none` |
+| `.spread-actions .sbtn.card-drop-target` | `position:relative`; `z-index:10030`; `opacity:1!important`; `transform:scale(1.04)!important`; `overflow:visible`; `transition:transform .12s ease,box-shadow .12s ease,filter .12s ease!important` |
+| `.spread-actions .sbtn.card-drop-target::after` | `content:attr(data-drop-label)`; `position:absolute`; `left:50%`; `bottom:calc(100% + 8px)`; `transform:translateX(-50%)`; `min-width:max-content`; `padding:5px 9px`; `border-radius:999px`; `background:rgba(18,10,7,.96)`; `font:800 10px/1 system-ui,Segoe UI,sans-serif`; `letter-spacing:.05em`; `text-transform:uppercase`; `white-space:nowrap`; `pointer-events:none`; `box-shadow:0 7px 18px rgba(0,0,0,.68)` |
+| `.spread-actions .sbtn-discard.card-drop-target` | `filter:brightness(1.16)!important`; `box-shadow:0 0 4px rgba(255,139,66,.52),0 0 11px rgba(255,94,46,.32)!important` |
+| `.spread-actions .sbtn-discard.card-drop-target::after` | `color:#ffd1a4`; `border:1px solid rgba(255,135,72,.58)`; `text-shadow:0 0 5px rgba(255,108,52,.38)` |
+| `.spread-actions .sbtn-purge.card-drop-target` | `filter:brightness(1.16)!important`; `box-shadow:0 0 4px rgba(189,130,255,.52),0 0 11px rgba(126,76,225,.34)!important` |
+| `.spread-actions .sbtn-purge.card-drop-target::after` | `color:#e6ccff`; `border:1px solid rgba(183,126,255,.56)`; `text-shadow:0 0 5px rgba(147,91,230,.4)` |
+| `#abilityPrompt .ability-prompt-actions` | `margin-left:auto`; `display:flex`; `align-items:center`; `gap:8px`; `flex:0 0 auto` |
+| `#abilityPrompt .ability-prompt-actions button` | `margin-left:0!important` |
+| `#abilityCancel` | `background:rgba(33,22,17,.94)!important`; `color:#cdbb98!important`; `border:1px solid rgba(133,101,54,.78)!important`; `box-shadow:none!important` |
+| `#abilityCancel:hover` | `filter:brightness(1.08)` |
+| `#abilityCancel[hidden]` | `display:none!important` |
+| `#spread .slot` | `overflow:visible!important`; `z-index:1!important` |
+| `#spread .slot > .card` | `position:relative!important`; `z-index:2!important` |
+| `#spread .slot:has(> .card)` | `z-index:20!important` |
+| `#spread .slot:nth-child(1):has(> .card)` | `z-index:21!important` |
+| `#spread .slot:nth-child(2):has(> .card)` | `z-index:23!important` |
+| `#spread .slot:nth-child(3):has(> .card)` | `z-index:25!important` |
+| `#spread .slot:nth-child(4):has(> .card)` | `z-index:23!important` |
+| `#spread .slot:nth-child(5):has(> .card)` | `z-index:21!important` |
+| `#spread .slot:has(> .card.press-highlight)`, `#spread .slot:has(> .card.ability-picked)`, `#spread .slot:has(> .card.sel)`, `#spread .slot:has(> .card:active)` | `z-index:60!important` |
+| `html body #spread .slot > .card[data-hint]` | `overflow:visible!important` |
+| `#spread .slot > .card[data-hint]::after` | `z-index:140!important` |
+| `.modal.show` | `z-index:10080!important` |
+| `.ability-prompt.show` | `z-index:10070!important` |
+| `#tutTip.show` | `z-index:10130!important` |
+| `.card-detail-backdrop` | `z-index:10120!important` |
+| `#packAnim.pack-anim-overlay` | `z-index:10140!important` |
+| `.refs-layer:has(.ref:not(.hidden))` | `z-index:10080!important` |
+| `#titleWrap:has(#settingsPanel:not(.hidden))` | `z-index:10090!important` |
+| `#settingsPanel:not(.hidden)` | `z-index:10091!important` |
+| `.spread-wrap:has(#scorePreview:not(.hidden))` | `z-index:10060!important` |
+| `#scorePreview:not(.hidden)` | `position:relative`; `z-index:10080!important` |
+| `.relic-callout`, `.inv-tut` | `z-index:10090!important` |
+| `.store-relic-callout`, `.store-pack-callout` | `z-index:10150!important` |
+| `#summary.modal.show:has(.tarot-shop)`, `#summary.modal.show:has(.store-front-shell)` | `z-index:10110!important` |
+| shop/store `body:has(#summary ...) #discardBtn/#purgeBtn/#spv2ArchiveBtn` selectors | `z-index:10!important` |
+| `html body.single-player-v2.generated-sheet-ready` | `--spv2-action-edge-gap:max(24px,6.5vw)`; `background-color:#0b0805!important`; `background-image:url('/assets/background.webp')!important`; `background-position:center top!important`; `background-size:cover!important`; `background-repeat:no-repeat!important`; `background-attachment:fixed!important` |
+| `html body.single-player-v2.generated-sheet-ready::before` | `content:none`; `display:none!important`; `background:none!important` |
+| `html body.single-player-v2.generated-sheet-ready .handDock` | `z-index:44!important` |
+| `html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone` | `z-index:43!important` |
+| `html body.single-player-v2.generated-sheet-ready #handSwipeZone .hand-swipe-hint` | `position:relative!important`; `z-index:2!important` |
+| `html body.single-player-v2.generated-sheet-ready .hand .card[data-hint]::after` | `z-index:60!important` |
+| `html body.single-player-v2.generated-sheet-ready #abilityPrompt.ability-prompt` | `top:142px!important`; `bottom:auto!important` |
+| generated-sheet `#discardBtn/#purgeBtn/#menuBtn/#spv2ArchiveBtn/#scoringBtn/#abilitiesBtn` | `position:fixed!important`; `z-index:65!important` |
+| generated-sheet `#discardBtn` | `top:calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + var(--spv2-action-edge-gap))!important`; `bottom:auto!important`; `left:var(--spv2-action-edge-gap)!important`; `right:auto!important` |
+| generated-sheet `#purgeBtn` | `top:calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + var(--spv2-action-edge-gap))!important`; `bottom:auto!important`; `left:auto!important`; `right:var(--spv2-action-edge-gap)!important` |
+| generated-sheet `#menuBtn/#spv2ArchiveBtn` | `top:auto!important`; `bottom:max(24px,3dvh,calc(env(safe-area-inset-bottom) + 14px))!important`; `right:auto!important` |
+| generated-sheet `#menuBtn` | `left:4vw!important` |
+| generated-sheet `#spv2ArchiveBtn` | `left:calc(4vw + var(--spv2-control-size,clamp(46px,12vw,58px)) + 1.2vw)!important` |
+| generated-sheet `#scoringBtn/#abilitiesBtn` | `top:auto!important`; `bottom:max(24px,3dvh,calc(env(safe-area-inset-bottom) + 14px))!important`; `left:auto!important` |
+| generated-sheet `#scoringBtn` | `right:calc(4vw + var(--spv2-control-size,clamp(46px,12vw,58px)) + 1.2vw)!important` |
+| generated-sheet `#abilitiesBtn` | `right:4vw!important` |
+| generated-sheet shop/store `#discardBtn/#purgeBtn/#spv2ArchiveBtn` selectors | `z-index:10!important` |
+| generated-sheet `#discardBtn:disabled` | `opacity:.74!important`; `box-shadow:none!important` |
+| generated-sheet `#discardBtn:disabled::before` | `filter:brightness(1.45) contrast(1.02) saturate(.92) drop-shadow(0 0 3px rgba(0,0,0,.42))!important` |
+| generated-sheet `#discardBtn:disabled #spv2DiscardBadge` | `border-color:rgba(202,202,202,.62)!important`; `background:radial-gradient(circle at 40% 32%,#9a9a9a,#4b4b4b 78%)!important`; `color:#e2e2e2!important`; `text-shadow:0 1px 2px rgba(0,0,0,.72)!important`; `box-shadow:0 2px 4px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.14)!important` |
+| generated-sheet `#discardBtn:not(:disabled)` | `box-shadow:0 0 0 1px rgba(255,217,120,.48),0 0 7px rgba(255,200,84,.34),0 0 13px rgba(100,168,255,.14)!important` |
+| generated-sheet `#discardBtn:not(:disabled)::before` | `filter:brightness(2) contrast(1.06) saturate(1.12) drop-shadow(0 0 3px rgba(255,220,132,.42)) drop-shadow(0 0 6px rgba(85,156,255,.25))!important` |
+| generated-sheet `:has(#purgePrompt.show) #purgeBtn` | `opacity:1!important`; `box-shadow:0 0 0 1px rgba(255,217,120,.48),0 0 7px rgba(255,200,84,.34),0 0 13px rgba(100,168,255,.14)!important`; `filter:brightness(1.55) contrast(1.05) saturate(1.08) drop-shadow(0 0 3px rgba(255,220,132,.4)) drop-shadow(0 0 6px rgba(85,156,255,.24))!important` |
+| generated-sheet `#discardBtn.card-drop-target/#purgeBtn.card-drop-target` | `transform:scale(1.04)!important`; `overflow:visible!important` |
+| generated-sheet `#discardBtn.card-drop-target` | `filter:brightness(1.45) contrast(1.04) saturate(1.08) drop-shadow(0 0 4px rgba(255,139,66,.58)) drop-shadow(0 0 9px rgba(255,94,46,.34))!important` |
+| generated-sheet `#purgeBtn.card-drop-target` | `filter:brightness(1.4) contrast(1.05) saturate(1.08) drop-shadow(0 0 4px rgba(189,130,255,.58)) drop-shadow(0 0 9px rgba(126,76,225,.36))!important` |
+| generated-sheet `#discardBtn.card-drop-target::after/#purgeBtn.card-drop-target::after` | `content:attr(data-drop-label)!important`; `display:block!important`; `position:absolute!important`; `top:calc(100% + 8px)!important`; `bottom:auto!important`; `left:50%!important`; `transform:translateX(-50%)!important`; `min-width:max-content!important`; `padding:5px 9px!important`; `border-radius:999px!important`; `background:rgba(18,10,7,.96)!important`; `font:800 10px/1 system-ui,Segoe UI,sans-serif!important`; `letter-spacing:.05em!important`; `text-transform:uppercase!important`; `white-space:nowrap!important`; `pointer-events:none!important`; `box-shadow:0 7px 18px rgba(0,0,0,.68)!important` |
+| generated-sheet `#discardBtn.card-drop-target::after` | `color:#ffd1a4!important`; `border:1px solid rgba(255,135,72,.58)!important`; `text-shadow:0 0 5px rgba(255,108,52,.38)!important` |
+| generated-sheet `#purgeBtn.card-drop-target::after` | `color:#e6ccff!important`; `border:1px solid rgba(183,126,255,.56)!important`; `text-shadow:0 0 5px rgba(147,91,230,.4)!important` |
+| mobile `#abilityPrompt .ability-prompt-actions` | `flex-direction:column`; `gap:6px`; `align-items:stretch` |
+| mobile `#abilityPrompt .ability-prompt-actions button` | `min-width:74px` |
+| reduced-motion `.spread-actions .sbtn.card-drop-target` | `transition:none!important` |
+
+Overlap classification from `rg` against `src/styles/**/*.css`:
+
+| Overlap source found by `rg` | Classification | Reason |
+|---|---|---|
+| `base.css`: `body` background; `.refs-layer`; `.spread-wrap`; `.spread-actions`; buttons | Candidate must win for body/background, visible refs, score preview/action overlays, and fixed action-button states. Other button hits are non-conflicts where the candidate uses narrower state selectors or different properties. | Candidate rules are late fixes for SPv2 generated-sheet background, visible reference overlay stacking, and drag/drop affordances. They are `!important` where they overlap real legacy declarations. |
+| `spread.css`: `.ability-prompt`, `.ability-prompt.show`, `.slot`, `.slot > .card` | Candidate must win for ability prompt z-index/top/bottom and spread-slot/card z-index/overflow while drag/target/hint states are active. | These are `!important` stack/position repairs over base spread layout. |
+| `market.css`: `.modal.show`, `#tutTip.show`, `.refs-layer`, `.handDock`, `.relic-callout`, `.sbtn-*`, `.tarot-shop` | Candidate must win for overlay/callout z-index and shop suppression z-index; non-conflict for `.sbtn-*` size/art and `.tarot-shop` layout/background because candidate changes different properties or state-gated buttons. | Candidate only raises/lower stacks for active contextual surfaces and does not replace market card/button art dimensions. |
+| `mobile.css`: `#menuBtn`, `.spread .slot.ability-*`, `.handDock`, `.hand-swipe-zone`, `#spread .slot.drop-target`, `.hand .card.hand-card-dragging` | Candidate must win for drag lift, SPv2 generated-sheet button placement/z-index, hand swipe hint z-index, and slot/card z-index/overflow; non-conflict for ability target slot color/box-shadow and drag-active transitions. | Candidate uses more specific state selectors and `!important` where it must override mobile behavior during drag/drop. |
+| `handDragFix.css`: `.handDock` | Candidate must win when `hand-card-action-drag-active` or SPv2 generated-sheet state is present. | The existing extraction already documents that `handDragFix.css` must lose to action drop target z-index overrides. |
+| `performance.css`: generated-sheet `body` background attachment/image | Candidate must win. | The existing extraction already documents that performance overrides must lose to the action-drop SPV2 background repair. |
+| `mainMenu.css`: boot veil selectors, `#tutTip`, `#packAnim`, `#summary`, `#modal` | Non-conflict for active menu/loading modes or candidate must win for contextual surface stack once the app is interactive. | Boot veil visibility/opacity/pointer-events are separate from candidate z-index fixes; z-index fixes need to remain high when those surfaces are shown. |
+| `drawers.css`: `.refs-layer`, `#settingsPanel`, pull-tab/menu surfaces, hand idle animation exclusions | Non-conflict except candidate must win visible refs/settings/score-preview stack. | Drawers mostly owns display/layout of pull desks; candidate only restores high z-index for visible contextual surfaces. |
+| `attic.css`: mode transition selectors for table surfaces; `#handSwipeZone`; `#settingsPanel` | Non-conflict / mode-exclusive. | Attic mode classes intentionally hide/reposition table surfaces, but candidate action-drop states are table-interaction states; no clean attic extraction was attempted. |
+| `ps1aesthetic.css`: generated-sheet body/ambient/handDock/title styling | Candidate must win for generated-sheet background attachment/image and selected z-index repairs; visual filter/aesthetic-only properties are non-conflicts. | Candidate background and z-index declarations are `!important` repairs; PS1 visual treatment does not require reversing them. |
+| Multiplayer cluster (`mpGame.css`, `mpMobile.css`, `mpSpreadCards.css`, `mpFixes.css`, `mpMultMobile.css`, `mpSinglePlayerIsolation.css`) | Non-conflict for this extraction. | Multiplayer selectors are `body.mp-game-active`/opponent-surface scoped. Where they reuse `#spread`, `.handDock`, or `.hand-swipe-zone`, they either set different geometry properties or mode-exclusive MP state properties. No candidate declaration was found that must lose to preserve current MP source-order behavior. |
+| SPv2 legacy files still in `legacy` and bundled SPv2 index hits: generated-sheet body, spread/slot/card, fixed utility/action buttons, hand swipe zone, hints, and discard/purge badge/labels | Candidate must win for generated-sheet action-drop/mobile repairs; non-conflict for utility icon labels, card art/layout properties, and hint states not matching `.card-drop-target`. | Candidate rules are intentionally later SPv2 repairs and use `!important` for real overlapping properties; normal-tier hits are either new `.card-drop-target`/`.ability-prompt-actions` state or different pseudo-elements/properties. |
+
+Conclusion: clean one-directional extraction. Place `actionDropTargets` before
+`legacy` so its `!important` repairs keep winning; the normal-tier overlap scan
+did not identify a declaration that depends on candidate source-order winning
+against another legacy normal declaration.
 
 ## Verification commands
 
