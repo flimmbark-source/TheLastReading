@@ -75,20 +75,22 @@ all without per-selector surgery.
    `scripts/validate-app-cascade-layers.mjs` and add its own assertion block
    with the same reasoning comment.
 8. `npm test` (static checks).
-9. Empirical verification: start `scripts/serve.mjs`, drive the real page
-   with Playwright (`chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })`
-   in this sandbox), force the relevant state classes via
-   `page.evaluate`, and read `getComputedStyle` for every property the file
-   touches that had a real interaction.
-10. `git stash push` the in-progress change, re-run the exact same Playwright
-    script against the untouched baseline, diff the two outputs — they must
-    match exactly. `git stash pop` to restore.
-11. Run the SPv2 visual smoke test if applicable
+9. Empirical verification: write a small probe module (default export
+   `async (page) => ({...jsonSafe})`) that forces the relevant state classes
+   via `page.evaluate` and reads `getComputedStyle` for every property that
+   had a real interaction, then run
+   `node scripts/cascade-probe.mjs <probe.mjs> -- <changed files>`. The
+   harness boots the real game (New Game flow), runs the probe against the
+   current tree, `git stash push`es the given files, reloads and re-runs the
+   probe against that pre-extraction baseline, `git stash pop`s, and diffs
+   the two JSON results — no need to hand-roll the boot/stash/diff dance per
+   file anymore. Keep probe modules in the scratchpad; they're throwaway.
+10. Run the SPv2 visual smoke test if applicable
     (`scripts/validate-single-player-v2-visual-smoke.mjs`; it no-ops
     gracefully in this sandbox since the full browser isn't installed here).
-12. Delete scratch scripts, confirm `git status` is clean of anything but
-    the intended 3 files (game.html, the validator, the CSS file itself).
-13. Commit with the win/lose reasoning in the message, push.
+11. Confirm `git status` is clean of anything but the intended files
+    (game.html, the validator, the CSS file itself, the doc).
+12. Commit with the win/lose reasoning in the message, push.
 
 Static analysis alone was tried first and abandoned: proving the whole
 `legacy` pile independent this way would require verifying real DOM tags for
