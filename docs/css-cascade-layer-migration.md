@@ -105,7 +105,7 @@ rather than doing the harder per-selector/per-pair surgery. Only extract
 files that are cleanly one-directional or fully independent. This applies
 every time it comes up, not just once.
 
-## Done so far (8 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
+## Done so far (10 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
 
 | File | Direction | Why |
 |---|---|---|
@@ -117,6 +117,8 @@ every time it comes up, not just once.
 | `drawers.css` | after `legacy` | Needs to keep LOSING two `!important` ties (SPv2 desktop.css's `display:block!important` un-hide of `#scoringBtn`/`#abilitiesBtn`/`#menuBtn`, and drawAnimation.css's reduced-motion deal-in fade, both still in `legacy`) while needing to keep WINNING two normal-tier ties (`handCardIdleCycle` vs market.css's `card-wave`, and `#settingsPanel` sizing vs mobile.css's base rule, both still in `legacy`) — both satisfied by the same "after legacy" placement. Verified empirically via `scripts/cascade-probe.mjs`, including a `prefers-reduced-motion` emulation check. |
 | `spread.css` | before `legacy` | Every real normal-tier interaction found (market.css's mobile `.ability-prompt`/`.spread`/`.slot`/`.slot .num` overrides, mobile.css's `.ability-target-slot`/`.ability-picked-slot` highlight colors, mpMobile.css's mobile `.slot .num`, and the SPv2 bundle's normal-tier mobile/generated-sheet layout overrides) requires spread's declarations to keep losing against files still in `legacy`; no interaction requires it to win against anything there. Verified empirically via `scripts/cascade-probe.mjs` — first attempt gave a false-positive diff from reading a live `.slot`'s `background-color` mid-`transition:.18s`, fixed by probing a freshly-created element instead. |
 | `base.css` | before `legacy` | It's the first file concatenated into `legacy`, so it already loses every normal-tier tie against every other still-in-`legacy` file by source order/specificity today (market.css's mobile `body`/`h1`/`.bar`/`.pill`/`.actions`/`button`/`.ref`/`.scoring-sheet` overrides, mobile.css's higher-specificity `.actions`/`touch-action` rules, attic.css's mode-gated `.score-stack` transform); moving it earlier just makes that load-order-proof instead of accidental. Its lone `!important` declaration (`.score-preview{display:none!important}`) has zero competing declarations anywhere in the tree. |
+| `cards.css` | before `legacy` | Zero `!important` declarations in the file. Every real normal-tier conflict (market.css's mobile `.title`/`.sym`/`.plaque`/`.seal` sizing, market.css's `.card.photo .title/.art{display:none}`, mpMobile.css's mp-mode `.seal` transform) needs cards to keep losing to files still in `legacy`, and nothing anywhere needs to lose to cards. The earlier "deprioritized" concern (its classes reused by market/mp files) turned out to be exactly this one-directional shape once actually checked. Verified empirically via `scripts/cascade-probe.mjs`. |
+| `assetLazy.css` | before `legacy` | All rules are `!important` and exist specifically to override attic.css's normal-tier background declarations on the same elements (`#atticScene::before`/`::after`, `#atticRoom`) — importance dominance already decides every current fight regardless of layer; declaring it before `legacy` keeps it winning even if a competing `!important` ever appears in the legacy pile. Its internal ungated-strip vs mode-gated-restore pair lives in one file and moves together. Verified empirically via `scripts/cascade-probe.mjs` (strip with no mode class, restore under `body.mode-attic`). |
 
 Also handled earlier (before this session, same branch): `loadout.css`,
 `matchmaking.css`, and part of `mainMenu.css` were split out as fully
@@ -136,12 +138,12 @@ satisfy with one relative two-layer ordering. Fixing this for real would
 mean per-pair/per-selector surgery, not a bulk layer move. Left in `legacy`
 until/unless that harder work is requested specifically.
 
-**Reprioritized, not touched:** `cards.css` looked like an easy independent
-extraction by size, but its classes (`.title`, `.art`, `.sym`, `.plaque`,
-`.scroll`, `.seal`) are reused verbatim by `market.css`, `mpMobile.css`, and
-`mpSpreadCards.css` for their own card-face rendering — needs the same
-per-interaction treatment as the others, not a quick win. Moved down the
-list.
+**Formerly deprioritized, since extracted:** `cards.css` looked like an easy
+independent extraction by size, then got deprioritized when its classes
+(`.title`, `.art`, `.sym`, `.plaque`, `.scroll`, `.seal`) turned out to be
+reused verbatim by `market.css`, `mpMobile.css`, and `mpSpreadCards.css`.
+Once actually checked per-interaction, every reuse was one-directional
+(cards always loses) — see the Done table above.
 
 **Explicitly skipped (structural wall, confirmed via parallel research):**
 
@@ -196,24 +198,45 @@ list.
   normal-tier ties against `market.css`/`hand.css` (`.relic-rack`
   `align-items`, `.hand .card` transition timing) — requires **after**
   `legacy`. No single position satisfies all three.
+- `attic.css` — needs to WIN two `!important` ties against files still in
+  `legacy` (its ungated `#handSwipeZone.hand-swipe-zone{bottom:197px!important}`
+  beats ps1aesthetic.css's `.hand-swipe-zone{bottom:233px!important}` today
+  only via specificity, and its mobile `.relic-rack{flex-direction:row!important}`
+  beats mobile.css's `.relic-rack{flex-direction:column!important}` today
+  only via source order — same specificity) — requires **before** `legacy` —
+  while also needing to WIN normal-tier ties against ps1aesthetic.css (its
+  mode-gated `filter:blur()` on `#titleWrap`/`.score-stack`/`#relicRack`
+  beats ps1aesthetic's ungated `filter:saturate()` via specificity) —
+  requires **after** `legacy`. Opposite placements; mixed-direction. This
+  also retroactively validates the reverted extraction attempt on the old
+  `codex/...` branch: placing attic after `legacy` would have broken the
+  hand-swipe-zone geometry and mobile relic-rack row layout.
 
 ## What's left
 
 Remaining files still in the shared `legacy` layer, in the order they'll be
 attempted (skip-ahead rule applies throughout):
 
-- `cards.css` (deprioritized, see above)
 - `market.css` (skipped, see above)
 - `ps1aesthetic.css` (skipped, see above)
 - `drawAnimation.css` (skipped, see above)
 - `hand.css` (skipped, see above)
 - `mobile.css` (skipped, see above)
+- `attic.css` (skipped, see above)
 - The multiplayer cluster (skipped, see above — only revisit per-file/per-pair if asked)
-- `attic.css` — not yet investigated in this pass.
 - 10 SPv2 files still sitting in `legacy` rather than an `spv2.*` tier:
   `singlePlayerV2/base.css`, `compat.css`, `desktop.css`, `assets.css`,
   `layout.css`, `mobile.css`, `components/spread.css`,
   `components/scoreHud.css`, `states.css`, `components/artIntegration.css`
+
+Every non-SPv2, non-multiplayer file has now been either extracted or
+confirmed mixed-direction. What remains in `legacy` is exactly the
+interdependent core the layer model can't split without per-selector
+surgery: the `hand → cards(✓) → market → mobile → attic → drawers(✓)`
+chain's unextractable middle (`hand`, `market`, `mobile`, `attic`,
+`ps1aesthetic`, `drawAnimation`), the multiplayer cluster, and the 10
+SPv2 files whose eventual home is the `spv2.*` tiers rather than a new
+standalone layer.
 
 
 ### Extracted candidate: `actionDropTargets.css`

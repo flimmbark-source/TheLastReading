@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, legacy, handDragFix, performance, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, legacy, handDragFix, performance, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, handDragFix, performance, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, handDragFix, performance, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -26,7 +26,6 @@ assert.ok(
 // budget.mjs and the SPv2 cascade validator for the matching SPv2-side story).
 const legacyLayeredFiles = [
   '../src/styles/hand.css',
-  '../src/styles/cards.css',
   '../src/styles/market.css',
   '../src/styles/mobile.css',
   '../src/styles/attic.css',
@@ -35,7 +34,6 @@ const legacyLayeredFiles = [
   '../src/styles/mpSpreadCards.css',
   '../src/styles/mpFixes.css',
   '../src/styles/mpMultMobile.css',
-  '../src/styles/assetLazy.css',
   '../src/styles/ps1aesthetic.css',
   '../src/styles/mpSinglePlayerIsolation.css',
   '../src/styles/drawAnimation.css',
@@ -112,6 +110,25 @@ assert.match(spread.trimEnd(), /\}$/, 'spread.css should close its layer wrapper
 const base = read('../src/styles/base.css');
 assert.match(base, /^@layer base \{/, 'base.css should live in its own base layer');
 assert.match(base.trimEnd(), /\}$/, 'base.css should close its layer wrapper');
+
+// cards.css: zero !important declarations; every real normal-tier conflict
+// (market.css's mobile .title/.sym/.plaque/.seal sizing, market.css's
+// .card.photo .title/.art{display:none}, mpMobile.css's mp-mode .seal
+// transform) needs cards to keep losing to files still in legacy, and
+// nothing anywhere needs to lose to cards. Declared BEFORE `legacy` on
+// purpose (see game.html); the assertion above already locks that in.
+const cards = read('../src/styles/cards.css');
+assert.match(cards, /^@layer cards \{/, 'cards.css should live in its own cards layer');
+assert.match(cards.trimEnd(), /\}$/, 'cards.css should close its layer wrapper');
+
+// assetLazy.css: all rules are !important and exist specifically to override
+// attic.css's normal-tier background declarations on the same elements
+// (#atticScene::before/::after, #atticRoom) -- importance dominance already
+// decides every current fight, and declaring it before legacy keeps it
+// winning even if a competing !important ever appears in the legacy pile.
+const assetLazy = read('../src/styles/assetLazy.css');
+assert.match(assetLazy, /^@layer assetLazy \{/, 'assetLazy.css should live in its own assetLazy layer');
+assert.match(assetLazy.trimEnd(), /\}$/, 'assetLazy.css should close its layer wrapper');
 
 // handDragFix.css: its .handDock z-index needs to keep losing to
 // actionDropTargets.css's higher, state-gated z-index in the earlier

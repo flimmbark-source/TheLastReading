@@ -96,8 +96,24 @@
      that load-order-proof instead of accidental. Its lone !important
      declaration (.score-preview{display:none!important}) has zero
      competing declarations anywhere in the tree, so the reversed
-     !important tie-break rule has no real case to satisfy either way. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, legacy, handDragFix, performance, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+     !important tie-break rule has no real case to satisfy either way.
+
+     `cards` is also BEFORE legacy: the file has zero !important
+     declarations, and every real normal-tier conflict (market.css's mobile
+     .title/.sym/.plaque/.seal sizing, market.css's .card.photo
+     .title/.art{display:none}, mpMobile.css's mp-mode .seal transform)
+     needs cards to keep losing to files still in legacy. Nothing anywhere
+     needs to lose to cards.
+
+     `assetLazy` is also BEFORE legacy: all of its rules are !important and
+     exist specifically to override attic.css's normal-tier background
+     declarations on the same elements (#atticScene::before/::after,
+     #atticRoom) -- importance dominance already decides every current
+     fight, and declaring it before legacy keeps it winning even if a
+     competing !important ever appears in the legacy pile. Its internal
+     ungated-strip vs mode-gated-restore pair lives in one file, so that
+     relationship moves with it unchanged. */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, handDragFix, performance, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">

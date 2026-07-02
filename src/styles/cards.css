@@ -1,4 +1,4 @@
-@layer legacy {
+@layer cards {
 /* Extracted from index.html (Phase 17). Files split in original rule order;
    link order in index.html must stay base,spread,hand,cards,market,mobile,attic,drawers
    to preserve the cascade. Some sections span themes because order wins over purity. */
