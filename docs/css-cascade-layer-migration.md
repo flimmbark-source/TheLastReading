@@ -140,26 +140,42 @@ extraction by size, but its classes (`.title`, `.art`, `.sym`, `.plaque`,
 per-interaction treatment as the others, not a quick win. Moved down the
 list.
 
+**Explicitly skipped (structural wall, confirmed via parallel research):**
+
+- `market.css` — sits in the middle of a documented load-order dependency
+  chain (`base,spread,hand,cards,market,mobile,attic,drawers`) and needs to
+  win `!important` ties against `hand.css` (`.sel`/`.ability-picked`
+  z-index) while also needing to keep *losing* an `!important` tie against
+  `mobile.css` (`.spread .card` box-shadow vs. `.ability-target`/
+  `.ability-picked`'s highlight ring) and a normal-tier tie against
+  `mobile.css` (`.relic-rack` `align-items`). No single layer position
+  before/after `legacy` satisfies both.
+- `ps1aesthetic.css` — needs to keep losing on the `!important` tier to
+  `mpSinglePlayerIsolation.css`/`attic.css`/`singlePlayerV2/states.css`
+  overrides (`.handDock`, `.hand-swipe-zone`, `.slot.target`, mobile SPv2
+  `#roomAmbient` opacity) while also needing to keep losing on the *normal*
+  tier to `attic.css`'s mode-gated `filter:blur(...)` on
+  `#titleWrap`/`.score-stack`/`#relicRack` — normal-tier and `!important`-tier
+  ties resolve in opposite layer directions, so those two requirements demand
+  opposite placements relative to `legacy`.
+
 ## What's left
 
 Remaining files still in the shared `legacy` layer, in the order they'll be
 attempted (skip-ahead rule applies throughout):
 
-- `drawAnimation.css` — **investigation in progress, no edits made.** Its
-  `.hand .card.card-draw-dealt` rule (animation/z-index/pointer-events, all
-  `!important`) was being checked against hand.css/market.css's
-  `.sel`/`.ability-picked`/`.purge-picked` z-index rules (999/1000, also
-  `!important`) and market.css's ungated `.hand .card:not(...)` wave
-  animation (normal tier, so already dominated regardless of layer). Not
-  yet concluded one-directional or mixed; pick this back up first.
-- `drawers.css`
-- `ps1aesthetic.css`
-- `market.css`
+- `drawAnimation.css` — investigation in progress (parallel research
+  dispatched; being checked against hand.css/market.css's
+  `.sel`/`.ability-picked`/`.purge-picked` z-index rules and whether those
+  states can co-occur with the deal animation).
+- `drawers.css` — investigation in progress.
 - `mobile.css`
 - `base.css`
 - `hand.css`
 - `spread.css`
 - `cards.css` (deprioritized, see above)
+- `market.css` (skipped, see above)
+- `ps1aesthetic.css` (skipped, see above)
 - The multiplayer cluster (skipped, see above — only revisit per-file/per-pair if asked)
 - 10 SPv2 files still sitting in `legacy` rather than an `spv2.*` tier:
   `singlePlayerV2/base.css`, `compat.css`, `desktop.css`, `assets.css`,
