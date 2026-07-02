@@ -75,6 +75,14 @@ const appStyleFiles = [
 // briefly extracted here too before a full A/B diff showed that broke
 // its pre-existing dead-code tie against ps1aesthetic.css), and
 // mpGameChrome.css's 15 makes up the difference exactly.
+// mpGame.css/mpMobile.css/mpFixes.css (716, unchanged) moved from the
+// shared `legacy` layer into a new shared `mpCore` layer together (a
+// trio-as-one-unit extraction, not a per-file move -- see mpFixes.css's
+// header comment). Pure layer renames plus one same-file rule split
+// (mpMobile.css's .handDock declarations, moved between two @layer
+// blocks in the same file, not duplicated) -- no declarations were
+// added, removed, or duplicated, so each file's own count is unchanged
+// (mpGame.css 41, mpMobile.css 51, mpFixes.css 118, same as before).
 const importantBudget = 716;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)

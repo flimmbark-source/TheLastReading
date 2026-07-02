@@ -105,7 +105,7 @@ rather than doing the harder per-selector/per-pair surgery. Only extract
 files that are cleanly one-directional or fully independent. This applies
 every time it comes up, not just once.
 
-## Done so far (22 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
+## Done so far (23 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
 
 Three methods are in play now, noted per row: **layer-move** (rename the
 file's `@layer legacy {` and place the new layer before/after `legacy`,
@@ -126,13 +126,24 @@ below is a fifth variant: **solo/laddered split** — mining a file that's
 part of a larger cross-file "hard" bundle for an internally-solo
 sub-portion (selectors with no counterpart anywhere in the sibling
 ladder files), leaving the genuinely laddered remainder untouched in
-its original file/layer.
+its original file/layer. `mpCore` (mpGame.css's laddered core +
+mpMobile.css + mpFixes.css) is a sixth variant: **trio-as-one-unit** —
+three files that can't be split into DIFFERENT layers from each other
+(their mutual ties depend on shared-layer source order), but don't need
+to stay co-resident with the rest of `legacy` either, so all three moved
+together into one new shared layer instead, preserving their relative
+link order (and therefore every internal tie) exactly as it resolved in
+`legacy`. One rule's declarations still had to split across two layers
+within a single file (the same "split minority-direction rules into a
+second layer block" technique used for mpGameChrome's exceptions), but
+that's the only per-declaration surgery needed — the trio itself moved
+as a whole, unlike `mpGameChrome.css`'s selector-level split.
 
 | File | Method | Direction | Why |
 |---|---|---|---|
 | `constellations.css` | layer-move | before `legacy` | Its own rules are all normal-tier and already lose via specificity to mainMenu.css's boot veil and SPv2's base/relics z-index rules on the same `#constellationPill` element; needs to keep losing. |
 | `dragStability.css` | layer-move | before `legacy` | Its one rule (`transition:none!important` on `.hand .card.hand-card-dragging`) exists specifically to beat mobile.css's own `!important` transition on the same selector; needs to always win. |
-| `handDragFix.css` | layer-move | after `legacy` | `.handDock{z-index:26!important}` needs to keep losing to actionDropTargets.css's higher state-gated z-index in its earlier layer and mpGame.css's higher state-gated z-index overrides still in legacy; its other rules are uncontested or already dominated by an existing `spv2.components` `!important` rule regardless of position. |
+| `handDragFix.css` | layer-move | after `legacy` | `.handDock{z-index:26!important}` needs to keep losing to actionDropTargets.css's higher state-gated z-index in its earlier layer and mpGame.css's higher state-gated z-index overrides (now in the `mpCore` layer, still earlier than this file either way); its other rules are uncontested or already dominated by an existing `spv2.components` `!important` rule regardless of position. |
 | `performance.css` | layer-move | after `legacy` | Its mobile/reduced-motion overrides (`body` background-attachment, `#roomAmbient` animation/opacity/transform) need to keep losing to actionDropTargets.css's SPv2-mode override and ps1aesthetic.css's explicit "re-enable candle glow on mobile" override. `#ambientFX`/`.mote`/`.slot.res-*` rules checked individually: no real conflict (uncontested, unconditional importance dominance, or identical values). |
 | `actionDropTargets.css` | layer-move | before `legacy` | Dynamically appended by `gestureActionDrops.mjs`; all real cross-file conflicts that affect layer order are `!important` fixes that need to keep winning over the remaining `legacy` pile. Normal-tier hits from `rg` are non-conflicts (new state selectors/elements, different properties/pseudo-elements, identical values, or mode-exclusive branches). |
 | `drawers.css` | layer-move | after `legacy` | Needs to keep LOSING two `!important` ties (SPv2 desktop.css's `display:block!important` un-hide of `#scoringBtn`/`#abilitiesBtn`/`#menuBtn`, and drawAnimation.css's reduced-motion deal-in fade, both still in `legacy`) while needing to keep WINNING two normal-tier ties (`handCardIdleCycle` vs market.css's `card-wave`, and `#settingsPanel` sizing vs mobile.css's base rule, both still in `legacy`) — both satisfied by the same "after legacy" placement. Verified empirically via `scripts/cascade-probe.mjs`, including a `prefers-reduced-motion` emulation check. |
@@ -151,6 +162,7 @@ its original file/layer.
 | `mpSpreadCards.css` | layer-move | before `legacy` | The second crack in the cluster. Every declaration in it is `!important`, and nothing else sets that tier on the same property for its `#spread .slot > .card` / `#mpOppSpread .slot > .card` targets (or their `.photo`/`.title` descendants) — `actionDropTargets.css`'s `position`/`z-index` on the same selector is a disjoint property, `mpFixes.css`'s `width`/`height` there targets the `.slot` itself rather than the `.card` inside it, and `market.css`'s unconditional non-important `.card.photo{background-size:200% 200%}` is importance-dominated regardless of layer (the values happen to match anyway). SPv2's own `#spread .slot > .card` hint rules are gated by `body.single-player-v2`, mutually exclusive with `body.mp-game-active` at runtime. Genuinely unconstrained for the same reasons as `mpMultMobile.css`; the file's original "loads after mpGame.css/mpMobile.css" comment predates this migration's importance-tier reasoning — importance dominance already made load order moot for every real conflict found. Verified the same way: synthetic `#spread`/`#mpOppSpread` slot-card elements, full computed-style A/B diff, byte-for-byte identical against baseline. |
 | `mpSinglePlayerIsolation.css` | layer-move | before `legacy` | The third crack, and a different shape from the first two — not property-disjoint, just dead. Every rule in the file is gated by `body.mp-game-active.single-player-v2` (all of them, no exception), and those two classes are enforced mutually exclusive at runtime by `src/app/mpModeClassGuard.mjs`'s `MutationObserver`: the instant `mp-game-active` is added, `single-player-v2` is stripped on the same microtask, before the next paint. No other file in the app references this combined gate. So the file's entire ruleset is unreachable in any rendered frame, and its layer position genuinely cannot affect real behavior regardless of where it's declared. Verified by reading computed style in the actual transient window itself — set all three classes in one synchronous assignment and read immediately, before the guard's microtask could run (confirmed via `document.body.className` in the probe output: all three classes were still present at read time) — a full computed-style A/B diff on synthetic `#spread`/`#mpOppSpread`/`.handDock`/`#handSwipeZone` elements came back byte-for-byte identical against the pre-extraction baseline even in that window. |
 | `components/mpGameChrome.css` | solo/laddered split | before `legacy` | The fourth crack, and a different technique from the first three: `mpGame.css`, `mpMobile.css`, and `mpFixes.css` form a genuine ~50-property-pair cross-file responsive-breakpoint ladder (confirmed via a full selector/property audit, not just reference-counting) that can't be split into different layers without swapping source-order resolution for layer-order resolution — the same shape that broke the reverted `hand.css` extraction. But 61 of `mpGame.css`'s 91 rules turned out to have no counterpart at all in `mpMobile.css`/`mpFixes.css` — its own top bar, player rows, opponent hand/badges, opponent spread state decorations, progress bar, and scoring overlay — and moved to this new file. Three families almost shipped wrong, all caught only by a full computed-style A/B diff against a real baseline, never by static reasoning: (1) `#spread .slot.mp-targetable`/`.mp-anchored`/`.mp-silenced`/`.mp-swap-a`/`.mp-swap-pick` (and their `.mp-opp-spread-transform` mirror) compete against `ps1aesthetic.css`'s bare `.slot{border-color:...!important}` and need this file *before* `legacy` to keep winning via specificity — genuinely required, not just consistency; (2) `.card.mp-interaction` looked unconstrained (only `hand.css`'s non-important base `.card` rule was found by static grep) but actually already loses a same-layer specificity tie to `ps1aesthetic.css`'s `.card:not(.photo){...!important}` via source order — `:not()` contributes its argument's specificity, so `.card:not(.photo)` and `.card.mp-interaction` tie exactly — meaning `.card.mp-interaction`'s own gradient has never rendered, a pre-existing dead-code situation confirmed against a true git-checkout baseline (not a probe artifact); extracting it would have revived dead code by swapping that tie-break for plain layer order; (3) the `mp-action-btn` family and `mp-ov-btn` also looked unconstrained, but in the *opposite* direction from (1): both render as real `<button>` elements (verified in `src/app/mpGame.mjs`) and need to keep beating `market.css`'s mobile-breakpoint bare `button{font-size:12px;padding:6px 9px}` reset via specificity — the same conflict already documented for `tutTip.css`'s `#tutSkipBtn` — which requires *after* `legacy`, the opposite of (1). One file position can't satisfy both (1) and (3), and neither (2) nor (3) has `!important` declarations of its own to make a cross-layer move net-zero, so both stayed behind in `mpGame.css`/`legacy` instead of spinning up a third layer for two small rule families. Verified via a comprehensive computed-style A/B diff (every extracted selector plus the laddered-core sanity checks) across the full split; the only remaining diff was the same `.mp-turn-badge.my-turn` animation-timing sampling noise documented elsewhere in this doc. |
+| `mpCore` (mpGame.css's laddered core, mpMobile.css, mpFixes.css) | trio-as-one-unit | after `legacy` | The sixth crack: instead of a per-file layer-move, all three files that form the confirmed ~50-property-pair cross-file ladder moved together into one new shared layer, declared in the same relative link order (mpGame.css, mpMobile.css, mpFixes.css) so every internal tie between them keeps resolving via source order exactly as it did in `legacy` — nothing requires them to stay co-resident with the *rest* of `legacy` specifically, only with each other. A full selector/property audit against every other file in the app (everything still in `legacy`, every already-extracted layer, all 10 SPv2 files) found the trio's real external conflicts point overwhelmingly one direction: ~8 normal-tier specificity ties where the trio's higher specificity needs to keep beating bare, lower-specificity rules in `market.css`/`hand.css`/`spread.css` (`mpGame.css`'s `.mp-opp-spread-transform .spread`, `mpMobile.css`'s `#spread .slot .num`/`.hand .card` grid-template-rows/`.hand .card .seal` transform), requiring *after* `legacy`. Exactly one exception pointed the opposite way: `mpMobile.css`'s `.handDock{bottom,background}` needs to keep beating `ps1aesthetic.css`'s unconditional (not mode-gated), important-tier `.handDock` rule via specificity, requiring *before* `legacy`. Those two declarations were split into a small residual `legacy` block in `mpMobile.css` (mirroring `mpGameChrome.css`'s exception-splitting technique) rather than moving the whole trio the wrong way. Every already-extracted before-`legacy` multiplayer file (`mpMultMobile.css`/`mpSpreadCards.css`/`mpSinglePlayerIsolation.css`/`components/mpGameChrome.css`) is unaffected — they stay before `legacy` regardless of which side of `legacy` the trio sits on, since before-`legacy` < `legacy` < `mpCore` either way. The one already-extracted file with a real touch is `handDragFix.css`'s bare, important-tier `.handDock{z-index:26}`, which `mpGame.css`'s higher-specificity z-index override needs to keep beating — `mpCore` is declared immediately after `legacy`, before `handDragFix` and everything else already after it, none of which showed any real conflict with the trio. Verified via a full computed-style A/B diff across all three breakpoints (max-width:640px, the 380×740 narrow variant, min-width:641px desktop) using direct element references rather than `document.querySelector` (game.html has real static elements with the same ids/classes as the synthetic probe elements — `#spread`, `#mpGame`, `#modal`, `.hand`, `.handDock`, `.spread-wrap` all collide, and querying by selector after creation silently matched the wrong element; see the probe-design lessons below). The only remaining diffs were sub-pixel/sub-degree noise in `.card`'s continuous ambient wave animation (rotate/translate/filter), a property untouched by any of the three files. |
 
 Also handled earlier (before this session, same branch): `loadout.css`,
 `matchmaking.css`, and part of `mainMenu.css` were split out as fully
@@ -160,42 +172,38 @@ of `mainMenu.css` stays in `legacy` since it's a real cross-file dependency
 
 **Explicitly skipped (structural wall, not "fixed"):** `attic.css` was already handled/skipped as not a clean extraction target: it intentionally reaches across table UI surfaces (`#titleWrap`, `.score-stack`, `.spread-wrap`, `.handDock`, `#relicRack`, `#invWrap`, `.refs-layer`, `#handSwipeZone`, `#settingsPanel`) during mode transitions and mobile hint repair. Do not attempt it again without fresh interaction proof showing those cross-file dependencies are one-directional.
 
-**Explicitly skipped as a bundle, but no longer entirely (see
+**Explicitly skipped as a bundle, since resolved (see
 `mpMultMobile.css`/`mpSpreadCards.css`/`mpSinglePlayerIsolation.css`/
-`components/mpGameChrome.css` in the Done table above):** the multiplayer
-CSS cluster (`mpGame.css`'s laddered core, `mpMobile.css`, and
-`mpFixes.css` remain skipped; the other four shipped, the fourth being a
-partial extraction *out of* `mpGame.css` rather than a whole file).
-They're provably mode-exclusive (`mp-game-active`), which made *bundling
-them all into one shared layer* look promising, but that bundle needs to
-win against `legacy` on the `!important` tier in some places and lose on
-it in others — impossible to satisfy with one relative two-layer ordering
-for the whole cluster at once. That verdict is still believed correct for
-the bundle, but it doesn't mean no individual file (or portion of a file)
-in the cluster is extractable — four different slices proved the
-opposite, each for a different reason: `mpMultMobile.css` (28 lines) is
-fully self-contained with zero property overlap with anything;
+`components/mpGameChrome.css`/`mpCore` in the Done table above):** the
+whole multiplayer CSS cluster is now extracted. It looked unpromising as
+a single bundle move at first — the six mp*.css files are provably
+mode-exclusive (`mp-game-active`), which made *bundling them all into one
+shared layer* look promising, but that bundle needs to win against
+`legacy` on the `!important` tier in some places and lose on it in
+others — impossible to satisfy with one relative two-layer ordering for
+the whole cluster at once. That verdict is still correct for a naive
+whole-cluster bundle, but it turned out every piece of the cluster is
+extractable once split correctly: `mpMultMobile.css` (28 lines) is fully
+self-contained with zero property overlap with anything;
 `mpSpreadCards.css` (35 lines) is every-declaration-`!important` and
 importance-dominant everywhere it's not simply disjoint;
 `mpSinglePlayerIsolation.css` (124 lines) is gated entirely behind a
 runtime-unreachable class combination (confirmed via the actual guard
 source, `src/app/mpModeClassGuard.mjs`, not just assumed), making its
-layer position moot; `mpGameChrome.css` is 61 of `mpGame.css`'s 91 rules
-that have no counterpart at all in `mpMobile.css`/`mpFixes.css` (verified
-via a full selector-overlap audit, not reference-counting) — the file's
-own UI chrome rather than its laddered core. All four were either small,
-fully self-contained, fully dead, or (mpGameChrome's case) a genuinely
-separable subset — likely why they were the tractable ones. What's left
-of `mpGame.css` (its 30-rule laddered core, plus three rules that
-couldn't safely leave `legacy` — see the `mpGameChrome.css` row above),
-plus all of `mpMobile.css` and `mpFixes.css` (∼517 combined lines), form
-the genuinely hard remainder: a deliberate ~50-property-pair cross-file
-responsive-breakpoint ladder, confirmed (not just assumed) via the same
-full selector/property audit that found `mpGameChrome.css`'s solo subset.
-Splitting the ladder itself into different layers would swap its
-source-order resolution for layer-order resolution across all ~50
-pairs — the same shape of problem that broke the reverted `hand.css`
-extraction — so it's not attempted here.
+layer position moot; `mpGameChrome.css` mined 61 of `mpGame.css`'s 91
+rules that have no counterpart at all in `mpMobile.css`/`mpFixes.css`
+(the file's own UI chrome, not its laddered core); and `mpCore` took the
+genuinely laddered remainder (`mpGame.css`'s 30-rule core, all of
+`mpMobile.css`, all of `mpFixes.css`) and moved the whole trio together
+into one new shared layer, since the ladder only requires them to stay
+co-resident *with each other*, not with the rest of `legacy`. What's
+left behind in `legacy` is now down to four rules total: `mpGame.css`'s
+`.card.mp-interaction`/`mp-action-btn`/`mp-ov-btn` (each has a real,
+opposite-direction conflict against `ps1aesthetic.css`/`market.css` that
+`mpCore`'s position can't also satisfy) and `mpMobile.css`'s
+`.handDock{bottom,background}` (needs the opposite direction from the
+rest of that file, for the same kind of reason) — see the `mpGameChrome.css`
+and `mpCore` rows above for each one's specific reasoning.
 
 **Formerly deprioritized, since extracted:** `cards.css` looked like an easy
 independent extraction by size, then got deprioritized when its classes
@@ -291,27 +299,28 @@ attempted (skip-ahead rule applies throughout):
 - `hand.css` (skipped, see above)
 - `mobile.css` (skipped, see above)
 - `attic.css` (skipped, see above)
-- The multiplayer cluster's genuinely laddered remainder — `mpGame.css`'s
-  30-rule core (plus `.card.mp-interaction`/`mp-action-btn`/`mp-ov-btn`,
-  which can't safely leave `legacy` either, see the `mpGameChrome.css` row
-  in the Done table above), `mpMobile.css`, and `mpFixes.css`
-  (`mpMultMobile.css`, `mpSpreadCards.css`, `mpSinglePlayerIsolation.css`,
-  and `components/mpGameChrome.css` already extracted, see Done table
-  above; the remainder is a confirmed, not just assumed, ~50-property-pair
-  cross-file ladder — not a bundle retry candidate without redesigning the
-  ladder itself)
+- The multiplayer cluster is now fully extracted (`mpMultMobile.css`,
+  `mpSpreadCards.css`, `mpSinglePlayerIsolation.css`,
+  `components/mpGameChrome.css`, and `mpCore` — see Done table above).
+  Four rules remain behind in `legacy` on purpose, each with a real,
+  opposite-direction conflict that no single layer position could also
+  satisfy: `mpGame.css`'s `.card.mp-interaction`/`mp-action-btn`/
+  `mp-ov-btn` (see the `mpGameChrome.css` row) and `mpMobile.css`'s
+  `.handDock{bottom,background}` (see the `mpCore` row).
 - 10 SPv2 files still sitting in `legacy` rather than an `spv2.*` tier:
   `singlePlayerV2/base.css`, `compat.css`, `desktop.css`, `assets.css`,
   `layout.css`, `mobile.css`, `components/spread.css`,
   `components/scoreHud.css`, `states.css`, `components/artIntegration.css`
 
-Every non-SPv2, non-multiplayer file has now been either extracted or
-confirmed mixed-direction. What remains in `legacy` is exactly the
-interdependent core the layer model can't split without per-selector
-surgery: the `hand → cards(✓) → market → mobile → attic → drawers(✓)`
-chain's unextractable middle (`hand`, `market`, `mobile`, `attic`,
-`ps1aesthetic`), the multiplayer cluster, and the 10 SPv2 files whose
-eventual home is the `spv2.*` tiers rather than a new standalone layer.
+Every non-SPv2 file has now been either extracted or confirmed
+mixed-direction, and the multiplayer cluster is now fully extracted too
+(just four small residual rules stayed behind, see above). What remains
+in `legacy` is exactly the interdependent core the layer model can't
+split without per-selector surgery: the `hand → cards(✓) → market →
+mobile → attic → drawers(✓)` chain's unextractable middle (`hand`,
+`market`, `mobile`, `attic`, `ps1aesthetic`), those four multiplayer
+residual rules, and the 10 SPv2 files whose eventual home is the
+`spv2.*` tiers rather than a new standalone layer.
 
 **Narrowing what "structural wall" means.** The skip verdicts above are
 about whole-file moves — "can this entire file get one `before`/`after
@@ -511,6 +520,28 @@ three:
     solo selector — not just the ones static reasoning flagged as
     plausible — is what surfaced both, immediately after the first miss
     was found, not before.
+11. **Synthetic probe elements using an id/class that's also used by a
+    real static element in game.html silently read the WRONG element's
+    computed style if the result-gathering code re-queries by selector
+    instead of holding a direct reference.** CSS id/class selectors don't
+    care about duplicates — a synthetic `<div id="spread">` matches
+    `#spread .slot` correctly regardless of a real `#spread` elsewhere in
+    the document — but `document.querySelector('#spread .slot')` run
+    *after* creating the synthetic element returns the first match in
+    document order, which is usually the REAL element (already in the
+    DOM from page load, appearing earlier than anything appended at the
+    end of `<body>`), not the synthetic one. The `mpCore` pilot's first
+    probe pass hit this for `#spread`, `#mpGame`, `#modal`, `.hand`,
+    `.handDock`, and `.spread-wrap` — all real elements in game.html or
+    created by real game JS — producing a batch of clean-looking but
+    nonsensical diffs (proportionally-scaled slot dimensions matching
+    neither side's declared values, card animation/hint noise unrelated
+    to any changed file) that looked like real regressions until traced
+    back to reading the wrong element entirely. Fixed by building all
+    synthetic elements inside a dedicated wrapper and storing direct
+    element references at creation time (`refs.spread = el(...)`,
+    `getComputedStyle(refs.spread)`), never re-querying by selector for
+    elements whose id/class might collide with real markup.
 
 The 10 SPv2 files are a separate job: their eventual home is the
 `spv2.*` tier system, which is declared earliest — so their normal-tier

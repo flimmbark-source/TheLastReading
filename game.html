@@ -219,12 +219,54 @@
      mp-opp-hand-label, mp-opp-spread-clip, mp-opp-spread-transform,
      mp-side-label, mp-action-panel/mp-action-hint/mp-leave-btn/
      mp-round-label family, plus .card.mp-interaction, mp-action-btn, and
-     mp-ov-btn) stay in mpGame.css/legacy untouched, so that ladder --
-     and the two specificity-tie mechanisms above -- keep resolving
-     exactly as they do today. mpMobile.css and mpFixes.css themselves
-     remain unextracted -- they're entirely on the laddered side of this
-     divide with mpGame.css's remaining core, not split candidates by
-     this same technique.
+     mp-ov-btn) split further: .card.mp-interaction/mp-action-btn/mp-ov-btn
+     stay in mpGame.css/legacy (see mpCore's own entry below for why the
+     rest moved out from under them).
+
+     `mpCore` (src/styles/mpGame.css's laddered core, src/styles/mpMobile.css,
+     src/styles/mpFixes.css) is the fifth crack, and a genuinely different
+     shape from the first four: a trio-as-one-unit extraction, not a
+     single-file layer-move. These three files form the deliberate
+     ~50-property-pair cross-file responsive-breakpoint cascade described
+     above -- they can't be split into DIFFERENT layers from each other
+     without swapping their internal source-order resolution for
+     layer-order resolution. But nothing requires them to stay co-resident
+     with the rest of `legacy` specifically, so all three moved together
+     into one new shared layer instead, declared in the same relative
+     order they're linked below (mpGame.css, mpMobile.css, mpFixes.css),
+     which preserves every internal tie between them exactly as it
+     resolves today. A full selector/property audit against every other
+     file in the app -- everything still in legacy, every already-extracted
+     layer, and all 10 SPv2 files -- found the trio's real external
+     conflicts overwhelmingly point one direction (after legacy: ~8
+     normal-tier ties where the trio's higher specificity beats bare,
+     lower-specificity rules in market.css/hand.css/spread.css, e.g.
+     mpGame.css's `.mp-opp-spread-transform .spread` and mpMobile.css's
+     `#spread .slot .num`/`.hand .card`/`.hand .card .seal`), with exactly
+     one exception in the opposite direction: mpMobile.css's
+     `.handDock{bottom,background}` needs to keep beating ps1aesthetic.css's
+     unconditional (not mode-gated), important-tier `.handDock` rule via
+     specificity, which requires BEFORE legacy instead -- the earlier layer
+     wins important-tier ties. One file position can't satisfy both, so
+     just those two declarations were split out of mpMobile.css into a
+     small residual `legacy` block (mirroring the same split-declaration
+     technique used for mpGameChrome's exceptions above), while everything
+     else moved to `mpCore`. Every already-extracted before-legacy
+     multiplayer file (mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation,
+     mpGameChrome) stays unaffected: they're before legacy today, and
+     mpCore sits after legacy, so their relative order to the trio doesn't
+     change either way. The only already-extracted file with a real touch
+     is handDragFix.css's bare, important-tier `.handDock{z-index:26}`
+     rule, which mpGame.css's higher-specificity z-index override needs to
+     keep beating -- that's why mpCore is declared immediately after
+     legacy, before handDragFix and everything else already after it
+     (tutTip, invTab, titleWrap, atticFade, performance, drawAnimation,
+     drawers), none of which showed any real conflict with the trio.
+     Verified via a full computed-style A/B diff across every breakpoint
+     (max-width:640px, the 380x740 narrow variant, and the min-width:641px
+     desktop layout) plus the mpGameChrome pilot's existing laddered-core/
+     solo sanity checks. See src/styles/mpFixes.css's header comment for
+     the complete audit writeup.
 
      `drawAnimation` sits BETWEEN legacy and drawers -- it was unextractable
      while drawers.css still lived in legacy (it must WIN the !important tie
@@ -370,7 +412,7 @@
      so this file (after legacy) stays later than relicRack regardless.
      Verified via the same full computed-style A/B diff technique, across
      all five mode-transition states plus classic. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, legacy, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">

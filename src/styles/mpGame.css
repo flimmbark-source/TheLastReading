@@ -1,4 +1,4 @@
-@layer legacy {
+@layer mpCore {
 /* mpGame.css's laddered core: #mpGame/.handDock/.spread-wrap/#spread/
    #spread .slot and the mp-pill-score/mp-pill-disc/mp-pill-thresh,
    mp-pills-band/mp-pills-mid/mp-pills-actions, mp-mid-wrap, mp-bar,
@@ -8,19 +8,23 @@
    selector here also gets a different value for the same property in
    mpMobile.css and/or mpFixes.css at other breakpoints -- a deliberate,
    deep responsive-breakpoint cascade (mpFixes.css's own comments
-   confirm it's meant to load after mpGame.css and mpMobile.css), mostly
-   resolved today by important-tier source order within this shared
-   layer. Splitting these three files into different layers would swap
-   that source-order resolution for layer-order resolution across ~50
-   property/selector pairs -- the same shape of problem that broke the
-   reverted hand.css extraction, not attempted here. Most of the REST of
-   mpGame.css (everything with no counterpart in mpMobile.css/
-   mpFixes.css, verified via a full selector-overlap audit) moved to
-   components/mpGameChrome.css, its own layer ordered before legacy --
-   see that file's header comment for the full reasoning. .card.mp-
-   interaction, the mp-action-btn family, and mp-ov-btn are the solo
-   exceptions that stayed behind; see the comments on those rules below
-   for why. */
+   confirm it's meant to load after mpGame.css and mpMobile.css), so
+   this core, all of mpMobile.css, and all of mpFixes.css share this
+   same `mpCore` layer (declared in the same relative order they're
+   linked in game.html), letting their internal ties keep resolving via
+   important-tier source order exactly as they did in the shared
+   `legacy` layer -- see mpFixes.css's header comment for the full
+   cross-file audit and the two real external constraints that
+   determined `mpCore`'s position (right after `legacy`, before
+   `handDragFix`). Most of the REST of mpGame.css (everything with no
+   counterpart in mpMobile.css/mpFixes.css, verified via a full
+   selector-overlap audit) moved to components/mpGameChrome.css, its
+   own layer ordered before legacy -- see that file's header comment
+   for the full reasoning. .card.mp-interaction and the mp-action-btn
+   family/mp-ov-btn are solo exceptions that stayed in `legacy` instead
+   (see the comments on those rules below); mpMobile.css's own
+   .handDock rule is similarly split between `legacy` and `mpCore` for
+   an analogous reason -- see that file's header comment. */
 #mpGame {
   position: fixed; inset: 0; z-index: 9300;
   display: flex; flex-direction: column;
@@ -182,7 +186,9 @@ body.mp-game-active #spread .slot {
    match-over overlay is up, raise the whole MP layer above the lifted hand
    and spread so the overlay covers everything. */
 body.mp-game-active.mp-overlay-active #mpGame { z-index: 99999 !important; }
+}
 
+@layer legacy {
 /* Interaction card tint. Stays here (not in mpGameChrome.css) on purpose:
    ps1aesthetic.css's important-tier .card:not(.photo){...} rule has the
    same effective specificity (:not() contributes its argument's
