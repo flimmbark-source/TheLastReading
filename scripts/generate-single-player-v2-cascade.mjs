@@ -18,6 +18,9 @@ export const singlePlayerV2CascadeSources = [
   ['singlePlayerV2/states.css', 'state correction pass'],
   ['singlePlayerV2/components/artIntegration.css', 'component: art integration'],
   ['singlePlayerV2/components/utilityIcons.css', 'component: utility icons'],
+];
+
+export const singlePlayerV2ExternalComponentSources = [
   ['singlePlayerV2/components/utilityButtons.css', 'component: utility button visibility'],
 ];
 
@@ -30,11 +33,12 @@ export function buildSinglePlayerV2Cascade() {
   const sections = [`/* AUTO-GENERATED FILE. Do not edit directly.
 
    Run \`node scripts/generate-single-player-v2-cascade.mjs\` after changing any
-   source stylesheet listed below. The generated file is the only stylesheet
-   game.html and the runtime installer should load for Single Player V2. It
-   preserves the previous direct-link cascade order while making the active
-   cascade traceable in one file. tokens/utilityIcons/utilityButtons/relics/
-   hand/spreadHints own real cascade layers; the remaining sources here still
+   bundled source stylesheet listed below. This generated file is the checked-in,
+   authoritative bundle for legacy SPv2 source partials. Component-owned files
+   listed in singlePlayerV2ExternalComponentSources are loaded beside it instead
+   of being duplicated here. It preserves the previous direct-link cascade order
+   while making the active cascade traceable in one file. tokens/utilityIcons/
+   relics/hand/spreadHints own real cascade layers; the remaining sources here still
    live in the app-wide \`legacy\` layer declared in game.html (see that file's
    layer statement for why -- their !important declarations are load-bearing
    against other legacy-layer files elsewhere in the app in ways that aren't
