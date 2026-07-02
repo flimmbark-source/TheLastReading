@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, relicRack, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, relicRack, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, relicRack, handSwipeZone, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, relicRack, handSwipeZone, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -136,7 +136,7 @@ assert.match(assetLazy.trimEnd(), /\}$/, 'assetLazy.css should close its layer w
 // Unextractable while drawers.css shared legacy; now that drawers has its
 // own later layer, the slot between legacy and drawers satisfies every
 // direction at once. The master-statement assertion above locks that
-// relative order (legacy < handDragFix/performance < drawAnimation < drawers).
+// relative order (legacy < relicRack/handSwipeZone/handDragFix/performance < drawAnimation < drawers).
 const drawAnimation = read('../src/styles/drawAnimation.css');
 assert.match(drawAnimation, /^@layer drawAnimation \{/, 'drawAnimation.css should live in its own drawAnimation layer');
 assert.match(drawAnimation.trimEnd(), /\}$/, 'drawAnimation.css should close its layer wrapper');
@@ -150,6 +150,21 @@ assert.match(drawAnimation.trimEnd(), /\}$/, 'drawAnimation.css should close its
 const relicRack = read('../src/styles/components/relicRack.css');
 assert.match(relicRack, /^@layer relicRack \{/, 'relicRack.css should live in its own relicRack layer');
 assert.match(relicRack.trimEnd(), /\}$/, 'relicRack.css should close its layer wrapper');
+
+
+
+// handSwipeZone.css: consolidates the swipe gesture surface and tutorial hint
+// rules that were previously spread across mobile.css, ps1aesthetic.css,
+// attic.css, and the swipe-zone portion of handDragFix.css. It sits after
+// legacy so normal-tier component rules keep the post-legacy component ordering;
+// its internal source order preserves the old base -> PS1 -> attic -> drag-fix
+// priority ladder for the component's important geometry and hint rules.
+const handSwipeZone = read('../src/styles/components/handSwipeZone.css');
+assert.match(handSwipeZone, /^@layer handSwipeZone \{/, 'handSwipeZone.css should live in its own handSwipeZone layer');
+assert.match(handSwipeZone.trimEnd(), /\}$/, 'handSwipeZone.css should close its layer wrapper');
+assert.match(html, /components\/handSwipeZone\.css/, 'game.html should load the consolidated hand swipe-zone component stylesheet');
+assert.doesNotMatch(read('../src/styles/mobile.css'), /\.hand-swipe-zone\{position:fixed/, 'mobile.css should no longer own the swipe-zone base geometry');
+assert.doesNotMatch(read('../src/styles/attic.css'), /#handSwipeZone\.hand-swipe-zone\{height:121px!important/, 'attic.css should no longer own swipe-zone tutorial geometry');
 
 // handDragFix.css: its .handDock z-index needs to keep losing to
 // actionDropTargets.css's higher, state-gated z-index in the earlier

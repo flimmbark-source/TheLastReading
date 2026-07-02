@@ -193,21 +193,9 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
 }
 /* Stop the old swipe handler from also nudging the whole hand sideways. */
 .hand{--hand-slide-x:0px;--hand-card-margin:0px}
-.hand-swipe-zone{position:fixed;left:0;right:0;bottom:197px;height:88px;z-index:19;pointer-events:auto;touch-action:none;cursor:grab;background:transparent}
 .hand-scroll-dragging~* .card,.hand-scroll-dragging .card{pointer-events:none!important}
 body:has(.hand-scroll-dragging){cursor:grabbing!important}
 body:has(.hand-scroll-dragging) .handDock *{cursor:grabbing!important}
-.hand-swipe-zone.dragging{cursor:grabbing}
-.hand-swipe-zone.pinching{cursor:ew-resize}
-@media(max-width:640px){.hand-swipe-zone{bottom:152px;height:74px}}
-.hand-swipe-hint{position:absolute;left:50%;top:50%;pointer-events:none;opacity:0;transition:opacity .4s}
-.hand-swipe-zone.has-overflow .hand-swipe-hint{opacity:1}
-.hand-swipe-zone.dragging .hand-swipe-hint,.hand-swipe-zone.pinching .hand-swipe-hint{opacity:0}
-.hand-swipe-zone.has-swiped .hand-swipe-hint{display:none!important}
-.swipe-hint-line{position:absolute;left:0;top:0;transform:translate(-50%,-50%);display:flex;align-items:center;gap:14px;font:600 10px system-ui,Segoe UI,sans-serif;color:rgba(232,196,96,.55);letter-spacing:.18em;text-transform:uppercase;white-space:nowrap;opacity:0;animation:hint-cycle 9s ease-in-out infinite}
-.swipe-hint-line-2{animation-delay:3s}.swipe-hint-line-3{animation-delay:6s}
-@keyframes hint-cycle{0%{opacity:0}5%{opacity:1}28%{opacity:1}33%{opacity:0}100%{opacity:0}}
-.hand-swipe-hint span{display:inline-block;width:30px;height:1px;background:linear-gradient(90deg,transparent,rgba(232,196,96,.6),transparent)}
 /* end hand swipe-scroll patch */
 /* hand card gestures patch */
 #hand .card[data-uid],#spread .card[data-uid]{touch-action:none;-webkit-user-select:none;user-select:none}
