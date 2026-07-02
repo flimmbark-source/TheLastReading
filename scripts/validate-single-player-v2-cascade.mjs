@@ -52,7 +52,7 @@ assert.match(read('../src/styles/singlePlayerV2/components/utilityButtons.css'),
 assert.equal(singlePlayerV2CascadeSources.some(([path]) => path === 'singlePlayerV2/components/utilityButtons.css'), false, 'component-owned utility button CSS should be externalized from the generated SPv2 bundle');
 assert.equal(singlePlayerV2ExternalComponentSources.some(([path]) => path === 'singlePlayerV2/components/utilityButtons.css'), true, 'externalized utility button CSS should be tracked by the generator contract');
 assert.match(read('../src/styles/singlePlayerV2/components/utilityIcons.css'), /^@layer spv2\.components \{/m, 'utility icon art should live in the components cascade layer');
-assert.match(read('../src/styles/singlePlayerV2/components/relics.css'), /^@layer spv2\.components \{/m, 'relic placement should live in the components cascade layer');
+assert.match(read('../src/styles/singlePlayerV2/components/relics.css'), /^@layer spv2\.components \{/m, 'remaining constellation/relic-adjacent SPv2 placement should live in the components cascade layer');
 assert.match(read('../src/styles/singlePlayerV2/components/hand.css'), /^@layer spv2\.components \{/m, 'hand gesture restore should live in the components cascade layer');
 assert.match(read('../src/styles/singlePlayerV2/components/spreadHints.css'), /^@layer spv2\.components \{/m, 'spread hints should live in the components cascade layer');
 
@@ -63,6 +63,7 @@ assert.doesNotMatch(cascade, /singlePlayerV2\/components\/utilityButtons\.css/, 
 assert.doesNotMatch(cascade, /body\.single-player-v2\.generated-sheet-ready #mullBtn\s*\{\s*display:\s*none\s*!important/s, 'migrated utility-button hidden selector should not remain in old generated SPv2 sections');
 assert.doesNotMatch(cascade, /body\.single-player-v2\.generated-sheet-ready #scoringBtn,\s*body\.single-player-v2\.generated-sheet-ready #abilitiesBtn,\s*body\.single-player-v2\.generated-sheet-ready #menuBtn\s*\{\s*display:\s*block\s*!important;\s*width:\s*clamp\(44px, 11\.5vw, 56px\)\s*!important;\s*height:\s*clamp\(44px, 11\.5vw, 56px\)\s*!important;\s*border-radius:\s*50%\s*!important/s, 'migrated utility-button visible selector should not remain in old generated SPv2 sections');
 assert.match(cascade, /singlePlayerV2\/tokens\.css: tokens[\s\S]*singlePlayerV2\/base\.css: base layout[\s\S]*singlePlayerV2\/components\/utilityIcons\.css: component: utility icons/, 'cascade entry should preserve the previous direct-link order in one file');
+assert.doesNotMatch(cascade, /html body\.single-player-v2\.generated-sheet-ready \.relic-rack/, 'relic rack SPv2 overrides should live in the consolidated relicRack component stylesheet');
 
 assert.match(html, /id="single-player-v2-index"[^>]+singlePlayerV2\/index\.css/, 'game should load the consolidated cascade entry point');
 assert.doesNotMatch(html, /singlePlayerV2LatestFixes\.css/, 'patch files should not be linked directly from game.html');
