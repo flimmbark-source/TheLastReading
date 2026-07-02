@@ -1,21 +1,25 @@
 @layer invWrap {
 /* The archive/inventory drawer (#invWrap/#invDesk), consolidated out of
    mobile.css's base rules and attic.css's mode-transition important-tier
-   block. Declared BEFORE legacy: attic.css's shared 7-element
-   mode-transition fade rule (still in legacy -- also covers #titleWrap/
-   .score-stack/.spread-wrap/.handDock/#relicRack/.refs-layer, so it can't
-   move here without duplicating a rule that isn't invWrap's alone) sets a
-   normal-tier `transition` value on #invWrap during mode-to-attic/
-   mode-to-table/mode-table-return that must keep winning via its higher
-   (body-class-gated) specificity over this file's base
+   block. Declared BEFORE legacy: attic.css's #invWrap-only mode-transition
+   fade rule (still in legacy -- originally shared with #titleWrap/
+   .score-stack/.spread-wrap/.handDock/#relicRack/.refs-layer, since split
+   out into titleWrap.css and atticFade.css, leaving only #invWrap's line
+   behind) sets a normal-tier `transition` value on #invWrap during
+   mode-to-attic/mode-to-table/mode-table-return that must keep winning via
+   its higher (body-class-gated) specificity over this file's base
    `transition:transform .45s...` -- otherwise the coordinated opacity/
    transform/filter fade would lose its timing and those properties would
    snap instead of animate. This file's own important-tier transform/
-   pointer-events/z-index block dominates that shared rule's non-important
+   pointer-events/z-index block dominates that rule's non-important
    transform regardless of layer position, so only the base rule's
    `transition` forces the "before legacy" placement. See invTab.css for
    why the sibling tab needed the opposite direction -- this pair could not
-   stay one file. */
+   stay one file. (Now that the rule attic.css keeps is #invWrap-only
+   rather than shared, it could in principle be folded into this file with
+   its position then fully unconstrained -- left as attic.css's own
+   single-selector rule instead, since the current split is already
+   verified correct and that fold isn't required for anything.) */
 #invWrap{position:fixed;top:0;left:0;right:0;z-index:150;transform:translateY(calc(-1 * var(--inv-h)));transition:transform .45s cubic-bezier(.34,1.28,.64,1);pointer-events:none}
 /* See drawers.css for why this needs to clear .spread-wrap's scorePreview-driven z-index:10060. */
 #invWrap.open{transform:translateY(0);pointer-events:auto;z-index:10095!important}

@@ -39,6 +39,7 @@ const appStyleFiles = [
   '../src/styles/components/invWrap.css',
   '../src/styles/components/invTab.css',
   '../src/styles/components/titleWrap.css',
+  '../src/styles/components/atticFade.css',
 ];
 
 // Budget jumped 693 -> 706 not from new !important declarations but from
@@ -58,10 +59,14 @@ const appStyleFiles = [
 // #titleWrap/.score-stack's selectors out of a shared comma-selector rule
 // in attic.css, but the two rules still each need their own full copy of
 // the same opacity/transform/filter/pointer-events/transition values (the
-// remaining 5-element rule in attic.css keeps its copy; this file gets its
-// own). Selectors are partitioned, declaration values are duplicated -- so
-// this is a genuine, deliberate increase, not a tracking-gap artifact.
-const importantBudget = 711;
+// remaining rule in attic.css keeps its copy; this file gets its own).
+// Selectors are partitioned, declaration values are duplicated -- so this
+// is a genuine, deliberate increase, not a tracking-gap artifact.
+// components/atticFade.css (716, another REAL +5) does the same partition
+// for the rule's remaining four elements (.spread-wrap/.handDock/
+// #relicRack/.refs-layer), leaving only #invWrap's single-selector line
+// behind in attic.css. Same duplication trade, same reasoning.
+const importantBudget = 716;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);

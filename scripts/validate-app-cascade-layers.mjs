@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -233,19 +233,16 @@ assert.match(invTab.trimEnd(), /\}$/, 'invTab.css should close its layer wrapper
 assert.match(html, /components\/invTab\.css/, 'game.html should load the extracted invTab component stylesheet');
 assert.doesNotMatch(read('../src/styles/mobile.css'), /#invWrap\{position:fixed/, 'mobile.css should no longer own the invWrap base geometry');
 assert.doesNotMatch(read('../src/styles/mobile.css'), /#invTab\{position:absolute/, 'mobile.css should no longer own the invTab base geometry');
-assert.doesNotMatch(read('../src/styles/attic.css'), /#invWrap,\nbody\.mode-attic #invWrap,/, 'attic.css should no longer own the invWrap-only mode-transition block (its shared 7-element fade rule mentioning #invWrap inline is expected to remain)');
+assert.doesNotMatch(read('../src/styles/attic.css'), /#invWrap,\nbody\.mode-attic #invWrap,/, 'attic.css should no longer own the old multi-line invWrap-only mode-transition block (a single-selector #invWrap{...} line per mode, now that titleWrap.css/atticFade.css split the rest of the once-shared fade rule out, is expected to remain)');
 
-// titleWrap.css: #titleWrap and .score-stack's share of that same shared
-// fade rule. The selector list is partitioned, not duplicated (no selector
-// appears in both places), but the declaration values ARE duplicated --
-// see the file's own header comment and validate-app-important-budget.mjs
-// for why that raises the tracked budget by 5. The other five elements
-// (.spread-wrap/.handDock/#relicRack/#invWrap/.refs-layer) stay in legacy;
-// they have far more remaining cross-file touches than titleWrap/score-stack
-// do, making them a bigger pilot -- see the migration doc's "audited
-// candidates" section. Declared AFTER legacy, same direction as tutTip/
-// invTab: ps1aesthetic.css's unconditional filter:saturate() on both
-// elements (still in legacy) must keep losing to this file's mode-gated
+// titleWrap.css: #titleWrap and .score-stack's share of the originally
+// shared 7-element attic fade rule. The selector list is partitioned, not
+// duplicated (no selector appears in both places), but the declaration
+// values ARE duplicated -- see the file's own header comment and
+// validate-app-important-budget.mjs for why that raises the tracked
+// budget by 5. Declared AFTER legacy, same direction as tutTip/invTab:
+// ps1aesthetic.css's unconditional filter:saturate() on both elements
+// (still in legacy) must keep losing to this file's mode-gated
 // filter:blur() during attic transitions, previously decided by the fade
 // rule's higher specificity within the shared layer.
 const titleWrap = read('../src/styles/components/titleWrap.css');
@@ -253,6 +250,28 @@ assert.match(titleWrap, /^@layer titleWrap \{/, 'titleWrap.css should live in it
 assert.match(titleWrap.trimEnd(), /\}$/, 'titleWrap.css should close its layer wrapper');
 assert.match(html, /components\/titleWrap\.css/, 'game.html should load the extracted titleWrap component stylesheet');
 assert.doesNotMatch(read('../src/styles/attic.css'), /#titleWrap|\.score-stack/, 'attic.css should no longer reference #titleWrap or .score-stack anywhere');
+
+// atticFade.css: .spread-wrap/.handDock/#relicRack/.refs-layer's share of
+// the same originally-shared fade rule. #invWrap deliberately stays behind
+// as attic.css's own single-selector rule (see invWrap.css's header
+// comment); moving it here too would be redundant, not incorrect. Same
+// partition/duplication trade as titleWrap.css (another +5 on the
+// !important budget) and the same AFTER-legacy direction: every remaining
+// cross-file touch on these four elements checked out as property-disjoint
+// from opacity/transform/filter/pointer-events/transition, or important-tier
+// and therefore importance-dominant regardless of layer (mostly the
+// multiplayer cluster's geometry overrides) -- see the file's own header
+// comment for the full per-element breakdown. #relicRack's own unconditional
+// filter:saturate() (in the relicRack layer, before legacy) needs to keep
+// losing to this file's mode-gated filter:blur(), same as always -- relicRack
+// stays earlier than legacy either way, so this file (after legacy) stays
+// later than relicRack regardless of specificity.
+const atticFade = read('../src/styles/components/atticFade.css');
+assert.match(atticFade, /^@layer atticFade \{/, 'atticFade.css should live in its own atticFade layer');
+assert.match(atticFade.trimEnd(), /\}$/, 'atticFade.css should close its layer wrapper');
+assert.match(html, /components\/atticFade\.css/, 'game.html should load the extracted atticFade component stylesheet');
+assert.doesNotMatch(read('../src/styles/attic.css'), /\.spread-wrap|\.handDock|#relicRack|\.refs-layer/, 'attic.css should no longer reference .spread-wrap, .handDock, #relicRack, or .refs-layer anywhere');
+assert.match(read('../src/styles/attic.css'), /#invWrap\{opacity:0;transform:scale\(\.9\)/, 'attic.css should still own the single-selector #invWrap mode-transition rule');
 
 // drawAnimation.css: must WIN the !important tie against drawers.css's
 // reduced-motion .hand .card{animation:none!important} (so its deal-in fade
