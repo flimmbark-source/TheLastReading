@@ -143,8 +143,35 @@
      regression, caught and fixed before it was reported). Nothing else in
      legacy still touches .relic-rack/.relic-btn/.relic-slot-empty's box or
      position properties (mpGame.css's body.mp-game-active #relicRack
-     touches only display, a disjoint property). */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, legacy, handSwipeZone, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+     touches only display, a disjoint property).
+
+     `handSwipeZone` (src/styles/components/handSwipeZone.css) is the same
+     technique and the same bug pattern, before legacy for the same reason:
+     mpMobile.css's mp-game-active-only height/bottom !important override
+     (still in legacy) must keep losing to the consolidated file's
+     mobile-breakpoint #handSwipeZone.hand-swipe-zone rule -- previously
+     decided by the latter's higher ID-based specificity within the shared
+     legacy layer. A first placement after legacy flipped this too: verified
+     empirically that in mp-game-active mode without SPv2, at mobile width,
+     computed height/bottom changed from 97px/152px to 46px/130px, and (a
+     second effect of the same root cause) that in SPv2 mode the tutorial
+     hint's #handSwipeZone .swipe-hint-line{display:none!important} default
+     -- which must keep beating mpFixes.css's mp-game-active hint-hiding
+     rule via ID specificity -- lost to it via layer order instead, making
+     all three swipe-hint-line steps render simultaneously instead of just
+     the active one. Its z-index:9401 is untouched either way since the
+     consolidated file only ever sets a normal-tier z-index on the bare
+     .hand-swipe-zone class, so !important wins regardless of layer
+     position. mpSinglePlayerIsolation.css's mp+SPv2-gated #handSwipeZone
+     block turned out to already be dead code before this file even
+     existed: singlePlayerV2/components/hand.css's own #handSwipeZone rule
+     lives in spv2.components, declared earlier than legacy here, so it
+     already won that fight on layer order alone regardless of specificity
+     -- confirmed identical before and after (note: body.mp-game-active and
+     body.single-player-v2 are mutually exclusive at runtime via a class
+     guard, so this combination only matters as a transient/synthetic
+     state, not real reachable UI). */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, legacy, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">

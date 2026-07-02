@@ -105,21 +105,31 @@ rather than doing the harder per-selector/per-pair surgery. Only extract
 files that are cleanly one-directional or fully independent. This applies
 every time it comes up, not just once.
 
-## Done so far (11 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
+## Done so far (13 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
 
-| File | Direction | Why |
-|---|---|---|
-| `constellations.css` | before `legacy` | Its own rules are all normal-tier and already lose via specificity to mainMenu.css's boot veil and SPv2's base/relics z-index rules on the same `#constellationPill` element; needs to keep losing. |
-| `dragStability.css` | before `legacy` | Its one rule (`transition:none!important` on `.hand .card.hand-card-dragging`) exists specifically to beat mobile.css's own `!important` transition on the same selector; needs to always win. |
-| `handDragFix.css` | after `legacy` | `.handDock{z-index:26!important}` needs to keep losing to actionDropTargets.css's higher state-gated z-index in its earlier layer and mpGame.css's higher state-gated z-index overrides still in legacy; its other rules are uncontested or already dominated by an existing `spv2.components` `!important` rule regardless of position. |
-| `performance.css` | after `legacy` | Its mobile/reduced-motion overrides (`body` background-attachment, `#roomAmbient` animation/opacity/transform) need to keep losing to actionDropTargets.css's SPv2-mode override and ps1aesthetic.css's explicit "re-enable candle glow on mobile" override. `#ambientFX`/`.mote`/`.slot.res-*` rules checked individually: no real conflict (uncontested, unconditional importance dominance, or identical values). |
-| `actionDropTargets.css` | before `legacy` | Dynamically appended by `gestureActionDrops.mjs`; all real cross-file conflicts that affect layer order are `!important` fixes that need to keep winning over the remaining `legacy` pile. Normal-tier hits from `rg` are non-conflicts (new state selectors/elements, different properties/pseudo-elements, identical values, or mode-exclusive branches). |
-| `drawers.css` | after `legacy` | Needs to keep LOSING two `!important` ties (SPv2 desktop.css's `display:block!important` un-hide of `#scoringBtn`/`#abilitiesBtn`/`#menuBtn`, and drawAnimation.css's reduced-motion deal-in fade, both still in `legacy`) while needing to keep WINNING two normal-tier ties (`handCardIdleCycle` vs market.css's `card-wave`, and `#settingsPanel` sizing vs mobile.css's base rule, both still in `legacy`) — both satisfied by the same "after legacy" placement. Verified empirically via `scripts/cascade-probe.mjs`, including a `prefers-reduced-motion` emulation check. |
-| `spread.css` | before `legacy` | Every real normal-tier interaction found (market.css's mobile `.ability-prompt`/`.spread`/`.slot`/`.slot .num` overrides, mobile.css's `.ability-target-slot`/`.ability-picked-slot` highlight colors, mpMobile.css's mobile `.slot .num`, and the SPv2 bundle's normal-tier mobile/generated-sheet layout overrides) requires spread's declarations to keep losing against files still in `legacy`; no interaction requires it to win against anything there. Verified empirically via `scripts/cascade-probe.mjs` — first attempt gave a false-positive diff from reading a live `.slot`'s `background-color` mid-`transition:.18s`, fixed by probing a freshly-created element instead. |
-| `base.css` | before `legacy` | It's the first file concatenated into `legacy`, so it already loses every normal-tier tie against every other still-in-`legacy` file by source order/specificity today (market.css's mobile `body`/`h1`/`.bar`/`.pill`/`.actions`/`button`/`.ref`/`.scoring-sheet` overrides, mobile.css's higher-specificity `.actions`/`touch-action` rules, attic.css's mode-gated `.score-stack` transform); moving it earlier just makes that load-order-proof instead of accidental. Its lone `!important` declaration (`.score-preview{display:none!important}`) has zero competing declarations anywhere in the tree. |
-| `cards.css` | before `legacy` | Zero `!important` declarations in the file. Every real normal-tier conflict (market.css's mobile `.title`/`.sym`/`.plaque`/`.seal` sizing, market.css's `.card.photo .title/.art{display:none}`, mpMobile.css's mp-mode `.seal` transform) needs cards to keep losing to files still in `legacy`, and nothing anywhere needs to lose to cards. The earlier "deprioritized" concern (its classes reused by market/mp files) turned out to be exactly this one-directional shape once actually checked. Verified empirically via `scripts/cascade-probe.mjs`. |
-| `assetLazy.css` | before `legacy` | All rules are `!important` and exist specifically to override attic.css's normal-tier background declarations on the same elements (`#atticScene::before`/`::after`, `#atticRoom`) — importance dominance already decides every current fight regardless of layer; declaring it before `legacy` keeps it winning even if a competing `!important` ever appears in the legacy pile. Its internal ungated-strip vs mode-gated-restore pair lives in one file and moves together. Verified empirically via `scripts/cascade-probe.mjs` (strip with no mode class, restore under `body.mode-attic`). |
-| `drawAnimation.css` | between `legacy` and `drawers` | Formerly a mixed-direction skip — it must WIN the `!important` tie against drawers.css's reduced-motion `.hand .card{animation:none!important}` but LOSE the `!important` ties against the SPv2 bundle's mobile `pointer-events:auto` override (still in `legacy`) and actionDropTargets' drag-lift z-index. Both directions were impossible while drawers.css shared `legacy`; once drawers got its own later layer, the slot between them satisfies everything. Verified empirically via `scripts/cascade-probe.mjs`: deal-in animation, drag-lift z-index (10042 wins over 10043), SPv2-mode pointer-events, and the reduced-motion fade all identical before/after. |
+Two methods are in play now, noted per row: **layer-move** (rename the
+file's `@layer legacy {` and place the new layer before/after `legacy`,
+per the Methodology section) and **consolidation** (gather one
+component's rules that were scattered across multiple `legacy` files
+into one new file, in their original effective order, then give that
+file its own layer — see "Component consolidation pilots" below for
+why this unblocks files a plain layer-move can't).
+
+| File | Method | Direction | Why |
+|---|---|---|---|
+| `constellations.css` | layer-move | before `legacy` | Its own rules are all normal-tier and already lose via specificity to mainMenu.css's boot veil and SPv2's base/relics z-index rules on the same `#constellationPill` element; needs to keep losing. |
+| `dragStability.css` | layer-move | before `legacy` | Its one rule (`transition:none!important` on `.hand .card.hand-card-dragging`) exists specifically to beat mobile.css's own `!important` transition on the same selector; needs to always win. |
+| `handDragFix.css` | layer-move | after `legacy` | `.handDock{z-index:26!important}` needs to keep losing to actionDropTargets.css's higher state-gated z-index in its earlier layer and mpGame.css's higher state-gated z-index overrides still in legacy; its other rules are uncontested or already dominated by an existing `spv2.components` `!important` rule regardless of position. |
+| `performance.css` | layer-move | after `legacy` | Its mobile/reduced-motion overrides (`body` background-attachment, `#roomAmbient` animation/opacity/transform) need to keep losing to actionDropTargets.css's SPv2-mode override and ps1aesthetic.css's explicit "re-enable candle glow on mobile" override. `#ambientFX`/`.mote`/`.slot.res-*` rules checked individually: no real conflict (uncontested, unconditional importance dominance, or identical values). |
+| `actionDropTargets.css` | layer-move | before `legacy` | Dynamically appended by `gestureActionDrops.mjs`; all real cross-file conflicts that affect layer order are `!important` fixes that need to keep winning over the remaining `legacy` pile. Normal-tier hits from `rg` are non-conflicts (new state selectors/elements, different properties/pseudo-elements, identical values, or mode-exclusive branches). |
+| `drawers.css` | layer-move | after `legacy` | Needs to keep LOSING two `!important` ties (SPv2 desktop.css's `display:block!important` un-hide of `#scoringBtn`/`#abilitiesBtn`/`#menuBtn`, and drawAnimation.css's reduced-motion deal-in fade, both still in `legacy`) while needing to keep WINNING two normal-tier ties (`handCardIdleCycle` vs market.css's `card-wave`, and `#settingsPanel` sizing vs mobile.css's base rule, both still in `legacy`) — both satisfied by the same "after legacy" placement. Verified empirically via `scripts/cascade-probe.mjs`, including a `prefers-reduced-motion` emulation check. |
+| `spread.css` | layer-move | before `legacy` | Every real normal-tier interaction found (market.css's mobile `.ability-prompt`/`.spread`/`.slot`/`.slot .num` overrides, mobile.css's `.ability-target-slot`/`.ability-picked-slot` highlight colors, mpMobile.css's mobile `.slot .num`, and the SPv2 bundle's normal-tier mobile/generated-sheet layout overrides) requires spread's declarations to keep losing against files still in `legacy`; no interaction requires it to win against anything there. Verified empirically via `scripts/cascade-probe.mjs` — first attempt gave a false-positive diff from reading a live `.slot`'s `background-color` mid-`transition:.18s`, fixed by probing a freshly-created element instead. |
+| `base.css` | layer-move | before `legacy` | It's the first file concatenated into `legacy`, so it already loses every normal-tier tie against every other still-in-`legacy` file by source order/specificity today (market.css's mobile `body`/`h1`/`.bar`/`.pill`/`.actions`/`button`/`.ref`/`.scoring-sheet` overrides, mobile.css's higher-specificity `.actions`/`touch-action` rules, attic.css's mode-gated `.score-stack` transform); moving it earlier just makes that load-order-proof instead of accidental. Its lone `!important` declaration (`.score-preview{display:none!important}`) has zero competing declarations anywhere in the tree. |
+| `cards.css` | layer-move | before `legacy` | Zero `!important` declarations in the file. Every real normal-tier conflict (market.css's mobile `.title`/`.sym`/`.plaque`/`.seal` sizing, market.css's `.card.photo .title/.art{display:none}`, mpMobile.css's mp-mode `.seal` transform) needs cards to keep losing to files still in `legacy`, and nothing anywhere needs to lose to cards. The earlier "deprioritized" concern (its classes reused by market/mp files) turned out to be exactly this one-directional shape once actually checked. Verified empirically via `scripts/cascade-probe.mjs`. |
+| `assetLazy.css` | layer-move | before `legacy` | All rules are `!important` and exist specifically to override attic.css's normal-tier background declarations on the same elements (`#atticScene::before`/`::after`, `#atticRoom`) — importance dominance already decides every current fight regardless of layer; declaring it before `legacy` keeps it winning even if a competing `!important` ever appears in the legacy pile. Its internal ungated-strip vs mode-gated-restore pair lives in one file and moves together. Verified empirically via `scripts/cascade-probe.mjs` (strip with no mode class, restore under `body.mode-attic`). |
+| `drawAnimation.css` | layer-move | between `legacy` and `drawers` | Formerly a mixed-direction skip — it must WIN the `!important` tie against drawers.css's reduced-motion `.hand .card{animation:none!important}` but LOSE the `!important` ties against the SPv2 bundle's mobile `pointer-events:auto` override (still in `legacy`) and actionDropTargets' drag-lift z-index. Both directions were impossible while drawers.css shared `legacy`; once drawers got its own later layer, the slot between them satisfies everything. Verified empirically via `scripts/cascade-probe.mjs`: deal-in animation, drag-lift z-index (10042 wins over 10043), SPv2-mode pointer-events, and the reduced-motion fade all identical before/after. |
+| `components/relicRack.css` | consolidation | before `legacy` | Gathers the relic rack's base market rules, classic/mobile patch, attic mobile row patch, PS1 tone, and SPv2 mobile override — previously scattered across `market.css`, `mobile.css`, `attic.css`, `ps1aesthetic.css`, and `singlePlayerV2/components/relics.css` — into one file in their original effective order, then removes every one of those scattered originals. **First placed after `legacy` (assumed unconstrained since the scattered competition was gone); this was wrong** — attic.css's mode-gated `filter:blur()` on `#relicRack` (still in `legacy`) needs to keep winning over the consolidated file's own unconditional `filter:saturate()`, previously decided by attic's higher specificity within the shared layer. Placing the new layer after `legacy` let normal-tier layer order override that specificity instead, flipping the computed filter during `body.mode-attic` from `blur(3px)` to `saturate(.7) contrast(1.03)` — caught via a git-checkout A/B against the pre-consolidation commit, not by re-reading the code, and fixed by moving to before `legacy`. Probed with `scripts/probes/relicRackCascadeProbe.mjs`. |
+| `components/handSwipeZone.css` | consolidation | before `legacy` | Same technique: gathers the classic hand swipe surface, PS1 float offset, attic tutorial hint geometry, and lower swipe-capture extension — previously scattered across `mobile.css`, `ps1aesthetic.css`, `attic.css`, `handDragFix.css` — into one file in original order, then removes the scattered originals. **Also first placed after `legacy`, also wrong, same root cause:** mpMobile.css's `mp-game-active`-only height/bottom override (still in `legacy`) needs to keep losing to the consolidated file's ID-specific mobile-breakpoint rule; placing the layer after `legacy` let mpMobile.css win via layer order instead, changing computed height/bottom in plain multiplayer mode (no SPv2) from `97px`/`152px` to `46px`/`130px`, and separately let mpFixes.css's mp-mode hint-hiding rule beat the tutorial hint's ID-specific default the same way, making all three swipe-hint-line steps render at once instead of just the active one. Both fixed by the same before-`legacy` move; z-index was untouched either way (only ever set at normal-tier on the bare class inside the file, so `!important` always won regardless of position). Probed with `scripts/probes/handSwipeZoneCascadeProbe.mjs` across classic mobile/desktop, attic tutorial hints (in progress and completed), SPv2 mobile, and MP+SPv2 mobile samples (the last of which turned out to be an unreachable transient state — `body.mp-game-active` and `body.single-player-v2` are mutually exclusive at runtime via a class guard). |
 
 Also handled earlier (before this session, same branch): `loadout.css`,
 `matchmaking.css`, and part of `mainMenu.css` were split out as fully
@@ -345,6 +355,34 @@ three:
    hint combos (which made those look safe) but not the `ability-target`
    ones (which flipped). Enumerate the full state matrix; don't
    extrapolate from a couple of green cells.
+4. **A single-run probe result is not verification — always A/B against a
+   real baseline.** Both `relicRack.css` and `handSwipeZone.css` shipped
+   with real regressions despite each having its own dedicated probe file,
+   because those probes were apparently only ever run once (single-run
+   mode) and eyeballed, never diffed against the pre-consolidation commit.
+   `scripts/cascade-probe.mjs`'s stash-based A/B only compares against
+   *uncommitted* changes — for a consolidation whose "before" state is
+   several commits back, stash the changed files or `git checkout
+   <pre-consolidation-sha> -- <files>` to build a real baseline, run the
+   probe against it, then restore. Don't trust "the probe passed" without
+   having actually run it both ways.
+5. **Layer moves for consolidated files still need the full remaining-file
+   sweep, not just the files that were consolidated away.** Both
+   regressions above came from stopping the interaction search once the
+   obviously-related files (market/mobile/attic/ps1aesthetic) were fully
+   absorbed, without re-checking the multiplayer cluster
+   (`mpMobile.css`/`mpFixes.css`/`mpSinglePlayerIsolation.css`) and the
+   `spv2.*`-layer files, which still reference the same selectors.
+6. **When forcing mutually-exclusive mode classes on `<body>` for a test,
+   wait a tick and re-read the class list.** `body.mp-game-active` and
+   `body.single-player-v2` are enforced mutually exclusive at runtime by a
+   class guard (`mpModeClassGuard.mjs`) that runs asynchronously; setting
+   both via `document.body.className = '...'` and reading computed style
+   in the same synchronous tick captures a state the guard hasn't
+   corrected yet, producing results that don't reflect any real reachable
+   UI state. `await page.waitForTimeout(...)` (however brief) before
+   reading, and check `document.body.className` in the probe's own output
+   to confirm which classes actually stuck.
 
 The 10 SPv2 files are a separate job: their eventual home is the
 `spv2.*` tier system, which is declared earliest — so their normal-tier
@@ -536,22 +574,16 @@ node scripts/serve.mjs 8123 &
 
 ## Component consolidation pilots
 
-### `relicRack.css` pilot
-
-`src/styles/components/relicRack.css` is the first standing component-owned
-pilot. It gathers the relic rack's base market rules, classic/mobile patch,
-attic mobile row patch, PS1 tone, and SPv2 mobile override into one
-`@layer relicRack` stylesheet. This makes the component's priority explicit by
-source order inside one file instead of by cross-file specificity and link order.
-
-### `handSwipeZone.css` pilot
-
-`src/styles/components/handSwipeZone.css` is the next small consolidation pilot.
-It gathers the classic hand swipe surface, PS1 float offset, attic tutorial hint
-geometry, and lower swipe-capture extension into one `@layer handSwipeZone`
-stylesheet. The cascade probe `scripts/probes/handSwipeZoneCascadeProbe.mjs`
-checks classic mobile/desktop, attic tutorial hints, completed hints, SPv2
-mobile, and MP+SPv2 mobile samples before/after the move.
+`relicRack.css` and `handSwipeZone.css` are the two standing pilots — see
+the Done table above for what each gathers and, importantly, the bug each
+one shipped with and how it was found and fixed. The general technique:
+gather one component's rules that were scattered across multiple `legacy`
+files into a new file, in their original effective order, remove the
+scattered originals, then determine the new layer's position the same way
+as any other candidate (re-derive win/lose against everything still in
+`legacy`, including the multiplayer cluster and `spv2.*`-layer files — see
+lesson 5 above). Do not assume "unconstrained" just because the obviously
+related files were absorbed.
 
 ## Dead-declaration candidate scanner
 
