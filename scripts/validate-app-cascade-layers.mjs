@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -33,7 +33,6 @@ const legacyLayeredFiles = [
   '../src/styles/mpMobile.css',
   '../src/styles/mpSpreadCards.css',
   '../src/styles/mpFixes.css',
-  '../src/styles/mpMultMobile.css',
   '../src/styles/ps1aesthetic.css',
   '../src/styles/mpSinglePlayerIsolation.css',
   '../src/styles/singlePlayerV2/base.css',
@@ -128,6 +127,19 @@ assert.match(cards.trimEnd(), /\}$/, 'cards.css should close its layer wrapper')
 const assetLazy = read('../src/styles/assetLazy.css');
 assert.match(assetLazy, /^@layer assetLazy \{/, 'assetLazy.css should live in its own assetLazy layer');
 assert.match(assetLazy.trimEnd(), /\}$/, 'assetLazy.css should close its layer wrapper');
+
+// mpMultMobile.css: a first cut at the multiplayer cluster, extracted one
+// file at a time instead of bundled into one shared layer (bundling all six
+// mp*.css files failed -- see the "explicitly skipped" notes below for why).
+// Its four target selectors (.mp-pills-opp/.mp-pills-self/.mp-pill-score/
+// .mp-mult-inline) appear nowhere in the app except mpGame.css/mpMobile.css/
+// mpFixes.css (still in legacy), and every one of those other touches sets
+// properties disjoint from this file's own -- zero property overlap
+// anywhere, so its position is genuinely unconstrained. Declared before
+// legacy for consistency with the other unconstrained layer-moves.
+const mpMultMobile = read('../src/styles/mpMultMobile.css');
+assert.match(mpMultMobile, /^@layer mpMultMobile \{/, 'mpMultMobile.css should live in its own mpMultMobile layer');
+assert.match(mpMultMobile.trimEnd(), /\}$/, 'mpMultMobile.css should close its layer wrapper');
 
 // relicRack.css: consolidates the relic rack's previously scattered rules
 // (market base, mobile/classic, attic, PS1, and SPv2 mode overrides) into

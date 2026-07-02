@@ -114,6 +114,20 @@
      ungated-strip vs mode-gated-restore pair lives in one file, so that
      relationship moves with it unchanged.
 
+     `mpMultMobile` (src/styles/mpMultMobile.css) is a first cut at the
+     multiplayer cluster, extracted one file at a time rather than bundled
+     into one shared layer (the earlier attempt at bundling all six
+     mp*.css files into one new layer failed -- they need opposite
+     !important directions against legacy in different places, impossible
+     to satisfy with one relative position; see the "explicitly skipped"
+     notes below). This file's four target selectors (.mp-pills-opp/
+     .mp-pills-self/.mp-pill-score/.mp-mult-inline) appear nowhere in the
+     app except mpGame.css/mpMobile.css/mpFixes.css (still in legacy), and
+     every one of those other touches sets properties disjoint from this
+     file's own -- zero property overlap anywhere, so its position is
+     genuinely unconstrained. Declared before legacy for consistency with
+     the other unconstrained layer-moves (assetLazy/cards/base/spread).
+
      `drawAnimation` sits BETWEEN legacy and drawers -- it was unextractable
      while drawers.css still lived in legacy (it must WIN the !important tie
      against drawers' reduced-motion .hand .card{animation:none!important},
@@ -258,7 +272,7 @@
      so this file (after legacy) stays later than relicRack regardless.
      Verified via the same full computed-style A/B diff technique, across
      all five mode-transition states plus classic. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">

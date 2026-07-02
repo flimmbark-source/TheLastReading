@@ -105,7 +105,7 @@ rather than doing the harder per-selector/per-pair surgery. Only extract
 files that are cleanly one-directional or fully independent. This applies
 every time it comes up, not just once.
 
-## Done so far (18 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
+## Done so far (19 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
 
 Three methods are in play now, noted per row: **layer-move** (rename the
 file's `@layer legacy {` and place the new layer before/after `legacy`,
@@ -142,6 +142,7 @@ component became two files/layers instead of one.
 | `components/invWrap.css` + `components/invTab.css` | pulled whole, split in two | `invWrap` before `legacy`; `invTab` after `legacy` | The archive/inventory drawer (`#invWrap`/`#invDesk`) and its pull-tab (`#invTab`), pulled whole out of `mobile.css`'s base rules and `attic.css`'s mode-transition important-tier block — audited first (see "audited candidates" below) as a single "invWrap cluster" candidate, but that shape didn't survive contact with the actual rules. Two independent, opposite-direction constraints turned up: attic.css's shared 7-element mode-transition fade rule (still in `legacy`, also covers `#titleWrap`/`.score-stack`/`.spread-wrap`/`.handDock`/`#relicRack`/`.refs-layer` — so it can't be absorbed into either new file without duplicating a rule that isn't invWrap's alone) sets a normal-tier `transition` value on `#invWrap` that must keep winning via its higher specificity over `#invWrap`'s own base `transition:transform .45s...`, requiring `invWrap` *before* `legacy` (relicRack/handSwipeZone's direction) — while market.css's mobile-breakpoint `button{font-size:12px;padding:6px 9px}` reset (still in `legacy`) must keep losing to `#invTab`'s higher ID-based specificity, requiring `invTab` *after* `legacy` (tutTip's direction, the same failure mode `#tutSkipBtn` hit). One file could not satisfy both, so the pair was split before either shipped with a first-attempt regression the way the other three pilots did. Verified via a full computed-style A/B diff (every property, all three elements — `#invWrap`/`#invTab`/`#invDesk`) across seven states (classic closed/open, and all five attic mode-transition classes). First pass at a 60ms post-transition sample showed `transform`/`opacity`/`filter` diffs on `#invWrap` — re-run at a 1.5s settled-state wait (past the fade's full duration) came back byte-for-byte identical, confirming those were mid-animation sampling noise (same class of false-positive as the doc's other two documented cases), not a regression; the `transition` property itself and every `#invTab` property matched at both wait lengths, which was the actual signal. |
 | `components/titleWrap.css` | pulled whole, partitioned | after `legacy` | Takes `#titleWrap`/`.score-stack`'s share of the originally 7-element attic fade rule that `invWrap.css` left behind — the selector list is *partitioned* out of it (no selector appears in both this file and the other split-off pieces), but the declaration *values* are necessarily duplicated (every piece needs its own full copy of the same opacity/transform/filter/pointer-events/transition values) — a genuine, deliberate `!important` budget increase of 5 (706 → 711), unlike every prior pilot's net-zero move. Declared after `legacy`, same direction as tutTip/invTab: ps1aesthetic.css's unconditional `filter:saturate()` on both elements (still in `legacy`) must keep losing to this file's mode-gated `filter:blur()` during attic transitions, previously decided by the fade rule's higher specificity within the shared layer; base.css's unconditional `.score-stack{transform:translateX(-50%)}` needs the same outcome but is trivially satisfied since base is declared far earlier than legacy already. Verified via a full computed-style A/B diff technique, across all five mode-transition states plus classic: a settled 1.5s-wait sample came back byte-for-byte identical; a 60ms mid-transition sample showed the same class of `opacity`/`filter` sampling noise as invWrap (and, reassuringly, identical noise values between `#titleWrap` and `.score-stack` within each run, since one rule drives both). |
 | `components/atticFade.css` | pulled whole, partitioned | after `legacy` | Takes the fade rule's remaining four elements: `.spread-wrap`/`.handDock`/`#relicRack`/`.refs-layer`. `#invWrap` deliberately stays out — it already works correctly as `attic.css`'s own single-selector rule (see `invWrap.css`'s reasoning), and moving it here too would be redundant, not incorrect. This is the candidate the original audit rejected as "bigger scope than a single pilot"; re-examined once titleWrap.css proved selector-partition-without-full-duplication works, and a full per-property check (every remaining touch on all four elements, against opacity/transform/filter/pointer-events/transition specifically) found every one either property-disjoint or important-tier (importance-dominant regardless of layer) — the multiplayer cluster's `.spread-wrap`/`.handDock` geometry overrides are all `!important`, and ps1aesthetic.css's `.handDock` rule never touches `filter` the way its `#titleWrap`/`.score-stack` rules do. `#relicRack`'s own unconditional `filter:saturate(.7) contrast(1.03)` (in the `relicRack` layer, before `legacy`) needs to keep losing to this file's mode-gated `filter:blur()`, same as always — `relicRack` stays earlier than `legacy` either way, so this file (after `legacy`) stays later than `relicRack` regardless of specificity. Same partition/duplication trade as titleWrap.css: another genuine `!important` budget increase of 5 (711 → 716). Verified the same way: a settled 1.5s-wait full computed-style A/B diff across all five mode-transition states plus classic came back byte-for-byte identical for all four elements *and* `#invWrap` (confirming leaving `#invWrap` behind didn't disturb it), including `#relicRack`'s `filter:blur(3px)` in `mode-attic` specifically — the exact property/value that regressed in the original `relicRack.css` pilot. A 60ms mid-transition sample showed the same small class of `opacity`/`filter` sampling noise as the other two pilots. |
+| `mpMultMobile.css` | layer-move | before `legacy` | The first crack in the multiplayer cluster: extracted **one file at a time** instead of bundling all six `mp*.css` files into one shared layer, which is the approach that failed before (see the "explicitly skipped" note below). Its four target selectors (`.mp-pills-opp`/`.mp-pills-self`/`.mp-pill-score`/`.mp-mult-inline`) appear nowhere in the app except `mpGame.css`/`mpMobile.css`/`mpFixes.css` (still in `legacy`), and every one of those other touches sets properties (`display`, `grid-row`/`grid-column`/`justify-self`, `width`/`height`/`padding`/`font-size`) disjoint from this file's own (`position`/`overflow`/`right`/`top`/`transform`/`margin-left`/`pointer-events`/`padding-left`/`box-sizing`) — zero property overlap anywhere, so its layer position is genuinely unconstrained; declared before `legacy` for consistency with the other unconstrained layer-moves. Its elements (`.mp-pill-score`, `.mp-mult-inline`) are purely dynamic — never present in static markup, only created by multiplayer JS — so verified via synthetic elements matching the exact selector structure (`body.mp-game-active`, mobile viewport) rather than a real multiplayer session: a full computed-style A/B diff came back byte-for-byte identical against the pre-extraction baseline. |
 
 Also handled earlier (before this session, same branch): `loadout.css`,
 `matchmaking.css`, and part of `mainMenu.css` were split out as fully
@@ -151,15 +152,27 @@ of `mainMenu.css` stays in `legacy` since it's a real cross-file dependency
 
 **Explicitly skipped (structural wall, not "fixed"):** `attic.css` was already handled/skipped as not a clean extraction target: it intentionally reaches across table UI surfaces (`#titleWrap`, `.score-stack`, `.spread-wrap`, `.handDock`, `#relicRack`, `#invWrap`, `.refs-layer`, `#handSwipeZone`, `#settingsPanel`) during mode transitions and mobile hint repair. Do not attempt it again without fresh interaction proof showing those cross-file dependencies are one-directional.
 
-**Explicitly skipped (structural wall, not "fixed"):** the multiplayer CSS
-cluster (`mpGame.css`, `mpMobile.css`, `mpSpreadCards.css`, `mpFixes.css`,
-`mpMultMobile.css`, `mpSinglePlayerIsolation.css`). They're provably
-mode-exclusive (`mp-game-active`), which made bundling them into one shared
-layer look promising, but they need to win against `legacy` on the
-`!important` tier in some places and lose on it in others — impossible to
-satisfy with one relative two-layer ordering. Fixing this for real would
-mean per-pair/per-selector surgery, not a bulk layer move. Left in `legacy`
-until/unless that harder work is requested specifically.
+**Explicitly skipped as a bundle, but no longer entirely (see
+`mpMultMobile.css` in the Done table above):** the multiplayer CSS cluster
+(`mpGame.css`, `mpMobile.css`, `mpSpreadCards.css`, `mpFixes.css`,
+`mpSinglePlayerIsolation.css` remain skipped; `mpMultMobile.css` shipped).
+They're provably mode-exclusive (`mp-game-active`), which made *bundling
+them all into one shared layer* look promising, but that bundle needs to
+win against `legacy` on the `!important` tier in some places and lose on
+it in others — impossible to satisfy with one relative two-layer ordering
+for the whole cluster at once. That verdict is still believed correct for
+the bundle, but it doesn't mean no individual file in the cluster is
+extractable — `mpMultMobile.css` (28 lines, fully self-contained, zero
+property overlap with anything) proved the opposite. The remaining five
+files are much larger (995 combined lines, ~301 `!important` declarations
+across the cluster) and almost certainly do have real, not just
+apparent, mixed-direction conflicts within themselves and against
+`legacy` -- but that hasn't been verified per-file the way `mpMultMobile
+.css` was, only assumed from the original bundle-level finding. Per-file
+(not per-pair-across-the-whole-cluster) extraction attempts, in the same
+spirit as `mpMultMobile.css`, are the next step if this is picked up
+again -- not a retry of the bundle, and not an assumption that the rest
+is equally hard without checking.
 
 **Formerly deprioritized, since extracted:** `cards.css` looked like an easy
 independent extraction by size, then got deprioritized when its classes
@@ -255,7 +268,11 @@ attempted (skip-ahead rule applies throughout):
 - `hand.css` (skipped, see above)
 - `mobile.css` (skipped, see above)
 - `attic.css` (skipped, see above)
-- The multiplayer cluster (skipped, see above — only revisit per-file/per-pair if asked)
+- The multiplayer cluster's remaining five files — `mpGame.css`,
+  `mpMobile.css`, `mpSpreadCards.css`, `mpFixes.css`,
+  `mpSinglePlayerIsolation.css` (`mpMultMobile.css` already extracted, see
+  Done table above; per-file extraction attempts on the rest are the next
+  step, not a bundle retry)
 - 10 SPv2 files still sitting in `legacy` rather than an `spv2.*` tier:
   `singlePlayerV2/base.css`, `compat.css`, `desktop.css`, `assets.css`,
   `layout.css`, `mobile.css`, `components/spread.css`,
