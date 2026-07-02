@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, legacy, handDragFix, performance, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, legacy, handDragFix, performance, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, legacy, handDragFix, performance, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, legacy, handDragFix, performance, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -26,7 +26,6 @@ assert.ok(
 // budget.mjs and the SPv2 cascade validator for the matching SPv2-side story).
 const legacyLayeredFiles = [
   '../src/styles/base.css',
-  '../src/styles/spread.css',
   '../src/styles/hand.css',
   '../src/styles/cards.css',
   '../src/styles/market.css',
@@ -91,6 +90,19 @@ assert.match(dragStability.trimEnd(), /\}$/, 'dragStability.css should close its
 const actionDropTargets = read('../src/styles/actionDropTargets.css');
 assert.match(actionDropTargets, /^@layer actionDropTargets \{/, 'actionDropTargets.css should live in its own actionDropTargets layer');
 assert.match(actionDropTargets.trimEnd(), /\}$/, 'actionDropTargets.css should close its layer wrapper');
+
+// spread.css: every real normal-tier interaction found (market.css's mobile
+// .ability-prompt/.spread/.slot/.slot .num overrides, mobile.css's
+// .ability-target-slot/.ability-picked-slot highlight colors, mpMobile.css's
+// mobile .slot .num, and the SPv2 bundle's normal-tier mobile/generated-sheet
+// layout overrides) requires spread's declarations to keep losing against
+// files still in legacy. Every !important interaction is unconditional
+// importance dominance. No interaction requires spread to win against
+// anything still in legacy. Declared BEFORE `legacy` on purpose (see
+// game.html); the assertion above already locks that relative order in.
+const spread = read('../src/styles/spread.css');
+assert.match(spread, /^@layer spread \{/, 'spread.css should live in its own spread layer');
+assert.match(spread.trimEnd(), /\}$/, 'spread.css should close its layer wrapper');
 
 // handDragFix.css: its .handDock z-index needs to keep losing to
 // actionDropTargets.css's higher, state-gated z-index in the earlier

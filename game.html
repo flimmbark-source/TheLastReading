@@ -75,8 +75,20 @@
      still in legacy -- drawers being the later layer guarantees both
      regardless of specificity). No interaction found with handDragFix or
      performance, so its position among the "after legacy" layers doesn't
-     matter. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, legacy, handDragFix, performance, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+     matter.
+
+     `spread` is BEFORE legacy, same direction as constellations/actionDropTargets:
+     every real normal-tier interaction found (market.css's mobile
+     .ability-prompt/.spread/.slot/.slot .num overrides, mobile.css's
+     .ability-target-slot/.ability-picked-slot highlight colors, mpMobile.css's
+     mobile .slot .num, and the SPv2 bundle's normal-tier mobile/generated-sheet
+     layout overrides) requires spread's declarations to keep losing against
+     files still in legacy -- legacy remaining the later layer preserves that
+     regardless of specificity. Every !important interaction (actionDropTargets,
+     mpFixes, mpSinglePlayerIsolation, ps1aesthetic, most of the SPv2 bundle) is
+     unconditional importance dominance and imposes no directional requirement.
+     No interaction requires spread to win against anything still in legacy. */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, legacy, handDragFix, performance, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">

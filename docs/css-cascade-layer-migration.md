@@ -105,7 +105,7 @@ rather than doing the harder per-selector/per-pair surgery. Only extract
 files that are cleanly one-directional or fully independent. This applies
 every time it comes up, not just once.
 
-## Done so far (6 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
+## Done so far (7 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
 
 | File | Direction | Why |
 |---|---|---|
@@ -115,6 +115,7 @@ every time it comes up, not just once.
 | `performance.css` | after `legacy` | Its mobile/reduced-motion overrides (`body` background-attachment, `#roomAmbient` animation/opacity/transform) need to keep losing to actionDropTargets.css's SPv2-mode override and ps1aesthetic.css's explicit "re-enable candle glow on mobile" override. `#ambientFX`/`.mote`/`.slot.res-*` rules checked individually: no real conflict (uncontested, unconditional importance dominance, or identical values). |
 | `actionDropTargets.css` | before `legacy` | Dynamically appended by `gestureActionDrops.mjs`; all real cross-file conflicts that affect layer order are `!important` fixes that need to keep winning over the remaining `legacy` pile. Normal-tier hits from `rg` are non-conflicts (new state selectors/elements, different properties/pseudo-elements, identical values, or mode-exclusive branches). |
 | `drawers.css` | after `legacy` | Needs to keep LOSING two `!important` ties (SPv2 desktop.css's `display:block!important` un-hide of `#scoringBtn`/`#abilitiesBtn`/`#menuBtn`, and drawAnimation.css's reduced-motion deal-in fade, both still in `legacy`) while needing to keep WINNING two normal-tier ties (`handCardIdleCycle` vs market.css's `card-wave`, and `#settingsPanel` sizing vs mobile.css's base rule, both still in `legacy`) — both satisfied by the same "after legacy" placement. Verified empirically via `scripts/cascade-probe.mjs`, including a `prefers-reduced-motion` emulation check. |
+| `spread.css` | before `legacy` | Every real normal-tier interaction found (market.css's mobile `.ability-prompt`/`.spread`/`.slot`/`.slot .num` overrides, mobile.css's `.ability-target-slot`/`.ability-picked-slot` highlight colors, mpMobile.css's mobile `.slot .num`, and the SPv2 bundle's normal-tier mobile/generated-sheet layout overrides) requires spread's declarations to keep losing against files still in `legacy`; no interaction requires it to win against anything there. Verified empirically via `scripts/cascade-probe.mjs` — first attempt gave a false-positive diff from reading a live `.slot`'s `background-color` mid-`transition:.18s`, fixed by probing a freshly-created element instead. |
 
 Also handled earlier (before this session, same branch): `loadout.css`,
 `matchmaking.css`, and part of `mainMenu.css` were split out as fully
@@ -174,22 +175,46 @@ list.
   structurally clears selection/ability/purge state in the same dispatch
   that precedes any queued draw animation, so those classes never co-occur
   with `.card-draw-dealt` on the same card.)
+- `hand.css` — needs `market.css`/`mobile.css` to win several normal-tier
+  ties (`.card` sizing, `.handDock` height, `.hand .card` transition timing,
+  `.spread .card.ability-disabled`, `.card.ability-target` box-shadow,
+  `.card[data-hint]::after` sizing, hint-glow box-shadow radii), which
+  requires hand's new layer **before** `legacy`, while also needing
+  `market.css`/`mobile.css` to win two `!important` ties (`.hand .card.sel`
+  z-index 999 vs market's 1000; `.hand .card.ability-picked` z-index 1000 vs
+  mobile's unconditional 300), which requires hand's new layer **after**
+  `legacy` — opposite placements, same shape as the others.
+- `mobile.css` — "the biggest hub," and it turns out to be one of the root
+  causes of the `market.css` conflict above (their `.relic-rack`/
+  `.ability-picked` ties are the same rules pulling opposite ways here too).
+  Needs to win `!important` ties against `hand.css`/`market.css`
+  (`.hand .card.ability-picked`/`.sel` z-index) — requires **before**
+  `legacy` — while needing to lose a normal-tier tie against `attic.css`
+  (`#invWrap` transform/transition during attic-scene mode transitions) —
+  also requires **before** `legacy` — but *also* needing to win two
+  normal-tier ties against `market.css`/`hand.css` (`.relic-rack`
+  `align-items`, `.hand .card` transition timing) — requires **after**
+  `legacy`. No single position satisfies all three.
 
 ## What's left
 
 Remaining files still in the shared `legacy` layer, in the order they'll be
 attempted (skip-ahead rule applies throughout):
 
-- `drawers.css` — investigation in progress.
-- `mobile.css`
-- `base.css`
-- `hand.css`
-- `spread.css`
+- `base.css` — investigation complete (clean one-directional, before
+  `legacy`: it's the first file concatenated into `legacy`, so it already
+  loses every normal-tier tie against every other still-in-`legacy` file by
+  source order/specificity today; its lone `!important` declaration
+  (`.score-preview{display:none!important}`) has zero competitors anywhere).
+  Next up to implement.
 - `cards.css` (deprioritized, see above)
 - `market.css` (skipped, see above)
 - `ps1aesthetic.css` (skipped, see above)
 - `drawAnimation.css` (skipped, see above)
+- `hand.css` (skipped, see above)
+- `mobile.css` (skipped, see above)
 - The multiplayer cluster (skipped, see above — only revisit per-file/per-pair if asked)
+- `attic.css` — not yet investigated in this pass.
 - 10 SPv2 files still sitting in `legacy` rather than an `spv2.*` tier:
   `singlePlayerV2/base.css`, `compat.css`, `desktop.css`, `assets.css`,
   `layout.css`, `mobile.css`, `components/spread.css`,
