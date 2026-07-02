@@ -40,6 +40,7 @@ const appStyleFiles = [
   '../src/styles/components/invTab.css',
   '../src/styles/components/titleWrap.css',
   '../src/styles/components/atticFade.css',
+  '../src/styles/components/mpGameChrome.css',
 ];
 
 // Budget jumped 693 -> 706 not from new !important declarations but from
@@ -66,6 +67,14 @@ const appStyleFiles = [
 // for the rule's remaining four elements (.spread-wrap/.handDock/
 // #relicRack/.refs-layer), leaving only #invWrap's single-selector line
 // behind in attic.css. Same duplication trade, same reasoning.
+// components/mpGameChrome.css (716, unchanged) is a solo/laddered SPLIT
+// of mpGame.css (still tracked above) rather than a consolidation --
+// declarations moved, none were duplicated or newly added, so the total
+// stays flat: mpGame.css's own count dropped from 56 to 41 (it kept
+// .card.mp-interaction's 2 important-tier declarations, which were
+// briefly extracted here too before a full A/B diff showed that broke
+// its pre-existing dead-code tie against ps1aesthetic.css), and
+// mpGameChrome.css's 15 makes up the difference exactly.
 const importantBudget = 716;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)

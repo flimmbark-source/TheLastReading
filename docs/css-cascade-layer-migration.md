@@ -105,7 +105,7 @@ rather than doing the harder per-selector/per-pair surgery. Only extract
 files that are cleanly one-directional or fully independent. This applies
 every time it comes up, not just once.
 
-## Done so far (21 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
+## Done so far (22 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
 
 Three methods are in play now, noted per row: **layer-move** (rename the
 file's `@layer legacy {` and place the new layer before/after `legacy`,
@@ -121,7 +121,12 @@ since the file it came from can still hold *other*, unrelated rules that
 compete with it). `invWrap.css`/`invTab.css` below is a fourth variant:
 **pulled whole, split in two** — the same technique as tutTip, but the
 gathered rules turned out to need opposite layer directions, so one
-component became two files/layers instead of one.
+component became two files/layers instead of one. `mpGameChrome.css`
+below is a fifth variant: **solo/laddered split** — mining a file that's
+part of a larger cross-file "hard" bundle for an internally-solo
+sub-portion (selectors with no counterpart anywhere in the sibling
+ladder files), leaving the genuinely laddered remainder untouched in
+its original file/layer.
 
 | File | Method | Direction | Why |
 |---|---|---|---|
@@ -145,6 +150,7 @@ component became two files/layers instead of one.
 | `mpMultMobile.css` | layer-move | before `legacy` | The first crack in the multiplayer cluster: extracted **one file at a time** instead of bundling all six `mp*.css` files into one shared layer, which is the approach that failed before (see the "explicitly skipped" note below). Its four target selectors (`.mp-pills-opp`/`.mp-pills-self`/`.mp-pill-score`/`.mp-mult-inline`) appear nowhere in the app except `mpGame.css`/`mpMobile.css`/`mpFixes.css` (still in `legacy`), and every one of those other touches sets properties (`display`, `grid-row`/`grid-column`/`justify-self`, `width`/`height`/`padding`/`font-size`) disjoint from this file's own (`position`/`overflow`/`right`/`top`/`transform`/`margin-left`/`pointer-events`/`padding-left`/`box-sizing`) — zero property overlap anywhere, so its layer position is genuinely unconstrained; declared before `legacy` for consistency with the other unconstrained layer-moves. Its elements (`.mp-pill-score`, `.mp-mult-inline`) are purely dynamic — never present in static markup, only created by multiplayer JS — so verified via synthetic elements matching the exact selector structure (`body.mp-game-active`, mobile viewport) rather than a real multiplayer session: a full computed-style A/B diff came back byte-for-byte identical against the pre-extraction baseline. |
 | `mpSpreadCards.css` | layer-move | before `legacy` | The second crack in the cluster. Every declaration in it is `!important`, and nothing else sets that tier on the same property for its `#spread .slot > .card` / `#mpOppSpread .slot > .card` targets (or their `.photo`/`.title` descendants) — `actionDropTargets.css`'s `position`/`z-index` on the same selector is a disjoint property, `mpFixes.css`'s `width`/`height` there targets the `.slot` itself rather than the `.card` inside it, and `market.css`'s unconditional non-important `.card.photo{background-size:200% 200%}` is importance-dominated regardless of layer (the values happen to match anyway). SPv2's own `#spread .slot > .card` hint rules are gated by `body.single-player-v2`, mutually exclusive with `body.mp-game-active` at runtime. Genuinely unconstrained for the same reasons as `mpMultMobile.css`; the file's original "loads after mpGame.css/mpMobile.css" comment predates this migration's importance-tier reasoning — importance dominance already made load order moot for every real conflict found. Verified the same way: synthetic `#spread`/`#mpOppSpread` slot-card elements, full computed-style A/B diff, byte-for-byte identical against baseline. |
 | `mpSinglePlayerIsolation.css` | layer-move | before `legacy` | The third crack, and a different shape from the first two — not property-disjoint, just dead. Every rule in the file is gated by `body.mp-game-active.single-player-v2` (all of them, no exception), and those two classes are enforced mutually exclusive at runtime by `src/app/mpModeClassGuard.mjs`'s `MutationObserver`: the instant `mp-game-active` is added, `single-player-v2` is stripped on the same microtask, before the next paint. No other file in the app references this combined gate. So the file's entire ruleset is unreachable in any rendered frame, and its layer position genuinely cannot affect real behavior regardless of where it's declared. Verified by reading computed style in the actual transient window itself — set all three classes in one synchronous assignment and read immediately, before the guard's microtask could run (confirmed via `document.body.className` in the probe output: all three classes were still present at read time) — a full computed-style A/B diff on synthetic `#spread`/`#mpOppSpread`/`.handDock`/`#handSwipeZone` elements came back byte-for-byte identical against the pre-extraction baseline even in that window. |
+| `components/mpGameChrome.css` | solo/laddered split | before `legacy` | The fourth crack, and a different technique from the first three: `mpGame.css`, `mpMobile.css`, and `mpFixes.css` form a genuine ~50-property-pair cross-file responsive-breakpoint ladder (confirmed via a full selector/property audit, not just reference-counting) that can't be split into different layers without swapping source-order resolution for layer-order resolution — the same shape that broke the reverted `hand.css` extraction. But 61 of `mpGame.css`'s 91 rules turned out to have no counterpart at all in `mpMobile.css`/`mpFixes.css` — its own top bar, player rows, opponent hand/badges, opponent spread state decorations, progress bar, and scoring overlay — and moved to this new file. Three families almost shipped wrong, all caught only by a full computed-style A/B diff against a real baseline, never by static reasoning: (1) `#spread .slot.mp-targetable`/`.mp-anchored`/`.mp-silenced`/`.mp-swap-a`/`.mp-swap-pick` (and their `.mp-opp-spread-transform` mirror) compete against `ps1aesthetic.css`'s bare `.slot{border-color:...!important}` and need this file *before* `legacy` to keep winning via specificity — genuinely required, not just consistency; (2) `.card.mp-interaction` looked unconstrained (only `hand.css`'s non-important base `.card` rule was found by static grep) but actually already loses a same-layer specificity tie to `ps1aesthetic.css`'s `.card:not(.photo){...!important}` via source order — `:not()` contributes its argument's specificity, so `.card:not(.photo)` and `.card.mp-interaction` tie exactly — meaning `.card.mp-interaction`'s own gradient has never rendered, a pre-existing dead-code situation confirmed against a true git-checkout baseline (not a probe artifact); extracting it would have revived dead code by swapping that tie-break for plain layer order; (3) the `mp-action-btn` family and `mp-ov-btn` also looked unconstrained, but in the *opposite* direction from (1): both render as real `<button>` elements (verified in `src/app/mpGame.mjs`) and need to keep beating `market.css`'s mobile-breakpoint bare `button{font-size:12px;padding:6px 9px}` reset via specificity — the same conflict already documented for `tutTip.css`'s `#tutSkipBtn` — which requires *after* `legacy`, the opposite of (1). One file position can't satisfy both (1) and (3), and neither (2) nor (3) has `!important` declarations of its own to make a cross-layer move net-zero, so both stayed behind in `mpGame.css`/`legacy` instead of spinning up a third layer for two small rule families. Verified via a comprehensive computed-style A/B diff (every extracted selector plus the laddered-core sanity checks) across the full split; the only remaining diff was the same `.mp-turn-badge.my-turn` animation-timing sampling noise documented elsewhere in this doc. |
 
 Also handled earlier (before this session, same branch): `loadout.css`,
 `matchmaking.css`, and part of `mainMenu.css` were split out as fully
@@ -155,34 +161,41 @@ of `mainMenu.css` stays in `legacy` since it's a real cross-file dependency
 **Explicitly skipped (structural wall, not "fixed"):** `attic.css` was already handled/skipped as not a clean extraction target: it intentionally reaches across table UI surfaces (`#titleWrap`, `.score-stack`, `.spread-wrap`, `.handDock`, `#relicRack`, `#invWrap`, `.refs-layer`, `#handSwipeZone`, `#settingsPanel`) during mode transitions and mobile hint repair. Do not attempt it again without fresh interaction proof showing those cross-file dependencies are one-directional.
 
 **Explicitly skipped as a bundle, but no longer entirely (see
-`mpMultMobile.css`/`mpSpreadCards.css`/`mpSinglePlayerIsolation.css` in
-the Done table above):** the multiplayer CSS cluster (`mpGame.css`,
-`mpMobile.css`, `mpFixes.css` remain skipped; the other three shipped).
+`mpMultMobile.css`/`mpSpreadCards.css`/`mpSinglePlayerIsolation.css`/
+`components/mpGameChrome.css` in the Done table above):** the multiplayer
+CSS cluster (`mpGame.css`'s laddered core, `mpMobile.css`, and
+`mpFixes.css` remain skipped; the other four shipped, the fourth being a
+partial extraction *out of* `mpGame.css` rather than a whole file).
 They're provably mode-exclusive (`mp-game-active`), which made *bundling
 them all into one shared layer* look promising, but that bundle needs to
 win against `legacy` on the `!important` tier in some places and lose on
 it in others — impossible to satisfy with one relative two-layer ordering
 for the whole cluster at once. That verdict is still believed correct for
-the bundle, but it doesn't mean no individual file in the cluster is
-extractable — three different files proved the opposite, each for a
-different reason: `mpMultMobile.css` (28 lines) is fully self-contained
-with zero property overlap with anything; `mpSpreadCards.css` (35 lines)
-is every-declaration-`!important` and importance-dominant everywhere it's
-not simply disjoint; `mpSinglePlayerIsolation.css` (124 lines) is gated
-entirely behind a runtime-unreachable class combination (confirmed via
-the actual guard source, `src/app/mpModeClassGuard.mjs`, not just
-assumed), making its layer position moot. All three were either small,
-fully self-contained, or fully dead — likely why they were the tractable
-ones. The remaining three files (`mpGame.css`, `mpMobile.css`,
-`mpFixes.css`, ∼808 combined lines, ∼225 `!important` declarations) are
-larger and busier, and almost certainly do have real, not just apparent,
-mixed-direction conflicts within themselves and against `legacy` — but
-that hasn't been verified per-file the way the first three were, only
-assumed from the original bundle-level finding. Per-file (not
-per-pair-across-the-whole-cluster) extraction attempts, in the same
-spirit as these three, are the next step
-if this is picked up again — not a retry of the bundle, and not an
-assumption that the rest is equally hard without checking.
+the bundle, but it doesn't mean no individual file (or portion of a file)
+in the cluster is extractable — four different slices proved the
+opposite, each for a different reason: `mpMultMobile.css` (28 lines) is
+fully self-contained with zero property overlap with anything;
+`mpSpreadCards.css` (35 lines) is every-declaration-`!important` and
+importance-dominant everywhere it's not simply disjoint;
+`mpSinglePlayerIsolation.css` (124 lines) is gated entirely behind a
+runtime-unreachable class combination (confirmed via the actual guard
+source, `src/app/mpModeClassGuard.mjs`, not just assumed), making its
+layer position moot; `mpGameChrome.css` is 61 of `mpGame.css`'s 91 rules
+that have no counterpart at all in `mpMobile.css`/`mpFixes.css` (verified
+via a full selector-overlap audit, not reference-counting) — the file's
+own UI chrome rather than its laddered core. All four were either small,
+fully self-contained, fully dead, or (mpGameChrome's case) a genuinely
+separable subset — likely why they were the tractable ones. What's left
+of `mpGame.css` (its 30-rule laddered core, plus three rules that
+couldn't safely leave `legacy` — see the `mpGameChrome.css` row above),
+plus all of `mpMobile.css` and `mpFixes.css` (∼517 combined lines), form
+the genuinely hard remainder: a deliberate ~50-property-pair cross-file
+responsive-breakpoint ladder, confirmed (not just assumed) via the same
+full selector/property audit that found `mpGameChrome.css`'s solo subset.
+Splitting the ladder itself into different layers would swap its
+source-order resolution for layer-order resolution across all ~50
+pairs — the same shape of problem that broke the reverted `hand.css`
+extraction — so it's not attempted here.
 
 **Formerly deprioritized, since extracted:** `cards.css` looked like an easy
 independent extraction by size, then got deprioritized when its classes
@@ -278,11 +291,15 @@ attempted (skip-ahead rule applies throughout):
 - `hand.css` (skipped, see above)
 - `mobile.css` (skipped, see above)
 - `attic.css` (skipped, see above)
-- The multiplayer cluster's remaining three files — `mpGame.css`,
-  `mpMobile.css`, `mpFixes.css` (`mpMultMobile.css`, `mpSpreadCards.css`,
-  and `mpSinglePlayerIsolation.css` already extracted, see Done table
-  above; per-file extraction attempts on the rest are the next step, not a
-  bundle retry)
+- The multiplayer cluster's genuinely laddered remainder — `mpGame.css`'s
+  30-rule core (plus `.card.mp-interaction`/`mp-action-btn`/`mp-ov-btn`,
+  which can't safely leave `legacy` either, see the `mpGameChrome.css` row
+  in the Done table above), `mpMobile.css`, and `mpFixes.css`
+  (`mpMultMobile.css`, `mpSpreadCards.css`, `mpSinglePlayerIsolation.css`,
+  and `components/mpGameChrome.css` already extracted, see Done table
+  above; the remainder is a confirmed, not just assumed, ~50-property-pair
+  cross-file ladder — not a bundle retry candidate without redesigning the
+  ladder itself)
 - 10 SPv2 files still sitting in `legacy` rather than an `spv2.*` tier:
   `singlePlayerV2/base.css`, `compat.css`, `desktop.css`, `assets.css`,
   `layout.css`, `mobile.css`, `components/spread.css`,
@@ -449,6 +466,51 @@ three:
    which is not a property anyone would have guessed to check on the
    popover's own height. Don't keep guessing after two misses — measure
    everything and let the diff find it.
+8. **Writing prose comments with wildcard notation right before a slash
+   creates an accidental `*/` token that silently truncates the comment.**
+   Prose like `.mp-pill-*/.mp-pills-*/` (meant as shorthand for "the
+   mp-pill-* and mp-pills-* selector families") contains a literal `*/`
+   character sequence, which a CSS parser reads as the comment's close —
+   everything after it becomes raw, invalid CSS, silently mis-parsed. This
+   corrupted three separate header/explanatory comments during the
+   `mpGameChrome.css` pilot (game.html's inline `<style>` block,
+   `mpGame.css`'s header, `mpGameChrome.css`'s header) before being
+   caught — confirmed severe, not cosmetic, by reading
+   `document.styleSheets[i].cssRules[0].cssRules.length` directly in the
+   browser: both affected external stylesheets reported 0 nested rules,
+   meaning the entire file was invisible to the cascade. `grep -c '/\*'`
+   vs `grep -c '\*/'` per file (openers must equal closers) catches this
+   immediately; fix by spelling out full selector names comma-separated
+   instead of using wildcard-asterisk-immediately-before-slash.
+9. **`rule.type === CSSRule.LAYER_BLOCK_RULE` is not a reliable way to
+   detect `@layer` blocks when walking `document.styleSheets` in this
+   Playwright/Chromium environment.** A rule-matching diagnostic built
+   around that check silently returned zero matches for everything nested
+   inside any `@layer`, making it look like no rules existed at all.
+   Switching to `rule.constructor.name === 'CSSStyleRule'` for leaf rules,
+   and recursing into any rule with a truthy `.cssRules` (covers `@layer`,
+   `@media`, etc. without needing to name the container type), found the
+   real competing rules immediately — including the `ps1aesthetic.css`
+   rule that the `mpGameChrome.css` pilot's first pass had missed
+   entirely.
+10. **A selector or file being referenced by many other files is not
+    evidence of a real conflict, and being referenced by only one
+    "obvious" file is not evidence of no conflict either — only a
+    per-property, per-competitor check is.** The `mpGameChrome.css` pilot
+    found two real, previously-undiscovered competitors this way in
+    opposite directions: `.card.mp-interaction` looked safe because static
+    grep only turned up `hand.css`'s non-important base rule, missing
+    `ps1aesthetic.css`'s `.card:not(.photo){...!important}` (same
+    effective specificity via `:not()`'s argument, so a genuine same-layer
+    tie today, resolved by source order) — extracting the rule would have
+    revived it from its current, correct, dead-code state. Conversely,
+    `mp-action-btn`/`mp-ov-btn` looked safe by the same kind of check but
+    actually needed to keep winning a specificity fight against
+    `market.css`'s bare `button{}` mobile reset. Re-running the *same*
+    reliable rule-matching diagnostic (lesson 9) across every remaining
+    solo selector — not just the ones static reasoning flagged as
+    plausible — is what surfaced both, immediately after the first miss
+    was found, not before.
 
 The 10 SPv2 files are a separate job: their eventual home is the
 `spv2.*` tier system, which is declared earliest — so their normal-tier

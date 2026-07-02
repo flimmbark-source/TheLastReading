@@ -155,6 +155,77 @@
      it's declared -- not property-disjoint like the first two, just
      dead. Declared before legacy for the same consistency.
 
+     `mpGameChrome` (src/styles/components/mpGameChrome.css) is the fourth
+     crack, and a different technique from the first three: a solo/laddered
+     SPLIT of mpGame.css, not a whole-file layer-move. A full selector/
+     property audit across mpGame.css, mpMobile.css, and mpFixes.css found
+     they form a deliberate, deep cross-file responsive-breakpoint cascade
+     -- ~50 property/selector pairs where the same selector's same property
+     gets progressively different values across the three files at
+     different breakpoints, mostly important-tier, resolved today by
+     source order within this shared legacy layer (mpFixes.css's own
+     comments confirm it's deliberately meant to load after the other
+     two). That's the same shape of problem that broke the reverted
+     hand.css extraction -- not attempted here. What DID come out cleanly:
+     61 of mpGame.css's 91 rules have no counterpart at all in mpMobile.css
+     or mpFixes.css (verified via a full selector-overlap audit, not a
+     guess) -- the game's own top bar, player info rows, opponent hand/
+     badges, opponent spread state decorations, progress bar, action
+     buttons, and scoring overlay. Most of those checked out as either
+     fully self-contained (.mp-* classes nothing else in the app
+     references) or already-vetted importance-dominant/property-disjoint
+     against their one remaining touch (the multi-selector display:none
+     block). Three families did NOT check out as unconstrained on first
+     pass -- all three caught only by a full computed-style A/B diff
+     against a real baseline, not by static reasoning:
+
+       1. The #spread .slot.mp-targetable/mp-anchored/mp-silenced/
+          mp-swap-a/mp-swap-pick states (and their .mp-opp-spread-transform
+          mirror) compete against ps1aesthetic.css's bare
+          .slot{border-color:...!important} rule -- this file's higher
+          specificity needs to keep winning that fight, so mpGameChrome
+          has to stay before legacy for real, not just for consistency.
+
+       2. .card.mp-interaction looked unconstrained by the same static
+          check (only hand.css's non-important base .card rule was found)
+          but the A/B diff caught that it was wrong: ps1aesthetic.css's
+          .card:not(.photo){...!important} has the same effective
+          specificity and is also important, so it's always won a
+          same-layer specificity tie against .card.mp-interaction via
+          source order -- that rule's own gradient has never rendered, a
+          pre-existing dead-code situation confirmed against a true
+          git-checkout baseline. Moving it to mpGameChrome would have
+          revived it by swapping that tie-break for plain layer order.
+
+       3. The mp-action-btn family and mp-ov-btn also looked unconstrained,
+          but in the opposite direction from #1: both render as real
+          <button> elements (see src/app/mpGame.mjs), and market.css's
+          mobile-breakpoint bare button{font-size:12px;padding:6px 9px}
+          reset -- the same conflict already documented for tutTip.css's
+          #tutSkipBtn above -- competes on font-size/padding. Winning that
+          fight needs this family declared AFTER legacy, the opposite of
+          what #1 needs, so one file position can't satisfy both.
+
+     Items 2 and 3 have no important-tier declarations of their own to
+     make a cross-layer move net-zero, and #1 is the only one of the three
+     that actually requires mpGameChrome's own before-legacy position -- so
+     items 2 and 3 both stayed behind in mpGame.css/legacy instead (see the
+     comments on those rules there) rather than spinning up a third layer,
+     while the rest of the solo rules moved to mpGameChrome, declared
+     before legacy. The remaining 32 rules (the laddered core: #mpGame/
+     .handDock/.spread-wrap/#spread/#spread .slot and the mp-pill-score,
+     mp-pill-disc, mp-pill-thresh, mp-pills-band, mp-pills-mid,
+     mp-pills-actions, mp-mid-wrap, mp-bar, mp-opp-hand, mp-opp-pip,
+     mp-opp-hand-label, mp-opp-spread-clip, mp-opp-spread-transform,
+     mp-side-label, mp-action-panel/mp-action-hint/mp-leave-btn/
+     mp-round-label family, plus .card.mp-interaction, mp-action-btn, and
+     mp-ov-btn) stay in mpGame.css/legacy untouched, so that ladder --
+     and the two specificity-tie mechanisms above -- keep resolving
+     exactly as they do today. mpMobile.css and mpFixes.css themselves
+     remain unextracted -- they're entirely on the laddered side of this
+     divide with mpGame.css's remaining core, not split candidates by
+     this same technique.
+
      `drawAnimation` sits BETWEEN legacy and drawers -- it was unextractable
      while drawers.css still lived in legacy (it must WIN the !important tie
      against drawers' reduced-motion .hand .card{animation:none!important},
@@ -299,7 +370,7 @@
      so this file (after legacy) stays later than relicRack regardless.
      Verified via the same full computed-style A/B diff technique, across
      all five mode-transition states plus classic. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
@@ -330,6 +401,7 @@
 <link id="single-player-v2-index" rel="stylesheet" href="src/styles/singlePlayerV2/index.css?v=1">
 <link id="single-player-v2-utility-buttons" rel="stylesheet" href="src/styles/singlePlayerV2/components/utilityButtons.css?v=1">
 <link rel="stylesheet" href="src/styles/mpSinglePlayerIsolation.css?v=1">
+<link rel="stylesheet" href="src/styles/components/mpGameChrome.css?v=1">
 <link rel="stylesheet" href="src/styles/components/relicRack.css?v=1">
 <link rel="stylesheet" href="src/styles/components/handSwipeZone.css?v=1">
 <link rel="stylesheet" href="src/styles/components/tutTip.css?v=1">

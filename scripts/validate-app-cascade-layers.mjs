@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -165,6 +165,48 @@ assert.match(mpSpreadCards.trimEnd(), /\}$/, 'mpSpreadCards.css should close its
 const mpSinglePlayerIsolation = read('../src/styles/mpSinglePlayerIsolation.css');
 assert.match(mpSinglePlayerIsolation, /^@layer mpSinglePlayerIsolation \{/, 'mpSinglePlayerIsolation.css should live in its own mpSinglePlayerIsolation layer');
 assert.match(mpSinglePlayerIsolation.trimEnd(), /\}$/, 'mpSinglePlayerIsolation.css should close its layer wrapper');
+
+// mpGameChrome.css: the fourth crack, a solo/laddered SPLIT of mpGame.css,
+// not a whole-file layer-move. A full selector/property audit found
+// mpGame.css/mpMobile.css/mpFixes.css form a deliberate cross-file
+// responsive-breakpoint cascade (~50 property/selector pairs, mostly
+// important-tier, resolved by source order today) -- the same shape that
+// broke the reverted hand.css extraction. 61 of mpGame.css's 91 rules have
+// no counterpart at all in mpMobile.css/mpFixes.css and moved here. Most
+// are genuinely unconstrained (self-contained .mp-* classes, or already
+// importance-dominant/property-disjoint against their one remaining
+// touch), but three families needed a full computed-style A/B diff (not
+// just static reasoning, which missed all three) to catch:
+//   1. #spread .slot.mp-targetable/.mp-anchored/.mp-silenced/.mp-swap-a/
+//      .mp-swap-pick genuinely needs to stay before legacy, to keep
+//      winning a real specificity fight against ps1aesthetic.css's bare
+//      .slot{border-color:...!important}.
+//   2. .card.mp-interaction is NOT safe to move here: it already loses a
+//      same-layer specificity tie to ps1aesthetic.css's
+//      .card:not(.photo){...!important} via source order today
+//      (pre-existing dead code, confirmed against a true git-checkout
+//      baseline), and relocating it would revive it by swapping that
+//      tie-break for plain layer order.
+//   3. mp-action-btn/mp-ov-btn are NOT safe to move here either, in the
+//      opposite direction from #1: both render as real <button> elements
+//      and need to keep beating market.css's mobile-breakpoint bare
+//      button{font-size:12px;padding:6px 9px} reset via specificity,
+//      which requires AFTER legacy -- the same conflict already
+//      documented above for tutTip.css's #tutSkipBtn.
+// Items 2 and 3 stayed behind in mpGame.css/legacy instead (no single
+// file position satisfies both #1 and #3). The other 32 rules (the
+// laddered core, plus .card.mp-interaction, mp-action-btn, mp-ov-btn)
+// stay in mpGame.css/legacy untouched.
+const mpGameChrome = read('../src/styles/components/mpGameChrome.css');
+assert.match(mpGameChrome, /^@layer mpGameChrome \{/, 'mpGameChrome.css should live in its own mpGameChrome layer');
+assert.match(mpGameChrome.trimEnd(), /\}$/, 'mpGameChrome.css should close its layer wrapper');
+assert.match(html, /components\/mpGameChrome\.css/, 'game.html should load the extracted mpGameChrome component stylesheet');
+assert.doesNotMatch(mpGameChrome, /\.card\.mp-interaction\s*\{/, 'mpGameChrome.css should not own the .card.mp-interaction rule -- it must stay co-resident with ps1aesthetic.css in legacy to preserve its pre-existing dead-code specificity tie');
+assert.doesNotMatch(mpGameChrome, /\.mp-action-btn\s*\{|\.mp-ov-btn\s*\{/, 'mpGameChrome.css should not own mp-action-btn/mp-ov-btn -- they must stay in legacy to keep beating market.css\'s bare button{} reset via specificity');
+assert.doesNotMatch(read('../src/styles/mpGame.css'), /\.mp-persona|\.mp-ov-box/, 'mpGame.css should no longer own the solo chrome rules moved to mpGameChrome.css');
+assert.match(read('../src/styles/mpGame.css'), /\.mp-action-btn\s*\{/, 'mpGame.css should retain the mp-action-btn rule so it stays co-resident with market.css in legacy');
+assert.match(read('../src/styles/mpGame.css'), /\.mp-ov-btn\s*\{/, 'mpGame.css should retain the mp-ov-btn rule so it stays co-resident with market.css in legacy');
+assert.match(read('../src/styles/mpGame.css'), /\.card\.mp-interaction\s*\{/, 'mpGame.css should retain the .card.mp-interaction rule so it stays co-resident with ps1aesthetic.css in legacy');
 
 // relicRack.css: consolidates the relic rack's previously scattered rules
 // (market base, mobile/classic, attic, PS1, and SPv2 mode overrides) into
