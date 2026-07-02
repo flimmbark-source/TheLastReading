@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, hand, legacy, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, hand, legacy, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -25,7 +25,6 @@ assert.ok(
 // cascade-layer importance reverses layer order (see validate-app-important-
 // budget.mjs and the SPv2 cascade validator for the matching SPv2-side story).
 const legacyLayeredFiles = [
-  '../src/styles/hand.css',
   '../src/styles/market.css',
   '../src/styles/mobile.css',
   '../src/styles/attic.css',
@@ -140,6 +139,22 @@ assert.match(assetLazy.trimEnd(), /\}$/, 'assetLazy.css should close its layer w
 const drawAnimation = read('../src/styles/drawAnimation.css');
 assert.match(drawAnimation, /^@layer drawAnimation \{/, 'drawAnimation.css should live in its own drawAnimation layer');
 assert.match(drawAnimation.trimEnd(), /\}$/, 'drawAnimation.css should close its layer wrapper');
+
+// hand.css is split, mainMenu.css-style: the bulk lives in its own `hand`
+// layer before legacy (all real normal-tier interactions need it to keep
+// losing to market.css/mobile.css/the SPv2 bundle still in legacy; its
+// remaining !important rules are value-identical to mobile.css's winners or
+// win via specificity in a way the earlier position preserves). Its one
+// legacy-bound rule -- .card.hint-multi's unscoped !important box-shadow,
+// which must keep losing to mobile.css/market.css spread-side rules via
+// specificity/source order -- stays behind in a small `@layer legacy` block.
+// The dead ability-picked z-index tie-breakers were deleted outright
+// (mobile.css's unconditional 300!important always won; verified via
+// cascade-probe before the deletion commit).
+const hand = read('../src/styles/hand.css');
+assert.match(hand, /@layer hand \{/, 'hand.css should keep its main rules in its own hand layer');
+assert.match(hand, /@layer legacy \{\n\.card\.hint-multi\{/, 'hand.css should keep the unscoped hint-multi box-shadow rule in a residual legacy block');
+assert.doesNotMatch(hand, /\.hand \.card\.ability-picked[^{]*\{[^}]*z-index/, 'hand.css should not reintroduce a hand-card ability-picked z-index (mobile.css owns that outcome; the .spread one is fine)');
 
 // handDragFix.css: its .handDock z-index needs to keep losing to
 // actionDropTargets.css's higher, state-gated z-index in the earlier

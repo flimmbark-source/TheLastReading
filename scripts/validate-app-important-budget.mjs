@@ -35,7 +35,7 @@ const appStyleFiles = [
   '../src/styles/drawAnimation.css',
 ];
 
-const importantBudget = 695;
+const importantBudget = 694;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);
