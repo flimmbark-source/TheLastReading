@@ -275,6 +275,28 @@ Conclusion: clean one-directional extraction. Place `actionDropTargets` before
 did not identify a declaration that depends on candidate source-order winning
 against another legacy normal declaration.
 
+Independently re-verified empirically (git-stash A/B against the pre-extraction
+baseline, real boot flow via Playwright) before trusting this analysis, since
+it's the most state-heavy file extracted so far. One edge case looked risky on
+paper and turned out fine in practice: `drawers.css`'s
+`#menuPullDesk #settingsPanel{z-index:auto!important}` (specificity 2,0,0) and
+this file's `#settingsPanel:not(.hidden){z-index:10091!important}`
+(specificity 1,1,0) target the same element once `gestureDrawers.mjs` moves
+`#settingsPanel` into `#menuPullDesk` on menu-drawer open (`CONTENT =
+{menu:'settingsPanel'}` in that file) -- moving `actionDropTargets` before
+`legacy` flips which one wins on paper (layer order beats specificity for
+`!important` ties). But `menuControls.mjs` only drives that drawer-based
+`toggleMenu` path when `tlrTogglePullTab` is installed, and that path never
+clears `#settingsPanel`'s `.hidden` class -- it's shown via drawers.css's own
+`#menuPullDesk #settingsPanel.hidden{display:flex!important}` override
+instead. So `:not(.hidden)` never matches while the panel is parented in the
+drawer in the app's current wiring; confirmed both by reading the two
+`toggleMenu` implementations and by measuring `getComputedStyle` before and
+after the extraction (`z-index: auto` in both cases). Also confirmed
+identical: dragging-card z-index/pointer-events under
+`body.hand-card-action-drag-active`, empty `#spread .slot` z-index, and
+`.modal.show` z-index.
+
 ## Verification commands
 
 ```
