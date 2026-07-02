@@ -8,7 +8,7 @@ export const singlePlayerV2CascadeSources = [
   ['singlePlayerV2/compat.css', 'composition compatibility'],
   ['singlePlayerV2/components/spreadHints.css', 'component: spread hints and choice polish'],
   ['singlePlayerV2/desktop.css', 'desktop phone-column layout'],
-  ['singlePlayerV2/components/relics.css', 'component: relic placement'],
+  ['singlePlayerV2/components/relics.css', 'component: constellation placement'],
   ['singlePlayerV2/assets.css', 'generated assets'],
   ['singlePlayerV2/layout.css', 'layout pass'],
   ['singlePlayerV2/mobile.css', 'mobile visual fixes'],
@@ -38,7 +38,7 @@ export function buildSinglePlayerV2Cascade() {
    listed in singlePlayerV2ExternalComponentSources are loaded beside it instead
    of being duplicated here. It preserves the previous direct-link cascade order
    while making the active cascade traceable in one file. tokens/utilityIcons/
-   relics/hand/spreadHints own real cascade layers; the remaining sources here still
+   hand/spreadHints own real cascade layers; the remaining sources here still
    live in the app-wide \`legacy\` layer declared in game.html (see that file's
    layer statement for why -- their !important declarations are load-bearing
    against other legacy-layer files elsewhere in the app in ways that aren't
@@ -47,7 +47,7 @@ export function buildSinglePlayerV2Cascade() {
 `];
 
   for (const [fileName, label] of singlePlayerV2CascadeSources) {
-    let css = readFileSync(join(stylesDir, fileName), 'utf8');
+    const css = readFileSync(join(stylesDir, fileName), 'utf8');
     sections.push(`\n/* === ${fileName}: ${label} === */\n${css.trimEnd()}\n`);
   }
 

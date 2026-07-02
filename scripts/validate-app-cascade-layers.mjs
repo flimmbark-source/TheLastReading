@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, relicRack, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, relicRack, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -140,6 +140,16 @@ assert.match(assetLazy.trimEnd(), /\}$/, 'assetLazy.css should close its layer w
 const drawAnimation = read('../src/styles/drawAnimation.css');
 assert.match(drawAnimation, /^@layer drawAnimation \{/, 'drawAnimation.css should live in its own drawAnimation layer');
 assert.match(drawAnimation.trimEnd(), /\}$/, 'drawAnimation.css should close its layer wrapper');
+
+
+// relicRack.css: consolidated after verifying the component's previous cross-file
+// rules (market base, mobile/classic, attic, PS1, and SPv2 mode overrides) in one
+// component stylesheet. It sits after legacy so its normal-tier PS1 filter keeps
+// the former ps1aesthetic source-order win; all competing relic !important rules
+// are now internal to the one relicRack layer and preserve their old source order.
+const relicRack = read('../src/styles/components/relicRack.css');
+assert.match(relicRack, /^@layer relicRack \{/, 'relicRack.css should live in its own relicRack layer');
+assert.match(relicRack.trimEnd(), /\}$/, 'relicRack.css should close its layer wrapper');
 
 // handDragFix.css: its .handDock z-index needs to keep losing to
 // actionDropTargets.css's higher, state-gated z-index in the earlier

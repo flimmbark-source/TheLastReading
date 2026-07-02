@@ -155,7 +155,6 @@ body {
 
 /* ── Desaturate self-contained UI regions (no stacking-context conflict) ── */
 .score-stack { filter: saturate(.68); }
-#relicRack   { filter: saturate(.70) contrast(1.03); }
 #titleWrap   { filter: saturate(.74); }
 #mainMenu    { filter: saturate(.72) contrast(1.04); }
 
