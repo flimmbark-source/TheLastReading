@@ -24,7 +24,7 @@ actually load in:
 
 ```
 @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states,
-       spv2.compat, constellations, dragStability, legacy, handDragFix,
+       spv2.compat, constellations, dragStability, drawAnimation, drawers, ps1aesthetic, assetLazy, legacy, handDragFix,
        performance, screens.main-menu, screens.loadout, screens.matchmaking;
 ```
 
@@ -103,14 +103,18 @@ rather than doing the harder per-selector/per-pair surgery. Only extract
 files that are cleanly one-directional or fully independent. This applies
 every time it comes up, not just once.
 
-## Done so far (4 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
+## Done so far (8 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
 
 | File | Direction | Why |
 |---|---|---|
 | `constellations.css` | before `legacy` | Its own rules are all normal-tier and already lose via specificity to mainMenu.css's boot veil and SPv2's base/relics z-index rules on the same `#constellationPill` element; needs to keep losing. |
 | `dragStability.css` | before `legacy` | Its one rule (`transition:none!important` on `.hand .card.hand-card-dragging`) exists specifically to beat mobile.css's own `!important` transition on the same selector; needs to always win. |
 | `handDragFix.css` | after `legacy` | `.handDock{z-index:26!important}` needs to keep losing to actionDropTargets.css/mpGame.css's higher, state-gated z-index overrides still in legacy; its other rules are uncontested or already dominated by an existing `spv2.components` `!important` rule regardless of position. |
-| `performance.css` | after `legacy` | Its mobile/reduced-motion overrides (`body` background-attachment, `#roomAmbient` animation/opacity/transform) need to keep losing to actionDropTargets.css's SPv2-mode override and ps1aesthetic.css's explicit "re-enable candle glow on mobile" override, both still in legacy. `#ambientFX`/`.mote`/`.slot.res-*` rules checked individually: no real conflict (uncontested, unconditional importance dominance, or identical values). |
+| `performance.css` | after `legacy` | Its mobile/reduced-motion overrides (`body` background-attachment, `#roomAmbient` animation/opacity/transform) need to keep losing to actionDropTargets.css's SPv2-mode override and ps1aesthetic.css's explicit "re-enable candle glow on mobile" override, now in its own earlier layer. `#ambientFX`/`.mote`/`.slot.res-*` rules checked individually: no real conflict (uncontested, unconditional importance dominance, or identical values). |
+| `drawAnimation.css` | before `legacy` | Its `.hand .card.card-draw-dealt` temporary animation state must keep winning legacy `!important` conflicts for animation, z-index, and pointer-events while a deal-in is active (mobile selected/ability/purge states and drawers reduced-motion suppression), but it remains after `spv2.*` so existing SPv2 important-tier hand/card priority is unchanged. |
+| `drawers.css` | before `legacy`, after `drawAnimation` | Its drawer/reference/menu rules need to keep winning legacy `!important` conflicts for hidden reference surfaces, fitted drawer dimensions, and pull-tab presentation; it sits after `drawAnimation` so the temporary deal-in animation still beats drawers' reduced-motion hand-card suppression, and after `spv2.*` to preserve existing SPv2 priority. |
+| `ps1aesthetic.css` | before `legacy` | Its global lofi skin intentionally wins legacy `!important` presentation conflicts for cards, slots, headings, body color/padding, and room ambient effects; its normal-tier rules are unique, same-value, or property-disjoint against the remaining legacy files, so the before-legacy placement preserves the important-tier wins without flipping normal-tier behavior. |
+| `assetLazy.css` | before `legacy` | Its attic-only background-image toggles need to keep winning the `!important` tier against `attic.css`: default heavy scene images are stripped, then restored only while attic transition/mode classes are active. It has no normal-tier legacy conflicts. |
 
 Also handled earlier (before this session, same branch): `loadout.css`,
 `matchmaking.css`, and part of `mainMenu.css` were split out as fully
@@ -140,15 +144,7 @@ list.
 Remaining files still in the shared `legacy` layer, in the order they'll be
 attempted (skip-ahead rule applies throughout):
 
-- `drawAnimation.css` — **investigation in progress, no edits made.** Its
-  `.hand .card.card-draw-dealt` rule (animation/z-index/pointer-events, all
-  `!important`) was being checked against hand.css/market.css's
-  `.sel`/`.ability-picked`/`.purge-picked` z-index rules (999/1000, also
-  `!important`) and market.css's ungated `.hand .card:not(...)` wave
-  animation (normal tier, so already dominated regardless of layer). Not
-  yet concluded one-directional or mixed; pick this back up first.
-- `drawers.css`
-- `ps1aesthetic.css`
+- `attic.css`
 - `actionDropTargets.css`
 - `market.css`
 - `mobile.css`

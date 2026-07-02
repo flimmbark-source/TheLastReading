@@ -1,4 +1,4 @@
-@layer legacy {
+@layer drawAnimation {
 .hand .card.card-draw-dealt{
   animation:tlr-card-deal-in 560ms cubic-bezier(.18,.78,.2,1.02) var(--draw-delay,0ms) both!important;
   z-index:10043!important;
