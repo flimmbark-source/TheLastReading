@@ -1,11 +1,12 @@
 /* AUTO-GENERATED FILE. Do not edit directly.
 
    Run `node scripts/generate-single-player-v2-cascade.mjs` after changing any
-   source stylesheet listed below. The generated file is the only stylesheet
-   game.html and the runtime installer should load for Single Player V2. It
-   preserves the previous direct-link cascade order while making the active
-   cascade traceable in one file. tokens/utilityIcons/utilityButtons/relics/
-   hand/spreadHints own real cascade layers; the remaining sources here still
+   bundled source stylesheet listed below. This generated file is the checked-in,
+   authoritative bundle for legacy SPv2 source partials. Component-owned files
+   listed in singlePlayerV2ExternalComponentSources are loaded beside it instead
+   of being duplicated here. It preserves the previous direct-link cascade order
+   while making the active cascade traceable in one file. tokens/utilityIcons/
+   relics/hand/spreadHints own real cascade layers; the remaining sources here still
    live in the app-wide `legacy` layer declared in game.html (see that file's
    layer statement for why -- their !important declarations are load-bearing
    against other legacy-layer files elsewhere in the app in ways that aren't
@@ -3764,31 +3765,6 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     body.single-player-v2.generated-sheet-ready #discardBtn:active,
     body.single-player-v2.generated-sheet-ready #purgeBtn:active {
       transform: translateY(1px) scale(0.94) !important;
-    }
-  }
-}
-
-
-/* === singlePlayerV2/components/utilityButtons.css: component: utility button visibility === */
-@layer spv2.components {
-  /* Single Player V2 mobile utility button visibility contract.
-
-     Keep display ownership for the utility medallions in one component: Menu,
-     Scoring, Abilities, and Archive are visible utilities; Mulligan remains the
-     hidden legacy button. Art and pressed-state styling still live in the
-     generated art/icon source sections until those rules are migrated here. */
-  @media (max-width: 640px) {
-    body.single-player-v2.generated-sheet-ready #mullBtn {
-      display: none !important;
-    }
-
-    body.single-player-v2.generated-sheet-ready #scoringBtn,
-    body.single-player-v2.generated-sheet-ready #abilitiesBtn,
-    body.single-player-v2.generated-sheet-ready #menuBtn {
-      display: block !important;
-      width: clamp(44px, 11.5vw, 56px) !important;
-      height: clamp(44px, 11.5vw, 56px) !important;
-      border-radius: 50% !important;
     }
   }
 }
