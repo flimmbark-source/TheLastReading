@@ -4,15 +4,6 @@
    to preserve the cascade. Some sections span themes because order wins over purity. */
 :root{--inv-h:300px}
 body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!important}
-#invWrap{position:fixed;top:0;left:0;right:0;z-index:150;transform:translateY(calc(-1 * var(--inv-h)));transition:transform .45s cubic-bezier(.34,1.28,.64,1);pointer-events:none}
-/* See drawers.css for why this needs to clear .spread-wrap's scorePreview-driven z-index:10060. */
-#invWrap.open{transform:translateY(0);pointer-events:auto;z-index:10095!important}
-#invDesk{height:var(--inv-h);background:linear-gradient(180deg,#0e0704 0%,#1c1008 55%,#150d06 100%);border-bottom:2px solid #6a4c24;position:relative;overflow:hidden;pointer-events:auto}
-#invDesk::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 50% 110%,rgba(90,45,5,.35),transparent 65%);pointer-events:none;z-index:0}
-#invDesk::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px),repeating-linear-gradient(0deg,rgba(255,200,80,.012) 0,rgba(255,200,80,.012) 1px,transparent 1px,transparent 64px);pointer-events:none;z-index:0}
-#invTab{position:absolute;top:var(--inv-h);left:calc(50% - 40px);width:80px;height:28px;background:linear-gradient(180deg,#2e1e0e,#1e1208);border:1px solid #6a4c24;border-top:none;border-radius:0 0 10px 10px;cursor:grab;color:#a07838;font-size:10px;font-weight:700;letter-spacing:.07em;text-align:center;line-height:28px;pointer-events:auto;transition:background .15s,color .15s,box-shadow .15s;padding:0;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.5);touch-action:none;user-select:none}
-#invTab:hover{background:linear-gradient(180deg,#3e2814,#281810);color:#ffd978;box-shadow:0 4px 14px rgba(0,0,0,.6)}
-#invTab:active{cursor:grabbing}
 .inv-item{position:absolute;cursor:grab;user-select:none;touch-action:none;z-index:1;transition:box-shadow .12s;will-change:transform}
 .inv-item:active{cursor:grabbing}
 .inv-item-paper{width:84px;background:linear-gradient(160deg,#ede2be,#d6c488);border:1px solid #9c7c30;border-radius:2px;padding:8px 7px 8px;box-shadow:2px 5px 14px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,255,255,.28);display:flex;flex-direction:column;align-items:center;gap:5px;position:relative}

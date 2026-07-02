@@ -105,7 +105,7 @@ rather than doing the harder per-selector/per-pair surgery. Only extract
 files that are cleanly one-directional or fully independent. This applies
 every time it comes up, not just once.
 
-## Done so far (14 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
+## Done so far (16 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
 
 Three methods are in play now, noted per row: **layer-move** (rename the
 file's `@layer legacy {` and place the new layer before/after `legacy`,
@@ -118,7 +118,10 @@ never scattered — they already lived together in one `legacy` file — so
 the extraction is just moving that self-contained block into its own
 file/layer; same empirical-verification requirement as the other two,
 since the file it came from can still hold *other*, unrelated rules that
-compete with it).
+compete with it). `invWrap.css`/`invTab.css` below is a fourth variant:
+**pulled whole, split in two** — the same technique as tutTip, but the
+gathered rules turned out to need opposite layer directions, so one
+component became two files/layers instead of one.
 
 | File | Method | Direction | Why |
 |---|---|---|---|
@@ -136,6 +139,7 @@ compete with it).
 | `components/relicRack.css` | consolidation | before `legacy` | Gathers the relic rack's base market rules, classic/mobile patch, attic mobile row patch, PS1 tone, and SPv2 mobile override — previously scattered across `market.css`, `mobile.css`, `attic.css`, `ps1aesthetic.css`, and `singlePlayerV2/components/relics.css` — into one file in their original effective order, then removes every one of those scattered originals. **First placed after `legacy` (assumed unconstrained since the scattered competition was gone); this was wrong** — attic.css's mode-gated `filter:blur()` on `#relicRack` (still in `legacy`) needs to keep winning over the consolidated file's own unconditional `filter:saturate()`, previously decided by attic's higher specificity within the shared layer. Placing the new layer after `legacy` let normal-tier layer order override that specificity instead, flipping the computed filter during `body.mode-attic` from `blur(3px)` to `saturate(.7) contrast(1.03)` — caught via a git-checkout A/B against the pre-consolidation commit, not by re-reading the code, and fixed by moving to before `legacy`. Probed with `scripts/probes/relicRackCascadeProbe.mjs`. |
 | `components/handSwipeZone.css` | consolidation | before `legacy` | Same technique: gathers the classic hand swipe surface, PS1 float offset, attic tutorial hint geometry, and lower swipe-capture extension — previously scattered across `mobile.css`, `ps1aesthetic.css`, `attic.css`, `handDragFix.css` — into one file in original order, then removes the scattered originals. **Also first placed after `legacy`, also wrong, same root cause:** mpMobile.css's `mp-game-active`-only height/bottom override (still in `legacy`) needs to keep losing to the consolidated file's ID-specific mobile-breakpoint rule; placing the layer after `legacy` let mpMobile.css win via layer order instead, changing computed height/bottom in plain multiplayer mode (no SPv2) from `97px`/`152px` to `46px`/`130px`, and separately let mpFixes.css's mp-mode hint-hiding rule beat the tutorial hint's ID-specific default the same way, making all three swipe-hint-line steps render at once instead of just the active one. Both fixed by the same before-`legacy` move; z-index was untouched either way (only ever set at normal-tier on the bare class inside the file, so `!important` always won regardless of position). Probed with `scripts/probes/handSwipeZoneCascadeProbe.mjs` across classic mobile/desktop, attic tutorial hints (in progress and completed), SPv2 mobile, and MP+SPv2 mobile samples (the last of which turned out to be an unreachable transient state — `body.mp-game-active` and `body.single-player-v2` are mutually exclusive at runtime via a class guard). |
 | `components/tutTip.css` | pulled whole | after `legacy` (opposite direction from its siblings) | The `#tutTip` tutorial popover cluster was never scattered — it already lived together in `market.css` — so this was a whole-block move, not a gather. Most remaining touches are safe regardless of layer position (mpGame.css's `display:none!important`, actionDropTargets.css's `z-index:10130!important`, mainMenu.css's boot-veil `visibility`/`pointer-events`/`transition` are each either importance-dominant or a disjoint property) — but one is not: market.css's own mobile-breakpoint `button{font-size:12px;padding:6px 9px}` reset (still in `legacy`) needs to keep *losing* to `#tutSkipBtn`'s higher ID-based specificity, previously decided inside the shared layer. **First placed before `legacy` (mirroring relicRack/handSwipeZone, on the assumption the position was unconstrained) — wrong, but the opposite failure mode from those two:** relicRack/handSwipeZone each needed `legacy` to keep winning against them; tutTip needed *itself* to keep winning against `legacy`'s generic reset. Before `legacy`, layer order let the low-specificity `button{}` rule beat the ID-specific `#tutSkipBtn` rule outright, changing its computed `font-size`/`padding` from `11px`/`3px 8px` to `12px`/`6px 9px` and growing the popover's total height from `134px` to `144px` — caught via a full computed-style diff (every property on `#tutTip` and its children, not a hand-picked subset) against a git-checkout-A/B pre-extraction baseline, after two rounds of guessing individual properties failed to find it. Fixed by moving to after `legacy` instead; checked for the reverse risk (some legacy rule needing to win against tutTip's own low-specificity `.tut-arrow`/`.tut-foot`/`.tut-tap-prompt` selectors) and found no bare `span{}`/`div{}`/`p{}` reset anywhere in `legacy` that would compete. |
+| `components/invWrap.css` + `components/invTab.css` | pulled whole, split in two | `invWrap` before `legacy`; `invTab` after `legacy` | The archive/inventory drawer (`#invWrap`/`#invDesk`) and its pull-tab (`#invTab`), pulled whole out of `mobile.css`'s base rules and `attic.css`'s mode-transition important-tier block — audited first (see "audited candidates" below) as a single "invWrap cluster" candidate, but that shape didn't survive contact with the actual rules. Two independent, opposite-direction constraints turned up: attic.css's shared 7-element mode-transition fade rule (still in `legacy`, also covers `#titleWrap`/`.score-stack`/`.spread-wrap`/`.handDock`/`#relicRack`/`.refs-layer` — so it can't be absorbed into either new file without duplicating a rule that isn't invWrap's alone) sets a normal-tier `transition` value on `#invWrap` that must keep winning via its higher specificity over `#invWrap`'s own base `transition:transform .45s...`, requiring `invWrap` *before* `legacy` (relicRack/handSwipeZone's direction) — while market.css's mobile-breakpoint `button{font-size:12px;padding:6px 9px}` reset (still in `legacy`) must keep losing to `#invTab`'s higher ID-based specificity, requiring `invTab` *after* `legacy` (tutTip's direction, the same failure mode `#tutSkipBtn` hit). One file could not satisfy both, so the pair was split before either shipped with a first-attempt regression the way the other three pilots did. Verified via a full computed-style A/B diff (every property, all three elements — `#invWrap`/`#invTab`/`#invDesk`) across seven states (classic closed/open, and all five attic mode-transition classes). First pass at a 60ms post-transition sample showed `transform`/`opacity`/`filter` diffs on `#invWrap` — re-run at a 1.5s settled-state wait (past the fade's full duration) came back byte-for-byte identical, confirming those were mid-animation sampling noise (same class of false-positive as the doc's other two documented cases), not a regression; the `transition` property itself and every `#invTab` property matched at both wait lengths, which was the actual signal. |
 
 Also handled earlier (before this session, same branch): `loadout.css`,
 `matchmaking.css`, and part of `mainMenu.css` were split out as fully
@@ -655,28 +659,32 @@ handSwipeZone, and tutTip each shipped a first-attempt regression:
    the affected elements, not a hand-picked subset (lesson 7), since the
    property that actually differs is often not the one you'd guess.
 
-## Component consolidation pilots — audited candidates (not yet extracted)
+## Component consolidation pilots — audited candidates
 
 Three follow-on candidates were audited against this checklist before
 picking a next pilot. Two failed gate 2; one partially passed with a
-narrower scope than first assumed.
+narrower scope than first assumed and has since shipped (see the Done
+table above for `components/invWrap.css` + `components/invTab.css`).
 
-- **`#invWrap` attic-mode cluster — partially viable, narrower than
-  expected.** `attic.css` has a genuinely `#invWrap`-only block (its
-  `!important` transform/pointer-events/z-index during the four
-  mode-transition states) that's cleanly gatherable on its own, together
-  with `mobile.css`'s base `#invWrap`/`.open`/`tlr-loading` rules. But
-  the mode-gated *fade* (opacity/filter/transform) that "attic-mode
-  cluster" implies isn't `#invWrap`'s alone — it's one shared
-  comma-selector rule (`attic.css` lines 12–15, 140) that also fades
-  `#titleWrap`, `.score-stack`, `.spread-wrap`, `.handDock`, `#relicRack`
-  (already its own layer), and `.refs-layer` in the same declaration.
-  Gathering just `#invWrap`'s share would mean duplicating that rule —
-  the checklist's gate 2 failure. The real next pilot here is the
-  narrower cut: the `!important`-only block plus `mobile.css`'s rules,
-  leaving the shared fade rule in `legacy` untouched (its `transform` on
-  `#invWrap` is already dead there, dominated by the `!important` block,
-  so nothing is lost).
+- **`#invWrap` attic-mode cluster — shipped as two files, and the audit
+  undersold the real complexity.** The narrower cut identified here
+  (`attic.css`'s `#invWrap`-only important-tier block plus `mobile.css`'s
+  base rules) was correctly gatherable, but this audit only checked
+  `transform`/`pointer-events`/`z-index` for entanglement with the shared
+  7-element fade rule and missed `transition` — the shared rule's
+  higher-specificity `transition` value on `#invWrap` needed to keep
+  beating the gathered file's own base `transition:transform .45s...`,
+  which the important-tier block doesn't touch at all (only importance
+  dominance was checked; the normal-tier `transition` property was not).
+  That forced `invWrap` before `legacy`. Separately, `#invTab`'s own
+  font-size/padding turned out to need the opposite direction (after
+  `legacy`, to keep beating market.css's mobile `button{}` reset) — a
+  conflict this audit never went looking for because "the invWrap
+  cluster" was still being treated as one candidate at audit time. Lesson:
+  an audit's job is to establish *whether* a candidate is shaped right,
+  not to enumerate every constraint — still do the full checklist search
+  once you commit to extracting, even for a candidate the audit called
+  narrow. See the Done table entry above for the full before/after story.
 - **`#titleWrap`/`.score-stack` filter cluster — fails gate 2 as scoped.**
   Unlike `#invWrap`, these two have no selector-specific carve-out
   anywhere — their entire attic-mode behavior *is* that same shared

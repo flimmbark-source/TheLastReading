@@ -193,8 +193,29 @@
      the reverse risk too: no other legacy-resident rule (no bare span{}/
      div{}/p{} reset) competes with tutTip's own low-specificity selectors
      (.tut-arrow/.tut-foot/.tut-tap-prompt), so moving it after legacy
-     doesn't let it wrongly override anything else. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, legacy, tutTip, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+     doesn't let it wrongly override anything else.
+
+     `invWrap`/`invTab` (src/styles/components/invWrap.css,
+     src/styles/components/invTab.css) are the archive/inventory drawer and
+     its pull-tab, consolidated out of mobile.css's base rules and
+     attic.css's mode-transition important-tier block. They could not stay
+     one file: attic.css's shared 7-element mode-transition fade rule
+     (still in legacy -- also covers #titleWrap/.score-stack/.spread-wrap/
+     .handDock/#relicRack/.refs-layer, so it can't be absorbed without
+     duplicating a rule that isn't invWrap's alone) sets a normal-tier
+     `transition` value on #invWrap that must keep winning via its higher
+     specificity over invWrap's own base `transition:transform .45s...`,
+     requiring invWrap BEFORE legacy (same direction as relicRack/
+     handSwipeZone) -- while market.css's mobile-breakpoint
+     `button{font-size:12px;padding:6px 9px}` reset (still in legacy) must
+     keep losing to #invTab's higher ID-based specificity, requiring invTab
+     AFTER legacy (same direction as tutTip, and the same failure mode
+     tutTip hit with #tutSkipBtn). One file could not satisfy both
+     directions, so the pair was split. Verified via a full computed-style
+     A/B diff against the pre-extraction baseline for both files together
+     (identical before/after, including mid-transition sampling for the
+     attic fade). */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
@@ -228,6 +249,8 @@
 <link rel="stylesheet" href="src/styles/components/relicRack.css?v=1">
 <link rel="stylesheet" href="src/styles/components/handSwipeZone.css?v=1">
 <link rel="stylesheet" href="src/styles/components/tutTip.css?v=1">
+<link rel="stylesheet" href="src/styles/components/invWrap.css?v=1">
+<link rel="stylesheet" href="src/styles/components/invTab.css?v=1">
 </head>
 <body class="tlr-loading">
 <div id="roomAmbient"></div>

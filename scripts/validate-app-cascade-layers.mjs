@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, legacy, tutTip, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, legacy, tutTip, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -206,6 +206,34 @@ assert.match(tutTip, /^@layer tutTip \{/, 'tutTip.css should live in its own tut
 assert.match(tutTip.trimEnd(), /\}$/, 'tutTip.css should close its layer wrapper');
 assert.match(html, /components\/tutTip\.css/, 'game.html should load the extracted tutTip component stylesheet');
 assert.doesNotMatch(read('../src/styles/market.css'), /#tutTip\{position:fixed/, 'market.css should no longer own the tutTip popover rules');
+
+// invWrap.css / invTab.css: the archive/inventory drawer and its pull-tab,
+// consolidated out of mobile.css's base rules and attic.css's
+// mode-transition important-tier block. Could not stay one file: attic.css's
+// shared 7-element mode-transition fade rule (still in legacy -- also
+// covers #titleWrap/.score-stack/.spread-wrap/.handDock/#relicRack/
+// .refs-layer, so it can't be absorbed without duplicating a rule that
+// isn't invWrap's alone) sets a normal-tier `transition` value on #invWrap
+// that must keep winning via its higher specificity over invWrap's own
+// base `transition:transform .45s...`, requiring invWrap BEFORE legacy
+// (same direction as relicRack/handSwipeZone) -- while market.css's
+// mobile-breakpoint `button{font-size:12px;padding:6px 9px}` reset (still
+// in legacy) must keep losing to #invTab's higher ID-based specificity,
+// requiring invTab AFTER legacy (same direction as tutTip, and the same
+// failure mode tutTip hit with #tutSkipBtn). One file could not satisfy
+// both directions, so the pair was split before either shipped with a
+// first-attempt regression like the earlier three pilots did.
+const invWrap = read('../src/styles/components/invWrap.css');
+assert.match(invWrap, /^@layer invWrap \{/, 'invWrap.css should live in its own invWrap layer');
+assert.match(invWrap.trimEnd(), /\}$/, 'invWrap.css should close its layer wrapper');
+assert.match(html, /components\/invWrap\.css/, 'game.html should load the extracted invWrap component stylesheet');
+const invTab = read('../src/styles/components/invTab.css');
+assert.match(invTab, /^@layer invTab \{/, 'invTab.css should live in its own invTab layer');
+assert.match(invTab.trimEnd(), /\}$/, 'invTab.css should close its layer wrapper');
+assert.match(html, /components\/invTab\.css/, 'game.html should load the extracted invTab component stylesheet');
+assert.doesNotMatch(read('../src/styles/mobile.css'), /#invWrap\{position:fixed/, 'mobile.css should no longer own the invWrap base geometry');
+assert.doesNotMatch(read('../src/styles/mobile.css'), /#invTab\{position:absolute/, 'mobile.css should no longer own the invTab base geometry');
+assert.doesNotMatch(read('../src/styles/attic.css'), /#invWrap,\nbody\.mode-attic #invWrap,/, 'attic.css should no longer own the invWrap-only mode-transition block (its shared 7-element fade rule mentioning #invWrap inline is expected to remain)');
 
 // drawAnimation.css: must WIN the !important tie against drawers.css's
 // reduced-motion .hand .card{animation:none!important} (so its deal-in fade
