@@ -263,6 +263,20 @@ chain's unextractable middle (`hand`, `market`, `mobile`, `attic`,
 `ps1aesthetic`), the multiplayer cluster, and the 10 SPv2 files whose
 eventual home is the `spv2.*` tiers rather than a new standalone layer.
 
+**Narrowing what "structural wall" means.** The skip verdicts above are
+about whole-file moves — "can this entire file get one `before`/`after
+legacy` position" — and that verdict stands: `market.css`, `mobile.css`,
+`attic.css`, `hand.css`, and `ps1aesthetic.css` are not single-position
+files. But `relicRack.css`, `handSwipeZone.css`, and `tutTip.css` prove
+that a *component-shaped selector cluster inside* one of those files can
+still be extractable even when the whole file isn't — because gathering
+just that cluster into its own file resolves its internal specificity
+ladder without needing to move anything it doesn't own. So the wall is
+terminal for plain file-level layer-moves, not for mining those files for
+further component-shaped subgraphs — see "Component consolidation
+pilots" below for the audited candidates and why not all of them turned
+out to qualify.
+
 ## Re-examine skips after every extraction
 
 `drawAnimation.css` proved that "mixed-direction" is relative to the
@@ -612,6 +626,77 @@ the same layer, and silently start winning once the block moves to a
 layer with the wrong relative position. "Never scattered" is not the same
 as "unconstrained" — check every remaining rule in the source file too,
 not just the other files that used to touch the component.
+
+### Component pilot checklist
+
+Every consolidation or pulled-whole pilot needs all six of these before
+it counts as done — skipping any one of them is exactly how relicRack,
+handSwipeZone, and tutTip each shipped a first-attempt regression:
+
+1. **Inventory** every selector and property being moved, across every
+   file that currently declares them.
+2. **Confirm self-containment** — the component's rules describe one UI
+   concept and can be gathered into one file without duplicating a rule
+   that also governs elements outside the component (see the audited
+   candidates below for a case where this gate fails).
+3. **Preserve original effective order** inside the new file, so
+   intra-file specificity/source-order resolves priority the same way
+   cross-file specificity used to.
+4. **Search every remaining reference** to the moved selectors — not just
+   the files the rules came from, but the multiplayer cluster and the
+   `spv2.*`-layer files too (lesson 5 above).
+5. **Derive the new layer's position** (before or after `legacy`) from
+   that search — for each remaining competitor, does the component need
+   to keep winning or keep losing against it? There is no default-safe
+   side; relicRack/handSwipeZone needed `legacy` to keep winning, tutTip
+   needed itself to keep winning.
+6. **Run a real A/B probe** against a pre-extraction baseline (git-stash
+   or git-checkout, per lesson 4) — diff every computed-style property on
+   the affected elements, not a hand-picked subset (lesson 7), since the
+   property that actually differs is often not the one you'd guess.
+
+## Component consolidation pilots — audited candidates (not yet extracted)
+
+Three follow-on candidates were audited against this checklist before
+picking a next pilot. Two failed gate 2; one partially passed with a
+narrower scope than first assumed.
+
+- **`#invWrap` attic-mode cluster — partially viable, narrower than
+  expected.** `attic.css` has a genuinely `#invWrap`-only block (its
+  `!important` transform/pointer-events/z-index during the four
+  mode-transition states) that's cleanly gatherable on its own, together
+  with `mobile.css`'s base `#invWrap`/`.open`/`tlr-loading` rules. But
+  the mode-gated *fade* (opacity/filter/transform) that "attic-mode
+  cluster" implies isn't `#invWrap`'s alone — it's one shared
+  comma-selector rule (`attic.css` lines 12–15, 140) that also fades
+  `#titleWrap`, `.score-stack`, `.spread-wrap`, `.handDock`, `#relicRack`
+  (already its own layer), and `.refs-layer` in the same declaration.
+  Gathering just `#invWrap`'s share would mean duplicating that rule —
+  the checklist's gate 2 failure. The real next pilot here is the
+  narrower cut: the `!important`-only block plus `mobile.css`'s rules,
+  leaving the shared fade rule in `legacy` untouched (its `transform` on
+  `#invWrap` is already dead there, dominated by the `!important` block,
+  so nothing is lost).
+- **`#titleWrap`/`.score-stack` filter cluster — fails gate 2 as scoped.**
+  Unlike `#invWrap`, these two have no selector-specific carve-out
+  anywhere — their entire attic-mode behavior *is* that same shared
+  7-element rule. There's no way to extract "just titleWrap/score-stack"
+  without either duplicating the shared rule (drift risk) or extracting
+  the whole 7-element fade concern as one pilot — which would also mean
+  reconciling with the already-shipped `relicRack.css`, since `#relicRack`
+  is one of the seven targets and its fade behavior currently still lives
+  in `attic.css`, separate from `relicRack.css`'s own filter rule. Bigger
+  scope than a single pilot; not recommended next.
+- **`hand.css` state-card ladder — real, but the largest and riskiest by
+  far; confirmed hardest.** `.sel`/`.ability-picked`/`.ability-target`/
+  `.press-highlight`/`.hint-card`/`.hint-complete`/`.hint-multi`/
+  `.purge-picked` combos are declared across `hand.css` (base),
+  `market.css` (≤640px override, different pixel values, not just
+  duplicates), and `mobile.css` (its own overlapping set) — dozens of
+  selector blocks with three breakpoint/file tiers apiece. This is the
+  exact ladder that broke the original reverted `hand.css` attempt; any
+  future pass needs the full state × breakpoint × mode matrix verified,
+  not a sample. Last in line if attempted at all.
 
 ## Dead-declaration candidate scanner
 
