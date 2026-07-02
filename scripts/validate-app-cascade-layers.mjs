@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, legacy, handDragFix, performance, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, legacy, handDragFix, performance, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, drawAnimation, drawers, ps1aesthetic, assetLazy, legacy, handDragFix, performance, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, drawAnimation, drawers, ps1aesthetic, assetLazy, legacy, handDragFix, performance, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -32,17 +32,13 @@ const legacyLayeredFiles = [
   '../src/styles/market.css',
   '../src/styles/mobile.css',
   '../src/styles/attic.css',
-  '../src/styles/drawers.css',
   '../src/styles/mpGame.css',
   '../src/styles/mpMobile.css',
   '../src/styles/mpSpreadCards.css',
   '../src/styles/mpFixes.css',
   '../src/styles/mpMultMobile.css',
-  '../src/styles/assetLazy.css',
-  '../src/styles/ps1aesthetic.css',
   '../src/styles/mpSinglePlayerIsolation.css',
   '../src/styles/actionDropTargets.css',
-  '../src/styles/drawAnimation.css',
   '../src/styles/singlePlayerV2/base.css',
   '../src/styles/singlePlayerV2/compat.css',
   '../src/styles/singlePlayerV2/desktop.css',
@@ -80,6 +76,45 @@ const dragStability = read('../src/styles/dragStability.css');
 assert.match(dragStability, /^@layer dragStability \{/, 'dragStability.css should live in its own dragStability layer');
 assert.match(dragStability.trimEnd(), /\}$/, 'dragStability.css should close its layer wrapper');
 
+// drawAnimation.css: its temporary .card-draw-dealt state must keep
+// beating same-element legacy !important rules while deal-in animation is
+// active: mobile.css selected/ability/purge card z-index, drawers.css
+// reduced-motion animation suppression, and hand/card pointer behavior. It
+// stays after spv2.* so SPv2 important-tier hand/card rules retain their
+// existing priority, but before legacy so it wins these legacy fights.
+const drawAnimation = read('../src/styles/drawAnimation.css');
+assert.match(drawAnimation, /^@layer drawAnimation \{/, 'drawAnimation.css should live in its own drawAnimation layer');
+assert.match(drawAnimation.trimEnd(), /\}$/, 'drawAnimation.css should close its layer wrapper');
+
+// drawers.css: the pull drawers need to keep winning legacy !important
+// conflicts for hidden reference surfaces, fitted drawer dimensions, and
+// menu/reference presentation. It sits after drawAnimation so drawAnimation's
+// reduced-motion deal-in animation still wins over drawers' broad
+// `@media(prefers-reduced-motion)` hand-card suppression, and after spv2.*
+// so existing SPv2 important-tier drawer/control priority is unchanged.
+const drawers = read('../src/styles/drawers.css');
+assert.match(drawers, /^@layer drawers \{/, 'drawers.css should live in its own drawers layer');
+assert.match(drawers.trimEnd(), /\}$/, 'drawers.css should close its layer wrapper');
+
+// ps1aesthetic.css: this global lofi skin intentionally wins legacy
+// important-tier presentation conflicts for cards, slots, headings, body
+// color/padding, and room ambient effects. Its normal-tier declarations are
+// unique, same-value, or property-disjoint in the remaining legacy files, so
+// declaring it before legacy preserves the important-tier wins without
+// changing normal-tier outcomes.
+const ps1aesthetic = read('../src/styles/ps1aesthetic.css');
+assert.match(ps1aesthetic, /^@layer ps1aesthetic \{/, 'ps1aesthetic.css should live in its own ps1aesthetic layer');
+assert.match(ps1aesthetic.trimEnd(), /\}$/, 'ps1aesthetic.css should close its layer wrapper');
+
+// assetLazy.css: this attic-specific helper intentionally wins the
+// important-tier background-image toggles against attic.css: default scene
+// images are stripped, then restored only while attic transition/mode classes
+// are active. It has no normal-tier legacy conflicts, so declaring it before
+// legacy preserves the image-loading behavior without flipping other rules.
+const assetLazy = read('../src/styles/assetLazy.css');
+assert.match(assetLazy, /^@layer assetLazy \{/, 'assetLazy.css should live in its own assetLazy layer');
+assert.match(assetLazy.trimEnd(), /\}$/, 'assetLazy.css should close its layer wrapper');
+
 // handDragFix.css: its .handDock z-index needs to keep losing to
 // actionDropTargets.css/mpGame.css's higher, state-gated z-index overrides
 // in legacy. Its other declarations either have no competing declaration
@@ -94,7 +129,7 @@ assert.match(handDragFix.trimEnd(), /\}$/, 'handDragFix.css should close its lay
 // performance.css: its mobile/reduced-motion overrides need to keep losing to
 // actionDropTargets.css's SPv2-mode background-attachment override and to
 // ps1aesthetic.css's explicit "re-enable candle glow on mobile" override,
-// both still in legacy. Declared AFTER `legacy` on purpose, same direction as
+// now in its own earlier layer. Declared AFTER `legacy` on purpose, same direction as
 // handDragFix; the assertion above already locks that relative order in.
 const performance_ = read('../src/styles/performance.css');
 assert.match(performance_, /^@layer performance \{/, 'performance.css should live in its own performance layer');

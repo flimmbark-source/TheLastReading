@@ -50,12 +50,38 @@
      mobile/reduced-motion overrides (body background-attachment, #roomAmbient
      animation/opacity/transform) need to keep losing to actionDropTargets.css's
      SPv2-mode background-attachment override and to ps1aesthetic.css's
-     explicit "re-enable candle glow on mobile" override, both still in
-     legacy. Its #ambientFX/.mote/.slot.res-* rules either have no competing
+     explicit "re-enable candle glow on mobile" override (now in the
+     ps1aesthetic layer before legacy). Its #ambientFX/.mote/.slot.res-* rules either have no competing
      declaration, are already dominated unconditionally (their target
      properties are !important here against a plain normal-tier rule
-     elsewhere), or match the competing value exactly -- checked individually. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, legacy, handDragFix, performance, screens.main-menu, screens.loadout, screens.matchmaking;
+     elsewhere), or match the competing value exactly -- checked individually.
+
+     `drawAnimation` is declared BEFORE legacy so its temporary deal-in
+     state keeps winning legacy !important conflicts while the animation is
+     active: it must suppress hand/card idle or reduced-motion animation,
+     force pointer-events:none, and lift dealt cards above mobile selected or
+     ability/purge card z-index rules. It remains AFTER spv2.* so existing
+     SPv2 important-tier hand/card rules still keep their previous priority.
+
+     `drawers` is also BEFORE legacy, but deliberately AFTER drawAnimation:
+     its drawer chrome needs to keep winning legacy !important overrides for
+     hidden reference panels, fitted drawer geometry, and pull-tab/menu
+     presentation, while drawAnimation must still outrank drawers' reduced-
+     motion hand-card animation suppression during the temporary deal-in
+     state. It remains after spv2.* to preserve the existing SPv2 priority.
+
+     `ps1aesthetic` is BEFORE legacy because its lofi theme is a deliberate
+     app-wide skin: important-tier card, slot, heading, body, and ambient
+     declarations must keep overriding the remaining legacy presentation
+     rules, including performance's later mobile ambient suppression. Its
+     normal-tier rules are either unique, same-value, or non-conflicting.
+
+     `assetLazy` is BEFORE legacy so its attic background-image toggles keep
+     winning over attic.css's scene background declarations in the important
+     tier: the file first strips heavyweight images, then restores them only
+     while attic transition/mode classes are active. Its selectors are
+     attic-specific and do not need normal-tier priority over legacy. */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, drawAnimation, drawers, ps1aesthetic, assetLazy, legacy, handDragFix, performance, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
