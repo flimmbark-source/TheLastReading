@@ -173,15 +173,31 @@ Once actually checked per-interaction, every reuse was one-directional
   app's reducer structurally clears selection/ability/purge state in the
   same dispatch that precedes any queued draw animation, so those classes
   never co-occur with `.card-draw-dealt` on the same card.)
-- `hand.css` — needs `market.css`/`mobile.css` to win several normal-tier
-  ties (`.card` sizing, `.handDock` height, `.hand .card` transition timing,
-  `.spread .card.ability-disabled`, `.card.ability-target` box-shadow,
-  `.card[data-hint]::after` sizing, hint-glow box-shadow radii), which
-  requires hand's new layer **before** `legacy`, while also needing
-  `market.css`/`mobile.css` to win two `!important` ties (`.hand .card.sel`
-  z-index 999 vs market's 1000; `.hand .card.ability-picked` z-index 1000 vs
-  mobile's unconditional 300), which requires hand's new layer **after**
-  `legacy` — opposite placements, same shape as the others.
+- `hand.css` — **an extraction was attempted and REVERTED; do not retry
+  without solving the specificity-ladder problem below.** The original
+  mixed-direction verdict (normal-tier sizing must lose to market/mobile →
+  before `legacy`; `!important` z-index ties must lose → after `legacy`)
+  was partially resolved by declaration surgery: the `.ability-picked`
+  z-index tie-breakers were provably dead and deleted (that deletion
+  STANDS — mobile.css's unconditional `z-index:300!important` always won;
+  budget ratcheted 695→694), and `.card.hint-multi`'s unscoped box-shadow
+  was split into a residual `@layer legacy` block. But empirical probing
+  of `.photo` cards (see the probe-design lessons below) exposed a deeper
+  structural dependency the file-level analysis missed: market.css's
+  mobile block deliberately uses LOW-specificity overrides
+  (`.card{box-shadow:...}`, `.hand .card.ability-target{...}`) and relies
+  on hand.css's HIGHER-specificity state combos
+  (`.hand .card.ability-target.hint-card`, `.hand .card.hint-card.sel`,
+  `:active`/`.press-highlight` rules) to keep beating them via
+  specificity — a cross-file specificity ladder. Layer separation removes
+  specificity from the comparison entirely, so market's generic rules
+  start beating every hand state combo. The concrete regression: at
+  ≤640px in non-SPv2 states, `ability-target`+`hint-card`/`hint-complete`
+  cards lost their hint glow (mobile.css carries identical-value
+  duplicates of the `sel`/`press-highlight` hint combos, which masked
+  those — but not the ability-target ones). hand.css and market.css must
+  stay co-resident in `legacy` unless the ladder rules themselves are
+  restructured.
 - `mobile.css` — "the biggest hub," and it turns out to be one of the root
   causes of the `market.css` conflict above (their `.relic-rack`/
   `.ability-picked` ties are the same rules pulling opposite ways here too).
@@ -251,24 +267,56 @@ order without splitting rules).
 ## The path for the rest (per-declaration surgery)
 
 File-level moves are exhausted. The remaining cluster's contradictions
-hinge on a small number of specific `!important` declarations, and the
-next viable technique is declaration-level work, with two forms:
+hinge on specific declarations, and the next viable technique is
+declaration-level work, with two forms:
 
 1. **Delete provably-dead tie-breakers.** Some of the blocking
-   declarations never win anywhere today — e.g. hand.css's
-   `.hand .card.ability-picked{z-index:1000!important}` is always beaten
+   declarations never win anywhere today — hand.css's
+   `.hand .card.ability-picked{z-index:1000!important}` was always beaten
    by mobile.css's unconditional `z-index:300!important` (same
    specificity, later source), and hand.css's `.sel` z-index 999 ties
-   mobile.css's value exactly. Removing dead/identical declarations (with
-   cascade-probe verification, following the precedent of the earlier
-   "drop provably-redundant !important" commits on this branch) shrinks
-   the conflict graph, and may leave files one-directional.
+   mobile.css's value exactly. Both were deleted (the deletion survived
+   the hand.css revert; cascade-probe A/B verified, budget 695→694).
+   Removing dead/identical declarations shrinks the conflict graph.
 2. **Split minority-direction rules into a second layer block.** A file
    can contain multiple `@layer` blocks (mainMenu.css already does this:
    boot veil in `legacy`, the rest in `screens.main-menu`). For a file
    whose conflicts point one way except for a couple of rules, move just
    those rules into a separate block assigned to a layer on the other
    side of `legacy`.
+
+**Hard limit discovered (the hand.css reverted attempt):** neither
+technique helps when two files form a **cross-file specificity ladder** —
+market.css's mobile block sets low-specificity base overrides and relies
+on hand.css's higher-specificity state combos beating them via
+specificity. Ties like that aren't carried by one deletable declaration
+or a couple of splittable rules; they span ~10 interleaved state rules on
+each side, and layer separation removes specificity from the comparison
+entirely. Files joined by a ladder must stay co-resident in one layer
+unless the ladder itself is redesigned (e.g. equalizing specificity or
+merging the state styling into one file). Assume market ↔ hand ↔ mobile
+are ladder-joined until proven otherwise.
+
+## Probe-design lessons (hard-won, follow these)
+
+The hand.css regression shipped briefly because the verification probe
+had three blind spots — every future probe should check against all
+three:
+
+1. **Probe `.photo` cards, not bare `.card`s.** Real cards carry `.photo`
+   (art sheets). ps1aesthetic.css's `.card:not(.photo){...!important}`
+   reskin masks the entire normal-tier box-shadow cascade for non-photo
+   probes, hiding real flips.
+2. **Strip body mode classes before probing classic styling.** The
+   harness boot lands in SPv2 mode (`single-player-v2
+   generated-sheet-ready mode-reading` on `<body>`), whose `!important`
+   rules mask classic-mode fights. `document.body.className = ''` inside
+   the probe exposes them.
+3. **Duplicate rules can protect some combos and not others.** mobile.css
+   carries identical-value duplicates of hand.css's `sel`/`press-highlight`
+   hint combos (which made those look safe) but not the `ability-target`
+   ones (which flipped). Enumerate the full state matrix; don't
+   extrapolate from a couple of green cells.
 
 The 10 SPv2 files are a separate job: their eventual home is the
 `spv2.*` tier system, which is declared earliest — so their normal-tier
