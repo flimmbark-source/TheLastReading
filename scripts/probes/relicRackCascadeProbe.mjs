@@ -1,9 +1,3 @@
-const PROPS = ['position','top','right','bottom','left','width','height','display','flexDirection','justifyContent','alignItems','gap','zIndex','filter','margin','transform'];
-
-function snapshotStyle(style) {
-  return Object.fromEntries(PROPS.map(prop => [prop, style[prop]]));
-}
-
 async function sample(page, label, { width = 1024, classes = [] } = {}) {
   await page.setViewportSize({ width, height: 720 });
   await page.evaluate((classList) => {

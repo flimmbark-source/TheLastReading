@@ -47,7 +47,7 @@ export function buildSinglePlayerV2Cascade() {
 `];
 
   for (const [fileName, label] of singlePlayerV2CascadeSources) {
-    let css = readFileSync(join(stylesDir, fileName), 'utf8');
+    const css = readFileSync(join(stylesDir, fileName), 'utf8');
     sections.push(`\n/* === ${fileName}: ${label} === */\n${css.trimEnd()}\n`);
   }
 
