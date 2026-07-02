@@ -35,6 +35,7 @@ const appStyleFiles = [
   '../src/styles/drawAnimation.css',
   '../src/styles/components/relicRack.css',
   '../src/styles/components/handSwipeZone.css',
+  '../src/styles/components/tutTip.css',
 ];
 
 // Budget jumped 693 -> 706 not from new !important declarations but from
@@ -45,6 +46,8 @@ const appStyleFiles = [
 // actual app-wide count didn't change; the check just stopped being blind
 // to it. Every future component-consolidation pilot must add its new file
 // here in the same commit, or this check silently stops covering it again.
+// components/tutTip.css (706, unchanged) moved its 4 declarations out of
+// market.css wholesale -- a net wash, tracked here from the start.
 const importantBudget = 706;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)

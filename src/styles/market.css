@@ -130,18 +130,6 @@
   .scoring-sheet td{font-size:10px}
   .shop-grid{grid-template-columns:1fr}
 }
-#tutTip{position:fixed;z-index:90;background:rgba(22,16,13,.97);border:1px solid #856536;border-radius:10px;box-shadow:0 12px 34px rgba(0,0,0,.65);padding:12px 14px;max-width:min(88vw,300px);color:#d0bc8c;font-size:13px;line-height:1.5;display:none}
-#tutTip.show{display:block}
-#tutTip.tut-center{left:50%!important;top:50%!important;bottom:auto!important;transform:translate(-50%,-50%);max-width:min(88vw,360px)!important}
-#tutTip.tut-center .tut-arrow{display:none}
-#tutTip p{margin:0}
-#tutTip p b{color:#f0d58a}
-.tut-arrow{position:absolute;width:0;height:0;left:50%;transform:translateX(-50%)}
-.tut-arrow.down{border-left:8px solid transparent;border-right:8px solid transparent;border-top:10px solid #856536;bottom:-10px}
-.tut-arrow.up{border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:10px solid #856536;top:-10px}
-.tut-foot{display:flex;gap:8px;margin-top:10px;justify-content:flex-end;align-items:center}
-.tut-tap-prompt{flex:1;font-size:10px;color:#8a7551;font-style:italic;text-align:left}
-#tutSkipBtn{background:transparent;border:1px solid #5f4c29;color:#7a6540;font-size:11px;padding:3px 8px;font-weight:400}
 .card.photo{border:none;background-color:#100806;border-radius:4px;background-size:200% 200%;background-repeat:no-repeat}
 .card.photo .title,.card.photo .art{display:none}
 /* Purge selection mode */

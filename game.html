@@ -170,8 +170,31 @@
      -- confirmed identical before and after (note: body.mp-game-active and
      body.single-player-v2 are mutually exclusive at runtime via a class
      guard, so this combination only matters as a transient/synthetic
-     state, not real reachable UI). */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, legacy, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+     state, not real reachable UI).
+
+     `tutTip` (src/styles/components/tutTip.css) is a different shape from
+     relicRack/handSwipeZone: its rules weren't scattered across files to
+     begin with, they were already all together inside market.css. Pulled
+     out whole rather than consolidated. Most remaining touches are safe
+     regardless of layer position (mpGame.css's display:none!important,
+     actionDropTargets' z-index:10130!important, and mainMenu.css's
+     boot-veil visibility/pointer-events/transition are each either
+     importance-dominant or a disjoint property) -- but one is not:
+     market.css's mobile-breakpoint `button{font-size:12px;padding:6px 9px}`
+     reset (still in legacy) must keep losing to #tutSkipBtn's higher
+     ID-based specificity, previously decided within the shared legacy
+     layer. A first placement before legacy (mirroring relicRack/
+     handSwipeZone) flipped this: verified empirically that computed
+     font-size/padding on #tutSkipBtn changed from 11px/3px 8px to
+     12px/6px 9px, and the popover's height grew 134px to 144px as a
+     result. legacy needs to keep winning against relicRack/handSwipeZone's
+     rules, but tutTip needs to keep winning against this one -- opposite
+     constraints -- so tutTip is declared after legacy instead. Checked for
+     the reverse risk too: no other legacy-resident rule (no bare span{}/
+     div{}/p{} reset) competes with tutTip's own low-specificity selectors
+     (.tut-arrow/.tut-foot/.tut-tap-prompt), so moving it after legacy
+     doesn't let it wrongly override anything else. */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, legacy, tutTip, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
@@ -204,6 +227,7 @@
 <link rel="stylesheet" href="src/styles/mpSinglePlayerIsolation.css?v=1">
 <link rel="stylesheet" href="src/styles/components/relicRack.css?v=1">
 <link rel="stylesheet" href="src/styles/components/handSwipeZone.css?v=1">
+<link rel="stylesheet" href="src/styles/components/tutTip.css?v=1">
 </head>
 <body class="tlr-loading">
 <div id="roomAmbient"></div>

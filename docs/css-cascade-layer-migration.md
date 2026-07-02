@@ -105,15 +105,20 @@ rather than doing the harder per-selector/per-pair surgery. Only extract
 files that are cleanly one-directional or fully independent. This applies
 every time it comes up, not just once.
 
-## Done so far (13 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
+## Done so far (14 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
 
-Two methods are in play now, noted per row: **layer-move** (rename the
+Three methods are in play now, noted per row: **layer-move** (rename the
 file's `@layer legacy {` and place the new layer before/after `legacy`,
-per the Methodology section) and **consolidation** (gather one
-component's rules that were scattered across multiple `legacy` files
-into one new file, in their original effective order, then give that
-file its own layer — see "Component consolidation pilots" below for
-why this unblocks files a plain layer-move can't).
+per the Methodology section), **consolidation** (gather one component's
+rules that were scattered across multiple `legacy` files into one new
+file, in their original effective order, then give that file its own
+layer — see the probe-design lessons below for why this unblocks files
+a plain layer-move can't), and **pulled whole** (a component's rules were
+never scattered — they already lived together in one `legacy` file — so
+the extraction is just moving that self-contained block into its own
+file/layer; same empirical-verification requirement as the other two,
+since the file it came from can still hold *other*, unrelated rules that
+compete with it).
 
 | File | Method | Direction | Why |
 |---|---|---|---|
@@ -130,6 +135,7 @@ why this unblocks files a plain layer-move can't).
 | `drawAnimation.css` | layer-move | between `legacy` and `drawers` | Formerly a mixed-direction skip — it must WIN the `!important` tie against drawers.css's reduced-motion `.hand .card{animation:none!important}` but LOSE the `!important` ties against the SPv2 bundle's mobile `pointer-events:auto` override (still in `legacy`) and actionDropTargets' drag-lift z-index. Both directions were impossible while drawers.css shared `legacy`; once drawers got its own later layer, the slot between them satisfies everything. Verified empirically via `scripts/cascade-probe.mjs`: deal-in animation, drag-lift z-index (10042 wins over 10043), SPv2-mode pointer-events, and the reduced-motion fade all identical before/after. |
 | `components/relicRack.css` | consolidation | before `legacy` | Gathers the relic rack's base market rules, classic/mobile patch, attic mobile row patch, PS1 tone, and SPv2 mobile override — previously scattered across `market.css`, `mobile.css`, `attic.css`, `ps1aesthetic.css`, and `singlePlayerV2/components/relics.css` — into one file in their original effective order, then removes every one of those scattered originals. **First placed after `legacy` (assumed unconstrained since the scattered competition was gone); this was wrong** — attic.css's mode-gated `filter:blur()` on `#relicRack` (still in `legacy`) needs to keep winning over the consolidated file's own unconditional `filter:saturate()`, previously decided by attic's higher specificity within the shared layer. Placing the new layer after `legacy` let normal-tier layer order override that specificity instead, flipping the computed filter during `body.mode-attic` from `blur(3px)` to `saturate(.7) contrast(1.03)` — caught via a git-checkout A/B against the pre-consolidation commit, not by re-reading the code, and fixed by moving to before `legacy`. Probed with `scripts/probes/relicRackCascadeProbe.mjs`. |
 | `components/handSwipeZone.css` | consolidation | before `legacy` | Same technique: gathers the classic hand swipe surface, PS1 float offset, attic tutorial hint geometry, and lower swipe-capture extension — previously scattered across `mobile.css`, `ps1aesthetic.css`, `attic.css`, `handDragFix.css` — into one file in original order, then removes the scattered originals. **Also first placed after `legacy`, also wrong, same root cause:** mpMobile.css's `mp-game-active`-only height/bottom override (still in `legacy`) needs to keep losing to the consolidated file's ID-specific mobile-breakpoint rule; placing the layer after `legacy` let mpMobile.css win via layer order instead, changing computed height/bottom in plain multiplayer mode (no SPv2) from `97px`/`152px` to `46px`/`130px`, and separately let mpFixes.css's mp-mode hint-hiding rule beat the tutorial hint's ID-specific default the same way, making all three swipe-hint-line steps render at once instead of just the active one. Both fixed by the same before-`legacy` move; z-index was untouched either way (only ever set at normal-tier on the bare class inside the file, so `!important` always won regardless of position). Probed with `scripts/probes/handSwipeZoneCascadeProbe.mjs` across classic mobile/desktop, attic tutorial hints (in progress and completed), SPv2 mobile, and MP+SPv2 mobile samples (the last of which turned out to be an unreachable transient state — `body.mp-game-active` and `body.single-player-v2` are mutually exclusive at runtime via a class guard). |
+| `components/tutTip.css` | pulled whole | after `legacy` (opposite direction from its siblings) | The `#tutTip` tutorial popover cluster was never scattered — it already lived together in `market.css` — so this was a whole-block move, not a gather. Most remaining touches are safe regardless of layer position (mpGame.css's `display:none!important`, actionDropTargets.css's `z-index:10130!important`, mainMenu.css's boot-veil `visibility`/`pointer-events`/`transition` are each either importance-dominant or a disjoint property) — but one is not: market.css's own mobile-breakpoint `button{font-size:12px;padding:6px 9px}` reset (still in `legacy`) needs to keep *losing* to `#tutSkipBtn`'s higher ID-based specificity, previously decided inside the shared layer. **First placed before `legacy` (mirroring relicRack/handSwipeZone, on the assumption the position was unconstrained) — wrong, but the opposite failure mode from those two:** relicRack/handSwipeZone each needed `legacy` to keep winning against them; tutTip needed *itself* to keep winning against `legacy`'s generic reset. Before `legacy`, layer order let the low-specificity `button{}` rule beat the ID-specific `#tutSkipBtn` rule outright, changing its computed `font-size`/`padding` from `11px`/`3px 8px` to `12px`/`6px 9px` and growing the popover's total height from `134px` to `144px` — caught via a full computed-style diff (every property on `#tutTip` and its children, not a hand-picked subset) against a git-checkout-A/B pre-extraction baseline, after two rounds of guessing individual properties failed to find it. Fixed by moving to after `legacy` instead; checked for the reverse risk (some legacy rule needing to win against tutTip's own low-specificity `.tut-arrow`/`.tut-foot`/`.tut-tap-prompt` selectors) and found no bare `span{}`/`div{}`/`p{}` reset anywhere in `legacy` that would compete. |
 
 Also handled earlier (before this session, same branch): `loadout.css`,
 `matchmaking.css`, and part of `mainMenu.css` were split out as fully
@@ -383,6 +389,19 @@ three:
    UI state. `await page.waitForTimeout(...)` (however brief) before
    reading, and check `document.body.className` in the probe's own output
    to confirm which classes actually stuck.
+7. **When a diff turns up a real, reproducible discrepancy but its cause
+   isn't obvious, diff *every* computed-style property, not a hand-picked
+   subset.** The `tutTip.css` pilot showed a genuine, deterministic 10px
+   height difference on `#tutTip` that survived two rounds of guessing
+   individual properties (padding, line-height, font-size, border,
+   max-width, box-sizing, child display/margin — all identical between
+   states). Only iterating `getComputedStyle(el)` itself (it's iterable —
+   `for (let i = 0; i < cs.length; i++)` over `cs[i]`/`cs.getPropertyValue`)
+   and diffing the full property set for `#tutTip` and each child surfaced
+   the actual cause: `#tutSkipBtn`'s `font-size`/`padding` had changed,
+   which is not a property anyone would have guessed to check on the
+   popover's own height. Don't keep guessing after two misses — measure
+   everything and let the diff find it.
 
 The 10 SPv2 files are a separate job: their eventual home is the
 `spv2.*` tier system, which is declared earliest — so their normal-tier
@@ -574,16 +593,25 @@ node scripts/serve.mjs 8123 &
 
 ## Component consolidation pilots
 
-`relicRack.css` and `handSwipeZone.css` are the two standing pilots — see
-the Done table above for what each gathers and, importantly, the bug each
-one shipped with and how it was found and fixed. The general technique:
+`relicRack.css`, `handSwipeZone.css`, and `tutTip.css` are the three
+standing pilots — see the Done table above for what each gathers (or, for
+`tutTip.css`, pulls whole) and, importantly, the bug each one shipped with
+and how it was found and fixed. The general technique for **consolidation**:
 gather one component's rules that were scattered across multiple `legacy`
 files into a new file, in their original effective order, remove the
 scattered originals, then determine the new layer's position the same way
 as any other candidate (re-derive win/lose against everything still in
 `legacy`, including the multiplayer cluster and `spv2.*`-layer files — see
 lesson 5 above). Do not assume "unconstrained" just because the obviously
-related files were absorbed.
+related files were absorbed. For **pulled-whole** extractions like
+`tutTip.css`, where the rules were never scattered in the first place, the
+same re-derivation is still required: the file the block came from can
+hold *other*, unrelated rules (a generic `button{}` reset, in tutTip's
+case) that used to lose to the block via specificity while co-resident in
+the same layer, and silently start winning once the block moves to a
+layer with the wrong relative position. "Never scattered" is not the same
+as "unconstrained" — check every remaining rule in the source file too,
+not just the other files that used to touch the component.
 
 ## Dead-declaration candidate scanner
 

@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, legacy, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, legacy, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, legacy, tutTip, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, handSwipeZone, legacy, tutTip, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -182,6 +182,30 @@ assert.match(handSwipeZone.trimEnd(), /\}$/, 'handSwipeZone.css should close its
 assert.match(html, /components\/handSwipeZone\.css/, 'game.html should load the consolidated hand swipe-zone component stylesheet');
 assert.doesNotMatch(read('../src/styles/mobile.css'), /\.hand-swipe-zone\{position:fixed/, 'mobile.css should no longer own the swipe-zone base geometry');
 assert.doesNotMatch(read('../src/styles/attic.css'), /#handSwipeZone\.hand-swipe-zone\{height:121px!important/, 'attic.css should no longer own swipe-zone tutorial geometry');
+
+// tutTip.css: pulled whole out of market.css rather than consolidated --
+// its rules weren't scattered across files to begin with. Most remaining
+// touches are safe regardless of layer position (mpGame.css's
+// display:none!important, actionDropTargets.css's z-index:10130!important,
+// mainMenu.css's boot-veil visibility/pointer-events/transition are each
+// either importance-dominant or a disjoint property) -- but one is not:
+// market.css's mobile-breakpoint button{font-size:12px;padding:6px 9px}
+// reset (still in legacy) must keep losing to #tutSkipBtn's higher
+// ID-based specificity, previously decided within the shared legacy layer.
+// Declared BEFORE legacy (the first attempt, mirroring relicRack/
+// handSwipeZone) flipped that: verified empirically that computed
+// font-size/padding on #tutSkipBtn changed from 11px/3px 8px to
+// 12px/6px 9px, growing the popover's height from 134px to 144px.
+// relicRack/handSwipeZone need legacy to keep winning; tutTip needs itself
+// to keep winning -- the opposite constraint -- so tutTip is declared
+// AFTER legacy instead. No bare span{}/div{}/p{} reset elsewhere in legacy
+// competes with tutTip's own low-specificity selectors (.tut-arrow/
+// .tut-foot/.tut-tap-prompt), so this move doesn't create the reverse bug.
+const tutTip = read('../src/styles/components/tutTip.css');
+assert.match(tutTip, /^@layer tutTip \{/, 'tutTip.css should live in its own tutTip layer');
+assert.match(tutTip.trimEnd(), /\}$/, 'tutTip.css should close its layer wrapper');
+assert.match(html, /components\/tutTip\.css/, 'game.html should load the extracted tutTip component stylesheet');
+assert.doesNotMatch(read('../src/styles/market.css'), /#tutTip\{position:fixed/, 'market.css should no longer own the tutTip popover rules');
 
 // drawAnimation.css: must WIN the !important tie against drawers.css's
 // reduced-motion .hand .card{animation:none!important} (so its deal-in fade
