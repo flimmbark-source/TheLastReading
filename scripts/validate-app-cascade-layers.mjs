@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, relicRack, handSwipeZone, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, relicRack, handSwipeZone, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, legacy, handSwipeZone, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, legacy, handSwipeZone, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -129,6 +129,24 @@ const assetLazy = read('../src/styles/assetLazy.css');
 assert.match(assetLazy, /^@layer assetLazy \{/, 'assetLazy.css should live in its own assetLazy layer');
 assert.match(assetLazy.trimEnd(), /\}$/, 'assetLazy.css should close its layer wrapper');
 
+// relicRack.css: consolidates the relic rack's previously scattered rules
+// (market base, mobile/classic, attic, PS1, and SPv2 mode overrides) into
+// one component stylesheet in their original effective order. Declared
+// BEFORE legacy: attic.css's mode-gated filter:blur() on #relicRack (still
+// in legacy) must keep winning over relicRack's own unconditional
+// filter:saturate() -- previously decided by attic's higher specificity
+// within the shared legacy layer, now decided by legacy remaining the later
+// layer for this normal-tier property. Placing this layer AFTER legacy (the
+// first attempt) silently flipped that: verified empirically that
+// #relicRack's computed filter during body.mode-attic changed from
+// blur(3px) to saturate(.7) contrast(1.03), a real regression caught and
+// fixed via a git-checkout A/B against the pre-consolidation commit, not
+// just by re-reading the code. Nothing else in legacy still touches
+// .relic-rack/.relic-btn/.relic-slot-empty's box or position properties.
+const relicRack = read('../src/styles/components/relicRack.css');
+assert.match(relicRack, /^@layer relicRack \{/, 'relicRack.css should live in its own relicRack layer');
+assert.match(relicRack.trimEnd(), /\}$/, 'relicRack.css should close its layer wrapper');
+
 // drawAnimation.css: must WIN the !important tie against drawers.css's
 // reduced-motion .hand .card{animation:none!important} (so its deal-in fade
 // still plays) while LOSING the !important ties against the SPv2 bundle's
@@ -136,23 +154,10 @@ assert.match(assetLazy.trimEnd(), /\}$/, 'assetLazy.css should close its layer w
 // Unextractable while drawers.css shared legacy; now that drawers has its
 // own later layer, the slot between legacy and drawers satisfies every
 // direction at once. The master-statement assertion above locks that
-// relative order (legacy < relicRack/handSwipeZone/handDragFix/performance < drawAnimation < drawers).
+// relative order (legacy < handSwipeZone/handDragFix/performance < drawAnimation < drawers).
 const drawAnimation = read('../src/styles/drawAnimation.css');
 assert.match(drawAnimation, /^@layer drawAnimation \{/, 'drawAnimation.css should live in its own drawAnimation layer');
 assert.match(drawAnimation.trimEnd(), /\}$/, 'drawAnimation.css should close its layer wrapper');
-
-
-// relicRack.css: consolidated after verifying the component's previous cross-file
-// rules (market base, mobile/classic, attic, PS1, and SPv2 mode overrides) in one
-// component stylesheet. It sits after legacy so its normal-tier PS1 filter keeps
-// the former ps1aesthetic source-order win; all competing relic !important rules
-// are now internal to the one relicRack layer and preserve their old source order.
-const relicRack = read('../src/styles/components/relicRack.css');
-assert.match(relicRack, /^@layer relicRack \{/, 'relicRack.css should live in its own relicRack layer');
-assert.match(relicRack.trimEnd(), /\}$/, 'relicRack.css should close its layer wrapper');
-
-
-
 // handSwipeZone.css: consolidates the swipe gesture surface and tutorial hint
 // rules that were previously spread across mobile.css, ps1aesthetic.css,
 // attic.css, and the swipe-zone portion of handDragFix.css. It sits after

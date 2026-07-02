@@ -125,8 +125,26 @@
      also keeps losing to actionDropTargets' drag-lift override (earlier
      layer), and its one normal declaration (will-change) keeps beating
      hand.css's via later-layer normal-tier order, same as it won via
-     specificity before. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, relicRack, handSwipeZone, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+     specificity before.
+
+     `relicRack` (src/styles/components/relicRack.css) consolidates the relic
+     rack's rules out of market.css/mobile.css/attic.css/ps1aesthetic.css/
+     singlePlayerV2/components/relics.css into one file, in their original
+     effective order, so intra-file specificity/source order resolves
+     priority the same way cross-file specificity used to. It's declared
+     BEFORE legacy: attic.css's mode-gated filter:blur() on #relicRack
+     (still in legacy) must keep winning over relicRack's own unconditional
+     filter:saturate() during attic-mode transitions -- previously decided
+     by attic's higher specificity within the shared legacy layer, now
+     decided by legacy remaining the later layer for this normal-tier
+     property (a first placement of "after legacy" broke this: verified
+     empirically that #relicRack's computed filter during body.mode-attic
+     flipped from blur(3px) to saturate(.7) contrast(1.03), a real
+     regression, caught and fixed before it was reported). Nothing else in
+     legacy still touches .relic-rack/.relic-btn/.relic-slot-empty's box or
+     position properties (mpGame.css's body.mp-game-active #relicRack
+     touches only display, a disjoint property). */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, relicRack, legacy, handSwipeZone, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
