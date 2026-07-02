@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -33,7 +33,6 @@ const legacyLayeredFiles = [
   '../src/styles/mpMobile.css',
   '../src/styles/mpFixes.css',
   '../src/styles/ps1aesthetic.css',
-  '../src/styles/mpSinglePlayerIsolation.css',
   '../src/styles/singlePlayerV2/base.css',
   '../src/styles/singlePlayerV2/compat.css',
   '../src/styles/singlePlayerV2/desktop.css',
@@ -154,6 +153,18 @@ assert.match(mpMultMobile.trimEnd(), /\}$/, 'mpMultMobile.css should close its l
 const mpSpreadCards = read('../src/styles/mpSpreadCards.css');
 assert.match(mpSpreadCards, /^@layer mpSpreadCards \{/, 'mpSpreadCards.css should live in its own mpSpreadCards layer');
 assert.match(mpSpreadCards.trimEnd(), /\}$/, 'mpSpreadCards.css should close its layer wrapper');
+
+// mpSinglePlayerIsolation.css: the third crack, a different shape from the
+// first two. Every rule is gated by body.mp-game-active.single-player-v2
+// (all of them, no exception), and those two classes are enforced mutually
+// exclusive at runtime by src/app/mpModeClassGuard.mjs's MutationObserver
+// -- no other file references this combined gate. So this file's entire
+// ruleset is unreachable in any rendered frame; its layer position
+// genuinely cannot affect real behavior regardless of where it's
+// declared -- not property-disjoint like the first two, just dead.
+const mpSinglePlayerIsolation = read('../src/styles/mpSinglePlayerIsolation.css');
+assert.match(mpSinglePlayerIsolation, /^@layer mpSinglePlayerIsolation \{/, 'mpSinglePlayerIsolation.css should live in its own mpSinglePlayerIsolation layer');
+assert.match(mpSinglePlayerIsolation.trimEnd(), /\}$/, 'mpSinglePlayerIsolation.css should close its layer wrapper');
 
 // relicRack.css: consolidates the relic rack's previously scattered rules
 // (market base, mobile/classic, attic, PS1, and SPv2 mode overrides) into

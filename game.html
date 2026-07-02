@@ -142,6 +142,19 @@
      for the same reasons as mpMultMobile; declared before legacy for the
      same consistency.
 
+     `mpSinglePlayerIsolation` (src/styles/mpSinglePlayerIsolation.css) is
+     the third crack, and a different shape from the first two: every
+     rule in it is gated by body.mp-game-active.single-player-v2 (all of
+     them, no exception), and those two classes are enforced mutually
+     exclusive at runtime by src/app/mpModeClassGuard.mjs's
+     MutationObserver -- the instant mp-game-active is added,
+     single-player-v2 is stripped on the same microtask, before the next
+     paint. No other file references this combined gate. So this file's
+     entire ruleset is unreachable in any rendered frame, and its layer
+     position genuinely cannot affect real behavior regardless of where
+     it's declared -- not property-disjoint like the first two, just
+     dead. Declared before legacy for the same consistency.
+
      `drawAnimation` sits BETWEEN legacy and drawers -- it was unextractable
      while drawers.css still lived in legacy (it must WIN the !important tie
      against drawers' reduced-motion .hand .card{animation:none!important},
@@ -286,7 +299,7 @@
      so this file (after legacy) stays later than relicRack regardless.
      Verified via the same full computed-style A/B diff technique, across
      all five mode-transition states plus classic. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, relicRack, handSwipeZone, invWrap, legacy, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
