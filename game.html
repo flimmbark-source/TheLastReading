@@ -62,8 +62,21 @@
      !important-tier z-index/position/visibility fixes that must continue to
      beat the remaining legacy pile; its normal-tier selector hits were checked
      as non-conflicts (different pseudo-elements/properties, identical values,
-     or newly introduced card-drop-target/ability-prompt-actions state). */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, legacy, handDragFix, performance, screens.main-menu, screens.loadout, screens.matchmaking;
+     or newly introduced card-drop-target/ability-prompt-actions state).
+
+     `drawers` is also AFTER legacy, same direction as handDragFix/performance:
+     it needs to keep LOSING two !important ties (SPv2 desktop.css's
+     display:block!important un-hide of #scoringBtn/#abilitiesBtn/#menuBtn, and
+     drawAnimation.css's reduced-motion deal-in fade, both still in legacy --
+     legacy staying the earlier layer preserves both regardless of drawers'
+     own specificity) while needing to keep WINNING two normal-tier ties
+     (handCardIdleCycle vs market.css's card-wave animation, and its
+     #settingsPanel sizing vs mobile.css's base .settings-panel rule, both
+     still in legacy -- drawers being the later layer guarantees both
+     regardless of specificity). No interaction found with handDragFix or
+     performance, so its position among the "after legacy" layers doesn't
+     matter. */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, legacy, handDragFix, performance, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">

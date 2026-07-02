@@ -105,7 +105,7 @@ rather than doing the harder per-selector/per-pair surgery. Only extract
 files that are cleanly one-directional or fully independent. This applies
 every time it comes up, not just once.
 
-## Done so far (5 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
+## Done so far (6 extractions, on `claude/spv2-cleanup-assessment-438tt8`)
 
 | File | Direction | Why |
 |---|---|---|
@@ -114,6 +114,7 @@ every time it comes up, not just once.
 | `handDragFix.css` | after `legacy` | `.handDock{z-index:26!important}` needs to keep losing to actionDropTargets.css's higher state-gated z-index in its earlier layer and mpGame.css's higher state-gated z-index overrides still in legacy; its other rules are uncontested or already dominated by an existing `spv2.components` `!important` rule regardless of position. |
 | `performance.css` | after `legacy` | Its mobile/reduced-motion overrides (`body` background-attachment, `#roomAmbient` animation/opacity/transform) need to keep losing to actionDropTargets.css's SPv2-mode override and ps1aesthetic.css's explicit "re-enable candle glow on mobile" override. `#ambientFX`/`.mote`/`.slot.res-*` rules checked individually: no real conflict (uncontested, unconditional importance dominance, or identical values). |
 | `actionDropTargets.css` | before `legacy` | Dynamically appended by `gestureActionDrops.mjs`; all real cross-file conflicts that affect layer order are `!important` fixes that need to keep winning over the remaining `legacy` pile. Normal-tier hits from `rg` are non-conflicts (new state selectors/elements, different properties/pseudo-elements, identical values, or mode-exclusive branches). |
+| `drawers.css` | after `legacy` | Needs to keep LOSING two `!important` ties (SPv2 desktop.css's `display:block!important` un-hide of `#scoringBtn`/`#abilitiesBtn`/`#menuBtn`, and drawAnimation.css's reduced-motion deal-in fade, both still in `legacy`) while needing to keep WINNING two normal-tier ties (`handCardIdleCycle` vs market.css's `card-wave`, and `#settingsPanel` sizing vs mobile.css's base rule, both still in `legacy`) — both satisfied by the same "after legacy" placement. Verified empirically via `scripts/cascade-probe.mjs`, including a `prefers-reduced-motion` emulation check. |
 
 Also handled earlier (before this session, same branch): `loadout.css`,
 `matchmaking.css`, and part of `mainMenu.css` were split out as fully
@@ -158,16 +159,27 @@ list.
   `#titleWrap`/`.score-stack`/`#relicRack` — normal-tier and `!important`-tier
   ties resolve in opposite layer directions, so those two requirements demand
   opposite placements relative to `legacy`.
+- `drawAnimation.css` — needs to win an `!important` tie against
+  `drawers.css`'s `@media(prefers-reduced-motion:reduce){.hand .card{animation:none!important}}`
+  (today only via specificity: `.hand .card.card-draw-dealt` beats `.hand .card`),
+  but needs to keep losing an `!important` tie against
+  `singlePlayerV2/mobile.css`'s `body.single-player-v2.generated-sheet-ready
+  .handDock .hand .card{pointer-events:auto!important}` (shipped in the
+  compiled `singlePlayerV2/index.css`, still inside its own `legacy` block) —
+  ordinary, frequent Adventure Mode traffic on mobile, not a corner case.
+  Both competing rules currently live inside the same undivided `legacy`
+  layer, so no single relative position satisfies both. (`.sel`/
+  `.ability-picked`/`.ability-target`/`.purge-picked` z-index conflicts
+  against hand.css/market.css/mobile.css are all moot — the app's reducer
+  structurally clears selection/ability/purge state in the same dispatch
+  that precedes any queued draw animation, so those classes never co-occur
+  with `.card-draw-dealt` on the same card.)
 
 ## What's left
 
 Remaining files still in the shared `legacy` layer, in the order they'll be
 attempted (skip-ahead rule applies throughout):
 
-- `drawAnimation.css` — investigation in progress (parallel research
-  dispatched; being checked against hand.css/market.css's
-  `.sel`/`.ability-picked`/`.purge-picked` z-index rules and whether those
-  states can co-occur with the deal animation).
 - `drawers.css` — investigation in progress.
 - `mobile.css`
 - `base.css`
@@ -176,6 +188,7 @@ attempted (skip-ahead rule applies throughout):
 - `cards.css` (deprioritized, see above)
 - `market.css` (skipped, see above)
 - `ps1aesthetic.css` (skipped, see above)
+- `drawAnimation.css` (skipped, see above)
 - The multiplayer cluster (skipped, see above — only revisit per-file/per-pair if asked)
 - 10 SPv2 files still sitting in `legacy` rather than an `spv2.*` tier:
   `singlePlayerV2/base.css`, `compat.css`, `desktop.css`, `assets.css`,

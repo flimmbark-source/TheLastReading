@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, legacy, handDragFix, performance, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, legacy, handDragFix, performance, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, legacy, handDragFix, performance, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, legacy, handDragFix, performance, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -32,7 +32,6 @@ const legacyLayeredFiles = [
   '../src/styles/market.css',
   '../src/styles/mobile.css',
   '../src/styles/attic.css',
-  '../src/styles/drawers.css',
   '../src/styles/mpGame.css',
   '../src/styles/mpMobile.css',
   '../src/styles/mpSpreadCards.css',
@@ -113,6 +112,18 @@ assert.match(handDragFix.trimEnd(), /\}$/, 'handDragFix.css should close its lay
 const performance_ = read('../src/styles/performance.css');
 assert.match(performance_, /^@layer performance \{/, 'performance.css should live in its own performance layer');
 assert.match(performance_.trimEnd(), /\}$/, 'performance.css should close its layer wrapper');
+
+// drawers.css: needs to keep LOSING two !important ties (SPv2 desktop.css's
+// display:block!important un-hide of #scoringBtn/#abilitiesBtn/#menuBtn, and
+// drawAnimation.css's reduced-motion deal-in fade, both still in legacy) while
+// needing to keep WINNING two normal-tier ties (handCardIdleCycle vs
+// market.css's card-wave, and its #settingsPanel sizing vs mobile.css's base
+// rule, both still in legacy). Declared AFTER `legacy` on purpose, same
+// direction as handDragFix/performance; the assertion above already locks
+// that relative order in.
+const drawers = read('../src/styles/drawers.css');
+assert.match(drawers, /^@layer drawers \{/, 'drawers.css should live in its own drawers layer');
+assert.match(drawers.trimEnd(), /\}$/, 'drawers.css should close its layer wrapper');
 
 // Standalone screens: every selector is scoped to that screen's own classes
 // or ids (verified against the actual render/DOM-construction code, not
