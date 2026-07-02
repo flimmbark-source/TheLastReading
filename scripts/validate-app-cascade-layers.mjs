@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, handDragFix, performance, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, handDragFix, performance, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, legacy, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -36,7 +36,6 @@ const legacyLayeredFiles = [
   '../src/styles/mpMultMobile.css',
   '../src/styles/ps1aesthetic.css',
   '../src/styles/mpSinglePlayerIsolation.css',
-  '../src/styles/drawAnimation.css',
   '../src/styles/singlePlayerV2/base.css',
   '../src/styles/singlePlayerV2/compat.css',
   '../src/styles/singlePlayerV2/desktop.css',
@@ -129,6 +128,18 @@ assert.match(cards.trimEnd(), /\}$/, 'cards.css should close its layer wrapper')
 const assetLazy = read('../src/styles/assetLazy.css');
 assert.match(assetLazy, /^@layer assetLazy \{/, 'assetLazy.css should live in its own assetLazy layer');
 assert.match(assetLazy.trimEnd(), /\}$/, 'assetLazy.css should close its layer wrapper');
+
+// drawAnimation.css: must WIN the !important tie against drawers.css's
+// reduced-motion .hand .card{animation:none!important} (so its deal-in fade
+// still plays) while LOSING the !important ties against the SPv2 bundle's
+// mobile pointer-events override and actionDropTargets' drag-lift z-index.
+// Unextractable while drawers.css shared legacy; now that drawers has its
+// own later layer, the slot between legacy and drawers satisfies every
+// direction at once. The master-statement assertion above locks that
+// relative order (legacy < handDragFix/performance < drawAnimation < drawers).
+const drawAnimation = read('../src/styles/drawAnimation.css');
+assert.match(drawAnimation, /^@layer drawAnimation \{/, 'drawAnimation.css should live in its own drawAnimation layer');
+assert.match(drawAnimation.trimEnd(), /\}$/, 'drawAnimation.css should close its layer wrapper');
 
 // handDragFix.css: its .handDock z-index needs to keep losing to
 // actionDropTargets.css's higher, state-gated z-index in the earlier
