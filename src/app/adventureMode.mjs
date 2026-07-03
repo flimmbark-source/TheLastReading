@@ -81,7 +81,7 @@ function ensureStyles(doc) {
     body.mode-adventure #advHud{display:flex}
     #advHud .adv-resolve{background:rgba(18,12,9,.82);border:1px solid rgba(228,188,111,.5);border-radius:999px;padding:5px 11px}
     #advHud .adv-resolve b{color:#f3c969}
-    #advHud .adv-status{background:rgba(228,188,111,.1);border:1px solid rgba(228,188,111,.5);border-radius:999px;padding:3px 8px;font-size:11px}
+    #advHud .adv-status{background:rgba(228,188,111,.1);border:1px solid rgba(228,188,111,.5);border-radius:999px;padding:3px 8px;font-size:11px;cursor:pointer;color:inherit}
     #advHud .adv-leave{border:1px solid rgba(228,188,111,.5);background:rgba(18,12,9,.82);color:#e7c07c;border-radius:999px;
       padding:5px 11px;cursor:pointer;font:700 11px system-ui,sans-serif}
 
@@ -214,7 +214,7 @@ export function installAdventureMode(target = window) {
     const hud = doc.getElementById('advHud');
     if (hud) {
       const statuses = (run.statuses || [])
-        .map(id => `<span class="adv-status">${esc(getStatus(id)?.name || id)}</span>`).join('');
+        .map(id => `<button class="adv-status" type="button" data-status-id="${esc(id)}" title="${esc(getStatus(id)?.description || '')}" aria-label="${esc(getStatus(id)?.name || id)} status. ${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</button>`).join('');
       hud.innerHTML = `<span class="adv-resolve">Resolve <b>${run.resolve}</b> / ${run.maxResolve}</span>`
         + `<span class="adv-resolve" title="Cards in your deck">Deck <b>${run.deck.length}</b></span>`
         + statuses + `<button class="adv-leave" type="button" data-adv-leave>Leave</button>`;

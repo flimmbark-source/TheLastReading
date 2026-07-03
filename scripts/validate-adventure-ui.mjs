@@ -30,7 +30,10 @@ window.persist = LIVE_PERSIST;
 window.state = LIVE_STATE;
 
 const { installAdventureMode } = await import('../src/app/adventureMode.mjs');
+const { installAdventureItemPopups } = await import('../src/app/adventureItemPopups.mjs');
 installAdventureMode(window);
+window.tlrAdventureV3UseItem = () => false;
+installAdventureItemPopups(window);
 
 const byId = new Map(ALL_CARD_DEFINITIONS.map((c, uid) => [c.id, { ...c, uid }]));
 const spread = ['major_8', 'major_16', 'court_Swords_King', 'court_Swords_Queen', 'court_Swords_Knight'].map(id => byId.get(id));
@@ -134,6 +137,22 @@ window.tlrAdventureResolveReading(1, spread); // below Iron Gate target 22
 assert.ok(summary().innerHTML.includes('Failure'), 'a low score is a failure');
 assert.ok(window.document.getElementById('advHud').innerHTML.includes('<b>3</b>'), 'failure costs 1 Resolve (4 → 3)');
 window.tlrAdventureLeave();
+
+
+// --- Status pills open contextual explanation callouts ---------------------
+window.document.body.classList.add('mode-adventure');
+const statusHud = window.document.createElement('div');
+statusHud.id = 'advHud';
+statusHud.innerHTML = '<button class="adv-status adv-status--haunted" type="button" data-status-id="haunted">Haunted</button>';
+window.document.body.appendChild(statusHud);
+statusHud.querySelector('.adv-status').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+const statusCallout = window.document.querySelector('.adv-status-callout');
+assert.ok(statusCallout, 'clicking an Adventure status opens a contextual callout');
+assert.ok(statusCallout.textContent.includes('Haunted'), 'status callout names the status');
+assert.ok(statusCallout.textContent.includes('Supernatural readings run stronger'), 'status callout describes the status effect');
+statusHud.remove();
+statusCallout.remove();
+window.document.body.classList.remove('mode-adventure');
 
 // --- Debug panel is gated off in production --------------------------------
 const { isAdventureDebugEnabled } = await import('../src/ui/adventure/adventureHud.mjs');
