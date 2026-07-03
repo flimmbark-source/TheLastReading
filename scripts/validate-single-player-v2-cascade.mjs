@@ -41,7 +41,11 @@ for (const file of legacyReferenceFiles) {
 }
 
 
-const importantBudget = 921;
+// 921 -> 90: the A/B computed-style reduction pass (scripts/_ab) removed 816
+// verified-redundant declarations from the SPv2 partials and proved the
+// remaining ones load-bearing. This ceiling is the actual post-reduction
+// count so redundant importance cannot silently creep back.
+const importantBudget = 90;
 const sourceImportantCount = [...singlePlayerV2CascadeSources, ...singlePlayerV2ExternalComponentSources]
   .map(([path]) => read(`../src/styles/${path}`).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);

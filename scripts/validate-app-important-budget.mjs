@@ -106,7 +106,17 @@ const appStyleFiles = [
 // mpModeClassGuard.mjs's MutationObserver enforces can never coexist on
 // <body> at runtime -- see game.html's own former entry for the full
 // writeup). A real reduction, not a tracking-gap correction.
-const importantBudget = 652;
+// 652 -> 651 (tally correction to the true current sum, same class of drift
+// as the 716 -> 713 note above). More importantly, the A/B computed-style
+// reduction pass (scripts/_ab) tested these app-side declarations against 18
+// UI states and found them essentially all load-bearing: classicCore/mpCore
+// sit early in the layer order, where important declarations win by design
+// (importance inverts layer order between cascade layers), and the fix-tier
+// files (actionDropTargets, assetLazy, handDragFix, dragStability, mpFixes)
+// use importance as their documented mechanism. The redundancy the pass did
+// find was concentrated in the SPv2 partials (816 removals) — tracked by
+// validate-single-player-v2-cascade.mjs's own budget, now 90.
+const importantBudget = 651;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);

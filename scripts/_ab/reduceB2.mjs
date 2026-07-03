@@ -21,8 +21,6 @@ const CHECKPOINT = join(SCRATCH, 'checkpoint.json');
 // notes) document importance-dominance as the intended mechanism — the whole
 // file exists to outrank other layers' importants.
 const FILES = [
-  // SPv2 partials: 12 already verified via the recovered checkpoint (skipped
-  // by fileDone); relics/assets/utilityButtons still need processing.
   'src/styles/singlePlayerV2/desktop.css',
   'src/styles/singlePlayerV2/mobile.css',
   'src/styles/singlePlayerV2/compat.css',
@@ -41,27 +39,10 @@ const FILES = [
   'src/styles/mpFixes.css',
   'src/styles/mpMobile.css',
   'src/styles/mpGame.css',
-  'src/styles/drawers.css',
-  'src/styles/mobile.css',
-  'src/styles/ps1aesthetic.css',
-  'src/styles/components/relicRack.css',
   'src/styles/mpSpreadCards.css',
   'src/styles/components/mpGameChrome.css',
-  'src/styles/components/handSwipeZone.css',
-  'src/styles/attic.css',
-  'src/styles/performance.css',
-  'src/styles/market.css',
-  'src/styles/drawAnimation.css',
-  'src/styles/components/invWrap.css',
   'src/styles/mpMultMobile.css',
-  'src/styles/components/titleWrap.css',
-  'src/styles/components/atticFade.css',
-  'src/styles/matchmaking.css',
-  'src/styles/mainMenu.css',
-  'src/styles/base.css',
-  'src/styles/hand.css',
-  'src/styles/components/tutTip.css',
-  'src/styles/components/invTab.css',
+  'src/styles/ps1aesthetic.css',
 ];
 
 function commentRanges(text) {
@@ -142,6 +123,16 @@ function capture(outPath) {
   execFileSync(process.execPath, [join(MAIN, 'scripts/_ab/capture.mjs'), outPath],
     { stdio: ['ignore', 'ignore', 'ignore'], env: { ...process.env, TLR_PORT: PORT } });
 }
+const SKIP = new Set((process.env.TLR_SKIP || '').split(',').filter(Boolean));
+const CHAINED = {
+  'm-reading': ['m-card-selected','m-menu-drawer','m-scoring-drawer','m-archive','m-item-detail'],
+  'm-attic': ['m-attic-pickup'],
+  'm-duel-cpu': ['m-loadout','m-matchmaking'],
+  'm-menu': [],
+};
+const skippedStates = new Set();
+for (const s of SKIP) { skippedStates.add(s); for (const c of (CHAINED[s] || [])) skippedStates.add(c); if (s === 'd-menu') ['d-reading','d-card-selected','d-menu-drawer','d-archive'].forEach(x => skippedStates.add(x)); }
+const stateOn = name => !skippedStates.has(name);
 let BASE = null;
 function runDiff(label) {
   runCounter += 1;
@@ -151,7 +142,7 @@ function runDiff(label) {
   let diffs = 0;
   const detail = [];
   const diffProps = new Set();
-  for (const state of Object.keys(BASE)) {
+  for (const state of Object.keys(BASE).filter(stateOn)) {
     if (!b[state]) { diffs += 1e6; continue; }
     const ea = BASE[state], eb = b[state];
     if (ea.length !== eb.length) {

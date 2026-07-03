@@ -78,6 +78,8 @@ const CAPTURE_FN = `(props) => {
   return out;
 }`;
 
+const SKIP = new Set((process.env.TLR_SKIP || '').split(',').filter(Boolean));
+const on = name => !SKIP.has(name);
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
 const results = {};
 
@@ -112,12 +114,12 @@ async function boot(page) {
 // ─────────────────────────── MOBILE ───────────────────────────
 const mob = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 
-{ // menu
+if (on('m-menu')) { // menu
   const p = await newPage(mob);
   await snap(p, 'm-menu');
   await p.close();
 }
-{ // reading + toggles (non-destructive)
+if (on('m-reading')) { // reading + toggles
   const p = await newPage(mob);
   await boot(p);
   await snap(p, 'm-reading');
@@ -143,7 +145,7 @@ const mob = await browser.newContext({ viewport: { width: 390, height: 844 }, ha
   await snap(p, 'm-item-detail');
   await p.close();
 }
-{ // mid-card-drag hold (real inline styles from gestureCard)
+if (on('m-mid-drag')) { // mid-card-drag hold
   const p = await newPage(mob);
   await boot(p);
   const cdp = await mob.newCDPSession(p);
@@ -160,7 +162,7 @@ const mob = await browser.newContext({ viewport: { width: 390, height: 844 }, ha
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchCancel', touchPoints: [] });
   await p.close();
 }
-{ // ability targeting UI (real discard of a MIRROR card)
+if (on('m-ability-targeting')) { // ability targeting
   const p = await newPage(mob);
   await boot(p);
   await p.evaluate(() => {
@@ -178,7 +180,7 @@ const mob = await browser.newContext({ viewport: { width: 390, height: 844 }, ha
   await snap(p, 'm-ability-targeting');
   await p.close();
 }
-{ // attic + pickup
+if (on('m-attic')) { // attic + pickup
   const p = await newPage(mob);
   await boot(p);
   await p.evaluate(() => window.tlrDebugEnterAttic(3, false));
@@ -192,14 +194,14 @@ const mob = await browser.newContext({ viewport: { width: 390, height: 844 }, ha
   await snap(p, 'm-attic-pickup');
   await p.close();
 }
-{ // adventure
+if (on('m-adventure')) { // adventure
   const p = await newPage(mob);
   await p.click('button:has-text("Adventure Mode")');
   await p.waitForTimeout(3500);
   await snap(p, 'm-adventure');
   await p.close();
 }
-{ // duel vs CPU (loadout -> matchmaking -> CPU board)
+if (on('m-duel-cpu')) { // duel chain
   const p = await newPage(mob);
   await p.click('button:has-text("Duel")');
   await p.waitForTimeout(2500);
@@ -217,7 +219,7 @@ const mob = await browser.newContext({ viewport: { width: 390, height: 844 }, ha
   }
   await p.close();
 }
-{ // forced overlay classes
+if (on('m-forced-overlays')) { // forced overlays
   const p = await newPage(mob);
   await boot(p);
   await p.evaluate(() => {
@@ -233,7 +235,7 @@ await mob.close();
 
 // ─────────────────────────── DESKTOP ───────────────────────────
 const desk = await browser.newContext({ viewport: { width: 1100, height: 800 } });
-{
+if (on('d-menu')) {
   const p = await newPage(desk);
   await snap(p, 'd-menu');
   await boot(p);
