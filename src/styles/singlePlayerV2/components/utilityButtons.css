@@ -18,5 +18,25 @@
       height: clamp(44px, 11.5vw, 56px) !important;
       border-radius: 50% !important;
     }
+
+    /* SPv2 art ownership. Generic classic-mode background shorthands are also
+       important, so these image subproperties stay in the earlier component
+       layer and cannot be reset during future cascade cleanup. */
+    html body.single-player-v2.generated-sheet-ready .spread .slot,
+    html body.single-player-v2.generated-sheet-ready .spread .slot.empty:hover,
+    html body.single-player-v2.generated-sheet-ready .spread .slot.target {
+      background-image: var(--spv2-spread-slot-art) !important;
+      background-position: center !important;
+      background-size: 118% 118% !important;
+      background-repeat: no-repeat !important;
+    }
+
+    html body.single-player-v2.generated-sheet-ready .handDock {
+      background-color: transparent !important;
+      background-image: var(--spv2-hand-dock-art) !important;
+      background-position: center bottom calc(2dvh - 5px) !important;
+      background-size: auto clamp(144px, 17.6dvh, 155.2px) !important;
+      background-repeat: no-repeat !important;
+    }
   }
 }
