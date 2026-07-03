@@ -20,9 +20,9 @@
    header comment. */
 
 /* ── Persistent edge vignette ──────────────────────────────────────────────
-   Using html:: not body:: — body has overflow-x:hidden on mobile which
-   causes iOS Safari to incorrectly clip position:fixed pseudo-elements. */
-html::before {
+   Classic-mode only. SPv2 owns its own table lighting and should not inherit
+   a second full-screen vignette from the legacy visual treatment. */
+html:not(:has(body.single-player-v2))::before {
   content: '';
   position: fixed;
   top: 0; right: 0; bottom: 0; left: 0;
@@ -46,13 +46,14 @@ html::before {
   96.5%        { opacity: .93  }
   97%          { opacity: 1    }
 }
-body {
+body:not(.single-player-v2) {
   color: #bea67c !important;
   animation: ps1Flicker 14s ease-in-out infinite;
 }
 
-/* ── Stronger breath-vignette gradient (JS still controls opacity) ── */
-#breathVignette {
+/* ── Stronger breath-vignette gradient (JS still controls opacity) ──
+   Classic-mode only; SPv2 uses its own restrained table vignette. */
+body:not(.single-player-v2) #breathVignette {
   background: radial-gradient(
     ellipse 73% 67% at 50% 42%,
     transparent 8%,
