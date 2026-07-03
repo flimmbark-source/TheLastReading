@@ -37,7 +37,8 @@
    1. The #spread .slot.mp-targetable/.mp-anchored/.mp-silenced/.mp-swap-a/
       .mp-swap-pick state overrides (and the mirrored .mp-opp-spread-
       transform .slot.mp-targetable equivalent above) aren't just touched
-      by mpSinglePlayerIsolation.css's dead code -- ps1aesthetic.css also
+      by mpSinglePlayerIsolation.css's dead code (that file has since been
+      deleted outright, confirmed unreachable) -- ps1aesthetic.css also
       carries a bare, important-tier .slot{border-color:...} rule that
       matches every .slot regardless of its other classes. This file's
       higher, ID/class-qualified specificity is *meant* to win that fight,

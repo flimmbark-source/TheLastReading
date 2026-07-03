@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 
@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -129,17 +129,18 @@ const mpSpreadCards = read('../src/styles/mpSpreadCards.css');
 assert.match(mpSpreadCards, /^@layer mpSpreadCards \{/, 'mpSpreadCards.css should live in its own mpSpreadCards layer');
 assert.match(mpSpreadCards.trimEnd(), /\}$/, 'mpSpreadCards.css should close its layer wrapper');
 
-// mpSinglePlayerIsolation.css: the third crack, a different shape from the
-// first two. Every rule is gated by body.mp-game-active.single-player-v2
+// mpSinglePlayerIsolation.css was the third crack, a different shape from
+// the first two: every rule was gated by body.mp-game-active.single-player-v2
 // (all of them, no exception), and those two classes are enforced mutually
-// exclusive at runtime by src/app/mpModeClassGuard.mjs's MutationObserver
-// -- no other file references this combined gate. So this file's entire
-// ruleset is unreachable in any rendered frame; its layer position
-// genuinely cannot affect real behavior regardless of where it's
-// declared -- not property-disjoint like the first two, just dead.
-const mpSinglePlayerIsolation = read('../src/styles/mpSinglePlayerIsolation.css');
-assert.match(mpSinglePlayerIsolation, /^@layer mpSinglePlayerIsolation \{/, 'mpSinglePlayerIsolation.css should live in its own mpSinglePlayerIsolation layer');
-assert.match(mpSinglePlayerIsolation.trimEnd(), /\}$/, 'mpSinglePlayerIsolation.css should close its layer wrapper');
+// exclusive at runtime by src/app/mpModeClassGuard.mjs's MutationObserver --
+// no other file referenced this combined gate. So the file's entire ruleset
+// was unreachable in any rendered frame -- not property-disjoint like the
+// first two, just dead. Deleted outright once every other file had its own
+// reasoned layer position too, rather than keeping a whole file around just
+// to document that its position didn't matter.
+assert.doesNotMatch(html, /<link[^>]*mpSinglePlayerIsolation/, 'game.html should not link the deleted mpSinglePlayerIsolation.css');
+assert.doesNotMatch(html, /@layer[^;]*\bmpSinglePlayerIsolation\b/, 'the master layer statement should not declare a deleted mpSinglePlayerIsolation layer');
+assert.equal(existsSync(new URL('../src/styles/mpSinglePlayerIsolation.css', import.meta.url)), false, 'mpSinglePlayerIsolation.css should stay deleted');
 
 // mpGameChrome.css: the fourth crack, a solo/laddered SPLIT of mpGame.css,
 // not a whole-file layer-move. A full selector/property audit found
@@ -391,8 +392,9 @@ assert.match(relicRack.trimEnd(), /\}$/, 'relicRack.css should close its layer w
 // mpMobile.css's z-index:9401 on the same selector is untouched either way
 // -- the consolidated file only ever sets a normal-tier z-index on the bare
 // .hand-swipe-zone class there, so !important always won regardless of
-// layer position. mpSinglePlayerIsolation.css's mp+SPv2-gated
-// #handSwipeZone block is entirely dead code -- singlePlayerV2/components/
+// layer position. mpSinglePlayerIsolation.css's (since deleted entirely,
+// see above) mp+SPv2-gated #handSwipeZone block was already dead code
+// before this file even existed -- singlePlayerV2/components/
 // hand.css's own #handSwipeZone rule lives in the spv2.components layer,
 // declared earlier than legacy in the master statement, so it already wins
 // that fight on layer order alone regardless of specificity, confirmed

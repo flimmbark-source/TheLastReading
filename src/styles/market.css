@@ -54,7 +54,7 @@
    baseline) and still satisfies everything the original audit found:
    files already declared before legacy (actionDropTargets, base, cards,
    spread, assetLazy, mpMultMobile, mpSpreadCards,
-   mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone,
+   mpGameChrome, relicRack, handSwipeZone,
    invWrap, dragStability) are unaffected -- classicCore was already
    later than all of them as the last "after legacy" layer, and stays
    later than all of them as the last "before legacy" layer, so their

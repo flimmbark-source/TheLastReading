@@ -30,7 +30,6 @@ const appStyleFiles = [
   '../src/styles/mpMultMobile.css',
   '../src/styles/assetLazy.css',
   '../src/styles/ps1aesthetic.css',
-  '../src/styles/mpSinglePlayerIsolation.css',
   '../src/styles/actionDropTargets.css',
   '../src/styles/drawAnimation.css',
   '../src/styles/components/relicRack.css',
@@ -101,7 +100,13 @@ const appStyleFiles = [
 // importantBudget`), not an exact tally, so that drift never tripped a
 // failure, but it's corrected here to the real number (713 - 2 = 711)
 // rather than carried forward.
-const importantBudget = 711;
+// mpSinglePlayerIsolation.css (711 -> 652) was deleted outright: every one
+// of its 59 !important declarations was confirmed dead code (every rule
+// gated by body.mp-game-active.single-player-v2, a combination
+// mpModeClassGuard.mjs's MutationObserver enforces can never coexist on
+// <body> at runtime -- see game.html's own former entry for the full
+// writeup). A real reduction, not a tracking-gap correction.
+const importantBudget = 652;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);

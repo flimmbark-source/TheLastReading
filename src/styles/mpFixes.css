@@ -44,7 +44,7 @@
      wrong side or leaving everything in `legacy`.
 
    Every already-extracted before-legacy multiplayer file (mpMultMobile,
-   mpSpreadCards, mpSinglePlayerIsolation, components/mpGameChrome) stays
+   mpSpreadCards, components/mpGameChrome) stays
    unaffected by this move: they're all before `legacy` today, and
    `mpCore` sits after `legacy`, so the relative order between them and
    the trio is unchanged either way (before-legacy < legacy < mpCore,

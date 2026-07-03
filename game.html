@@ -88,7 +88,7 @@
      and mpCore alike preserves that regardless of specificity or exactly
      which of those three layers each competitor ended up in. Every
      !important interaction (actionDropTargets,
-     mpFixes, mpSinglePlayerIsolation, ps1aesthetic, most of the SPv2 bundle) is
+     mpFixes, ps1aesthetic, most of the SPv2 bundle) is
      unconditional importance dominance and imposes no directional requirement.
      No interaction requires spread to win against anything still in legacy.
 
@@ -145,18 +145,26 @@
      for the same reasons as mpMultMobile; declared before legacy for the
      same consistency.
 
-     `mpSinglePlayerIsolation` (src/styles/mpSinglePlayerIsolation.css) is
-     the third crack, and a different shape from the first two: every
-     rule in it is gated by body.mp-game-active.single-player-v2 (all of
-     them, no exception), and those two classes are enforced mutually
-     exclusive at runtime by src/app/mpModeClassGuard.mjs's
-     MutationObserver -- the instant mp-game-active is added,
-     single-player-v2 is stripped on the same microtask, before the next
-     paint. No other file references this combined gate. So this file's
-     entire ruleset is unreachable in any rendered frame, and its layer
-     position genuinely cannot affect real behavior regardless of where
-     it's declared -- not property-disjoint like the first two, just
-     dead. Declared before legacy for the same consistency.
+     `mpSinglePlayerIsolation` was the third crack, and a different shape
+     from the first two: every rule in it was gated by
+     body.mp-game-active.single-player-v2 (all of them, no exception),
+     and those two classes are enforced mutually exclusive at runtime by
+     src/app/mpModeClassGuard.mjs's MutationObserver -- the instant
+     mp-game-active is added, single-player-v2 is stripped on the same
+     microtask, before the next paint. No other file referenced this
+     combined gate. So the file's entire ruleset was unreachable in any
+     rendered frame -- not property-disjoint like the first two, just
+     dead -- confirmed by reading computed style in the actual transient
+     window itself (before the guard's microtask could run) and finding
+     it byte-for-byte identical to removing the file outright. Since its
+     layer position genuinely couldn't affect real behavior, keeping the
+     file around only to document that fact stopped being worth it once
+     every other file had its own reasoned position too: deleted outright
+     (src/styles/mpSinglePlayerIsolation.css, its stylesheet link, and its
+     layer from the master list below), the one whole-file dead-code
+     removal this migration found. See
+     docs/css-cascade-layer-migration.md's Done table for the historical
+     writeup.
 
      `mpGameChrome` (src/styles/components/mpGameChrome.css) is the fourth
      crack, and a different technique from the first three: a solo/laddered
@@ -276,11 +284,11 @@
      requirement the original audit found: classicCore stays earlier than
      mpCore/drawAnimation/drawers/titleWrap (the normal-tier ties it needs
      to keep LOSING to their more specific overrides) and earlier than
-     performance.css (the important-tier `#roomAmbind` tie it needs to keep
+     performance.css (the important-tier `#roomAmbient` tie it needs to keep
      WINNING) -- before-legacy is earlier than after-legacy either way, so
      none of those directions flip. Its relative order against every other
      before-legacy layer (dragStability, actionDropTargets, spread, base,
-     cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation,
+     cards, assetLazy, mpMultMobile, mpSpreadCards,
      mpGameChrome, relicRack, handSwipeZone, invWrap, constellations) is
      also unaffected -- classicCore was already later than all of them
      before this fix (as the last "after legacy" layer), and stays later
@@ -347,7 +355,7 @@
      small residual `legacy` block (mirroring the same split-declaration
      technique used for mpGameChrome's exceptions above), while everything
      else moved to `mpCore`. Every already-extracted before-legacy
-     multiplayer file (mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation,
+     multiplayer file (mpMultMobile, mpSpreadCards,
      mpGameChrome) stays unaffected: they're before legacy today, and
      mpCore sits after legacy, so their relative order to the trio doesn't
      change either way. The only already-extracted file with a real touch
@@ -418,9 +426,10 @@
      the active one. Its z-index:9401 is untouched either way since the
      consolidated file only ever sets a normal-tier z-index on the bare
      .hand-swipe-zone class, so !important wins regardless of layer
-     position. mpSinglePlayerIsolation.css's mp+SPv2-gated #handSwipeZone
-     block turned out to already be dead code before this file even
-     existed: singlePlayerV2/components/hand.css's own #handSwipeZone rule
+     position. mpSinglePlayerIsolation.css's (since deleted entirely --
+     see its own former entry above) mp+SPv2-gated #handSwipeZone block
+     turned out to already be dead code before this file even existed:
+     singlePlayerV2/components/hand.css's own #handSwipeZone rule
      lives in spv2.components, declared earlier than legacy here, so it
      already won that fight on layer order alone regardless of specificity
      -- confirmed identical before and after (note: body.mp-game-active and
@@ -578,7 +587,7 @@
      already-migrated spv2.components ladder. See
      src/styles/singlePlayerV2/base.css's header comment for the complete
      audit writeup. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
@@ -608,7 +617,6 @@
 <link rel="stylesheet" href="src/styles/ps1aesthetic.css?v=4">
 <link id="single-player-v2-index" rel="stylesheet" href="src/styles/singlePlayerV2/index.css?v=1">
 <link id="single-player-v2-utility-buttons" rel="stylesheet" href="src/styles/singlePlayerV2/components/utilityButtons.css?v=1">
-<link rel="stylesheet" href="src/styles/mpSinglePlayerIsolation.css?v=1">
 <link rel="stylesheet" href="src/styles/components/mpGameChrome.css?v=1">
 <link rel="stylesheet" href="src/styles/components/relicRack.css?v=1">
 <link rel="stylesheet" href="src/styles/components/handSwipeZone.css?v=1">
