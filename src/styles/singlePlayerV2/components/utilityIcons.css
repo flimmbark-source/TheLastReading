@@ -23,19 +23,19 @@
     body.single-player-v2.generated-sheet-ready #abilitiesBtn,
     body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
       background-color: transparent !important;
-      background-repeat: no-repeat !important;
-      background-position: center !important;
-      background-size: contain !important;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: contain;
       border: 0 !important;
       box-shadow: none !important;
-      overflow: visible !important;
+      overflow: visible;
       /* Kill the mobile blue tap-highlight / text-selection flash so a tap reads
          as a press, not a "selected" box. */
-      -webkit-tap-highlight-color: transparent !important;
-      -webkit-touch-callout: none !important;
-      -webkit-user-select: none !important;
-      user-select: none !important;
-      outline: none !important;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      outline: none;
       /* Raised look: neutral dark elevation only — no color. Layered contact +
          cast shadow so the disc pops off the table. drop-shadow (not box-shadow)
          follows the disc's circular alpha instead of the square button box. */
@@ -51,11 +51,11 @@
     body.single-player-v2.generated-sheet-ready #scoringBtn:active,
     body.single-player-v2.generated-sheet-ready #abilitiesBtn:active,
     body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn:active {
-      transform: translateY(1px) scale(0.94) !important;
+      transform: translateY(1px) scale(0.94);
       filter:
         drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7))
         drop-shadow(0 1px 1px rgba(0, 0, 0, 0.55))
-        brightness(1.08) !important;
+        brightness(1.08);
     }
 
     body.single-player-v2.generated-sheet-ready #menuBtn {
@@ -78,10 +78,10 @@
        single-player button (Discard, Purge, pull tabs, etc.), so a tap never
        paints a selection box — not just the utility discs above. */
     body.single-player-v2.generated-sheet-ready button {
-      -webkit-tap-highlight-color: transparent !important;
-      -webkit-touch-callout: none !important;
-      -webkit-user-select: none !important;
-      user-select: none !important;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     /* Pressed feedback for the Discard / Purge action medallions, matching the
@@ -93,7 +93,7 @@
 
     body.single-player-v2.generated-sheet-ready #discardBtn:active,
     body.single-player-v2.generated-sheet-ready #purgeBtn:active {
-      transform: translateY(1px) scale(0.94) !important;
+      transform: translateY(1px) scale(0.94);
     }
   }
 }

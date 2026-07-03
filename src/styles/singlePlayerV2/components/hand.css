@@ -4,36 +4,36 @@
      remains one layer above it, so cards stay selectable while swipes in the
      open portions of the fan still reach gestureHand.mjs. */
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 25.5dvh !important;
-    width: auto !important;
-    height: 7.5dvh !important;
-    transform: none !important;
-    z-index: 25 !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    pointer-events: auto !important;
-    touch-action: none !important;
+    left: 0;
+    right: 0;
+    bottom: 25.5dvh;
+    width: auto;
+    height: 7.5dvh;
+    transform: none;
+    z-index: 25;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    pointer-events: auto;
+    touch-action: none;
   }
 
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone::before,
   body.single-player-v2.generated-sheet-ready #spv2HandDragLabel {
-    content: none !important;
-    display: none !important;
+    content: none;
+    display: none;
   }
 
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower {
-    display: block !important;
-    visibility: visible !important;
+    display: block;
+    visibility: visible;
   }
 
   /* Keep the original tutorial state machine, but draw its current instruction
      over the hand where the gesture surface actually lives. */
   body.single-player-v2.generated-sheet-ready .hand-swipe-hint {
-    display: none !important;
+    display: none;
   }
 
   body.single-player-v2.generated-sheet-ready .handDock::after {
@@ -73,84 +73,84 @@
      region's relationship to the current hand dock: 52px above its top and
      45px overlapping into it. */
   html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone {
-    position: fixed !important;
-    left: 0 !important;
-    right: 0 !important;
+    position: fixed;
+    left: 0;
+    right: 0;
     bottom: calc(6.2dvh + 31dvh - 45px) !important;
-    width: auto !important;
-    height: 97px !important;
-    transform: none !important;
+    width: auto;
+    height: 97px;
+    transform: none;
     z-index: 19 !important;
-    pointer-events: auto !important;
-    touch-action: none !important;
-    cursor: grab !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
+    pointer-events: auto;
+    touch-action: none;
+    cursor: grab;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
   }
 
   html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone.dragging {
-    cursor: grabbing !important;
+    cursor: grabbing;
   }
 
   html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone.pinching {
-    cursor: ew-resize !important;
+    cursor: ew-resize;
   }
 
   html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone::before,
   html body.single-player-v2.generated-sheet-ready #spv2HandDragLabel,
   html body.single-player-v2.generated-sheet-ready .handDock::after {
-    content: none !important;
-    display: none !important;
+    content: none;
+    display: none;
   }
 
   /* Restore the original extension through the open parts of the hand, but
      terminate it before the bottom action row. */
   html body.single-player-v2.generated-sheet-ready #handSwipeZone .hand-swipe-zone-lower {
-    position: absolute !important;
-    left: 0 !important;
-    right: 0 !important;
-    top: 100% !important;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
     height: calc(31dvh - 55px) !important;
-    display: block !important;
-    visibility: visible !important;
-    pointer-events: auto !important;
-    touch-action: none !important;
-    background: transparent !important;
-    cursor: grab !important;
+    display: block;
+    visibility: visible;
+    pointer-events: auto;
+    touch-action: none;
+    background: transparent;
+    cursor: grab;
   }
 
   html body.single-player-v2.generated-sheet-ready #handSwipeZone.dragging .hand-swipe-zone-lower,
   html body.single-player-v2.generated-sheet-ready #handSwipeZone.pinching .hand-swipe-zone-lower {
-    cursor: grabbing !important;
+    cursor: grabbing;
   }
 
   /* Keep the original one-at-a-time tutorial inside the upper drag region. */
   html body.single-player-v2.generated-sheet-ready #handSwipeZone .hand-swipe-hint {
     position: absolute !important;
-    left: 50% !important;
-    top: 50% !important;
-    right: auto !important;
-    bottom: auto !important;
-    width: auto !important;
-    transform: translate(-50%,-50%) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    visibility: visible !important;
-    pointer-events: none !important;
-    opacity: 0 !important;
-    transition: opacity .4s !important;
+    left: 50%;
+    top: 50%;
+    right: auto;
+    bottom: auto;
+    width: auto;
+    transform: translate(-50%,-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    visibility: visible;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .4s;
   }
 
   html body.single-player-v2.generated-sheet-ready #handSwipeZone.has-overflow .hand-swipe-hint {
-    opacity: 1 !important;
+    opacity: 1;
   }
 
   html body.single-player-v2.generated-sheet-ready #handSwipeZone.dragging .hand-swipe-hint,
   html body.single-player-v2.generated-sheet-ready #handSwipeZone.pinching .hand-swipe-hint {
-    opacity: 0 !important;
+    opacity: 0;
   }
 
   html body.single-player-v2.generated-sheet-ready #handSwipeZone.has-swiped .hand-swipe-hint,
@@ -159,27 +159,27 @@
   }
 
   html body.single-player-v2.generated-sheet-ready #handSwipeZone .swipe-hint-line {
-    position: static !important;
+    position: static;
     left: auto !important;
     top: auto !important;
-    transform: none !important;
-    align-items: center !important;
-    gap: 14px !important;
-    visibility: visible !important;
-    font: 600 10px system-ui,"Segoe UI",sans-serif !important;
-    color: rgba(232,196,96,.55) !important;
-    letter-spacing: .18em !important;
-    text-transform: uppercase !important;
-    white-space: nowrap !important;
-    opacity: 1 !important;
-    animation: none !important;
+    transform: none;
+    align-items: center;
+    gap: 14px;
+    visibility: visible;
+    font: 600 10px system-ui,"Segoe UI",sans-serif;
+    color: rgba(232,196,96,.55);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    opacity: 1;
+    animation: none;
   }
 
   html body.single-player-v2.generated-sheet-ready #handSwipeZone .hand-swipe-hint span {
-    display: inline-block !important;
-    width: 30px !important;
-    height: 1px !important;
-    background: linear-gradient(90deg,transparent,rgba(232,196,96,.6),transparent) !important;
+    display: inline-block;
+    width: 30px;
+    height: 1px;
+    background: linear-gradient(90deg,transparent,rgba(232,196,96,.6),transparent);
   }
 }
 

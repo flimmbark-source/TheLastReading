@@ -15,7 +15,7 @@
   }
 
   body.single-player-v2 .handDock {
-    z-index: 26 !important;
+    z-index: 26;
     pointer-events: none;
   }
 
@@ -119,10 +119,10 @@
 
   body.single-player-v2.generated-sheet-ready .handDock {
     height: 34dvh;
-    bottom: 0 !important;
+    bottom: 0;
     align-items: flex-start;
-    background-position: center bottom !important;
-    background-size: 100% auto !important;
+    background-position: center bottom;
+    background-size: 100% auto;
   }
 
   body.single-player-v2.generated-sheet-ready .handDock .hand {
@@ -192,7 +192,7 @@
 
   body.single-player-v2:not(.generated-sheet-ready) .handDock {
     height: 146px;
-    bottom: 14px !important;
+    bottom: 14px;
   }
 }
 
@@ -209,13 +209,13 @@
   body.single-player-v2.reference-sheet-ready #menuBtn,
   body.single-player-v2.reference-sheet-ready .actions button {
     position:relative;
-    color:transparent !important;
-    font-size:0 !important;
+    color:transparent;
+    font-size:0;
   }
 
   body.single-player-v2.reference-sheet-ready #menuBtn::before,
   body.single-player-v2.reference-sheet-ready .actions button::before {
-    content:none !important;
+    content:none;
   }
 
   body.single-player-v2.reference-sheet-ready .handDock::before {
@@ -254,23 +254,23 @@
      outside the frame; the card itself still clips its artwork normally. */
   html body.single-player-v2.generated-sheet-ready .spread .slot {
     background-size: 118% 118% !important;
-    overflow: visible !important;
+    overflow: visible;
   }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot > .card {
-    overflow: hidden !important;
+    overflow: hidden;
   }
 
   /* Drag highlighting must tint the existing slot art, not replace the entire
      background shorthand and reset the PNG sizing. */
   html body.single-player-v2.generated-sheet-ready #spread .slot.drop-target {
-    background-color: rgba(98,170,104,.28) !important;
-    background-image: var(--spv2-spread-slot-art) !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-    background-size: 118% 118% !important;
-    border-color: #79c778 !important;
-    box-shadow: 0 0 0 2px rgba(121,199,120,.55),0 0 32px rgba(121,199,120,.45) !important;
+    background-color: rgba(98,170,104,.28);
+    background-image: var(--spv2-spread-slot-art);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 118% 118%;
+    border-color: #79c778;
+    box-shadow: 0 0 0 2px rgba(121,199,120,.55),0 0 32px rgba(121,199,120,.45);
   }
 
   /* Preserve the dock artwork's aspect ratio while reducing the current art
@@ -285,7 +285,7 @@
     box-shadow:
       0 0 0 3px rgba(255,217,120,.9),
       0 0 18px rgba(255,200,84,.82),
-      0 0 36px rgba(100,168,255,.45) !important;
+      0 0 36px rgba(100,168,255,.45);
   }
 
   html body.single-player-v2.generated-sheet-ready #discardBtn:not(:disabled)::before {
@@ -294,41 +294,41 @@
       contrast(1.12)
       saturate(1.28)
       drop-shadow(0 0 8px rgba(255,220,132,.88))
-      drop-shadow(0 0 14px rgba(85,156,255,.72)) !important;
+      drop-shadow(0 0 14px rgba(85,156,255,.72));
   }
 
   /* Group the upper utility controls into two compact pairs:
      Menu + Archives on the left, Scoring + Abilities on the right. */
   html body.single-player-v2.generated-sheet-ready #menuBtn {
-    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh + 4px) !important;
-    left: 3.8vw !important;
-    right: auto !important;
-    width: clamp(40px,10.5vw,50px) !important;
-    height: clamp(40px,10.5vw,50px) !important;
-    transform: none !important;
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh + 4px);
+    left: 3.8vw;
+    right: auto;
+    width: clamp(40px,10.5vw,50px);
+    height: clamp(40px,10.5vw,50px);
+    transform: none;
   }
 
   html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh + 4px) !important;
-    left: calc(3.8vw + clamp(40px,10.5vw,50px) + 8px) !important;
-    right: auto !important;
-    width: clamp(40px,10.5vw,50px) !important;
-    height: clamp(40px,10.5vw,50px) !important;
-    transform: none !important;
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh + 4px);
+    left: calc(3.8vw + clamp(40px,10.5vw,50px) + 8px);
+    right: auto;
+    width: clamp(40px,10.5vw,50px);
+    height: clamp(40px,10.5vw,50px);
+    transform: none;
   }
 
   html body.single-player-v2.generated-sheet-ready #scoringBtn {
-    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
-    left: auto !important;
-    right: calc(3.8vw + clamp(40px,10.5vw,50px) + 8px) !important;
-    transform: none !important;
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh);
+    left: auto;
+    right: calc(3.8vw + clamp(40px,10.5vw,50px) + 8px);
+    transform: none;
   }
 
   html body.single-player-v2.generated-sheet-ready #abilitiesBtn {
-    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
-    left: auto !important;
-    right: 3.8vw !important;
-    transform: none !important;
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh);
+    left: auto;
+    right: 3.8vw;
+    transform: none;
   }
 
   /* Deliberate five-card fan. The slot dimensions remain unchanged; only their
@@ -336,78 +336,78 @@
      translations use the reference values when space permits, but clamp inward
      on narrow screens to preserve a safe gutter for the rotated top corners. */
   html body.single-player-v2.generated-sheet-ready .spread {
-    top: calc(.4dvh + 52px) !important;
-    position: relative !important;
-    display: block !important;
+    top: calc(.4dvh + 52px);
+    position: relative;
+    display: block;
     box-sizing: border-box;
-    width: 100% !important;
-    height: calc(var(--spv2-slot-h) + 28px) !important;
+    width: 100%;
+    height: calc(var(--spv2-slot-h) + 28px);
     min-height: calc(var(--spv2-slot-h) + 28px) !important;
-    margin-inline: auto !important;
+    margin-inline: auto;
     padding: 0 !important;
     perspective: 900px;
-    overflow: visible !important;
+    overflow: visible;
   }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot,
   html body.single-player-v2.generated-sheet-ready .spread .slot:first-child {
     position: absolute !important;
-    left: 50% !important;
-    top: 0 !important;
-    flex: 0 0 var(--spv2-slot-w) !important;
-    width: var(--spv2-slot-w) !important;
-    height: var(--spv2-slot-h) !important;
+    left: 50%;
+    top: 0;
+    flex: 0 0 var(--spv2-slot-w);
+    width: var(--spv2-slot-w);
+    height: var(--spv2-slot-h);
     margin: 0 !important;
-    transform-origin: 50% 90% !important;
-    will-change: transform !important;
+    transform-origin: 50% 90%;
+    will-change: transform;
   }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
-    transform: translateX(max(-265%, calc(-50vw + 14px))) translateY(14px) rotate(-8deg) !important;
-    z-index: 1 !important;
+    transform: translateX(max(-265%, calc(-50vw + 14px))) translateY(14px) rotate(-8deg);
+    z-index: 1;
     box-shadow:
       0 5px 4px rgba(0,0,0,.70),
       0 14px 17px rgba(0,0,0,.52),
-      inset 0 0 0 3px rgba(183,139,67,.045) !important;
+      inset 0 0 0 3px rgba(183,139,67,.045);
   }
 
   /* Pull the two inner slots slightly toward the center. This redistributes the
      small rotation-driven intersections evenly across the fan and creates more
      clearance between the inner and outer pairs. */
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
-    transform: translateX(-153%) translateY(5px) rotate(-4deg) !important;
-    z-index: 2 !important;
+    transform: translateX(-153%) translateY(5px) rotate(-4deg);
+    z-index: 2;
     box-shadow:
       0 6px 4px rgba(0,0,0,.74),
       0 16px 18px rgba(0,0,0,.56),
-      inset 0 0 0 3px rgba(183,139,67,.045) !important;
+      inset 0 0 0 3px rgba(183,139,67,.045);
   }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
-    transform: translateX(-50%) translateY(0) rotate(0deg) scale(1.025) !important;
-    z-index: 3 !important;
+    transform: translateX(-50%) translateY(0) rotate(0deg) scale(1.025);
+    z-index: 3;
     box-shadow:
       0 7px 5px rgba(0,0,0,.82),
       0 19px 22px rgba(0,0,0,.62),
-      inset 0 0 0 3px rgba(183,139,67,.045) !important;
+      inset 0 0 0 3px rgba(183,139,67,.045);
   }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
-    transform: translateX(53%) translateY(5px) rotate(4deg) !important;
-    z-index: 2 !important;
+    transform: translateX(53%) translateY(5px) rotate(4deg);
+    z-index: 2;
     box-shadow:
       0 6px 4px rgba(0,0,0,.74),
       0 16px 18px rgba(0,0,0,.56),
-      inset 0 0 0 3px rgba(183,139,67,.045) !important;
+      inset 0 0 0 3px rgba(183,139,67,.045);
   }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
-    transform: translateX(min(165%, calc(50vw - 14px - 100%))) translateY(14px) rotate(8deg) !important;
-    z-index: 1 !important;
+    transform: translateX(min(165%, calc(50vw - 14px - 100%))) translateY(14px) rotate(8deg);
+    z-index: 1;
     box-shadow:
       0 5px 4px rgba(0,0,0,.70),
       0 14px 17px rgba(0,0,0,.52),
-      inset 0 0 0 3px rgba(183,139,67,.045) !important;
+      inset 0 0 0 3px rgba(183,139,67,.045);
   }
 
   /* Interaction glows sit above the fan and temporarily replace the dark
@@ -415,33 +415,33 @@
   html body.single-player-v2.generated-sheet-ready #spread .slot.drop-target,
   html body.single-player-v2.generated-sheet-ready #spread .slot.ability-target-slot,
   html body.single-player-v2.generated-sheet-ready #spread .slot.ability-picked-slot {
-    z-index: 5 !important;
+    z-index: 5;
   }
 
   html body.single-player-v2.generated-sheet-ready #spread .slot.ability-target-slot {
-    background-color: rgba(98,170,104,.18) !important;
-    background-image: var(--spv2-spread-slot-art) !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-    background-size: 118% 118% !important;
-    border-color: #79c778 !important;
+    background-color: rgba(98,170,104,.18);
+    background-image: var(--spv2-spread-slot-art);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 118% 118%;
+    border-color: #79c778;
     box-shadow:
       0 0 0 2px rgba(121,199,120,.72),
       0 0 24px rgba(121,199,120,.42),
-      0 9px 14px rgba(0,0,0,.66) !important;
+      0 9px 14px rgba(0,0,0,.66);
   }
 
   html body.single-player-v2.generated-sheet-ready #spread .slot.ability-picked-slot {
-    background-color: rgba(212,175,106,.18) !important;
-    background-image: var(--spv2-spread-slot-art) !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-    background-size: 118% 118% !important;
-    border-color: #ffd978 !important;
+    background-color: rgba(212,175,106,.18);
+    background-image: var(--spv2-spread-slot-art);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 118% 118%;
+    border-color: #ffd978;
     box-shadow:
       0 0 0 2px rgba(255,217,120,.88),
       0 0 28px rgba(255,217,120,.48),
-      0 9px 14px rgba(0,0,0,.66) !important;
+      0 9px 14px rgba(0,0,0,.66);
   }
 }
 }

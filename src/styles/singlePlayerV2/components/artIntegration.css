@@ -8,11 +8,11 @@
    CSS/DOM driven. */
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
-    display: none !important;
+    display: none;
   }
 
   body.single-player-v2.generated-sheet-ready .score-stack .pill::before {
-    content: none !important;
+    content: none;
   }
 
   /* The art already supplies each panel's frame; drop the extra panel-edge
@@ -33,7 +33,7 @@
   body.single-player-v2.generated-sheet-ready .spread-wrap::before {
     background: none !important;
     filter: none !important;
-    box-shadow: none !important;
+    box-shadow: none;
   }
 
   body.single-player-v2.generated-sheet-ready .spread-wrap::after {
@@ -44,22 +44,22 @@
      hosts, but render no title graphic or text. */
   body.single-player-v2.generated-sheet-ready #titleWrap::after,
   body.single-player-v2.generated-sheet-ready #titleWrap::before {
-    content: none !important;
-    background: none !important;
+    content: none;
+    background: none;
   }
 
   /* Remove the reserve and discards pills; keep Score and Threshold side by
      side. Discards still show on the discard-button badge. */
   body.single-player-v2.generated-sheet-ready .score-stack .reserve-pill,
   body.single-player-v2.generated-sheet-ready .score-stack .discards-pill {
-    display: none !important;
+    display: none;
   }
 
   /* Separate the remaining panels so each card's rounded border reads as a
      distinct tile rather than butting edge-to-edge. */
   body.single-player-v2.generated-sheet-ready .score-stack {
     grid-template-columns: 1fr 1fr;
-    gap: 6px !important;
+    gap: 6px;
   }
 
   /* Taller HUD pills (the bar height drives pill height; the button rows below
@@ -72,34 +72,34 @@
      Archives immediately to the right of Menu. */
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    top: .8dvh !important;
-    right: auto !important;
-    transform: none !important;
+    top: .8dvh;
+    right: auto;
+    transform: none;
   }
 
   body.single-player-v2.generated-sheet-ready #menuBtn {
-    left: 3.8vw !important;
+    left: 3.8vw;
   }
 
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    left: calc(3.8vw + var(--spv2-control-size, clamp(46px, 12vw, 58px)) + 1.2vw) !important;
+    left: calc(3.8vw + var(--spv2-control-size, clamp(46px, 12vw, 58px)) + 1.2vw);
   }
 
   /* Place Scoring and Abilities together on the right edge, preserving their
      side-by-side spacing while freeing the left edge for Menu/Archives. */
   body.single-player-v2.generated-sheet-ready #scoringBtn,
   body.single-player-v2.generated-sheet-ready #abilitiesBtn {
-    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
-    left: auto !important;
-    transform: none !important;
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh);
+    left: auto;
+    transform: none;
   }
 
   body.single-player-v2.generated-sheet-ready #scoringBtn {
-    right: calc(3.8vw + var(--spv2-control-size, clamp(46px, 12vw, 58px)) + 1.2vw) !important;
+    right: calc(3.8vw + var(--spv2-control-size, clamp(46px, 12vw, 58px)) + 1.2vw);
   }
 
   body.single-player-v2.generated-sheet-ready #abilitiesBtn {
-    right: 3.8vw !important;
+    right: 3.8vw;
   }
 
   /* Drop the hand fan down so its base nests inside the dock tray banner
@@ -111,7 +111,7 @@
   /* Position the dock banner so most of it sits behind the fan and only its
      bottom rim peeks out just below the hand cards. */
   body.single-player-v2.generated-sheet-ready .handDock {
-    background-position: center bottom 2dvh !important;
+    background-position: center bottom 2dvh;
   }
 
   /* Utility buttons carry their icon as art, so drop the text fallbacks
@@ -121,24 +121,24 @@
   body.single-player-v2.generated-sheet-ready #scoringBtn::after,
   body.single-player-v2.generated-sheet-ready #abilitiesBtn::after,
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
-    content: none !important;
+    content: none;
   }
 
   body.single-player-v2.generated-sheet-ready #abilitiesBtn,
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-    background-size: contain !important;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
   }
 
   /* Swap the two right-side utility icons:
      abilities = deck, archive = eye. */
   body.single-player-v2.generated-sheet-ready #abilitiesBtn {
-    background-image: var(--spv2-action-deck-art) !important;
+    background-image: var(--spv2-action-deck-art);
   }
 
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    background-image: var(--spv2-action-eye-art) !important;
+    background-image: var(--spv2-action-eye-art);
   }
 
   /* Soften the pattern-hint halo on the hand so it reads as subtle guidance
@@ -148,7 +148,7 @@
     box-shadow:
       0 0 0 1px rgba(var(--hint-rgb, 232, 196, 96), .55),
       0 0 10px rgba(var(--hint-rgb, 232, 196, 96), .30),
-      0 5px 14px rgba(0, 0, 0, .5) !important;
+      0 5px 14px rgba(0, 0, 0, .5);
   }
 
   /* Bottom action buttons render as medallion art instead of text pills:
@@ -157,46 +157,46 @@
   body.single-player-v2.generated-sheet-ready #purgeBtn {
     width: clamp(58px, 16vw, 74px) !important;
     height: clamp(58px, 16vw, 74px) !important;
-    border: 0 !important;
+    border: 0;
     border-radius: 50%;
-    background-color: transparent !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-    background-size: contain !important;
-    box-shadow: none !important;
-    color: transparent !important;
-    font-size: 0 !important;
-    overflow: visible !important;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    box-shadow: none;
+    color: transparent;
+    font-size: 0;
+    overflow: visible;
   }
 
   /* Purge: art + brightness live on ::before (mirroring Discard) so the
      caption child below is not washed out by an element-level filter. */
   body.single-player-v2.generated-sheet-ready #purgeBtn::before {
-    content: "" !important;
-    position: absolute !important;
-    inset: 0 !important;
-    background-image: var(--spv2-action-center-art) !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-    background-size: contain !important;
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--spv2-action-center-art);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
     filter: brightness(1.45) contrast(1.05) saturate(1.08)
-      drop-shadow(0 0 6px rgba(0, 0, 0, .6)) !important;
-    pointer-events: none !important;
+      drop-shadow(0 0 6px rgba(0, 0, 0, .6));
+    pointer-events: none;
   }
 
   /* Discard: art + brightness live on ::before so the count badge child is
      not affected by the filter. */
   body.single-player-v2.generated-sheet-ready #discardBtn::before {
-    content: "" !important;
-    position: absolute !important;
-    inset: 0 !important;
-    background-image: url("/public/ui/single-player-v2/elements/Discard.webp") !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-    background-size: contain !important;
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/public/ui/single-player-v2/elements/Discard.webp");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
     filter: brightness(1.85) contrast(1.06) saturate(1.12)
-      drop-shadow(0 0 6px rgba(0, 0, 0, .6)) !important;
-    pointer-events: none !important;
+      drop-shadow(0 0 6px rgba(0, 0, 0, .6));
+    pointer-events: none;
   }
 
   /* Don't fade the action buttons so heavily while disabled (their default
@@ -212,45 +212,45 @@
      it shows, and their art now lives on ::before so this child stays crisp. */
   body.single-player-v2.generated-sheet-ready #discardBtn::after,
   body.single-player-v2.generated-sheet-ready #purgeBtn::after {
-    position: absolute !important;
-    top: 100% !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    margin-top: 3px !important;
-    display: block !important;
-    font: 800 clamp(8px, 2.4vw, 10px)/1 system-ui, sans-serif !important;
-    letter-spacing: .09em !important;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 3px;
+    display: block;
+    font: 800 clamp(8px, 2.4vw, 10px)/1 system-ui, sans-serif;
+    letter-spacing: .09em;
     text-transform: uppercase;
-    color: #cdb079 !important;
-    text-shadow: 0 1px 3px #000 !important;
-    white-space: nowrap !important;
-    text-indent: 0 !important;
-    pointer-events: none !important;
+    color: #cdb079;
+    text-shadow: 0 1px 3px #000;
+    white-space: nowrap;
+    text-indent: 0;
+    pointer-events: none;
   }
 
-  body.single-player-v2.generated-sheet-ready #discardBtn::after { content: "Discard" !important; }
-  body.single-player-v2.generated-sheet-ready #purgeBtn::after { content: "Purge" !important; }
+  body.single-player-v2.generated-sheet-ready #discardBtn::after { content: "Discard"; }
+  body.single-player-v2.generated-sheet-ready #purgeBtn::after { content: "Purge"; }
 
   /* Discards-left count badge in the discard button's top-right corner. */
   body.single-player-v2.generated-sheet-ready #spv2DiscardBadge {
-    position: absolute !important;
-    top: -2px !important;
-    right: -2px !important;
+    position: absolute;
+    top: -2px;
+    right: -2px;
     min-width: 19px;
-    height: 19px !important;
-    padding: 0 4px !important;
-    display: grid !important;
+    height: 19px;
+    padding: 0 4px;
+    display: grid;
     place-items: center;
     border-radius: 999px;
-    border: 1px solid rgba(196, 224, 255, .8) !important;
-    background: radial-gradient(circle at 40% 32%, #6aa8ee, #1b4d99 78%) !important;
-    color: #fff !important;
-    font: 800 11px/1 system-ui, sans-serif !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, .6) !important;
+    border: 1px solid rgba(196, 224, 255, .8);
+    background: radial-gradient(circle at 40% 32%, #6aa8ee, #1b4d99 78%);
+    color: #fff;
+    font: 800 11px/1 system-ui, sans-serif;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
     box-shadow: 0 2px 5px rgba(0, 0, 0, .55),
-      inset 0 1px 0 rgba(255, 255, 255, .25) !important;
-    z-index: 3 !important;
-    pointer-events: none !important;
+      inset 0 1px 0 rgba(255, 255, 255, .25);
+    z-index: 3;
+    pointer-events: none;
   }
 }
 }

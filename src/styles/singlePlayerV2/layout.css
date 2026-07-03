@@ -48,7 +48,7 @@
 
   body.single-player-v2.generated-sheet-ready .tlr-pull-tab,
   body.single-player-v2.generated-sheet-ready #invTab {
-    display: none !important;
+    display: none;
   }
 
   body.single-player-v2.generated-sheet-ready #titleWrap {
@@ -77,23 +77,23 @@
 
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready .actions button {
-    color: transparent !important;
-    font-size: 0 !important;
+    color: transparent;
+    font-size: 0;
     text-indent: -9999px;
-    border: 0 !important;
-    padding: 0 !important;
+    border: 0;
+    padding: 0;
   }
 
   body.single-player-v2.generated-sheet-ready .actions {
-    left: 3.8vw !important;
-    right: auto !important;
-    top: 23.7dvh !important;
+    left: 3.8vw;
+    right: auto;
+    top: 23.7dvh;
   }
 
   body.single-player-v2.generated-sheet-ready #menuBtn {
-    left: auto !important;
-    right: 3.8vw !important;
-    top: 23.7dvh !important;
+    left: auto;
+    right: 3.8vw;
+    top: 23.7dvh;
   }
 
   body.single-player-v2.generated-sheet-ready .spread-wrap::before {
@@ -103,7 +103,7 @@
 
   body.single-player-v2.generated-sheet-ready .handDock {
     height: 31dvh;
-    background-size: 100% 24dvh !important;
+    background-size: 100% 24dvh;
   }
 
   body.single-player-v2.generated-sheet-ready .handDock .hand {
@@ -112,17 +112,17 @@
   }
 
   body.single-player-v2.generated-sheet-ready .spread-actions {
-    position: fixed !important;
-    z-index: 40 !important;
-    top: auto !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: max(1.2dvh, env(safe-area-inset-bottom)) !important;
-    width: 100% !important;
+    position: fixed;
+    z-index: 40;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: max(1.2dvh, env(safe-area-inset-bottom));
+    width: 100%;
     height: clamp(66px, 17vw, 82px);
-    padding: 0 5vw !important;
-    transform: none !important;
-    display: flex !important;
+    padding: 0 5vw;
+    transform: none;
+    display: flex;
     justify-content: space-between;
     align-items: center;
     pointer-events: none;
@@ -130,8 +130,8 @@
 
   body.single-player-v2.generated-sheet-ready .spread-actions button {
     pointer-events: auto;
-    opacity: 1 !important;
-    visibility: visible !important;
+    opacity: 1;
+    visibility: visible;
   }
 
   body.single-player-v2.generated-sheet-ready .spread-actions::before {
@@ -141,8 +141,8 @@
 
   body.single-player-v2.generated-sheet-ready #discardBtn,
   body.single-player-v2.generated-sheet-ready #purgeBtn {
-    width: clamp(58px, 15.5vw, 72px) !important;
-    height: clamp(66px, 17.5vw, 80px) !important;
+    width: clamp(58px, 15.5vw, 72px);
+    height: clamp(66px, 17.5vw, 80px);
     min-width: 0;
   }
 }

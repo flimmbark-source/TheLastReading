@@ -11,93 +11,93 @@
   }
 
   body.single-player-v2.generated-sheet-ready .score-stack {
-    top: var(--spv2-hud-top) !important;
-    height: var(--spv2-compact-hud-h) !important;
-    min-height: var(--spv2-compact-hud-h) !important;
+    top: var(--spv2-hud-top);
+    height: var(--spv2-compact-hud-h);
+    min-height: var(--spv2-compact-hud-h);
   }
 
   body.single-player-v2.generated-sheet-ready .score-stack .pill {
-    padding: 6px 2px 5px !important;
-    gap: 2px !important;
+    padding: 6px 2px 5px;
+    gap: 2px;
   }
 
   body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
-    font-size: clamp(11px, 3vw, 14px) !important;
-    font-weight: 700 !important;
-    letter-spacing: .04em !important;
+    font-size: clamp(11px, 3vw, 14px);
+    font-weight: 700;
+    letter-spacing: .04em;
   }
 
   body.single-player-v2.generated-sheet-ready .score-stack .pill > b {
-    font-size: clamp(24px, 6.5vw, 32px) !important;
-    font-weight: 800 !important;
+    font-size: clamp(24px, 6.5vw, 32px);
+    font-weight: 800;
   }
 
   body.single-player-v2.generated-sheet-ready .actions {
-    position: static !important;
+    position: static;
     inset: auto !important;
-    width: 0 !important;
-    height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    pointer-events: none !important;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
   }
 
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready #scoringBtn,
   body.single-player-v2.generated-sheet-ready #abilitiesBtn,
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    position: fixed !important;
-    z-index: 45 !important;
-    display: grid !important;
+    position: fixed;
+    z-index: 45;
+    display: grid;
     place-items: center;
-    width: clamp(46px, 12vw, 58px) !important;
-    height: clamp(46px, 12vw, 58px) !important;
+    width: clamp(46px, 12vw, 58px);
+    height: clamp(46px, 12vw, 58px);
     min-width: 0;
-    margin: 0 !important;
-    padding: 0 !important;
+    margin: 0;
+    padding: 0;
     border-radius: 50%;
-    border: 2px solid #8f6a34 !important;
-    background-color: #17101f !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-    background-size: contain !important;
+    border: 2px solid #8f6a34;
+    background-color: #17101f;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
     box-shadow:
       0 3px 8px rgba(0, 0, 0, .75),
       inset 0 0 0 2px rgba(218, 171, 91, .18),
-      inset 0 0 12px rgba(105, 61, 126, .35) !important;
-    color: transparent !important;
-    font-size: 0 !important;
-    text-indent: 0 !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    overflow: visible !important;
-    pointer-events: auto !important;
+      inset 0 0 12px rgba(105, 61, 126, .35);
+    color: transparent;
+    font-size: 0;
+    text-indent: 0;
+    opacity: 1;
+    visibility: visible;
+    overflow: visible;
+    pointer-events: auto;
   }
 
   body.single-player-v2.generated-sheet-ready #menuBtn {
-    top: .8dvh !important;
-    left: 3.8vw !important;
-    right: auto !important;
-    background-image: var(--spv2-utility-settings-art) !important;
+    top: .8dvh;
+    left: 3.8vw;
+    right: auto;
+    background-image: var(--spv2-utility-settings-art);
   }
 
   body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    top: .8dvh !important;
-    left: auto !important;
-    right: 3.8vw !important;
+    top: .8dvh;
+    left: auto;
+    right: 3.8vw;
   }
 
   body.single-player-v2.generated-sheet-ready #scoringBtn {
-    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
-    left: 3.8vw !important;
-    right: auto !important;
-    background-image: var(--spv2-utility-reference-art) !important;
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh);
+    left: 3.8vw;
+    right: auto;
+    background-image: var(--spv2-utility-reference-art);
   }
 
   body.single-player-v2.generated-sheet-ready #abilitiesBtn {
-    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh) !important;
-    left: auto !important;
-    right: 3.8vw !important;
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh);
+    left: auto;
+    right: 3.8vw;
   }
 
   body.single-player-v2.generated-sheet-ready #menuBtn::after,
@@ -140,70 +140,70 @@
   }
 
   body.single-player-v2.generated-sheet-ready .spread-wrap {
-    top: 25.4dvh !important;
+    top: 25.4dvh;
   }
 
   body.single-player-v2.generated-sheet-ready .spread {
-    transform: translateY(2.2dvh) !important;
+    transform: translateY(2.2dvh);
   }
 
   body.single-player-v2.generated-sheet-ready .spread-actions {
-    position: fixed !important;
-    z-index: 46 !important;
-    top: calc(25.4dvh + var(--spv2-live-card-h) + .8dvh) !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: auto !important;
-    width: 100% !important;
-    height: clamp(62px, 16vw, 76px) !important;
-    padding: 0 !important;
-    transform: none !important;
+    position: fixed;
+    z-index: 46;
+    top: calc(25.4dvh + var(--spv2-live-card-h) + .8dvh);
+    left: 0;
+    right: 0;
+    bottom: auto;
+    width: 100%;
+    height: clamp(62px, 16vw, 76px);
+    padding: 0;
+    transform: none;
     display: block !important;
-    pointer-events: none !important;
+    pointer-events: none;
   }
 
   body.single-player-v2.generated-sheet-ready .spread-actions::before {
-    display: none !important;
+    display: none;
   }
 
   body.single-player-v2.generated-sheet-ready #discardBtn,
   body.single-player-v2.generated-sheet-ready #purgeBtn {
-    position: absolute !important;
-    top: 0 !important;
-    display: grid !important;
+    position: absolute;
+    top: 0;
+    display: grid;
     place-items: center;
-    width: clamp(62px, 16vw, 76px) !important;
-    height: clamp(62px, 16vw, 76px) !important;
+    width: clamp(62px, 16vw, 76px);
+    height: clamp(62px, 16vw, 76px);
     min-width: 0;
-    margin: 0 !important;
-    padding: 0 !important;
+    margin: 0;
+    padding: 0;
     border-radius: 50%;
-    border: 2px solid #8f6a34 !important;
-    background-color: #17101f !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-    background-size: contain !important;
+    border: 2px solid #8f6a34;
+    background-color: #17101f;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
     box-shadow:
       0 4px 10px rgba(0,0,0,.72),
       inset 0 0 0 2px rgba(218,171,91,.16),
-      inset 0 0 14px rgba(105,61,126,.32) !important;
-    pointer-events: auto !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    filter: none !important;
-    transform: none !important;
+      inset 0 0 14px rgba(105,61,126,.32);
+    pointer-events: auto;
+    opacity: 1;
+    visibility: visible;
+    filter: none;
+    transform: none;
   }
 
   body.single-player-v2.generated-sheet-ready #discardBtn {
-    left: 8vw !important;
-    right: auto !important;
-    background-image: var(--spv2-action-eye-art) !important;
+    left: 8vw;
+    right: auto;
+    background-image: var(--spv2-action-eye-art);
   }
 
   body.single-player-v2.generated-sheet-ready #purgeBtn {
-    left: auto !important;
-    right: 8vw !important;
-    background-image: var(--spv2-action-deck-art) !important;
+    left: auto;
+    right: 8vw;
+    background-image: var(--spv2-action-deck-art);
   }
 
   body.single-player-v2.generated-sheet-ready #discardBtn::after,
@@ -226,66 +226,66 @@
   }
 
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 36dvh !important;
-    height: clamp(42px, 6.5dvh, 56px) !important;
-    z-index: 25 !important;
-    pointer-events: auto !important;
+    left: 0;
+    right: 0;
+    bottom: 36dvh;
+    height: clamp(42px, 6.5dvh, 56px);
+    z-index: 25;
+    pointer-events: auto;
     touch-action: none;
   }
 
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower {
-    display: none !important;
+    display: none;
   }
 
   body.single-player-v2.generated-sheet-ready .handDock {
-    z-index: 26 !important;
+    z-index: 26;
   }
 
   body.single-player-v2.generated-sheet-ready .handDock .hand .card {
-    pointer-events: auto !important;
+    pointer-events: auto;
   }
 
   body.single-player-v2.generated-sheet-ready .tlr-pull-wrap,
   body.single-player-v2.generated-sheet-ready #invWrap {
-    overflow: visible !important;
+    overflow: visible;
   }
 
   body.single-player-v2.generated-sheet-ready .spv2-menu-close-tab {
-    position: absolute !important;
-    left: 50% !important;
-    z-index: 410 !important;
-    width: 42px !important;
-    height: 24px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    transform: translateX(-50%) !important;
-    border: 1px solid #8f6a34 !important;
-    border-top: 0 !important;
-    border-radius: 0 0 10px 10px !important;
-    background: linear-gradient(180deg,#21162a,#130d19) !important;
-    color: #d7b36e !important;
-    font: 700 18px/22px Georgia,serif !important;
-    box-shadow: 0 4px 10px rgba(0,0,0,.55) !important;
+    position: absolute;
+    left: 50%;
+    z-index: 410;
+    width: 42px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    transform: translateX(-50%);
+    border: 1px solid #8f6a34;
+    border-top: 0;
+    border-radius: 0 0 10px 10px;
+    background: linear-gradient(180deg,#21162a,#130d19);
+    color: #d7b36e;
+    font: 700 18px/22px Georgia,serif;
+    box-shadow: 0 4px 10px rgba(0,0,0,.55);
     cursor: pointer;
-    pointer-events: auto !important;
-    display: none !important;
+    pointer-events: auto;
+    display: none;
   }
 
   body.single-player-v2.generated-sheet-ready .tlr-pull-wrap.open > .spv2-menu-close-tab,
   body.single-player-v2.generated-sheet-ready #invWrap.open > .spv2-menu-close-tab {
-    display: block !important;
+    display: block;
   }
 
   body.single-player-v2.generated-sheet-ready .tlr-pull-wrap > .spv2-menu-close-tab {
-    top: var(--tlr-drawer-h) !important;
-    bottom: auto !important;
+    top: var(--tlr-drawer-h);
+    bottom: auto;
   }
 
   body.single-player-v2.generated-sheet-ready #invWrap > .spv2-menu-close-tab {
-    top: var(--inv-h) !important;
-    bottom: auto !important;
+    top: var(--inv-h);
+    bottom: auto;
   }
 }
 }

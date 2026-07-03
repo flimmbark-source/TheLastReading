@@ -26,18 +26,18 @@
     --spv2-slot-w: 72px;
     --spv2-slot-h: calc(var(--spv2-slot-w) * 1.5);
     --spv2-hand-clearance: 222px;
-    padding: 0 !important;
-    background: url('/assets/background.webp') center top / cover no-repeat !important;
+    padding: 0;
+    background: url('/assets/background.webp') center top / cover no-repeat;
   }
 
   html body.single-player-v2.generated-sheet-ready::before {
     content: none;
-    display: none !important;
+    display: none;
   }
 
   /* Hide plain title text — generated sheet art serves as header */
   body.single-player-v2.generated-sheet-ready #titleWrap::before {
-    content: none !important;
+    content: none;
   }
 
   html body.single-player-v2.generated-sheet-ready {
@@ -46,51 +46,51 @@
 
   /* Center the spread vertically; become containing block for absolute slots */
   html body.single-player-v2.generated-sheet-ready .spread {
-    position: fixed !important;
-    top: 45dvh !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: auto !important;
-    height: 178px !important;
-    transform: translateY(-50%) !important;
-    overflow: visible !important;
+    position: fixed;
+    top: 45dvh;
+    left: 0;
+    right: 0;
+    bottom: auto;
+    height: 178px;
+    transform: translateY(-50%);
+    overflow: visible;
   }
 
   /* All slots: absolute within the 430px spread, sized to match hand cards (96×144px) */
   html body.single-player-v2.generated-sheet-ready .spread .slot {
-    position: absolute !important;
-    top: 17px !important;
-    width: 96px !important;
-    height: 144px !important;
-    flex: 0 0 96px !important;
-    margin-left: 0 !important;
+    position: absolute;
+    top: 17px;
+    width: 96px;
+    height: 144px;
+    flex: 0 0 96px;
+    margin-left: 0;
   }
 
   /* Five-card fan — slots pinned from spread edges (spread = 430px wide) */
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
-    left: 14px !important; right: auto !important;
-    transform: translateY(14px) rotate(-8deg) !important;
+    left: 14px; right: auto;
+    transform: translateY(14px) rotate(-8deg);
     --spv2-contact-shadow: 0 5px 4px rgba(0,0,0,.70), 0 14px 17px rgba(0,0,0,.52);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
-    left: 91px !important; right: auto !important;
-    transform: translateY(5px) rotate(-4deg) !important;
+    left: 91px; right: auto;
+    transform: translateY(5px) rotate(-4deg);
     --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
-    left: 167px !important; right: auto !important;
-    transform: scale(1.025) !important;
+    left: 167px; right: auto;
+    transform: scale(1.025);
     --spv2-contact-shadow: 0 7px 5px rgba(0,0,0,.82), 0 19px 22px rgba(0,0,0,.62);
-    box-shadow: var(--spv2-contact-shadow) !important;
+    box-shadow: var(--spv2-contact-shadow);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
-    left: 243px !important; right: auto !important;
-    transform: translateY(5px) rotate(4deg) !important;
+    left: 243px; right: auto;
+    transform: translateY(5px) rotate(4deg);
     --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
-    left: auto !important; right: 14px !important;
-    transform: translateY(14px) rotate(8deg) !important;
+    left: auto; right: 14px;
+    transform: translateY(14px) rotate(8deg);
     --spv2-contact-shadow: 0 5px 4px rgba(0,0,0,.70), 0 14px 17px rgba(0,0,0,.52);
   }
 
@@ -98,7 +98,7 @@
 
   /* Title bar becomes a thin decorative strip */
   body.single-player-v2 #titleWrap {
-    position: fixed !important;
+    position: fixed;
     z-index: 28;
     top: 0;
     left: 0;
@@ -120,16 +120,16 @@
     text-shadow: 0 2px 8px #000;
   }
   body.single-player-v2 #titleRow {
-    position: static !important;
+    position: static;
     pointer-events: none;
   }
   body.single-player-v2 #titleContent {
-    position: static !important;
+    position: static;
   }
   /* Menu button becomes a floating circular medallion */
   body.single-player-v2 #menuBtn {
     display: block !important;
-    position: fixed !important;
+    position: fixed;
     z-index: 31;
     top: auto;
     bottom: max(24px, 3dvh);
@@ -147,11 +147,11 @@
     pointer-events: auto;
     box-shadow: 0 7px 20px rgba(0,0,0,.55), inset 0 0 0 3px rgba(183,139,67,.08);
   }
-  body.single-player-v2 #settingsPanel { z-index: 70; pointer-events: auto !important; }
+  body.single-player-v2 #settingsPanel { z-index: 70; pointer-events: auto; }
 
   /* HUD: 4-cell grid with large Score and Threshold panels */
   body.single-player-v2 .score-stack {
-    position: fixed !important;
+    position: fixed;
     z-index: 25;
     top: var(--spv2-hud-top);
     left: var(--spv2-side);
@@ -159,7 +159,7 @@
     width: auto;
     height: var(--spv2-hud-h);
     transform: none;
-    display: grid !important;
+    display: grid;
     grid-template-columns: 21fr 29fr 29fr 21fr;
     gap: 0;
     align-items: stretch;
@@ -238,20 +238,20 @@
     overflow: hidden;
     border-radius: 9px 9px 4px 4px;
     border-bottom: 1px solid rgba(227,190,114,.3);
-    font: 700 17px/1 'Cinzel', Georgia, serif !important;
-    letter-spacing: .14em !important;
+    font: 700 17px/1 'Cinzel', Georgia, serif;
+    letter-spacing: .14em;
     text-transform: uppercase;
     text-shadow: 0 1px 3px #000;
     z-index: 1;
     pointer-events: none;
   }
   html body.single-player-v2.generated-sheet-ready .score-stack .score-pill .spv2-label {
-    color: #e7c98c !important;
+    color: #e7c98c;
     background: linear-gradient(180deg, #241809, #150d05);
     box-shadow: inset 0 2px 6px rgba(0,0,0,.55);
   }
   html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill .spv2-label {
-    color: #d2c2ff !important;
+    color: #d2c2ff;
     background: linear-gradient(180deg, #1d1430, #110b1d);
     box-shadow: inset 0 2px 6px rgba(0,0,0,.55);
   }
@@ -323,14 +323,14 @@
 
   /* Scoring/Abilities become icon medallions at lower-right; Mulligan likewise */
   body.single-player-v2 .actions {
-    position: fixed !important;
+    position: fixed;
     z-index: 31;
     top: auto;
     bottom: max(24px, 3dvh);
     right: 13px;
     left: auto;
     margin: 0;
-    display: flex !important;
+    display: flex;
     gap: 7px;
     pointer-events: auto;
   }
@@ -364,7 +364,7 @@
 
   /* Archive button — JS-injected, needs full desktop positioning */
   body.single-player-v2 #spv2ArchiveBtn {
-    position: fixed !important;
+    position: fixed;
     z-index: 31;
     top: auto;
     bottom: max(24px, 3dvh);
@@ -383,28 +383,28 @@
     box-shadow: 0 7px 20px rgba(0,0,0,.55), inset 0 0 0 3px rgba(183,139,67,.08);
   }
   html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    left: 63px !important;
-    background-image: var(--spv2-option-archive-art) !important;
-    background-color: transparent !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-    background-size: contain !important;
-    border: 0 !important;
-    box-shadow: none !important;
-    color: transparent !important;
-    filter: drop-shadow(0 5px 7px rgba(0,0,0,.78)) drop-shadow(0 2px 2px rgba(0,0,0,.6)) !important;
+    left: 63px;
+    background-image: var(--spv2-option-archive-art);
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    border: 0;
+    box-shadow: none;
+    color: transparent;
+    filter: drop-shadow(0 5px 7px rgba(0,0,0,.78)) drop-shadow(0 2px 2px rgba(0,0,0,.6));
   }
 
   /* Discard/Purge action rail between HUD and spread */
   body.single-player-v2 .spread-actions {
-    position: fixed !important;
+    position: fixed;
     z-index: 27;
     left: 0;
     right: 0;
     top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 8px);
     bottom: auto;
     transform: none;
-    display: flex !important;
+    display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 0;
@@ -415,10 +415,10 @@
 
   /* HandDock */
   body.single-player-v2 .handDock {
-    z-index: 26 !important;
+    z-index: 26;
     height: 166px;
-    bottom: 22px !important;
-    background: linear-gradient(transparent, rgba(0,0,0,.78)) !important;
+    bottom: 22px;
+    background: linear-gradient(transparent, rgba(0,0,0,.78));
   }
   body.single-player-v2 .hand-swipe-zone { z-index: 27; }
   body.single-player-v2 #constellationPill { z-index: 29; }
@@ -461,8 +461,8 @@
   body.single-player-v2.generated-sheet-ready #menuBtn { left: 9px; right: auto; }
   body.single-player-v2.generated-sheet-ready .actions { right: 9px; left: auto; gap: 5px; }
   body.single-player-v2.generated-sheet-ready .spread-actions {
-    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 8px) !important;
-    bottom: auto !important;
+    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 8px);
+    bottom: auto;
     padding: 0 13px;
     align-items: center;
   }
@@ -473,15 +473,15 @@
   }
   body.single-player-v2.generated-sheet-ready .spread-actions::before {
     content: none;
-    display: none !important;
+    display: none;
   }
   body.single-player-v2.generated-sheet-ready .handDock {
     height: 34dvh;
-    bottom: 0 !important;
+    bottom: 0;
     align-items: flex-start;
-    background-position: center bottom calc(2dvh - 5px) !important;
-    background-size: auto clamp(144px, 17.6dvh, 155.2px) !important;
-    background-repeat: no-repeat !important;
+    background-position: center bottom calc(2dvh - 5px);
+    background-size: auto clamp(144px, 17.6dvh, 155.2px);
+    background-repeat: no-repeat;
   }
   body.single-player-v2.generated-sheet-ready .handDock .hand {
     height: 31dvh;
@@ -501,7 +501,7 @@
   /* Hide pull drawer tabs — desktop phone-column uses icon medallion buttons instead */
   body.single-player-v2 .tlr-pull-wrap,
   body.single-player-v2 #invWrap {
-    display: none !important;
+    display: none;
   }
 
   /* ── Art layer: mirrors singlePlayerV2Assets + ArtIntegration + UtilityIcons ──
@@ -511,187 +511,187 @@
 
   /* Body: generated table-cloth background replaces the plain fallback image */
   html body.single-player-v2.generated-sheet-ready {
-    background-color: #0b0805 !important;
-    background-image: var(--spv2-table-bg-art) !important;
-    background-size: cover !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
+    background-color: #0b0805;
+    background-image: var(--spv2-table-bg-art);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
   }
 
   /* Title wrap: art integration hides all title graphics/text */
   html body.single-player-v2.generated-sheet-ready #titleWrap::before,
   html body.single-player-v2.generated-sheet-ready #titleWrap::after {
-    content: none !important;
-    background: none !important;
+    content: none;
+    background: none;
   }
 
   /* HUD: 2-column art frame (Score + Threshold only) */
   html body.single-player-v2.generated-sheet-ready .score-stack {
-    background-color: transparent !important;
-    background-image: var(--spv2-hud-frame-art) !important;
-    background-size: 100% 100% !important;
-    background-repeat: no-repeat !important;
-    border-color: transparent !important;
-    box-shadow: none !important;
+    background-color: transparent;
+    background-image: var(--spv2-hud-frame-art);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border-color: transparent;
+    box-shadow: none;
     grid-template-columns: 1fr 1fr;
-    gap: 6px !important;
-    overflow: visible !important;
-    height: var(--spv2-hud-h) !important;
+    gap: 6px;
+    overflow: visible;
+    height: var(--spv2-hud-h);
   }
 
   /* Reserve and discards are baked into the table-background art */
   html body.single-player-v2.generated-sheet-ready .score-stack .reserve-pill,
   html body.single-player-v2.generated-sheet-ready .score-stack .discards-pill {
-    display: none !important;
+    display: none;
   }
 
   /* Art supplies its own dividers — remove the DOM pill borders */
   html body.single-player-v2.generated-sheet-ready .score-stack > .pill,
   html body.single-player-v2.generated-sheet-ready .score-stack > .th-pill-wrap {
-    border-right: 0 !important;
+    border-right: 0;
   }
 
   /* Labels and icons are baked into pill art — hide DOM versions */
   html body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
-    display: none !important;
+    display: none;
   }
   html body.single-player-v2.generated-sheet-ready .score-stack .pill::before {
-    content: none !important;
+    content: none;
   }
 
   /* Pill art backgrounds with room for baked header at the top */
   html body.single-player-v2.generated-sheet-ready .score-stack .pill {
-    padding-top: 30px !important;
-    background-position: center !important;
-    background-size: 100% 100% !important;
-    background-repeat: no-repeat !important;
-    border-radius: 14px !important;
-    box-shadow: none !important;
-    background-color: transparent !important;
+    padding-top: 30px;
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border-radius: 14px;
+    box-shadow: none;
+    background-color: transparent;
   }
   html body.single-player-v2.generated-sheet-ready .score-stack .score-pill {
-    background-image: var(--spv2-hud-score-art) !important;
+    background-image: var(--spv2-hud-score-art);
   }
   html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill {
-    background-image: var(--spv2-hud-threshold-art) !important;
+    background-image: var(--spv2-hud-threshold-art);
   }
 
   /* Spread slots: ornate art frame tile */
   html body.single-player-v2.generated-sheet-ready .spread .slot {
-    background-image: var(--spv2-spread-slot-art) !important;
-    background-position: center !important;
-    background-size: 100% 100% !important;
-    background-repeat: no-repeat !important;
-    background-color: transparent !important;
-    border-color: transparent !important;
+    background-image: var(--spv2-spread-slot-art);
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    border-color: transparent;
   }
 
   /* Hand dock: art tray banner */
   html body.single-player-v2.generated-sheet-ready .handDock {
-    background-image: var(--spv2-hand-dock-art) !important;
-    background-color: transparent !important;
+    background-image: var(--spv2-hand-dock-art);
+    background-color: transparent;
   }
 
   /* Utility buttons: art medallion discs (menu / scoring / abilities) */
   html body.single-player-v2.generated-sheet-ready #menuBtn,
   html body.single-player-v2.generated-sheet-ready #scoringBtn,
   html body.single-player-v2.generated-sheet-ready #abilitiesBtn {
-    background-color: transparent !important;
-    background-repeat: no-repeat !important;
-    background-position: center !important;
-    background-size: contain !important;
-    border: 0 !important;
-    box-shadow: none !important;
-    color: transparent !important;
-    font-size: 0 !important;
-    filter: drop-shadow(0 5px 7px rgba(0,0,0,.78)) drop-shadow(0 2px 2px rgba(0,0,0,.6)) !important;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    border: 0;
+    box-shadow: none;
+    color: transparent;
+    font-size: 0;
+    filter: drop-shadow(0 5px 7px rgba(0,0,0,.78)) drop-shadow(0 2px 2px rgba(0,0,0,.6));
   }
   html body.single-player-v2.generated-sheet-ready #menuBtn::before,
   html body.single-player-v2.generated-sheet-ready #scoringBtn::before,
   html body.single-player-v2.generated-sheet-ready #abilitiesBtn::before {
-    content: none !important;
+    content: none;
   }
   html body.single-player-v2.generated-sheet-ready #menuBtn {
-    background-image: var(--spv2-option-menu-art) !important;
+    background-image: var(--spv2-option-menu-art);
   }
   html body.single-player-v2.generated-sheet-ready #scoringBtn {
-    background-image: var(--spv2-option-scoring-art) !important;
+    background-image: var(--spv2-option-scoring-art);
   }
   html body.single-player-v2.generated-sheet-ready #abilitiesBtn {
-    background-image: var(--spv2-option-abilities-art) !important;
+    background-image: var(--spv2-option-abilities-art);
   }
 
   /* Discard / Purge: medallion art on ::before, caption on ::after */
   html body.single-player-v2.generated-sheet-ready #discardBtn,
   html body.single-player-v2.generated-sheet-ready #purgeBtn {
-    position: relative !important;
-    width: 74px !important;
-    height: 74px !important;
-    border: 0 !important;
+    position: relative;
+    width: 74px;
+    height: 74px;
+    border: 0;
     border-radius: 50%;
-    background-color: transparent !important;
-    background-image: none !important;
-    box-shadow: none !important;
-    color: transparent !important;
-    font-size: 0 !important;
-    overflow: visible !important;
-    opacity: 1 !important;
+    background-color: transparent;
+    background-image: none;
+    box-shadow: none;
+    color: transparent;
+    font-size: 0;
+    overflow: visible;
+    opacity: 1;
   }
   html body.single-player-v2.generated-sheet-ready #discardBtn::before {
-    content: "" !important;
-    position: absolute !important;
-    inset: 0 !important;
-    background-image: url("/public/ui/single-player-v2/elements/Discard.webp") !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-    background-size: contain !important;
-    filter: brightness(1.85) contrast(1.06) saturate(1.12) drop-shadow(0 0 6px rgba(0,0,0,.6)) !important;
-    pointer-events: none !important;
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/public/ui/single-player-v2/elements/Discard.webp");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    filter: brightness(1.85) contrast(1.06) saturate(1.12) drop-shadow(0 0 6px rgba(0,0,0,.6));
+    pointer-events: none;
   }
   html body.single-player-v2.generated-sheet-ready #purgeBtn::before {
-    content: "" !important;
-    position: absolute !important;
-    inset: 0 !important;
-    background-image: var(--spv2-action-center-art) !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-    background-size: contain !important;
-    filter: brightness(1.45) contrast(1.05) saturate(1.08) drop-shadow(0 0 6px rgba(0,0,0,.6)) !important;
-    pointer-events: none !important;
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--spv2-action-center-art);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    filter: brightness(1.45) contrast(1.05) saturate(1.08) drop-shadow(0 0 6px rgba(0,0,0,.6));
+    pointer-events: none;
   }
   html body.single-player-v2.generated-sheet-ready #discardBtn::after,
   html body.single-player-v2.generated-sheet-ready #purgeBtn::after {
-    position: absolute !important;
-    top: 100% !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    margin-top: 3px !important;
-    display: block !important;
-    font: 800 10px/1 system-ui, sans-serif !important;
-    letter-spacing: .09em !important;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 3px;
+    display: block;
+    font: 800 10px/1 system-ui, sans-serif;
+    letter-spacing: .09em;
     text-transform: uppercase;
-    color: #cdb079 !important;
-    text-shadow: 0 1px 3px #000 !important;
-    white-space: nowrap !important;
-    pointer-events: none !important;
+    color: #cdb079;
+    text-shadow: 0 1px 3px #000;
+    white-space: nowrap;
+    pointer-events: none;
   }
-  html body.single-player-v2.generated-sheet-ready #discardBtn::after { content: "Discard" !important; }
-  html body.single-player-v2.generated-sheet-ready #purgeBtn::after { content: "Purge" !important; }
+  html body.single-player-v2.generated-sheet-ready #discardBtn::after { content: "Discard"; }
+  html body.single-player-v2.generated-sheet-ready #purgeBtn::after { content: "Purge"; }
 
   /* Threshold progress bar is baked into the mobile art at mobile pill dimensions.
      At desktop pill dimensions the bar floats visibly below the number — hide it. */
   html body.single-player-v2.generated-sheet-ready .spv2-threshold-progress {
-    display: none !important;
+    display: none;
   }
 
   /* Spread-wrap overlays: table-bg art has the reading circle — suppress extra layers */
   html body.single-player-v2.generated-sheet-ready .spread-wrap::before {
-    background: none !important;
-    filter: none !important;
-    box-shadow: none !important;
+    background: none;
+    filter: none;
+    box-shadow: none;
   }
   html body.single-player-v2.generated-sheet-ready .spread-wrap::after {
-    content: none !important;
+    content: none;
   }
 }
 }
