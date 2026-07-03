@@ -25,65 +25,88 @@
    order (hand, market, mobile, attic, ps1aesthetic), preserving every
    internal tie exactly as it resolved in legacy.
 
-   A full selector/property audit against every other file in the app
-   (everything still in legacy, every already-extracted layer, all 10
-   SPv2 files) found the cluster's real external conflicts point
-   overwhelmingly one direction: AFTER legacy, same as mpCore. Files
-   already declared before legacy (actionDropTargets, base, cards,
+   classicCore is declared BEFORE legacy, immediately preceding it (the
+   last of the before-legacy layers) -- NOT after legacy, where this
+   shipped originally. The first audit checked every other file in the
+   app (everything still in legacy, every already-extracted layer) EXCEPT
+   the 10 SPv2 source files still sharing `legacy` themselves. Those
+   files' body.single-player-v2-prefixed rules rely on much higher
+   specificity to beat this cluster's classic-mode rules on shared
+   elements (#titleWrap, #menuBtn, .score-stack, #spread .slot, among
+   others) -- previously decided by specificity within the one shared
+   legacy layer, same as every other still-in-legacy tie. Declaring
+   classicCore AFTER legacy silently swapped that for pure layer order:
+   since classicCore was now the later layer, it started winning every
+   one of those normal-tier ties regardless of the SPv2 files' higher
+   specificity -- 286 real same-tier conflicts, confirmed by a dedicated
+   audit and then by a computed-style A/B diff against a true
+   pre-classicCore baseline (single-player-v2's #titleWrap filter read
+   back as ps1aesthetic.css's saturate(.74) instead of none; #menuBtn's
+   z-index/padding/border/color all read back as this file's classic-mode
+   values). This shipped as a real regression in single-player-v2 mode
+   before it was caught -- not by a bug report, but by re-checking
+   classicCore's relationship with the SPv2 files before starting to
+   migrate them, per this migration's own "re-examine skips after every
+   extraction" rule.
+
+   Moving classicCore before legacy restores the specificity-based
+   tie-break for all ten SPv2 files (confirmed against the same true
+   baseline) and still satisfies everything the original audit found:
+   files already declared before legacy (actionDropTargets, base, cards,
    spread, assetLazy, mpMultMobile, mpSpreadCards,
    mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone,
-   invWrap, dragStability) are unaffected regardless -- they stay
-   before legacy either way, so their relative order to this cluster
-   never changes (before-legacy < legacy < classicCore, whether the
-   cluster is in legacy or classicCore). mainMenu.css's boot-veil
-   :where(...) selectors (zero specificity) already lose to this
-   cluster's body-class-gated rules via specificity today; "after
-   legacy" preserves that outcome via layer order instead, the same
-   trick titleWrap.css/atticFade.css already rely on. The
-   `.sel`/`.ability-picked`/`.ability-target`/`.purge-picked` z-index
-   ties against drawAnimation.css's `.card-draw-dealt` are moot for the
-   same reason already established for drawAnimation.css's own
-   extraction: those classes structurally never co-occur on the same
-   card. What's left determines classicCore's exact position -- it has
-   to stay declared before every file it needs to keep losing normal-tier
-   specificity ties against (mpCore's `.mp-opp-spread-transform .spread`/
-   `#spread .slot .num`/`.hand .card` family, drawAnimation.css's
-   `.hand .card.card-draw-dealt` will-change, drawers.css's
-   `handCardIdleCycle` idle-sway alternative to this file's own
-   `card-wave`, titleWrap.css's mode-gated filter:blur() on
-   `.score-stack`/`#titleWrap`) and before performance.css (needs to
-   keep WINNING an important-tier `#roomAmbient` animation/opacity tie
-   against performance.css's mobile override -- important ties favor
-   the earlier layer, so classicCore has to stay earlier than
-   performance.css too, not just later than legacy). All of those are
-   satisfied by declaring classicCore immediately after legacy, before
-   every other after-legacy layer (mpCore, tutTip, invTab, titleWrap,
-   atticFade, handDragFix, performance, drawAnimation, drawers) --
-   none of which showed any conflict requiring the opposite direction.
+   invWrap, dragStability) are unaffected -- classicCore was already
+   later than all of them as the last "after legacy" layer, and stays
+   later than all of them as the last "before legacy" layer, so their
+   relative order to this cluster never changes. classicCore also still
+   has to stay declared before every file it needs to keep losing
+   normal-tier specificity ties against (mpCore's
+   `.mp-opp-spread-transform .spread`/`#spread .slot .num`/`.hand .card`
+   family, drawAnimation.css's `.hand .card.card-draw-dealt` will-change,
+   drawers.css's `handCardIdleCycle` idle-sway alternative to this file's
+   own `card-wave`, titleWrap.css's mode-gated filter:blur() on
+   `.score-stack`/`#titleWrap`) and before performance.css (needs to keep
+   WINNING an important-tier `#roomAmbient` animation/opacity tie against
+   performance.css's mobile override) -- before-legacy is earlier than
+   after-legacy either way, so none of those directions flip. The one
+   real trade-off: mainMenu.css's zero-specificity :where(...) boot-veil
+   selectors and attic.css's own #atticScene transition now tie the other
+   way during boot states -- previously attic.css won via the after-legacy
+   layer-order trick titleWrap.css/atticFade.css also rely on; now
+   mainMenu.css wins instead, since classicCore is earlier than legacy
+   again. Checked via the same true-baseline technique and found to only
+   change an invisible transition duration on an element that isn't
+   visible during boot either way -- accepted given the alternative is a
+   confirmed, visible single-player-v2 regression. The
+   `.sel`/`.ability-picked`/`.ability-target`/`.purge-picked` z-index ties
+   against drawAnimation.css's `.card-draw-dealt` remain moot regardless
+   of position, for the same reason already established for
+   drawAnimation.css's own extraction: those classes structurally never
+   co-occur on the same card.
 
-   Two cascading fixes came out of this in mpGame.css, both now that
-   market.css/ps1aesthetic.css no longer live in the same layer as
-   legacy: mp-action-btn/mp-ov-btn used to stay behind in a residual
-   `legacy` block specifically to win a same-layer specificity tie
-   against this file's bare button{font-size:12px;padding:6px 9px}
-   mobile reset -- now that this file lives in classicCore (before
-   mpCore), mpGame.css's mere later position wins that fight via
-   normal-tier layer order instead, so they moved back into mpCore's
-   main block. .card.mp-interaction used to depend on staying
-   co-resident with ps1aesthetic.css in legacy to preserve a same-layer
-   specificity tie against the important-tier .card:not(.photo){...}
-   rule that keeps it correctly dead (its own gradient has never
-   rendered); since that tie needs BOTH rules in the same layer and
-   ps1aesthetic.css was moving anyway, the confirmed-dead rule was
-   deleted outright instead of relocated -- one less thing to keep
-   synchronized, and a genuine (if small) important-tier budget
-   reduction rather than a net-zero move.
+   Two cascading fixes came out of the original extraction in
+   mpGame.css, both unaffected by the position fix above: mp-action-btn/
+   mp-ov-btn used to stay behind in a residual `legacy` block specifically
+   to win a same-layer specificity tie against this file's bare
+   button{font-size:12px;padding:6px 9px} mobile reset -- now that this
+   file lives in classicCore (before mpCore either way), mpGame.css's
+   mere later position wins that fight via normal-tier layer order
+   instead, so they moved back into mpCore's main block.
+   .card.mp-interaction used to depend on staying co-resident with
+   ps1aesthetic.css in legacy to preserve a same-layer specificity tie
+   against the important-tier .card:not(.photo){...} rule that keeps it
+   correctly dead (its own gradient has never rendered); since that tie
+   needs BOTH rules in the same layer and ps1aesthetic.css was moving
+   anyway, the confirmed-dead rule was deleted outright instead of
+   relocated -- one less thing to keep synchronized, and a genuine (if
+   small) important-tier budget reduction rather than a net-zero move.
 
    Verified via a full computed-style A/B diff across the game's
    reachable state space: all five attic mode-transition states plus
    classic, mobile/narrow/desktop breakpoints, prefers-reduced-motion,
    hand-card-action-drag-active, and the card-draw-dealt/card-wave/
-   handCardIdleCycle animation states. */
+   handCardIdleCycle animation states, re-run after the position fix with
+   no changes to any of those results. */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}.modal.show{display:flex}
 /* Ability reveal step (Search/Peek/Neighbor/Kin/Mirror/Between "take 1"):
    dock above the spread instead of dead-centering, with a lighter backdrop,

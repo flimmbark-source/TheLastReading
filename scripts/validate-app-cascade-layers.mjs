@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, legacy, classicCore, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, legacy, classicCore, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -225,10 +225,12 @@ assert.doesNotMatch(read('../src/styles/mpGame.css'), /@layer legacy/, 'mpGame.c
 // .handDock{bottom,background} rule via specificity. Those two declarations
 // were split out into a small residual legacy block in mpMobile.css instead
 // of moving the whole trio the wrong way. mpCore is declared immediately
-// after classicCore (itself immediately after legacy; before handDragFix.css's
-// bare, important-tier .handDock{z-index:26} rule, which mpGame.css's
-// z-index override needs to keep beating) -- see src/styles/mpFixes.css's
-// header comment for the full writeup.
+// after legacy (classicCore is declared immediately BEFORE legacy instead --
+// see that block below for why -- so it stays transitively earlier than
+// mpCore either way); mpCore in turn sits before handDragFix.css's bare,
+// important-tier .handDock{z-index:26} rule, which mpGame.css's z-index
+// override needs to keep beating -- see src/styles/mpFixes.css's header
+// comment for the full writeup.
 const mpGameCore = read('../src/styles/mpGame.css');
 const mpMobileCore = read('../src/styles/mpMobile.css');
 const mpFixesCore = read('../src/styles/mpFixes.css');
@@ -258,24 +260,52 @@ assert.match(
 // specificity). Like mpCore, nothing requires these five to stay
 // co-resident with the rest of legacy, only with each other, so all five
 // moved together into one new shared layer, in their original relative
-// link order (hand, market, mobile, attic, ps1aesthetic). A full audit
-// against every other file in the app found the cluster's real external
-// conflicts point overwhelmingly after legacy (same direction as mpCore),
-// with mainMenu.css's zero-specificity :where(...) boot-veil rules relying
-// on the same layer-order trick titleWrap.css/atticFade.css already use,
-// and the .sel/.ability-picked/.ability-target/.purge-picked z-index ties
-// against drawAnimation.css moot for the same structural reason already
-// established there. classicCore is declared immediately after legacy,
-// before mpCore/titleWrap/drawAnimation/drawers (normal-tier specificity
-// ties it needs to keep LOSING) and before performance.css (an
-// important-tier #roomAmbient tie it needs to keep WINNING) -- see
-// src/styles/market.css's header comment for the full writeup. This
-// extraction also resolved mpGame.css's two former legacy exceptions:
-// mp-action-btn/mp-ov-btn moved back into mpCore's main block (market.css's
-// new before-mpCore position already wins their fight via normal-tier
-// layer order), and .card.mp-interaction -- confirmed-dead code that only
-// existed to preserve a same-layer specificity tie against
-// ps1aesthetic.css -- was deleted outright instead of relocated.
+// link order (hand, market, mobile, attic, ps1aesthetic).
+//
+// classicCore is declared BEFORE legacy, immediately preceding it (the last
+// of the before-legacy layers) -- NOT after legacy, where this shipped
+// originally. The first audit checked the cluster against every
+// already-extracted layer and every other legacy-resident file EXCEPT the
+// 10 SPv2 source files still sharing `legacy` themselves; those files'
+// body.single-player-v2-prefixed rules rely on higher specificity to beat
+// this cluster's classic-mode rules on shared elements (#titleWrap/
+// #menuBtn/.score-stack/#spread .slot, among others), previously decided
+// by specificity within the one shared legacy layer. Declaring classicCore
+// AFTER legacy silently swapped that for pure layer order, and since
+// classicCore was later, it started winning every one of those ties
+// regardless of the SPv2 files' higher specificity -- 286 real same-tier
+// conflicts, confirmed by audit and then by a computed-style A/B diff
+// against a true pre-classicCore baseline (single-player-v2's #titleWrap
+// filter read back as ps1aesthetic.css's saturate(.74) instead of none;
+// #menuBtn's z-index/padding/border/color all read back as market.css's
+// classic-mode values). This shipped as a real regression before it was
+// caught by re-checking classicCore's relationship with the SPv2 files
+// prior to migrating them, per this doc's own "re-examine skips after
+// every extraction" rule. Moving classicCore before legacy restores the
+// specificity-based tie-break for all ten files and still satisfies every
+// other requirement the original audit found: classicCore stays earlier
+// than mpCore/titleWrap/drawAnimation/drawers (normal-tier ties it needs
+// to keep LOSING) and earlier than performance.css (an important-tier
+// #roomAmbient tie it needs to keep WINNING) -- before-legacy is earlier
+// than after-legacy either way, so none of those directions flip. Its
+// order against every other before-legacy layer is unaffected too:
+// classicCore was already later than all of them as the last "after
+// legacy" layer, and stays later than all of them as the last "before
+// legacy" layer. The one real trade-off: mainMenu.css's zero-specificity
+// :where(...) boot-veil rule and attic.css's own #atticScene transition now
+// tie the other way during boot states (mainMenu.css wins instead of
+// attic.css's after-legacy layer-order trick) -- checked via the same
+// true-baseline technique and found to only change an invisible transition
+// duration on an element that isn't visible during boot either way, an
+// acceptable trade given the alternative is a confirmed single-player-v2
+// regression. See src/styles/market.css's header comment for the full
+// writeup. This extraction also resolved mpGame.css's two former legacy
+// exceptions, both unaffected by the position fix: mp-action-btn/mp-ov-btn
+// moved back into mpCore's main block (market.css's before-mpCore position
+// either way already wins their fight via normal-tier layer order), and
+// .card.mp-interaction -- confirmed-dead code that only existed to preserve
+// a same-layer specificity tie against ps1aesthetic.css -- was deleted
+// outright instead of relocated.
 const classicCoreFiles = [
   '../src/styles/hand.css',
   '../src/styles/market.css',
@@ -292,11 +322,13 @@ for (const path of classicCoreFiles) {
 // relicRack.css: consolidates the relic rack's previously scattered rules
 // (market base, mobile/classic, attic, PS1, and SPv2 mode overrides) into
 // one component stylesheet in their original effective order. Declared
-// BEFORE legacy: attic.css's mode-gated filter:blur() on #relicRack (still
-// in legacy) must keep winning over relicRack's own unconditional
-// filter:saturate() -- previously decided by attic's higher specificity
-// within the shared legacy layer, now decided by legacy remaining the later
-// layer for this normal-tier property. Placing this layer AFTER legacy (the
+// BEFORE legacy: attic.css's mode-gated filter:blur() on #relicRack (now in
+// classicCore, itself before legacy but still later than relicRack) must
+// keep winning over relicRack's own unconditional filter:saturate() --
+// previously decided by attic's higher specificity within the shared legacy
+// layer, now decided by classicCore remaining the later layer for this
+// normal-tier property regardless of which side of legacy it sits on.
+// Placing this layer AFTER legacy (the
 // first attempt) silently flipped that: verified empirically that
 // #relicRack's computed filter during body.mode-attic changed from
 // blur(3px) to saturate(.7) contrast(1.03), a real regression caught and
