@@ -1,7 +1,23 @@
-@layer legacy {
+@layer classicCore {
 /* Extracted from index.html (Phase 17). Files split in original rule order;
    link order in index.html must stay base,spread,hand,cards,market,mobile,attic,drawers
-   to preserve the cascade. Some sections span themes because order wins over purity. */
+   to preserve the cascade. Some sections span themes because order wins over purity.
+
+   Shares the classicCore layer with hand.css/market.css/mobile.css/
+   ps1aesthetic.css -- see market.css's header comment for the full
+   cross-file audit. Most of this file's own content (#atticScene,
+   .attic-prop, #obalsHud, #atticWhisper/Pickup/Tutorial/TableReturn) is
+   fully self-contained by now -- relicRack.css, handSwipeZone.css,
+   titleWrap.css, and atticFade.css already consolidated everything that
+   used to make this file cross-file-entangled out into their own
+   layers. What's left with a real touch outside this file: the
+   #invWrap mode-transition fade rule (needs to keep winning a
+   specificity tie against invWrap.css's own base transition, same
+   requirement as before -- invWrap.css is before legacy, classicCore is
+   after, so this still wins via layer order) and
+   #settingsPanel .settings-action.get-up-action (needs to keep winning
+   a specificity tie against mobile.css's .settings-panel .settings-action
+   -- satisfied by staying co-resident with mobile.css in classicCore). */
 /* Attic scene shell patch */
 #atticScene{position:fixed;inset:0;z-index:520;opacity:0;pointer-events:none;background:url('../../backgrounds/attic_room_mvp_1080x1920.png') center center/cover no-repeat;transition:opacity .9s ease,filter .9s ease,transform 1.15s ease;transform:scale(1.04);filter:blur(2px);overflow:hidden;color:#ead9b5;font-family:Georgia,serif}
 #atticScene::before{content:'';position:absolute;inset:0;background:url('../../fx/transition_dark_vignette_1080x1920.png') center center/cover no-repeat;opacity:.72;z-index:1;pointer-events:none}

@@ -1,7 +1,11 @@
-@layer legacy {
+@layer classicCore {
 /* Extracted from index.html (Phase 17). Files split in original rule order;
    link order in index.html must stay base,spread,hand,cards,market,mobile,attic,drawers
-   to preserve the cascade. Some sections span themes because order wins over purity. */
+   to preserve the cascade. Some sections span themes because order wins over purity.
+
+   Shares the classicCore layer with hand.css/market.css/attic.css/
+   ps1aesthetic.css -- see market.css's header comment for the full
+   cross-file audit and reasoning. */
 :root{--inv-h:300px}
 body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!important}
 .inv-item{position:absolute;cursor:grab;user-select:none;touch-action:none;z-index:1;transition:box-shadow .12s;will-change:transform}

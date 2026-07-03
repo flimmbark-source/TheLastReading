@@ -83,7 +83,25 @@ const appStyleFiles = [
 // blocks in the same file, not duplicated) -- no declarations were
 // added, removed, or duplicated, so each file's own count is unchanged
 // (mpGame.css 41, mpMobile.css 51, mpFixes.css 118, same as before).
-const importantBudget = 716;
+// hand.css/market.css/mobile.css/attic.css/ps1aesthetic.css moved together
+// from `legacy` into a new shared `classicCore` layer (another
+// trio-as-one-unit extraction, five-wide this time -- see market.css's
+// header comment). This one isn't quite net-zero: mpGame.css's
+// .card.mp-interaction, kept alive in a residual `legacy` block purely to
+// stay co-resident with ps1aesthetic.css for a dead-code specificity tie,
+// lost its reason to exist once ps1aesthetic.css moved to classicCore too
+// -- deleted outright instead of relocated, dropping mpGame.css's own
+// count from 41 to 39. mp-action-btn/mp-ov-btn moved back into
+// mpGame.css's main mpCore block (no count change, just a location change
+// within the same file) now that market.css's new before-mpCore position
+// wins their fight via layer order instead of a same-layer specificity
+// trick. While reconciling this, the actual summed total across
+// appStyleFiles turned out to be 713 pre-extraction, not the 716 the
+// budget constant claimed -- this check is a ceiling (`total <=
+// importantBudget`), not an exact tally, so that drift never tripped a
+// failure, but it's corrected here to the real number (713 - 2 = 711)
+// rather than carried forward.
+const importantBudget = 711;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);

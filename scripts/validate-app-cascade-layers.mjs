@@ -11,8 +11,8 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, legacy, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, legacy, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, legacy, classicCore, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, legacy, classicCore, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
@@ -25,11 +25,6 @@ assert.ok(
 // cascade-layer importance reverses layer order (see validate-app-important-
 // budget.mjs and the SPv2 cascade validator for the matching SPv2-side story).
 const legacyLayeredFiles = [
-  '../src/styles/hand.css',
-  '../src/styles/market.css',
-  '../src/styles/mobile.css',
-  '../src/styles/attic.css',
-  '../src/styles/ps1aesthetic.css',
   '../src/styles/singlePlayerV2/base.css',
   '../src/styles/singlePlayerV2/compat.css',
   '../src/styles/singlePlayerV2/desktop.css',
@@ -178,32 +173,39 @@ assert.match(mpSinglePlayerIsolation.trimEnd(), /\}$/, 'mpSinglePlayerIsolation.
 //      .mp-swap-pick genuinely needs to stay before legacy, to keep
 //      winning a real specificity fight against ps1aesthetic.css's bare
 //      .slot{border-color:...!important}.
-//   2. .card.mp-interaction is NOT safe to move here: it already loses a
+//   2. .card.mp-interaction was NOT safe to move here: it already lost a
 //      same-layer specificity tie to ps1aesthetic.css's
 //      .card:not(.photo){...!important} via source order today
 //      (pre-existing dead code, confirmed against a true git-checkout
 //      baseline), and relocating it would revive it by swapping that
-//      tie-break for plain layer order.
-//   3. mp-action-btn/mp-ov-btn are NOT safe to move here either, in the
+//      tie-break for plain layer order. (Since deleted outright -- see
+//      the classicCore block below, where market.css/ps1aesthetic.css
+//      moved out of legacy entirely and this rule stopped having
+//      anywhere safe to live.)
+//   3. mp-action-btn/mp-ov-btn were NOT safe to move here either, in the
 //      opposite direction from #1: both render as real <button> elements
 //      and need to keep beating market.css's mobile-breakpoint bare
 //      button{font-size:12px;padding:6px 9px} reset via specificity,
 //      which requires AFTER legacy -- the same conflict already
-//      documented above for tutTip.css's #tutSkipBtn.
-// Items 2 and 3 stayed behind in mpGame.css/legacy instead (no single
-// file position satisfies both #1 and #3). The other 32 rules (the
+//      documented above for tutTip.css's #tutSkipBtn. (Since moved back
+//      into mpCore's main block -- see the classicCore block below.)
+// Items 2 and 3 stayed behind in mpGame.css/legacy at the time (no single
+// file position satisfied both #1 and #3). The other 32 rules (the
 // laddered core, plus .card.mp-interaction, mp-action-btn, mp-ov-btn)
-// stay in mpGame.css/legacy untouched.
+// stayed in mpGame.css/legacy untouched -- until the classicCore
+// extraction below moved market.css/ps1aesthetic.css out of legacy too,
+// which resolved items 2 and 3 differently (see that block).
 const mpGameChrome = read('../src/styles/components/mpGameChrome.css');
 assert.match(mpGameChrome, /^@layer mpGameChrome \{/, 'mpGameChrome.css should live in its own mpGameChrome layer');
 assert.match(mpGameChrome.trimEnd(), /\}$/, 'mpGameChrome.css should close its layer wrapper');
 assert.match(html, /components\/mpGameChrome\.css/, 'game.html should load the extracted mpGameChrome component stylesheet');
-assert.doesNotMatch(mpGameChrome, /\.card\.mp-interaction\s*\{/, 'mpGameChrome.css should not own the .card.mp-interaction rule -- it must stay co-resident with ps1aesthetic.css in legacy to preserve its pre-existing dead-code specificity tie');
-assert.doesNotMatch(mpGameChrome, /\.mp-action-btn\s*\{|\.mp-ov-btn\s*\{/, 'mpGameChrome.css should not own mp-action-btn/mp-ov-btn -- they must stay in legacy to keep beating market.css\'s bare button{} reset via specificity');
+assert.doesNotMatch(mpGameChrome, /\.card\.mp-interaction\s*\{/, 'mpGameChrome.css should not own a .card.mp-interaction rule -- it was deleted outright as confirmed-dead code, not relocated here');
+assert.doesNotMatch(mpGameChrome, /\.mp-action-btn\s*\{|\.mp-ov-btn\s*\{/, 'mpGameChrome.css should not own mp-action-btn/mp-ov-btn -- they live in mpCore\'s main block now that market.css moved to classicCore');
 assert.doesNotMatch(read('../src/styles/mpGame.css'), /\.mp-persona|\.mp-ov-box/, 'mpGame.css should no longer own the solo chrome rules moved to mpGameChrome.css');
-assert.match(read('../src/styles/mpGame.css'), /\.mp-action-btn\s*\{/, 'mpGame.css should retain the mp-action-btn rule so it stays co-resident with market.css in legacy');
-assert.match(read('../src/styles/mpGame.css'), /\.mp-ov-btn\s*\{/, 'mpGame.css should retain the mp-ov-btn rule so it stays co-resident with market.css in legacy');
-assert.match(read('../src/styles/mpGame.css'), /\.card\.mp-interaction\s*\{/, 'mpGame.css should retain the .card.mp-interaction rule so it stays co-resident with ps1aesthetic.css in legacy');
+assert.match(read('../src/styles/mpGame.css'), /\.mp-action-btn\s*\{/, 'mpGame.css should retain the mp-action-btn rule (now in its main mpCore block, since market.css moved to classicCore)');
+assert.match(read('../src/styles/mpGame.css'), /\.mp-ov-btn\s*\{/, 'mpGame.css should retain the mp-ov-btn rule (now in its main mpCore block, since market.css moved to classicCore)');
+assert.doesNotMatch(read('../src/styles/mpGame.css'), /\.card\.mp-interaction\s*\{/, 'mpGame.css should no longer own a .card.mp-interaction rule -- deleted outright as confirmed-dead code once ps1aesthetic.css moved to classicCore');
+assert.doesNotMatch(read('../src/styles/mpGame.css'), /@layer legacy/, 'mpGame.css should no longer need a residual legacy block -- both of its former exceptions were resolved by the classicCore extraction');
 
 // mpCore: the fifth crack, a trio-as-one-unit extraction of mpGame.css's
 // laddered core + mpMobile.css + mpFixes.css into one new shared layer --
@@ -223,15 +225,15 @@ assert.match(read('../src/styles/mpGame.css'), /\.card\.mp-interaction\s*\{/, 'm
 // .handDock{bottom,background} rule via specificity. Those two declarations
 // were split out into a small residual legacy block in mpMobile.css instead
 // of moving the whole trio the wrong way. mpCore is declared immediately
-// after legacy (before handDragFix.css's bare, important-tier
-// .handDock{z-index:26} rule, which mpGame.css's z-index override needs to
-// keep beating) -- see src/styles/mpFixes.css's header comment for the full
-// writeup.
+// after classicCore (itself immediately after legacy; before handDragFix.css's
+// bare, important-tier .handDock{z-index:26} rule, which mpGame.css's
+// z-index override needs to keep beating) -- see src/styles/mpFixes.css's
+// header comment for the full writeup.
 const mpGameCore = read('../src/styles/mpGame.css');
 const mpMobileCore = read('../src/styles/mpMobile.css');
 const mpFixesCore = read('../src/styles/mpFixes.css');
 assert.match(mpGameCore, /^@layer mpCore \{/, 'mpGame.css should open with its laddered core in the mpCore layer');
-assert.match(mpGameCore, /\n@layer legacy \{/, 'mpGame.css should carry a residual legacy block for its solo exceptions');
+assert.doesNotMatch(mpGameCore, /\n@layer legacy \{/, 'mpGame.css should no longer carry a residual legacy block -- both former exceptions were resolved by the classicCore extraction');
 assert.match(mpMobileCore, /^@layer mpCore \{/, 'mpMobile.css should open with its bulk content in the mpCore layer');
 assert.match(mpMobileCore, /\n@layer legacy \{/, 'mpMobile.css should carry a residual legacy block for the .handDock bottom/background split');
 assert.match(mpFixesCore, /^@layer mpCore \{/, 'mpFixes.css should live entirely in the mpCore layer');
@@ -246,6 +248,46 @@ assert.match(
   /body\.mp-game-active \.handDock \{[^}]*bottom:\s*0\s*!important;[^}]*background:/,
   'mpMobile.css\'s residual legacy block should retain .handDock\'s bottom/background declarations',
 );
+
+// classicCore: resolves what used to be this migration's "structural wall"
+// -- hand.css, market.css, mobile.css, attic.css, and ps1aesthetic.css form
+// a deliberate cross-file specificity ladder with EACH OTHER (confirmed by
+// an earlier, reverted attempt to extract hand.css alone: market.css's
+// mobile block deliberately uses low-specificity overrides and relies on
+// hand.css's higher-specificity state combos to keep beating them via
+// specificity). Like mpCore, nothing requires these five to stay
+// co-resident with the rest of legacy, only with each other, so all five
+// moved together into one new shared layer, in their original relative
+// link order (hand, market, mobile, attic, ps1aesthetic). A full audit
+// against every other file in the app found the cluster's real external
+// conflicts point overwhelmingly after legacy (same direction as mpCore),
+// with mainMenu.css's zero-specificity :where(...) boot-veil rules relying
+// on the same layer-order trick titleWrap.css/atticFade.css already use,
+// and the .sel/.ability-picked/.ability-target/.purge-picked z-index ties
+// against drawAnimation.css moot for the same structural reason already
+// established there. classicCore is declared immediately after legacy,
+// before mpCore/titleWrap/drawAnimation/drawers (normal-tier specificity
+// ties it needs to keep LOSING) and before performance.css (an
+// important-tier #roomAmbient tie it needs to keep WINNING) -- see
+// src/styles/market.css's header comment for the full writeup. This
+// extraction also resolved mpGame.css's two former legacy exceptions:
+// mp-action-btn/mp-ov-btn moved back into mpCore's main block (market.css's
+// new before-mpCore position already wins their fight via normal-tier
+// layer order), and .card.mp-interaction -- confirmed-dead code that only
+// existed to preserve a same-layer specificity tie against
+// ps1aesthetic.css -- was deleted outright instead of relocated.
+const classicCoreFiles = [
+  '../src/styles/hand.css',
+  '../src/styles/market.css',
+  '../src/styles/mobile.css',
+  '../src/styles/attic.css',
+  '../src/styles/ps1aesthetic.css',
+];
+for (const path of classicCoreFiles) {
+  const text = read(path);
+  assert.match(text, /^@layer classicCore \{/, `${path} should live in the classicCore layer`);
+  assert.match(text.trimEnd(), /\}$/, `${path} should close its classicCore layer wrapper`);
+}
 
 // relicRack.css: consolidates the relic rack's previously scattered rules
 // (market base, mobile/classic, attic, PS1, and SPv2 mode overrides) into

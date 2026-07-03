@@ -20,11 +20,19 @@
    counterpart in mpMobile.css/mpFixes.css, verified via a full
    selector-overlap audit) moved to components/mpGameChrome.css, its
    own layer ordered before legacy -- see that file's header comment
-   for the full reasoning. .card.mp-interaction and the mp-action-btn
-   family/mp-ov-btn are solo exceptions that stayed in `legacy` instead
-   (see the comments on those rules below); mpMobile.css's own
-   .handDock rule is similarly split between `legacy` and `mpCore` for
-   an analogous reason -- see that file's header comment. */
+   for the full reasoning. mp-action-btn/mp-ov-btn used to be solo
+   exceptions kept behind in a residual `legacy` block (needing a
+   same-layer specificity tie against market.css's bare button{} reset),
+   but now that market.css lives in the classicCore layer (before
+   mpCore, see market.css's header comment), this file's later position
+   already wins that fight via normal-tier layer order -- moved back
+   into the main block below. .card.mp-interaction, a confirmed-dead
+   rule that only existed to preserve a specificity tie against
+   ps1aesthetic.css, was deleted outright once ps1aesthetic.css also
+   moved to classicCore (see market.css's header comment for why
+   deletion, not relocation, was the right call). mpMobile.css's own
+   .handDock rule is still split between `legacy` and `mpCore` for an
+   analogous but unrelated reason -- see that file's header comment. */
 #mpGame {
   position: fixed; inset: 0; z-index: 9300;
   display: flex; flex-direction: column;
@@ -186,34 +194,20 @@ body.mp-game-active #spread .slot {
    match-over overlay is up, raise the whole MP layer above the lifted hand
    and spread so the overlay covers everything. */
 body.mp-game-active.mp-overlay-active #mpGame { z-index: 99999 !important; }
-}
 
-@layer legacy {
-/* Interaction card tint. Stays here (not in mpGameChrome.css) on purpose:
-   ps1aesthetic.css's important-tier .card:not(.photo){...} rule has the
-   same effective specificity (:not() contributes its argument's
-   specificity, so .card:not(.photo) == .card.mp-interaction, both "two
-   classes") and is also important-tier, so this has always lost the
-   resulting same-layer specificity tie to ps1aesthetic.css via source
-   order -- this rule's own 160deg gradient has never actually rendered.
-   Moving it to any other layer (before or after legacy) would replace
-   that specificity-tie/source-order resolution with plain layer-order,
-   reviving dead code as a side effect. Verified empirically, including
-   against a manual git-checkout true baseline, not just by static
-   reasoning. */
-.card.mp-interaction { background: linear-gradient(160deg, rgba(30,15,5,.95), rgba(15,8,3,.98)) !important; border-color: rgba(180,80,80,.5) !important; }
-
-/* Action buttons and the round/match-over overlay's return button. Also
-   stay here rather than in mpGameChrome.css: both render as real <button>
-   elements (see src/app/mpGame.mjs), and market.css's mobile-breakpoint
-   bare button{font-size:12px;padding:6px 9px} reset (still in legacy)
-   competes on font-size/padding. This file's higher, class-based
-   specificity is meant to win that fight -- the exact same conflict
-   already documented for components/tutTip.css's #tutSkipBtn above.
-   Extracting these to mpGameChrome.css (declared before legacy) would
-   flip that specificity win into a layer-order loss; verified via a
-   full computed-style A/B diff, which caught font-size/padding/width/
-   height all regressing to market.css's reset values once extracted. */
+/* Action buttons and the round/match-over overlay's return button. Both
+   render as real <button> elements (see src/app/mpGame.mjs), and
+   market.css's mobile-breakpoint bare button{font-size:12px;
+   padding:6px 9px} reset (now in the classicCore layer, before mpCore)
+   competes on font-size/padding. These used to stay behind in a
+   residual legacy block specifically to keep beating that reset via a
+   same-layer specificity tie (the exact conflict already documented for
+   components/tutTip.css's #tutSkipBtn) -- but now that market.css lives
+   in classicCore, declared before mpCore, this file's mere position
+   (later than classicCore) already wins that fight via normal-tier
+   layer order, with no same-layer specificity trick needed. Moved back
+   here accordingly; see classicCore's own header comment (in
+   market.css) for the full reasoning. */
 .mp-action-btn {
   padding: 5px 11px;
   background: rgba(180,140,90,.12); border: 1px solid rgba(180,140,90,.3);

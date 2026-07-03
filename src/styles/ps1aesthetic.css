@@ -1,8 +1,23 @@
-@layer legacy {
+@layer classicCore {
 /* ═══════════════════════════════════════════════════════════════
    PS1 / LOFI DARK AESTHETIC
    Inspired by Inscryption · Lunacid · Dread Delusion · You Must Feed It
-   ═══════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════
+
+   Shares the classicCore layer with hand.css/market.css/mobile.css/
+   attic.css -- see market.css's header comment for the full cross-file
+   audit. This file's own two real external touches: needs to keep
+   LOSING a normal-tier tie to titleWrap.css's mode-gated filter:blur()
+   on .score-stack/#titleWrap (titleWrap.css is after legacy, this file
+   is in classicCore, also after legacy but earlier than titleWrap --
+   still satisfied), and needs to keep WINNING an important-tier tie
+   against performance.css's #roomAmbient{animation:none} mobile
+   override (performance.css is after legacy too, later than
+   classicCore -- earlier layer wins important ties, so this still
+   wins). mpGame.css's .card.mp-interaction, which used to depend on
+   staying co-resident with this file for a dead-code specificity tie,
+   was deleted outright instead of moved here -- see market.css's
+   header comment. */
 
 /* ── Persistent edge vignette ──────────────────────────────────────────────
    Using html:: not body:: — body has overflow-x:hidden on mobile which
