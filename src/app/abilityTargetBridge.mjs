@@ -1,6 +1,7 @@
 const START_ABILITY_TARGETING = 'START_ABILITY_TARGETING';
 const TOGGLE_ABILITY_TARGET = 'TOGGLE_ABILITY_TARGET';
 const CLEAR_ABILITY_TARGETING = 'CLEAR_ABILITY_TARGETING';
+const CANCEL_ABILITY = 'CANCEL_ABILITY';
 
 // The store owns the serializable targeting selection (valid/picked ids, title,
 // count). The confirm callback and preview function cannot live in the store, so
@@ -116,9 +117,9 @@ export function installAbilityTargetBridge(target = window) {
     if (typeof target.render === 'function') target.render();
   };
 
-  // Cancelling never costs anything (the source card stays discarded either
-  // way — see resolveAbility's retry loop), so it's available at every step,
-  // not just the first.
+  // The active targeting prompt always owns its Cancel action. Cancelling does
+  // not restore the already-discarded source card, but it does end the current
+  // ability instead of immediately reopening the same first targeting step.
   target.tlrCanCancelAbilitySelection = function () {
     return !!storeTargeting(target);
   };
@@ -161,28 +162,27 @@ export function installAbilityTargetBridge(target = window) {
     if (typeof cb === 'function') cb(...picked);
   };
 
-  // Cancel backs out of the current targeting step without touching the
-  // discard — the source card stays spent. Resolving the pending callback
-  // with no picks signals cancellation up through buildAbilityChoiceAsync,
-  // and resolveAbility's retry loop re-shows targeting from the start.
   target.cancelAbilitySelection = function () {
     clearPendingAutoConfirm();
     const targeting = storeTargeting(target);
     if (!targeting) return false;
     const cb = pendingCallbacks.cb;
     clearPendingCallbacks();
-    target.tlrStore.dispatch({ type: CLEAR_ABILITY_TARGETING });
+    target.tlrStore.dispatch({ type: CANCEL_ABILITY });
+    const state = stateOf(target);
+    if (state) { state.abilitySelect = null; state.busy = false; }
     if (typeof target.render === 'function') target.render();
-    if (typeof cb === 'function') cb();
+    // A single null argument is the UI contract for "end this targeting flow".
+    // abilityFlowAsync converts it into a no-op ability result, allowing the
+    // normal reading flow to finish cleanly without retrying the first prompt.
+    if (typeof cb === 'function') cb(null);
     return true;
   };
 
   // Hard abandon for navigation (e.g. Return to Menu): unlike
-  // cancelAbilitySelection, this never resolves the pending callback, so
-  // resolveAbility's retry loop does not fire and re-prompt. It just drops
-  // the whole in-flight ability — including run.ability itself, not only
-  // .targeting — so a resumed session ("Continue") never finds a stale
-  // half-active ability still sitting in the store.
+  // cancelAbilitySelection, this never resolves the pending callback. It just
+  // drops the whole in-flight ability so a resumed session ("Continue") never
+  // finds a stale half-active ability still sitting in the store.
   target.tlrForceCloseAbilityTargeting = function () {
     clearPendingAutoConfirm();
     clearPendingCallbacks();
