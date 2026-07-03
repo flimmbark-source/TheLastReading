@@ -23,7 +23,21 @@
        Individual translate composes with their existing positioning rules. */
     html body.single-player-v2.generated-sheet-ready .handDock,
     html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone {
-      translate: 0 -6dvh;
+      translate: 0 -4.5dvh;
+    }
+
+    /* Lighten only the table plane beneath the interface. Keeping this at the
+       background stacking level preserves card, HUD, and control contrast. */
+    body.single-player-v2.generated-sheet-ready::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at 50% 52%, rgba(174, 111, 54, .20), transparent 58%),
+        linear-gradient(rgba(116, 76, 43, .10), rgba(72, 43, 24, .08));
+      mix-blend-mode: screen;
     }
   }
 }
