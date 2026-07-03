@@ -23,7 +23,7 @@
        Individual translate composes with their existing positioning rules. */
     html body.single-player-v2.generated-sheet-ready .handDock,
     html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone {
-      translate: 0 -4.5dvh;
+      translate: 0dvh;
     }
 
     /* Lighten only the table plane beneath the interface. Keeping this at the
