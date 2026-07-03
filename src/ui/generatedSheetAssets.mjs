@@ -31,8 +31,7 @@ const ROOT_ART = {
   // The constellation circle remains a standalone SVG in the runtime kit.
   // Keep the CSS custom property populated so spread art does not disappear
   // if the integration layer enables the separate circle overlay again.
-  '--spv2-reading-circle-art': 'reading-circle.svg',
-  '--spv2-card-back-art': 'card-back.svg'
+  '--spv2-reading-circle-art': 'reading-circle.svg'
 };
 
 const TABLE_BG = '/public/ui/single-player-v2/table-bg.webp';

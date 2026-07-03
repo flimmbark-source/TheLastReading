@@ -3707,41 +3707,6 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     z-index: 3 !important;
     pointer-events: none !important;
   }
-
-  /* Empty spread positions should read as full card backs, matching the
-     approved single-player comp, not as dim transparent outlines with slot
-     numbers bleeding through the table art. */
-  body.single-player-v2.generated-sheet-ready #spread .slot.empty {
-    background-color: transparent !important;
-    background-image: var(--spv2-card-back-art) !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-    background-size: 100% 100% !important;
-    border-color: transparent !important;
-    filter: brightness(1.18) contrast(1.08)
-      drop-shadow(0 8px 10px rgba(0, 0, 0, .72)) !important;
-  }
-
-  body.single-player-v2.generated-sheet-ready #spread .slot.empty .num {
-    display: none !important;
-  }
-
-  body.single-player-v2.generated-sheet-ready #spread .slot.empty:hover,
-  body.single-player-v2.generated-sheet-ready #spread .slot.empty.target,
-  body.single-player-v2.generated-sheet-ready #spread .slot.empty.drop-target {
-    background-image: var(--spv2-card-back-art) !important;
-    background-size: 100% 100% !important;
-  }
-
-  /* Restore the bottom tray ornament's comp-level presence. A previous
-     compatibility pass shrank the dock art so far that the flourish at the
-     bottom of the screen became barely visible. */
-  body.single-player-v2.generated-sheet-ready .handDock {
-    background-size: 100% auto !important;
-    background-position: center bottom !important;
-    filter: brightness(1.22) contrast(1.08)
-      drop-shadow(0 -2px 8px rgba(0, 0, 0, .72)) !important;
-  }
 }
 }
 
