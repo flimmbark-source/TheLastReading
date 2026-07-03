@@ -168,7 +168,11 @@ export function installSinglePlayerV2(target = window) {
 
       const archiveWrap=doc.getElementById('invWrap');
       const archiveDesk=doc.getElementById('invDesk');
-      if(archiveWrap?.classList.contains('open')&&archiveDesk&&!archiveDesk.contains(element)&&!element.closest('#spv2ArchiveBtn'))closeArchive();
+      // The item-detail popup renders outside #invDesk (appended to <body> so it
+      // can sit above the drawer — see mobile.css's .inv-detail-bg z-index).
+      // A pointerdown there is dismissing the item, not asking to close the
+      // archive drawer underneath it.
+      if(archiveWrap?.classList.contains('open')&&archiveDesk&&!archiveDesk.contains(element)&&!element.closest('#spv2ArchiveBtn')&&!element.closest('.inv-detail-bg'))closeArchive();
     },true);
   };
 

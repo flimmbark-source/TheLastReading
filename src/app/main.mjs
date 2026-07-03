@@ -325,6 +325,13 @@ export function startApp(target = window) {
   installAbilityTargetBridge(target);
   installSpreadPlacementBridge(target);
   installControlBindings(target);
+
+  // Populate the Archives desk with anything already collected in a prior
+  // session. Every other renderInventory() call is reactive (a pickup or a
+  // freshly-unlocked fragment); without this, previously-collected items sit
+  // in localStorage but never reach the DOM until something new is collected
+  // in the current session.
+  if (typeof target.renderInventory === 'function') target.renderInventory();
 }
 
 startApp();

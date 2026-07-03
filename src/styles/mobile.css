@@ -26,7 +26,7 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
 .inv-item-type{font-size:6.5px;letter-spacing:.11em;text-transform:uppercase;color:#7a5018;text-align:center;pointer-events:none;line-height:1.2;position:relative;z-index:1}
 .inv-item-name{font-size:7.5px;font-weight:700;text-align:center;color:#3a1a06;line-height:1.3;font-family:Georgia,serif;pointer-events:none;display:none;position:relative;z-index:1}
 .inv-item.named .inv-item-name{display:block}
-.inv-detail-bg{position:fixed;inset:0;z-index:9995;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:20px}
+.inv-detail-bg{position:fixed;inset:0;z-index:10100;background:rgba(0,0,0,.82);display:flex;align-items:center;justify-content:center;padding:20px}
 .inv-detail-box{background:linear-gradient(160deg,#f4eac8,#dece94);border:2px solid #9a7830;border-radius:6px;max-width:min(88vw,460px);width:100%;padding:22px 24px 26px;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.3)}
 .inv-detail-close{position:absolute;top:8px;right:10px;background:transparent;border:none;font-size:18px;color:#8a5820;cursor:pointer;line-height:1;padding:4px 6px;font-weight:700}
 .inv-detail-close:hover{color:#2a1a06}
