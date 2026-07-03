@@ -1,7 +1,23 @@
+@layer classicCore {
 /* ═══════════════════════════════════════════════════════════════
    PS1 / LOFI DARK AESTHETIC
    Inspired by Inscryption · Lunacid · Dread Delusion · You Must Feed It
-   ═══════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════
+
+   Shares the classicCore layer with hand.css/market.css/mobile.css/
+   attic.css -- see market.css's header comment for the full cross-file
+   audit. This file's own two real external touches: needs to keep
+   LOSING a normal-tier tie to titleWrap.css's mode-gated filter:blur()
+   on .score-stack/#titleWrap (titleWrap.css is after legacy, this file
+   is in classicCore, also after legacy but earlier than titleWrap --
+   still satisfied), and needs to keep WINNING an important-tier tie
+   against performance.css's #roomAmbient{animation:none} mobile
+   override (performance.css is after legacy too, later than
+   classicCore -- earlier layer wins important ties, so this still
+   wins). mpGame.css's .card.mp-interaction, which used to depend on
+   staying co-resident with this file for a dead-code specificity tie,
+   was deleted outright instead of moved here -- see market.css's
+   header comment. */
 
 /* ── Persistent edge vignette ──────────────────────────────────────────────
    Using html:: not body:: — body has overflow-x:hidden on mobile which
@@ -96,10 +112,6 @@ body {
   border-color: #496946 !important;
 }
 
-#handSwipeZone {
-  touch-action: none;
-}
-
 /* ── Float the hand above the bottom edge ──────────────────────────────────
    bottom: 0 pins the dock to the screen edge, making cards look like they're
    sinking out of frame. Lifting it reveals the table background below, giving
@@ -113,9 +125,6 @@ body {
   bottom: 36px !important;
   background: linear-gradient(transparent, rgba(0,0,0,.70)) !important;
 }
-.hand-swipe-zone {
-  bottom: 233px !important; /* 197px dock + 36px float */
-}
 body {
   padding-bottom: 238px !important; /* 202px + 36px */
 }
@@ -123,9 +132,6 @@ body {
 @media (max-width: 640px) {
   .handDock {
     bottom: 24px !important;
-  }
-  .hand-swipe-zone {
-    bottom: 176px !important; /* 152px dock + 24px float */
   }
   body {
     padding-bottom: 181px !important; /* 157px + 24px */
@@ -154,7 +160,6 @@ body {
 
 /* ── Desaturate self-contained UI regions (no stacking-context conflict) ── */
 .score-stack { filter: saturate(.68); }
-#relicRack   { filter: saturate(.70) contrast(1.03); }
 #titleWrap   { filter: saturate(.74); }
 #mainMenu    { filter: saturate(.72) contrast(1.04); }
 
@@ -170,4 +175,5 @@ h1 {
   font-family: 'VT323', 'Courier New', monospace;
   font-size: 18px;
   letter-spacing: .05em;
+}
 }

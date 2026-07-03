@@ -1,3 +1,5 @@
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* ─── Desktop phone-column constraint ────────────────────────────────────── */
 /* On wide screens confine the entire game to a portrait phone column.        */
 /* CSS transform on body makes it the containing block for all               */
@@ -25,11 +27,11 @@
     --spv2-slot-h: calc(var(--spv2-slot-w) * 1.5);
     --spv2-hand-clearance: 222px;
     padding: 0 !important;
-    background: url('../../assets/background.webp') center top / cover no-repeat !important;
+    background: url('/assets/background.webp') center top / cover no-repeat !important;
   }
 
   html body.single-player-v2.generated-sheet-ready::before {
-    content: none !important;
+    content: none;
     display: none !important;
   }
 
@@ -39,7 +41,7 @@
   }
 
   html body.single-player-v2.generated-sheet-ready {
-    --spv2-hud-top: 12px !important;
+    --spv2-hud-top: 12px;
   }
 
   /* Center the spread vertically; become containing block for absolute slots */
@@ -423,11 +425,11 @@
 
   /* Generated-sheet-ready variable overrides and layout refinements */
   html body.single-player-v2.generated-sheet-ready {
-    --spv2-hud-top: 12px !important;
-    --spv2-hud-h: clamp(140px, 17.5dvh, 162px) !important;
-    --spv2-slot-w: 96px !important;
-    --spv2-slot-h: calc(96px * 1.5) !important;
-    --spv2-hand-clearance: 34dvh !important;
+    --spv2-hud-top: 12px;
+    --spv2-hud-h: clamp(140px, 17.5dvh, 162px);
+    --spv2-slot-w: 96px;
+    --spv2-slot-h: calc(96px * 1.5);
+    --spv2-hand-clearance: 34dvh;
   }
   body.single-player-v2.generated-sheet-ready #titleWrap {
     height: var(--spv2-title-h);
@@ -470,7 +472,7 @@
     height: 74px;
   }
   body.single-player-v2.generated-sheet-ready .spread-actions::before {
-    content: none !important;
+    content: none;
     display: none !important;
   }
   body.single-player-v2.generated-sheet-ready .handDock {
@@ -531,7 +533,7 @@
     background-repeat: no-repeat !important;
     border-color: transparent !important;
     box-shadow: none !important;
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: 1fr 1fr;
     gap: 6px !important;
     overflow: visible !important;
     height: var(--spv2-hud-h) !important;
@@ -626,7 +628,7 @@
     width: 74px !important;
     height: 74px !important;
     border: 0 !important;
-    border-radius: 50% !important;
+    border-radius: 50%;
     background-color: transparent !important;
     background-image: none !important;
     box-shadow: none !important;
@@ -667,7 +669,7 @@
     display: block !important;
     font: 800 10px/1 system-ui, sans-serif !important;
     letter-spacing: .09em !important;
-    text-transform: uppercase !important;
+    text-transform: uppercase;
     color: #cdb079 !important;
     text-shadow: 0 1px 3px #000 !important;
     white-space: nowrap !important;
@@ -691,4 +693,5 @@
   html body.single-player-v2.generated-sheet-ready .spread-wrap::after {
     content: none !important;
   }
+}
 }

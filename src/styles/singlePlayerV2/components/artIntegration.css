@@ -1,3 +1,5 @@
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* Reconciles the tuned single-player-v2 layout with the approved art tiles.
    The four stat panels now carry their label text (RESERVE / SCORE / THRESHOLD
    / DISCARDS) and their stat icons (bag / star / scales / skull) baked into the
@@ -35,7 +37,7 @@
   }
 
   body.single-player-v2.generated-sheet-ready .spread-wrap::after {
-    content: none !important;
+    content: none;
   }
 
   /* Title art removed per design; keep #titleWrap for the corner buttons it
@@ -56,14 +58,14 @@
   /* Separate the remaining panels so each card's rounded border reads as a
      distinct tile rather than butting edge-to-edge. */
   body.single-player-v2.generated-sheet-ready .score-stack {
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: 1fr 1fr;
     gap: 6px !important;
   }
 
   /* Taller HUD pills (the bar height drives pill height; the button rows below
      reference this var, so they shift down with it). */
   body.single-player-v2.generated-sheet-ready {
-    --spv2-compact-hud-h: clamp(140px, 17.5dvh, 162px) !important;
+    --spv2-compact-hud-h: clamp(140px, 17.5dvh, 162px);
   }
 
   /* Keep settings and archives as a compact top-left utility pair, with
@@ -156,7 +158,7 @@
     width: clamp(58px, 16vw, 74px) !important;
     height: clamp(58px, 16vw, 74px) !important;
     border: 0 !important;
-    border-radius: 50% !important;
+    border-radius: 50%;
     background-color: transparent !important;
     background-repeat: no-repeat !important;
     background-position: center !important;
@@ -218,7 +220,7 @@
     display: block !important;
     font: 800 clamp(8px, 2.4vw, 10px)/1 system-ui, sans-serif !important;
     letter-spacing: .09em !important;
-    text-transform: uppercase !important;
+    text-transform: uppercase;
     color: #cdb079 !important;
     text-shadow: 0 1px 3px #000 !important;
     white-space: nowrap !important;
@@ -234,12 +236,12 @@
     position: absolute !important;
     top: -2px !important;
     right: -2px !important;
-    min-width: 19px !important;
+    min-width: 19px;
     height: 19px !important;
     padding: 0 4px !important;
     display: grid !important;
-    place-items: center !important;
-    border-radius: 999px !important;
+    place-items: center;
+    border-radius: 999px;
     border: 1px solid rgba(196, 224, 255, .8) !important;
     background: radial-gradient(circle at 40% 32%, #6aa8ee, #1b4d99 78%) !important;
     color: #fff !important;
@@ -250,4 +252,5 @@
     z-index: 3 !important;
     pointer-events: none !important;
   }
+}
 }

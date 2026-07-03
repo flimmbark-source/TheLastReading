@@ -1,12 +1,15 @@
 /* AUTO-GENERATED FILE. Do not edit directly.
 
    Run `node scripts/generate-single-player-v2-cascade.mjs` after changing any
-   source stylesheet listed below. The generated file is the only stylesheet
-   game.html and the runtime installer should load for Single Player V2. It
-   preserves the previous direct-link cascade order while making the active
-   cascade traceable in one file. The layer order below is reserved for the next
-   migration step, where sections can be moved into component-owned layers
-   without changing the public loading surface. */
+   bundled source stylesheet listed below. This generated file is the checked-in,
+   authoritative bundle for SPv2 source partials. Component-owned files
+   listed in singlePlayerV2ExternalComponentSources are loaded beside it instead
+   of being duplicated here. It preserves the previous direct-link cascade order
+   while making the active cascade traceable in one file. tokens/utilityIcons/
+   hand/spreadHints own real cascade layers; the remaining ten sources here
+   live in the app-wide `spv2Core` layer declared in game.html (see that
+   file's layer statement, and singlePlayerV2/base.css's own header comment,
+   for the full reasoning). */
 @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat;
 
 
@@ -54,6 +57,66 @@
 
 
 /* === singlePlayerV2/base.css: base layout === */
+@layer spv2Core {
+/* `spv2Core` (base.css, compat.css, desktop.css, assets.css, layout.css,
+   mobile.css, components/spread.css, components/scoreHud.css, states.css,
+   components/artIntegration.css) is the tenth-crack, ten-as-one-unit
+   extraction of the last SPv2 source files that stayed in the app-wide
+   `legacy` layer. Nine of the ten are gated to the same
+   @media(max-width:640px) breakpoint and form a genuine cross-file
+   specificity/media ladder with each other -- e.g. this file's
+   `body.single-player-v2 .score-stack` base rule is deliberately
+   overridden by compat.css's `body.single-player-v2.generated-sheet-ready
+   .score-stack` (more classes, higher specificity) at the generated-sheet
+   breakpoint, the same "base + higher-specificity override" shape as
+   classicCore's market/hand ladder. The tenth, desktop.css, is gated to
+   @media(min-width:641px) -- mutually exclusive with the other nine's
+   breakpoint, so it has no intra-cluster ties, but shares the same
+   external-position requirements (below), so it moved along with the
+   rest rather than getting its own layer for one file's sake.
+
+   A full selector/property audit against every other file in the app --
+   every already-extracted layer, everything still in `legacy` (just
+   mpMobile.css's one residual rule and mainMenu.css's boot veil, both
+   confirmed moot: the residual rule is gated to `body.mp-game-active`,
+   mutually exclusive with this cluster's `body.single-player-v2` at
+   runtime via mpModeClassGuard.mjs, and the boot veil never touches
+   opacity/visibility/pointer-events/transition on any element this
+   cluster also touches) -- found every real conflict points the same
+   two directions, both already satisfied by this cluster's *previous*
+   position (inside `legacy` itself):
+
+     - LATER than classicCore (hand/market/mobile/attic/ps1aesthetic) and
+       actionDropTargets.css, mpGameChrome.css, handSwipeZone.css, and
+       every other before-legacy layer -- normal-tier ties against
+       market.css's/mobile.css's/hand.css's bare classic-mode layout
+       rules (`.score-stack`, `.spread-wrap`, `.spread`, `.slot`, `.card`,
+       `.handDock`, and more) need this cluster to keep WINNING via being
+       the later layer, and important-tier ties against
+       actionDropTargets.css's drag-drop-target overrides (`#discardBtn`/
+       `#purgeBtn`'s `.card-drop-target` state, `#menuBtn`'s background,
+       etc.) need this cluster to keep LOSING via being the later layer --
+       already true today since `legacy` sits after all of those.
+     - EARLIER than mpCore, titleWrap.css, atticFade.css, handDragFix.css,
+       performance.css, drawAnimation.css, and drawers.css -- important-tier
+       ties against drawers.css's `#menuBtn`/`#scoringBtn`/`#abilitiesBtn`
+       `display:none` defaults and performance.css's mobile `#roomAmbient`
+       opacity need this cluster to keep WINNING via being the earlier
+       layer -- already true today since `legacy` sits before all of those.
+
+   Since `legacy`'s own position already satisfies every real requirement
+   found, `spv2Core` is declared immediately after `legacy` (before
+   `mpCore`) -- the smallest possible move, preserving every relationship
+   above unchanged, purely replacing "wins/loses because it happens to
+   share a name with a big unsorted pile" with "wins/loses because of an
+   explicit, reasoned position." Verified via a full computed-style A/B
+   diff: classic-vs-single-player-v2 layout ties (score-stack/spread/slot/
+   handDock/card sizing) at both the 640px and 641px breakpoints, the
+   drag-drop-target button overrides, drawers'/performance's/
+   drawAnimation's ties, all five attic mode-transition states, and the
+   already-migrated spv2.components ladder (spreadHints/hand/relics/
+   utilityIcons/utilityButtons). See docs/css-cascade-layer-migration.md
+   for the full writeup. */
 /* Phase 1 single-player layout.
    Placeholder materials only: final transparent art replaces these shells in Phase 2. */
 
@@ -586,9 +649,12 @@
     }
   }
 }
+}
 
 
 /* === singlePlayerV2/compat.css: composition compatibility === */
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* Compatibility overrides kept separate from the Phase 1 composition sheet. */
 
 @media (max-width: 640px) {
@@ -822,11 +888,11 @@
   /* Keep the complete top HUD cluster closer to the top edge. Every pill and
      upper utility button keys off these shared variables. */
   html body.single-player-v2.generated-sheet-ready {
-    --spv2-hud-top: max(4.5dvh, env(safe-area-inset-top)) !important;
+    --spv2-hud-top: max(4.5dvh, env(safe-area-inset-top));
     /* Shorter Score/Threshold panels: the previous clamp grew across several
        override passes (76 -> 116 -> 140 -> 148) and left a lot of empty
        vertical ornament. This is the authoritative height. */
-    --spv2-compact-hud-h: clamp(112px,14dvh,128px) !important;
+    --spv2-compact-hud-h: clamp(112px,14dvh,128px);
   }
 
   /* Give the two live headline values more visual weight inside the slightly
@@ -928,13 +994,13 @@
     top: calc(.4dvh + 52px) !important;
     position: relative !important;
     display: block !important;
-    box-sizing: border-box !important;
+    box-sizing: border-box;
     width: 100% !important;
     height: calc(var(--spv2-slot-h) + 28px) !important;
     min-height: calc(var(--spv2-slot-h) + 28px) !important;
     margin-inline: auto !important;
     padding: 0 !important;
-    perspective: 900px !important;
+    perspective: 900px;
     overflow: visible !important;
   }
 
@@ -1033,6 +1099,7 @@
       0 9px 14px rgba(0,0,0,.66) !important;
   }
 }
+}
 
 
 /* === singlePlayerV2/components/spreadHints.css: component: spread hints and choice polish === */
@@ -1068,7 +1135,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   /* Use the same full-page background as desktop instead of the generated
      mobile table skin and its extra texture/vignette overlay. */
   html body.single-player-v2 {
-    background: url('../../assets/background.webp') center top / cover no-repeat fixed !important;
+    background: url('/assets/background.webp') center top / cover no-repeat fixed !important;
   }
 
   html body.single-player-v2.generated-sheet-ready::before {
@@ -1210,6 +1277,8 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 
 
 /* === singlePlayerV2/desktop.css: desktop phone-column layout === */
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* ─── Desktop phone-column constraint ────────────────────────────────────── */
 /* On wide screens confine the entire game to a portrait phone column.        */
 /* CSS transform on body makes it the containing block for all               */
@@ -1237,11 +1306,11 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     --spv2-slot-h: calc(var(--spv2-slot-w) * 1.5);
     --spv2-hand-clearance: 222px;
     padding: 0 !important;
-    background: url('../../assets/background.webp') center top / cover no-repeat !important;
+    background: url('/assets/background.webp') center top / cover no-repeat !important;
   }
 
   html body.single-player-v2.generated-sheet-ready::before {
-    content: none !important;
+    content: none;
     display: none !important;
   }
 
@@ -1251,7 +1320,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
 
   html body.single-player-v2.generated-sheet-ready {
-    --spv2-hud-top: 12px !important;
+    --spv2-hud-top: 12px;
   }
 
   /* Center the spread vertically; become containing block for absolute slots */
@@ -1635,11 +1704,11 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 
   /* Generated-sheet-ready variable overrides and layout refinements */
   html body.single-player-v2.generated-sheet-ready {
-    --spv2-hud-top: 12px !important;
-    --spv2-hud-h: clamp(140px, 17.5dvh, 162px) !important;
-    --spv2-slot-w: 96px !important;
-    --spv2-slot-h: calc(96px * 1.5) !important;
-    --spv2-hand-clearance: 34dvh !important;
+    --spv2-hud-top: 12px;
+    --spv2-hud-h: clamp(140px, 17.5dvh, 162px);
+    --spv2-slot-w: 96px;
+    --spv2-slot-h: calc(96px * 1.5);
+    --spv2-hand-clearance: 34dvh;
   }
   body.single-player-v2.generated-sheet-ready #titleWrap {
     height: var(--spv2-title-h);
@@ -1682,7 +1751,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     height: 74px;
   }
   body.single-player-v2.generated-sheet-ready .spread-actions::before {
-    content: none !important;
+    content: none;
     display: none !important;
   }
   body.single-player-v2.generated-sheet-ready .handDock {
@@ -1743,7 +1812,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     background-repeat: no-repeat !important;
     border-color: transparent !important;
     box-shadow: none !important;
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: 1fr 1fr;
     gap: 6px !important;
     overflow: visible !important;
     height: var(--spv2-hud-h) !important;
@@ -1838,7 +1907,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     width: 74px !important;
     height: 74px !important;
     border: 0 !important;
-    border-radius: 50% !important;
+    border-radius: 50%;
     background-color: transparent !important;
     background-image: none !important;
     box-shadow: none !important;
@@ -1879,7 +1948,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     display: block !important;
     font: 800 10px/1 system-ui, sans-serif !important;
     letter-spacing: .09em !important;
-    text-transform: uppercase !important;
+    text-transform: uppercase;
     color: #cdb079 !important;
     text-shadow: 0 1px 3px #000 !important;
     white-space: nowrap !important;
@@ -1904,36 +1973,12 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     content: none !important;
   }
 }
+}
 
 
-/* === singlePlayerV2/components/relics.css: component: relic placement === */
+/* === singlePlayerV2/components/relics.css: component: constellation placement === */
 @layer spv2.components {
   @media (max-width: 640px) {
-    /* Keep the horizontal relic row clearly above the centered spread. The
-       responsive half-card offset tracks the fan while the added clearance keeps
-       the slots visually separate from the card tops. */
-    html body.single-player-v2.generated-sheet-ready .relic-rack {
-      position: fixed !important;
-      top: calc(45dvh - clamp(49px,13.3vw,63px) - 72px) !important;
-      bottom: auto !important;
-      left: 0 !important;
-      right: 0 !important;
-      width: 100% !important;
-      margin: 0 !important;
-      transform: none !important;
-      flex-direction: row !important;
-      justify-content: center !important;
-      align-items: center !important;
-      gap: 8px !important;
-      z-index: 13 !important;
-    }
-
-    html body.single-player-v2.generated-sheet-ready .relic-rack .relic-btn,
-    html body.single-player-v2.generated-sheet-ready .relic-rack .relic-slot-empty {
-      width: 38px !important;
-      height: 38px !important;
-    }
-
     /* Center the active constellation between the left and right utility pairs,
        directly beneath the Score and Threshold panels and vertically aligned
        with the surrounding controls. */
@@ -1956,11 +2001,14 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
       transform: translateX(-50%) !important;
       z-index: 45 !important;
     }
+
   }
 }
 
 
 /* === singlePlayerV2/assets.css: generated assets === */
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* Phase 2 generated-sheet art layer.
    The existing SVG kit remains the fallback until the generated sprite is
    decoded and body.generated-sheet-ready is applied. */
@@ -2197,9 +2245,12 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     background-image: var(--spv2-action-deck-art);
   }
 }
+}
 
 
 /* === singlePlayerV2/layout.css: layout pass === */
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* Final mobile shell corrections layered after the generated art styles. */
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
@@ -2323,8 +2374,8 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     padding: 0 5vw !important;
     transform: none !important;
     display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
+    justify-content: space-between;
+    align-items: center;
     pointer-events: none;
   }
 
@@ -2343,12 +2394,15 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   body.single-player-v2.generated-sheet-ready #purgeBtn {
     width: clamp(58px, 15.5vw, 72px) !important;
     height: clamp(66px, 17.5vw, 80px) !important;
-    min-width: 0 !important;
+    min-width: 0;
   }
+}
 }
 
 
 /* === singlePlayerV2/mobile.css: mobile visual fixes === */
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-compact-hud-h: clamp(76px, 11dvh, 94px);
@@ -2401,10 +2455,10 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     place-items: center;
     width: clamp(46px, 12vw, 58px) !important;
     height: clamp(46px, 12vw, 58px) !important;
-    min-width: 0 !important;
+    min-width: 0;
     margin: 0 !important;
     padding: 0 !important;
-    border-radius: 50% !important;
+    border-radius: 50%;
     border: 2px solid #8f6a34 !important;
     background-color: #17101f !important;
     background-repeat: no-repeat !important;
@@ -2520,13 +2574,13 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     position: absolute !important;
     top: 0 !important;
     display: grid !important;
-    place-items: center !important;
+    place-items: center;
     width: clamp(62px, 16vw, 76px) !important;
     height: clamp(62px, 16vw, 76px) !important;
-    min-width: 0 !important;
+    min-width: 0;
     margin: 0 !important;
     padding: 0 !important;
-    border-radius: 50% !important;
+    border-radius: 50%;
     border: 2px solid #8f6a34 !important;
     background-color: #17101f !important;
     background-repeat: no-repeat !important;
@@ -2581,7 +2635,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     height: clamp(42px, 6.5dvh, 56px) !important;
     z-index: 25 !important;
     pointer-events: auto !important;
-    touch-action: none !important;
+    touch-action: none;
   }
 
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower {
@@ -2636,6 +2690,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     top: var(--inv-h) !important;
     bottom: auto !important;
   }
+}
 }
 
 
@@ -2829,6 +2884,8 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 
 
 /* === singlePlayerV2/components/spread.css: component: spread final placement === */
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
@@ -2856,7 +2913,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   body.single-player-v2.generated-sheet-ready .spread-wrap {
     top: var(--spv2-spread-top) !important;
     display: block !important;
-    place-items: initial !important;
+    place-items: initial;
   }
 
   body.single-player-v2.generated-sheet-ready .spread-wrap::before {
@@ -2876,18 +2933,18 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
 
   body.single-player-v2.generated-sheet-ready .spread .slot {
-    box-sizing: border-box !important;
+    box-sizing: border-box;
     position: relative !important;
     display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    align-items: center;
+    justify-content: center;
     width: var(--spv2-spread-card-w) !important;
     min-width: var(--spv2-spread-card-w) !important;
     max-width: var(--spv2-spread-card-w) !important;
     height: var(--spv2-spread-card-h) !important;
     min-height: var(--spv2-spread-card-h) !important;
-    max-height: var(--spv2-spread-card-h) !important;
-    flex: 0 0 var(--spv2-spread-card-w) !important;
+    max-height: var(--spv2-spread-card-h);
+    flex: 0 0 var(--spv2-spread-card-w);
     margin-left: -7.2vw !important;
     background-image: var(--spv2-spread-slot-art) !important;
     background-position: center !important;
@@ -2921,7 +2978,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
 
   body.single-player-v2.generated-sheet-ready .spread .slot > .card {
-    box-sizing: border-box !important;
+    box-sizing: border-box;
     position: absolute !important;
     inset: 0 !important;
     width: 100% !important;
@@ -2929,7 +2986,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     min-width: 100% !important;
     min-height: 100% !important;
     max-width: 100% !important;
-    max-height: 100% !important;
+    max-height: 100%;
     margin: 0 !important;
     border-radius: inherit !important;
   }
@@ -2948,13 +3005,13 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     bottom: 0 !important;
     width: clamp(108px, 29vw, 132px) !important;
     height: clamp(44px, 11.5vw, 52px) !important;
-    border-radius: 999px !important;
+    border-radius: 999px;
     border: 2px solid #8f6a34 !important;
     background-image: none !important;
     background-color: #17101f !important;
     display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+    align-items: center;
+    justify-content: center;
     gap: 7px !important;
     color: #e4c47c !important;
     opacity: 1 !important;
@@ -3040,9 +3097,12 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     pointer-events: auto !important;
   }
 }
+}
 
 
 /* === singlePlayerV2/components/scoreHud.css: component: score HUD table pass === */
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 7.6dvh;
@@ -3092,7 +3152,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     right:2vw !important;
     height:var(--spv2-compact-hud-h) !important;
     min-height:var(--spv2-compact-hud-h) !important;
-    grid-template-columns:22fr 28fr 29fr 21fr !important;
+    grid-template-columns: 22fr 28fr 29fr 21fr;
     overflow:visible !important;
     border:2px solid rgba(174,122,52,.82) !important;
     border-radius:clamp(16px,4vw,24px) !important;
@@ -3133,10 +3193,10 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     height:100% !important;
     padding:27px 4px 15px !important;
     gap:4px !important;
-    justify-content:center !important;
+    justify-content: center;
     border-radius:clamp(13px,3.4vw,20px) !important;
     background-size:100% 100% !important;
-    background-blend-mode:screen,normal !important;
+    background-blend-mode: screen,normal;
   }
 
   body.single-player-v2.generated-sheet-ready .reserve-pill {
@@ -3253,9 +3313,12 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     z-index:2 !important;
   }
 }
+}
 
 
 /* === singlePlayerV2/states.css: state correction pass === */
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 @media (max-width: 640px) {
   /* Spread slots keep their ornate frame and placed cards occupy that exact box. */
   body.single-player-v2.generated-sheet-ready .spread {
@@ -3263,10 +3326,10 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
 
   body.single-player-v2.generated-sheet-ready .spread .slot {
-    box-sizing: border-box !important;
+    box-sizing: border-box;
     width: var(--spv2-spread-card-w) !important;
     height: var(--spv2-spread-card-h) !important;
-    flex-basis: var(--spv2-spread-card-w) !important;
+    flex-basis: var(--spv2-spread-card-w);
     background-image: var(--spv2-spread-slot-art) !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
@@ -3275,7 +3338,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
 
   body.single-player-v2.generated-sheet-ready .spread .slot > .card {
-    box-sizing: border-box !important;
+    box-sizing: border-box;
     position: absolute !important;
     inset: 0 !important;
     width: var(--spv2-spread-card-w) !important;
@@ -3283,7 +3346,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     min-width: var(--spv2-spread-card-w) !important;
     min-height: var(--spv2-spread-card-h) !important;
     max-width: var(--spv2-spread-card-w) !important;
-    max-height: var(--spv2-spread-card-h) !important;
+    max-height: var(--spv2-spread-card-h);
     margin: 0 !important;
     border: 0 !important;
     border-radius: inherit !important;
@@ -3322,11 +3385,11 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     background: transparent !important;
     box-shadow: none !important;
     pointer-events: auto !important;
-    touch-action: none !important;
+    touch-action: none;
   }
 
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone::before {
-    content: none !important;
+    content: none;
     display: none !important;
   }
 
@@ -3372,7 +3435,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
      without washing over placed cards or spread slots. */
   body.single-player-v2.generated-sheet-ready #roomAmbient {
     z-index: 1 !important;
-    mix-blend-mode: screen !important;
+    mix-blend-mode: screen;
     background:
       radial-gradient(circle at 7% 56%,rgba(255,190,88,.2),rgba(255,137,48,.06) 18%,transparent 34%),
       radial-gradient(circle at 92% 47%,rgba(146,104,180,.1),transparent 29%),
@@ -3386,9 +3449,12 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     background: radial-gradient(ellipse 78% 72% at 50% 50%,transparent 48%,rgba(0,0,0,.24) 78%,rgba(0,0,0,.58) 100%) !important;
   }
 }
+}
 
 
 /* === singlePlayerV2/components/artIntegration.css: component: art integration === */
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* Reconciles the tuned single-player-v2 layout with the approved art tiles.
    The four stat panels now carry their label text (RESERVE / SCORE / THRESHOLD
    / DISCARDS) and their stat icons (bag / star / scales / skull) baked into the
@@ -3426,7 +3492,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
 
   body.single-player-v2.generated-sheet-ready .spread-wrap::after {
-    content: none !important;
+    content: none;
   }
 
   /* Title art removed per design; keep #titleWrap for the corner buttons it
@@ -3447,14 +3513,14 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   /* Separate the remaining panels so each card's rounded border reads as a
      distinct tile rather than butting edge-to-edge. */
   body.single-player-v2.generated-sheet-ready .score-stack {
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: 1fr 1fr;
     gap: 6px !important;
   }
 
   /* Taller HUD pills (the bar height drives pill height; the button rows below
      reference this var, so they shift down with it). */
   body.single-player-v2.generated-sheet-ready {
-    --spv2-compact-hud-h: clamp(140px, 17.5dvh, 162px) !important;
+    --spv2-compact-hud-h: clamp(140px, 17.5dvh, 162px);
   }
 
   /* Keep settings and archives as a compact top-left utility pair, with
@@ -3547,7 +3613,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     width: clamp(58px, 16vw, 74px) !important;
     height: clamp(58px, 16vw, 74px) !important;
     border: 0 !important;
-    border-radius: 50% !important;
+    border-radius: 50%;
     background-color: transparent !important;
     background-repeat: no-repeat !important;
     background-position: center !important;
@@ -3609,7 +3675,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     display: block !important;
     font: 800 clamp(8px, 2.4vw, 10px)/1 system-ui, sans-serif !important;
     letter-spacing: .09em !important;
-    text-transform: uppercase !important;
+    text-transform: uppercase;
     color: #cdb079 !important;
     text-shadow: 0 1px 3px #000 !important;
     white-space: nowrap !important;
@@ -3625,12 +3691,12 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     position: absolute !important;
     top: -2px !important;
     right: -2px !important;
-    min-width: 19px !important;
+    min-width: 19px;
     height: 19px !important;
     padding: 0 4px !important;
     display: grid !important;
-    place-items: center !important;
-    border-radius: 999px !important;
+    place-items: center;
+    border-radius: 999px;
     border: 1px solid rgba(196, 224, 255, .8) !important;
     background: radial-gradient(circle at 40% 32%, #6aa8ee, #1b4d99 78%) !important;
     color: #fff !important;
@@ -3641,6 +3707,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     z-index: 3 !important;
     pointer-events: none !important;
   }
+}
 }
 
 
@@ -3741,31 +3808,6 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     body.single-player-v2.generated-sheet-ready #discardBtn:active,
     body.single-player-v2.generated-sheet-ready #purgeBtn:active {
       transform: translateY(1px) scale(0.94) !important;
-    }
-  }
-}
-
-
-/* === singlePlayerV2/components/utilityButtons.css: component: utility button visibility === */
-@layer spv2.components {
-  /* Single Player V2 mobile utility button visibility contract.
-
-     Keep display ownership for the utility medallions in one component: Menu,
-     Scoring, Abilities, and Archive are visible utilities; Mulligan remains the
-     hidden legacy button. Art and pressed-state styling still live in the
-     generated art/icon source sections until those rules are migrated here. */
-  @media (max-width: 640px) {
-    body.single-player-v2.generated-sheet-ready #mullBtn {
-      display: none !important;
-    }
-
-    body.single-player-v2.generated-sheet-ready #scoringBtn,
-    body.single-player-v2.generated-sheet-ready #abilitiesBtn,
-    body.single-player-v2.generated-sheet-ready #menuBtn {
-      display: block !important;
-      width: clamp(44px, 11.5vw, 56px) !important;
-      height: clamp(44px, 11.5vw, 56px) !important;
-      border-radius: 50% !important;
     }
   }
 }

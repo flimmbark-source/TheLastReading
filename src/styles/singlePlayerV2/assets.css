@@ -1,3 +1,5 @@
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* Phase 2 generated-sheet art layer.
    The existing SVG kit remains the fallback until the generated sprite is
    decoded and body.generated-sheet-ready is applied. */
@@ -233,4 +235,5 @@
   body.single-player-v2.generated-sheet-ready #purgeBtn {
     background-image: var(--spv2-action-deck-art);
   }
+}
 }

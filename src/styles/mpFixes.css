@@ -1,4 +1,70 @@
-/* Multiplayer UI overrides that must load after mpGame.css and mpMobile.css. */
+@layer mpCore {
+/* Multiplayer UI overrides that must load after mpGame.css and mpMobile.css.
+
+   This file, mpGame.css's laddered core, and mpMobile.css all share this
+   `mpCore` layer -- a genuine trio-as-one-unit extraction, not a
+   whole-file layer-move for each individually. The three form a
+   deliberate ~50-property-pair cross-file responsive-breakpoint cascade
+   (same selector, same property, progressively different values across
+   breakpoints, mostly important-tier) that can't be split into DIFFERENT
+   layers from each other without swapping their internal source-order
+   resolution for layer-order resolution. But nothing requires them to
+   stay co-resident with the REST of `legacy` specifically -- so all
+   three moved together into one new shared layer instead, declared in
+   the same relative order they're linked in game.html (mpGame.css,
+   mpMobile.css, mpFixes.css), which preserves every internal tie between
+   them exactly as it resolves today.
+
+   A full selector/property audit against every other file in the app
+   (everything still in `legacy`, every already-extracted layer, and all
+   10 SPv2 files) found the trio's real external conflicts overwhelmingly
+   point one direction -- after legacy -- with exactly one exception:
+
+   - AFTER legacy (majority, ~8 property/selector pairs): normal-tier
+     rules that rely on the trio's higher specificity to keep beating
+     bare, lower-specificity rules still in `legacy` or already-extracted
+     before it -- market.css's bare `.spread`/`.slot .num` and hand.css's
+     bare `.card` (grid-template-rows) and `.hand .card` (the `.seal`
+     transform/transform-origin), used by mpGame.css's
+     `.mp-opp-spread-transform .spread` and mpMobile.css's `#spread .slot
+     .num`/`.hand .card`/`.hand .card .seal`. For normal-tier ties, the
+     LATER layer wins, so `mpCore` has to be declared after `legacy` (and
+     after every already-extracted before-legacy file, which it already
+     is transitively: before-legacy < legacy < mpCore) to keep resolving
+     these via specificity-as-layer-order instead of flipping to a
+     layer-order loss.
+   - BEFORE legacy (minority, one rule): mpMobile.css's
+     `.handDock{bottom,background}` needs the OPPOSITE direction, to keep
+     beating ps1aesthetic.css's unconditional (not mode-gated),
+     important-tier `.handDock` rule via specificity -- for important-tier
+     ties the EARLIER layer wins. One file position can't satisfy both
+     directions, so just those two declarations were split out of
+     mpMobile.css into a small residual `@layer legacy` block (see that
+     file's header comment) rather than moving the whole trio to the
+     wrong side or leaving everything in `legacy`.
+
+   Every already-extracted before-legacy multiplayer file (mpMultMobile,
+   mpSpreadCards, components/mpGameChrome) stays
+   unaffected by this move: they're all before `legacy` today, and
+   `mpCore` sits after `legacy`, so the relative order between them and
+   the trio is unchanged either way (before-legacy < legacy < mpCore,
+   whether the trio was in `legacy` or `mpCore`). The only other
+   already-extracted file with a real touch is handDragFix.css's bare,
+   important-tier `.handDock{z-index:26}` rule, which mpGame.css's
+   higher-specificity, higher-value z-index override needs to keep
+   beating -- that's why `mpCore` is declared immediately after `legacy`,
+   before `handDragFix` and everything else already after it (tutTip,
+   invTab, titleWrap, atticFade, performance, drawAnimation, drawers),
+   none of which showed any real conflict with the trio at all.
+
+   Every SPv2-file touch found in the audit is gated by
+   `body.single-player-v2`, mutually exclusive with `body.mp-game-active`
+   at runtime (src/app/mpModeClassGuard.mjs), so moot regardless of
+   layer -- consistent with every other multiplayer-cluster pilot in this
+   migration. Verified via a full computed-style A/B diff covering every
+   breakpoint (max-width:640px, the 380x740 narrow variant, and the
+   min-width:641px desktop layout) plus the mpGameChrome.css pilot's
+   existing laddered-core/solo sanity checks. */
 
 body.mp-game-active .hand-swipe-hint,
 body.mp-game-active .hand-swipe-zone.has-overflow .hand-swipe-hint,
@@ -10,16 +76,16 @@ body.mp-game-active .hand-swipe-zone .swipe-hint-line {
 }
 
 body.mp-game-active .mp-pills-actions {
-  justify-content: center !important;
-  align-items: center !important;
+  justify-content: center;
+  align-items: center;
   gap: 8px !important;
 }
 
 body.mp-game-active .mp-pills-actions .sbtn {
   overflow: visible !important;
   display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  align-items: center;
+  justify-content: center;
 }
 
 body.mp-game-active .mp-action-panel {
@@ -51,11 +117,11 @@ body.mp-game-active #mpAbilityBtn {
   background-position: center !important;
   background-repeat: repeat !important;
   border: 1px solid #7a5a2d !important;
-  border-radius: 6px !important;
+  border-radius: 6px;
   color: #20130b !important;
   font: 700 12px/1 system-ui, Segoe UI, sans-serif !important;
-  letter-spacing: normal !important;
-  text-transform: none !important;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 body.mp-game-active .mp-opp-spread-clip {
@@ -121,7 +187,7 @@ body.mp-game-active .spread-wrap {
 
   body.mp-game-active .mp-pills-actions {
     width: 100% !important;
-    justify-content: center !important;
+    justify-content: center;
   }
 
   body.mp-game-active .mp-pills-actions .sbtn {
@@ -185,7 +251,7 @@ body.mp-game-active .spread-wrap {
     padding: 0 !important;
     min-height: 0 !important;
     transform: none !important;
-    justify-content: center !important;
+    justify-content: center;
   }
 
   /* Opponent spread → right side, full-size cards, mirrored inward tilt. */
@@ -210,7 +276,7 @@ body.mp-game-active .spread-wrap {
   body.mp-game-active #mpOppSpread {
     padding: 0 !important;
     min-height: 0 !important;
-    justify-content: center !important;
+    justify-content: center;
   }
 
   /* Pills → centred grid, generously shifted above the midpoint.
@@ -226,10 +292,10 @@ body.mp-game-active .spread-wrap {
     right: auto !important;
     transform: translate(-50%, -50%) !important;
     display: grid !important;
-    grid-template-columns: auto 118px auto 118px auto !important;
-    grid-template-rows: auto auto auto auto !important;
+    grid-template-columns: auto 118px auto 118px auto;
+    grid-template-rows: auto auto auto auto;
     gap: 5px 6px !important;
-    align-items: center !important;
+    align-items: center;
     width: auto !important;
     padding: 0 !important;
   }
@@ -239,18 +305,18 @@ body.mp-game-active .spread-wrap {
   body.mp-game-active .mp-pills-self { display: contents !important; }
 
   /* Row 1 — discs in player col (2) and opp col (4). */
-  body.mp-game-active .mp-pill-my-disc   { grid-row: 1 !important; grid-column: 2 !important; }
-  body.mp-game-active .mp-pill-opp-disc  { grid-row: 1 !important; grid-column: 4 !important; }
+  body.mp-game-active .mp-pill-my-disc   { grid-row: 1; grid-column: 2; }
+  body.mp-game-active .mp-pill-opp-disc  { grid-row: 1; grid-column: 4; }
   /* Row 2 — threshold band spans all 5 columns. */
-  body.mp-game-active .mp-pills-mid      { grid-row: 2 !important; grid-column: 1 / -1 !important; }
+  body.mp-game-active .mp-pills-mid      { grid-row: 2; grid-column: 1 / -1; }
   /* Row 3 — [mult] [my-score] (centre gap) [opp-score] [mult] */
-  body.mp-game-active .mp-mult-inline.mp-mult-left  { grid-row: 3 !important; grid-column: 1 !important; justify-self: end !important; }
-  body.mp-game-active .mp-pill-my-score  { grid-row: 3 !important; grid-column: 2 !important; }
-  body.mp-game-active .mp-pill-opp-score { grid-row: 3 !important; grid-column: 4 !important; }
-  body.mp-game-active .mp-mult-inline.mp-mult-right { grid-row: 3 !important; grid-column: 5 !important; justify-self: start !important; }
+  body.mp-game-active .mp-mult-inline.mp-mult-left  { grid-row: 3; grid-column: 1; justify-self: end !important; }
+  body.mp-game-active .mp-pill-my-score  { grid-row: 3; grid-column: 2; }
+  body.mp-game-active .mp-pill-opp-score { grid-row: 3; grid-column: 4; }
+  body.mp-game-active .mp-mult-inline.mp-mult-right { grid-row: 3; grid-column: 5; justify-self: start !important; }
   /* Row 4+ — actions and action panel span full width. */
-  body.mp-game-active .mp-pills-actions  { grid-row: 4 !important; grid-column: 1 / -1 !important; }
-  body.mp-game-active .mp-action-panel   { grid-column: 1 / -1 !important; }
+  body.mp-game-active .mp-pills-actions  { grid-row: 4; grid-column: 1 / -1; }
+  body.mp-game-active .mp-action-panel   { grid-column: 1 / -1; }
 
   /* You / Foe labels flanking the threshold pill. */
   body.mp-game-active .mp-side-label {
@@ -259,7 +325,7 @@ body.mp-game-active .spread-wrap {
     letter-spacing: .08em !important;
     text-transform: uppercase !important;
     color: #7a6040 !important;
-    white-space: nowrap !important;
+    white-space: nowrap;
     padding: 0 4px !important;
   }
 
@@ -267,4 +333,5 @@ body.mp-game-active .spread-wrap {
   body.mp-game-active .handDock {
     transform: translateX(-12vw) !important;
   }
+}
 }

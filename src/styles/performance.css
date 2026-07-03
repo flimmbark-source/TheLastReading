@@ -1,3 +1,4 @@
+@layer performance {
 @media(max-width:640px){
   body{background-attachment:scroll!important;background-size:cover!important;}
   #roomAmbient{animation:none!important;opacity:.42!important;transform:none!important;}
@@ -12,4 +13,5 @@
 
 @media(max-width:640px),(prefers-reduced-motion:reduce){
   .slot.res-1::before,.slot.res-2::before,.slot.res-3::before{animation:none!important;}
+}
 }

@@ -4,6 +4,591 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>The Last Reading</title>
+<style>
+  /* Pre-declares the whole app's cascade layer order in one place, before any
+     stylesheet loads. Everything that isn't already SPv2-owned (see
+     singlePlayerV2/index.css's own layer statement) shares one "legacy"
+     layer, in the same relative order the files already load in today --
+     this makes the existing implicit "unlayered beats spv2.tokens/components
+     for normal declarations, loses to them for !important" behavior explicit
+     instead of accidental, without changing what actually wins anywhere.
+
+     screens.* holds standalone, single-purpose screens (main menu, loadout,
+     matchmaking) that are fully self-scoped -- every selector is prefixed
+     to that screen's own classes/ids, verified by reading the actual
+     render code, not inferred from naming. They never interact with
+     `legacy` or with each other, so their position here is arbitrary; they
+     just don't need to live in the shared pile anymore.
+
+     `constellations` is NOT independent the way screens.* is: its own
+     #constellationPill/.constellation-pill element is also targeted by
+     mainMenu.css's boot veil (legacy) and by SPv2's base.css/relics.css for
+     z-index and position. It's declared BEFORE legacy on purpose, so it
+     stays the lowest-priority normal-tier layer here -- today those other
+     rules already win via higher specificity/!important, and putting
+     constellations first keeps it that way (normal-tier layer order is
+     compared before specificity, so declaring it any later would flip
+     those results regardless of specificity).
+
+     `dragStability` is the opposite direction: its one rule
+     (`.hand .card.hand-card-dragging { transition: none !important }`)
+     exists specifically to beat mobile.css's own !important transition on
+     the same selector while a card is actively being dragged. Declared
+     BEFORE legacy so it wins the !important tier (earlier-declared layer
+     wins for !important -- the reverse of the normal-tier rule above).
+
+     `handDragFix` goes back to AFTER legacy: its .handDock z-index needs to
+     keep losing to actionDropTargets.css's higher state-gated z-index in the
+     earlier actionDropTargets layer and to mpGame.css's higher state-gated
+     z-index overrides in legacy (they only apply during specific drag/mp
+     states; when they don't apply, nothing competes and handDragFix wins
+     regardless of tier). Its other rules either have no competing
+     declaration anywhere, or are already dominated by an existing
+     spv2.components !important rule that wins unconditionally regardless
+     of where handDragFix sits -- checked all of them individually.
+
+     `performance` is also AFTER legacy, same direction as handDragFix: its
+     mobile/reduced-motion overrides (body background-attachment, #roomAmbient
+     animation/opacity/transform) need to keep losing to actionDropTargets.css's
+     SPv2-mode background-attachment override in the earlier actionDropTargets
+     layer and to ps1aesthetic.css's explicit "re-enable candle glow on mobile"
+     override, now in classicCore (before legacy, so still earlier than
+     performance either way). Its #ambientFX/.mote/.slot.res-* rules either have no competing
+     declaration, are already dominated unconditionally (their target
+     properties are !important here against a plain normal-tier rule
+     elsewhere), or match the competing value exactly -- checked individually.
+
+     `actionDropTargets` is dynamically appended by gestureActionDrops.mjs after
+     the initial stylesheet set. Its real cross-file conflicts are all
+     !important-tier z-index/position/visibility fixes that must continue to
+     beat the remaining legacy pile; its normal-tier selector hits were checked
+     as non-conflicts (different pseudo-elements/properties, identical values,
+     or newly introduced card-drop-target/ability-prompt-actions state).
+
+     `drawers` is also AFTER legacy, same direction as handDragFix/performance:
+     it needs to keep LOSING two !important ties (SPv2 desktop.css's
+     display:block!important un-hide of #scoringBtn/#abilitiesBtn/#menuBtn, and
+     drawAnimation.css's reduced-motion deal-in fade, both still in legacy --
+     legacy staying the earlier layer preserves both regardless of drawers'
+     own specificity) while needing to keep WINNING two normal-tier ties
+     (handCardIdleCycle vs market.css's card-wave animation, and its
+     #settingsPanel sizing vs mobile.css's base .settings-panel rule, both
+     now in classicCore -- drawers being the later layer either way
+     guarantees both regardless of specificity). No interaction found with handDragFix or
+     performance, so its position among the "after legacy" layers doesn't
+     matter.
+
+     `spread` is BEFORE legacy, same direction as constellations/actionDropTargets:
+     every real normal-tier interaction found (market.css's mobile
+     .ability-prompt/.spread/.slot/.slot .num overrides, mobile.css's
+     .ability-target-slot/.ability-picked-slot highlight colors, mpMobile.css's
+     mobile .slot .num, and the SPv2 bundle's normal-tier mobile/generated-sheet
+     layout overrides) requires spread's declarations to keep losing against
+     those files -- before-legacy remaining earlier than legacy, classicCore,
+     and mpCore alike preserves that regardless of specificity or exactly
+     which of those three layers each competitor ended up in. Every
+     !important interaction (actionDropTargets,
+     mpFixes, ps1aesthetic, most of the SPv2 bundle) is
+     unconditional importance dominance and imposes no directional requirement.
+     No interaction requires spread to win against anything still in legacy.
+
+     `base` (src/styles/base.css -- unrelated to the spv2.base tier above) is
+     also BEFORE legacy: it's the first file concatenated into legacy, so it
+     already loses every normal-tier tie against every other still-in-legacy
+     file by source order/specificity today; moving it earlier just makes
+     that load-order-proof instead of accidental. Its lone !important
+     declaration (.score-preview{display:none!important}) has zero
+     competing declarations anywhere in the tree, so the reversed
+     !important tie-break rule has no real case to satisfy either way.
+
+     `cards` is also BEFORE legacy: the file has zero !important
+     declarations, and every real normal-tier conflict (market.css's mobile
+     .title/.sym/.plaque/.seal sizing, market.css's .card.photo
+     .title/.art{display:none}, mpMobile.css's mp-mode .seal transform)
+     needs cards to keep losing to files still in legacy. Nothing anywhere
+     needs to lose to cards.
+
+     `assetLazy` is also BEFORE legacy: all of its rules are !important and
+     exist specifically to override attic.css's normal-tier background
+     declarations on the same elements (#atticScene::before/::after,
+     #atticRoom) -- importance dominance already decides every current
+     fight, and declaring it before legacy keeps it winning even if a
+     competing !important ever appears in the legacy pile. Its internal
+     ungated-strip vs mode-gated-restore pair lives in one file, so that
+     relationship moves with it unchanged.
+
+     `mpMultMobile` (src/styles/mpMultMobile.css) is a first cut at the
+     multiplayer cluster, extracted one file at a time rather than bundled
+     into one shared layer (the earlier attempt at bundling all six
+     mp*.css files into one new layer failed -- they need opposite
+     !important directions against legacy in different places, impossible
+     to satisfy with one relative position; see the "explicitly skipped"
+     notes below). This file's four target selectors (.mp-pills-opp/
+     .mp-pills-self/.mp-pill-score/.mp-mult-inline) appear nowhere in the
+     app except mpGame.css/mpMobile.css/mpFixes.css (still in legacy), and
+     every one of those other touches sets properties disjoint from this
+     file's own -- zero property overlap anywhere, so its position is
+     genuinely unconstrained. Declared before legacy for consistency with
+     the other unconstrained layer-moves (assetLazy/cards/base/spread).
+
+     `mpSpreadCards` (src/styles/mpSpreadCards.css) is the second crack in
+     the cluster: every declaration in it is !important, and nothing else
+     sets that tier on the same property for its #spread .slot > .card /
+     #mpOppSpread .slot > .card targets (or their .photo/.title
+     descendants) -- actionDropTargets.css's position/z-index on the same
+     selector is a disjoint property, mpFixes.css's width/height there
+     targets the .slot itself rather than the .card inside it, and
+     market.css's unconditional non-important .card.photo{background-size}
+     is importance-dominated regardless of layer. SPv2's own #spread .slot
+     > .card hint rules are gated by body.single-player-v2, mutually
+     exclusive with body.mp-game-active at runtime. Genuinely unconstrained
+     for the same reasons as mpMultMobile; declared before legacy for the
+     same consistency.
+
+     `mpSinglePlayerIsolation` was the third crack, and a different shape
+     from the first two: every rule in it was gated by
+     body.mp-game-active.single-player-v2 (all of them, no exception),
+     and those two classes are enforced mutually exclusive at runtime by
+     src/app/mpModeClassGuard.mjs's MutationObserver -- the instant
+     mp-game-active is added, single-player-v2 is stripped on the same
+     microtask, before the next paint. No other file referenced this
+     combined gate. So the file's entire ruleset was unreachable in any
+     rendered frame -- not property-disjoint like the first two, just
+     dead -- confirmed by reading computed style in the actual transient
+     window itself (before the guard's microtask could run) and finding
+     it byte-for-byte identical to removing the file outright. Since its
+     layer position genuinely couldn't affect real behavior, keeping the
+     file around only to document that fact stopped being worth it once
+     every other file had its own reasoned position too: deleted outright
+     (src/styles/mpSinglePlayerIsolation.css, its stylesheet link, and its
+     layer from the master list below), the one whole-file dead-code
+     removal this migration found. See
+     docs/css-cascade-layer-migration.md's Done table for the historical
+     writeup.
+
+     `mpGameChrome` (src/styles/components/mpGameChrome.css) is the fourth
+     crack, and a different technique from the first three: a solo/laddered
+     SPLIT of mpGame.css, not a whole-file layer-move. A full selector/
+     property audit across mpGame.css, mpMobile.css, and mpFixes.css found
+     they form a deliberate, deep cross-file responsive-breakpoint cascade
+     -- ~50 property/selector pairs where the same selector's same property
+     gets progressively different values across the three files at
+     different breakpoints, mostly important-tier, resolved today by
+     source order within this shared legacy layer (mpFixes.css's own
+     comments confirm it's deliberately meant to load after the other
+     two). That's the same shape of problem that broke the reverted
+     hand.css extraction -- not attempted here. What DID come out cleanly:
+     61 of mpGame.css's 91 rules have no counterpart at all in mpMobile.css
+     or mpFixes.css (verified via a full selector-overlap audit, not a
+     guess) -- the game's own top bar, player info rows, opponent hand/
+     badges, opponent spread state decorations, progress bar, action
+     buttons, and scoring overlay. Most of those checked out as either
+     fully self-contained (.mp-* classes nothing else in the app
+     references) or already-vetted importance-dominant/property-disjoint
+     against their one remaining touch (the multi-selector display:none
+     block). Three families did NOT check out as unconstrained on first
+     pass -- all three caught only by a full computed-style A/B diff
+     against a real baseline, not by static reasoning:
+
+       1. The #spread .slot.mp-targetable/mp-anchored/mp-silenced/
+          mp-swap-a/mp-swap-pick states (and their .mp-opp-spread-transform
+          mirror) compete against ps1aesthetic.css's bare
+          .slot{border-color:...!important} rule -- this file's higher
+          specificity needs to keep winning that fight, so mpGameChrome
+          has to stay before legacy for real, not just for consistency.
+
+       2. .card.mp-interaction looked unconstrained by the same static
+          check (only hand.css's non-important base .card rule was found)
+          but the A/B diff caught that it was wrong: ps1aesthetic.css's
+          .card:not(.photo){...!important} has the same effective
+          specificity and is also important, so it's always won a
+          same-layer specificity tie against .card.mp-interaction via
+          source order -- that rule's own gradient has never rendered, a
+          pre-existing dead-code situation confirmed against a true
+          git-checkout baseline. Moving it to mpGameChrome would have
+          revived it by swapping that tie-break for plain layer order.
+
+       3. The mp-action-btn family and mp-ov-btn also looked unconstrained,
+          but in the opposite direction from #1: both render as real
+          <button> elements (see src/app/mpGame.mjs), and market.css's
+          mobile-breakpoint bare button{font-size:12px;padding:6px 9px}
+          reset -- the same conflict already documented for tutTip.css's
+          #tutSkipBtn above -- competes on font-size/padding. Winning that
+          fight needs this family declared AFTER legacy, the opposite of
+          what #1 needs, so one file position can't satisfy both.
+
+     Items 2 and 3 have no important-tier declarations of their own to
+     make a cross-layer move net-zero, and #1 is the only one of the three
+     that actually requires mpGameChrome's own before-legacy position -- so
+     items 2 and 3 both stayed behind in mpGame.css/legacy instead (see the
+     comments on those rules there) rather than spinning up a third layer,
+     while the rest of the solo rules moved to mpGameChrome, declared
+     before legacy. The remaining 32 rules (the laddered core: #mpGame/
+     .handDock/.spread-wrap/#spread/#spread .slot and the mp-pill-score,
+     mp-pill-disc, mp-pill-thresh, mp-pills-band, mp-pills-mid,
+     mp-pills-actions, mp-mid-wrap, mp-bar, mp-opp-hand, mp-opp-pip,
+     mp-opp-hand-label, mp-opp-spread-clip, mp-opp-spread-transform,
+     mp-side-label, mp-action-panel/mp-action-hint/mp-leave-btn/
+     mp-round-label family, plus .card.mp-interaction, mp-action-btn, and
+     mp-ov-btn) split further at the time: .card.mp-interaction/
+     mp-action-btn/mp-ov-btn stayed in mpGame.css/legacy (see mpCore's own
+     entry below for why -- and the classicCore entry further below for
+     how that later changed again once market.css/ps1aesthetic.css moved
+     out of legacy too).
+
+     `classicCore` (src/styles/hand.css, market.css, mobile.css, attic.css,
+     ps1aesthetic.css) resolves what used to be this migration's
+     "structural wall" -- five files this migration explicitly skipped for
+     a long time because they form a deliberate cross-file specificity
+     ladder with EACH OTHER (market.css's mobile block deliberately uses
+     LOW-specificity overrides and relies on hand.css's HIGHER-specificity
+     state combos to keep beating them via specificity; mobile.css/
+     attic.css/ps1aesthetic.css lean on similar relationships) that broke
+     an earlier, reverted attempt to extract hand.css alone. Like mpCore,
+     the fix wasn't to solve the ladder -- it was to recognize that
+     nothing requires these five to stay co-resident with the REST of
+     legacy, only with EACH OTHER, so all five moved together into one
+     new shared layer, in their original relative link order, preserving
+     every internal tie exactly as it resolved in legacy.
+
+     classicCore is declared BEFORE legacy, immediately preceding it (right
+     after invWrap, i.e. the very last of the before-legacy layers) -- NOT
+     after legacy, where this migration first shipped it. The original
+     audit checked the cluster's external conflicts against every
+     already-extracted layer and every other legacy-resident file EXCEPT
+     the 10 SPv2 source files that were still (and, as of this writing,
+     still are) sharing `legacy` themselves -- singlePlayerV2/{base,compat,
+     desktop,assets,layout,mobile,states}.css and
+     singlePlayerV2/components/{spread,scoreHud,artIntegration}.css. Those
+     ten files' body.single-player-v2-prefixed rules rely on much higher
+     specificity to beat market.css/mobile.css/hand.css/attic.css/
+     ps1aesthetic.css's classic-mode rules on shared elements
+     (#titleWrap/#menuBtn/.score-stack/#spread .slot, among others) --
+     previously decided by specificity within the one shared legacy layer,
+     the same way every other still-in-legacy tie is. Declaring classicCore
+     AFTER legacy silently swapped that tie-break for pure layer order:
+     since classicCore was now the LATER layer, it started winning every
+     one of those normal-tier ties regardless of the SPv2 files' higher
+     specificity -- 286 real same-tier conflicts, confirmed by a dedicated
+     audit and then by a computed-style A/B diff against a true
+     pre-classicCore baseline (e.g. body.single-player-v2's #titleWrap
+     `filter` read back as ps1aesthetic.css's `saturate(.74)` instead of
+     `none`; #menuBtn's z-index/padding/border/color all read back as
+     market.css's classic-mode values). This shipped as a real regression
+     in single-player-v2 mode before it was caught -- not by a bug report,
+     but by re-checking classicCore's relationship with the SPv2 files
+     before starting to migrate them, per this doc's own "re-examine skips
+     after every extraction" rule. Moving classicCore before legacy
+     restores the specificity-based tie-break for all ten files (confirmed
+     against the same true baseline) and still satisfies every other
+     requirement the original audit found: classicCore stays earlier than
+     mpCore/drawAnimation/drawers/titleWrap (the normal-tier ties it needs
+     to keep LOSING to their more specific overrides) and earlier than
+     performance.css (the important-tier `#roomAmbient` tie it needs to keep
+     WINNING) -- before-legacy is earlier than after-legacy either way, so
+     none of those directions flip. Its relative order against every other
+     before-legacy layer (dragStability, actionDropTargets, spread, base,
+     cards, assetLazy, mpMultMobile, mpSpreadCards,
+     mpGameChrome, relicRack, handSwipeZone, invWrap, constellations) is
+     also unaffected -- classicCore was already later than all of them
+     before this fix (as the last "after legacy" layer), and stays later
+     than all of them now (as the last "before legacy" layer), so nothing
+     there needed re-checking. The one real trade-off: mainMenu.css's
+     zero-specificity :where(...) boot-veil rule and attic.css's own
+     #atticScene transition now tie the opposite way during boot states --
+     previously attic.css won via the after-legacy layer-order trick
+     titleWrap.css/atticFade.css also rely on; now mainMenu.css's rule wins
+     instead, since classicCore is earlier than legacy again. Checked via
+     the same true-baseline technique: opacity/visibility/pointer-events on
+     #atticScene during tlr-loading/main-menu-mode-booting are identical
+     either way (the element isn't visible during boot regardless); only
+     the transition duration differs, which has no visible effect on a
+     static hidden element. Accepted as the right trade given the
+     alternative is a confirmed, visible single-player-v2 regression.
+
+     Two cascading fixes fell out of the original extraction in
+     mpGame.css, both unaffected by the position fix above: mp-action-btn/
+     mp-ov-btn moved back into mpCore's main block, since market.css's new
+     position (before mpCore either way) already wins their font-size/
+     padding fight via normal-tier layer order without needing the
+     same-layer specificity trick anymore; and .card.mp-interaction --
+     which only existed to preserve a same-layer specificity tie against
+     ps1aesthetic.css that kept it correctly dead -- was deleted outright
+     once ps1aesthetic.css moved to classicCore too, since relocating it
+     alongside ps1aesthetic.css would have worked just as well but deleting
+     confirmed-dead code is simpler and shrinks the important-tier budget
+     for real instead of just moving it. Verified via a full computed-style
+     A/B diff across the game's whole reachable state space: all five
+     attic mode-transition states plus classic, mobile/narrow/desktop
+     breakpoints, prefers-reduced-motion, hand-card-action-drag-active, and
+     the card-draw-dealt/card-wave/handCardIdleCycle animation states,
+     re-run after the position fix with no changes to any of those
+     results. See src/styles/market.css's header comment for the complete
+     audit writeup.
+
+     `mpCore` (src/styles/mpGame.css's laddered core, src/styles/mpMobile.css,
+     src/styles/mpFixes.css) is the fifth crack, and a genuinely different
+     shape from the first four: a trio-as-one-unit extraction, not a
+     single-file layer-move. These three files form the deliberate
+     ~50-property-pair cross-file responsive-breakpoint cascade described
+     above -- they can't be split into DIFFERENT layers from each other
+     without swapping their internal source-order resolution for
+     layer-order resolution. But nothing requires them to stay co-resident
+     with the rest of `legacy` specifically, so all three moved together
+     into one new shared layer instead, declared in the same relative
+     order they're linked below (mpGame.css, mpMobile.css, mpFixes.css),
+     which preserves every internal tie between them exactly as it
+     resolves today. A full selector/property audit against every other
+     file in the app -- everything still in legacy, every already-extracted
+     layer, and all 10 SPv2 files -- found the trio's real external
+     conflicts overwhelmingly point one direction (after legacy: ~8
+     normal-tier ties where the trio's higher specificity beats bare,
+     lower-specificity rules in market.css/hand.css/spread.css, e.g.
+     mpGame.css's `.mp-opp-spread-transform .spread` and mpMobile.css's
+     `#spread .slot .num`/`.hand .card`/`.hand .card .seal`), with exactly
+     one exception in the opposite direction: mpMobile.css's
+     `.handDock{bottom,background}` needs to keep beating ps1aesthetic.css's
+     unconditional (not mode-gated), important-tier `.handDock` rule via
+     specificity, which requires BEFORE legacy instead -- the earlier layer
+     wins important-tier ties. One file position can't satisfy both, so
+     just those two declarations were split out of mpMobile.css into a
+     small residual `legacy` block (mirroring the same split-declaration
+     technique used for mpGameChrome's exceptions above), while everything
+     else moved to `mpCore`. Every already-extracted before-legacy
+     multiplayer file (mpMultMobile, mpSpreadCards,
+     mpGameChrome) stays unaffected: they're before legacy today, and
+     mpCore sits after legacy, so their relative order to the trio doesn't
+     change either way. The only already-extracted file with a real touch
+     is handDragFix.css's bare, important-tier `.handDock{z-index:26}`
+     rule, which mpGame.css's higher-specificity z-index override needs to
+     keep beating -- that's why mpCore is declared shortly after legacy,
+     before handDragFix and everything else already after it (tutTip,
+     invTab, titleWrap, atticFade, performance, drawAnimation, drawers),
+     none of which showed any real conflict with the trio. (classicCore is
+     declared immediately BEFORE legacy -- see classicCore's own entry
+     above for why -- so it stays transitively earlier than mpCore either
+     way. spv2Core now sits between legacy and mpCore too -- see
+     spv2Core's own entry below -- but it needs the same "earlier than
+     mpCore" direction for its own reasons, so mpCore's position relative
+     to handDragFix is unaffected.)
+     Verified via a full computed-style A/B diff across every breakpoint
+     (max-width:640px, the 380x740 narrow variant, and the min-width:641px
+     desktop layout) plus the mpGameChrome pilot's existing laddered-core/
+     solo sanity checks. See src/styles/mpFixes.css's header comment for
+     the complete audit writeup.
+
+     `drawAnimation` sits BETWEEN legacy and drawers -- it was unextractable
+     while drawers.css still lived in legacy (it must WIN the !important tie
+     against drawers' reduced-motion .hand .card{animation:none!important},
+     but LOSE the !important tie against the SPv2 bundle's mobile
+     pointer-events:auto override still in legacy; both directions at once
+     were impossible against one undivided layer). With drawers extracted,
+     a slot after legacy (loses to legacy: earlier wins important ties) and
+     before drawers (beats drawers: same rule) satisfies both. Its z-index
+     also keeps losing to actionDropTargets' drag-lift override (earlier
+     layer), and its one normal declaration (will-change) keeps beating
+     hand.css's via later-layer normal-tier order, same as it won via
+     specificity before.
+
+     `relicRack` (src/styles/components/relicRack.css) consolidates the relic
+     rack's rules out of market.css/mobile.css/attic.css/ps1aesthetic.css/
+     singlePlayerV2/components/relics.css into one file, in their original
+     effective order, so intra-file specificity/source order resolves
+     priority the same way cross-file specificity used to. It's declared
+     BEFORE legacy: attic.css's mode-gated filter:blur() on #relicRack
+     (now in classicCore, itself before legacy but still later than
+     relicRack) must keep winning over relicRack's own unconditional
+     filter:saturate() during attic-mode transitions -- previously decided
+     by attic's higher specificity within the shared legacy layer, now
+     decided by classicCore remaining the later layer for this normal-tier
+     property regardless of which side of legacy it sits on (a first placement of "after legacy" broke this: verified
+     empirically that #relicRack's computed filter during body.mode-attic
+     flipped from blur(3px) to saturate(.7) contrast(1.03), a real
+     regression, caught and fixed before it was reported). Nothing else in
+     legacy still touches .relic-rack/.relic-btn/.relic-slot-empty's box or
+     position properties (mpGame.css's body.mp-game-active #relicRack
+     touches only display, a disjoint property).
+
+     `handSwipeZone` (src/styles/components/handSwipeZone.css) is the same
+     technique and the same bug pattern, before legacy for the same reason:
+     mpMobile.css's mp-game-active-only height/bottom !important override
+     (still in legacy) must keep losing to the consolidated file's
+     mobile-breakpoint #handSwipeZone.hand-swipe-zone rule -- previously
+     decided by the latter's higher ID-based specificity within the shared
+     legacy layer. A first placement after legacy flipped this too: verified
+     empirically that in mp-game-active mode without SPv2, at mobile width,
+     computed height/bottom changed from 97px/152px to 46px/130px, and (a
+     second effect of the same root cause) that in SPv2 mode the tutorial
+     hint's #handSwipeZone .swipe-hint-line{display:none!important} default
+     -- which must keep beating mpFixes.css's mp-game-active hint-hiding
+     rule via ID specificity -- lost to it via layer order instead, making
+     all three swipe-hint-line steps render simultaneously instead of just
+     the active one. Its z-index:9401 is untouched either way since the
+     consolidated file only ever sets a normal-tier z-index on the bare
+     .hand-swipe-zone class, so !important wins regardless of layer
+     position. mpSinglePlayerIsolation.css's (since deleted entirely --
+     see its own former entry above) mp+SPv2-gated #handSwipeZone block
+     turned out to already be dead code before this file even existed:
+     singlePlayerV2/components/hand.css's own #handSwipeZone rule
+     lives in spv2.components, declared earlier than legacy here, so it
+     already won that fight on layer order alone regardless of specificity
+     -- confirmed identical before and after (note: body.mp-game-active and
+     body.single-player-v2 are mutually exclusive at runtime via a class
+     guard, so this combination only matters as a transient/synthetic
+     state, not real reachable UI).
+
+     `tutTip` (src/styles/components/tutTip.css) is a different shape from
+     relicRack/handSwipeZone: its rules weren't scattered across files to
+     begin with, they were already all together inside market.css. Pulled
+     out whole rather than consolidated. Most remaining touches are safe
+     regardless of layer position (mpGame.css's display:none!important,
+     actionDropTargets' z-index:10130!important, and mainMenu.css's
+     boot-veil visibility/pointer-events/transition are each either
+     importance-dominant or a disjoint property) -- but one is not:
+     market.css's mobile-breakpoint `button{font-size:12px;padding:6px 9px}`
+     reset (now in classicCore, before legacy) must keep losing to
+     #tutSkipBtn's higher ID-based specificity, previously decided within
+     the shared legacy layer, still satisfied today since tutTip (after
+     legacy) stays later than classicCore either way. A first placement before legacy (mirroring relicRack/
+     handSwipeZone) flipped this: verified empirically that computed
+     font-size/padding on #tutSkipBtn changed from 11px/3px 8px to
+     12px/6px 9px, and the popover's height grew 134px to 144px as a
+     result. legacy needs to keep winning against relicRack/handSwipeZone's
+     rules, but tutTip needs to keep winning against this one -- opposite
+     constraints -- so tutTip is declared after legacy instead. Checked for
+     the reverse risk too: no other legacy-resident rule (no bare span{}/
+     div{}/p{} reset) competes with tutTip's own low-specificity selectors
+     (.tut-arrow/.tut-foot/.tut-tap-prompt), so moving it after legacy
+     doesn't let it wrongly override anything else.
+
+     `invWrap`/`invTab` (src/styles/components/invWrap.css,
+     src/styles/components/invTab.css) are the archive/inventory drawer and
+     its pull-tab, consolidated out of mobile.css's base rules and
+     attic.css's mode-transition important-tier block. They could not stay
+     one file: attic.css's mode-transition fade rule for #invWrap (now in
+     classicCore, before legacy but still later than invWrap in the
+     before-legacy sequence -- originally shared with #titleWrap/
+     .score-stack/.spread-wrap/.handDock/#relicRack/.refs-layer, since
+     split out into titleWrap.css and atticFade.css below, leaving only
+     #invWrap's line behind) sets a
+     normal-tier `transition` value on #invWrap that must keep winning via
+     its higher specificity over invWrap's own base
+     `transition:transform .45s...`, requiring invWrap BEFORE legacy (same
+     direction as relicRack/handSwipeZone) -- while market.css's
+     mobile-breakpoint `button{font-size:12px;padding:6px 9px}` reset
+     (now in classicCore, before legacy) must keep losing to #invTab's
+     higher ID-based specificity, requiring invTab AFTER legacy (same
+     direction as tutTip,
+     and the same failure mode tutTip hit with #tutSkipBtn). One file could
+     not satisfy both directions, so the pair was split. Verified via a
+     full computed-style A/B diff against the pre-extraction baseline for
+     both files together (identical before/after, including mid-transition
+     sampling for the attic fade).
+
+     `titleWrap` (src/styles/components/titleWrap.css) takes #titleWrap and
+     .score-stack's share of the same originally-7-element fade rule. The
+     selector list is partitioned, not duplicated (no selector now appears
+     in both this file and the other files sharing this rule's declaration
+     values), but the declaration values ARE duplicated -- every split-off
+     piece needs its own full copy of the same opacity/transform/filter/
+     pointer-events/transition values, which is why the !important budget
+     goes up by 5 here, unlike every prior pilot's net-zero move. Declared
+     AFTER legacy, same direction as tutTip/invTab: ps1aesthetic.css's
+     unconditional `.score-stack{filter:saturate(.68)}`/
+     `#titleWrap{filter:saturate(.74)}` (now in classicCore, before legacy,
+     so still earlier than titleWrap either way) must keep losing
+     to this file's mode-gated filter:blur() during attic transitions,
+     previously decided by the fade rule's higher specificity within the
+     shared layer. base.css's unconditional
+     `.score-stack{transform:translateX(-50%)}` needs the same outcome but
+     is trivially satisfied since base is declared far earlier than legacy
+     already. Verified via the same full computed-style A/B diff technique
+     as invWrap/invTab, across all five mode-transition states plus
+     classic, sampled both mid-transition and settled.
+
+     `atticFade` (src/styles/components/atticFade.css) takes the remaining
+     four elements' share: .spread-wrap/.handDock/#relicRack/.refs-layer.
+     #invWrap deliberately stays out (see invWrap.css's own reasoning
+     above -- it already works correctly where it is, and moving it here
+     too would be redundant, not incorrect). Same duplication trade as
+     titleWrap (selectors partitioned, values duplicated, another +5 on
+     the budget) and the same AFTER-legacy direction, for the same reason:
+     every remaining cross-file touch on these four elements checked out
+     as either property-disjoint from opacity/transform/filter/
+     pointer-events/transition, or important-tier and therefore
+     importance-dominant regardless of layer (the multiplayer cluster's
+     geometry overrides on .spread-wrap/.handDock, mostly) -- see
+     atticFade.css's own header comment for the full per-element
+     breakdown, and the migration doc's "audited candidates" section for
+     why the earlier pass over this same cluster judged it too large
+     before this per-property check was actually done. #relicRack's own
+     unconditional filter:saturate() (in the relicRack layer, before
+     legacy) needs to keep losing to this file's mode-gated filter:blur(),
+     same as it always has -- relicRack is earlier than legacy either way,
+     so this file (after legacy) stays later than relicRack regardless.
+     Verified via the same full computed-style A/B diff technique, across
+     all five mode-transition states plus classic.
+
+     `spv2Core` (singlePlayerV2/base.css, compat.css, desktop.css,
+     assets.css, layout.css, mobile.css, components/spread.css,
+     components/scoreHud.css, states.css, components/artIntegration.css)
+     is the tenth crack: the last 10 SPv2 source files that stayed in the
+     app-wide `legacy` layer (the other 6 -- tokens.css, components/hand.css,
+     components/relics.css, components/spreadHints.css,
+     components/utilityButtons.css, components/utilityIcons.css -- already
+     own their own spv2.tokens/spv2.components layers). A ten-as-one-unit
+     extraction, the same technique as mpCore/classicCore: 9 of the 10 are
+     gated to the same @media(max-width:640px) breakpoint and form a
+     genuine cross-file specificity/media ladder with each other (e.g.
+     base.css's `body.single-player-v2 .score-stack` base rule is
+     deliberately overridden by compat.css's
+     `body.single-player-v2.generated-sheet-ready .score-stack`, one more
+     class, higher specificity, at the generated-sheet breakpoint -- the
+     same "low-specificity base + higher-specificity override" shape as
+     classicCore's market/hand ladder). The tenth, desktop.css, is gated to
+     @media(min-width:641px) -- mutually exclusive with the other nine's
+     breakpoint, so no intra-cluster ties, but it shares the same external
+     position requirements below, so it moved along with the rest rather
+     than getting its own layer.
+
+     A full selector/property audit against every other file in the app --
+     every already-extracted layer, and everything still in `legacy`
+     itself (just mpMobile.css's one residual rule and mainMenu.css's boot
+     veil, both confirmed moot: the residual rule is gated to
+     `body.mp-game-active`, mutually exclusive with this cluster's
+     `body.single-player-v2` at runtime via mpModeClassGuard.mjs, and the
+     boot veil never touches opacity/transform/filter/pointer-events/
+     transition on any element this cluster also touches) -- found every
+     real conflict points the same two directions, and both were *already
+     satisfied* by this cluster's previous position (inside `legacy`
+     itself, unmoved): later than classicCore/actionDropTargets/
+     mpGameChrome/handSwipeZone and every other before-legacy layer
+     (normal-tier ties against market.css's/mobile.css's/hand.css's bare
+     classic-mode `.score-stack`/`.spread-wrap`/`.spread`/`.slot`/`.card`/
+     `.handDock` rules need this cluster to keep WINNING via being the
+     later layer; important-tier ties against actionDropTargets.css's
+     drag-drop-target button overrides need this cluster to keep LOSING
+     via being the later layer -- both already true since `legacy` sits
+     after all of those), and earlier than mpCore/titleWrap/atticFade/
+     handDragFix/performance/drawAnimation/drawers (important-tier ties
+     against drawers.css's `#menuBtn`/`#scoringBtn`/`#abilitiesBtn`
+     `display:none` defaults and performance.css's mobile `#roomAmbient`
+     opacity need this cluster to keep WINNING via being the earlier layer
+     -- already true since `legacy` sits before all of those). Since
+     `legacy`'s own position already satisfies everything found,
+     `spv2Core` is declared immediately after `legacy`, before `mpCore` --
+     the smallest possible move, replacing "wins/loses because it happens
+     to share a name with a big unsorted pile" with "wins/loses because of
+     an explicit, reasoned position," without changing a single outcome.
+     Verified via a full computed-style A/B diff: classic-vs-single-
+     player-v2 layout ties at both the 640px and 641px breakpoints, the
+     drag-drop-target button overrides, drawers'/performance's/
+     drawAnimation's ties, all five attic mode-transition states, and the
+     already-migrated spv2.components ladder. See
+     src/styles/singlePlayerV2/base.css's header comment for the complete
+     audit writeup. */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+</style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">
 <link rel="stylesheet" href="src/styles/hand.css?v=mobile-load-fix-1">
@@ -31,7 +616,15 @@
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=VT323&display=swap"></noscript>
 <link rel="stylesheet" href="src/styles/ps1aesthetic.css?v=4">
 <link id="single-player-v2-index" rel="stylesheet" href="src/styles/singlePlayerV2/index.css?v=1">
-<link rel="stylesheet" href="src/styles/mpSinglePlayerIsolation.css?v=1">
+<link id="single-player-v2-utility-buttons" rel="stylesheet" href="src/styles/singlePlayerV2/components/utilityButtons.css?v=1">
+<link rel="stylesheet" href="src/styles/components/mpGameChrome.css?v=1">
+<link rel="stylesheet" href="src/styles/components/relicRack.css?v=1">
+<link rel="stylesheet" href="src/styles/components/handSwipeZone.css?v=1">
+<link rel="stylesheet" href="src/styles/components/tutTip.css?v=1">
+<link rel="stylesheet" href="src/styles/components/invWrap.css?v=1">
+<link rel="stylesheet" href="src/styles/components/invTab.css?v=1">
+<link rel="stylesheet" href="src/styles/components/titleWrap.css?v=1">
+<link rel="stylesheet" href="src/styles/components/atticFade.css?v=1">
 </head>
 <body class="tlr-loading">
 <div id="roomAmbient"></div>

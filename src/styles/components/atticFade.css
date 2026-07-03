@@ -1,0 +1,67 @@
+@layer atticFade {
+/* .spread-wrap/.handDock/#relicRack/.refs-layer's share of attic.css's
+   mode-transition fade rule -- the same shared rule that titleWrap.css
+   and invWrap.css already partitioned #titleWrap/.score-stack and #invWrap
+   out of. #invWrap deliberately stays behind in attic.css/legacy instead of
+   joining this file: invWrap.css needs legacy to keep winning a `transition`
+   tie against it (see invWrap.css's own header comment), and legacy already
+   satisfies that; moving #invWrap's share here too would be redundant, not
+   incorrect, so it was left alone rather than touched for no reason.
+
+   As with titleWrap.css, the selector list is partitioned (no selector
+   appears in both this file and any other), but the declaration values
+   are necessarily duplicated between this file and the surviving
+   attic.css rule (whose sole remaining selector is #invWrap) -- both need
+   their own full copy of the same opacity/transform/filter/pointer-events/
+   transition values. That is a smaller duplication than titleWrap.css's,
+   since only #invWrap's line survives in attic.css now, but it is still a
+   real, deliberate important-tier budget increase, not a net wash.
+
+   Declared AFTER legacy, same direction as titleWrap: every remaining
+   cross-file touch on these four elements was checked against this file's
+   five properties (opacity/transform/filter/pointer-events/transition) and
+   found either property-disjoint or important-tier (and therefore
+   importance-dominant regardless of layer):
+     - .spread-wrap: actionDropTargets.css's z-index is disjoint. market.css's
+       unconditional `transform:translateY(-50%)` (not important) needs to
+       keep LOSING to this file's mode-gated transform during attic
+       transitions -- exactly the outcome "after legacy" gives, since it's
+       the fade rule that's supposed to temporarily override the base
+       layout. The multiplayer cluster's bottom/height/position/transform
+       overrides on `body.mp-game-active .spread-wrap` are all important-tier,
+       so they win regardless of this file's position whenever reachable
+       (attic mode and mp-game-active are not concurrently reachable
+       states in practice).
+     - .handDock: actionDropTargets.css/handDragFix.css/mpGame.css's
+       z-index rules are disjoint. hand.css's base `pointer-events:none`
+       sets the same value this file sets in the non-mode-attic states, so
+       there is no visible difference regardless of which wins. ps1aesthetic
+       .css's important-tier `.handDock{bottom:...;background:...}`
+       touches disjoint properties (unlike its #titleWrap/.score-stack
+       filter rules, it never sets filter on .handDock). mpFixes.css's
+       important-tier `body.mp-game-active .handDock{transform:
+       translateX(-12vw)}` dominates regardless of layer
+       (and, again, not concurrently reachable with attic mode anyway).
+     - #relicRack: relicRack.css's own unconditional `filter:saturate(.7)
+       contrast(1.03)` (in the relicRack layer, before legacy) must keep
+       LOSING to this file's mode-gated filter:blur() -- since relicRack
+       is declared before legacy and this file is declared after legacy,
+       relicRack is unambiguously earlier in the master order either way,
+       so this file keeps winning via layer order regardless of specificity,
+       same outcome as when the fade rule lived in legacy itself.
+     - .refs-layer: actionDropTargets.css's z-index and drawers.css's
+       important-tier `display:none` are both disjoint/important-tier.
+       market.css's `left`/`right`/`display` touches are disjoint.
+   mainMenu.css's several `:where(...)` boot-veil rules touch all four
+   elements (opacity/pointer-events/transition, gated by body.tlr-loading,
+   body.main-menu-mode-booting, or prefers-reduced-motion) -- :where()
+   always contributes zero specificity, so today the fade rule's
+   body-class-gated selectors already win via specificity when active
+   within the shared legacy layer; "after legacy" preserves that same
+   outcome via layer order instead. */
+body.mode-to-attic .spread-wrap,body.mode-to-attic .handDock,body.mode-to-attic #relicRack,body.mode-to-attic .refs-layer{opacity:0;transform:scale(.9) translateY(14vh);filter:blur(2px);pointer-events:none;transition:opacity .75s ease,transform 1.1s ease,filter .75s ease}
+body.mode-attic .spread-wrap,body.mode-attic .handDock,body.mode-attic #relicRack,body.mode-attic .refs-layer{opacity:0!important;pointer-events:none!important;filter:blur(3px);transform:scale(.88) translateY(18vh)}
+body.mode-to-table .spread-wrap,body.mode-to-table .handDock,body.mode-to-table #relicRack,body.mode-to-table .refs-layer{opacity:0;transform:scale(.92) translateY(12vh);filter:blur(2px);pointer-events:none;transition:opacity .65s ease,transform .9s ease,filter .65s ease}
+body.mode-table-return .spread-wrap,body.mode-table-return .handDock,body.mode-table-return #relicRack,body.mode-table-return .refs-layer{opacity:1;transform:none;filter:none;transition:opacity .8s ease,transform 1s ease,filter .8s ease}
+body.mode-return-hard-hide .spread-wrap,body.mode-return-hard-hide .handDock,body.mode-return-hard-hide #relicRack,body.mode-to-table .spread-wrap,body.mode-to-table .handDock,body.mode-to-table #relicRack{opacity:0!important;transition:none!important;pointer-events:none!important}
+}

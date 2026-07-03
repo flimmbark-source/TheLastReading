@@ -1,3 +1,5 @@
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-compact-hud-h: clamp(76px, 11dvh, 94px);
@@ -50,10 +52,10 @@
     place-items: center;
     width: clamp(46px, 12vw, 58px) !important;
     height: clamp(46px, 12vw, 58px) !important;
-    min-width: 0 !important;
+    min-width: 0;
     margin: 0 !important;
     padding: 0 !important;
-    border-radius: 50% !important;
+    border-radius: 50%;
     border: 2px solid #8f6a34 !important;
     background-color: #17101f !important;
     background-repeat: no-repeat !important;
@@ -169,13 +171,13 @@
     position: absolute !important;
     top: 0 !important;
     display: grid !important;
-    place-items: center !important;
+    place-items: center;
     width: clamp(62px, 16vw, 76px) !important;
     height: clamp(62px, 16vw, 76px) !important;
-    min-width: 0 !important;
+    min-width: 0;
     margin: 0 !important;
     padding: 0 !important;
-    border-radius: 50% !important;
+    border-radius: 50%;
     border: 2px solid #8f6a34 !important;
     background-color: #17101f !important;
     background-repeat: no-repeat !important;
@@ -230,7 +232,7 @@
     height: clamp(42px, 6.5dvh, 56px) !important;
     z-index: 25 !important;
     pointer-events: auto !important;
-    touch-action: none !important;
+    touch-action: none;
   }
 
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower {
@@ -285,4 +287,5 @@
     top: var(--inv-h) !important;
     bottom: auto !important;
   }
+}
 }
