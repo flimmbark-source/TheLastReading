@@ -252,5 +252,72 @@
     z-index: 3 !important;
     pointer-events: none !important;
   }
+
+  /* Cascade-integrity guard for the generated-sheet table chrome. The cascade
+     layer refactor moved the SPv2 partials into a generated bundle, so keep the
+     irreplaceable art surfaces asserted at the final art-integration point:
+     five empty spread slots, the hand tray, and the two lower action
+     medallions. These duplicate only the asset-critical properties so layout
+     tuning can continue to happen in the earlier placement/mobile passes. */
+  html body.single-player-v2.generated-sheet-ready #spread.spread > .slot {
+    background-color: transparent;
+    background-image: var(--spv2-spread-slot-art);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    border-color: transparent;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .handDock {
+    background-color: transparent;
+    background-image: var(--spv2-hand-dock-art);
+    background-position: center bottom 2dvh;
+    background-repeat: no-repeat;
+    background-size: 100% 24dvh;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread-actions {
+    display: flex;
+    visibility: visible;
+    opacity: 1;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #discardBtn,
+  html body.single-player-v2.generated-sheet-ready #purgeBtn {
+    position: relative;
+    border: 0;
+    background-color: transparent;
+    background-image: none;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #discardBtn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    display: block;
+    background-image: url("/public/ui/single-player-v2/elements/Discard.webp");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    pointer-events: none;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #purgeBtn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    display: block;
+    background-image: var(--spv2-action-center-art);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    pointer-events: none;
+  }
+
 }
 }

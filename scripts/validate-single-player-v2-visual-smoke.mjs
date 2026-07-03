@@ -89,10 +89,21 @@ async function main() {
           scoreHud: boxFor('.score-stack'),
           spread: boxFor('.spread'),
           handDock: boxFor('.handDock'),
+          slotCount: document.querySelectorAll('#spread > .slot').length,
+          slotImage: getComputedStyle(document.querySelector('#spread > .slot'))?.backgroundImage || '',
+          dockImage: getComputedStyle(document.querySelector('.handDock'))?.backgroundImage || '',
+          discardArt: getComputedStyle(document.getElementById('discardBtn'), '::before')?.backgroundImage || '',
+          purgeArt: getComputedStyle(document.getElementById('purgeBtn'), '::before')?.backgroundImage || '',
         };
       });
 
-      for (const [name, box] of Object.entries(snapshot)) {
+      assert.equal(snapshot.slotCount, 5, `spread should render five slots at ${width}px`);
+      assert.match(snapshot.slotImage, /spread-slot\.webp/, `spread slots should use generated slot art at ${width}px`);
+      assert.match(snapshot.dockImage, /hand-dock\.webp/, `hand dock should use generated dock art at ${width}px`);
+      assert.match(snapshot.discardArt, /Discard\.webp/, `discard medallion should use generated art at ${width}px`);
+      assert.match(snapshot.purgeArt, /action-center\.webp/, `purge medallion should use generated action-center art at ${width}px`);
+
+      for (const [name, box] of Object.entries(snapshot).filter(([, value]) => value && typeof value === 'object')) {
         assert.ok(box, `${name} should exist at ${width}px`);
         assert.notEqual(box.display, 'none', `${name} should not be display:none at ${width}px`);
         assert.notEqual(box.visibility, 'hidden', `${name} should not be visibility:hidden at ${width}px`);
