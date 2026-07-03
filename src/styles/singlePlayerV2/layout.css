@@ -1,4 +1,5 @@
-@layer legacy {
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* Final mobile shell corrections layered after the generated art styles. */
 @media (max-width: 640px) {
   body.single-player-v2.generated-sheet-ready {

@@ -1,4 +1,5 @@
-@layer legacy {
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* Reconciles the tuned single-player-v2 layout with the approved art tiles.
    The four stat panels now carry their label text (RESERVE / SCORE / THRESHOLD
    / DISCARDS) and their stat icons (bag / star / scales / skull) baked into the

@@ -1,4 +1,5 @@
-@layer legacy {
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* ─── Desktop phone-column constraint ────────────────────────────────────── */
 /* On wide screens confine the entire game to a portrait phone column.        */
 /* CSS transform on body makes it the containing block for all               */

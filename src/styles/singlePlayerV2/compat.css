@@ -1,4 +1,5 @@
-@layer legacy {
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* Compatibility overrides kept separate from the Phase 1 composition sheet. */
 
 @media (max-width: 640px) {

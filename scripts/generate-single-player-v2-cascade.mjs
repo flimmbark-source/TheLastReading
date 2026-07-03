@@ -34,15 +34,14 @@ export function buildSinglePlayerV2Cascade() {
 
    Run \`node scripts/generate-single-player-v2-cascade.mjs\` after changing any
    bundled source stylesheet listed below. This generated file is the checked-in,
-   authoritative bundle for legacy SPv2 source partials. Component-owned files
+   authoritative bundle for SPv2 source partials. Component-owned files
    listed in singlePlayerV2ExternalComponentSources are loaded beside it instead
    of being duplicated here. It preserves the previous direct-link cascade order
    while making the active cascade traceable in one file. tokens/utilityIcons/
-   hand/spreadHints own real cascade layers; the remaining sources here still
-   live in the app-wide \`legacy\` layer declared in game.html (see that file's
-   layer statement for why -- their !important declarations are load-bearing
-   against other legacy-layer files elsewhere in the app in ways that aren't
-   yet safe to split further without per-component visual verification). */
+   hand/spreadHints own real cascade layers; the remaining ten sources here
+   live in the app-wide \`spv2Core\` layer declared in game.html (see that
+   file's layer statement, and singlePlayerV2/base.css's own header comment,
+   for the full reasoning). */
 @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat;
 `];
 

@@ -353,13 +353,16 @@
      change either way. The only already-extracted file with a real touch
      is handDragFix.css's bare, important-tier `.handDock{z-index:26}`
      rule, which mpGame.css's higher-specificity z-index override needs to
-     keep beating -- that's why mpCore is declared immediately after
-     legacy (classicCore, now declared immediately BEFORE legacy instead --
-     see classicCore's own entry above for why -- stays transitively
-     earlier than mpCore either way), before handDragFix and everything
-     else already after it (tutTip, invTab, titleWrap, atticFade,
-     performance, drawAnimation, drawers), none of which showed any real
-     conflict with the trio.
+     keep beating -- that's why mpCore is declared shortly after legacy,
+     before handDragFix and everything else already after it (tutTip,
+     invTab, titleWrap, atticFade, performance, drawAnimation, drawers),
+     none of which showed any real conflict with the trio. (classicCore is
+     declared immediately BEFORE legacy -- see classicCore's own entry
+     above for why -- so it stays transitively earlier than mpCore either
+     way. spv2Core now sits between legacy and mpCore too -- see
+     spv2Core's own entry below -- but it needs the same "earlier than
+     mpCore" direction for its own reasons, so mpCore's position relative
+     to handDragFix is unaffected.)
      Verified via a full computed-style A/B diff across every breakpoint
      (max-width:640px, the 380x740 narrow variant, and the min-width:641px
      desktop layout) plus the mpGameChrome pilot's existing laddered-core/
@@ -515,8 +518,67 @@
      same as it always has -- relicRack is earlier than legacy either way,
      so this file (after legacy) stays later than relicRack regardless.
      Verified via the same full computed-style A/B diff technique, across
-     all five mode-transition states plus classic. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+     all five mode-transition states plus classic.
+
+     `spv2Core` (singlePlayerV2/base.css, compat.css, desktop.css,
+     assets.css, layout.css, mobile.css, components/spread.css,
+     components/scoreHud.css, states.css, components/artIntegration.css)
+     is the tenth crack: the last 10 SPv2 source files that stayed in the
+     app-wide `legacy` layer (the other 6 -- tokens.css, components/hand.css,
+     components/relics.css, components/spreadHints.css,
+     components/utilityButtons.css, components/utilityIcons.css -- already
+     own their own spv2.tokens/spv2.components layers). A ten-as-one-unit
+     extraction, the same technique as mpCore/classicCore: 9 of the 10 are
+     gated to the same @media(max-width:640px) breakpoint and form a
+     genuine cross-file specificity/media ladder with each other (e.g.
+     base.css's `body.single-player-v2 .score-stack` base rule is
+     deliberately overridden by compat.css's
+     `body.single-player-v2.generated-sheet-ready .score-stack`, one more
+     class, higher specificity, at the generated-sheet breakpoint -- the
+     same "low-specificity base + higher-specificity override" shape as
+     classicCore's market/hand ladder). The tenth, desktop.css, is gated to
+     @media(min-width:641px) -- mutually exclusive with the other nine's
+     breakpoint, so no intra-cluster ties, but it shares the same external
+     position requirements below, so it moved along with the rest rather
+     than getting its own layer.
+
+     A full selector/property audit against every other file in the app --
+     every already-extracted layer, and everything still in `legacy`
+     itself (just mpMobile.css's one residual rule and mainMenu.css's boot
+     veil, both confirmed moot: the residual rule is gated to
+     `body.mp-game-active`, mutually exclusive with this cluster's
+     `body.single-player-v2` at runtime via mpModeClassGuard.mjs, and the
+     boot veil never touches opacity/transform/filter/pointer-events/
+     transition on any element this cluster also touches) -- found every
+     real conflict points the same two directions, and both were *already
+     satisfied* by this cluster's previous position (inside `legacy`
+     itself, unmoved): later than classicCore/actionDropTargets/
+     mpGameChrome/handSwipeZone and every other before-legacy layer
+     (normal-tier ties against market.css's/mobile.css's/hand.css's bare
+     classic-mode `.score-stack`/`.spread-wrap`/`.spread`/`.slot`/`.card`/
+     `.handDock` rules need this cluster to keep WINNING via being the
+     later layer; important-tier ties against actionDropTargets.css's
+     drag-drop-target button overrides need this cluster to keep LOSING
+     via being the later layer -- both already true since `legacy` sits
+     after all of those), and earlier than mpCore/titleWrap/atticFade/
+     handDragFix/performance/drawAnimation/drawers (important-tier ties
+     against drawers.css's `#menuBtn`/`#scoringBtn`/`#abilitiesBtn`
+     `display:none` defaults and performance.css's mobile `#roomAmbient`
+     opacity need this cluster to keep WINNING via being the earlier layer
+     -- already true since `legacy` sits before all of those). Since
+     `legacy`'s own position already satisfies everything found,
+     `spv2Core` is declared immediately after `legacy`, before `mpCore` --
+     the smallest possible move, replacing "wins/loses because it happens
+     to share a name with a big unsorted pile" with "wins/loses because of
+     an explicit, reasoned position," without changing a single outcome.
+     Verified via a full computed-style A/B diff: classic-vs-single-
+     player-v2 layout ties at both the 640px and 641px breakpoints, the
+     drag-drop-target button overrides, drawers'/performance's/
+     drawAnimation's ties, all five attic mode-transition states, and the
+     already-migrated spv2.components ladder. See
+     src/styles/singlePlayerV2/base.css's header comment for the complete
+     audit writeup. */
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
 </style>
 <link rel="stylesheet" href="src/styles/base.css?v=tap-highlight-1">
 <link rel="stylesheet" href="src/styles/spread.css?v=mobile-load-fix-1">

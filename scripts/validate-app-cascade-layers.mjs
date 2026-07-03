@@ -11,37 +11,20 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const html = read('../game.html');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
-  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpSinglePlayerIsolation, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
   html.indexOf('@layer spv2.tokens') < html.indexOf('<link rel="stylesheet"'),
   'the layer order pre-declaration must appear before the first stylesheet link',
 );
 
-// Files outside the SPv2 cascade that carry cross-file !important
-// dependencies on each other must all share the `legacy` layer -- splitting
-// any of them into their own layer would flip which !important wins because
-// cascade-layer importance reverses layer order (see validate-app-important-
-// budget.mjs and the SPv2 cascade validator for the matching SPv2-side story).
-const legacyLayeredFiles = [
-  '../src/styles/singlePlayerV2/base.css',
-  '../src/styles/singlePlayerV2/compat.css',
-  '../src/styles/singlePlayerV2/desktop.css',
-  '../src/styles/singlePlayerV2/assets.css',
-  '../src/styles/singlePlayerV2/layout.css',
-  '../src/styles/singlePlayerV2/mobile.css',
-  '../src/styles/singlePlayerV2/components/spread.css',
-  '../src/styles/singlePlayerV2/components/scoreHud.css',
-  '../src/styles/singlePlayerV2/states.css',
-  '../src/styles/singlePlayerV2/components/artIntegration.css',
-];
-
-for (const path of legacyLayeredFiles) {
-  const text = read(path);
-  assert.match(text, /^@layer legacy \{/, `${path} should be wrapped in the app-wide legacy cascade layer`);
-  assert.match(text.trimEnd(), /\}$/, `${path} should close its legacy layer wrapper`);
-}
+// The last 10 SPv2 source files that shared cross-file !important
+// dependencies with each other (and previously lived in the app-wide
+// `legacy` layer for that reason) have since moved together into their own
+// `spv2Core` layer -- see that block further below for the full reasoning
+// (same ten-as-one-unit technique as mpCore/classicCore, preserving every
+// internal and external tie exactly as it resolved in `legacy`).
 
 // constellations.css: self-namespaced (.constellation-*) but NOT independent
 // -- its #constellationPill/.constellation-pill element is also targeted by
@@ -224,10 +207,13 @@ assert.doesNotMatch(read('../src/styles/mpGame.css'), /@layer legacy/, 'mpGame.c
 // to keep beating ps1aesthetic.css's unconditional, important-tier
 // .handDock{bottom,background} rule via specificity. Those two declarations
 // were split out into a small residual legacy block in mpMobile.css instead
-// of moving the whole trio the wrong way. mpCore is declared immediately
+// of moving the whole trio the wrong way. mpCore is declared shortly
 // after legacy (classicCore is declared immediately BEFORE legacy instead --
 // see that block below for why -- so it stays transitively earlier than
-// mpCore either way); mpCore in turn sits before handDragFix.css's bare,
+// mpCore either way; spv2Core now sits between legacy and mpCore too --
+// see that block further below -- but needs the same "earlier than mpCore"
+// direction for its own reasons, so this is unaffected); mpCore in turn
+// sits before handDragFix.css's bare,
 // important-tier .handDock{z-index:26} rule, which mpGame.css's z-index
 // override needs to keep beating -- see src/styles/mpFixes.css's header
 // comment for the full writeup.
@@ -317,6 +303,51 @@ for (const path of classicCoreFiles) {
   const text = read(path);
   assert.match(text, /^@layer classicCore \{/, `${path} should live in the classicCore layer`);
   assert.match(text.trimEnd(), /\}$/, `${path} should close its classicCore layer wrapper`);
+}
+
+// spv2Core: the tenth crack -- the last 10 SPv2 source files that stayed in
+// the app-wide `legacy` layer (the other 6 -- tokens.css, components/hand.css,
+// components/relics.css, components/spreadHints.css,
+// components/utilityButtons.css, components/utilityIcons.css -- already own
+// spv2.tokens/spv2.components). A ten-as-one-unit extraction, same technique
+// as mpCore/classicCore: 9 of the 10 are gated to the same
+// @media(max-width:640px) breakpoint and form a genuine cross-file
+// specificity/media ladder with each other (base.css's low-specificity
+// `body.single-player-v2 .score-stack` base rule is deliberately overridden
+// by compat.css's higher-specificity `body.single-player-v2.generated-sheet-
+// ready .score-stack` at the generated-sheet breakpoint -- the same shape as
+// classicCore's market/hand ladder). The tenth, desktop.css, is gated to
+// @media(min-width:641px) -- mutually exclusive with the other nine's
+// breakpoint, so no intra-cluster ties, but it shares the same external
+// position requirements, so it moved along with the rest. A full audit
+// against every already-extracted layer and everything still in `legacy`
+// (just mpMobile.css's one residual rule -- gated to `body.mp-game-active`,
+// mutually exclusive with this cluster's `body.single-player-v2` at runtime
+// -- and mainMenu.css's boot veil, which never touches any property this
+// cluster also touches) found every real conflict already satisfied by this
+// cluster's previous position (inside `legacy` itself, unmoved): later than
+// classicCore/actionDropTargets/mpGameChrome/handSwipeZone and every other
+// before-legacy layer, earlier than mpCore/titleWrap/atticFade/handDragFix/
+// performance/drawAnimation/drawers. Declared immediately after legacy,
+// before mpCore -- the smallest possible move, preserving every relationship
+// unchanged. See src/styles/singlePlayerV2/base.css's header comment and
+// game.html's own spv2Core entry for the complete audit writeup.
+const spv2CoreFiles = [
+  '../src/styles/singlePlayerV2/base.css',
+  '../src/styles/singlePlayerV2/compat.css',
+  '../src/styles/singlePlayerV2/desktop.css',
+  '../src/styles/singlePlayerV2/assets.css',
+  '../src/styles/singlePlayerV2/layout.css',
+  '../src/styles/singlePlayerV2/mobile.css',
+  '../src/styles/singlePlayerV2/components/spread.css',
+  '../src/styles/singlePlayerV2/components/scoreHud.css',
+  '../src/styles/singlePlayerV2/states.css',
+  '../src/styles/singlePlayerV2/components/artIntegration.css',
+];
+for (const path of spv2CoreFiles) {
+  const text = read(path);
+  assert.match(text, /^@layer spv2Core \{/, `${path} should live in the spv2Core layer`);
+  assert.match(text.trimEnd(), /\}$/, `${path} should close its spv2Core layer wrapper`);
 }
 
 // relicRack.css: consolidates the relic rack's previously scattered rules
