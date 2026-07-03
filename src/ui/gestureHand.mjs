@@ -524,7 +524,10 @@ export function installHandSwipeScroll(target = window){
   };
   // ── Desktop scroll-wheel: scroll down = constrict, scroll up = expand ──
   (function(){
-    const isDesktop=()=>false; // mobile touch-style hint text/behavior is used even for a real mouse
+    // Fine-pointer devices get the wheel wording; touch devices keep the
+    // pinch wording. A touchscreen laptop matches fine-pointer but pinch
+    // still works there too — both inputs stay live regardless of the text.
+    const isDesktop=()=>target.matchMedia?.('(hover: hover) and (pointer: fine)').matches??false;
     // Swap hint text for desktop on first opportunity
     const setHintText=()=>{
       const l2=document.getElementById('handHintLine2');
@@ -540,6 +543,9 @@ export function installHandSwipeScroll(target = window){
     };
     if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',setHintText);}
     else{setHintText();}
+    // The SPv2 shell rebuilds the hint DOM (restoreHandTutorial), so expose
+    // the setter for it to re-apply the input-appropriate wording after.
+    target.__handSetHintText=setHintText;
 
     // Scroll to adjust spacing; horizontal scroll drifts the hand side-to-side.
     const DEG_PER_SCROLL=0.012;  // degrees of spacing per pixel of vertical scroll delta
@@ -570,8 +576,8 @@ export function installHandSwipeScroll(target = window){
         }
       }
     };
+    // A wheel event over the hand is unambiguous intent — no device gate.
     const onWheel=ev=>{
-      if(!isDesktop())return;
       const z=zoneEl();if(!z)return;
       // Only activate when hovering the swipe zone or the hand area
       if(!ev.target.closest('#handSwipeZone,.handDock'))return;

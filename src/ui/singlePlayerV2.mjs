@@ -103,6 +103,10 @@ export function installSinglePlayerV2(target = window) {
 
     if(!zone.querySelector('.hand-swipe-hint')){
       zone.innerHTML='<div class="hand-swipe-zone-lower" aria-hidden="true"></div><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div>';
+      // Re-apply the input-appropriate constrict/expand wording (pinch vs
+      // scroll) — gestureHand owns that decision and the rebuild above
+      // resets the lines to the touch defaults.
+      target.__handSetHintText?.();
     }
   };
 
