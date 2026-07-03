@@ -102,38 +102,33 @@ body {
   border-bottom-color: #3a2610 !important;
 }
 
-/* ── Spread slots: darker, more dungeon-ish ── */
-.slot {
+/* ── Spread slots: darker, more dungeon-ish ──
+   Classic-only: SPv2 owns its slot art and interaction states. */
+body:not(.single-player-v2) .slot {
   background: rgba(0,0,0,.28) !important;
   border-color: #2e2012 !important;
 }
-.slot.empty:hover, .slot.target {
+body:not(.single-player-v2) .slot.empty:hover,
+body:not(.single-player-v2) .slot.target {
   background: rgba(42,74,40,.20) !important;
   border-color: #496946 !important;
 }
 
 /* ── Float the hand above the bottom edge ──────────────────────────────────
-   bottom: 0 pins the dock to the screen edge, making cards look like they're
-   sinking out of frame. Lifting it reveals the table background below, giving
-   the PS1 "cards floating in the scene" feel (cf. Inscryption).
-   Three things move together: the dock itself, the swipe-capture zone that
-   sits just above it, and body's bottom padding that keeps the spread clear.
-   Direct px values are used instead of a CSS variable because var() inside
-   !important can misbehave on some mobile browsers. */
-
-.handDock {
+   Classic-only: SPv2 owns its dock placement and artwork. */
+body:not(.single-player-v2) .handDock {
   bottom: 36px !important;
   background: linear-gradient(transparent, rgba(0,0,0,.70)) !important;
 }
-body {
+body:not(.single-player-v2) {
   padding-bottom: 238px !important; /* 202px + 36px */
 }
 
 @media (max-width: 640px) {
-  .handDock {
+  body:not(.single-player-v2) .handDock {
     bottom: 24px !important;
   }
-  body {
+  body:not(.single-player-v2) {
     padding-bottom: 181px !important; /* 157px + 24px */
   }
 
