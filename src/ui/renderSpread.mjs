@@ -101,6 +101,28 @@ function targetCard(card, view) {
   else handleAbilityHandClick(card);
 }
 
+function bindSpreadAbilityTargeting(spreadEl, ability, displaySpread, view) {
+  // The spread slots are stable DOM nodes, so keep the targeting link on their
+  // shared owner instead of depending on per-card handlers surviving every
+  // lightweight state refresh. Tapping either the card or its surrounding slot
+  // frame resolves through the same existing ability-target callback.
+  spreadEl.onclick = ability ? event => {
+    const source = event.target instanceof Element ? event.target : null;
+    const slot = source?.closest?.('.slot');
+    if (!slot || !spreadEl.contains(slot)) return;
+
+    const cardEl = slot.querySelector(':scope > .card[data-uid]');
+    const uid = Number(cardEl?.dataset.uid);
+    if (!Number.isFinite(uid) || !ability.validIds.has(uid)) return;
+
+    const card = displaySpread.find(candidate => candidate?.uid === uid);
+    if (!card) return;
+
+    event.stopPropagation();
+    targetCard(card, view);
+  } : null;
+}
+
 function clearHintVisual(element) {
   if (!element) return;
   element.style.removeProperty('--hint-rgb');
@@ -118,6 +140,7 @@ export function renderSpread(ability, inPurge, view = null) {
   const hintState = { spread: displaySpread || [], hand: displayHand || [] };
   const hintPool=[...hintState.spread.filter(Boolean),...hintState.hand];
   const sp = $('#spread');
+  bindSpreadAbilityTargeting(sp, ability, displaySpread, view);
   if (!_slotEls || _slotEls.length !== 5 || !sp.contains(_slotEls[0])) {
     _slotEls = [];
     sp.replaceChildren();
@@ -138,7 +161,7 @@ export function renderSpread(ability, inPurge, view = null) {
       const pickedSpread = ability && validSpread && ability.picked.includes(card.uid);
       if (ability) cls += ' ' + (pickedSpread ? 'ability-picked-slot' : (validSpread ? 'ability-target-slot' : 'ability-disabled-slot'));
       s.className = cls;
-      s.onclick = (ability && validSpread) ? (ev) => { ev.stopPropagation(); targetCard(card, view); } : null;
+      s.onclick = null;
       let e = s.firstElementChild;
       const sameCard = e && e.classList && e.classList.contains('card') && Number(e.dataset.uid) === card.uid;
       if (!sameCard) {
@@ -159,7 +182,7 @@ export function renderSpread(ability, inPurge, view = null) {
         // context instead of disappearing behind the fan.
         applyHint(s, card, hintPool, hintState);
       }
-      e.onclick = (ability && validSpread) ? (ev) => { ev.stopPropagation(); targetCard(card, view); } : null;
+      e.onclick = null;
     } else {
       if (ability) cls += ' ability-empty-slot';
       s.className = cls;
