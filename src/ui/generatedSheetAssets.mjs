@@ -27,6 +27,13 @@ const ELEMENT_ART = {
   '--spv2-option-archive-art': 'option-archive.webp'
 };
 
+const ROOT_ART = {
+  // The constellation circle remains a standalone SVG in the runtime kit.
+  // Keep the CSS custom property populated so spread art does not disappear
+  // if the integration layer enables the separate circle overlay again.
+  '--spv2-reading-circle-art': 'reading-circle.svg'
+};
+
 const TABLE_BG = '/public/ui/single-player-v2/table-bg.webp';
 
 let applied = null;
@@ -50,6 +57,11 @@ export function installGeneratedSheetAssets(target = window) {
   const urls = [];
   for (const [property, file] of Object.entries(ELEMENT_ART)) {
     const url = `${ELEMENT_BASE}${file}`;
+    root.style.setProperty(property, `url("${url}")`);
+    urls.push(url);
+  }
+  for (const [property, file] of Object.entries(ROOT_ART)) {
+    const url = `/public/ui/single-player-v2/${file}`;
     root.style.setProperty(property, `url("${url}")`);
     urls.push(url);
   }

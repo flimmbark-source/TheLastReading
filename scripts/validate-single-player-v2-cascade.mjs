@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { buildSinglePlayerV2Cascade, singlePlayerV2CascadeSources, singlePlayerV2ExternalComponentSources } from './generate-single-player-v2-cascade.mjs';
 
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
+const exists = path => existsSync(new URL(path, import.meta.url));
 
 const html = read('../game.html');
 
@@ -75,6 +76,25 @@ assert.match(source, /single-player-v2-index/, 'runtime loader should ensure the
 assert.doesNotMatch(source, /single-player-v2-utility-icons/, 'runtime loader should not append individual patch stylesheets');
 assert.match(source, /single-player-v2-utility-buttons/, 'runtime loader should ensure the externalized utility-button component stylesheet');
 assert.doesNotMatch(source, /singlePlayerV2Compat\.css\?v=composition-1/, 'runtime loader should not reshuffle compatibility CSS order');
+
+const generatedAssetSource = read('../src/ui/generatedSheetAssets.mjs');
+const referencedGeneratedArtVars = [...cascade.matchAll(/var\((--spv2-[a-z0-9-]+-art)\)/g)]
+  .map(match => match[1]);
+for (const variable of new Set(referencedGeneratedArtVars)) {
+  assert.match(generatedAssetSource, new RegExp(`['"]${variable}['"]`), `${variable} should be assigned by generatedSheetAssets.mjs`);
+}
+
+const generatedElementFiles = [...generatedAssetSource.matchAll(/['"](--spv2-[a-z0-9-]+-art)['"]:\s*['"]([^'"]+)['"]/g)];
+for (const [, variable, file] of generatedElementFiles) {
+  const assetPath = file.includes('/')
+    ? `../public/ui/single-player-v2/${file}`
+    : `../public/ui/single-player-v2/elements/${file}`;
+  const fallbackAssetPath = `../public/ui/single-player-v2/${file}`;
+  assert.ok(
+    exists(assetPath) || exists(fallbackAssetPath),
+    `${variable} should point at an existing runtime asset (${assetPath} or ${fallbackAssetPath})`
+  );
+}
 
 const layout = read('../src/styles/singlePlayerV2/layout.css');
 const utilityButtons = read('../src/styles/singlePlayerV2/components/utilityButtons.css');
