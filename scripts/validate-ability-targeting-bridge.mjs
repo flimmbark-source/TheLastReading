@@ -15,10 +15,14 @@ function makeTarget() {
   const store = createStore();
   const cardA = { uid: 1, id: 'major_5', type: 'major' };
   const cardB = { uid: 2, id: 'major_8', type: 'major' };
-  const cardC = { uid: 3, id: 'major_3', type: 'major' };
+  const cardC = { uid: 3, id: 'major_3', type: 'major', ability: 'BETWEEN_2' };
   const target = {
     tlrStore: store,
-    state: { hand: [cardA, cardB, cardC], spread: [], abilitySelect: null },
+    state: {
+      hand: [cardA, cardB, cardC], spread: [], discard: [], discardedCards: [],
+      discards: 3, freeDiscardUsed: false, sightChargesUsed: 0,
+      roundDiscardCount: 0, lastDiscardedCard: null, abilitySelect: null,
+    },
     renderCount: 0,
     refreshCount: 0,
     render() { this.renderCount += 1; },
@@ -77,23 +81,61 @@ function targeting(target) {
   assert.equal(firstCalls, 0, 'the abandoned first callback is never invoked');
 }
 
-// --- Cancel ends the active ability without restoring the discarded source card. ---
+// --- Complete cancel restores the source card and pre-discard resources. ---
 {
-  const { target, cardA, cardB } = makeTarget();
+  const { target, cardA, cardB, cardC } = makeTarget();
   let cancelledArgs = null;
+  const rollback = {
+    card: cardC,
+    handIndex: 2,
+    discards: 3,
+    freeDiscardUsed: false,
+    sightChargesUsed: 0,
+    discardedCards: [],
+    roundDiscardCount: 0,
+    lastDiscardedCard: null,
+  };
 
-  target.tlrStore.dispatch({ type: 'START_ABILITY', abilityId: 'BETWEEN_2', sourceCardId: 99 });
+  target.state.hand = [cardA, cardB];
+  target.state.discard = [cardC];
+  target.state.discardedCards = [cardC];
+  target.state.discards = 2;
+  target.state.roundDiscardCount = 1;
+  target.state.lastDiscardedCard = cardC;
+  target.__tlrPendingAbilityDiscardRollback = rollback;
+  target.tlrStore.dispatch({
+    type: 'SYNC_LEGACY_RUN',
+    run: {
+      hand: [cardA, cardB], discard: [cardC], discardedCards: [cardC],
+      discards: 2, freeDiscardUsed: false, sightChargesUsed: 0,
+      roundDiscardCount: 1, selectedCardId: null,
+    },
+  });
+  target.tlrStore.dispatch({
+    type: 'START_ABILITY',
+    ability: { id: 'BETWEEN_2', sourceCardId: cardC.uid },
+    sourceCardId: cardC.uid,
+  });
   target.tlrStartAbilityTargeting({
     title: 'Between', validCardIds: [cardA.uid, cardB.uid], count: 1,
     cb: (...picked) => { cancelledArgs = picked; },
   });
+
   assert.equal(target.tlrCanCancelAbilitySelection(), true, 'cancel is available on the initial targeting step');
-  assert.equal(typeof target.cancelPendingDiscardAbility, 'undefined', 'no rollback affordance to call');
   assert.equal(target.cancelAbilitySelection(), true, 'cancel succeeds');
   assert.deepEqual(cancelledArgs, [null], 'cancel signals an explicit targeting-flow exit');
   assert.equal(targeting(target), null, 'cancel closes targeting');
-  assert.equal(target.tlrStore.getState().run.ability, null, 'cancel clears the active ability instead of reopening targeting');
-  assert.equal(target.tlrStore.getState().run.busy, false, 'cancel releases the table busy state');
+
+  const run = target.tlrStore.getState().run;
+  assert.equal(run.ability, null, 'cancel clears the active ability');
+  assert.equal(run.busy, false, 'cancel releases the table busy state');
+  assert.deepEqual(run.hand.map(card => card.uid), [cardA.uid, cardB.uid, cardC.uid], 'cancel returns the source card to its original hand position');
+  assert.deepEqual(run.discard, [], 'cancel removes the source card from discard');
+  assert.equal(run.discards, 3, 'cancel refunds the spent discard');
+  assert.deepEqual(run.discardedCards, [], 'cancel restores discard-tracking history');
+  assert.equal(run.roundDiscardCount, 0, 'cancel restores the round discard count');
+  assert.deepEqual(target.state.hand.map(card => card.uid), [cardA.uid, cardB.uid, cardC.uid], 'legacy hand mirrors the restored store hand');
+  assert.deepEqual(target.state.discard, [], 'legacy discard mirrors the restored store discard');
 }
 
 // --- Filling the last required pick auto-confirms without an explicit confirm call ---
