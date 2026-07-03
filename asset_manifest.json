@@ -21,7 +21,6 @@
   "fx": [
     "fx/transition_dark_vignette_1080x1920.png",
     "fx/table_to_attic_fog_overlay_1080x1920.png",
-    "fx/dust_mote_particle.png",
-    "fx/dust_mote_sheet_4x4.png"
+    "fx/dust_mote_particle.png"
   ]
 }

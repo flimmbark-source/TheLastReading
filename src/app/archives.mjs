@@ -1,10 +1,10 @@
-// Archives desk UI (Step 3e, Phase 16.4). Moved verbatim from index.html.
-// Owns the draggable invTab, the desk item rendering/drag/naming flow, and
-// the item detail overlay. toggleInventory/renderInventory are exported and
-// installed on window by main.mjs (checkResonationTriggers and the attic
-// module call them as globals). invOpen/invPos stay in the classic script:
-// the inline closeArchives patch writes invOpen and checkResonationTriggers
-// reads both through the global declarative environment.
+// Archives desk UI. Owns the draggable invTab, the desk item rendering/drag/
+// naming flow, and the item detail overlay. toggleInventory/renderInventory
+// are exported and installed on window by main.mjs (checkResonationTriggers
+// and the attic module call them as globals; startApp performs the initial
+// desk render). invOpen/invPos are window globals seeded by runtimeState.mjs:
+// atticFlow's closeArchives writes invOpen and checkResonationTriggers reads
+// both through the global declarative environment.
 /* global state, invOpen, invPos, INV_ITEMS, INV_FRAGMENTS,
    getUnlockedFragments, playSound, applyResonationGlows, _resStateKey */
 
@@ -180,7 +180,3 @@ function openInvDetail(item){
   bg.addEventListener('click',e=>{if(Date.now()-openedAt<350)return;if(e.target===bg)bg.remove()});
   document.body.appendChild(bg);
 }
-
-// Initial desk render once dataGlobals.mjs has installed INV_ITEMS on window.
-// The event is dispatched on window (not document), so listen there.
-window.addEventListener('tlr-architecture-bridge-ready',()=>renderInventory(),{once:true});
