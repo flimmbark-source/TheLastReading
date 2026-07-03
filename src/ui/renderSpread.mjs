@@ -107,7 +107,7 @@ function bindSpreadAbilityTargeting(spreadEl, ability, displaySpread, view) {
   // lightweight state refresh. Tapping either the card or its surrounding slot
   // frame resolves through the same existing ability-target callback.
   spreadEl.onclick = ability ? event => {
-    const source = event.target instanceof Element ? event.target : null;
+    const source = window.Element && event.target instanceof window.Element ? event.target : null;
     const slot = source?.closest?.('.slot');
     if (!slot || !spreadEl.contains(slot)) return;
 
