@@ -346,8 +346,9 @@ internal-cohesion requirement:
 
 ## What's left
 
-Remaining files still in the shared `legacy` layer, in the order they'll be
-attempted (skip-ahead rule applies throughout):
+The migration is effectively complete: every file that can be given an
+explicit, reasoned layer position now has one. What used to be here (in
+the order each piece was attempted, skip-ahead rule applied throughout):
 
 - The multiplayer cluster is now fully extracted (`mpMultMobile.css`,
   `mpSpreadCards.css`, `mpSinglePlayerIsolation.css`,
