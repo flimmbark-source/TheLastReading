@@ -273,11 +273,12 @@
     box-shadow: 0 0 0 2px rgba(121,199,120,.55),0 0 32px rgba(121,199,120,.45) !important;
   }
 
-  /* Preserve the dock artwork's aspect ratio while reducing the current art
-     size by 20 percent and moving the image down 10px. */
+  /* Keep the bottom dock ornament at comp scale. The previous reduction made
+     the center flourish and lower rail nearly disappear while leaving the
+     buttons themselves in place. */
   html body.single-player-v2.generated-sheet-ready .handDock {
-    background-size: auto clamp(144px,17.6dvh,155.2px) !important;
-    background-position: center bottom calc(2dvh - 5px) !important;
+    background-size: 100% auto !important;
+    background-position: center bottom !important;
   }
 
   /* Make an available discard action visibly brighter than its disabled state. */
