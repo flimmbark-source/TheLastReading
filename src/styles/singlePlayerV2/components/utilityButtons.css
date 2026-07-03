@@ -38,5 +38,12 @@
       background-size: auto clamp(144px, 17.6dvh, 155.2px) !important;
       background-repeat: no-repeat !important;
     }
+
+    html body.single-player-v2.generated-sheet-ready .spread-actions::before {
+      background-image: var(--spv2-action-center-art) !important;
+      background-position: center !important;
+      background-size: contain !important;
+      background-repeat: no-repeat !important;
+    }
   }
 }
