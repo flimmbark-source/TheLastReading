@@ -77,9 +77,7 @@ function targeting(target) {
   assert.equal(firstCalls, 0, 'the abandoned first callback is never invoked');
 }
 
-// --- Cancel never rolls back the discard — it's available at every step and
-// just resolves with no picks, so resolveAbility's retry loop re-shows
-// targeting fresh. No claim/gating: the source card stays discarded either way. ---
+// --- Cancel ends the active ability without restoring the discarded source card. ---
 {
   const { target, cardA, cardB } = makeTarget();
   let cancelledArgs = null;
@@ -89,19 +87,13 @@ function targeting(target) {
     title: 'Between', validCardIds: [cardA.uid, cardB.uid], count: 1,
     cb: (...picked) => { cancelledArgs = picked; },
   });
-  assert.equal(target.tlrCanCancelAbilitySelection(), true, 'cancel is available on the first targeting step');
+  assert.equal(target.tlrCanCancelAbilitySelection(), true, 'cancel is available on the initial targeting step');
   assert.equal(typeof target.cancelPendingDiscardAbility, 'undefined', 'no rollback affordance to call');
   assert.equal(target.cancelAbilitySelection(), true, 'cancel succeeds');
-  assert.deepEqual(cancelledArgs, [], 'cancel resolves targeting with no selected cards');
+  assert.deepEqual(cancelledArgs, [null], 'cancel signals an explicit targeting-flow exit');
   assert.equal(targeting(target), null, 'cancel closes targeting');
-
-  // A later step (e.g. Between's second pick) offers the exact same Cancel —
-  // no "only the first step" restriction now that nothing is being refunded.
-  target.tlrStore.dispatch({ type: 'START_ABILITY', abilityId: 'BETWEEN_2', sourceCardId: 99 });
-  target.tlrStartAbilityTargeting({ title: 'Between step 2', validCardIds: [cardB.uid], count: 1, cb: () => {} });
-  assert.equal(target.tlrCanCancelAbilitySelection(), true, 'later targeting steps also expose Cancel');
-  assert.equal(target.cancelAbilitySelection(), true, 'cancel succeeds on a later step too');
-  assert.equal(targeting(target), null, 'cancel closes targeting on a later step too');
+  assert.equal(target.tlrStore.getState().run.ability, null, 'cancel clears the active ability instead of reopening targeting');
+  assert.equal(target.tlrStore.getState().run.busy, false, 'cancel releases the table busy state');
 }
 
 // --- Filling the last required pick auto-confirms without an explicit confirm call ---
