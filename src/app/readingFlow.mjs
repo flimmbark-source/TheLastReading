@@ -287,7 +287,13 @@ function peek(n, done) {
     }
     if (!cards.length) { setBusy(false); done(); return; }
     choice('Peek ' + n, 'Pick one. The rest go to the bottom.', cards, p => {
-      if (!p) { state.deck.unshift(...cards); attempt(); return; }
+      if (!p) {
+        state.deck.unshift(...cards);
+        if (typeof window.tlrCancelActiveAbility === 'function' && window.tlrCancelActiveAbility()) {
+          setBusy(false); done(); return;
+        }
+        attempt(); return;
+      }
       tlrResolveAbilityThroughStore({ kind: 'take', heldCards: cards, takenCardId: p.uid });
       setBusy(false); done();
     });
