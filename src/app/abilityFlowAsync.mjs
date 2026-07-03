@@ -1,6 +1,10 @@
 import { ABILITY_TYPES } from '../data/abilities.mjs';
 import { abilityHeldCards } from '../systems/abilities.mjs';
 
+function targetingWasCancelled(selection) {
+  return Array.isArray(selection) && selection.length === 1 && selection[0] === null;
+}
+
 /**
  * Builds the player's interactive ability choice asynchronously.
  * Shared by singleplayer and multiplayer; callers inject their own state and UI.
@@ -18,12 +22,12 @@ import { abilityHeldCards } from '../systems/abilities.mjs';
  *   shuffleDeck(cards): card[],
  *   isTargetable(card): boolean,
  * }
- * @returns {object | null}  choice descriptor, or null if cancelled
+ * @returns {object | null}  choice descriptor, or null if a reveal modal backs out
  *
  *   { kind: 'search', takenCardUid, deckOrderUids }
  *   { kind: 'take',   takenCardUid, heldCardUids, anchorUids, threadBond? }
  *   { kind: 'fallback', count }
- *   {}  (unrecognised ability — no-op)
+ *   {}  (cancelled targeting or unrecognised ability — no-op)
  */
 export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
   const { type, count = 1, title = '' } = ability;
@@ -51,6 +55,7 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
       return n ? `${cleanName(anchor)}: ${n} card${n === 1 ? '' : 's'} found` : 'No matching cards.';
     };
     const anchors = await selectTargets(title, anchorPrompt, candidates, 1, previewFn);
+    if (targetingWasCancelled(anchors)) return {};
     if (!anchors?.length || !anchors[0]) return null;
     const [anchor] = anchors;
     const found = sortCards(abilityHeldCards(deck, ability, [anchor])).slice(0, count);
@@ -83,6 +88,7 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
         return `${cleanName(first)}: ${n} valid second card${n === 1 ? '' : 's'}`;
       },
     );
+    if (targetingWasCancelled(firstPick)) return {};
     if (!firstPick?.length || !firstPick[0]) return null;
     const [first] = firstPick;
     const validSeconds = inPlay.filter(second => second.uid !== first.uid && resultCards(first, second).length > 0);
@@ -98,6 +104,7 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
         return `Between these anchors: ${n} card${n === 1 ? '' : 's'}`;
       },
     );
+    if (targetingWasCancelled(secondPick)) return {};
     if (!secondPick?.length || !secondPick[0]) return null;
     const [second] = secondPick;
     const found = sortCards(resultCards(first, second)).slice(0, count);
