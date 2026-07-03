@@ -79,9 +79,14 @@ assert.doesNotMatch(source, /singlePlayerV2Compat\.css\?v=composition-1/, 'runti
 const layout = read('../src/styles/singlePlayerV2/layout.css');
 const utilityButtons = read('../src/styles/singlePlayerV2/components/utilityButtons.css');
 const utilityIcons = read('../src/styles/singlePlayerV2/components/utilityIcons.css');
+const base = read('../src/styles/singlePlayerV2/base.css');
+const compat = read('../src/styles/singlePlayerV2/compat.css');
 assert.doesNotMatch(layout, /#abilitiesBtn,\s*\n\s*body\.single-player-v2\.generated-sheet-ready #mullBtn\s*\{\s*display:\s*none\s*!important/s, 'abilities must not share the legacy hidden-button rule');
 assert.doesNotMatch(layout, /#abilitiesBtn,[\s\S]*?#menuBtn\s*\{[\s\S]*?display:\s*block\s*!important/, 'layout CSS should not own utility-button display');
 assert.match(utilityButtons, /#abilitiesBtn,[\s\S]*?#menuBtn\s*\{[\s\S]*?display:\s*block\s*!important/, 'abilities should share the visible utility-button sizing/display rule');
 assert.match(utilityIcons, /#abilitiesBtn\s*\{\s*background-image:\s*var\(--spv2-option-abilities-art\)\s*!important/s, 'visible abilities button should retain its icon art');
+assert.match(base, /#spread\s*\n\s*\.slot\.empty[^{}]+\{\s*background-color:\s*transparent;[\s\S]*?background-image:\s*var\(--spv2-spread-slot-art\)\s*!important;[\s\S]*?opacity:\s*1;/, 'empty generated-sheet spread slots should render the approved spread-slot art at full opacity');
+assert.match(base, /#spread\s*\n\s*\.slot\.empty[^{}]+ \.num\s*\{\s*display:\s*none\s*!important;\s*\}/, 'empty generated-sheet spread slots should hide fallback slot numbers');
+assert.match(compat, /\.handDock\s*\{\s*background-size:\s*100%\s+auto\s*!important;\s*background-position:\s*center\s+bottom\s*!important;\s*\}/, 'generated-sheet hand dock should keep comp-scale bottom ornament art');
 
 console.log('Single Player V2 cascade checks passed.');
