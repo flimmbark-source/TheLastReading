@@ -44,6 +44,23 @@ function installDuelReferenceSurfaceStyle(doc) {
     body.mp-game-active #abilitiesPullWrap.open {
       z-index: 2147483250 !important;
     }
+
+    /* On phones the HUD/action group is top-anchored, but the player spread was
+       bottom-anchored. Taller screens therefore created a large empty gap. Anchor
+       the spread immediately beneath the Discard/Purge row instead. */
+    @media (max-width: 640px) {
+      body.mp-game-active .spread-wrap {
+        top: 390px !important;
+        bottom: auto !important;
+      }
+    }
+
+    @media (max-width: 380px) and (max-height: 740px) {
+      body.mp-game-active .spread-wrap {
+        top: 343px !important;
+        bottom: auto !important;
+      }
+    }
   `;
   doc.head.appendChild(style);
 }
