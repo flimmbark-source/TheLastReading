@@ -16,8 +16,8 @@ document.addEventListener('pointerdown', () => {
 
 const FILE_SOUNDS = Object.freeze({
   purchase: { src: new URL('../../assets/audio/freesound_gamestudio-drop-coin-384921.mp3', import.meta.url).href, gain: 0.28 },
-  pack_pick: { src: new URL('../../assets/audio/gargamel10-magic-basic-game-sound-effect-380301.mp3', import.meta.url).href, gain: 0.22 },
-  pack_open: { src: new URL('../../assets/audio/alexzavesa-magic-logo-version-1-491183.mp3', import.meta.url).href, gain: 0.2 },
+  pack_pick: { src: new URL('../../assets/audio/gargamel10-magic-basic-game-sound-effect-380301.mp3', import.meta.url).href, gain: 0.32 },
+  pack_open: { src: new URL('../../assets/audio/alexzavesa-magic-logo-version-1-491183.mp3', import.meta.url).href, gain: 0.7 },
 });
 
 function _playFileSound(type){
