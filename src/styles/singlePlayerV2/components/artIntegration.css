@@ -141,16 +141,6 @@
     background-image: var(--spv2-action-eye-art);
   }
 
-  /* Soften the pattern-hint halo on the hand so it reads as subtle guidance
-     rather than a bright glow. */
-  body.single-player-v2 .hand .card.hint-card,
-  body.single-player-v2 .hand .card.hint-complete {
-    box-shadow:
-      0 0 0 1px rgba(var(--hint-rgb, 232, 196, 96), .55),
-      0 0 10px rgba(var(--hint-rgb, 232, 196, 96), .30),
-      0 5px 14px rgba(0, 0, 0, .5);
-  }
-
   /* Bottom action buttons render as medallion art instead of text pills:
      discard = crescent/cards medallion, purge = sun-compass medallion. */
   body.single-player-v2.generated-sheet-ready #discardBtn,
@@ -253,4 +243,20 @@
     pointer-events: none;
   }
 }
+
+/* Soften the pattern-hint halo so it reads as subtle guidance rather than a
+   bright glow. This applies at every width: the legacy broad glow otherwise
+   survives on desktop (the classicCore hand/market rules), which left hand
+   cards mixing the old and new treatments depending on viewport. Choice
+   cards share the same information and get the same restraint. */
+body.single-player-v2 .hand .card.hint-card,
+body.single-player-v2 .hand .card.hint-complete,
+body.single-player-v2 #choices .card.hint-card,
+body.single-player-v2 #choices .card.hint-complete {
+  box-shadow:
+    0 0 0 1px rgba(var(--hint-rgb, 232, 196, 96), .55),
+    0 0 10px rgba(var(--hint-rgb, 232, 196, 96), .30),
+    0 5px 14px rgba(0, 0, 0, .5);
+}
+
 }
