@@ -149,7 +149,7 @@ statusHud.querySelector('.adv-status').dispatchEvent(new window.MouseEvent('clic
 const statusCallout = window.document.querySelector('.adv-status-callout');
 assert.ok(statusCallout, 'clicking an Adventure status opens a contextual callout');
 assert.ok(statusCallout.textContent.includes('Haunted'), 'status callout names the status');
-assert.ok(statusCallout.textContent.includes('Supernatural readings run stronger'), 'status callout describes the status effect');
+assert.ok(statusCallout.textContent.includes('Strengthens any supernatural leanings'), 'status callout describes the status effect');
 statusHud.remove();
 statusCallout.remove();
 window.document.body.classList.remove('mode-adventure');
