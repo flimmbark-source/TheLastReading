@@ -1119,6 +1119,30 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   filter: none;
 }
 
+/* Multi-pattern hints paint the legacy broad glow through the JS-built
+   var(--hint-shadow), applied from hand.css/mobile.css with !important. In
+   the important tier EARLIER layers win, and spv2.components precedes
+   classicCore, so these are the one place that treatment can be replaced
+   with the same restrained rim + short halo the single-hint cards use
+   (primary hint color; the label pill still lists every pattern). Ability
+   targeting keeps its own green/gold ring feedback. */
+html body.single-player-v2 .hand .card.hint-multi:not(.ability-target):not(.ability-picked),
+html body.single-player-v2 #choices .card.hint-multi:not(.ability-target):not(.ability-picked) {
+  box-shadow:
+    0 0 0 1px rgba(var(--hint-rgb,232,196,96),.55),
+    0 0 10px rgba(var(--hint-rgb,232,196,96),.30),
+    0 5px 14px rgba(0,0,0,.5) !important;
+}
+
+/* On the table the slot owns the hint rim; the placed card keeps the plain
+   contact shadow whether idle or pressed (market.css's .spread .card values). */
+html body.single-player-v2 #spread .slot > .card.hint-multi:not(.ability-target):not(.ability-picked) {
+  box-shadow:
+    0 8px 22px rgba(0,0,0,.7),
+    0 2px 6px rgba(0,0,0,.5),
+    2px 4px 12px rgba(0,0,0,.4) !important;
+}
+
 @keyframes spv2-pattern-card-bump {
   0%, 100% {
     transform: translateY(0) scale(1);
@@ -1727,7 +1751,10 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
     transform: translateX(-50%);
     z-index: 3;
-    --spv2-contact-shadow: none;
+    /* Must be a valid <shadow>, not `none`: this var is composed into the
+       hint rule's shadow list below, and `none` there invalidates the whole
+       declaration, deleting the center slot's hint rim entirely. */
+    --spv2-contact-shadow: 0 0 0 0 rgba(0,0,0,0);
     box-shadow: none;
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
@@ -3843,16 +3870,6 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     background-image: var(--spv2-action-eye-art);
   }
 
-  /* Soften the pattern-hint halo on the hand so it reads as subtle guidance
-     rather than a bright glow. */
-  body.single-player-v2 .hand .card.hint-card,
-  body.single-player-v2 .hand .card.hint-complete {
-    box-shadow:
-      0 0 0 1px rgba(var(--hint-rgb, 232, 196, 96), .55),
-      0 0 10px rgba(var(--hint-rgb, 232, 196, 96), .30),
-      0 5px 14px rgba(0, 0, 0, .5);
-  }
-
   /* Bottom action buttons render as medallion art instead of text pills:
      discard = crescent/cards medallion, purge = sun-compass medallion. */
   body.single-player-v2.generated-sheet-ready #discardBtn,
@@ -3955,6 +3972,22 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     pointer-events: none;
   }
 }
+
+/* Soften the pattern-hint halo so it reads as subtle guidance rather than a
+   bright glow. This applies at every width: the legacy broad glow otherwise
+   survives on desktop (the classicCore hand/market rules), which left hand
+   cards mixing the old and new treatments depending on viewport. Choice
+   cards share the same information and get the same restraint. */
+body.single-player-v2 .hand .card.hint-card,
+body.single-player-v2 .hand .card.hint-complete,
+body.single-player-v2 #choices .card.hint-card,
+body.single-player-v2 #choices .card.hint-complete {
+  box-shadow:
+    0 0 0 1px rgba(var(--hint-rgb, 232, 196, 96), .55),
+    0 0 10px rgba(var(--hint-rgb, 232, 196, 96), .30),
+    0 5px 14px rgba(0, 0, 0, .5);
+}
+
 }
 
 

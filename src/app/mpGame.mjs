@@ -5,7 +5,7 @@ import { MP_ABILITY_TYPES } from '../multiplayer/interactionCards.mjs';
 import {
   isPlayerTurn, canInvokeAbility, canTargetSlot,
   isSlotAnchored, isCardSilenced, canSwapSpread,
-  isMatchOver, needsScoring, scores, roundScores,
+  isMatchOver, needsScoring, scores,
   hasSubmittedAction,
 } from '../multiplayer/mpSelectors.mjs';
 import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
@@ -235,9 +235,17 @@ export function installMpGame(target = window) {
     renderMpPurgePrompt();
     applyPendingPlacementPreview();
 
-    if (needsScoring(s))   showScoringOverlay(s);
-    else if (isMatchOver(s)) showCompleteOverlay(s, my);
-    else                   hideOverlay();
+    // The between-set "Round N Complete" overlay is retired: mpGameHost's
+    // suppressBetweenSetResults force-hides it after every action. Re-showing
+    // it during SCORING still re-added body.mp-overlay-active as a side
+    // effect, and the opponent reveal timers call render() with no action
+    // afterwards to re-suppress it — that class lifts the opaque #mpGame
+    // chrome above the shared .spread-wrap/.handDock, hiding the player's
+    // own spread and hand from the moment their last card lands until the
+    // opponent's reveal queue drains. Scoring now leaves the overlay alone;
+    // only match completion shows it.
+    if (isMatchOver(s)) showCompleteOverlay(s, my);
+    else if (!needsScoring(s)) hideOverlay();
 
     // Re-apply the ability prompt and target glows: render() rebuilds the hand
     // and spread, which would otherwise wipe the selection classes mid-pick.
@@ -1501,15 +1509,6 @@ export function installMpGame(target = window) {
     });
   }
 
-  function showScoringOverlay(s) {
-    const overlay = el('mpOverlay'), box = el('mpOvBox');
-    if (!box || !overlay) return;
-    const rs = roundScores(s), ts = scores(s);
-    const my = _myIndex, opp = 1 - my;
-    box.innerHTML = `<h2 class="mp-ov-title">Round ${s.round ?? 1} Complete</h2><div class="mp-ov-scores"><div><div class="mp-ov-score-val">${rs[my]}</div><div class="mp-ov-score-label">You</div></div><div class="mp-ov-vs">vs</div><div><div class="mp-ov-score-val">${rs[opp]}</div><div class="mp-ov-score-label">Opponent</div></div></div><div class="mp-ov-totals">Total: ${ts[my]} – ${ts[opp]} / ${s.scoreTarget ?? 200}</div><p class="mp-ov-waiting">Starting next set…</p>`;
-    overlay.classList.remove('mp-ov-hidden');
-    doc.body.classList.add('mp-overlay-active');
-  }
   function showCompleteOverlay(s, my) {
     const overlay = el('mpOverlay'), box = el('mpOvBox');
     if (!box || !overlay) return;

@@ -383,4 +383,24 @@ body.mp-game-active .spread-wrap {
     transform: translateX(-12vw) !important;
   }
 }
+
+/* Duel hints share the reading game's restrained rim + short halo. The
+   shared renderHand/applyHint path tags duel cards with the same hint
+   classes, but classicCore's broad legacy glow (hand.css/market.css/
+   mobile.css .card.hint-* rules, 26-76px halos) still styled them here.
+   mpCore is declared after classicCore, so these normal-tier rules win.
+   hint-multi is handled in mpSpreadCards.css: its legacy glow arrives via
+   var(--hint-shadow) with !important, which only an earlier-declared
+   layer can beat. */
+body.mp-game-active .hand .card.hint-card,
+body.mp-game-active .hand .card.hint-complete,
+body.mp-game-active #choices .card.hint-card,
+body.mp-game-active #choices .card.hint-complete,
+body.mp-game-active #spread .slot > .card.hint-card,
+body.mp-game-active #spread .slot > .card.hint-complete {
+  box-shadow:
+    0 0 0 1px rgba(var(--hint-rgb, 232, 196, 96), .55),
+    0 0 10px rgba(var(--hint-rgb, 232, 196, 96), .30),
+    0 5px 14px rgba(0, 0, 0, .5);
+}
 }

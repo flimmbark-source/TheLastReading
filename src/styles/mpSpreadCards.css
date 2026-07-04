@@ -45,4 +45,20 @@ body.mp-game-active #mpOppSpread .slot > .card .title {
     min-height: 100% !important;
   }
 }
+
+/* Duel hint-multi cards: classicCore applies the JS-built legacy broad glow
+   via var(--hint-shadow) with !important (hand.css/mobile.css). In the
+   important tier the EARLIER-declared layer wins, and mpSpreadCards
+   precedes classicCore, so this is where that glow gets replaced with the
+   same restrained rim the single-hint duel rules use (mpFixes.css). A
+   deliberate exception to the header's "no competing important tier" note.
+   Ability targeting keeps its ring feedback. */
+body.mp-game-active .hand .card.hint-multi:not(.ability-target):not(.ability-picked),
+body.mp-game-active #choices .card.hint-multi:not(.ability-target):not(.ability-picked),
+body.mp-game-active #spread .slot > .card.hint-multi:not(.ability-target):not(.ability-picked) {
+  box-shadow:
+    0 0 0 1px rgba(var(--hint-rgb, 232, 196, 96), .55),
+    0 0 10px rgba(var(--hint-rgb, 232, 196, 96), .30),
+    0 5px 14px rgba(0, 0, 0, .5) !important;
+}
 }

@@ -448,7 +448,10 @@
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
     transform: translateX(-50%);
     z-index: 3;
-    --spv2-contact-shadow: none;
+    /* Must be a valid <shadow>, not `none`: this var is composed into the
+       hint rule's shadow list below, and `none` there invalidates the whole
+       declaration, deleting the center slot's hint rim entirely. */
+    --spv2-contact-shadow: 0 0 0 0 rgba(0,0,0,0);
     box-shadow: none;
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
