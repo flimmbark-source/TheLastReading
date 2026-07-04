@@ -144,7 +144,14 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
   --total-rot:calc(var(--total-a) + var(--lag) * 1.5);
   transform:translate(calc(-50% + var(--arc-x) + var(--drift-x)),calc(var(--arc-y) + var(--lift-y) + var(--drift-y))) rotate(var(--total-rot))!important;
   transform-origin:50% 50%!important;
-  transition:transform .32s cubic-bezier(.2,.85,.25,1);
+  /* Governs the lift/drop when .sel toggles (among other --lift-y-driven
+     moves). The old curve, cubic-bezier(.2,.85,.25,1), reaches 85% of the
+     distance by just 20% of the duration -- almost the whole lift happens
+     in the first ~60ms, then the remaining ~250ms creeps through the last
+     15%, reading as a snap-then-crawl rather than one continuous glide.
+     This ease-out-cubic curve spreads the deceleration across the full
+     duration instead. */
+  transition:transform .32s cubic-bezier(.22,.61,.36,1);
 }
 .hand.hand-scroll-dragging .card,.hand.hand-undulating .card{transition:none}
 .hand .card.sel,.hand .card.purge-picked{
