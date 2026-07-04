@@ -30,7 +30,7 @@ import { installHandSwipeScroll } from '../ui/gestureHand.mjs';
 import { installHandCardGestures } from '../ui/gestureCard.mjs';
 import { installGestureDrawers } from '../ui/gestureDrawers.mjs';
 import { installPressHighlight } from '../ui/gesturePressHighlight.mjs';
-import { installHandSelectionVisuals } from '../ui/handSelectionVisuals.mjs';
+import { installHandSelectionVisuals } from '../ui/handSelectionVisuals.mjs?v=deselect-raf-1';
 import { installSinglePlayerV2 } from '../ui/singlePlayerV2.mjs?v=phase1-2';
 import * as abilitySystem from '../systems/abilities.mjs';
 import * as shopSystem from '../systems/shop.mjs';

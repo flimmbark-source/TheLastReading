@@ -4,7 +4,7 @@ import { installMarketAudioRotation } from './marketAudioRotation.mjs';
 import { installActionDropGestures } from '../ui/gestureActionDrops.mjs';
 import { installCardDetailGestures } from '../ui/cardDetailGestures.mjs?v=double-tap-1';
 
-const GAME_MODULE = './main.mjs?v=major-title-fix-1';
+const GAME_MODULE = './main.mjs?v=deselect-raf-1';
 const DEFERRED_ASSETS_MODULE = './deferredAssets.mjs?v=lazy-boot-1';
 const CURTAIN_FADE_MS = 300;
 
