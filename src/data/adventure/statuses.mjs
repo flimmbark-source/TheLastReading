@@ -16,7 +16,7 @@ export const STATUSES = Object.freeze({
   haunted: {
     id: 'haunted',
     name: 'Haunted',
-    description: 'Something followed you. Strengthens any supernatural leanings in your spread, swaying Events toward eerier outcomes.',
+    description: 'Sways Supernatural Events towards eerier Outcomes.',
     // Amplifies supernatural meaning axes already present in the spread.
     modifyMeanings(meanings, spread) {
       for (const tag of SUPERNATURAL_TAGS) {
