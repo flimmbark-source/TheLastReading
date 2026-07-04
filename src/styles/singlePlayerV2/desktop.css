@@ -847,18 +847,6 @@
     pointer-events: auto;
   }
 
-  html body.single-player-v2.generated-sheet-ready .spread::before {
-    content: "READING";
-    position: absolute;
-    left: 50%;
-    top: -22px;
-    transform: translateX(-50%);
-    color: rgba(231, 198, 129, .78);
-    font: 800 12px/1 system-ui, sans-serif;
-    letter-spacing: .22em;
-    text-shadow: 0 1px 4px #000, 0 0 14px rgba(225,170,72,.32);
-    pointer-events: none;
-  }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot::after {
     content: "";
@@ -879,18 +867,6 @@
     transform: scale(1);
   }
 
-  html body.single-player-v2.generated-sheet-ready .handDock::before {
-    content: "HAND";
-    position: absolute;
-    left: 50%;
-    top: calc(100% - var(--spv2-dock-art-h) + 18px);
-    transform: translateX(-50%);
-    color: rgba(216, 189, 129, .62);
-    font: 800 11px/1 system-ui, sans-serif;
-    letter-spacing: .24em;
-    text-shadow: 0 1px 3px #000;
-    pointer-events: none;
-  }
 
   html body.single-player-v2.generated-sheet-ready #discardBtn:disabled,
   html body.single-player-v2.generated-sheet-ready #purgeBtn:disabled {
