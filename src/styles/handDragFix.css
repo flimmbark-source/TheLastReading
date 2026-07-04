@@ -1,8 +1,9 @@
 @layer handDragFix {
-/* Keep the hand above the score pills (z-index:25) while leaving references,
-   modals, and tutorials above it. */
+/* Keep the hand above score/spread play layers while leaving references,
+   modals, and tutorials above it. Desktop SPv2 places the spread near the hand,
+   so this tier must also beat placed spread cards. */
 .handDock {
-  z-index: 26 !important;
+  z-index: 36 !important;
 }
 
 /* Active hand movement must follow the pointer directly.
