@@ -17,6 +17,7 @@
    maxHand, hasMull, tlrArchitectureSync, tlrScoreToObals */
 import { isCardUntargetable, hasActiveConstellation } from '../systems/constellations.mjs';
 import { getAbility, ABILITY_TYPES } from '../data/abilities.mjs';
+import { abilityHeldCards } from '../systems/abilities.mjs';
 import { buildAbilityChoiceAsync } from './abilityFlowAsync.mjs';
 import { choiceAsync } from '../ui/renderAbility.mjs';
 
@@ -42,6 +43,42 @@ function syncRoundFields(_run){
 }
 function isTargetBlocked(card){return isCardUntargetable({th:state.th,constellationId:state.constellationId,untargetableCardIds:state.untargetableCardUids},card)}
 function targetable(cards){return cards.filter(c=>!isTargetBlocked(c))}
+
+function abilityHasValidTargets(ab, sourceCard = null) {
+  if (!ab) return true;
+  if (ab === 'DRAW_1' || ab === 'DRAW_2' || ab === 'DRAW_3' || ab === 'WORLD') return true;
+  if (ab === 'PEEK_3' || ab === 'PEEK_5') return state.deck.length > 0 || state.discard.length > 0;
+  const ability = getAbility(ab);
+  if (!ability) return true;
+  if (ability.type === ABILITY_TYPES.SEARCH) return state.deck.length > 0;
+  const inPlay = [...state.hand.filter(c => c.uid !== sourceCard?.uid), ...state.spread.filter(Boolean)].filter(c => !isTargetBlocked(c));
+  if (ability.type === ABILITY_TYPES.NEIGHBOR || ability.type === ABILITY_TYPES.KIN || ability.type === ABILITY_TYPES.MIRROR) {
+    return inPlay.some(card => abilityHeldCards(state.deck, ability, [card]).length > 0);
+  }
+  if (ability.type === ABILITY_TYPES.BETWEEN) {
+    const betweenDef = { type: ABILITY_TYPES.BETWEEN };
+    return inPlay.some((first, index) => inPlay.some((second, otherIndex) => otherIndex !== index && abilityHeldCards(state.deck, betweenDef, [first, second]).length > 0));
+  }
+  return true;
+}
+
+function fireNoValidTargetsGhost(cardUid) {
+  const card = document.querySelector(`#hand .card[data-uid="${cardUid}"]`);
+  if (!card) return;
+  const r = card.getBoundingClientRect();
+  const g = document.createElement('div');
+  g.className = 'ghost big';
+  g.textContent = 'No Valid Targets';
+  g.style.setProperty('--dx', '0px');
+  g.style.setProperty('--rot', '0deg');
+  g.style.position = 'fixed';
+  g.style.left = (r.left + r.width / 2) + 'px';
+  g.style.top = (r.top - 10) + 'px';
+  g.style.zIndex = '99999';
+  document.body.appendChild(g);
+  card.animate?.([{ filter: 'brightness(1)' }, { filter: 'brightness(1.22)' }, { filter: 'brightness(1)' }], { duration: 220, easing: 'ease-out' });
+  setTimeout(() => g.remove(), 1700);
+}
 function visibleCounterValue(){_cacheEls();const n=Number(_elCurrent?.textContent||0);return Number.isFinite(n)?n:counterShown}
 function recordScorePillBase(value){scorePillSetBase=Number(value||0);window.tlrScorePillSetBase=scorePillSetBase;snapCounter(scorePillSetBase)}
 
@@ -196,6 +233,13 @@ export function discardSelected(){
   if(!free&&state.discards<=0)return;
   let idx=state.hand.findIndex(c=>c.uid===selectedBefore);if(idx<0)return;
   let c=state.hand[idx];
+  if(!abilityHasValidTargets(c.ability,c)){
+    fireNoValidTargetsGhost(c.uid);
+    playSound('fail');haptic([0,30]);
+    if(tlrStoreReady())window.tlrStore.dispatch({type:window.tlrActions.CANCEL_ABILITY});
+    render();
+    return;
+  }
   tlrSyncPersistToStore();
   window.tlrStore.dispatch({type:window.tlrActions.DISCARD_SELECTED});
   const _run=window.tlrStore.getState().run;
