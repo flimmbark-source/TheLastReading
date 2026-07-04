@@ -323,4 +323,21 @@ body.mp-game-active.mp-overlay-active #mpGame { z-index: 99999 !important; }
   cursor: pointer; transition: background .15s; width: 100%;
 }
 .mp-ov-btn:hover    { background: rgba(200,160,80,.3); filter: none; }
+
+/* Position scoring and abilities buttons in top right during duel mode */
+body.mp-game-active #scoringBtn {
+  position: fixed !important;
+  top: 12px;
+  z-index: 9405;
+  right: 70px;
+  display: block;
+}
+
+body.mp-game-active #abilitiesBtn {
+  position: fixed !important;
+  top: 12px;
+  z-index: 9405;
+  right: 12px;
+  display: block;
+}
 }

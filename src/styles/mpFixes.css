@@ -75,6 +75,11 @@ body.mp-game-active .hand-swipe-zone .swipe-hint-line {
   animation: none !important;
 }
 
+/* Allow hand cards to be clickable in multiplayer mode */
+body.mp-game-active .hand-swipe-zone {
+  pointer-events: none !important;
+}
+
 body.mp-game-active .mp-pills-actions {
   justify-content: center;
   align-items: center;
@@ -229,6 +234,23 @@ body.mp-game-active .spread-wrap {
     background: rgba(8, 5, 3, .58) !important;
     border: 1px solid rgba(180, 140, 90, .18) !important;
     border-radius: 8px !important;
+  }
+
+  /* Mobile button sizing for top-right corner buttons */
+  body.mp-game-active #scoringBtn,
+  body.mp-game-active #abilitiesBtn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 0;
+  }
+
+  body.mp-game-active #abilitiesBtn {
+    right: 8px;
+  }
+
+  body.mp-game-active #scoringBtn {
+    right: 56px;
   }
 }
 

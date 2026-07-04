@@ -134,6 +134,7 @@ export function installMpGame(target = window) {
             <div class="pill score-pill mp-pill-score mp-pill-my-score">Score <b id="mpMyScore">0</b></div>
           </div>
           <div class="mp-score-cell mp-score-cell-threshold">
+            <span class="mp-side-label">Threshold</span>
             <div class="pill threshold-pill mp-pill-thresh">Threshold <b id="mpThresh">200</b></div>
             <button class="constellation-pill mp-constellation hidden" id="mpConstellation" type="button"></button>
           </div>
