@@ -1675,16 +1675,36 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     overflow: visible;
   }
 
-  /* All slots: absolute at the spread's center, sized to match hand cards */
+  /* All slots: absolute at the spread's center, sized to match hand cards. */
   html body.single-player-v2.generated-sheet-ready .spread .slot {
     position: absolute;
     top: 12px;
     left: 50%;
-    width: var(--spv2-slot-w);
-    height: var(--spv2-slot-h);
-    flex: 0 0 var(--spv2-slot-w);
+    width: var(--spv2-card-w);
+    height: var(--spv2-card-h);
+    aspect-ratio: 2 / 3;
+    flex: 0 0 var(--spv2-card-w);
     margin-left: 0;
     transform-origin: 50% 90%;
+  }
+
+  /* Placed cards keep the same explicit dimensions as hand cards. Avoid
+     inheriting the older fill-the-slot rules that can vertically stretch the
+     rendered card art if the ornate slot frame changes size or padding. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot > .card {
+    box-sizing: border-box;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--spv2-card-w);
+    height: var(--spv2-card-h);
+    min-width: var(--spv2-card-w);
+    min-height: var(--spv2-card-h);
+    max-width: var(--spv2-card-w);
+    max-height: var(--spv2-card-h);
+    aspect-ratio: 2 / 3;
+    margin: 0;
+    translate: -50% -50%;
   }
 
   /* Five-card fan — translateX percentages are relative to the slot width,
