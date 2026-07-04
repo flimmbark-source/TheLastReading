@@ -117,33 +117,128 @@ body.mp-game-active #spread .slot {
   padding: 0 14px; pointer-events: none;
 }
 
-/* Each band: two equal-width pills side by side, so the rows line up
-   into tidy columns. */
-.mp-pills-band {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
+/* Duel HUD: fitted adaptation of the updated single-player score tiles. */
+.mp-score-hud {
+  display: grid;
+  grid-template-columns: minmax(112px, 1fr) minmax(138px, 1.14fr) minmax(112px, 1fr);
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: min(470px, calc(100vw - 28px));
+  padding: 8px 12px 10px;
+  box-sizing: border-box;
+  background: var(--spv2-hud-frame-art, url('/public/ui/single-player-v2/elements/hud-frame.webp')) center/100% 100% no-repeat;
+  filter: drop-shadow(0 9px 20px rgba(0,0,0,.48));
+  pointer-events: auto;
+}
+
+.mp-score-cell {
+  position: relative;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  min-width: 0;
 }
 
 /* market.css reorders pills with flex `order` at mobile widths — neutralize
    so DOM order is what renders */
-.mp-pill-score, .mp-pill-disc, .mp-pill-thresh { order: 0 !important; transform: none !important; }
+.mp-pill-score, .mp-pill-thresh { order: 0; transform: none; }
 
-/* Uniform compact pill sizing — equal widths keep rows aligned */
-.mp-pill-score, .mp-pill-disc, .mp-pill-thresh {
-  min-width: 0 !important; width: 118px !important; box-sizing: border-box;
-  height: 32px !important; padding: 0 10px !important;
-  display: flex !important; align-items: center;
-  justify-content: center; gap: 5px;
-  font-size: 11px !important; letter-spacing: .03em;
+/* SPv2-style score tiles: the art carries the labels, so only values remain. */
+.mp-score-hud .mp-pill-score,
+.mp-score-hud .mp-pill-thresh {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  height: 58px;
+  padding: 25px 8px 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: transparent;
+  font-size: 0;
+  letter-spacing: .03em;
   white-space: nowrap;
+  border: 0;
+  border-radius: 14px;
+  box-shadow: none;
+  background-color: transparent;
+  background-position: center;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
 }
-.mp-pill-score b, .mp-pill-disc b, .mp-pill-thresh b { font-size: 13px; }
-.mp-pill-thresh { width: 142px !important; }
+.mp-score-hud .mp-pill-score {
+  background-image: var(--spv2-hud-score-art, url('/public/ui/single-player-v2/elements/hud-score.webp'));
+}
+.mp-score-hud .mp-pill-thresh {
+  background-image: var(--spv2-hud-threshold-art, url('/public/ui/single-player-v2/elements/hud-threshold.webp'));
+}
+.mp-score-hud .mp-pill-score b,
+.mp-score-hud .mp-pill-thresh b {
+  display: block;
+  color: #efe5ce;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(34px, 4.6dvh, 44px);
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: .01em;
+  line-height: .9;
+  text-shadow: 0 2px 8px #000;
+  justify-self: center;
+}
 
-/* You / Foe labels beside the threshold — hidden on mobile, shown on desktop via mpFixes.css */
-.mp-side-label { display: none; }
+.mp-score-hud .mp-pill-score b {
+  color: #ffd98c;
+  text-shadow: 0 0 12px rgba(235,175,70,.32), 0 2px 8px #000;
+}
 
-/* Middle band: threshold centered; constellation beside it when shown */
-.mp-pills-mid { gap: 10px; }
+.mp-score-hud .mp-pill-thresh b {
+  color: #cfbfff;
+  text-shadow: 0 0 12px rgba(145,107,224,.34), 0 2px 8px #000;
+}
+
+.mp-score-hud .mp-score-mult {
+  position: absolute;
+  top: 42%;
+  left: 62%;
+  display: none;
+  color: #f2564a;
+  font: 800 15px/1 'Cinzel', Georgia, serif;
+  letter-spacing: .01em;
+  text-shadow: 0 0 7px rgba(242,86,74,.55), 0 2px 4px #000;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.mp-score-hud .mp-score-mult.show { display: block; }
+
+/* Side labels sit just above the score tiles to clarify player/opponent. */
+.mp-side-label {
+  position: absolute;
+  top: -6px;
+  z-index: 1;
+  display: block;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(22, 14, 8, .78);
+  border: 1px solid rgba(180,140,90,.28);
+  color: #f0d58a;
+  font: 800 9px/1 system-ui, sans-serif;
+  letter-spacing: .11em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.mp-score-cell-threshold .mp-constellation {
+  position: absolute;
+  right: -9px;
+  top: -7px;
+}
+
+.mp-pills-band {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
 
 /* Actions band: discard/purge buttons centered under the pills */
 .mp-pills-actions { gap: 10px; margin-top: 3px; min-height: 38px; overflow: visible; }
@@ -228,4 +323,21 @@ body.mp-game-active.mp-overlay-active #mpGame { z-index: 99999 !important; }
   cursor: pointer; transition: background .15s; width: 100%;
 }
 .mp-ov-btn:hover    { background: rgba(200,160,80,.3); filter: none; }
+
+/* Position scoring and abilities buttons in top right during duel mode */
+body.mp-game-active #scoringBtn {
+  position: fixed !important;
+  top: 12px;
+  z-index: 9405;
+  right: 70px;
+  display: block;
+}
+
+body.mp-game-active #abilitiesBtn {
+  position: fixed !important;
+  top: 12px;
+  z-index: 9405;
+  right: 12px;
+  display: block;
+}
 }

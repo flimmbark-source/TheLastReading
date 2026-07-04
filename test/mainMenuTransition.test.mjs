@@ -136,3 +136,11 @@ test('opening a drawer schedules immediate height fitting', () => {
 
   assert.match(source, /if\(opening\)\{[\s\S]*requestAnimationFrame\?\.\(fitDrawerHeights\)/, 'opening a drawer should fit height immediately');
 });
+
+test('duel entry uses the shared black curtain before revealing loadout', () => {
+  const source = readFileSync(new URL('../src/app/menuBoot.mjs', import.meta.url), 'utf8');
+
+  assert.match(source, /function installMultiplayerFadeTransition\(\)[\s\S]*await showCurtain\(\)[\s\S]*await current\.apply\(this, arguments\)[\s\S]*await afterPaint\(\)[\s\S]*hideCurtain\(\)/, 'duel entry should fade to black, render loadout, then fade back in');
+  assert.match(source, /if \(actionName === 'tlrMainMenuMultiplayer'\) installMultiplayerFadeTransition\(\)/, 'the first cold Duel launch should install the persistent fade wrapper');
+  assert.match(source, /multiplayerWithFade\.__tlrDuelFadeWrapped = true/, 'later Duel launches should reuse the same wrapper instead of nesting transitions');
+});

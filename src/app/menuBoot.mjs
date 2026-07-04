@@ -6,6 +6,7 @@ import { installCardDetailGestures } from '../ui/cardDetailGestures.mjs?v=double
 
 const GAME_MODULE = './main.mjs?v=major-title-fix-1';
 const DEFERRED_ASSETS_MODULE = './deferredAssets.mjs?v=lazy-boot-1';
+const CURTAIN_FADE_MS = 300;
 
 let gamePromise = null;
 let deferredAssetsPromise = null;
@@ -57,6 +58,53 @@ function hasSavedProgress(storage) {
 
 function menuEl() {
   return document.getElementById('mainMenu');
+}
+
+function curtainEl() {
+  let el = document.getElementById('tlrBootCurtain');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'tlrBootCurtain';
+    el.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+function showCurtain() {
+  document.body.classList.add('main-menu-mode-booting', 'main-menu-blackout');
+  curtainEl().classList.add('show');
+  return new Promise(resolve => window.setTimeout(resolve, CURTAIN_FADE_MS));
+}
+
+function hideCurtain() {
+  document.getElementById('tlrBootCurtain')?.classList.remove('show');
+  document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
+}
+
+function afterPaint() {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => requestAnimationFrame(resolve));
+  });
+}
+
+function installMultiplayerFadeTransition() {
+  const current = window.tlrMainMenuMultiplayer;
+  if (typeof current !== 'function' || current.__tlrDuelFadeWrapped) return;
+
+  async function multiplayerWithFade() {
+    await showCurtain();
+    try {
+      const result = await current.apply(this, arguments);
+      await afterPaint();
+      return result;
+    } finally {
+      hideCurtain();
+    }
+  }
+
+  multiplayerWithFade.__tlrDuelFadeWrapped = true;
+  window.tlrMainMenuMultiplayer = multiplayerWithFade;
 }
 
 function buttons() {
@@ -134,6 +182,7 @@ async function launch(actionName) {
     if (actionName === 'tlrMainMenuAdventure' && typeof window.__tlrInstallAdventureModules === 'function') {
       await window.__tlrInstallAdventureModules();
     }
+    if (actionName === 'tlrMainMenuMultiplayer') installMultiplayerFadeTransition();
     const action = window[actionName];
     if (typeof action === 'function') {
       await action();
@@ -154,6 +203,7 @@ async function launch(actionName) {
     console.error('The Last Reading could not load the full game.', err);
     bootAction = null;
     gamePromise = null;
+    hideCurtain();
     document.body.classList.remove('main-menu-mode-booting');
     clearBusy();
   }

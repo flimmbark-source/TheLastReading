@@ -75,6 +75,11 @@ body.mp-game-active .hand-swipe-zone .swipe-hint-line {
   animation: none !important;
 }
 
+/* Allow hand cards to be clickable in multiplayer mode */
+body.mp-game-active .hand-swipe-zone {
+  pointer-events: none !important;
+}
+
 body.mp-game-active .mp-pills-actions {
   justify-content: center;
   align-items: center;
@@ -136,6 +141,33 @@ body.mp-game-active .spread-wrap {
   body.mp-game-active .mp-mid-wrap {
     top: 280px !important;
     bottom: auto !important;
+  }
+
+  body.mp-game-active .mp-score-hud {
+    width: min(374px, calc(100vw - 10px)) !important;
+    grid-template-columns: minmax(94px, 1fr) minmax(116px, 1.12fr) minmax(94px, 1fr) !important;
+    gap: 4px !important;
+    padding: 7px 8px 11px !important;
+  }
+
+  body.mp-game-active .mp-score-hud .mp-pill-score,
+  body.mp-game-active .mp-score-hud .mp-pill-thresh {
+    width: 100% !important;
+    height: 52px !important;
+    padding: 23px 5px 5px !important;
+    font-size: 0 !important;
+  }
+
+  body.mp-game-active .mp-score-hud .mp-pill-score b,
+  body.mp-game-active .mp-score-hud .mp-pill-thresh b {
+    font-size: clamp(35px, 9.5vw, 47px) !important;
+    line-height: .92;
+    font-weight: 800;
+  }
+
+  body.mp-game-active .mp-score-hud .mp-side-label {
+    top: -5px;
+    font-size: 8px;
   }
 
   body.mp-game-active .mp-opp-spread-clip {
@@ -202,6 +234,23 @@ body.mp-game-active .spread-wrap {
     background: rgba(8, 5, 3, .58) !important;
     border: 1px solid rgba(180, 140, 90, .18) !important;
     border-radius: 8px !important;
+  }
+
+  /* Mobile button sizing for top-right corner buttons */
+  body.mp-game-active #scoringBtn,
+  body.mp-game-active #abilitiesBtn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 0;
+  }
+
+  body.mp-game-active #abilitiesBtn {
+    right: 8px;
+  }
+
+  body.mp-game-active #scoringBtn {
+    right: 56px;
   }
 }
 

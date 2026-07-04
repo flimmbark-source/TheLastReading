@@ -128,19 +128,20 @@ export function installMpGame(target = window) {
       </div>
 
       <div class="mp-mid-wrap" id="mpMidWrap">
-        <div class="mp-pills-band mp-pills-opp">
-          <div class="pill score-pill mp-pill-score mp-pill-opp-score">Score <b id="mpOppScore">0</b></div>
-          <div class="pill reserve-pill mp-pill-disc mp-pill-opp-disc">Discards <b id="mpOppDisc">0</b></div>
-        </div>
-        <div class="mp-pills-band mp-pills-mid">
-          <span class="mp-side-label mp-you-label">You</span>
-          <div class="pill threshold-pill mp-pill-thresh">Threshold <b id="mpThresh">200</b></div>
-          <button class="constellation-pill mp-constellation hidden" id="mpConstellation" type="button"></button>
-          <span class="mp-side-label mp-foe-label">Foe</span>
-        </div>
-        <div class="mp-pills-band mp-pills-self">
-          <div class="pill score-pill mp-pill-score mp-pill-my-score">Score <b id="mpMyScore">0</b></div>
-          <div class="pill reserve-pill mp-pill-disc mp-pill-my-disc">Discards <b id="mpMyDisc">0</b></div>
+        <div class="mp-score-hud" aria-label="Duel scores">
+          <div class="mp-score-cell mp-score-cell-self">
+            <span class="mp-side-label mp-you-label">You</span>
+            <div class="pill score-pill mp-pill-score mp-pill-my-score">Score <b id="mpMyScore">0</b></div>
+          </div>
+          <div class="mp-score-cell mp-score-cell-threshold">
+            <span class="mp-side-label">Threshold</span>
+            <div class="pill threshold-pill mp-pill-thresh">Threshold <b id="mpThresh">200</b></div>
+            <button class="constellation-pill mp-constellation hidden" id="mpConstellation" type="button"></button>
+          </div>
+          <div class="mp-score-cell mp-score-cell-opp">
+            <span class="mp-side-label mp-foe-label">Foe</span>
+            <div class="pill score-pill mp-pill-score mp-pill-opp-score">Score <b id="mpOppScore">0</b></div>
+          </div>
         </div>
         <div class="mp-pills-band mp-pills-actions">
           <button class="sbtn sbtn-discard" id="mpDiscardBtn" onclick="tlrMpDiscard()" type="button" disabled aria-label="Discard selected card" title="Discard"></button>
@@ -171,13 +172,6 @@ export function installMpGame(target = window) {
       if (!optimisticExtra.length) _optimisticSelf = null;
     }
     if (_selected !== null && !(p.hand || []).some(c => c.uid === _selected)) _selected = null;
-  }
-
-  // My player as the local view should show it: the optimistically-resolved
-  // snapshot (set when I invoke a card ability) takes precedence over the
-  // canonical _state until resolution catches up.
-  function effectiveSelf(s, my) {
-    return _optimisticSelf || s.players[my];
   }
 
   function selfHandView(s, my) {
@@ -517,16 +511,10 @@ export function installMpGame(target = window) {
 
   function renderPills(s, my) {
     const opp = 1 - my;
-    // Reflect the optimistic ability snapshot in my own discards pill so the
-    // spent discard shows immediately alongside the drawn/taken cards.
-    const mp  = effectiveSelf(s, my), op = s.players[opp];
     const e = (id, val) => { const n = el(id); if (n) n.textContent = val; };
     e('mpOppScore', visibleScoreForPlayer(s, opp, { allowOpponentAdvance: !opponentRevealPending() }));
-    e('mpOppDisc', op?.discards ?? 0);
     e('mpMyScore', visibleScoreForPlayer(s, my, { allowOpponentAdvance: true }));
-    e('mpMyDisc', mp?.discards ?? 0);
     e('mpThresh', s.scoreTarget ?? 200);
-    moveMultPillsOutside();
   }
 
   function opponentRevealPending() {
@@ -837,37 +825,6 @@ export function installMpGame(target = window) {
     });
   }
 
-  function moveMultPillsOutside() {
-    if (!doc.body.classList.contains('mp-game-active')) return;
-    const isDesktop = target.matchMedia?.('(min-width: 641px)').matches ?? false;
-    doc.querySelectorAll('.mp-pill-score').forEach(pill => {
-      const parent = pill.parentElement;
-      if (!parent) return;
-      const embedded = pill.querySelector(':scope > .mp-mult-inline');
-      const putRight = isDesktop && pill.classList.contains('mp-pill-opp-score');
-      const adjacent = putRight
-        ? (pill.nextElementSibling?.classList?.contains('mp-mult-inline') ? pill.nextElementSibling : null)
-        : (pill.previousElementSibling?.classList?.contains('mp-mult-inline') ? pill.previousElementSibling : null);
-      let mult = adjacent || embedded;
-      if (!mult) return;
-      if (embedded && embedded !== mult) embedded.remove();
-      if (putRight) {
-        if (mult.parentElement !== parent || pill.nextElementSibling !== mult) parent.insertBefore(mult, pill.nextSibling);
-        mult.classList.add('mp-mult-right');
-        mult.classList.remove('mp-mult-left');
-      } else {
-        if (mult.parentElement !== parent || mult.nextElementSibling !== pill) parent.insertBefore(mult, pill);
-        mult.classList.add('mp-mult-left');
-        mult.classList.remove('mp-mult-right');
-      }
-      const cleanText = mult.textContent.replace(/[()]/g, '').trim();
-      if (mult.textContent !== cleanText) mult.textContent = cleanText;
-      if (!putRight) parent.classList.add('mp-has-left-mult');
-      pill.style.setProperty('width', '118px', 'important');
-      pill.style.setProperty('gap', '5px', 'important');
-    });
-  }
-
   function updateScoreMultPills(state = _state, options = {}) {
     if (!state?.players) return;
     if (Number.isInteger(options.onlyPlayerIndex)) {
@@ -887,15 +844,18 @@ export function installMpGame(target = window) {
     if (scoreNode.textContent !== score) scoreNode.textContent = score;
     const pill = scoreNode.closest('.mp-pill-score') || scoreNode.parentElement;
     if (!pill) return;
-    let mult = pill.querySelector('.mp-mult-inline');
+    pill.parentElement?.querySelectorAll(':scope > .mp-mult-inline').forEach(node => node.remove());
+    pill.querySelectorAll(':scope > .mp-mult-inline').forEach(node => node.remove());
+    let mult = pill.querySelector('.mp-score-mult');
     if (!mult) {
       mult = doc.createElement('span');
-      mult.className = 'mp-mult-inline';
+      mult.className = 'mp-score-mult';
       pill.appendChild(mult);
     }
-    const multText = `${formatMult(player?.roundMult ?? 1)}x`;
+    const roundMult = player?.roundMult ?? 1;
+    const multText = `×${formatMult(roundMult)}`;
     if (mult.textContent !== multText) mult.textContent = multText;
-    moveMultPillsOutside();
+    mult.classList.toggle('show', roundMult > 1);
   }
 
   // Safety net: if the score pills are rebuilt or reordered by any render path
@@ -909,7 +869,7 @@ export function installMpGame(target = window) {
       if (!_state || !doc.body.classList.contains('mp-game-active')) return;
       if (!records.some(record => {
         const node = record.target?.nodeType === 1 ? record.target : record.target?.parentElement;
-        return node?.closest?.('#mpMidWrap,.mp-pill-score,.mp-mult-inline');
+        return node?.closest?.('#mpMidWrap,.mp-pill-score,.mp-score-mult,.mp-mult-inline');
       })) return;
       if (queued) return;
       queued = true;
@@ -1804,30 +1764,6 @@ function installMpGameStyle(doc) {
     body.mp-game-active #mpAbilityBtn::after {
       content: none !important;
       display: none !important;
-    }
-    body.mp-game-active .mp-pills-opp.mp-has-left-mult,
-    body.mp-game-active .mp-pills-self.mp-has-left-mult {
-      transform: translateX(-14px) !important;
-    }
-    body.mp-game-active .mp-mult-inline.mp-mult-left,
-    body.mp-game-active .mp-mult-inline.mp-mult-right {
-      display: inline-flex !important;
-      align-items: center !important;
-      min-width: 0 !important;
-      flex: 0 0 auto !important;
-      color: #ff5a4f !important;
-      font-weight: 800 !important;
-      white-space: nowrap !important;
-    }
-    body.mp-game-active .mp-mult-inline.mp-mult-left {
-      justify-content: flex-end !important;
-      margin-left: 0 !important;
-      margin-right: 2px !important;
-    }
-    body.mp-game-active .mp-mult-inline.mp-mult-right {
-      justify-content: flex-start !important;
-      margin-left: 2px !important;
-      margin-right: 0 !important;
     }
     body.mp-game-active .mp-pill-score {
       gap: 5px !important;
