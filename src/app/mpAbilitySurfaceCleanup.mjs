@@ -1,5 +1,4 @@
 const SLOT_HIT_PAD = 28;
-const LANDING_MS = 320;
 
 function mpIsActive(doc) {
   return doc.body.classList.contains('mp-game-active');
@@ -59,7 +58,6 @@ function installMpHandReturnAdapter(target, doc) {
     if (uid == null) return;
     const openDetail = event.type !== 'pointercancel'
       && draggedCard.classList.contains('hand-card-detail-pull');
-    const wasSelected = draggedCard.classList.contains('sel');
 
     pendingSyntheticClickUid = uid;
     if (!target.tlrCancelHandDrag?.()) {
@@ -75,10 +73,6 @@ function installMpHandReturnAdapter(target, doc) {
     if (openDetail) {
       const card = mpCardForUid(target, uid);
       if (card) target.expandCard?.(card, target);
-    } else if (wasSelected) {
-      target.setTimeout?.(() => {
-        doc.querySelector(`#hand .card.sel[data-uid="${uid}"]`)?.onclick?.();
-      }, LANDING_MS);
     }
 
     target.setTimeout?.(() => {
