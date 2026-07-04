@@ -1,4 +1,4 @@
-function pointIsOverHand(doc, target, event, draggedCard) {
+function pointIsOverHand(doc, event, draggedCard) {
   const stack = typeof doc.elementsFromPoint === 'function'
     ? doc.elementsFromPoint(event.clientX, event.clientY)
     : [];
@@ -25,7 +25,7 @@ function installMpHandReturnGuard(target, doc) {
     if (!doc.body.classList.contains('mp-game-active')) return;
     const draggedCard = doc.querySelector('.hand-card-dragging[data-uid]');
     if (!draggedCard) return;
-    if (event.type !== 'pointercancel' && !pointIsOverHand(doc, target, event, draggedCard)) return;
+    if (event.type !== 'pointercancel' && !pointIsOverHand(doc, event, draggedCard)) return;
 
     if (target.tlrCancelHandDrag?.()) {
       event.preventDefault?.();
@@ -41,10 +41,22 @@ function installMpHandReturnGuard(target, doc) {
   target.addEventListener('pointercancel', finishBackInHand, true);
 }
 
+function installDuelReferenceSurfaceStyle(doc) {
+  if (doc.getElementById('mp-reference-surface-style')) return;
+  const style = doc.createElement('style');
+  style.id = 'mp-reference-surface-style';
+  style.textContent = `
+    body.mp-game-active #scoringPullTab,
+    body.mp-game-active #abilitiesPullTab { display: none !important; }
+  `;
+  doc.head.appendChild(style);
+}
+
 export function installMpAbilitySurfaceCleanup(target = window) {
   if (!target || target.__tlrMpAbilitySurfaceCleanupInstalled) return;
   target.__tlrMpAbilitySurfaceCleanupInstalled = true;
   const doc = target.document;
   if (!doc) return;
   installMpHandReturnGuard(target, doc);
+  installDuelReferenceSurfaceStyle(doc);
 }
