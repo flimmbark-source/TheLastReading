@@ -1,4 +1,5 @@
 const SLOT_HIT_PAD = 28;
+const LANDING_MS = 320;
 
 function mpIsActive(doc) {
   return doc.body.classList.contains('mp-game-active');
@@ -59,6 +60,27 @@ function hoverIndexForPointer(target, clientX, handLength) {
   return Math.max(0, Math.min(handLength - 1, Math.round(fractionalSlot + (handLength - 1) / 2)));
 }
 
+function slideToCurrentSlot(target, card, firstRect) {
+  if (!card || !firstRect) return;
+  const finalRect = card.getBoundingClientRect();
+  const dx = firstRect.left - finalRect.left;
+  const dy = firstRect.top - finalRect.top;
+  if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+
+  // tlrCancelHandDrag first prepares a FLIP animation to the card's original
+  // slot. Recalculate that inversion after the duel order has been applied so
+  // the card travels directly to the slot where it was actually dropped.
+  card.style.setProperty('transition', 'none', 'important');
+  card.style.setProperty('transform', `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px)`, 'important');
+  void card.offsetWidth;
+  target.requestAnimationFrame?.(() => {
+    card.classList.add('hand-card-landing');
+    card.style.removeProperty('transition');
+    card.style.removeProperty('transform');
+    target.setTimeout?.(() => card.classList.remove('hand-card-landing'), LANDING_MS);
+  });
+}
+
 export function installMpSinglePlayerHandBridge(target = window) {
   if (!target || target.__tlrMpSinglePlayerHandBridgeInstalled) return;
   target.__tlrMpSinglePlayerHandBridgeInstalled = true;
@@ -75,6 +97,11 @@ export function installMpSinglePlayerHandBridge(target = window) {
     if (uid == null) return;
     const selected = doc.querySelector(`#hand .card.sel[data-uid="${uid}"]`);
     selected?.onclick?.();
+  };
+
+  const clearSelectionAfterLanding = uid => {
+    if (uid == null) return;
+    target.setTimeout?.(() => clearSelection(uid), LANDING_MS);
   };
 
   const armSyntheticClickGuard = uid => {
@@ -180,6 +207,7 @@ export function installMpSinglePlayerHandBridge(target = window) {
 
     const context = drag;
     drag = null;
+    const firstRect = draggedCard.getBoundingClientRect();
     const wantsDetail = draggedCard.classList.contains('hand-card-detail-pull');
     const targetIndex = hoverIndexForPointer(target, event.clientX, Math.max(1, order.length));
     armSyntheticClickGuard(context.uid);
@@ -191,19 +219,17 @@ export function installMpSinglePlayerHandBridge(target = window) {
 
     target.__handGestureSuppressClickUntil = 0;
 
-    if (context.selectedUid != null && context.selectedUid !== context.uid) {
-      clearSelection(context.selectedUid);
-    }
-
     if (wantsDetail) {
       const card = mpCardForUid(target, context.uid);
       if (card) target.expandCard?.(card, target);
+      clearSelectionAfterLanding(context.selectedUid);
     } else {
       const fromIndex = order.indexOf(context.uid);
       if (fromIndex >= 0) order.splice(fromIndex, 1);
       order.splice(Math.max(0, Math.min(targetIndex, order.length)), 0, context.uid);
       applyOrder();
-      clearSelection(context.uid);
+      slideToCurrentSlot(target, draggedCard, firstRect);
+      clearSelectionAfterLanding(context.selectedUid);
     }
 
     event.preventDefault?.();
@@ -213,11 +239,13 @@ export function installMpSinglePlayerHandBridge(target = window) {
   target.addEventListener('pointercancel', event => {
     if (!mpIsActive(doc) || !drag || event.pointerId !== drag.pointerId) return;
     const uid = drag.uid;
+    const selectedUid = drag.selectedUid;
     drag = null;
     armSyntheticClickGuard(uid);
     if (target.tlrCancelHandDrag?.()) {
       target.__handGestureSuppressClickUntil = 0;
       applyOrder();
+      clearSelectionAfterLanding(selectedUid);
       event.preventDefault?.();
       event.stopImmediatePropagation?.();
     }
