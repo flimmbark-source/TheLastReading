@@ -1,3 +1,5 @@
+import { installMpSinglePlayerHandBridge as installSharedMpHandBridge } from './mpSinglePlayerHandBridge.mjs';
+
 const SLOT_HIT_PAD = 28;
 
 function mpIsActive(doc) {
@@ -173,10 +175,6 @@ function installMpSinglePlayerHandBridge(target, doc) {
       return;
     }
 
-    // A valid spread placement is already handled correctly by the shared
-    // single-player gesture controller through the multiplayer placeCardUid
-    // override. Only hand returns, hand reorders, detail pulls, and invalid
-    // spread drops need a multiplayer commit path.
     if (validSpreadDrop(doc, draggedCard)) {
       const previousSelection = drag.selectedUid;
       const draggedUid = drag.uid;
@@ -198,9 +196,6 @@ function installMpSinglePlayerHandBridge(target, doc) {
       return;
     }
 
-    // The shared controller set an 800ms blanket timer at drag start. This
-    // bridge replaces it with the one synthetic-click guard above, so a real
-    // follow-up tap remains responsive.
     target.__handGestureSuppressClickUntil = 0;
 
     if (context.selectedUid != null && context.selectedUid !== context.uid) {
@@ -280,7 +275,6 @@ export function installMpAbilitySurfaceCleanup(target = window) {
   target.__tlrMpAbilitySurfaceCleanupInstalled = true;
   const doc = target.document;
   if (!doc) return;
-  installMpReturnedDragClickGuard(target, doc);
-  installMpSinglePlayerHandBridge(target, doc);
+  installSharedMpHandBridge(target);
   installDuelReferenceSurfaceStyle(doc);
 }
