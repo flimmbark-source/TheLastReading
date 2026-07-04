@@ -1191,7 +1191,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     --spv2-contact-shadow:
       0 7px 5px rgba(0,0,0,.82),
       0 19px 22px rgba(0,0,0,.62);
-    box-shadow: var(--spv2-contact-shadow) !important;
+    box-shadow: var(--spv2-contact-shadow);
   }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
@@ -1707,6 +1707,11 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     translate: -50% -50%;
   }
 
+  /* Hide legacy spread position numbers; the ornate slot art carries the layout. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot .num {
+    display: none;
+  }
+
   /* Five-card fan — translateX percentages are relative to the slot width,
      so the fan scales with --spv2-card-w */
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
@@ -1720,10 +1725,10 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
-    transform: translateX(-50%) scale(1.025);
+    transform: translateX(-50%);
     z-index: 3;
-    --spv2-contact-shadow: 0 7px 5px rgba(0,0,0,.82), 0 19px 22px rgba(0,0,0,.62);
-    box-shadow: var(--spv2-contact-shadow);
+    --spv2-contact-shadow: none;
+    box-shadow: none;
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
     transform: translateX(68%) translateY(6px) rotate(4deg);
