@@ -128,19 +128,21 @@ export function installMpGame(target = window) {
       </div>
 
       <div class="mp-mid-wrap" id="mpMidWrap">
-        <div class="mp-pills-band mp-pills-opp">
-          <div class="pill score-pill mp-pill-score mp-pill-opp-score">Score <b id="mpOppScore">0</b></div>
-          <div class="pill reserve-pill mp-pill-disc mp-pill-opp-disc">Discards <b id="mpOppDisc">0</b></div>
-        </div>
-        <div class="mp-pills-band mp-pills-mid">
-          <span class="mp-side-label mp-you-label">You</span>
-          <div class="pill threshold-pill mp-pill-thresh">Threshold <b id="mpThresh">200</b></div>
-          <button class="constellation-pill mp-constellation hidden" id="mpConstellation" type="button"></button>
-          <span class="mp-side-label mp-foe-label">Foe</span>
-        </div>
-        <div class="mp-pills-band mp-pills-self">
-          <div class="pill score-pill mp-pill-score mp-pill-my-score">Score <b id="mpMyScore">0</b></div>
-          <div class="pill reserve-pill mp-pill-disc mp-pill-my-disc">Discards <b id="mpMyDisc">0</b></div>
+        <div class="mp-score-hud" aria-label="Duel scores">
+          <div class="mp-score-cell mp-score-cell-self">
+            <span class="mp-side-label mp-you-label">You</span>
+            <div class="pill score-pill mp-pill-score mp-pill-my-score">Score <b id="mpMyScore">0</b></div>
+            <div class="pill reserve-pill mp-pill-disc mp-pill-my-disc">Discards <b id="mpMyDisc">0</b></div>
+          </div>
+          <div class="mp-score-cell mp-score-cell-threshold">
+            <div class="pill threshold-pill mp-pill-thresh">Threshold <b id="mpThresh">200</b></div>
+            <button class="constellation-pill mp-constellation hidden" id="mpConstellation" type="button"></button>
+          </div>
+          <div class="mp-score-cell mp-score-cell-opp">
+            <span class="mp-side-label mp-foe-label">Foe</span>
+            <div class="pill score-pill mp-pill-score mp-pill-opp-score">Score <b id="mpOppScore">0</b></div>
+            <div class="pill reserve-pill mp-pill-disc mp-pill-opp-disc">Discards <b id="mpOppDisc">0</b></div>
+          </div>
         </div>
         <div class="mp-pills-band mp-pills-actions">
           <button class="sbtn sbtn-discard" id="mpDiscardBtn" onclick="tlrMpDiscard()" type="button" disabled aria-label="Discard selected card" title="Discard"></button>
@@ -894,7 +896,7 @@ export function installMpGame(target = window) {
       const cleanText = mult.textContent.replace(/[()]/g, '').trim();
       if (mult.textContent !== cleanText) mult.textContent = cleanText;
       if (!putRight) parent.classList.add('mp-has-left-mult');
-      pill.style.setProperty('width', '118px', 'important');
+      pill.style.setProperty('width', pill.closest('.mp-score-hud') ? '100%' : '118px', 'important');
       pill.style.setProperty('gap', '5px', 'important');
     });
   }

@@ -138,6 +138,37 @@ body.mp-game-active .spread-wrap {
     bottom: auto !important;
   }
 
+  body.mp-game-active .mp-score-hud {
+    width: min(374px, calc(100vw - 10px)) !important;
+    grid-template-columns: minmax(94px, 1fr) minmax(116px, 1.12fr) minmax(94px, 1fr) !important;
+    gap: 4px !important;
+    padding: 7px 8px 11px !important;
+  }
+
+  body.mp-game-active .mp-score-hud .mp-pill-score,
+  body.mp-game-active .mp-score-hud .mp-pill-thresh {
+    width: 100% !important;
+    height: 52px !important;
+    padding: 23px 5px 5px !important;
+    font-size: 0 !important;
+  }
+
+  body.mp-game-active .mp-score-hud .mp-pill-score b,
+  body.mp-game-active .mp-score-hud .mp-pill-thresh b {
+    font-size: 20px !important;
+  }
+
+  body.mp-game-active .mp-score-hud .mp-pill-disc {
+    min-width: 64px;
+    height: 17px;
+    font-size: 8px;
+  }
+
+  body.mp-game-active .mp-score-hud .mp-side-label {
+    top: -5px;
+    font-size: 8px;
+  }
+
   body.mp-game-active .mp-opp-spread-clip {
     top: 62px !important;
     height: 150px !important;
