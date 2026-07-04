@@ -18,7 +18,6 @@ Object.assign(globalThis, {
   MutationObserver: w.MutationObserver,
   requestAnimationFrame: raf,
   cancelAnimationFrame: () => {},
-  performance: w.performance,
 });
 
 globalThis.state = {
