@@ -34,8 +34,14 @@ export function installMpHandGestureAdapter(target = window) {
     const hand = handNode();
     return hand ? [...hand.querySelectorAll(':scope > .card[data-uid]')] : [];
   };
-  const selectedNode = () => doc.querySelector('#hand > .card.sel[data-uid], body > .card.sel[data-uid]');
-  const selectedUid = () => cardUid(selectedNode());
+  const actualSelectedNode = () => doc.querySelector('#hand > .card.sel[data-uid], body > .card.sel[data-uid]');
+  const orphanCard = uid => {
+    const selector = uid == null
+      ? 'body > .card[data-uid]'
+      : `body > .card[data-uid="${uid}"]`;
+    return doc.querySelector(selector);
+  };
+  const selectedUid = () => cardUid(orphanCard() || actualSelectedNode());
 
   const insertCardAt = (card, index) => {
     const hand = handNode();
@@ -59,33 +65,33 @@ export function installMpHandGestureAdapter(target = window) {
     target.__handTriggerLayout?.();
   };
 
-  const setSelected = uid => {
-    const current = selectedUid();
-    if (current === uid) return;
-    if (uid == null) {
-      selectedNode()?.onclick?.();
-      return;
-    }
-    const card = doc.querySelector(`#hand > .card[data-uid="${uid}"]`);
-    card?.onclick?.();
+  const restoreOrphan = card => {
+    if (!card) return;
+    reconcileOrder(player()?.hand || []);
+    const index = Math.max(0, handOrder.indexOf(cardUid(card)));
+    insertCardAt(card, index);
+    applyDomOrder();
   };
 
-  const reorderHand = (uid, toIndex, context = {}) => {
+  const setSelected = uid => {
+    if (uid == null) {
+      restoreOrphan(orphanCard());
+      actualSelectedNode()?.onclick?.();
+      return;
+    }
+    if (cardUid(actualSelectedNode()) === uid) return;
+    doc.querySelector(`#hand > .card[data-uid="${uid}"]`)?.onclick?.();
+  };
+
+  const reorderHand = (uid, toIndex) => {
     reconcileOrder(player()?.hand || []);
     const currentIndex = handOrder.indexOf(uid);
     if (currentIndex < 0) return;
     handOrder.splice(currentIndex, 1);
     handOrder.splice(Math.max(0, Math.min(toIndex, handOrder.length)), 0, uid);
-    insertCardAt(context.cardEl, toIndex);
+    insertCardAt(orphanCard(uid) || doc.querySelector(`#hand > .card[data-uid="${uid}"]`), toIndex);
     applyDomOrder();
-    if (selectedUid() === uid) setSelected(null);
-  };
-
-  const returnCard = (uid, originalIndex, context = {}) => {
-    reconcileOrder(player()?.hand || []);
-    insertCardAt(context.cardEl, originalIndex);
-    applyDomOrder();
-    if (selectedUid() === uid) setSelected(null);
+    if (cardUid(actualSelectedNode()) === uid) setSelected(null);
   };
 
   const wrapRenderHand = () => {
@@ -100,6 +106,9 @@ export function installMpHandGestureAdapter(target = window) {
   };
 
   wrapRenderHand();
+  new MutationObserver(() => {
+    if (!isActive()) handOrder = [];
+  }).observe(doc.body, { attributes: true, attributeFilter: ['class'] });
 
   target.tlrHandGestureAdapter = {
     isActive,
@@ -121,6 +130,5 @@ export function installMpHandGestureAdapter(target = window) {
     showDetail: card => target.expandCard?.(card, target),
     placeCard: (uid, index) => target.placeCardUid?.(uid, index),
     reorderHand,
-    returnCard,
   };
 }
