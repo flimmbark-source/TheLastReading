@@ -1,7 +1,7 @@
 @layer drawers {
 body:not(.mp-game-active) #scoringBtn,body:not(.mp-game-active) #abilitiesBtn,#menuBtn{display:none!important}
 .tlr-pull-wrap{position:fixed;top:0;left:0;right:0;z-index:150;transform:translateY(calc(-1 * var(--inv-h)));transition:transform .45s cubic-bezier(.34,1.28,.64,1);pointer-events:none}
-.tlr-pull-wrap.open{transform:translateY(0);pointer-events:auto;z-index:10095!important}
+.tlr-pull-wrap.open{transform:translateY(0);pointer-events:auto;z-index:2147483250!important}
 .tlr-pull-desk{height:var(--inv-h);border-bottom:2px solid #6a4c24;position:relative;overflow:auto;pointer-events:auto;padding:18px 18px 24px;box-shadow:0 16px 38px rgba(0,0,0,.45)}
 .tlr-pull-desk::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 90% 70% at 50% 110%,rgba(90,45,5,.22),transparent 65%)}
 .tlr-pull-desk>*{position:relative;z-index:1}
