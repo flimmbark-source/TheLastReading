@@ -1651,7 +1651,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     left: 50%;
     right: auto;
     bottom: auto;
-    width: min(86vw, calc(var(--spv2-slot-w) * 7 + 320px));
+    width: var(--spv2-action-rail-w, min(86vw, calc(var(--spv2-slot-w) * 7 + 320px)));
     transform: translate(-50%, -50%);
     display: flex;
     justify-content: space-between;
@@ -1792,6 +1792,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     --spv2-slot-h: calc(var(--spv2-slot-w) * 1.5);
     --spv2-dock-art-h: clamp(102px, 8.25dvh, 123px);
     --spv2-dock-half: calc(var(--spv2-dock-art-h) * 2.42);
+    --spv2-action-rail-w: min(86vw, calc(var(--spv2-slot-w) * 7 + 320px));
   }
   body.single-player-v2.generated-sheet-ready #titleWrap {
     height: var(--spv2-title-h);
@@ -1806,8 +1807,9 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready .actions {
-    top: auto;
-    bottom: max(24px, 3dvh);
+    top: 47dvh;
+    bottom: auto;
+    transform: translateY(-50%);
   }
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready .actions button {
@@ -1815,19 +1817,21 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     height: 50px;
     min-width: 0;
   }
-  /* Utility medallions sit outside the hand-dock banner: Menu + Archives
-     immediately to the left, Scoring + Abilities immediately to the right.
-     max() keeps each two-button cluster on-screen when the dock grows. */
+  /* Utility medallions align with the table action medallions: Menu +
+     Archives sit just left of Discard, Scoring + Abilities just right of Purge. */
   body.single-player-v2.generated-sheet-ready #menuBtn {
-    left: max(14px, calc(50% - var(--spv2-dock-half) - 116px));
+    left: max(14px, calc(50% - var(--spv2-action-rail-w) / 2 - 116px));
     right: auto;
   }
   html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    left: max(72px, calc(50% - var(--spv2-dock-half) - 58px));
+    top: 47dvh;
+    bottom: auto;
+    left: max(72px, calc(50% - var(--spv2-action-rail-w) / 2 - 58px));
     right: auto;
+    transform: translateY(-50%);
   }
   body.single-player-v2.generated-sheet-ready .actions {
-    right: max(14px, calc(50% - var(--spv2-dock-half) - 116px));
+    right: max(14px, calc(50% - var(--spv2-action-rail-w) / 2 - 116px));
     left: auto;
     gap: 8px;
   }
