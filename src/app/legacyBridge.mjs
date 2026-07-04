@@ -95,7 +95,7 @@ export function marketPurchase(purchase,target = window){
   persist.up=Object.assign({},st.persist.upgrades);
   persist.relics=st.persist.relics.slice();
   persist.stampedMajors=(st.persist.stampedMajors||[]).slice();
-  if(typeof target.playSound==='function')target.playSound('purchase');
+  if((purchase?.cost||0)>0&&typeof target.playSound==='function')target.playSound('purchase');
   if(typeof target.haptic==='function')target.haptic(14);
   return true;
 }
