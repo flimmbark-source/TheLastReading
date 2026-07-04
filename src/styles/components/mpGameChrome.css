@@ -1,12 +1,10 @@
 @layer mpGameChrome {
 #mpGame.mp-hidden { opacity: 0; pointer-events: none; }
 
-/* Hide single-player chrome that would bleed through. The title wrapper stays
-   mounted in duel mode because it owns the shared Scoring/Abilities buttons. */
+/* Hide single-player chrome that would bleed through. The title wrapper and
+   Scoring/Abilities drawers stay mounted because duel reuses those controls. */
 body.mp-game-active .score-stack,
 body.mp-game-active #relicRack,
-body.mp-game-active #abilitiesPullWrap,
-body.mp-game-active #scoringPullWrap,
 body.mp-game-active #menuPullWrap,
 body.mp-game-active #tutTip,
 body.mp-game-active .spread-actions,
@@ -58,7 +56,7 @@ body.mp-game-active #purgePrompt { display: none !important; }
 .mp-progress-score { font: 700 12px/1 Georgia,serif; color: #ddc98a; min-width: 28px; }
 .mp-progress-score.right { text-align: right; }
 .mp-progress-bar   { flex: 1; height: 5px; background: rgba(40,28,16,.8); border-radius: 3px; overflow: hidden; position: relative; }
-.mp-progress-fill  { height: 100%; border-radius: 3px; transition: width .4s ease; position: absolute; top: 0; }
+.mp-progress-fill  { height: 100%; border-radius: 3px; transition: width .4s; position: absolute; top: 0; }
 .mp-progress-fill.p0 { left: 0;  background: linear-gradient(to right, rgba(180,140,70,.6), rgba(220,180,80,.85)); }
 .mp-progress-fill.p1 { right: 0; background: linear-gradient(to left, rgba(120,100,180,.6), rgba(150,120,200,.85)); }
 .mp-target-label { font: 400 10px/1 system-ui,sans-serif; color: #4a3820; white-space: nowrap; }
