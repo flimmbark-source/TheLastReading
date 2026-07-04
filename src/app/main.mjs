@@ -55,7 +55,7 @@ import * as archivesModule from './archives.mjs';
 function installAdventureFeatureModules(target = window) {
   if (!target || target.__tlrAdventureFeatureModulesPromise) return target?.__tlrAdventureFeatureModulesPromise;
   target.__tlrAdventureFeatureModulesPromise = Promise.all([
-    import('./adventureModeV3.mjs?v=1'),
+    import('./adventureModeV3.mjs?v=status-pill-click-1'),
     import('./adventureEventHero.mjs?v=resolve-below-1'),
     import('./adventureInteractionFx.mjs?v=17'),
     import('./adventureItemPopups.mjs?v=5'),
