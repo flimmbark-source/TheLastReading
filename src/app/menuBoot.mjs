@@ -66,6 +66,7 @@ function curtainEl() {
     el = document.createElement('div');
     el.id = 'tlrBootCurtain';
     el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = '<div class="tlr-boot-spinner"></div>';
     document.body.appendChild(el);
   }
   return el;

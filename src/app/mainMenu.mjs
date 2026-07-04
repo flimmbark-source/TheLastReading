@@ -179,6 +179,7 @@ export function installMainMenu(target = window) {
       el = doc.createElement('div');
       el.id = 'tlrBootCurtain';
       el.setAttribute('aria-hidden', 'true');
+      el.innerHTML = '<div class="tlr-boot-spinner"></div>';
       doc.body.appendChild(el);
     }
     return el;
