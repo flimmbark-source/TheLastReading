@@ -77,26 +77,6 @@ function installMpHandReturnGuard(target, doc) {
   target.addEventListener('pointercancel', finishBackInHand, true);
 }
 
-function installDuelDrawerCloseButtons(target, doc) {
-  for (const id of ['scoring', 'abilities']) {
-    const desk = doc.getElementById(`${id}PullDesk`);
-    if (!desk || desk.querySelector('.mp-reference-drawer-close')) continue;
-
-    const button = doc.createElement('button');
-    button.type = 'button';
-    button.className = 'mp-reference-drawer-close';
-    button.textContent = '×';
-    button.setAttribute('aria-label', `Close ${id} drawer`);
-    button.addEventListener('click', event => {
-      event.preventDefault();
-      event.stopPropagation();
-      const wrap = doc.getElementById(`${id}PullWrap`);
-      if (wrap?.classList.contains('open')) target.tlrTogglePullTab?.(id);
-    });
-    desk.prepend(button);
-  }
-}
-
 function installDuelReferenceSurfaceStyle(doc) {
   if (doc.getElementById('mp-reference-surface-style')) return;
   const style = doc.createElement('style');
@@ -104,37 +84,6 @@ function installDuelReferenceSurfaceStyle(doc) {
   style.textContent = `
     body.mp-game-active #scoringPullTab,
     body.mp-game-active #abilitiesPullTab { display: none !important; }
-
-    body.mp-game-active #titleWrap { z-index: 2147483000 !important; }
-    body.mp-game-active #titleWrap .actions,
-    body.mp-game-active #scoringBtn,
-    body.mp-game-active #abilitiesBtn { position: relative; z-index: 0 !important; }
-
-    body.mp-game-active #scoringPullWrap.open > .tlr-pull-desk,
-    body.mp-game-active #abilitiesPullWrap.open > .tlr-pull-desk { padding-top: 44px !important; }
-
-    body.mp-game-active .mp-reference-drawer-close {
-      display: none !important;
-      position: absolute !important;
-      top: 8px !important;
-      left: 50% !important;
-      z-index: 4 !important;
-      width: 32px;
-      height: 32px;
-      padding: 0;
-      border: 1px solid rgba(77, 45, 18, .45);
-      border-radius: 50%;
-      background: rgba(42, 22, 10, .12);
-      color: #3a1a06;
-      font: 700 26px/28px Georgia, serif;
-      place-items: center;
-      transform: translateX(-50%) !important;
-      cursor: pointer;
-    }
-
-    body.mp-game-active .tlr-pull-wrap.open .mp-reference-drawer-close {
-      display: grid !important;
-    }
   `;
   doc.head.appendChild(style);
 }
@@ -146,6 +95,5 @@ export function installMpAbilitySurfaceCleanup(target = window) {
   if (!doc) return;
   installMpReturnedDragClickGuard(target, doc);
   installMpHandReturnGuard(target, doc);
-  installDuelDrawerCloseButtons(target, doc);
   installDuelReferenceSurfaceStyle(doc);
 }
