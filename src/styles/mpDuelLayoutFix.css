@@ -1,0 +1,18 @@
+@layer mpCore {
+  /* The duel action HUD is top-anchored on phones. Keep the player's spread
+     attached to that HUD instead of positioning it from the bottom of the
+     viewport, which creates a large gap on taller devices. */
+  @media (max-width: 640px) {
+    body.mp-game-active .spread-wrap {
+      top: 390px !important;
+      bottom: auto !important;
+    }
+  }
+
+  @media (max-width: 380px) and (max-height: 740px) {
+    body.mp-game-active .spread-wrap {
+      top: 343px !important;
+      bottom: auto !important;
+    }
+  }
+}
