@@ -147,6 +147,7 @@ export function pickPackUpgrade(upgradeKey,target = window){
     ? target.tlrMarketPurchase({kind:'upgrade',upgradeKey})
     : false;
   if(purchased!==true)return purchased;
+  if(typeof target.playSound==='function')target.playSound('pack_pick');
   if(typeof target.render==='function')target.render();
   returnToMarket(target);
   return true;
@@ -189,6 +190,7 @@ export function buyPack(packId,cost,target = window){
   if((persist.pool||0)<finalCost)return false;
   if(typeof target.tlrMarketPurchase==='function'&&target.tlrMarketPurchase({kind:'pack',packId,cost:finalCost})!==true)return false;
   if(market(target).markPackBought)market(target).markPackBought(packId,target);
+  if(typeof target.playSound==='function')target.playSound('pack_open');
   let revealed=false;
   const reveal=()=>{if(revealed)return;revealed=true;showPackContents(packId,target);};
   animatePackOpen(packId,reveal,target);
@@ -272,6 +274,7 @@ export function applyFiveStampTarget(cardId, target = window) {
   if (!persist.stampedFive.includes(cardId)) persist.stampedFive.push(cardId);
   if (Array.isArray(persist.stampedMajors)) persist.stampedMajors = persist.stampedMajors.filter(id => id !== cardId);
   if (typeof target.tlrSyncPersistToStore === 'function') target.tlrSyncPersistToStore();
+  if (typeof target.playSound === 'function') target.playSound('pack_pick');
   if (typeof target.render === 'function') target.render();
   if (typeof target.openShopMain === 'function') target.openShopMain();
   return true;
@@ -284,6 +287,7 @@ export function applyStampTarget(cardId, target = window) {
   if (!persist.stampedMajors.includes(cardId)) persist.stampedMajors.push(cardId);
   if (Array.isArray(persist.stampedFive)) persist.stampedFive = persist.stampedFive.filter(id => id !== cardId);
   if (typeof target.tlrSyncPersistToStore === 'function') target.tlrSyncPersistToStore();
+  if (typeof target.playSound === 'function') target.playSound('pack_pick');
   if (typeof target.render === 'function') target.render();
   if (typeof target.openShopMain === 'function') target.openShopMain();
   return true;

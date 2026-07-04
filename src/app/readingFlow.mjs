@@ -495,7 +495,7 @@ html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${roundTotal}$
 html+='</table><div class="rbtns">';
 if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}
 else{html+='<button onclick="endSession()">End Session</button>';}
-html+='</div></div>';playSound(pass?'pass':'fail');haptic(pass?[0,18,40,18,90]:[0,50]);showOverlay(html);render();}
+html+='</div></div>';playSound(pass?'store_open':'fail');haptic(pass?[0,18,40,18,90]:[0,50]);showOverlay(html);render();}
 function tlSyncBeforeScore(){tlrSyncPersistToStore()}
 
 export function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html;tlrArchitectureSync()}
