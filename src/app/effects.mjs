@@ -15,17 +15,18 @@ document.addEventListener('pointerdown', () => {
 
 
 const FILE_SOUNDS = Object.freeze({
-  purchase: new URL('../../assets/audio/freesound_gamestudio-drop-coin-384921.mp3', import.meta.url).href,
-  pack_pick: new URL('../../assets/audio/gargamel10-magic-basic-game-sound-effect-380301.mp3', import.meta.url).href,
-  pack_open: new URL('../../assets/audio/alexzavesa-magic-logo-version-1-491183.mp3', import.meta.url).href,
+  purchase: { src: new URL('../../assets/audio/freesound_gamestudio-drop-coin-384921.mp3', import.meta.url).href, gain: 0.28 },
+  pack_pick: { src: new URL('../../assets/audio/gargamel10-magic-basic-game-sound-effect-380301.mp3', import.meta.url).href, gain: 0.22 },
+  pack_open: { src: new URL('../../assets/audio/alexzavesa-magic-logo-version-1-491183.mp3', import.meta.url).href, gain: 0.2 },
 });
 
 function _playFileSound(type){
-  const src=FILE_SOUNDS[type];
-  if(!src || typeof Audio!=='function')return false;
+  const sound=FILE_SOUNDS[type];
+  if(!sound?.src || typeof Audio!=='function')return false;
   try{
-    const audio=new Audio(src);
-    audio.volume=Math.max(0,Math.min(1,typeof _sfxVol==='number'?_sfxVol:1));
+    const audio=new Audio(sound.src);
+    const master=typeof _sfxVol==='number'?_sfxVol:1;
+    audio.volume=Math.max(0,Math.min(1,master*(sound.gain ?? 0.25)));
     const done=()=>{try{audio.src='';audio.load?.();}catch(e){}};
     audio.addEventListener?.('ended',done,{once:true});
     audio.addEventListener?.('error',done,{once:true});
