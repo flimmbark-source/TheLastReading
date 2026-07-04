@@ -22,8 +22,8 @@
     --spv2-side: 22px;
     --spv2-title-h: 38px;
     --spv2-hud-top: 44px;
-    --spv2-hud-w: clamp(400px, 36vw, 760px);
-    --spv2-hud-h: 112px;
+    --spv2-hud-w: clamp(420px, 35vw, 690px);
+    --spv2-hud-h: 104px;
     --spv2-card-w: clamp(96px, 7.4vw, 190px);
     --spv2-card-h: calc(var(--spv2-card-w) * 1.5);
     --spv2-slot-w: var(--spv2-card-w);
@@ -368,11 +368,11 @@
   body.single-player-v2 .spread-actions {
     position: fixed;
     z-index: 27;
-    top: 46dvh;
+    top: 47dvh;
     left: 50%;
     right: auto;
     bottom: auto;
-    width: min(90vw, calc(var(--spv2-slot-w) * 7 + 260px));
+    width: var(--spv2-action-rail-w, min(86vw, calc(var(--spv2-slot-w) * 7 + 320px)));
     transform: translate(-50%, -50%);
     display: flex;
     justify-content: space-between;
@@ -386,26 +386,51 @@
   /* Centered five-card fan; the spread is the containing block for its slots */
   html body.single-player-v2.generated-sheet-ready .spread {
     position: fixed;
-    top: 46dvh;
+    top: 46.5dvh;
     left: 50%;
     right: auto;
     bottom: auto;
-    width: calc(var(--spv2-slot-w) * 7);
+    width: calc(var(--spv2-slot-w) * 7.15);
     height: calc(var(--spv2-slot-h) + 44px);
     transform: translate(-50%, -50%);
     overflow: visible;
   }
 
-  /* All slots: absolute at the spread's center, sized to match hand cards */
+  /* All slots: absolute at the spread's center, sized to match hand cards. */
   html body.single-player-v2.generated-sheet-ready .spread .slot {
     position: absolute;
     top: 12px;
     left: 50%;
-    width: var(--spv2-slot-w);
-    height: var(--spv2-slot-h);
-    flex: 0 0 var(--spv2-slot-w);
+    width: var(--spv2-card-w);
+    height: var(--spv2-card-h);
+    aspect-ratio: 2 / 3;
+    flex: 0 0 var(--spv2-card-w);
     margin-left: 0;
     transform-origin: 50% 90%;
+  }
+
+  /* Placed cards keep the same explicit dimensions as hand cards. Avoid
+     inheriting the older fill-the-slot rules that can vertically stretch the
+     rendered card art if the ornate slot frame changes size or padding. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot > .card {
+    box-sizing: border-box;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--spv2-card-w);
+    height: var(--spv2-card-h);
+    min-width: var(--spv2-card-w);
+    min-height: var(--spv2-card-h);
+    max-width: var(--spv2-card-w);
+    max-height: var(--spv2-card-h);
+    aspect-ratio: 2 / 3;
+    margin: 0;
+    translate: -50% -50%;
+  }
+
+  /* Hide legacy spread position numbers; the ornate slot art carries the layout. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot .num {
+    display: none;
   }
 
   /* Five-card fan — translateX percentages are relative to the slot width,
@@ -421,10 +446,10 @@
     --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
-    transform: translateX(-50%) scale(1.025);
+    transform: translateX(-50%);
     z-index: 3;
-    --spv2-contact-shadow: 0 7px 5px rgba(0,0,0,.82), 0 19px 22px rgba(0,0,0,.62);
-    box-shadow: var(--spv2-contact-shadow);
+    --spv2-contact-shadow: none;
+    box-shadow: none;
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
     transform: translateX(68%) translateY(6px) rotate(4deg);
@@ -477,17 +502,18 @@
   body.single-player-v2 #constellationPill { z-index: 29; }
 
   /* Generated-sheet-ready variable overrides and layout refinements.
-     Slots grow past the hand-card size and the utility medallions anchor to
-     the hand-dock banner's ends (banner art is 999x207, so width = 4.83x the
-     rendered height). */
+     Slots intentionally match the live card size, while utility medallions
+     anchor just outside the hand-dock banner's edges (banner art is 999x207,
+     so width = 4.83x the rendered height). */
   html body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 14px;
-    --spv2-hud-h: clamp(132px, 17dvh, 164px);
-    --spv2-hand-clearance: 32dvh;
-    --spv2-slot-w: calc(var(--spv2-card-w) * 1.5);
+    --spv2-hud-h: clamp(116px, 14.5dvh, 142px);
+    --spv2-hand-clearance: 27dvh;
+    --spv2-slot-w: var(--spv2-card-w);
     --spv2-slot-h: calc(var(--spv2-slot-w) * 1.5);
-    --spv2-dock-art-h: clamp(250px, 19.5dvh, 290px);
+    --spv2-dock-art-h: clamp(102px, 8.25dvh, 123px);
     --spv2-dock-half: calc(var(--spv2-dock-art-h) * 2.42);
+    --spv2-action-rail-w: min(86vw, calc(var(--spv2-slot-w) * 7 + 320px));
   }
   body.single-player-v2.generated-sheet-ready #titleWrap {
     height: var(--spv2-title-h);
@@ -504,6 +530,7 @@
   body.single-player-v2.generated-sheet-ready .actions {
     top: auto;
     bottom: max(24px, 3dvh);
+    transform: none;
   }
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready .actions button {
@@ -511,19 +538,22 @@
     height: 50px;
     min-width: 0;
   }
-  /* Utility medallions tuck in under the ends of the hand-dock banner:
-     Menu + Archives under its left wing, Scoring + Abilities under its right.
-     max() keeps them on-screen when the banner is wider than the viewport. */
+  /* Utility medallions stay on the bottom edge while using the same columns as
+     the table action medallions: Menu + Archives under Discard, Scoring +
+     Abilities under Purge. */
   body.single-player-v2.generated-sheet-ready #menuBtn {
-    left: max(14px, calc(50% - var(--spv2-dock-half) + 20px));
+    left: max(14px, calc(50% - var(--spv2-action-rail-w) / 2 - 116px));
     right: auto;
   }
   html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    left: max(72px, calc(50% - var(--spv2-dock-half) + 78px));
+    top: auto;
+    bottom: max(24px, 3dvh);
+    left: max(72px, calc(50% - var(--spv2-action-rail-w) / 2 - 58px));
     right: auto;
+    transform: none;
   }
   body.single-player-v2.generated-sheet-ready .actions {
-    right: max(14px, calc(50% - var(--spv2-dock-half) + 20px));
+    right: max(14px, calc(50% - var(--spv2-action-rail-w) / 2 - 116px));
     left: auto;
     gap: 8px;
   }
@@ -537,16 +567,16 @@
     display: none;
   }
   body.single-player-v2.generated-sheet-ready .handDock {
-    height: 32dvh;
-    bottom: 7.5dvh;
+    height: 16dvh;
+    bottom: 4.5dvh;
     align-items: flex-end;
     background-position: center bottom calc(2dvh - 6px);
     background-size: auto var(--spv2-dock-art-h);
     background-repeat: no-repeat;
   }
   body.single-player-v2.generated-sheet-ready .handDock .hand {
-    height: 29dvh;
-    --track-spacing: 6.5deg;
+    height: 25.5dvh;
+    --track-spacing: 7.25deg;
     --track-radius: 700px;
     transform: translateY(0);
   }
@@ -555,8 +585,8 @@
     height: var(--spv2-card-h);
   }
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
-    bottom: 28.5dvh;
-    height: 7dvh;
+    bottom: 24.5dvh;
+    height: 6.5dvh;
   }
 
   /* Hide the drawer pull tabs — desktop opens the same drawers through the
@@ -778,6 +808,38 @@
   html body.single-player-v2.generated-sheet-ready #discardBtn::after { content: "Discard"; }
   html body.single-player-v2.generated-sheet-ready #purgeBtn::after { content: "Purge"; }
 
+  /* Discards-left count badge — desktop uses the same proven badge treatment
+     as mobile so the remaining count sits in a small blue circle on Discard. */
+  html body.single-player-v2.generated-sheet-ready #spv2DiscardBadge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 19px;
+    height: 19px;
+    padding: 0 4px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    border: 1px solid rgba(196, 224, 255, .8);
+    background: radial-gradient(circle at 40% 32%, #6aa8ee, #1b4d99 78%);
+    color: #fff;
+    font: 800 11px/1 system-ui, sans-serif;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .55),
+      inset 0 1px 0 rgba(255, 255, 255, .25);
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #discardBtn:disabled #spv2DiscardBadge {
+    border-color: rgba(202, 202, 202, .62);
+    background: radial-gradient(circle at 40% 32%, #9a9a9a, #4b4b4b 78%);
+    color: #e2e2e2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .72);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .48),
+      inset 0 1px 0 rgba(255, 255, 255, .14);
+  }
+
   /* Make an available discard action visibly brighter than its disabled state
      (desktop mirror of the mobile compat rule) */
   html body.single-player-v2.generated-sheet-ready #discardBtn:not(:disabled) {
@@ -793,6 +855,72 @@
       saturate(1.28)
       drop-shadow(0 0 8px rgba(255,220,132,.88))
       drop-shadow(0 0 14px rgba(85,156,255,.72));
+  }
+
+
+  /* Modern game-readability pass: separate the core play lanes, make the
+     center objective feel intentional, and reserve high-contrast glows for
+     actionable state instead of all decorative chrome competing equally. */
+  html body.single-player-v2.generated-sheet-ready::after {
+    content: "";
+    position: fixed;
+    z-index: 1;
+    left: 18vw;
+    right: 18vw;
+    top: 20dvh;
+    bottom: 21dvh;
+    border-radius: 50%;
+    background:
+      radial-gradient(ellipse at center, rgba(218, 168, 82, .11) 0 1px, transparent 62%),
+      radial-gradient(ellipse at center, transparent 42%, rgba(199, 143, 55, .18) 43%, transparent 45%),
+      radial-gradient(ellipse at center, rgba(18, 13, 10, .32), transparent 68%);
+    box-shadow: inset 0 0 72px rgba(0,0,0,.38);
+    pointer-events: none;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread-wrap {
+    position: fixed;
+    inset: 0;
+    z-index: 24;
+    pointer-events: none;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread {
+    pointer-events: auto;
+  }
+
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 10px;
+    background: radial-gradient(ellipse at center, rgba(255, 215, 124, .18), transparent 64%);
+    opacity: 0;
+    transition: opacity .18s ease, transform .18s ease;
+    transform: scale(.96);
+    pointer-events: none;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:empty::after,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.drop-target::after,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-target-slot::after {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+
+  html body.single-player-v2.generated-sheet-ready #discardBtn:disabled,
+  html body.single-player-v2.generated-sheet-ready #purgeBtn:disabled {
+    opacity: .54;
+    filter: grayscale(.35) brightness(.78);
+  }
+
+  html body.single-player-v2.generated-sheet-ready #purgeBtn:not(:disabled) {
+    box-shadow:
+      0 0 0 2px rgba(211,185,255,.72),
+      0 0 16px rgba(148,101,255,.58),
+      0 0 30px rgba(255,183,84,.26);
   }
 
   /* Threshold progress bar is baked into the mobile art at mobile pill

@@ -86,7 +86,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     --spv2-contact-shadow:
       0 7px 5px rgba(0,0,0,.82),
       0 19px 22px rgba(0,0,0,.62);
-    box-shadow: var(--spv2-contact-shadow) !important;
+    box-shadow: var(--spv2-contact-shadow);
   }
 
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {

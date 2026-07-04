@@ -1,8 +1,10 @@
 @layer handDragFix {
-/* Keep the hand above the score pills (z-index:25) while leaving references,
-   modals, and tutorials above it. */
+/* Keep the hand above score/spread play layers while leaving references,
+   modals, and tutorials above it. Selecting a card reveals #scorePreview,
+   which intentionally boosts .spread-wrap to 10060; the hand must sit just
+   above that preview/spread tier so selected hand cards do not tuck under it. */
 .handDock {
-  z-index: 26 !important;
+  z-index: 10065 !important;
 }
 
 /* Active hand movement must follow the pointer directly.
