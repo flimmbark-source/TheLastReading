@@ -20,16 +20,6 @@ function fmtBonus(v){return '+'+Number(v).toFixed(2).replace(/\.?0+$/,'');}
 
 export function installGestureDrawers(target = window){
   if(!target || target.__tlrGestureDrawersInstalled)return;
-
-  // Legacy inline migration guard. The inline drawer block runs before the
-  // module script today; if it is still present, it has already bound pointer
-  // listeners, so this module must not double-bind. When that block is removed,
-  // this module activates automatically.
-  if(typeof target.tlrTogglePullTab === 'function' && !target.tlrTogglePullTab.__tlrGestureDrawersOwned){
-    target.__tlrLegacyInlineDrawersDetected=true;
-    return;
-  }
-
   target.__tlrGestureDrawersInstalled=true;
 
   function closeOthers(id){
@@ -54,8 +44,6 @@ export function installGestureDrawers(target = window){
       target.requestAnimationFrame?.(fitDrawerHeights);
     }
   }
-  togglePullTab.__tlrGestureDrawersOwned=true;
-
   function moveContentIntoDesks(){
     for(const id of Object.keys(LABELS)){
       const desk=document.getElementById(id+'PullDesk');

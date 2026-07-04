@@ -1,4 +1,5 @@
 import { ADVENTURE_ITEMS } from '../data/adventure/adventureContentV3.mjs';
+import { getStatus } from '../data/adventure/statuses.mjs';
 
 const STYLE_ID = 'adventure-item-popup-style';
 const ITEM_LIST = Object.freeze(Object.values(ADVENTURE_ITEMS));
@@ -122,13 +123,13 @@ function ensureStyle(doc) {
     .adv-inventory-icon{display:flex!important;align-items:center;justify-content:center;max-width:none!important;overflow:visible!important;font-size:0!important}
     #relicRack.adv-inventory-rack .adv-inventory-kind{display:none!important}
     .adv-inventory-slot .adv-item-art{pointer-events:none}
-    .adv-item-callout{z-index:10020;max-width:240px}
-    .adv-item-callout .relic-callout-name{display:flex;align-items:center}
-    .adv-item-callout__timing,.adv-item-callout__hint{margin-top:6px;color:#a99878;font:600 10px/1.35 system-ui,sans-serif}
+    .adv-item-callout,.adv-status-callout{z-index:10020;max-width:240px}
+    .adv-item-callout .relic-callout-name,.adv-status-callout .relic-callout-name{display:flex;align-items:center}
+    .adv-item-callout__timing,.adv-item-callout__hint,.adv-status-callout__hint{margin-top:6px;color:#a99878;font:600 10px/1.35 system-ui,sans-serif}
     .adv-item-callout__hint{color:#c5a66d}
     @media(max-width:640px){
       .adv-item-art--compact{width:29px;height:29px}.adv-item-art--compact .adv-item-art__glyph{font-size:18px}
-      .adv-item-callout{max-width:min(240px,calc(100vw - 16px))}
+      .adv-item-callout,.adv-status-callout{max-width:min(240px,calc(100vw - 16px))}
     }
   `;
   doc.head.appendChild(style);
@@ -207,11 +208,17 @@ function closeItemCallout(target) {
   target.__tlrAdventureItemPopup = null;
 }
 
+function closeStatusCallout(target) {
+  target.document?.querySelectorAll('.relic-callout.adv-status-callout').forEach(element => element.remove());
+  target.__tlrAdventureStatusPopup = null;
+}
+
 function positionCallout(target, callout, button) {
   const rect = button.getBoundingClientRect();
   callout.style.top = `${rect.bottom + 6}px`;
   callout.style.left = '0px';
-  target.requestAnimationFrame(() => {
+  const raf = typeof target.requestAnimationFrame === 'function' ? target.requestAnimationFrame.bind(target) : fn => setTimeout(fn, 0);
+  raf(() => {
     const width = callout.offsetWidth;
     const height = callout.offsetHeight;
     const margin = 8;
@@ -277,10 +284,36 @@ export function installAdventureItemPopups(target = window) {
   target.__tlrAdventureItemPopupsModeObserver = modeObserver;
 
   doc.addEventListener('pointerdown', event => {
-    const callout = doc.querySelector('.relic-callout.adv-item-callout');
-    if (!callout || callout.contains(event.target) || event.target.closest?.('.adv-inventory-slot')) return;
-    closeItemCallout(target);
+    const itemCallout = doc.querySelector('.relic-callout.adv-item-callout');
+    const statusCallout = doc.querySelector('.relic-callout.adv-status-callout');
+    const inContextSurface = event.target.closest?.('.adv-inventory-slot,.adv-status[data-status-id],.adv-item-callout,.adv-status-callout');
+    if (inContextSurface) return;
+    if (itemCallout) closeItemCallout(target);
+    if (statusCallout) closeStatusCallout(target);
   }, true);
+
+  doc.addEventListener('click', event => {
+    const button = event.target.closest?.('.adv-status[data-status-id]');
+    if (!button) return;
+    const status = getStatus(button.dataset.statusId);
+    if (!status) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    const current = target.__tlrAdventureStatusPopup;
+    closeStatusCallout(target);
+    closeItemCallout(target);
+    if (current?.id === status.id) return;
+
+    const callout = doc.createElement('div');
+    callout.className = 'relic-callout adv-status-callout';
+    callout.innerHTML = `<div class="relic-callout-name"><span>${esc(status.name)}</span></div>
+      <div class="relic-callout-desc">${esc(status.description)}</div>
+      <div class="adv-status-callout__hint">Status effect</div>`;
+    doc.body.appendChild(callout);
+    target.__tlrAdventureStatusPopup = { id: status.id };
+    positionCallout(target, callout, button);
+  });
 
   const attach = () => {
     const originalUse = target.tlrAdventureV3UseItem;
@@ -296,6 +329,7 @@ export function installAdventureItemPopups(target = window) {
 
       const current = target.__tlrAdventureItemPopup;
       closeItemCallout(target);
+      closeStatusCallout(target);
       if (current?.index === index) return true;
 
       doc.querySelectorAll('.relic-callout').forEach(element => element.remove());

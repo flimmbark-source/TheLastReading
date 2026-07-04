@@ -1,3 +1,4 @@
+@layer drawers {
 /* Extracted from index.html (Phase 17). Files split in original rule order;
    link order in index.html must stay base,spread,hand,cards,market,mobile,attic,drawers
    to preserve the cascade. Some sections span themes because order wins over purity. */
@@ -34,7 +35,7 @@
 #scoringPullDesk .ref.hidden,#abilitiesPullDesk .ref.hidden{display:block!important}
 #scoringPullDesk .ref table,#scoringPullDesk .ref td,#scoringPullDesk .ref th,#abilitiesPullDesk .ref table,#abilitiesPullDesk .ref td,#abilitiesPullDesk .ref th{color:#2a160a!important;border-color:rgba(77,45,18,.22)!important}
 #scoringPullDesk .ref .r,#scoringPullDesk .scoring-sheet .r,#scoringPullDesk .scoring-sheet .score-head,#scoringPullDesk .scoring-sheet .arcana-row td,#abilitiesPullDesk .ref .r{color:#5b3515!important}
-#menuPullDesk #settingsPanel{display:flex!important;position:relative!important;top:auto!important;left:auto!important;min-width:min(260px,86vw)!important;margin:0 auto!important;background:transparent!important;border:none!important;border-radius:0!important;box-shadow:none!important;color:#e4c189!important;padding:0!important;z-index:auto!important}
+#menuPullDesk #settingsPanel{display:flex!important;position:relative!important;top:auto!important;left:auto!important;min-width:min(260px,86vw);margin:0 auto!important;background:transparent!important;border:none!important;border-radius:0;box-shadow:none!important;color:#e4c189!important;padding:0!important;z-index:auto!important}
 #menuPullDesk #settingsPanel.hidden{display:flex!important}
 #menuPullDesk #settingsPanel .settings-title{color:#f0d58a!important;border-bottom-color:rgba(228,193,137,.22)!important}
 #menuPullDesk #settingsPanel .settings-action{background:rgba(180,140,90,.18)!important;border-color:rgba(180,140,90,.45)!important;color:#e6c89a!important}
@@ -58,16 +59,16 @@
 .tlr-pull-tab{top:var(--tlr-drawer-h)!important}
 @media(max-width:640px){.tlr-pull-desk{padding:9px 7px 11px!important}}
 #scoringPullDesk .scoring-sheet{display:block!important;width:fit-content!important;max-width:100%!important;margin:0 auto!important;padding:0!important}
-#scoringPullDesk .scoring-sheet table{width:auto!important;max-width:100%!important;border-collapse:collapse!important}
+#scoringPullDesk .scoring-sheet table{width:auto!important;max-width:100%!important;border-collapse:collapse}
 #scoringPullDesk .scoring-sheet td{font-size:10.5px!important;line-height:1.08!important;padding:1px 4px!important;white-space:nowrap!important}
 #scoringPullDesk .scoring-sheet .m{padding-left:6px!important;color:#6b4b20!important;font-size:9.6px!important}
-#scoringPullDesk .scoring-sheet .score-head{font-size:8.5px!important;letter-spacing:.06em!important}
+#scoringPullDesk .scoring-sheet .score-head{font-size:8.5px!important;letter-spacing:.06em}
 #scoringPullDesk .scoring-sheet .arcana-row td{font-size:9px!important;letter-spacing:.08em!important;padding-top:5px!important;padding-bottom:1px!important}
 #scoringPullDesk .scoring-sheet .r .chips{width:42px!important}
 #scoringPullDesk .scoring-sheet .r .mult{width:32px!important;margin-left:4px!important}
 #abilitiesPullDesk .ref{max-width:min(94vw,720px)!important;padding:0!important}
-#abilitiesPullDesk table{width:100%!important;border-collapse:collapse!important;font-size:11.5px!important;line-height:1.2!important}
-#abilitiesPullDesk td{padding:3px 5px!important;vertical-align:top!important;white-space:normal!important}
+#abilitiesPullDesk table{width:100%!important;border-collapse:collapse;font-size:11.5px!important;line-height:1.2!important}
+#abilitiesPullDesk td{padding:3px 5px!important;vertical-align:top;white-space:normal!important}
 #abilitiesPullDesk td:first-child{width:86px!important;font-weight:700!important;white-space:nowrap!important;color:#3a1a06!important}
 #menuPullDesk #settingsPanel{max-width:min(92vw,300px)!important;gap:9px!important}
 
@@ -75,3 +76,4 @@
    When it is open, keep the content inside the drawer and let the drawer scroll
    instead of letting the settings controls spill over the table. */
 #menuPullDesk.tlr-pull-desk{overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain}
+}

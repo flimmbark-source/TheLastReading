@@ -1,0 +1,27 @@
+@layer spv2.components {
+  @media (max-width: 640px) {
+    /* Center the active constellation between the left and right utility pairs,
+       directly beneath the Score and Threshold panels and vertically aligned
+       with the surrounding controls. */
+    html body.single-player-v2.generated-sheet-ready #constellationPill {
+      position: fixed !important;
+      top: calc(
+        var(--spv2-hud-top) +
+        var(--spv2-compact-hud-h) +
+        .35dvh +
+        clamp(6px,1.55vw,12px)
+      ) !important;
+      left: 50% !important;
+      right: auto !important;
+      bottom: auto !important;
+      width: 34px !important;
+      height: 34px !important;
+      min-width: 34px !important;
+      min-height: 34px !important;
+      margin: 0 !important;
+      transform: translateX(-50%) !important;
+      z-index: 45 !important;
+    }
+
+  }
+}

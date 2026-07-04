@@ -1,12 +1,28 @@
+@layer classicCore {
 /* ═══════════════════════════════════════════════════════════════
    PS1 / LOFI DARK AESTHETIC
    Inspired by Inscryption · Lunacid · Dread Delusion · You Must Feed It
-   ═══════════════════════════════════════════════════════════════ */
+   ═══════════════════════════════════════════════════════════════
+
+   Shares the classicCore layer with hand.css/market.css/mobile.css/
+   attic.css -- see market.css's header comment for the full cross-file
+   audit. This file's own two real external touches: needs to keep
+   LOSING a normal-tier tie to titleWrap.css's mode-gated filter:blur()
+   on .score-stack/#titleWrap (titleWrap.css is after legacy, this file
+   is in classicCore, also after legacy but earlier than titleWrap --
+   still satisfied), and needs to keep WINNING an important-tier tie
+   against performance.css's #roomAmbient{animation:none} mobile
+   override (performance.css is after legacy too, later than
+   classicCore -- earlier layer wins important ties, so this still
+   wins). mpGame.css's .card.mp-interaction, which used to depend on
+   staying co-resident with this file for a dead-code specificity tie,
+   was deleted outright instead of moved here -- see market.css's
+   header comment. */
 
 /* ── Persistent edge vignette ──────────────────────────────────────────────
-   Using html:: not body:: — body has overflow-x:hidden on mobile which
-   causes iOS Safari to incorrectly clip position:fixed pseudo-elements. */
-html::before {
+   Classic-mode only. SPv2 owns its own table lighting and should not inherit
+   a second full-screen vignette from the legacy visual treatment. */
+html:not(:has(body.single-player-v2))::before {
   content: '';
   position: fixed;
   top: 0; right: 0; bottom: 0; left: 0;
@@ -30,13 +46,14 @@ html::before {
   96.5%        { opacity: .93  }
   97%          { opacity: 1    }
 }
-body {
+body:not(.single-player-v2) {
   color: #bea67c !important;
   animation: ps1Flicker 14s ease-in-out infinite;
 }
 
-/* ── Stronger breath-vignette gradient (JS still controls opacity) ── */
-#breathVignette {
+/* ── Stronger breath-vignette gradient (JS still controls opacity) ──
+   Classic-mode only; SPv2 uses its own restrained table vignette. */
+body:not(.single-player-v2) #breathVignette {
   background: radial-gradient(
     ellipse 73% 67% at 50% 42%,
     transparent 8%,
@@ -86,48 +103,33 @@ body {
   border-bottom-color: #3a2610 !important;
 }
 
-/* ── Spread slots: darker, more dungeon-ish ── */
-.slot {
+/* ── Spread slots: darker, more dungeon-ish ──
+   Classic-only: SPv2 owns its slot art and interaction states. */
+body:not(.single-player-v2) .slot {
   background: rgba(0,0,0,.28) !important;
   border-color: #2e2012 !important;
 }
-.slot.empty:hover, .slot.target {
+body:not(.single-player-v2) .slot.empty:hover,
+body:not(.single-player-v2) .slot.target {
   background: rgba(42,74,40,.20) !important;
   border-color: #496946 !important;
 }
 
-#handSwipeZone {
-  touch-action: none;
-}
-
 /* ── Float the hand above the bottom edge ──────────────────────────────────
-   bottom: 0 pins the dock to the screen edge, making cards look like they're
-   sinking out of frame. Lifting it reveals the table background below, giving
-   the PS1 "cards floating in the scene" feel (cf. Inscryption).
-   Three things move together: the dock itself, the swipe-capture zone that
-   sits just above it, and body's bottom padding that keeps the spread clear.
-   Direct px values are used instead of a CSS variable because var() inside
-   !important can misbehave on some mobile browsers. */
-
-.handDock {
+   Classic-only: SPv2 owns its dock placement and artwork. */
+body:not(.single-player-v2) .handDock {
   bottom: 36px !important;
   background: linear-gradient(transparent, rgba(0,0,0,.70)) !important;
 }
-.hand-swipe-zone {
-  bottom: 233px !important; /* 197px dock + 36px float */
-}
-body {
+body:not(.single-player-v2) {
   padding-bottom: 238px !important; /* 202px + 36px */
 }
 
 @media (max-width: 640px) {
-  .handDock {
+  body:not(.single-player-v2) .handDock {
     bottom: 24px !important;
   }
-  .hand-swipe-zone {
-    bottom: 176px !important; /* 152px dock + 24px float */
-  }
-  body {
+  body:not(.single-player-v2) {
     padding-bottom: 181px !important; /* 157px + 24px */
   }
 
@@ -154,7 +156,6 @@ body {
 
 /* ── Desaturate self-contained UI regions (no stacking-context conflict) ── */
 .score-stack { filter: saturate(.68); }
-#relicRack   { filter: saturate(.70) contrast(1.03); }
 #titleWrap   { filter: saturate(.74); }
 #mainMenu    { filter: saturate(.72) contrast(1.04); }
 
@@ -170,4 +171,5 @@ h1 {
   font-family: 'VT323', 'Courier New', monospace;
   font-size: 18px;
   letter-spacing: .05em;
+}
 }

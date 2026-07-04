@@ -1,0 +1,944 @@
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
+/* ─── Desktop full-screen layout ─────────────────────────────────────────── */
+/* On wide screens the game uses the entire viewport with the V2 (generated    */
+/* sheet) styling: centered HUD at the top, the five-slot fan mid-table with   */
+/* the Discard/Purge medallions flanking it, the hand fan across the bottom,   */
+/* and utility medallions in the lower corners. Sizing rides on the desktop    */
+/* variables below instead of the mobile vw/dvh ramps.                         */
+@media (min-width: 641px) {
+  html {
+    background: #030201;
+  }
+
+  body.single-player-v2 {
+    position: fixed;
+    inset: 0;
+    width: auto;
+    height: auto;
+    overflow: hidden;
+    /* Desktop layout variables. Card size drives the slot fan and hand;
+       the HUD is a centered fixed-width block instead of an edge-to-edge bar. */
+    --spv2-side: 22px;
+    --spv2-title-h: 38px;
+    --spv2-hud-top: 44px;
+    --spv2-hud-w: clamp(420px, 35vw, 690px);
+    --spv2-hud-h: 104px;
+    --spv2-card-w: clamp(96px, 7.4vw, 190px);
+    --spv2-card-h: calc(var(--spv2-card-w) * 1.5);
+    --spv2-slot-w: var(--spv2-card-w);
+    --spv2-slot-h: var(--spv2-card-h);
+    --spv2-hand-clearance: 240px;
+    padding: 0;
+    background: url('/assets/background.webp') center / cover no-repeat;
+  }
+
+  html body.single-player-v2.generated-sheet-ready::before {
+    content: none;
+    display: none;
+  }
+
+  /* Hide plain title text — the wide table art carries the header zone */
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
+    content: none;
+  }
+
+  /* Title bar becomes a thin decorative strip */
+  body.single-player-v2 #titleWrap {
+    position: fixed;
+    z-index: 28;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--spv2-title-h);
+    pointer-events: none;
+    filter: none;
+    overflow: hidden;
+  }
+  body.single-player-v2 #titleWrap::before {
+    content: "THE LAST READING";
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #b79761;
+    font: 700 17px/1 Georgia, serif;
+    letter-spacing: .11em;
+    text-shadow: 0 2px 8px #000;
+  }
+  body.single-player-v2 #titleRow {
+    position: static;
+    pointer-events: none;
+  }
+  body.single-player-v2 #titleContent {
+    position: static;
+  }
+
+  /* Menu button becomes a floating circular medallion (lower-left corner) */
+  body.single-player-v2 #menuBtn {
+    display: block !important;
+    position: fixed;
+    z-index: 31;
+    top: auto;
+    bottom: max(24px, 3dvh);
+    left: var(--spv2-side);
+    right: auto;
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid #8f6a34;
+    background: radial-gradient(circle at 45% 38%, #342414, #100b08 70%);
+    color: #dfbd73;
+    font-size: 20px;
+    pointer-events: auto;
+    box-shadow: 0 7px 20px rgba(0,0,0,.55), inset 0 0 0 3px rgba(183,139,67,.08);
+  }
+  body.single-player-v2 #settingsPanel { z-index: 70; pointer-events: auto; }
+
+  /* HUD: centered fixed-width block with large Score and Threshold panels */
+  body.single-player-v2 .score-stack {
+    position: fixed;
+    z-index: 25;
+    top: var(--spv2-hud-top);
+    left: calc(50% - var(--spv2-hud-w) / 2);
+    right: auto;
+    width: var(--spv2-hud-w);
+    height: var(--spv2-hud-h);
+    transform: none;
+    display: grid;
+    grid-template-columns: 21fr 29fr 29fr 21fr;
+    gap: 0;
+    align-items: stretch;
+    justify-content: stretch;
+    flex-wrap: nowrap;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #8e6832;
+    border-radius: 17px;
+    background: #0d0a08;
+    box-shadow: 0 9px 28px rgba(0,0,0,.62), inset 0 0 0 2px rgba(205,155,73,.06);
+    filter: none;
+  }
+  body.single-player-v2 .score-stack > .pill,
+  body.single-player-v2 .score-stack > .th-pill-wrap {
+    order: initial;
+    min-width: 0;
+    width: auto;
+    height: 100%;
+    margin: 0;
+    transform: none;
+    border-right: 1px solid rgba(153,111,51,.38);
+  }
+  body.single-player-v2 .score-stack > :last-child { border-right: 0; }
+  body.single-player-v2 .score-stack .pill {
+    position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+    padding: 12px 3px 10px;
+    align-items: center;
+    justify-content: center;
+    align-content: center;
+    gap: 7px;
+    grid-template-columns: none;
+    background-image: none;
+    background-color: transparent;
+    text-align: center;
+    border: 0;
+    border-radius: 0;
+    color: #c4ab7c;
+  }
+  body.single-player-v2 .score-stack .score-pill {
+    background: radial-gradient(circle at 50% 88%, rgba(213,151,44,.30), transparent 70%);
+    box-shadow: inset 0 -2px 0 rgba(234,181,79,.45);
+  }
+  body.single-player-v2 .score-stack .threshold-pill {
+    background: radial-gradient(circle at 50% 88%, rgba(116,84,197,.34), transparent 70%);
+    box-shadow: inset 0 -2px 0 rgba(147,113,224,.48);
+  }
+  body.single-player-v2 .spv2-label {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    color: #c2a979;
+    font: 700 10px/1 system-ui, sans-serif;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-overflow: clip;
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .pill .spv2-label {
+    display: block !important;
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    right: 6px;
+    height: 34px;
+    margin: 0;
+    padding-top: 10px;
+    box-sizing: border-box;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    border-radius: 9px 9px 4px 4px;
+    border-bottom: 1px solid rgba(227,190,114,.3);
+    font: 700 18px/1 'Cinzel', Georgia, serif;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 3px #000;
+    z-index: 1;
+    pointer-events: none;
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill .spv2-label {
+    color: #e7c98c;
+    background: linear-gradient(180deg, #241809, #150d05);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,.55);
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill .spv2-label {
+    color: #d2c2ff;
+    background: linear-gradient(180deg, #1d1430, #110b1d);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,.55);
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill .spv2-label::before { content: "✦ "; }
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill .spv2-label::before { content: "⚖ "; }
+  body.single-player-v2 .score-stack .pill b {
+    display: block;
+    color: #efe5ce;
+    font-family: 'Cinzel', Georgia, serif;
+    font-weight: 700;
+    font-size: 31px;
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: .01em;
+    line-height: .9;
+    text-shadow: 0 2px 8px #000;
+  }
+  body.single-player-v2 .score-stack .score-pill b {
+    color: #ffd98c;
+    font-size: 36px;
+    text-shadow: 0 0 12px rgba(235,175,70,.32), 0 2px 8px #000;
+  }
+  body.single-player-v2 .score-stack .threshold-pill b {
+    color: #cfbfff;
+    font-size: 36px;
+    text-shadow: 0 0 12px rgba(145,107,224,.34), 0 2px 8px #000;
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill b,
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill b {
+    font-size: clamp(34px, 4.6dvh, 44px);
+    line-height: .9;
+  }
+  /* Live reading multiplier badge at the score number's upper corner
+     (mirrors the mobile rule; shown only above ×1) */
+  body.single-player-v2 #spv2ScoreMult {
+    position: absolute;
+    top: 42%;
+    left: 62%;
+    display: none;
+    color: #f2564a;
+    font: 800 15px/1 'Cinzel', Georgia, serif;
+    letter-spacing: .01em;
+    text-shadow: 0 0 7px rgba(242,86,74,.55), 0 2px 4px #000;
+    pointer-events: none;
+    z-index: 2;
+  }
+  body.single-player-v2 #spv2ScoreMult.show {
+    display: block;
+  }
+  body.single-player-v2 .th-pill-wrap {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    height: 100%;
+  }
+  body.single-player-v2 .spv2-threshold-progress {
+    position: absolute;
+    left: 14%;
+    right: 14%;
+    bottom: 12px;
+    height: 7px;
+    overflow: hidden;
+    border: 1px solid #6f5b9d;
+    border-radius: 999px;
+    background: #17111e;
+    box-shadow: inset 0 1px 3px #000;
+    pointer-events: none;
+  }
+  body.single-player-v2 .spv2-threshold-progress > span {
+    display: block;
+    width: calc(var(--spv2-progress, 0) * 100%);
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #6b4dbb, #ac8bf1);
+    transition: width .3s ease;
+  }
+  body.single-player-v2 .spv2-threshold-progress::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: calc(var(--spv2-progress, 0) * 100%);
+    width: 8px;
+    height: 8px;
+    border: 1px solid #e2d7ff;
+    background: #8e70d8;
+    transform: translate(-50%,-50%) rotate(45deg);
+    box-shadow: 0 0 7px rgba(194,168,255,.75);
+  }
+  body.single-player-v2 .spv2-threshold-progress.is-complete > span {
+    background: linear-gradient(90deg, #a87528, #f0c96e);
+  }
+
+  /* Scoring/Abilities become icon medallions at lower-right; Mulligan likewise */
+  body.single-player-v2 .actions {
+    position: fixed;
+    z-index: 31;
+    top: auto;
+    bottom: max(24px, 3dvh);
+    right: var(--spv2-side);
+    left: auto;
+    margin: 0;
+    display: flex;
+    gap: 8px;
+    pointer-events: auto;
+  }
+  /* drawers.css hides these globally — un-hide them for the desktop layout */
+  body.single-player-v2 #scoringBtn,
+  body.single-player-v2 #abilitiesBtn {
+    display: block !important;
+  }
+  body.single-player-v2 .actions button {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    padding: 0 4px;
+    border-radius: 50%;
+    border: 1px solid #8f6a34;
+    background: radial-gradient(circle at 45% 38%, #342414, #100b08 70%);
+    color: #dfbd73;
+    font-size: 0;
+    box-shadow: 0 7px 20px rgba(0,0,0,.55), inset 0 0 0 3px rgba(183,139,67,.08);
+  }
+  body.single-player-v2 #scoringBtn::before { content: "✦"; font-size: 19px; }
+  body.single-player-v2 #abilitiesBtn::before { content: "◉"; font-size: 18px; }
+  body.single-player-v2 #mullBtn::before { content: "↻"; font-size: 20px; }
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    background-color: transparent;
+    filter: var(--spv2-coin-shadow);
+  }
+
+  /* Archive button — JS-injected, needs full desktop positioning */
+  body.single-player-v2 #spv2ArchiveBtn {
+    position: fixed;
+    z-index: 31;
+    top: auto;
+    bottom: max(24px, 3dvh);
+    left: calc(var(--spv2-side) + 58px);
+    right: auto;
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid #8f6a34;
+    background: radial-gradient(circle at 45% 38%, #342414, #100b08 70%);
+    color: #dfbd73;
+    font-size: 0;
+    pointer-events: auto;
+    box-shadow: 0 7px 20px rgba(0,0,0,.55), inset 0 0 0 3px rgba(183,139,67,.08);
+  }
+  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    background-image: var(--spv2-option-archive-art);
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    border: 0;
+    box-shadow: none;
+    color: transparent;
+    filter: drop-shadow(0 5px 7px rgba(0,0,0,.78)) drop-shadow(0 2px 2px rgba(0,0,0,.6));
+  }
+
+  /* Discard/Purge medallions flank the centered slot fan at table height */
+  body.single-player-v2 .spread-actions {
+    position: fixed;
+    z-index: 27;
+    top: 47dvh;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    width: var(--spv2-action-rail-w, min(86vw, calc(var(--spv2-slot-w) * 7 + 320px)));
+    transform: translate(-50%, -50%);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0;
+    padding: 0;
+    pointer-events: none;
+  }
+  body.single-player-v2 .spread-actions button { pointer-events: auto; }
+
+  /* Centered five-card fan; the spread is the containing block for its slots */
+  html body.single-player-v2.generated-sheet-ready .spread {
+    position: fixed;
+    top: 46.5dvh;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    width: calc(var(--spv2-slot-w) * 7.15);
+    height: calc(var(--spv2-slot-h) + 44px);
+    transform: translate(-50%, -50%);
+    overflow: visible;
+  }
+
+  /* All slots: absolute at the spread's center, sized to match hand cards. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    width: var(--spv2-card-w);
+    height: var(--spv2-card-h);
+    aspect-ratio: 2 / 3;
+    flex: 0 0 var(--spv2-card-w);
+    margin-left: 0;
+    transform-origin: 50% 90%;
+  }
+
+  /* Placed cards keep the same explicit dimensions as hand cards. Avoid
+     inheriting the older fill-the-slot rules that can vertically stretch the
+     rendered card art if the ornate slot frame changes size or padding. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot > .card {
+    box-sizing: border-box;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--spv2-card-w);
+    height: var(--spv2-card-h);
+    min-width: var(--spv2-card-w);
+    min-height: var(--spv2-card-h);
+    max-width: var(--spv2-card-w);
+    max-height: var(--spv2-card-h);
+    aspect-ratio: 2 / 3;
+    margin: 0;
+    translate: -50% -50%;
+  }
+
+  /* Hide legacy spread position numbers; the ornate slot art carries the layout. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot .num {
+    display: none;
+  }
+
+  /* Five-card fan — translateX percentages are relative to the slot width,
+     so the fan scales with --spv2-card-w */
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
+    transform: translateX(-286%) translateY(16px) rotate(-8deg);
+    z-index: 1;
+    --spv2-contact-shadow: 0 5px 4px rgba(0,0,0,.70), 0 14px 17px rgba(0,0,0,.52);
+  }
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
+    transform: translateX(-168%) translateY(6px) rotate(-4deg);
+    z-index: 2;
+    --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
+  }
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
+    transform: translateX(-50%);
+    z-index: 3;
+    --spv2-contact-shadow: none;
+    box-shadow: none;
+  }
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
+    transform: translateX(68%) translateY(6px) rotate(4deg);
+    z-index: 2;
+    --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
+  }
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
+    transform: translateX(186%) translateY(16px) rotate(8deg);
+    z-index: 1;
+    --spv2-contact-shadow: 0 5px 4px rgba(0,0,0,.70), 0 14px 17px rgba(0,0,0,.52);
+  }
+
+  /* Interaction glows sit above the fan */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.drop-target,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-target-slot,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-picked-slot {
+    z-index: 5;
+  }
+
+  /* Hint polish: restrained rim + short halo over the fan's contact shadow
+     (desktop mirror of the mobile spreadHints treatment) */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-card:not(.drop-target):not(.ability-target-slot):not(.ability-picked-slot),
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-complete:not(.drop-target):not(.ability-target-slot):not(.ability-picked-slot),
+  html body.single-player-v2.generated-sheet-ready #spread .slot.hint-multi:not(.drop-target):not(.ability-target-slot):not(.ability-picked-slot) {
+    box-shadow:
+      0 0 0 1px rgba(var(--hint-rgb,232,196,96),.55),
+      0 0 10px rgba(var(--hint-rgb,232,196,96),.30),
+      var(--spv2-contact-shadow);
+  }
+
+  /* HandDock. The swipe surface sits BELOW the dock (mobile-parity pointer
+     contract from compat.css): empty dock space passes through to the swipe
+     zone while every card stays directly clickable and draggable. */
+  body.single-player-v2 .handDock {
+    z-index: 26;
+    height: 176px;
+    bottom: 12px;
+    background: linear-gradient(transparent, rgba(0,0,0,.78));
+    pointer-events: none;
+  }
+  body.single-player-v2 .handDock .hand {
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
+  }
+  body.single-player-v2 .handDock .hand .card {
+    pointer-events: auto;
+  }
+  body.single-player-v2 .hand-swipe-zone { z-index: 25; }
+  body.single-player-v2 #constellationPill { z-index: 29; }
+
+  /* Generated-sheet-ready variable overrides and layout refinements.
+     Slots intentionally match the live card size, while utility medallions
+     anchor just outside the hand-dock banner's edges (banner art is 999x207,
+     so width = 4.83x the rendered height). */
+  html body.single-player-v2.generated-sheet-ready {
+    --spv2-hud-top: 14px;
+    --spv2-hud-h: clamp(116px, 14.5dvh, 142px);
+    --spv2-hand-clearance: 27dvh;
+    --spv2-slot-w: var(--spv2-card-w);
+    --spv2-slot-h: calc(var(--spv2-slot-w) * 1.5);
+    --spv2-dock-art-h: clamp(102px, 8.25dvh, 123px);
+    --spv2-dock-half: calc(var(--spv2-dock-art-h) * 2.42);
+    --spv2-action-rail-w: min(86vw, calc(var(--spv2-slot-w) * 7 + 320px));
+  }
+  body.single-player-v2.generated-sheet-ready #titleWrap {
+    height: var(--spv2-title-h);
+  }
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    top: var(--spv2-hud-top);
+    left: calc(50% - var(--spv2-hud-w) / 2);
+    right: auto;
+    width: var(--spv2-hud-w);
+    height: var(--spv2-hud-h);
+    border-radius: 17px;
+  }
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready .actions {
+    top: auto;
+    bottom: max(24px, 3dvh);
+    transform: none;
+  }
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready .actions button {
+    width: 50px;
+    height: 50px;
+    min-width: 0;
+  }
+  /* Utility medallions stay on the bottom edge while using the same columns as
+     the table action medallions: Menu + Archives under Discard, Scoring +
+     Abilities under Purge. */
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    left: max(14px, calc(50% - var(--spv2-action-rail-w) / 2 - 116px));
+    right: auto;
+  }
+  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    top: auto;
+    bottom: max(24px, 3dvh);
+    left: max(72px, calc(50% - var(--spv2-action-rail-w) / 2 - 58px));
+    right: auto;
+    transform: none;
+  }
+  body.single-player-v2.generated-sheet-ready .actions {
+    right: max(14px, calc(50% - var(--spv2-action-rail-w) / 2 - 116px));
+    left: auto;
+    gap: 8px;
+  }
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    width: 74px;
+    height: 74px;
+  }
+  body.single-player-v2.generated-sheet-ready .spread-actions::before {
+    content: none;
+    display: none;
+  }
+  body.single-player-v2.generated-sheet-ready .handDock {
+    height: 16dvh;
+    bottom: 4.5dvh;
+    align-items: flex-end;
+    background-position: center bottom calc(2dvh - 6px);
+    background-size: auto var(--spv2-dock-art-h);
+    background-repeat: no-repeat;
+  }
+  body.single-player-v2.generated-sheet-ready .handDock .hand {
+    height: 25.5dvh;
+    --track-spacing: 7.25deg;
+    --track-radius: 700px;
+    transform: translateY(0);
+  }
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card {
+    width: var(--spv2-card-w);
+    height: var(--spv2-card-h);
+  }
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+    bottom: 24.5dvh;
+    height: 6.5dvh;
+  }
+
+  /* Hide the drawer pull tabs — desktop opens the same drawers through the
+     medallion buttons, so only the protruding tab chrome goes away. */
+  body.single-player-v2 .tlr-pull-tab,
+  body.single-player-v2 #invTab {
+    display: none;
+  }
+
+  /* Close tab under an open drawer (desktop mirror of the mobile rules,
+     which live behind the max-width gate) */
+  body.single-player-v2 .spv2-menu-close-tab {
+    position: absolute;
+    left: 50%;
+    z-index: 410;
+    width: 42px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    transform: translateX(-50%);
+    border: 1px solid #8f6a34;
+    border-top: 0;
+    border-radius: 0 0 10px 10px;
+    background: linear-gradient(180deg,#21162a,#130d19);
+    color: #d7b36e;
+    font: 700 18px/22px Georgia,serif;
+    box-shadow: 0 4px 10px rgba(0,0,0,.55);
+    cursor: pointer;
+    pointer-events: none;
+    display: none;
+  }
+  body.single-player-v2 .tlr-pull-wrap.open > .spv2-menu-close-tab,
+  body.single-player-v2 #invWrap.open > .spv2-menu-close-tab {
+    display: block;
+    pointer-events: auto;
+  }
+  body.single-player-v2 .tlr-pull-wrap > .spv2-menu-close-tab {
+    top: var(--tlr-drawer-h);
+    bottom: auto;
+  }
+  body.single-player-v2 #invWrap > .spv2-menu-close-tab {
+    top: var(--inv-h);
+    bottom: auto;
+  }
+
+  /* ── Art layer: mirrors singlePlayerV2Assets + ArtIntegration + UtilityIcons ──
+     Those files load inside @media (max-width:640px) so they don't fire on
+     desktop viewports. Replicate the same art rules here so the full-screen
+     layout gets the identical generated-sheet visual treatment as mobile.      */
+
+  /* Body: keep the wide table-cloth art. The portrait generated sheet is
+     mobile-only; the landscape background already carries the V2 mood
+     (spreadHints.css points mobile at this same art). */
+  html body.single-player-v2.generated-sheet-ready {
+    background-color: #0b0805;
+    background-image: url('/assets/background.webp');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  /* Title wrap: art integration hides all title graphics/text */
+  html body.single-player-v2.generated-sheet-ready #titleWrap::before,
+  html body.single-player-v2.generated-sheet-ready #titleWrap::after {
+    content: none;
+    background: none;
+  }
+
+  /* HUD: 2-column art frame (Score + Threshold only) */
+  html body.single-player-v2.generated-sheet-ready .score-stack {
+    background-color: transparent;
+    background-image: var(--spv2-hud-frame-art);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border-color: transparent;
+    box-shadow: none;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    overflow: visible;
+    height: var(--spv2-hud-h);
+  }
+
+  /* Reserve and discards live in the drawers/summary on desktop too */
+  html body.single-player-v2.generated-sheet-ready .score-stack .reserve-pill,
+  html body.single-player-v2.generated-sheet-ready .score-stack .discards-pill {
+    display: none;
+  }
+
+  /* Art supplies its own dividers — remove the DOM pill borders */
+  html body.single-player-v2.generated-sheet-ready .score-stack > .pill,
+  html body.single-player-v2.generated-sheet-ready .score-stack > .th-pill-wrap {
+    border-right: 0;
+  }
+
+  /* Labels and icons are baked into pill art — hide DOM versions */
+  html body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
+    display: none;
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .pill::before {
+    content: none;
+  }
+
+  /* Pill art backgrounds with room for the nameplate at the top */
+  html body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    padding-top: 32px;
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border-radius: 14px;
+    box-shadow: none;
+    background-color: transparent;
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill {
+    background-image: var(--spv2-hud-score-art);
+  }
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill {
+    background-image: var(--spv2-hud-threshold-art);
+  }
+
+  /* Spread slots: ornate art frame tile */
+  html body.single-player-v2.generated-sheet-ready .spread .slot {
+    background-image: var(--spv2-spread-slot-art);
+    background-position: center;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    border-color: transparent;
+  }
+
+  /* Hand dock: art tray banner */
+  html body.single-player-v2.generated-sheet-ready .handDock {
+    background-image: var(--spv2-hand-dock-art);
+    background-color: transparent;
+  }
+
+  /* Utility buttons: art medallion discs (menu / scoring / abilities) */
+  html body.single-player-v2.generated-sheet-ready #menuBtn,
+  html body.single-player-v2.generated-sheet-ready #scoringBtn,
+  html body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    border: 0;
+    box-shadow: none;
+    color: transparent;
+    font-size: 0;
+    filter: drop-shadow(0 5px 7px rgba(0,0,0,.78)) drop-shadow(0 2px 2px rgba(0,0,0,.6));
+  }
+  html body.single-player-v2.generated-sheet-ready #menuBtn::before,
+  html body.single-player-v2.generated-sheet-ready #scoringBtn::before,
+  html body.single-player-v2.generated-sheet-ready #abilitiesBtn::before {
+    content: none;
+  }
+  html body.single-player-v2.generated-sheet-ready #menuBtn {
+    background-image: var(--spv2-option-menu-art);
+  }
+  html body.single-player-v2.generated-sheet-ready #scoringBtn {
+    background-image: var(--spv2-option-scoring-art);
+  }
+  html body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    background-image: var(--spv2-option-abilities-art);
+  }
+
+  /* Discard / Purge: medallion art on ::before, caption on ::after */
+  html body.single-player-v2.generated-sheet-ready #discardBtn,
+  html body.single-player-v2.generated-sheet-ready #purgeBtn {
+    position: relative;
+    width: 74px;
+    height: 74px;
+    border: 0;
+    border-radius: 50%;
+    background-color: transparent;
+    background-image: none;
+    box-shadow: none;
+    color: transparent;
+    font-size: 0;
+    overflow: visible;
+    opacity: 1;
+  }
+  html body.single-player-v2.generated-sheet-ready #discardBtn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("/public/ui/single-player-v2/elements/Discard.webp");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    filter: brightness(1.85) contrast(1.06) saturate(1.12) drop-shadow(0 0 6px rgba(0,0,0,.6));
+    pointer-events: none;
+  }
+  html body.single-player-v2.generated-sheet-ready #purgeBtn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--spv2-action-center-art);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    filter: brightness(1.45) contrast(1.05) saturate(1.08) drop-shadow(0 0 6px rgba(0,0,0,.6));
+    pointer-events: none;
+  }
+  html body.single-player-v2.generated-sheet-ready #discardBtn::after,
+  html body.single-player-v2.generated-sheet-ready #purgeBtn::after {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 3px;
+    display: block;
+    font: 800 11px/1 system-ui, sans-serif;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: #cdb079;
+    text-shadow: 0 1px 3px #000;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  html body.single-player-v2.generated-sheet-ready #discardBtn::after { content: "Discard"; }
+  html body.single-player-v2.generated-sheet-ready #purgeBtn::after { content: "Purge"; }
+
+  /* Discards-left count badge — desktop uses the same proven badge treatment
+     as mobile so the remaining count sits in a small blue circle on Discard. */
+  html body.single-player-v2.generated-sheet-ready #spv2DiscardBadge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 19px;
+    height: 19px;
+    padding: 0 4px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    border: 1px solid rgba(196, 224, 255, .8);
+    background: radial-gradient(circle at 40% 32%, #6aa8ee, #1b4d99 78%);
+    color: #fff;
+    font: 800 11px/1 system-ui, sans-serif;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .55),
+      inset 0 1px 0 rgba(255, 255, 255, .25);
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #discardBtn:disabled #spv2DiscardBadge {
+    border-color: rgba(202, 202, 202, .62);
+    background: radial-gradient(circle at 40% 32%, #9a9a9a, #4b4b4b 78%);
+    color: #e2e2e2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .72);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .48),
+      inset 0 1px 0 rgba(255, 255, 255, .14);
+  }
+
+  /* Make an available discard action visibly brighter than its disabled state
+     (desktop mirror of the mobile compat rule) */
+  html body.single-player-v2.generated-sheet-ready #discardBtn:not(:disabled) {
+    box-shadow:
+      0 0 0 3px rgba(255,217,120,.9),
+      0 0 18px rgba(255,200,84,.82),
+      0 0 36px rgba(100,168,255,.45);
+  }
+  html body.single-player-v2.generated-sheet-ready #discardBtn:not(:disabled)::before {
+    filter:
+      brightness(2.45)
+      contrast(1.12)
+      saturate(1.28)
+      drop-shadow(0 0 8px rgba(255,220,132,.88))
+      drop-shadow(0 0 14px rgba(85,156,255,.72));
+  }
+
+
+  /* Modern game-readability pass: separate the core play lanes, make the
+     center objective feel intentional, and reserve high-contrast glows for
+     actionable state instead of all decorative chrome competing equally. */
+  html body.single-player-v2.generated-sheet-ready::after {
+    content: "";
+    position: fixed;
+    z-index: 1;
+    left: 18vw;
+    right: 18vw;
+    top: 20dvh;
+    bottom: 21dvh;
+    border-radius: 50%;
+    background:
+      radial-gradient(ellipse at center, rgba(218, 168, 82, .11) 0 1px, transparent 62%),
+      radial-gradient(ellipse at center, transparent 42%, rgba(199, 143, 55, .18) 43%, transparent 45%),
+      radial-gradient(ellipse at center, rgba(18, 13, 10, .32), transparent 68%);
+    box-shadow: inset 0 0 72px rgba(0,0,0,.38);
+    pointer-events: none;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread-wrap {
+    position: fixed;
+    inset: 0;
+    z-index: 24;
+    pointer-events: none;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread {
+    pointer-events: auto;
+  }
+
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+    border-radius: 10px;
+    background: radial-gradient(ellipse at center, rgba(255, 215, 124, .18), transparent 64%);
+    opacity: 0;
+    transition: opacity .18s ease, transform .18s ease;
+    transform: scale(.96);
+    pointer-events: none;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:empty::after,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.drop-target::after,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-target-slot::after {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+
+  html body.single-player-v2.generated-sheet-ready #discardBtn:disabled,
+  html body.single-player-v2.generated-sheet-ready #purgeBtn:disabled {
+    opacity: .54;
+    filter: grayscale(.35) brightness(.78);
+  }
+
+  html body.single-player-v2.generated-sheet-ready #purgeBtn:not(:disabled) {
+    box-shadow:
+      0 0 0 2px rgba(211,185,255,.72),
+      0 0 16px rgba(148,101,255,.58),
+      0 0 30px rgba(255,183,84,.26);
+  }
+
+  /* Threshold progress bar is baked into the mobile art at mobile pill
+     dimensions. At desktop pill dimensions the bar floats visibly below the
+     number — hide it. */
+  html body.single-player-v2.generated-sheet-ready .spv2-threshold-progress {
+    display: none;
+  }
+
+  /* Spread-wrap overlays: the wide table art carries the mood — suppress the
+     procedural reading-circle layers */
+  html body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    background: none;
+    filter: none;
+    box-shadow: none;
+  }
+  html body.single-player-v2.generated-sheet-ready .spread-wrap::after {
+    content: none;
+  }
+}
+}

@@ -1,0 +1,149 @@
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
+/* Final mobile shell corrections layered after the generated art styles. */
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-live-card-w: clamp(78px, 22vw, 96px);
+    --spv2-live-card-h: calc(var(--spv2-live-card-w) * 1.5);
+    --spv2-slot-w: var(--spv2-live-card-w);
+    --spv2-slot-h: var(--spv2-live-card-h);
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot,
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card {
+    width: var(--spv2-live-card-w);
+    height: var(--spv2-live-card-h);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread {
+    min-height: calc(var(--spv2-live-card-h) + 24px);
+    padding-inline: 1vw;
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot {
+    margin-left: -7.2vw;
+    flex: 0 0 var(--spv2-live-card-w);
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot:first-child {
+    margin-left: 0;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
+    display: block;
+    order: 1;
+    line-height: 1;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill > b {
+    display: block;
+    order: 2;
+    line-height: 1;
+  }
+
+  body.single-player-v2.generated-sheet-ready .tlr-pull-tab,
+  body.single-player-v2.generated-sheet-ready #invTab {
+    display: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap {
+    z-index: 34;
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
+    opacity: .6;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap::after {
+    content: "THE LAST READING";
+    position: absolute;
+    left: 15%;
+    right: 15%;
+    top: 1.2dvh;
+    text-align: center;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(15px, 4.5vw, 22px);
+    line-height: 1;
+    letter-spacing: .12em;
+    color: #b68a48;
+    text-shadow: 0 1px 0 #000, 0 0 10px rgba(192, 133, 55, .24);
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready .actions button {
+    color: transparent;
+    font-size: 0;
+    text-indent: -9999px;
+    border: 0;
+    padding: 0;
+  }
+
+  body.single-player-v2.generated-sheet-ready .actions {
+    left: 3.8vw;
+    right: auto;
+    top: 23.7dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    left: auto;
+    right: 3.8vw;
+    top: 23.7dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    opacity: .96;
+    transform: translateY(-.5dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock {
+    height: 31dvh;
+    background-size: 100% 24dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand {
+    height: 26dvh;
+    transform: translateY(.4dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions {
+    position: fixed;
+    z-index: 40;
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: max(1.2dvh, env(safe-area-inset-bottom));
+    width: 100%;
+    height: clamp(66px, 17vw, 82px);
+    padding: 0 5vw;
+    transform: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions button {
+    pointer-events: auto;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions::before {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    width: clamp(58px, 15.5vw, 72px);
+    height: clamp(66px, 17.5vw, 80px);
+    min-width: 0;
+  }
+}
+}

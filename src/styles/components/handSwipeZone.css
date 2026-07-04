@@ -1,0 +1,30 @@
+@layer handSwipeZone {
+/* Consolidated hand swipe-zone component rules. Ordered by the old effective
+   cascade: classic mobile base, PS1 float offsets, attic hint tutorial patch,
+   hand-drag lower capture extension, then SPv2 generated-sheet corrections. */
+.hand-swipe-zone{position:fixed;left:0;right:0;bottom:197px;height:88px;z-index:19;pointer-events:auto;touch-action:none;cursor:grab;background:transparent}
+.hand-swipe-zone.dragging{cursor:grabbing}
+.hand-swipe-zone.pinching{cursor:ew-resize}
+@media(max-width:640px){.hand-swipe-zone{bottom:152px;height:74px}}
+.hand-swipe-hint{position:absolute;left:50%;top:50%;pointer-events:none;opacity:0;transition:opacity .4s}
+.hand-swipe-zone.has-overflow .hand-swipe-hint{opacity:1}
+.hand-swipe-zone.dragging .hand-swipe-hint,.hand-swipe-zone.pinching .hand-swipe-hint{opacity:0}
+.hand-swipe-zone.has-swiped .hand-swipe-hint{display:none!important}
+.swipe-hint-line{position:absolute;left:0;top:0;transform:translate(-50%,-50%);display:flex;align-items:center;gap:14px;font:600 10px system-ui,Segoe UI,sans-serif;color:rgba(232,196,96,.55);letter-spacing:.18em;text-transform:uppercase;white-space:nowrap;opacity:0;animation:hint-cycle 9s ease-in-out infinite}
+.swipe-hint-line-2{animation-delay:3s}.swipe-hint-line-3{animation-delay:6s}
+@keyframes hint-cycle{0%{opacity:0}5%{opacity:1}28%{opacity:1}33%{opacity:0}100%{opacity:0}}
+.hand-swipe-hint span{display:inline-block;width:30px;height:1px;background:linear-gradient(90deg,transparent,rgba(232,196,96,.6),transparent)}
+#handSwipeZone{touch-action:none}
+.hand-swipe-zone{bottom:233px!important}
+@media(max-width:640px){.hand-swipe-zone{bottom:176px!important}}
+#handSwipeZone.hand-swipe-zone{height:121px!important;bottom:197px!important}
+@media(max-width:640px){#handSwipeZone.hand-swipe-zone{height:97px!important;bottom:152px!important}}
+#handSwipeZone .hand-swipe-hint{display:flex!important;align-items:center;justify-content:center;transform:translate(-50%,-50%)!important}
+#handSwipeZone .swipe-hint-line{position:static!important;transform:none!important;animation:none!important;opacity:1!important;display:none!important}
+#handSwipeZone[data-hint-step="1"] .swipe-hint-line-1,#handSwipeZone[data-hint-step="2"] .swipe-hint-line-2,#handSwipeZone[data-hint-step="3"] .swipe-hint-line-3{display:flex!important}
+#handSwipeZone.hints-complete .hand-swipe-hint{display:none!important}
+#handSwipeZone.dragging,#handSwipeZone.pinching{transition:none!important;will-change:translate}
+.hand-swipe-zone-lower{position:absolute;left:0;right:0;top:100%;height:240px;pointer-events:auto;touch-action:none;background:transparent;cursor:grab}
+#handSwipeZone.dragging .hand-swipe-zone-lower,#handSwipeZone.pinching .hand-swipe-zone-lower{cursor:grabbing}
+@media(max-width:640px){.hand-swipe-zone-lower{height:200px}}
+}

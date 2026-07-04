@@ -1,0 +1,593 @@
+@layer spv2Core {
+/* `spv2Core` (base.css, compat.css, desktop.css, assets.css, layout.css,
+   mobile.css, components/spread.css, components/scoreHud.css, states.css,
+   components/artIntegration.css) is the tenth-crack, ten-as-one-unit
+   extraction of the last SPv2 source files that stayed in the app-wide
+   `legacy` layer. Nine of the ten are gated to the same
+   @media(max-width:640px) breakpoint and form a genuine cross-file
+   specificity/media ladder with each other -- e.g. this file's
+   `body.single-player-v2 .score-stack` base rule is deliberately
+   overridden by compat.css's `body.single-player-v2.generated-sheet-ready
+   .score-stack` (more classes, higher specificity) at the generated-sheet
+   breakpoint, the same "base + higher-specificity override" shape as
+   classicCore's market/hand ladder. The tenth, desktop.css, is gated to
+   @media(min-width:641px) -- mutually exclusive with the other nine's
+   breakpoint, so it has no intra-cluster ties, but shares the same
+   external-position requirements (below), so it moved along with the
+   rest rather than getting its own layer for one file's sake.
+
+   A full selector/property audit against every other file in the app --
+   every already-extracted layer, everything still in `legacy` (just
+   mpMobile.css's one residual rule and mainMenu.css's boot veil, both
+   confirmed moot: the residual rule is gated to `body.mp-game-active`,
+   mutually exclusive with this cluster's `body.single-player-v2` at
+   runtime via mpModeClassGuard.mjs, and the boot veil never touches
+   opacity/visibility/pointer-events/transition on any element this
+   cluster also touches) -- found every real conflict points the same
+   two directions, both already satisfied by this cluster's *previous*
+   position (inside `legacy` itself):
+
+     - LATER than classicCore (hand/market/mobile/attic/ps1aesthetic) and
+       actionDropTargets.css, mpGameChrome.css, handSwipeZone.css, and
+       every other before-legacy layer -- normal-tier ties against
+       market.css's/mobile.css's/hand.css's bare classic-mode layout
+       rules (`.score-stack`, `.spread-wrap`, `.spread`, `.slot`, `.card`,
+       `.handDock`, and more) need this cluster to keep WINNING via being
+       the later layer, and important-tier ties against
+       actionDropTargets.css's drag-drop-target overrides (`#discardBtn`/
+       `#purgeBtn`'s `.card-drop-target` state, `#menuBtn`'s background,
+       etc.) need this cluster to keep LOSING via being the later layer --
+       already true today since `legacy` sits after all of those.
+     - EARLIER than mpCore, titleWrap.css, atticFade.css, handDragFix.css,
+       performance.css, drawAnimation.css, and drawers.css -- important-tier
+       ties against drawers.css's `#menuBtn`/`#scoringBtn`/`#abilitiesBtn`
+       `display:none` defaults and performance.css's mobile `#roomAmbient`
+       opacity need this cluster to keep WINNING via being the earlier
+       layer -- already true today since `legacy` sits before all of those.
+
+   Since `legacy`'s own position already satisfies every real requirement
+   found, `spv2Core` is declared immediately after `legacy` (before
+   `mpCore`) -- the smallest possible move, preserving every relationship
+   above unchanged, purely replacing "wins/loses because it happens to
+   share a name with a big unsorted pile" with "wins/loses because of an
+   explicit, reasoned position." Verified via a full computed-style A/B
+   diff: classic-vs-single-player-v2 layout ties (score-stack/spread/slot/
+   handDock/card sizing) at both the 640px and 641px breakpoints, the
+   drag-drop-target button overrides, drawers'/performance's/
+   drawAnimation's ties, all five attic mode-transition states, and the
+   already-migrated spv2.components ladder (spreadHints/hand/relics/
+   utilityIcons/utilityButtons). See docs/css-cascade-layer-migration.md
+   for the full writeup. */
+/* Phase 1 single-player layout.
+   Placeholder materials only: final transparent art replaces these shells in Phase 2. */
+
+
+/* Base mobile layout; design tokens have moved to singlePlayerV2/tokens.css. */
+@media (max-width: 640px) {
+  body.single-player-v2 {
+    --spv2-side: 9px;
+    --spv2-title-h: 38px;
+    --spv2-hud-top: 38px;
+    --spv2-hud-h: 112px;
+    --spv2-slot-w: clamp(64px, 18.3vw, 72px);
+    --spv2-slot-h: calc(var(--spv2-slot-w) * 1.5);
+    --spv2-hand-clearance: 222px;
+    min-height: 100dvh;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  /* Compact title strip. It stays decorative and never competes with values. */
+  body.single-player-v2 #titleWrap {
+    position: fixed;
+    z-index: 28;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--spv2-title-h);
+    pointer-events: none;
+    filter: none;
+  }
+
+  body.single-player-v2 #titleWrap::before {
+    content: "THE LAST READING";
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #b79761;
+    font: 700 17px/1 Georgia, serif;
+    letter-spacing: .11em;
+    text-shadow: 0 2px 8px #000;
+  }
+
+  body.single-player-v2 #titleRow {
+    position: static;
+    pointer-events: none;
+  }
+
+  body.single-player-v2 #titleContent {
+    position: static;
+  }
+
+  body.single-player-v2 #menuBtn {
+    position: fixed;
+    z-index: 31;
+    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 10px);
+    right: 13px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid #8f6a34;
+    background: radial-gradient(circle at 45% 38%, #342414, #100b08 70%);
+    color: #dfbd73;
+    font-size: 20px;
+    pointer-events: auto;
+    box-shadow: 0 7px 20px rgba(0,0,0,.55), inset 0 0 0 3px rgba(183,139,67,.08);
+  }
+
+  body.single-player-v2 #settingsPanel {
+    z-index: 70;
+  }
+
+  /* Four-part primary HUD using the existing live counters. */
+  body.single-player-v2 .score-stack {
+    position: fixed;
+    z-index: 25;
+    top: var(--spv2-hud-top);
+    left: var(--spv2-side);
+    right: var(--spv2-side);
+    width: auto;
+    height: var(--spv2-hud-h);
+    transform: none;
+    display: grid;
+    grid-template-columns: 21fr 29fr 29fr 21fr;
+    gap: 0;
+    align-items: stretch;
+    justify-content: stretch;
+    flex-wrap: nowrap;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #8e6832;
+    border-radius: 17px;
+    background: #0d0a08;
+    box-shadow: 0 9px 28px rgba(0,0,0,.62), inset 0 0 0 2px rgba(205,155,73,.06);
+    filter: none;
+  }
+
+  body.single-player-v2 .score-stack > .pill,
+  body.single-player-v2 .score-stack > .th-pill-wrap {
+    order: initial;
+    min-width: 0;
+    width: auto;
+    height: 100%;
+    margin: 0;
+    transform: none;
+    border-right: 1px solid rgba(153,111,51,.38);
+  }
+
+  body.single-player-v2 .score-stack > :last-child {
+    border-right: 0;
+  }
+
+  body.single-player-v2 .score-stack .pill {
+    position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+    padding: 12px 3px 10px;
+    align-items: center;
+    justify-content: center;
+    align-content: center;
+    gap: 7px;
+    grid-template-columns: none;
+    background-image: none;
+    background-color: transparent;
+    text-align: center;
+    border: 0;
+    border-radius: 0;
+    color: #c4ab7c;
+  }
+
+  body.single-player-v2 .score-stack .score-pill {
+    background: radial-gradient(circle at 50% 88%, rgba(213,151,44,.30), transparent 70%);
+    box-shadow: inset 0 -2px 0 rgba(234,181,79,.45);
+  }
+
+  /* Live reading multiplier, shown in red at the score number's upper corner
+     only when above 1 (toggled by singlePlayerV2.mjs). Mult red follows the
+     genre convention and stays clear of the gold score / violet threshold. */
+  body.single-player-v2 #spv2ScoreMult {
+    position: absolute;
+    top: 41px;
+    left: 61%;
+    display: none;
+    color: #f2564a;
+    font: 800 clamp(12px, 3.4vw, 15px)/1 'Cinzel', Georgia, serif;
+    letter-spacing: .01em;
+    text-shadow: 0 0 7px rgba(242, 86, 74, 0.55), 0 2px 4px #000;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  body.single-player-v2 #spv2ScoreMult.show {
+    display: block;
+  }
+
+  body.single-player-v2 .score-stack .threshold-pill {
+    background: radial-gradient(circle at 50% 88%, rgba(116,84,197,.34), transparent 70%);
+    box-shadow: inset 0 -2px 0 rgba(147,113,224,.48);
+  }
+
+  body.single-player-v2 .spv2-label {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    color: #c2a979;
+    font: 700 clamp(8px,2.45vw,10px)/1 system-ui,sans-serif;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-overflow: clip;
+  }
+
+  /* The Score/Threshold labels are baked into the panel art, so shortening the
+     panels squished them. Block out the baked label band with a panel-matched
+     gradient and drive crisp live Cinzel text instead. High specificity + !
+     important overrides the art-mode suppression (ArtIntegration / SlotMatch /
+     VisualFix / HudTablePass all set this label display:none !important). */
+  html body.single-player-v2.generated-sheet-ready .score-stack .pill .spv2-label {
+    display: block;
+    position: absolute;
+    top: 4px;
+    left: 5px;
+    right: 5px;
+    height: 31px;
+    margin: 0;
+    padding-top: 9px;
+    box-sizing: border-box;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    border-radius: 9px 9px 4px 4px;
+    border-bottom: 1px solid rgba(227, 190, 114, 0.3);
+    font: 700 clamp(14px, 4vw, 17px)/1 'Cinzel', Georgia, serif;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 3px #000;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  /* Solid (opaque) plate fully hides the squished baked label beneath, with an
+     inset recess so it reads as an intentional nameplate rather than a patch. */
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill .spv2-label {
+    color: #e7c98c;
+    background: linear-gradient(180deg, #241809, #150d05);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.55);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill .spv2-label {
+    color: #d2c2ff;
+    background: linear-gradient(180deg, #1d1430, #110b1d);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.55);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill .spv2-label::before { content: "✦ "; }
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill .spv2-label::before { content: "⚖ "; }
+
+  body.single-player-v2 .score-stack .pill b {
+    display: block;
+    justify-self: auto;
+    color: #efe5ce;
+    font-family: 'Cinzel', Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(25px,7.4vw,31px);
+    font-variant-numeric: tabular-nums lining-nums;
+    letter-spacing: .01em;
+    line-height: .9;
+    text-shadow: 0 2px 8px #000;
+  }
+
+  body.single-player-v2 .score-stack .score-pill b {
+    color: #ffd98c;
+    font-size: clamp(29px,8.6vw,36px);
+    text-shadow: 0 0 12px rgba(235,175,70,.32), 0 2px 8px #000;
+  }
+
+  body.single-player-v2 .score-stack .threshold-pill b {
+    color: #cfbfff;
+    font-size: clamp(29px,8.6vw,36px);
+    text-shadow: 0 0 12px rgba(145,107,224,.34), 0 2px 8px #000;
+  }
+
+  body.single-player-v2 .th-pill-wrap {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    height: 100%;
+  }
+
+  body.single-player-v2 .spv2-threshold-progress {
+    position: absolute;
+    left: 14%;
+    right: 14%;
+    bottom: 12px;
+    height: 7px;
+    overflow: hidden;
+    border: 1px solid #6f5b9d;
+    border-radius: 999px;
+    background: #17111e;
+    box-shadow: inset 0 1px 3px #000;
+    pointer-events: none;
+  }
+
+  body.single-player-v2 .spv2-threshold-progress > span {
+    display: block;
+    width: calc(var(--spv2-progress, 0) * 100%);
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg,#6b4dbb,#ac8bf1);
+    transition: width .3s ease;
+  }
+
+  body.single-player-v2 .spv2-threshold-progress::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: calc(var(--spv2-progress, 0) * 100%);
+    width: 8px;
+    height: 8px;
+    border: 1px solid #e2d7ff;
+    background: #8e70d8;
+    transform: translate(-50%,-50%) rotate(45deg);
+    box-shadow: 0 0 7px rgba(194,168,255,.75);
+  }
+
+  body.single-player-v2 .spv2-threshold-progress.is-complete > span {
+    background: linear-gradient(90deg,#a87528,#f0c96e);
+  }
+
+  /* Existing Scoring and Abilities controls become the left utility cluster. */
+  body.single-player-v2 .actions {
+    position: fixed;
+    z-index: 31;
+    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 10px);
+    left: 13px;
+    margin: 0;
+    display: flex;
+    gap: 7px;
+    pointer-events: auto;
+  }
+
+  body.single-player-v2 .actions button {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    padding: 0 4px;
+    border-radius: 50%;
+    border: 1px solid #8f6a34;
+    background: radial-gradient(circle at 45% 38%,#342414,#100b08 70%);
+    color: #dfbd73;
+    font-size: 0;
+    box-shadow: 0 7px 20px rgba(0,0,0,.55), inset 0 0 0 3px rgba(183,139,67,.08);
+  }
+
+  body.single-player-v2 #scoringBtn::before { content: "✦"; font-size: 19px; }
+  body.single-player-v2 #abilitiesBtn::before { content: "◉"; font-size: 18px; }
+  body.single-player-v2 #mullBtn::before { content: "↻"; font-size: 20px; }
+
+  /* Seat the top utility medallions on the table with the same coin shadow the
+     bottom action medallions already carry, so all controls read as physical
+     objects rather than flat stickers floating on bare wood. (Consolidation:
+     unifies the top/bottom medallion treatment; nothing else sets `filter`
+     on these buttons.) */
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    background-color: transparent;
+    filter: var(--spv2-coin-shadow);
+  }
+
+  /* Reading field and five-card horizontal spread. */
+  body.single-player-v2 .spread-wrap {
+    position: fixed;
+    z-index: 12;
+    left: 0;
+    right: 0;
+    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 72px);
+    bottom: var(--spv2-hand-clearance);
+    margin: 0;
+    transform: none;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+  }
+
+  body.single-player-v2 .spread-wrap::before {
+    content: "";
+    position: absolute;
+    width: min(84vw, 330px);
+    aspect-ratio: 1;
+    border: 1px solid rgba(173,126,55,.22);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle, transparent 0 35%, rgba(173,126,55,.10) 35.4% 35.8%, transparent 36.2%),
+      repeating-conic-gradient(from 0deg,rgba(184,136,62,.10) 0deg 1deg,transparent 1deg 30deg);
+    box-shadow: inset 0 0 0 18px rgba(173,126,55,.018);
+    pointer-events: none;
+  }
+
+  body.single-player-v2 .spread {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    width: 100%;
+    min-height: calc(var(--spv2-slot-h) + 20px);
+    padding: 0 6px;
+    align-items: flex-start;
+    justify-content: center;
+    overflow: visible;
+    pointer-events: auto;
+  }
+
+  body.single-player-v2 .slot {
+    flex: 0 0 var(--spv2-slot-w);
+    width: var(--spv2-slot-w);
+    height: var(--spv2-slot-h);
+    margin-left: -2px;
+    border: 1px solid #74552d;
+    border-radius: 6px;
+    background: linear-gradient(160deg,rgba(32,23,17,.88),rgba(10,7,6,.92));
+    box-shadow: 0 7px 18px rgba(0,0,0,.58), inset 0 0 0 3px rgba(183,139,67,.045);
+    transform-origin: 50% 140%;
+    transition: transform .18s ease, border-color .16s ease, box-shadow .16s ease, background .16s ease;
+  }
+
+  body.single-player-v2 .slot:first-child { margin-left: 0; }
+  body.single-player-v2 .slot:nth-child(1) { transform: translateY(10px) rotate(-4deg); }
+  body.single-player-v2 .slot:nth-child(2) { transform: translateY(3px) rotate(-2deg); }
+  body.single-player-v2 .slot:nth-child(3) { transform: translateY(0) rotate(0); }
+  body.single-player-v2 .slot:nth-child(4) { transform: translateY(3px) rotate(2deg); }
+  body.single-player-v2 .slot:nth-child(5) { transform: translateY(10px) rotate(4deg); }
+
+  body.single-player-v2 .slot.empty::after {
+    content: "✦";
+    color: #5e4829;
+    font-size: 21px;
+  }
+
+  body.single-player-v2 .slot.empty:hover,
+  body.single-player-v2 .slot.target {
+    border-color: #9fc49b;
+    background: linear-gradient(160deg,rgba(48,70,45,.75),rgba(12,17,11,.92));
+    box-shadow: 0 0 0 2px rgba(126,190,126,.20),0 0 18px rgba(106,181,112,.22),0 7px 18px rgba(0,0,0,.58);
+  }
+
+  body.single-player-v2 .slot .num {
+    top: 4px;
+    left: 6px;
+    color: #866d48;
+    font-size: 9px;
+  }
+
+  body.single-player-v2 .slot > .card {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* #4: empty reading positions should read as part of the table, not as
+     cool-blue cards floating on it. Remove the lift drop-shadow, recess the
+     slot with an inset shadow, and mute/darken the compass tile so its gold
+     lines etch into the warm wood. High specificity (id + .empty) wins over
+     the .spread .slot rules spread across the override sheets. */
+  html body.single-player-v2.generated-sheet-ready #spread
+    .slot.empty:not(.target):not(.drop-target):not(:hover):not(.ability-target-slot):not(.ability-picked-slot) {
+    background-color: rgba(9, 6, 4, 0.55);
+    border: 1px solid rgba(227, 190, 114, 0.14);
+    /* !important to override the lift drop-shadow set with !important in the
+       FinalPlacement/SlotMatch slot rules; the :not() guards keep this off the
+       target/hover states so the green placement glow is untouched. */
+    box-shadow:
+      inset 0 3px 9px rgba(0, 0, 0, 0.62),
+      inset 0 -1px 0 rgba(227, 190, 114, 0.08),
+      inset 0 0 0 1px rgba(0, 0, 0, 0.45);
+    opacity: 0.86;
+    filter: saturate(0.45) brightness(0.66);
+  }
+
+  /* Existing discard and purge actions become the lower action rail. */
+  body.single-player-v2 .spread-actions {
+    position: fixed;
+    z-index: 27;
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: max(10px,env(safe-area-inset-bottom));
+    transform: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 0;
+    padding: 0 18px;
+    pointer-events: none;
+  }
+
+  body.single-player-v2 .spread-actions button {
+    pointer-events: auto;
+  }
+
+  body.single-player-v2 .ability-prompt {
+    z-index: 35;
+  }
+
+  /* Keep the live hand over the HUD when the player lifts it. */
+  body.single-player-v2 .handDock {
+    z-index: 26;
+    height: 166px;
+    bottom: 22px;
+    background: linear-gradient(transparent,rgba(0,0,0,.78));
+  }
+
+  body.single-player-v2 .hand-swipe-zone {
+    z-index: 27;
+  }
+
+  /* #5: the gesture hint is onboarding chrome. Fade it out (and keep it out)
+     once the player first interacts, so it stops competing with the table.
+     singlePlayerV2.mjs toggles the body flag and persists it across sessions.
+     The existing hint system shows it via `#handSwipeZone.has-overflow
+     .hand-swipe-hint { opacity:1 !important }` (RequestedFixes), so the dismiss
+     must out-specify that (id + 5 classes) and use !important. It keeps the
+     base rule's opacity transition, so the hint fades rather than snapping. */
+  html body.single-player-v2.spv2-hand-hint-dismissed.generated-sheet-ready
+    #handSwipeZone.hand-swipe-zone .hand-swipe-hint {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  body.single-player-v2 #constellationPill {
+    z-index: 29;
+  }
+
+  @media (max-height: 759px) {
+    body.single-player-v2 {
+      --spv2-title-h: 32px;
+      --spv2-hud-top: 32px;
+      --spv2-hud-h: 94px;
+      --spv2-slot-w: clamp(61px,17.8vw,66px);
+      --spv2-hand-clearance: 188px;
+    }
+
+    body.single-player-v2 .score-stack .pill {
+      padding-top: 8px;
+      padding-bottom: 7px;
+      gap: 4px;
+    }
+
+    body.single-player-v2 .spv2-threshold-progress {
+      bottom: 8px;
+      height: 6px;
+    }
+
+    body.single-player-v2 #menuBtn,
+    body.single-player-v2 .actions {
+      top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 7px);
+    }
+
+    body.single-player-v2 .spread-wrap {
+      top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 59px);
+    }
+
+    body.single-player-v2 .handDock {
+      height: 146px;
+      bottom: 14px;
+    }
+  }
+}
+}

@@ -149,7 +149,7 @@ Target:
 
 Prepared file:
 
-`src/styles/singlePlayerV2Assets.css`
+`src/styles/singlePlayerV2/assets.css`
 
 This file is not loaded until Batch A is approved and files exist. It provides one isolated replacement layer above Phase 1 placeholder CSS.
 
@@ -157,7 +157,7 @@ This file is not loaded until Batch A is approved and files exist. It provides o
 
 When each batch is integrated:
 
-- increment the query version on `singlePlayerV2Assets.css`
+- increment the query version on `singlePlayerV2/assets.css`
 - keep filenames stable
 - avoid renaming approved files after integration
 
@@ -183,7 +183,7 @@ The shell asset kit should remain under approximately 2.2 MB before card sheets.
 ## Integration order
 
 1. Add Batch A files.
-2. Load `singlePlayerV2Assets.css` behind a new cache version.
+2. Load `singlePlayerV2/assets.css` behind a new cache version.
 3. Validate at 360, 390, and 430 px widths.
 4. Correct art, not Phase 1 geometry, unless a genuine clipping defect is discovered.
 5. Add Batch B files.

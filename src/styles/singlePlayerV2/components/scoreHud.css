@@ -1,0 +1,213 @@
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-hud-top: 7.6dvh;
+    --spv2-compact-hud-h: clamp(116px,14.5dvh,132px);
+    --spv2-control-size: clamp(46px,12vw,56px);
+    --spv2-spread-top: calc(
+      var(--spv2-hud-top) +
+      var(--spv2-compact-hud-h) +
+      var(--spv2-control-size) +
+      .75dvh
+    );
+    background-color: #090603;
+    background-image:
+      radial-gradient(circle at 6% 58%,rgba(255,155,48,.18),transparent 20%),
+      radial-gradient(circle at 94% 48%,rgba(116,78,160,.12),transparent 22%),
+      radial-gradient(ellipse at 50% 54%,rgba(93,54,24,.18),transparent 44%),
+      linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.48)),
+      var(--spv2-table-bg-art);
+    background-size:auto,auto,auto,auto,cover;
+    background-position:center;
+  }
+
+  body.single-player-v2.generated-sheet-ready::before {
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    background:
+      repeating-linear-gradient(96deg,rgba(255,255,255,.012) 0 1px,transparent 1px 11px),
+      repeating-linear-gradient(4deg,rgba(78,43,16,.055) 0 2px,transparent 2px 15px),
+      radial-gradient(ellipse at center,transparent 48%,rgba(0,0,0,.66) 100%);
+    mix-blend-mode:screen,normal,normal;
+    opacity:.95;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
+    left:10%;
+    right:10%;
+    height:calc(var(--spv2-title-h) + 28px);
+    filter:brightness(1.16) contrast(1.06) drop-shadow(0 3px 10px rgba(0,0,0,.8));
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    top:var(--spv2-hud-top);
+    left:2vw;
+    right:2vw;
+    height:var(--spv2-compact-hud-h);
+    min-height:var(--spv2-compact-hud-h);
+    grid-template-columns: 22fr 28fr 29fr 21fr;
+    overflow:visible;
+    border:2px solid rgba(174,122,52,.82);
+    border-radius:clamp(16px,4vw,24px);
+    background:
+      linear-gradient(180deg,rgba(255,196,91,.07),rgba(0,0,0,.1)),
+      var(--spv2-hud-frame-art) center/100% 100% no-repeat;
+    box-shadow:
+      0 12px 28px rgba(0,0,0,.72),
+      0 0 0 2px rgba(69,40,14,.85),
+      inset 0 0 0 1px rgba(255,206,119,.22),
+      inset 0 -14px 24px rgba(0,0,0,.28);
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack::before {
+    content:"";
+    position:absolute;
+    inset:5px;
+    border:1px solid rgba(221,163,78,.3);
+    border-radius:inherit;
+    pointer-events:none;
+    box-shadow:inset 0 0 18px rgba(0,0,0,.55);
+    z-index:3;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack > .pill,
+  body.single-player-v2.generated-sheet-ready .score-stack > .th-pill-wrap {
+    position:relative;
+    height:100%;
+    overflow:hidden;
+    border-right:1px solid rgba(172,123,53,.28);
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack > :last-child {
+    border-right:0;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    height:100%;
+    padding:27px 4px 15px;
+    gap:4px;
+    justify-content: center;
+    border-radius:clamp(13px,3.4vw,20px);
+    background-size:100% 100%;
+    background-blend-mode: screen,normal;
+  }
+
+  body.single-player-v2.generated-sheet-ready .reserve-pill {
+    background-image:
+      linear-gradient(180deg,rgba(26,65,107,.18),rgba(3,9,16,.2)),
+      var(--spv2-hud-reserve-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .score-pill {
+    background-image:
+      radial-gradient(circle at 50% 88%,rgba(255,185,62,.28),transparent 66%),
+      var(--spv2-hud-score-art);
+    box-shadow:inset 0 -3px 0 rgba(234,177,76,.62),inset 0 0 22px rgba(183,117,29,.13);
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill {
+    background-image:
+      radial-gradient(circle at 50% 88%,rgba(132,82,224,.34),transparent 68%),
+      var(--spv2-hud-threshold-art);
+    box-shadow:inset 0 -3px 0 rgba(154,111,235,.62),inset 0 0 22px rgba(102,66,175,.16);
+  }
+
+  body.single-player-v2.generated-sheet-ready .discards-pill {
+    background-image:
+      linear-gradient(180deg,rgba(90,28,28,.12),rgba(11,7,7,.18)),
+      var(--spv2-hud-discards-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill::before {
+    position:absolute;
+    top:11px;
+    left:12px;
+    color:#d0a85f;
+    font:700 clamp(15px,4vw,19px)/1 Georgia,serif;
+    text-shadow:0 1px 3px #000;
+    opacity:.95;
+  }
+
+  body.single-player-v2.generated-sheet-ready .reserve-pill::before { content:"◈"; }
+  body.single-player-v2.generated-sheet-ready .score-pill::before { content:"✦"; }
+  body.single-player-v2.generated-sheet-ready .threshold-pill::before { content:"⚖"; }
+  body.single-player-v2.generated-sheet-ready .discards-pill::before { content:"☠"; }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
+    font-size:clamp(10px,2.8vw,13px);
+    line-height:1;
+    color:#cfb581;
+    letter-spacing:.06em;
+    text-shadow:0 1px 3px #000;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill > b {
+    font-size:clamp(31px,8.5vw,42px);
+    line-height:.92;
+    font-weight:800;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .score-pill > b,
+  body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill > b {
+    font-size:clamp(35px,9.5vw,47px);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spv2-threshold-progress {
+    left:13%;
+    right:13%;
+    bottom:12px;
+    height:7px;
+    border-color:#8067b2;
+    background:#120d1a;
+    box-shadow:inset 0 1px 4px #000,0 0 8px rgba(147,104,224,.18);
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    top:calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap {
+    top:var(--spv2-spread-top);
+    bottom:31dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    width:min(97vw,430px);
+    height:auto;
+    aspect-ratio:1 / 1;
+    top:5.5dvh;
+    left:50%;
+    transform:translateX(-50%);
+    opacity:1;
+    filter:brightness(1.42) contrast(1.18) saturate(1.08) drop-shadow(0 0 18px rgba(179,116,37,.18));
+    background-size:96% 96%;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::after {
+    content:"";
+    position:absolute;
+    left:50%;
+    top:8.5dvh;
+    width:min(91vw,400px);
+    aspect-ratio:1;
+    transform:translateX(-50%);
+    border-radius:50%;
+    background:
+      radial-gradient(circle,transparent 0 20%,rgba(177,117,46,.16) 20.4% 20.8%,transparent 21.2% 36%,rgba(177,117,46,.13) 36.4% 36.8%,transparent 37.2% 49%,rgba(177,117,46,.12) 49.4% 49.8%,transparent 50.2%),
+      repeating-conic-gradient(from -15deg,rgba(192,132,55,.12) 0deg 1deg,transparent 1deg 30deg);
+    box-shadow:inset 0 0 0 1px rgba(177,117,46,.17),0 0 35px rgba(110,67,27,.08);
+    opacity:.9;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread {
+    z-index:2;
+  }
+}
+}

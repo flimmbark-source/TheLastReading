@@ -1,3 +1,4 @@
+@layer assetLazy {
 #atticScene::before,
 #atticScene::after,
 #atticRoom{
@@ -23,4 +24,5 @@ body.mode-attic #atticRoom,
 body.mode-to-table #atticRoom,
 body.mode-table-return #atticRoom{
   background:url('../../backgrounds/attic_room_mvp_1080x1920.png') left top/100% 100% no-repeat!important;
+}
 }

@@ -1,0 +1,447 @@
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
+/* Compatibility overrides kept separate from the Phase 1 composition sheet. */
+
+@media (max-width: 640px) {
+  body.single-player-v2 #settingsPanel {
+    pointer-events: auto;
+  }
+
+  /* Keep the hand cards above the separate swipe surface. Empty space inside
+     the dock passes through to that surface, while every card remains directly
+     clickable and draggable. */
+  body.single-player-v2 .hand-swipe-zone {
+    z-index: 25;
+  }
+
+  body.single-player-v2 .handDock {
+    z-index: 26;
+    pointer-events: none;
+  }
+
+  body.single-player-v2 .handDock .hand {
+    position: relative;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  body.single-player-v2 .handDock .hand .card {
+    pointer-events: auto;
+  }
+
+  /* Bottom actions must remain tappable above the hand and swipe surface,
+     but still below reference sheets, modals, and tutorials. */
+  body.single-player-v2 .spread-actions {
+    z-index: 29;
+  }
+
+  /* Generated-sheet composition, matched to the approved 941 × 1672 layout. */
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-title-h: 6.58dvh;
+    --spv2-hud-top: 6.58dvh;
+    --spv2-hud-h: 16.39dvh;
+    --spv2-slot-w: clamp(56px,15.2vw,72px);
+    --spv2-slot-h: calc(var(--spv2-slot-w) * 1.75);
+    --spv2-hand-clearance: 34dvh;
+    background-position: center top;
+    background-size: 100% 100%;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap {
+    height: var(--spv2-title-h);
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap::before {
+    top: .55dvh;
+    left: 24%;
+    right: 24%;
+    height: 5.55dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    top: var(--spv2-hud-top);
+    left: max(4px,.45vw);
+    right: max(4px,.45vw);
+    height: var(--spv2-hud-h);
+    border-radius: clamp(14px,3.8vw,22px);
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready .actions {
+    top: 23.65dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready .actions button {
+    width: clamp(38px,9.3vw,48px);
+    height: clamp(38px,9.3vw,48px);
+    min-width: 0;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    right: 2.2vw;
+  }
+
+  body.single-player-v2.generated-sheet-ready .actions {
+    left: 2.2vw;
+    gap: 1.2vw;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap {
+    top: 28.2dvh;
+    bottom: 34dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap::before {
+    width: min(92vw,390px);
+    height: auto;
+    aspect-ratio: 380 / 348;
+    opacity: .9;
+    transform: translateY(-1.2dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread {
+    min-height: calc(var(--spv2-slot-h) + 24px);
+    padding: 0 4.5vw;
+    transform: translateY(4.1dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot {
+    margin-left: -1.25vw;
+    border-radius: clamp(5px,1.4vw,8px);
+  }
+
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(1) { transform: translateY(1.3dvh) rotate(-4deg); }
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(2) { transform: translateY(.45dvh) rotate(-2deg); }
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(3) { transform: translateY(0) rotate(0); }
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(4) { transform: translateY(.45dvh) rotate(2deg); }
+  body.single-player-v2.generated-sheet-ready .slot:nth-child(5) { transform: translateY(1.3dvh) rotate(4deg); }
+
+  body.single-player-v2.generated-sheet-ready .handDock {
+    height: 34dvh;
+    bottom: 0;
+    align-items: flex-start;
+    background-position: center bottom;
+    background-size: 100% auto;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand {
+    height: 31dvh;
+    --track-spacing: 6.5deg;
+    --track-radius: 560px;
+    transform: translateY(.8dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card {
+    width: clamp(78px,22vw,96px);
+    height: calc(clamp(78px,22vw,96px) * 1.5);
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+    bottom: 25.5dvh;
+    height: 7.5dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions {
+    bottom: max(1.35dvh,env(safe-area-inset-bottom));
+    padding: 0 5vw;
+    align-items: center;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    width: clamp(48px,13.8vw,64px);
+    height: clamp(55px,15.8vw,74px);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions::before {
+    bottom: -.2dvh;
+    width: clamp(70px,20.5vw,92px);
+    height: clamp(70px,20.5vw,92px);
+  }
+}
+
+@media (max-width: 640px) and (max-height: 759px) {
+  body.single-player-v2:not(.generated-sheet-ready) {
+    --spv2-title-h: 32px;
+    --spv2-hud-top: 32px;
+    --spv2-hud-h: 94px;
+    --spv2-slot-w: clamp(61px,17.8vw,66px);
+    --spv2-hand-clearance: 188px;
+  }
+
+  body.single-player-v2:not(.generated-sheet-ready) .score-stack .pill {
+    padding-top: 8px;
+    padding-bottom: 7px;
+    gap: 4px;
+  }
+
+  body.single-player-v2:not(.generated-sheet-ready) .spv2-threshold-progress {
+    bottom: 8px;
+    height: 6px;
+  }
+
+  body.single-player-v2:not(.generated-sheet-ready) #menuBtn,
+  body.single-player-v2:not(.generated-sheet-ready) .actions {
+    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 7px);
+  }
+
+  body.single-player-v2:not(.generated-sheet-ready) .spread-wrap {
+    top: calc(var(--spv2-hud-top) + var(--spv2-hud-h) + 59px);
+  }
+
+  body.single-player-v2:not(.generated-sheet-ready) .handDock {
+    height: 146px;
+    bottom: 14px;
+  }
+}
+
+/* Deprecated exact-sheet fallback. */
+@media (max-width: 640px) {
+  body.single-player-v2.reference-sheet-ready {
+    --spv2-title-h:6.58dvh;
+    --spv2-hud-top:6.58dvh;
+    --spv2-hud-h:16.39dvh;
+    --spv2-slot-w:15.2vw;
+    --spv2-slot-h:14.95dvh;
+  }
+
+  body.single-player-v2.reference-sheet-ready #menuBtn,
+  body.single-player-v2.reference-sheet-ready .actions button {
+    position:relative;
+    color:transparent;
+    font-size:0;
+  }
+
+  body.single-player-v2.reference-sheet-ready #menuBtn::before,
+  body.single-player-v2.reference-sheet-ready .actions button::before {
+    content:none;
+  }
+
+  body.single-player-v2.reference-sheet-ready .handDock::before {
+    z-index:0;
+    pointer-events:none;
+  }
+
+  body.single-player-v2.reference-sheet-ready .handDock .hand {
+    z-index:2;
+  }
+}
+
+/* === Migrated requested fixes compatibility section === */
+@media (max-width: 640px) {
+  /* Keep the complete top HUD cluster closer to the top edge. Every pill and
+     upper utility button keys off these shared variables. */
+  html body.single-player-v2.generated-sheet-ready {
+    --spv2-hud-top: max(4.5dvh, env(safe-area-inset-top));
+    /* Shorter Score/Threshold panels: the previous clamp grew across several
+       override passes (76 -> 116 -> 140 -> 148) and left a lot of empty
+       vertical ornament. This is the authoritative height. */
+    --spv2-compact-hud-h: clamp(112px,14dvh,128px);
+  }
+
+  /* Give the two live headline values more visual weight inside the slightly
+     taller Score and Threshold panels. */
+  html body.single-player-v2.generated-sheet-ready .score-stack .score-pill > b,
+  html body.single-player-v2.generated-sheet-ready .score-stack .threshold-pill > b {
+    font-size: clamp(40px,10.5vw,70px) !important;
+    line-height: .9 !important;
+  }
+
+  /* The replacement PNG has more breathing room around its frame. Overscale
+     the artwork inside the existing slot boxes rather than changing card or
+     spread geometry. Keep the slot open so a placed card's hint halo can render
+     outside the frame; the card itself still clips its artwork normally. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot {
+    background-size: 118% 118% !important;
+    overflow: visible;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot > .card {
+    overflow: hidden;
+  }
+
+  /* Drag highlighting must tint the existing slot art, not replace the entire
+     background shorthand and reset the PNG sizing. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.drop-target {
+    background-color: rgba(98,170,104,.28);
+    background-image: var(--spv2-spread-slot-art);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 118% 118%;
+    border-color: #79c778;
+    box-shadow: 0 0 0 2px rgba(121,199,120,.55),0 0 32px rgba(121,199,120,.45);
+  }
+
+  /* Preserve the dock artwork's aspect ratio while reducing the current art
+     size by 20 percent and moving the image down 10px. */
+  html body.single-player-v2.generated-sheet-ready .handDock {
+    background-size: auto clamp(144px,17.6dvh,155.2px) !important;
+    background-position: center bottom calc(2dvh - 5px) !important;
+  }
+
+  /* Make an available discard action visibly brighter than its disabled state. */
+  html body.single-player-v2.generated-sheet-ready #discardBtn:not(:disabled) {
+    box-shadow:
+      0 0 0 3px rgba(255,217,120,.9),
+      0 0 18px rgba(255,200,84,.82),
+      0 0 36px rgba(100,168,255,.45);
+  }
+
+  html body.single-player-v2.generated-sheet-ready #discardBtn:not(:disabled)::before {
+    filter:
+      brightness(2.45)
+      contrast(1.12)
+      saturate(1.28)
+      drop-shadow(0 0 8px rgba(255,220,132,.88))
+      drop-shadow(0 0 14px rgba(85,156,255,.72));
+  }
+
+  /* Group the upper utility controls into two compact pairs:
+     Menu + Archives on the left, Scoring + Abilities on the right. */
+  html body.single-player-v2.generated-sheet-ready #menuBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh + 4px);
+    left: 3.8vw;
+    right: auto;
+    width: clamp(40px,10.5vw,50px);
+    height: clamp(40px,10.5vw,50px);
+    transform: none;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh + 4px);
+    left: calc(3.8vw + clamp(40px,10.5vw,50px) + 8px);
+    right: auto;
+    width: clamp(40px,10.5vw,50px);
+    height: clamp(40px,10.5vw,50px);
+    transform: none;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #scoringBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh);
+    left: auto;
+    right: calc(3.8vw + clamp(40px,10.5vw,50px) + 8px);
+    transform: none;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh);
+    left: auto;
+    right: 3.8vw;
+    transform: none;
+  }
+
+  /* Deliberate five-card fan. The slot dimensions remain unchanged; only their
+     position, rotation, overlap depth, and contact shadows change. The outer
+     translations use the reference values when space permits, but clamp inward
+     on narrow screens to preserve a safe gutter for the rotated top corners. */
+  html body.single-player-v2.generated-sheet-ready .spread {
+    top: calc(.4dvh + 52px);
+    position: relative;
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    height: calc(var(--spv2-slot-h) + 28px);
+    min-height: calc(var(--spv2-slot-h) + 28px) !important;
+    margin-inline: auto;
+    padding: 0 !important;
+    perspective: 900px;
+    overflow: visible;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot,
+  html body.single-player-v2.generated-sheet-ready .spread .slot:first-child {
+    position: absolute !important;
+    left: 50%;
+    top: 0;
+    flex: 0 0 var(--spv2-slot-w);
+    width: var(--spv2-slot-w);
+    height: var(--spv2-slot-h);
+    margin: 0 !important;
+    transform-origin: 50% 90%;
+    will-change: transform;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
+    transform: translateX(max(-265%, calc(-50vw + 14px))) translateY(14px) rotate(-8deg);
+    z-index: 1;
+    box-shadow:
+      0 5px 4px rgba(0,0,0,.70),
+      0 14px 17px rgba(0,0,0,.52),
+      inset 0 0 0 3px rgba(183,139,67,.045);
+  }
+
+  /* Pull the two inner slots slightly toward the center. This redistributes the
+     small rotation-driven intersections evenly across the fan and creates more
+     clearance between the inner and outer pairs. */
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
+    transform: translateX(-153%) translateY(5px) rotate(-4deg);
+    z-index: 2;
+    box-shadow:
+      0 6px 4px rgba(0,0,0,.74),
+      0 16px 18px rgba(0,0,0,.56),
+      inset 0 0 0 3px rgba(183,139,67,.045);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
+    transform: translateX(-50%) translateY(0) rotate(0deg) scale(1.025);
+    z-index: 3;
+    box-shadow:
+      0 7px 5px rgba(0,0,0,.82),
+      0 19px 22px rgba(0,0,0,.62),
+      inset 0 0 0 3px rgba(183,139,67,.045);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
+    transform: translateX(53%) translateY(5px) rotate(4deg);
+    z-index: 2;
+    box-shadow:
+      0 6px 4px rgba(0,0,0,.74),
+      0 16px 18px rgba(0,0,0,.56),
+      inset 0 0 0 3px rgba(183,139,67,.045);
+  }
+
+  html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
+    transform: translateX(min(165%, calc(50vw - 14px - 100%))) translateY(14px) rotate(8deg);
+    z-index: 1;
+    box-shadow:
+      0 5px 4px rgba(0,0,0,.70),
+      0 14px 17px rgba(0,0,0,.52),
+      inset 0 0 0 3px rgba(183,139,67,.045);
+  }
+
+  /* Interaction glows sit above the fan and temporarily replace the dark
+     contact-only treatment. They remain local to the active slot. */
+  html body.single-player-v2.generated-sheet-ready #spread .slot.drop-target,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-target-slot,
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-picked-slot {
+    z-index: 5;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-target-slot {
+    background-color: rgba(98,170,104,.18);
+    background-image: var(--spv2-spread-slot-art);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 118% 118%;
+    border-color: #79c778;
+    box-shadow:
+      0 0 0 2px rgba(121,199,120,.72),
+      0 0 24px rgba(121,199,120,.42),
+      0 9px 14px rgba(0,0,0,.66);
+  }
+
+  html body.single-player-v2.generated-sheet-ready #spread .slot.ability-picked-slot {
+    background-color: rgba(212,175,106,.18);
+    background-image: var(--spv2-spread-slot-art);
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 118% 118%;
+    border-color: #ffd978;
+    box-shadow:
+      0 0 0 2px rgba(255,217,120,.88),
+      0 0 28px rgba(255,217,120,.48),
+      0 9px 14px rgba(0,0,0,.66);
+  }
+}
+}

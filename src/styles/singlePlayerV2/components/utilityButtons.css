@@ -1,0 +1,62 @@
+@layer spv2.components {
+  /* Single Player V2 mobile utility button visibility contract.
+
+     Keep display ownership for the utility medallions in one component: Menu,
+     Scoring, Abilities, and Archive are visible utilities; Mulligan remains the
+     hidden legacy button. Art and pressed-state styling still live in the
+     generated art/icon source sections until those rules are migrated here. */
+  @media (max-width: 640px) {
+    body.single-player-v2.generated-sheet-ready #mullBtn {
+      display: none !important;
+    }
+
+    body.single-player-v2.generated-sheet-ready #scoringBtn,
+    body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+    body.single-player-v2.generated-sheet-ready #menuBtn,
+    body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+      display: block !important;
+      width: clamp(44px, 11.5vw, 56px) !important;
+      height: clamp(44px, 11.5vw, 56px) !important;
+      border-radius: 50% !important;
+    }
+
+    /* Lift the dock, card fan, and its gesture surface as one visual unit.
+       Individual translate composes with their existing positioning rules. */
+    html body.single-player-v2.generated-sheet-ready .handDock,
+    html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone {
+      translate: 0dvh;
+    }
+
+    /* A small warm lift remains beneath the interface after the redundant
+       darkening layers are removed. */
+    body.single-player-v2.generated-sheet-ready::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at 50% 52%, rgba(174, 111, 54, .12), transparent 60%),
+        linear-gradient(rgba(116, 76, 43, .06), rgba(72, 43, 24, .04));
+      mix-blend-mode: screen;
+    }
+  }
+}
+
+/* Loaded after the generated SPv2 bundle, so these normal declarations refine
+   the same spv2Core layer without adding another priority tier. */
+@layer spv2Core {
+  @media (max-width: 640px) {
+    body.single-player-v2.generated-sheet-ready::before {
+      background:
+        repeating-linear-gradient(96deg, rgba(255,255,255,.012) 0 1px, transparent 1px 11px),
+        repeating-linear-gradient(4deg, rgba(78,43,16,.035) 0 2px, transparent 2px 15px),
+        radial-gradient(ellipse at center, transparent 62%, rgba(0,0,0,.24) 100%);
+      opacity: .55;
+    }
+
+    body.single-player-v2.generated-sheet-ready #breathVignette {
+      display: none;
+    }
+  }
+}

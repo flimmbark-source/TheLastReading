@@ -151,7 +151,12 @@ export function installHandSwipeScroll(target = window){
     h.style.setProperty('--track-offset',d.toFixed(3)+'deg');
     if(!target.__handHasBeenSwiped)updateOverflowHint();
   };
-  const applySpacing=d=>{const h=handEl();if(!h)return;h.style.setProperty('--track-spacing',d.toFixed(3)+'deg');};
+  const applySpacing=d=>{
+    const h=handEl();if(!h)return;
+    // Some late visual-pass styles define --track-spacing with !important;
+    // match that priority so the gesture/autofit controller remains authoritative.
+    h.style.setProperty('--track-spacing',d.toFixed(3)+'deg','important');
+  };
   const liftCap=()=>target.innerWidth<640?HAND_LIFT_PX_MOBILE:HAND_LIFT_PX;
   const clampLift=y=>Math.max(-liftCap(),Math.min(liftCap(),y));
   const softClampLift=y=>{const c=liftCap();if(y>c)return c+(y-c)*RUBBER;if(y<-c)return -c+(y+c)*RUBBER;return y;};
@@ -184,6 +189,8 @@ export function installHandSwipeScroll(target = window){
     const spacing=(maxAngleDeg*2)/(n-1);
     return Math.max(SPACING_MIN,Math.min(SPACING_MAX,spacing));
   };
+  const spacingMaxForFit=()=>autoSpacing!=null?autoSpacing:SPACING_MAX;
+  const clampSpacingForFit=d=>Math.max(SPACING_MIN,Math.min(spacingMaxForFit(),d));
   const refreshLayout=()=>{
     const h=handEl();if(!h)return;
     // Re-apply lift to the live element in case render() replaced the DOM node.
@@ -198,6 +205,7 @@ export function installHandSwipeScroll(target = window){
     if(!target.__handReorderActive)applySlots();
     const auto=calcAutoSpacing();
     if(auto!=null)autoSpacing=auto;
+    if(manualSpacing!=null)manualSpacing=clampSpacingForFit(manualSpacing);
     const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
     applySpacing(s);
     cachedCap=null;
@@ -329,7 +337,7 @@ export function installHandSwipeScroll(target = window){
     if(!a||!b)return;
     const delta=distOf(a,b)-pinchStart.dist;
     let next=pinchStart.spacing+delta*DEG_PER_PX_PINCH;
-    next=Math.max(SPACING_MIN,Math.min(SPACING_MAX,next));
+    next=clampSpacingForFit(next);
     if(next===manualSpacing)return;
     if(next<pinchStart.spacing-.15)completeHandHintStep(2);
     if(next>pinchStart.spacing+.15)completeHandHintStep(3);
@@ -364,9 +372,9 @@ export function installHandSwipeScroll(target = window){
     const dy=(ev.clientY||startY)-startY;
     // Flush gesture: drag 2/3 of the hand dock below the screen edge.
     if(dy>startDockH*2/3&&typeof target.flushHand==='function'){endGesture();target.flushHand();return;}
-    const _desktopDir=target.matchMedia('(pointer:fine)').matches?-1:1;const targetOffset=softClamp(startOffset+dx*DEG_PER_PX_SWIPE*_desktopDir);
+    const targetOffset=softClamp(startOffset+dx*DEG_PER_PX_SWIPE);
     if(Math.abs(targetOffset-startOffset)>1.15)completeHandHintStep(1);
-    const _desktopYDir=target.matchMedia('(pointer:fine)').matches?-1:1;const y=softClampLift(startLift+dy*_desktopYDir);
+    const y=softClampLift(startLift+dy);
     applyOffset(targetOffset);
     applyLift(y);
     const now=performance.now();
@@ -516,7 +524,10 @@ export function installHandSwipeScroll(target = window){
   };
   // ── Desktop scroll-wheel: scroll down = constrict, scroll up = expand ──
   (function(){
-    const isDesktop=()=>target.matchMedia('(pointer:fine)').matches;
+    // Fine-pointer devices get the wheel wording; touch devices keep the
+    // pinch wording. A touchscreen laptop matches fine-pointer but pinch
+    // still works there too — both inputs stay live regardless of the text.
+    const isDesktop=()=>target.matchMedia?.('(hover: hover) and (pointer: fine)').matches??false;
     // Swap hint text for desktop on first opportunity
     const setHintText=()=>{
       const l2=document.getElementById('handHintLine2');
@@ -532,7 +543,9 @@ export function installHandSwipeScroll(target = window){
     };
     if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',setHintText);}
     else{setHintText();}
-    target.matchMedia('(pointer:fine)').addEventListener('change',setHintText);
+    // The SPv2 shell rebuilds the hint DOM (restoreHandTutorial), so expose
+    // the setter for it to re-apply the input-appropriate wording after.
+    target.__handSetHintText=setHintText;
 
     // Scroll to adjust spacing; horizontal scroll drifts the hand side-to-side.
     const DEG_PER_SCROLL=0.012;  // degrees of spacing per pixel of vertical scroll delta
@@ -554,7 +567,7 @@ export function installHandSwipeScroll(target = window){
         // deltaY > 0 = scroll down = constrict (reduce spacing)
         const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
         let next=s - delta*DEG_PER_SCROLL;
-        next=Math.max(SPACING_MIN,Math.min(SPACING_MAX,next));
+        next=clampSpacingForFit(next);
         if(next!==manualSpacing){
           manualSpacing=next;
           cachedCap=null;
@@ -563,8 +576,8 @@ export function installHandSwipeScroll(target = window){
         }
       }
     };
+    // A wheel event over the hand is unambiguous intent — no device gate.
     const onWheel=ev=>{
-      if(!isDesktop())return;
       const z=zoneEl();if(!z)return;
       // Only activate when hovering the swipe zone or the hand area
       if(!ev.target.closest('#handSwipeZone,.handDock'))return;

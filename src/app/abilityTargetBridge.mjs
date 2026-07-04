@@ -1,6 +1,8 @@
 const START_ABILITY_TARGETING = 'START_ABILITY_TARGETING';
 const TOGGLE_ABILITY_TARGET = 'TOGGLE_ABILITY_TARGET';
 const CLEAR_ABILITY_TARGETING = 'CLEAR_ABILITY_TARGETING';
+const CANCEL_ABILITY = 'CANCEL_ABILITY';
+const SYNC_LEGACY_RUN = 'SYNC_LEGACY_RUN';
 
 // The store owns the serializable targeting selection (valid/picked ids, title,
 // count). The confirm callback and preview function cannot live in the store, so
@@ -80,6 +82,55 @@ function allSelectableCards(target) {
   return [...(state?.hand || []), ...((state?.spread || []).filter(Boolean))];
 }
 
+function mirrorDiscardStateFromRun(target, run, lastDiscardedCard = undefined) {
+  const state = stateOf(target);
+  if (!state || !run) return;
+  state.hand = [...(run.hand || [])];
+  state.discard = [...(run.discard || [])];
+  state.discardedCards = [...(run.discardedCards || [])];
+  state.discards = run.discards;
+  state.freeDiscardUsed = !!run.freeDiscardUsed;
+  state.sightChargesUsed = Number(run.sightChargesUsed || 0);
+  state.roundDiscardCount = Number(run.roundDiscardCount || 0);
+  state.selected = run.selectedCardId ?? null;
+  if (lastDiscardedCard !== undefined) state.lastDiscardedCard = lastDiscardedCard;
+}
+
+function restoreCancelledAbilityDiscard(target) {
+  const rollback = target.__tlrPendingAbilityDiscardRollback;
+  const run = target.tlrStore?.getState?.()?.run;
+  if (!rollback || !run) return false;
+
+  const sourceCardId = rollback.card?.uid ?? run.ability?.sourceCardId ?? run.sourceCardId;
+  const discard = [...(run.discard || [])];
+  const discardIndex = discard.findIndex(card => card.uid === sourceCardId);
+  if (discardIndex < 0) return false;
+
+  const [card] = discard.splice(discardIndex, 1);
+  const hand = [...(run.hand || [])];
+  const insertAt = Math.max(0, Math.min(Number(rollback.handIndex ?? hand.length), hand.length));
+  hand.splice(insertAt, 0, card);
+
+  target.tlrStore.dispatch({
+    type: SYNC_LEGACY_RUN,
+    run: {
+      hand,
+      discard,
+      selectedCardId: null,
+      discards: rollback.discards,
+      freeDiscardUsed: rollback.freeDiscardUsed,
+      sightChargesUsed: rollback.sightChargesUsed,
+      discardedCards: [...(rollback.discardedCards || [])],
+      roundDiscardCount: rollback.roundDiscardCount,
+    },
+  });
+
+  const restoredRun = target.tlrStore.getState().run;
+  mirrorDiscardStateFromRun(target, restoredRun, rollback.lastDiscardedCard ?? null);
+  target.__tlrPendingAbilityDiscardRollback = null;
+  return true;
+}
+
 export function installAbilityTargetBridge(target = window) {
   if (!target || target.__tlrAbilityTargetBridgeInstalled) return;
   target.__tlrAbilityTargetBridgeInstalled = true;
@@ -116,11 +167,22 @@ export function installAbilityTargetBridge(target = window) {
     if (typeof target.render === 'function') target.render();
   };
 
-  // Cancelling never costs anything (the source card stays discarded either
-  // way — see resolveAbility's retry loop), so it's available at every step,
-  // not just the first.
   target.tlrCanCancelAbilitySelection = function () {
-    return !!storeTargeting(target);
+    return !!storeTargeting(target) || !!target.__tlrPendingAbilityDiscardRollback;
+  };
+
+  // Cancel an active non-targeting ability (for example Peek's reveal-choice
+  // modal). These abilities never create store targeting, but they still have
+  // the same pending discard rollback captured before resolution began.
+  target.tlrCancelActiveAbility = function () {
+    clearPendingAutoConfirm();
+    clearPendingCallbacks();
+    const restored = restoreCancelledAbilityDiscard(target);
+    if (storeReady(target)) target.tlrStore.dispatch({ type: CANCEL_ABILITY });
+    const state = stateOf(target);
+    if (state) { state.abilitySelect = null; state.busy = false; }
+    if (typeof target.render === 'function') target.render();
+    return restored;
   };
 
   target.handleAbilityHandClick = function (card) {
@@ -161,31 +223,30 @@ export function installAbilityTargetBridge(target = window) {
     if (typeof cb === 'function') cb(...picked);
   };
 
-  // Cancel backs out of the current targeting step without touching the
-  // discard — the source card stays spent. Resolving the pending callback
-  // with no picks signals cancellation up through buildAbilityChoiceAsync,
-  // and resolveAbility's retry loop re-shows targeting from the start.
+  // Complete cancellation rolls back the discard that activated the ability.
+  // The exact pre-discard hand position and resource counters are captured by
+  // discardRuntime, then restored here before the active ability is cleared.
   target.cancelAbilitySelection = function () {
     clearPendingAutoConfirm();
     const targeting = storeTargeting(target);
     if (!targeting) return false;
     const cb = pendingCallbacks.cb;
     clearPendingCallbacks();
-    target.tlrStore.dispatch({ type: CLEAR_ABILITY_TARGETING });
+    restoreCancelledAbilityDiscard(target);
+    target.tlrStore.dispatch({ type: CANCEL_ABILITY });
+    const state = stateOf(target);
+    if (state) { state.abilitySelect = null; state.busy = false; }
     if (typeof target.render === 'function') target.render();
-    if (typeof cb === 'function') cb();
+    if (typeof cb === 'function') cb(null);
     return true;
   };
 
-  // Hard abandon for navigation (e.g. Return to Menu): unlike
-  // cancelAbilitySelection, this never resolves the pending callback, so
-  // resolveAbility's retry loop does not fire and re-prompt. It just drops
-  // the whole in-flight ability — including run.ability itself, not only
-  // .targeting — so a resumed session ("Continue") never finds a stale
-  // half-active ability still sitting in the store.
+  // Hard abandon for navigation (e.g. Return to Menu) intentionally does not
+  // restore the discarded card or resolve the pending targeting callback.
   target.tlrForceCloseAbilityTargeting = function () {
     clearPendingAutoConfirm();
     clearPendingCallbacks();
+    target.__tlrPendingAbilityDiscardRollback = null;
     if (storeReady(target) && target.tlrActions) {
       target.tlrStore.dispatch({ type: target.tlrActions.CANCEL_ABILITY });
     }

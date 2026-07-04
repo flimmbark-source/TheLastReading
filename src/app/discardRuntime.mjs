@@ -28,6 +28,19 @@ function syncLegacyFromRun(state,run){
   state.lastDiscardedCard=run.lastDiscardedCard??state.lastDiscardedCard??null;
 }
 
+function captureAbilityDiscardRollback(state,run,card,handIndex){
+  return {
+    card,
+    handIndex,
+    discards:run?.discards??state.discards,
+    freeDiscardUsed:!!(run?.freeDiscardUsed??state.freeDiscardUsed),
+    sightChargesUsed:Number(run?.sightChargesUsed??state.sightChargesUsed??0),
+    discardedCards:[...(run?.discardedCards??state.discardedCards??[])],
+    roundDiscardCount:Number(run?.roundDiscardCount??state.roundDiscardCount??0),
+    lastDiscardedCard:run?.lastDiscardedCard??state.lastDiscardedCard??null,
+  };
+}
+
 export function canDiscardCard(cardUid,target = window){
   const state=stateOf(target),persist=persistOf(target);
   const run=target.tlrStore?.getState?.()?.run;
@@ -47,19 +60,25 @@ export function discardSelected(target = window){
   if(!free&&((_run?.discards??state.discards)<=0))return false;
   const selectedId=state.selected;
   const handArr=_run?.hand||state.hand;
-  const card=handArr.find(c=>c.uid===selectedId);
+  const handIndex=handArr.findIndex(c=>c.uid===selectedId);
+  const card=handArr[handIndex];
   if(!card)return false;
+
+  // Keep the exact pre-discard state while an ability is pending. The targeting
+  // bridge consumes this only when the player completely cancels the ability,
+  // restoring the card, its hand position, and the discard resources together.
+  target.__tlrPendingAbilityDiscardRollback=captureAbilityDiscardRollback(state,_run,card,handIndex);
 
   const isStoreReady=storeReady(target);
   if(isStoreReady){
     call(target,'tlrSyncPersistToStore');
     target.tlrStore.dispatch({type:target.tlrActions.DISCARD_SELECTED});
     const newRun=target.tlrStore.getState().run;
-    if(newRun.selectedCardId===selectedId)return false; // guard: dispatch had no effect
+    if(newRun.selectedCardId===selectedId){target.__tlrPendingAbilityDiscardRollback=null;return false;}
     syncLegacyFromRun(state,newRun);
   } else {
     const idx=state.hand.findIndex(c=>c.uid===selectedId);
-    if(idx<0)return false;
+    if(idx<0){target.__tlrPendingAbilityDiscardRollback=null;return false;}
     state.hand.splice(idx,1);
     state.selected=null;
     state.discard.push(card);
@@ -76,7 +95,11 @@ export function discardSelected(target = window){
   call(target,'haptic',16);
 
   const finish=()=>{
-    if((persist.up||{}).nimble_fingers)call(target,'drawN',persist.up.nimble_fingers);
+    const currentRun=target.tlrStore?.getState?.()?.run;
+    const currentHand=currentRun?.hand||state.hand||[];
+    const wasReturned=currentHand.some(candidate=>candidate.uid===card.uid);
+    target.__tlrPendingAbilityDiscardRollback=null;
+    if(!wasReturned&&(persist.up||{}).nimble_fingers)call(target,'drawN',persist.up.nimble_fingers);
     call(target,'render');
     call(target,'checkEnd');
   };

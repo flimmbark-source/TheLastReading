@@ -1,0 +1,26 @@
+@layer invTab {
+/* The archive drawer's pull-tab (#invTab), consolidated out of mobile.css's
+   base rules and attic.css's mode-transition important-tier block.
+   Declared AFTER legacy -- the opposite direction from its sibling
+   invWrap.css: the only real remaining conflict is market.css's
+   mobile-breakpoint `button{font-size:12px;padding:6px 9px}` reset (still
+   in legacy), which must keep losing to this file's higher ID-based
+   specificity (`font-size:10px;padding:0`), previously decided within the
+   shared legacy layer -- the same failure mode tutTip.css hit with
+   #tutSkipBtn. attic.css's mode-transition important-tier
+   `pointer-events:none` block dominates the base rule's non-important
+   `pointer-events:auto` regardless of layer position, so it doesn't
+   constrain this either way. #invTab is not one of the 7 elements in
+   attic.css's shared mode-transition fade rule (that rule never mentions
+   #invTab), so unlike invWrap.css there's no shared-rule entanglement to
+   worry about here. */
+#invTab{position:absolute;top:var(--inv-h);left:calc(50% - 40px);width:80px;height:28px;background:linear-gradient(180deg,#2e1e0e,#1e1208);border:1px solid #6a4c24;border-top:none;border-radius:0 0 10px 10px;cursor:grab;color:#a07838;font-size:10px;font-weight:700;letter-spacing:.07em;text-align:center;line-height:28px;pointer-events:auto;transition:background .15s,color .15s,box-shadow .15s;padding:0;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.5);touch-action:none;user-select:none}
+#invTab:hover{background:linear-gradient(180deg,#3e2814,#281810);color:#ffd978;box-shadow:0 4px 14px rgba(0,0,0,.6)}
+#invTab:active{cursor:grabbing}
+body.mode-to-attic #invTab,
+body.mode-attic #invTab,
+body.mode-to-table #invTab,
+body.mode-table-return #invTab{
+  pointer-events:none!important;
+}
+}

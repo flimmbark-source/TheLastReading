@@ -35,8 +35,9 @@ assert.deepEqual(choice.anchorUids, [chosenFirst.uid, firstPossible.uid], 'Betwe
 assert.deepEqual(choice.heldCardUids, [onlyResult.uid], 'Between holds only the available result');
 assert.equal(choice.takenCardUid, onlyResult.uid, 'Between takes the chosen result card');
 
-// The Cancel button resolves the targeting promise with no cards; this must exit
-// the ability builder cleanly instead of treating an empty array as a valid pick.
+// The targeting prompt's Cancel button resolves with one explicit null marker.
+// This ends the ability as a no-op instead of returning null, which the reading
+// flow intentionally interprets as "retry from the first targeting step."
 {
   let choiceOpened = false;
   const cancelled = await buildAbilityChoiceAsync(
@@ -44,14 +45,14 @@ assert.equal(choice.takenCardUid, onlyResult.uid, 'Between takes the chosen resu
     { deck: [onlyResult], hand: [firstPossible, chosenFirst, invalidSecond], spread: [], sourceCardUid: null },
     {
       showChoice: async () => { choiceOpened = true; return onlyResult; },
-      selectTargets: async () => [],
+      selectTargets: async () => [null],
       sortCards: cards => cards.slice().sort((a, b) => a.number - b.number),
       cleanName: card => card.name,
       shuffleDeck: cards => cards,
       isTargetable: () => true,
     },
   );
-  assert.equal(cancelled, null, 'empty target selection is treated as cancellation');
+  assert.deepEqual(cancelled, {}, 'explicit targeting cancellation ends the ability as a no-op');
   assert.equal(choiceOpened, false, 'cancellation never opens the result-card choice');
 }
 

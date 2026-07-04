@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - 'game.html'
       - 'src/styles/**'
       - 'src/ui/**'
       - 'src/app/**'

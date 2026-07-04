@@ -1,0 +1,291 @@
+@layer spv2Core {
+/* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready {
+    --spv2-compact-hud-h: clamp(76px, 11dvh, 94px);
+    --spv2-hud-top: 8.2dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready #titleWrap {
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack {
+    top: var(--spv2-hud-top);
+    height: var(--spv2-compact-hud-h);
+    min-height: var(--spv2-compact-hud-h);
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill {
+    padding: 6px 2px 5px;
+    gap: 2px;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
+    font-size: clamp(11px, 3vw, 14px);
+    font-weight: 700;
+    letter-spacing: .04em;
+  }
+
+  body.single-player-v2.generated-sheet-ready .score-stack .pill > b {
+    font-size: clamp(24px, 6.5vw, 32px);
+    font-weight: 800;
+  }
+
+  body.single-player-v2.generated-sheet-ready .actions {
+    position: static;
+    inset: auto !important;
+    width: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn,
+  body.single-player-v2.generated-sheet-ready #scoringBtn,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    position: fixed;
+    z-index: 45;
+    display: grid;
+    place-items: center;
+    width: clamp(46px, 12vw, 58px);
+    height: clamp(46px, 12vw, 58px);
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid #8f6a34;
+    background-color: #17101f;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    box-shadow:
+      0 3px 8px rgba(0, 0, 0, .75),
+      inset 0 0 0 2px rgba(218, 171, 91, .18),
+      inset 0 0 12px rgba(105, 61, 126, .35);
+    color: transparent;
+    font-size: 0;
+    text-indent: 0;
+    opacity: 1;
+    visibility: visible;
+    overflow: visible;
+    pointer-events: auto;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    top: .8dvh;
+    left: 3.8vw;
+    right: auto;
+    background-image: var(--spv2-utility-settings-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    top: .8dvh;
+    left: auto;
+    right: 3.8vw;
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh);
+    left: 3.8vw;
+    right: auto;
+    background-image: var(--spv2-utility-reference-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn {
+    top: calc(var(--spv2-hud-top) + var(--spv2-compact-hud-h) + .35dvh);
+    left: auto;
+    right: 3.8vw;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn::after,
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after,
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after,
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #d1a65f;
+    text-indent: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 700;
+    text-shadow: 0 1px 2px #000;
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready #menuBtn::after {
+    content: "⚙";
+    font-size: clamp(22px, 6vw, 29px);
+  }
+
+  body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn::after {
+    content: "ARCH";
+    font-size: clamp(8px, 2.25vw, 11px);
+    letter-spacing: .05em;
+  }
+
+  body.single-player-v2.generated-sheet-ready #scoringBtn::after {
+    content: "REF";
+    font-size: clamp(9px, 2.5vw, 12px);
+    letter-spacing: .08em;
+  }
+
+  body.single-player-v2.generated-sheet-ready #abilitiesBtn::after {
+    content: "ABIL";
+    font-size: clamp(8px, 2.25vw, 11px);
+    letter-spacing: .05em;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-wrap {
+    top: 25.4dvh;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread {
+    transform: translateY(2.2dvh);
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions {
+    position: fixed;
+    z-index: 46;
+    top: calc(25.4dvh + var(--spv2-live-card-h) + .8dvh);
+    left: 0;
+    right: 0;
+    bottom: auto;
+    width: 100%;
+    height: clamp(62px, 16vw, 76px);
+    padding: 0;
+    transform: none;
+    display: block !important;
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spread-actions::before {
+    display: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn,
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    position: absolute;
+    top: 0;
+    display: grid;
+    place-items: center;
+    width: clamp(62px, 16vw, 76px);
+    height: clamp(62px, 16vw, 76px);
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px solid #8f6a34;
+    background-color: #17101f;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    box-shadow:
+      0 4px 10px rgba(0,0,0,.72),
+      inset 0 0 0 2px rgba(218,171,91,.16),
+      inset 0 0 14px rgba(105,61,126,.32);
+    pointer-events: auto;
+    opacity: 1;
+    visibility: visible;
+    filter: none;
+    transform: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn {
+    left: 8vw;
+    right: auto;
+    background-image: var(--spv2-action-eye-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready #purgeBtn {
+    left: auto;
+    right: 8vw;
+    background-image: var(--spv2-action-deck-art);
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn::after,
+  body.single-player-v2.generated-sheet-ready #purgeBtn::after {
+    color: #d1a65f;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(9px, 2.6vw, 12px);
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-shadow: 0 1px 2px #000;
+    pointer-events: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready #discardBtn::after {
+    content: "DISCARD";
+  }
+
+  body.single-player-v2.generated-sheet-ready #purgeBtn::after {
+    content: "PURGE";
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
+    left: 0;
+    right: 0;
+    bottom: 36dvh;
+    height: clamp(42px, 6.5dvh, 56px);
+    z-index: 25;
+    pointer-events: auto;
+    touch-action: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready .hand-swipe-zone-lower {
+    display: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock {
+    z-index: 26;
+  }
+
+  body.single-player-v2.generated-sheet-ready .handDock .hand .card {
+    pointer-events: auto;
+  }
+
+  body.single-player-v2.generated-sheet-ready .tlr-pull-wrap,
+  body.single-player-v2.generated-sheet-ready #invWrap {
+    overflow: visible;
+  }
+
+  body.single-player-v2.generated-sheet-ready .spv2-menu-close-tab {
+    position: absolute;
+    left: 50%;
+    z-index: 410;
+    width: 42px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    transform: translateX(-50%);
+    border: 1px solid #8f6a34;
+    border-top: 0;
+    border-radius: 0 0 10px 10px;
+    background: linear-gradient(180deg,#21162a,#130d19);
+    color: #d7b36e;
+    font: 700 18px/22px Georgia,serif;
+    box-shadow: 0 4px 10px rgba(0,0,0,.55);
+    cursor: pointer;
+    pointer-events: auto;
+    display: none;
+  }
+
+  body.single-player-v2.generated-sheet-ready .tlr-pull-wrap.open > .spv2-menu-close-tab,
+  body.single-player-v2.generated-sheet-ready #invWrap.open > .spv2-menu-close-tab {
+    display: block;
+  }
+
+  body.single-player-v2.generated-sheet-ready .tlr-pull-wrap > .spv2-menu-close-tab {
+    top: var(--tlr-drawer-h);
+    bottom: auto;
+  }
+
+  body.single-player-v2.generated-sheet-ready #invWrap > .spv2-menu-close-tab {
+    top: var(--inv-h);
+    bottom: auto;
+  }
+}
+}

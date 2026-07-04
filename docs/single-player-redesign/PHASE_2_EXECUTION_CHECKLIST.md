@@ -43,7 +43,7 @@ Batch A approval gate:
 ## Batch A integration
 
 - [ ] Add approved files under `public/ui/single-player-v2/`
-- [ ] Load `src/styles/singlePlayerV2Assets.css`
+- [ ] Load `src/styles/singlePlayerV2/assets.css`
 - [ ] Increment stylesheet cache version
 - [ ] Validate missing-asset fallback colors
 - [ ] Validate labels and numbers remain live

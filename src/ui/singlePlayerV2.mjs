@@ -19,23 +19,11 @@ export function installSinglePlayerV2(target = window) {
   };
 
   const ensureAssetLayer=()=>{
-    ensureStylesheet('single-player-v2-assets','src/styles/singlePlayerV2Assets.css?v=clean-tiles-1');
-    ensureStylesheet('single-player-v2-slot-match','src/styles/singlePlayerV2SlotMatch.css?v=2');
-    ensureStylesheet('single-player-v2-visual-fix','src/styles/singlePlayerV2VisualFix.css?v=8');
-    ensureStylesheet('single-player-v2-final-placement','src/styles/singlePlayerV2FinalPlacement.css?v=6');
-    ensureStylesheet('single-player-v2-hud-table-pass','src/styles/singlePlayerV2HudTablePass.css?v=2');
-    ensureStylesheet('single-player-v2-correction-pass','src/styles/singlePlayerV2CorrectionPass.css?v=2');
-    ensureStylesheet('single-player-v2-art-integration','src/styles/singlePlayerV2ArtIntegration.css?v=art-3');
-    ensureStylesheet('single-player-v2-utility-icons','src/styles/singlePlayerV2UtilityIcons.css?v=10');
+    ensureStylesheet('single-player-v2-index','src/styles/singlePlayerV2/index.css?v=desktop-fullscreen-3');
+    ensureStylesheet('single-player-v2-utility-buttons','src/styles/singlePlayerV2/components/utilityButtons.css?v=1');
   };
 
-  const refreshCompositionLayer=()=>{
-    const link=[...doc.querySelectorAll('link[rel="stylesheet"]')]
-      .find(node=>node.getAttribute('href')?.includes('singlePlayerV2Compat.css'));
-    if(!link)return;
-    const next='src/styles/singlePlayerV2Compat.css?v=composition-1';
-    if(link.getAttribute('href')!==next)link.setAttribute('href',next);
-  };
+  const refreshCompositionLayer=()=>{};
 
   const closePullDrawer=(id,label)=>{
     doc.getElementById(`${id}PullWrap`)?.classList.remove('open');
@@ -115,6 +103,10 @@ export function installSinglePlayerV2(target = window) {
 
     if(!zone.querySelector('.hand-swipe-hint')){
       zone.innerHTML='<div class="hand-swipe-zone-lower" aria-hidden="true"></div><div class="hand-swipe-hint"><div class="swipe-hint-line swipe-hint-line-1"><span></span>&#x2724; swipe to drift &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-2" id="handHintLine2"><span></span>&#x2724; pinch to constrict &#x2724;<span></span></div><div class="swipe-hint-line swipe-hint-line-3" id="handHintLine3"><span></span>&#x2724; pull open to expand &#x2724;<span></span></div></div>';
+      // Re-apply the input-appropriate constrict/expand wording (pinch vs
+      // scroll) — gestureHand owns that decision and the rebuild above
+      // resets the lines to the touch defaults.
+      target.__handSetHintText?.();
     }
   };
 
@@ -180,7 +172,11 @@ export function installSinglePlayerV2(target = window) {
 
       const archiveWrap=doc.getElementById('invWrap');
       const archiveDesk=doc.getElementById('invDesk');
-      if(archiveWrap?.classList.contains('open')&&archiveDesk&&!archiveDesk.contains(element)&&!element.closest('#spv2ArchiveBtn'))closeArchive();
+      // The item-detail popup renders outside #invDesk (appended to <body> so it
+      // can sit above the drawer — see mobile.css's .inv-detail-bg z-index).
+      // A pointerdown there is dismissing the item, not asking to close the
+      // archive drawer underneath it.
+      if(archiveWrap?.classList.contains('open')&&archiveDesk&&!archiveDesk.contains(element)&&!element.closest('#spv2ArchiveBtn')&&!element.closest('.inv-detail-bg'))closeArchive();
     },true);
   };
 
