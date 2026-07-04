@@ -1,6 +1,14 @@
 import { installMpHandGestureAdapter } from './mpHandGestureAdapter.mjs';
 
-function installDuelReferenceSurfaceStyle(doc) {
+function installDuelLayoutStyles(doc) {
+  if (!doc.getElementById('mp-duel-layout-fix')) {
+    const link = doc.createElement('link');
+    link.id = 'mp-duel-layout-fix';
+    link.rel = 'stylesheet';
+    link.href = 'src/styles/mpDuelLayoutFix.css?v=1';
+    doc.head.appendChild(link);
+  }
+
   if (doc.getElementById('mp-reference-surface-style')) return;
   const style = doc.createElement('style');
   style.id = 'mp-reference-surface-style';
@@ -20,47 +28,6 @@ function installDuelReferenceSurfaceStyle(doc) {
     body.mp-game-active #abilitiesPullWrap.open > .spv2-menu-close-tab {
       display: flex !important;
     }
-
-    /* The utility buttons live inside #titleWrap while the drawers live inside
-       .refs-layer. Put the drawer parent above the button parent; raising only
-       the drawer child cannot escape its parent's stacking context. */
-    body.mp-game-active #titleWrap {
-      z-index: 2147483000 !important;
-    }
-
-    body.mp-game-active .refs-layer {
-      z-index: 2147483200 !important;
-    }
-
-    body.mp-game-active #titleWrap .actions,
-    body.mp-game-active #scoringBtn,
-    body.mp-game-active #abilitiesBtn {
-      z-index: auto !important;
-    }
-
-    body.mp-game-active #scoringPullWrap,
-    body.mp-game-active #abilitiesPullWrap,
-    body.mp-game-active #scoringPullWrap.open,
-    body.mp-game-active #abilitiesPullWrap.open {
-      z-index: 2147483250 !important;
-    }
-
-    /* On phones the HUD/action group is top-anchored, but the player spread was
-       bottom-anchored. Taller screens therefore created a large empty gap. Anchor
-       the spread immediately beneath the Discard/Purge row instead. */
-    @media (max-width: 640px) {
-      body.mp-game-active .spread-wrap {
-        top: 390px !important;
-        bottom: auto !important;
-      }
-    }
-
-    @media (max-width: 380px) and (max-height: 740px) {
-      body.mp-game-active .spread-wrap {
-        top: 343px !important;
-        bottom: auto !important;
-      }
-    }
   `;
   doc.head.appendChild(style);
 }
@@ -71,5 +38,5 @@ export function installMpAbilitySurfaceCleanup(target = window) {
   const doc = target.document;
   if (!doc) return;
   installMpHandGestureAdapter(target);
-  installDuelReferenceSurfaceStyle(doc);
+  installDuelLayoutStyles(doc);
 }
