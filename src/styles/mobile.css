@@ -125,6 +125,29 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
 @media(prefers-reduced-motion:reduce){.relic-vision-veil,.relic-vision-rays,.relic-vision-mote{animation:none;opacity:0;display:none}.relic-vision-enter{animation:none}}
 /* end relic vision transition patch */
 /* hand swipe-scroll patch */
+/* Mobile-only bug: the fan's .hand .card transform below is a calc() chain
+   with nested sin()/cos() built from these custom properties, and without
+   @property registration a custom property is an untyped token stream --
+   some mobile browser engines respond to that by refusing to smoothly
+   interpolate a transition on a transform that depends on one, snapping
+   straight to the end value instead of animating (desktop Chromium/Firefox
+   animate it fine either way). It's worst on the fan's outermost cards
+   because they have the largest --total-rot/--arc-x delta between resting
+   and .sel, so a failed interpolation is most visible there. Registering
+   the whole dependency chain with concrete types gives every engine a
+   well-defined, continuously interpolatable value to animate. */
+@property --slot{syntax:'<number>';inherits:true;initial-value:0}
+@property --lag{syntax:'<angle>';inherits:true;initial-value:0deg}
+@property --drift-x{syntax:'<length>';inherits:true;initial-value:0px}
+@property --drift-y{syntax:'<length>';inherits:true;initial-value:0px}
+@property --lift-y{syntax:'<length>';inherits:true;initial-value:0px}
+@property --track-offset{syntax:'<angle>';inherits:true;initial-value:0deg}
+@property --track-spacing{syntax:'<angle>';inherits:true;initial-value:5deg}
+@property --track-radius{syntax:'<length>';inherits:true;initial-value:780px}
+@property --total-a{syntax:'<angle>';inherits:true;initial-value:0deg}
+@property --total-rot{syntax:'<angle>';inherits:true;initial-value:0deg}
+@property --arc-x{syntax:'<length>';inherits:true;initial-value:0px}
+@property --arc-y{syntax:'<length>';inherits:true;initial-value:0px}
 .handDock{overflow-x:clip;overflow-y:visible}
 .hand{position:relative;display:block;max-width:none;width:100%;height:235px;--track-offset:0deg;--track-spacing:5deg;--track-radius:780px;--hand-lift-y:0px;transform:translateY(var(--hand-lift-y));transition:transform .22s cubic-bezier(.2,.85,.25,1)}
 @media(max-width:640px){.hand{height:185px;--track-radius:560px}}
