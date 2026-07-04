@@ -165,4 +165,47 @@ function targeting(target) {
   assert.equal(calls, 0, 'an incomplete, abandoned pick never auto-confirms');
 }
 
+
+// --- Non-targeting active ability cancel restores the source card too. ---
+{
+  const { target, cardA, cardB, cardC } = makeTarget();
+  target.state.hand = [cardA, cardB];
+  target.state.discard = [cardC];
+  target.state.discardedCards = [cardC];
+  target.state.discards = 2;
+  target.state.roundDiscardCount = 1;
+  target.__tlrPendingAbilityDiscardRollback = {
+    card: cardC,
+    handIndex: 2,
+    discards: 3,
+    freeDiscardUsed: false,
+    sightChargesUsed: 0,
+    discardedCards: [],
+    roundDiscardCount: 0,
+    lastDiscardedCard: null,
+  };
+  target.tlrStore.dispatch({
+    type: 'SYNC_LEGACY_RUN',
+    run: {
+      hand: [cardA, cardB], discard: [cardC], discardedCards: [cardC],
+      discards: 2, freeDiscardUsed: false, sightChargesUsed: 0,
+      roundDiscardCount: 1, selectedCardId: null,
+    },
+  });
+  target.tlrStore.dispatch({
+    type: 'START_ABILITY',
+    ability: { id: 'PEEK_3', sourceCardId: cardC.uid },
+    sourceCardId: cardC.uid,
+  });
+
+  assert.equal(target.tlrCanCancelAbilitySelection(), true, 'cancel is available for non-targeting active abilities with rollback');
+  assert.equal(target.tlrCancelActiveAbility(), true, 'non-targeting active ability cancel succeeds');
+
+  const run = target.tlrStore.getState().run;
+  assert.equal(run.ability, null, 'non-targeting cancel clears the active ability');
+  assert.deepEqual(run.hand.map(card => card.uid), [cardA.uid, cardB.uid, cardC.uid], 'non-targeting cancel returns the source card');
+  assert.deepEqual(run.discard, [], 'non-targeting cancel removes the source card from discard');
+  assert.equal(run.discards, 3, 'non-targeting cancel refunds the spent discard');
+}
+
 console.log('Ability targeting bridge checks passed.');

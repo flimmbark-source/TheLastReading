@@ -168,7 +168,21 @@ export function installAbilityTargetBridge(target = window) {
   };
 
   target.tlrCanCancelAbilitySelection = function () {
-    return !!storeTargeting(target);
+    return !!storeTargeting(target) || !!target.__tlrPendingAbilityDiscardRollback;
+  };
+
+  // Cancel an active non-targeting ability (for example Peek's reveal-choice
+  // modal). These abilities never create store targeting, but they still have
+  // the same pending discard rollback captured before resolution began.
+  target.tlrCancelActiveAbility = function () {
+    clearPendingAutoConfirm();
+    clearPendingCallbacks();
+    const restored = restoreCancelledAbilityDiscard(target);
+    if (storeReady(target)) target.tlrStore.dispatch({ type: CANCEL_ABILITY });
+    const state = stateOf(target);
+    if (state) { state.abilitySelect = null; state.busy = false; }
+    if (typeof target.render === 'function') target.render();
+    return restored;
   };
 
   target.handleAbilityHandClick = function (card) {

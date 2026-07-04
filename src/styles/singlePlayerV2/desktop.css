@@ -3,7 +3,7 @@
 /* ─── Desktop phone-column constraint ────────────────────────────────────── */
 /* On wide screens confine the entire game to a portrait phone column.        */
 /* CSS transform on body makes it the containing block for all               */
-/* position:fixed children, so they lay out within the 430px column.         */
+/* position:fixed children, so they lay out within the 430px stage, then the stage scales to a visible 360×740 frame. */
 @media (min-width: 641px) {
   html {
     background: #030201;
@@ -11,11 +11,12 @@
 
   body.single-player-v2 {
     position: fixed;
-    top: 0;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%) scale(0.8372093);
+    transform-origin: center;
     width: 430px;
-    height: 100%;
+    height: 884px;
     overflow: hidden;
     box-shadow: -2px 0 40px rgba(0,0,0,.7), 2px 0 40px rgba(0,0,0,.7);
     /* Mobile layout variables — vw is viewport-based so pin slot-w directly */

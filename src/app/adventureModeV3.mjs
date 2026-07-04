@@ -119,7 +119,7 @@ function ensureStyles(doc) {
     .adv-hud__statuses{display:flex;flex-direction:column;align-items:center;gap:5px}.adv-hud__statuses:empty{display:none}
     .adv-hud__status-row{display:flex;gap:5px;justify-content:center}
     #advHud .adv-status{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px 3px 8px;
-      font:700 10px/1 'Cinzel',Georgia,serif;letter-spacing:.05em;border:1px solid;background:rgba(16,11,7,.82)}
+      font:700 10px/1 'Cinzel',Georgia,serif;letter-spacing:.05em;border:1px solid;background:rgba(16,11,7,.82);cursor:pointer}
     #advHud .adv-status::before{content:'';width:7px;height:7px;border-radius:50%}
     .adv-status--blessed{color:#f6d488;border-color:rgba(243,201,105,.5)}.adv-status--blessed::before{background:#f3c969;box-shadow:0 0 6px #f3c969}
     .adv-status--haunted{color:#c7adef;border-color:rgba(169,139,214,.5)}.adv-status--haunted::before{background:#a98bd6;box-shadow:0 0 6px #a98bd6}
@@ -361,7 +361,7 @@ export function installAdventureModeV3(target = window) {
         hud.__advKey = hudKey;
         const pips = [...Array(Math.max(0, run.maxResolve)).keys()]
           .map(i => `<span class="adv-pip adv-pip--${i < run.resolve ? 'full' : 'empty'}"></span>`).join('');
-        const pill = id => `<span class="adv-status adv-status--${esc(id)}" title="${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</span>`;
+        const pill = id => `<button class="adv-status adv-status--${esc(id)}" type="button" data-status-id="${esc(id)}" title="${esc(getStatus(id)?.description || '')}" aria-label="${esc(getStatus(id)?.name || id)} status. ${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</button>`;
         const s = run.statuses;
         const rows = s.length === 0 ? [] :
           s.length <= 2 ? [s] :
