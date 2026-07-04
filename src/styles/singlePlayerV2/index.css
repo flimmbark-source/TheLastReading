@@ -1807,9 +1807,9 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready .actions {
-    top: 47dvh;
-    bottom: auto;
-    transform: translateY(-50%);
+    top: auto;
+    bottom: max(24px, 3dvh);
+    transform: none;
   }
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready .actions button {
@@ -1817,18 +1817,19 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     height: 50px;
     min-width: 0;
   }
-  /* Utility medallions align with the table action medallions: Menu +
-     Archives sit just left of Discard, Scoring + Abilities just right of Purge. */
+  /* Utility medallions stay on the bottom edge while using the same columns as
+     the table action medallions: Menu + Archives under Discard, Scoring +
+     Abilities under Purge. */
   body.single-player-v2.generated-sheet-ready #menuBtn {
     left: max(14px, calc(50% - var(--spv2-action-rail-w) / 2 - 116px));
     right: auto;
   }
   html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    top: 47dvh;
-    bottom: auto;
+    top: auto;
+    bottom: max(24px, 3dvh);
     left: max(72px, calc(50% - var(--spv2-action-rail-w) / 2 - 58px));
     right: auto;
-    transform: translateY(-50%);
+    transform: none;
   }
   body.single-player-v2.generated-sheet-ready .actions {
     right: max(14px, calc(50% - var(--spv2-action-rail-w) / 2 - 116px));
