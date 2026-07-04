@@ -798,6 +798,38 @@
   html body.single-player-v2.generated-sheet-ready #discardBtn::after { content: "Discard"; }
   html body.single-player-v2.generated-sheet-ready #purgeBtn::after { content: "Purge"; }
 
+  /* Discards-left count badge — desktop uses the same proven badge treatment
+     as mobile so the remaining count sits in a small blue circle on Discard. */
+  html body.single-player-v2.generated-sheet-ready #spv2DiscardBadge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 19px;
+    height: 19px;
+    padding: 0 4px;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    border: 1px solid rgba(196, 224, 255, .8);
+    background: radial-gradient(circle at 40% 32%, #6aa8ee, #1b4d99 78%);
+    color: #fff;
+    font: 800 11px/1 system-ui, sans-serif;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .55),
+      inset 0 1px 0 rgba(255, 255, 255, .25);
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  html body.single-player-v2.generated-sheet-ready #discardBtn:disabled #spv2DiscardBadge {
+    border-color: rgba(202, 202, 202, .62);
+    background: radial-gradient(circle at 40% 32%, #9a9a9a, #4b4b4b 78%);
+    color: #e2e2e2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .72);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .48),
+      inset 0 1px 0 rgba(255, 255, 255, .14);
+  }
+
   /* Make an available discard action visibly brighter than its disabled state
      (desktop mirror of the mobile compat rule) */
   html body.single-player-v2.generated-sheet-ready #discardBtn:not(:disabled) {
