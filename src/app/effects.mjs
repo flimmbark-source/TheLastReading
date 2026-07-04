@@ -13,6 +13,32 @@ document.addEventListener('pointerdown', () => {
   const _c = _ac(); if (_c && _c.state === 'suspended') _c.resume();
 }, true);
 
+
+const FILE_SOUNDS = Object.freeze({
+  purchase: { src: new URL('../../assets/audio/freesound_gamestudio-drop-coin-384921.mp3', import.meta.url).href, gain: 0.38 },
+  pack_pick: { src: new URL('../../assets/audio/gargamel10-magic-basic-game-sound-effect-380301.mp3', import.meta.url).href, gain: 0.32 },
+  pack_open: { src: new URL('../../assets/audio/universfield-magic-spell-03-242245.mp3', import.meta.url).href, gain: 0.8 },
+  store_open: { src: new URL('./floraphonic-ambient-metal-whoosh-2-174462.mp3', import.meta.url).href, gain: 0.3 },
+});
+
+function _playFileSound(type){
+  const sound=FILE_SOUNDS[type];
+  if(!sound?.src || typeof Audio!=='function')return false;
+  try{
+    const audio=new Audio(sound.src);
+    const master=typeof _sfxVol==='number'?_sfxVol:1;
+    audio.volume=Math.max(0,Math.min(1,master*(sound.gain ?? 0.25)));
+    const done=()=>{try{audio.src='';audio.load?.();}catch(e){}};
+    audio.addEventListener?.('ended',done,{once:true});
+    audio.addEventListener?.('error',done,{once:true});
+    const played=audio.play?.();
+    if(played&&typeof played.catch==='function')played.catch(()=>{});
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
 const MELD_SOUND_FILE = new URL('./freesound_community-chinese-fanfare-107737.mp3', import.meta.url).href;
 const _meldSoundBufferPromise = (async () => {
   try {
@@ -106,6 +132,7 @@ function _chime(ctx,bus,{freq,type='sine',start=0,attack=0.01,hold=0,decay=0.4,p
 }
 
 export function playSound(type,magnitude){
+  if(_playFileSound(type))return;
   const ctx=_ac();if(!ctx)return;
   if(ctx.state==='suspended')ctx.resume();
   try{
