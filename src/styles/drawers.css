@@ -1,25 +1,10 @@
 @layer drawers {
-/* Extracted from index.html (Phase 17). Files split in original rule order;
-   link order in index.html must stay base,spread,hand,cards,market,mobile,attic,drawers
-   to preserve the cascade. Some sections span themes because order wins over purity. */
-/* drawer tabs and desktop drift patch */
-/* Archives-style pull drawers for Scoring / Abilities / Menu */
-#scoringBtn,#abilitiesBtn,#menuBtn{display:none!important}
+body:not(.mp-game-active) #scoringBtn,body:not(.mp-game-active) #abilitiesBtn,#menuBtn{display:none!important}
 .tlr-pull-wrap{position:fixed;top:0;left:0;right:0;z-index:150;transform:translateY(calc(-1 * var(--inv-h)));transition:transform .45s cubic-bezier(.34,1.28,.64,1);pointer-events:none}
-/* Slots into the "contextual surfaces above table controls" tier defined in
-   actionDropTargets.css (10060-10150). Without this, a card selection bumps
-   .spread-wrap to z-index:10060 (so its score-preview hint clears nearby UI),
-   which otherwise buries every open pull-tab drawer sitting at the old 400. */
 .tlr-pull-wrap.open{transform:translateY(0);pointer-events:auto;z-index:10095!important}
 .tlr-pull-desk{height:var(--inv-h);border-bottom:2px solid #6a4c24;position:relative;overflow:auto;pointer-events:auto;padding:18px 18px 24px;box-shadow:0 16px 38px rgba(0,0,0,.45)}
 .tlr-pull-desk::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 90% 70% at 50% 110%,rgba(90,45,5,.22),transparent 65%)}
 .tlr-pull-desk>*{position:relative;z-index:1}
-/* Closed drawers are translated up by their fitted drawer height. If the menu
-   content is taller than that fitted height (for example after returning from
-   multiplayer before the drawer is remeasured), visible overflow can protrude
-   back onto the next mode even though the drawer itself is closed. Hide desk
-   contents unless the drawer is actually open so stale menu/settings content
-   cannot bleed into Adventure or other modes. */
 .tlr-pull-wrap:not(.open) .tlr-pull-desk>*{visibility:hidden!important}
 .tlr-pull-wrap.open .tlr-pull-desk>*{visibility:visible!important}
 .tlr-pull-tab{position:absolute;top:var(--inv-h);left:calc(50% - 40px);width:86px;height:28px;background:linear-gradient(180deg,#2e1e0e,#1e1208);border:1px solid #6a4c24;border-top:none;border-radius:0 0 10px 10px;cursor:grab;color:#a07838;font-size:10px;font-weight:700;letter-spacing:.07em;text-align:center;line-height:28px;pointer-events:auto;transition:background .15s,color .15s,box-shadow .15s;padding:0;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.5);touch-action:none;user-select:none;font-family:system-ui,Segoe UI,sans-serif}
@@ -40,19 +25,12 @@
 #menuPullDesk #settingsPanel .settings-title{color:#f0d58a!important;border-bottom-color:rgba(228,193,137,.22)!important}
 #menuPullDesk #settingsPanel .settings-action{background:rgba(180,140,90,.18)!important;border-color:rgba(180,140,90,.45)!important;color:#e6c89a!important}
 .refs-layer{display:none!important}
-/* Restore a subtle hand cycle without fighting the swipe transform. */
 @keyframes handCardIdleCycle{0%,100%{translate:0 0;rotate:0deg;filter:brightness(1)}50%{translate:0 -2px;rotate:.35deg;filter:brightness(1.035)}}
 .hand:not(.hand-scroll-dragging):not(.has-selected-card) .card:not(.sel):not(.ability-target):not(.ability-picked):not(.purge-picked):not(.hand-card-dragging){animation:handCardIdleCycle 4.8s ease-in-out infinite}
 .hand:not(.hand-scroll-dragging) .card:nth-child(2){animation-delay:-.8s}.hand:not(.hand-scroll-dragging) .card:nth-child(3){animation-delay:-1.6s}.hand:not(.hand-scroll-dragging) .card:nth-child(4){animation-delay:-2.4s}.hand:not(.hand-scroll-dragging) .card:nth-child(5){animation-delay:-3.2s}.hand:not(.hand-scroll-dragging) .card:nth-child(6){animation-delay:-4s}.hand:not(.hand-scroll-dragging) .card:nth-child(7){animation-delay:-4.8s}.hand:not(.hand-scroll-dragging) .card:nth-child(8){animation-delay:-5.6s}
 @media(prefers-reduced-motion:reduce){.hand .card{animation:none!important}}
-
-/* tab spacing and desktop vertical drift patch */
 #invTab,.tlr-pull-tab{will-change:left}
-/* Restore the desktop space that Scoring/Abilities buttons used to occupy before becoming drawer tabs. */
 @media(min-width:641px){#titleContent .actions{height:37px!important;min-height:37px!important;margin-bottom:10px!important}}
-
-/* drawer content fit patch */
-/* Pull drawers now size themselves to the content instead of dropping a fixed tall panel. */
 .tlr-pull-wrap{--tlr-drawer-h:220px;transform:translateY(calc(-1 * var(--tlr-drawer-h)))!important}
 .tlr-pull-wrap.open{transform:translateY(0)!important}
 .tlr-pull-desk{height:var(--tlr-drawer-h)!important;padding:10px 14px 12px!important;overflow:visible!important}
@@ -71,9 +49,15 @@
 #abilitiesPullDesk td{padding:3px 5px!important;vertical-align:top;white-space:normal!important}
 #abilitiesPullDesk td:first-child{width:86px!important;font-weight:700!important;white-space:nowrap!important;color:#3a1a06!important}
 #menuPullDesk #settingsPanel{max-width:min(92vw,300px)!important;gap:9px!important}
-
-/* The menu drawer can be shorter than its settings content on small screens.
-   When it is open, keep the content inside the drawer and let the drawer scroll
-   instead of letting the settings controls spill over the table. */
 #menuPullDesk.tlr-pull-desk{overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain}
+body.mp-game-active #handSwipeZone{display:none}
+body.mp-game-active #titleWrap{display:block;position:fixed;inset:0;width:0;height:0;overflow:visible;opacity:1;transform:none;filter:none;pointer-events:none;z-index:2147483190}
+body.mp-game-active #titleRow,body.mp-game-active #titleContent{display:contents}
+body.mp-game-active #settingsPanel,body.mp-game-active #mullBtn{display:none}
+body.mp-game-active #titleWrap .actions{pointer-events:auto}
+body.mp-game-active #scoringBtn,body.mp-game-active #abilitiesBtn{display:block;width:48px;height:48px;min-width:48px;padding:0;border:0;border-radius:50%;background-color:transparent;background-repeat:no-repeat;background-position:center;background-size:contain;box-shadow:none;color:transparent;font-size:0;overflow:visible;pointer-events:auto;cursor:pointer;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;outline:none;filter:drop-shadow(0 5px 7px rgba(0,0,0,.78)) drop-shadow(0 2px 2px rgba(0,0,0,.6));transition:transform .08s ease,filter .08s ease}
+body.mp-game-active #scoringBtn{background-image:var(--spv2-option-scoring-art)}
+body.mp-game-active #abilitiesBtn{background-image:var(--spv2-option-abilities-art)}
+body.mp-game-active #scoringBtn:active,body.mp-game-active #abilitiesBtn:active{transform:translateY(1px) scale(.94);filter:drop-shadow(0 2px 3px rgba(0,0,0,.7)) drop-shadow(0 1px 1px rgba(0,0,0,.55)) brightness(1.08)}
+@media(max-width:640px){body.mp-game-active #scoringBtn,body.mp-game-active #abilitiesBtn{width:40px;height:40px;min-width:40px}}
 }
