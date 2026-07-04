@@ -1,20 +1,62 @@
-function pointIsOverHand(doc, event, draggedCard) {
-  const stack = typeof doc.elementsFromPoint === 'function'
-    ? doc.elementsFromPoint(event.clientX, event.clientY)
-    : [];
+const SLOT_HIT_PAD = 28;
 
-  if (stack.some(node => {
-    if (node === draggedCard || typeof node?.closest !== 'function') return false;
-    return !!node.closest('#hand,.handDock') && !node.closest('#spread');
-  })) return true;
+function mpIsActive(doc) {
+  return doc.body.classList.contains('mp-game-active');
+}
 
-  const dock = doc.querySelector('.handDock');
-  const rect = dock?.getBoundingClientRect?.();
-  if (!rect || rect.width <= 0 || rect.height <= 0) return false;
-  return event.clientX >= rect.left
-    && event.clientX <= rect.right
-    && event.clientY >= rect.top
-    && event.clientY <= rect.bottom;
+function handElement(doc) {
+  return doc.getElementById('hand') || doc.querySelector('.hand');
+}
+
+function handCardNodes(doc) {
+  const hand = handElement(doc);
+  return hand ? [...hand.querySelectorAll(':scope > .card[data-uid]')] : [];
+}
+
+function cardUid(node) {
+  const uid = Number(node?.dataset?.uid);
+  return Number.isFinite(uid) ? uid : null;
+}
+
+function mpPlayerIndex(target) {
+  return target.tlrMpGetRole?.() === 'host' ? 0 : 1;
+}
+
+function mpCardForUid(target, uid) {
+  const state = target.tlrMpGetState?.();
+  const player = state?.players?.[mpPlayerIndex(target)];
+  return (player?.hand || []).find(card => card.uid === uid) || null;
+}
+
+function validSpreadDrop(doc, draggedCard) {
+  const cardRect = draggedCard?.getBoundingClientRect?.();
+  if (!cardRect) return null;
+  const cardCX = cardRect.left + cardRect.width / 2;
+  const cardCY = cardRect.top + cardRect.height / 2;
+
+  for (const [index, slot] of [...doc.querySelectorAll('#spread .slot')].entries()) {
+    if (slot.querySelector('.card')) continue;
+    const rect = slot.getBoundingClientRect();
+    if (cardCX >= rect.left - SLOT_HIT_PAD
+      && cardCX <= rect.right + SLOT_HIT_PAD
+      && cardCY >= rect.top - SLOT_HIT_PAD
+      && cardCY <= rect.bottom + SLOT_HIT_PAD) {
+      return { slot, index };
+    }
+  }
+  return null;
+}
+
+function hoverIndexForPointer(target, clientX, handLength) {
+  if (handLength <= 1) return 0;
+  const track = target.__handGetTrackState?.();
+  if (!track?.spacingDeg || !track.handRect) return handLength - 1;
+  const centerX = track.handRect.left + track.handRect.width / 2;
+  const dx = clientX - centerX;
+  const ratio = Math.max(-0.95, Math.min(0.95, dx / Math.max(1, track.radius)));
+  const totalAngle = Math.asin(ratio) * 180 / Math.PI;
+  const fractionalSlot = (totalAngle - track.offsetDeg) / track.spacingDeg;
+  return Math.max(0, Math.min(handLength - 1, Math.round(fractionalSlot + (handLength - 1) / 2)));
 }
 
 function installMpReturnedDragClickGuard(target, doc) {
@@ -37,44 +79,161 @@ function installMpReturnedDragClickGuard(target, doc) {
     const token = {};
     target.__tlrMpReturnedDragClick = { uid: String(uid), token };
     target.setTimeout?.(() => {
-      if (target.__tlrMpReturnedDragClick?.token === token) {
-        target.__tlrMpReturnedDragClick = null;
-      }
+      if (target.__tlrMpReturnedDragClick?.token === token) target.__tlrMpReturnedDragClick = null;
     }, 0);
   };
 }
 
-function installMpHandReturnGuard(target, doc) {
-  if (target.__tlrMpHandReturnGuardInstalled) return;
-  target.__tlrMpHandReturnGuardInstalled = true;
+function installMpSinglePlayerHandBridge(target, doc) {
+  if (target.__tlrMpSinglePlayerHandBridgeInstalled) return;
+  target.__tlrMpSinglePlayerHandBridgeInstalled = true;
 
-  const finishBackInHand = event => {
-    if (!doc.body.classList.contains('mp-game-active')) return;
-    const draggedCard = doc.querySelector('.hand-card-dragging[data-uid]');
-    if (!draggedCard) return;
-    if (event.type !== 'pointercancel' && !pointIsOverHand(doc, event, draggedCard)) return;
+  let order = [];
+  let drag = null;
+  let applyingOrder = false;
+  let orderFrame = null;
 
-    const uid = draggedCard.dataset.uid;
-    target.__tlrArmMpReturnedDragClick?.(uid);
-    if (target.tlrCancelHandDrag?.()) {
-      // The generic gesture controller suppresses clicks for 800ms from drag
-      // start. Duel mode replaces that broad timer with the one-shot guard above
-      // so the drag's synthetic click is swallowed but the player's next real
-      // tap can select a card immediately.
-      target.__handGestureSuppressClickUntil = 0;
-      event.preventDefault?.();
-      event.stopImmediatePropagation?.();
-    } else {
-      target.__tlrMpReturnedDragClick = null;
-    }
+  const clearSelection = uid => {
+    if (uid == null) return;
+    const selected = doc.querySelector(`#hand .card.sel[data-uid="${uid}"]`);
+    selected?.onclick?.();
   };
 
-  // Window capture runs before gestureCard's document-capture pointerup handler.
-  // That prevents duel drops over the hand from entering the single-player
-  // REORDER_HAND/render path, which can replace the multiplayer hand with the
-  // unrelated single-player hand state.
-  target.addEventListener('pointerup', finishBackInHand, true);
-  target.addEventListener('pointercancel', finishBackInHand, true);
+  const applyOrder = () => {
+    orderFrame = null;
+    if (!mpIsActive(doc) || target.__handReorderActive || applyingOrder) return;
+    const hand = handElement(doc);
+    const nodes = handCardNodes(doc);
+    if (!hand || !nodes.length) {
+      order = [];
+      return;
+    }
+
+    const byUid = new Map(nodes.map(node => [cardUid(node), node]));
+    order = order.filter(uid => byUid.has(uid));
+    for (const node of nodes) {
+      const uid = cardUid(node);
+      if (uid != null && !order.includes(uid)) order.push(uid);
+    }
+
+    applyingOrder = true;
+    order.forEach(uid => {
+      const node = byUid.get(uid);
+      if (node && node.parentElement === hand) hand.appendChild(node);
+    });
+    const finalNodes = handCardNodes(doc);
+    finalNodes.forEach((node, index) => node.style.setProperty('--slot', String(index - (finalNodes.length - 1) / 2)));
+    applyingOrder = false;
+    target.__handTriggerLayout?.();
+  };
+
+  const scheduleOrder = () => {
+    if (orderFrame || !mpIsActive(doc)) return;
+    orderFrame = target.requestAnimationFrame?.(applyOrder) || target.setTimeout?.(applyOrder, 0);
+  };
+
+  const hand = handElement(doc);
+  if (hand) {
+    new MutationObserver(() => {
+      if (!applyingOrder) scheduleOrder();
+    }).observe(hand, { childList: true });
+  }
+
+  new MutationObserver(() => {
+    if (!mpIsActive(doc)) {
+      order = [];
+      drag = null;
+      target.__tlrMpReturnedDragClick = null;
+    } else {
+      scheduleOrder();
+    }
+  }).observe(doc.body, { attributes: true, attributeFilter: ['class'] });
+
+  doc.addEventListener('pointerdown', event => {
+    if (!mpIsActive(doc)) return;
+    const card = event.target?.closest?.('#hand .card[data-uid]');
+    if (!card) return;
+    applyOrder();
+    const uid = cardUid(card);
+    if (uid == null) return;
+    const selected = doc.querySelector('#hand .card.sel[data-uid]');
+    drag = {
+      pointerId: event.pointerId,
+      uid,
+      originalIndex: Math.max(0, order.indexOf(uid)),
+      selectedUid: cardUid(selected),
+    };
+  }, true);
+
+  target.addEventListener('pointerup', event => {
+    if (!mpIsActive(doc) || !drag || event.pointerId !== drag.pointerId) return;
+    const draggedCard = doc.querySelector(`.hand-card-dragging[data-uid="${drag.uid}"]`);
+    if (!draggedCard) {
+      drag = null;
+      return;
+    }
+
+    // A valid spread placement is already handled correctly by the shared
+    // single-player gesture controller through the multiplayer placeCardUid
+    // override. Only hand returns, hand reorders, detail pulls, and invalid
+    // spread drops need a multiplayer commit path.
+    if (validSpreadDrop(doc, draggedCard)) {
+      const previousSelection = drag.selectedUid;
+      const draggedUid = drag.uid;
+      drag = null;
+      if (previousSelection != null && previousSelection !== draggedUid) {
+        target.setTimeout?.(() => clearSelection(previousSelection), 0);
+      }
+      return;
+    }
+
+    const context = drag;
+    drag = null;
+    const wantsDetail = draggedCard.classList.contains('hand-card-detail-pull');
+    const targetIndex = hoverIndexForPointer(target, event.clientX, Math.max(1, order.length));
+    target.__tlrArmMpReturnedDragClick?.(context.uid);
+
+    if (!target.tlrCancelHandDrag?.()) {
+      target.__tlrMpReturnedDragClick = null;
+      return;
+    }
+
+    // The shared controller set an 800ms blanket timer at drag start. This
+    // bridge replaces it with the one synthetic-click guard above, so a real
+    // follow-up tap remains responsive.
+    target.__handGestureSuppressClickUntil = 0;
+
+    if (context.selectedUid != null && context.selectedUid !== context.uid) {
+      clearSelection(context.selectedUid);
+    }
+
+    if (wantsDetail) {
+      const card = mpCardForUid(target, context.uid);
+      if (card) target.expandCard?.(card, target);
+    } else {
+      const fromIndex = order.indexOf(context.uid);
+      if (fromIndex >= 0) order.splice(fromIndex, 1);
+      order.splice(Math.max(0, Math.min(targetIndex, order.length)), 0, context.uid);
+      applyOrder();
+      clearSelection(context.uid);
+    }
+
+    event.preventDefault?.();
+    event.stopImmediatePropagation?.();
+  }, true);
+
+  target.addEventListener('pointercancel', event => {
+    if (!mpIsActive(doc) || !drag || event.pointerId !== drag.pointerId) return;
+    const uid = drag.uid;
+    drag = null;
+    target.__tlrArmMpReturnedDragClick?.(uid);
+    if (target.tlrCancelHandDrag?.()) {
+      target.__handGestureSuppressClickUntil = 0;
+      applyOrder();
+      event.preventDefault?.();
+      event.stopImmediatePropagation?.();
+    }
+  }, true);
 }
 
 function installDuelReferenceSurfaceStyle(doc) {
@@ -122,6 +281,6 @@ export function installMpAbilitySurfaceCleanup(target = window) {
   const doc = target.document;
   if (!doc) return;
   installMpReturnedDragClickGuard(target, doc);
-  installMpHandReturnGuard(target, doc);
+  installMpSinglePlayerHandBridge(target, doc);
   installDuelReferenceSurfaceStyle(doc);
 }
