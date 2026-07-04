@@ -31,11 +31,11 @@ body:not(.mp-game-active) #scoringBtn,body:not(.mp-game-active) #abilitiesBtn,#m
 @media(prefers-reduced-motion:reduce){.hand .card{animation:none!important}}
 #invTab,.tlr-pull-tab{will-change:left}
 @media(min-width:641px){#titleContent .actions{height:37px!important;min-height:37px!important;margin-bottom:10px!important}}
-.tlr-pull-wrap{--tlr-drawer-h:220px;transform:translateY(calc(-1 * var(--tlr-drawer-h)))!important}
-.tlr-pull-wrap.open{transform:translateY(0)!important}
-.tlr-pull-desk{height:var(--tlr-drawer-h)!important;padding:10px 14px 12px!important;overflow:visible!important}
-.tlr-pull-tab{top:var(--tlr-drawer-h)!important}
-@media(max-width:640px){.tlr-pull-desk{padding:9px 7px 11px!important}}
+.tlr-pull-wrap{--tlr-drawer-h:220px;transform:translateY(calc(-1 * var(--tlr-drawer-h)))}
+.tlr-pull-wrap.open{transform:translateY(0)}
+.tlr-pull-desk{height:var(--tlr-drawer-h);padding:10px 14px 12px;overflow:visible}
+.tlr-pull-tab{top:var(--tlr-drawer-h)}
+@media(max-width:640px){.tlr-pull-desk{padding:9px 7px 11px}}
 #scoringPullDesk .scoring-sheet{display:block!important;width:fit-content!important;max-width:100%!important;margin:0 auto!important;padding:0!important}
 #scoringPullDesk .scoring-sheet table{width:auto!important;max-width:100%!important;border-collapse:collapse}
 #scoringPullDesk .scoring-sheet td{font-size:10.5px!important;line-height:1.08!important;padding:1px 4px!important;white-space:nowrap!important}
