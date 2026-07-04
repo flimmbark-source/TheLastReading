@@ -17,6 +17,33 @@ function pointIsOverHand(doc, event, draggedCard) {
     && event.clientY <= rect.bottom;
 }
 
+function installMpReturnedDragClickGuard(target, doc) {
+  if (target.__tlrMpReturnedDragClickGuardInstalled) return;
+  target.__tlrMpReturnedDragClickGuardInstalled = true;
+
+  target.addEventListener('click', event => {
+    const pending = target.__tlrMpReturnedDragClick;
+    if (!pending) return;
+    const card = event.target?.closest?.('#hand .card[data-uid]');
+    if (!card || String(card.dataset.uid) !== pending.uid) return;
+
+    target.__tlrMpReturnedDragClick = null;
+    event.preventDefault?.();
+    event.stopPropagation?.();
+    event.stopImmediatePropagation?.();
+  }, true);
+
+  target.__tlrArmMpReturnedDragClick = uid => {
+    const token = {};
+    target.__tlrMpReturnedDragClick = { uid: String(uid), token };
+    target.setTimeout?.(() => {
+      if (target.__tlrMpReturnedDragClick?.token === token) {
+        target.__tlrMpReturnedDragClick = null;
+      }
+    }, 0);
+  };
+}
+
 function installMpHandReturnGuard(target, doc) {
   if (target.__tlrMpHandReturnGuardInstalled) return;
   target.__tlrMpHandReturnGuardInstalled = true;
@@ -27,9 +54,18 @@ function installMpHandReturnGuard(target, doc) {
     if (!draggedCard) return;
     if (event.type !== 'pointercancel' && !pointIsOverHand(doc, event, draggedCard)) return;
 
+    const uid = draggedCard.dataset.uid;
+    target.__tlrArmMpReturnedDragClick?.(uid);
     if (target.tlrCancelHandDrag?.()) {
+      // The generic gesture controller suppresses clicks for 800ms from drag
+      // start. Duel mode replaces that broad timer with the one-shot guard above
+      // so the drag's synthetic click is swallowed but the player's next real
+      // tap can select a card immediately.
+      target.__handGestureSuppressClickUntil = 0;
       event.preventDefault?.();
       event.stopImmediatePropagation?.();
+    } else {
+      target.__tlrMpReturnedDragClick = null;
     }
   };
 
@@ -108,6 +144,7 @@ export function installMpAbilitySurfaceCleanup(target = window) {
   target.__tlrMpAbilitySurfaceCleanupInstalled = true;
   const doc = target.document;
   if (!doc) return;
+  installMpReturnedDragClickGuard(target, doc);
   installMpHandReturnGuard(target, doc);
   installDuelDrawerCloseButtons(target, doc);
   installDuelReferenceSurfaceStyle(doc);
