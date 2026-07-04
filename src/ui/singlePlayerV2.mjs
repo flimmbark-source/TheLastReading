@@ -19,7 +19,7 @@ export function installSinglePlayerV2(target = window) {
   };
 
   const ensureAssetLayer=()=>{
-    ensureStylesheet('single-player-v2-index','src/styles/singlePlayerV2/index.css?v=desktop-360');
+    ensureStylesheet('single-player-v2-index','src/styles/singlePlayerV2/index.css?v=desktop-360-scale');
     ensureStylesheet('single-player-v2-utility-buttons','src/styles/singlePlayerV2/components/utilityButtons.css?v=1');
   };
 

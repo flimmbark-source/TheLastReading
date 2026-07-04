@@ -1282,7 +1282,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 /* ─── Desktop phone-column constraint ────────────────────────────────────── */
 /* On wide screens confine the entire game to a portrait phone column.        */
 /* CSS transform on body makes it the containing block for all               */
-/* position:fixed children, so they lay out within the 360px column.         */
+/* position:fixed children, so they lay out within the 430px stage, then the stage scales to a visible 360×740 frame. */
 @media (min-width: 641px) {
   html {
     background: #030201;
@@ -1292,9 +1292,10 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    width: 360px;
-    height: 740px;
+    transform: translate(-50%, -50%) scale(0.8372093);
+    transform-origin: center;
+    width: 430px;
+    height: 884px;
     overflow: hidden;
     box-shadow: -2px 0 40px rgba(0,0,0,.7), 2px 0 40px rgba(0,0,0,.7);
     /* Mobile layout variables — vw is viewport-based so pin slot-w directly */
@@ -1326,49 +1327,49 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   /* Center the spread vertically; become containing block for absolute slots */
   html body.single-player-v2.generated-sheet-ready .spread {
     position: fixed;
-    top: 333px;
+    top: 45dvh;
     left: 0;
     right: 0;
     bottom: auto;
-    height: 149px;
+    height: 178px;
     transform: translateY(-50%);
     overflow: visible;
   }
 
-  /* All slots: absolute within the 360px spread, sized to match hand cards (80×120px) */
+  /* All slots: absolute within the 430px spread, sized to match hand cards (96×144px) */
   html body.single-player-v2.generated-sheet-ready .spread .slot {
     position: absolute;
     top: 17px;
-    width: 80px;
-    height: 120px;
-    flex: 0 0 80px;
+    width: 96px;
+    height: 144px;
+    flex: 0 0 96px;
     margin-left: 0;
   }
 
-  /* Five-card fan — slots pinned from spread edges (spread = 360px wide) */
+  /* Five-card fan — slots pinned from spread edges (spread = 430px wide) */
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
-    left: 12px; right: auto;
+    left: 14px; right: auto;
     transform: translateY(14px) rotate(-8deg);
     --spv2-contact-shadow: 0 5px 4px rgba(0,0,0,.70), 0 14px 17px rgba(0,0,0,.52);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
-    left: 76px; right: auto;
+    left: 91px; right: auto;
     transform: translateY(5px) rotate(-4deg);
     --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(3) {
-    left: 140px; right: auto;
+    left: 167px; right: auto;
     transform: scale(1.025);
     --spv2-contact-shadow: 0 7px 5px rgba(0,0,0,.82), 0 19px 22px rgba(0,0,0,.62);
     box-shadow: var(--spv2-contact-shadow);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
-    left: 204px; right: auto;
+    left: 243px; right: auto;
     transform: translateY(5px) rotate(4deg);
     --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
-    left: auto; right: 12px;
+    left: auto; right: 14px;
     transform: translateY(14px) rotate(8deg);
     --spv2-contact-shadow: 0 5px 4px rgba(0,0,0,.70), 0 14px 17px rgba(0,0,0,.52);
   }
@@ -1411,7 +1412,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     position: fixed;
     z-index: 31;
     top: auto;
-    bottom: 24px;
+    bottom: max(24px, 3dvh);
     left: 13px;
     right: auto;
     width: 44px;
@@ -1605,7 +1606,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     position: fixed;
     z-index: 31;
     top: auto;
-    bottom: 24px;
+    bottom: max(24px, 3dvh);
     right: 13px;
     left: auto;
     margin: 0;
@@ -1646,7 +1647,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     position: fixed;
     z-index: 31;
     top: auto;
-    bottom: 24px;
+    bottom: max(24px, 3dvh);
     left: 63px;
     right: auto;
     width: 44px;
@@ -1705,19 +1706,19 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   /* Generated-sheet-ready variable overrides and layout refinements */
   html body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 12px;
-    --spv2-hud-h: 130px;
-    --spv2-slot-w: 80px;
-    --spv2-slot-h: 120px;
-    --spv2-hand-clearance: 252px;
+    --spv2-hud-h: clamp(140px, 17.5dvh, 162px);
+    --spv2-slot-w: 96px;
+    --spv2-slot-h: calc(96px * 1.5);
+    --spv2-hand-clearance: 34dvh;
   }
   body.single-player-v2.generated-sheet-ready #titleWrap {
     height: var(--spv2-title-h);
   }
   body.single-player-v2.generated-sheet-ready #titleWrap::before {
-    top: 4px;
+    top: .55dvh;
     left: 24%;
     right: 24%;
-    height: 41px;
+    height: 5.55dvh;
   }
   body.single-player-v2.generated-sheet-ready .score-stack {
     top: var(--spv2-hud-top);
@@ -1729,7 +1730,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready .actions {
     top: auto;
-    bottom: 24px;
+    bottom: max(24px, 3dvh);
   }
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready .actions button {
@@ -1755,26 +1756,26 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     display: none;
   }
   body.single-player-v2.generated-sheet-ready .handDock {
-    height: 252px;
+    height: 34dvh;
     bottom: 0;
     align-items: flex-start;
-    background-position: center bottom 10px;
-    background-size: auto 128px;
+    background-position: center bottom calc(2dvh - 5px);
+    background-size: auto clamp(144px, 17.6dvh, 155.2px);
     background-repeat: no-repeat;
   }
   body.single-player-v2.generated-sheet-ready .handDock .hand {
-    height: 229px;
+    height: 31dvh;
     --track-spacing: 6.5deg;
     --track-radius: 560px;
-    transform: translateY(6px);
+    transform: translateY(.8dvh);
   }
   body.single-player-v2.generated-sheet-ready .handDock .hand .card {
-    width: 80px;
-    height: 120px;
+    width: 96px;
+    height: calc(96px * 1.5);
   }
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
-    bottom: 189px;
-    height: 56px;
+    bottom: 25.5dvh;
+    height: 7.5dvh;
   }
 
   /* Hide pull drawer tabs — desktop phone-column uses icon medallion buttons instead */
