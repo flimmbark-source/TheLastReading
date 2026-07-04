@@ -29,7 +29,7 @@ function hintText(hints){
 
 function hintRuntime(target=window){return target.tlrRuntime||{};}
 function hintPersist(target=window){return hintRuntime(target).persist||target.persist||{};}
-function hintSettings(target=window){return hintRuntime(target).hintSettings||{patterns:true,relics:false,patternText:true};}
+function hintSettings(target=window){return hintRuntime(target).hintSettings||{patterns:false,relics:false,patternText:false};}
 
 function hintsForCard(card,poolCards=null,hintState=null,target=window){
   if(!card)return[];

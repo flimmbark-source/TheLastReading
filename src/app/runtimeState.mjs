@@ -29,7 +29,7 @@ export function createInitialState(){
   };
 }
 
-export function createInitialHintSettings(){return {patterns:true,relics:false,patternText:true};}
+export function createInitialHintSettings(){return {patterns:false,relics:false,patternText:false};}
 
 function readGlobalLexical(name){
   try{return Function(`try{return typeof ${name}==='undefined'?undefined:${name}}catch(e){return undefined}`)();}
@@ -84,6 +84,22 @@ export function installRuntimeState(target = window){
   if(typeof target.shuffle!=='function')target.shuffle=array=>{for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;};
   if(typeof target._slots!=='function')target._slots=()=>target._slotEls||(target._slotEls=Array.from(document.querySelectorAll('.slot')));
   if(typeof target.toggleHintSetting!=='function')target.toggleHintSetting=(key,value)=>{target.hintSettings[key]=value;if(target._hintsCache)target._hintsCache.clear();if(typeof target.render==='function')target.render();};
+  if(typeof target.setHintLevel!=='function')target.setHintLevel=(level)=>{
+    target.hintSettings.patterns=level>=1;
+    target.hintSettings.patternText=level>=2;
+    const bar=document.getElementById('hintLevelBar');
+    if(bar){
+      bar.querySelectorAll('.hint-level-seg').forEach(btn=>{
+        const segLevel=Number(btn.dataset.level);
+        const isActive=segLevel===level;
+        btn.classList.toggle('active',isActive);
+        btn.classList.toggle('on',segLevel>=1&&segLevel<=level);
+        btn.setAttribute('aria-pressed',String(isActive));
+      });
+    }
+    if(target._hintsCache)target._hintsCache.clear();
+    if(typeof target.render==='function')target.render();
+  };
 
   const runtime={
     get persist(){return target.persist;},set persist(v){target.persist=v;},
