@@ -1763,9 +1763,9 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     --spv2-hud-top: 14px;
     --spv2-hud-h: clamp(116px, 14.5dvh, 142px);
     --spv2-hand-clearance: 27dvh;
-    --spv2-slot-w: calc(var(--spv2-card-w) * 1.5);
+    --spv2-slot-w: var(--spv2-card-w);
     --spv2-slot-h: calc(var(--spv2-slot-w) * 1.5);
-    --spv2-dock-art-h: clamp(204px, 16.5dvh, 246px);
+    --spv2-dock-art-h: clamp(102px, 8.25dvh, 123px);
     --spv2-dock-half: calc(var(--spv2-dock-art-h) * 2.42);
   }
   body.single-player-v2.generated-sheet-ready #titleWrap {
@@ -1816,7 +1816,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     display: none;
   }
   body.single-player-v2.generated-sheet-ready .handDock {
-    height: 32dvh;
+    height: 16dvh;
     bottom: 4.5dvh;
     align-items: flex-end;
     background-position: center bottom calc(2dvh - 6px);
