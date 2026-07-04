@@ -199,6 +199,18 @@ export function buyPack(packId,cost,target = window){
 }
 
 
+function openStampChoice(title, prompt, eligible, onPick, target = window) {
+  const body = target.document?.body;
+  const modal = target.document?.getElementById('modal');
+  body?.classList?.add('tlr-stamp-picker-active');
+  target.choice(title, prompt, eligible, card => {
+    body?.classList?.remove('tlr-stamp-picker-active');
+    modal?.style?.removeProperty('z-index');
+    onPick(card);
+  });
+  if (eligible.length > 1) modal?.style?.setProperty('z-index', '10160', 'important');
+}
+
 export function openStampPicker(slotIndex, target = window) {
   if (typeof target.choice !== 'function') return;
   const persist = persistOf(target);
@@ -222,9 +234,9 @@ export function openStampPicker(slotIndex, target = window) {
     return true;
   });
   if (!eligible.length) return;
-  target.choice('Suit Stamp', 'Choose a Major Arcana — its suit counts toward Royal Court.', eligible, card => {
-    applyStampTarget(card.id, target);
-  });
+  openStampChoice('Suit Stamp', 'Choose a Major Arcana — its suit counts toward Royal Court.', eligible, card => {
+    if (card?.id) applyStampTarget(card.id, target);
+  }, target);
 }
 
 export function openFiveStampPicker(slotIndex, target = window) {
@@ -248,9 +260,9 @@ export function openFiveStampPicker(slotIndex, target = window) {
     return true;
   });
   if (!eligible.length) return;
-  target.choice('Five Star Stamp', 'Choose any card — it slots into Sequences as a multiple of 5 (5, 10, 15, 20).', eligible, card => {
-    applyFiveStampTarget(card.id, target);
-  });
+  openStampChoice('Five Star Stamp', 'Choose any card — it slots into Sequences as a multiple of 5 (5, 10, 15, 20).', eligible, card => {
+    if (card?.id) applyFiveStampTarget(card.id, target);
+  }, target);
 }
 
 export function applyFiveStampTarget(cardId, target = window) {
