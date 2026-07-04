@@ -1651,7 +1651,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     left: 50%;
     right: auto;
     bottom: auto;
-    width: min(90vw, calc(var(--spv2-slot-w) * 6.5 + 340px));
+    width: min(90vw, calc(var(--spv2-slot-w) * 7 + 260px));
     transform: translate(-50%, -50%);
     display: flex;
     justify-content: space-between;
@@ -1669,7 +1669,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     left: 50%;
     right: auto;
     bottom: auto;
-    width: calc(var(--spv2-slot-w) * 6.5);
+    width: calc(var(--spv2-slot-w) * 7);
     height: calc(var(--spv2-slot-h) + 44px);
     transform: translate(-50%, -50%);
     overflow: visible;
@@ -1690,12 +1690,12 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   /* Five-card fan — translateX percentages are relative to the slot width,
      so the fan scales with --spv2-card-w */
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(1) {
-    transform: translateX(-272%) translateY(16px) rotate(-8deg);
+    transform: translateX(-286%) translateY(16px) rotate(-8deg);
     z-index: 1;
     --spv2-contact-shadow: 0 5px 4px rgba(0,0,0,.70), 0 14px 17px rgba(0,0,0,.52);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(2) {
-    transform: translateX(-161%) translateY(6px) rotate(-4deg);
+    transform: translateX(-168%) translateY(6px) rotate(-4deg);
     z-index: 2;
     --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
   }
@@ -1706,12 +1706,12 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     box-shadow: var(--spv2-contact-shadow);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(4) {
-    transform: translateX(61%) translateY(6px) rotate(4deg);
+    transform: translateX(68%) translateY(6px) rotate(4deg);
     z-index: 2;
     --spv2-contact-shadow: 0 6px 4px rgba(0,0,0,.74), 0 16px 18px rgba(0,0,0,.56);
   }
   html body.single-player-v2.generated-sheet-ready .spread .slot:nth-child(5) {
-    transform: translateX(172%) translateY(16px) rotate(8deg);
+    transform: translateX(186%) translateY(16px) rotate(8deg);
     z-index: 1;
     --spv2-contact-shadow: 0 5px 4px rgba(0,0,0,.70), 0 14px 17px rgba(0,0,0,.52);
   }
@@ -1755,11 +1755,18 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   body.single-player-v2 .hand-swipe-zone { z-index: 25; }
   body.single-player-v2 #constellationPill { z-index: 29; }
 
-  /* Generated-sheet-ready variable overrides and layout refinements */
+  /* Generated-sheet-ready variable overrides and layout refinements.
+     Slots grow past the hand-card size and the utility medallions anchor to
+     the hand-dock banner's ends (banner art is 999x207, so width = 4.83x the
+     rendered height). */
   html body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 14px;
     --spv2-hud-h: clamp(132px, 17dvh, 164px);
     --spv2-hand-clearance: 32dvh;
+    --spv2-slot-w: calc(var(--spv2-card-w) * 1.16);
+    --spv2-slot-h: calc(var(--spv2-slot-w) * 1.5);
+    --spv2-dock-art-h: clamp(150px, 19.5dvh, 190px);
+    --spv2-dock-half: calc(var(--spv2-dock-art-h) * 2.42);
   }
   body.single-player-v2.generated-sheet-ready #titleWrap {
     height: var(--spv2-title-h);
@@ -1783,8 +1790,22 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     height: 50px;
     min-width: 0;
   }
-  body.single-player-v2.generated-sheet-ready #menuBtn { left: var(--spv2-side); right: auto; }
-  body.single-player-v2.generated-sheet-ready .actions { right: var(--spv2-side); left: auto; gap: 8px; }
+  /* Utility medallions tuck in under the ends of the hand-dock banner:
+     Menu + Archives under its left wing, Scoring + Abilities under its right.
+     max() keeps them on-screen when the banner is wider than the viewport. */
+  body.single-player-v2.generated-sheet-ready #menuBtn {
+    left: max(14px, calc(50% - var(--spv2-dock-half) + 20px));
+    right: auto;
+  }
+  html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
+    left: max(72px, calc(50% - var(--spv2-dock-half) + 78px));
+    right: auto;
+  }
+  body.single-player-v2.generated-sheet-ready .actions {
+    right: max(14px, calc(50% - var(--spv2-dock-half) + 20px));
+    left: auto;
+    gap: 8px;
+  }
   body.single-player-v2.generated-sheet-ready #discardBtn,
   body.single-player-v2.generated-sheet-ready #purgeBtn {
     width: 74px;
@@ -1796,10 +1817,10 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
   body.single-player-v2.generated-sheet-ready .handDock {
     height: 32dvh;
-    bottom: 0;
+    bottom: 4.5dvh;
     align-items: flex-start;
     background-position: center bottom calc(2dvh - 6px);
-    background-size: auto clamp(150px, 19.5dvh, 190px);
+    background-size: auto var(--spv2-dock-art-h);
     background-repeat: no-repeat;
   }
   body.single-player-v2.generated-sheet-ready .handDock .hand {
@@ -1813,7 +1834,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     height: var(--spv2-card-h);
   }
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
-    bottom: 24dvh;
+    bottom: 28.5dvh;
     height: 7dvh;
   }
 
