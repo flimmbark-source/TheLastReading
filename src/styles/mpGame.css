@@ -142,7 +142,7 @@ body.mp-game-active #spread .slot {
 
 /* market.css reorders pills with flex `order` at mobile widths — neutralize
    so DOM order is what renders */
-.mp-pill-score, .mp-pill-disc, .mp-pill-thresh { order: 0; transform: none; }
+.mp-pill-score, .mp-pill-thresh { order: 0; transform: none; }
 
 /* SPv2-style score tiles: the art carries the labels, so only values remain. */
 .mp-score-hud .mp-pill-score,
@@ -176,33 +176,42 @@ body.mp-game-active #spread .slot {
 }
 .mp-score-hud .mp-pill-score b,
 .mp-score-hud .mp-pill-thresh b {
-  color: #20130b;
-  font: 900 22px/1 Georgia, serif;
-  text-shadow: 0 1px 0 rgba(255,235,170,.35);
+  display: block;
+  color: #efe5ce;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  font-size: clamp(34px, 4.6dvh, 44px);
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: .01em;
+  line-height: .9;
+  text-shadow: 0 2px 8px #000;
   justify-self: center;
 }
 
-.mp-score-hud .mp-pill-disc {
-  position: absolute;
-  top: calc(100% - 5px);
-  width: auto;
-  min-width: 74px;
-  height: 18px;
-  padding: 0 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  font-size: 9px;
-  line-height: 1;
-  background: rgba(22, 14, 8, .82);
-  border: 1px solid rgba(180,140,90,.35);
-  border-radius: 999px;
-  box-shadow: 0 4px 10px rgba(0,0,0,.28);
-  color: #d4b37a;
-  pointer-events: none;
+.mp-score-hud .mp-pill-score b {
+  color: #ffd98c;
+  text-shadow: 0 0 12px rgba(235,175,70,.32), 0 2px 8px #000;
 }
-.mp-score-hud .mp-pill-disc b { color: #ffd978; font-size: 10px; }
+
+.mp-score-hud .mp-pill-thresh b {
+  color: #cfbfff;
+  text-shadow: 0 0 12px rgba(145,107,224,.34), 0 2px 8px #000;
+}
+
+.mp-score-hud .mp-score-mult {
+  position: absolute;
+  top: 42%;
+  left: 62%;
+  display: none;
+  color: #f2564a;
+  font: 800 15px/1 'Cinzel', Georgia, serif;
+  letter-spacing: .01em;
+  text-shadow: 0 0 7px rgba(242,86,74,.55), 0 2px 4px #000;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.mp-score-hud .mp-score-mult.show { display: block; }
 
 /* Side labels sit just above the score tiles to clarify player/opponent. */
 .mp-side-label {

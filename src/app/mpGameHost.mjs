@@ -32,13 +32,13 @@ function installMpHostFixes(target = window) {
     restoreExistingRefButtons(doc);
     syncDrawerTabs(target);
     suppressBetweenSetResults(doc);
-    syncMultSpans(target, doc, stateRef, myIndex);
+    syncMultSpans(doc, stateRef, myIndex);
     target.requestAnimationFrame?.(() => {
       removeInjectedMpTopRefTabs(doc);
       restoreExistingRefButtons(doc);
       syncDrawerTabs(target);
       suppressBetweenSetResults(doc);
-      syncMultSpans(target, doc, stateRef, myIndex);
+      syncMultSpans(doc, stateRef, myIndex);
       syncOverlayLayerClass(doc);
     });
   };
@@ -348,44 +348,32 @@ function syncOverlayLayerClass(doc) {
   doc.body.classList.toggle('mp-overlay-active', active);
 }
 
-function syncMultSpans(target, doc, state, myIndex) {
+function syncMultSpans(doc, state, myIndex) {
   if (!state?.players || !doc.body.classList.contains('mp-game-active')) return;
-  syncOneMultSpan(target, doc, 'mpMyScore', state.players[myIndex]);
-  syncOneMultSpan(target, doc, 'mpOppScore', state.players[1 - myIndex]);
+  syncOneMultSpan(doc, 'mpMyScore', state.players[myIndex]);
+  syncOneMultSpan(doc, 'mpOppScore', state.players[1 - myIndex]);
 }
 
-function syncOneMultSpan(target, doc, scoreId, player) {
+function syncOneMultSpan(doc, scoreId, player) {
   const scoreNode = doc.getElementById(scoreId);
   const pill = scoreNode?.closest?.('.mp-pill-score') || scoreNode?.parentElement;
   const parent = pill?.parentElement;
   if (!pill || !parent) return;
 
-  let mult = pill.querySelector(':scope > .mp-mult-inline')
-    || (pill.previousElementSibling?.classList?.contains('mp-mult-inline') ? pill.previousElementSibling : null)
-    || (pill.nextElementSibling?.classList?.contains('mp-mult-inline') ? pill.nextElementSibling : null);
+  parent.querySelectorAll(':scope > .mp-mult-inline').forEach(node => node.remove());
+  pill.querySelectorAll(':scope > .mp-mult-inline').forEach(node => node.remove());
+  let mult = pill.querySelector(':scope > .mp-score-mult');
   if (!mult) {
     mult = doc.createElement('span');
-    mult.className = 'mp-mult-inline';
+    mult.className = 'mp-score-mult';
     pill.appendChild(mult);
   }
 
-  const text = `${formatMult(player?.roundMult ?? 1)}x`;
+  const roundMult = player?.roundMult ?? 1;
+  const text = `×${formatMult(roundMult)}`;
   if (mult.textContent !== text) mult.textContent = text;
-
-  const isDesktop = target.matchMedia?.('(min-width: 641px)').matches ?? false;
-  const putRight = isDesktop && pill.classList.contains('mp-pill-opp-score');
-  if (putRight) {
-    if (mult.parentElement !== parent || pill.nextElementSibling !== mult) parent.insertBefore(mult, pill.nextSibling);
-    mult.classList.add('mp-mult-right');
-    mult.classList.remove('mp-mult-left');
-  } else {
-    if (mult.parentElement !== parent || mult.nextElementSibling !== pill) parent.insertBefore(mult, pill);
-    mult.classList.add('mp-mult-left');
-    mult.classList.remove('mp-mult-right');
-    parent.classList.add('mp-has-left-mult');
-  }
-  pill.style.setProperty('width', '118px', 'important');
-  pill.style.setProperty('gap', '5px', 'important');
+  mult.classList.toggle('show', roundMult > 1);
+  pill.style.setProperty('width', pill.closest('.mp-score-hud') ? '100%' : '118px', 'important');
 }
 
 // The multiplayer game is self-contained in mpGame.mjs. The host keeps the

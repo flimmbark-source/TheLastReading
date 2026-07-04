@@ -155,13 +155,9 @@ body.mp-game-active .spread-wrap {
 
   body.mp-game-active .mp-score-hud .mp-pill-score b,
   body.mp-game-active .mp-score-hud .mp-pill-thresh b {
-    font-size: 20px !important;
-  }
-
-  body.mp-game-active .mp-score-hud .mp-pill-disc {
-    min-width: 64px;
-    height: 17px;
-    font-size: 8px;
+    font-size: clamp(35px, 9.5vw, 47px) !important;
+    line-height: .92;
+    font-weight: 800;
   }
 
   body.mp-game-active .mp-score-hud .mp-side-label {
