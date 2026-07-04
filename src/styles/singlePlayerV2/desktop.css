@@ -477,9 +477,9 @@
   body.single-player-v2 #constellationPill { z-index: 29; }
 
   /* Generated-sheet-ready variable overrides and layout refinements.
-     Slots grow past the hand-card size and the utility medallions anchor to
-     the hand-dock banner's ends (banner art is 999x207, so width = 4.83x the
-     rendered height). */
+     Slots intentionally match the live card size, while utility medallions
+     anchor just outside the hand-dock banner's edges (banner art is 999x207,
+     so width = 4.83x the rendered height). */
   html body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 14px;
     --spv2-hud-h: clamp(116px, 14.5dvh, 142px);
@@ -511,19 +511,19 @@
     height: 50px;
     min-width: 0;
   }
-  /* Utility medallions tuck in under the ends of the hand-dock banner:
-     Menu + Archives under its left wing, Scoring + Abilities under its right.
-     max() keeps them on-screen when the banner is wider than the viewport. */
+  /* Utility medallions sit outside the hand-dock banner: Menu + Archives
+     immediately to the left, Scoring + Abilities immediately to the right.
+     max() keeps each two-button cluster on-screen when the dock grows. */
   body.single-player-v2.generated-sheet-ready #menuBtn {
-    left: max(14px, calc(50% - var(--spv2-dock-half) + 20px));
+    left: max(14px, calc(50% - var(--spv2-dock-half) - 116px));
     right: auto;
   }
   html body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
-    left: max(72px, calc(50% - var(--spv2-dock-half) + 78px));
+    left: max(72px, calc(50% - var(--spv2-dock-half) - 58px));
     right: auto;
   }
   body.single-player-v2.generated-sheet-ready .actions {
-    right: max(14px, calc(50% - var(--spv2-dock-half) + 20px));
+    right: max(14px, calc(50% - var(--spv2-dock-half) - 116px));
     left: auto;
     gap: 8px;
   }
