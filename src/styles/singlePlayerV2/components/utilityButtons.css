@@ -5,7 +5,7 @@
      Scoring, Abilities, and Archive are visible utilities; Mulligan remains the
      hidden legacy button. Art and pressed-state styling still live in the
      generated art/icon source sections until those rules are migrated here. */
-  @media (max-width: 640px) {
+  @media (max-width: 640px) and (min-height: 620.02px) {
     body.single-player-v2.generated-sheet-ready #mullBtn {
       display: none !important;
     }
@@ -46,7 +46,7 @@
 /* Loaded after the generated SPv2 bundle, so these normal declarations refine
    the same spv2Core layer without adding another priority tier. */
 @layer spv2Core {
-  @media (max-width: 640px) {
+  @media (max-width: 640px) and (min-height: 620.02px) {
     body.single-player-v2.generated-sheet-ready::before {
       background:
         repeating-linear-gradient(96deg, rgba(255,255,255,.012) 0 1px, transparent 1px 11px),

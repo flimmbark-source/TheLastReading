@@ -1,6 +1,6 @@
 @layer spv2Core {
 /* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-compact-hud-h: clamp(76px, 11dvh, 94px);
     --spv2-hud-top: 8.2dvh;

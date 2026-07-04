@@ -122,7 +122,7 @@
 
 
 /* Base mobile layout; design tokens have moved to singlePlayerV2/tokens.css. */
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   body.single-player-v2 {
     --spv2-side: 9px;
     --spv2-title-h: 38px;
@@ -657,7 +657,7 @@
 /* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* Compatibility overrides kept separate from the Phase 1 composition sheet. */
 
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   body.single-player-v2 #settingsPanel {
     pointer-events: auto;
   }
@@ -816,7 +816,7 @@
   }
 }
 
-@media (max-width: 640px) and (max-height: 759px) {
+@media (max-width: 640px) and (min-height: 620.02px) and (max-height: 759px) {
   body.single-player-v2:not(.generated-sheet-ready) {
     --spv2-title-h: 32px;
     --spv2-hud-top: 32px;
@@ -852,7 +852,7 @@
 }
 
 /* Deprecated exact-sheet fallback. */
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   body.single-player-v2.reference-sheet-ready {
     --spv2-title-h:6.58dvh;
     --spv2-hud-top:6.58dvh;
@@ -884,7 +884,7 @@
 }
 
 /* === Migrated requested fixes compatibility section === */
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   /* Keep the complete top HUD cluster closer to the top edge. Every pill and
      upper utility button keys off these shared variables. */
   html body.single-player-v2.generated-sheet-ready {
@@ -1131,7 +1131,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   /* Use the same full-page background as desktop instead of the generated
      mobile table skin and its extra texture/vignette overlay. */
   html body.single-player-v2 {
@@ -1280,10 +1280,20 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 @layer spv2Core {
 /* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* ─── Desktop phone-column constraint ────────────────────────────────────── */
-/* On wide screens confine the entire game to a portrait phone column.        */
-/* CSS transform on body makes it the containing block for all               */
-/* position:fixed children, so they lay out within the 430px stage, then the stage scales to a visible 360×740 frame. */
-@media (min-width: 641px) {
+/* On viewports that aren't phone-portrait shaped, confine the entire game to
+   a portrait phone column: wide screens (min-width branch) and short, squat
+   windows such as zoomed/small desktop browsers (max-width + max-height
+   branch — the raw mobile layout's px clamps overflow and pile up there, so
+   those heights are excluded from the mobile sheets via their matching
+   `(min-height: 620.02px)` guard).
+   CSS transform on body makes it the containing block for all
+   position:fixed children, so they lay out within the 430×884 stage, then
+   the stage scales to fit the viewport (tan(atan2()) division trick, with a
+   fixed-scale fallback for engines without CSS trig).
+   IMPORTANT: viewport units resolve against the real viewport, not this
+   884px-tall stage — inside this file use px pinned to the stage instead
+   (1% of stage height = 8.84px). */
+@media (min-width: 641px), (max-width: 640px) and (max-height: 620px) {
   html {
     background: #030201;
   }
@@ -1293,6 +1303,8 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0.8372093);
+    transform: translate(-50%, -50%)
+      scale(min(1, tan(atan2(98dvh, 884px)), tan(atan2(98dvw, 430px))));
     transform-origin: center;
     width: 430px;
     height: 884px;
@@ -1327,7 +1339,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   /* Center the spread vertically; become containing block for absolute slots */
   html body.single-player-v2.generated-sheet-ready .spread {
     position: fixed;
-    top: 45dvh;
+    top: 398px;
     left: 0;
     right: 0;
     bottom: auto;
@@ -1412,7 +1424,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     position: fixed;
     z-index: 31;
     top: auto;
-    bottom: max(24px, 3dvh);
+    bottom: 27px;
     left: 13px;
     right: auto;
     width: 44px;
@@ -1606,7 +1618,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     position: fixed;
     z-index: 31;
     top: auto;
-    bottom: max(24px, 3dvh);
+    bottom: 27px;
     right: 13px;
     left: auto;
     margin: 0;
@@ -1647,7 +1659,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     position: fixed;
     z-index: 31;
     top: auto;
-    bottom: max(24px, 3dvh);
+    bottom: 27px;
     left: 63px;
     right: auto;
     width: 44px;
@@ -1706,19 +1718,19 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   /* Generated-sheet-ready variable overrides and layout refinements */
   html body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 12px;
-    --spv2-hud-h: clamp(140px, 17.5dvh, 162px);
+    --spv2-hud-h: 155px;
     --spv2-slot-w: 96px;
     --spv2-slot-h: calc(96px * 1.5);
-    --spv2-hand-clearance: 34dvh;
+    --spv2-hand-clearance: 300px;
   }
   body.single-player-v2.generated-sheet-ready #titleWrap {
     height: var(--spv2-title-h);
   }
   body.single-player-v2.generated-sheet-ready #titleWrap::before {
-    top: .55dvh;
+    top: 5px;
     left: 24%;
     right: 24%;
-    height: 5.55dvh;
+    height: 49px;
   }
   body.single-player-v2.generated-sheet-ready .score-stack {
     top: var(--spv2-hud-top);
@@ -1730,7 +1742,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready .actions {
     top: auto;
-    bottom: max(24px, 3dvh);
+    bottom: 27px;
   }
   body.single-player-v2.generated-sheet-ready #menuBtn,
   body.single-player-v2.generated-sheet-ready .actions button {
@@ -1756,32 +1768,49 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
     display: none;
   }
   body.single-player-v2.generated-sheet-ready .handDock {
-    height: 34dvh;
+    height: 300px;
     bottom: 0;
     align-items: flex-start;
-    background-position: center bottom calc(2dvh - 5px);
-    background-size: auto clamp(144px, 17.6dvh, 155.2px);
+    background-position: center bottom 13px;
+    background-size: auto 155px;
     background-repeat: no-repeat;
   }
   body.single-player-v2.generated-sheet-ready .handDock .hand {
-    height: 31dvh;
+    height: 274px;
     --track-spacing: 6.5deg;
     --track-radius: 560px;
-    transform: translateY(.8dvh);
+    transform: translateY(7px);
   }
   body.single-player-v2.generated-sheet-ready .handDock .hand .card {
     width: 96px;
     height: calc(96px * 1.5);
   }
   body.single-player-v2.generated-sheet-ready .hand-swipe-zone {
-    bottom: 25.5dvh;
-    height: 7.5dvh;
+    bottom: 225px;
+    height: 66px;
   }
 
   /* Hide pull drawer tabs — desktop phone-column uses icon medallion buttons instead */
   body.single-player-v2 .tlr-pull-wrap,
   body.single-player-v2 #invWrap {
     display: none;
+  }
+
+  /* ── Squat-branch guard ──────────────────────────────────────────────────
+     On the (max-width:640px) and (max-height:620px) branch the classic
+     mobile sheets (market.css, …) still fire — they have no height guard,
+     unlike the SPv2 mobile sheets. market.css gives .spread-wrap a
+     translateY transform, which would make it the containing block for the
+     fixed .spread and drag the whole fan out of the stage — neutralize it.
+     This nested media can never match the min-width branch, so wide-screen
+     behavior is untouched. */
+  @media (max-width: 640px) {
+    body.single-player-v2 .spread-wrap {
+      top: 0;
+      bottom: auto;
+      margin: 0;
+      transform: none;
+    }
   }
 
   /* ── Art layer: mirrors singlePlayerV2Assets + ArtIntegration + UtilityIcons ──
@@ -1979,7 +2008,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 
 /* === singlePlayerV2/components/relics.css: component: constellation placement === */
 @layer spv2.components {
-  @media (max-width: 640px) {
+  @media (max-width: 640px) and (min-height: 620.02px) {
     /* Center the active constellation between the left and right utility pairs,
        directly beneath the Score and Threshold panels and vertically aligned
        with the surrounding controls. */
@@ -2014,7 +2043,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
    The existing SVG kit remains the fallback until the generated sprite is
    decoded and body.generated-sheet-ready is applied. */
 
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   body.single-player-v2 .score-stack {
     background-color: #0d0a08;
     background-image: url('/public/ui/single-player-v2/hud-frame.svg');
@@ -2253,7 +2282,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 @layer spv2Core {
 /* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* Final mobile shell corrections layered after the generated art styles. */
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-live-card-w: clamp(78px, 22vw, 96px);
     --spv2-live-card-h: calc(var(--spv2-live-card-w) * 1.5);
@@ -2404,7 +2433,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 /* === singlePlayerV2/mobile.css: mobile visual fixes === */
 @layer spv2Core {
 /* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-compact-hud-h: clamp(76px, 11dvh, 94px);
     --spv2-hud-top: 8.2dvh;
@@ -2697,7 +2726,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 
 /* === singlePlayerV2/components/hand.css: component: hand gesture restore === */
 @layer spv2.components {
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   /* Restore the original full-width gesture surface over the hand. The hand
      remains one layer above it, so cards stay selectable while swipes in the
      open portions of the fan still reach gestureHand.mjs. */
@@ -2766,7 +2795,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   /* Override the historical ID rule in attic.css. Preserve the old drag
      region's relationship to the current hand dock: 52px above its top and
      45px overlapping into it. */
@@ -2888,7 +2917,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 @layer spv2Core {
 /* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 8.8dvh;
     --spv2-control-size: clamp(46px, 12vw, 58px);
@@ -3104,7 +3133,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 /* === singlePlayerV2/components/scoreHud.css: component: score HUD table pass === */
 @layer spv2Core {
 /* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   body.single-player-v2.generated-sheet-ready {
     --spv2-hud-top: 7.6dvh;
     --spv2-compact-hud-h: clamp(116px,14.5dvh,132px);
@@ -3320,7 +3349,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
 /* === singlePlayerV2/states.css: state correction pass === */
 @layer spv2Core {
 /* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   /* Spread slots keep their ornate frame and placed cards occupy that exact box. */
   body.single-player-v2.generated-sheet-ready .spread {
     top: calc(.4dvh + 10px);
@@ -3462,7 +3491,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
    art, so the CSS-generated duplicates are suppressed here. The live values, the
    VS divider, and the threshold progress bar are NOT baked in and remain
    CSS/DOM driven. */
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   body.single-player-v2.generated-sheet-ready .score-stack .spv2-label {
     display: none;
   }
@@ -3732,7 +3761,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
      Loaded after ArtIntegration so the background-image override wins. Assets are
      preloaded via generatedSheetAssets.mjs so the skin doesn't flash. Mobile
      generated-sheet layout only. */
-  @media (max-width: 640px) {
+  @media (max-width: 640px) and (min-height: 620.02px) {
     body.single-player-v2.generated-sheet-ready #menuBtn,
     body.single-player-v2.generated-sheet-ready #scoringBtn,
     body.single-player-v2.generated-sheet-ready #abilitiesBtn,

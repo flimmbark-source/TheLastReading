@@ -1,5 +1,5 @@
 @layer spv2.components {
-  @media (max-width: 640px) {
+  @media (max-width: 640px) and (min-height: 620.02px) {
     /* Center the active constellation between the left and right utility pairs,
        directly beneath the Score and Threshold panels and vertically aligned
        with the surrounding controls. */

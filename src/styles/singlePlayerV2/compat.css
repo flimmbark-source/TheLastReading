@@ -2,7 +2,7 @@
 /* spv2Core layer -- see singlePlayerV2/base.css's header comment for the full ten-file position writeup. */
 /* Compatibility overrides kept separate from the Phase 1 composition sheet. */
 
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   body.single-player-v2 #settingsPanel {
     pointer-events: auto;
   }
@@ -161,7 +161,7 @@
   }
 }
 
-@media (max-width: 640px) and (max-height: 759px) {
+@media (max-width: 640px) and (min-height: 620.02px) and (max-height: 759px) {
   body.single-player-v2:not(.generated-sheet-ready) {
     --spv2-title-h: 32px;
     --spv2-hud-top: 32px;
@@ -197,7 +197,7 @@
 }
 
 /* Deprecated exact-sheet fallback. */
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   body.single-player-v2.reference-sheet-ready {
     --spv2-title-h:6.58dvh;
     --spv2-hud-top:6.58dvh;
@@ -229,7 +229,7 @@
 }
 
 /* === Migrated requested fixes compatibility section === */
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   /* Keep the complete top HUD cluster closer to the top edge. Every pill and
      upper utility button keys off these shared variables. */
   html body.single-player-v2.generated-sheet-ready {

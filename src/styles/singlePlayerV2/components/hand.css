@@ -1,5 +1,5 @@
 @layer spv2.components {
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   /* Restore the original full-width gesture surface over the hand. The hand
      remains one layer above it, so cards stay selectable while swipes in the
      open portions of the fan still reach gestureHand.mjs. */
@@ -68,7 +68,7 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   /* Override the historical ID rule in attic.css. Preserve the old drag
      region's relationship to the current hand dock: 52px above its top and
      45px overlapping into it. */

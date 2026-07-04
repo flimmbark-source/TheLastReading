@@ -4,7 +4,7 @@
    The existing SVG kit remains the fallback until the generated sprite is
    decoded and body.generated-sheet-ready is applied. */
 
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   body.single-player-v2 .score-stack {
     background-color: #0d0a08;
     background-image: url('/public/ui/single-player-v2/hud-frame.svg');

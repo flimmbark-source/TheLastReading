@@ -17,7 +17,7 @@
      Loaded after ArtIntegration so the background-image override wins. Assets are
      preloaded via generatedSheetAssets.mjs so the skin doesn't flash. Mobile
      generated-sheet layout only. */
-  @media (max-width: 640px) {
+  @media (max-width: 640px) and (min-height: 620.02px) {
     body.single-player-v2.generated-sheet-ready #menuBtn,
     body.single-player-v2.generated-sheet-ready #scoringBtn,
     body.single-player-v2.generated-sheet-ready #abilitiesBtn,

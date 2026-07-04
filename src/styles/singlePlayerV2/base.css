@@ -63,7 +63,7 @@
 
 
 /* Base mobile layout; design tokens have moved to singlePlayerV2/tokens.css. */
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   body.single-player-v2 {
     --spv2-side: 9px;
     --spv2-title-h: 38px;

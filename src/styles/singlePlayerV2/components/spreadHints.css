@@ -26,7 +26,7 @@ html body.single-player-v2.generated-sheet-ready #choices .choice-card.hint-mult
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 640px) and (min-height: 620.02px) {
   /* Use the same full-page background as desktop instead of the generated
      mobile table skin and its extra texture/vignette overlay. */
   html body.single-player-v2 {
