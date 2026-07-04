@@ -840,14 +840,26 @@ export function installMpGame(target = window) {
   }
 
   function syncSharedInfoButtonsForMp(active) {
+    const actions = doc.querySelector('#titleWrap .actions');
+    let wrap = doc.getElementById('mpSharedInfoButtons');
     const buttons = [
       { id: 'abilitiesBtn', right: '12px' },
       { id: 'scoringBtn', right: '104px' },
     ];
+    if (active && !wrap) {
+      wrap = doc.createElement('div');
+      wrap.id = 'mpSharedInfoButtons';
+      wrap.setAttribute('aria-label', 'Duel reference controls');
+      doc.body.appendChild(wrap);
+    }
     buttons.forEach(({ id, right }) => {
       const button = el(id);
       if (!button) return;
       if (!active) {
+        if (actions) {
+          if (id === 'scoringBtn') actions.insertBefore(button, actions.firstChild);
+          else actions.insertBefore(button, actions.querySelector('#mullBtn'));
+        }
         [
           'position', 'top', 'right', 'z-index', 'display', 'align-items',
           'justify-content', 'min-width', 'height', 'padding', 'pointer-events',
@@ -855,10 +867,11 @@ export function installMpGame(target = window) {
         ].forEach(prop => button.style.removeProperty(prop));
         return;
       }
+      wrap?.appendChild(button);
       button.style.setProperty('position', 'fixed', 'important');
       button.style.setProperty('top', '10px', 'important');
       button.style.setProperty('right', right, 'important');
-      button.style.setProperty('z-index', '9505', 'important');
+      button.style.setProperty('z-index', '2147483250', 'important');
       button.style.setProperty('display', 'inline-flex', 'important');
       button.style.setProperty('align-items', 'center', 'important');
       button.style.setProperty('justify-content', 'center', 'important');
@@ -868,6 +881,18 @@ export function installMpGame(target = window) {
       button.style.setProperty('pointer-events', 'auto', 'important');
       button.style.setProperty('box-shadow', '0 6px 16px rgba(0,0,0,.34)', 'important');
     });
+    ['scoringPullTab', 'abilitiesPullTab'].forEach(id => {
+      const tab = el(id);
+      if (!tab) return;
+      if (active) {
+        tab.style.setProperty('display', 'none', 'important');
+        tab.style.setProperty('pointer-events', 'none', 'important');
+      } else {
+        tab.style.removeProperty('display');
+        tab.style.removeProperty('pointer-events');
+      }
+    });
+    if (!active) wrap?.remove();
   }
 
   function moveMultPillsOutside() {
