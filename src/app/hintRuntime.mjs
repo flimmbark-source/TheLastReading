@@ -5,7 +5,7 @@
 function runtime(target){return target.tlrRuntime || {};}
 function stateOf(target){return runtime(target).state;}
 function persistOf(target){return runtime(target).persist;}
-function hintSettingsOf(target){return runtime(target).hintSettings || {patterns:true,relics:false};}
+function hintSettingsOf(target){return runtime(target).hintSettings || {patterns:true,relics:false,patternText:true};}
 function cachesOf(target){return runtime(target).caches || (target.__tlrRuntimeCaches ||= {});}
 
 export function majorNumeral(id){

@@ -29,7 +29,7 @@ export function createInitialState(){
   };
 }
 
-export function createInitialHintSettings(){return {patterns:true,relics:false};}
+export function createInitialHintSettings(){return {patterns:true,relics:false,patternText:true};}
 
 function readGlobalLexical(name){
   try{return Function(`try{return typeof ${name}==='undefined'?undefined:${name}}catch(e){return undefined}`)();}

@@ -63,6 +63,7 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
 .settings-panel hr{border:none;border-top:1px solid rgba(180,140,90,.2);margin:2px 0}
 .settings-check{display:flex;flex-direction:row!important;align-items:center;gap:8px;cursor:pointer;user-select:none}
 .settings-check input[type=checkbox]{accent-color:#c8a87a;width:14px;height:14px;cursor:pointer;flex:0 0 auto}
+.settings-panel label.settings-check-sub{margin-left:18px;color:#a88963}
 .settings-panel .settings-action{background:rgba(180,140,90,.18);border:1px solid rgba(180,140,90,.45);border-radius:6px;color:#e6c89a;font:600 .78rem system-ui,Segoe UI,sans-serif;letter-spacing:.04em;text-transform:uppercase;padding:7px 10px;cursor:pointer;width:100%;transition:background .15s,filter .15s}
 .settings-panel .settings-action:hover{background:rgba(180,140,90,.3);filter:brightness(1.1)}
 /* spread ability highlight patch */

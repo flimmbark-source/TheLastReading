@@ -29,7 +29,7 @@ function hintText(hints){
 
 function hintRuntime(target=window){return target.tlrRuntime||{};}
 function hintPersist(target=window){return hintRuntime(target).persist||target.persist||{};}
-function hintSettings(target=window){return hintRuntime(target).hintSettings||{patterns:true,relics:false};}
+function hintSettings(target=window){return hintRuntime(target).hintSettings||{patterns:true,relics:false,patternText:true};}
 
 function hintsForCard(card,poolCards=null,hintState=null,target=window){
   if(!card)return[];
@@ -109,5 +109,8 @@ export function applyHint(el,card,poolCards=null,hintState=null){
     el.classList.add('hint-multi');
     el.style.setProperty('--hint-shadow',multiHintShadow(hints,hasComplete?'complete':'near'));
   }
-  el.dataset.hint=hintText(hints);
+  // Pattern Hint Text (settings panel) only gates the label pill; the glow
+  // classes/vars above are set unconditionally so turning the text off never
+  // touches the hint glow itself.
+  if(hintSettings().patternText!==false)el.dataset.hint=hintText(hints);
 }
