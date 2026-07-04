@@ -116,7 +116,19 @@ const appStyleFiles = [
 // use importance as their documented mechanism. The redundancy the pass did
 // find was concentrated in the SPv2 partials (816 removals) — tracked by
 // validate-single-player-v2-cascade.mjs's own budget, now 90.
-const importantBudget = 651;
+// 651 -> 652 (a REAL +1): buyStoreScoringUpgrade's Suit Stamp / Five Star
+// Stamp purchase opens the ability-targeting #modal (openStampPicker /
+// openFiveStampPicker) while the shop stays open behind it in #summary.
+// #summary.modal.show:has(.tarot-shop) already boosts the shop to 10110
+// !important so it outranks ordinary contextual surfaces (10080); #modal
+// had no ID-scoped override, so it inherited the plain `.modal.show{z-index
+// :10080}` rule and rendered underneath (and interleaved with) the shop's
+// own Buy buttons, leaving the stamp target unselectable and the shop
+// visually broken. actionDropTargets.css gained `#modal.show{z-index:10111
+// !important}` to unconditionally outrank the shop -- !important is the
+// only lever that beats the existing !important boost, matching this
+// file's documented fix-tier mechanism.
+const importantBudget = 652;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);

@@ -62,6 +62,12 @@ body:has(.hand .card.ability-picked[data-hint]) .handDock{z-index:10062!importan
 .relic-callout,.inv-tut{z-index:10090!important}
 .store-relic-callout,.store-pack-callout{z-index:10150!important}
 #summary.modal.show:has(.tarot-shop),#summary.modal.show:has(.store-front-shell){z-index:10110!important}
+/* buyStoreScoringUpgrade's Suit Stamp / Five Star Stamp flow opens this
+   ability-targeting modal (openStampPicker/openFiveStampPicker) while the
+   shop stays open behind it. Without outranking the boost above, the
+   modal's card choices painted underneath the store front, interleaved
+   with its own Buy buttons, so neither surface could be clicked reliably. */
+#modal.show{z-index:10111!important}
 body:has(#summary .tarot-shop) #discardBtn,
 body:has(#summary .tarot-shop) #purgeBtn,
 body:has(#summary .tarot-shop) #spv2ArchiveBtn,
