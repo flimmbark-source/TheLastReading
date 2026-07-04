@@ -202,9 +202,20 @@ body:has(.hand-scroll-dragging) .handDock *{cursor:grabbing!important}
 /* end hand swipe-scroll patch */
 /* hand card gestures patch */
 #hand .card[data-uid],#spread .card[data-uid]{touch-action:none;-webkit-user-select:none;user-select:none}
-.hand .card.hand-card-dragging{
+/* Not scoped under .hand: gestureCard.mjs's startDrag() reparents the
+   dragged card to document.body for the duration of the drag (so its
+   position:fixed escapes .hand/.handDock's stacking/overflow), so a
+   ".hand .card.hand-card-dragging" selector would stop matching the moment
+   the drag actually starts -- the card would then fall through to generic
+   .card{transition:transform ...} rules (e.g. market.css's mobile .2s one)
+   whose easing fights the per-frame transform this class's JS sets every
+   rAF, producing a laggy "chase" instead of the finger-locked 1:1 tracking
+   a drag needs. transition intentionally omits transform entirely (so it
+   snaps instantly to each JS-set position) and keeps only the box-shadow
+   fade-in for the pickup lift. */
+.card.hand-card-dragging{
   transform:translate(calc(-50% + var(--drag-x,0px)), var(--drag-y,0px)) rotate(var(--drag-rot,0deg))!important;
-  transition:transform .07s cubic-bezier(.2,.85,.25,1), box-shadow .14s ease!important;
+  transition:box-shadow .14s ease!important;
   z-index:9999!important;
   box-shadow:0 22px 52px rgba(0,0,0,.78),0 0 0 2px #d4af6a;
   pointer-events:none;
