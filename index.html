@@ -5,16 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>The Last Reading</title>
 <style>
-  /* The game is built and tuned for a phone-width portrait screen. Rather than
-     re-deriving every width-based @media query, vw unit, and position:fixed
-     calculation for a wide desktop window, run the real game (game.html)
-     inside an iframe sized to phone dimensions. On an actual phone this frame
-     already is that width, so the iframe just fills the screen edge-to-edge
-     with no visible seam; on a wider window it centers a phone-sized column
-     and everything inside sees a genuinely narrow viewport, so all of the
-     game's existing mobile behavior applies with no special-casing. */
+  /* Preserve the phone-style shell on narrow screens, but let the game expand
+     to the full viewport on desktop so the SPv2 desktop layout can activate. */
   html,body{margin:0;height:100%;background:#030201;overflow:hidden}
-  #tlr-frame{display:block;border:0;width:min(430px,100%);height:100%;margin:0 auto;box-shadow:-2px 0 40px rgba(0,0,0,.7),2px 0 40px rgba(0,0,0,.7)}
+  #tlr-frame{display:block;border:0;width:100%;height:100%;margin:0;box-shadow:none}
+  @media (max-width: 640px){
+    body{display:block}
+    #tlr-frame{width:min(430px,100%);margin:0 auto;box-shadow:-2px 0 40px rgba(0,0,0,.7),2px 0 40px rgba(0,0,0,.7)}
+  }
 </style>
 </head>
 <body>

@@ -22,9 +22,9 @@
     --spv2-side: 22px;
     --spv2-title-h: 38px;
     --spv2-hud-top: 44px;
-    --spv2-hud-w: clamp(400px, 36vw, 520px);
+    --spv2-hud-w: clamp(400px, 36vw, 760px);
     --spv2-hud-h: 112px;
-    --spv2-card-w: clamp(96px, 7.4vw, 120px);
+    --spv2-card-w: clamp(96px, 7.4vw, 190px);
     --spv2-card-h: calc(var(--spv2-card-w) * 1.5);
     --spv2-slot-w: var(--spv2-card-w);
     --spv2-slot-h: var(--spv2-card-h);
@@ -484,9 +484,9 @@
     --spv2-hud-top: 14px;
     --spv2-hud-h: clamp(132px, 17dvh, 164px);
     --spv2-hand-clearance: 32dvh;
-    --spv2-slot-w: calc(var(--spv2-card-w) * 1.16);
+    --spv2-slot-w: calc(var(--spv2-card-w) * 1.5);
     --spv2-slot-h: calc(var(--spv2-slot-w) * 1.5);
-    --spv2-dock-art-h: clamp(150px, 19.5dvh, 190px);
+    --spv2-dock-art-h: clamp(250px, 19.5dvh, 290px);
     --spv2-dock-half: calc(var(--spv2-dock-art-h) * 2.42);
   }
   body.single-player-v2.generated-sheet-ready #titleWrap {
@@ -538,8 +538,8 @@
   }
   body.single-player-v2.generated-sheet-ready .handDock {
     height: 32dvh;
-    bottom: 4.5dvh;
-    align-items: flex-start;
+    bottom: 7.5dvh;
+    align-items: flex-end;
     background-position: center bottom calc(2dvh - 6px);
     background-size: auto var(--spv2-dock-art-h);
     background-repeat: no-repeat;
@@ -548,7 +548,7 @@
     height: 29dvh;
     --track-spacing: 6.5deg;
     --track-radius: 700px;
-    transform: translateY(.8dvh);
+    transform: translateY(0);
   }
   body.single-player-v2.generated-sheet-ready .handDock .hand .card {
     width: var(--spv2-card-w);
