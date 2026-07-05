@@ -1231,23 +1231,25 @@ export function installMpGame(target = window) {
     ];
     const clones = moving.map(({ source, from, to }) => {
       const clone = source.cloneNode(true);
+      clone.hidden = false;
+      clone.removeAttribute('aria-hidden');
+      clone.classList.remove('mp-local-pending-hidden');
       clone.classList.add('mp-surgeon-swap-ghost');
-      Object.assign(clone.style, {
-        position: 'fixed',
-        left: `${from.left}px`,
-        top: `${from.top}px`,
-        width: `${from.width}px`,
-        height: `${from.height}px`,
-        margin: '0',
-        zIndex: '9999',
-        pointerEvents: 'none',
-        display: 'block',
-        visibility: 'visible',
-        opacity: '1',
-        filter: 'none',
-        transform: 'translate3d(0,0,0)',
-        transition: `transform ${durationMs}ms cubic-bezier(.18,.82,.2,1)`,
-      });
+      const forceGhostStyle = (name, value) => clone.style.setProperty(name, value, 'important');
+      forceGhostStyle('position', 'fixed');
+      forceGhostStyle('left', `${from.left}px`);
+      forceGhostStyle('top', `${from.top}px`);
+      forceGhostStyle('width', `${from.width}px`);
+      forceGhostStyle('height', `${from.height}px`);
+      forceGhostStyle('margin', '0');
+      forceGhostStyle('z-index', '2147483001');
+      forceGhostStyle('pointer-events', 'none');
+      forceGhostStyle('display', 'grid');
+      forceGhostStyle('visibility', 'visible');
+      forceGhostStyle('opacity', '1');
+      forceGhostStyle('filter', 'none');
+      forceGhostStyle('transform', 'translate3d(0,0,0)');
+      forceGhostStyle('transition', `transform ${durationMs}ms cubic-bezier(.18,.82,.2,1)`);
       doc.body.appendChild(clone);
       return { clone, dx: to.left - from.left, dy: to.top - from.top };
     });
@@ -1259,7 +1261,7 @@ export function installMpGame(target = window) {
       ? target.requestAnimationFrame.bind(target)
       : callback => target.setTimeout?.(callback, 16);
     raf(() => raf(() => {
-      clones.forEach(({ clone, dx, dy }) => { clone.style.transform = `translate3d(${dx}px, ${dy}px, 0)`; });
+      clones.forEach(({ clone, dx, dy }) => { clone.style.setProperty('transform', `translate3d(${dx}px, ${dy}px, 0)`, 'important'); });
     }));
 
     return new Promise(resolve => {
