@@ -1241,12 +1241,15 @@ export function installMpGame(target = window) {
         margin: '0',
         zIndex: '9999',
         pointerEvents: 'none',
+        display: 'block',
+        visibility: 'visible',
+        opacity: '1',
+        filter: 'none',
         transform: 'translate3d(0,0,0)',
         transition: `transform ${durationMs}ms cubic-bezier(.18,.82,.2,1)`,
       });
       doc.body.appendChild(clone);
-      source.style.visibility = 'hidden';
-      return { clone, source, dx: to.left - from.left, dy: to.top - from.top };
+      return { clone, dx: to.left - from.left, dy: to.top - from.top };
     });
 
     // Wait two frames before applying the transform. That gives the browser a
@@ -1261,10 +1264,7 @@ export function installMpGame(target = window) {
 
     return new Promise(resolve => {
       target.setTimeout?.(() => {
-        clones.forEach(({ clone, source }) => {
-          clone.remove();
-          source.style.visibility = '';
-        });
+        clones.forEach(({ clone }) => { clone.remove(); });
         resolve(true);
       }, durationMs + 80);
     });
