@@ -1215,13 +1215,29 @@ export function installMpGame(target = window) {
   }
 
   function makeSurgeonSwapPlaceholder(source) {
-    const placeholder = source.cloneNode(false);
-    placeholder.className = source.className;
+    const placeholder = source.cloneNode(true);
     placeholder.removeAttribute('data-uid');
     placeholder.classList.add('mp-surgeon-swap-placeholder');
-    placeholder.style.setProperty('visibility', 'hidden', 'important');
     placeholder.style.setProperty('pointer-events', 'none', 'important');
+    placeholder.style.setProperty('opacity', '1', 'important');
+    placeholder.style.setProperty('visibility', 'visible', 'important');
     return placeholder;
+  }
+
+  function surgeonSwapOverlay() {
+    let overlay = doc.getElementById('mpSurgeonSwapOverlay');
+    if (!overlay) {
+      overlay = doc.createElement('div');
+      overlay.id = 'mpSurgeonSwapOverlay';
+      doc.body.appendChild(overlay);
+    }
+    const set = (name, value) => overlay.style.setProperty(name, value, 'important');
+    set('position', 'fixed');
+    set('inset', '0');
+    set('z-index', '2147483000');
+    set('pointer-events', 'none');
+    set('overflow', 'visible');
+    return overlay;
   }
 
   function liftSurgeonSwapCard(cardEl, rect) {
@@ -1244,14 +1260,14 @@ export function installMpGame(target = window) {
   }
 
   function animateSurgeonSwap(slotIndex, cardUid) {
-    if (prefersReducedMotion()) return Promise.resolve(false);
+    if (prefersReducedMotion()) return Promise.resolve({ animated: false, cleanup: null });
     const spreadCardEl = doc.querySelector(`#spread .slot:nth-child(${slotIndex + 1}) > .card[data-uid]`);
     const handCardEl = doc.querySelector(`#hand > .card[data-uid="${cardUid}"]`);
-    if (!spreadCardEl || !handCardEl || typeof spreadCardEl.animate !== 'function' || typeof handCardEl.animate !== 'function') return Promise.resolve(false);
+    if (!spreadCardEl || !handCardEl || typeof spreadCardEl.animate !== 'function' || typeof handCardEl.animate !== 'function') return Promise.resolve({ animated: false, cleanup: null });
 
     const spreadRect = spreadCardEl.getBoundingClientRect();
     const handRect = handCardEl.getBoundingClientRect();
-    if (!spreadRect.width || !spreadRect.height || !handRect.width || !handRect.height) return Promise.resolve(false);
+    if (!spreadRect.width || !spreadRect.height || !handRect.width || !handRect.height) return Promise.resolve({ animated: false, cleanup: null });
 
     const spreadPlaceholder = makeSurgeonSwapPlaceholder(spreadCardEl);
     const handPlaceholder = makeSurgeonSwapPlaceholder(handCardEl);
@@ -1260,8 +1276,9 @@ export function installMpGame(target = window) {
     spreadParent?.insertBefore(spreadPlaceholder, spreadCardEl);
     handParent?.insertBefore(handPlaceholder, handCardEl);
 
-    doc.body.appendChild(spreadCardEl);
-    doc.body.appendChild(handCardEl);
+    const overlay = surgeonSwapOverlay();
+    overlay.appendChild(spreadCardEl);
+    overlay.appendChild(handCardEl);
     liftSurgeonSwapCard(spreadCardEl, spreadRect);
     liftSurgeonSwapCard(handCardEl, handRect);
 
@@ -1276,33 +1293,34 @@ export function installMpGame(target = window) {
       { transform: `translate3d(${spreadRect.left - handRect.left}px, ${spreadRect.top - handRect.top}px, 0)` },
     ], options);
 
+    const cleanup = () => {
+      spreadAnim.cancel?.();
+      handAnim.cancel?.();
+      spreadCardEl.remove();
+      handCardEl.remove();
+      spreadPlaceholder.remove();
+      handPlaceholder.remove();
+      if (overlay && !overlay.childElementCount) overlay.remove();
+    };
+
     return Promise.allSettled([spreadAnim.finished, handAnim.finished])
-      .then(() => true)
-      .finally(() => {
-        spreadAnim.cancel?.();
-        handAnim.cancel?.();
-        spreadCardEl.remove();
-        handCardEl.remove();
-        spreadPlaceholder.remove();
-        handPlaceholder.remove();
-        // If the swap is cancelled before submission, render() rebuilds from
-        // state. If it succeeds, submitAction() immediately rebuilds from the
-        // optimistic/canonical state instead.
-      });
+      .then(() => ({ animated: true, cleanup }));
   }
 
   async function dispatchSwap(slotIndex, cardUid) {
     if (!canDispatchSwap(slotIndex, cardUid) || _abilityResolving) return;
     _abilityResolving = true;
     _personaSwapRequested = false;
-    const animated = await animateSurgeonSwap(slotIndex, cardUid);
+    const result = await animateSurgeonSwap(slotIndex, cardUid);
     if (!_state || !canDispatchSwap(slotIndex, cardUid)) {
+      result?.cleanup?.();
       _abilityResolving = false;
       render();
       return;
     }
     submitAction({ type: MP_ACTIONS.MP_SWAP_SPREAD, slotIndex, cardUid });
-    if (!animated) _abilityResolving = false;
+    result?.cleanup?.();
+    if (!result?.animated) _abilityResolving = false;
   }
   function handleInvokeTarget(playerIdx, slotIdx) {
     if (_invokeCard === null) return;
