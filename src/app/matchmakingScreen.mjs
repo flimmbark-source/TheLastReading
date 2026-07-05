@@ -1,9 +1,9 @@
 import { AblyRoomPeer } from './ablyRoomPeer.mjs';
 import { randomSeed } from '../multiplayer/mpRng.mjs';
 import { MP_ACTIONS } from '../multiplayer/mpActions.mjs';
-import { mpReducer, applyImmediateAction, MP_SHUFFLE_MODES } from '../multiplayer/mpReducer.mjs';
-import { MP_PHASES } from '../multiplayer/mpState.mjs';
-import { hasSubmittedAction, emptySlots } from '../multiplayer/mpSelectors.mjs';
+import { mpReducer, applyImmediateAction, MP_SHUFFLE_MODES } from '../multiplayer/mpReducer.mjs?v=persona-bonus-fix-1';
+import { MP_PHASES } from '../multiplayer/mpState.mjs?v=persona-bonus-fix-1';
+import { hasSubmittedAction, emptySlots } from '../multiplayer/mpSelectors.mjs?v=persona-bonus-fix-1';
 import { MP_ABILITY_TYPES } from '../multiplayer/interactionCards.mjs';
 import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
 import { computeScore } from '../systems/scoring.mjs';

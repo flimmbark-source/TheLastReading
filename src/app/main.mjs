@@ -79,8 +79,8 @@ function installMultiplayerFeatureModules(target = window) {
   if (!target || target.__tlrMultiplayerFeatureModulesPromise) return target?.__tlrMultiplayerFeatureModulesPromise;
   target.__tlrMultiplayerFeatureModulesPromise = Promise.all([
     import('./loadoutScreen.mjs'),
-    import('./matchmakingScreen.mjs'),
-    import('./mpGameHost.mjs'),
+    import('./matchmakingScreen.mjs?v=persona-bonus-fix-1'),
+    import('./mpGameHost.mjs?v=persona-bonus-fix-1'),
     import('./mpCpuSafety.mjs'),
     import('./mpAbilitySurfaceCleanup.mjs'),
     import('./mpScoreGhostParity.mjs'),

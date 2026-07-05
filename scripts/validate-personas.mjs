@@ -22,6 +22,16 @@ function initMatch(opts = {}) {
   return mpReducer(state, { type: MP_ACTIONS.MP_INIT, scoreTarget: opts.scoreTarget ?? SCORE_TARGETS.QUICK, personas: opts.personas ?? [null, null] });
 }
 
+// The real game (src/app/mpGame.mjs) never dispatches MP_PLACE_CARD/
+// MP_INVOKE_ABILITY/MP_SWAP_SPREAD directly — every action goes through
+// MP_SUBMIT_ACTION, which queues per-player and only resolves once both
+// players have locked in. Surgeon's free swap only works if a player can
+// submit a second (real) action before the opponent acts, so tests that
+// exercise it must dispatch this way too.
+function submit(state, playerIndex, action) {
+  return mpReducer(state, { type: MP_ACTIONS.MP_SUBMIT_ACTION, playerIndex, action: { ...action, playerIndex } });
+}
+
 function updatePlayerForTest(state, index, patch) {
   const players = state.players.map((p, i) => i === index ? { ...p, ...patch } : p);
   return { ...state, players };
@@ -88,59 +98,97 @@ function putBanishInHandFromDeck(state, playerIndex) {
 }
 
 // -----------------------------------------------------------------------
-// The Gambit — bonus place after invoke
+// The Gambit — Discard a card, Draw cards equal to its Value (points),
+// dispatched the way the real game does (MP_SUBMIT_ACTION), via a
+// dedicated MP_DISCARD_DRAW action. Once per round; behaves like a normal
+// turn-ending action (unlike Surgeon's free swap).
 // -----------------------------------------------------------------------
 {
   let s = initMatch({ personas: ['gambit', null] });
-  assert(s.players[0].bonusActionAvailable === true, 'Gambit: bonusActionAvailable starts true');
+  assert(s.players[0].discardDrawAvailable === true, 'Gambit: discardDrawAvailable starts true');
+  assert(sel.canDiscardDraw(s, 0), 'selector: canDiscardDraw is true at match start');
 
-  // Find any card with a DRAW ability in P0 hand
-  const drawCard = s.players[0].hand.find(c => c.ability && c.ability.startsWith('DRAW'));
-  if (drawCard) {
-    s = mpReducer(s, { type: MP_ACTIONS.MP_INVOKE_ABILITY, playerIndex: 0, cardUid: drawCard.uid });
-    assert(s.error === null, 'Gambit: invoke succeeds');
-    assert(s.activePlayerIndex === 0, 'Gambit: turn does NOT pass after invoke (bonus action)');
-    assert(s.players[0].bonusActionAvailable === false, 'Gambit: bonus consumed');
+  const startingHandSize = s.players[0].hand.length;
+  const card = s.players[0].hand[0];
+  s = submit(s, 0, { type: MP_ACTIONS.MP_DISCARD_DRAW, cardUid: card.uid });
+  assert(s.error === null, 'Gambit: Discard-Draw submits without error');
+  assert(!sel.isPlayerTurn(s, 0), 'Gambit: Discard-Draw locks the exchange like a normal action');
 
-    // Now place a card — turn SHOULD pass
-    const emptySlot = sel.emptySlots(s, 0)[0];
-    const cardToPlace = s.players[0].hand.find(c => c.type !== 'interaction');
-    if (cardToPlace && emptySlot !== undefined) {
-      s = mpReducer(s, { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex: 0, cardUid: cardToPlace.uid, slotIndex: emptySlot });
-      assert(sel.isPlayerTurn(s, 1), 'Gambit: turn passes after bonus place');
-    }
-  } else {
-    passed += 4; // no DRAW card in this random hand, skip
-  }
+  // Nothing has actually landed yet — the opponent hasn't acted this exchange.
+  assert(s.players[0].hand.some(c => c.uid === card.uid), 'Gambit: discarded card stays in hand until the opponent also acts');
+  assert(s.players[0].hand.length === startingHandSize, 'Gambit: hand size unchanged until resolution');
+  assert(s.players[0].discardDrawAvailable === true, 'Gambit: discardDrawAvailable canonically unchanged until resolution');
+
+  // A second submission this exchange (already locked) is rejected.
+  const otherCard = s.players[0].hand.find(c => c.uid !== card.uid);
+  const secondAttempt = submit(s, 0, { type: MP_ACTIONS.MP_DISCARD_DRAW, cardUid: otherCard.uid });
+  assert(secondAttempt.error !== null, 'Gambit: a second submission in the same exchange is rejected');
+
+  // Opponent acts — NOW the exchange resolves.
+  const oppSlot = sel.emptySlots(s, 1)[0];
+  s = submit(s, 1, { type: MP_ACTIONS.MP_PLACE_CARD, cardUid: s.players[1].hand[0].uid, slotIndex: oppSlot });
+  assert(s.error === null, 'Gambit: opponent action resolves the exchange without error');
+  assert(!s.players[0].hand.some(c => c.uid === card.uid), 'Gambit: discarded card left the hand once resolved');
+  assert(s.players[0].discard.some(c => c.uid === card.uid), 'Gambit: discarded card landed in the discard pile');
+  assert(s.players[0].hand.length === startingHandSize - 1 + card.points, `Gambit: hand grew by its Value (${card.points}) net of the discard`);
+  assert(s.players[0].discardDrawAvailable === false, 'Gambit: Discard-Draw consumed once resolved');
+  assert(!sel.canDiscardDraw(s, 0), 'selector: canDiscardDraw is false once consumed');
+
+  // A new exchange, same round: a second Discard-Draw attempt should fail.
+  const s2 = submit(s, 0, { type: MP_ACTIONS.MP_DISCARD_DRAW, cardUid: s.players[0].hand[0].uid });
+  assert(s2.error !== null, 'Gambit: Discard-Draw is rejected once already used this round');
 }
 
 // -----------------------------------------------------------------------
-// The Surgeon — free spread/hand swap once per round
+// The Surgeon — free spread/hand swap once per round, dispatched the way
+// the real game does (MP_SUBMIT_ACTION). Regression coverage for the same
+// bug class as Gambit above: the swap must not lock the player out of also
+// submitting their real action (Place/Discard/Purge) in the same exchange.
 // -----------------------------------------------------------------------
 {
   let s = initMatch({ personas: ['surgeon', null] });
   assert(s.players[0].swapAvailable === true, 'Surgeon: swapAvailable starts true');
 
-  const card0 = s.players[0].hand[0];
-  s = mpReducer(s, { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex: 0, cardUid: card0.uid, slotIndex: 0 });
-  // P1's turn now
-  s = mpReducer(s, { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex: 1, cardUid: s.players[1].hand[0].uid, slotIndex: 0 });
-  // Back to P0
+  // Round 1: both players place normally so P0 has a spread card to swap out.
+  s = submit(s, 0, { type: MP_ACTIONS.MP_PLACE_CARD, cardUid: s.players[0].hand[0].uid, slotIndex: 0 });
+  s = submit(s, 1, { type: MP_ACTIONS.MP_PLACE_CARD, cardUid: s.players[1].hand[0].uid, slotIndex: 0 });
+  assert(s.players[0].spread[0] !== null, 'test setup: P0 has a spread card to swap');
 
+  // New exchange: P0 submits the free swap first.
   const spreadCard = s.players[0].spread[0];
   const handCard = s.players[0].hand[0];
-  s = mpReducer(s, { type: MP_ACTIONS.MP_SWAP_SPREAD, playerIndex: 0, slotIndex: 0, cardUid: handCard.uid });
-  assert(s.error === null, 'Surgeon: spread/hand swap succeeds');
-  assert(s.players[0].spread[0]?.uid === handCard.uid, 'Surgeon: spread slot now has former hand card');
-  assert(s.players[0].hand.some(c => c.uid === spreadCard.uid), 'Surgeon: hand now contains former spread card');
-  assert(!s.players[0].hand.some(c => c.uid === handCard.uid), 'Surgeon: hand no longer contains swapped-in hand card');
-  assert(s.players[0].swapAvailable === false, 'Surgeon: swap consumed');
-  assert(s.activePlayerIndex === 0, 'Surgeon: turn did NOT advance (free action)');
+  s = submit(s, 0, { type: MP_ACTIONS.MP_SWAP_SPREAD, slotIndex: 0, cardUid: handCard.uid });
+  assert(s.error === null, 'Surgeon: swap submits without error');
+  assert(sel.isPlayerTurn(s, 0), 'Surgeon: still my turn after swap (free action, not locked)');
+  assert(s.players[0].swapAvailable === true, 'Surgeon: swapAvailable canonically unchanged until resolution');
+  assert(!sel.canSwapSpread(s, 0), 'Surgeon: canSwapSpread accounts for the swap already queued this exchange');
 
-  // Second swap attempt should fail
+  // The swap alone doesn't end the turn — P0 still submits their real action.
+  const emptySlot = sel.emptySlots(s, 0)[0];
+  const cardToPlace = s.players[0].hand.find(c => c.uid !== handCard.uid);
+  assert(cardToPlace && emptySlot !== undefined, 'test setup: a card and empty slot are available for the real action');
+  s = submit(s, 0, { type: MP_ACTIONS.MP_PLACE_CARD, cardUid: cardToPlace.uid, slotIndex: emptySlot });
+  assert(s.error === null, 'Surgeon: real action after the swap submits without error');
+  assert(!sel.isPlayerTurn(s, 0), 'Surgeon: turn locks once the real action is submitted');
+
+  // Nothing has actually landed yet — the opponent hasn't acted this exchange.
+  assert(s.players[0].spread[0]?.uid === spreadCard.uid, 'Surgeon: swap stays queued until the opponent also acts');
+  assert(s.players[0].spread[emptySlot] === null, 'Surgeon: real action stays queued until the opponent also acts');
+
+  // Opponent acts — NOW the whole exchange (swap + real action) resolves.
+  const oppSlot = sel.emptySlots(s, 1)[0];
+  s = submit(s, 1, { type: MP_ACTIONS.MP_PLACE_CARD, cardUid: s.players[1].hand[0].uid, slotIndex: oppSlot });
+  assert(s.error === null, 'Surgeon: opponent action resolves the exchange without error');
+  assert(s.players[0].spread[0]?.uid === handCard.uid, 'Surgeon: spread slot now has former hand card once resolved');
+  assert(s.players[0].hand.some(c => c.uid === spreadCard.uid), 'Surgeon: hand now contains former spread card once resolved');
+  assert(!s.players[0].hand.some(c => c.uid === handCard.uid), 'Surgeon: hand no longer contains swapped-in hand card');
+  assert(s.players[0].spread[emptySlot]?.uid === cardToPlace.uid, 'Surgeon: the real action also landed once resolved');
+  assert(s.players[0].swapAvailable === false, 'Surgeon: swap consumed once resolved');
+
+  // A new exchange, same round: a second swap attempt should fail.
   const nextHandCard = s.players[0].hand[0];
-  const s2 = mpReducer(s, { type: MP_ACTIONS.MP_SWAP_SPREAD, playerIndex: 0, slotIndex: 0, cardUid: nextHandCard.uid });
-  assert(s2.error !== null, 'Surgeon: second swap is rejected');
+  const s2 = submit(s, 0, { type: MP_ACTIONS.MP_SWAP_SPREAD, slotIndex: 0, cardUid: nextHandCard.uid });
+  assert(s2.error !== null, 'Surgeon: second swap this round is rejected');
 }
 
 // -----------------------------------------------------------------------

@@ -8,7 +8,7 @@ import {
   applyGameStartPassives,
   applyRoundStartPassives,
   handSizeForPersona,
-} from './mpState.mjs';
+} from './mpState.mjs?v=persona-bonus-fix-1';
 import { computeScore } from '../systems/scoring.mjs';
 import { shuffleDeck } from '../systems/deck.mjs';
 import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
@@ -94,10 +94,32 @@ function isActionPhase(state) {
   return state.phase === MP_PHASES.PLACEMENT;
 }
 
+function playerQueue(state, playerIndex) {
+  const queue = state.pendingActions?.[playerIndex];
+  return Array.isArray(queue) ? queue : [];
+}
+
+// Whether an action ends the acting player's turn for this exchange.
+// Surgeon's swap is the one free/preparatory action that never locks — it
+// doesn't cost a discard and doesn't stand in for the player's real action,
+// so they still submit Place/Discard/Invoke/Purge afterward. Everything else
+// (including Gambit's Discard-Draw) is a normal turn-ending action.
+function actionLocksExchange(action) {
+  return action.type !== MP_ACTIONS.MP_SWAP_SPREAD;
+}
+
+// Whether a player has locked in (submitted a turn-ending action this
+// exchange, so must wait on the opponent) or can still submit more — a
+// queued free action (Surgeon's swap) alone doesn't lock.
+export function exchangeStatus(state, playerIndex) {
+  const queue = playerQueue(state, playerIndex);
+  return { locked: queue.some(actionLocksExchange) };
+}
+
 function canSubmit(state, playerIndex) {
   if (!isActionPhase(state)) return 'Cannot act in phase: ' + state.phase;
   if (playerIndex !== 0 && playerIndex !== 1) return 'Invalid player.';
-  if (state.pendingActions?.[playerIndex]) return 'Action already submitted.';
+  if (exchangeStatus(state, playerIndex).locked) return 'Action already submitted.';
   return null;
 }
 
@@ -109,6 +131,7 @@ function sanitizeSubmittedAction(playerIndex, action) {
     MP_ACTIONS.MP_DISCARD_CARD,
     MP_ACTIONS.MP_PURGE_CARDS,
     MP_ACTIONS.MP_SWAP_SPREAD,
+    MP_ACTIONS.MP_DISCARD_DRAW,
   ]);
   if (!allowed.has(action.type)) return null;
   return { ...action, playerIndex };
@@ -343,10 +366,7 @@ export function applyImmediateAction(state, action) {
       const result = applyInvoke(state, playerIndex, cardUid, target, abilityChoice);
       if (result.error) return err(state, result.error);
 
-      let next = result.state ?? updatePlayer(state, playerIndex, result.player);
-      const actingPlayer = next.players[playerIndex];
-      if (actingPlayer.bonusActionAvailable) next = updatePlayer(next, playerIndex, { bonusActionAvailable: false });
-      return next;
+      return result.state ?? updatePlayer(state, playerIndex, result.player);
     }
 
     case MP_ACTIONS.MP_DISCARD_CARD: {
@@ -400,16 +420,34 @@ export function applyImmediateAction(state, action) {
       return updatePlayer(state, playerIndex, { hand, spread, swapAvailable: false });
     }
 
+    case MP_ACTIONS.MP_DISCARD_DRAW: {
+      const { playerIndex, cardUid } = action;
+      if (!isActionPhase(state)) return err(state, 'Cannot act in phase: ' + state.phase);
+
+      const player = state.players[playerIndex];
+      if (!player.discardDrawAvailable) return err(state, 'No Discard-Draw available. Gambit persona required once per round.');
+      const cardIndex = player.hand.findIndex(c => c.uid === cardUid);
+      if (cardIndex < 0) return err(state, 'Card not in hand.');
+
+      const card = player.hand[cardIndex];
+      const hand = player.hand.filter((_, i) => i !== cardIndex);
+      const discard = [...player.discard, card];
+      const discarded = { ...player, hand, discard, discardDrawAvailable: false };
+      return updatePlayer(state, playerIndex, drawCards(discarded, Math.max(0, Number(card.points) || 0)));
+    }
+
     default:
       return state;
   }
 }
 
 function resolvePendingActions(state) {
-  const actions = state.pendingActions ?? [null, null];
-  let next = { ...state, pendingActions: [null, null] };
-  for (const action of actions) {
-    if (action) next = applyImmediateAction(next, action);
+  const queues = state.pendingActions ?? [[], []];
+  let next = { ...state, pendingActions: [[], []] };
+  for (const queue of queues) {
+    for (const action of (Array.isArray(queue) ? queue : [])) {
+      next = applyImmediateAction(next, action);
+    }
   }
   if (next.error) return next;
   if (next.players.every(p => spreadFull(p.spread))) return { ...next, phase: MP_PHASES.SCORING };
@@ -443,7 +481,7 @@ function reduceMatch(state, action) {
         ...createMatchState({ scoreTarget: action.scoreTarget ?? state.scoreTarget, rng, personas }),
         phase: MP_PHASES.PLACEMENT,
         round: 1,
-        pendingActions: [null, null],
+        pendingActions: [[], []],
         shuffleMode: normalizeShuffleMode(action.shuffleMode),
         shuffleSeed: action.seed != null ? (Number(action.seed) >>> 0) : randomStateSeed(),
       };
@@ -469,14 +507,25 @@ function reduceMatch(state, action) {
       const submitted = sanitizeSubmittedAction(playerIndex, action.action);
       if (!submitted) return err(state, 'Invalid submitted action.');
 
-      const pendingActions = [...(state.pendingActions ?? [null, null])];
-      pendingActions[playerIndex] = submitted;
+      // Validate the new action against a preview of this player's own queue
+      // folded onto the real state (via the same applyImmediateAction the
+      // canonical resolution will use), so an illegal follow-up — e.g.
+      // placing in a slot already queued, or swapping twice — is rejected now
+      // instead of surfacing as a resolution-time error later.
+      const existingQueue = playerQueue(state, playerIndex);
+      const preview = existingQueue.reduce((acc, queued) => applyImmediateAction(acc, queued), state);
+      const previewResult = applyImmediateAction(preview, submitted);
+      if (previewResult.error) return err(state, previewResult.error);
+
+      const pendingActions = (state.pendingActions ?? [[], []]).map((queue, i) =>
+        i === playerIndex ? [...playerQueue(state, i), submitted] : queue);
       const next = { ...state, pendingActions };
       // A player whose spread is already full has nothing left to place, so treat
-      // them as having auto-passed: resolve once every player has either
-      // submitted or filled their spread. Otherwise a full spread (e.g. with no
-      // discards left to spend) would stall the cycle and the set would never end.
-      const ready = next.players.every((p, i) => pendingActions[i] || spreadFull(p.spread));
+      // them as having auto-passed: resolve once every player has either locked
+      // in (submitted a turn-ending action) or filled their spread. Otherwise a
+      // full spread (e.g. with no discards left to spend) would stall the cycle
+      // and the set would never end.
+      const ready = next.players.every((p, i) => exchangeStatus(next, i).locked || spreadFull(p.spread));
       return ready ? resolvePendingActions(next) : next;
     }
 
@@ -484,7 +533,8 @@ function reduceMatch(state, action) {
     case MP_ACTIONS.MP_INVOKE_ABILITY:
     case MP_ACTIONS.MP_DISCARD_CARD:
     case MP_ACTIONS.MP_PURGE_CARDS:
-    case MP_ACTIONS.MP_SWAP_SPREAD: {
+    case MP_ACTIONS.MP_SWAP_SPREAD:
+    case MP_ACTIONS.MP_DISCARD_DRAW: {
       const next = applyImmediateAction(state, action);
       if (next.error) return next;
       if (next.players.every(p => spreadFull(p.spread))) return { ...next, phase: MP_PHASES.SCORING };
@@ -503,7 +553,7 @@ function reduceMatch(state, action) {
         ...state.roundHistory,
         { scores: [p0Score, p1Score], totals: [next.players[0].totalScore, next.players[1].totalScore] },
       ];
-      next = { ...next, roundHistory: history, pendingActions: [null, null] };
+      next = { ...next, roundHistory: history, pendingActions: [[], []] };
 
       const winner = resolveVictory(next);
       if (winner !== null) return { ...next, phase: MP_PHASES.COMPLETE, winner };
@@ -528,7 +578,7 @@ function reduceMatch(state, action) {
           phase: MP_PHASES.PLACEMENT,
           round: nextRound,
           activePlayerIndex: 0,
-          pendingActions: [null, null],
+          pendingActions: [[], []],
           nextInjectedUid: uid,
         };
       }
@@ -552,7 +602,7 @@ function reduceMatch(state, action) {
           anchoredSlotIndex: null,
           playedSlotHistory: [],
           silencedCardUids: [],
-          bonusActionAvailable: false,
+          discardDrawAvailable: false,
           swapAvailable: false,
         };
         const targetHandSize = handSizeForPersona(p.persona);
@@ -568,7 +618,7 @@ function reduceMatch(state, action) {
         phase: MP_PHASES.PLACEMENT,
         round: state.round + 1,
         activePlayerIndex: 0,
-        pendingActions: [null, null],
+        pendingActions: [[], []],
         nextInjectedUid: uid,
       };
     }

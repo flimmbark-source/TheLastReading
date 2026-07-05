@@ -33,6 +33,11 @@ export const MP_ACTIONS = Object.freeze({
   // { type, playerIndex, slotIndex, cardUid }
   MP_SWAP_SPREAD: 'MP_SWAP_SPREAD',
 
+  // Gambit persona: discard a card, then draw cards equal to its Value
+  // (points). Counts as the player's action (once per round).
+  // { type, playerIndex, cardUid }
+  MP_DISCARD_DRAW: 'MP_DISCARD_DRAW',
+
   // Trigger scoring after the simultaneous action cycle completes
   // { type }
   MP_SCORE_ROUND: 'MP_SCORE_ROUND',
