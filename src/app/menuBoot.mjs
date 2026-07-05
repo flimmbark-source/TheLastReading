@@ -4,8 +4,6 @@ import { installMarketAudioRotation } from './marketAudioRotation.mjs';
 import { installActionDropGestures } from '../ui/gestureActionDrops.mjs';
 import { installCardDetailGestures } from '../ui/cardDetailGestures.mjs?v=double-tap-1';
 
-const GAME_MODULE = './main.mjs?v=deselect-raf-1';
-const DEFERRED_ASSETS_MODULE = './deferredAssets.mjs?v=lazy-boot-1';
 const CURTAIN_FADE_MS = 300;
 
 let gamePromise = null;
@@ -151,7 +149,7 @@ function clearBusy() {
 function scheduleDeferredAssets() {
   if (deferredAssetsPromise) return;
   const start = () => {
-    deferredAssetsPromise = import(DEFERRED_ASSETS_MODULE).catch(err => {
+    deferredAssetsPromise = import('./deferredAssets.mjs?v=lazy-boot-1').catch(err => {
       console.warn('The Last Reading deferred asset load did not complete.', err);
       deferredAssetsPromise = null;
     });
@@ -165,7 +163,7 @@ function scheduleDeferredAssets() {
 
 function loadGame() {
   if (!gamePromise) {
-    gamePromise = import(GAME_MODULE).then(mod => {
+    gamePromise = import('./main.mjs?v=deselect-raf-1').then(mod => {
       scheduleDeferredAssets();
       return mod;
     });

@@ -14,11 +14,16 @@ document.addEventListener('pointerdown', () => {
 }, true);
 
 
+// Plain page-relative paths (not import.meta.url-based): this module is
+// bundled by scripts/build-bundle.mjs, which relocates the code to a
+// different file, so a path resolved against the module's own URL would
+// point at the wrong place. Every other asset reference in the app already
+// uses page-relative strings for the same reason.
 const FILE_SOUNDS = Object.freeze({
-  purchase: { src: new URL('../../assets/audio/freesound_gamestudio-drop-coin-384921.mp3', import.meta.url).href, gain: 0.38 },
-  pack_pick: { src: new URL('../../assets/audio/gargamel10-magic-basic-game-sound-effect-380301.mp3', import.meta.url).href, gain: 0.32 },
-  pack_open: { src: new URL('../../assets/audio/universfield-magic-spell-03-242245.mp3', import.meta.url).href, gain: 0.8 },
-  store_open: { src: new URL('./floraphonic-ambient-metal-whoosh-2-174462.mp3', import.meta.url).href, gain: 0.3 },
+  purchase: { src: 'assets/audio/freesound_gamestudio-drop-coin-384921.mp3', gain: 0.38 },
+  pack_pick: { src: 'assets/audio/gargamel10-magic-basic-game-sound-effect-380301.mp3', gain: 0.32 },
+  pack_open: { src: 'assets/audio/universfield-magic-spell-03-242245.mp3', gain: 0.8 },
+  store_open: { src: 'src/app/floraphonic-ambient-metal-whoosh-2-174462.mp3', gain: 0.3 },
 });
 
 function _playFileSound(type){
@@ -39,7 +44,7 @@ function _playFileSound(type){
   }
 }
 
-const MELD_SOUND_FILE = new URL('./freesound_community-chinese-fanfare-107737.mp3', import.meta.url).href;
+const MELD_SOUND_FILE = 'src/app/freesound_community-chinese-fanfare-107737.mp3';
 const _meldSoundBufferPromise = (async () => {
   try {
     const response = await fetch(MELD_SOUND_FILE, { cache: 'reload' });

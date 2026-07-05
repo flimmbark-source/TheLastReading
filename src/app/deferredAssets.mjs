@@ -28,8 +28,18 @@ const DETAIL_SHEETS = Object.freeze([
   'assets/sheets/sheet10.webp',
 ]);
 
-const IDLE_DELAY_MS = 1600;
-const SHEET_GAP_MS = 260;
+// This module itself is only imported after the core game bundle has
+// already loaded (see menuBoot.mjs's scheduleDeferredAssets, which waits for
+// an idle callback before even fetching this file), so first paint is long
+// past by the time any of the code below runs -- no need for the large
+// up-front delay that used to duplicate that wait. Table sheets fire with
+// only a minimal stagger so every sheet a hand/spread/market could need is
+// warm well before the player finishes their *next* reading; detail sheets
+// stay slow/low-priority since they're only needed if a card is expanded.
+const IDLE_DELAY_MS = 200;
+const TABLE_GAP_MS = 40;
+const DETAIL_START_DELAY_MS = 500;
+const DETAIL_GAP_MS = 260;
 
 function shouldSkipWarmup(target = window) {
   const conn = target.navigator && target.navigator.connection;
@@ -50,9 +60,12 @@ function warmImage(src, target = window) {
 function warmSheets(target = window) {
   if (target.__tlrCardSheetsWarmStarted) return;
   target.__tlrCardSheetsWarmStarted = true;
-  const order = [...TABLE_SHEETS, ...DETAIL_SHEETS];
-  order.forEach((src, index) => {
-    target.setTimeout(() => warmImage(src, target), index * SHEET_GAP_MS);
+  TABLE_SHEETS.forEach((src, index) => {
+    target.setTimeout(() => warmImage(src, target), index * TABLE_GAP_MS);
+  });
+  const detailStart = TABLE_SHEETS.length * TABLE_GAP_MS + DETAIL_START_DELAY_MS;
+  DETAIL_SHEETS.forEach((src, index) => {
+    target.setTimeout(() => warmImage(src, target), detailStart + index * DETAIL_GAP_MS);
   });
 }
 

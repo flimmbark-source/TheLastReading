@@ -39,7 +39,7 @@ jobs:
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: dist
+          path: pages-site
 
   deploy:
     needs: build

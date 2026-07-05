@@ -9,6 +9,12 @@ const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 // of load order. Losing this statement -- or reordering it -- would change
 // which declarations win across the whole app, not just cosmetically.
 const html = read('../game.html');
+// game.html no longer links most stylesheets directly -- scripts/build-bundle.mjs
+// concatenates them into dist/styles-core.css / dist/styles-components.css, and
+// that script's CSS_GROUPS lists are now the source of truth for "is this file
+// loaded by the app". Checks below that used to match against `html` for a
+// specific components/*.css path now match against `buildScript` instead.
+const buildScript = read('../scripts/build-bundle.mjs');
 assert.match(
   html,
   /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
@@ -182,7 +188,7 @@ assert.equal(existsSync(new URL('../src/styles/mpSinglePlayerIsolation.css', imp
 const mpGameChrome = read('../src/styles/components/mpGameChrome.css');
 assert.match(mpGameChrome, /^@layer mpGameChrome \{/, 'mpGameChrome.css should live in its own mpGameChrome layer');
 assert.match(mpGameChrome.trimEnd(), /\}$/, 'mpGameChrome.css should close its layer wrapper');
-assert.match(html, /components\/mpGameChrome\.css/, 'game.html should load the extracted mpGameChrome component stylesheet');
+assert.match(buildScript, /components\/mpGameChrome\.css/, 'build-bundle.mjs should bundle the extracted mpGameChrome component stylesheet');
 assert.doesNotMatch(mpGameChrome, /\.card\.mp-interaction\s*\{/, 'mpGameChrome.css should not own a .card.mp-interaction rule -- it was deleted outright as confirmed-dead code, not relocated here');
 assert.doesNotMatch(mpGameChrome, /\.mp-action-btn\s*\{|\.mp-ov-btn\s*\{/, 'mpGameChrome.css should not own mp-action-btn/mp-ov-btn -- they live in mpCore\'s main block now that market.css moved to classicCore');
 assert.doesNotMatch(read('../src/styles/mpGame.css'), /\.mp-persona|\.mp-ov-box/, 'mpGame.css should no longer own the solo chrome rules moved to mpGameChrome.css');
@@ -404,7 +410,7 @@ assert.match(relicRack.trimEnd(), /\}$/, 'relicRack.css should close its layer w
 const handSwipeZone = read('../src/styles/components/handSwipeZone.css');
 assert.match(handSwipeZone, /^@layer handSwipeZone \{/, 'handSwipeZone.css should live in its own handSwipeZone layer');
 assert.match(handSwipeZone.trimEnd(), /\}$/, 'handSwipeZone.css should close its layer wrapper');
-assert.match(html, /components\/handSwipeZone\.css/, 'game.html should load the consolidated hand swipe-zone component stylesheet');
+assert.match(buildScript, /components\/handSwipeZone\.css/, 'build-bundle.mjs should bundle the consolidated hand swipe-zone component stylesheet');
 assert.doesNotMatch(read('../src/styles/mobile.css'), /\.hand-swipe-zone\{position:fixed/, 'mobile.css should no longer own the swipe-zone base geometry');
 assert.doesNotMatch(read('../src/styles/attic.css'), /#handSwipeZone\.hand-swipe-zone\{height:121px!important/, 'attic.css should no longer own swipe-zone tutorial geometry');
 
@@ -429,7 +435,7 @@ assert.doesNotMatch(read('../src/styles/attic.css'), /#handSwipeZone\.hand-swipe
 const tutTip = read('../src/styles/components/tutTip.css');
 assert.match(tutTip, /^@layer tutTip \{/, 'tutTip.css should live in its own tutTip layer');
 assert.match(tutTip.trimEnd(), /\}$/, 'tutTip.css should close its layer wrapper');
-assert.match(html, /components\/tutTip\.css/, 'game.html should load the extracted tutTip component stylesheet');
+assert.match(buildScript, /components\/tutTip\.css/, 'build-bundle.mjs should bundle the extracted tutTip component stylesheet');
 assert.doesNotMatch(read('../src/styles/market.css'), /#tutTip\{position:fixed/, 'market.css should no longer own the tutTip popover rules');
 
 // invWrap.css / invTab.css: the archive/inventory drawer and its pull-tab,
@@ -451,11 +457,11 @@ assert.doesNotMatch(read('../src/styles/market.css'), /#tutTip\{position:fixed/,
 const invWrap = read('../src/styles/components/invWrap.css');
 assert.match(invWrap, /^@layer invWrap \{/, 'invWrap.css should live in its own invWrap layer');
 assert.match(invWrap.trimEnd(), /\}$/, 'invWrap.css should close its layer wrapper');
-assert.match(html, /components\/invWrap\.css/, 'game.html should load the extracted invWrap component stylesheet');
+assert.match(buildScript, /components\/invWrap\.css/, 'build-bundle.mjs should bundle the extracted invWrap component stylesheet');
 const invTab = read('../src/styles/components/invTab.css');
 assert.match(invTab, /^@layer invTab \{/, 'invTab.css should live in its own invTab layer');
 assert.match(invTab.trimEnd(), /\}$/, 'invTab.css should close its layer wrapper');
-assert.match(html, /components\/invTab\.css/, 'game.html should load the extracted invTab component stylesheet');
+assert.match(buildScript, /components\/invTab\.css/, 'build-bundle.mjs should bundle the extracted invTab component stylesheet');
 assert.doesNotMatch(read('../src/styles/mobile.css'), /#invWrap\{position:fixed/, 'mobile.css should no longer own the invWrap base geometry');
 assert.doesNotMatch(read('../src/styles/mobile.css'), /#invTab\{position:absolute/, 'mobile.css should no longer own the invTab base geometry');
 assert.doesNotMatch(read('../src/styles/attic.css'), /#invWrap,\nbody\.mode-attic #invWrap,/, 'attic.css should no longer own the old multi-line invWrap-only mode-transition block (a single-selector #invWrap{...} line per mode, now that titleWrap.css/atticFade.css split the rest of the once-shared fade rule out, is expected to remain)');
@@ -473,7 +479,7 @@ assert.doesNotMatch(read('../src/styles/attic.css'), /#invWrap,\nbody\.mode-atti
 const titleWrap = read('../src/styles/components/titleWrap.css');
 assert.match(titleWrap, /^@layer titleWrap \{/, 'titleWrap.css should live in its own titleWrap layer');
 assert.match(titleWrap.trimEnd(), /\}$/, 'titleWrap.css should close its layer wrapper');
-assert.match(html, /components\/titleWrap\.css/, 'game.html should load the extracted titleWrap component stylesheet');
+assert.match(buildScript, /components\/titleWrap\.css/, 'build-bundle.mjs should bundle the extracted titleWrap component stylesheet');
 assert.doesNotMatch(read('../src/styles/attic.css'), /#titleWrap|\.score-stack/, 'attic.css should no longer reference #titleWrap or .score-stack anywhere');
 
 // atticFade.css: .spread-wrap/.handDock/#relicRack/.refs-layer's share of
@@ -494,7 +500,7 @@ assert.doesNotMatch(read('../src/styles/attic.css'), /#titleWrap|\.score-stack/,
 const atticFade = read('../src/styles/components/atticFade.css');
 assert.match(atticFade, /^@layer atticFade \{/, 'atticFade.css should live in its own atticFade layer');
 assert.match(atticFade.trimEnd(), /\}$/, 'atticFade.css should close its layer wrapper');
-assert.match(html, /components\/atticFade\.css/, 'game.html should load the extracted atticFade component stylesheet');
+assert.match(buildScript, /components\/atticFade\.css/, 'build-bundle.mjs should bundle the extracted atticFade component stylesheet');
 assert.doesNotMatch(read('../src/styles/attic.css'), /\.spread-wrap|\.handDock|#relicRack|\.refs-layer/, 'attic.css should no longer reference .spread-wrap, .handDock, #relicRack, or .refs-layer anywhere');
 assert.match(read('../src/styles/attic.css'), /#invWrap\{opacity:0;transform:scale\(\.9\)/, 'attic.css should still own the single-selector #invWrap mode-transition rule');
 
