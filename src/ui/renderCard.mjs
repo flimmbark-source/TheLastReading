@@ -23,7 +23,10 @@ function majorNumber(c){
 
 function majorName(c){
   const raw=String(c?.name||'').trim();
-  return raw.replace(/^(?:[IVXLCDM]+|\d+)\s*(?:[·\-–—:]\s*)?/i,'').trim()||raw;
+  // The numeral must be followed by whitespace or a separator, otherwise
+  // names starting with roman-numeral letters get eaten (Magician, Chariot,
+  // Death, Lovers, Moon...).
+  return raw.replace(/^(?:[IVXLCDM]+|\d+)(?:\s+|\s*[·\-–—:]\s*)/i,'').trim()||raw;
 }
 
 export function title(c){

@@ -5,6 +5,20 @@
 
 export function renderAtticObals(count){const h=document.getElementById('obalsHud');if(!h)return;h.innerHTML='<span class="attic-obal-label">Obals</span><b class="attic-obal-count">'+count+'</b>';}
 
+export function renderAtticDeck({onOpen}){
+  const root=document.getElementById('atticObjects');if(!root)return;
+  let el=root.querySelector('.attic-deck');
+  if(!el){
+    el=document.createElement('div');
+    el.className='attic-deck';
+    el.setAttribute('role','button');
+    el.setAttribute('aria-label','Look through the deck of cards');
+    for(let i=0;i<3;i++){const c=document.createElement('div');c.className='attic-deck-card';el.appendChild(c);}
+    root.appendChild(el);
+  }
+  el.onclick=function(e){e.stopPropagation();onOpen();};
+}
+
 export function renderAtticObjects({objects,searchedMap,foundItemIds,onRummage}){
   const root=document.getElementById('atticObjects');if(!root)return;
   Object.keys(objects).forEach(function(k){
