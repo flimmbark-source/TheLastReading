@@ -450,7 +450,7 @@ export function installMpGame(target = window) {
     // the only (or first) thing queued.
     const action = Array.isArray(queue) ? queue.find(a => a?.type === MP_ACTIONS.MP_PLACE_CARD) : null;
     if (!s || !action) return null;
-    const player = s.players?.[my];
+    const player = _optimisticSelf || s.players?.[my];
     const slotIndex = Number(action.slotIndex);
     if (!player || !Number.isInteger(slotIndex) || slotIndex < 0 || slotIndex >= (player.spread?.length || 0)) return null;
     if (player.spread?.[slotIndex]) return null;
@@ -514,8 +514,10 @@ export function installMpGame(target = window) {
     const handCard = doc.querySelector(`body.mp-game-active #hand .card[data-uid="${pending.cardUid}"]`);
     const slot = doc.querySelectorAll('body.mp-game-active #spread .slot')[pending.slotIndex];
     if (!slot) return;
+    const previewCard = buildPendingSpreadCard(pending.card);
+    if (!previewCard) return;
     if (handCard) handCard.classList.add('mp-local-pending-hidden');
-    slot.replaceChildren(buildPendingSpreadCard(pending.card));
+    slot.replaceChildren(previewCard);
     slot.classList.remove('empty', 'target');
     slot.classList.add('filled', 'mp-local-pending-slot');
     slot.style.setProperty('opacity', '1', 'important');
@@ -1175,8 +1177,13 @@ export function installMpGame(target = window) {
     // simultaneous cycle to resolve. These actions only touch my own piles, and
     // applyImmediateAction is deterministic, so this snapshot matches what the
     // canonical resolution will produce. Cleared once _state catches up.
-    if (action.type === MP_ACTIONS.MP_INVOKE_ABILITY || action.type === MP_ACTIONS.MP_DISCARD_DRAW || action.type === MP_ACTIONS.MP_SWAP_SPREAD) {
-      const resolved = applyImmediateAction(_state, fullAction);
+    if (action.type === MP_ACTIONS.MP_INVOKE_ABILITY
+      || action.type === MP_ACTIONS.MP_DISCARD_DRAW
+      || action.type === MP_ACTIONS.MP_SWAP_SPREAD
+      || action.type === MP_ACTIONS.MP_PLACE_CARD) {
+      const existingQueue = Array.isArray(_state.pendingActions?.[_myIndex]) ? _state.pendingActions[_myIndex] : [];
+      const previewBase = existingQueue.reduce((acc, queued) => acc?.error ? acc : applyImmediateAction(acc, queued), _state);
+      const resolved = previewBase?.error ? previewBase : applyImmediateAction(previewBase, fullAction);
       if (resolved && !resolved.error) _optimisticSelf = resolved.players[_myIndex];
     }
     // Mark cards being removed so selfHandView hides them immediately, preventing
