@@ -671,17 +671,19 @@ export function installMpGame(target = window) {
       // discards and draws off of.
       const personaAction = currentPersonaAbilityAction(s, my);
       const needsSelection = personaAction?.type === 'persona-discard-draw';
-      const isVisible = !!personaAction && (!needsSelection || !!selectedCard)
+      const isEnabled = !!personaAction && (!needsSelection || !!selectedCard)
         && _purgeSelect === null && _invokeCard === null && _swapFirst === null && !_abilityResolving;
       const action = personaAction?.type || '';
       const label = personaAction?.title || 'Persona ability unavailable';
-      abilityBtn.disabled = !isVisible;
+      abilityBtn.disabled = !isEnabled;
       abilityBtn.textContent = 'Ability';
       abilityBtn.title = label;
       abilityBtn.setAttribute('aria-label', label);
       abilityBtn.dataset.mpAbilityAction = action;
-      abilityBtn.classList.toggle('mp-visible', isVisible);
-      abilityBtn.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+      abilityBtn.classList.toggle('mp-visible', isEnabled);
+      // Keep the persona Ability button in the action row even when disabled so
+      // Discard/Purge/Ability do not shift or disappear after a placement.
+      abilityBtn.setAttribute('aria-hidden', 'false');
     }
   }
 
@@ -1854,7 +1856,9 @@ function installMpGameStyle(doc) {
       text-transform: none !important;
     }
     body.mp-game-active #mpAbilityBtn:not(.mp-visible) {
-      display: none !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
     body.mp-game-active #mpAbilityBtn.mp-visible {
       display: inline-flex !important;
