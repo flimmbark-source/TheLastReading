@@ -35,4 +35,12 @@ body.mode-table-return #invWrap{
   z-index:150!important;
 }
 body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:translateY(calc(-1 * var(--inv-h)))!important;pointer-events:none!important}
+/* Deck-of-cards button in the desk's top-right corner (see archives.mjs).
+   z-index 40 keeps it above idle desk items but under one being dragged (50). */
+.inv-deck-btn{position:absolute;top:10px;right:12px;width:38px;height:54px;z-index:40;background:transparent;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.inv-deck-btn-card{position:absolute;inset:0;border-radius:10%/7%;background:linear-gradient(160deg,#4a2f1b,#241207 62%,#160a04);border:1px solid rgba(214,166,92,.8);box-shadow:0 3px 8px rgba(0,0,0,.55),inset 0 0 0 2px rgba(20,10,4,.6);pointer-events:none}
+.inv-deck-btn-card:nth-child(1){transform:translate(-8%,7%) rotate(-6deg)}
+.inv-deck-btn-card:nth-child(2){transform:rotate(2deg)}
+.inv-deck-btn-card:nth-child(2)::after{content:'✦';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#e9c477;font-size:16px;text-shadow:0 0 8px rgba(255,205,105,.45)}
+.inv-deck-btn:hover .inv-deck-btn-card,.inv-deck-btn:active .inv-deck-btn-card{filter:brightness(1.18)}
 }

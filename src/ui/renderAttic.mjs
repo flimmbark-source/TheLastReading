@@ -6,7 +6,9 @@
 export function renderAtticObals(count){const h=document.getElementById('obalsHud');if(!h)return;h.innerHTML='<span class="attic-obal-label">Obals</span><b class="attic-obal-count">'+count+'</b>';}
 
 export function renderAtticDeck({onOpen}){
-  const root=document.getElementById('atticObjects');if(!root)return;
+  // Screen-anchored next to the Return to Table arch, not in the panning
+  // room, so it stays reachable no matter where the attic view is panned.
+  const root=document.getElementById('atticScene');if(!root)return;
   let el=root.querySelector('.attic-deck');
   if(!el){
     el=document.createElement('div');

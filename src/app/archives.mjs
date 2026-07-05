@@ -83,6 +83,24 @@ export function renderInventory(){
   const desk=document.getElementById('invDesk');
   if(!desk)return;
   desk.innerHTML='';
+  // Deck-of-cards button, top right of the desk: opens the read-only card
+  // browser. The open drawer (z 10095) outranks the choice modal (z 10080),
+  // so close the drawer before handing off to the browser.
+  const deckBtn=document.createElement('button');
+  deckBtn.type='button';
+  deckBtn.className='inv-deck-btn';
+  deckBtn.setAttribute('aria-label','Look through the deck of cards');
+  deckBtn.innerHTML='<span class="inv-deck-btn-card"></span><span class="inv-deck-btn-card"></span>';
+  deckBtn.addEventListener('pointerdown',e=>e.stopPropagation());
+  deckBtn.addEventListener('click',e=>{
+    e.stopPropagation();
+    // tlrCloseArchives covers both open paths (classic invTab sets invOpen,
+    // SPv2's archive button only toggles the class).
+    if(window.tlrCloseArchives)window.tlrCloseArchives();
+    else if(invOpen)toggleInventory();
+    window.tlrBrowseDeck?.();
+  });
+  desk.appendChild(deckBtn);
   const foundAtticItems=(()=>{try{return JSON.parse(localStorage.getItem('tlr_attic_found_items')||'[]')}catch(e){return []}})();const allItems=[...INV_ITEMS.filter(item=>foundAtticItems.includes(item.id)),...getUnlockedFragments().map(id=>INV_FRAGMENTS[id]).filter(Boolean)];
   allItems.forEach((item,idx)=>{
     let pos=invPos[item.id];

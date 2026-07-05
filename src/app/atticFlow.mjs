@@ -31,7 +31,9 @@ export function installAtticFlow(target = window){
   let deckBrowseCards=null;
   function openDeckBrowser(){
     if(typeof target.browseCards!=='function')return;
-    dismissAtticTutorial();
+    // Also reachable from the archives drawer at the table; only treat it
+    // as attic-tutorial interaction while actually in the attic.
+    if(inAttic)dismissAtticTutorial();
     if(!deckBrowseCards){
       const sort=typeof target.sortCards==='function'?target.sortCards:function(c){return c;};
       // Definitions carry no uid; cardHTML caches per uid, so give each a stable one.
@@ -137,9 +139,10 @@ export function installAtticFlow(target = window){
 
   function positionAtticView(){const pan=document.getElementById('atticPan');if(!pan)return;requestAnimationFrame(function(){const maxX=Math.max(0,pan.scrollWidth-pan.clientWidth);pan.scrollLeft=Math.round(maxX*.34);pan.scrollTop=0;});}
   function showPanHint(){if(target.innerWidth>980)return;try{if(target.localStorage.getItem('tlr_attic_pan_hint'))return;target.localStorage.setItem('tlr_attic_pan_hint','1');}catch(e){}const scene=document.getElementById('atticScene');if(!scene)return;const hint=document.createElement('div');hint.className='attic-pan-hint';hint.textContent='Swipe to look around';scene.appendChild(hint);setTimeout(function(){hint.remove();},3600);}
-  function installDragPan(){const pan=document.getElementById('atticPan');if(!pan||pan.__tlrDragPan)return;pan.__tlrDragPan=true;let active=false,startX=0,startLeft=0;pan.addEventListener('pointerdown',function(e){if(e.target&&e.target.closest&&e.target.closest('.attic-prop,.attic-deck,#atticPickup'))return;active=true;startX=e.clientX;startLeft=pan.scrollLeft;pan.classList.add('dragging');});pan.addEventListener('pointermove',function(e){if(!active)return;pan.scrollLeft=startLeft-(e.clientX-startX);});function end(){active=false;pan.classList.remove('dragging');}pan.addEventListener('pointerup',end);pan.addEventListener('pointercancel',end);}
+  function installDragPan(){const pan=document.getElementById('atticPan');if(!pan||pan.__tlrDragPan)return;pan.__tlrDragPan=true;let active=false,startX=0,startLeft=0;pan.addEventListener('pointerdown',function(e){if(e.target&&e.target.closest&&e.target.closest('.attic-prop,#atticPickup'))return;active=true;startX=e.clientX;startLeft=pan.scrollLeft;pan.classList.add('dragging');});pan.addEventListener('pointermove',function(e){if(!active)return;pan.scrollLeft=startLeft-(e.clientX-startX);});function end(){active=false;pan.classList.remove('dragging');}pan.addEventListener('pointerup',end);pan.addEventListener('pointercancel',end);}
 
   target.tlrCloseArchives=closeArchives;
+  target.tlrBrowseDeck=openDeckBrowser;
   target.tlrScoreToObals=candlesFromScore;
   target.tlrDebugEnterAttic=enter;
   target.tlrDebugLeaveAttic=leave;
