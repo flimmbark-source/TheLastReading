@@ -45,4 +45,25 @@ if ('inert' in menu) assert.equal(menu.inert, false, 'menu is not inert after re
 assert.equal(byText('New Game').disabled, false, 'New Game is selectable after returning');
 assert.equal(byText('Duel').disabled, false, 'Duel is selectable after returning');
 
+// Regression guard: tlrMainMenuMultiplayer() used to skip the curtain
+// entirely (unlike startSingleplayer/tlrMainMenuAdventure), so switching to
+// Duel mode after playing another mode showed that old mode's table fully
+// rendered -- only thinly covered by the fading main menu and the loadout
+// screen's own fade-in -- instead of a clean fade to black.
+window.tlrShowLoadout = () => {
+  window.document.getElementById('loadoutScreen')?.remove();
+  const screen = window.document.createElement('div');
+  screen.id = 'loadoutScreen';
+  screen.className = 'loadout-hidden';
+  window.document.body.appendChild(screen);
+  screen.classList.remove('loadout-hidden');
+};
+const duelPromise = window.tlrMainMenuMultiplayer();
+assert.ok(window.document.body.classList.contains('main-menu-blackout'), 'curtain forced opaque as soon as Duel starts loading');
+assert.ok(window.document.getElementById('tlrBootCurtain').classList.contains('show'), 'curtain shown while Duel loads');
+await duelPromise;
+assert.equal(window.document.body.classList.contains('main-menu-blackout'), false, 'curtain classes cleared once the loadout screen is ready');
+assert.equal(window.document.getElementById('tlrBootCurtain').classList.contains('show'), false, 'curtain hidden once the loadout screen is ready');
+assert.equal(window.document.getElementById('loadoutScreen').classList.contains('loadout-hidden'), false, 'loadout screen is shown once the curtain lifts');
+
 console.log('Main menu checks passed.');

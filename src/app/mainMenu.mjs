@@ -376,18 +376,45 @@ export function installMainMenu(target = window) {
     // tlrMainMenuAdventure above: main.mjs's bulk install overwrites this
     // function directly after the first game load via any path, so this
     // can't rely on menuBoot.mjs's boot-time await ever having run.
+    //
+    // This needs the same curtain treatment as startSingleplayer/
+    // tlrMainMenuAdventure: without it, whatever table was left behind by the
+    // previous mode (still fully rendered, only covered by the menu's own
+    // z-index) shows through while the menu fades out and the loadout screen
+    // fades in on top of it, instead of a clean fade to black.
+    target.document.body.classList.add('main-menu-mode-booting', 'main-menu-blackout');
     hide();
-    if (typeof target.tlrShowLoadout !== 'function' && typeof target.__tlrInstallMultiplayerModules === 'function') {
-      try {
-        await target.__tlrInstallMultiplayerModules();
-      } catch (err) {
-        console.error('The Last Reading: Duel mode failed to load.', err);
+    await showCurtain();
+    try {
+      if (typeof target.tlrShowLoadout !== 'function' && typeof target.__tlrInstallMultiplayerModules === 'function') {
+        try {
+          await target.__tlrInstallMultiplayerModules();
+        } catch (err) {
+          console.error('The Last Reading: Duel mode failed to load.', err);
+        }
       }
-    }
-    if (typeof target.tlrShowLoadout === 'function') {
-      target.tlrShowLoadout();
-    } else {
-      console.error('The Last Reading: Duel mode is not available.');
+      if (typeof target.tlrShowLoadout === 'function') {
+        target.tlrShowLoadout();
+        closeModeChrome();
+        // #loadoutScreen fades in over the same .3s as the curtain (see
+        // loadout.css). Let that finish while still safely hidden behind the
+        // forced-opaque curtain (main-menu-blackout), instead of lifting the
+        // curtain at the same instant the loadout screen starts fading in —
+        // otherwise the two transitions overlap and whatever table was left
+        // behind ghosts through the loadout screen's own transparency.
+        await new Promise(resolve => target.setTimeout(resolve, CURTAIN_FADE_MS));
+        hideCurtain();
+        target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
+      } else {
+        console.error('The Last Reading: Duel mode is not available.');
+        hideCurtain();
+        target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
+        show();
+      }
+    } catch (err) {
+      console.error('The Last Reading: Duel mode failed to start.', err);
+      hideCurtain();
+      target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
       show();
     }
   };

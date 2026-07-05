@@ -20,7 +20,7 @@ import { installAbilityTargetBridge } from './abilityTargetBridge.mjs';
 import { installSpreadPlacementBridge } from './spreadPlacementBridge.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
-import { installMainMenu } from './mainMenu.mjs?v=adventure-tutorial-1';
+import { installMainMenu } from './mainMenu.mjs?v=duel-curtain-1';
 import { installMenuControls } from './menuControls.mjs';
 import { installResonationFlow } from './resonationFlow.mjs';
 import { installHintRuntime } from './hintRuntime.mjs';
