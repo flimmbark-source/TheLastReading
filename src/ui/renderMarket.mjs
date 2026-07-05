@@ -93,8 +93,16 @@ function ensureStoreFrontStyles(target = window) {
     .store-candle.lit .candle-on{opacity:1}
     @keyframes storeCandleIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
 
-    .store-front{position:relative;width:min(96vw,560px);font-family:Georgia,serif;color:#eadbb9;z-index:1;opacity:0;transition:opacity 280ms ease-out}
+    .store-front{position:relative;width:min(96vw,560px);max-height:calc(100dvh - 128px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;font-family:Georgia,serif;color:#eadbb9;z-index:1;opacity:0;transition:opacity 280ms ease-out}
     .store-front.store-visible{opacity:1}
+
+    /* While the Market is open (shopPolish sets tlr-shop-active for the
+       whole visit), hide the Score/Threshold HUD and the four persistent
+       bottom navigation medallions. visibility, not display: the layered
+       SPv2 rules force display with !important, and unlayered normal
+       declarations still win the visibility channel. */
+    body.tlr-shop-active .score-stack{visibility:hidden;pointer-events:none}
+    body.tlr-shop-active #menuBtn,body.tlr-shop-active #scoringBtn,body.tlr-shop-active #abilitiesBtn,body.tlr-shop-active #spv2ArchiveBtn{visibility:hidden;pointer-events:none}
     .store-front button{font-family:Georgia,serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
     .store-front button:disabled{cursor:not-allowed;opacity:.4}
 
@@ -109,25 +117,36 @@ function ensureStoreFrontStyles(target = window) {
     .store-reserve-amount{font-size:28px;color:#f1d196;text-shadow:0 1px 3px #000;line-height:1}
     .store-reserve-amount .coin{font-size:.42em;margin-left:.1em;color:#c89445;vertical-align:middle}
 
-    .store-offer-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+    /* Offers as full-width horizontal rows: category tag top-left, art on
+       the left, name/effect/progression in the middle, buy button on the
+       right. Category accents stay restrained: engraved gold for scoring
+       (default), muted violet for packs, desaturated teal for relic slots. */
+    .store-offer-row{display:flex;flex-direction:column;gap:12px}
 
-    .store-card{position:relative;border-radius:12px;background:transparent;border:1px solid rgba(200,160,80,.22);padding:14px 12px 56px;display:flex;flex-direction:column;align-items:center;text-align:center;transition:transform .13s,border-color .13s;min-height:180px}
-    .store-card:not(.disabled):hover{transform:translateY(-2px);border-color:rgba(200,160,80,.5)}
-    .store-card.disabled{opacity:.5}
-    .store-card-tag{font:700 9px/1 system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#9a7840;margin-bottom:8px;align-self:flex-start}
-    .store-card-art{width:56px;height:56px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;flex-shrink:0}
+    .store-card{position:relative;display:flex;align-items:center;gap:14px;min-height:96px;padding:27px 14px 12px 18px;border:1px solid rgba(200,160,80,.28);border-radius:12px;background:linear-gradient(180deg,rgba(26,17,10,.55),rgba(9,6,4,.6));text-align:left;transition:border-color .13s}
+    .store-card::before{content:'';position:absolute;left:-1px;top:16px;bottom:16px;width:2px;border-radius:2px;background:var(--store-accent,rgba(201,162,74,.5));opacity:.75;pointer-events:none}
+    .store-card:not(.disabled):hover{border-color:rgba(200,160,80,.5)}
+    .store-card.disabled{opacity:.55}
+    .store-card--pack{--store-accent:rgba(157,139,184,.55)}
+    .store-card--vessel{--store-accent:rgba(127,168,162,.55)}
+    .store-card-tag{position:absolute;top:9px;left:18px;font:700 10px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#9a7840}
+    .store-card--pack .store-card-tag{color:#9d8bb8}
+    .store-card--vessel .store-card-tag{color:#7fa8a2}
+    .store-card-art{width:56px;height:56px;flex:0 0 56px;display:flex;align-items:center;justify-content:center}
     .store-card-art .isp{transform:scale(.48);transform-origin:center;filter:drop-shadow(0 3px 5px rgba(0,0,0,.6))}
     .store-card-art .relic-art-sprite{width:56px;height:56px;flex:0 0 56px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.65))}
     .store-vessel-glyph{font:800 30px/1 Georgia,serif;color:#f1d196;text-shadow:0 2px 6px #000}
-    .store-card-name{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#f0dfbd;line-height:1.1;margin-bottom:4px}
-    .store-card-desc{font:600 10px/1.25 system-ui,sans-serif;color:#b8a882;margin-bottom:4px}
-    .store-card-lv{font:800 9px/1 system-ui,sans-serif;color:#c89445;text-transform:uppercase;margin-top:2px}
-    .store-card-buy{position:absolute;bottom:10px;left:10px;right:10px;height:34px;border:1px solid rgba(226,181,100,.5);border-radius:7px;background:transparent;color:#f5d9a0;font:800 10px/1 Georgia,serif;text-transform:uppercase;letter-spacing:.05em}
+    .store-card-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+    .store-card-name{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#f0dfbd;line-height:1.15}
+    .store-card-desc{font:600 12px/1.35 system-ui,sans-serif;color:#b8a882}
+    .store-card-lv{font:800 10px/1 system-ui,sans-serif;color:#c89445;text-transform:uppercase;margin-top:2px}
+    .store-card--vessel .store-card-lv{color:#7fa8a2}
+    .store-card-buy{flex:0 0 auto;min-width:104px;min-height:46px;padding:0 14px;border:1px solid rgba(226,181,100,.5);border-radius:8px;background:transparent;color:#f5d9a0;font:800 12px/1.2 Georgia,serif;text-transform:uppercase;letter-spacing:.05em}
     .store-card-buy:not(:disabled):hover{background:rgba(226,181,100,.1)}
     .store-card-buy .coin{color:#c99443;margin-left:.2em}
-    .store-relic-art-btn{background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important;padding:0;margin:0;cursor:pointer;display:flex;align-items:center;justify-content:center;width:56px;height:56px}
+    .store-relic-art-btn{background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important;padding:0;margin:0;cursor:pointer;display:flex;align-items:center;justify-content:center;width:56px;height:56px;flex:0 0 56px}
 
-    .store-footer{display:flex;justify-content:flex-end;margin-top:14px}
+    .store-footer{display:flex;justify-content:center;margin-top:16px}
     .store-proceed{background:transparent;border:1px solid rgba(226,181,100,.55);border-radius:8px;color:#f1dfbd;font:800 14px/1 Georgia,serif;text-transform:uppercase;letter-spacing:.07em;padding:10px 22px;transition:background .15s}
     .store-proceed:hover{background:rgba(200,160,60,.15)}
 
@@ -148,19 +167,20 @@ function ensureStoreFrontStyles(target = window) {
       .summary.store-front-shell.store-exiting{animation:none;opacity:0}
     }
     @media(max-width:480px){
-      .store-front{width:min(98vw,380px)}
-      .store-offer-row{gap:8px}
-      .store-card{padding:10px 8px 50px;min-height:160px}
-      .store-card-art{width:48px;height:48px;margin-bottom:6px}
-      .store-card-art .isp{transform:scale(.38)}
+      .store-front{width:96vw;max-height:calc(100dvh - 108px)}
+      .store-offer-row{gap:10px}
+      .store-card{gap:10px;min-height:88px;padding:25px 10px 10px 14px}
+      .store-card-tag{left:14px}
+      .store-card-art{width:48px;height:48px;flex-basis:48px}
+      .store-card-art .isp{transform:scale(.4)}
       .store-card-art .relic-art-sprite{width:48px;height:48px;flex-basis:48px}
-      .store-relic-art-btn{width:48px;height:48px}
-      .store-card-name{font-size:10px}
-      .store-card-desc{font-size:9px}
-      .store-card-buy{height:30px;font-size:9px;bottom:8px;left:8px;right:8px}
-      .store-vessel-glyph{font-size:24px}
-      .store-refresh{font-size:11px;padding:6px 10px}
-      .store-reserve-amount{font-size:22px}
+      .store-relic-art-btn{width:48px;height:48px;flex-basis:48px}
+      .store-card-name{font-size:13.5px}
+      .store-card-desc{font-size:11.5px}
+      .store-card-buy{min-width:92px;min-height:44px;padding:0 10px;font-size:11px}
+      .store-vessel-glyph{font-size:26px}
+      .store-refresh{font-size:11px;padding:8px 10px}
+      .store-reserve-amount{font-size:24px}
       .store-candle{width:60px;height:60px}
     }
   `;
@@ -288,9 +308,10 @@ const STAMP_ART = Object.freeze({
 });
 
 function renderScoringCard(index, upgradeKey, target = window) {
-  if (!upgradeKey) return '<div class="store-card disabled"><div class="store-card-tag">Scoring</div><div class="store-card-name">—</div></div>';
+  const emptyRow = '<div class="store-card store-card--scoring disabled"><div class="store-card-tag">Scoring</div><div class="store-card-main"><div class="store-card-name">—</div></div></div>';
+  if (!upgradeKey) return emptyRow;
   const item = (target.SHOP || {})[upgradeKey];
-  if (!item) return '<div class="store-card disabled"><div class="store-card-tag">Scoring</div><div class="store-card-name">—</div></div>';
+  if (!item) return emptyRow;
   const copy = STORE_SCORING_COPY[upgradeKey] || { name: item[0], desc: String(item[1] || '').replace(/<[^>]*>/g, ''), icon: (target.SHOP_ICON || {})[upgradeKey] || 'isp-scoring' };
   const cost = scoringCostFor(upgradeKey, target);
   const ok = (persistOf(target).pool || 0) >= cost;
@@ -298,28 +319,33 @@ function renderScoringCard(index, upgradeKey, target = window) {
   const art = STAMP_ART[upgradeKey]
     ? `<div class="store-card-art">${STAMP_ART[upgradeKey]}</div>`
     : `<div class="store-card-art"><span class="isp isp-108 ${copy.icon}"></span></div>`;
-  return `<div class="store-card ${ok ? '' : 'disabled'}">
+  return `<div class="store-card store-card--scoring ${ok ? '' : 'disabled'}">
     <div class="store-card-tag">Scoring</div>
     ${art}
-    <div class="store-card-name">${escapeHtml(copy.name)}</div>
-    <div class="store-card-desc">${escapeHtml(copy.desc)}</div>
-    <div class="store-card-lv">Lv ${level} → ${level + 1}</div>
+    <div class="store-card-main">
+      <div class="store-card-name">${escapeHtml(copy.name)}</div>
+      <div class="store-card-desc">${escapeHtml(copy.desc)}</div>
+      <div class="store-card-lv">Lv ${level} → ${level + 1}</div>
+    </div>
     <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreScoringUpgrade(${index},'${upgradeKey}',${cost})">Buy <span class="coin">✦</span> ${cost}</button>
   </div>`;
 }
 
 function renderPackCard(index, packId, target = window) {
-  if (!packId) return '<div class="store-card disabled"><div class="store-card-tag">Pack</div><div class="store-card-name">—</div></div>';
+  const emptyRow = '<div class="store-card store-card--pack disabled"><div class="store-card-tag">Pack</div><div class="store-card-main"><div class="store-card-name">—</div></div></div>';
+  if (!packId) return emptyRow;
   const pack = (target.PACKS || {})[packId];
-  if (!pack) return '<div class="store-card disabled"><div class="store-card-tag">Pack</div><div class="store-card-name">—</div></div>';
+  if (!pack) return emptyRow;
   const cost = packCostFor(packId, target);
   const ok = (persistOf(target).pool || 0) >= cost;
   const desc = STORE_PACK_COPY[packId] || pack.desc || '';
-  return `<div class="store-card ${ok ? '' : 'disabled'}">
+  return `<div class="store-card store-card--pack ${ok ? '' : 'disabled'}">
     <div class="store-card-tag">Pack</div>
     <button type="button" class="store-relic-art-btn" onclick="showStorePackCallout('${packId}',this);event.stopPropagation()" aria-label="Show ${escapeHtml(pack.name)} details"><div class="store-card-art" style="pointer-events:none"><span class="isp isp-108 ${pack.icon}"></span></div></button>
-    <div class="store-card-name">${escapeHtml(pack.name)}</div>
-    <div class="store-card-desc">${escapeHtml(desc)}</div>
+    <div class="store-card-main">
+      <div class="store-card-name">${escapeHtml(pack.name)}</div>
+      <div class="store-card-desc">${escapeHtml(desc)}</div>
+    </div>
     <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStorePack('pack',${index},'${packId}',${cost})">Open <span class="coin">✦</span> ${cost}</button>
   </div>`;
 }
@@ -331,12 +357,16 @@ function renderRelicCard(index, relicKey, target = window) {
   const cost = relicCost(target);
   const ok = (persistOf(target).pool || 0) >= cost;
   const style = typeof target.relicIconStyle === 'function' ? target.relicIconStyle(relicKey, 56) : '';
-  return `<div class="store-card ${ok ? '' : 'disabled'} ${relic.rarity || ''}">
+  const desc = STORE_RELIC_COPY[relicKey] || relic.desc || relic.description || '';
+  return `<div class="store-card store-card--relic ${ok ? '' : 'disabled'} ${relic.rarity || ''}">
     <div class="store-card-tag">Relic</div>
     <div class="store-card-art">
       <button class="store-relic-art-btn" type="button" onclick="showStoreRelicCallout('${relicKey}',this);event.stopPropagation()" aria-label="Show ${escapeHtml(relic.name)} details"><div class="relic-art-sprite" style="${style}"></div></button>
     </div>
-    <div class="store-card-name">${escapeHtml(relic.name)}</div>
+    <div class="store-card-main">
+      <div class="store-card-name">${escapeHtml(relic.name)}</div>
+      <div class="store-card-desc">${escapeHtml(desc)}</div>
+    </div>
     <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreRelic(${index},'${relicKey}',${cost})">Buy <span class="coin">✦</span> ${cost}</button>
   </div>`;
 }
@@ -346,11 +376,15 @@ function renderVesselCard(target = window) {
   const maxed = level >= 2;
   const cost = storeVesselCost(target);
   const ok = !maxed && (persistOf(target).pool || 0) >= cost;
-  return `<div class="store-card ${ok ? '' : 'disabled'}">
+  const slots = typeof target.relicSlots === 'function' ? target.relicSlots() : 3 + level;
+  return `<div class="store-card store-card--vessel ${ok ? '' : 'disabled'}">
     <div class="store-card-tag">Relic Slot</div>
     <div class="store-card-art"><div class="store-vessel-glyph">＋</div></div>
-    <div class="store-card-name">Relic Vessel</div>
-    <div class="store-card-desc">${maxed ? 'Relic Slots maxed.' : 'Gain +1 Relic Slot'}</div>
+    <div class="store-card-main">
+      <div class="store-card-name">Relic Vessel</div>
+      <div class="store-card-desc">${maxed ? 'Relic Slots maxed.' : 'Gain +1 Relic Slot'}</div>
+      <div class="store-card-lv">${maxed ? 'Max 5' : `Slots ${slots} → ${slots + 1}`}</div>
+    </div>
     <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreVessel()">${maxed ? 'Maxed' : `Buy <span class="coin">✦</span> ${cost}`}</button>
   </div>`;
 }
