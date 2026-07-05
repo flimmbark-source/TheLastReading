@@ -1214,62 +1214,75 @@ export function installMpGame(target = window) {
     else target.setTimeout?.(runFeedback, 0);
   }
 
+  function buildSurgeonSwapGhost(card, rect) {
+    if (!card || !rect) return null;
+    const ghost = doc.createElement('div');
+    ghost.dataset.uid = card.uid;
+    ghost.className = 'card'
+      + (card.type === 'major' ? ' major' : '')
+      + (CARD_SHEET[card.id] ? ' photo' : '')
+      + (card.type === 'interaction' ? ' mp-interaction' : '')
+      + ' mp-surgeon-swap-ghost';
+    ghost.innerHTML = mpCardHTML(card);
+    if (card.type !== 'interaction') applyCardPhoto(ghost, card);
+    const setGhostStyle = (name, value) => ghost.style.setProperty(name, value, 'important');
+    setGhostStyle('position', 'fixed');
+    setGhostStyle('left', `${rect.left}px`);
+    setGhostStyle('top', `${rect.top}px`);
+    setGhostStyle('width', `${rect.width}px`);
+    setGhostStyle('height', `${rect.height}px`);
+    setGhostStyle('margin', '0');
+    setGhostStyle('z-index', '2147483001');
+    setGhostStyle('pointer-events', 'none');
+    setGhostStyle('display', 'grid');
+    setGhostStyle('visibility', 'visible');
+    setGhostStyle('opacity', '1');
+    setGhostStyle('filter', 'none');
+    setGhostStyle('transform', 'translate3d(0,0,0)');
+    doc.body.appendChild(ghost);
+    return ghost;
+  }
+
   function animateSurgeonSwap(slotIndex, cardUid) {
     if (prefersReducedMotion()) return Promise.resolve(false);
+    const player = _state?.players?.[_myIndex];
+    const spreadCard = player?.spread?.[slotIndex] || null;
+    const handCard = player?.hand?.find(card => card.uid === cardUid) || null;
+    if (!spreadCard || !handCard) return Promise.resolve(false);
+
     const spreadCardEl = doc.querySelector(`#spread .slot:nth-child(${slotIndex + 1}) > .card[data-uid]`);
     const handCardEl = doc.querySelector(`#hand > .card[data-uid="${cardUid}"]`);
     if (!spreadCardEl || !handCardEl) return Promise.resolve(false);
 
     const spreadRect = spreadCardEl.getBoundingClientRect();
     const handRect = handCardEl.getBoundingClientRect();
-    if (!spreadRect.width || !handRect.width) return Promise.resolve(false);
+    if (!spreadRect.width || !spreadRect.height || !handRect.width || !handRect.height) return Promise.resolve(false);
+
+    const spreadGhost = buildSurgeonSwapGhost(spreadCard, spreadRect);
+    const handGhost = buildSurgeonSwapGhost(handCard, handRect);
+    if (!spreadGhost || !handGhost || typeof spreadGhost.animate !== 'function' || typeof handGhost.animate !== 'function') {
+      spreadGhost?.remove();
+      handGhost?.remove();
+      return Promise.resolve(false);
+    }
 
     const durationMs = 780;
-    const moving = [
-      { source: spreadCardEl, from: spreadRect, to: handRect },
-      { source: handCardEl, from: handRect, to: spreadRect },
-    ];
-    const clones = moving.map(({ source, from, to }) => {
-      const clone = source.cloneNode(true);
-      clone.hidden = false;
-      clone.removeAttribute('aria-hidden');
-      clone.classList.remove('mp-local-pending-hidden');
-      clone.classList.add('mp-surgeon-swap-ghost');
-      const forceGhostStyle = (name, value) => clone.style.setProperty(name, value, 'important');
-      forceGhostStyle('position', 'fixed');
-      forceGhostStyle('left', `${from.left}px`);
-      forceGhostStyle('top', `${from.top}px`);
-      forceGhostStyle('width', `${from.width}px`);
-      forceGhostStyle('height', `${from.height}px`);
-      forceGhostStyle('margin', '0');
-      forceGhostStyle('z-index', '2147483001');
-      forceGhostStyle('pointer-events', 'none');
-      forceGhostStyle('display', 'grid');
-      forceGhostStyle('visibility', 'visible');
-      forceGhostStyle('opacity', '1');
-      forceGhostStyle('filter', 'none');
-      forceGhostStyle('transform', 'translate3d(0,0,0)');
-      forceGhostStyle('transition', `transform ${durationMs}ms cubic-bezier(.18,.82,.2,1)`);
-      doc.body.appendChild(clone);
-      return { clone, dx: to.left - from.left, dy: to.top - from.top };
-    });
+    const options = { duration: durationMs, easing: 'cubic-bezier(.18,.82,.2,1)', fill: 'forwards' };
+    const spreadAnim = spreadGhost.animate([
+      { transform: 'translate3d(0,0,0)' },
+      { transform: `translate3d(${handRect.left - spreadRect.left}px, ${handRect.top - spreadRect.top}px, 0)` },
+    ], options);
+    const handAnim = handGhost.animate([
+      { transform: 'translate3d(0,0,0)' },
+      { transform: `translate3d(${spreadRect.left - handRect.left}px, ${spreadRect.top - handRect.top}px, 0)` },
+    ], options);
 
-    // Wait two frames before applying the transform. That gives the browser a
-    // real initial paint for the fixed-position clones, so the cards visibly
-    // travel between positions instead of appearing already swapped.
-    const raf = typeof target.requestAnimationFrame === 'function'
-      ? target.requestAnimationFrame.bind(target)
-      : callback => target.setTimeout?.(callback, 16);
-    raf(() => raf(() => {
-      clones.forEach(({ clone, dx, dy }) => { clone.style.setProperty('transform', `translate3d(${dx}px, ${dy}px, 0)`, 'important'); });
-    }));
-
-    return new Promise(resolve => {
-      target.setTimeout?.(() => {
-        clones.forEach(({ clone }) => { clone.remove(); });
-        resolve(true);
-      }, durationMs + 80);
-    });
+    return Promise.allSettled([spreadAnim.finished, handAnim.finished])
+      .then(() => true)
+      .finally(() => {
+        spreadGhost.remove();
+        handGhost.remove();
+      });
   }
 
   async function dispatchSwap(slotIndex, cardUid) {
