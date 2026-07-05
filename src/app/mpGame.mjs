@@ -1322,23 +1322,27 @@ export function installMpGame(target = window) {
 
   async function dispatchSwap(slotIndex, cardUid) {
     if (!canDispatchSwap(slotIndex, cardUid) || _abilityResolving) return;
+    let result = null;
     _abilityResolving = true;
     _personaSwapRequested = false;
-    const result = await animateSurgeonSwap(slotIndex, cardUid);
-    if (!_state || !canDispatchSwap(slotIndex, cardUid)) {
-      result?.cleanup?.();
+    try {
+      result = await animateSurgeonSwap(slotIndex, cardUid);
+      if (!_state || !canDispatchSwap(slotIndex, cardUid)) return;
+      submitAction({ type: MP_ACTIONS.MP_SWAP_SPREAD, slotIndex, cardUid });
+    } finally {
+      try { result?.cleanup?.(); } catch { /* cleanup is best-effort; always unlock below */ }
+      // The swap is a free preparatory action, so the player must immediately be
+      // able to select and place/discard a real action afterward regardless of
+      // animation success, fallback, cancellation, submit short-circuit, or
+      // partial cleanup failure.
       _abilityResolving = false;
+      _swapFirst = null;
+      _personaSwapRequested = false;
+      doc.body.classList.remove('mp-persona-ability-active');
+      syncPersonaPrompt();
+      target.refreshHandState?.();
       render();
-      return;
     }
-    submitAction({ type: MP_ACTIONS.MP_SWAP_SPREAD, slotIndex, cardUid });
-    result?.cleanup?.();
-    // The swap is a free preparatory action, so the player must immediately be
-    // able to select and place/discard a real action afterward even if the
-    // submit path returned early or the animation fallback path was used.
-    _abilityResolving = false;
-    target.refreshHandState?.();
-    render();
   }
   function handleInvokeTarget(playerIdx, slotIdx) {
     if (_invokeCard === null) return;
