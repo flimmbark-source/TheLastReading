@@ -7,7 +7,7 @@ const DEFAULT_X={scoring:target=>Math.max(0,target.innerWidth/2-142),abilities:t
 const DRAWER_HEIGHTS=[
   {id:'scoring',min:92,max:260},
   {id:'abilities',min:112,max:360},
-  {id:'menu',min:150,max:380}
+  {id:'menu',min:150,max:440}
 ];
 const FAN_TABS=[
   {id:'menuPullTab',key:'tlr_menu_pull_tab_x',w:86,label:'Menu'},
