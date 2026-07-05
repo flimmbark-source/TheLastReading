@@ -35,13 +35,26 @@ function installEmptySpaceDeselect(target = window){
     if(!state || state.selected===null || (target.tlrStore?.getState?.()?.run?.busy??state.busy) || (target.tlrStore?.getState?.()?.run?.ability?.targeting||state.abilitySelect) || (target.tlrStore?.getState?.()?.run?.purge??state.purgeSelect)!==null)return;
     const eventTarget=ev.target instanceof Element?ev.target:null;
     if(isInteractiveOrCardSpace(eventTarget))return;
-    if(target.tlrStore&&target.tlrActions){
-      target.tlrStore.dispatch({type:target.tlrActions.CLEAR_SELECTION});
-      state.selected=target.tlrStore.getState?.()?.run?.selectedCardId ?? null;
-    }else{
-      state.selected=null;
-    }
-    if(typeof target.refreshHandState==='function')target.refreshHandState();
+    // Deferred a frame: unlike tapping the card itself (whose own onclick
+    // runs the same clear synchronously, directly off that element's own
+    // input event), this listener changes the card's class as a bubble-phase
+    // side effect of a click that landed on a completely different element.
+    // Some mobile engines don't reliably prime a CSS transition for a style
+    // change made that way -- it needs to land at the start of a fresh
+    // animation frame (a clean "before" state to diff against) rather than
+    // synchronously mid-bubble, or it snaps instead of animating.
+    const selectedAtClick=target.tlrStore?.getState?.()?.run?.selectedCardId ?? state.selected;
+    target.requestAnimationFrame(()=>{
+      const stillSelected=target.tlrStore?.getState?.()?.run?.selectedCardId ?? state.selected;
+      if(stillSelected!==selectedAtClick)return;
+      if(target.tlrStore&&target.tlrActions){
+        target.tlrStore.dispatch({type:target.tlrActions.CLEAR_SELECTION});
+        state.selected=target.tlrStore.getState?.()?.run?.selectedCardId ?? null;
+      }else{
+        state.selected=null;
+      }
+      if(typeof target.refreshHandState==='function')target.refreshHandState();
+    });
   });
 }
 

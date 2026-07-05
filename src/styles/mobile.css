@@ -63,6 +63,14 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
 .settings-panel hr{border:none;border-top:1px solid rgba(180,140,90,.2);margin:2px 0}
 .settings-check{display:flex;flex-direction:row!important;align-items:center;gap:8px;cursor:pointer;user-select:none}
 .settings-check input[type=checkbox]{accent-color:#c8a87a;width:14px;height:14px;cursor:pointer;flex:0 0 auto}
+.settings-row{display:flex;flex-direction:column;gap:6px}
+.settings-row-label{font-size:.78rem;color:#c8a87a;letter-spacing:.04em;text-transform:uppercase}
+.hint-level-bar{display:flex;border:1px solid rgba(180,140,90,.4);border-radius:6px;overflow:hidden}
+.hint-level-seg{flex:1;background:rgba(20,14,10,.5);color:#7a6540;border:none;padding:6px 4px;font:700 10px system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;transition:background .15s,color .15s}
+.hint-level-seg+.hint-level-seg{border-left:1px solid rgba(180,140,90,.3)}
+.hint-level-seg:hover{filter:brightness(1.15)}
+.hint-level-seg.on{background:rgba(200,168,122,.3);color:#e6c89a}
+.hint-level-seg.active{background:#c8a87a;color:#2a1608}
 .settings-panel .settings-action{background:rgba(180,140,90,.18);border:1px solid rgba(180,140,90,.45);border-radius:6px;color:#e6c89a;font:600 .78rem system-ui,Segoe UI,sans-serif;letter-spacing:.04em;text-transform:uppercase;padding:7px 10px;cursor:pointer;width:100%;transition:background .15s,filter .15s}
 .settings-panel .settings-action:hover{background:rgba(180,140,90,.3);filter:brightness(1.1)}
 /* spread ability highlight patch */
@@ -117,6 +125,29 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
 @media(prefers-reduced-motion:reduce){.relic-vision-veil,.relic-vision-rays,.relic-vision-mote{animation:none;opacity:0;display:none}.relic-vision-enter{animation:none}}
 /* end relic vision transition patch */
 /* hand swipe-scroll patch */
+/* Mobile-only bug: the fan's .hand .card transform below is a calc() chain
+   with nested sin()/cos() built from these custom properties, and without
+   @property registration a custom property is an untyped token stream --
+   some mobile browser engines respond to that by refusing to smoothly
+   interpolate a transition on a transform that depends on one, snapping
+   straight to the end value instead of animating (desktop Chromium/Firefox
+   animate it fine either way). It's worst on the fan's outermost cards
+   because they have the largest --total-rot/--arc-x delta between resting
+   and .sel, so a failed interpolation is most visible there. Registering
+   the whole dependency chain with concrete types gives every engine a
+   well-defined, continuously interpolatable value to animate. */
+@property --slot{syntax:'<number>';inherits:true;initial-value:0}
+@property --lag{syntax:'<angle>';inherits:true;initial-value:0deg}
+@property --drift-x{syntax:'<length>';inherits:true;initial-value:0px}
+@property --drift-y{syntax:'<length>';inherits:true;initial-value:0px}
+@property --lift-y{syntax:'<length>';inherits:true;initial-value:0px}
+@property --track-offset{syntax:'<angle>';inherits:true;initial-value:0deg}
+@property --track-spacing{syntax:'<angle>';inherits:true;initial-value:5deg}
+@property --track-radius{syntax:'<length>';inherits:true;initial-value:780px}
+@property --total-a{syntax:'<angle>';inherits:true;initial-value:0deg}
+@property --total-rot{syntax:'<angle>';inherits:true;initial-value:0deg}
+@property --arc-x{syntax:'<length>';inherits:true;initial-value:0px}
+@property --arc-y{syntax:'<length>';inherits:true;initial-value:0px}
 .handDock{overflow-x:clip;overflow-y:visible}
 .hand{position:relative;display:block;max-width:none;width:100%;height:235px;--track-offset:0deg;--track-spacing:5deg;--track-radius:780px;--hand-lift-y:0px;transform:translateY(var(--hand-lift-y));transition:transform .22s cubic-bezier(.2,.85,.25,1)}
 @media(max-width:640px){.hand{height:185px;--track-radius:560px}}
@@ -136,7 +167,14 @@ body.tlr-loading #invWrap,body.tlr-loading .tlr-pull-wrap{transition:none!import
   --total-rot:calc(var(--total-a) + var(--lag) * 1.5);
   transform:translate(calc(-50% + var(--arc-x) + var(--drift-x)),calc(var(--arc-y) + var(--lift-y) + var(--drift-y))) rotate(var(--total-rot))!important;
   transform-origin:50% 50%!important;
-  transition:transform .32s cubic-bezier(.2,.85,.25,1);
+  /* Governs the lift/drop when .sel toggles (among other --lift-y-driven
+     moves). The old curve, cubic-bezier(.2,.85,.25,1), reaches 85% of the
+     distance by just 20% of the duration -- almost the whole lift happens
+     in the first ~60ms, then the remaining ~250ms creeps through the last
+     15%, reading as a snap-then-crawl rather than one continuous glide.
+     This ease-out-cubic curve spreads the deceleration across the full
+     duration instead. */
+  transition:transform .32s cubic-bezier(.22,.61,.36,1);
 }
 .hand.hand-scroll-dragging .card,.hand.hand-undulating .card{transition:none}
 .hand .card.sel,.hand .card.purge-picked{
@@ -194,9 +232,20 @@ body:has(.hand-scroll-dragging) .handDock *{cursor:grabbing!important}
 /* end hand swipe-scroll patch */
 /* hand card gestures patch */
 #hand .card[data-uid],#spread .card[data-uid]{touch-action:none;-webkit-user-select:none;user-select:none}
-.hand .card.hand-card-dragging{
+/* Not scoped under .hand: gestureCard.mjs's startDrag() reparents the
+   dragged card to document.body for the duration of the drag (so its
+   position:fixed escapes .hand/.handDock's stacking/overflow), so a
+   ".hand .card.hand-card-dragging" selector would stop matching the moment
+   the drag actually starts -- the card would then fall through to generic
+   .card{transition:transform ...} rules (e.g. market.css's mobile .2s one)
+   whose easing fights the per-frame transform this class's JS sets every
+   rAF, producing a laggy "chase" instead of the finger-locked 1:1 tracking
+   a drag needs. transition intentionally omits transform entirely (so it
+   snaps instantly to each JS-set position) and keeps only the box-shadow
+   fade-in for the pickup lift. */
+.card.hand-card-dragging{
   transform:translate(calc(-50% + var(--drag-x,0px)), var(--drag-y,0px)) rotate(var(--drag-rot,0deg))!important;
-  transition:transform .07s cubic-bezier(.2,.85,.25,1), box-shadow .14s ease!important;
+  transition:box-shadow .14s ease!important;
   z-index:9999!important;
   box-shadow:0 22px 52px rgba(0,0,0,.78),0 0 0 2px #d4af6a;
   pointer-events:none;

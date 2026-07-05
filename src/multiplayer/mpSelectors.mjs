@@ -1,6 +1,8 @@
-import { MP_PHASES } from './mpState.mjs';
+import { MP_PHASES } from './mpState.mjs?v=persona-bonus-fix-1';
+import { MP_ACTIONS } from './mpActions.mjs';
 import { MP_ABILITY_TYPES } from './interactionCards.mjs';
 import { getPersona } from './personas.mjs';
+import { exchangeStatus } from './mpReducer.mjs?v=persona-bonus-fix-1';
 
 export function activePlayer(state) {
   return state.players[state.activePlayerIndex] ?? null;
@@ -10,8 +12,12 @@ export function playerByIndex(state, index) {
   return state.players[index] ?? null;
 }
 
+// A player has "submitted" once they've locked in a turn-ending action this
+// exchange. A queued free action alone (Surgeon's swap) does not lock — see
+// mpReducer.mjs's exchangeStatus, which this delegates to so both files
+// agree on one answer.
 export function hasSubmittedAction(state, playerIndex) {
-  return !!state?.pendingActions?.[playerIndex];
+  return !!state && exchangeStatus(state, playerIndex).locked;
 }
 
 export function isPlayerTurn(state, playerIndex) {
@@ -61,7 +67,22 @@ export function isCardSilenced(state, playerIndex, cardUid) {
 
 export function canSwapSpread(state, playerIndex) {
   if (!isPlayerTurn(state, playerIndex)) return false;
-  return !!(state.players[playerIndex]?.swapAvailable);
+  if (!state.players[playerIndex]?.swapAvailable) return false;
+  // swapAvailable is canonical and doesn't flip to false until the exchange
+  // resolves, so a swap already queued this exchange (awaiting the player's
+  // real action) would otherwise still look available — check the queue too.
+  const queue = state.pendingActions?.[playerIndex];
+  if (Array.isArray(queue) && queue.some(a => a.type === MP_ACTIONS.MP_SWAP_SPREAD)) return false;
+  return true;
+}
+
+// Whether the Gambit persona's once-per-round Discard-Draw is available.
+// Unlike the swap, Discard-Draw always locks the exchange once submitted, so
+// (unlike canSwapSpread) there's no "already queued, awaiting the real
+// action" state to account for — canSubmit's lock check already covers it.
+export function canDiscardDraw(state, playerIndex) {
+  if (!isPlayerTurn(state, playerIndex)) return false;
+  return !!state.players[playerIndex]?.discardDrawAvailable;
 }
 
 export function emptySlots(state, playerIndex) {

@@ -63,7 +63,7 @@ export function createPlayerState(playerIndex, personaId = null, rng = Math.rand
     anchoredSlotIndex: null, // Anchor: index of the first-placed card's slot
     playedSlotHistory: [],   // most recent spread placements, used by Banish
     silencedCardUids: [],    // Seal: UIDs excluded from scoring this round
-    bonusActionAvailable: false, // Gambit: can place immediately after next invoke
+    discardDrawAvailable: false, // Gambit: Discard-a-card-Draw-its-Value available this round
     swapAvailable: false,    // Surgeon: spread/hand swap available this round
   };
 }
@@ -80,8 +80,12 @@ export function createMatchState(options = {}) {
       createPlayerState(0, personas[0], rng),
       createPlayerState(1, personas[1], rng),
     ],
-    // One chosen action per player. Actions are hidden/resolved only when both are present.
-    pendingActions: [null, null],
+    // Each player's queue of chosen actions for the current exchange. Normally
+    // holds at most one action once submitted, but Surgeon's free swap can
+    // add a second (non-locking) action before their real one. Actions are
+    // hidden/resolved only once both players have locked in (see
+    // mpReducer.mjs's exchangeStatus/resolvePendingActions).
+    pendingActions: [[], []],
     winner: null,
     roundHistory: [],
     nextInjectedUid: 9000, // counter for injected interaction card UIDs
@@ -130,14 +134,14 @@ export function applyRoundStartPassives(player, nextUid) {
   }
 
   const swapAvailable = !!(persona?.passives?.freeSpreadSwap);
-  const bonusActionAvailable = !!(persona?.passives?.bonusPlaceAfterInvoke);
+  const discardDrawAvailable = !!(persona?.passives?.discardDrawByValue);
 
   return {
     player: {
       ...player,
       hand,
       swapAvailable,
-      bonusActionAvailable,
+      discardDrawAvailable,
     },
     nextUid: uid,
   };

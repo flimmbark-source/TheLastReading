@@ -87,18 +87,19 @@ export const PERSONAS = Object.freeze({
   gambit: {
     id: 'gambit',
     name: 'The Gambit',
-    tagline: 'Once per round: Place after Discard.',
+    tagline: 'Once per round: Discard a card, Draw its Value.',
     bio: 'A back-alley card sharp barred from every honest house in the city, grinning wider as the stakes climb.',
     accent: '#74c47a',
     icon: '<rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="8.8" cy="8.8" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.2" cy="15.2" r="1.3" fill="currentColor" stroke="none"/>',
     ability: {
       name: 'Double Deal',
       tag: 'Once per Round',
-      rules: 'After you **Discard**, you may immediately **Place** a card for free.',
-      flavor: 'Why take one turn when you’re owed two?',
+      rules: '**Discard** a card, then **Draw** cards equal to its Value.',
+      reminder: 'Value: the number shown on the card.',
+      flavor: 'The higher the card, the sweeter the trade.',
     },
     passives: {
-      bonusPlaceAfterInvoke: true,
+      discardDrawByValue: true,
     },
   },
 

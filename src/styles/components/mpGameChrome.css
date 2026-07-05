@@ -7,9 +7,27 @@ body.mp-game-active .score-stack,
 body.mp-game-active #relicRack,
 body.mp-game-active #menuPullWrap,
 body.mp-game-active #tutTip,
-body.mp-game-active .spread-actions,
-body.mp-game-active #abilityPrompt,
-body.mp-game-active #purgePrompt { display: none !important; }
+body.mp-game-active .spread-actions { display: none !important; }
+
+/* #abilityPrompt/#purgePrompt are not single-player-only bleed-through risks
+   the way the elements above are: mpGame.mjs's own ability-targeting/
+   Surgeon-swap/Purge flows (syncPersonaPrompt/renderAbilityPrompt/
+   renderMpPurgePrompt) legitimately reuse these same shared elements,
+   toggling the same .show class single-player uses, and setting their own
+   marked-important display:flex to reveal them. That override is a plain
+   unlayered <style> tag though, the weakest tier once importance is marked
+   at all, while this rule lives in the named mpGameChrome layer -- declared
+   earlier than mpCore in game.html's top-level @layer statement, and earlier
+   layers win the marked-important tier (the reverse of the normal-tier
+   order). So a blanket hide here always won regardless of specificity,
+   leaving every one of these MP flows tracking its own state correctly with
+   no visible popup at all. tlrMpLeave (see mpGameHost.mjs's
+   closeAllMpAbilitySurfaces) and mainMenu.mjs's closeAllOverlays both
+   explicitly strip .show from both elements before you could reach a fresh
+   single- or multiplayer session, so this exception does not reopen the
+   bleed-through the blanket rule existed for. */
+body.mp-game-active #abilityPrompt:not(.show),
+body.mp-game-active #purgePrompt:not(.show) { display: none !important; }
 
 .mp-turn-badge.my-turn    { color: #ffd978; animation: mp-pulse 2s ease-in-out infinite; }
 .mp-turn-badge.opp-turn   { color: #5a4828; }

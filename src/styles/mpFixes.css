@@ -114,7 +114,7 @@ body.mp-game-active #mpPurgeBtn {
 }
 
 body.mp-game-active #mpAbilityBtn {
-  display: none !important;
+  display: inline-flex !important;
   background: linear-gradient(#ead9b5, #b98948) !important;
   background-image: linear-gradient(#ead9b5, #b98948) !important;
   background-color: #d2ae73 !important;

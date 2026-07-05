@@ -20,7 +20,7 @@ import { installAbilityTargetBridge } from './abilityTargetBridge.mjs';
 import { installSpreadPlacementBridge } from './spreadPlacementBridge.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
-import { installMainMenu } from './mainMenu.mjs?v=adventure-tutorial-1';
+import { installMainMenu } from './mainMenu.mjs?v=duel-curtain-1';
 import { installMenuControls } from './menuControls.mjs';
 import { installResonationFlow } from './resonationFlow.mjs';
 import { installHintRuntime } from './hintRuntime.mjs';
@@ -28,9 +28,9 @@ import { installStampSigils } from './stampSigils.mjs';
 import { installAmbientEffects } from '../ui/ambientEffects.mjs';
 import { installHandSwipeScroll } from '../ui/gestureHand.mjs';
 import { installHandCardGestures } from '../ui/gestureCard.mjs';
-import { installGestureDrawers } from '../ui/gestureDrawers.mjs';
+import { installGestureDrawers } from '../ui/gestureDrawers.mjs?v=menu-drawer-height-1';
 import { installPressHighlight } from '../ui/gesturePressHighlight.mjs';
-import { installHandSelectionVisuals } from '../ui/handSelectionVisuals.mjs';
+import { installHandSelectionVisuals } from '../ui/handSelectionVisuals.mjs?v=deselect-raf-1';
 import { installSinglePlayerV2 } from '../ui/singlePlayerV2.mjs?v=phase1-2';
 import * as abilitySystem from '../systems/abilities.mjs';
 import * as shopSystem from '../systems/shop.mjs';
@@ -55,7 +55,7 @@ import * as archivesModule from './archives.mjs';
 function installAdventureFeatureModules(target = window) {
   if (!target || target.__tlrAdventureFeatureModulesPromise) return target?.__tlrAdventureFeatureModulesPromise;
   target.__tlrAdventureFeatureModulesPromise = Promise.all([
-    import('./adventureModeV3.mjs?v=1'),
+    import('./adventureModeV3.mjs?v=status-pill-click-1'),
     import('./adventureEventHero.mjs?v=resolve-below-1'),
     import('./adventureInteractionFx.mjs?v=17'),
     import('./adventureItemPopups.mjs?v=5'),
@@ -79,8 +79,8 @@ function installMultiplayerFeatureModules(target = window) {
   if (!target || target.__tlrMultiplayerFeatureModulesPromise) return target?.__tlrMultiplayerFeatureModulesPromise;
   target.__tlrMultiplayerFeatureModulesPromise = Promise.all([
     import('./loadoutScreen.mjs'),
-    import('./matchmakingScreen.mjs'),
-    import('./mpGameHost.mjs'),
+    import('./matchmakingScreen.mjs?v=persona-bonus-fix-1'),
+    import('./mpGameHost.mjs?v=persona-bonus-fix-1'),
     import('./mpCpuSafety.mjs'),
     import('./mpAbilitySurfaceCleanup.mjs'),
     import('./mpScoreGhostParity.mjs'),

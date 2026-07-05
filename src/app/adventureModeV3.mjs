@@ -118,8 +118,15 @@ function ensureStyles(doc) {
     .adv-pip--empty{background:rgba(243,201,105,.05)}
     .adv-hud__statuses{display:flex;flex-direction:column;align-items:center;gap:5px}.adv-hud__statuses:empty{display:none}
     .adv-hud__status-row{display:flex;gap:5px;justify-content:center}
+    /* pointer-events:auto opts back in from adventureEventHero.mjs's
+       body.mode-adventure #advHud{pointer-events:none!important} on
+       narrow viewports -- that rule lets clicks fall through the HUD's
+       empty space to the board beneath it, but without this the status
+       pills (which need their own click-for-popup handler in
+       adventureItemPopups.mjs) inherit that none and are unclickable. */
     #advHud .adv-status{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px 3px 8px;
-      font:700 10px/1 'Cinzel',Georgia,serif;letter-spacing:.05em;border:1px solid;background:rgba(16,11,7,.82);cursor:pointer}
+      font:700 10px/1 'Cinzel',Georgia,serif;letter-spacing:.05em;border:1px solid;background:rgba(16,11,7,.82);cursor:pointer;
+      pointer-events:auto}
     #advHud .adv-status::before{content:'';width:7px;height:7px;border-radius:50%}
     .adv-status--blessed{color:#f6d488;border-color:rgba(243,201,105,.5)}.adv-status--blessed::before{background:#f3c969;box-shadow:0 0 6px #f3c969}
     .adv-status--haunted{color:#c7adef;border-color:rgba(169,139,214,.5)}.adv-status--haunted::before{background:#a98bd6;box-shadow:0 0 6px #a98bd6}

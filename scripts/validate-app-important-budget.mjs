@@ -116,7 +116,19 @@ const appStyleFiles = [
 // use importance as their documented mechanism. The redundancy the pass did
 // find was concentrated in the SPv2 partials (816 removals) — tracked by
 // validate-single-player-v2-cascade.mjs's own budget, now 90.
-const importantBudget = 651;
+// 651 -> 652 (components/mpGameChrome.css, a REAL +1): its blanket
+// body.mp-game-active #abilityPrompt/#purgePrompt hide was one shared
+// declaration across 7 comma-separated selectors. mpGame.mjs's own
+// ability-targeting/Surgeon-swap/Purge flows reuse #abilityPrompt/
+// #purgePrompt (toggling the same .show class single-player uses) and were
+// silently never able to show them — this file's marked-important rule sits
+// in the mpGameChrome layer, declared earlier than mpCore, and earlier
+// layers win the marked-important tier, beating mpGame.mjs's own unlayered
+// (weakest-tier) show override regardless of specificity. Fixed by carving
+// #abilityPrompt/#purgePrompt out into their own :not(.show)-qualified rule,
+// leaving the other 5 selectors' blanket hide alone — two rules where there
+// was one, so a second declaration, not a tracking-gap artifact.
+const importantBudget = 652;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);

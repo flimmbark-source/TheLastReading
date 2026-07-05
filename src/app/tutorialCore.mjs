@@ -53,6 +53,7 @@ export const TUT_STEP = Object.freeze({
   ADVENTURE_REWARD: 31,
   ADVENTURE_ITEMS: 32,
   ADVENTURE_COMPLETE: 33,
+  HINT_SETTING: 34,
 });
 
 let tutStep = -1;
@@ -101,6 +102,9 @@ const TUT_STEPS = [
   { sel: '.adv-rewards', fallbackSel: '.result-panel', arrow: 'up', key: TUT_ADV_REWARD_KEY, text: 'When you succeed, pick a reward. Rewards shape your run.' },
   { sel: '#relicRack', arrow: 'up', key: TUT_ADV_ITEMS_KEY, text: 'Items you earn are carried here. Tap a consumable to use it.' },
   { center: true, key: TUT_ADV_COMPLETE_KEY, text: "You finished a Set. Complete one more to win the adventure." },
+  // Reached only via the PATTERN_NOTICE branch in tutNext() below (index kept
+  // out of the linear array order so every other step's index stays stable).
+  { sel: '#hintLevelBar', fallbackSel: '#settingsPanel', arrow: 'up', text: 'Use hints to see potential scoring combos.' },
 ];
 
 const MARKET_TUT_STEPS = [
@@ -268,6 +272,13 @@ export function tutShow(step, options = {}) {
   if (!tip || !text) return;
   tip.classList.remove('show', 'tut-center');
   tip.style.cssText = '';
+  // The settings drawer opens above nearly everything (menuPullWrap.open is
+  // z-index 2147483250, see drawers.css) so it can never be covered by the
+  // table underneath it. This is the one step that points at something
+  // inside that drawer, so it alone needs to outrank it; every other step
+  // keeps the tip's normal stacking position (cssText reset above clears
+  // this for the next tutShow call regardless of which step follows).
+  if (step === TUT_STEP.HINT_SETTING) tip.style.setProperty('z-index', '2147483300', 'important');
   text.innerHTML = s.text;
   const tapPrompt = tip.querySelector('.tut-tap-prompt');
   if (tapPrompt) tapPrompt.style.display = s.waitFor ? 'none' : '';
@@ -286,6 +297,30 @@ export function tutShow(step, options = {}) {
     });
     tutPositionTimer = setTimeout(positionActiveTip, 180);
   }
+}
+
+// The hint-level control lives inside the settings drawer, which is hidden
+// (visibility:hidden!important on its content, per drawers.css) until
+// #menuPullWrap gets .open. Both helpers check the drawer's own open state
+// first so they're idempotent regardless of what the player already had
+// open, and fall back to the pre-drawer #settingsPanel.hidden toggle for
+// any host page that hasn't installed the gesture-drawer system.
+function openHintSettingsMenu() {
+  const wrap = q('#menuPullWrap');
+  if (wrap) {
+    if (!wrap.classList.contains('open') && typeof window.tlrTogglePullTab === 'function') window.tlrTogglePullTab('menu');
+    return;
+  }
+  q('#settingsPanel')?.classList.remove('hidden');
+}
+
+function closeHintSettingsMenu() {
+  const wrap = q('#menuPullWrap');
+  if (wrap) {
+    if (wrap.classList.contains('open') && typeof window.tlrTogglePullTab === 'function') window.tlrTogglePullTab('menu');
+    return;
+  }
+  q('#settingsPanel')?.classList.add('hidden');
 }
 
 export function tutNext() {
@@ -308,7 +343,25 @@ export function tutNext() {
     else { tutHide(); scheduleQueuedTips(260); }
     return;
   }
-  if (tutStep === TUT_STEP.PATTERN_NOTICE) { tutShow(TUT_STEP.PATTERN_SCORING); return; }
+  if (tutStep === TUT_STEP.PATTERN_NOTICE) {
+    tutHide();
+    // Deferred a tick: menuControls.mjs's own document click listener (bound
+    // after this module's, so it runs later in the same event) closes the
+    // menu drawer on any click outside it. Opening the drawer synchronously
+    // inside this click handler would make that same click look like an
+    // outside click on the drawer we just opened, undoing it instantly.
+    // Waiting for the next task lets that listener finish first.
+    tutTimer = setTimeout(() => {
+      openHintSettingsMenu();
+      tutTimer = setTimeout(() => tutShow(TUT_STEP.HINT_SETTING), 480);
+    }, 0);
+    return;
+  }
+  if (tutStep === TUT_STEP.HINT_SETTING) {
+    closeHintSettingsMenu();
+    tutShow(TUT_STEP.PATTERN_SCORING);
+    return;
+  }
   if (tutStep === TUT_STEP.PATTERN_SCORING) {
     markStepSeen(tutStep);
     if (canShowStep(TUT_STEP.THRESHOLD)) tutShow(TUT_STEP.THRESHOLD);

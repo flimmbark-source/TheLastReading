@@ -1,4 +1,4 @@
-import { installMpGame as installBaseMpGame } from './mpGame.mjs';
+import { installMpGame as installBaseMpGame } from './mpGame.mjs?v=persona-bonus-fix-1';
 
 function normalizeMult(value) {
   const number = Number(value);

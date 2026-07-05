@@ -26,9 +26,15 @@ body.main-menu-mode-booting :where(#titleWrap,.bar,.score-stack,#constellationPi
    tier in actionDropTargets.css, which tops out at 10150) so the cut to
    black is a genuine hard mask, not just another layer that could be
    covered by something else mid-transition. */
-#tlrBootCurtain{position:fixed;inset:0;z-index:20000;background:#000;opacity:0;pointer-events:none;transition:opacity .3s ease}
+#tlrBootCurtain{position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;background:#000;opacity:0;pointer-events:none;transition:opacity .3s ease}
 #tlrBootCurtain.show{opacity:1;pointer-events:auto}
-@media(prefers-reduced-motion:reduce){#tlrBootCurtain{transition:none}}
+/* Loading spinner shown while the curtain is fully black, so the cut to
+   black never reads as a stall -- delayed/eased in so a curtain that lifts
+   again quickly (a fast transition) never shows a flash of spinner. */
+.tlr-boot-spinner{width:52px;height:52px;border-radius:50%;border:3px solid rgba(224,195,109,.18);border-top-color:#e0c36d;opacity:0;transition:opacity .2s ease .35s;animation:tlr-boot-spin 1s linear infinite}
+#tlrBootCurtain.show .tlr-boot-spinner{opacity:1}
+@keyframes tlr-boot-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){#tlrBootCurtain{transition:none}.tlr-boot-spinner{animation:none;transition:none}}
 /* Main menu — preserve the full-screen atmosphere and clarify the choice hierarchy */
 #mainMenu{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));overflow-y:auto;background-color:#080503;background-image:url(../../assets/background.webp);background-size:cover;background-position:center top;transition:opacity .35s ease}
 body.main-menu-active #mainMenu{z-index:2147484000}
