@@ -5,10 +5,14 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "predev": "node scripts/build-bundle.mjs",
+    "prestart": "node scripts/build-bundle.mjs",
+    "preserve": "node scripts/build-bundle.mjs",
     "start": "node scripts/serve.mjs",
     "dev": "node scripts/serve.mjs",
     "serve": "node scripts/serve.mjs",
-    "build": "node scripts/validate-all.mjs",
+    "build:bundle": "node scripts/build-bundle.mjs",
+    "build": "node scripts/build-bundle.mjs && node scripts/validate-all.mjs",
     "test": "node scripts/validate-all.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -21,6 +25,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "esbuild": "^0.28.1",
     "eslint": "^9.0.0",
     "globals": "^15.0.0",
     "jsdom": "^29.1.1",

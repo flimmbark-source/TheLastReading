@@ -7,4 +7,5 @@ Thumbs.db
 .vscode/
 coverage/
 dist/
+pages-site/
 artifacts/
