@@ -61,12 +61,13 @@ export function installMpGame(target = window) {
   // resolves, causing a one-frame flash where they reappear as unselected cards.
   // Track them here and filter in selfHandView until _state catches up.
   let _pendingRemovalUids = new Set();
-  // Optimistic local resolution of MY own card ability. Card abilities only
-  // affect the acting player's own piles, so we apply the effect to a local
-  // snapshot the instant it is submitted — the player sees the drawn/taken card
-  // immediately rather than waiting for the simultaneous cycle to resolve. The
-  // opponent still sees it when the cycle reveals. Cleared once the canonical
-  // _state catches up (resolution done).
+  // Optimistic local resolution of MY own local-only actions. Card abilities
+  // affect the acting player's own piles, and Surgeon's swap only exchanges one
+  // of my Spread cards with one of my Hand cards, so we apply the effect to a
+  // local snapshot the instant it is submitted — the player sees the changed
+  // piles immediately rather than waiting for the simultaneous cycle to resolve.
+  // The opponent still sees it when the cycle reveals. Cleared once the
+  // canonical _state catches up (resolution done).
   let _optimisticSelf = null;
 
   const doc = target.document;
@@ -379,7 +380,7 @@ export function installMpGame(target = window) {
   function renderSelfSpread(s, my) {
     const spreadEl = el('spread');
     if (!spreadEl) return;
-    const player = s.players[my];
+    const player = _optimisticSelf || s.players[my];
     if (!player) return;
     const isTurn = isMyActionTurn(s) && !_abilityResolving;
     if (!spreadEl._mpSlots || spreadEl._mpSlots.length !== 5 || !spreadEl.contains(spreadEl._mpSlots[0])) {
@@ -1169,10 +1170,10 @@ export function installMpGame(target = window) {
     const fullAction = { ...action, playerIndex: _myIndex };
     // Optimistically resolve my own card ability locally so its effect (drawn or
     // taken cards, spent discard) shows immediately, instead of waiting for the
-    // simultaneous cycle to resolve. Card abilities only touch my own piles, and
+    // simultaneous cycle to resolve. These actions only touch my own piles, and
     // applyImmediateAction is deterministic, so this snapshot matches what the
     // canonical resolution will produce. Cleared once _state catches up.
-    if (action.type === MP_ACTIONS.MP_INVOKE_ABILITY || action.type === MP_ACTIONS.MP_DISCARD_DRAW) {
+    if (action.type === MP_ACTIONS.MP_INVOKE_ABILITY || action.type === MP_ACTIONS.MP_DISCARD_DRAW || action.type === MP_ACTIONS.MP_SWAP_SPREAD) {
       const resolved = applyImmediateAction(_state, fullAction);
       if (resolved && !resolved.error) _optimisticSelf = resolved.players[_myIndex];
     }
@@ -1211,22 +1212,66 @@ export function installMpGame(target = window) {
     else target.setTimeout?.(runFeedback, 0);
   }
 
+  function animateSurgeonSwap(slotIndex, cardUid) {
+    if (prefersReducedMotion()) return false;
+    const spreadCardEl = doc.querySelector(`#spread .slot:nth-child(${slotIndex + 1}) > .card[data-uid]`);
+    const handCardEl = doc.querySelector(`#hand > .card[data-uid="${cardUid}"]`);
+    if (!spreadCardEl || !handCardEl) return false;
+
+    const spreadRect = spreadCardEl.getBoundingClientRect();
+    const handRect = handCardEl.getBoundingClientRect();
+    if (!spreadRect.width || !handRect.width) return false;
+
+    const moving = [
+      { source: spreadCardEl, from: spreadRect, to: handRect },
+      { source: handCardEl, from: handRect, to: spreadRect },
+    ];
+    const clones = moving.map(({ source, from, to }) => {
+      const clone = source.cloneNode(true);
+      clone.classList.add('mp-surgeon-swap-ghost');
+      Object.assign(clone.style, {
+        position: 'fixed',
+        left: `${from.left}px`,
+        top: `${from.top}px`,
+        width: `${from.width}px`,
+        height: `${from.height}px`,
+        margin: '0',
+        zIndex: '9999',
+        pointerEvents: 'none',
+        transform: 'translate3d(0,0,0)',
+        transition: 'transform 360ms cubic-bezier(.2,.8,.2,1)',
+      });
+      doc.body.appendChild(clone);
+      source.style.visibility = 'hidden';
+      return { clone, source, dx: to.left - from.left, dy: to.top - from.top };
+    });
+
+    target.requestAnimationFrame?.(() => {
+      clones.forEach(({ clone, dx, dy }) => { clone.style.transform = `translate3d(${dx}px, ${dy}px, 0)`; });
+    });
+    target.setTimeout?.(() => {
+      clones.forEach(({ clone, source }) => {
+        clone.remove();
+        source.style.visibility = '';
+      });
+    }, 430);
+    return true;
+  }
+
   function dispatchSwap(slotIndex, cardUid) {
     if (!canDispatchSwap(slotIndex, cardUid)) return;
-    target.tlrMpDispatch?.({
-      type: MP_ACTIONS.MP_SUBMIT_ACTION,
-      playerIndex: _myIndex,
-      action: {
-        type: MP_ACTIONS.MP_SWAP_SPREAD,
-        playerIndex: _myIndex,
-        slotIndex,
-        cardUid,
-      },
-    });
-    _swapFirst = null;
-    _selected = null;
+    const animated = animateSurgeonSwap(slotIndex, cardUid);
     _personaSwapRequested = false;
-    target.refreshHandState?.();
+    const spreadCardUid = _state?.players?.[_myIndex]?.spread?.[slotIndex]?.uid;
+    submitAction({ type: MP_ACTIONS.MP_SWAP_SPREAD, slotIndex, cardUid });
+    if (animated) {
+      const finalEls = [
+        doc.querySelector(`#spread .slot:nth-child(${slotIndex + 1}) > .card[data-uid="${cardUid}"]`),
+        spreadCardUid == null ? null : doc.querySelector(`#hand > .card[data-uid="${spreadCardUid}"]`),
+      ].filter(Boolean);
+      finalEls.forEach(cardEl => { cardEl.style.visibility = 'hidden'; });
+      target.setTimeout?.(() => { finalEls.forEach(cardEl => { cardEl.style.visibility = ''; }); }, 430);
+    }
   }
   function handleInvokeTarget(playerIdx, slotIdx) {
     if (_invokeCard === null) return;
