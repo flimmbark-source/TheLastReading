@@ -2,6 +2,7 @@ import http from 'node:http';
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { extname, join, normalize, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildBundle } from './build-bundle.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const port = Number(process.env.PORT || process.argv[2] || 8080);
@@ -92,6 +93,13 @@ const server = http.createServer((req, res) => {
   createReadStream(filePath).pipe(res);
 });
 
+// Build fresh before listening, regardless of how this script is invoked --
+// `npm run dev/start/serve` isn't the only path here: several test scripts
+// (validate-single-player-v2-visual-smoke.mjs, validate-mp-prompt-visual.mjs,
+// cascade-probe.mjs) spawn `node scripts/serve.mjs` directly, bypassing any
+// npm pre-hook. Doing the build here instead is the one place guaranteed to
+// run no matter how the server is started.
+await buildBundle();
 server.listen(port, () => {
   console.log(`The Last Reading  →  http://localhost:${port}`);
 });
