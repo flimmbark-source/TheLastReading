@@ -1213,15 +1213,16 @@ export function installMpGame(target = window) {
   }
 
   function animateSurgeonSwap(slotIndex, cardUid) {
-    if (prefersReducedMotion()) return false;
+    if (prefersReducedMotion()) return Promise.resolve(false);
     const spreadCardEl = doc.querySelector(`#spread .slot:nth-child(${slotIndex + 1}) > .card[data-uid]`);
     const handCardEl = doc.querySelector(`#hand > .card[data-uid="${cardUid}"]`);
-    if (!spreadCardEl || !handCardEl) return false;
+    if (!spreadCardEl || !handCardEl) return Promise.resolve(false);
 
     const spreadRect = spreadCardEl.getBoundingClientRect();
     const handRect = handCardEl.getBoundingClientRect();
-    if (!spreadRect.width || !handRect.width) return false;
+    if (!spreadRect.width || !handRect.width) return Promise.resolve(false);
 
+    const durationMs = 780;
     const moving = [
       { source: spreadCardEl, from: spreadRect, to: handRect },
       { source: handCardEl, from: handRect, to: spreadRect },
@@ -1239,39 +1240,46 @@ export function installMpGame(target = window) {
         zIndex: '9999',
         pointerEvents: 'none',
         transform: 'translate3d(0,0,0)',
-        transition: 'transform 360ms cubic-bezier(.2,.8,.2,1)',
+        transition: `transform ${durationMs}ms cubic-bezier(.18,.82,.2,1)`,
       });
       doc.body.appendChild(clone);
       source.style.visibility = 'hidden';
       return { clone, source, dx: to.left - from.left, dy: to.top - from.top };
     });
 
-    target.requestAnimationFrame?.(() => {
+    // Wait two frames before applying the transform. That gives the browser a
+    // real initial paint for the fixed-position clones, so the cards visibly
+    // travel between positions instead of appearing already swapped.
+    const raf = typeof target.requestAnimationFrame === 'function'
+      ? target.requestAnimationFrame.bind(target)
+      : callback => target.setTimeout?.(callback, 16);
+    raf(() => raf(() => {
       clones.forEach(({ clone, dx, dy }) => { clone.style.transform = `translate3d(${dx}px, ${dy}px, 0)`; });
+    }));
+
+    return new Promise(resolve => {
+      target.setTimeout?.(() => {
+        clones.forEach(({ clone, source }) => {
+          clone.remove();
+          source.style.visibility = '';
+        });
+        resolve(true);
+      }, durationMs + 80);
     });
-    target.setTimeout?.(() => {
-      clones.forEach(({ clone, source }) => {
-        clone.remove();
-        source.style.visibility = '';
-      });
-    }, 430);
-    return true;
   }
 
-  function dispatchSwap(slotIndex, cardUid) {
-    if (!canDispatchSwap(slotIndex, cardUid)) return;
-    const animated = animateSurgeonSwap(slotIndex, cardUid);
+  async function dispatchSwap(slotIndex, cardUid) {
+    if (!canDispatchSwap(slotIndex, cardUid) || _abilityResolving) return;
+    _abilityResolving = true;
     _personaSwapRequested = false;
-    const spreadCardUid = _state?.players?.[_myIndex]?.spread?.[slotIndex]?.uid;
-    submitAction({ type: MP_ACTIONS.MP_SWAP_SPREAD, slotIndex, cardUid });
-    if (animated) {
-      const finalEls = [
-        doc.querySelector(`#spread .slot:nth-child(${slotIndex + 1}) > .card[data-uid="${cardUid}"]`),
-        spreadCardUid == null ? null : doc.querySelector(`#hand > .card[data-uid="${spreadCardUid}"]`),
-      ].filter(Boolean);
-      finalEls.forEach(cardEl => { cardEl.style.visibility = 'hidden'; });
-      target.setTimeout?.(() => { finalEls.forEach(cardEl => { cardEl.style.visibility = ''; }); }, 430);
+    const animated = await animateSurgeonSwap(slotIndex, cardUid);
+    if (!_state || !canDispatchSwap(slotIndex, cardUid)) {
+      _abilityResolving = false;
+      render();
+      return;
     }
+    submitAction({ type: MP_ACTIONS.MP_SWAP_SPREAD, slotIndex, cardUid });
+    if (!animated) _abilityResolving = false;
   }
   function handleInvokeTarget(playerIdx, slotIdx) {
     if (_invokeCard === null) return;
