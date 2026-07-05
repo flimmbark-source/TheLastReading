@@ -1333,7 +1333,12 @@ export function installMpGame(target = window) {
     }
     submitAction({ type: MP_ACTIONS.MP_SWAP_SPREAD, slotIndex, cardUid });
     result?.cleanup?.();
-    if (!result?.animated) _abilityResolving = false;
+    // The swap is a free preparatory action, so the player must immediately be
+    // able to select and place/discard a real action afterward even if the
+    // submit path returned early or the animation fallback path was used.
+    _abilityResolving = false;
+    target.refreshHandState?.();
+    render();
   }
   function handleInvokeTarget(playerIdx, slotIdx) {
     if (_invokeCard === null) return;
