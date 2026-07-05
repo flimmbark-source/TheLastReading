@@ -61,12 +61,13 @@ export function installMpGame(target = window) {
   // resolves, causing a one-frame flash where they reappear as unselected cards.
   // Track them here and filter in selfHandView until _state catches up.
   let _pendingRemovalUids = new Set();
-  // Optimistic local resolution of MY own card ability. Card abilities only
-  // affect the acting player's own piles, so we apply the effect to a local
-  // snapshot the instant it is submitted — the player sees the drawn/taken card
-  // immediately rather than waiting for the simultaneous cycle to resolve. The
-  // opponent still sees it when the cycle reveals. Cleared once the canonical
-  // _state catches up (resolution done).
+  // Optimistic local resolution of MY own local-only actions. Card abilities
+  // affect the acting player's own piles, and Surgeon's swap only exchanges one
+  // of my Spread cards with one of my Hand cards, so we apply the effect to a
+  // local snapshot the instant it is submitted — the player sees the changed
+  // piles immediately rather than waiting for the simultaneous cycle to resolve.
+  // The opponent still sees it when the cycle reveals. Cleared once the
+  // canonical _state catches up (resolution done).
   let _optimisticSelf = null;
 
   const doc = target.document;
@@ -379,7 +380,7 @@ export function installMpGame(target = window) {
   function renderSelfSpread(s, my) {
     const spreadEl = el('spread');
     if (!spreadEl) return;
-    const player = s.players[my];
+    const player = _optimisticSelf || s.players[my];
     if (!player) return;
     const isTurn = isMyActionTurn(s) && !_abilityResolving;
     if (!spreadEl._mpSlots || spreadEl._mpSlots.length !== 5 || !spreadEl.contains(spreadEl._mpSlots[0])) {
@@ -449,7 +450,7 @@ export function installMpGame(target = window) {
     // the only (or first) thing queued.
     const action = Array.isArray(queue) ? queue.find(a => a?.type === MP_ACTIONS.MP_PLACE_CARD) : null;
     if (!s || !action) return null;
-    const player = s.players?.[my];
+    const player = _optimisticSelf || s.players?.[my];
     const slotIndex = Number(action.slotIndex);
     if (!player || !Number.isInteger(slotIndex) || slotIndex < 0 || slotIndex >= (player.spread?.length || 0)) return null;
     if (player.spread?.[slotIndex]) return null;
@@ -513,8 +514,10 @@ export function installMpGame(target = window) {
     const handCard = doc.querySelector(`body.mp-game-active #hand .card[data-uid="${pending.cardUid}"]`);
     const slot = doc.querySelectorAll('body.mp-game-active #spread .slot')[pending.slotIndex];
     if (!slot) return;
+    const previewCard = buildPendingSpreadCard(pending.card);
+    if (!previewCard) return;
     if (handCard) handCard.classList.add('mp-local-pending-hidden');
-    slot.replaceChildren(buildPendingSpreadCard(pending.card));
+    slot.replaceChildren(previewCard);
     slot.classList.remove('empty', 'target');
     slot.classList.add('filled', 'mp-local-pending-slot');
     slot.style.setProperty('opacity', '1', 'important');
@@ -670,17 +673,19 @@ export function installMpGame(target = window) {
       // discards and draws off of.
       const personaAction = currentPersonaAbilityAction(s, my);
       const needsSelection = personaAction?.type === 'persona-discard-draw';
-      const isVisible = !!personaAction && (!needsSelection || !!selectedCard)
+      const isEnabled = !!personaAction && (!needsSelection || !!selectedCard)
         && _purgeSelect === null && _invokeCard === null && _swapFirst === null && !_abilityResolving;
       const action = personaAction?.type || '';
       const label = personaAction?.title || 'Persona ability unavailable';
-      abilityBtn.disabled = !isVisible;
+      abilityBtn.disabled = !isEnabled;
       abilityBtn.textContent = 'Ability';
       abilityBtn.title = label;
       abilityBtn.setAttribute('aria-label', label);
       abilityBtn.dataset.mpAbilityAction = action;
-      abilityBtn.classList.toggle('mp-visible', isVisible);
-      abilityBtn.setAttribute('aria-hidden', isVisible ? 'false' : 'true');
+      abilityBtn.classList.toggle('mp-visible', isEnabled);
+      // Keep the persona Ability button in the action row even when disabled so
+      // Discard/Purge/Ability do not shift or disappear after a placement.
+      abilityBtn.setAttribute('aria-hidden', 'false');
     }
   }
 
@@ -1169,11 +1174,16 @@ export function installMpGame(target = window) {
     const fullAction = { ...action, playerIndex: _myIndex };
     // Optimistically resolve my own card ability locally so its effect (drawn or
     // taken cards, spent discard) shows immediately, instead of waiting for the
-    // simultaneous cycle to resolve. Card abilities only touch my own piles, and
+    // simultaneous cycle to resolve. These actions only touch my own piles, and
     // applyImmediateAction is deterministic, so this snapshot matches what the
     // canonical resolution will produce. Cleared once _state catches up.
-    if (action.type === MP_ACTIONS.MP_INVOKE_ABILITY || action.type === MP_ACTIONS.MP_DISCARD_DRAW) {
-      const resolved = applyImmediateAction(_state, fullAction);
+    if (action.type === MP_ACTIONS.MP_INVOKE_ABILITY
+      || action.type === MP_ACTIONS.MP_DISCARD_DRAW
+      || action.type === MP_ACTIONS.MP_SWAP_SPREAD
+      || action.type === MP_ACTIONS.MP_PLACE_CARD) {
+      const existingQueue = Array.isArray(_state.pendingActions?.[_myIndex]) ? _state.pendingActions[_myIndex] : [];
+      const previewBase = existingQueue.reduce((acc, queued) => acc?.error ? acc : applyImmediateAction(acc, queued), _state);
+      const resolved = previewBase?.error ? previewBase : applyImmediateAction(previewBase, fullAction);
       if (resolved && !resolved.error) _optimisticSelf = resolved.players[_myIndex];
     }
     // Mark cards being removed so selfHandView hides them immediately, preventing
@@ -1211,22 +1221,135 @@ export function installMpGame(target = window) {
     else target.setTimeout?.(runFeedback, 0);
   }
 
-  function dispatchSwap(slotIndex, cardUid) {
-    if (!canDispatchSwap(slotIndex, cardUid)) return;
-    target.tlrMpDispatch?.({
-      type: MP_ACTIONS.MP_SUBMIT_ACTION,
-      playerIndex: _myIndex,
-      action: {
-        type: MP_ACTIONS.MP_SWAP_SPREAD,
-        playerIndex: _myIndex,
-        slotIndex,
-        cardUid,
-      },
-    });
-    _swapFirst = null;
-    _selected = null;
+  function makeSurgeonSwapPlaceholder(source) {
+    const placeholder = source.cloneNode(true);
+    placeholder.removeAttribute('data-uid');
+    placeholder.classList.add('mp-surgeon-swap-placeholder');
+    placeholder.style.setProperty('pointer-events', 'none', 'important');
+    placeholder.style.setProperty('opacity', '1', 'important');
+    placeholder.style.setProperty('visibility', 'visible', 'important');
+    return placeholder;
+  }
+
+
+  function hideSurgeonSwapPlaceholder(placeholder) {
+    placeholder.style.setProperty('opacity', '0', 'important');
+    placeholder.style.setProperty('visibility', 'hidden', 'important');
+  }
+
+  function surgeonSwapOverlay() {
+    let overlay = doc.getElementById('mpSurgeonSwapOverlay');
+    if (!overlay) {
+      overlay = doc.createElement('div');
+      overlay.id = 'mpSurgeonSwapOverlay';
+      doc.body.appendChild(overlay);
+    }
+    const set = (name, value) => overlay.style.setProperty(name, value, 'important');
+    set('position', 'fixed');
+    set('inset', '0');
+    set('z-index', '2147483000');
+    set('pointer-events', 'none');
+    set('overflow', 'visible');
+    return overlay;
+  }
+
+  function liftSurgeonSwapCard(cardEl, rect) {
+    const set = (name, value, priority = 'important') => cardEl.style.setProperty(name, value, priority);
+    set('position', 'fixed');
+    set('left', `${rect.left}px`);
+    set('top', `${rect.top}px`);
+    set('width', `${rect.width}px`);
+    set('height', `${rect.height}px`);
+    set('margin', '0');
+    set('z-index', '2147483001');
+    set('pointer-events', 'none');
+    set('display', 'grid');
+    set('visibility', 'visible');
+    set('opacity', '1');
+    set('filter', 'none');
+    set('transform-origin', 'top left');
+    // Leave transform non-important so the Web Animations API can own it.
+    set('transform', 'translate3d(0,0,0)', '');
+    return cardEl;
+  }
+
+  function animateSurgeonSwap(slotIndex, cardUid) {
+    if (prefersReducedMotion()) return Promise.resolve({ animated: false, cleanup: null });
+    const spreadCardEl = doc.querySelector(`#spread .slot:nth-child(${slotIndex + 1}) > .card[data-uid]`);
+    const handCardEl = doc.querySelector(`#hand > .card[data-uid="${cardUid}"]`);
+    if (!spreadCardEl || !handCardEl || typeof spreadCardEl.animate !== 'function' || typeof handCardEl.animate !== 'function') return Promise.resolve({ animated: false, cleanup: null });
+
+    const spreadRect = spreadCardEl.getBoundingClientRect();
+    const handRect = handCardEl.getBoundingClientRect();
+    if (!spreadRect.width || !spreadRect.height || !handRect.width || !handRect.height) return Promise.resolve({ animated: false, cleanup: null });
+
+    const spreadPlaceholder = makeSurgeonSwapPlaceholder(spreadCardEl);
+    const handPlaceholder = makeSurgeonSwapPlaceholder(handCardEl);
+    const spreadParent = spreadCardEl.parentNode;
+    const handParent = handCardEl.parentNode;
+    spreadParent?.insertBefore(spreadPlaceholder, spreadCardEl);
+    handParent?.insertBefore(handPlaceholder, handCardEl);
+
+    const overlay = surgeonSwapOverlay();
+    overlay.appendChild(spreadCardEl);
+    overlay.appendChild(handCardEl);
+    liftSurgeonSwapCard(spreadCardEl, spreadRect);
+    liftSurgeonSwapCard(handCardEl, handRect);
+    hideSurgeonSwapPlaceholder(spreadPlaceholder);
+    hideSurgeonSwapPlaceholder(handPlaceholder);
+
+    const durationMs = 780;
+    const options = { duration: durationMs, easing: 'cubic-bezier(.18,.82,.2,1)', fill: 'forwards' };
+    const spreadToHandScaleX = handRect.width / spreadRect.width;
+    const spreadToHandScaleY = handRect.height / spreadRect.height;
+    const handToSpreadScaleX = spreadRect.width / handRect.width;
+    const handToSpreadScaleY = spreadRect.height / handRect.height;
+    const spreadAnim = spreadCardEl.animate([
+      { transform: 'translate3d(0,0,0) scale(1,1)' },
+      { transform: `translate3d(${handRect.left - spreadRect.left}px, ${handRect.top - spreadRect.top}px, 0) scale(${spreadToHandScaleX}, ${spreadToHandScaleY})` },
+    ], options);
+    const handAnim = handCardEl.animate([
+      { transform: 'translate3d(0,0,0) scale(1,1)' },
+      { transform: `translate3d(${spreadRect.left - handRect.left}px, ${spreadRect.top - handRect.top}px, 0) scale(${handToSpreadScaleX}, ${handToSpreadScaleY})` },
+    ], options);
+
+    const cleanup = () => {
+      spreadAnim.cancel?.();
+      handAnim.cancel?.();
+      spreadCardEl.remove();
+      handCardEl.remove();
+      spreadPlaceholder.remove();
+      handPlaceholder.remove();
+      if (overlay && !overlay.childElementCount) overlay.remove();
+    };
+
+    return Promise.allSettled([spreadAnim.finished, handAnim.finished])
+      .then(() => ({ animated: true, cleanup }));
+  }
+
+  async function dispatchSwap(slotIndex, cardUid) {
+    if (!canDispatchSwap(slotIndex, cardUid) || _abilityResolving) return;
+    let result = null;
+    _abilityResolving = true;
     _personaSwapRequested = false;
-    target.refreshHandState?.();
+    try {
+      result = await animateSurgeonSwap(slotIndex, cardUid);
+      if (!_state || !canDispatchSwap(slotIndex, cardUid)) return;
+      submitAction({ type: MP_ACTIONS.MP_SWAP_SPREAD, slotIndex, cardUid });
+    } finally {
+      try { result?.cleanup?.(); } catch { /* cleanup is best-effort; always unlock below */ }
+      // The swap is a free preparatory action, so the player must immediately be
+      // able to select and place/discard a real action afterward regardless of
+      // animation success, fallback, cancellation, submit short-circuit, or
+      // partial cleanup failure.
+      _abilityResolving = false;
+      _swapFirst = null;
+      _personaSwapRequested = false;
+      doc.body.classList.remove('mp-persona-ability-active');
+      syncPersonaPrompt();
+      target.refreshHandState?.();
+      render();
+    }
   }
   function handleInvokeTarget(playerIdx, slotIdx) {
     if (_invokeCard === null) return;
@@ -1801,7 +1924,9 @@ function installMpGameStyle(doc) {
       text-transform: none !important;
     }
     body.mp-game-active #mpAbilityBtn:not(.mp-visible) {
-      display: none !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
     body.mp-game-active #mpAbilityBtn.mp-visible {
       display: inline-flex !important;
