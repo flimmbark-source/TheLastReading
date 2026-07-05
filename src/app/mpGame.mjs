@@ -1224,6 +1224,12 @@ export function installMpGame(target = window) {
     return placeholder;
   }
 
+
+  function hideSurgeonSwapPlaceholder(placeholder) {
+    placeholder.style.setProperty('opacity', '0', 'important');
+    placeholder.style.setProperty('visibility', 'hidden', 'important');
+  }
+
   function surgeonSwapOverlay() {
     let overlay = doc.getElementById('mpSurgeonSwapOverlay');
     if (!overlay) {
@@ -1254,6 +1260,7 @@ export function installMpGame(target = window) {
     set('visibility', 'visible');
     set('opacity', '1');
     set('filter', 'none');
+    set('transform-origin', 'top left');
     // Leave transform non-important so the Web Animations API can own it.
     set('transform', 'translate3d(0,0,0)', '');
     return cardEl;
@@ -1281,16 +1288,22 @@ export function installMpGame(target = window) {
     overlay.appendChild(handCardEl);
     liftSurgeonSwapCard(spreadCardEl, spreadRect);
     liftSurgeonSwapCard(handCardEl, handRect);
+    hideSurgeonSwapPlaceholder(spreadPlaceholder);
+    hideSurgeonSwapPlaceholder(handPlaceholder);
 
     const durationMs = 780;
     const options = { duration: durationMs, easing: 'cubic-bezier(.18,.82,.2,1)', fill: 'forwards' };
+    const spreadToHandScaleX = handRect.width / spreadRect.width;
+    const spreadToHandScaleY = handRect.height / spreadRect.height;
+    const handToSpreadScaleX = spreadRect.width / handRect.width;
+    const handToSpreadScaleY = spreadRect.height / handRect.height;
     const spreadAnim = spreadCardEl.animate([
-      { transform: 'translate3d(0,0,0)' },
-      { transform: `translate3d(${handRect.left - spreadRect.left}px, ${handRect.top - spreadRect.top}px, 0)` },
+      { transform: 'translate3d(0,0,0) scale(1,1)' },
+      { transform: `translate3d(${handRect.left - spreadRect.left}px, ${handRect.top - spreadRect.top}px, 0) scale(${spreadToHandScaleX}, ${spreadToHandScaleY})` },
     ], options);
     const handAnim = handCardEl.animate([
-      { transform: 'translate3d(0,0,0)' },
-      { transform: `translate3d(${spreadRect.left - handRect.left}px, ${spreadRect.top - handRect.top}px, 0)` },
+      { transform: 'translate3d(0,0,0) scale(1,1)' },
+      { transform: `translate3d(${spreadRect.left - handRect.left}px, ${spreadRect.top - handRect.top}px, 0) scale(${handToSpreadScaleX}, ${handToSpreadScaleY})` },
     ], options);
 
     const cleanup = () => {
