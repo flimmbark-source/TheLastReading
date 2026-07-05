@@ -1214,65 +1214,64 @@ export function installMpGame(target = window) {
     else target.setTimeout?.(runFeedback, 0);
   }
 
-  function buildSurgeonSwapGhost(card, rect) {
-    if (!card || !rect) return null;
-    const ghost = doc.createElement('div');
-    ghost.dataset.uid = card.uid;
-    ghost.className = 'card'
-      + (card.type === 'major' ? ' major' : '')
-      + (CARD_SHEET[card.id] ? ' photo' : '')
-      + (card.type === 'interaction' ? ' mp-interaction' : '')
-      + ' mp-surgeon-swap-ghost';
-    ghost.innerHTML = mpCardHTML(card);
-    if (card.type !== 'interaction') applyCardPhoto(ghost, card);
-    const setGhostStyle = (name, value) => ghost.style.setProperty(name, value, 'important');
-    setGhostStyle('position', 'fixed');
-    setGhostStyle('left', `${rect.left}px`);
-    setGhostStyle('top', `${rect.top}px`);
-    setGhostStyle('width', `${rect.width}px`);
-    setGhostStyle('height', `${rect.height}px`);
-    setGhostStyle('margin', '0');
-    setGhostStyle('z-index', '2147483001');
-    setGhostStyle('pointer-events', 'none');
-    setGhostStyle('display', 'grid');
-    setGhostStyle('visibility', 'visible');
-    setGhostStyle('opacity', '1');
-    setGhostStyle('filter', 'none');
-    setGhostStyle('transform', 'translate3d(0,0,0)');
-    doc.body.appendChild(ghost);
-    return ghost;
+  function makeSurgeonSwapPlaceholder(source) {
+    const placeholder = source.cloneNode(false);
+    placeholder.className = source.className;
+    placeholder.removeAttribute('data-uid');
+    placeholder.classList.add('mp-surgeon-swap-placeholder');
+    placeholder.style.setProperty('visibility', 'hidden', 'important');
+    placeholder.style.setProperty('pointer-events', 'none', 'important');
+    return placeholder;
+  }
+
+  function liftSurgeonSwapCard(cardEl, rect) {
+    const set = (name, value, priority = 'important') => cardEl.style.setProperty(name, value, priority);
+    set('position', 'fixed');
+    set('left', `${rect.left}px`);
+    set('top', `${rect.top}px`);
+    set('width', `${rect.width}px`);
+    set('height', `${rect.height}px`);
+    set('margin', '0');
+    set('z-index', '2147483001');
+    set('pointer-events', 'none');
+    set('display', 'grid');
+    set('visibility', 'visible');
+    set('opacity', '1');
+    set('filter', 'none');
+    // Leave transform non-important so the Web Animations API can own it.
+    set('transform', 'translate3d(0,0,0)', '');
+    return cardEl;
   }
 
   function animateSurgeonSwap(slotIndex, cardUid) {
     if (prefersReducedMotion()) return Promise.resolve(false);
-    const player = _state?.players?.[_myIndex];
-    const spreadCard = player?.spread?.[slotIndex] || null;
-    const handCard = player?.hand?.find(card => card.uid === cardUid) || null;
-    if (!spreadCard || !handCard) return Promise.resolve(false);
-
     const spreadCardEl = doc.querySelector(`#spread .slot:nth-child(${slotIndex + 1}) > .card[data-uid]`);
     const handCardEl = doc.querySelector(`#hand > .card[data-uid="${cardUid}"]`);
-    if (!spreadCardEl || !handCardEl) return Promise.resolve(false);
+    if (!spreadCardEl || !handCardEl || typeof spreadCardEl.animate !== 'function' || typeof handCardEl.animate !== 'function') return Promise.resolve(false);
 
     const spreadRect = spreadCardEl.getBoundingClientRect();
     const handRect = handCardEl.getBoundingClientRect();
     if (!spreadRect.width || !spreadRect.height || !handRect.width || !handRect.height) return Promise.resolve(false);
 
-    const spreadGhost = buildSurgeonSwapGhost(spreadCard, spreadRect);
-    const handGhost = buildSurgeonSwapGhost(handCard, handRect);
-    if (!spreadGhost || !handGhost || typeof spreadGhost.animate !== 'function' || typeof handGhost.animate !== 'function') {
-      spreadGhost?.remove();
-      handGhost?.remove();
-      return Promise.resolve(false);
-    }
+    const spreadPlaceholder = makeSurgeonSwapPlaceholder(spreadCardEl);
+    const handPlaceholder = makeSurgeonSwapPlaceholder(handCardEl);
+    const spreadParent = spreadCardEl.parentNode;
+    const handParent = handCardEl.parentNode;
+    spreadParent?.insertBefore(spreadPlaceholder, spreadCardEl);
+    handParent?.insertBefore(handPlaceholder, handCardEl);
+
+    doc.body.appendChild(spreadCardEl);
+    doc.body.appendChild(handCardEl);
+    liftSurgeonSwapCard(spreadCardEl, spreadRect);
+    liftSurgeonSwapCard(handCardEl, handRect);
 
     const durationMs = 780;
     const options = { duration: durationMs, easing: 'cubic-bezier(.18,.82,.2,1)', fill: 'forwards' };
-    const spreadAnim = spreadGhost.animate([
+    const spreadAnim = spreadCardEl.animate([
       { transform: 'translate3d(0,0,0)' },
       { transform: `translate3d(${handRect.left - spreadRect.left}px, ${handRect.top - spreadRect.top}px, 0)` },
     ], options);
-    const handAnim = handGhost.animate([
+    const handAnim = handCardEl.animate([
       { transform: 'translate3d(0,0,0)' },
       { transform: `translate3d(${spreadRect.left - handRect.left}px, ${spreadRect.top - handRect.top}px, 0)` },
     ], options);
@@ -1280,8 +1279,15 @@ export function installMpGame(target = window) {
     return Promise.allSettled([spreadAnim.finished, handAnim.finished])
       .then(() => true)
       .finally(() => {
-        spreadGhost.remove();
-        handGhost.remove();
+        spreadAnim.cancel?.();
+        handAnim.cancel?.();
+        spreadCardEl.remove();
+        handCardEl.remove();
+        spreadPlaceholder.remove();
+        handPlaceholder.remove();
+        // If the swap is cancelled before submission, render() rebuilds from
+        // state. If it succeeds, submitAction() immediately rebuilds from the
+        // optimistic/canonical state instead.
       });
   }
 
