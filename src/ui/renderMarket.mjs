@@ -567,8 +567,8 @@ export function openShopMain(){
   const html=`<div class="summary tarot-shop store-front-shell">
     <div class="store-dim"></div>
     <div class="store-candle${alreadyOpen ? ' lit' : ''}" id="storeCandle">
-      <img class="candle-off" src="ui/candle_flame_off.png" alt="">
-      <img class="candle-on"  src="ui/candle_flame_on.png"  alt="">
+      <img class="candle-off" src="ui/candle_flame_off.small.webp" alt="">
+      <img class="candle-on"  src="ui/candle_flame_on.small.webp"  alt="">
     </div>
     <div class="store-front${alreadyOpen ? ' store-visible' : ''}" id="storeFront">${inner}</div>
   </div>`;
