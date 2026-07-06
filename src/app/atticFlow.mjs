@@ -22,7 +22,10 @@ export function installAtticFlow(target = window){
     coat_01:{id:'coat_01',label:'Old Coat',verb:'Check pocket',motion:'search',cost:1,before:'props/old_coat_closed.png',after:'props/old_coat_searched.png',left:'2%',top:'13%',width:'18%',height:'54%',itemId:'letter_01',itemTitle:'Unsigned Letter',thumb:'assets/handwritten_note.webp'}
   };
 
-  function foundItems(){try{const v=JSON.parse(target.localStorage.getItem('tlr_attic_found_items')||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
+  function vaultedItemIds(){try{const v=JSON.parse(target.localStorage.getItem('tlr_resonation_vault')||'{}');return Object.keys(v).reduce(function(a,k){return a.concat(Array.isArray(v[k])?v[k]:[])},[])}catch(e){return []}}
+  // Vaulted items count as found: completing a resonation moves them out of
+  // the drawer, but the attic props they came from must stay searched.
+  function foundItems(){try{const v=JSON.parse(target.localStorage.getItem('tlr_attic_found_items')||'[]');return (Array.isArray(v)?v:[]).concat(vaultedItemIds())}catch(e){return vaultedItemIds()}}
   function candlesFromScore(score){if(score>=1000)return 7;if(score>=700)return 6;if(score>=450)return 5;if(score>=250)return 4;if(score>=100)return 3;if(score>=50)return 2;return 1;}
   function renderCandles(){if(target.renderAtticObals)target.renderAtticObals(candleCount);}
   function candleSpend(){const h=document.getElementById('obalsHud');if(!h)return;h.classList.remove('spend');requestAnimationFrame(()=>requestAnimationFrame(()=>{h.classList.add('spend');setTimeout(function(){h.classList.remove('spend')},460);}));}
@@ -124,6 +127,9 @@ export function installAtticFlow(target = window){
 
   function closeArchives(){
     try{ if(typeof invOpen !== 'undefined') invOpen = false; }catch(e){}
+    // Leaving the drawer behind (attic, new reading, menu) drops any
+    // resonation-memory view so it reopens on the present-day drawer.
+    if(typeof target.tlrResetDrawerView==='function')target.tlrResetDrawerView();
     const wrap = document.getElementById('invWrap');
     if(wrap) wrap.classList.remove('open');
     const tab = document.getElementById('invTab');

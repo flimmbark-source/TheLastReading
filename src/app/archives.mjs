@@ -79,6 +79,87 @@ function initTabDrag(){
 }
 setTimeout(initTabDrag,0);
 
+// ── Resonation vault ────────────────────────────────────────────────────────
+// When a puzzle resonation completes for the first time, its archive items
+// are moved out of the current drawer into a per-resonation record
+// (tlr_resonation_vault). The vault screen (tlrOpenDrawerVault) lets the
+// player point the drawer back at any completed resonation's items.
+
+const VAULT_KEY='tlr_resonation_vault';
+let _drawerView=null; // null = current drawer, otherwise a vaulted resonation id
+
+export function tlrReadResonationVault(){
+  try{
+    const v=JSON.parse(localStorage.getItem(VAULT_KEY)||'{}');
+    return v&&typeof v==='object'&&!Array.isArray(v)?v:{};
+  }catch(e){return {};}
+}
+
+export function tlrVaultResonationItems(resId,itemIds){
+  if(!resId||!Array.isArray(itemIds)||!itemIds.length)return false;
+  const vault=tlrReadResonationVault();
+  if(vault[resId])return false; // only the first completion moves the items
+  vault[resId]=itemIds.slice();
+  try{localStorage.setItem(VAULT_KEY,JSON.stringify(vault))}catch(e){}
+  try{
+    const key='tlr_attic_found_items';
+    let arr;try{arr=JSON.parse(localStorage.getItem(key)||'[]')}catch(e){arr=null}
+    if(Array.isArray(arr))localStorage.setItem(key,JSON.stringify(arr.filter(id=>!itemIds.includes(id))));
+  }catch(e){}
+  renderInventory();
+  return true;
+}
+
+// Placeholder gate for the first meta puzzle: the vault icon only appears
+// once a resonation is vaulted AND this flag is set. Call
+// tlrSolveMetaPuzzle() from the future meta-puzzle code when it is solved.
+export function tlrMetaPuzzleSolved(id=1){
+  try{return !!localStorage.getItem('tlr_meta_puzzle_'+id)}catch(e){return false}
+}
+export function tlrSolveMetaPuzzle(id=1){
+  try{localStorage.setItem('tlr_meta_puzzle_'+id,'1')}catch(e){}
+  renderInventory();
+}
+
+export function tlrGetDrawerView(){return _drawerView;}
+export function tlrSetDrawerView(resId){_drawerView=resId||null;renderInventory();}
+export function tlrResetDrawerView(){if(_drawerView!==null){_drawerView=null;renderInventory();}}
+
+export function tlrOpenDrawerVault(){
+  document.querySelectorAll('.res-vault-bg').forEach(e=>e.remove());
+  const vault=tlrReadResonationVault();
+  const bg=document.createElement('div');
+  bg.className='res-vault-bg';
+  const screen=document.createElement('div');
+  screen.className='res-vault-screen';
+  // Chain grows upward from the drawer node: first-solved sits closest to
+  // the center, later ones stack above it.
+  let chain='';
+  Object.keys(vault).slice().reverse().forEach(id=>{
+    const res=(window.RESONATIONS||[]).find(r=>r.id===id);
+    chain+='<button type="button" class="res-vault-node'+(_drawerView===id?' active':'')+'" data-res-id="'+id+'"><span>'+(res?res.name:id)+'</span></button>'
+      +'<span class="res-vault-link"></span>';
+  });
+  chain+='<button type="button" class="res-vault-node res-vault-node-center'+(_drawerView?'':' active')+'" data-res-id=""><span>Current Drawer</span></button>';
+  screen.innerHTML='<button class="res-vault-close" type="button" aria-label="Close">&#x2715;</button>'
+    +'<h3>Remembrance</h3>'
+    +'<p class="res-vault-hint">Choose a memory to lay its pieces back on the desk. The drawer below returns you to the present.</p>'
+    +'<div class="res-vault-chain">'+chain+'</div>';
+  bg.appendChild(screen);
+  bg.addEventListener('click',e=>{if(e.target===bg)bg.remove();});
+  screen.querySelector('.res-vault-close').addEventListener('click',()=>bg.remove());
+  screen.querySelectorAll('.res-vault-node').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      tlrSetDrawerView(btn.dataset.resId||null);
+      bg.remove();
+      const wrap=document.getElementById('invWrap');
+      if(wrap&&!wrap.classList.contains('open'))wrap.classList.add('open');
+    });
+  });
+  document.body.appendChild(bg);
+}
+
 export function renderInventory(){
   const desk=document.getElementById('invDesk');
   if(!desk)return;
@@ -101,70 +182,100 @@ export function renderInventory(){
     window.tlrBrowseDeck?.();
   });
   desk.appendChild(deckBtn);
+
+  const vault=tlrReadResonationVault();
+  if(_drawerView&&!vault[_drawerView])_drawerView=null;
+  if(Object.keys(vault).length&&tlrMetaPuzzleSolved(1)){
+    const vaultBtn=document.createElement('button');
+    vaultBtn.type='button';
+    vaultBtn.className='inv-vault-btn';
+    vaultBtn.setAttribute('aria-label','Open the drawer memories');
+    vaultBtn.innerHTML='<span class="inv-vault-node inv-vault-node-top"></span><span class="inv-vault-node inv-vault-node-mid"></span><span class="inv-vault-node inv-vault-node-base"></span>';
+    vaultBtn.addEventListener('pointerdown',e=>e.stopPropagation());
+    vaultBtn.addEventListener('click',e=>{e.stopPropagation();tlrOpenDrawerVault();});
+    desk.appendChild(vaultBtn);
+  }
+
+  if(_drawerView){
+    const res=(window.RESONATIONS||[]).find(r=>r.id===_drawerView);
+    const chip=document.createElement('div');
+    chip.className='inv-view-chip';
+    chip.textContent=res?res.name:_drawerView;
+    desk.appendChild(chip);
+    (vault[_drawerView]||[]).map(id=>INV_ITEMS.find(i=>i.id===id)).filter(Boolean)
+      .forEach(item=>renderDeskItem(desk,item,true));
+    return;
+  }
+
   const foundAtticItems=(()=>{try{return JSON.parse(localStorage.getItem('tlr_attic_found_items')||'[]')}catch(e){return []}})();const allItems=[...INV_ITEMS.filter(item=>foundAtticItems.includes(item.id)),...getUnlockedFragments().map(id=>INV_FRAGMENTS[id]).filter(Boolean)];
-  allItems.forEach((item,idx)=>{
-    let pos=invPos[item.id];
-    if(!pos){
-      const rot=(Math.random()*32-16);
-      const dw=desk.clientWidth||320;
-      const cx=Math.max(20,dw/2-40);
-      pos={x:cx+(Math.random()*40-20),y:20+(Math.random()*24-12),rot,named:false};
-      invPos[item.id]=pos;
-      _saveInvPos();
-    }
-    const el=document.createElement('div');
-    el.className='inv-item'+(pos.named?' named':'');
-    el.dataset.invId=item.id;
-    el.style.cssText='left:'+pos.x+'px;top:'+pos.y+'px;transform:rotate('+pos.rot+'deg)';
-    const iconHtml=item.image?'<img class="inv-item-img" src="'+item.image+'" alt="">':`<span class="inv-item-emoji">${item.emoji}</span>`;
-    el.innerHTML='<div class="inv-item-paper">'+iconHtml+'<span class="inv-item-type">'+item.type+'</span><span class="inv-item-name">'+item.title+'</span></div>';
-    let psx,psy,esx,esy,dw,dh,iw,ih,moved=false,active=false;
-    el.addEventListener('pointerdown',e=>{
+  allItems.forEach(item=>renderDeskItem(desk,item,false));
+}
+
+// memoryView: item belongs to a vaulted resonation being revisited — always
+// shown named, taps go straight to the detail view, and the naming flow
+// (sound, tutorial, resonation glow refresh) is skipped.
+function renderDeskItem(desk,item,memoryView){
+  let pos=invPos[item.id];
+  if(!pos){
+    const rot=(Math.random()*32-16);
+    const dw=desk.clientWidth||320;
+    const cx=Math.max(20,dw/2-40);
+    pos={x:cx+(Math.random()*40-20),y:20+(Math.random()*24-12),rot,named:false};
+    invPos[item.id]=pos;
+    _saveInvPos();
+  }
+  const el=document.createElement('div');
+  el.className='inv-item'+((pos.named||memoryView)?' named':'');
+  el.dataset.invId=item.id;
+  el.style.cssText='left:'+pos.x+'px;top:'+pos.y+'px;transform:rotate('+pos.rot+'deg)';
+  const iconHtml=item.image?'<img class="inv-item-img" src="'+item.image+'" alt="">':`<span class="inv-item-emoji">${item.emoji}</span>`;
+  el.innerHTML='<div class="inv-item-paper">'+iconHtml+'<span class="inv-item-type">'+item.type+'</span><span class="inv-item-name">'+item.title+'</span></div>';
+  let psx,psy,esx,esy,dw,dh,iw,ih,moved=false,active=false;
+  el.addEventListener('pointerdown',e=>{
+    e.stopPropagation();
+    el.setPointerCapture(e.pointerId);
+    psx=e.clientX;psy=e.clientY;
+    esx=parseFloat(el.style.left)||0;esy=parseFloat(el.style.top)||0;
+    const desk=document.getElementById('invDesk');
+    dw=desk?desk.clientWidth:window.innerWidth;
+    dh=desk?desk.clientHeight:300;
+    iw=el.offsetWidth||84;ih=el.offsetHeight||100;
+    moved=false;active=true;el.style.zIndex=50;
+  });
+  el.addEventListener('pointermove',e=>{
+    if(!active)return;
+    const dx=e.clientX-psx,dy=e.clientY-psy;
+    if(Math.hypot(dx,dy)>12)moved=true;
+    if(!moved)return;
+    const margin=24;
+    el.style.left=Math.max(-iw+margin,Math.min(dw-margin,esx+dx))+'px';
+    el.style.top=Math.max(0,Math.min(dh-margin,esy+dy))+'px';
+  });
+  el.addEventListener('pointerup',e=>{
+    if(!active)return;
+    active=false;el.style.zIndex='';
+    const nx=parseFloat(el.style.left)||0,ny=parseFloat(el.style.top)||0;
+    invPos[item.id]={...invPos[item.id],x:nx,y:ny};
+    _saveInvPos();
+    if(!moved){
       e.stopPropagation();
-      el.setPointerCapture(e.pointerId);
-      psx=e.clientX;psy=e.clientY;
-      esx=parseFloat(el.style.left)||0;esy=parseFloat(el.style.top)||0;
-      const desk=document.getElementById('invDesk');
-      dw=desk?desk.clientWidth:window.innerWidth;
-      dh=desk?desk.clientHeight:300;
-      iw=el.offsetWidth||84;ih=el.offsetHeight||100;
-      moved=false;active=true;el.style.zIndex=50;
-    });
-    el.addEventListener('pointermove',e=>{
-      if(!active)return;
-      const dx=e.clientX-psx,dy=e.clientY-psy;
-      if(Math.hypot(dx,dy)>12)moved=true;
-      if(!moved)return;
-      const margin=24;
-      el.style.left=Math.max(-iw+margin,Math.min(dw-margin,esx+dx))+'px';
-      el.style.top=Math.max(0,Math.min(dh-margin,esy+dy))+'px';
-    });
-    el.addEventListener('pointerup',e=>{
-      if(!active)return;
-      active=false;el.style.zIndex='';
-      const nx=parseFloat(el.style.left)||0,ny=parseFloat(el.style.top)||0;
-      invPos[item.id]={...invPos[item.id],x:nx,y:ny};
-      _saveInvPos();
-      if(!moved){
-        e.stopPropagation();
-        if(el.classList.contains('named')){
-          openInvDetail(item);
-        } else {
-          playSound('scratch');
-          el.classList.add('named');
-          invPos[item.id].named=true;
-          _saveInvPos();
-          _resStateKey=null;applyResonationGlows(state.spread);
-          if(!localStorage.getItem('tlr_tut_inv_name')){
-            localStorage.setItem('tlr_tut_inv_name','1');
-            setTimeout(()=>showInvTut('Item identified. Tap it again to examine it closely.'),300);
-          }
+      if(memoryView||el.classList.contains('named')){
+        openInvDetail(item);
+      } else {
+        playSound('scratch');
+        el.classList.add('named');
+        invPos[item.id].named=true;
+        _saveInvPos();
+        _resStateKey=null;applyResonationGlows(state.spread);
+        if(!localStorage.getItem('tlr_tut_inv_name')){
+          localStorage.setItem('tlr_tut_inv_name','1');
+          setTimeout(()=>showInvTut('Item identified. Tap it again to examine it closely.'),300);
         }
       }
-      moved=false;
-    });
-    desk.appendChild(el);
+    }
+    moved=false;
   });
+  desk.appendChild(el);
 }
 
 function openInvDetail(item){
