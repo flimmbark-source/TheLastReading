@@ -35,13 +35,23 @@ export function renderAtticObjects({objects,searchedMap,foundItemIds,onRummage})
       const aft=document.createElement('div');aft.className='prop-img prop-img-after';aft.style.backgroundImage='url("'+o.after+'")';
       el.appendChild(bef);el.appendChild(aft);
       el.setAttribute('role','button');el.setAttribute('aria-label',o.verb+' '+o.label);
-      if(!done)el.addEventListener('click',function(e){e.stopPropagation();onRummage(o.id,el);});
+      // Always bind; the searched class gates it. Binding only when !done
+      // used to leave un-searched props dead if they were first rendered as
+      // done and later reset.
+      el.addEventListener('click',function(e){e.stopPropagation();if(el.classList.contains('searched'))return;onRummage(o.id,el);});
       root.appendChild(el);
     }
     if(done&&!el.classList.contains('searched')){
       el.classList.add('searched');
       el.setAttribute('aria-label',o.label+' already searched');
       el.style.pointerEvents='none';
+    }else if(!done&&el.classList.contains('searched')){
+      // The found-items record no longer covers this prop (e.g. it was reset
+      // or lost). Un-latch the DOM state so the attic offers the item again
+      // instead of staying "searched" with the item unrecoverable.
+      el.classList.remove('searched');
+      el.setAttribute('aria-label',o.verb+' '+o.label);
+      el.style.pointerEvents='';
     }
   });
 }

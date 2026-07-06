@@ -156,10 +156,35 @@ export function installMainMenu(target = window) {
     if (attic) attic.setAttribute('aria-hidden', 'true');
   }
 
+  // Same saved-progress criteria as menuBoot.mjs's hasSavedProgress — keep
+  // the two in sync or the button will flicker between boot and game-module
+  // ownership of the menu.
+  function hasSavedProgress() {
+    try {
+      const raw = target.localStorage.getItem('tlr_save');
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      if (!parsed?.persist) return false;
+      const p = parsed.persist;
+      const reserve = Number(p.reserve ?? p.pool ?? 0);
+      const upgrades = p.upgrades || p.up || {};
+      return (reserve > 0) || (p.relics?.length > 0) || Object.values(upgrades).some(v => v > 0);
+    } catch {
+      return false;
+    }
+  }
+
   function syncContinueBtn() {
     const btn = target.document.getElementById('mainMenuContinue');
     if (!btn) return;
-    btn.disabled = false;
+    // A run started this session is always resumable, even before it has
+    // earned anything save-worthy. Otherwise fall back to the saved-progress
+    // check — and clear the unavailable class menuBoot may have set at cold
+    // boot (it is display:none via mainMenu.css, so leaving it latched hides
+    // Continue forever even once progress exists).
+    const available = gameStarted || hasSavedProgress();
+    btn.disabled = !available;
+    btn.classList.toggle('main-menu-continue-unavailable', !available);
   }
 
 

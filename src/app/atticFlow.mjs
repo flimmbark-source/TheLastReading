@@ -22,7 +22,7 @@ export function installAtticFlow(target = window){
     coat_01:{id:'coat_01',label:'Old Coat',verb:'Check pocket',motion:'search',cost:1,before:'props/old_coat_closed.png',after:'props/old_coat_searched.png',left:'2%',top:'13%',width:'18%',height:'54%',itemId:'letter_01',itemTitle:'Unsigned Letter',thumb:'assets/handwritten_note.webp'}
   };
 
-  function foundItems(){try{return JSON.parse(target.localStorage.getItem('tlr_attic_found_items')||'[]')}catch(e){return []}}
+  function foundItems(){try{const v=JSON.parse(target.localStorage.getItem('tlr_attic_found_items')||'[]');return Array.isArray(v)?v:[]}catch(e){return []}}
   function candlesFromScore(score){if(score>=1000)return 7;if(score>=700)return 6;if(score>=450)return 5;if(score>=250)return 4;if(score>=100)return 3;if(score>=50)return 2;return 1;}
   function renderCandles(){if(target.renderAtticObals)target.renderAtticObals(candleCount);}
   function candleSpend(){const h=document.getElementById('obalsHud');if(!h)return;h.classList.remove('spend');requestAnimationFrame(()=>requestAnimationFrame(()=>{h.classList.add('spend');setTimeout(function(){h.classList.remove('spend')},460);}));}
@@ -45,7 +45,11 @@ export function installAtticFlow(target = window){
   function saveFound(itemId){
     try{
       const key='tlr_attic_found_items';
-      const arr=JSON.parse(target.localStorage.getItem(key)||'[]');
+      // A corrupt stored value must not eat the pickup: rebuild the list
+      // instead of throwing past the write below.
+      let arr;
+      try{arr=JSON.parse(target.localStorage.getItem(key)||'[]')}catch(e){arr=null}
+      if(!Array.isArray(arr))arr=[];
       const isNew=!arr.includes(itemId);
       const isFirst=isNew&&arr.length===0;
       if(isNew){
