@@ -73,14 +73,13 @@ body.main-menu-active #mainMenu{z-index:2147484000}
 .main-menu-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .main-menu-btn.main-menu-mode-card{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;gap:8px;height:116px;min-height:116px;padding:12px 11px 11px;border:1px solid rgba(240,213,138,.52);border-radius:18px;background:linear-gradient(180deg,rgba(35,22,11,.9),rgba(9,5,4,.92));box-shadow:0 12px 26px rgba(0,0,0,.52),inset 0 1px 0 rgba(255,232,166,.16),inset 0 -18px 30px rgba(0,0,0,.36);text-align:left;overflow:hidden;transform:translateZ(0)}
 .main-menu-btn.main-menu-mode-card::before{content:'';position:absolute;inset:4px;border:1px solid rgba(255,223,143,.2);border-radius:14px;pointer-events:none;z-index:2;box-shadow:inset 0 0 26px rgba(240,213,138,.06)}
-.main-menu-btn.main-menu-mode-card::after{content:'›';position:absolute;right:12px;bottom:15px;z-index:3;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(240,213,138,.34);background:rgba(8,5,3,.5);color:rgba(240,213,138,.92);font:700 20px/18px Georgia,serif;box-shadow:0 0 16px rgba(224,195,109,.15)}
 .main-menu-mode-art{position:absolute;inset:-10px;z-index:-3;background-image:url(../../assets/background.webp);background-size:245%;filter:saturate(1.12) brightness(1.18) contrast(1.08);opacity:.86;transition:transform .4s ease,filter .2s ease}
 .main-menu-mode-art-adventure{background-position:13% 24%}
 .main-menu-mode-art-duel{background-position:88% 58%}
 .main-menu-mode-scrim{position:absolute;inset:0;z-index:-2;background:radial-gradient(circle at 28% 20%,rgba(255,226,143,.28),transparent 28%),radial-gradient(circle at 72% 18%,rgba(188,94,32,.18),transparent 34%),linear-gradient(180deg,rgba(7,4,3,.08) 0%,rgba(7,4,3,.32) 44%,rgba(7,4,3,.88) 100%)}
 .main-menu-mode-emblem{position:absolute;left:11px;top:11px;z-index:3;width:38px;height:38px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 28%,rgba(255,230,155,.4),rgba(82,47,18,.68) 58%,rgba(9,5,4,.82) 100%);border:1px solid rgba(255,224,148,.46);box-shadow:0 0 18px rgba(224,195,109,.22),0 4px 12px rgba(0,0,0,.5),inset 0 1px 3px rgba(255,232,166,.22);transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease}
 .main-menu-mode-icon{width:26px;height:26px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.55))}
-.main-menu-mode-text{position:relative;z-index:3;display:flex;flex-direction:column;align-items:flex-start;max-width:calc(100% - 22px);min-width:0;padding-top:36px}
+.main-menu-mode-text{position:relative;z-index:3;display:flex;flex-direction:column;align-items:flex-start;max-width:100%;min-width:0;padding-top:36px}
 .main-menu-mode-title{font:800 16px/1 Cinzel,Georgia,serif;color:#fff0b8;letter-spacing:.02em;text-shadow:0 0 16px rgba(240,213,138,.45),0 2px 5px rgba(0,0,0,.95)}
 .main-menu-mode-sub{margin-top:4px;font:700 8.5px/1.15 system-ui,sans-serif;color:#d8bd7a;letter-spacing:.12em;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,.95);opacity:.94}
 .main-menu-btn.main-menu-mode-card:hover:not(:disabled){border-color:rgba(255,232,166,.9);transform:translateY(-3px);box-shadow:0 16px 30px rgba(0,0,0,.62),0 0 22px rgba(224,195,109,.16),inset 0 1px 0 rgba(255,232,166,.24),inset 0 -18px 30px rgba(0,0,0,.34)}
@@ -121,7 +120,7 @@ body.main-menu-active #mainMenu{z-index:2147484000}
    nested structure back to a plain string the first time it fired. */
 .main-menu-btn.main-menu-btn-loading{position:relative;color:transparent}
 .main-menu-btn.main-menu-btn-loading>*{visibility:hidden}
-.main-menu-btn.main-menu-btn-loading::after{content:'Loading…';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(8,5,3,.66);border-radius:inherit;color:#ddc98a;font:700 13px/1 Georgia,serif;visibility:visible}
+.main-menu-btn.main-menu-btn-loading::after{content:'Loading…';position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:rgba(8,5,3,.66);border-radius:inherit;color:#ddc98a;font:700 13px/1 Georgia,serif;visibility:visible}
 
 .main-menu-promo-wrap{position:relative;padding:0 14px;display:flex;flex-direction:column;gap:8px}
 .main-menu-promo{position:relative;width:100%;height:88px;padding:0;border:1px solid var(--mm-border);border-radius:var(--mm-radius);overflow:hidden;background:var(--mm-panel);cursor:pointer;box-shadow:var(--mm-shadow);transition:border-color .15s ease,transform .12s ease}
