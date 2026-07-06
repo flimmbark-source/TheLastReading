@@ -119,14 +119,14 @@ export function installMainMenu(target = window) {
     // The lightweight boot loader disables every menu button while it loads the
     // game module and only restores them on failure, so a button left disabled
     // there would make this menu dead when we return to it. Once the game is
-    // running we own the menu: re-enable the buttons (and restore any "Loading…"
-    // label) on every show, then let syncContinueBtn re-disable Continue if there
+    // running we own the menu: re-enable the buttons (and clear any "Loading…"
+    // overlay) on every show, then let syncHubCopy re-disable Continue if there
     // is no saved progress.
     el.querySelectorAll('.main-menu-btn').forEach(btn => {
       btn.disabled = false;
-      if (btn.dataset.bootLabel) { btn.textContent = btn.dataset.bootLabel; delete btn.dataset.bootLabel; }
+      btn.classList.remove('main-menu-btn-loading');
     });
-    syncContinueBtn();
+    syncHubCopy();
   }
 
   function forceSingleplayerTable() {
@@ -174,7 +174,38 @@ export function installMainMenu(target = window) {
     }
   }
 
-  function syncContinueBtn() {
+  // Live session state (target.persist) is more current than whatever's on
+  // disk, so prefer it once a run has actually started this tab; otherwise
+  // fall back to the last saved snapshot. Field names match both shapes
+  // (legacy target.persist uses pool/relics; the saved JSON mirrors it).
+  function readProgressSnapshot() {
+    if (gameStarted && target.persist) {
+      const p = target.persist;
+      return { reserve: Number(p.reserve ?? p.pool ?? 0), relics: (p.relics || []).length };
+    }
+    try {
+      const raw = target.localStorage.getItem('tlr_save');
+      if (!raw) return { reserve: 0, relics: 0 };
+      const p = JSON.parse(raw)?.persist;
+      if (!p) return { reserve: 0, relics: 0 };
+      return { reserve: Number(p.reserve ?? p.pool ?? 0), relics: (p.relics || []).length };
+    } catch {
+      return { reserve: 0, relics: 0 };
+    }
+  }
+
+  function describeProgress({ reserve, relics }) {
+    const relicPart = relics > 0 ? `${relics} relic${relics === 1 ? '' : 's'}` : '';
+    const reservePart = reserve > 0 ? `${reserve} reserve` : '';
+    if (relicPart && reservePart) return `${reservePart} · ${relicPart}`;
+    return relicPart || reservePart || 'Progress saved';
+  }
+
+  // Drives the hub's continue card: the plaque button's disabled state (as
+  // before), plus the run label/subtitle text and the secondary button's
+  // label ("New Reading" alongside an available Continue, or "Begin" when
+  // there's nothing yet to continue).
+  function syncHubCopy() {
     const btn = target.document.getElementById('mainMenuContinue');
     if (!btn) return;
     // A run started this session is always resumable, even before it has
@@ -185,7 +216,57 @@ export function installMainMenu(target = window) {
     const available = gameStarted || hasSavedProgress();
     btn.disabled = !available;
     btn.classList.toggle('main-menu-continue-unavailable', !available);
+
+    const runLabel = target.document.getElementById('mainMenuRunLabel');
+    const runSub = target.document.getElementById('mainMenuRunSub');
+    const newGameBtn = target.document.getElementById('mainMenuNewGame');
+    if (runLabel) runLabel.textContent = available ? 'Reading in progress' : 'No reading yet';
+    if (runSub) runSub.textContent = available ? describeProgress(readProgressSnapshot()) : 'A fresh deck awaits';
+    if (newGameBtn) newGameBtn.textContent = available ? 'New Reading' : 'Begin';
   }
+
+  const PROMO_CYCLE_S = 9; // keep in sync with mainMenu.css's tlr-promo-crossfade duration
+  const PROMO_KEYS = ['chair', 'shop'];
+
+  function promoPanel(key) {
+    return target.document.querySelector(`.main-menu-promo-${key}`);
+  }
+
+  function promoDot(key) {
+    return target.document.querySelector(`.main-menu-promo-dot[data-promo-dot="${key}"]`);
+  }
+
+  // Tapping a dot jumps straight to that panel and restarts the auto-cycle
+  // from there. There is no JS-owned timer to reset (mainMenu.css's
+  // tlr-promo-crossfade keyframes drive the cycle so headless test scripts
+  // never inherit a live setInterval) -- this just drops each panel's
+  // animation, forces a reflow, and re-enables it with the tapped panel's
+  // delay at 0 so it leads the next cycle.
+  function selectPromo(key) {
+    const chair = promoPanel('chair');
+    const shop = promoPanel('shop');
+    if (!chair || !shop) return;
+    chair.style.animation = 'none';
+    shop.style.animation = 'none';
+    void chair.offsetWidth;
+    chair.style.animation = '';
+    shop.style.animation = '';
+    const halfCycle = `${PROMO_CYCLE_S / 2}s`;
+    chair.style.animationDelay = key === 'chair' ? '0s' : halfCycle;
+    shop.style.animationDelay = key === 'chair' ? halfCycle : '0s';
+    for (const k of PROMO_KEYS) {
+      const dot = promoDot(k);
+      if (dot) dot.setAttribute('aria-selected', String(k === key));
+    }
+  }
+
+  function installPromoControls() {
+    for (const key of PROMO_KEYS) {
+      const dot = promoDot(key);
+      if (dot) dot.addEventListener('click', () => selectPromo(key));
+    }
+  }
+  installPromoControls();
 
 
   // Full-screen black curtain for the New Game/Continue transition. The
@@ -480,7 +561,7 @@ export function installMainMenu(target = window) {
     // Close any open sub-panels before showing the menu or starting another mode.
     resetModeTransitionUi();
     closeAllOverlays();
-    syncContinueBtn();
+    syncHubCopy();
     show();
   };
 }

@@ -587,7 +587,7 @@
      already-migrated spv2.components ladder. See
      src/styles/singlePlayerV2/base.css's header comment for the complete
      audit writeup. */
-  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking;
+  @layer spv2.tokens, spv2.base, spv2.components, spv2.mobile, spv2.states, spv2.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens.main-menu, screens.loadout, screens.matchmaking, screens.premium-store;
 </style>
 <!-- Bundled by scripts/build-bundle.mjs (dev/build scripts run it automatically
      first) from the files listed in that script's CSS_GROUPS -- add new
@@ -660,23 +660,130 @@
 </div>
 <div id="mainMenu" class="main-menu-overlay">
   <div class="main-menu-inner">
-    <h1 class="main-menu-title">The Last Reading</h1>
-    <p class="main-menu-subtitle">A tarot card game</p>
-    <div class="main-menu-divider"></div>
-    <div class="main-menu-section">
-      <span class="main-menu-section-label">Singleplayer</span>
-      <button id="mainMenuContinue" class="main-menu-btn main-menu-btn-primary" onclick="tlrMainMenuContinue()" disabled>Continue</button>
-      <button class="main-menu-btn" onclick="tlrMainMenuNewGame()">New Game</button>
+    <div class="main-menu-titleblock">
+      <h1 class="main-menu-title">The Last Reading</h1>
+      <div class="main-menu-divider"></div>
     </div>
-    <div class="main-menu-divider"></div>
-    <div class="main-menu-section">
-      <span class="main-menu-section-label">Adventure</span>
-      <button class="main-menu-btn" onclick="tlrMainMenuAdventure()">Adventure Mode</button>
+
+    <div class="main-menu-hub">
+      <div class="main-menu-continue-card">
+        <div class="main-menu-continue-row">
+          <span id="mainMenuRunLabel" class="main-menu-run-label">No reading yet</span>
+          <span id="mainMenuRunSub" class="main-menu-run-sub">A fresh deck awaits</span>
+        </div>
+        <button id="mainMenuContinue" class="main-menu-btn main-menu-btn-primary" onclick="tlrMainMenuContinue()" disabled>Continue</button>
+        <button id="mainMenuNewGame" class="main-menu-btn main-menu-btn-secondary" onclick="tlrMainMenuNewGame()">New Reading</button>
+      </div>
+
+      <div class="main-menu-mode-grid">
+        <button id="mainMenuAdventure" class="main-menu-btn main-menu-mode-card" onclick="tlrMainMenuAdventure()">
+          <img src="assets/medallion_compass.png" alt="" class="main-menu-mode-icon">
+          <span class="main-menu-mode-text">
+            <span class="main-menu-mode-title">Adventure</span>
+            <span class="main-menu-mode-sub">Campaign runs</span>
+          </span>
+        </button>
+        <button id="mainMenuDuel" class="main-menu-btn main-menu-mode-card" onclick="tlrMainMenuMultiplayer()">
+          <img src="assets/medallion_dark_coin.png" alt="" class="main-menu-mode-icon">
+          <span class="main-menu-mode-text">
+            <span class="main-menu-mode-title">Duel</span>
+            <span class="main-menu-mode-sub">Play a friend</span>
+          </span>
+        </button>
+      </div>
     </div>
-    <div class="main-menu-divider"></div>
-    <div class="main-menu-section">
-      <span class="main-menu-section-label">Multiplayer</span>
-      <button class="main-menu-btn" onclick="tlrMainMenuMultiplayer()">Duel</button>
+
+    <div class="main-menu-promo-wrap">
+      <button type="button" id="mainMenuPromo" class="main-menu-promo" onclick="tlrOpenPremiumStore()" aria-label="Premium offers">
+        <span class="main-menu-promo-panel main-menu-promo-chair" data-promo-panel="chair">
+          <span class="main-menu-promo-copy">
+            <span class="main-menu-promo-badge">NEW CHAPTER</span>
+            <span class="main-menu-promo-title">The Empty Chair</span>
+            <span class="main-menu-promo-desc">Story expansion — six readings beyond the attic.</span>
+          </span>
+          <span class="main-menu-promo-art main-menu-promo-art-chair"></span>
+        </span>
+        <span class="main-menu-promo-panel main-menu-promo-shop" data-promo-panel="shop">
+          <span class="main-menu-promo-art main-menu-promo-art-shop"></span>
+          <span class="main-menu-promo-copy">
+            <span class="main-menu-promo-title">The Curiosity Shop</span>
+            <span class="main-menu-promo-desc">New chapter, decks &amp; finery</span>
+          </span>
+          <span class="main-menu-promo-chevron" aria-hidden="true">&rsaquo;</span>
+        </span>
+      </button>
+      <div class="main-menu-promo-dots" role="tablist" aria-label="Promo selector">
+        <button type="button" class="main-menu-promo-dot" data-promo-dot="chair" aria-label="Show The Empty Chair" aria-selected="true"></button>
+        <button type="button" class="main-menu-promo-dot" data-promo-dot="shop" aria-label="Show The Curiosity Shop" aria-selected="false"></button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="premiumStore" class="premium-store-overlay premium-store-hidden" aria-hidden="true">
+  <div class="premium-store-sheet">
+    <div class="premium-store-header">
+      <button type="button" id="premiumStoreBack" class="premium-store-icon-btn premium-store-back" onclick="tlrPremiumStoreBack()" aria-label="Back" hidden>&lsaquo;</button>
+      <div class="premium-store-heading">
+        <div class="premium-store-title">The Curiosity Shop</div>
+        <div id="premiumStoreSubtitle" class="premium-store-subtitle">Premium expansions &amp; finery</div>
+      </div>
+      <button type="button" class="premium-store-icon-btn premium-store-close" onclick="tlrClosePremiumStore()" aria-label="Close">&#10005;</button>
+    </div>
+    <div class="premium-store-divider"></div>
+
+    <div id="premiumStoreList" class="premium-store-view">
+      <button type="button" id="premiumStoreBundle" class="premium-store-bundle" onclick="tlrPremiumStoreOpenDetail('bundle')">
+        <div class="premium-store-bundle-copy">
+          <div class="premium-store-bundle-tags">
+            <span class="premium-store-tag premium-store-tag-value">BEST VALUE</span>
+            <span class="premium-store-tag premium-store-tag-save">SAVE 40%</span>
+          </div>
+          <div class="premium-store-bundle-name">The Complete Reading</div>
+          <div class="premium-store-bundle-desc">Every expansion, deck skin &amp; cosmetic set — current and future.</div>
+          <div id="premiumStoreBundlePrice" class="premium-store-bundle-price">$12.99</div>
+        </div>
+        <div class="premium-store-bundle-art"></div>
+      </button>
+
+      <div class="premium-store-section-label">Expansions &amp; Finery</div>
+      <div id="premiumStoreGrid" class="premium-store-grid"></div>
+      <div class="premium-store-footnote">One-time purchases · Yours on every device</div>
+    </div>
+
+    <div id="premiumStoreDetail" class="premium-store-view" hidden>
+      <div id="premiumStoreDetailArt" class="premium-store-detail-art"></div>
+      <div class="premium-store-detail-body">
+        <div id="premiumStoreDetailType" class="premium-store-detail-type"></div>
+        <div id="premiumStoreDetailName" class="premium-store-detail-name"></div>
+        <div id="premiumStoreDetailDesc" class="premium-store-detail-desc"></div>
+        <div class="premium-store-includes">
+          <div class="premium-store-includes-label">Includes</div>
+          <ul id="premiumStoreDetailContents" class="premium-store-includes-list"></ul>
+        </div>
+        <button type="button" id="premiumStoreCta" class="premium-store-cta" onclick="tlrPremiumStoreCta()"></button>
+        <div class="premium-store-fineprint">One-time purchase · Restores with your save</div>
+      </div>
+    </div>
+
+    <div id="premiumStoreDone" class="premium-store-view premium-store-done" hidden>
+      <div class="premium-store-done-badge">&#10022;</div>
+      <div class="premium-store-done-title">Added to your collection</div>
+      <div id="premiumStoreDoneDesc" class="premium-store-done-desc"></div>
+      <button type="button" class="premium-store-keep-browsing" onclick="tlrPremiumStoreBackToList()">Keep browsing</button>
+      <button type="button" class="premium-store-back-to-table" onclick="tlrClosePremiumStore()">Back to the table</button>
+    </div>
+  </div>
+
+  <div id="premiumStoreConfirm" class="premium-store-confirm-backdrop" hidden>
+    <div class="premium-store-confirm-sheet">
+      <div class="premium-store-confirm-label">Confirm purchase</div>
+      <div class="premium-store-confirm-row">
+        <span id="premiumStoreConfirmName" class="premium-store-confirm-name"></span>
+        <span id="premiumStoreConfirmPrice" class="premium-store-confirm-price"></span>
+      </div>
+      <button type="button" id="premiumStoreConfirmBuy" class="premium-store-confirm-buy" onclick="tlrPremiumStoreConfirmBuy()"></button>
+      <button type="button" class="premium-store-confirm-cancel" onclick="tlrPremiumStoreCancelBuy()">Cancel</button>
+      <div class="premium-store-confirm-note">Mock checkout — no payment is processed</div>
     </div>
   </div>
 </div>

@@ -35,40 +35,96 @@ body.main-menu-mode-booting :where(#titleWrap,.bar,.score-stack,#constellationPi
 #tlrBootCurtain.show .tlr-boot-spinner{opacity:1}
 @keyframes tlr-boot-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){#tlrBootCurtain{transition:none}.tlr-boot-spinner{animation:none;transition:none}}
-/* Main menu — preserve the full-screen atmosphere and clarify the choice hierarchy */
+/* Main menu — unified hub: title block, continue/mode cluster, cycling
+   premium-offer banner. One shared card language throughout (16px radius,
+   rgba(224,195,109,.4) gold border, rgba(13,8,5,.78) dark panel fill, same
+   drop shadow) so the plaque button reads as the one warm/focal element. */
 #mainMenu{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));overflow-y:auto;background-color:#080503;background-image:url(../../assets/background.webp);background-size:cover;background-position:center top;transition:opacity .35s ease}
 body.main-menu-active #mainMenu{z-index:2147484000}
-#mainMenu::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center 40%,transparent 0%,rgba(8,5,3,.55) 100%);pointer-events:none}
+#mainMenu::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center 36%,transparent 0%,rgba(8,5,3,.62) 100%);pointer-events:none}
 #mainMenu.mm-hidden{opacity:0;pointer-events:none}
 #mainMenu[hidden]{display:none!important}
-.main-menu-inner{position:relative;display:flex;flex-direction:column;align-items:center;width:min(340px,92vw);box-sizing:border-box;padding:28px 20px 26px}
-.main-menu-title{width:100%;margin:0;padding:0;color:#f0d58a;font:700 clamp(28px,9vw,42px)/1.05 Georgia,serif;letter-spacing:.05em;text-align:center;text-shadow:0 0 24px rgba(240,213,138,.55),0 2px 6px rgba(0,0,0,.8)}
-.main-menu-subtitle{margin:7px 0 0;color:#b09060;font:400 11px/1.4 system-ui,sans-serif;letter-spacing:.22em;text-align:center;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.8)}
-.main-menu-divider{width:min(280px,78vw);height:28px;margin:19px 0 18px;background:url(../../assets/divider_sunburst.png) center/contain no-repeat;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
-.main-menu-section+.main-menu-divider{display:none}
-.main-menu-section{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
-.main-menu-section-label{display:none}
-.main-menu-inner>.main-menu-section:nth-child(6){margin-top:27px}
-.main-menu-inner>.main-menu-section:nth-child(6)::before{content:'Other Modes';margin-bottom:3px;color:#8a7551;font:700 10px/1 system-ui,sans-serif;letter-spacing:.2em;text-align:center;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,.8)}
-.main-menu-inner>.main-menu-section:nth-child(8){margin-top:10px}
-.main-menu-btn{width:100%;max-width:250px;height:54px;padding:0 22px;border:none;border-radius:0;background:url(../../assets/pill_dark_medium.png) center/100% 100% no-repeat;color:#ddc98a;font:700 15px/1 Georgia,serif;letter-spacing:.05em;text-shadow:0 1px 3px rgba(0,0,0,.8);cursor:pointer;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5));transition:transform .12s ease,filter .15s ease}
-.main-menu-btn:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.15)}
+
+.main-menu-inner{position:relative;display:flex;flex-direction:column;width:min(390px,94vw);height:100%;max-height:800px;box-sizing:border-box;padding:0 4px}
+
+.main-menu-titleblock{text-align:center;margin-top:min(78px,9vh)}
+.main-menu-title{margin:0;padding:0;color:#f0d58a;font:700 clamp(22px,7vw,28px)/1.1 Cinzel,Georgia,serif;letter-spacing:.06em;text-align:center;text-shadow:0 0 22px rgba(240,213,138,.5),0 2px 6px rgba(0,0,0,.8)}
+.main-menu-divider{width:210px;max-width:56vw;height:20px;margin:9px auto 0;background:url(../../assets/divider_sunburst.png) center/contain no-repeat;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6));opacity:.9}
+
+.main-menu-hub{position:relative;flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;padding:14px 14px 0;min-height:0}
+
+.main-menu-continue-card{border:1px solid rgba(224,195,109,.4);border-radius:16px;background:rgba(13,8,5,.78);padding:15px 16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+.main-menu-continue-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.main-menu-run-label{font:700 9.5px/1 system-ui,sans-serif;color:#8a7551;letter-spacing:.22em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.main-menu-run-sub{font:400 10px/1 system-ui,sans-serif;color:#8a7551;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.main-menu-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.main-menu-mode-card{border:1px solid rgba(224,195,109,.4);border-radius:16px;background:rgba(13,8,5,.78);padding:13px 15px;display:flex;align-items:center;gap:10px;box-shadow:0 6px 20px rgba(0,0,0,.5);text-align:left}
+.main-menu-mode-card:hover:not(:disabled){border-color:rgba(240,213,138,.8)}
+.main-menu-mode-icon{width:38px;height:38px;object-fit:contain;flex:none}
+.main-menu-mode-text{display:flex;flex-direction:column;min-width:0}
+.main-menu-mode-title{font:700 13px/1.2 Georgia,serif;color:#e8d9b0}
+.main-menu-mode-sub{font:400 9.5px/1.3 system-ui,sans-serif;color:#8a7551}
+
+.main-menu-btn{border:none;cursor:pointer;transition:transform .12s ease,filter .15s ease,border-color .15s ease}
 .main-menu-btn:focus-visible{outline:2px solid #e0c36d;outline-offset:3px}
 .main-menu-btn:disabled{opacity:.4;cursor:not-allowed}
-.main-menu-btn-primary{height:58px;background-image:url(../../assets/parchment_plaque_large_center.png);color:#3a1a06;text-shadow:none}
-.main-menu-btn-primary:hover:not(:disabled){filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
-#mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled{display:none}
+.main-menu-btn-primary,.main-menu-btn-secondary{width:100%}
+.main-menu-btn-primary{height:56px;background:url(../../assets/parchment_plaque_large_center.png) center/100% 100% no-repeat;color:#3a1a06;font:700 15px/1 Georgia,serif;letter-spacing:.05em;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
+.main-menu-btn-primary:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
+.main-menu-btn-secondary{height:42px;border:1px solid rgba(224,195,109,.3);border-radius:12px;background:rgba(224,195,109,.06);color:#ddc98a;font:700 13px/1 Georgia,serif;letter-spacing:.04em}
+.main-menu-btn-secondary:hover:not(:disabled){background:rgba(224,195,109,.13)}
+#mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled,
 #mainMenu #mainMenuContinue.main-menu-continue-unavailable{display:none}
-#mainMenu:not(.main-menu-busy) .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue:disabled) .main-menu-btn:last-child{height:58px;background-image:url(../../assets/parchment_plaque_large_center.png);color:#3a1a06;text-shadow:none}
-#mainMenu:not(.main-menu-busy) .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue:disabled) .main-menu-btn:last-child:hover{filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
-#mainMenu .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue.main-menu-continue-unavailable) .main-menu-btn:last-child{height:58px;background-image:url(../../assets/parchment_plaque_large_center.png);color:#3a1a06;text-shadow:none}
-#mainMenu .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue.main-menu-continue-unavailable) .main-menu-btn:last-child:hover{filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
+
+/* Boot-disable state (menuBoot.mjs's setBusy/clearBusy): overlays "Loading…"
+   without touching textContent/innerHTML, so the mode cards' nested icon +
+   title + subtitle markup survives being disabled/re-enabled repeatedly --
+   a textContent capture/restore (the previous technique) would flatten that
+   nested structure back to a plain string the first time it fired. */
+.main-menu-btn.main-menu-btn-loading{position:relative;color:transparent}
+.main-menu-btn.main-menu-btn-loading>*{visibility:hidden}
+.main-menu-btn.main-menu-btn-loading::after{content:'Loading…';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ddc98a;font:700 13px/1 Georgia,serif;visibility:visible}
+
+.main-menu-promo-wrap{position:relative;padding:0 14px;display:flex;flex-direction:column;gap:8px}
+.main-menu-promo{position:relative;width:100%;height:88px;padding:0;border:1px solid rgba(224,195,109,.4);border-radius:16px;overflow:hidden;background:rgba(13,8,5,.78);cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.5);transition:border-color .15s ease}
+.main-menu-promo:hover{border-color:rgba(240,213,138,.8)}
+.main-menu-promo-panel{position:absolute;inset:0;display:grid;opacity:0;pointer-events:none}
+/* Auto-cycles between the two panels with no JS timer (a live setInterval
+   here would keep headless test scripts running forever -- see
+   src/app/mainMenu.mjs's promo dot-click handler for how a manual pick
+   restarts this animation instead of tracking phase in JS state). The two
+   panels share one keyframe, offset by half the cycle. */
+.main-menu-promo-chair,.main-menu-promo-shop{animation:tlr-promo-crossfade 9s ease-in-out infinite}
+.main-menu-promo-shop{animation-delay:4.5s}
+@keyframes tlr-promo-crossfade{0%,42%{opacity:1}50%,92%{opacity:0}100%{opacity:1}}
+.main-menu-promo-chair{grid-template-columns:1fr 104px}
+.main-menu-promo-shop{grid-template-columns:104px 1fr auto}
+.main-menu-promo-copy{padding:10px 4px 10px 15px;display:flex;flex-direction:column;gap:4px;justify-content:center;min-width:0}
+.main-menu-promo-shop .main-menu-promo-copy{padding:10px 4px 10px 12px}
+.main-menu-promo-badge{align-self:flex-start;font:700 8px/1 system-ui,sans-serif;color:#14100b;background:#e0c36d;border-radius:3px;padding:3px 6px;letter-spacing:.14em}
+.main-menu-promo-title{font:700 15px/1.2 Cinzel,Georgia,serif;color:#f0d58a}
+.main-menu-promo-desc{font:400 10.5px/1.4 Georgia,serif;color:#b09060}
+.main-menu-promo-art{background-position:center;background-size:cover}
+/* Reuses the main menu's own atmospheric backdrop rather than
+   assets/Reading_room.webp -- that image is already the free "The Reading
+   Room" archive fragment discovered via the attic (src/data/archiveFragments.mjs),
+   and reusing a named collectible's art to sell an unrelated paid item would
+   be its own kind of misleading. background.webp is decorative chrome only. */
+.main-menu-promo-art-chair{border-left:1px solid rgba(224,195,109,.25);background-image:url(../../assets/background.webp)}
+.main-menu-promo-art-shop{height:88px;border-right:1px solid rgba(224,195,109,.25);background-image:url(../../assets/Store_Front.webp)}
+.main-menu-promo-chevron{align-self:center;padding-right:14px;color:#e0c36d;font:400 18px/1 Georgia,serif}
+.main-menu-promo-dots{display:flex;justify-content:center;gap:7px}
+.main-menu-promo-dot{width:7px;height:7px;padding:0;border:none;border-radius:50%;cursor:pointer;background:rgba(224,195,109,.35);transition:background .4s ease}
+.main-menu-promo-dot[aria-selected="true"]{background:#f0d58a}
+
 body.main-menu-blackout #mainMenu{opacity:0;transition:opacity .3s ease}
 body.main-menu-blackout #mainMenu::before{opacity:0;transition:opacity .3s ease}
 body.main-menu-blackout #tlrBootCurtain{opacity:1;pointer-events:auto}
-.main-menu-coming-soon{margin-top:2px;color:#5a4828;font:400 11px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
-.main-menu-toggle{display:flex;align-items:center;gap:8px;margin-top:2px;color:#b09060;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.8);cursor:pointer;user-select:none}
-.main-menu-toggle input{accent-color:#d9b35f;cursor:pointer}
-@media(max-height:620px){#mainMenu{align-items:flex-start}.main-menu-inner{margin:auto 0;padding-top:18px;padding-bottom:18px}.main-menu-divider{height:22px;margin-top:12px;margin-bottom:12px}.main-menu-inner>.main-menu-section:nth-child(6){margin-top:19px}.main-menu-btn{height:50px}.main-menu-btn-primary,#mainMenu:not(.main-menu-busy) .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue:disabled) .main-menu-btn:last-child{height:54px}}
-@media(prefers-reduced-motion:reduce){#mainMenu,.main-menu-btn{transition:none}}
+@media(max-height:680px){.main-menu-titleblock{margin-top:34px}.main-menu-hub{gap:12px}}
+@media(prefers-reduced-motion:reduce){
+  #mainMenu,.main-menu-btn,.main-menu-promo-dot{transition:none}
+  .main-menu-promo-chair,.main-menu-promo-shop{animation:none}
+  .main-menu-promo-chair{opacity:1}
+}
 }

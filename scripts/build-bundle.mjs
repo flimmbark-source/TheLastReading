@@ -36,6 +36,7 @@ const CSS_GROUPS = [
       'src/styles/drawers.css',
       'src/styles/performance.css',
       'src/styles/mainMenu.css',
+      'src/styles/premiumStore.css',
       'src/styles/loadout.css',
       'src/styles/matchmaking.css',
       'src/styles/mpGame.css',

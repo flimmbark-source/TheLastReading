@@ -25,12 +25,12 @@ installMainMenu(window);
 
 const menu = window.document.getElementById('mainMenu');
 const allButtons = () => [...menu.querySelectorAll('.main-menu-btn')];
-const byText = label => allButtons().find(b => b.textContent.trim() === label);
+const byId = id => window.document.getElementById(id);
 
 // Simulate the boot loader having disabled every menu button (setBusy) and the
 // menu then being hidden for a session (matchmaking enterMatchView style).
 menu.classList.add('main-menu-busy');
-allButtons().forEach(b => { b.disabled = true; });
+allButtons().forEach(b => { b.disabled = true; b.classList.add('main-menu-btn-loading'); });
 menu.classList.add('mm-hidden');
 if ('inert' in menu) menu.inert = true;
 menu.hidden = true;
@@ -42,8 +42,11 @@ assert.equal(menu.hidden, false, 'menu is visible after returning');
 assert.equal(menu.classList.contains('mm-hidden'), false, 'mm-hidden cleared on show');
 assert.equal(menu.classList.contains('main-menu-busy'), false, 'main-menu-busy cleared on show');
 if ('inert' in menu) assert.equal(menu.inert, false, 'menu is not inert after returning');
-assert.equal(byText('New Game').disabled, false, 'New Game is selectable after returning');
-assert.equal(byText('Duel').disabled, false, 'Duel is selectable after returning');
+assert.equal(byId('mainMenuNewGame').disabled, false, 'New Reading is selectable after returning');
+assert.equal(byId('mainMenuDuel').disabled, false, 'Duel is selectable after returning');
+assert.equal(byId('mainMenuNewGame').classList.contains('main-menu-btn-loading'), false, 'New Reading\'s nested icon/title/subtitle markup is restored (not left showing "Loading…") after returning');
+assert.equal(byId('mainMenuDuel').classList.contains('main-menu-btn-loading'), false, 'Duel\'s nested icon/title/subtitle markup is restored (not left showing "Loading…") after returning');
+assert.ok(byId('mainMenuDuel').querySelector('.main-menu-mode-title'), 'Duel\'s nested mode-card markup survives the disable/re-enable cycle intact');
 
 // Regression guard: tlrMainMenuMultiplayer() used to skip the curtain
 // entirely (unlike startSingleplayer/tlrMainMenuAdventure), so switching to

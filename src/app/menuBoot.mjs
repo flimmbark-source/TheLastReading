@@ -3,6 +3,7 @@
 import { installMarketAudioRotation } from './marketAudioRotation.mjs';
 import { installActionDropGestures } from '../ui/gestureActionDrops.mjs';
 import { installCardDetailGestures } from '../ui/cardDetailGestures.mjs?v=double-tap-1';
+import { installPremiumStore } from './premiumStore.mjs';
 
 const CURTAIN_FADE_MS = 300;
 
@@ -13,6 +14,11 @@ let bootAction = null;
 installMarketAudioRotation(window);
 installActionDropGestures(window);
 installCardDetailGestures(window);
+// Installed eagerly (not behind loadGame()'s lazy import) so the promo
+// banner's store is tappable at first paint, before the player has ever
+// triggered a nav action that would pull in the full game module graph. It
+// has no dependency on game state, so this is safe before main.mjs loads.
+installPremiumStore(window);
 
 const CANDLELIGHT_KEY = 'tlr_candlelight_lighting';
 
@@ -52,6 +58,28 @@ function hasSavedProgress(storage) {
   } catch {
     return false;
   }
+}
+
+// Same field names as hasSavedProgress above -- used for the hub's run
+// label/subtitle at cold boot, before mainMenu.mjs's own richer
+// syncHubCopy (which additionally prefers live session state) takes over.
+function readProgressSnapshot(storage) {
+  try {
+    const raw = storage?.getItem('tlr_save');
+    if (!raw) return { reserve: 0, relics: 0 };
+    const p = JSON.parse(raw)?.persist;
+    if (!p) return { reserve: 0, relics: 0 };
+    return { reserve: Number(p.reserve ?? p.pool ?? 0), relics: (p.relics || []).length };
+  } catch {
+    return { reserve: 0, relics: 0 };
+  }
+}
+
+function describeProgress({ reserve, relics }) {
+  const relicPart = relics > 0 ? `${relics} relic${relics === 1 ? '' : 's'}` : '';
+  const reservePart = reserve > 0 ? `${reserve} reserve` : '';
+  if (relicPart && reservePart) return `${reservePart} · ${relicPart}`;
+  return relicPart || reservePart || 'Progress saved';
 }
 
 function menuEl() {
@@ -120,15 +148,25 @@ function syncContinueButton() {
   const available = hasSavedProgress(window.localStorage);
   btn.disabled = !available;
   btn.classList.toggle('main-menu-continue-unavailable', !available);
+
+  const runLabel = document.getElementById('mainMenuRunLabel');
+  const runSub = document.getElementById('mainMenuRunSub');
+  const newGameBtn = document.getElementById('mainMenuNewGame');
+  if (runLabel) runLabel.textContent = available ? 'Reading in progress' : 'No reading yet';
+  if (runSub) runSub.textContent = available ? describeProgress(readProgressSnapshot(window.localStorage)) : 'A fresh deck awaits';
+  if (newGameBtn) newGameBtn.textContent = available ? 'New Reading' : 'Begin';
 }
 
 function setBusy(actionName) {
   const menu = menuEl();
   if (menu) menu.classList.add('main-menu-busy');
   for (const btn of buttons()) {
-    btn.dataset.bootLabel = btn.textContent;
     btn.disabled = true;
-    if (btn.onclick && String(btn.onclick).includes(actionName)) btn.textContent = 'Loading...';
+    // A CSS class overlay (not a textContent swap) so the mode-grid buttons'
+    // nested icon/title/subtitle markup survives being disabled -- capturing
+    // and restoring textContent would flatten that nested structure to a
+    // plain string the first time any nav action fired.
+    if (btn.onclick && String(btn.onclick).includes(actionName)) btn.classList.add('main-menu-btn-loading');
   }
 }
 
@@ -137,10 +175,7 @@ function clearBusy() {
   if (menu) menu.classList.remove('main-menu-busy');
   for (const btn of buttons()) {
     btn.disabled = false;
-    if (btn.dataset.bootLabel) {
-      btn.textContent = btn.dataset.bootLabel;
-      delete btn.dataset.bootLabel;
-    }
+    btn.classList.remove('main-menu-btn-loading');
   }
   syncContinueButton();
   syncCandlelightToggle();
