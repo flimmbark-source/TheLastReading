@@ -36,10 +36,12 @@ body.main-menu-mode-booting :where(#titleWrap,.bar,.score-stack,#constellationPi
 @keyframes tlr-boot-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){#tlrBootCurtain{transition:none}.tlr-boot-spinner{animation:none;transition:none}}
 /* Main menu — unified hub: title block, continue/mode cluster, cycling
-   premium-offer banner. One shared card language throughout (16px radius,
-   rgba(224,195,109,.4) gold border, rgba(13,8,5,.78) dark panel fill, same
-   drop shadow) so the plaque button reads as the one warm/focal element. */
-#mainMenu{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));overflow-y:auto;background-color:#080503;background-image:url(../../assets/background.webp);background-size:cover;background-position:center top;transition:opacity .35s ease}
+   premium-offer banner. The design tokens below are the card language every
+   hub surface shares (radius, gold border at rest/hover, dark panel fill,
+   inner hairline, elevation at rest/lifted) so the parchment plaque stays
+   the one warm/focal element. New hub surfaces should consume these tokens
+   rather than restating literals. */
+#mainMenu{--mm-gold:#e0c36d;--mm-gold-bright:#f0d58a;--mm-border:rgba(224,195,109,.45);--mm-border-hi:rgba(240,213,138,.9);--mm-hairline:rgba(224,195,109,.22);--mm-panel:rgba(13,8,5,.78);--mm-ink:#080503;--mm-radius:16px;--mm-shadow:0 6px 20px rgba(0,0,0,.5);--mm-shadow-hi:0 10px 26px rgba(0,0,0,.6);position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));overflow-y:auto;background-color:#080503;background-image:url(../../assets/background.webp);background-size:cover;background-position:center top;transition:opacity .35s ease}
 body.main-menu-active #mainMenu{z-index:2147484000}
 #mainMenu::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center 36%,transparent 0%,rgba(8,5,3,.62) 100%);pointer-events:none}
 #mainMenu.mm-hidden{opacity:0;pointer-events:none}
@@ -53,20 +55,37 @@ body.main-menu-active #mainMenu{z-index:2147484000}
 
 .main-menu-hub{position:relative;flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;padding:14px 14px 0;min-height:0}
 
-.main-menu-continue-card{border:1px solid rgba(224,195,109,.4);border-radius:16px;background:rgba(13,8,5,.78);padding:15px 16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+.main-menu-continue-card{position:relative;border:1px solid var(--mm-border);border-radius:var(--mm-radius);background:var(--mm-panel);padding:15px 16px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--mm-shadow)}
+.main-menu-continue-card::before{content:'';position:absolute;inset:4px;border:1px solid var(--mm-hairline);border-radius:calc(var(--mm-radius) - 5px);pointer-events:none}
 .main-menu-continue-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .main-menu-run-label{font:700 9.5px/1 system-ui,sans-serif;color:#8a7551;letter-spacing:.22em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .main-menu-run-sub{font:400 10px/1 system-ui,sans-serif;color:#8a7551;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+/* Mode tiles: a zoomed crop of the menu's own constellation backdrop behind
+   a vignette scrim, an inner hairline frame, a glowing medallion emblem, and
+   a press-down state -- the modern-mobile "mode select" card anatomy built
+   entirely from neutral chrome assets (background texture + medallion
+   ornaments). Deliberately NOT persona/fragment art: every illustrated
+   asset in the repo already names a specific free thing (Duel personas,
+   archive fragments), and reusing those here would misassign meaning. Art
+   layers sit on negative z-index inside an isolated stacking context so the
+   in-flow emblem/text need no positioning of their own. */
 .main-menu-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
-.main-menu-mode-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:116px;padding:16px 10px 14px;border:1px solid rgba(224,195,109,.4);border-radius:16px;background:radial-gradient(circle at 50% 6%,rgba(224,195,109,.16),transparent 62%),linear-gradient(165deg,rgba(224,195,109,.06),rgba(13,8,5,.85) 60%);box-shadow:0 6px 20px rgba(0,0,0,.5);text-align:center;overflow:hidden}
-.main-menu-mode-card:hover:not(:disabled){border-color:rgba(240,213,138,.85);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.55)}
-.main-menu-mode-icon-badge{width:56px;height:56px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%,rgba(224,195,109,.32),rgba(224,195,109,.05) 70%);border:1px solid rgba(224,195,109,.4);box-shadow:0 0 0 4px rgba(224,195,109,.06),inset 0 1px 2px rgba(0,0,0,.4);transition:border-color .15s ease,background .15s ease}
-.main-menu-mode-card:hover:not(:disabled) .main-menu-mode-icon-badge{border-color:rgba(240,213,138,.8);background:radial-gradient(circle at 35% 30%,rgba(224,195,109,.42),rgba(224,195,109,.08) 70%)}
-.main-menu-mode-icon{width:32px;height:32px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.main-menu-mode-card{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;height:150px;padding:14px 10px;border:1px solid var(--mm-border);border-radius:var(--mm-radius);background:var(--mm-panel);box-shadow:var(--mm-shadow);text-align:center;overflow:hidden}
+.main-menu-mode-card::before{content:'';position:absolute;inset:4px;border:1px solid var(--mm-hairline);border-radius:calc(var(--mm-radius) - 5px);pointer-events:none;z-index:1}
+.main-menu-mode-art{position:absolute;inset:0;z-index:-2;background-image:url(../../assets/background.webp);background-size:230%;filter:saturate(.9) brightness(1.12);transition:transform .4s ease}
+.main-menu-mode-art-adventure{background-position:16% 28%}
+.main-menu-mode-art-duel{background-position:84% 62%}
+.main-menu-mode-scrim{position:absolute;inset:0;z-index:-1;background:radial-gradient(circle at 50% 34%,rgba(224,195,109,.13),transparent 58%),linear-gradient(180deg,rgba(8,5,3,.3) 0%,rgba(8,5,3,.12) 36%,rgba(8,5,3,.68) 100%)}
+.main-menu-mode-emblem{width:54px;height:54px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%,rgba(224,195,109,.26),rgba(8,5,3,.55) 78%);border:1px solid var(--mm-border);box-shadow:0 0 16px rgba(224,195,109,.16),inset 0 1px 2px rgba(0,0,0,.5);transition:border-color .15s ease,box-shadow .15s ease}
+.main-menu-mode-icon{width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.55))}
 .main-menu-mode-text{display:flex;flex-direction:column;align-items:center;min-width:0}
-.main-menu-mode-title{font:700 15px/1.2 Cinzel,Georgia,serif;color:#f0d58a;letter-spacing:.03em}
-.main-menu-mode-sub{margin-top:2px;font:400 9.5px/1.3 system-ui,sans-serif;color:#8a7551;letter-spacing:.01em}
+.main-menu-mode-title{font:700 15.5px/1.15 Cinzel,Georgia,serif;color:var(--mm-gold-bright);letter-spacing:.04em;text-shadow:0 0 14px rgba(240,213,138,.35),0 2px 4px rgba(0,0,0,.9)}
+.main-menu-mode-sub{margin-top:3px;font:400 9px/1.3 system-ui,sans-serif;color:#c9b184;letter-spacing:.14em;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+.main-menu-mode-card:hover:not(:disabled){border-color:var(--mm-border-hi);transform:translateY(-2px);box-shadow:var(--mm-shadow-hi)}
+.main-menu-mode-card:hover:not(:disabled) .main-menu-mode-art{transform:scale(1.06)}
+.main-menu-mode-card:hover:not(:disabled) .main-menu-mode-emblem{border-color:var(--mm-border-hi);box-shadow:0 0 22px rgba(224,195,109,.28),inset 0 1px 2px rgba(0,0,0,.5)}
+.main-menu-mode-card:active:not(:disabled){transform:translateY(0) scale(.98)}
 
 .main-menu-btn{border:none;cursor:pointer;transition:transform .12s ease,filter .15s ease,border-color .15s ease}
 .main-menu-btn:focus-visible{outline:2px solid #e0c36d;outline-offset:3px}
@@ -74,8 +93,10 @@ body.main-menu-active #mainMenu{z-index:2147484000}
 .main-menu-btn-primary,.main-menu-btn-secondary{width:100%}
 .main-menu-btn-primary{height:56px;background:url(../../assets/parchment_plaque_large_center.png) center/100% 100% no-repeat;color:#3a1a06;font:700 15px/1 Georgia,serif;letter-spacing:.05em;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
 .main-menu-btn-primary:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
+.main-menu-btn-primary:active:not(:disabled){transform:translateY(0) scale(.985)}
 .main-menu-btn-secondary{height:42px;border:1px solid rgba(224,195,109,.3);border-radius:12px;background:rgba(224,195,109,.06);color:#ddc98a;font:700 13px/1 Georgia,serif;letter-spacing:.04em}
 .main-menu-btn-secondary:hover:not(:disabled){background:rgba(224,195,109,.13)}
+.main-menu-btn-secondary:active:not(:disabled){transform:scale(.985)}
 #mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled,
 #mainMenu #mainMenuContinue.main-menu-continue-unavailable{display:none}
 /* When Continue is hidden (no run to resume) the secondary button is the
@@ -99,11 +120,13 @@ body.main-menu-active #mainMenu{z-index:2147484000}
    nested structure back to a plain string the first time it fired. */
 .main-menu-btn.main-menu-btn-loading{position:relative;color:transparent}
 .main-menu-btn.main-menu-btn-loading>*{visibility:hidden}
-.main-menu-btn.main-menu-btn-loading::after{content:'Loading…';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#ddc98a;font:700 13px/1 Georgia,serif;visibility:visible}
+.main-menu-btn.main-menu-btn-loading::after{content:'Loading…';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(8,5,3,.66);border-radius:inherit;color:#ddc98a;font:700 13px/1 Georgia,serif;visibility:visible}
 
 .main-menu-promo-wrap{position:relative;padding:0 14px;display:flex;flex-direction:column;gap:8px}
-.main-menu-promo{position:relative;width:100%;height:88px;padding:0;border:1px solid rgba(224,195,109,.4);border-radius:16px;overflow:hidden;background:rgba(13,8,5,.78);cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.5);transition:border-color .15s ease}
-.main-menu-promo:hover{border-color:rgba(240,213,138,.8)}
+.main-menu-promo{position:relative;width:100%;height:88px;padding:0;border:1px solid var(--mm-border);border-radius:var(--mm-radius);overflow:hidden;background:var(--mm-panel);cursor:pointer;box-shadow:var(--mm-shadow);transition:border-color .15s ease,transform .12s ease}
+.main-menu-promo::after{content:'';position:absolute;inset:4px;border:1px solid var(--mm-hairline);border-radius:calc(var(--mm-radius) - 5px);pointer-events:none;z-index:1}
+.main-menu-promo:hover{border-color:var(--mm-border-hi)}
+.main-menu-promo:active{transform:scale(.99)}
 .main-menu-promo-panel{position:absolute;inset:0;display:grid;opacity:0;pointer-events:none}
 /* Auto-cycles between the two panels with no JS timer (a live setInterval
    here would keep headless test scripts running forever -- see
@@ -138,8 +161,9 @@ body.main-menu-blackout #mainMenu::before{opacity:0;transition:opacity .3s ease}
 body.main-menu-blackout #tlrBootCurtain{opacity:1;pointer-events:auto}
 @media(max-height:680px){.main-menu-titleblock{margin-top:34px}.main-menu-hub{gap:12px}}
 @media(prefers-reduced-motion:reduce){
-  #mainMenu,.main-menu-btn,.main-menu-promo-dot{transition:none}
+  #mainMenu,.main-menu-btn,.main-menu-promo,.main-menu-promo-dot,.main-menu-mode-art{transition:none}
   .main-menu-promo-chair,.main-menu-promo-shop{animation:none}
   .main-menu-promo-chair{opacity:1}
+  .main-menu-mode-card:hover:not(:disabled) .main-menu-mode-art{transform:none}
 }
 }
