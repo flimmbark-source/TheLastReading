@@ -13,6 +13,15 @@ const TABLE_SHEETS = Object.freeze([
   'assets/sheets/sheet10.small.webp',
 ]);
 
+// Market chrome fetched fresh each time the store opens. The candle images
+// are tiny downscaled webps (the original PNGs were ~1.7MB combined and made
+// the candle visibly late on first market entry), but warming them here means
+// even the first market open lights instantly.
+const MARKET_CHROME = Object.freeze([
+  'ui/candle_flame_off.small.webp',
+  'ui/candle_flame_on.small.webp',
+]);
+
 // Full-res sheets are only needed by the card-detail modal. Warm them after the
 // table sheets so opening a card later is snappy without delaying first paint.
 const DETAIL_SHEETS = Object.freeze([
@@ -48,11 +57,17 @@ function shouldSkipWarmup(target = window) {
   return /(^|-)2g$/.test(String(conn.effectiveType || ''));
 }
 
+// Detached images marked loading='lazy' are never fetched, and detached
+// unreferenced images can be garbage-collected mid-request — either way the
+// warm-up silently does nothing. Fetch normally and hold a reference until
+// the request settles; shouldSkipWarmup already guards data-saver/2g users.
+const warmRefs = new Set();
 function warmImage(src, target = window) {
   try {
     const img = new (target.Image || Image)();
     img.decoding = 'async';
-    img.loading = 'lazy';
+    warmRefs.add(img);
+    img.onload = img.onerror = () => warmRefs.delete(img);
     img.src = src;
   } catch (e) {}
 }
@@ -62,6 +77,9 @@ function warmSheets(target = window) {
   target.__tlrCardSheetsWarmStarted = true;
   TABLE_SHEETS.forEach((src, index) => {
     target.setTimeout(() => warmImage(src, target), index * TABLE_GAP_MS);
+  });
+  MARKET_CHROME.forEach((src, index) => {
+    target.setTimeout(() => warmImage(src, target), (TABLE_SHEETS.length + index) * TABLE_GAP_MS);
   });
   const detailStart = TABLE_SHEETS.length * TABLE_GAP_MS + DETAIL_START_DELAY_MS;
   DETAIL_SHEETS.forEach((src, index) => {

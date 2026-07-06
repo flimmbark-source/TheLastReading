@@ -165,6 +165,42 @@ body.mode-table-return #invWrap{opacity:1;transform:none;filter:none;transition:
 #atticTableReturn:focus,#atticTableReturn:focus-visible{outline:none;background:radial-gradient(ellipse at center top,rgba(139,83,42,.96),rgba(73,38,18,.98) 62%,rgba(28,14,8,1))}
 /* Attic tutorial copy cleanup patch */
 
+/* Attic deck of cards: screen-anchored at the bottom of the scene, to the
+   right of the Return to Table arch (z-index 28), and opens the read-only
+   card browser. Not an .attic-prop on purpose -- the mobile pan patch above
+   force-hides .attic-prop pseudo-elements, and this stack is drawn entirely
+   with them. The left clamp keeps it beside the arch's right edge on wide
+   screens and inside the viewport on narrow ones. */
+.attic-deck{position:absolute;left:min(calc(50% + min(42vw,280px) + 12px),calc(100% - 66px));bottom:10px;width:54px;height:76px;z-index:29;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-tap-highlight-color:transparent;outline:none}
+.attic-deck::before{content:'';position:absolute;inset:-46%;border-radius:50%;background:radial-gradient(circle,rgba(255,214,118,.2),rgba(255,214,118,0) 68%);opacity:.52;transform:scale(.8);animation:atticSoftPulse 2.8s ease-in-out infinite;pointer-events:none}
+.attic-deck-card{position:absolute;inset:0;border-radius:10%/7%;background:linear-gradient(160deg,#4a2f1b,#241207 62%,#160a04);border:1px solid rgba(214,166,92,.8);box-shadow:0 4px 10px rgba(0,0,0,.55),inset 0 0 0 2px rgba(20,10,4,.6);pointer-events:none}
+.attic-deck-card:nth-child(1){transform:translate(-10%,9%) rotate(-5deg)}
+.attic-deck-card:nth-child(2){transform:translate(-4%,4%) rotate(-1.5deg)}
+.attic-deck-card:nth-child(3){transform:rotate(2.5deg)}
+.attic-deck-card:nth-child(3)::after{content:'✦';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#e9c477;font-size:22px;text-shadow:0 0 8px rgba(255,205,105,.45)}
+.attic-deck:hover .attic-deck-card,.attic-deck:active .attic-deck-card{filter:brightness(1.18)}
+/* No z-index override needed for the deck browser: actionDropTargets.css
+   already pins .modal.show at 10080, above the attic scene (520). */
+
+/* Sticky note on the attic table. The paper itself is placeholder art drawn
+   in CSS -- replace .attic-note-paper's background (and drop its pseudo
+   elements) when real art exists. Room-relative like the rummage props, so
+   it stays glued to the tabletop while the view pans. */
+.attic-note{position:absolute;left:28.8%;top:36%;width:2.6%;height:4.6%;z-index:7;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-tap-highlight-color:transparent;outline:none}
+.attic-note::before{content:'';position:absolute;inset:-55%;border-radius:50%;background:radial-gradient(circle,rgba(255,214,118,.22),rgba(255,214,118,0) 68%);opacity:.55;transform:scale(.85);animation:atticSoftPulse 2.8s ease-in-out infinite;pointer-events:none}
+.attic-note-paper{position:absolute;inset:0;transform:rotate(-6deg);background:linear-gradient(165deg,#e4cf9f,#c9ad74 68%,#ab8e57);border:1px solid rgba(90,62,30,.55);border-radius:6%;box-shadow:0 3px 7px rgba(0,0,0,.55);pointer-events:none}
+.attic-note-paper::before{content:'';position:absolute;left:15%;right:15%;top:28%;height:44%;background:repeating-linear-gradient(180deg,rgba(74,50,24,.5) 0 1px,transparent 1px 5px)}
+.attic-note-paper::after{content:'';position:absolute;right:-1px;bottom:-1px;width:26%;height:26%;background:linear-gradient(315deg,#8a7044 50%,transparent 50%)}
+.attic-note:hover .attic-note-paper,.attic-note:active .attic-note-paper{filter:brightness(1.12)}
+
+/* Read-only note detail view: above the attic scene (520) and its chrome,
+   below #tutTip (10130). */
+.attic-note-detail{position:fixed;inset:0;z-index:10125;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:22px}
+.attic-note-detail-card{position:relative;width:min(88vw,380px);padding:36px 30px 32px;background:linear-gradient(168deg,#e6d2a4,#cdb17a 62%,#b6975f);border:1px solid rgba(84,58,26,.6);border-radius:4px;box-shadow:0 24px 60px rgba(0,0,0,.72);transform:rotate(-1.6deg);color:#3c2812;font:italic 400 17px/1.65 Georgia,serif;text-align:center}
+.attic-note-detail-card p{margin:0 0 16px}
+.attic-note-detail-card p:last-child{margin-bottom:0}
+.attic-note-detail-close{position:absolute;right:6px;top:4px;border:0;background:transparent;color:#5d4425;font-size:18px;line-height:1;cursor:pointer;padding:8px}
+
 /* Pill mobile spread patch */
 @media (max-width: 640px) {
   .reserve-pill{transform:translateX(calc(-25vw + 57px))}

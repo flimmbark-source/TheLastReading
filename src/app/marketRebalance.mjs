@@ -117,14 +117,16 @@ function renderVesselOffer(target = window) {
   const maxed = currentRelicSlots(target) >= 5;
   const cost = vesselCost(target);
   const canAfford = !maxed && (persist.pool || 0) >= cost;
-  card.className = `store-card ${canAfford ? '' : 'disabled'}`;
+  card.className = `store-card store-card--vessel ${canAfford ? '' : 'disabled'}`;
   card.style.pointerEvents = '';
   card.innerHTML = `
     <div class="store-card-tag">Relic Slot</div>
     <div class="store-card-art"><div class="store-vessel-glyph">＋</div></div>
-    <div class="store-card-name">Relic Vessel</div>
-    <div class="store-card-desc">${maxed ? 'Relic Slots maxed.' : 'Gain +1 Relic Slot'}</div>
-    <div class="store-card-lv">${maxed ? 'Max 5' : `Slots ${3 + level} → ${4 + level}`}</div>
+    <div class="store-card-main">
+      <div class="store-card-name">Relic Vessel</div>
+      <div class="store-card-desc">${maxed ? 'Relic Slots maxed.' : 'Gain +1 Relic Slot'}</div>
+      <div class="store-card-lv">${maxed ? 'Max 5' : `Slots ${3 + level} → ${4 + level}`}</div>
+    </div>
     <button class="store-card-buy" ${canAfford ? '' : 'disabled'} onclick="buyStoreVessel()">${maxed ? 'Maxed' : `Buy <span class="coin">✦</span> ${cost}`}</button>`;
 }
 

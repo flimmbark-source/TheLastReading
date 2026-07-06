@@ -35,4 +35,41 @@ body.mode-table-return #invWrap{
   z-index:150!important;
 }
 body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:translateY(calc(-1 * var(--inv-h)))!important;pointer-events:none!important}
+/* Deck-of-cards button in the desk's top-right corner (see archives.mjs).
+   z-index 40 keeps it above idle desk items but under one being dragged (50). */
+.inv-deck-btn{position:absolute;top:10px;right:12px;width:38px;height:54px;z-index:40;background:transparent;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.inv-deck-btn-card{position:absolute;inset:0;border-radius:10%/7%;background:linear-gradient(160deg,#4a2f1b,#241207 62%,#160a04);border:1px solid rgba(214,166,92,.8);box-shadow:0 3px 8px rgba(0,0,0,.55),inset 0 0 0 2px rgba(20,10,4,.6);pointer-events:none}
+.inv-deck-btn-card:nth-child(1){transform:translate(-8%,7%) rotate(-6deg)}
+.inv-deck-btn-card:nth-child(2){transform:rotate(2deg)}
+.inv-deck-btn-card:nth-child(2)::after{content:'✦';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#e9c477;font-size:16px;text-shadow:0 0 8px rgba(255,205,105,.45)}
+.inv-deck-btn:hover .inv-deck-btn-card,.inv-deck-btn:active .inv-deck-btn-card{filter:brightness(1.18)}
+/* Vault (drawer memories) button, top-left of the desk: a small node-chain
+   icon, mirroring the deck button on the right. Rendered only once a puzzle
+   resonation has been vaulted and the first meta puzzle is solved. */
+.inv-vault-btn{position:absolute;top:10px;left:12px;width:38px;height:54px;z-index:40;background:transparent;border:0;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.inv-vault-btn::before{content:'';position:absolute;left:50%;top:9px;bottom:10px;width:2px;margin-left:-1px;background:linear-gradient(180deg,rgba(214,166,92,.3),rgba(214,166,92,.75))}
+.inv-vault-node{position:absolute;left:50%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a2417,#160a04);border:1px solid rgba(214,166,92,.8);box-shadow:0 2px 6px rgba(0,0,0,.55);pointer-events:none}
+.inv-vault-node-top{top:3px;width:12px;height:12px}
+.inv-vault-node-mid{top:20px;width:14px;height:14px}
+.inv-vault-node-base{bottom:2px;width:20px;height:20px;border-color:#e9c477;box-shadow:0 2px 6px rgba(0,0,0,.55),0 0 8px rgba(255,205,105,.35)}
+.inv-vault-btn:hover .inv-vault-node,.inv-vault-btn:active .inv-vault-node{filter:brightness(1.2)}
+/* Label shown while the drawer displays a vaulted resonation's items. */
+.inv-view-chip{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:35;padding:6px 12px;border:1px solid rgba(197,149,74,.55);border-radius:999px;background:rgba(20,12,7,.82);color:#f0d99b;font:800 10px system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;pointer-events:none;white-space:nowrap}
+}
+/* Vault node screen: incremental-style chain of completed puzzle
+   resonations above the Current Drawer node. z 10100 clears the open
+   drawer (10095) and stays under the card detail (10120) and #tutTip
+   (10130). */
+@layer invWrap {
+.res-vault-bg{position:fixed;inset:0;z-index:10100;background:rgba(3,2,1,.86);display:flex;align-items:center;justify-content:center;padding:22px}
+.res-vault-screen{position:relative;width:min(92vw,400px);max-height:86dvh;overflow-y:auto;padding:22px 18px 30px;border:1px solid rgba(200,160,80,.4);border-radius:14px;background:radial-gradient(circle at 50% 8%,rgba(64,42,18,.5),rgba(9,5,3,.96) 72%);color:#eadbb9;font-family:Georgia,serif;text-align:center;box-shadow:0 26px 70px rgba(0,0,0,.8)}
+.res-vault-screen h3{margin:2px 0 6px;font:700 18px Georgia,serif;color:#f0d58a;letter-spacing:.04em}
+.res-vault-hint{margin:0 auto 18px;max-width:280px;font:400 12px/1.5 Georgia,serif;color:#b8a07a}
+.res-vault-chain{display:flex;flex-direction:column;align-items:center}
+.res-vault-node{width:84px;height:84px;border-radius:50%;border:2px solid rgba(226,181,100,.55);background:radial-gradient(circle at 38% 30%,rgba(84,56,26,.85),rgba(18,10,5,.95) 78%);color:#ecd9ab;font:700 11px/1.25 Georgia,serif;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:10px;text-align:center;-webkit-tap-highlight-color:transparent;transition:box-shadow .15s,border-color .15s}
+.res-vault-node:hover{border-color:rgba(255,214,120,.8)}
+.res-vault-node.active{border-color:#ffd978;box-shadow:0 0 20px rgba(255,214,120,.4)}
+.res-vault-node-center{width:104px;height:104px;font-size:12px}
+.res-vault-link{width:2px;height:36px;background:linear-gradient(180deg,rgba(226,181,100,.55),rgba(226,181,100,.22))}
+.res-vault-close{position:absolute;right:8px;top:6px;border:0;background:transparent;color:#e7c07c;font-size:18px;line-height:1;padding:8px;cursor:pointer}
 }

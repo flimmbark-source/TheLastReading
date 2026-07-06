@@ -26,7 +26,7 @@ function ensureModalCancelButton(){
   cancel.textContent='Cancel';
   cancel.hidden=true;
   cancel.addEventListener('click',()=>{
-    $('#modal').classList.remove('show','collapsed','ability-reveal');
+    $('#modal').classList.remove('show','collapsed','ability-reveal','card-browse');
     const fn=activeChoiceCancel;
     activeChoiceCancel=null;
     fn?.();
@@ -67,7 +67,7 @@ export function choice(title,prompt,cards,cb){
     e.className='card choice-card '+(c.type==='major'?'major':'');
     applyHint(e,c,uniqueCards([...state.spread.filter(Boolean),...state.hand,c]));
     e.innerHTML=cardHTML(c);applyCardPhoto(e,c);
-    e.onclick=()=>{activeChoiceCancel=null;$('#modal').classList.remove('show','collapsed','ability-reveal');cb(c)};
+    e.onclick=()=>{activeChoiceCancel=null;$('#modal').classList.remove('show','collapsed','ability-reveal','card-browse');cb(c)};
     ch.appendChild(e);
   });
   // Reaching this modal always means an ability is actively resolving, so
@@ -77,12 +77,34 @@ export function choice(title,prompt,cards,cb){
   const cancelBtn=ensureModalCancelButton();
   if(cancelBtn)cancelBtn.hidden=false;
   activeChoiceCancel=()=>cb(null);
-  $('#modal').classList.remove('collapsed');
+  $('#modal').classList.remove('collapsed','card-browse');
   $('#modal').classList.add('show','ability-reveal');
   playSound('flip');tlrArchitectureSync()
 }
 
 export function choiceAsync(title,prompt,cards){return new Promise(resolve=>choice(title,prompt,cards,resolve))}
+
+// Read-only card browser (attic deck). Reuses the choice modal shell, but
+// clicking a card opens its detail view instead of taking it; only the
+// header Cancel button closes the window. The card-browse class marks the
+// modal as browse-owned so the attic flow can close it when leaving.
+export function browseCards(title,prompt,cards){
+  $('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';
+  const ch=$('#choices');ch.innerHTML='';
+  cards.forEach(c=>{
+    const e=document.createElement('div');
+    e.className='card choice-card '+(c.type==='major'?'major':'');
+    e.innerHTML=cardHTML(c);applyCardPhoto(e,c);
+    e.onclick=()=>{window.expandCard?.(c)};
+    ch.appendChild(e);
+  });
+  const cancelBtn=ensureModalCancelButton();
+  if(cancelBtn)cancelBtn.hidden=false;
+  activeChoiceCancel=null;
+  $('#modal').classList.remove('collapsed','ability-reveal');
+  $('#modal').classList.add('show','card-browse');
+  playSound('flip');tlrArchitectureSync()
+}
 
 export function toggleModalCollapse(){let m=$('#modal');if(!m.classList.contains('show'))return;m.classList.toggle('collapsed');$('#modalToggle').textContent=m.classList.contains('collapsed')?'Show':'Hide'}
 

@@ -79,6 +79,11 @@ export function triggerResonation(res,target = window){
     unlocked.push(res.fragmentId);
     writeUnlockedFragments(unlocked,target.localStorage);
     if(target.tlrStore&&target.tlrActions)target.tlrStore.dispatch({type:target.tlrActions.UNLOCK_FRAGMENT,fragmentId:res.fragmentId});
+    // First completion of a puzzle resonation: move its archive items out of
+    // the current drawer into the resonation vault (see archives.mjs). Their
+    // invPos records stay, so glows/scoring keep working on later runs.
+    const puzzleItemIds=(res.conditions||[]).map(c=>c.itemId).filter(Boolean);
+    if(puzzleItemIds.length&&typeof target.tlrVaultResonationItems==='function')target.tlrVaultResonationItems(res.id,puzzleItemIds);
     if(typeof target.renderInventory==='function')target.renderInventory();
     setTimeout(()=>{
       if(typeof target.showToast==='function')target.showToast('Something stirs in the Archives…',4200);
