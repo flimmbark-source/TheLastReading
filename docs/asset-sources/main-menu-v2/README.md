@@ -49,10 +49,13 @@ sit close together in brightness. See `manifest.json`'s `"alpha"` field.
 the source photo is very underexposed as delivered (mean brightness
 12/255, 83% of pixels below 20/255), which read as "the menu is too dark"
 once shipped as-is with only a CSS vignette on top. The shipped copy has a
-gamma correction applied (gamma 2.0: `output = 255*(input/255)^(1/2.0)`,
-same curve per RGB channel) to lift shadow/midtone visibility — table
-etching, chair detail, curtains — without clipping the candle-flame
-highlights, which a flat linear `brightness()` multiply strong enough to
-matter would have blown out well before the shadows became visible.
-`background.jpeg` stays the untouched reference; regenerate the shipped
-asset from it if the gamma value ever needs revisiting.
+tone curve applied — gamma 1.6 (`output = 255*(input/255)^(1/1.6)`, same
+curve per RGB channel) followed by a contrast enhance (PIL
+`ImageEnhance.Contrast`, factor 1.25, pivoted on the image's own mean) —
+to lift shadow/midtone visibility (table etching, chair detail, curtains)
+while pushing true blacks back down and highlights back up afterward, so
+the scene keeps its depth instead of reading as a flat gray wash. An
+earlier pass used gamma 2.0 alone; that lifted every shadow uniformly
+with nothing pushing the black point back down, which is exactly what
+read as "washed out." `background.jpeg` stays the untouched reference;
+regenerate the shipped asset from it if this curve ever needs revisiting.
