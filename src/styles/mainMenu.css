@@ -139,6 +139,7 @@ body.main-menu-blackout #tlrBootCurtain{opacity:1;pointer-events:auto}
 .main-menu-status-pill{font-size:11px;padding:0 14px}
 .main-menu-titleblock{padding:0 44px}
 }
+@media(max-width:640px){.main-menu-heat-wave{left:-18px}.main-menu-heat-wave-b{--heat-x:10px}}
 @media(prefers-reduced-motion:reduce){#mainMenu,.main-menu-btn,.main-menu-dock-tab,.main-menu-gear,.main-menu-shop-sign{transition:none}}
 @media(prefers-reduced-motion:reduce){.main-menu-incense-smoke,.main-menu-heat-wave{animation:none;opacity:.14}}
 }
