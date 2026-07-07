@@ -338,7 +338,9 @@ export function tutNext() {
   }
   if (tutStep < TUT_STEP.SELECT_CARD) { tutShow(tutStep + 1); return; }
   if (tutStep === TUT_STEP.SCORE_ADDED) { tutShow(TUT_STEP.CARD_POINTS); return; }
-  if (tutStep === TUT_STEP.CARD_POINTS) {
+  if (tutStep === TUT_STEP.CARD_POINTS) { tutShow(TUT_STEP.THRESHOLD); return; }
+  if (tutStep === TUT_STEP.THRESHOLD) {
+    markStepSeen(tutStep);
     finishIntro();
     queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
     return;
@@ -369,9 +371,11 @@ export function tutNext() {
     return;
   }
   if (tutStep === TUT_STEP.PATTERN_SCORING) {
+    // THRESHOLD moved into the intro flow (after CARD_POINTS), so the
+    // discard/pattern chain just ends here.
     markStepSeen(tutStep);
-    if (canShowStep(TUT_STEP.THRESHOLD)) tutShow(TUT_STEP.THRESHOLD);
-    else { tutHide(); scheduleQueuedTips(260); }
+    tutHide();
+    scheduleQueuedTips(260);
     return;
   }
   const marketIndex = MARKET_TUT_STEPS.indexOf(tutStep);
