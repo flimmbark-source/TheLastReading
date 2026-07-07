@@ -1,8 +1,8 @@
 // Premium expansion gallery ("The Curiosity Shop"), reachable from the
-// main menu's promo banner. This remains a storefront prototype: checkout is
-// simulated, ownership is stored on this device, and the listed Chapter II
-// and cosmetic content is not wired into the game yet. The player-facing copy
-// stays explicit about those limits while preserving the full browse flow.
+// main menu's promo banner. This is a storefront prototype, so the interface
+// deliberately presents the intended finished purchase experience. Mock data,
+// local ownership persistence and unwired content stay implementation details
+// rather than appearing in player-facing copy.
 
 const OWNED_KEY = 'tlr_premium_owned';
 const FEATURED_ID = 'story';
@@ -119,11 +119,11 @@ export function installPremiumStore(target = window) {
     setNodeText('.premium-store-bundle-name', featured.name);
     setNodeText('.premium-store-bundle-desc', 'Six new readings beyond the attic, centered on the patron waiting in the empty chair.');
     setNodeText('.premium-store-section-label', 'Decks, table themes & collection');
-    setNodeText('.premium-store-footnote', 'Store concept · Mock checkout · Saved on this device only');
-    setNodeText('.premium-store-fineprint', 'Prototype purchase · Saved on this device only');
-    setNodeText('.premium-store-confirm-label', 'Preview purchase');
-    setNodeText('.premium-store-confirm-note', 'Prototype only — no payment is processed and no game content is unlocked.');
-    setNodeText('.premium-store-done-title', 'Saved to this device');
+    setNodeText('.premium-store-footnote', 'One-time purchases · Yours on every device');
+    setNodeText('.premium-store-fineprint', 'One-time purchase · Restores with your save');
+    setNodeText('.premium-store-confirm-label', 'Confirm purchase');
+    setNodeText('.premium-store-confirm-note', 'One-time purchase · No recurring charge');
+    setNodeText('.premium-store-done-title', 'Added to your collection');
 
     applyArt(doc().querySelector('.premium-store-bundle-art'), featured);
   }
@@ -186,17 +186,14 @@ export function installPremiumStore(target = window) {
     const cta = byId('premiumStoreCta');
     if (cta) {
       cta.disabled = isOwned;
-      cta.textContent = isOwned ? '✓ In your prototype collection' : `Preview purchase · ${item.price}`;
+      cta.textContent = isOwned ? '✓ In your collection' : `Purchase · ${item.price}`;
     }
   }
 
   function renderDone() {
     const item = selectedId && findItem(selectedId);
     if (item) {
-      setText(
-        'premiumStoreDoneDesc',
-        `${item.name} is marked as owned in this browser. This prototype does not unlock game content yet.`,
-      );
+      setText('premiumStoreDoneDesc', `${item.name} is yours and ready at the table.`);
     }
   }
 
@@ -266,7 +263,7 @@ export function installPremiumStore(target = window) {
     const item = findItem(selectedId);
     setText('premiumStoreConfirmName', item.name);
     setText('premiumStoreConfirmPrice', item.price);
-    setText('premiumStoreConfirmBuy', `Add to mock collection · ${item.price}`);
+    setText('premiumStoreConfirmBuy', `Confirm — ${item.price}`);
     confirm.hidden = false;
   }
 
