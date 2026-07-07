@@ -58,6 +58,21 @@ async function main() {
       });
       await page.goto(`${baseUrl}/game.html`, { waitUntil: 'networkidle' });
 
+      // Capture the player-facing premium shop before entering a game. This is
+      // part of the same mobile front-page surface and needs real-browser visual
+      // coverage rather than being judged from CSS alone.
+      await page.click('#mainMenuPromo');
+      await page.waitForFunction(() => document.getElementById('premiumStore')?.getAttribute('aria-hidden') === 'false');
+      const storeRect = await page.locator('.premium-store-sheet').boundingBox();
+      assert.ok(storeRect, `premium store sheet should exist at ${width}px`);
+      assert.ok(storeRect.x >= -4, `premium store should not clip left at ${width}px`);
+      assert.ok(storeRect.x + storeRect.width <= width + 4, `premium store should not clip right at ${width}px`);
+      assert.ok(storeRect.y >= -4, `premium store should not clip top at ${width}px`);
+      assert.ok(storeRect.y + storeRect.height <= height + 4, `premium store should not clip bottom at ${width}px`);
+      await page.screenshot({ path: `artifacts/spv2-smoke-store-${width}.png`, fullPage: true });
+      await page.click('.premium-store-close');
+      await page.waitForFunction(() => document.getElementById('premiumStore')?.getAttribute('aria-hidden') === 'true');
+
       // Drive the real main-menu boot path instead of forcing SPv2 body classes:
       // the SPv2 game engine (gesture drawers, ability handlers, generated-sheet
       // art) only loads once a game actually starts, so a synthetic class swap
