@@ -40,12 +40,12 @@ body.main-menu-mode-booting :where(#titleWrap,.bar,.score-stack,#constellationPi
    title/status/actions/dock float on top of it instead of forming a stack
    of independent app cards. See docs/asset-sources/main-menu-v2 for the
    source sheet this was cut from. */
-#mainMenu{position:fixed;inset:0;z-index:9000;display:flex;align-items:stretch;justify-content:center;box-sizing:border-box;overflow:hidden;background-color:#050302;background-image:url(../../assets/main_menu_table.webp);background-size:cover;background-position:center top;transition:opacity .35s ease}
+#mainMenu{position:fixed;inset:0;z-index:9000;display:flex;align-items:stretch;justify-content:center;box-sizing:border-box;overflow:hidden;background-color:#050302;background-image:radial-gradient(ellipse at 50% 63%,rgba(226,177,88,.1),rgba(0,0,0,0) 42%),linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.36) 74%,rgba(0,0,0,.68)),url(../../assets/main_menu_table.webp);background-size:cover,cover,cover;background-position:center top;transition:opacity .35s ease}
 body.main-menu-active #mainMenu{z-index:2147484000}
 #mainMenu.mm-hidden{opacity:0;pointer-events:none}
 #mainMenu[hidden]{display:none!important}
 
-.main-menu-inner{position:relative;z-index:1;width:100%;max-width:480px;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.main-menu-inner{position:relative;z-index:1;width:100%;max-width:480px;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(26px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
 
 /* Icon-only auxiliary controls (gear, shop sign) — kept off `.main-menu-btn`
    on purpose: menuBoot.mjs's setBusy()/clearBusy() capture and later
@@ -67,18 +67,27 @@ body.main-menu-active #mainMenu{z-index:2147484000}
    carries an alt already, this just keeps a heading in the a11y tree. */
 .main-menu-sr-title{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;margin:-1px}
 
-.main-menu-shop-sign{position:absolute;top:clamp(168px,22vh,212px);right:max(6px,env(safe-area-inset-right));z-index:5;width:clamp(68px,19vw,82px);transform-origin:top center;transition:transform .15s ease}
+.main-menu-shop-sign{position:absolute;top:clamp(150px,20vh,194px);right:max(6px,env(safe-area-inset-right));z-index:5;width:clamp(64px,18vw,78px);transform-origin:top center;transition:transform .15s ease}
 .main-menu-shop-sign img{width:100%;height:auto;display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,.55))}
 .main-menu-shop-sign:hover{transform:rotate(-2deg)}
 .main-menu-shop-sign:active{transform:rotate(0) scale(.96)}
 
-.main-menu-hub{position:relative;z-index:2;flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:12px;padding-bottom:6px}
+.main-menu-hub{position:relative;z-index:2;flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:10px;padding-bottom:2px}
 
-.main-menu-status-pill{margin:0;padding:0 22px;height:34px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1px solid rgba(224,195,109,.4);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);background:linear-gradient(180deg,rgba(19,12,7,.92),rgba(6,4,3,.95));color:#d9bd7c;font:700 12px/1 Georgia,serif;letter-spacing:.05em;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.4);visibility:hidden}
+.main-menu-card-spread{position:relative;width:min(260px,72vw);height:76px;margin-bottom:-2px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.55));pointer-events:none}
+.main-menu-table-deck,.main-menu-table-card{position:absolute;bottom:4px;width:52px;height:72px;border:1px solid rgba(219,181,100,.66);border-radius:5px;background:linear-gradient(145deg,rgba(34,24,17,.96),rgba(9,7,6,.98));box-shadow:inset 0 0 0 2px rgba(219,181,100,.14),inset 0 0 18px rgba(0,0,0,.72),0 2px 0 rgba(255,221,145,.08)}
+.main-menu-table-deck{left:2px;transform:rotate(-8deg);background-image:linear-gradient(145deg,rgba(34,24,17,.96),rgba(9,7,6,.98)),url(../../assets/main_menu_dock_reading.png);background-size:cover,42px auto;background-position:center;background-repeat:no-repeat}
+.main-menu-table-deck::before{content:'';position:absolute;inset:5px;border:1px solid rgba(219,181,100,.42);border-radius:4px}
+.main-menu-table-card{bottom:0}
+.main-menu-table-card:nth-child(2){left:82px;transform:rotate(-3deg)}
+.main-menu-table-card:nth-child(3){left:146px;transform:rotate(2deg)}
+.main-menu-table-card:nth-child(4){left:210px;transform:rotate(5deg)}
+.main-menu-table-card::before{content:'✦';position:absolute;inset:8px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(219,181,100,.36);border-radius:4px;color:rgba(219,181,100,.62);font-size:22px;text-shadow:0 0 10px rgba(219,181,100,.32)}
+.main-menu-status-pill{margin:0;padding:0 24px;height:36px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1px solid rgba(224,195,109,.48);clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,12px 100%,0 50%);background:linear-gradient(180deg,rgba(19,12,7,.94),rgba(6,4,3,.97));color:#d9bd7c;font:700 12px/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.4),inset 0 0 0 1px rgba(240,213,138,.09);visibility:hidden}
 .main-menu-status-pill[data-ready="true"]{visibility:visible}
 .main-menu-status-sep{color:#8a7551;margin:0 2px}
 
-.main-menu-action-panel{display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:280px}
+.main-menu-action-panel{display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:312px}
 .main-menu-hub[data-active-tab="reading"] .main-menu-action-panel[data-panel="reading"]{display:flex}
 .main-menu-hub[data-active-tab="adventure"] .main-menu-action-panel[data-panel="adventure"]{display:flex}
 .main-menu-hub[data-active-tab="duel"] .main-menu-action-panel[data-panel="duel"]{display:flex}
@@ -86,7 +95,7 @@ body.main-menu-active #mainMenu{z-index:2147484000}
 .main-menu-btn{width:100%;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease,filter .15s ease}
 .main-menu-btn:focus-visible{outline:2px solid #e0c36d;outline-offset:3px}
 .main-menu-btn:disabled{opacity:.4;cursor:not-allowed}
-.main-menu-btn-primary{height:58px;background:url(../../assets/parchment_plaque_large_center.png) center/100% 100% no-repeat;color:#3a1a06;font:700 16px/1 Georgia,serif;letter-spacing:.05em;text-shadow:none;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
+.main-menu-btn-primary{height:66px;background:url(../../assets/parchment_plaque_large_center.png) center/100% 100% no-repeat;color:#3a1a06;font:700 20px/1 Georgia,serif;letter-spacing:.04em;text-shadow:none;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
 .main-menu-btn-primary:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
 .main-menu-btn-primary:active:not(:disabled){transform:translateY(0) scale(.985)}
 .main-menu-btn-secondary{height:38px;border:1px solid rgba(224,195,109,.32);border-radius:999px;background:rgba(8,5,3,.42);color:#c9aa66;font:700 12px/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase}
@@ -98,14 +107,14 @@ body.main-menu-active #mainMenu{z-index:2147484000}
 #mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled,
 #mainMenu #mainMenuContinue.main-menu-continue-unavailable{display:none}
 #mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled ~ #mainMenuNewGame,
-#mainMenu #mainMenuContinue.main-menu-continue-unavailable ~ #mainMenuNewGame{width:100%;height:58px;border:none;border-radius:0;background:url(../../assets/parchment_plaque_large_center.png) center/100% 100% no-repeat;color:#3a1a06;font:700 16px/1 Georgia,serif;letter-spacing:.05em;text-transform:none}
+#mainMenu #mainMenuContinue.main-menu-continue-unavailable ~ #mainMenuNewGame{width:100%;height:66px;border:none;border-radius:0;background:url(../../assets/parchment_plaque_large_center.png) center/100% 100% no-repeat;color:#3a1a06;font:700 20px/1 Georgia,serif;letter-spacing:.04em;text-transform:none}
 #mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled ~ #mainMenuNewGame:hover:not(:disabled),
 #mainMenu #mainMenuContinue.main-menu-continue-unavailable ~ #mainMenuNewGame:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
 
-.main-menu-dock{margin-top:4px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%;max-width:340px;box-sizing:border-box;padding:6px;border:1px solid rgba(224,195,109,.3);border-radius:16px;background:linear-gradient(180deg,rgba(15,10,6,.6),rgba(7,5,3,.75));box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.main-menu-dock{margin-top:4px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%;max-width:340px;box-sizing:border-box;padding:6px;border:1px solid rgba(224,195,109,.36);border-radius:16px;background:linear-gradient(180deg,rgba(15,10,6,.48),rgba(7,5,3,.72));box-shadow:0 6px 16px rgba(0,0,0,.35),inset 0 0 0 1px rgba(240,213,138,.07)}
 .main-menu-dock-tab{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:88px;box-sizing:border-box;border:1px solid rgba(224,195,109,.2);border-radius:11px;background:rgba(0,0,0,.16);padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;opacity:.92;transition:opacity .15s ease,border-color .15s ease,background .2s ease,transform .12s ease}
-.main-menu-dock-tab img{width:auto;height:52px;object-fit:contain}
-.main-menu-dock-tab span{font:700 11px/1 Georgia,serif;letter-spacing:.04em;color:#c9aa66;text-shadow:0 1px 3px rgba(0,0,0,.85)}
+.main-menu-dock-tab img{width:auto;height:50px;object-fit:contain}
+.main-menu-dock-tab span{font:700 13px/1 Georgia,serif;letter-spacing:.04em;color:#c9aa66;text-shadow:0 1px 3px rgba(0,0,0,.85);text-transform:uppercase}
 .main-menu-dock-tab.is-active{opacity:1;border-color:rgba(240,213,138,.75);background:radial-gradient(ellipse at 50% 32%,rgba(224,168,71,.22),rgba(20,13,7,.5) 72%);box-shadow:inset 0 0 0 1px rgba(240,213,138,.18)}
 .main-menu-dock-tab.is-active span{color:#f0d58a;margin-bottom:8px}
 .main-menu-dock-tab.is-active::after{content:'\2726';position:absolute;bottom:6px;color:#e0c36d;font-size:8px;text-shadow:0 0 6px rgba(224,195,109,.7)}
@@ -121,6 +130,9 @@ body.main-menu-blackout #tlrBootCurtain{opacity:1;pointer-events:auto}
 .main-menu-titleblock{margin-top:18px}
 .main-menu-title-art{max-width:200px}
 .main-menu-shop-sign{top:118px;width:64px}
+.main-menu-card-spread{height:52px;width:min(210px,64vw)}
+.main-menu-table-deck,.main-menu-table-card{width:40px;height:56px}
+.main-menu-table-card:nth-child(2){left:66px}.main-menu-table-card:nth-child(3){left:118px}.main-menu-table-card:nth-child(4){left:170px}
 .main-menu-dock-tab{height:72px}
 .main-menu-dock-tab img{height:38px}
 }
