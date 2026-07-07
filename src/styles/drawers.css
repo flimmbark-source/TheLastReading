@@ -25,7 +25,9 @@ body:not(.mp-game-active) #scoringBtn,body:not(.mp-game-active) #abilitiesBtn,#m
 #menuPullDesk #settingsPanel .settings-title{color:#f0d58a!important;border-bottom-color:rgba(228,193,137,.22)!important}
 #menuPullDesk #settingsPanel .settings-action{background:rgba(180,140,90,.18)!important;border-color:rgba(180,140,90,.45)!important;color:#e6c89a!important}
 .refs-layer{display:none!important}
-@keyframes handCardIdleCycle{0%,100%{translate:0 0;rotate:0deg;filter:brightness(1)}50%{translate:0 -2px;rotate:.35deg;filter:brightness(1.035)}}
+/* translate/rotate are compositor-only; the old filter:brightness pulse
+   (1 -> 1.035, imperceptible) forced a repaint of every hand card every frame. */
+@keyframes handCardIdleCycle{0%,100%{translate:0 0;rotate:0deg}50%{translate:0 -2px;rotate:.35deg}}
 .hand:not(.hand-scroll-dragging):not(.has-selected-card) .card:not(.sel):not(.ability-target):not(.ability-picked):not(.purge-picked):not(.hand-card-dragging){animation:handCardIdleCycle 4.8s ease-in-out infinite}
 .hand:not(.hand-scroll-dragging) .card:nth-child(2){animation-delay:-.8s}.hand:not(.hand-scroll-dragging) .card:nth-child(3){animation-delay:-1.6s}.hand:not(.hand-scroll-dragging) .card:nth-child(4){animation-delay:-2.4s}.hand:not(.hand-scroll-dragging) .card:nth-child(5){animation-delay:-3.2s}.hand:not(.hand-scroll-dragging) .card:nth-child(6){animation-delay:-4s}.hand:not(.hand-scroll-dragging) .card:nth-child(7){animation-delay:-4.8s}.hand:not(.hand-scroll-dragging) .card:nth-child(8){animation-delay:-5.6s}
 @media(prefers-reduced-motion:reduce){.hand .card{animation:none!important}}

@@ -133,9 +133,14 @@ body:not(.single-player-v2) {
     padding-bottom: 181px !important; /* 157px + 24px */
   }
 
-  /* ── Re-enable candle glow on mobile (performance.css disables it) ── */
+  /* ── Keep the candle glow visible on mobile (performance.css dims it), but
+     leave it static. #roomAmbient is a fullscreen fixed element with a
+     mix-blend-mode, so animating its opacity/transform (the old candleFlicker)
+     forced the GPU to re-blend the entire viewport every frame -- the source of
+     the single-player/adventure lag. performance.css's `animation:none` is kept
+     (no !important animation here means it wins), so only the brightness is
+     restored, not the per-frame flicker. ── */
   #roomAmbient {
-    animation: candleFlicker 7.3s ease-in-out infinite !important;
     opacity: 0.86 !important;
     transform: none !important;
   }
