@@ -30,7 +30,7 @@ const STORE_SCORING_COPY = Object.freeze({
   court_chips: { name: 'Full Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin' },
   royal_court_chips: { name: 'Royal Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin' },
   path_chips: { name: 'Path of the Magi', desc: '+15 Chips / +0.5 Mult', icon: 'isp-scoring' },
-  suit_stamp: { name: 'Suit Stamp', desc: 'Major Arcana. Its suit counts toward Royal Court.', icon: 'isp-scoring' },
+  suit_stamp: { name: 'Suit Stamp', desc: 'Major Arcana. Suit emblams in card art count in Royal Court.', icon: 'isp-scoring' },
   five_stamp: { name: 'Five Star', desc: 'Any card. Slots into Sequences as a multiple of 5.', icon: 'isp-scoring' },
 });
 
