@@ -42,7 +42,6 @@ body.main-menu-mode-booting :where(#titleWrap,.bar,.score-stack,#constellationPi
    source sheet this was cut from. */
 #mainMenu{position:fixed;inset:0;z-index:9000;display:flex;align-items:stretch;justify-content:center;box-sizing:border-box;overflow:hidden;background-color:#050302;background-image:url(../../assets/main_menu_table.webp);background-size:cover;background-position:center top;transition:opacity .35s ease}
 body.main-menu-active #mainMenu{z-index:2147484000}
-#mainMenu::before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(3,2,2,.16) 0%,rgba(3,2,2,.02) 26%,rgba(3,2,2,.22) 60%,rgba(3,2,2,.5) 100%)}
 #mainMenu.mm-hidden{opacity:0;pointer-events:none}
 #mainMenu[hidden]{display:none!important}
 
@@ -114,7 +113,6 @@ body.main-menu-active #mainMenu{z-index:2147484000}
 .main-menu-dock-tab:focus-visible{outline:2px solid #e0c36d;outline-offset:2px}
 
 body.main-menu-blackout #mainMenu{opacity:0;transition:opacity .3s ease}
-body.main-menu-blackout #mainMenu::before{opacity:0;transition:opacity .3s ease}
 body.main-menu-blackout #tlrBootCurtain{opacity:1;pointer-events:auto}
 
 @media(max-height:700px){
