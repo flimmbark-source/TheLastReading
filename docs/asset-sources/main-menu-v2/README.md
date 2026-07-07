@@ -44,3 +44,15 @@ dividers) were re-keyed from flat JPEG to real alpha transparency via a
 luminance ramp (near-black → transparent, ~24/255 brightness and above →
 opaque) rather than a naive color-key, since backdrop and some panel fills
 sit close together in brightness. See `manifest.json`'s `"alpha"` field.
+
+`main_menu_table.webp` also differs from `background.jpeg` in exposure:
+the source photo is very underexposed as delivered (mean brightness
+12/255, 83% of pixels below 20/255), which read as "the menu is too dark"
+once shipped as-is with only a CSS vignette on top. The shipped copy has a
+gamma correction applied (gamma 2.0: `output = 255*(input/255)^(1/2.0)`,
+same curve per RGB channel) to lift shadow/midtone visibility — table
+etching, chair detail, curtains — without clipping the candle-flame
+highlights, which a flat linear `brightness()` multiply strong enough to
+matter would have blown out well before the shadows became visible.
+`background.jpeg` stays the untouched reference; regenerate the shipped
+asset from it if the gamma value ever needs revisiting.
