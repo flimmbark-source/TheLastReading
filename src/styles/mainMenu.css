@@ -55,13 +55,13 @@ body.main-menu-active #mainMenu{z-index:2147484000}
 .main-menu-candle-melt::before{content:'';position:absolute;left:18px;top:30px;width:5px;height:8px;border-radius:0 0 999px 999px;background:linear-gradient(180deg,rgba(255,244,198,.88),rgba(231,188,110,.62));box-shadow:0 0 7px rgba(255,221,144,.38);transform-origin:50% 0;animation:mainMenuCandleWaxRun 7.4s ease-in-out infinite}
 .main-menu-candle-melt::after{content:'';position:absolute;left:16px;top:72px;width:9px;height:9px;border-radius:50% 50% 58% 42%;background:radial-gradient(circle at 45% 35%,rgba(255,248,210,.82),rgba(225,181,102,.52) 68%,transparent 72%);box-shadow:0 0 6px rgba(255,221,144,.24);opacity:0;animation:mainMenuCandleWaxBead 7.4s ease-in-out infinite}
 @media(max-width:640px){
-  /* Keep the mobile wax animation pinned to the candle body itself. Avoid
-     viewport-height cover-image math here: on real phone chrome/aspect-ratio
-     combinations it can push the small drip beside the candle instead of onto
-     the candle face. */
-  .main-menu-candle-melt{left:-6px;opacity:.82}
-  .main-menu-candle-melt::before{left:30px}
-  .main-menu-candle-melt::after{left:28px}
+  /* The big candle's wax face is about x=96 in the 941x1672 table art. In
+     portrait phones the cover-scaled image is height-bound and center-cropped,
+     so place the drip at that art coordinate instead of at a viewport edge. */
+  .main-menu-candle-melt{left:calc(50vw - 22.4vh - 18px);opacity:.82}
+}
+@supports(height:100dvh){
+  @media(max-width:640px){.main-menu-candle-melt{left:calc(50vw - 22.4dvh - 18px)}}
 }
 @keyframes mainMenuCandleMeltPlacement{0%,24.99%{transform:translate3d(0,0,0)}25%,49.99%{transform:translate3d(2px,-1px,0)}50%,74.99%{transform:translate3d(-1px,1px,0)}75%,100%{transform:translate3d(3px,0,0)}}
 @keyframes mainMenuCandleWaxRun{0%,18%{opacity:0;transform:scaleY(.2)}30%{opacity:.52;transform:scaleY(1.15)}58%{opacity:.78;transform:scaleY(4.6)}76%{opacity:.38;transform:scaleY(5.2)}100%{opacity:0;transform:scaleY(.35)}}
