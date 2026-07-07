@@ -8,14 +8,16 @@ const DEFAULT_TRACKS = [
 ];
 
 const MUSIC_CONTEXTS = {
-  default: { tracks: DEFAULT_TRACKS, loopSingle: false },
+  default: { tracks: DEFAULT_TRACKS, loopSingle: false, volumeScale: 1 },
   mainMenu: {
     tracks: ['assets/audio/alexrockbeat-alexrockbeat-magic-fantasy-music-547446.mp3'],
     loopSingle: true,
+    volumeScale: 0.5,
   },
   premiumStore: {
     tracks: ['assets/audio/lofium-lofi-song-backyard-by-lofium-242713.mp3'],
     loopSingle: true,
+    volumeScale: 0.5,
   },
 };
 
@@ -53,6 +55,10 @@ export function installAudioControls(target = window) {
     return MUSIC_CONTEXTS[name] || MUSIC_CONTEXTS.default;
   }
 
+  function contextVolume(name = activeContext) {
+    return targetVol * (contextConfig(name).volumeScale ?? 1);
+  }
+
   function pickTrack(name = activeContext) {
     const tracks = contextConfig(name).tracks;
     if (tracks.length === 1) {
@@ -81,7 +87,7 @@ export function installAudioControls(target = window) {
     return el;
   }
 
-  function beginFadeTo(src, contextName = activeContext) {
+  function beginFadeTo(src, contextName = activeContext, fadeSeconds = FADE) {
     if (!started) return;
     if (currentTrack === src && cur && !nxt) {
       cur.loop = !!contextConfig(contextName).loopSingle;
@@ -103,9 +109,9 @@ export function installAudioControls(target = window) {
     nxt.play().catch(() => {});
 
     function tick() {
-      const p = Math.min(1, (performance.now() - fadeStart) / 1000 / FADE);
+      const p = Math.min(1, (performance.now() - fadeStart) / 1000 / fadeSeconds);
       if (outgoing) outgoing.volume = fromVol * (1 - p);
-      if (nxt) nxt.volume = targetVol * p;
+      if (nxt) nxt.volume = contextVolume(contextName) * p;
       if (p < 1) {
         fadeTick = target.requestAnimationFrame(tick);
       } else {
@@ -150,25 +156,25 @@ export function installAudioControls(target = window) {
     started = true;
     currentTrack = pickTrack(activeContext);
     cur = buildAudio(currentTrack, activeContext);
-    cur.volume = targetVol;
+    cur.volume = contextVolume(activeContext);
     cur.preload = 'none';
     cur.play().catch(() => { started = false; cur = null; currentTrack = null; });
   }
 
   const music = {
-    setVol(v) { targetVol = v; if (cur && !fading) cur.volume = v; },
-    setContext(name = 'default') {
+    setVol(v) { targetVol = v; if (cur && !fading) cur.volume = contextVolume(activeContext); },
+    setContext(name = 'default', options = {}) {
       const nextContext = MUSIC_CONTEXTS[name] ? name : 'default';
       if (nextContext === activeContext) return;
       activeContext = nextContext;
       lastIdx = -1;
-      if (started) beginFadeTo(pickTrack(activeContext), activeContext);
+      if (started) beginFadeTo(pickTrack(activeContext), activeContext, options.fadeSeconds ?? FADE);
     },
   };
   target.tlrMusic = music;
   target._music = music;
   target.setMusicVol = function (v) { music.setVol(v); };
-  target.tlrSetMusicContext = function (name) { music.setContext(name); };
+  target.tlrSetMusicContext = function (name, options) { music.setContext(name, options); };
   target.setSfxVol = function (v) { target._sfxVol = v; };
 
   document.addEventListener('touchstart', start, { capture: true, once: true });
