@@ -45,6 +45,15 @@ body.main-menu-active #mainMenu{z-index:2147484000}
 #mainMenu.mm-hidden{opacity:0;pointer-events:none}
 #mainMenu[hidden]{display:none!important}
 
+.main-menu-ambient{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.main-menu-incense-smoke{position:absolute;right:clamp(16px,7vw,38px);top:clamp(318px,45vh,430px);width:clamp(22px,6vw,34px);height:clamp(96px,18vh,142px);border-radius:50%;opacity:0;background:radial-gradient(ellipse at 48% 22%,rgba(225,218,203,.38),rgba(204,194,176,.18) 34%,rgba(160,150,136,.08) 58%,transparent 72%);filter:blur(7px);mix-blend-mode:screen;transform-origin:50% 100%;animation:mainMenuIncenseSmoke 6.8s ease-in-out infinite}
+.main-menu-incense-smoke-b{right:clamp(26px,8.5vw,52px);top:clamp(304px,43vh,410px);width:clamp(18px,5vw,28px);height:clamp(86px,16vh,128px);animation-delay:2.1s;animation-duration:7.6s}
+.main-menu-incense-smoke-c{right:clamp(8px,4.5vw,28px);top:clamp(334px,47vh,454px);width:clamp(16px,4.5vw,26px);height:clamp(74px,14vh,116px);animation-delay:4.3s;animation-duration:6.2s}
+.main-menu-heat-wave{position:absolute;left:50%;top:clamp(286px,40vh,380px);width:clamp(34px,8vw,48px);height:clamp(70px,12vh,96px);border-radius:50%;opacity:.28;background:linear-gradient(90deg,transparent 0 18%,rgba(255,225,168,.2) 30%,transparent 43% 57%,rgba(255,197,113,.18) 70%,transparent 82% 100%);filter:blur(3px);mix-blend-mode:screen;transform:translateX(-104px) skewX(-8deg);animation:mainMenuHeatWave 2.9s ease-in-out infinite}
+.main-menu-heat-wave-b{width:clamp(26px,6vw,38px);height:clamp(58px,10vh,82px);opacity:.2;transform:translateX(-82px) skewX(10deg);animation-delay:1.35s;animation-duration:3.4s}
+@keyframes mainMenuIncenseSmoke{0%{opacity:0;transform:translate3d(0,22px,0) scale(.42) rotate(-5deg)}18%{opacity:.42}55%{opacity:.24;transform:translate3d(-10px,-38px,0) scale(.86) rotate(8deg)}100%{opacity:0;transform:translate3d(10px,-98px,0) scale(1.28) rotate(-10deg)}}
+@keyframes mainMenuHeatWave{0%,100%{opacity:.12;filter:blur(4px);transform:translateX(-104px) translateY(8px) skewX(-8deg) scaleY(.82)}45%{opacity:.34;filter:blur(2px);transform:translateX(-98px) translateY(-8px) skewX(9deg) scaleY(1.06)}70%{opacity:.2;transform:translateX(-110px) translateY(-18px) skewX(-4deg) scaleY(1.14)}}
+
 .main-menu-inner{position:relative;z-index:1;width:100%;max-width:480px;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
 
 /* Icon-only auxiliary controls (gear, shop sign) — kept off `.main-menu-btn`
@@ -129,4 +138,5 @@ body.main-menu-blackout #tlrBootCurtain{opacity:1;pointer-events:auto}
 .main-menu-titleblock{padding:0 44px}
 }
 @media(prefers-reduced-motion:reduce){#mainMenu,.main-menu-btn,.main-menu-dock-tab,.main-menu-gear,.main-menu-shop-sign{transition:none}}
+@media(prefers-reduced-motion:reduce){.main-menu-incense-smoke,.main-menu-heat-wave{animation:none;opacity:.14}}
 }
