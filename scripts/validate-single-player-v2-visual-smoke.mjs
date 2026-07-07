@@ -63,6 +63,7 @@ async function main() {
       // coverage rather than being judged from CSS alone.
       await page.click('#mainMenuPromo');
       await page.waitForFunction(() => document.getElementById('premiumStore')?.getAttribute('aria-hidden') === 'false');
+      await page.waitForTimeout(320);
       const storeRect = await page.locator('.premium-store-sheet').boundingBox();
       assert.ok(storeRect, `premium store sheet should exist at ${width}px`);
       assert.ok(storeRect.x >= -4, `premium store should not clip left at ${width}px`);
