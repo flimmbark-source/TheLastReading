@@ -57,13 +57,13 @@ body.main-menu-active #mainMenu{z-index:2147484000}
 @media(max-width:640px){
   /* The menu table art is background-size: cover and centered at the top.
      On narrow phone viewports it is scaled from the viewport height, which
-     crops the left edge by different amounts per device. Anchor the wax drip
-     to that rendered art edge instead of the viewport edge so it stays on the
-     candle across responsive phone widths. The source art is 941x1672. */
-  .main-menu-candle-melt{left:calc(50vw - 28.14vh - 6px);opacity:.82}
+     crops the left edge by different amounts per device. Track the candle's
+     wax seam inside the rendered 941x1672 artwork instead of only tracking
+     the cropped image edge, keeping the drip on the candle across phones. */
+  .main-menu-candle-melt{left:calc(50vw - 21.68vh - 18px);opacity:.82}
 }
 @supports(height:100dvh){
-  @media(max-width:640px){.main-menu-candle-melt{left:calc(50vw - 28.14dvh - 6px)}}
+  @media(max-width:640px){.main-menu-candle-melt{left:calc(50vw - 21.68dvh - 18px)}}
 }
 @keyframes mainMenuCandleMeltPlacement{0%,24.99%{transform:translate3d(0,0,0)}25%,49.99%{transform:translate3d(2px,-1px,0)}50%,74.99%{transform:translate3d(-1px,1px,0)}75%,100%{transform:translate3d(3px,0,0)}}
 @keyframes mainMenuCandleWaxRun{0%,18%{opacity:0;transform:scaleY(.2)}30%{opacity:.52;transform:scaleY(1.15)}58%{opacity:.78;transform:scaleY(4.6)}76%{opacity:.38;transform:scaleY(5.2)}100%{opacity:0;transform:scaleY(.35)}}
