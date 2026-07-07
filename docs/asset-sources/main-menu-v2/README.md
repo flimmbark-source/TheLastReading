@@ -33,6 +33,12 @@ and copied into `assets/` directly (`main_menu_title.png`,
 the mode name stays live HTML underneath, matching the title/shop-sign
 treatment of using the art for chrome only.
 
+Note: `main_menu_shop_sign.png` is just the hanging-sign art. The button it's
+used on opens the real-money premium store (`tlrOpenPremiumStore`, see
+`src/app/premiumStore.mjs`/`src/styles/premiumStore.css`), not the in-game
+Reserve-currency market (`openShopMain` in `src/ui/renderMarket.mjs`) — the
+two are unrelated systems that happen to share "shop" in their names.
+
 Elements with a black sheet backdrop (title, shop sign, dock tiles, icons,
 dividers) were re-keyed from flat JPEG to real alpha transparency via a
 luminance ramp (near-black → transparent, ~24/255 brightness and above →

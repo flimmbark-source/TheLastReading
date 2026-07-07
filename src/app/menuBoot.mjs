@@ -3,6 +3,7 @@
 import { installMarketAudioRotation } from './marketAudioRotation.mjs';
 import { installActionDropGestures } from '../ui/gestureActionDrops.mjs';
 import { installCardDetailGestures } from '../ui/cardDetailGestures.mjs?v=double-tap-1';
+import { installPremiumStore } from './premiumStore.mjs';
 
 const CURTAIN_FADE_MS = 300;
 
@@ -13,6 +14,7 @@ let bootAction = null;
 installMarketAudioRotation(window);
 installActionDropGestures(window);
 installCardDetailGestures(window);
+installPremiumStore(window);
 
 const CANDLELIGHT_KEY = 'tlr_candlelight_lighting';
 
@@ -241,13 +243,6 @@ window.tlrMainMenuMultiplayer = function () {
 
 window.tlrMainMenuAdventure = function () {
   launch('tlrMainMenuAdventure');
-};
-
-// Opening the shop starts a reading behind it (see mainMenu.mjs's
-// tlrMainMenuOpenShop), so -- like the four actions above -- it needs the
-// full game module loaded first. Reuses the same generic launch() stub.
-window.tlrMainMenuOpenShop = function () {
-  launch('tlrMainMenuOpenShop');
 };
 
 // Tab switching and the settings gear are pure menu UI, not game state, so

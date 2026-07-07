@@ -17,7 +17,7 @@ const html = read('../game.html');
 const buildScript = read('../scripts/build-bundle.mjs');
 assert.match(
   html,
-  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking;/,
+  /@layer spv2\.tokens, spv2\.base, spv2\.components, spv2\.mobile, spv2\.states, spv2\.compat, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, screens\.main-menu, screens\.loadout, screens\.matchmaking, screens\.premium-store;/,
   'game.html should pre-declare the app-wide cascade layer order (spv2.* tiers, constellations, dragStability, actionDropTargets, spread, base, cards, assetLazy, mpMultMobile, mpSpreadCards, mpGameChrome, relicRack, handSwipeZone, invWrap, classicCore, legacy, spv2Core, mpCore, tutTip, invTab, titleWrap, atticFade, handDragFix, performance, drawAnimation, drawers, then standalone screens) before any stylesheet link',
 );
 assert.ok(
@@ -571,5 +571,14 @@ assert.match(mainMenu, /@layer screens\.main-menu \{/, 'mainMenu.css should move
 const mainMenuLegacyBlock = mainMenu.slice(mainMenu.indexOf('@layer legacy {'), mainMenu.indexOf('@layer screens.main-menu {'));
 assert.match(mainMenuLegacyBlock, /#titleWrap/, 'the boot-veil block should still cover the shared gameplay elements it fades');
 assert.doesNotMatch(mainMenuLegacyBlock, /#mainMenu\{/, 'the legacy block should not also contain the standalone #mainMenu overlay rules');
+
+// premiumStore.css: the mock IAP store overlay, reachable from the main
+// menu's Curiosity Shop sign. Every selector is scoped to #premiumStore/
+// .premium-store-*, so like loadout.css/matchmaking.css it lives in its own
+// standalone screens.premium-store layer rather than the shared legacy pile.
+const premiumStore = read('../src/styles/premiumStore.css');
+assert.match(premiumStore, /^@layer screens\.premium-store \{/, 'premiumStore.css should live in its own screens.premium-store layer');
+assert.match(premiumStore.trimEnd(), /\}$/, 'premiumStore.css should close its layer wrapper');
+assert.match(buildScript, /src\/styles\/premiumStore\.css/, 'build-bundle.mjs should bundle premiumStore.css');
 
 console.log('App-wide cascade layer checks passed.');

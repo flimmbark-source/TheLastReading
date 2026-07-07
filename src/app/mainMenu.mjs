@@ -506,39 +506,6 @@ export function installMainMenu(target = window) {
     }
   };
 
-  target.tlrMainMenuOpenShop = async function () {
-    resetModeTransitionUi();
-    // The shop is normally only ever reachable mid-reading (after a
-    // threshold clear), so openShopMain() and its "Next Reading" exit both
-    // assume a real dealt hand/deck exist. Route through the same
-    // ensure-a-reading-exists step Continue/New Reading already use before
-    // layering the shop on top, rather than inventing a standalone
-    // no-run shop mode the rest of the game was never built to resume from.
-    target.document.body.classList.add('main-menu-mode-booting', 'main-menu-blackout');
-    hide();
-    await showCurtain();
-    try {
-      forceSingleplayerTable();
-      if (typeof target.startReading === 'function' && !gameStarted) {
-        target.startReading();
-        gameStarted = true;
-      }
-      closeModeChrome();
-      if (typeof target.openShopMain === 'function') {
-        target.openShopMain();
-      } else {
-        console.error('The Last Reading: the shop is not available yet.');
-      }
-      await waitForSinglePlayerSkin();
-      clearSingleplayerBootVeil();
-    } catch (err) {
-      console.error('The Last Reading: failed to open the shop from the main menu.', err);
-    } finally {
-      hideCurtain();
-      target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
-    }
-  };
-
   function closeAllOverlays() {
     const doc = target.document;
     if (!doc) return;
