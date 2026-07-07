@@ -67,7 +67,7 @@ body.main-menu-active #mainMenu{z-index:2147484000}
    carries an alt already, this just keeps a heading in the a11y tree. */
 .main-menu-sr-title{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;margin:-1px}
 
-.main-menu-shop-sign{position:absolute;top:clamp(28px,7.5vh,68px);right:max(8px,env(safe-area-inset-right));z-index:5;width:clamp(46px,13vw,62px);transform-origin:top center;transition:transform .15s ease}
+.main-menu-shop-sign{position:absolute;top:clamp(168px,22vh,212px);right:max(6px,env(safe-area-inset-right));z-index:5;width:clamp(68px,19vw,82px);transform-origin:top center;transition:transform .15s ease}
 .main-menu-shop-sign img{width:100%;height:auto;display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,.55))}
 .main-menu-shop-sign:hover{transform:rotate(-2deg)}
 .main-menu-shop-sign:active{transform:rotate(0) scale(.96)}
@@ -102,13 +102,15 @@ body.main-menu-active #mainMenu{z-index:2147484000}
 #mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled ~ #mainMenuNewGame:hover:not(:disabled),
 #mainMenu #mainMenuContinue.main-menu-continue-unavailable ~ #mainMenuNewGame:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
 
-.main-menu-dock{margin-top:4px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;max-width:340px}
-.main-menu-dock-tab{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:88px;border:none;background:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;opacity:.78;filter:brightness(.95);transition:opacity .15s ease,filter .15s ease,transform .12s ease}
+.main-menu-dock{margin-top:4px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%;max-width:340px;box-sizing:border-box;padding:6px;border:1px solid rgba(224,195,109,.3);border-radius:16px;background:linear-gradient(180deg,rgba(15,10,6,.6),rgba(7,5,3,.75));box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.main-menu-dock-tab{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:88px;box-sizing:border-box;border:1px solid rgba(224,195,109,.2);border-radius:11px;background:rgba(0,0,0,.16);padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;opacity:.92;transition:opacity .15s ease,border-color .15s ease,background .2s ease,transform .12s ease}
 .main-menu-dock-tab img{width:auto;height:52px;object-fit:contain}
 .main-menu-dock-tab span{font:700 11px/1 Georgia,serif;letter-spacing:.04em;color:#c9aa66;text-shadow:0 1px 3px rgba(0,0,0,.85)}
-.main-menu-dock-tab.is-active{opacity:1;filter:none}
-.main-menu-dock-tab:hover{opacity:.85}
-.main-menu-dock-tab.is-active:hover{opacity:1}
+.main-menu-dock-tab.is-active{opacity:1;border-color:rgba(240,213,138,.75);background:radial-gradient(ellipse at 50% 32%,rgba(224,168,71,.22),rgba(20,13,7,.5) 72%);box-shadow:inset 0 0 0 1px rgba(240,213,138,.18)}
+.main-menu-dock-tab.is-active span{color:#f0d58a;margin-bottom:8px}
+.main-menu-dock-tab.is-active::after{content:'\2726';position:absolute;bottom:6px;color:#e0c36d;font-size:8px;text-shadow:0 0 6px rgba(224,195,109,.7)}
+.main-menu-dock-tab:hover{opacity:1;border-color:rgba(224,195,109,.4)}
+.main-menu-dock-tab.is-active:hover{border-color:rgba(240,213,138,.85)}
 .main-menu-dock-tab:active{transform:scale(.96)}
 .main-menu-dock-tab:focus-visible{outline:2px solid #e0c36d;outline-offset:2px}
 
@@ -118,12 +120,11 @@ body.main-menu-blackout #tlrBootCurtain{opacity:1;pointer-events:auto}
 @media(max-height:700px){
 .main-menu-titleblock{margin-top:18px}
 .main-menu-title-art{max-width:200px}
-.main-menu-shop-sign{top:16px}
+.main-menu-shop-sign{top:118px;width:64px}
 .main-menu-dock-tab{height:72px}
 .main-menu-dock-tab img{height:38px}
 }
 @media(max-width:365px){
-.main-menu-shop-sign{width:44px}
 .main-menu-status-pill{font-size:11px;padding:0 14px}
 .main-menu-titleblock{padding:0 44px}
 }
