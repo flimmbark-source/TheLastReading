@@ -109,7 +109,7 @@ export function flushHand(){
   if(typeof fireThresholdBonusGhost==='function')fireThresholdBonusGhost(10);
 }
 
-export function startReading(){
+export function startReading({silent=false}={}){
   if(window.tlrCloseArchives)window.tlrCloseArchives();
   tlrSyncPersistToStore();
   // Adventure Mode deals from its own evolving deck; Score Mode uses the
@@ -126,7 +126,11 @@ export function startReading(){
   state.thBonus=_run.thresholdBonus;state.thBonusPending=0;
   syncRoundFields(_run);
   persist.pool=_st.persist.reserve;
-  playSound('shuffle');
+  // silent: true lets a caller that's dealing behind a hidden/curtained table
+  // (see mainMenu.mjs's startSingleplayer) skip the sound here and replay it
+  // itself once the table is actually visible, instead of the shuffle being
+  // heard during the blackout with nothing on screen to match it.
+  if(!silent)playSound('shuffle');
   _resStateKey=null;
   clearOverlay();recordScorePillBase(0);render();
 }

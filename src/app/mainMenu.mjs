@@ -331,7 +331,14 @@ export function installMainMenu(target = window) {
       if (fresh) startFresh();
       forceSingleplayerTable();
       if (typeof target.startReading === 'function') {
-        if (!gameStarted || fresh) target.startReading();
+        const didDeal = !gameStarted || fresh;
+        // silent: true -- the shuffle sound would otherwise play for real,
+        // audibly, while the table is still hidden behind the curtain/veil
+        // below. Re-fire it ourselves once the table is actually visible,
+        // alongside the re-queued draw animation, so what the player hears
+        // matches what they're looking at instead of firing during a black
+        // screen.
+        if (didDeal) target.startReading({ silent: true });
         gameStarted = true;
         forceSingleplayerTable();
         closeModeChrome();
@@ -346,6 +353,7 @@ export function installMainMenu(target = window) {
         // the time the curtain lifts the animation is over and was never
         // seen. Re-queue it for the dealt hand now that the table is visible
         // so the player actually sees the cards get dealt.
+        if (didDeal && typeof target.playSound === 'function') target.playSound('shuffle');
         if (typeof target.tlrQueueDrawAnimation === 'function') {
           const dealtHand = target.tlrStore?.getState?.()?.run?.hand;
           if (Array.isArray(dealtHand) && dealtHand.length) target.tlrQueueDrawAnimation(dealtHand);
