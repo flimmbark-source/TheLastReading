@@ -243,6 +243,34 @@ window.tlrMainMenuAdventure = function () {
   launch('tlrMainMenuAdventure');
 };
 
+// Opening the shop starts a reading behind it (see mainMenu.mjs's
+// tlrMainMenuOpenShop), so -- like the four actions above -- it needs the
+// full game module loaded first. Reuses the same generic launch() stub.
+window.tlrMainMenuOpenShop = function () {
+  launch('tlrMainMenuOpenShop');
+};
+
+// Tab switching and the settings gear are pure menu UI, not game state, so
+// they don't need the full module at all -- give them a real implementation
+// here rather than a load-then-call stub. installMainMenu() overwrites
+// tlrMainMenuSelectTab with a fuller version once loaded (it additionally
+// syncs the status pill to live reading/threshold state, which doesn't
+// exist yet at this point); keep the dock-switching half of that logic in
+// sync between the two files.
+window.tlrMainMenuSelectTab = function (tab) {
+  const hub = document.querySelector('#mainMenu .main-menu-hub');
+  if (hub) hub.dataset.activeTab = tab;
+  document.querySelectorAll('#mainMenu .main-menu-dock-tab').forEach(btn => {
+    const isActive = btn.dataset.mode === tab;
+    btn.classList.toggle('is-active', isActive);
+    btn.setAttribute('aria-selected', String(isActive));
+  });
+};
+
+window.tlrMainMenuToggleSettings = function () {
+  document.getElementById('settingsPanel')?.classList.toggle('hidden');
+};
+
 window.tlrSetCandlelightLighting = function (enabled) {
   const next = !!enabled;
   try {

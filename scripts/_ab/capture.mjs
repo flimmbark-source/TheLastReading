@@ -107,7 +107,7 @@ async function snap(page, name) {
 }
 
 async function boot(page) {
-  await page.click('button:has-text("New Game")');
+  await page.click('button:has-text("New Reading")');
   await page.waitForTimeout(3000);
 }
 

@@ -659,24 +659,46 @@
   </div>
 </div>
 <div id="mainMenu" class="main-menu-overlay">
+  <button id="mainMenuSettingsGear" class="main-menu-icon-btn main-menu-gear" onclick="tlrMainMenuToggleSettings()" type="button" aria-label="Settings">
+    <img src="assets/main_menu_icon_gear.png" alt="" />
+  </button>
   <div class="main-menu-inner">
-    <h1 class="main-menu-title">The Last Reading</h1>
-    <p class="main-menu-subtitle">A tarot card game</p>
-    <div class="main-menu-divider"></div>
-    <div class="main-menu-section">
-      <span class="main-menu-section-label">Singleplayer</span>
-      <button id="mainMenuContinue" class="main-menu-btn main-menu-btn-primary" onclick="tlrMainMenuContinue()" disabled>Continue</button>
-      <button class="main-menu-btn" onclick="tlrMainMenuNewGame()">New Game</button>
+    <div class="main-menu-titleblock">
+      <h1 class="main-menu-sr-title">The Last Reading</h1>
+      <img class="main-menu-title-art" src="assets/main_menu_title.png" alt="The Last Reading" />
     </div>
-    <div class="main-menu-divider"></div>
-    <div class="main-menu-section">
-      <span class="main-menu-section-label">Adventure</span>
-      <button class="main-menu-btn" onclick="tlrMainMenuAdventure()">Adventure Mode</button>
-    </div>
-    <div class="main-menu-divider"></div>
-    <div class="main-menu-section">
-      <span class="main-menu-section-label">Multiplayer</span>
-      <button class="main-menu-btn" onclick="tlrMainMenuMultiplayer()">Duel</button>
+
+    <button id="mainMenuShopSign" class="main-menu-icon-btn main-menu-shop-sign" onclick="tlrMainMenuOpenShop()" type="button" aria-label="Curiosity Shop">
+      <img src="assets/main_menu_shop_sign.png" alt="" />
+    </button>
+
+    <div class="main-menu-hub" data-active-tab="reading">
+      <p class="main-menu-status-pill" id="mainMenuStatusPill" aria-live="polite">
+        <span id="mainMenuStatusPrimary"></span><span class="main-menu-status-sep" id="mainMenuStatusSep"> &middot; </span><span id="mainMenuStatusSecondary"></span>
+      </p>
+
+      <div class="main-menu-action-panel" data-panel="reading">
+        <button id="mainMenuContinue" class="main-menu-btn main-menu-btn-primary" onclick="tlrMainMenuContinue()" disabled>Continue Reading</button>
+        <button id="mainMenuNewGame" class="main-menu-btn main-menu-btn-secondary" onclick="tlrMainMenuNewGame()">New Reading</button>
+      </div>
+      <div class="main-menu-action-panel" data-panel="adventure">
+        <button class="main-menu-btn main-menu-btn-primary" onclick="tlrMainMenuAdventure()">Adventure Mode</button>
+      </div>
+      <div class="main-menu-action-panel" data-panel="duel">
+        <button class="main-menu-btn main-menu-btn-primary" onclick="tlrMainMenuMultiplayer()">Duel</button>
+      </div>
+
+      <div class="main-menu-dock" role="tablist" aria-label="Game modes">
+        <button class="main-menu-dock-tab is-active" data-mode="reading" role="tab" aria-selected="true" onclick="tlrMainMenuSelectTab('reading')" type="button">
+          <img src="assets/main_menu_dock_reading.png" alt="" /><span>Reading</span>
+        </button>
+        <button class="main-menu-dock-tab" data-mode="adventure" role="tab" aria-selected="false" onclick="tlrMainMenuSelectTab('adventure')" type="button">
+          <img src="assets/main_menu_dock_adventure.png" alt="" /><span>Adventure</span>
+        </button>
+        <button class="main-menu-dock-tab" data-mode="duel" role="tab" aria-selected="false" onclick="tlrMainMenuSelectTab('duel')" type="button">
+          <img src="assets/main_menu_dock_duel.png" alt="" /><span>Duel</span>
+        </button>
+      </div>
     </div>
   </div>
 </div>

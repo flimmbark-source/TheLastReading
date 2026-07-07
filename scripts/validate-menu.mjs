@@ -25,7 +25,9 @@ installMainMenu(window);
 
 const menu = window.document.getElementById('mainMenu');
 const allButtons = () => [...menu.querySelectorAll('.main-menu-btn')];
-const byText = label => allButtons().find(b => b.textContent.trim() === label);
+// Dock tabs (Reading/Adventure/Duel) are deliberately not .main-menu-btn --
+// see mainMenu.css's .main-menu-icon-btn comment -- so byText searches both.
+const byText = label => [...menu.querySelectorAll('.main-menu-btn, .main-menu-dock-tab')].find(b => b.textContent.trim() === label);
 
 // Simulate the boot loader having disabled every menu button (setBusy) and the
 // menu then being hidden for a session (matchmaking enterMatchView style).
@@ -42,7 +44,7 @@ assert.equal(menu.hidden, false, 'menu is visible after returning');
 assert.equal(menu.classList.contains('mm-hidden'), false, 'mm-hidden cleared on show');
 assert.equal(menu.classList.contains('main-menu-busy'), false, 'main-menu-busy cleared on show');
 if ('inert' in menu) assert.equal(menu.inert, false, 'menu is not inert after returning');
-assert.equal(byText('New Game').disabled, false, 'New Game is selectable after returning');
+assert.equal(byText('New Reading').disabled, false, 'New Reading is selectable after returning');
 assert.equal(byText('Duel').disabled, false, 'Duel is selectable after returning');
 
 // Regression guard: tlrMainMenuMultiplayer() used to skip the curtain

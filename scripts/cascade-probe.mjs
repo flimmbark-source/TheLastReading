@@ -51,12 +51,12 @@ async function bootGame(page) {
   await page.waitForTimeout(400);
   await page.evaluate(() => {
     const btns = [...document.querySelectorAll('.main-menu-btn')];
-    const newGameBtn = btns.find(b => b.textContent.trim() === 'New Game');
+    const newGameBtn = btns.find(b => b.textContent.trim() === 'New Reading');
     if (newGameBtn) newGameBtn.click();
   });
   await page.waitForTimeout(1200);
   await page.waitForSelector('#hand .card, .hand .card', { timeout: 10000 }).catch(() => {
-    console.warn('[cascade-probe] warning: no hand card appeared after New Game');
+    console.warn('[cascade-probe] warning: no hand card appeared after New Reading');
   });
 }
 
