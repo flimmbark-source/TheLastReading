@@ -227,6 +227,7 @@ export function installPremiumStore(target = window) {
     render();
     overlay.classList.remove('premium-store-hidden');
     overlay.setAttribute('aria-hidden', 'false');
+    if (typeof target.tlrSetMusicContext === 'function') target.tlrSetMusicContext('premiumStore');
   }
 
   function closeStore() {
@@ -235,6 +236,10 @@ export function installPremiumStore(target = window) {
     overlay.classList.add('premium-store-hidden');
     overlay.setAttribute('aria-hidden', 'true');
     cancelBuy();
+    if (typeof target.tlrSetMusicContext === 'function') {
+      const menuActive = target.document?.body?.classList.contains('main-menu-active');
+      target.tlrSetMusicContext(menuActive ? 'mainMenu' : 'default');
+    }
   }
 
   function openDetail(id) {
