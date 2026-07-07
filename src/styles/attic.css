@@ -58,6 +58,7 @@ body.mode-table-return #invWrap{opacity:1;transform:none;filter:none;transition:
 #atticWhisper.show{opacity:1}
 #atticPickup{position:absolute;left:50%;top:55%;z-index:18;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 20px;background:rgba(18,11,6,.88);border:1px solid rgba(194,148,75,.65);border-radius:12px;box-shadow:0 22px 60px rgba(0,0,0,.75),0 0 24px rgba(255,202,101,.2);cursor:pointer;animation:atticPickupIn .34s ease forwards}
 #atticPickup img{width:112px;height:112px;object-fit:cover;border-radius:4px;box-shadow:0 8px 22px rgba(0,0,0,.6)}
+#atticPickup .attic-pickup-emoji{width:112px;height:112px;display:flex;align-items:center;justify-content:center;font-size:64px;border-radius:4px;box-shadow:0 8px 22px rgba(0,0,0,.6);background:rgba(228,207,159,.14)}
 #atticPickup b{font-size:13px;color:#ffd978;text-align:center;line-height:1.25}
 #atticPickup span{font:800 10px system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#b99a5d}
 @keyframes atticPickupIn{0%{opacity:0;transform:translate(-50%,-45%) scale(.92);filter:blur(6px)}100%{opacity:1;transform:translate(-50%,-50%) scale(1);filter:blur(0)}}
@@ -192,14 +193,6 @@ body.mode-table-return #invWrap{opacity:1;transform:none;filter:none;transition:
 .attic-note-paper::before{content:'';position:absolute;left:15%;right:15%;top:28%;height:44%;background:repeating-linear-gradient(180deg,rgba(74,50,24,.5) 0 1px,transparent 1px 5px)}
 .attic-note-paper::after{content:'';position:absolute;right:-1px;bottom:-1px;width:26%;height:26%;background:linear-gradient(315deg,#8a7044 50%,transparent 50%)}
 .attic-note:hover .attic-note-paper,.attic-note:active .attic-note-paper{filter:brightness(1.12)}
-
-/* Read-only note detail view: above the attic scene (520) and its chrome,
-   below #tutTip (10130). */
-.attic-note-detail{position:fixed;inset:0;z-index:10125;background:rgba(0,0,0,.62);display:flex;align-items:center;justify-content:center;padding:22px}
-.attic-note-detail-card{position:relative;width:min(88vw,380px);padding:36px 30px 32px;background:linear-gradient(168deg,#e6d2a4,#cdb17a 62%,#b6975f);border:1px solid rgba(84,58,26,.6);border-radius:4px;box-shadow:0 24px 60px rgba(0,0,0,.72);transform:rotate(-1.6deg);color:#3c2812;font:italic 400 17px/1.65 Georgia,serif;text-align:center}
-.attic-note-detail-card p{margin:0 0 16px}
-.attic-note-detail-card p:last-child{margin-bottom:0}
-.attic-note-detail-close{position:absolute;right:6px;top:4px;border:0;background:transparent;color:#5d4425;font-size:18px;line-height:1;cursor:pointer;padding:8px}
 
 /* Pill mobile spread patch */
 @media (max-width: 640px) {

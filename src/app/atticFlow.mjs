@@ -22,6 +22,11 @@ export function installAtticFlow(target = window){
     coat_01:{id:'coat_01',label:'Old Coat',verb:'Check pocket',motion:'search',cost:1,before:'props/old_coat_closed.png',after:'props/old_coat_searched.png',left:'2%',top:'13%',width:'18%',height:'54%',itemId:'letter_01',itemTitle:'Unsigned Letter',thumb:'assets/handwritten_note.webp'}
   };
 
+  // The sticky note on the table is collected like the props above, but has
+  // CSS-drawn art (no before/after prop images), so it renders through
+  // renderAtticNote instead of renderAtticObjects.
+  const note={id:'sticky_note_01',itemId:'note_01',itemTitle:'Note on the Table',emoji:'🗒️'};
+
   function vaultedItemIds(){try{const v=JSON.parse(target.localStorage.getItem('tlr_resonation_vault')||'{}');return Object.keys(v).reduce(function(a,k){return a.concat(Array.isArray(v[k])?v[k]:[])},[])}catch(e){return []}}
   // Vaulted items count as found: completing a resonation moves them out of
   // the drawer, but the attic props they came from must stay searched.
@@ -45,7 +50,8 @@ export function installAtticFlow(target = window){
     target.browseCards('The Deck','Look through every card in the deck. Select a card to read it.',deckBrowseCards);
   }
   function renderDeck(){if(target.renderAtticDeck)target.renderAtticDeck({onOpen:openDeckBrowser});}
-  function renderNote(){if(target.renderAtticNote)target.renderAtticNote();}
+  function renderNote(){if(target.renderAtticNote)target.renderAtticNote({note:note,found:foundItems().includes(note.itemId),onCollect:collectNote});}
+  function collectNote(){if(awaitingPickup)return;if(foundItems().includes(note.itemId))return;dismissAtticTutorial();showPickup(note);}
   function saveFound(itemId){
     try{
       const key='tlr_attic_found_items';
@@ -67,9 +73,12 @@ export function installAtticFlow(target = window){
   function dustNear(el){return;}
   function showPickup(o){
     awaitingPickup=true;document.querySelectorAll('#atticPickup').forEach(function(p){p.remove();});
-    const p=document.createElement('div');p.id='atticPickup';p.innerHTML='<img src="'+o.thumb+'" alt=""><b>'+o.itemTitle+'</b><span>Take</span>';p.addEventListener('click',function(e){e.stopPropagation();takePickup(o);});document.getElementById('atticScene').appendChild(p);
+    // Props carry a thumb image; the sticky note is CSS art with no image, so
+    // fall back to its emoji for the pickup preview.
+    const media=o.thumb?'<img src="'+o.thumb+'" alt="">':'<span class="attic-pickup-emoji">'+(o.emoji||'')+'</span>';
+    const p=document.createElement('div');p.id='atticPickup';p.innerHTML=media+'<b>'+o.itemTitle+'</b><span>Take</span>';p.addEventListener('click',function(e){e.stopPropagation();takePickup(o);});document.getElementById('atticScene').appendChild(p);
   }
-  function takePickup(o){document.querySelectorAll('#atticPickup').forEach(function(p){p.remove();});awaitingPickup=false;saveFound(o.itemId);renderObjects();if(typeof target.renderInventory==='function')target.renderInventory();else if(typeof renderInventory==='function')renderInventory();}
+  function takePickup(o){document.querySelectorAll('#atticPickup').forEach(function(p){p.remove();});awaitingPickup=false;saveFound(o.itemId);renderObjects();renderNote();if(typeof target.renderInventory==='function')target.renderInventory();else if(typeof renderInventory==='function')renderInventory();}
   function rummage(id,el){
     const o=objects[id];if(!o||awaitingPickup)return;
     if(searched[id]){whisper('You already searched there.');return;}
@@ -86,7 +95,7 @@ export function installAtticFlow(target = window){
   }
   function leave(){
     if(target.tlrCloseArchives)target.tlrCloseArchives();
-    if(!inAttic)return;inAttic=false;document.querySelectorAll('#atticPickup,.attic-action-tag,.attic-dust,.attic-note-detail').forEach(function(p){p.remove();});
+    if(!inAttic)return;inAttic=false;document.querySelectorAll('#atticPickup,.attic-action-tag,.attic-dust').forEach(function(p){p.remove();});
     const deckModal=document.getElementById('modal');if(deckModal&&deckModal.classList.contains('card-browse'))deckModal.classList.remove('show','collapsed','card-browse');
     const showArchivesAfterReturn=pendingArchivesTutorial;
     pendingArchivesTutorial=false;
