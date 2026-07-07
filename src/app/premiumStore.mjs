@@ -1,35 +1,22 @@
-// Mock in-app-purchase storefront ("The Curiosity Shop"), reachable only
-// from the main menu's promo banner (src/app/mainMenu.mjs). This is a real,
-// working store -> detail -> confirm -> "added to collection" flow with
-// ownership persisted to localStorage, but it is deliberately a storefront
-// shell: Chapter II and the cosmetic sets it sells don't exist as actual
-// game content yet (that's new content work, out of scope for a front-page
-// reorganization), so a purchase here doesn't unlock anything new in the
-// game today. It's meant to be wired to real content/payment later.
-//
-// The catalog intentionally excludes "reader archetypes" -- the design
-// mockup this was built from used "The Gambit"/"The Hoarder" as placeholder
-// new premium archetypes, but those are already free, existing Duel personas
-// (src/multiplayer/personas.mjs, src/app/loadoutScreen.mjs). Selling
-// already-free content under a new name would be misleading, so that
-// category was dropped rather than renamed.
+// Premium expansion gallery ("The Curiosity Shop"), reachable from the
+// main menu's promo banner. This is a storefront prototype, so the interface
+// deliberately presents the intended finished purchase experience. Mock data,
+// local ownership persistence and unwired content stay implementation details
+// rather than appearing in player-facing copy.
 
 const OWNED_KEY = 'tlr_premium_owned';
+const FEATURED_ID = 'story';
 
 const BUNDLE = {
   id: 'bundle',
-  type: 'Everything Bundle',
+  type: 'Collection Bundle',
   name: 'The Complete Reading',
   price: '$12.99',
-  desc: 'Every expansion, deck skin and cosmetic set — including everything added in the future. One purchase, the whole reading.',
+  art: { kind: 'image', src: 'assets/Store_Front.webp' },
+  desc: 'Chapter II together with every deck and table cosmetic currently displayed in the shop.',
   contents: ['Chapter II — The Empty Chair', 'Gilded Arcana Deck', 'Threadbare Deck', 'Velvet Table & Trim'],
 };
 
-// art.kind 'swatch' renders a CSS gradient (see premiumStore.css); 'image'
-// renders assets/background.webp, the game's own decorative backdrop -- not
-// assets/Reading_room.webp, which is already the free "The Reading Room"
-// archive fragment (src/data/archiveFragments.mjs) and would be misleading
-// to reuse here for the same reason the archetypes were dropped.
 const CATALOG = [
   {
     id: 'story', type: 'Story Expansion', name: 'Chapter II — The Empty Chair', price: '$6.99',
@@ -85,7 +72,7 @@ function saveOwned(target, owned) {
     target.localStorage.setItem(OWNED_KEY, JSON.stringify(owned));
   } catch {
     // Storage unavailable (private browsing, quota) -- ownership just won't
-    // persist across reloads; the flow itself still works for this session.
+    // persist across reloads; the prototype flow still works for this session.
   }
 }
 
@@ -105,7 +92,13 @@ export function installPremiumStore(target = window) {
     if (node) node.textContent = text;
   }
 
+  function setNodeText(selector, text) {
+    const node = doc().querySelector(selector);
+    if (node) node.textContent = text;
+  }
+
   function applyArt(node, item) {
+    if (!node) return;
     node.style.backgroundImage = '';
     node.classList.remove('premium-store-swatch-gilded', 'premium-store-swatch-threadbare', 'premium-store-swatch-velvet');
     if (!item?.art) return;
@@ -113,14 +106,44 @@ export function installPremiumStore(target = window) {
     else if (item.art.kind === 'image') node.style.backgroundImage = `url(${item.art.src})`;
   }
 
+  function prepareStoreChrome() {
+    const featured = findItem(FEATURED_ID);
+    const featuredBtn = byId('premiumStoreBundle');
+    if (featuredBtn) {
+      featuredBtn.onclick = () => openDetail(FEATURED_ID);
+      featuredBtn.setAttribute('aria-label', `View ${featured.name}`);
+    }
+
+    setNodeText('.premium-store-tag-value', 'STORY EXPANSION');
+    setNodeText('.premium-store-tag-save', 'FEATURED');
+    setNodeText('.premium-store-bundle-name', featured.name);
+    setNodeText('.premium-store-bundle-desc', 'Six new readings beyond the attic, centered on the patron waiting in the empty chair.');
+    setNodeText('.premium-store-section-label', 'Decks, table themes & collection');
+    setNodeText('.premium-store-footnote', 'One-time purchases · Yours on every device');
+    setNodeText('.premium-store-fineprint', 'One-time purchase · Restores with your save');
+    setNodeText('.premium-store-confirm-label', 'Confirm purchase');
+    setNodeText('.premium-store-confirm-note', 'One-time purchase · No recurring charge');
+    setNodeText('.premium-store-done-title', 'Added to your collection');
+
+    applyArt(doc().querySelector('.premium-store-bundle-art'), featured);
+  }
+
   function renderGrid() {
     const grid = byId('premiumStoreGrid');
     if (!grid) return;
-    grid.innerHTML = CATALOG.map(item => {
+
+    const secondaryItems = [
+      ...CATALOG.filter(item => item.id !== FEATURED_ID),
+      BUNDLE,
+    ];
+
+    grid.innerHTML = secondaryItems.map(item => {
       const isOwned = !!owned[item.id];
+      const artClass = item.art?.kind === 'swatch' ? ` ${item.art.className}` : '';
+      const artStyle = item.art?.kind === 'image' ? ` style="background-image:url(${item.art.src})"` : '';
       return `
         <button type="button" class="premium-store-item${isOwned ? ' premium-store-owned' : ''}" data-store-item="${escapeHtml(item.id)}">
-          <div class="premium-store-item-art${item.art.kind === 'swatch' ? ` ${item.art.className}` : ''}" ${item.art.kind === 'image' ? `style="background-image:url(${item.art.src})"` : ''}></div>
+          <div class="premium-store-item-art${artClass}"${artStyle}></div>
           <div class="premium-store-item-body">
             <div class="premium-store-item-type">${escapeHtml(item.type)}</div>
             <div class="premium-store-item-name">${escapeHtml(item.name)}</div>
@@ -129,24 +152,25 @@ export function installPremiumStore(target = window) {
         </button>
       `;
     }).join('');
+
     grid.querySelectorAll('[data-store-item]').forEach(card => {
       card.addEventListener('click', () => openDetail(card.dataset.storeItem));
     });
   }
 
-  function renderBundle() {
-    const bundleBtn = byId('premiumStoreBundle');
-    const isOwned = !!owned.bundle;
-    if (bundleBtn) bundleBtn.classList.toggle('premium-store-owned', isOwned);
-    setText('premiumStoreBundlePrice', isOwned ? '✓ Owned' : BUNDLE.price);
+  function renderFeatured() {
+    const featured = findItem(FEATURED_ID);
+    const featuredBtn = byId('premiumStoreBundle');
+    const isOwned = !!owned[FEATURED_ID];
+    if (featuredBtn) featuredBtn.classList.toggle('premium-store-owned', isOwned);
+    setText('premiumStoreBundlePrice', isOwned ? '✓ Owned' : featured.price);
   }
 
   function renderDetail() {
     const item = selectedId && findItem(selectedId);
     if (!item) return;
     const isOwned = !!owned[selectedId];
-    const artEl = byId('premiumStoreDetailArt');
-    if (artEl) applyArt(artEl, item);
+    applyArt(byId('premiumStoreDetailArt'), item);
     setText('premiumStoreDetailType', item.type);
     setText('premiumStoreDetailName', item.name);
     setText('premiumStoreDetailDesc', item.desc);
@@ -168,7 +192,9 @@ export function installPremiumStore(target = window) {
 
   function renderDone() {
     const item = selectedId && findItem(selectedId);
-    if (item) setText('premiumStoreDoneDesc', `${item.name} is yours. It'll be ready at the table once that content ships.`);
+    if (item) {
+      setText('premiumStoreDoneDesc', `${item.name} is yours and ready at the table.`);
+    }
   }
 
   function syncViews() {
@@ -181,12 +207,12 @@ export function installPremiumStore(target = window) {
     if (done) done.hidden = view !== 'done';
     if (back) back.hidden = view !== 'detail';
     const item = selectedId && findItem(selectedId);
-    setText('premiumStoreSubtitle', view === 'detail' && item ? item.type : 'Premium expansions & finery');
+    setText('premiumStoreSubtitle', view === 'detail' && item ? item.type : 'Chapter expansions & cosmetic collections');
   }
 
   function render() {
     syncViews();
-    renderBundle();
+    renderFeatured();
     if (view === 'detail') renderDetail();
     if (view === 'done') renderDone();
   }
@@ -196,6 +222,7 @@ export function installPremiumStore(target = window) {
     if (!overlay) return;
     view = 'store';
     selectedId = null;
+    prepareStoreChrome();
     renderGrid();
     render();
     overlay.classList.remove('premium-store-hidden');

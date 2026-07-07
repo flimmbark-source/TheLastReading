@@ -1,169 +1,116 @@
-/* This file is deliberately split across two layers. Most of it only ever
-   touches #mainMenu/.main-menu-* elements and nothing else in the app reads
-   or writes those, so it lives in its own `screens.main-menu` layer below.
-   The "boot veil" block, though, reaches into gameplay elements owned by
-   other files (#titleWrap, .score-stack, .spread-wrap, .handDock, etc.) to
-   fade the table out while a game boots -- that's a real cross-cutting
-   dependency, not something that can be proven independent, so it stays in
-   the shared `legacy` layer where those other files' rules live too. */
+/* Main menu owns its own visual layer. The boot veil remains in legacy because
+   it deliberately reaches across into gameplay while a selected mode loads. */
 @layer legacy {
 body.tlr-loading :where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,.spread-actions,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal){visibility:hidden;pointer-events:none}
-/* Low-specificity default so the boot veil below can fade in instead of
-   popping; any rule elsewhere that sets its own transition for these
-   elements (attic mode, tutorial tips, etc.) still wins over this. */
 :where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,.spread-actions,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal){transition:opacity .4s ease}
-/* Entering singleplayer hides the table/HUD behind an opacity veil (rather
-   than an instant visibility cut) so any not-yet-fully-styled frame while
-   the "single-player-v2" skin assets finish loading is masked, and lifting
-   the veil once they're ready reads as a fade-in instead of a hard pop. */
 body.main-menu-mode-booting :where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,.spread-actions,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal){opacity:0;pointer-events:none}
 @media(prefers-reduced-motion:reduce){:where(#titleWrap,.bar,.score-stack,#constellationPill,.refs-layer,.spread-wrap,.spread-actions,#relicRack,#abilityPrompt,#purgePrompt,#handSwipeZone,.handDock,#tutTip,#packAnim,#atticScene,#summary,#modal){transition:none}}
 }
 
 @layer screens.main-menu {
-/* Full-screen black curtain for the New Game/Continue transition — sits
-   above everything (including #mainMenu and the "contextual surfaces"
-   tier in actionDropTargets.css, which tops out at 10150) so the cut to
-   black is a genuine hard mask, not just another layer that could be
-   covered by something else mid-transition. */
 #tlrBootCurtain{position:fixed;inset:0;z-index:20000;display:flex;align-items:center;justify-content:center;background:#000;opacity:0;pointer-events:none;transition:opacity .3s ease}
 #tlrBootCurtain.show{opacity:1;pointer-events:auto}
-/* Loading spinner shown while the curtain is fully black, so the cut to
-   black never reads as a stall -- delayed/eased in so a curtain that lifts
-   again quickly (a fast transition) never shows a flash of spinner. */
 .tlr-boot-spinner{width:52px;height:52px;border-radius:50%;border:3px solid rgba(224,195,109,.18);border-top-color:#e0c36d;opacity:0;transition:opacity .2s ease .35s;animation:tlr-boot-spin 1s linear infinite}
 #tlrBootCurtain.show .tlr-boot-spinner{opacity:1}
 @keyframes tlr-boot-spin{to{transform:rotate(360deg)}}
-@media(prefers-reduced-motion:reduce){#tlrBootCurtain{transition:none}.tlr-boot-spinner{animation:none;transition:none}}
-/* Main menu — unified hub: title block, continue/mode cluster, cycling
-   premium-offer banner. The design tokens below are the card language every
-   hub surface shares (radius, gold border at rest/hover, dark panel fill,
-   inner hairline, elevation at rest/lifted) so the parchment plaque stays
-   the one warm/focal element. New hub surfaces should consume these tokens
-   rather than restating literals. */
-#mainMenu{--mm-gold:#e0c36d;--mm-gold-bright:#f0d58a;--mm-border:rgba(224,195,109,.45);--mm-border-hi:rgba(240,213,138,.9);--mm-hairline:rgba(224,195,109,.22);--mm-panel:rgba(13,8,5,.78);--mm-ink:#080503;--mm-radius:16px;--mm-shadow:0 6px 20px rgba(0,0,0,.5);--mm-shadow-hi:0 10px 26px rgba(0,0,0,.6);position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));overflow-y:auto;background-color:#080503;background-image:url(../../assets/background.webp);background-size:cover;background-position:center top;transition:opacity .35s ease}
+
+/* Reading-table lobby. The room image is treated as world art; UI floats in
+   front of it instead of forming a vertical stack of independent app cards. */
+#mainMenu{--mm-gold:#d8b45f;--mm-gold-bright:#f3d991;--mm-deep:#080503;position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;box-sizing:border-box;overflow:hidden;background:
+linear-gradient(180deg,rgba(3,2,2,.2) 0%,rgba(3,2,2,.08) 30%,rgba(3,2,2,.7) 74%,#050302 100%),
+radial-gradient(ellipse at 50% 44%,transparent 0 32%,rgba(3,2,2,.7) 82%,rgba(3,2,2,.95) 100%),
+url(../../assets/Reading_room.webp) center 35%/cover no-repeat,
+url(../../assets/background.webp) center/cover no-repeat;
+font-family:Georgia,serif;transition:opacity .35s ease}
 body.main-menu-active #mainMenu{z-index:2147484000}
-#mainMenu::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center 36%,transparent 0%,rgba(8,5,3,.62) 100%);pointer-events:none}
+#mainMenu::before{content:'';position:absolute;inset:0;pointer-events:none;background:
+radial-gradient(circle at 18% 47%,rgba(255,188,78,.14),transparent 13%),
+radial-gradient(circle at 78% 48%,rgba(255,176,60,.08),transparent 16%),
+linear-gradient(90deg,rgba(0,0,0,.45),transparent 24% 76%,rgba(0,0,0,.48));mix-blend-mode:screen;opacity:.78}
+#mainMenu::after{content:'';position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 120px 28px rgba(0,0,0,.74);border:1px solid rgba(224,195,109,.08)}
 #mainMenu.mm-hidden{opacity:0;pointer-events:none}
 #mainMenu[hidden]{display:none!important}
 
-.main-menu-inner{position:relative;display:flex;flex-direction:column;width:min(390px,94vw);height:100%;max-height:800px;box-sizing:border-box;padding:0 4px}
+.main-menu-inner{position:relative;z-index:1;width:min(430px,100%);height:100%;min-height:0;box-sizing:border-box;padding:max(18px,env(safe-area-inset-top)) 14px max(12px,env(safe-area-inset-bottom));display:flex;flex-direction:column;isolation:isolate}
 
-.main-menu-titleblock{text-align:center;margin-top:min(78px,9vh)}
-.main-menu-title{margin:0;padding:0;color:#f0d58a;font:700 clamp(22px,7vw,28px)/1.1 Cinzel,Georgia,serif;letter-spacing:.06em;text-align:center;text-shadow:0 0 22px rgba(240,213,138,.5),0 2px 6px rgba(0,0,0,.8)}
-.main-menu-divider{width:210px;max-width:56vw;height:20px;margin:9px auto 0;background:url(../../assets/divider_sunburst.png) center/contain no-repeat;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6));opacity:.9}
+.main-menu-titleblock{position:relative;z-index:4;flex:none;text-align:center;margin-top:10px;padding:4px 44px 0}
+.main-menu-titleblock::before{content:'';position:absolute;left:50%;top:-6px;width:min(250px,72vw);height:66px;transform:translateX(-50%);border-top:1px solid rgba(224,195,109,.44);border-radius:50%;opacity:.7;pointer-events:none}
+.main-menu-title{position:relative;margin:0;color:#e8c875;font:700 clamp(26px,8vw,34px)/1 Cinzel,Georgia,serif;letter-spacing:.075em;text-transform:uppercase;text-shadow:0 0 24px rgba(224,195,109,.22),0 3px 10px rgba(0,0,0,.95)}
+.main-menu-title::first-letter{font-size:.78em}
+.main-menu-divider{width:230px;max-width:66vw;height:25px;margin:5px auto 0;background:url(../../assets/divider_sunburst.png) center/contain no-repeat;filter:drop-shadow(0 2px 4px rgba(0,0,0,.8)) sepia(.15);opacity:.92}
 
-.main-menu-hub{position:relative;flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;padding:14px 14px 0;min-height:0}
+.main-menu-hub{position:relative;z-index:2;flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;padding:0 0 2px}
+/* A foreground tarot table and three card silhouettes turn the room image into
+   a lobby scene. They are intentionally CSS-built so the scene asset can be
+   swapped later without changing the menu structure. */
+.main-menu-hub::before{content:'';position:absolute;z-index:-2;left:-18%;right:-18%;top:8%;height:47%;border-radius:50% 50% 35% 35%/25% 25% 75% 75%;background:
+radial-gradient(ellipse at 50% 17%,rgba(191,135,52,.12),transparent 35%),
+repeating-radial-gradient(ellipse at 50% 42%,rgba(224,195,109,.08) 0 1px,transparent 1px 28px),
+linear-gradient(180deg,rgba(29,18,10,.46),rgba(7,4,3,.9));border:1px solid rgba(224,195,109,.24);box-shadow:0 -10px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,222,141,.09),inset 0 0 55px rgba(0,0,0,.65);transform:perspective(520px) rotateX(57deg);transform-origin:center bottom;pointer-events:none}
+.main-menu-hub::after{content:'✦';position:absolute;z-index:-1;left:calc(50% - 22px);top:27%;width:42px;height:62px;border:1px solid rgba(229,198,112,.6);border-radius:4px;background:radial-gradient(circle at 50% 45%,rgba(224,195,109,.13),transparent 28%),linear-gradient(145deg,#21150c,#080503);color:#d6b663;font:400 17px/62px Georgia,serif;text-align:center;box-shadow:-59px 12px 0 -1px #130c07,-59px 12px 0 0 rgba(229,198,112,.5),59px 12px 0 -1px #130c07,59px 12px 0 0 rgba(229,198,112,.5),0 10px 18px rgba(0,0,0,.55);transform:perspective(300px) rotateX(18deg);pointer-events:none}
 
-.main-menu-continue-card{position:relative;border:1px solid var(--mm-border);border-radius:var(--mm-radius);background:var(--mm-panel);padding:15px 16px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--mm-shadow)}
-.main-menu-continue-card::before{content:'';position:absolute;inset:4px;border:1px solid var(--mm-hairline);border-radius:calc(var(--mm-radius) - 5px);pointer-events:none}
-.main-menu-continue-row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.main-menu-run-label{font:700 9.5px/1 system-ui,sans-serif;color:#8a7551;letter-spacing:.22em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.main-menu-run-sub{font:400 10px/1 system-ui,sans-serif;color:#8a7551;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.main-menu-continue-card{position:relative;z-index:3;display:flex;flex-direction:column;gap:8px;padding:0 8px;background:none;border:0;box-shadow:none}
+.main-menu-continue-card::before{display:none}
+.main-menu-continue-row{height:35px;box-sizing:border-box;padding:0 14px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid rgba(224,195,109,.4);border-radius:999px;background:linear-gradient(180deg,rgba(19,12,7,.93),rgba(7,4,3,.96));box-shadow:0 5px 14px rgba(0,0,0,.48),inset 0 0 18px rgba(224,195,109,.04)}
+.main-menu-run-label,.main-menu-run-sub{max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#c9aa66;text-shadow:0 1px 4px rgba(0,0,0,.9)}
+.main-menu-run-label{font:700 9px/1 Cinzel,Georgia,serif;letter-spacing:.11em;text-transform:uppercase}
+.main-menu-run-sub{font:400 9px/1 Georgia,serif;color:#8f7952}
+.main-menu-run-label:not(:empty)+.main-menu-run-sub::before{content:'·';margin-right:8px;color:#a68b58}
 
-/* Mode tiles: a zoomed crop of the menu's own constellation backdrop behind
-   a vignette scrim, an inner hairline frame, a glowing medallion emblem, and
-   a press-down state -- the modern-mobile "mode select" card anatomy built
-   entirely from neutral chrome assets (background texture + medallion
-   ornaments). Deliberately NOT persona/fragment art: every illustrated
-   asset in the repo already names a specific free thing (Duel personas,
-   archive fragments), and reusing those here would misassign meaning. Art
-   layers sit on negative z-index inside an isolated stacking context so the
-   in-flow emblem/text need no positioning of their own. */
-.main-menu-mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
-.main-menu-mode-card{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;height:150px;padding:14px 10px;border:1px solid var(--mm-border);border-radius:var(--mm-radius);background:var(--mm-panel);box-shadow:var(--mm-shadow);text-align:center;overflow:hidden}
-.main-menu-mode-card::before{content:'';position:absolute;inset:4px;border:1px solid var(--mm-hairline);border-radius:calc(var(--mm-radius) - 5px);pointer-events:none;z-index:1}
-.main-menu-mode-art{position:absolute;inset:0;z-index:-2;background-image:url(../../assets/background.webp);background-size:230%;filter:saturate(.9) brightness(1.12);transition:transform .4s ease}
-.main-menu-mode-art-adventure{background-position:16% 28%}
-.main-menu-mode-art-duel{background-position:84% 62%}
-.main-menu-mode-scrim{position:absolute;inset:0;z-index:-1;background:radial-gradient(circle at 50% 34%,rgba(224,195,109,.13),transparent 58%),linear-gradient(180deg,rgba(8,5,3,.3) 0%,rgba(8,5,3,.12) 36%,rgba(8,5,3,.68) 100%)}
-.main-menu-mode-emblem{width:54px;height:54px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%,rgba(224,195,109,.26),rgba(8,5,3,.55) 78%);border:1px solid var(--mm-border);box-shadow:0 0 16px rgba(224,195,109,.16),inset 0 1px 2px rgba(0,0,0,.5);transition:border-color .15s ease,box-shadow .15s ease}
-.main-menu-mode-icon{width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 2px 4px rgba(0,0,0,.55))}
-.main-menu-mode-text{display:flex;flex-direction:column;align-items:center;min-width:0}
-.main-menu-mode-title{font:700 15.5px/1.15 Cinzel,Georgia,serif;color:var(--mm-gold-bright);letter-spacing:.04em;text-shadow:0 0 14px rgba(240,213,138,.35),0 2px 4px rgba(0,0,0,.9)}
-.main-menu-mode-sub{margin-top:3px;font:400 9px/1.3 system-ui,sans-serif;color:#c9b184;letter-spacing:.14em;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,.9)}
-.main-menu-mode-card:hover:not(:disabled){border-color:var(--mm-border-hi);transform:translateY(-2px);box-shadow:var(--mm-shadow-hi)}
-.main-menu-mode-card:hover:not(:disabled) .main-menu-mode-art{transform:scale(1.06)}
-.main-menu-mode-card:hover:not(:disabled) .main-menu-mode-emblem{border-color:var(--mm-border-hi);box-shadow:0 0 22px rgba(224,195,109,.28),inset 0 1px 2px rgba(0,0,0,.5)}
-.main-menu-mode-card:active:not(:disabled){transform:translateY(0) scale(.98)}
-
-.main-menu-btn{border:none;cursor:pointer;transition:transform .12s ease,filter .15s ease,border-color .15s ease}
-.main-menu-btn:focus-visible{outline:2px solid #e0c36d;outline-offset:3px}
+.main-menu-btn{border:none;cursor:pointer;transition:transform .14s ease,filter .16s ease,border-color .16s ease,box-shadow .16s ease;background:none}
+.main-menu-btn:focus-visible{outline:2px solid var(--mm-gold-bright);outline-offset:3px}
 .main-menu-btn:disabled{opacity:.4;cursor:not-allowed}
 .main-menu-btn-primary,.main-menu-btn-secondary{width:100%}
-.main-menu-btn-primary{height:56px;background:url(../../assets/parchment_plaque_large_center.png) center/100% 100% no-repeat;color:#3a1a06;font:700 15px/1 Georgia,serif;letter-spacing:.05em;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
-.main-menu-btn-primary:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
-.main-menu-btn-primary:active:not(:disabled){transform:translateY(0) scale(.985)}
-.main-menu-btn-secondary{height:42px;border:1px solid rgba(224,195,109,.3);border-radius:12px;background:rgba(224,195,109,.06);color:#ddc98a;font:700 13px/1 Georgia,serif;letter-spacing:.04em}
-.main-menu-btn-secondary:hover:not(:disabled){background:rgba(224,195,109,.13)}
-.main-menu-btn-secondary:active:not(:disabled){transform:scale(.985)}
-#mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled,
-#mainMenu #mainMenuContinue.main-menu-continue-unavailable{display:none}
-/* When Continue is hidden (no run to resume) the secondary button is the
-   only action left, so it takes over the plaque's primary styling instead
-   of staying visually secondary -- dropped by accident in the hub rewrite;
-   restored here using sibling selectors instead of the old markup's
-   nth-child section structure. */
-#mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled ~ #mainMenuNewGame,
-#mainMenu #mainMenuContinue.main-menu-continue-unavailable ~ #mainMenuNewGame{
-  height:56px;border-radius:0;background:url(../../assets/parchment_plaque_large_center.png) center/100% 100% no-repeat;color:#3a1a06;font:700 15px/1 Georgia,serif;letter-spacing:.05em;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))
-}
-#mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled ~ #mainMenuNewGame:hover:not(:disabled),
-#mainMenu #mainMenuContinue.main-menu-continue-unavailable ~ #mainMenuNewGame:hover:not(:disabled){
-  transform:translateY(-2px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)
-}
+.main-menu-btn-primary{height:66px;background:url(../../assets/parchment_plaque_large_center.png) center/100% 100% no-repeat;color:#351806;font:700 clamp(16px,4.8vw,20px)/1 Cinzel,Georgia,serif;letter-spacing:.045em;filter:drop-shadow(0 5px 11px rgba(0,0,0,.72))}
+.main-menu-btn-primary:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 8px 14px rgba(0,0,0,.8)) brightness(1.06)}
+.main-menu-btn-primary:active:not(:disabled){transform:translateY(1px) scale(.985);filter:drop-shadow(0 2px 7px rgba(0,0,0,.7)) brightness(.98)}
+.main-menu-btn-secondary{align-self:center;width:78%;height:39px;border:1px solid rgba(224,195,109,.33);border-radius:999px;background:linear-gradient(180deg,rgba(20,13,8,.94),rgba(7,4,3,.96));color:#bda166;font:700 12px/1 Cinzel,Georgia,serif;letter-spacing:.06em;box-shadow:0 4px 10px rgba(0,0,0,.38)}
+.main-menu-btn-secondary:hover:not(:disabled){border-color:rgba(240,213,138,.64);color:#e0c36d}
+.main-menu-btn-secondary:active:not(:disabled){transform:scale(.98)}
+#mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled,#mainMenu #mainMenuContinue.main-menu-continue-unavailable{display:none}
+#mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled~#mainMenuNewGame,#mainMenu #mainMenuContinue.main-menu-continue-unavailable~#mainMenuNewGame{width:100%;height:66px;border:0;border-radius:0;background:url(../../assets/parchment_plaque_large_center.png) center/100% 100% no-repeat;color:#351806;font:700 clamp(16px,4.8vw,20px)/1 Cinzel,Georgia,serif;filter:drop-shadow(0 5px 11px rgba(0,0,0,.72))}
+#mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled~#mainMenuNewGame:hover:not(:disabled),#mainMenu #mainMenuContinue.main-menu-continue-unavailable~#mainMenuNewGame:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 8px 14px rgba(0,0,0,.8)) brightness(1.06)}
 
-/* Boot-disable state (menuBoot.mjs's setBusy/clearBusy): overlays "Loading…"
-   without touching textContent/innerHTML, so the mode cards' nested icon +
-   title + subtitle markup survives being disabled/re-enabled repeatedly --
-   a textContent capture/restore (the previous technique) would flatten that
-   nested structure back to a plain string the first time it fired. */
-.main-menu-btn.main-menu-btn-loading{position:relative;color:transparent}
+/* Dock: the existing Adventure and Duel controls become compact mode tabs;
+   Reading is represented by the selected first cell because the primary action
+   above already controls the active reading session. */
+.main-menu-mode-grid{position:relative;z-index:3;display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:5px;border:1px solid rgba(224,195,109,.32);border-radius:17px;background:linear-gradient(180deg,rgba(19,12,7,.95),rgba(5,3,2,.97));box-shadow:0 8px 22px rgba(0,0,0,.58),inset 0 0 20px rgba(224,195,109,.035)}
+.main-menu-mode-grid::before{content:'✦\A READING';white-space:pre;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;height:83px;border:1px solid rgba(240,213,138,.62);border-radius:12px;background:radial-gradient(circle at 50% 28%,rgba(224,195,109,.2),transparent 42%),linear-gradient(180deg,rgba(55,35,17,.8),rgba(17,10,6,.94));color:#f0d58a;font:700 12px/1.9 Cinzel,Georgia,serif;letter-spacing:.04em;text-shadow:0 0 14px rgba(224,195,109,.35);box-shadow:inset 0 0 18px rgba(224,195,109,.09),0 0 13px rgba(224,195,109,.08)}
+.main-menu-mode-grid::after{content:'◆';position:absolute;left:calc(16.666% - 5px);bottom:-8px;color:#e8c875;font-size:12px;text-shadow:0 0 10px rgba(240,213,138,.75);pointer-events:none}
+.main-menu-btn.main-menu-mode-card{position:relative;isolation:isolate;height:83px;min-height:83px;padding:8px 4px 7px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;border:1px solid rgba(224,195,109,.18);border-radius:12px;background:linear-gradient(180deg,rgba(16,10,7,.86),rgba(6,4,3,.96));box-shadow:none;text-align:center;overflow:hidden}
+.main-menu-btn.main-menu-mode-card::before{content:'';position:absolute;inset:3px;border:1px solid rgba(224,195,109,.08);border-radius:9px;pointer-events:none}
+.main-menu-mode-art,.main-menu-mode-scrim{display:none}
+.main-menu-mode-emblem{position:relative;left:auto;top:auto;z-index:1;width:31px;height:31px;border:0;border-radius:0;background:none;box-shadow:none;display:flex;align-items:center;justify-content:center}
+.main-menu-mode-icon{display:none}
+#mainMenuAdventure .main-menu-mode-emblem::before{content:'△';color:#c2a25f;font:700 31px/1 Georgia,serif;text-shadow:-7px 5px 0 rgba(194,162,95,.5),7px 5px 0 rgba(194,162,95,.5)}
+#mainMenuDuel .main-menu-mode-emblem::before{content:'⚔';color:#c2a25f;font:400 28px/1 Georgia,serif;text-shadow:0 2px 5px rgba(0,0,0,.8)}
+.main-menu-mode-text{position:relative;z-index:1;display:block;max-width:100%;padding:0}
+.main-menu-mode-title{font:700 11px/1 Cinzel,Georgia,serif;color:#b99c60;letter-spacing:.035em;text-shadow:0 1px 4px rgba(0,0,0,.95)}
+.main-menu-mode-sub{display:none}
+.main-menu-btn.main-menu-mode-card:hover:not(:disabled){transform:translateY(-2px);border-color:rgba(224,195,109,.48);box-shadow:0 5px 12px rgba(0,0,0,.38),inset 0 0 14px rgba(224,195,109,.04)}
+.main-menu-btn.main-menu-mode-card:active:not(:disabled){transform:translateY(0) scale(.97)}
+
+/* The rotating ecommerce banner is re-presented as one physical destination in
+   the room. Its internal panels still exist for the store boot path, but no
+   longer compete with the primary play action. */
+.main-menu-promo-wrap{position:absolute;z-index:5;right:3px;top:27%;width:88px;height:122px;padding:0;display:block}
+.main-menu-promo{position:relative;width:78px;height:108px;margin-left:auto;padding:0;border:1px solid rgba(224,195,109,.52);border-radius:3px 3px 12px 12px;clip-path:polygon(5% 0,95% 0,100% 84%,50% 100%,0 84%);background:linear-gradient(145deg,rgba(25,16,10,.98),rgba(5,3,2,.98));box-shadow:0 8px 18px rgba(0,0,0,.62),inset 0 0 18px rgba(224,195,109,.06);cursor:pointer;overflow:visible;animation:tlr-shop-sway 7s ease-in-out infinite;transform-origin:50% -18px}
+.main-menu-promo::before{content:'CURIOSITY\A SHOP\A ✦';white-space:pre;position:absolute;inset:12px 7px 15px;display:flex;align-items:center;justify-content:center;text-align:center;color:#d6b461;font:700 10px/1.55 Cinzel,Georgia,serif;letter-spacing:.035em;text-shadow:0 1px 5px rgba(0,0,0,.95)}
+.main-menu-promo::after{content:'';position:absolute;left:17px;right:17px;top:-20px;height:20px;border-left:1px solid #a77e34;border-right:1px solid #a77e34;box-shadow:0 -2px 0 -1px #a77e34;pointer-events:none}
+.main-menu-promo:hover{filter:brightness(1.12);border-color:rgba(240,213,138,.82)}
+.main-menu-promo:active{transform:rotate(0) scale(.97)}
+.main-menu-promo-panel,.main-menu-promo-dots{display:none!important}
+@keyframes tlr-shop-sway{0%,100%{transform:rotate(-1.1deg)}50%{transform:rotate(1.1deg)}}
+
+.main-menu-btn.main-menu-btn-loading{position:relative;color:transparent!important}
 .main-menu-btn.main-menu-btn-loading>*{visibility:hidden}
-.main-menu-btn.main-menu-btn-loading::after{content:'Loading…';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(8,5,3,.66);border-radius:inherit;color:#ddc98a;font:700 13px/1 Georgia,serif;visibility:visible}
-
-.main-menu-promo-wrap{position:relative;padding:0 14px;display:flex;flex-direction:column;gap:8px}
-.main-menu-promo{position:relative;width:100%;height:88px;padding:0;border:1px solid var(--mm-border);border-radius:var(--mm-radius);overflow:hidden;background:var(--mm-panel);cursor:pointer;box-shadow:var(--mm-shadow);transition:border-color .15s ease,transform .12s ease}
-.main-menu-promo::after{content:'';position:absolute;inset:4px;border:1px solid var(--mm-hairline);border-radius:calc(var(--mm-radius) - 5px);pointer-events:none;z-index:1}
-.main-menu-promo:hover{border-color:var(--mm-border-hi)}
-.main-menu-promo:active{transform:scale(.99)}
-.main-menu-promo-panel{position:absolute;inset:0;display:grid;opacity:0;pointer-events:none}
-/* Auto-cycles between the two panels with no JS timer (a live setInterval
-   here would keep headless test scripts running forever -- see
-   src/app/mainMenu.mjs's promo dot-click handler for how a manual pick
-   restarts this animation instead of tracking phase in JS state). The two
-   panels share one keyframe, offset by half the cycle. */
-.main-menu-promo-chair,.main-menu-promo-shop{animation:tlr-promo-crossfade 9s ease-in-out infinite}
-.main-menu-promo-shop{animation-delay:4.5s}
-@keyframes tlr-promo-crossfade{0%,42%{opacity:1}50%,92%{opacity:0}100%{opacity:1}}
-.main-menu-promo-chair{grid-template-columns:1fr 104px}
-.main-menu-promo-shop{grid-template-columns:104px 1fr auto}
-.main-menu-promo-copy{padding:10px 4px 10px 15px;display:flex;flex-direction:column;gap:4px;justify-content:center;min-width:0}
-.main-menu-promo-shop .main-menu-promo-copy{padding:10px 4px 10px 12px}
-.main-menu-promo-badge{align-self:flex-start;font:700 8px/1 system-ui,sans-serif;color:#14100b;background:#e0c36d;border-radius:3px;padding:3px 6px;letter-spacing:.14em}
-.main-menu-promo-title{font:700 15px/1.2 Cinzel,Georgia,serif;color:#f0d58a}
-.main-menu-promo-desc{font:400 10.5px/1.4 Georgia,serif;color:#b09060}
-.main-menu-promo-art{background-position:center;background-size:cover}
-/* Reuses the main menu's own atmospheric backdrop rather than
-   assets/Reading_room.webp -- that image is already the free "The Reading
-   Room" archive fragment discovered via the attic (src/data/archiveFragments.mjs),
-   and reusing a named collectible's art to sell an unrelated paid item would
-   be its own kind of misleading. background.webp is decorative chrome only. */
-.main-menu-promo-art-chair{border-left:1px solid rgba(224,195,109,.25);background-image:url(../../assets/background.webp)}
-.main-menu-promo-art-shop{height:88px;border-right:1px solid rgba(224,195,109,.25);background-image:url(../../assets/Store_Front.webp)}
-.main-menu-promo-chevron{align-self:center;padding-right:14px;color:#e0c36d;font:400 18px/1 Georgia,serif}
-.main-menu-promo-dots{display:flex;justify-content:center;gap:7px}
-.main-menu-promo-dot{width:7px;height:7px;padding:0;border:none;border-radius:50%;cursor:pointer;background:rgba(224,195,109,.35);transition:background .4s ease}
-.main-menu-promo-dot[aria-selected="true"]{background:#f0d58a}
+.main-menu-btn.main-menu-btn-loading::after{content:'Loading…';position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:rgba(8,5,3,.72);border-radius:inherit;color:#ddc98a;font:700 12px/1 Georgia,serif;visibility:visible}
 
 body.main-menu-blackout #mainMenu{opacity:0;transition:opacity .3s ease}
 body.main-menu-blackout #mainMenu::before{opacity:0;transition:opacity .3s ease}
 body.main-menu-blackout #tlrBootCurtain{opacity:1;pointer-events:auto}
-@media(max-height:680px){.main-menu-titleblock{margin-top:34px}.main-menu-hub{gap:12px}}
-@media(prefers-reduced-motion:reduce){
-  #mainMenu,.main-menu-btn,.main-menu-promo,.main-menu-promo-dot,.main-menu-mode-art{transition:none}
-  .main-menu-promo-chair,.main-menu-promo-shop{animation:none}
-  .main-menu-promo-chair{opacity:1}
-  .main-menu-mode-card:hover:not(:disabled) .main-menu-mode-art{transform:none}
-}
+
+@media(max-height:740px){.main-menu-titleblock{margin-top:2px}.main-menu-title{font-size:25px}.main-menu-divider{height:19px}.main-menu-hub::before{top:3%;height:43%}.main-menu-hub::after{top:20%}.main-menu-promo-wrap{top:23%}.main-menu-continue-card{gap:6px}.main-menu-btn-primary,#mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled~#mainMenuNewGame,#mainMenu #mainMenuContinue.main-menu-continue-unavailable~#mainMenuNewGame{height:57px}.main-menu-btn-secondary{height:34px}.main-menu-mode-grid::before,.main-menu-btn.main-menu-mode-card{height:74px;min-height:74px}}
+@media(max-width:365px){.main-menu-inner{padding-left:10px;padding-right:10px}.main-menu-titleblock{padding-left:30px;padding-right:30px}.main-menu-title{font-size:24px}.main-menu-promo-wrap{right:-1px;transform:scale(.9);transform-origin:top right}.main-menu-continue-card{padding-left:4px;padding-right:4px}.main-menu-run-label,.main-menu-run-sub{font-size:8px}.main-menu-mode-title{font-size:10px}}
+@media(prefers-reduced-motion:reduce){#tlrBootCurtain,.main-menu-btn,.main-menu-promo{transition:none}.tlr-boot-spinner,.main-menu-promo{animation:none}}
 }
