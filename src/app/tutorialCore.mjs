@@ -337,6 +337,12 @@ export function tutNext() {
     return;
   }
   if (tutStep < TUT_STEP.SELECT_CARD) { tutShow(tutStep + 1); return; }
+  if (tutStep === TUT_STEP.SCORE_ADDED) { tutShow(TUT_STEP.CARD_POINTS); return; }
+  if (tutStep === TUT_STEP.CARD_POINTS) {
+    finishIntro();
+    queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
+    return;
+  }
   if (tutStep === TUT_STEP.DISCARD_ABILITY) {
     markStepSeen(tutStep);
     if (canShowStep(TUT_STEP.PATTERN_NOTICE)) tutShow(TUT_STEP.PATTERN_NOTICE);
@@ -400,7 +406,12 @@ export function tutSignal(eventName) {
     else { localStorage.setItem(TUT_ADVENTURE_KEY, '1'); tutHide(); }
     return;
   }
-  if (tutStep < TUT_STEP.PLACE_CARD) { tutShow(tutStep + 1); return; }
+  // cardSelected (SELECT_CARD) and cardPlaced (PLACE_CARD) both land here after
+  // their waitFor match; advancing one step turns PLACE_CARD into SCORE_ADDED
+  // (index 3) rather than finishing the intro. SCORE_ADDED and CARD_POINTS have
+  // no waitFor, so they're tap-advanced through tutNext(), which finishes the
+  // intro after CARD_POINTS.
+  if (tutStep <= TUT_STEP.PLACE_CARD) { tutShow(tutStep + 1); return; }
   finishIntro();
   queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
 }
