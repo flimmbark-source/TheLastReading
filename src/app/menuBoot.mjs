@@ -62,6 +62,16 @@ function menuEl() {
   return document.getElementById('mainMenu');
 }
 
+function randomizeMainMenuCandleMelt() {
+  const melt = document.querySelector('#mainMenu .main-menu-candle-melt');
+  if (!melt) return;
+  const x = Math.round((Math.random() * 14 - 6) * 10) / 10;
+  melt.style.setProperty('--main-menu-candle-drip-x', `${x}px`);
+  melt.style.animationDelay = `${-(Math.random() * 29.6).toFixed(2)}s`;
+}
+
+window.tlrRandomizeMainMenuCandleMelt = randomizeMainMenuCandleMelt;
+
 function curtainEl() {
   let el = document.getElementById('tlrBootCurtain');
   if (!el) {
@@ -228,6 +238,7 @@ window.tlrShowMainMenu = function () {
   document.body.classList.add('main-menu-active');
   document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
   document.getElementById('tlrBootCurtain')?.classList.remove('show');
+  randomizeMainMenuCandleMelt();
   syncContinueButton();
 };
 

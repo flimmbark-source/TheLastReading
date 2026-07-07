@@ -118,6 +118,7 @@ export function installMainMenu(target = window) {
     if (typeof target.tlrSetMusicContext === 'function') target.tlrSetMusicContext('mainMenu');
     target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
     hideCurtain();
+    if (typeof target.tlrRandomizeMainMenuCandleMelt === 'function') target.tlrRandomizeMainMenuCandleMelt();
     // The lightweight boot loader disables every menu button while it loads the
     // game module and only restores them on failure, so a button left disabled
     // there would make this menu dead when we return to it. Once the game is
