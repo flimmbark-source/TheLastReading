@@ -104,7 +104,7 @@ const TUT_STEPS = [
   { center: true, key: TUT_ADV_COMPLETE_KEY, text: "You finished a Set. Complete one more to win the adventure." },
   // Reached only via the PATTERN_NOTICE branch in tutNext() below (index kept
   // out of the linear array order so every other step's index stays stable).
-  { sel: '#hintLevelBar', fallbackSel: '#settingsPanel', arrow: 'up', text: 'Use hints to see potential scoring combos.' },
+  { sel: '#hintLevelBar', fallbackSel: '#settingsPanel', arrow: 'up', text: 'Use hints to see potential scoring patterns.' },
 ];
 
 const MARKET_TUT_STEPS = [
@@ -337,6 +337,14 @@ export function tutNext() {
     return;
   }
   if (tutStep < TUT_STEP.SELECT_CARD) { tutShow(tutStep + 1); return; }
+  if (tutStep === TUT_STEP.SCORE_ADDED) { tutShow(TUT_STEP.CARD_POINTS); return; }
+  if (tutStep === TUT_STEP.CARD_POINTS) { tutShow(TUT_STEP.THRESHOLD); return; }
+  if (tutStep === TUT_STEP.THRESHOLD) {
+    markStepSeen(tutStep);
+    finishIntro();
+    queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
+    return;
+  }
   if (tutStep === TUT_STEP.DISCARD_ABILITY) {
     markStepSeen(tutStep);
     if (canShowStep(TUT_STEP.PATTERN_NOTICE)) tutShow(TUT_STEP.PATTERN_NOTICE);
@@ -363,9 +371,11 @@ export function tutNext() {
     return;
   }
   if (tutStep === TUT_STEP.PATTERN_SCORING) {
+    // THRESHOLD moved into the intro flow (after CARD_POINTS), so the
+    // discard/pattern chain just ends here.
     markStepSeen(tutStep);
-    if (canShowStep(TUT_STEP.THRESHOLD)) tutShow(TUT_STEP.THRESHOLD);
-    else { tutHide(); scheduleQueuedTips(260); }
+    tutHide();
+    scheduleQueuedTips(260);
     return;
   }
   const marketIndex = MARKET_TUT_STEPS.indexOf(tutStep);
@@ -400,7 +410,12 @@ export function tutSignal(eventName) {
     else { localStorage.setItem(TUT_ADVENTURE_KEY, '1'); tutHide(); }
     return;
   }
-  if (tutStep < TUT_STEP.PLACE_CARD) { tutShow(tutStep + 1); return; }
+  // cardSelected (SELECT_CARD) and cardPlaced (PLACE_CARD) both land here after
+  // their waitFor match; advancing one step turns PLACE_CARD into SCORE_ADDED
+  // (index 3) rather than finishing the intro. SCORE_ADDED and CARD_POINTS have
+  // no waitFor, so they're tap-advanced through tutNext(), which finishes the
+  // intro after CARD_POINTS.
+  if (tutStep <= TUT_STEP.PLACE_CARD) { tutShow(tutStep + 1); return; }
   finishIntro();
   queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
 }
