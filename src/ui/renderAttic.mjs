@@ -5,35 +5,31 @@
 
 export function renderAtticObals(count){const h=document.getElementById('obalsHud');if(!h)return;h.innerHTML='<span class="attic-obal-label">Obals</span><b class="attic-obal-count">'+count+'</b>';}
 
-// Sticky note on the attic table. Not a collectable prop: clicking it opens
-// a read-only detail view. Placeholder art is CSS-drawn (.attic-note-paper);
-// swap that element's styling for real art later.
-export function renderAtticNote(){
+// Sticky note on the attic table. A collectable item like the attic props:
+// clicking it opens the pickup flow and adds it to the archives. Once taken it
+// leaves the table, so it hides while it stays found. Placeholder art is
+// CSS-drawn (.attic-note-paper); swap that element's styling for real art later.
+export function renderAtticNote({note,found,onCollect}){
   const root=document.getElementById('atticObjects');if(!root)return;
   let el=root.querySelector('.attic-note');
   if(!el){
     el=document.createElement('div');
     el.className='attic-note';
     el.setAttribute('role','button');
-    el.setAttribute('aria-label','Read the note on the table');
     el.innerHTML='<div class="attic-note-paper"></div>';
-    el.addEventListener('click',function(e){e.stopPropagation();showAtticNoteDetail();});
+    el.addEventListener('click',function(e){e.stopPropagation();if(el.classList.contains('searched'))return;if(typeof onCollect==='function')onCollect();});
     root.appendChild(el);
   }
-}
-
-function showAtticNoteDetail(){
-  document.querySelectorAll('.attic-note-detail').forEach(function(d){d.remove();});
-  const bg=document.createElement('div');
-  bg.className='attic-note-detail';
-  bg.innerHTML='<div class="attic-note-detail-card" role="dialog" aria-modal="true" aria-label="Note">'
-    +'<button class="attic-note-detail-close" type="button" aria-label="Close">&#x2715;</button>'
-    +'<p>The same 3 again.</p>'
-    +'<p>Pay attention when their images begin turning up elsewhere.</p>'
-    +'</div>';
-  bg.addEventListener('click',function(e){if(e.target===bg)bg.remove();});
-  bg.querySelector('.attic-note-detail-close').addEventListener('click',function(){bg.remove();});
-  document.body.appendChild(bg);
+  const title=note&&note.itemTitle?note.itemTitle:'Note';
+  if(found){
+    el.classList.add('searched');
+    el.setAttribute('aria-label',title+' already taken');
+    el.style.display='none';
+  }else{
+    el.classList.remove('searched');
+    el.setAttribute('aria-label','Take the '+title.toLowerCase()+' on the table');
+    el.style.display='';
+  }
 }
 
 export function renderAtticDeck({onOpen}){

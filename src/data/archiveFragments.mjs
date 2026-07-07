@@ -54,6 +54,13 @@ export const ARCHIVE_ITEMS = Object.freeze([
     imageFull:'assets/Reading_Room_Poleroid.webp',
     content:'<p>I found this when we were clearing the house. Nobody knew who to call so it fell to me.</p><p>She isn\'t in the picture — she must have been the one holding the camera. I don\'t recognise anyone at the table. They\'re all looking down at something laid out on the surface, but the photograph is too dark in the center to make it out. On the left edge of the frame you can see part of what looks like a card, face up. There\'s another on the right side. The middle of the table is just black.</p><p>In the background the room looks half-settled — like she\'d only recently moved in. A chair has been placed against the far wall with two tall pillars on either side of it — the left one black, the right one white, each with a capital at the top. A dark curtain is partly drawn across the window behind.</p><p>I keep thinking the center will become clear if I look long enough. It hasn\'t.</p>',
   },
+  {
+    id:'note_01',
+    type:'Sticky Note',
+    title:'Note on the Table',
+    emoji:'🗒️',
+    content:'<p style="font-style:italic">The same 3 again.</p><p style="font-style:italic">Pay attention when their images begin turning up elsewhere.</p>',
+  },
 ]);
 
 export function getArchiveFragment(id) {
