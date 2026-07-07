@@ -101,6 +101,7 @@ export function installMainMenu(target = window) {
     el.setAttribute('aria-hidden', 'true');
     if ('inert' in el) el.inert = true;
     target.document.body.classList.remove('main-menu-active');
+    if (typeof target.tlrSetMusicContext === 'function') target.tlrSetMusicContext('default');
     // Delay display:none until after the 0.35s opacity fade-out finishes,
     // so the game never shows through while the overlay is still fading.
     setTimeout(() => { if (el.classList.contains('mm-hidden')) el.hidden = true; }, 400);
@@ -114,6 +115,7 @@ export function installMainMenu(target = window) {
     el.setAttribute('aria-hidden', 'false');
     el.classList.remove('mm-hidden', 'main-menu-busy');
     target.document.body.classList.add('main-menu-active');
+    if (typeof target.tlrSetMusicContext === 'function') target.tlrSetMusicContext('mainMenu');
     target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
     hideCurtain();
     // The lightweight boot loader disables every menu button while it loads the
