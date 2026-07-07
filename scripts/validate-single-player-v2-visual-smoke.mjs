@@ -58,6 +58,12 @@ async function main() {
       });
       await page.goto(`${baseUrl}/game.html`, { waitUntil: 'networkidle' });
 
+      // Keep a direct capture of the front page itself. This makes menu art,
+      // hierarchy, clipping and density reviewable from the real browser render
+      // instead of from CSS inspection alone.
+      await page.waitForTimeout(320);
+      await page.screenshot({ path: `artifacts/spv2-smoke-menu-${width}.png`, fullPage: true });
+
       // Capture the player-facing premium shop before entering a game. This is
       // part of the same mobile front-page surface and needs real-browser visual
       // coverage rather than being judged from CSS alone.
