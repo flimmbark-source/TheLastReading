@@ -20,7 +20,7 @@
 .premium-store-divider{height:1px;margin:0 14px;background:linear-gradient(90deg,transparent,rgba(224,195,109,.4),transparent)}
 
 .premium-store-view{flex:1;min-height:0}
-.premium-store-view[hidden]{display:none}
+#premiumStore .premium-store-view[hidden]{display:none!important}
 #premiumStoreList{overflow-y:auto;padding:14px 14px 24px;display:flex;flex-direction:column;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(224,195,109,.26) transparent}
 
 /* Featured chapter: art is allowed to lead, with the copy anchored over a
