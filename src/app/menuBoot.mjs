@@ -3,6 +3,8 @@
 import { installMarketAudioRotation } from './marketAudioRotation.mjs';
 import { installActionDropGestures } from '../ui/gestureActionDrops.mjs';
 import { installCardDetailGestures } from '../ui/cardDetailGestures.mjs?v=double-tap-1';
+import { installPremiumStore } from './premiumStore.mjs';
+import { installAudioControls } from './audio.mjs';
 
 const CURTAIN_FADE_MS = 300;
 
@@ -13,6 +15,8 @@ let bootAction = null;
 installMarketAudioRotation(window);
 installActionDropGestures(window);
 installCardDetailGestures(window);
+installAudioControls(window);
+installPremiumStore(window);
 
 const CANDLELIGHT_KEY = 'tlr_candlelight_lighting';
 
@@ -241,6 +245,27 @@ window.tlrMainMenuMultiplayer = function () {
 
 window.tlrMainMenuAdventure = function () {
   launch('tlrMainMenuAdventure');
+};
+
+// Tab switching and the settings gear are pure menu UI, not game state, so
+// they don't need the full module at all -- give them a real implementation
+// here rather than a load-then-call stub. installMainMenu() overwrites
+// tlrMainMenuSelectTab with a fuller version once loaded (it additionally
+// syncs the status pill to live reading/threshold state, which doesn't
+// exist yet at this point); keep the dock-switching half of that logic in
+// sync between the two files.
+window.tlrMainMenuSelectTab = function (tab) {
+  const hub = document.querySelector('#mainMenu .main-menu-hub');
+  if (hub) hub.dataset.activeTab = tab;
+  document.querySelectorAll('#mainMenu .main-menu-dock-tab').forEach(btn => {
+    const isActive = btn.dataset.mode === tab;
+    btn.classList.toggle('is-active', isActive);
+    btn.setAttribute('aria-selected', String(isActive));
+  });
+};
+
+window.tlrMainMenuToggleSettings = function () {
+  document.getElementById('settingsPanel')?.classList.toggle('hidden');
 };
 
 window.tlrSetCandlelightLighting = function (enabled) {

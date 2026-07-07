@@ -1,0 +1,54 @@
+[
+  {
+    "file": "main_menu_title.png",
+    "source": "sprite-sheet.jpeg",
+    "source_box": [428, 30, 848, 298],
+    "size": [420, 268],
+    "alpha": "luminance-keyed"
+  },
+  {
+    "file": "main_menu_shop_sign.png",
+    "source": "sprite-sheet.jpeg",
+    "source_box": [858, 0, 1024, 300],
+    "size": [166, 300],
+    "alpha": "luminance-keyed"
+  },
+  {
+    "file": "main_menu_dock_reading.png",
+    "source": "sprite-sheet.jpeg",
+    "source_box": [6, 900, 162, 1008],
+    "size": [156, 108],
+    "alpha": "luminance-keyed",
+    "note": "frame+icon only, cropped above the baked label so the mode name can stay live HTML"
+  },
+  {
+    "file": "main_menu_dock_adventure.png",
+    "source": "sprite-sheet.jpeg",
+    "source_box": [166, 900, 320, 1008],
+    "size": [154, 108],
+    "alpha": "luminance-keyed",
+    "note": "frame+icon only, cropped above the baked label so the mode name can stay live HTML"
+  },
+  {
+    "file": "main_menu_dock_duel.png",
+    "source": "sprite-sheet.jpeg",
+    "source_box": [326, 900, 498, 1008],
+    "size": [172, 108],
+    "alpha": "luminance-keyed",
+    "note": "frame+icon only, cropped above the baked label so the mode name can stay live HTML"
+  },
+  {
+    "file": "main_menu_icon_gear.png",
+    "source": "sprite-sheet.jpeg",
+    "source_box": [18, 1104, 128, 1178],
+    "size": [110, 74],
+    "alpha": "luminance-keyed"
+  },
+  {
+    "file": "main_menu_table.webp",
+    "source": "background.jpeg",
+    "source_box": null,
+    "size": [941, 1672],
+    "note": "full source image, re-encoded to webp only"
+  }
+]

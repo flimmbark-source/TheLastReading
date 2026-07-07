@@ -35,40 +35,114 @@ body.main-menu-mode-booting :where(#titleWrap,.bar,.score-stack,#constellationPi
 #tlrBootCurtain.show .tlr-boot-spinner{opacity:1}
 @keyframes tlr-boot-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){#tlrBootCurtain{transition:none}.tlr-boot-spinner{animation:none;transition:none}}
-/* Main menu — preserve the full-screen atmosphere and clarify the choice hierarchy */
-#mainMenu{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));overflow-y:auto;background-color:#080503;background-image:url(../../assets/background.webp);background-size:cover;background-position:center top;transition:opacity .35s ease}
+
+/* Main menu — reading-table lobby. The candlelit table is world art; the
+   title/status/actions/dock float on top of it instead of forming a stack
+   of independent app cards. See docs/asset-sources/main-menu-v2 for the
+   source sheet this was cut from. */
+#mainMenu{position:fixed;inset:0;z-index:9000;display:flex;align-items:stretch;justify-content:center;box-sizing:border-box;overflow:hidden;background-color:#050302;background-image:url(../../assets/main_menu_table.webp);background-size:cover;background-position:center top;transition:opacity .35s ease}
 body.main-menu-active #mainMenu{z-index:2147484000}
-#mainMenu::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at center 40%,transparent 0%,rgba(8,5,3,.55) 100%);pointer-events:none}
 #mainMenu.mm-hidden{opacity:0;pointer-events:none}
 #mainMenu[hidden]{display:none!important}
-.main-menu-inner{position:relative;display:flex;flex-direction:column;align-items:center;width:min(340px,92vw);box-sizing:border-box;padding:28px 20px 26px}
-.main-menu-title{width:100%;margin:0;padding:0;color:#f0d58a;font:700 clamp(28px,9vw,42px)/1.05 Georgia,serif;letter-spacing:.05em;text-align:center;text-shadow:0 0 24px rgba(240,213,138,.55),0 2px 6px rgba(0,0,0,.8)}
-.main-menu-subtitle{margin:7px 0 0;color:#b09060;font:400 11px/1.4 system-ui,sans-serif;letter-spacing:.22em;text-align:center;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.8)}
-.main-menu-divider{width:min(280px,78vw);height:28px;margin:19px 0 18px;background:url(../../assets/divider_sunburst.png) center/contain no-repeat;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
-.main-menu-section+.main-menu-divider{display:none}
-.main-menu-section{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
-.main-menu-section-label{display:none}
-.main-menu-inner>.main-menu-section:nth-child(6){margin-top:27px}
-.main-menu-inner>.main-menu-section:nth-child(6)::before{content:'Other Modes';margin-bottom:3px;color:#8a7551;font:700 10px/1 system-ui,sans-serif;letter-spacing:.2em;text-align:center;text-transform:uppercase;text-shadow:0 1px 3px rgba(0,0,0,.8)}
-.main-menu-inner>.main-menu-section:nth-child(8){margin-top:10px}
-.main-menu-btn{width:100%;max-width:250px;height:54px;padding:0 22px;border:none;border-radius:0;background:url(../../assets/pill_dark_medium.png) center/100% 100% no-repeat;color:#ddc98a;font:700 15px/1 Georgia,serif;letter-spacing:.05em;text-shadow:0 1px 3px rgba(0,0,0,.8);cursor:pointer;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5));transition:transform .12s ease,filter .15s ease}
-.main-menu-btn:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.15)}
+
+.main-menu-ambient{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.main-menu-incense-smoke{position:absolute;right:clamp(18px,5.5vw,44px);top:clamp(238px,34vh,350px);width:clamp(42px,10vw,66px);height:clamp(128px,24vh,188px);opacity:0;filter:blur(.35px);mix-blend-mode:screen;transform-origin:50% 100%;animation:mainMenuIncenseSmoke 5.8s ease-in-out infinite}
+.main-menu-incense-smoke::before,.main-menu-incense-smoke::after{content:'';position:absolute;inset:0;border-left:2px solid rgba(238,231,216,.64);border-radius:48% 52% 46% 54%;box-shadow:0 0 12px rgba(238,231,216,.28);filter:blur(1.1px)}
+.main-menu-incense-smoke::after{left:16px;top:8px;border-left-color:rgba(202,196,184,.42);transform:scale(.68) rotate(16deg)}
+.main-menu-incense-smoke-b{right:clamp(36px,8.5vw,70px);top:clamp(252px,36vh,368px);width:clamp(34px,8vw,54px);height:clamp(110px,20vh,164px);animation-delay:1.55s;animation-duration:6.4s}
+.main-menu-incense-smoke-c{right:clamp(4px,3vw,20px);top:clamp(268px,38vh,390px);width:clamp(30px,7vw,48px);height:clamp(96px,17vh,142px);animation-delay:3.2s;animation-duration:5.2s}
+.main-menu-candle-melt{display:block;position:absolute;left:0;top:clamp(328px,42vh,410px);width:64px;height:118px;pointer-events:none;opacity:.72;mix-blend-mode:screen;filter:blur(.15px);animation:mainMenuCandleMeltPlacement 29.6s steps(1,end) infinite}
+.main-menu-candle-melt::before{content:'';position:absolute;left:18px;top:30px;width:5px;height:8px;border-radius:0 0 999px 999px;background:linear-gradient(180deg,rgba(255,244,198,.88),rgba(231,188,110,.62));box-shadow:0 0 7px rgba(255,221,144,.38);transform-origin:50% 0;animation:mainMenuCandleWaxRun 7.4s ease-in-out infinite}
+.main-menu-candle-melt::after{content:'';position:absolute;left:16px;top:72px;width:9px;height:9px;border-radius:50% 50% 58% 42%;background:radial-gradient(circle at 45% 35%,rgba(255,248,210,.82),rgba(225,181,102,.52) 68%,transparent 72%);box-shadow:0 0 6px rgba(255,221,144,.24);opacity:0;animation:mainMenuCandleWaxBead 7.4s ease-in-out infinite}
+@media(max-width:640px){.main-menu-candle-melt{left:-6px;opacity:.82}}
+@keyframes mainMenuCandleMeltPlacement{0%,24.99%{transform:translate3d(0,0,0)}25%,49.99%{transform:translate3d(2px,-1px,0)}50%,74.99%{transform:translate3d(-1px,1px,0)}75%,100%{transform:translate3d(3px,0,0)}}
+@keyframes mainMenuCandleWaxRun{0%,18%{opacity:0;transform:scaleY(.2)}30%{opacity:.52;transform:scaleY(1.15)}58%{opacity:.78;transform:scaleY(4.6)}76%{opacity:.38;transform:scaleY(5.2)}100%{opacity:0;transform:scaleY(.35)}}
+@keyframes mainMenuCandleWaxBead{0%,46%{opacity:0;transform:translateY(-10px) scale(.55)}58%{opacity:.72;transform:translateY(0) scale(1)}74%{opacity:.55;transform:translateY(10px) scale(.9)}100%{opacity:0;transform:translateY(22px) scale(.72)}}
+@keyframes mainMenuIncenseSmoke{0%{opacity:0;transform:translate3d(0,18px,0) scale(.54) rotate(-8deg)}12%{opacity:.86}52%{opacity:.56;transform:translate3d(-14px,-42px,0) scale(.92) rotate(9deg)}100%{opacity:0;transform:translate3d(18px,-118px,0) scale(1.28) rotate(-13deg)}}
+
+.main-menu-inner{position:relative;z-index:1;width:100%;max-width:480px;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+
+/* Icon-only auxiliary controls (gear, shop sign) — kept off `.main-menu-btn`
+   on purpose: menuBoot.mjs's setBusy()/clearBusy() capture and later
+   restore .main-menu-btn textContent wholesale while a mode module loads,
+   which would flatten these buttons' nested <img> back to plain text the
+   first time a cold boot completed. Neither control loads a game module,
+   so they don't need that boot-busy disable in the first place. */
+.main-menu-icon-btn{border:none;background:none;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.main-menu-icon-btn:focus-visible{outline:2px solid #e0c36d;outline-offset:3px}
+
+.main-menu-gear{position:absolute;top:max(16px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:6;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(8,5,3,.4);border:1px solid rgba(224,195,109,.3);transition:background .15s ease,border-color .15s ease,transform .12s ease}
+.main-menu-gear img{width:22px;height:22px;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.8))}
+.main-menu-gear:hover{border-color:rgba(240,213,138,.65);background:rgba(8,5,3,.6)}
+.main-menu-gear:active{transform:scale(.94)}
+
+.main-menu-titleblock{flex:none;text-align:center;margin-top:clamp(26px,7vh,60px);padding:0 52px}
+.main-menu-title-art{display:block;width:100%;max-width:260px;height:auto;margin:0 auto;filter:drop-shadow(0 2px 10px rgba(0,0,0,.65))}
+/* Visually hidden but still real text for screen readers/SEO -- the image
+   carries an alt already, this just keeps a heading in the a11y tree. */
+.main-menu-sr-title{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;margin:-1px}
+
+.main-menu-shop-sign{position:absolute;top:clamp(168px,22vh,212px);right:max(6px,env(safe-area-inset-right));z-index:5;width:clamp(68px,19vw,82px);transform-origin:top center;transition:transform .15s ease}
+.main-menu-shop-sign img{width:100%;height:auto;display:block;filter:drop-shadow(0 4px 10px rgba(0,0,0,.55))}
+.main-menu-shop-sign:hover{transform:rotate(-2deg)}
+.main-menu-shop-sign:active{transform:rotate(0) scale(.96)}
+
+.main-menu-hub{position:relative;z-index:2;flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:12px;padding-bottom:6px}
+
+.main-menu-status-pill{margin:0;padding:0 22px;height:34px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1px solid rgba(224,195,109,.4);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,10px 100%,0 50%);background:linear-gradient(180deg,rgba(19,12,7,.92),rgba(6,4,3,.95));color:#d9bd7c;font:700 12px/1 Georgia,serif;letter-spacing:.05em;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.4);visibility:hidden}
+.main-menu-status-pill[data-ready="true"]{visibility:visible}
+.main-menu-status-sep{color:#8a7551;margin:0 2px}
+
+.main-menu-action-panel{display:none;flex-direction:column;align-items:center;gap:10px;width:100%;max-width:280px}
+.main-menu-hub[data-active-tab="reading"] .main-menu-action-panel[data-panel="reading"]{display:flex}
+.main-menu-hub[data-active-tab="adventure"] .main-menu-action-panel[data-panel="adventure"]{display:flex}
+.main-menu-hub[data-active-tab="duel"] .main-menu-action-panel[data-panel="duel"]{display:flex}
+
+.main-menu-btn{width:100%;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s ease,filter .15s ease}
 .main-menu-btn:focus-visible{outline:2px solid #e0c36d;outline-offset:3px}
 .main-menu-btn:disabled{opacity:.4;cursor:not-allowed}
-.main-menu-btn-primary{height:58px;background-image:url(../../assets/parchment_plaque_large_center.png);color:#3a1a06;text-shadow:none}
-.main-menu-btn-primary:hover:not(:disabled){filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
-#mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled{display:none}
+.main-menu-btn-primary{height:58px;background:url(../../assets/parchment_plaque_large_center.png) center/100% 100% no-repeat;color:#3a1a06;font:700 16px/1 Georgia,serif;letter-spacing:.05em;text-shadow:none;filter:drop-shadow(0 3px 8px rgba(0,0,0,.5))}
+.main-menu-btn-primary:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
+.main-menu-btn-primary:active:not(:disabled){transform:translateY(0) scale(.985)}
+.main-menu-btn-secondary{height:38px;border:1px solid rgba(224,195,109,.32);border-radius:999px;background:rgba(8,5,3,.42);color:#c9aa66;font:700 12px/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase}
+.main-menu-btn-secondary:hover:not(:disabled){border-color:rgba(240,213,138,.7);color:#e0c36d;background:rgba(8,5,3,.62)}
+.main-menu-btn-secondary:active:not(:disabled){transform:scale(.97)}
+
+/* When Continue has nothing to resume, New Reading takes over the primary
+   plaque styling instead of sitting under an invisible Continue button. */
+#mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled,
 #mainMenu #mainMenuContinue.main-menu-continue-unavailable{display:none}
-#mainMenu:not(.main-menu-busy) .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue:disabled) .main-menu-btn:last-child{height:58px;background-image:url(../../assets/parchment_plaque_large_center.png);color:#3a1a06;text-shadow:none}
-#mainMenu:not(.main-menu-busy) .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue:disabled) .main-menu-btn:last-child:hover{filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
-#mainMenu .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue.main-menu-continue-unavailable) .main-menu-btn:last-child{height:58px;background-image:url(../../assets/parchment_plaque_large_center.png);color:#3a1a06;text-shadow:none}
-#mainMenu .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue.main-menu-continue-unavailable) .main-menu-btn:last-child:hover{filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
+#mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled ~ #mainMenuNewGame,
+#mainMenu #mainMenuContinue.main-menu-continue-unavailable ~ #mainMenuNewGame{width:100%;height:58px;border:none;border-radius:0;background:url(../../assets/parchment_plaque_large_center.png) center/100% 100% no-repeat;color:#3a1a06;font:700 16px/1 Georgia,serif;letter-spacing:.05em;text-transform:none}
+#mainMenu:not(.main-menu-busy) #mainMenuContinue:disabled ~ #mainMenuNewGame:hover:not(:disabled),
+#mainMenu #mainMenuContinue.main-menu-continue-unavailable ~ #mainMenuNewGame:hover:not(:disabled){transform:translateY(-2px);filter:drop-shadow(0 5px 12px rgba(0,0,0,.6)) brightness(1.06)}
+
+.main-menu-dock{margin-top:4px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%;max-width:340px;box-sizing:border-box;padding:6px;border:1px solid rgba(224,195,109,.3);border-radius:16px;background:linear-gradient(180deg,rgba(15,10,6,.6),rgba(7,5,3,.75));box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.main-menu-dock-tab{position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;height:88px;box-sizing:border-box;border:1px solid rgba(224,195,109,.2);border-radius:11px;background:rgba(0,0,0,.16);padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent;opacity:.92;transition:opacity .15s ease,border-color .15s ease,background .2s ease,transform .12s ease}
+.main-menu-dock-tab img{width:auto;height:52px;object-fit:contain}
+.main-menu-dock-tab span{font:700 11px/1 Georgia,serif;letter-spacing:.04em;color:#c9aa66;text-shadow:0 1px 3px rgba(0,0,0,.85)}
+.main-menu-dock-tab.is-active{opacity:1;border-color:rgba(240,213,138,.75);background:radial-gradient(ellipse at 50% 32%,rgba(224,168,71,.22),rgba(20,13,7,.5) 72%);box-shadow:inset 0 0 0 1px rgba(240,213,138,.18)}
+.main-menu-dock-tab.is-active span{color:#f0d58a;margin-bottom:8px}
+.main-menu-dock-tab.is-active::after{content:'\2726';position:absolute;bottom:6px;color:#e0c36d;font-size:8px;text-shadow:0 0 6px rgba(224,195,109,.7)}
+.main-menu-dock-tab:hover{opacity:1;border-color:rgba(224,195,109,.4)}
+.main-menu-dock-tab.is-active:hover{border-color:rgba(240,213,138,.85)}
+.main-menu-dock-tab:active{transform:scale(.96)}
+.main-menu-dock-tab:focus-visible{outline:2px solid #e0c36d;outline-offset:2px}
+
 body.main-menu-blackout #mainMenu{opacity:0;transition:opacity .3s ease}
-body.main-menu-blackout #mainMenu::before{opacity:0;transition:opacity .3s ease}
 body.main-menu-blackout #tlrBootCurtain{opacity:1;pointer-events:auto}
-.main-menu-coming-soon{margin-top:2px;color:#5a4828;font:400 11px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
-.main-menu-toggle{display:flex;align-items:center;gap:8px;margin-top:2px;color:#b09060;font:700 11px/1.2 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.8);cursor:pointer;user-select:none}
-.main-menu-toggle input{accent-color:#d9b35f;cursor:pointer}
-@media(max-height:620px){#mainMenu{align-items:flex-start}.main-menu-inner{margin:auto 0;padding-top:18px;padding-bottom:18px}.main-menu-divider{height:22px;margin-top:12px;margin-bottom:12px}.main-menu-inner>.main-menu-section:nth-child(6){margin-top:19px}.main-menu-btn{height:50px}.main-menu-btn-primary,#mainMenu:not(.main-menu-busy) .main-menu-inner>.main-menu-section:nth-child(4):has(#mainMenuContinue:disabled) .main-menu-btn:last-child{height:54px}}
-@media(prefers-reduced-motion:reduce){#mainMenu,.main-menu-btn{transition:none}}
+
+@media(max-height:700px){
+.main-menu-titleblock{margin-top:18px}
+.main-menu-title-art{max-width:200px}
+.main-menu-shop-sign{top:118px;width:64px}
+.main-menu-dock-tab{height:72px}
+.main-menu-dock-tab img{height:38px}
+}
+@media(max-width:365px){
+.main-menu-status-pill{font-size:11px;padding:0 14px}
+.main-menu-titleblock{padding:0 44px}
+}
+@media(prefers-reduced-motion:reduce){#mainMenu,.main-menu-btn,.main-menu-dock-tab,.main-menu-gear,.main-menu-shop-sign{transition:none}}
+@media(prefers-reduced-motion:reduce){.main-menu-incense-smoke,.main-menu-candle-melt,.main-menu-candle-melt::before,.main-menu-candle-melt::after{animation:none}.main-menu-incense-smoke,.main-menu-candle-melt{opacity:.14}}
 }

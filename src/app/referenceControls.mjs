@@ -35,7 +35,7 @@ export function renderScoringSheet(target = window){
   const pathChips=(u.path_chips||0)*15;
   const pathMult=+(2+(u.path_mult||0)*0.5).toFixed(2);
   const rows=[
-    ['(3/4)) of a Kind','Matching ranks',`+${5+rankBonus}`,fmtBonus(rankMult)],
+    ['(3/4) of a Kind','Matching ranks',`+${5+rankBonus}`,fmtBonus(rankMult)],
     ['Full Court (3/4)','Consecutive ranks',`+${10+fullCourtChips}`,fmtBonus(fullCourtMult)],
     ['Royal Court (3/4)','Consecutive ranks, same suit',`+${10+royalCourtChips}`,fmtBonus(royalCourtMult)],
     ['Sequence (3/4/5)','Consecutive major arcana',`+${15+seqBonus}`,fmtBonus(seqMult)],

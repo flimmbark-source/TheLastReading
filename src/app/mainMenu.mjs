@@ -101,6 +101,7 @@ export function installMainMenu(target = window) {
     el.setAttribute('aria-hidden', 'true');
     if ('inert' in el) el.inert = true;
     target.document.body.classList.remove('main-menu-active');
+    if (typeof target.tlrSetMusicContext === 'function') target.tlrSetMusicContext('default');
     // Delay display:none until after the 0.35s opacity fade-out finishes,
     // so the game never shows through while the overlay is still fading.
     setTimeout(() => { if (el.classList.contains('mm-hidden')) el.hidden = true; }, 400);
@@ -114,6 +115,7 @@ export function installMainMenu(target = window) {
     el.setAttribute('aria-hidden', 'false');
     el.classList.remove('mm-hidden', 'main-menu-busy');
     target.document.body.classList.add('main-menu-active');
+    if (typeof target.tlrSetMusicContext === 'function') target.tlrSetMusicContext('mainMenu');
     target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
     hideCurtain();
     // The lightweight boot loader disables every menu button while it loads the
@@ -127,6 +129,7 @@ export function installMainMenu(target = window) {
       if (btn.dataset.bootLabel) { btn.textContent = btn.dataset.bootLabel; delete btn.dataset.bootLabel; }
     });
     syncContinueBtn();
+    selectTab('reading');
   }
 
   function forceSingleplayerTable() {
@@ -186,6 +189,67 @@ export function installMainMenu(target = window) {
     btn.disabled = !available;
     btn.classList.toggle('main-menu-continue-unavailable', !available);
   }
+
+  // Bottom mode dock: Reading/Adventure/Duel tabs. Switching tabs only
+  // changes what the hub shows (status pill + primary/secondary actions) --
+  // it does not enter a mode. Entering a mode still goes through the same
+  // tlrMainMenuContinue/NewGame/Adventure/Multiplayer handlers as before.
+  const DOCK_TABS = ['reading', 'adventure', 'duel'];
+  let activeTab = 'reading';
+
+  function romanFor(n) {
+    const roman = target.ROMAN;
+    return (Array.isArray(roman) && roman[n] != null) ? roman[n] : String(n);
+  }
+
+  function thresholdValueFor(state) {
+    const idx = state?.th ?? 0;
+    const bonus = state?.thBonus ?? 0;
+    const table = Array.isArray(target.TH) && target.TH.length ? target.TH : [30, 60, 90, 120, 150, 180, 210, 240, 270, 300];
+    const base = table[idx] ?? table[table.length - 1] ?? 0;
+    return base + bonus;
+  }
+
+  // Only Reading has a live "current run" concept (a reading number and a
+  // threshold to clear) -- Adventure always starts a fresh run and Duel is
+  // matchmaking-based, so the pill has nothing truthful to show there.
+  // It also has nothing truthful to show on Reading itself until the full
+  // game module has loaded: menuBoot.mjs's lightweight stub runs long before
+  // that (installMainMenu hasn't even been called yet), and reading/threshold
+  // are transient run state, never part of the tlr_save persist blob, so
+  // there is no earlier source to read them from. Stay hidden rather than
+  // guess, so returning players never see a wrong number flash before the
+  // real one lands.
+  function updateStatusPill() {
+    const pill = target.document.getElementById('mainMenuStatusPill');
+    const primary = target.document.getElementById('mainMenuStatusPrimary');
+    const secondary = target.document.getElementById('mainMenuStatusSecondary');
+    if (!pill || !primary || !secondary) return;
+    const state = typeof target.tlrGetState === 'function' ? target.tlrGetState() : target.state;
+    const ready = activeTab === 'reading' && !!state;
+    pill.dataset.ready = String(ready);
+    if (!ready) return;
+    primary.textContent = `Reading ${romanFor(state.reading ?? 1)}`;
+    secondary.textContent = `Threshold ${thresholdValueFor(state)}`;
+  }
+
+  function selectTab(tab) {
+    if (!DOCK_TABS.includes(tab)) return;
+    activeTab = tab;
+    const hub = target.document.querySelector('#mainMenu .main-menu-hub');
+    if (hub) hub.dataset.activeTab = tab;
+    target.document.querySelectorAll('#mainMenu .main-menu-dock-tab').forEach(btn => {
+      const isActive = btn.dataset.mode === tab;
+      btn.classList.toggle('is-active', isActive);
+      btn.setAttribute('aria-selected', String(isActive));
+    });
+    updateStatusPill();
+  }
+  target.tlrMainMenuSelectTab = selectTab;
+
+  target.tlrMainMenuToggleSettings = function () {
+    target.document.getElementById('settingsPanel')?.classList.toggle('hidden');
+  };
 
 
   // Full-screen black curtain for the New Game/Continue transition. The
@@ -269,7 +333,14 @@ export function installMainMenu(target = window) {
       if (fresh) startFresh();
       forceSingleplayerTable();
       if (typeof target.startReading === 'function') {
-        if (!gameStarted || fresh) target.startReading();
+        const didDeal = !gameStarted || fresh;
+        // silent: true -- the shuffle sound would otherwise play for real,
+        // audibly, while the table is still hidden behind the curtain/veil
+        // below. Re-fire it ourselves once the table is actually visible,
+        // alongside the re-queued draw animation, so what the player hears
+        // matches what they're looking at instead of firing during a black
+        // screen.
+        if (didDeal) target.startReading({ silent: true });
         gameStarted = true;
         forceSingleplayerTable();
         closeModeChrome();
@@ -284,6 +355,7 @@ export function installMainMenu(target = window) {
         // the time the curtain lifts the animation is over and was never
         // seen. Re-queue it for the dealt hand now that the table is visible
         // so the player actually sees the cards get dealt.
+        if (didDeal && typeof target.playSound === 'function') target.playSound('shuffle');
         if (typeof target.tlrQueueDrawAnimation === 'function') {
           const dealtHand = target.tlrStore?.getState?.()?.run?.hand;
           if (Array.isArray(dealtHand) && dealtHand.length) target.tlrQueueDrawAnimation(dealtHand);
@@ -483,4 +555,13 @@ export function installMainMenu(target = window) {
     syncContinueBtn();
     show();
   };
+
+  // The menu is visible by default from static HTML/CSS on a cold boot, and
+  // menuBoot.mjs's lightweight stub can already have switched the dock tab
+  // before this real module finished loading -- preserve that choice rather
+  // than resetting to Reading, but still (re-)run selectTab so the status
+  // pill (which the boot stub can't populate) gets filled in now that real
+  // state exists.
+  const bootTab = target.document.querySelector('#mainMenu .main-menu-hub')?.dataset.activeTab;
+  selectTab(bootTab && DOCK_TABS.includes(bootTab) ? bootTab : 'reading');
 }

@@ -49,7 +49,7 @@ try {
     page.on('pageerror', error => consoleErrors.push(error.message));
 
     await page.goto(`${baseUrl}/game.html`, { waitUntil: 'networkidle' });
-    await page.locator('button', { hasText: 'New Game' }).click();
+    await page.locator('button', { hasText: 'New Reading' }).click();
     await page.waitForSelector('body.single-player-v2.generated-sheet-ready', { timeout: 15000 });
 
     await page.evaluate(() => {
