@@ -14,7 +14,7 @@ const TUT_ADV_APPROACH_GREAT_KEY = 'tlr_tut_adv_approach_great';
 const TUT_ADV_REWARD_KEY = 'tlr_tut_adv_reward';
 const TUT_ADV_ITEMS_KEY = 'tlr_tut_adv_items';
 const TUT_ADV_COMPLETE_KEY = 'tlr_tut_adv_complete';
-const INTRO_LAST_STEP = 2;
+const INTRO_LAST_STEP = 5;
 const ADVENTURE_FIRST_STEP = 21;
 const ADVENTURE_LAST_STEP = 27;
 
@@ -337,6 +337,15 @@ export function tutNext() {
     return;
   }
   if (tutStep < TUT_STEP.SELECT_CARD) { tutShow(tutStep + 1); return; }
+  if (tutStep >= TUT_STEP.SCORE_ADDED && tutStep < TUT_STEP.THRESHOLD) {
+    tutShow(tutStep + 1, { force: true });
+    return;
+  }
+  if (tutStep === TUT_STEP.THRESHOLD) {
+    finishIntro();
+    queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
+    return;
+  }
   if (tutStep === TUT_STEP.DISCARD_ABILITY) {
     markStepSeen(tutStep);
     if (canShowStep(TUT_STEP.PATTERN_NOTICE)) tutShow(TUT_STEP.PATTERN_NOTICE);
@@ -401,8 +410,9 @@ export function tutSignal(eventName) {
     return;
   }
   if (tutStep < TUT_STEP.PLACE_CARD) { tutShow(tutStep + 1); return; }
-  finishIntro();
-  queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
+  if (tutStep === TUT_STEP.PLACE_CARD) {
+    tutShow(TUT_STEP.SCORE_ADDED, { force: true });
+  }
 }
 
 export function maybeShowAdventureTutorial(options = {}) {
