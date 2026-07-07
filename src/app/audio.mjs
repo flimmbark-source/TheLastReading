@@ -10,9 +10,9 @@ const DEFAULT_TRACKS = [
 const MUSIC_CONTEXTS = {
   default: { tracks: DEFAULT_TRACKS, loopSingle: false, volumeScale: 1 },
   mainMenu: {
-    tracks: ['assets/audio/alexrockbeat-alexrockbeat-magic-fantasy-music-547446.mp3'],
+    tracks: ['assets/audio/aloneintheuniverse-dreamtravel-243429.mp3'],
     loopSingle: true,
-    volumeScale: 0.5,
+    volumeScale: 0.7,
   },
   premiumStore: {
     tracks: ['assets/audio/lofium-lofi-song-backyard-by-lofium-242713.mp3'],
