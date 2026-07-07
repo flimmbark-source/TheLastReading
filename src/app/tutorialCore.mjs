@@ -104,7 +104,7 @@ const TUT_STEPS = [
   { center: true, key: TUT_ADV_COMPLETE_KEY, text: "You finished a Set. Complete one more to win the adventure." },
   // Reached only via the PATTERN_NOTICE branch in tutNext() below (index kept
   // out of the linear array order so every other step's index stays stable).
-  { sel: '#hintLevelBar', fallbackSel: '#settingsPanel', arrow: 'up', text: 'Use hints to see potential scoring combos.' },
+  { sel: '#hintLevelBar', fallbackSel: '#settingsPanel', arrow: 'up', text: 'Use hints to see potential scoring patterns.' },
 ];
 
 const MARKET_TUT_STEPS = [
