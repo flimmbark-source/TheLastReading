@@ -92,13 +92,6 @@ function renderBundleMarket(target = window) {
   return true;
 }
 
-function pickerPackIdForBundle(bundle) {
-  const display = MARKET_BUNDLES[bundle?.bundleId] || {};
-  if (display.sourcePackId) return display.sourcePackId;
-  if (bundle?.bundleId === 'sequence_bundle' || bundle?.bundleId === 'court_bundle') return 'pattern';
-  return null;
-}
-
 function buildRewardBundlePicker(bundle, target = window) {
   const display = MARKET_BUNDLES[bundle.bundleId] || {};
   const title = display.name || 'Reward Bundle';
@@ -138,16 +131,12 @@ export function openRewardBundleWithAnimation(bundleId, target = window) {
   if (typeof target.tlrSyncPersistToStore === 'function') target.tlrSyncPersistToStore();
   target.tlrStore.dispatch({ type: target.tlrActions.OPEN_REWARD_BUNDLE, bundleId });
   syncStorePersistToLegacy(target);
-  const bundle = bundleList(persistOf(target)).find(item => item.id === bundleId);
-  const reveal = () => showRewardBundleContents(bundleId, target);
-  const packId = pickerPackIdForBundle(bundle);
-  if (packId && typeof target.animatePackOpen === 'function' && target.PACKS?.[packId]) {
-    target.animatePackOpen(packId, reveal);
-    target.setTimeout?.(reveal, 1500);
-    return true;
-  }
-  reveal();
-  return true;
+
+  // This is a reward bundle, not a paid pack. Do not route through
+  // animatePackOpen(packId), because that surfaces the legacy pack object
+  // (for example, "Restless Hands Pack") instead of the saved bundle choices.
+  if (typeof target.playSound === 'function') target.playSound('pack_open');
+  return showRewardBundleContents(bundleId, target);
 }
 
 export function pickRewardBundleChoice(bundleId, rewardKey, target = window) {
