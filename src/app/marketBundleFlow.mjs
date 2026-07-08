@@ -1,4 +1,4 @@
-import { MARKET_BUNDLES } from '../data/marketBundleTracks.mjs';
+import { MARKET_BUNDLES, MARKET_BUNDLE_REWARD_POOLS } from '../data/marketBundleTracks.mjs';
 import { SHOP, SHOP_ICON } from '../data/legacyMarket.mjs';
 import { copyStorePersistToLegacy } from './legacyBridge.mjs';
 import { eligibleFiveStampCards, eligibleSuitStampCards } from './shopOverlayFlow.mjs';
@@ -10,6 +10,10 @@ function stateOf(target){return runtime(target).state || target.state || {};}
 
 function escapeHtml(value = '') {
   return String(value).replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
+}
+
+function stripTags(value = '') {
+  return String(value || '').replace(/<[^>]*>/g, '');
 }
 
 function bundleList(persist) {
@@ -44,18 +48,22 @@ function ensureBundleStyles(target = window) {
     .store-card--bundle-stillness .store-card-tag{color:#a8c99d}
     .store-card--bundle-echo .store-card-tag{color:#bf97df}
     .store-card--bundle-court .store-card-tag{color:#8faee5}
+    .store-card--reward-choice{--store-accent:rgba(214,176,86,.54)}
+    .store-card--reward-choice .store-card-tag{color:#c49a50}
+    .store-card--reward-choice.reward-role-core{--store-accent:rgba(225,180,88,.64)}
+    .store-card--reward-choice.reward-role-tool{--store-accent:rgba(110,180,220,.58)}
+    .store-card--reward-choice.reward-role-bridge{--store-accent:rgba(190,145,220,.58)}
+    .store-card--reward-choice.reward-role-core .store-card-tag{color:#e6bc68}
+    .store-card--reward-choice.reward-role-tool .store-card-tag{color:#80bdda}
+    .store-card--reward-choice.reward-role-bridge .store-card-tag{color:#bf97df}
+    .store-card-choice-lv{margin-top:6px;font:800 10px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8a7551}
     .store-bundle-note{font:700 11px/1.35 system-ui,sans-serif;color:#8a7551;text-align:center;margin-top:8px}
+    .bundle-source-reasons{font:700 11px/1.35 system-ui,sans-serif;color:#b8a882;text-align:center;margin:6px auto 0;max-width:620px}
     .bundle-result-row td{color:#b8a882!important}
     .bundle-result-row.complete td:first-child{color:#f0dfbd!important}
     .bundle-result-row .bundle-result-reason{display:block;color:#f0dfbd;font-weight:800}
     .bundle-result-row .bundle-result-track{display:block;color:#8a7551;font:700 10px/1.25 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
-    .reward-bundle-picker{width:min(96vw,620px);margin:0 auto;padding:10px 0 4px;background:transparent!important;border:0!important;box-shadow:none!important}
-    .reward-bundle-picker .pack-picker-header{margin:0 0 10px;padding:0 10px;background:transparent!important;border:0!important;box-shadow:none!important;text-align:center}
-    .reward-bundle-picker .pack-picker-header h3{margin:0 0 4px}
-    .reward-bundle-picker .pack-picker-header p{margin:0;color:#b8a882}
-    .reward-bundle-picker .shop-items-row{display:flex!important;flex-direction:row!important;align-items:stretch!important;justify-content:center!important;gap:10px!important;flex-wrap:nowrap!important;overflow-x:auto!important;padding:0 6px 8px;scroll-snap-type:x proximity}
-    .reward-bundle-picker .upg-card{flex:0 0 min(30vw,170px)!important;max-width:170px!important;min-width:128px!important;scroll-snap-align:center;background:rgba(19,14,10,.74)!important}
-    @media(max-width:480px){.reward-bundle-picker{width:98vw}.reward-bundle-picker .shop-items-row{justify-content:flex-start!important;gap:8px!important}.reward-bundle-picker .upg-card{flex-basis:31vw!important;min-width:112px!important}.reward-bundle-picker .upg-desc{font-size:10px!important;line-height:1.25!important}}
+    @media(max-width:480px){.store-card-choice-lv{font-size:9px}.bundle-source-reasons{font-size:10px;padding:0 10px}}
   `;
   doc.head.appendChild(style);
 }
@@ -163,38 +171,87 @@ function openBundleMarket(target = window) {
   return showBundleMarket(target);
 }
 
-function buildRewardBundlePicker(bundle, target = window) {
-  const display = MARKET_BUNDLES[bundle.bundleId] || {};
-  const title = display.name || 'Reward Bundle';
-  const keys = bundle.rewardKeys || [];
-  let html = '<div class="reward-bundle-picker">';
-  html += `<div class="pack-picker-header"><h3>${escapeHtml(title)}</h3><p>Choose 1 reward.</p></div>`;
-  html += '<div class="shop-items-row">';
-  const persist = persistOf(target);
-  for (const key of keys) {
-    const row = SHOP[key];
-    if (!row) continue;
-    const level = (persist.up || {})[key] || 0;
-    const icon = SHOP_ICON[key] || 'isp-scoring';
-    const desc = String(row[1] || '').replace(/<[^>]*>/g, '');
-    html += `<div class="upg-card pool-${escapeHtml(row[5] || 'bundle')}">
-      <div class="upg-title-strip"><span>${escapeHtml(row[0])}</span></div>
-      <div class="upg-art"><span class="isp isp-40 ${escapeHtml(icon)}"></span></div>
-      <div class="upg-body"><div class="upg-desc">${escapeHtml(desc)}</div></div>
-      <div class="upg-footer"><span class="upg-lv">Lv <b>${level}</b></span>
-      <button class="sbtn sbtn-pick" aria-label="Pick" onclick="pickRewardBundleChoice('${escapeHtml(bundle.id)}','${escapeHtml(key)}')"></button></div>
-    </div>`;
+function poolSetForBundle(bundle) {
+  const pools = MARKET_BUNDLE_REWARD_POOLS[bundle?.bundleId];
+  if (!pools) return null;
+  return bundle.tier > 1 ? pools.tier2 || pools.tier1 || null : pools.tier1 || null;
+}
+
+function rewardRoleForKey(bundle, rewardKey) {
+  const pools = poolSetForBundle(bundle);
+  if (!pools) return 'reward';
+  for (const role of ['core', 'tool', 'bridge']) {
+    if ((pools[role] || []).includes(rewardKey)) return role;
   }
-  html += '</div></div>';
-  return html;
+  return 'reward';
+}
+
+function roleLabel(role) {
+  if (role === 'core') return 'Core';
+  if (role === 'tool') return 'Tool';
+  if (role === 'bridge') return 'Bridge';
+  return 'Reward';
+}
+
+function sourceReasonText(bundle) {
+  const reasons = bundle?.source?.reasons || [];
+  return reasons.filter(Boolean).join(' · ');
+}
+
+function renderRewardChoiceCard(bundle, rewardKey, target = window) {
+  const row = SHOP[rewardKey];
+  if (!row) return '';
+  const persist = persistOf(target);
+  const level = (persist.up || {})[rewardKey] || 0;
+  const icon = SHOP_ICON[rewardKey] || 'isp-scoring';
+  const role = rewardRoleForKey(bundle, rewardKey);
+  const desc = stripTags(row[1] || '');
+  return `<div class="store-card store-card--reward-choice reward-role-${escapeHtml(role)}">
+    <div class="store-card-tag">${escapeHtml(roleLabel(role))}</div>
+    <div class="store-card-art"><span class="isp isp-108 ${escapeHtml(icon)}"></span></div>
+    <div class="store-card-main">
+      <div class="store-card-name">${escapeHtml(row[0])}</div>
+      <div class="store-card-desc">${escapeHtml(desc)}</div>
+      <div class="store-card-choice-lv">Lv ${level} → ${level + 1}</div>
+    </div>
+    <button class="store-card-buy" onclick="pickRewardBundleChoice('${escapeHtml(bundle.id)}','${escapeHtml(rewardKey)}')">Take</button>
+  </div>`;
+}
+
+function rewardBundleChoicesInner(bundle, target = window) {
+  const display = MARKET_BUNDLES[bundle.bundleId] || {};
+  const keys = bundle.rewardKeys || [];
+  const reason = sourceReasonText(bundle);
+  return `
+    <div class="store-meta">
+      <button class="store-refresh" onclick="openShopMain()">← Bundles</button>
+      <div class="store-reserve-display"><div class="store-reserve-label">Choose</div><div class="store-reserve-amount">1</div></div>
+    </div>
+    <div class="store-bundle-note"><strong>${escapeHtml(display.name || 'Reward Bundle')}</strong> — Choose 1 reward.</div>
+    ${reason ? `<div class="bundle-source-reasons">${escapeHtml(reason)}</div>` : ''}
+    <div class="store-offer-row">
+      ${keys.map(key => renderRewardChoiceCard(bundle, key, target)).join('')}
+    </div>
+    <div class="store-footer">
+      <button class="store-proceed" onclick="openShopMain()">Back to Bundles</button>
+    </div>`;
+}
+
+function renderRewardBundleChoices(bundle, target = window) {
+  ensureBundleStyles(target);
+  const front = target.document?.getElementById('storeFront') || target.document?.querySelector('.store-front-shell .store-front');
+  if (!front) return false;
+  front.innerHTML = rewardBundleChoicesInner(bundle, target);
+  return true;
 }
 
 export function showRewardBundleContents(bundleId, target = window) {
   const bundle = bundleList(persistOf(target)).find(item => item.id === bundleId);
   if (!bundle || bundle.state !== 'opened') return false;
+  if (renderRewardBundleChoices(bundle, target)) return true;
   if (typeof target.showOverlay !== 'function') return false;
-  target.showOverlay(buildRewardBundlePicker(bundle, target));
-  return true;
+  showBundleMarket(target);
+  return renderRewardBundleChoices(bundle, target);
 }
 
 function ineligibleStampRewardKeys(target = window) {
@@ -299,5 +356,5 @@ export function installMarketBundleFlow(target = window) {
   target.openShop = () => openBundleMarket(target);
   target.openRewardBundleWithAnimation = bundleId => openRewardBundleWithAnimation(bundleId, target);
   target.showRewardBundleContents = bundleId => showRewardBundleContents(bundleId, target);
-  target.pickRewardBundleChoice = (bundleId, rewardKey) => pickRewardBundleChoice(bundleId, rewardKey, target);
+  target.pickRewardBundleChoice = (bundleId, rewardKey) => pickRewardBundleChoice(bundleId, target);
 }
