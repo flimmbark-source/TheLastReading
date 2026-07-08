@@ -368,6 +368,31 @@ function patchResultsOverlay(target = window) {
   }
 }
 
+function maybeDelayResultsOverlayForTrackGhosts(target = window) {
+  const summary = target.document?.getElementById('summary');
+  if (!summary || !summary.classList.contains('show')) return false;
+  if (!summary.querySelector('.result-panel.pass')) return false;
+  if (summary.dataset.trackGhostDelay === 'done') return false;
+
+  const run = target.tlrStore?.getState?.()?.run;
+  const results = run?.lastResults;
+  const key = resultGhostKey(run || {});
+  const labels = results?.cleared ? trackGhostSequenceLabels(results) : [];
+  if (!labels.length || target.__tlrTrackGhostResultsPlayed === key) return false;
+  if (target.__tlrTrackGhostResultDelayKey === key) return true;
+
+  target.__tlrTrackGhostResultDelayKey = key;
+  summary.dataset.trackGhostDelay = 'pending';
+  summary.style.visibility = 'hidden';
+  playTrackResultsBeforeOverlay(() => {
+    summary.style.visibility = '';
+    summary.dataset.trackGhostDelay = 'done';
+    target.__tlrTrackGhostResultDelayKey = null;
+    patchResultsOverlay(target);
+  }, target);
+  return true;
+}
+
 function installResultsPatchObserver(target = window) {
   const doc = target.document;
   const summary = doc?.getElementById('summary');
@@ -379,12 +404,13 @@ function installResultsPatchObserver(target = window) {
     queued = true;
     target.setTimeout?.(() => {
       queued = false;
+      if (maybeDelayResultsOverlayForTrackGhosts(target)) return;
       patchResultsOverlay(target);
     }, 0);
   };
 
   const observer = new MutationObserver(schedule);
-  observer.observe(summary, { childList: true, subtree: true });
+  observer.observe(summary, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   target.__tlrMarketBundleResultsObserver = observer;
   schedule();
 }
@@ -535,6 +561,41 @@ function openBundleMarketAfterTrackGhosts(target = window) {
   return playTrackResultsBeforeOverlay(() => openBundleMarket(target), target);
 }
 
+function installInReadingTrackGhostWrappers(target = window) {
+  if (!target || target.__tlrTrackGhostActionWrappersInstalled) return;
+  target.__tlrTrackGhostActionWrappersInstalled = true;
+
+  const wrapAction = (actionFactory, fn) => function wrappedTrackGhostAction(...args) {
+    const beforeRun = target.tlrStore?.getState?.()?.run;
+    const result = fn.apply(this, args);
+    const afterRun = target.tlrStore?.getState?.()?.run;
+    const action = actionFactory(...args);
+    fireInReadingTrackGhosts(action, beforeRun, afterRun, target);
+    return result;
+  };
+
+  if (typeof target.placeCard === 'function') {
+    const original = target.placeCard;
+    target.placeCard = wrapAction(slotIndex => ({ type: target.tlrActions?.PLACE_CARD || 'PLACE_CARD', slotIndex }), original);
+  }
+
+  if (typeof target.discardSelected === 'function') {
+    const original = target.discardSelected;
+    target.discardSelected = wrapAction(() => ({ type: target.tlrActions?.DISCARD_SELECTED || 'DISCARD_SELECTED' }), original);
+  }
+
+  if (typeof target.tlrResolveAbilityThroughStore === 'function') {
+    const original = target.tlrResolveAbilityThroughStore;
+    target.tlrResolveAbilityThroughStore = function wrappedResolveAbilityThroughStore(result) {
+      const beforeRun = target.tlrStore?.getState?.()?.run;
+      const out = original.call(this, result);
+      const afterRun = target.tlrStore?.getState?.()?.run;
+      fireInReadingTrackGhosts({ type: target.tlrActions?.RESOLVE_ABILITY || 'RESOLVE_ABILITY', result }, beforeRun, afterRun, target);
+      return out;
+    };
+  }
+}
+
 export function installMarketBundleFlow(target = window) {
   if (!target || target.__tlrMarketBundleFlowInstalled) return;
   target.__tlrMarketBundleFlowInstalled = true;
@@ -549,4 +610,5 @@ export function installMarketBundleFlow(target = window) {
   target.pickRewardBundleChoice = (bundleId, rewardKey) => pickRewardBundleChoice(bundleId, rewardKey, target);
   target.tlrMaybeFireTrackGhosts = (action, beforeRun, afterRun) => fireInReadingTrackGhosts(action, beforeRun, afterRun, target);
   target.playTrackResultsBeforeOverlay = done => playTrackResultsBeforeOverlay(done, target);
+  installInReadingTrackGhostWrappers(target);
 }
