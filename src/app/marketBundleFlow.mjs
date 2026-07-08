@@ -181,6 +181,7 @@ function rewardRoleForKey(bundle, rewardKey) {
 
 function rewardKindLabel(rewardKey, row) {
   const category = row?.[5] || '';
+  if (rewardKey === 'suit_stamp' || rewardKey === 'five_stamp') return 'Stamp';
   if (category === 'relic' || rewardKey === 'relicSlot') return 'Relic';
   if (category === 'pattern' || category === 'scoring') return 'Scoring';
   if (category === 'hand') return 'Hand Upgrade';
@@ -214,10 +215,11 @@ function renderRewardChoiceCard(bundle, rewardKey, target = window) {
 
 function rewardBundleChoicesInner(bundle, target = window) {
   const keys = bundle.rewardKeys || [];
+  const canRefresh = !bundle.rewardRefreshed;
   return `
     <div class="store-meta">
       <button class="store-refresh" onclick="openShopMain()">← Market</button>
-      <button class="store-refresh" onclick="refreshRewardBundleChoices('${escapeHtml(bundle.id)}')"><span class="store-refresh-icon">↻</span> Refresh</button>
+      <button class="store-refresh" ${canRefresh ? '' : 'disabled'} onclick="refreshRewardBundleChoices('${escapeHtml(bundle.id)}')"><span class="store-refresh-icon">↻</span> ${canRefresh ? 'Refresh' : 'Refresh Used'}</button>
     </div>
     <div class="store-bundle-note">Choose 1 Reward</div>
     <div class="store-offer-row">
@@ -297,12 +299,12 @@ export function refreshRewardBundleChoices(bundleId, target = window) {
   const storePersist = target.tlrStore.getState().persist;
   const bundles = storePersist.pendingRewardBundles || [];
   const index = bundles.findIndex(bundle => bundle.id === bundleId && bundle.state === 'opened');
-  if (index < 0) return false;
+  if (index < 0 || bundles[index].rewardRefreshed) return false;
 
   const rewardKeys = rewardOfferKeysForBundle(storePersist, bundles[index], {
     excludeRewardKeys: ineligibleStampRewardKeys(target),
   });
-  const pendingRewardBundles = bundles.map((bundle, i) => i === index ? { ...bundle, rewardKeys } : bundle);
+  const pendingRewardBundles = bundles.map((bundle, i) => i === index ? { ...bundle, rewardKeys, rewardRefreshed: true } : bundle);
   target.tlrStore.dispatch({ type: target.tlrActions.SYNC_LEGACY_PERSIST, persist: { pendingRewardBundles } });
   syncStorePersistToLegacy(target);
   if (typeof target.playSound === 'function') target.playSound('pack_open');
@@ -486,18 +488,8 @@ function maybeFireInReadingTrackGhosts(target, action, beforeState, afterState) 
   labels.forEach((label, index) => fireLiteralTrackGhost(target, label, 260 + index * 170));
 }
 
-function installInReadingTrackGhosts(target = window) {
-  const store = target.tlrStore;
-  if (!store || store.__tlrTrackGhostDispatchWrapped || typeof store.dispatch !== 'function') return;
-  const originalDispatch = store.dispatch.bind(store);
-  store.dispatch = action => {
-    const before = typeof store.getState === 'function' ? store.getState() : null;
-    const result = originalDispatch(action);
-    const after = typeof store.getState === 'function' ? store.getState() : null;
-    maybeFireInReadingTrackGhosts(target, action, before, after);
-    return result;
-  };
-  store.__tlrTrackGhostDispatchWrapped = true;
+export function fireInReadingTrackGhosts(action, beforeRun, afterRun, target = window) {
+  maybeFireInReadingTrackGhosts(target, action, { run: beforeRun }, { run: afterRun });
 }
 
 function trackGhostSequenceLabels(results) {
@@ -514,24 +506,33 @@ function resultGhostKey(run = {}) {
   return `${run.lastReadingLedger?.id || run.reading || 'reading'}:${ids.join(',')}:${(run.lastResults?.trackDeltas || []).map(delta => `${delta.trackId}:${delta.gained}:${delta.after}`).join('|')}`;
 }
 
-function openBundleMarketAfterTrackGhosts(target = window) {
+export function playTrackResultsBeforeOverlay(done = () => {}, target = window) {
   const run = target.tlrStore?.getState?.()?.run;
   const results = run?.lastResults;
   const key = resultGhostKey(run || {});
   const labels = results?.cleared ? trackGhostSequenceLabels(results) : [];
-  if (!labels.length || target.__tlrTrackGhostResultsPlayed === key) return openBundleMarket(target);
+  if (!labels.length || target.__tlrTrackGhostResultsPlayed === key) {
+    done();
+    return false;
+  }
   if (target.__tlrTrackGhostPlaybackActive) return false;
   target.__tlrTrackGhostResultsPlayed = key;
   target.__tlrTrackGhostPlaybackActive = true;
-  if (typeof target.clearOverlay === 'function') target.clearOverlay();
   labels.forEach((label, index) => {
-    fireLiteralTrackGhost(target, label, 180 + index * 560, { center: true });
+    fireLiteralTrackGhost(target, label, 160 + index * 520, { center: true });
   });
   target.setTimeout?.(() => {
     target.__tlrTrackGhostPlaybackActive = false;
-    openBundleMarket(target);
-  }, 180 + labels.length * 560 + 180);
+    done();
+  }, 160 + labels.length * 520 + 120);
   return true;
+}
+
+function openBundleMarketAfterTrackGhosts(target = window) {
+  const run = target.tlrStore?.getState?.()?.run;
+  const key = resultGhostKey(run || {});
+  if (target.__tlrTrackGhostResultsPlayed === key) return openBundleMarket(target);
+  return playTrackResultsBeforeOverlay(() => openBundleMarket(target), target);
 }
 
 export function installMarketBundleFlow(target = window) {
@@ -539,7 +540,6 @@ export function installMarketBundleFlow(target = window) {
   target.__tlrMarketBundleFlowInstalled = true;
   ensureBundleStyles(target);
   installResultsPatchObserver(target);
-  installInReadingTrackGhosts(target);
 
   target.openShopMain = () => showBundleMarket(target);
   target.openShop = () => openBundleMarketAfterTrackGhosts(target);
@@ -547,4 +547,6 @@ export function installMarketBundleFlow(target = window) {
   target.refreshRewardBundleChoices = bundleId => refreshRewardBundleChoices(bundleId, target);
   target.showRewardBundleContents = bundleId => showRewardBundleContents(bundleId, target);
   target.pickRewardBundleChoice = (bundleId, rewardKey) => pickRewardBundleChoice(bundleId, rewardKey, target);
+  target.tlrMaybeFireTrackGhosts = (action, beforeRun, afterRun) => fireInReadingTrackGhosts(action, beforeRun, afterRun, target);
+  target.playTrackResultsBeforeOverlay = done => playTrackResultsBeforeOverlay(done, target);
 }
