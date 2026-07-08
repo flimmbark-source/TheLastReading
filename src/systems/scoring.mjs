@@ -37,6 +37,24 @@ function majorCards(cards) {
   return cards.filter(card => card.type === 'major');
 }
 
+function hasMatchingRankPair(cards) {
+  const counts = new Map();
+  for (const card of cards) {
+    if (!card.rank) continue;
+    counts.set(card.rank, (counts.get(card.rank) || 0) + 1);
+    if (counts.get(card.rank) >= 2) return true;
+  }
+  return false;
+}
+
+function hasCourtPlaced(cards, placedCardIds = []) {
+  const courtByUid = new Map(courtCards(cards).map(card => [card.uid, card]));
+  if (Array.isArray(placedCardIds) && placedCardIds.length) {
+    return placedCardIds.some(uid => courtByUid.has(uid));
+  }
+  return courtByUid.size > 0;
+}
+
 function applyFlatUpgradeBonuses(result, cards, upgrades, context) {
   const minorCards = cards.filter(card => card.type !== 'major');
   const majors = majorCards(cards);
@@ -54,6 +72,23 @@ function applyFlatUpgradeBonuses(result, cards, upgrades, context) {
   addChipMeld(result, 'First Light', (upgrades.first_light || 0) * 3);
   addChipMeld(result, 'Deep Reserve', (context.handCount || 0) * (upgrades.deep_reserve || 0) * 2);
   addChipMeld(result, 'Quick Release', (context.discardedCount || 0) * (upgrades.quick_release || 0) * 3);
+
+  const unusedDiscards = Math.max(0, Number(context.remainingDiscards || 0));
+  addChipMeld(result, 'Patient Reading', unusedDiscards * (upgrades.patient_reading || 0) * 2);
+
+  if (upgrades.first_answer) {
+    const opening = new Set(context.openingHandCardIds || []);
+    const count = cards.filter(card => opening.has(card.uid)).length;
+    addChipMeld(result, 'First Answer', count * upgrades.first_answer * 2);
+  }
+
+  if (upgrades.familiar_face && hasMatchingRankPair(cards)) {
+    addChipMeld(result, 'Familiar Face', upgrades.familiar_face * 6);
+  }
+
+  if (upgrades.court_favor && hasCourtPlaced(cards, context.placedCardIds || [])) {
+    addChipMeld(result, 'Court Favor', upgrades.court_favor * 6);
+  }
 
   addAdditiveMultMeld(result, 'Ritual Mult', (upgrades.flat_mult || 0) * 0.25);
   addAdditiveMultMeld(result, 'Blessed Start', (upgrades.blessed_start || 0) * 0.25);
