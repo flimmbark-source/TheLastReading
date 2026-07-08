@@ -6,18 +6,21 @@ export const MARKET_BUNDLE_TRACK_IDS = Object.freeze({
   COURT: 'court',
 });
 
+// Axes are now descriptive only. They group tracks for balance/UI language, but
+// they do not suppress earned progress. If the player earns both sides, both
+// sides advance.
 export const MARKET_BUNDLE_AXES = Object.freeze({
   intervention: {
     id: 'intervention',
     label: 'Intervention',
-    mode: 'dominant',
+    mode: 'independent',
     tracks: ['restless', 'stillness'],
   },
 
   pattern: {
     id: 'pattern',
     label: 'Pattern',
-    mode: 'dominant',
+    mode: 'independent',
     tracks: ['sequence', 'echo'],
   },
 });
@@ -71,7 +74,7 @@ export const MARKET_BUNDLE_TRACKS = Object.freeze({
 
 export const MARKET_BUNDLE_TRACK_ORDER = Object.freeze(['restless', 'stillness', 'sequence', 'echo', 'court']);
 export const MARKET_BUNDLE_AXIS_ORDER = Object.freeze(['intervention', 'pattern']);
-export const MARKET_BUNDLE_MAX_BUNDLES_PER_READING = 2;
+export const MARKET_BUNDLE_MAX_BUNDLES_PER_READING = Number.POSITIVE_INFINITY;
 
 export const MARKET_BUNDLES = Object.freeze({
   restless_bundle: {
