@@ -5,6 +5,9 @@ import { eligibleFiveStampCards, eligibleSuitStampCards } from './shopOverlayFlo
 import { ensureStoreFrontStyles } from '../ui/renderMarket.mjs';
 import { rewardOfferKeysForBundle } from '../systems/marketRewardBundles.mjs';
 
+const TRACK_LABELS = Object.freeze({ restless: 'Restless', stillness: 'Stillness', sequence: 'Sequence', echo: 'Echo', court: 'Court', thread: 'Thread' });
+const LIVE_TRACK_ORDER = Object.freeze(['restless', 'stillness', 'sequence', 'echo', 'court', 'thread']);
+
 function runtime(target){return target.tlrRuntime || {};}
 function persistOf(target){return runtime(target).persist || target.persist || {};}
 function stateOf(target){return runtime(target).state || target.state || {};}
@@ -119,7 +122,6 @@ function bundleMarketInner(target = window) {
 function showBundleMarket(target = window) {
   ensureBundleStyles(target);
   syncStorePersistToLegacy(target);
-
   const doc = target.document;
   const reduce = target.matchMedia && target.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const alreadyOpen = !!doc?.querySelector('.store-front-shell:not(.store-exiting)');
@@ -131,18 +133,10 @@ function showBundleMarket(target = window) {
     </div>
     <div class="store-front${alreadyOpen || reduce ? ' store-visible' : ''}" id="storeFront">${bundleMarketInner(target)}</div>
   </div>`;
-
   if (typeof target.showOverlay === 'function') target.showOverlay(html);
   if (alreadyOpen || reduce) return true;
-
-  target.setTimeout?.(() => {
-    const candle = doc.getElementById('storeCandle');
-    if (candle) candle.classList.add('lit');
-  }, 300);
-  target.setTimeout?.(() => {
-    const front = doc.getElementById('storeFront');
-    if (front) front.classList.add('store-visible');
-  }, 520);
+  target.setTimeout?.(() => { const candle = doc.getElementById('storeCandle'); if (candle) candle.classList.add('lit'); }, 300);
+  target.setTimeout?.(() => { const front = doc.getElementById('storeFront'); if (front) front.classList.add('store-visible'); }, 520);
   return true;
 }
 
@@ -240,10 +234,8 @@ function transitionToRewardBundleChoices(bundle, target = window) {
   const front = target.document?.getElementById('storeFront') || target.document?.querySelector('.store-front-shell .store-front');
   if (!front) return false;
   if (target.__tlrRewardChoiceTransitionActive) return true;
-
   const reduce = target.matchMedia && target.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduce) return renderRewardBundleChoices(bundle, target);
-
   target.__tlrRewardChoiceTransitionActive = true;
   front.classList.add('bundle-choice-transition', 'bundle-choice-transition-out');
   target.setTimeout?.(() => {
@@ -279,11 +271,7 @@ function ineligibleStampRewardKeys(target = window) {
 export function openRewardBundleWithAnimation(bundleId, target = window) {
   if (!target.tlrStore || !target.tlrActions) return false;
   if (typeof target.tlrSyncPersistToStore === 'function') target.tlrSyncPersistToStore();
-  target.tlrStore.dispatch({
-    type: target.tlrActions.OPEN_REWARD_BUNDLE,
-    bundleId,
-    excludeRewardKeys: ineligibleStampRewardKeys(target),
-  });
+  target.tlrStore.dispatch({ type: target.tlrActions.OPEN_REWARD_BUNDLE, bundleId, excludeRewardKeys: ineligibleStampRewardKeys(target) });
   syncStorePersistToLegacy(target);
   if (typeof target.playSound === 'function') target.playSound('pack_open');
   const bundle = bundleList(persistOf(target)).find(item => item.id === bundleId);
@@ -295,20 +283,15 @@ export function openRewardBundleWithAnimation(bundleId, target = window) {
 export function refreshRewardBundleChoices(bundleId, target = window) {
   if (!target.tlrStore || !target.tlrActions) return false;
   if (typeof target.tlrSyncPersistToStore === 'function') target.tlrSyncPersistToStore();
-
   const storePersist = target.tlrStore.getState().persist;
   const bundles = storePersist.pendingRewardBundles || [];
   const index = bundles.findIndex(bundle => bundle.id === bundleId && bundle.state === 'opened');
   if (index < 0 || bundles[index].rewardRefreshed) return false;
-
-  const rewardKeys = rewardOfferKeysForBundle(storePersist, bundles[index], {
-    excludeRewardKeys: ineligibleStampRewardKeys(target),
-  });
+  const rewardKeys = rewardOfferKeysForBundle(storePersist, bundles[index], { excludeRewardKeys: ineligibleStampRewardKeys(target) });
   const pendingRewardBundles = bundles.map((bundle, i) => i === index ? { ...bundle, rewardKeys, rewardRefreshed: true } : bundle);
   target.tlrStore.dispatch({ type: target.tlrActions.SYNC_LEGACY_PERSIST, persist: { pendingRewardBundles } });
   syncStorePersistToLegacy(target);
   if (typeof target.playSound === 'function') target.playSound('pack_open');
-
   const updated = bundleList(persistOf(target)).find(bundle => bundle.id === bundleId);
   return updated ? renderRewardBundleChoices(updated, target) : false;
 }
@@ -346,7 +329,6 @@ function patchResultsOverlay(target = window) {
   if (!table) return;
   const existing = table.querySelector('.bundle-result-row');
   if (existing) return;
-
   const deltas = results.trackDeltas || [];
   const generated = results.generatedBundleIds || [];
   const rows = [];
@@ -357,15 +339,11 @@ function patchResultsOverlay(target = window) {
     const value = delta.completed ? `${delta.label} +${delta.gained} · ${bundleText}` : `${delta.label} +${delta.gained} (${delta.after} / ${delta.threshold})`;
     rows.push(`<tr class="mrow bundle-result-row ${delta.completed ? 'complete' : ''}"><td><span class="bundle-result-reason">✦ ${escapeHtml(trackReason(delta))}</span><span class="bundle-result-track">${escapeHtml(delta.label)}</span></td><td class="r">${escapeHtml(value)}</td></tr>`);
   }
-
   const totals = table.querySelectorAll('tr.totrow');
   const reserveRow = totals[totals.length - 1];
   const bundleSummary = `<tr class="totrow bundle-result-row"><td>Bundles added</td><td class="r">${generated.length}</td></tr>`;
-  if (reserveRow && reserveRow.textContent.includes('Added to reserve')) {
-    reserveRow.outerHTML = [...rows, bundleSummary].join('');
-  } else {
-    table.insertAdjacentHTML('beforeend', [...rows, bundleSummary].join(''));
-  }
+  if (reserveRow && reserveRow.textContent.includes('Added to reserve')) reserveRow.outerHTML = [...rows, bundleSummary].join('');
+  else table.insertAdjacentHTML('beforeend', [...rows, bundleSummary].join(''));
 }
 
 function maybeDelayResultsOverlayForTrackGhosts(target = window) {
@@ -373,23 +351,22 @@ function maybeDelayResultsOverlayForTrackGhosts(target = window) {
   if (!summary || !summary.classList.contains('show')) return false;
   if (!summary.querySelector('.result-panel.pass')) return false;
   if (summary.dataset.trackGhostDelay === 'done') return false;
-
   const run = target.tlrStore?.getState?.()?.run;
   const results = run?.lastResults;
+  const labels = finalTrackGhostLabels(results, run, target);
+  if (!labels.length) return false;
   const key = resultGhostKey(run || {});
-  const labels = results?.cleared ? trackGhostSequenceLabels(results) : [];
-  if (!labels.length || target.__tlrTrackGhostResultsPlayed === key) return false;
   if (target.__tlrTrackGhostResultDelayKey === key) return true;
-
   target.__tlrTrackGhostResultDelayKey = key;
   summary.dataset.trackGhostDelay = 'pending';
   summary.style.visibility = 'hidden';
-  playTrackResultsBeforeOverlay(() => {
+  playTrackGhostLabels(labels, () => {
     summary.style.visibility = '';
     summary.dataset.trackGhostDelay = 'done';
     target.__tlrTrackGhostResultDelayKey = null;
+    target.__tlrTrackGhostResultsPlayed = key;
     patchResultsOverlay(target);
-  }, target);
+  }, target, { blocking: true });
   return true;
 }
 
@@ -397,7 +374,6 @@ function installResultsPatchObserver(target = window) {
   const doc = target.document;
   const summary = doc?.getElementById('summary');
   if (!summary || target.__tlrMarketBundleResultsObserver) return;
-
   let queued = false;
   const schedule = () => {
     if (queued) return;
@@ -408,11 +384,26 @@ function installResultsPatchObserver(target = window) {
       patchResultsOverlay(target);
     }, 0);
   };
-
   const observer = new MutationObserver(schedule);
   observer.observe(summary, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
   target.__tlrMarketBundleResultsObserver = observer;
   schedule();
+}
+
+function trackGhostRunKey(run = {}) {
+  return `${run.reading || 1}:${run.thresholdIndex || 0}:${run.setIndex || 0}`;
+}
+
+function emptyTrackMap() {
+  return { restless: 0, stillness: 0, sequence: 0, echo: 0, court: 0, thread: 0 };
+}
+
+function emittedTrackState(target, run) {
+  const key = trackGhostRunKey(run || {});
+  if (!target.__tlrEmittedTrackGhosts || target.__tlrEmittedTrackGhosts.key !== key) {
+    target.__tlrEmittedTrackGhosts = { key, emitted: emptyTrackMap() };
+  }
+  return target.__tlrEmittedTrackGhosts.emitted;
 }
 
 function cardRankKey(card) {
@@ -450,22 +441,46 @@ function sequenceTrackScoreForCards(cards = []) {
   return 0;
 }
 
+function courtTrackScoreForCards(cards = []) {
+  const courts = cards.filter(card => card?.type === 'court');
+  let score = courts.length;
+  const distinctRanks = new Set(courts.map(card => card.rank).filter(Boolean)).size;
+  let hasRoyal = false;
+  for (const suit of ['Wands', 'Cups', 'Swords', 'Pentacles']) {
+    const ranks = new Set(courts.filter(card => card.suit === suit).map(card => card.rank).filter(Boolean));
+    if (ranks.size >= 3) { hasRoyal = true; break; }
+  }
+  if (hasRoyal) score += 3;
+  else if (distinctRanks >= 3) score += 2;
+  return Math.min(5, Math.max(0, score));
+}
+
 function openingHandCardsInSpread(run = {}) {
   const opening = new Set(run.openingHandCardIds || []);
   return (run.spread || []).filter(card => card && opening.has(card.uid)).length;
 }
 
-function interventionSnapshot(run = {}) {
+function liveTrackProgress(run = {}) {
+  const cards = (run.spread || []).filter(Boolean);
   const discards = run.roundDiscardCount || 0;
   const abilityTaken = (run.abilityTakenCardIds || []).length;
   const mulligans = run.roundMulliganCount || 0;
-  return {
-    discards,
-    abilityTaken,
-    mulligans,
-    total: discards + abilityTaken + mulligans,
-    remainingDiscards: run.discards || 0,
-  };
+  const initialDiscards = Number.isFinite(run.initialDiscards) ? run.initialDiscards : 3;
+  const totalInterventions = discards + abilityTaken + mulligans;
+  const out = emptyTrackMap();
+
+  if (discards >= 2) out.restless += 1;
+  if (abilityTaken >= 2) out.restless += 1;
+  if (initialDiscards > 0 && (run.discards || 0) <= 0) out.restless += 1;
+  if (totalInterventions >= 4) out.restless += 1;
+  out.restless = Math.min(4, out.restless);
+
+  if (openingHandCardsInSpread(run) >= 3) out.stillness += 1;
+  out.sequence = sequenceTrackScoreForCards(cards);
+  out.echo = echoTrackScoreForCards(cards);
+  out.court = courtTrackScoreForCards(cards);
+  out.thread = run.threadBondCount || run.roundThreadBondCount || 0;
+  return out;
 }
 
 function fireLiteralTrackGhost(target, label, delay = 0, options = {}) {
@@ -475,56 +490,37 @@ function fireLiteralTrackGhost(target, label, delay = 0, options = {}) {
   }, delay);
 }
 
-function maybeFireInReadingTrackGhosts(target, action, beforeState, afterState) {
-  if (!beforeState?.run || !afterState?.run) return;
-  if (target.__tlrTrackGhostPlaybackActive) return;
-  const before = beforeState.run;
-  const after = afterState.run;
-  const labels = [];
-
-  if (action?.type === 'PLACE_CARD') {
-    const beforeCards = (before.spread || []).filter(Boolean);
-    const afterCards = (after.spread || []).filter(Boolean);
-    const placed = after.spread?.[action.slotIndex];
-    if (placed?.type === 'court') labels.push('+1 Court');
-
-    const beforeOpening = openingHandCardsInSpread(before);
-    const afterOpening = openingHandCardsInSpread(after);
-    if (beforeOpening < 3 && afterOpening >= 3) labels.push('+1 Stillness');
-
-    const beforeEcho = echoTrackScoreForCards(beforeCards);
-    const afterEcho = echoTrackScoreForCards(afterCards);
-    if (afterEcho > beforeEcho) labels.push(`+${afterEcho} Echo`);
-
-    const beforeSequence = sequenceTrackScoreForCards(beforeCards);
-    const afterSequence = sequenceTrackScoreForCards(afterCards);
-    if (afterSequence > beforeSequence) labels.push(`+${afterSequence} Sequence`);
-  }
-
-  if (action?.type === 'DISCARD_SELECTED' || action?.type === 'RESOLVE_ABILITY') {
-    const b = interventionSnapshot(before);
-    const a = interventionSnapshot(after);
-    if (b.discards < 2 && a.discards >= 2) labels.push('+1 Restless');
-    if (b.remainingDiscards > 0 && a.remainingDiscards <= 0) labels.push('+1 Restless');
-    if (b.abilityTaken < 2 && a.abilityTaken >= 2) labels.push('+1 Restless');
-    if (b.total < 4 && a.total >= 4) labels.push('+1 Restless');
-    if (action?.result?.threadBond) labels.push('+1 Thread');
-  }
-
-  labels.forEach((label, index) => fireLiteralTrackGhost(target, label, 260 + index * 170));
+function trackGhostLabel(trackId, amount, fallbackLabel = null) {
+  const label = fallbackLabel || TRACK_LABELS[trackId] || trackId;
+  return `+${amount} ${label}`;
 }
 
-export function fireInReadingTrackGhosts(action, beforeRun, afterRun, target = window) {
-  maybeFireInReadingTrackGhosts(target, action, { run: beforeRun }, { run: afterRun });
+function playTrackGhostLabels(labels, done = () => {}, target = window, options = {}) {
+  if (!labels.length) { done(); return false; }
+  const step = options.blocking ? 520 : 170;
+  const start = options.blocking ? 160 : 240;
+  if (options.blocking) target.__tlrTrackGhostPlaybackActive = true;
+  labels.forEach((label, index) => fireLiteralTrackGhost(target, label, start + index * step, { center: !!options.blocking }));
+  const finishDelay = start + labels.length * step + (options.blocking ? 120 : 0);
+  target.setTimeout?.(() => {
+    if (options.blocking) target.__tlrTrackGhostPlaybackActive = false;
+    done();
+  }, finishDelay);
+  return true;
 }
 
-function trackGhostSequenceLabels(results) {
+export function fireInReadingTrackGhosts(_action, _beforeRun, afterRun, target = window) {
+  if (!afterRun || target.__tlrTrackGhostPlaybackActive) return false;
+  const emitted = emittedTrackState(target, afterRun);
+  const current = liveTrackProgress(afterRun);
   const labels = [];
-  for (const delta of results?.trackDeltas || []) {
-    if (!delta || !(delta.gained > 0)) continue;
-    labels.push(`+${delta.gained} ${delta.label}`);
+  for (const trackId of LIVE_TRACK_ORDER) {
+    const delta = Math.max(0, (current[trackId] || 0) - (emitted[trackId] || 0));
+    if (delta <= 0) continue;
+    emitted[trackId] = current[trackId] || 0;
+    labels.push(trackGhostLabel(trackId, delta));
   }
-  return labels;
+  return playTrackGhostLabels(labels, () => {}, target, { blocking: false });
 }
 
 function resultGhostKey(run = {}) {
@@ -532,65 +528,59 @@ function resultGhostKey(run = {}) {
   return `${run.lastReadingLedger?.id || run.reading || 'reading'}:${ids.join(',')}:${(run.lastResults?.trackDeltas || []).map(delta => `${delta.trackId}:${delta.gained}:${delta.after}`).join('|')}`;
 }
 
+function finalTrackGhostLabels(results, run, target = window) {
+  if (!results?.cleared) return [];
+  const emitted = emittedTrackState(target, run || {});
+  const labels = [];
+  for (const delta of results.trackDeltas || []) {
+    if (!delta || !(delta.gained > 0)) continue;
+    const already = emitted[delta.trackId] || 0;
+    const missing = Math.max(0, delta.gained - already);
+    if (missing <= 0) continue;
+    emitted[delta.trackId] = already + missing;
+    labels.push(trackGhostLabel(delta.trackId, missing, delta.label));
+  }
+  return labels;
+}
+
 export function playTrackResultsBeforeOverlay(done = () => {}, target = window) {
   const run = target.tlrStore?.getState?.()?.run;
   const results = run?.lastResults;
   const key = resultGhostKey(run || {});
-  const labels = results?.cleared ? trackGhostSequenceLabels(results) : [];
-  if (!labels.length || target.__tlrTrackGhostResultsPlayed === key) {
-    done();
-    return false;
-  }
-  if (target.__tlrTrackGhostPlaybackActive) return false;
+  if (target.__tlrTrackGhostResultsPlayed === key) { done(); return false; }
+  const labels = finalTrackGhostLabels(results, run, target);
+  if (!labels.length) { target.__tlrTrackGhostResultsPlayed = key; done(); return false; }
   target.__tlrTrackGhostResultsPlayed = key;
-  target.__tlrTrackGhostPlaybackActive = true;
-  labels.forEach((label, index) => {
-    fireLiteralTrackGhost(target, label, 160 + index * 520, { center: true });
-  });
-  target.setTimeout?.(() => {
-    target.__tlrTrackGhostPlaybackActive = false;
-    done();
-  }, 160 + labels.length * 520 + 120);
-  return true;
+  return playTrackGhostLabels(labels, done, target, { blocking: true });
 }
 
 function openBundleMarketAfterTrackGhosts(target = window) {
-  const run = target.tlrStore?.getState?.()?.run;
-  const key = resultGhostKey(run || {});
-  if (target.__tlrTrackGhostResultsPlayed === key) return openBundleMarket(target);
   return playTrackResultsBeforeOverlay(() => openBundleMarket(target), target);
 }
 
 function installInReadingTrackGhostWrappers(target = window) {
   if (!target || target.__tlrTrackGhostActionWrappersInstalled) return;
   target.__tlrTrackGhostActionWrappersInstalled = true;
-
   const wrapAction = (actionFactory, fn) => function wrappedTrackGhostAction(...args) {
-    const beforeRun = target.tlrStore?.getState?.()?.run;
     const result = fn.apply(this, args);
     const afterRun = target.tlrStore?.getState?.()?.run;
-    const action = actionFactory(...args);
-    fireInReadingTrackGhosts(action, beforeRun, afterRun, target);
+    fireInReadingTrackGhosts(actionFactory(...args), null, afterRun, target);
     return result;
   };
-
   if (typeof target.placeCard === 'function') {
     const original = target.placeCard;
     target.placeCard = wrapAction(slotIndex => ({ type: target.tlrActions?.PLACE_CARD || 'PLACE_CARD', slotIndex }), original);
   }
-
   if (typeof target.discardSelected === 'function') {
     const original = target.discardSelected;
     target.discardSelected = wrapAction(() => ({ type: target.tlrActions?.DISCARD_SELECTED || 'DISCARD_SELECTED' }), original);
   }
-
   if (typeof target.tlrResolveAbilityThroughStore === 'function') {
     const original = target.tlrResolveAbilityThroughStore;
     target.tlrResolveAbilityThroughStore = function wrappedResolveAbilityThroughStore(result) {
-      const beforeRun = target.tlrStore?.getState?.()?.run;
       const out = original.call(this, result);
       const afterRun = target.tlrStore?.getState?.()?.run;
-      fireInReadingTrackGhosts({ type: target.tlrActions?.RESOLVE_ABILITY || 'RESOLVE_ABILITY', result }, beforeRun, afterRun, target);
+      fireInReadingTrackGhosts({ type: target.tlrActions?.RESOLVE_ABILITY || 'RESOLVE_ABILITY', result }, null, afterRun, target);
       return out;
     };
   }
@@ -601,7 +591,6 @@ export function installMarketBundleFlow(target = window) {
   target.__tlrMarketBundleFlowInstalled = true;
   ensureBundleStyles(target);
   installResultsPatchObserver(target);
-
   target.openShopMain = () => showBundleMarket(target);
   target.openShop = () => openBundleMarketAfterTrackGhosts(target);
   target.openRewardBundleWithAnimation = bundleId => openRewardBundleWithAnimation(bundleId, target);
