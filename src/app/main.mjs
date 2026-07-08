@@ -114,6 +114,9 @@ function installStoreFrontTuning(target = window) {
   style.id = 'store-front-style';
   style.textContent = `
     #summary.modal.show:has(.store-front-shell){background:transparent!important}
+    #summary.modal.show:has(.result-panel){overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important}
+    #summary.modal.show .result-panel{max-height:calc(100dvh - 40px)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important}
+    #constellationCallout{position:fixed!important;z-index:2147483000!important;pointer-events:auto!important}
     #tutTip{z-index:2147483000!important}
     .store-front .store-offer-row .store-pack-offer:first-child{transform:translateX(-2.4%)!important}
     .store-front .store-offer-row .store-pack-offer:first-child:hover{transform:translateX(-2.4%) translateY(-1px)!important}
