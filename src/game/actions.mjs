@@ -14,6 +14,10 @@ export const ACTIONS = Object.freeze({
   CANCEL_PURGE: 'CANCEL_PURGE',
   SCORE_READING: 'SCORE_READING',
   OPEN_MARKET: 'OPEN_MARKET',
+  ENTER_MARKET_FROM_RESULTS: 'ENTER_MARKET_FROM_RESULTS',
+  OPEN_REWARD_BUNDLE: 'OPEN_REWARD_BUNDLE',
+  CLAIM_REWARD_BUNDLE_CHOICE: 'CLAIM_REWARD_BUNDLE_CHOICE',
+  CLOSE_REWARD_BUNDLE: 'CLOSE_REWARD_BUNDLE',
   BUY_MARKET_ITEM: 'BUY_MARKET_ITEM',
   LEAVE_MARKET: 'LEAVE_MARKET',
   ENTER_ATTIC: 'ENTER_ATTIC',
@@ -41,6 +45,10 @@ export const clearSelection = () => ({ type: ACTIONS.CLEAR_SELECTION });
 export const placeCard = slotIndex => ({ type: ACTIONS.PLACE_CARD, slotIndex });
 export const discardSelected = () => ({ type: ACTIONS.DISCARD_SELECTED });
 export const scoreReading = () => ({ type: ACTIONS.SCORE_READING });
+export const enterMarketFromResults = () => ({ type: ACTIONS.ENTER_MARKET_FROM_RESULTS });
+export const openRewardBundle = bundleId => ({ type: ACTIONS.OPEN_REWARD_BUNDLE, bundleId });
+export const claimRewardBundleChoice = (bundleId, rewardKey) => ({ type: ACTIONS.CLAIM_REWARD_BUNDLE_CHOICE, bundleId, rewardKey });
+export const closeRewardBundle = () => ({ type: ACTIONS.CLOSE_REWARD_BUNDLE });
 export const syncLegacySnapshot = snapshot => ({ type: ACTIONS.SYNC_LEGACY_SNAPSHOT, snapshot });
 export const syncLegacyRun = run => ({ type: ACTIONS.SYNC_LEGACY_RUN, run });
 export const syncLegacyPersist = persist => ({ type: ACTIONS.SYNC_LEGACY_PERSIST, persist });
