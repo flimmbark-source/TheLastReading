@@ -1,84 +1,195 @@
 export const MARKET_BUNDLE_TRACK_IDS = Object.freeze({
+  RESTLESS: 'restless',
+  STILLNESS: 'stillness',
   SEQUENCE: 'sequence',
+  ECHO: 'echo',
   COURT: 'court',
-  DRAW_DISCARD: 'draw_discard',
+});
+
+export const MARKET_BUNDLE_AXES = Object.freeze({
+  intervention: {
+    id: 'intervention',
+    label: 'Intervention',
+    mode: 'dominant',
+    tracks: ['restless', 'stillness'],
+  },
+
+  pattern: {
+    id: 'pattern',
+    label: 'Pattern',
+    mode: 'dominant',
+    tracks: ['sequence', 'echo'],
+  },
 });
 
 export const MARKET_BUNDLE_TRACKS = Object.freeze({
+  restless: {
+    id: 'restless',
+    label: 'Restless',
+    axisId: 'intervention',
+    thresholds: [3, 7, 12, 18, 25],
+    bundleId: 'restless_bundle',
+    capPerReading: 4,
+  },
+
+  stillness: {
+    id: 'stillness',
+    label: 'Stillness',
+    axisId: 'intervention',
+    thresholds: [3, 7, 12, 18, 25],
+    bundleId: 'stillness_bundle',
+    capPerReading: 4,
+  },
+
   sequence: {
     id: 'sequence',
     label: 'Sequence',
+    axisId: 'pattern',
     thresholds: [2, 5, 10, 18, 30],
     bundleId: 'sequence_bundle',
-    progressMetric: 'sequenceMelds',
+    capPerReading: 3,
+  },
+
+  echo: {
+    id: 'echo',
+    label: 'Echo',
+    axisId: 'pattern',
+    thresholds: [2, 5, 10, 18, 30],
+    bundleId: 'echo_bundle',
+    capPerReading: 3,
   },
 
   court: {
     id: 'court',
     label: 'Court',
-    thresholds: [2, 5, 9, 14, 20],
+    axisId: null,
+    thresholds: [4, 9, 15, 24],
     bundleId: 'court_bundle',
-    progressMetric: 'courtMelds',
-  },
-
-  draw_discard: {
-    id: 'draw_discard',
-    label: 'Draw/Discard',
-    thresholds: [3, 8, 15, 25],
-    bundleId: 'draw_discard_bundle',
-    progressMetric: 'discardsUsed',
+    capPerReading: 5,
   },
 });
 
-export const MARKET_BUNDLE_TRACK_ORDER = Object.freeze(['sequence', 'court', 'draw_discard']);
+export const MARKET_BUNDLE_TRACK_ORDER = Object.freeze(['restless', 'stillness', 'sequence', 'echo', 'court']);
+export const MARKET_BUNDLE_AXIS_ORDER = Object.freeze(['intervention', 'pattern']);
+export const MARKET_BUNDLE_MAX_BUNDLES_PER_READING = 2;
 
 export const MARKET_BUNDLES = Object.freeze({
+  restless_bundle: {
+    id: 'restless_bundle',
+    trackId: 'restless',
+    name: 'Restless Bundle',
+    description: 'Choose a reward for changing the reading.',
+    categoryLabel: 'Bundle',
+    icon: 'isp-restless',
+    accentClass: 'store-card--bundle-restless',
+    sourcePackId: 'restless',
+  },
+
+  stillness_bundle: {
+    id: 'stillness_bundle',
+    trackId: 'stillness',
+    name: 'Stillness Bundle',
+    description: 'Choose a reward for preserving the reading.',
+    categoryLabel: 'Bundle',
+    icon: 'isp-scoring',
+    accentClass: 'store-card--bundle-stillness',
+  },
+
   sequence_bundle: {
     id: 'sequence_bundle',
     trackId: 'sequence',
     name: 'Sequence Bundle',
-    description: 'Open to reveal a Sequence reward.',
+    description: 'Choose a reward for ordered patterns.',
     categoryLabel: 'Bundle',
     icon: 'isp-pattern',
     accentClass: 'store-card--bundle-sequence',
+  },
+
+  echo_bundle: {
+    id: 'echo_bundle',
+    trackId: 'echo',
+    name: 'Echo Bundle',
+    description: 'Choose a reward for repeated ranks.',
+    categoryLabel: 'Bundle',
+    icon: 'isp-scoring',
+    accentClass: 'store-card--bundle-echo',
   },
 
   court_bundle: {
     id: 'court_bundle',
     trackId: 'court',
     name: 'Court Bundle',
-    description: 'Open to reveal a Court reward.',
+    description: 'Choose a reward for Court cards.',
     categoryLabel: 'Bundle',
     icon: 'isp-kin',
     accentClass: 'store-card--bundle-court',
   },
-
-  draw_discard_bundle: {
-    id: 'draw_discard_bundle',
-    trackId: 'draw_discard',
-    name: 'Restless Bundle',
-    description: 'Open to reveal a Restless reward.',
-    categoryLabel: 'Bundle',
-    icon: 'isp-restless',
-    accentClass: 'store-card--bundle-restless',
-    sourcePackId: 'restless',
-  },
 });
 
 export const MARKET_BUNDLE_REWARD_POOLS = Object.freeze({
+  restless_bundle: {
+    tier1: {
+      core: ['quick_release'],
+      tool: ['discards', 'mulligan'],
+      bridge: ['nimble_fingers', 'ritual_depth'],
+    },
+    tier2: {
+      core: ['quick_release'],
+      tool: ['discards', 'mulligan', 'nimble_fingers'],
+      bridge: ['ritual_depth'],
+    },
+  },
+
+  stillness_bundle: {
+    tier1: {
+      core: ['patient_reading'],
+      tool: ['blessed_start', 'first_answer'],
+      bridge: ['first_light'],
+    },
+    tier2: {
+      core: ['patient_reading'],
+      tool: ['blessed_start', 'first_answer'],
+      bridge: ['first_light'],
+    },
+  },
+
   sequence_bundle: {
-    common: ['sequence', 'five_stamp', 'first_light'],
-    later: ['sequence', 'five_stamp', 'first_light', 'path_chips'],
+    tier1: {
+      core: ['sequence'],
+      tool: ['five_stamp', 'first_light'],
+      bridge: ['path_chips'],
+    },
+    tier2: {
+      core: ['sequence', 'path_chips'],
+      tool: ['five_stamp', 'first_light'],
+      bridge: ['rank'],
+    },
+  },
+
+  echo_bundle: {
+    tier1: {
+      core: ['rank'],
+      tool: ['familiar_face'],
+      bridge: ['court_favor'],
+    },
+    tier2: {
+      core: ['rank'],
+      tool: ['familiar_face'],
+      bridge: ['court_favor', 'sequence'],
+    },
   },
 
   court_bundle: {
-    common: ['court_chips', 'royal_court_chips', 'suit_stamp'],
-    later: ['court_chips', 'royal_court_chips', 'suit_stamp', 'rank'],
-  },
-
-  draw_discard_bundle: {
-    common: ['discards', 'mulligan', 'nimble_fingers'],
-    later: ['discards', 'mulligan', 'ritual_depth', 'nimble_fingers', 'quick_release'],
+    tier1: {
+      core: ['court_chips'],
+      tool: ['suit_stamp', 'court_favor'],
+      bridge: ['royal_court_chips'],
+    },
+    tier2: {
+      core: ['court_chips', 'royal_court_chips'],
+      tool: ['suit_stamp', 'court_favor'],
+      bridge: ['rank'],
+    },
   },
 });
 
@@ -91,10 +202,9 @@ export function bundleForId(bundleId) {
 }
 
 export function initialBundleProgressForTrack(track) {
-  const firstThreshold = Array.isArray(track?.thresholds) && track.thresholds.length ? track.thresholds[0] : null;
   return {
     total: 0,
     claimedTier: 0,
-    nextThreshold: firstThreshold,
+    nextThreshold: track?.thresholds?.[0] ?? null,
   };
 }
