@@ -67,6 +67,7 @@ function placeCard(state, slotIndex, cardUid) {
     hand,
     spread,
     selectedCardId: null,
+    placedCardIds: [...(run.placedCardIds || []), card.uid],
   };
 
   if (firstCardInSet && activeConstellation(run).id === 'unasked_question') {
@@ -115,6 +116,10 @@ function scoringContext(run) {
     resonationBonus: run.resonationBonus,
     worldCarry: run.worldCarry,
     constellationId: run.constellationId,
+    remainingDiscards: run.discards || 0,
+    initialDiscards: run.initialDiscards || 0,
+    openingHandCardIds: run.openingHandCardIds || [],
+    placedCardIds: run.placedCardIds || [],
   };
 }
 
@@ -197,6 +202,7 @@ function startNextSet(state, rng = Math.random) {
   const { run, persist } = state;
   if (!run.awaitingNextSet) return state;
   const next = drawFreshSetHand(run, persist, rng);
+  const initialDiscards = startingDiscards(persist);
   return replaceRun(state, {
     phase: GAME_PHASES.TABLE,
     deck: next.deck,
@@ -213,7 +219,11 @@ function startNextSet(state, rng = Math.random) {
     purge: null,
     abilityTakenCardIds: [],
     resonationBonus: null,
-    discards: startingDiscards(persist),
+    discards: initialDiscards,
+    initialDiscards,
+    openingHandCardIds: next.hand.map(card => card.uid),
+    placedCardIds: [],
+    roundMulliganCount: 0,
     freeDiscardUsed: false,
     sightChargesUsed: 0,
   });
@@ -244,6 +254,9 @@ function flushHand(state, rng = Math.random) {
     busy: false,
     abilityTakenCardIds: [],
     resonationBonus: null,
+    openingHandCardIds: hand.map(card => card.uid),
+    placedCardIds: [],
+    roundMulliganCount: (run.roundMulliganCount || 0) + 1,
   });
 }
 
@@ -395,17 +408,15 @@ function resetSession(state, fresh = false) {
   });
 }
 
-// The single source of truth for which run fields cross the legacy<->store
-// bridge. SYNC_LEGACY_RUN only accepts these, and app/legacyBridge.mjs must emit
-// exactly this set; scripts/validate-bridge.mjs guards against the two drifting.
 export const LEGACY_RUN_FIELDS = [
-  'deck', 'hand', 'discard', 'spread', 'selectedCardId', 'discards', 'discardedCards',
-  'freeDiscardUsed', 'sightChargesUsed', 'thresholdIndex', 'thresholdBonus',
+  'deck', 'hand', 'discard', 'spread', 'selectedCardId', 'discards', 'initialDiscards',
+  'discardedCards', 'freeDiscardUsed', 'sightChargesUsed', 'thresholdIndex', 'thresholdBonus',
   'thresholdBonusPending', 'reading', 'pendingReserve', 'worldCarry',
-  'abilityTakenCardIds', 'resonationBonus', 'setIndex', 'setsPerRound', 'roundScore',
-  'setScores', 'roundDiscardCount', 'roundPatternCount', 'constellationId',
-  'untargetableCardIds', 'awaitingNextSet', 'lastOutcome', 'lastReadingLedger',
-  'lastResults', 'openedBundleId', 'lastBundleClaim',
+  'abilityTakenCardIds', 'resonationBonus', 'openingHandCardIds', 'placedCardIds',
+  'setIndex', 'setsPerRound', 'roundScore', 'setScores', 'roundDiscardCount',
+  'roundMulliganCount', 'roundPatternCount', 'constellationId', 'untargetableCardIds',
+  'awaitingNextSet', 'lastOutcome', 'lastReadingLedger', 'lastResults', 'openedBundleId',
+  'lastBundleClaim',
 ];
 
 function syncLegacyRun(state, run = {}) {
@@ -447,8 +458,8 @@ function startReading(state, deck, rng = Math.random) {
   const handSize = handSizeForSet(persist);
   const { drawn: hand, deck: remainingDeck } = drawCards(nextDeck, handSize);
   const offeringReserve = (persist.upgrades.offering || 0) * 5;
-  // Reuse constellation already chosen at market entry; pick fresh for game-start path.
   const constellationId = run.constellationId ?? constellationForRound(run.thresholdIndex || 0, rng).id;
+  const initialDiscards = startingDiscards(persist);
   return replacePersist(
     replaceRun(state, {
       phase: GAME_PHASES.TABLE,
@@ -462,12 +473,16 @@ function startReading(state, deck, rng = Math.random) {
       roundScore: 0,
       setScores: [],
       roundDiscardCount: 0,
+      roundMulliganCount: 0,
       roundPatternCount: 0,
       constellationId,
       untargetableCardIds: [],
       awaitingNextSet: false,
       lastOutcome: null,
-      discards: startingDiscards(persist),
+      discards: initialDiscards,
+      initialDiscards,
+      openingHandCardIds: hand.map(card => card.uid),
+      placedCardIds: [],
       mulliganCharges: persist.upgrades.mulligan || 0,
       ability: null,
       sourceCardId: null,
@@ -503,18 +518,15 @@ function leaveMarket(state, rng = Math.random) {
     relicEarned: false,
     constellationId: constellation.id,
     untargetableCardIds: [],
-    // The finished round's spread/score bookkeeping is done the moment the
-    // player leaves for the market — clear it here (not just on the legacy
-    // mirror) so the table behind the shop already reads as "next round
-    // pending" instead of jumping the instant the player steps away from
-    // the market. Hand/deck stay deferred to startReading()/startNextSet(),
-    // which deal fresh cards only once the player actually returns.
     spread: Array(5).fill(null),
     selectedCardId: null,
     roundScore: 0,
     setScores: [],
     roundDiscardCount: 0,
+    roundMulliganCount: 0,
     roundPatternCount: 0,
+    openingHandCardIds: [],
+    placedCardIds: [],
     openedBundleId: null,
   });
 }
