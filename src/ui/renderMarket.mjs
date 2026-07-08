@@ -1,20 +1,21 @@
-// Market and relic-rack renderer (Phase 15.4). Moved verbatim from
-// index.html. Offers and costs come through window.tlrShop
-// (src/systems/shop.mjs); purchase logic stays with the game flow.
+// Market and relic-rack renderer (Phase 15.4). Offers and costs come
+// through window.tlrShop (src/systems/shop.mjs); purchase logic stays with
+// the game flow. This renderer keeps the market on one mobile screen by
+// grouping each offer into anchored decision zones instead of equal-weight
+// vertical text stacks.
 /* global state, persist, render, _nextRefreshCost, showOverlay, $, relicSlots, _relicRackKey, RELICS, _openRelicKey, RELIC_SPRITE */
 
 const STORE_ABILITY_PACKS = Object.freeze(['innate', 'restless', 'second_sight', 'thread', 'foundation']);
 const RELIC_CACHE_PACK_ID = 'relic';
-const STORE_ASSET_PATH = './';
 const STORE_FADE_MS = 260;
 const STORE_SLOT = Object.freeze({ SCORING: 0, STAMP: 1, PACK: 2, RELIC_A: 3, RELIC_B: 4 });
 
 const STORE_PACK_COPY = Object.freeze({
-  innate: 'Starting resources.',
-  restless: 'Draw and Discard.',
-  second_sight: 'Ability reveals.',
-  thread: 'Relational abilities.',
-  foundation: 'Chip bonuses.',
+  innate: 'Choose 1 starting resource upgrade.',
+  restless: 'Choose 1 Draw or Discard upgrade.',
+  second_sight: 'Choose 1 reveal ability upgrade.',
+  thread: 'Choose 1 relational ability upgrade.',
+  foundation: 'Choose 1 of 3 Chip upgrades.',
 });
 
 const STORE_PACK_CALLOUT = Object.freeze({
@@ -26,20 +27,20 @@ const STORE_PACK_CALLOUT = Object.freeze({
 });
 
 const STORE_SCORING_COPY = Object.freeze({
-  rank: { name: 'Rank of a Kind', desc: '+5 Chips / +0.25 Mult', icon: 'isp-scoring' },
-  sequence: { name: 'Sequence', desc: '+5 Chips / +0.5 Mult', icon: 'isp-scoring' },
-  court_chips: { name: 'Full Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin' },
-  royal_court_chips: { name: 'Royal Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin' },
-  path_chips: { name: 'Path of the Magi', desc: '+15 Chips / +0.5 Mult', icon: 'isp-scoring' },
-  suit_stamp: { name: 'Suit Stamp', desc: 'Major Arcana. Suits shown on card art count in Royal Court.', icon: 'isp-scoring' },
-  five_stamp: { name: 'Five Star', desc: 'Any card. Slots into Sequences as a multiple of 5.', icon: 'isp-scoring' },
+  rank: { name: 'Rank of a Kind', desc: '+5 Chips / +0.25 Mult', icon: 'isp-scoring', label: 'Rank bonus' },
+  sequence: { name: 'Sequence', desc: '+5 Chips / +0.5 Mult', icon: 'isp-scoring', label: 'Sequence bonus' },
+  court_chips: { name: 'Full Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin', label: 'Court bonus' },
+  royal_court_chips: { name: 'Royal Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin', label: 'Court bonus' },
+  path_chips: { name: 'Path of the Magi', desc: '+15 Chips / +0.5 Mult', icon: 'isp-scoring', label: 'Path bonus' },
+  suit_stamp: { name: 'Suit Stamp', desc: 'Choose 1 Major. It counts toward Royal Court.', icon: 'isp-scoring' },
+  five_stamp: { name: 'Five Star', desc: 'Choose 1 card. Counts as 5 in Sequences.', icon: 'isp-scoring' },
 });
 
 const STORE_RELIC_COPY = Object.freeze({
   gilded_fool: '+10 Chips if spread has a card.',
   hermit_lantern: 'Major Arcana add +0.25 Mult.',
   mirror_shard: 'Matching ranks add +1 Mult.',
-  still_pool: '+1 Mult if no Discards used.',
+  still_pool: 'Gain +1 Mult if you use no Discards.',
   loaded_die: 'Court cards add extra Chips.',
   gilded_discard: 'First Discard is free.',
   threadbare_tarot: 'Start with +1 card.',
@@ -53,7 +54,7 @@ const STORE_RELIC_COPY = Object.freeze({
   strengths_grip: '3 Court cards add +3 Mult.',
   the_world: 'Excess Chips carry forward.',
   fool_reversed: '-1 hand size, +3 Chips each.',
-  watcher: 'Once: reveal 3, take 1.',
+  watcher: 'Reveal 3, take 1.',
 });
 
 function runtime(target = window) { return target.tlrRuntime || {}; }
@@ -79,137 +80,83 @@ function ensureStoreFrontStyles(target = window) {
   }
   style.textContent = `
     .modal:has(.store-front-shell){background:transparent;padding:0;align-items:center;justify-content:center}
-    .summary.store-front-shell{background:transparent;border:0;box-shadow:none;padding:0;max-width:none;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+    .summary.store-front-shell{background:transparent;border:0;box-shadow:none;padding:0;max-width:none;width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
     .summary.store-front-shell.store-exiting{animation:storeShellFadeOut ${STORE_FADE_MS}ms ease-in both;pointer-events:none}
     @keyframes storeShellFadeOut{from{opacity:1}to{opacity:0}}
 
-    .store-dim{position:absolute;inset:0;background:rgba(0,0,0,.82);animation:storeDimIn 420ms ease-out both;pointer-events:none;z-index:0}
+    .store-dim{position:absolute;inset:0;background:radial-gradient(circle at 50% 8%,rgba(80,54,20,.32),rgba(0,0,0,.86) 42%,rgba(0,0,0,.93));animation:storeDimIn 420ms ease-out both;pointer-events:none;z-index:0}
     @keyframes storeDimIn{from{opacity:0}to{opacity:1}}
 
-    .store-candle{position:relative;width:80px;height:80px;flex-shrink:0;margin-bottom:-8px;z-index:1;pointer-events:none;align-self:center;animation:storeCandleIn 220ms ease-out both}
+    .store-candle{position:absolute;top:8px;left:50%;width:44px;height:44px;margin-left:-22px;z-index:1;pointer-events:none;animation:storeCandleIn 220ms ease-out both;opacity:.86}
     .store-candle img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity 90ms linear}
-    .store-candle .candle-off{opacity:1}
-    .store-candle .candle-on{opacity:0}
-    .store-candle.lit .candle-off{opacity:0}
-    .store-candle.lit .candle-on{opacity:1}
-    @keyframes storeCandleIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+    .store-candle .candle-off{opacity:1}.store-candle .candle-on{opacity:0}.store-candle.lit .candle-off{opacity:0}.store-candle.lit .candle-on{opacity:1}
+    @keyframes storeCandleIn{from{opacity:0;transform:translateY(-6px)}to{opacity:.86;transform:translateY(0)}}
 
-    .store-front{position:relative;width:min(96vw,560px);max-height:calc(100dvh - 128px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;font-family:Georgia,serif;color:#eadbb9;z-index:1;opacity:0;transition:opacity 280ms ease-out}
+    .store-front{position:relative;width:min(96vw,560px);height:min(96dvh,790px);max-height:96dvh;overflow:hidden;box-sizing:border-box;padding:clamp(8px,1.7dvh,14px);font-family:Georgia,serif;color:#eadbb9;z-index:1;opacity:0;transition:opacity 280ms ease-out;display:flex;flex-direction:column;gap:clamp(6px,1dvh,10px)}
     .store-front.store-visible{opacity:1}
 
-    /* While the Market is open (shopPolish sets tlr-shop-active for the
-       whole visit), hide the Score/Threshold HUD and the four persistent
-       bottom navigation medallions. visibility, not display: the layered
-       SPv2 rules force display with !important, and unlayered normal
-       declarations still win the visibility channel. */
     body.tlr-shop-active .score-stack{visibility:hidden;pointer-events:none}
     body.tlr-shop-active #menuBtn,body.tlr-shop-active #scoringBtn,body.tlr-shop-active #abilitiesBtn,body.tlr-shop-active #spv2ArchiveBtn{visibility:hidden;pointer-events:none}
     .store-front button{font-family:Georgia,serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
-    .store-front button:disabled{cursor:not-allowed;opacity:.4}
+    .store-front button:disabled{cursor:not-allowed;opacity:.42}
 
-    .store-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px}
-    .store-refresh{display:flex;align-items:center;gap:6px;background:transparent;border:1px solid rgba(226,181,100,.35);border-radius:8px;color:#f1dfbd;padding:7px 12px;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;transition:background .15s,opacity .15s}
-    .store-refresh:not(:disabled):hover{background:rgba(255,255,255,.08)}
-    .store-refresh:disabled{opacity:.35;cursor:not-allowed}
-    .store-refresh-icon{font-size:1.15em;line-height:1}
-    .store-refresh-cost{color:#e0b96a;font-size:.88em}
-    .store-reserve-display{display:flex;flex-direction:column;align-items:flex-end;line-height:1}
-    .store-reserve-label{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#b08040;font-family:system-ui,sans-serif}
-    .store-reserve-amount{font-size:28px;color:#f1d196;text-shadow:0 1px 3px #000;line-height:1}
-    .store-reserve-amount .coin{font-size:.42em;margin-left:.1em;color:#c89445;vertical-align:middle}
+    .store-meta{display:grid;grid-template-columns:minmax(88px,1fr) auto minmax(88px,1fr);align-items:center;gap:8px;flex:0 0 auto}
+    .store-title{font:900 clamp(28px,8.2vw,48px)/.9 Georgia,serif;letter-spacing:.12em;color:#f1d196;text-shadow:0 2px 12px rgba(0,0,0,.9);text-align:center;text-transform:uppercase;filter:drop-shadow(0 0 8px rgba(223,170,72,.18))}
+    .store-refresh,.store-reserve-display{min-height:42px;border:1px solid rgba(226,181,100,.42);border-radius:10px;background:linear-gradient(180deg,rgba(24,18,13,.72),rgba(6,5,4,.7));box-shadow:inset 0 0 0 1px rgba(255,232,176,.06);color:#f1dfbd;text-transform:uppercase}
+    .store-refresh{display:flex;align-items:center;justify-content:center;gap:5px;padding:6px 8px;font-size:clamp(10px,2.7vw,13px);font-weight:900;letter-spacing:.05em;transition:background .15s,opacity .15s}
+    .store-refresh:not(:disabled):hover{background:rgba(226,181,100,.1)}.store-refresh:disabled{opacity:.35;cursor:not-allowed}
+    .store-refresh-icon{font-size:1.2em;line-height:1}.store-refresh-cost{color:#e0b96a;font-size:.92em;white-space:nowrap}
+    .store-reserve-display{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;padding:5px 8px}
+    .store-reserve-label{font:800 clamp(9px,2.4vw,11px)/1 system-ui,sans-serif;letter-spacing:.14em;color:#b08040}
+    .store-reserve-amount{font-size:clamp(22px,6.2vw,31px);color:#f1d196;text-shadow:0 1px 3px #000;line-height:1}.store-reserve-amount .coin{font-size:.48em;margin-right:.12em;color:#c89445;vertical-align:middle}
 
-    /* Mobile market composition: two small top offers, one featured pack,
-       then two relic/vessel offers. The cards still use the existing purchase
-       and picker code; the wrappers only change hierarchy and spacing. */
-    .store-offer-row{display:flex;flex-direction:column;gap:12px}
-    .store-grid-top,.store-grid-bottom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-    .store-pack-feature{display:block}
+    .store-section-title{display:flex;align-items:center;gap:10px;color:#d8a95b;font:900 clamp(11px,3vw,15px)/1 Georgia,serif;letter-spacing:.18em;text-transform:uppercase;text-align:center;white-space:nowrap;flex:0 0 auto}
+    .store-section-title::before,.store-section-title::after{content:'';height:1px;flex:1;background:linear-gradient(90deg,transparent,rgba(210,154,66,.55),transparent)}
+    .store-section-title--featured{margin-top:1px}.store-section-title--relics{margin-top:0}
 
-    .store-card{position:relative;display:flex;align-items:center;gap:14px;min-height:96px;padding:27px 14px 12px 18px;border:1px solid rgba(200,160,80,.28);border-radius:12px;background:linear-gradient(180deg,rgba(26,17,10,.55),rgba(9,6,4,.6));text-align:left;transition:border-color .13s}
-    .store-card::before{content:'';position:absolute;left:-1px;top:16px;bottom:16px;width:2px;border-radius:2px;background:var(--store-accent,rgba(201,162,74,.5));opacity:.75;pointer-events:none}
-    .store-card:not(.disabled):hover{border-color:rgba(200,160,80,.5)}
-    .store-card.disabled{opacity:.55}
-    .store-card--pack{--store-accent:rgba(157,139,184,.55)}
-    .store-card--stamp{--store-accent:rgba(92,126,201,.6)}
-    .store-card--relic,.store-card--vessel{--store-accent:rgba(127,168,162,.55)}
-    .store-card-tag{position:absolute;top:9px;left:18px;font:700 10px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#9a7840}
-    .store-card--pack .store-card-tag{color:#9d8bb8}
-    .store-card--stamp .store-card-tag{color:#89a5df}
-    .store-card--relic .store-card-tag,.store-card--vessel .store-card-tag{color:#7fa8a2}
-    .store-card-art{width:56px;height:56px;flex:0 0 56px;display:flex;align-items:center;justify-content:center}
-    .store-card-art .isp{transform:scale(.48);transform-origin:center;filter:drop-shadow(0 3px 5px rgba(0,0,0,.6))}
-    .store-card-art .relic-art-sprite{width:56px;height:56px;flex:0 0 56px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.65))}
-    .store-vessel-glyph{font:800 30px/1 Georgia,serif;color:#f1d196;text-shadow:0 2px 6px #000}
-    .store-card-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
-    .store-card-name{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#f0dfbd;line-height:1.15}
-    .store-card-desc{font:600 12px/1.35 system-ui,sans-serif;color:#b8a882}
-    .store-card-lv{font:800 10px/1 system-ui,sans-serif;color:#c89445;text-transform:uppercase;margin-top:2px}
-    .store-card--vessel .store-card-lv{color:#7fa8a2}
-    .store-card-buy{flex:0 0 auto;min-width:104px;min-height:46px;padding:0 14px;border:1px solid rgba(226,181,100,.5);border-radius:8px;background:transparent;color:#f5d9a0;font:800 12px/1.2 Georgia,serif;text-transform:uppercase;letter-spacing:.05em}
-    .store-card-buy:not(:disabled):hover{background:rgba(226,181,100,.1)}
-    .store-card-buy .coin{color:#c99443;margin-left:.2em}
-    .store-relic-art-btn{background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important;padding:0;margin:0;cursor:pointer;display:flex;align-items:center;justify-content:center;width:56px;height:56px;flex:0 0 56px}
+    .store-offer-row{display:flex;flex-direction:column;gap:clamp(7px,1dvh,10px);min-height:0;flex:1 1 auto}
+    .store-grid-top,.store-grid-bottom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(7px,1.7vw,10px)}
+    .store-pack-feature{display:block;flex:0 0 auto}
 
-    .store-grid-top .store-card,.store-grid-bottom .store-card{min-height:168px;align-items:stretch;flex-direction:column;gap:8px;padding:28px 10px 10px;text-align:center}
-    .store-grid-top .store-card::before,.store-grid-bottom .store-card::before{left:14px;right:14px;top:auto;bottom:-1px;width:auto;height:2px}
-    .store-grid-top .store-card-tag,.store-grid-bottom .store-card-tag{left:0;right:0;text-align:center}
-    .store-grid-top .store-card-art,.store-grid-bottom .store-card-art{width:50px;height:50px;flex:0 0 50px;margin:0 auto}
-    .store-grid-top .store-card-art .isp,.store-grid-bottom .store-card-art .isp{transform:scale(.42)}
-    .store-grid-top .store-card-art .relic-art-sprite,.store-grid-bottom .store-card-art .relic-art-sprite{width:50px;height:50px;flex-basis:50px}
-    .store-grid-top .store-relic-art-btn,.store-grid-bottom .store-relic-art-btn{width:50px;height:50px;flex-basis:50px;margin:0 auto}
-    .store-grid-top .store-card-main,.store-grid-bottom .store-card-main{align-items:center;justify-content:flex-start;min-height:0}
-    .store-grid-top .store-card-name,.store-grid-bottom .store-card-name{font-size:13px;line-height:1.1}
-    .store-grid-top .store-card-desc,.store-grid-bottom .store-card-desc{font-size:10.5px;line-height:1.25}
-    .store-grid-top .store-card-lv,.store-grid-bottom .store-card-lv{font-size:9.5px}
-    .store-grid-top .store-card-buy,.store-grid-bottom .store-card-buy{width:100%;min-width:0;min-height:38px;margin-top:auto;padding:0 8px;font-size:10.5px}
-    .store-pack-feature .store-card{min-height:112px;border-color:rgba(157,139,184,.42);background:linear-gradient(180deg,rgba(34,22,38,.62),rgba(10,7,10,.7))}
+    .store-card{--store-accent:rgba(201,162,74,.55);position:relative;display:flex;gap:8px;border:1px solid rgba(200,160,80,.32);border-radius:12px;background:linear-gradient(180deg,rgba(26,17,10,.62),rgba(9,6,4,.75));box-shadow:inset 0 0 0 1px rgba(255,235,185,.045),0 8px 22px rgba(0,0,0,.24);transition:border-color .13s;overflow:hidden}
+    .store-card::before{content:'';position:absolute;inset:auto 12px -1px 12px;height:2px;border-radius:2px;background:var(--store-accent);opacity:.86;pointer-events:none}
+    .store-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 24%,var(--store-glow,rgba(205,158,62,.12)),transparent 46%);pointer-events:none;opacity:.9}
+    .store-card:not(.disabled):hover{border-color:rgba(225,178,92,.58)}.store-card.disabled{opacity:.55}
+    .store-card--scoring{--store-accent:rgba(211,158,65,.74);--store-glow:rgba(205,142,42,.16)}
+    .store-card--pack,.store-card--stamp{--store-accent:rgba(145,88,184,.7);--store-glow:rgba(118,64,174,.18)}
+    .store-card--relic,.store-card--vessel{--store-accent:rgba(83,151,145,.72);--store-glow:rgba(53,139,134,.15)}
 
-    .store-footer{display:flex;justify-content:center;margin-top:16px}
-    .store-proceed{background:transparent;border:1px solid rgba(226,181,100,.55);border-radius:8px;color:#f1dfbd;font:800 14px/1 Georgia,serif;text-transform:uppercase;letter-spacing:.07em;padding:10px 22px;transition:background .15s}
-    .store-proceed:hover{background:rgba(200,160,60,.15)}
+    .store-card-utility{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%}
+    .store-card-tag,.store-card-meta{display:inline-flex;align-items:center;min-height:18px;border:1px solid rgba(221,180,103,.34);border-radius:999px;background:rgba(0,0,0,.28);padding:0 8px;font:900 clamp(8px,2.15vw,10px)/1 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#d0a35a;white-space:nowrap}
+    .store-card--pack .store-card-tag,.store-card--stamp .store-card-tag{color:#d0a6f2;border-color:rgba(163,105,206,.45)}
+    .store-card--relic .store-card-tag,.store-card--vessel .store-card-tag,.store-card--relic .store-card-meta,.store-card--vessel .store-card-meta{color:#9bd3cc;border-color:rgba(106,184,176,.42)}
+    .store-card--stamp .store-card-meta{color:#e5bc76;border-color:rgba(226,181,100,.38)}
 
-    .store-replace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:12px}
-    .store-replace-card{border:1px solid rgba(210,161,94,.42);border-radius:8px;background:rgba(255,255,255,.04);padding:9px;text-align:center}
-    .store-replace-card button{margin-top:8px}
-    .store-relic-callout{z-index:10010;max-width:220px}
-    .store-relic-callout .relic-callout-desc{font-size:12px;line-height:1.35}
-    .store-pack-callout{z-index:10010;max-width:240px}
-    .store-pack-callout .relic-callout-desc{font-size:12px;line-height:1.35;margin-bottom:6px}
-    .store-pack-callout-list{margin:0;padding:0 0 0 16px;list-style:disc}
-    .store-pack-callout-list li{font-size:11px;line-height:1.4;color:#c8b888;margin-bottom:2px}
+    .store-card-art{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;flex:0 0 auto}.store-card-art .isp{transform-origin:center;filter:drop-shadow(0 3px 6px rgba(0,0,0,.72))}.store-card-art .relic-art-sprite{filter:drop-shadow(0 3px 8px rgba(0,0,0,.72))}
+    .store-relic-art-btn{background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important;padding:0;margin:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .store-vessel-glyph{font:900 30px/1 Georgia,serif;color:#f1d196;text-shadow:0 2px 6px #000}
+    .store-card-main{position:relative;z-index:1;display:flex;flex-direction:column;min-width:0}.store-card-name{font-weight:900;text-transform:uppercase;letter-spacing:.045em;color:#f4e8ca;line-height:1.05;text-shadow:0 1px 5px rgba(0,0,0,.85)}
+    .store-card-desc{font:700 clamp(10px,2.7vw,12px)/1.28 system-ui,sans-serif;color:#cbbd98}.store-card-kicker{font:800 clamp(8.5px,2.2vw,10px)/1 system-ui,sans-serif;color:#ad9367;text-transform:uppercase;letter-spacing:.08em}.store-card-lines{display:flex;flex-direction:column;gap:2px}
+    .store-stat-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:100%;margin-top:2px}.store-stat-chip{border:1px solid rgba(226,181,100,.34);border-radius:7px;background:rgba(0,0,0,.24);color:#f1d196;font:900 clamp(10px,2.8vw,12px)/1 system-ui,sans-serif;padding:7px 4px;text-align:center;white-space:nowrap}
+    .store-card-buy{position:relative;z-index:1;border:1px solid rgba(226,181,100,.58);border-radius:8px;background:linear-gradient(180deg,rgba(133,84,24,.76),rgba(55,34,13,.8));box-shadow:inset 0 0 0 1px rgba(255,238,190,.08),0 2px 8px rgba(0,0,0,.32);color:#f6dfac;font:900 clamp(11px,3vw,14px)/1 Georgia,serif;text-transform:uppercase;letter-spacing:.06em}.store-card-buy:not(:disabled):hover{background:linear-gradient(180deg,rgba(159,101,28,.82),rgba(67,42,15,.86))}.store-card-buy .coin{color:#f0c46c;margin:0 .16em}
+    .store-card--stamp .store-card-buy,.store-card--pack .store-card-buy{background:linear-gradient(180deg,rgba(83,37,105,.84),rgba(38,18,53,.86));border-color:rgba(191,129,229,.55)}.store-card--relic .store-card-buy,.store-card--vessel .store-card-buy{background:linear-gradient(180deg,rgba(31,91,88,.74),rgba(14,45,43,.86));border-color:rgba(108,190,180,.48)}
 
-    @media(prefers-reduced-motion:reduce){
-      .store-dim{animation:none}
-      .store-candle{animation:none}
-      .store-front{opacity:1;transition:none}
-      .summary.store-front-shell.store-exiting{animation:none;opacity:0}
-    }
-    @media(max-width:480px){
-      .store-front{width:96vw;max-height:calc(100dvh - 108px)}
-      .store-offer-row{gap:10px}
-      .store-card{gap:10px;min-height:88px;padding:25px 10px 10px 14px}
-      .store-card-tag{left:14px}
-      .store-card-art{width:48px;height:48px;flex-basis:48px}
-      .store-card-art .isp{transform:scale(.4)}
-      .store-card-art .relic-art-sprite{width:48px;height:48px;flex-basis:48px}
-      .store-relic-art-btn{width:48px;height:48px;flex-basis:48px}
-      .store-card-name{font-size:13.5px}
-      .store-card-desc{font-size:11.5px}
-      .store-card-buy{min-width:92px;min-height:44px;padding:0 10px;font-size:11px}
-      .store-vessel-glyph{font-size:26px}
-      .store-refresh{font-size:11px;padding:8px 10px}
-      .store-reserve-amount{font-size:24px}
-      .store-candle{width:60px;height:60px}
-      .store-grid-top,.store-grid-bottom{gap:8px}
-      .store-grid-top .store-card,.store-grid-bottom .store-card{min-height:158px;padding:27px 8px 8px}
-      .store-grid-top .store-card-tag,.store-grid-bottom .store-card-tag{left:0}
-      .store-grid-top .store-card-art,.store-grid-bottom .store-card-art{width:46px;height:46px;flex-basis:46px}
-      .store-grid-top .store-card-art .isp,.store-grid-bottom .store-card-art .isp{transform:scale(.39)}
-      .store-grid-top .store-card-name,.store-grid-bottom .store-card-name{font-size:12.5px}
-      .store-grid-top .store-card-desc,.store-grid-bottom .store-card-desc{font-size:10px}
-      .store-grid-top .store-card-buy,.store-grid-bottom .store-card-buy{min-height:36px;font-size:10px}
-      .store-pack-feature .store-card{min-height:108px}
-    }
+    .store-grid-top .store-card,.store-grid-bottom .store-card{min-height:0;align-items:center;flex-direction:column;text-align:center;padding:clamp(7px,1.15dvh,10px) clamp(7px,1.6vw,10px);box-sizing:border-box}.store-grid-top .store-card{height:clamp(188px,25dvh,214px)}.store-grid-bottom .store-card{height:clamp(174px,23dvh,204px)}
+    .store-grid-top .store-card-art{width:clamp(46px,13vw,64px);height:clamp(46px,13vw,64px);margin-top:0}.store-grid-top .store-card-art .isp{transform:scale(clamp(.39,.12vw + .36,.54))}.store-grid-top .store-card-art .store-stamp-art{transform:scale(clamp(.76,.1vw + .72,1))}
+    .store-grid-bottom .store-card-art{width:clamp(52px,14vw,72px);height:clamp(52px,14vw,72px)}.store-grid-bottom .store-card-art .relic-art-sprite{width:clamp(52px,14vw,72px);height:clamp(52px,14vw,72px);background-size:contain!important}.store-grid-bottom .store-relic-art-btn{width:100%;height:100%}
+    .store-grid-top .store-card-main,.store-grid-bottom .store-card-main{align-items:center;justify-content:flex-start;gap:4px;width:100%;flex:1 1 auto}.store-grid-top .store-card-name{font-size:clamp(15px,4.2vw,21px)}.store-grid-bottom .store-card-name{font-size:clamp(13px,3.6vw,18px)}
+    .store-grid-top .store-card-desc,.store-grid-bottom .store-card-desc{max-width:100%}.store-grid-top .store-card-buy,.store-grid-bottom .store-card-buy{width:100%;min-height:clamp(34px,4.9dvh,42px);padding:0 8px;margin-top:auto;flex:0 0 auto}
+
+    .store-pack-feature .store-card{height:clamp(86px,12.2dvh,108px);display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;text-align:left;padding:8px clamp(8px,2vw,12px);column-gap:clamp(8px,2vw,14px);border-color:rgba(157,91,198,.42);background:linear-gradient(180deg,rgba(34,22,38,.68),rgba(10,7,10,.78))}.store-pack-feature .store-card::before{inset:12px auto 12px -1px;width:2px;height:auto}.store-pack-feature .store-card-utility{justify-content:flex-start}.store-pack-feature .store-card-art{width:clamp(50px,14vw,72px);height:clamp(50px,14vw,72px)}.store-pack-feature .store-card-art .isp{transform:scale(clamp(.42,.1vw + .38,.6))}.store-pack-feature .store-relic-art-btn{width:clamp(50px,14vw,72px);height:clamp(50px,14vw,72px)}.store-pack-feature .store-card-main{gap:4px}.store-pack-feature .store-card-name{font-size:clamp(15px,4.1vw,22px)}.store-pack-feature .store-card-buy{min-width:clamp(94px,25vw,128px);min-height:clamp(38px,5.2dvh,48px);padding:0 10px}
+
+    .store-footer{display:flex;justify-content:center;flex:0 0 auto}.store-proceed{width:min(86%,420px);min-height:clamp(38px,5.2dvh,46px);background:linear-gradient(180deg,rgba(28,22,16,.82),rgba(7,6,5,.9));border:1px solid rgba(226,181,100,.58);border-radius:10px;color:#f1dfbd;font:900 clamp(14px,4.5vw,20px)/1 Georgia,serif;text-transform:uppercase;letter-spacing:.1em;padding:0 22px;transition:background .15s}.store-proceed:hover{background:rgba(200,160,60,.15)}
+
+    .store-replace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:12px}.store-replace-card{border:1px solid rgba(210,161,94,.42);border-radius:8px;background:rgba(255,255,255,.04);padding:9px;text-align:center}.store-replace-card button{margin-top:8px}
+    .store-relic-callout{z-index:10010;max-width:220px}.store-relic-callout .relic-callout-desc{font-size:12px;line-height:1.35}.store-pack-callout{z-index:10010;max-width:240px}.store-pack-callout .relic-callout-desc{font-size:12px;line-height:1.35;margin-bottom:6px}.store-pack-callout-list{margin:0;padding:0 0 0 16px;list-style:disc}.store-pack-callout-list li{font-size:11px;line-height:1.4;color:#c8b888;margin-bottom:2px}
+
+    @media(prefers-reduced-motion:reduce){.store-dim{animation:none}.store-candle{animation:none}.store-front{opacity:1;transition:none}.summary.store-front-shell.store-exiting{animation:none;opacity:0}}
+    @media(max-height:740px){.store-front{height:98dvh;max-height:98dvh;gap:5px;padding:6px}.store-candle{display:none}.store-grid-top .store-card{height:176px}.store-grid-bottom .store-card{height:162px}.store-pack-feature .store-card{height:82px}.store-card-desc{font-size:10px}.store-stat-chip{padding:5px 3px}.store-section-title{font-size:10px}.store-proceed{min-height:34px}}
+    @media(max-width:380px){.store-meta{grid-template-columns:minmax(74px,1fr) auto minmax(74px,1fr);gap:5px}.store-refresh,.store-reserve-display{min-height:38px}.store-title{font-size:26px;letter-spacing:.08em}.store-card-tag,.store-card-meta{padding:0 6px;letter-spacing:.08em}.store-stat-row{gap:4px}.store-stat-chip{font-size:9.5px}.store-card-buy{font-size:10.5px}.store-pack-feature .store-card{grid-template-columns:auto minmax(0,1fr) auto;column-gap:7px}.store-pack-feature .store-card-buy{min-width:84px}}
   `;
 }
 
@@ -219,7 +166,7 @@ function updateStoreReserveDisplay(target = window) {
   const amt = persistOf(target).pool || 0;
   const coin = display.querySelector('.coin');
   display.textContent = amt;
-  if (coin) display.appendChild(coin);
+  if (coin) display.prepend(coin);
 }
 
 function markCardPurchased(slotIndex, target = window) {
@@ -232,7 +179,7 @@ function markCardPurchased(slotIndex, target = window) {
   card.style.transition = 'opacity 220ms ease-out';
   card.style.opacity = '0';
   setTimeout(() => {
-    card.innerHTML = '<div class="store-card-tag" style="opacity:.4">Purchased</div><div style="flex:1;display:flex;align-items:center;justify-content:center;color:rgba(200,160,80,.35);font-size:22px">✦</div>';
+    card.innerHTML = '<div class="store-card-utility"><div class="store-card-tag" style="opacity:.45">Purchased</div></div><div style="position:relative;z-index:1;flex:1;display:flex;align-items:center;justify-content:center;color:rgba(200,160,80,.35);font-size:22px">✦</div>';
     card.style.opacity = '1';
     card.style.pointerEvents = 'none';
     updateStoreReserveDisplay(target);
@@ -322,16 +269,28 @@ function relicCost(target = window) {
 function storeVesselCost(target = window) { return typeof target.shopCost === 'function' ? target.shopCost('relicSlot') : 35; }
 
 const STAMP_ART = Object.freeze({
-  suit_stamp: '<div style="width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#3a6bbf,#152a5c 72%,#070e1e);display:flex;align-items:center;justify-content:center;font:900 24px/1 Georgia,serif;color:#f5e0b4;text-shadow:0 2px 4px rgba(0,0,0,.9);border:2px solid rgba(210,175,100,.65);box-shadow:0 2px 8px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.5)">♡</div>',
-  five_stamp: '<div style="width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d4a017,#7a5800 72%,#2a1c00);display:flex;align-items:center;justify-content:center;font:900 16px/1 Georgia,serif;color:#f5e0b4;text-shadow:0 2px 4px rgba(0,0,0,.9);border:2px solid rgba(210,175,100,.65);box-shadow:0 2px 8px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.5)">5★</div>',
+  suit_stamp: '<div class="store-stamp-art" style="width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#3a6bbf,#152a5c 72%,#070e1e);display:flex;align-items:center;justify-content:center;font:900 24px/1 Georgia,serif;color:#f5e0b4;text-shadow:0 2px 4px rgba(0,0,0,.9);border:2px solid rgba(210,175,100,.65);box-shadow:0 2px 8px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.5)">♡</div>',
+  five_stamp: '<div class="store-stamp-art" style="width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d4a017,#7a5800 72%,#2a1c00);display:flex;align-items:center;justify-content:center;font:900 16px/1 Georgia,serif;color:#f5e0b4;text-shadow:0 2px 4px rgba(0,0,0,.9);border:2px solid rgba(210,175,100,.65);box-shadow:0 2px 8px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.5)">5★</div>',
 });
+
+function renderScoringEffect(upgradeKey, copy, isStamp) {
+  if (isStamp) {
+    const parts = String(copy.desc || '').split('.').map(s => s.trim()).filter(Boolean).slice(0, 2);
+    return `<div class="store-card-lines">${parts.map(part => `<div class="store-card-desc">${escapeHtml(part)}</div>`).join('')}</div>`;
+  }
+  const stats = String(copy.desc || '').split('/').map(s => s.trim()).filter(Boolean);
+  if (stats.length >= 2) {
+    return `<div class="store-card-kicker">${escapeHtml(copy.label || 'Scoring bonus')}</div><div class="store-stat-row"><div class="store-stat-chip">${escapeHtml(stats[0])}</div><div class="store-stat-chip">${escapeHtml(stats[1])}</div></div>`;
+  }
+  return `<div class="store-card-desc">${escapeHtml(copy.desc)}</div>`;
+}
 
 function renderScoringCard(index, upgradeKey, target = window, options = {}) {
   const isStamp = !!options.stamp;
   const tag = isStamp ? 'Stamp' : 'Scoring';
   const cardClass = isStamp ? 'store-card--stamp' : 'store-card--scoring';
   const purchaseSection = isStamp ? 'stamps' : 'scoring';
-  const emptyRow = `<div class="store-card ${cardClass} disabled"><div class="store-card-tag">${tag}</div><div class="store-card-main"><div class="store-card-name">—</div></div></div>`;
+  const emptyRow = `<div class="store-card ${cardClass} disabled"><div class="store-card-utility"><div class="store-card-tag">${tag}</div></div><div class="store-card-main"><div class="store-card-name">—</div></div></div>`;
   if (!upgradeKey) return emptyRow;
   const item = (target.SHOP || {})[upgradeKey];
   if (!item) return emptyRow;
@@ -343,19 +302,18 @@ function renderScoringCard(index, upgradeKey, target = window, options = {}) {
     ? `<div class="store-card-art">${STAMP_ART[upgradeKey]}</div>`
     : `<div class="store-card-art"><span class="isp isp-108 ${copy.icon}"></span></div>`;
   return `<div class="store-card ${cardClass} ${ok ? '' : 'disabled'}">
-    <div class="store-card-tag">${tag}</div>
+    <div class="store-card-utility"><div class="store-card-tag">${tag}</div><div class="store-card-meta">Lv ${level} → ${level + 1}</div></div>
     ${art}
     <div class="store-card-main">
       <div class="store-card-name">${escapeHtml(copy.name)}</div>
-      <div class="store-card-desc">${escapeHtml(copy.desc)}</div>
-      <div class="store-card-lv">Lv ${level} → ${level + 1}</div>
+      ${renderScoringEffect(upgradeKey, copy, isStamp)}
     </div>
     <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreScoringUpgrade(${index},'${upgradeKey}',${cost},'${purchaseSection}')">Buy <span class="coin">✦</span> ${cost}</button>
   </div>`;
 }
 
 function renderPackCard(index, packId, target = window) {
-  const emptyRow = '<div class="store-card store-card--pack disabled"><div class="store-card-tag">Pack</div><div class="store-card-main"><div class="store-card-name">—</div></div></div>';
+  const emptyRow = '<div class="store-card store-card--pack disabled"><div class="store-card-main"><div class="store-card-name">—</div></div></div>';
   if (!packId) return emptyRow;
   const pack = (target.PACKS || {})[packId];
   if (!pack) return emptyRow;
@@ -363,14 +321,20 @@ function renderPackCard(index, packId, target = window) {
   const ok = (persistOf(target).pool || 0) >= cost;
   const desc = STORE_PACK_COPY[packId] || pack.desc || '';
   return `<div class="store-card store-card--pack ${ok ? '' : 'disabled'}">
-    <div class="store-card-tag">Pack</div>
     <button type="button" class="store-relic-art-btn" onclick="showStorePackCallout('${packId}',this);event.stopPropagation()" aria-label="Show ${escapeHtml(pack.name)} details"><div class="store-card-art" style="pointer-events:none"><span class="isp isp-108 ${pack.icon}"></span></div></button>
     <div class="store-card-main">
+      <div class="store-card-utility"><div class="store-card-tag">Pack</div></div>
       <div class="store-card-name">${escapeHtml(pack.name)}</div>
       <div class="store-card-desc">${escapeHtml(desc)}</div>
     </div>
     <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStorePack('pack',${index},'${packId}',${cost})">Open <span class="coin">✦</span> ${cost}</button>
   </div>`;
+}
+
+function relicMetaTag(relicKey, relic) {
+  if (relicKey === 'watcher') return 'Once / reading';
+  if (relic?.active) return 'Active';
+  return 'Passive';
 }
 
 function renderRelicCard(index, relicKey, target = window) {
@@ -379,10 +343,10 @@ function renderRelicCard(index, relicKey, target = window) {
   if (!relic) return renderVesselCard(index, target);
   const cost = relicCost(target);
   const ok = (persistOf(target).pool || 0) >= cost;
-  const style = typeof target.relicIconStyle === 'function' ? target.relicIconStyle(relicKey, 56) : '';
+  const style = typeof target.relicIconStyle === 'function' ? target.relicIconStyle(relicKey, 72) : '';
   const desc = STORE_RELIC_COPY[relicKey] || relic.desc || relic.description || '';
   return `<div class="store-card store-card--relic ${ok ? '' : 'disabled'} ${relic.rarity || ''}">
-    <div class="store-card-tag">Relic</div>
+    <div class="store-card-utility"><div class="store-card-tag">Relic</div><div class="store-card-meta">${escapeHtml(relicMetaTag(relicKey, relic))}</div></div>
     <div class="store-card-art">
       <button class="store-relic-art-btn" type="button" onclick="showStoreRelicCallout('${relicKey}',this);event.stopPropagation()" aria-label="Show ${escapeHtml(relic.name)} details"><div class="relic-art-sprite" style="${style}"></div></button>
     </div>
@@ -401,12 +365,11 @@ function renderVesselCard(index = 0, target = window) {
   const ok = !maxed && index === 0 && (persistOf(target).pool || 0) >= cost;
   const slots = typeof target.relicSlots === 'function' ? target.relicSlots() : 3 + level;
   return `<div class="store-card store-card--vessel ${ok ? '' : 'disabled'}">
-    <div class="store-card-tag">${index === 0 ? 'Relic Slot' : 'Empty'}</div>
+    <div class="store-card-utility"><div class="store-card-tag">${index === 0 ? 'Relic Slot' : 'Empty'}</div>${index === 0 ? `<div class="store-card-meta">${maxed ? 'Max 5' : `Slots ${slots} → ${slots + 1}`}</div>` : ''}</div>
     <div class="store-card-art"><div class="store-vessel-glyph">${index === 0 ? '＋' : '✦'}</div></div>
     <div class="store-card-main">
       <div class="store-card-name">${index === 0 ? 'Relic Vessel' : 'No Relic'}</div>
       <div class="store-card-desc">${index === 0 ? (maxed ? 'Relic Slots maxed.' : 'Gain +1 Relic Slot') : 'Refresh for new stock.'}</div>
-      ${index === 0 ? `<div class="store-card-lv">${maxed ? 'Max 5' : `Slots ${slots} → ${slots + 1}`}</div>` : ''}
     </div>
     <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreVessel(${index})">${index !== 0 ? 'Empty' : maxed ? 'Maxed' : `Buy <span class="coin">✦</span> ${cost}`}</button>
   </div>`;
@@ -571,9 +534,11 @@ export function openShopMain(){
   const alreadyOpen = !!document.querySelector('.store-front-shell:not(.store-exiting)');
   const inner=`
     <div class="store-meta">
-      <button class="store-refresh" ${canRefresh?'':'disabled'} onclick="refreshStoreFront()"><span class="store-refresh-icon">↻</span> Refresh <span class="store-refresh-cost">✦ ${rc}</span></button>
-      <div class="store-reserve-display"><div class="store-reserve-label">Reserve</div><div class="store-reserve-amount">${persist.pool}<span class="coin">✦</span></div></div>
+      <button class="store-refresh" ${canRefresh?'':'disabled'} onclick="refreshStoreFront()"><span class="store-refresh-icon">↻</span><span>Refresh</span><span class="store-refresh-cost">✦ ${rc}</span></button>
+      <div class="store-title">Shop</div>
+      <div class="store-reserve-display"><div class="store-reserve-label">Reserve</div><div class="store-reserve-amount"><span class="coin">✦</span>${persist.pool}</div></div>
     </div>
+    <div class="store-section-title store-section-title--featured">Featured Offers</div>
     <div class="store-offer-row">
       <div class="store-grid-top">
         ${renderScoringCard(0, offers.scoring[0], window)}
@@ -582,6 +547,7 @@ export function openShopMain(){
       <div class="store-pack-feature">
         ${renderPackCard(0, offers.pack[0], window)}
       </div>
+      <div class="store-section-title store-section-title--relics">Relics</div>
       <div class="store-grid-bottom">
         ${relicA ? renderRelicCard(0, relicA, window) : renderVesselCard(0, window)}
         ${relicB ? renderRelicCard(1, relicB, window) : renderVesselCard(1, window)}
