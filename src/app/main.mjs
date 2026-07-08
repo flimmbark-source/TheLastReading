@@ -317,7 +317,6 @@ export function startApp(target = window) {
   installLegacyBridge(target);
   installMarketFlow(target);
   installShopOverlayFlow(target);
-  installMarketBundleFlow(target);
   installRelicFlow(target);
   installShopPolish(target);
   installResonationFlow(target);
@@ -329,6 +328,7 @@ export function startApp(target = window) {
   installAbilityTargetBridge(target);
   installSpreadPlacementBridge(target);
   installControlBindings(target);
+  installMarketBundleFlow(target);
 
   // Populate the Archives desk with anything already collected in a prior
   // session. Every other renderInventory() call is reactive (a pickup or a
