@@ -3,10 +3,13 @@ import { createGameState, GAME_PHASES } from './state.mjs';
 import { buildDeck, drawCards, shuffleDeck } from '../systems/deck.mjs';
 import { computeScore } from '../systems/scoring.mjs';
 import { buyShopItem, maxRelicSlots } from '../systems/shop.mjs';
-import { firstDiscardIsFree, hasRelic, startingHandBonusFromRelics, thresholdClearBonusFromRelics, worldCarryFromRelics } from '../systems/relics.mjs';
+import { firstDiscardIsFree, hasRelic, startingHandBonusFromRelics, worldCarryFromRelics } from '../systems/relics.mjs';
 import { applyAbilityTake, applySearchTake, applyWorldReset, drawWithReshuffle, isSightAbility } from '../systems/abilities.mjs';
 import { currentThreshold } from '../data/thresholds.mjs';
 import { SETS_PER_ROUND, constellationForRound, activeConstellation, blocksDiscard, constellationThreshold, gateSatisfied, setHasScoringPattern } from '../systems/constellations.mjs';
+import { buildReadingLedger } from '../systems/readingLedger.mjs';
+import { advanceMarketBundleProgress } from '../systems/marketBundleProgress.mjs';
+import { claimRewardFromBundle, openRewardBundle } from '../systems/marketRewardBundles.mjs';
 
 function maxHand(persist) {
   return 5 + (persist.upgrades.hand || 0) - (hasRelic(persist.relics, 'fool_reversed') ? 1 : 0);
@@ -142,20 +145,30 @@ function scoreReading(state) {
   };
 
   if (passed) {
-    const miserBonus = thresholdClearBonusFromRelics(persist.relics);
+    const ledger = buildReadingLedger({ state, score, threshold, passed: true });
+    const bundleProgress = advanceMarketBundleProgress(persist, ledger);
     return replacePersist(
       replaceRun(state, {
         ...common,
-        phase: GAME_PHASES.MARKET,
+        phase: GAME_PHASES.RESULTS,
         thresholdIndex: run.thresholdIndex + 1,
         lastPassed: true,
         lastOutcome: 'pass',
         awaitingNextSet: false,
-        pendingReserve: (run.pendingReserve || 0) + roundScore + miserBonus,
+        pendingReserve: 0,
         worldCarry: worldCarryFromRelics(persist.relics, roundScore, threshold),
         relicEarned: false,
+        lastReadingLedger: ledger,
+        lastResults: {
+          finalScore: roundScore,
+          threshold,
+          cleared: true,
+          trackDeltas: bundleProgress.deltas,
+          generatedBundleIds: bundleProgress.generatedBundles.map(bundle => bundle.id),
+        },
       }),
       {
+        ...bundleProgress.persist,
         totalScore: persist.totalScore + roundScore,
       }
     );
@@ -391,7 +404,8 @@ export const LEGACY_RUN_FIELDS = [
   'thresholdBonusPending', 'reading', 'pendingReserve', 'worldCarry',
   'abilityTakenCardIds', 'resonationBonus', 'setIndex', 'setsPerRound', 'roundScore',
   'setScores', 'roundDiscardCount', 'roundPatternCount', 'constellationId',
-  'untargetableCardIds', 'awaitingNextSet', 'lastOutcome',
+  'untargetableCardIds', 'awaitingNextSet', 'lastOutcome', 'lastReadingLedger',
+  'lastResults', 'openedBundleId', 'lastBundleClaim',
 ];
 
 function syncLegacyRun(state, run = {}) {
@@ -419,6 +433,11 @@ function syncLegacyPersist(state, persist = {}) {
   if ('discoveredArchiveItems' in persist) next.discoveredArchiveItems = [...persist.discoveredArchiveItems];
   if ('seenTutorials' in persist) next.seenTutorials = { ...persist.seenTutorials };
   if ('stampedMajors' in persist) next.stampedMajors = [...persist.stampedMajors];
+  if ('stampedFive' in persist) next.stampedFive = [...persist.stampedFive];
+  if ('marketBundleProgress' in persist) next.marketBundleProgress = { ...persist.marketBundleProgress };
+  if ('pendingRewardBundles' in persist) next.pendingRewardBundles = [...persist.pendingRewardBundles];
+  if ('claimedRewardBundleIds' in persist) next.claimedRewardBundleIds = [...persist.claimedRewardBundleIds];
+  if ('pendingCardChoice' in persist) next.pendingCardChoice = persist.pendingCardChoice;
   return replacePersist(state, next);
 }
 
@@ -462,9 +481,15 @@ function startReading(state, deck, rng = Math.random) {
       thresholdBonusPending: 0,
       worldCarry: run.worldCarry || 0,
       relicEarned: false,
+      openedBundleId: null,
+      lastBundleClaim: null,
     }),
     { reserve: (persist.reserve || 0) + offeringReserve }
   );
+}
+
+function enterMarketFromResults(state) {
+  return replaceRun(state, { phase: GAME_PHASES.MARKET });
 }
 
 function leaveMarket(state, rng = Math.random) {
@@ -490,6 +515,7 @@ function leaveMarket(state, rng = Math.random) {
     setScores: [],
     roundDiscardCount: 0,
     roundPatternCount: 0,
+    openedBundleId: null,
   });
 }
 
@@ -529,6 +555,23 @@ export function reducer(state, action) {
       return replaceRun(state, { ability: null, sourceCardId: null, busy: false });
     case ACTIONS.SCORE_READING:
       return scoreReading(state);
+    case ACTIONS.OPEN_MARKET:
+    case ACTIONS.ENTER_MARKET_FROM_RESULTS:
+      return enterMarketFromResults(state);
+    case ACTIONS.OPEN_REWARD_BUNDLE:
+      return replacePersist(
+        replaceRun(state, { openedBundleId: action.bundleId }),
+        openRewardBundle(state.persist, action.bundleId, { rng: action.rng || Math.random })
+      );
+    case ACTIONS.CLAIM_REWARD_BUNDLE_CHOICE: {
+      const claim = claimRewardFromBundle(state.persist, action.bundleId, action.rewardKey);
+      return replacePersist(
+        replaceRun(state, { openedBundleId: null, lastBundleClaim: claim }),
+        claim.persist
+      );
+    }
+    case ACTIONS.CLOSE_REWARD_BUNDLE:
+      return replaceRun(state, { openedBundleId: null });
     case ACTIONS.BUY_MARKET_ITEM:
       if (action.itemId) return buyMarketItem(state, action.itemId);
       return buyMarketPurchase(state, action.purchase || {});
