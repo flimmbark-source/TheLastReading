@@ -53,6 +53,12 @@ export const SHOP = Object.freeze({
   nimble_fingers:  ['Nimble Fingers',    'After each Discard, draw 1 card',                                                                                                   22,1.75,'🃏','draw'],
   quick_release:   ['Quick Release',     'Each discarded card adds +3 Chips to the score',                                                                                  18,1.75,'🃏','draw'],
 
+  // ── Bundle-native rewards ──
+  patient_reading: ['Patient Reading',   'Each unused Discard adds +2 Chips when scoring.',                                                                                   18,1.75,'🪷','stillness'],
+  first_answer:    ['First Answer',      'Cards from the opening hand gain +2 Chips when scoring.',                                                                          18,1.75,'🪷','stillness'],
+  familiar_face:   ['Familiar Face',     'The first matching-rank pair in the spread gives +6 Chips.',                                                                       20,1.75,'🪞','echo'],
+  court_favor:     ['Court Favor',       'The first Court placed each reading gains +6 Chips.',                                                                              20,1.75,'👑','court'],
+
   // ── Relic Cache (relic) ──
   relicSlot:       ['Relic Vessel',      'Gain +1 Relic Slot (max 5).',                                                                                                      35,2,   '🎁','relic'],
 
@@ -92,6 +98,10 @@ export const SHOP_ICON = Object.freeze({
   balanced_reading:'isp-scoring',elemental_harmony:'isp-scoring',
   suit_stamp:'isp-scoring',
   five_stamp:'isp-scoring',
+  patient_reading:'isp-scoring',
+  first_answer:'isp-scoring',
+  familiar_face:'isp-scoring',
+  court_favor:'isp-kin',
 });
 
 export const REFRESH_COSTS = Object.freeze([10,20,30,40,50]);
