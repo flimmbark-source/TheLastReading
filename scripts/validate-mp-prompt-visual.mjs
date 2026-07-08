@@ -79,8 +79,15 @@ async function main() {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
     await page.goto(`${baseUrl}/game.html`, { waitUntil: 'networkidle' });
 
-    // Drive the real Duel entry path: loadout -> Surgeon -> Ready -> vs CPU.
-    await page.click('button[onclick="tlrMainMenuMultiplayer()"]');
+    // Drive the real Duel entry path: main menu tab -> loadout -> Surgeon -> Ready -> vs CPU.
+    // The Duel action button is intentionally hidden while the Reading tab is
+    // active, so select the visible dock tab first instead of clicking the
+    // hidden action-panel button directly.
+    await page.waitForSelector('#mainMenu .main-menu-dock-tab[data-mode="duel"]', { state: 'visible' });
+    await page.click('#mainMenu .main-menu-dock-tab[data-mode="duel"]', { force: true });
+    await page.waitForFunction(() => document.querySelector('#mainMenu .main-menu-hub')?.dataset?.activeTab === 'duel');
+    await page.waitForSelector('.main-menu-action-panel[data-panel="duel"] button[onclick="tlrMainMenuMultiplayer()"]', { state: 'visible' });
+    await page.click('.main-menu-action-panel[data-panel="duel"] button[onclick="tlrMainMenuMultiplayer()"]', { force: true });
     await page.waitForSelector('.loadout-slot[data-persona="surgeon"]', { state: 'visible' });
     // A short settle delay avoids clicking mid-entrance-animation, which can
     // make a plain click land on stale coordinates before the loadout finishes
