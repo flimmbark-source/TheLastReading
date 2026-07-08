@@ -11,6 +11,16 @@
     background: #030201;
   }
 
+  /* The contextual hint panel (renderCardHintPanel.mjs) is the single-player
+     hint text now, so hide the classic above-card pill on hand/spread cards
+     here too — mirrors the mobile suppression in mobile.css. spv2Core is a
+     later layer than classicCore, so a normal-tier display:none wins with no
+     importance override. */
+  body.single-player-v2.generated-sheet-ready .hand .card[data-hint]::after,
+  body.single-player-v2.generated-sheet-ready .spread .card[data-hint]::after {
+    display: none;
+  }
+
   body.single-player-v2 {
     position: fixed;
     inset: 0;

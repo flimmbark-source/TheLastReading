@@ -50,17 +50,20 @@ html body.single-player-v2 #spread .slot > .card.hint-multi:not(.ability-target)
   }
 }
 
-/* Pattern hint text placement (single-player). The #patternHintStack element
+/* Contextual card hint panel (single-player). The #patternHintStack element
    (game.html, a direct child of <body>) is a fixed panel kept in sync with the
-   selected/pressed card by patternHintStack.mjs. It is hidden everywhere by
-   default; the mobile single-player block below positions and reveals it. A
-   real element is used rather than the classic above-card ::after pill because
-   that pseudo-element is trapped inside the card's transformed ancestor and so
-   cannot be pinned to the viewport. */
+   selected/pressed hand card by renderCardHintPanel.mjs: a placement value, a
+   few pattern rows with progress, the discard ability, and modifier icons. It
+   is hidden everywhere by default; the breakpoint blocks below position and
+   reveal it. A real element is used rather than the classic above-card ::after
+   pill because that pseudo-element is trapped inside the card's transformed
+   ancestor and so cannot be pinned to the viewport. */
 .pattern-hint-stack {
   display: none;
 }
 
+/* Pattern rows (and, on mobile, the panel as a whole) read as small gold
+   tarot pills. --hint-line-rgb lets a complete row tint stronger. */
 .pattern-hint-stack .pattern-hint-line {
   background: linear-gradient(155deg, rgba(48, 32, 18, .97), rgba(16, 10, 6, .97));
   border: 1px solid rgba(var(--hint-line-rgb, 232, 196, 96), .75);
@@ -78,6 +81,84 @@ html body.single-player-v2 #spread .slot > .card.hint-multi:not(.ability-target)
     inset 0 0 0 1px rgba(0, 0, 0, .4);
 }
 
+/* A completed pattern reads stronger without getting longer. */
+.pattern-hint-stack .chp-pattern.is-complete {
+  --hint-line-rgb: 255, 217, 120;
+  color: #fff2cf;
+  border-color: rgba(255, 226, 150, .95);
+}
+
+/* Placement value — the headline of the lens. */
+.pattern-hint-stack .chp-value {
+  font: 800 15px/1 "Cinzel", Georgia, serif;
+  color: #ffe6a2;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .85), 0 0 10px rgba(255, 210, 120, .35);
+  letter-spacing: .03em;
+}
+
+/* Discard ability — muted so it reads as secondary to the patterns. */
+.pattern-hint-stack .chp-discard {
+  font: 700 10px system-ui, sans-serif;
+  color: #d8c08a;
+  letter-spacing: .04em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+  white-space: nowrap;
+}
+
+/* Modifier row — symbolic glyph chips only, no words. */
+.pattern-hint-stack .chp-mods {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+}
+
+.pattern-hint-stack .chp-mod {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 3px;
+  border-radius: 5px;
+  border: 1px solid rgba(212, 175, 106, .6);
+  background: rgba(24, 16, 10, .92);
+  color: #ffe6a2;
+  font: 600 11px/1 system-ui, sans-serif;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+}
+
+/* Desktop: a single ornate panel anchored just above the active card by
+   renderCardHintPanel.mjs (it sets left/top; everything else lives here). The
+   classic above-card pill is suppressed in desktop.css so this is the only
+   hint text. */
+@media (min-width: 641px) {
+  html body.single-player-v2.generated-sheet-ready .pattern-hint-stack {
+    position: fixed;
+    z-index: 10065; /* above the selected-card dock (10062), below ability prompt (10070) which the panel hides for */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    max-width: 240px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(212, 175, 106, .7);
+    background: linear-gradient(160deg, rgba(30, 20, 12, .97), rgba(14, 9, 6, .98));
+    box-shadow:
+      0 12px 30px rgba(0, 0, 0, .6),
+      inset 0 0 0 1px rgba(0, 0, 0, .5),
+      0 0 14px rgba(212, 175, 106, .2);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .12s ease;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .pattern-hint-stack.is-visible {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 640px) {
   /* The individual patterns stack in the gap between the two bottom utility
      medallion sets (menu + archive on the left, scoring + abilities on the
@@ -93,7 +174,7 @@ html body.single-player-v2 #spread .slot > .card.hint-multi:not(.ability-target)
        fixed bottom edge. */
     bottom: 47px;
     transform: translate(-50%, 50%);
-    z-index: 120;
+    z-index: 10065; /* above the selected-card dock (10062), below ability prompt (10070) which the panel hides for */
     display: flex;
     flex-direction: column;
     align-items: center;
