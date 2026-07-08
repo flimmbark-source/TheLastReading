@@ -400,7 +400,7 @@ function renderRelicCard(index, relicKey, target = window) {
       <div class="store-card-name">${escapeHtml(relic.name)}</div>
       <div class="store-card-desc">${escapeHtml(desc)}</div>
     </div>
-    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreRelic(${index},'${relicKey}',${cost})">Buy <span class="coin">✦</span> ${cost}</button>
+    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreRelic(${index},'${relicKey}')">Buy <span class="coin">✦</span> ${cost}</button>
   </div>`;
 }
 
@@ -678,11 +678,12 @@ function chargeStoreRelic(cost,target = window){
 }
 
 export function buyStoreRelic(index,relicKey,cost,target = window){
+  const finalCost = relicCost(target);
   const p=persistOf(target);
-  if((p.pool||0)<cost)return false;
+  if((p.pool||0)<finalCost)return false;
   const slots=typeof target.relicSlots==='function'?target.relicSlots():3;
-  if((p.relics||[]).length>=slots)return showStoreRelicReplace(index,relicKey,cost,target);
-  const charged=chargeStoreRelic(cost,target);
+  if((p.relics||[]).length>=slots)return showStoreRelicReplace(index,relicKey,finalCost,target);
+  const charged=chargeStoreRelic(finalCost,target);
   if(charged!==true)return charged;
   const acquired=typeof target.doAcquireRelic==='function'?target.doAcquireRelic(relicKey,()=>{
     if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.relics))target._storeFrontOffers.relics[index]=null;
