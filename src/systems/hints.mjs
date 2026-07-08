@@ -41,6 +41,17 @@ export function sequenceRunKey(number, cards) {
   return `seq:${start}`;
 }
 
+// Length of the unbroken run of major numbers containing `number`, counting
+// this card. Powers the "(x/y)" progress label on the Sequence hint text.
+export function sequenceRunLength(number, cards) {
+  const nums = new Set(cards.filter(card => card.type === 'major').map(card => card.number));
+  nums.add(number);
+  let length = 1;
+  for (let n = number - 1; nums.has(n); n -= 1) length += 1;
+  for (let n = number + 1; nums.has(n); n += 1) length += 1;
+  return length;
+}
+
 function extractColorKeyFromMeld(label, rawName, card, placedCards) {
   if (label === SCORING_PATTERNS.SEQUENCE.label && card.type === 'major') return sequenceRunKey(card.number, placedCards);
   if (label === SCORING_PATTERNS.PATH_OF_THE_MAGI.label) return PATH_OF_THE_MAGI_COLOR_KEY;
@@ -59,7 +70,7 @@ function sameHintIdentity(hint, level, label, colorKey) {
   return hint.level === level && hint.label === label && (hint.colorKey || '') === (colorKey || '');
 }
 
-function addHint(hints, seen, level, label, colorKey = null) {
+function addHint(hints, seen, level, label, colorKey = null, progress = null) {
   const suffix = `${label}:${colorKey || ''}`;
   const key = `${level}:${suffix}`;
 
@@ -84,6 +95,10 @@ function addHint(hints, seen, level, label, colorKey = null) {
     label,
     group: hintGroup(label),
     colorKey,
+    // Optional {have, need} toward the pattern's minimum completion tier. Hint
+    // detection/glow does not read this; it only lets the text renderer append
+    // lightweight progress such as "Full Court (2/3)".
+    ...(progress ? { progress } : {}),
   });
 }
 
@@ -115,12 +130,18 @@ function addNearMajorHints({ hints, seen, card, allCards }) {
   if (card.type !== 'major') return;
   const otherMajorNumbers = new Set(allCards.filter(other => other.type === 'major' && other.uid !== card.uid).map(other => other.number));
   if (otherMajorNumbers.has(card.number - 1) || otherMajorNumbers.has(card.number + 1)) {
-    addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.SEQUENCE.label, sequenceRunKey(card.number, allCards));
+    addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.SEQUENCE.label, sequenceRunKey(card.number, allCards), {
+      have: sequenceRunLength(card.number, allCards),
+      need: 3,
+    });
   }
 
   if (SCORING_PATTERNS.PATH_OF_THE_MAGI.requiredCardIds.includes(card.id)) {
     const pathIds = new Set(allCards.filter(other => SCORING_PATTERNS.PATH_OF_THE_MAGI.requiredCardIds.includes(other.id)).map(other => other.id));
-    if (pathIds.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.PATH_OF_THE_MAGI.label, PATH_OF_THE_MAGI_COLOR_KEY);
+    if (pathIds.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.PATH_OF_THE_MAGI.label, PATH_OF_THE_MAGI_COLOR_KEY, {
+      have: pathIds.size,
+      need: SCORING_PATTERNS.PATH_OF_THE_MAGI.requiredCardIds.length,
+    });
   }
 }
 
@@ -132,20 +153,32 @@ function addNearCourtHints({ hints, seen, card, allCards, stampedMajors = [] }) 
 
   if (card.type === 'court') {
     const sameRank = allCards.filter(other => other.type === 'court' && other.rank === card.rank);
-    if (sameRank.length >= 4) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.FOUR_OF_A_KIND.label, `rank:${card.rank}`);
-    else if (sameRank.length >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.THREE_OF_A_KIND.label, `rank:${card.rank}`);
+    if (sameRank.length >= 4) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.FOUR_OF_A_KIND.label, `rank:${card.rank}`, {
+      have: sameRank.length,
+      need: 4,
+    });
+    else if (sameRank.length >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.THREE_OF_A_KIND.label, `rank:${card.rank}`, {
+      have: sameRank.length,
+      need: 3,
+    });
   }
 
   const cardSuits = card.type === 'court' ? [card.suit] : (card.suits || []);
   for (const suit of cardSuits) {
     const tokens = new Set(allCards.filter(other => other.type === 'court' && other.suit === suit).map(other => other.rank));
     allCards.filter(other => other.type === 'major' && stampedIds.has(other.id) && (other.suits || []).includes(suit)).forEach(other => tokens.add(other.id));
-    if (tokens.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.ROYAL_COURT.label, `flush:${suit}`);
+    if (tokens.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.ROYAL_COURT.label, `flush:${suit}`, {
+      have: tokens.size,
+      need: 3,
+    });
   }
 
   if (card.type === 'court') {
     const ranks = new Set(allCards.filter(other => other.type === 'court').map(other => other.rank));
-    if (ranks.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.FULL_COURT.label);
+    if (ranks.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.FULL_COURT.label, null, {
+      have: ranks.size,
+      need: 3,
+    });
   }
 }
 
@@ -180,13 +213,23 @@ export function getHandHints(state, options = {}) {
   return result;
 }
 
+function hintLabelWithProgress(hint) {
+  const p = hint && hint.progress;
+  const have = Number(p && p.have);
+  const need = Number(p && p.need);
+  if (hint?.level !== HINT_LEVELS.COMPLETE && Number.isFinite(have) && Number.isFinite(need) && have > 0 && need > 0 && have < need) {
+    return `${hint.label} (${have}/${need})`;
+  }
+  return hint.label;
+}
+
 export function hintLabel(hints) {
   const labels = [];
   const seen = new Set();
   for (const hint of hints) {
     if (!seen.has(hint.label)) {
       seen.add(hint.label);
-      labels.push(hint.label);
+      labels.push(hintLabelWithProgress(hint));
     }
   }
   return labels.join(' + ');

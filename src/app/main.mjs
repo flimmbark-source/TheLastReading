@@ -30,6 +30,7 @@ import { installHandSwipeScroll } from '../ui/gestureHand.mjs';
 import { installHandCardGestures } from '../ui/gestureCard.mjs';
 import { installGestureDrawers } from '../ui/gestureDrawers.mjs?v=menu-drawer-height-1';
 import { installPressHighlight } from '../ui/gesturePressHighlight.mjs';
+import { installPatternHintStack } from '../ui/patternHintStack.mjs';
 import { installHandSelectionVisuals } from '../ui/handSelectionVisuals.mjs?v=deselect-raf-1';
 import { installSinglePlayerV2 } from '../ui/singlePlayerV2.mjs?v=phase1-2';
 import * as abilitySystem from '../systems/abilities.mjs';
@@ -292,6 +293,7 @@ export function startApp(target = window) {
   installHandCardGestures(target);
   installGestureDrawers(target);
   installPressHighlight(target);
+  installPatternHintStack(target);
   installHandSelectionVisuals(target);
   installAmbientEffects(target);
   installAudioControls(target);

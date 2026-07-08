@@ -1155,7 +1155,64 @@ html body.single-player-v2 #spread .slot > .card.hint-multi:not(.ability-target)
   }
 }
 
+/* Pattern hint text placement (single-player). The #patternHintStack element
+   (game.html, a direct child of <body>) is a fixed panel kept in sync with the
+   selected/pressed card by patternHintStack.mjs. It is hidden everywhere by
+   default; the mobile single-player block below positions and reveals it. A
+   real element is used rather than the classic above-card ::after pill because
+   that pseudo-element is trapped inside the card's transformed ancestor and so
+   cannot be pinned to the viewport. */
+.pattern-hint-stack {
+  display: none;
+}
+
+.pattern-hint-stack .pattern-hint-line {
+  background: linear-gradient(155deg, rgba(48, 32, 18, .97), rgba(16, 10, 6, .97));
+  border: 1px solid rgba(var(--hint-line-rgb, 232, 196, 96), .75);
+  border-radius: 999px;
+  padding: 2px 12px;
+  color: #ffd978;
+  font: 800 11px system-ui, sans-serif;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .8);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, .5),
+    0 0 10px rgba(var(--hint-line-rgb, 232, 196, 96), .35),
+    inset 0 1px 0 rgba(255, 255, 255, .08),
+    inset 0 0 0 1px rgba(0, 0, 0, .4);
+}
+
 @media (max-width: 640px) {
+  /* The individual patterns stack in the gap between the two bottom utility
+     medallion sets (menu + archive on the left, scoring + abilities on the
+     right) instead of reading "pattern + pattern" on a pill floating above the
+     card. The classic above-card pill is suppressed in mobile.css (spv2Core
+     layer) so the text shows in one place. */
+  html body.single-player-v2.generated-sheet-ready .pattern-hint-stack {
+    position: fixed;
+    left: 50%;
+    /* Anchor by the stack's own centre (translateY(50%) drops it half its own
+       height) onto the bottom-medallion centreline, so one pill or several
+       always share the same vertical midpoint instead of growing upward off a
+       fixed bottom edge. */
+    bottom: 47px;
+    transform: translate(-50%, 50%);
+    z-index: 120;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    max-width: 150px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .12s ease;
+  }
+
+  html body.single-player-v2.generated-sheet-ready .pattern-hint-stack.is-visible {
+    opacity: 1;
+  }
+
   /* Use the same full-page background as desktop instead of the generated
      mobile table skin and its extra texture/vignette overlay. */
   html body.single-player-v2 {
@@ -2681,6 +2738,16 @@ html body.single-player-v2 #spread .slot > .card.hint-multi:not(.ability-target)
   body.single-player-v2.generated-sheet-ready {
     --spv2-compact-hud-h: clamp(76px, 11dvh, 94px);
     --spv2-hud-top: 8.2dvh;
+  }
+
+  /* Pattern hint text moves to the fixed #patternHintStack panel in the gap
+     between the bottom utility medallions (see spreadHints.css), so the classic
+     above-card pill is hidden here. This lives in spv2Core rather than beside
+     the stack styles because that pill (hand.css's .card[data-hint]::after) is
+     in the later classicCore layer -- a normal-tier display:none only beats it
+     from a still-later layer, avoiding an importance override. */
+  body.single-player-v2.generated-sheet-ready .card[data-hint]::after {
+    display: none;
   }
 
   body.single-player-v2.generated-sheet-ready #titleWrap {

@@ -6,6 +6,16 @@
     --spv2-hud-top: 8.2dvh;
   }
 
+  /* Pattern hint text moves to the fixed #patternHintStack panel in the gap
+     between the bottom utility medallions (see spreadHints.css), so the classic
+     above-card pill is hidden here. This lives in spv2Core rather than beside
+     the stack styles because that pill (hand.css's .card[data-hint]::after) is
+     in the later classicCore layer -- a normal-tier display:none only beats it
+     from a still-later layer, avoiding an importance override. */
+  body.single-player-v2.generated-sheet-ready .card[data-hint]::after {
+    display: none;
+  }
+
   body.single-player-v2.generated-sheet-ready #titleWrap {
     pointer-events: none;
   }

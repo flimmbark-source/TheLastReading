@@ -16,15 +16,25 @@ function dedupeHints(hints){
   return out;
 }
 
-function hintText(hints){
+function labelWithProgress(hint){
+  const p=hint&&hint.progress;
+  const have=Number(p&&p.have);
+  const need=Number(p&&p.need);
+  if(hint?.level!=='complete'&&Number.isFinite(have)&&Number.isFinite(need)&&have>0&&need>0&&have<need){
+    return `${hint.label} (${have}/${need})`;
+  }
+  return hint.label;
+}
+
+function hintLabels(hints){
   const seen=new Set();
   const labels=[];
   for(const hint of hints||[]){
     if(seen.has(hint.label))continue;
     seen.add(hint.label);
-    labels.push(hint.label);
+    labels.push(labelWithProgress(hint));
   }
-  return labels.join(' + ');
+  return labels;
 }
 
 function hintRuntime(target=window){return target.tlrRuntime||{};}
@@ -112,5 +122,12 @@ export function applyHint(el,card,poolCards=null,hintState=null){
   // Pattern Hint Text (settings panel) only gates the label pill; the glow
   // classes/vars above are set unconditionally so turning the text off never
   // touches the hint glow itself.
-  if(hintSettings().patternText!==false)el.dataset.hint=hintText(hints);
+  if(hintSettings().patternText!==false){
+    const labels=hintLabels(hints);
+    el.dataset.hint=labels.join(' + ');
+    // Single-player mobile stacks each pattern on its own line in a fixed
+    // panel between the bottom utility medallions; patternHintStack.mjs reads
+    // this newline-joined attribute off the active card to build that panel.
+    el.dataset.hintLines=labels.join('\n');
+  }
 }

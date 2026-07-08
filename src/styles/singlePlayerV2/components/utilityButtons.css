@@ -24,7 +24,7 @@
        Individual translate composes with their existing positioning rules. */
     html body.single-player-v2.generated-sheet-ready .handDock,
     html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone {
-      translate: 0dvh;
+      translate: 0 -1.5dvh;
     }
 
     /* A small warm lift remains beneath the interface after the redundant
