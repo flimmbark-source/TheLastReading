@@ -546,5 +546,5 @@ export function installMarketBundleFlow(target = window) {
   target.openRewardBundleWithAnimation = bundleId => openRewardBundleWithAnimation(bundleId, target);
   target.refreshRewardBundleChoices = bundleId => refreshRewardBundleChoices(bundleId, target);
   target.showRewardBundleContents = bundleId => showRewardBundleContents(bundleId, target);
-  target.pickRewardBundleChoice = (bundleId, rewardKey) => pickRewardBundleChoice(bundleId, target);
+  target.pickRewardBundleChoice = (bundleId, rewardKey) => pickRewardBundleChoice(bundleId, rewardKey, target);
 }
