@@ -177,11 +177,11 @@ function ledger(overrides = {}) {
     run: {
       thresholdBonus: -25,
       spread: [
-        card(1, 'major_1', 'major', { number: 1 }),
-        card(2, 'major_2', 'major', { number: 2 }),
-        card(3, 'major_3', 'major', { number: 3 }),
-        card(4, 'court_Wands_Page', 'court', { rank: 'Page', suit: 'Wands' }),
-        card(5, 'court_Cups_Knight', 'court', { rank: 'Knight', suit: 'Cups' }),
+        card(1, 'court_Wands_Page', 'court', { rank: 'Page', suit: 'Wands' }),
+        card(2, 'court_Cups_Knight', 'court', { rank: 'Knight', suit: 'Cups' }),
+        card(3, 'court_Swords_Queen', 'court', { rank: 'Queen', suit: 'Swords' }),
+        card(4, 'court_Pentacles_King', 'court', { rank: 'King', suit: 'Pentacles' }),
+        card(5, 'major_1', 'major', { number: 1 }),
       ],
       roundDiscardCount: 3,
       initialDiscards: 3,
