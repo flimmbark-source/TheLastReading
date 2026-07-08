@@ -24,6 +24,10 @@ function scorePillBase(target,state){
   return Number.isFinite(round)?round:0;
 }
 
+function notifyTrackGhosts(target, action, beforeRun, afterRun) {
+  if (typeof target.tlrMaybeFireTrackGhosts === 'function') target.tlrMaybeFireTrackGhosts(action, beforeRun, afterRun);
+}
+
 export function shouldAnnounceMeld(meld,target = window){
   const name=meld?.[0];
   if(!name)return false;
@@ -49,6 +53,7 @@ export function placeCard(slotIndex,target = window, explicitCardUid = null){
 
   const card=state.hand[handIndex];
   const storeReady=target.tlrStore&&target.tlrActions&&typeof target.tlrStore.getState==='function';
+  const beforeRun=storeReady?target.tlrStore.getState().run:null;
   if(storeReady){
     call(target,'tlrSyncRunToStore');
     target.tlrStore.dispatch({type:target.tlrActions.PLACE_CARD,slotIndex,cardUid});
@@ -57,10 +62,12 @@ export function placeCard(slotIndex,target = window, explicitCardUid = null){
     state.hand=newRun.hand.slice();
     state.spread=newRun.spread.slice();
     state.selected=newRun.selectedCardId;
+    notifyTrackGhosts(target,{type:target.tlrActions.PLACE_CARD,slotIndex,cardUid},beforeRun,newRun);
   } else {
     state.hand.splice(handIndex,1);
     state.spread[slotIndex]=card;
     state.selected=null;
+    notifyTrackGhosts(target,{type:'PLACE_CARD',slotIndex,cardUid},null,state);
   }
   target._cachedPlacedScore=null;
 
