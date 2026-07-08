@@ -27,9 +27,6 @@ function syncStorePersistToLegacy(target = window) {
 }
 
 function ensureBundleStyles(target = window) {
-  // Reuse the shared storefront chrome (shell, candle, dim, offer rows, meta,
-  // proceed button, reduced-motion rules) that the bundle market also depends
-  // on, then layer only the bundle-specific accents and picker styles on top.
   ensureStoreFrontStyles(target);
   const doc = target.document;
   if (!doc || doc.getElementById('market-bundle-flow-style')) return;
@@ -113,14 +110,6 @@ function bundleMarketInner(target = window) {
     <div class="store-footer">
       <button class="store-proceed" ${hasBundles ? 'disabled' : ''} onclick="storeExitToNextReading()">Next Reading →</button>
     </div>`;
-}
-
-function renderBundleMarket(target = window) {
-  ensureBundleStyles(target);
-  const front = target.document?.getElementById('storeFront') || target.document?.querySelector('.store-front-shell .store-front');
-  if (!front) return false;
-  front.innerHTML = bundleMarketInner(target);
-  return true;
 }
 
 function showBundleMarket(target = window) {
@@ -356,5 +345,5 @@ export function installMarketBundleFlow(target = window) {
   target.openShop = () => openBundleMarket(target);
   target.openRewardBundleWithAnimation = bundleId => openRewardBundleWithAnimation(bundleId, target);
   target.showRewardBundleContents = bundleId => showRewardBundleContents(bundleId, target);
-  target.pickRewardBundleChoice = (bundleId, rewardKey) => pickRewardBundleChoice(bundleId, target);
+  target.pickRewardBundleChoice = (bundleId, rewardKey) => pickRewardBundleChoice(bundleId, rewardKey, target);
 }
