@@ -112,10 +112,10 @@ export function placeCard(slotIndex,target = window, explicitCardUid = null){
         call(target,'haptic',[0,10,35,12]);
       },delay+announceOffset);
     }else if(relicKey){
-      setTimeout(()=>{
-        call(target,'playSound','relic');
-        call(target,'haptic',[0,14,30]);
-      },ghostDelay);
+      // setTimeout(()=>{
+      //  call(target,'playSound','relic');
+      //  call(target,'haptic',[0,14,30]);
+      // },ghostDelay);
     }
     if(meld[2]>0){
       const raw=meld[3]==='add'?meld[2]:meld[2]-1;
