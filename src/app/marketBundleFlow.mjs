@@ -46,6 +46,13 @@ function ensureBundleStyles(target = window) {
     .store-bundle-note{font:700 11px/1.35 system-ui,sans-serif;color:#8a7551;text-align:center;margin-top:8px}
     .bundle-result-row td{color:#b8a882!important}
     .bundle-result-row.complete td:first-child{color:#f0dfbd!important}
+    .reward-bundle-picker{width:min(96vw,620px);margin:0 auto;padding:10px 0 4px;background:transparent!important;border:0!important;box-shadow:none!important}
+    .reward-bundle-picker .pack-picker-header{margin:0 0 10px;padding:0 10px;background:transparent!important;border:0!important;box-shadow:none!important;text-align:center}
+    .reward-bundle-picker .pack-picker-header h3{margin:0 0 4px}
+    .reward-bundle-picker .pack-picker-header p{margin:0;color:#b8a882}
+    .reward-bundle-picker .shop-items-row{display:flex!important;flex-direction:row!important;align-items:stretch!important;justify-content:center!important;gap:10px!important;flex-wrap:nowrap!important;overflow-x:auto!important;padding:0 6px 8px;scroll-snap-type:x proximity}
+    .reward-bundle-picker .upg-card{flex:0 0 min(30vw,170px)!important;max-width:170px!important;min-width:128px!important;scroll-snap-align:center;background:rgba(19,14,10,.74)!important}
+    @media(max-width:480px){.reward-bundle-picker{width:98vw}.reward-bundle-picker .shop-items-row{justify-content:flex-start!important;gap:8px!important}.reward-bundle-picker .upg-card{flex-basis:31vw!important;min-width:112px!important}.reward-bundle-picker .upg-desc{font-size:10px!important;line-height:1.25!important}}
   `;
   doc.head.appendChild(style);
 }
@@ -96,7 +103,7 @@ function buildRewardBundlePicker(bundle, target = window) {
   const display = MARKET_BUNDLES[bundle.bundleId] || {};
   const title = display.name || 'Reward Bundle';
   const keys = bundle.rewardKeys || [];
-  let html = '<div class="summary tarot-shop">';
+  let html = '<div class="reward-bundle-picker">';
   html += `<div class="pack-picker-header"><h3>${escapeHtml(title)}</h3><p>Choose 1 reward.</p></div>`;
   html += '<div class="shop-items-row">';
   const persist = persistOf(target);
@@ -186,10 +193,32 @@ function patchResultsOverlay(target = window) {
   }
 }
 
+function installResultsPatchObserver(target = window) {
+  const doc = target.document;
+  const summary = doc?.getElementById('summary');
+  if (!summary || target.__tlrMarketBundleResultsObserver) return;
+
+  let queued = false;
+  const schedule = () => {
+    if (queued) return;
+    queued = true;
+    target.setTimeout?.(() => {
+      queued = false;
+      patchResultsOverlay(target);
+    }, 0);
+  };
+
+  const observer = new MutationObserver(schedule);
+  observer.observe(summary, { childList: true, subtree: true });
+  target.__tlrMarketBundleResultsObserver = observer;
+  schedule();
+}
+
 export function installMarketBundleFlow(target = window) {
   if (!target || target.__tlrMarketBundleFlowInstalled) return;
   target.__tlrMarketBundleFlowInstalled = true;
   ensureBundleStyles(target);
+  installResultsPatchObserver(target);
 
   const originalOpenShopMain = target.openShopMain;
   if (typeof originalOpenShopMain === 'function') {
@@ -201,16 +230,7 @@ export function installMarketBundleFlow(target = window) {
     };
   }
 
-  const originalScoreReading = target.scoreReading;
-  if (typeof originalScoreReading === 'function') {
-    target.scoreReading = function scoreReadingWithBundleResults(...args) {
-      const result = originalScoreReading.apply(this, args);
-      target.setTimeout?.(() => patchResultsOverlay(target), 0);
-      return result;
-    };
-  }
-
   target.openRewardBundleWithAnimation = bundleId => openRewardBundleWithAnimation(bundleId, target);
   target.showRewardBundleContents = bundleId => showRewardBundleContents(bundleId, target);
-  target.pickRewardBundleChoice = (bundleId, rewardKey) => pickRewardBundleChoice(bundleId, rewardKey, target);
+  target.pickRewardBundleChoice = (bundleId, rewardKey) => pickRewardBundleChoice(bundleId, target);
 }
