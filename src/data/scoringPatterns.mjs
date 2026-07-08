@@ -44,6 +44,10 @@ export const DEFAULT_UPGRADES = Object.freeze({
   wands_mult: 0,
   swords_mult: 0,
   pentacles_mult: 0,
+  patient_reading: 0,
+  first_answer: 0,
+  familiar_face: 0,
+  court_favor: 0,
 });
 
 export const SCORING_PATTERNS = Object.freeze({
