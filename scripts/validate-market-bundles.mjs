@@ -14,8 +14,6 @@ function ledger(overrides = {}) {
     thresholdIndex: 0,
     patterns: { sequenceMelds: 0, sequenceBestLength: 0, courtMelds: 0, fullCourtMelds: 0, royalCourtMelds: 0, rankMelds: 0, pathMelds: 0, echoBestKind: 0, hasPair: false, hasThreeOfKind: false, hasFourOfKind: false },
     cards: { courtsInSpread: 0, openingHandCardsInSpread: 0 },
-    // Neutral baseline for tests: a normal, slightly-intervened reading should
-    // not automatically become either Restless or Stillness.
     actions: { discardsUsed: 1, initialDiscards: 3, allDiscardsUsed: false, abilityTakenCards: 1, mulligansUsed: 0 },
     ...overrides,
   };
@@ -53,17 +51,16 @@ function ledger(overrides = {}) {
     actions: { discardsUsed: 3, initialDiscards: 3, allDiscardsUsed: true, abilityTakenCards: 2, mulligansUsed: 0 },
     cards: { openingHandCardsInSpread: 4 },
   }));
-  assert.ok(evaluated.awarded.restless, 'dominant restless wins intervention axis');
-  assert.ok(!evaluated.awarded.stillness, 'stillness is suppressed when restless is stronger');
+  assert.ok(evaluated.awarded.restless, 'restless is awarded when earned');
+  assert.ok(evaluated.awarded.stillness, 'stillness is also awarded when earned');
 }
 
 {
   const evaluated = evaluateMarketBundleTracks(ledger({
-    actions: { discardsUsed: 0, initialDiscards: 3, allDiscardsUsed: false, abilityTakenCards: 0, mulligansUsed: 0 },
-    cards: { openingHandCardsInSpread: 4 },
+    patterns: { sequenceBestLength: 4, echoBestKind: 3, hasThreeOfKind: true },
   }));
-  assert.ok(evaluated.awarded.stillness, 'dominant stillness wins intervention axis');
-  assert.ok(!evaluated.awarded.restless, 'restless is suppressed when stillness is stronger');
+  assert.ok(evaluated.awarded.sequence, 'sequence is awarded when earned');
+  assert.ok(evaluated.awarded.echo, 'echo is also awarded when earned');
 }
 
 {
@@ -104,6 +101,18 @@ function ledger(overrides = {}) {
   const persist = createInitialPersistState();
   const result = advanceMarketBundleProgress(persist, ledger({ cards: { courtsInSpread: 4 }, patterns: { fullCourtMelds: 1, courtMelds: 1 } }));
   assert.equal(result.generatedBundles[0].bundleId, 'court_bundle', 'court play creates Court bundle');
+}
+
+{
+  const persist = createInitialPersistState();
+  const result = advanceMarketBundleProgress(persist, ledger({
+    actions: { discardsUsed: 3, initialDiscards: 3, allDiscardsUsed: true, abilityTakenCards: 2, mulligansUsed: 0 },
+    cards: { courtsInSpread: 4, openingHandCardsInSpread: 4 },
+    patterns: { sequenceBestLength: 4, echoBestKind: 3, hasThreeOfKind: true, fullCourtMelds: 1, courtMelds: 1 },
+  }));
+  const bundleIds = result.generatedBundles.map(bundle => bundle.bundleId).sort();
+  assert.deepEqual(bundleIds, ['court_bundle', 'echo_bundle', 'restless_bundle', 'sequence_bundle'].sort(), 'all earned bundles are queued');
+  assert.ok(result.deltas.every(delta => !delta.deferred), 'no earned bundle is deferred');
 }
 
 {
