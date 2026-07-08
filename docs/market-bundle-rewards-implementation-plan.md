@@ -1,29 +1,21 @@
-# Market Bundle Rewards — Implementation Plan
+# Market Bundle Rewards - Grounded Implementation Plan
 
-This plan defines the data layer and implementation path for replacing the Reserve-driven Market with a Results-driven track system that creates pack-like reward bundles.
+This replaces the first draft of this plan. The first draft mixed design examples with implementation facts. This version starts from the current repo data and only proposes new concepts where the existing code does not already have one.
 
-The design decision is:
+Core decision remains:
 
-- **Results screen explains what happened.**
-- **Market shows only reward bundles.**
-- **Opening a bundle reveals reward choices like a pack.**
-- **The Market should not display track progress, thresholds, or reward-pool internals.**
-
-No gameplay implementation should begin until this plan is reviewed.
+- Results explains track progress and bundle unlocks.
+- Market only shows unopened reward bundles.
+- Opening a bundle reuses the existing pack-like choose-one pattern.
+- The first implementation should be data-first and should not invent new reward ids when an existing `SHOP` key already represents the reward.
 
 ---
 
-## 1. Current architecture constraints
+## 1. Verified repo inventory
 
-The current store architecture already has the right broad shape:
+### 1.1 State ownership
 
-- Persistent run upgrades/relics live in `persist` via `createInitialPersistState()`.
-- Per-reading/per-round state lives in `run` via `createInitialRunState()`.
-- The reducer owns scoring, market entry, purchases, and market exit.
-- Current Market purchase handling is still cost-oriented through `BUY_MARKET_ITEM` and `buyMarketPurchase()`.
-- The current Market UI is a compact overlay with candle, rows, refresh, reserve, and next-reading button.
-
-Important current state fields that this plan must not break:
+Store-side persistent state currently lives in `createInitialPersistState()`:
 
 ```js
 persist: {
@@ -39,19 +31,22 @@ persist: {
   stampedMajors,
   stampedFive,
 }
+```
 
+Store-side run state currently includes fields we can use for end-of-reading telemetry:
+
+```js
 run: {
   phase,
-  hand,
-  deck,
-  discard,
-  spread,
+  reading,
   thresholdIndex,
   roundScore,
   setScores,
   roundDiscardCount,
   roundPatternCount,
-  pendingReserve,
+  discardedCards,
+  abilityTakenCardIds,
+  sightChargesUsed,
   lastScore,
   lastSetScore,
   lastThreshold,
@@ -60,466 +55,349 @@ run: {
 }
 ```
 
-The new system should add fields, not remove old ones in the first pass.
+Legacy runtime state is still separate. It uses `persist.pool` and `persist.up`, then bridges to store-side `reserve` and `upgrades`.
 
----
+Implementation implication:
 
-## 2. Target player-facing flow
+- New durable bundle/track fields should be added to store-side `persist`.
+- If the legacy UI reads or writes them before migration is complete, matching fields must also be mirrored into legacy `persist`.
+- The bridge currently syncs `reserve`, `totalScore`, `upgrades`, `relics`, `relicUsed`, and `stampedMajors`. It does not yet sync `stampedFive`, market progress, pending bundles, or last results.
 
-### 2.1 Reading end
+### 1.2 Existing Market rows
 
-When a round clears the threshold:
+The current Market UI is already the right visual structure for the bundle screen:
 
-1. The score resolves normally.
-2. A **reading ledger** is created from the completed round.
-3. The ledger advances Market tracks.
-4. Completed track milestones create **pending reward bundles**.
-5. The game enters a Results screen.
+- candle at top,
+- compact meta row,
+- vertical full-width offer rows,
+- left art,
+- center title/description,
+- right action button,
+- bottom `Next Reading` button.
 
-### 2.2 Results screen
+The current `openShopMain()` renders:
 
-The Results screen explains the system:
-
-```text
-Reading Results
-Score: 64 / 30
-
-Track Progress
-Sequence Complete — 5 / 5
-Restless Complete — 8 / 8
-Court — 2 / 3
-
-2 bundles added to the Market
+```html
+store-meta
+store-offer-row
+  scoring card
+  pack card
+  relic/vessel card
+store-footer
+  Next Reading
 ```
 
-The Results screen is where the player sees track progress, completion, and why bundles were created.
+Implementation implication:
 
-### 2.3 Market screen
+- Do not make a new full-screen reward menu.
+- Replace the current three offer rows with bundle rows when the bundle system is active.
+- Preserve the existing `store-card` row component style as much as possible.
 
-The Market remains compact and bundle-only:
+### 1.3 Existing rewards and packs
 
-```text
-REFRESH ✦ 10              BUNDLES 2
+The current authoritative live market data is `src/data/legacyMarket.mjs`.
 
-BUNDLE
-SEQUENCE BUNDLE
-Open to reveal a Sequence reward.      OPEN
-
-BUNDLE
-RESTLESS BUNDLE
-Open to reveal a Restless reward.      OPEN
-
-NEXT READING →
-```
-
-The Market does **not** show:
-
-- track progress bars,
-- thresholds,
-- `5/5` or `8/8`,
-- the reward choices before opening,
-- the exact reason the bundle exists.
-
-That context belongs on the Results screen.
-
-### 2.4 Bundle opening
-
-Tapping `OPEN` reveals a pack-like choice state:
-
-```text
-Sequence Bundle
-Choose 1 Sequence reward
-
-Five Star Stamp
-Sequence Bonus
-Major Bridge
-```
-
-The player chooses one reward. The chosen reward is applied immediately. The bundle is marked claimed.
-
----
-
-## 3. New data files
-
-### 3.1 `src/data/marketTracks.mjs`
-
-Owns track configuration and track-to-bundle metadata.
+Important existing pack ids:
 
 ```js
-export const MARKET_TRACK_IDS = Object.freeze({
-  SEQUENCE: 'sequence',
-  RESTLESS: 'restless',
-  COURT: 'court',
-  ROYAL_COURT: 'royal_court',
-  MAJOR: 'major',
-  SIGHT: 'sight',
-  THREAD: 'thread',
-  PURGE: 'purge',
-  RELIC: 'relic',
-  STAMP: 'stamp',
-});
+PACKS = {
+  foundation,
+  ritual,
+  pattern,
+  innate,
+  restless,
+  relic,
+  second_sight,
+  thread,
+}
+```
 
-export const MARKET_TRACKS = Object.freeze({
+Important clarification:
+
+- `restless` exists today as a **pack id**: `Restless Hands Pack`.
+- `restless` is **not** currently a gameplay track entity.
+- It maps to the `draw` SHOP category.
+- If we use `Restless Bundle` as a player-facing bundle name, the implementation should still treat the track as a new `draw_discard` track unless we deliberately choose to reuse `restless` as the track id.
+
+Existing `Restless Hands Pack` reward keys in `SHOP`:
+
+```js
+discards
+mulligan
+ritual_depth
+nimble_fingers
+quick_release
+```
+
+Existing Sequence-related reward keys in `SHOP`:
+
+```js
+sequence      // paired with seq_mult in old scoring upgrade flow
+five_stamp    // stamp picker reward, not a numeric upgrade
+first_light   // existing Innate reward that can serve as first-pass bridge-style reward
+```
+
+Existing Court-related reward keys in `SHOP`:
+
+```js
+court_chips          // paired with court_mult
+royal_court_chips    // paired with royal_court_mult
+suit_stamp           // stamp picker reward
+rank                 // rank pattern reward, paired with rank_mult
+```
+
+Existing stamp flow:
+
+- `openFiveStampPicker()` selects any non-stamped card and writes `persist.stampedFive`.
+- `openStampPicker()` selects eligible Major Arcana and writes `persist.stampedMajors`.
+
+Implementation implication:
+
+- First-pass bundle rewards should choose from existing `SHOP` keys.
+- Bundle choices should not create new reward ids like `major_bridge` unless we also implement a real data definition for it.
+- For first pass, display the existing reward names from `SHOP`.
+- Later we can add bundle-specific display aliases, but the apply layer should still point to a real `SHOP` key or real relic id.
+
+### 1.4 Existing pack opening behavior
+
+Current paid pack opening already does most of the UX we want:
+
+- `buyPack(packId, cost)` charges Reserve, plays pack animation, then reveals a choose-one picker.
+- `buildUpgradePicker(packId)` gets the pack pool from `PACKS[packId].pool`, finds matching `SHOP` rows, shuffles them, and shows 3 options.
+- `pickPackUpgrade(upgradeKey)` applies the selected upgrade through the store purchase bridge.
+
+Implementation implication:
+
+- Bundle opening should reuse the same animation/choice style, but **not** use the paid `buyPack()` path.
+- Bundle choices must be generated once and saved into the bundle. Current pack picker re-randomizes from the pool when built, which is not safe for save/load or rerender.
+- Bundle claiming should apply a free reward. It should not dispatch a fake paid pack purchase with cost 0 unless that is explicitly wrapped and validated.
+
+### 1.5 Existing scoring telemetry
+
+`computeScore()` returns a score object with `melds` and `finalScore`.
+
+Meld names are generated from current logic:
+
+```js
+Three of a Kind (${rank}s)
+Four of a Kind (${rank}s)
+Full Court (${tier})
+Royal Court (${tier}, ${royalSuit})
+Sequence of ${tier}
+Path of the Magi
+```
+
+Implementation implication:
+
+- Track progress should read `score.melds` after scoring.
+- Do not re-detect scoring patterns in the track system.
+- If a pattern name changes later, the ledger helper must be updated or moved closer to scoring constants.
+
+### 1.6 Existing action telemetry
+
+Current reliable telemetry:
+
+```js
+run.roundDiscardCount
+run.roundPatternCount
+run.setScores
+run.roundScore
+run.discardedCards
+run.abilityTakenCardIds
+run.sightChargesUsed
+```
+
+`roundDiscardCount` increments when `DISCARD_SELECTED` succeeds.
+
+Implementation implication:
+
+- First-pass draw/discard progress can use `roundDiscardCount`.
+- Do not build a Sight track yet unless we add reliable ability-use counters. `sightChargesUsed` only tracks free sight charges, not all sight use.
+- Do not build a Purge track yet unless we add a `roundPurgeCount` counter. `CONFIRM_PURGE` currently exists, but the reducer/run state does not expose a cumulative purge counter in the same way.
+- Do not build a Relic trigger track yet unless we add relic trigger telemetry.
+
+---
+
+## 2. First-pass scope
+
+Implement only these three tracks:
+
+```js
+sequence
+court
+draw_discard
+```
+
+Player-facing bundle names:
+
+```js
+sequence_bundle -> Sequence Bundle
+court_bundle -> Court Bundle
+draw_discard_bundle -> Restless Bundle
+```
+
+Why `draw_discard` instead of `restless` as the track id?
+
+- `restless` already means an existing pack id.
+- The new track should describe the measured behavior: draw/discard play.
+- The bundle can still be called `Restless Bundle` to match existing market language.
+
+Do not implement these tracks in first pass:
+
+```js
+sight
+thread
+purge
+relic
+stamp
+major
+royal_court as a separate track
+```
+
+They are candidates after telemetry is added or after the core loop is proven.
+
+---
+
+## 3. Data model
+
+### 3.1 New `src/data/marketBundleTracks.mjs`
+
+This file owns track config, bundle display metadata, and reward key pools. It should use existing `SHOP` keys.
+
+```js
+export const MARKET_BUNDLE_TRACKS = Object.freeze({
   sequence: {
     id: 'sequence',
     label: 'Sequence',
-    bundleId: 'sequence_bundle',
     thresholds: [2, 5, 10, 18, 30],
-    progressKey: 'sequenceCount',
-    icon: 'sequence',
-    reasonTemplates: {
-      complete: 'You scored {value} total Sequences.',
-      progress: 'Sequences scored: {after} / {threshold}.',
-    },
-  },
-
-  restless: {
-    id: 'restless',
-    label: 'Restless',
-    bundleId: 'restless_bundle',
-    thresholds: [3, 8, 15, 25],
-    progressKey: 'discardCount',
-    icon: 'restless',
-    reasonTemplates: {
-      complete: 'You used {value} total Discards.',
-      progress: 'Discards used: {after} / {threshold}.',
-    },
+    bundleId: 'sequence_bundle',
+    progressMetric: 'sequenceMelds',
   },
 
   court: {
     id: 'court',
     label: 'Court',
+    thresholds: [2, 5, 9, 14, 20],
     bundleId: 'court_bundle',
-    thresholds: [3, 7, 12, 20],
-    progressKey: 'courtScore',
-    icon: 'court',
-    reasonTemplates: {
-      complete: 'Your Court reading reached {value}.',
-      progress: 'Court progress: {after} / {threshold}.',
-    },
+    progressMetric: 'courtMelds',
+  },
+
+  draw_discard: {
+    id: 'draw_discard',
+    label: 'Draw/Discard',
+    thresholds: [3, 8, 15, 25],
+    bundleId: 'draw_discard_bundle',
+    progressMetric: 'discardsUsed',
   },
 });
 ```
 
-Initial implementation should ship only `sequence`, `restless`, and `court`. Other tracks can be declared later after the loop is proven.
+Threshold notes:
 
-### 3.2 `src/data/marketBundles.mjs`
+- These are placeholder tuning values.
+- They are cumulative within the run.
+- Each claimed tier raises the next target.
+- If a reading jumps across multiple thresholds, generate one bundle at the highest reached tier.
 
-Owns bundle display data. The Market renders these, not tracks.
+### 3.2 Bundle display data
 
 ```js
 export const MARKET_BUNDLES = Object.freeze({
   sequence_bundle: {
     id: 'sequence_bundle',
-    family: 'sequence',
+    trackId: 'sequence',
     name: 'Sequence Bundle',
-    shortDescription: 'Open to reveal a Sequence reward.',
+    description: 'Open to reveal a Sequence reward.',
     categoryLabel: 'Bundle',
-    icon: 'sequence_pack',
-    accent: 'gold',
-  },
-
-  restless_bundle: {
-    id: 'restless_bundle',
-    family: 'restless',
-    name: 'Restless Bundle',
-    shortDescription: 'Open to reveal a Restless reward.',
-    categoryLabel: 'Bundle',
-    icon: 'restless_pack',
-    accent: 'violet',
+    icon: 'isp-pattern',
+    accentClass: 'store-card--bundle-sequence',
   },
 
   court_bundle: {
     id: 'court_bundle',
-    family: 'court',
+    trackId: 'court',
     name: 'Court Bundle',
-    shortDescription: 'Open to reveal a Court reward.',
+    description: 'Open to reveal a Court reward.',
     categoryLabel: 'Bundle',
-    icon: 'court_pack',
-    accent: 'blue',
+    icon: 'isp-kin',
+    accentClass: 'store-card--bundle-court',
+  },
+
+  draw_discard_bundle: {
+    id: 'draw_discard_bundle',
+    trackId: 'draw_discard',
+    name: 'Restless Bundle',
+    description: 'Open to reveal a Restless reward.',
+    categoryLabel: 'Bundle',
+    icon: 'isp-restless',
+    accentClass: 'store-card--bundle-restless',
+    sourcePackId: 'restless',
   },
 });
 ```
 
-### 3.3 `src/data/marketRewards.mjs`
-
-Owns reward definitions and tiered pools.
+### 3.3 Reward pools use existing `SHOP` keys
 
 ```js
-export const MARKET_REWARD_APPLY_TYPES = Object.freeze({
-  UPGRADE: 'upgrade',
-  RELIC: 'relic',
-  STAMP: 'stamp',
-  CARD_MOD: 'card_mod',
-  BUNDLE_MOD: 'bundle_mod',
-});
-
-export const MARKET_REWARDS = Object.freeze({
-  sequence_bonus: {
-    id: 'sequence_bonus',
-    family: 'sequence',
-    rarity: 'common',
-    name: 'Sequence Bonus',
-    description: 'Sequences gain more Chips.',
-    icon: 'sequence_bonus',
-    apply: { type: 'upgrade', upgradeKey: 'sequence', amount: 1 },
+export const MARKET_BUNDLE_REWARD_POOLS = Object.freeze({
+  sequence_bundle: {
+    common: ['sequence', 'five_stamp', 'first_light'],
+    later: ['sequence', 'five_stamp', 'first_light', 'path_chips'],
   },
 
-  five_star_stamp: {
-    id: 'five_star_stamp',
-    family: 'sequence',
-    rarity: 'common',
-    name: 'Five Star Stamp',
-    description: 'Choose a card to bridge Sequences.',
-    icon: 'five_star_stamp',
-    apply: { type: 'stamp', stampId: 'five_star' },
+  court_bundle: {
+    common: ['court_chips', 'royal_court_chips', 'suit_stamp'],
+    later: ['court_chips', 'royal_court_chips', 'suit_stamp', 'rank'],
   },
 
-  major_bridge: {
-    id: 'major_bridge',
-    family: 'sequence',
-    rarity: 'common',
-    name: 'Major Bridge',
-    description: 'First Major placed each reading gains Chips.',
-    icon: 'major_bridge',
-    apply: { type: 'upgrade', upgradeKey: 'first_light', amount: 1 },
-  },
-
-  extra_discard: {
-    id: 'extra_discard',
-    family: 'restless',
-    rarity: 'common',
-    name: 'Extra Discard',
-    description: '+1 Discard each reading.',
-    icon: 'extra_discard',
-    apply: { type: 'upgrade', upgradeKey: 'discards', amount: 1 },
-  },
-
-  nimble_fingers: {
-    id: 'nimble_fingers',
-    family: 'restless',
-    rarity: 'common',
-    name: 'Nimble Fingers',
-    description: 'After each Discard, draw 1 card.',
-    icon: 'nimble_fingers',
-    apply: { type: 'upgrade', upgradeKey: 'nimble_fingers', amount: 1 },
-  },
-
-  quick_release: {
-    id: 'quick_release',
-    family: 'restless',
-    rarity: 'common',
-    name: 'Quick Release',
-    description: 'Each discarded card adds Chips to the score.',
-    icon: 'quick_release',
-    apply: { type: 'upgrade', upgradeKey: 'quick_release', amount: 1 },
-  },
-
-  court_bonus: {
-    id: 'court_bonus',
-    family: 'court',
-    rarity: 'common',
-    name: 'Court Bonus',
-    description: 'Court patterns gain more Chips.',
-    icon: 'court_bonus',
-    apply: { type: 'upgrade', upgradeKey: 'court_chips', amount: 1 },
-  },
-});
-
-export const MARKET_REWARD_POOLS = Object.freeze({
-  sequence_common: ['five_star_stamp', 'sequence_bonus', 'major_bridge'],
-  sequence_uncommon: ['sequence_bonus', 'major_bridge'],
-
-  restless_common: ['extra_discard', 'nimble_fingers', 'quick_release'],
-  restless_uncommon: ['nimble_fingers', 'quick_release'],
-
-  court_common: ['court_bonus'],
-});
-
-export const MARKET_REWARD_POOL_BY_FAMILY_TIER = Object.freeze({
-  sequence: {
-    1: ['sequence_common'],
-    2: ['sequence_common', 'sequence_uncommon'],
-    3: ['sequence_uncommon'],
-  },
-  restless: {
-    1: ['restless_common'],
-    2: ['restless_common', 'restless_uncommon'],
-    3: ['restless_uncommon'],
-  },
-  court: {
-    1: ['court_common'],
+  draw_discard_bundle: {
+    common: ['discards', 'mulligan', 'nimble_fingers'],
+    later: ['discards', 'mulligan', 'ritual_depth', 'nimble_fingers', 'quick_release'],
   },
 });
 ```
+
+Important:
+
+- `first_light` is an existing `SHOP` key. Do not display it as `Major Bridge` in implementation unless a separate display alias is added.
+- `sequence` has a paired key `seq_mult` in legacy market data. Claim logic must respect `SHOP[key][6]` just like the scoring row does.
+- `court_chips`, `royal_court_chips`, `rank`, `path_chips`, `balanced_reading`, and `elemental_harmony` also have paired keys in legacy market data. Bundle reward application must support paired keys generally.
+- `five_stamp` and `suit_stamp` are not simple numeric upgrades. They must route to the existing stamp picker flow or an equivalent pending-card-choice state.
 
 ---
 
-## 4. New system files
+## 4. Persist/run state additions
 
-### 4.1 `src/systems/readingLedger.mjs`
+### 4.1 Store-side persist additions
 
-Creates a ledger from the scoring result and run context.
-
-Input:
+Add defaults to `createInitialPersistState()`:
 
 ```js
-buildReadingLedger({ state, score, threshold, passed })
+marketBundleProgress: normalizeMarketBundleProgress(overrides.marketBundleProgress),
+pendingRewardBundles: Array.isArray(overrides.pendingRewardBundles) ? [...overrides.pendingRewardBundles] : [],
+claimedRewardBundleIds: Array.isArray(overrides.claimedRewardBundleIds) ? [...overrides.claimedRewardBundleIds] : [],
 ```
 
-Output:
+Track progress shape:
 
 ```js
-{
-  id: 'reading_3_round_2',
-  reading: 3,
-  thresholdIndex: 2,
-  score: {
-    finalScore: 64,
-    threshold: 30,
-    cleared: true,
+marketBundleProgress: {
+  sequence: {
+    total: 0,
+    claimedTier: 0,
+    nextThreshold: 2,
   },
-  patterns: {
-    sequenceCount: 2,
-    fullCourtCount: 1,
-    royalCourtCount: 0,
-    threeOfKindCount: 0,
-    fourOfKindCount: 0,
-    pathOfMagiCount: 0,
+  court: {
+    total: 0,
+    claimedTier: 0,
+    nextThreshold: 2,
   },
-  cards: {
-    majorsPlaced: 3,
-    courtsPlaced: 2,
-    stampedCardsScored: 1,
-  },
-  actions: {
-    discardsUsed: 3,
-    purgesUsed: 0,
-    abilitiesUsed: 3,
-    sightAbilitiesUsed: 1,
-    threadAbilitiesUsed: 1,
-  },
-  relics: {
-    triggered: {},
+  draw_discard: {
+    total: 0,
+    claimedTier: 0,
+    nextThreshold: 3,
   },
 }
-```
-
-Implementation notes:
-
-- Use `score.melds` to count pattern names.
-- Do not re-run full pattern detection unless the score object is unavailable.
-- Count `run.roundDiscardCount` for restless progress.
-- Count `run.spread.filter(Boolean)` for card family data.
-- Initial implementation can leave `relics.triggered` empty unless relic trigger telemetry already exists.
-
-Pattern count helper:
-
-```js
-function patternCountsFromMelds(melds = []) {
-  const out = {
-    sequenceCount: 0,
-    fullCourtCount: 0,
-    royalCourtCount: 0,
-    threeOfKindCount: 0,
-    fourOfKindCount: 0,
-    pathOfMagiCount: 0,
-  };
-
-  for (const meld of melds) {
-    const name = typeof meld === 'string' ? meld : meld.name;
-    if (!name) continue;
-    if (name.startsWith('Sequence')) out.sequenceCount += 1;
-    else if (name.startsWith('Full Court')) out.fullCourtCount += 1;
-    else if (name.startsWith('Royal Court')) out.royalCourtCount += 1;
-    else if (name.startsWith('Three of a Kind')) out.threeOfKindCount += 1;
-    else if (name.startsWith('Four of a Kind')) out.fourOfKindCount += 1;
-    else if (name === 'Path of the Magi') out.pathOfMagiCount += 1;
-  }
-
-  return out;
-}
-```
-
-### 4.2 `src/systems/marketTracks.mjs`
-
-Owns track progress, completion detection, bundle generation, and result deltas.
-
-Public functions:
-
-```js
-export function createInitialMarketTrackState(overrides = {})
-export function advanceMarketTracks(persist, ledger, options = {})
-export function completedTracksFromDeltas(trackDeltas)
-export function nextThresholdForTrack(trackConfig, claimedTier)
-export function createBundleFromTrack(trackConfig, track, tier, ledger, options = {})
-```
-
-Core result:
-
-```js
-const result = advanceMarketTracks(persist, ledger, { rng });
-
-result.persist;
-result.trackDeltas;
-result.generatedBundles;
-```
-
-Track object shape:
-
-```js
-{
-  id: 'sequence',
-  total: 5,
-  claimedTier: 2,
-  nextThreshold: 10,
-  lastAdvancedReading: 3,
-}
-```
-
-Track delta shape:
-
-```js
-{
-  family: 'sequence',
-  name: 'Sequence',
-  gained: 2,
-  before: 3,
-  after: 5,
-  threshold: 5,
-  completed: true,
-  completedTier: 2,
-  generatedBundleId: 'bundle_r3_sequence_t2',
-  reason: 'You scored 5 total Sequences.',
-}
-```
-
-Compression rule:
-
-If a track crosses multiple unclaimed thresholds in one reading, generate **one bundle at the highest completed tier**.
-
-Example:
-
-```js
-before.total = 1
-ledger gains = 10
-thresholds = [2, 5, 10]
-```
-
-Generate one `sequence` bundle with `tier = 3`, not three bundles.
-
-### 4.3 `src/systems/marketBundles.mjs`
-
-Owns bundle opening and reward selection.
-
-Public functions:
-
-```js
-export function unopenedBundles(persist)
-export function openMarketBundle(persist, bundleId, options = {})
-export function generateBundleRewardChoices(bundle, persist, options = {})
-export function claimBundleReward(persist, bundleId, rewardId)
-export function applyMarketReward(persist, reward)
 ```
 
 Pending bundle shape:
@@ -528,85 +406,22 @@ Pending bundle shape:
 {
   id: 'bundle_r3_sequence_t2',
   bundleId: 'sequence_bundle',
-  family: 'sequence',
+  trackId: 'sequence',
   tier: 2,
   state: 'unopened', // unopened | opened | claimed
-  rewardChoices: null,
-  claimedRewardId: null,
+  rewardKeys: null, // set when opened
+  claimedRewardKey: null,
   source: {
-    ledgerId: 'reading_3_round_2',
     reading: 3,
-    reason: 'You scored 5 total Sequences.',
+    thresholdIndex: 2,
+    reason: 'Sequence Complete',
   },
 }
 ```
 
-Opened bundle shape:
+### 4.2 Store-side run additions
 
-```js
-{
-  ...bundle,
-  state: 'opened',
-  rewardChoices: ['five_star_stamp', 'sequence_bonus', 'major_bridge'],
-}
-```
-
-Claimed bundle shape:
-
-```js
-{
-  ...bundle,
-  state: 'claimed',
-  claimedRewardId: 'five_star_stamp',
-}
-```
-
-Choice generation requirements:
-
-- Generate exactly 3 choices when possible.
-- Save choices into the bundle on open.
-- Do not regenerate choices on render.
-- Exclude already-owned unique relics.
-- Exclude maxed upgrades where appropriate.
-- If fewer than 3 legal family rewards exist, fill from `general_common` later; in prototype, allow fewer choices rather than crashing.
-
-Reward apply requirements:
-
-- `upgrade`: increment `persist.upgrades[upgradeKey]`.
-- `relic`: add to `persist.relics`, respecting relic slots.
-- `stamp`: set a pending stamp selection field, not immediately mutate a random card.
-- `card_mod`: set a pending card modification selection field.
-
----
-
-## 5. State changes
-
-### 5.1 Persist state additions
-
-Add to `createInitialPersistState()`:
-
-```js
-marketTracks: createInitialMarketTrackState(overrides.marketTracks),
-pendingBundles: [...(overrides.pendingBundles || [])],
-claimedMarketRewards: [...(overrides.claimedMarketRewards || [])],
-pendingCardChoice: overrides.pendingCardChoice || null,
-```
-
-`pendingCardChoice` is for rewards like Five Star Stamp that require choosing a card after the bundle reward is selected.
-
-Example:
-
-```js
-pendingCardChoice: {
-  kind: 'stamp',
-  stampId: 'five_star',
-  sourceRewardId: 'five_star_stamp',
-}
-```
-
-### 5.2 Run state additions
-
-Add to `createInitialRunState()`:
+Add defaults to `createInitialRunState()`:
 
 ```js
 lastReadingLedger: overrides.lastReadingLedger || null,
@@ -614,472 +429,567 @@ lastResults: overrides.lastResults || null,
 openedBundleId: overrides.openedBundleId || null,
 ```
 
-### 5.3 Save compatibility
+### 4.3 Legacy runtime state additions
 
-`serializePersistState()` stores the whole `persist`, so new fields will serialize automatically.
+If legacy UI owns the first implementation, also add matching fields to `createInitialPersist()` in `runtimeState.mjs`:
 
-`deserializePersistState()` routes through `createInitialPersistState(parsed.persist)`, so adding defaults there handles old saves.
+```js
+marketBundleProgress: {},
+pendingRewardBundles: [],
+claimedRewardBundleIds: [],
+```
 
-Do not increment `SAVE_VERSION` in the first prototype unless old saves break. If field shape changes after testing, bump version later.
+The bridge must sync these fields in both directions while both state systems are live.
+
+### 4.4 Save compatibility
+
+`save.mjs` serializes the entire `persist` object and deserializes through `createInitialPersistState()`. Adding default fields in state is enough for old saves. Do not bump `SAVE_VERSION` unless testing shows old saves break.
 
 ---
 
-## 6. Reducer changes
+## 5. Reading ledger
 
-### 6.1 New actions
+### 5.1 New `src/systems/readingLedger.mjs`
+
+Build a ledger from existing score/run data.
+
+```js
+export function buildReadingLedger({ state, score, threshold, passed }) {
+  const { run } = state;
+  const cards = (run.spread || []).filter(Boolean);
+  const patternCounts = patternCountsFromMelds(score?.melds || []);
+
+  return {
+    id: `reading_${run.reading || 1}_threshold_${run.thresholdIndex || 0}`,
+    reading: run.reading || 1,
+    thresholdIndex: run.thresholdIndex || 0,
+    score: {
+      finalScore: score?.finalScore || 0,
+      threshold,
+      cleared: !!passed,
+    },
+    patterns: patternCounts,
+    cards: {
+      majorsPlaced: cards.filter(card => card.type === 'major').length,
+      courtsPlaced: cards.filter(card => card.type === 'court').length,
+      stampedFiveScored: countStamped(cards, state.persist?.stampedFive),
+      stampedMajorsScored: countStamped(cards, state.persist?.stampedMajors),
+    },
+    actions: {
+      discardsUsed: run.roundDiscardCount || 0,
+      abilityTakenCards: (run.abilityTakenCardIds || []).length,
+    },
+  };
+}
+```
+
+Pattern parser:
+
+```js
+export function patternCountsFromMelds(melds = []) {
+  const counts = {
+    sequenceMelds: 0,
+    fullCourtMelds: 0,
+    royalCourtMelds: 0,
+    rankMelds: 0,
+    pathMelds: 0,
+  };
+
+  for (const meld of melds) {
+    const name = Array.isArray(meld) ? meld[0] : meld?.name;
+    if (!name) continue;
+    if (name.startsWith('Sequence of ')) counts.sequenceMelds += 1;
+    else if (name.startsWith('Full Court')) counts.fullCourtMelds += 1;
+    else if (name.startsWith('Royal Court')) counts.royalCourtMelds += 1;
+    else if (name.startsWith('Three of a Kind') || name.startsWith('Four of a Kind')) counts.rankMelds += 1;
+    else if (name === 'Path of the Magi') counts.pathMelds += 1;
+  }
+
+  counts.courtMelds = counts.fullCourtMelds + counts.royalCourtMelds;
+  return counts;
+}
+```
+
+Do not add Sight, Thread, Purge, Relic, or Stamp tracks until ledger telemetry exists for them.
+
+---
+
+## 6. Track advancement and bundle generation
+
+### 6.1 New `src/systems/marketBundleProgress.mjs`
+
+Public API:
+
+```js
+export function normalizeMarketBundleProgress(overrides = {})
+export function advanceMarketBundleProgress(persist, ledger)
+export function completedTierForTotal(trackConfig, total)
+export function nextThreshold(trackConfig, claimedTier)
+```
+
+Main result shape:
+
+```js
+{
+  persist,
+  deltas: [
+    {
+      trackId: 'sequence',
+      label: 'Sequence',
+      before: 3,
+      gained: 2,
+      after: 5,
+      threshold: 5,
+      completed: true,
+      completedTier: 2,
+      bundleId: 'bundle_r3_sequence_t2',
+    }
+  ],
+  generatedBundles: [bundle]
+}
+```
+
+Progress mapping:
+
+```js
+function progressFromLedger(trackId, ledger) {
+  switch (trackId) {
+    case 'sequence':
+      return ledger.patterns.sequenceMelds || 0;
+    case 'court':
+      return ledger.patterns.courtMelds || 0;
+    case 'draw_discard':
+      return ledger.actions.discardsUsed || 0;
+    default:
+      return 0;
+  }
+}
+```
+
+Compression rule:
+
+- If progress crosses multiple thresholds in one reading, generate one bundle at the highest completed tier.
+- Example: Sequence total `1 -> 10` with thresholds `[2, 5, 10]` creates one tier 3 Sequence Bundle.
+
+Bundle id rule:
+
+```js
+`bundle_r${ledger.reading}_${trackId}_t${completedTier}`
+```
+
+If that id already exists in `pendingRewardBundles` or `claimedRewardBundleIds`, append a short suffix or do not generate a duplicate.
+
+---
+
+## 7. Bundle opening and reward claiming
+
+### 7.1 New `src/systems/marketRewardBundles.mjs`
+
+Public API:
+
+```js
+export function pendingBundleViews(persist)
+export function openRewardBundle(persist, bundleInstanceId, options = {})
+export function claimRewardFromBundle(persist, bundleInstanceId, rewardKey)
+export function applyFreeShopReward(persist, rewardKey)
+export function legalRewardKeysForBundle(persist, bundle, options = {})
+```
+
+Opening behavior:
+
+- Find bundle by instance id.
+- If `state !== 'unopened'`, return unchanged.
+- Generate 3 legal `SHOP` keys when possible.
+- Save them to `bundle.rewardKeys`.
+- Set `state = 'opened'`.
+- Do not regenerate choices on render.
+
+Legal reward filtering:
+
+- Key must exist in `SHOP`.
+- If key is a numeric upgrade, it should not exceed an optional cap if one is defined.
+- If key is `five_stamp`, only offer if there is at least one eligible card or if we can safely show the picker later.
+- If key is `suit_stamp`, only offer if there is an eligible Major with suits.
+- Retired `SHOP` categories should not appear unless explicitly listed in a bundle pool.
+
+Claiming behavior:
+
+- If reward is `five_stamp`, mark bundle claimed and open existing Five Star picker from UI, or set a pending card choice if implementing in reducer-only flow.
+- If reward is `suit_stamp`, same but use Suit Stamp picker.
+- Otherwise apply it as a free upgrade using the existing `SHOP` key.
+- Respect paired keys: `SHOP[rewardKey][6]` should also increment if present.
+
+Store-side helper:
+
+```js
+export function applyFreeShopReward(persist, rewardKey, shop = SHOP) {
+  const row = shop[rewardKey];
+  if (!row) return { persist, applied: false, reason: 'missing_shop_key' };
+
+  if (rewardKey === 'five_stamp') return { persist, applied: false, reason: 'requires_five_stamp_picker' };
+  if (rewardKey === 'suit_stamp') return { persist, applied: false, reason: 'requires_suit_stamp_picker' };
+
+  const pairedKey = row[6] || null;
+  const upgrades = { ...(persist.upgrades || {}) };
+  upgrades[rewardKey] = (upgrades[rewardKey] || 0) + 1;
+  if (pairedKey) upgrades[pairedKey] = (upgrades[pairedKey] || 0) + 1;
+
+  return { persist: { ...persist, upgrades }, applied: true, rewardKey, pairedKey };
+}
+```
+
+Legacy helper must mirror this for `persist.up` while legacy state is still active.
+
+---
+
+## 8. Reducer integration
+
+### 8.1 New actions
 
 Add to `ACTIONS`:
 
 ```js
-OPEN_RESULTS: 'OPEN_RESULTS',
 ENTER_MARKET_FROM_RESULTS: 'ENTER_MARKET_FROM_RESULTS',
-OPEN_MARKET_BUNDLE: 'OPEN_MARKET_BUNDLE',
-CLAIM_BUNDLE_REWARD: 'CLAIM_BUNDLE_REWARD',
-CLOSE_BUNDLE: 'CLOSE_BUNDLE',
-REROLL_BUNDLE_CHOICES: 'REROLL_BUNDLE_CHOICES',
+OPEN_REWARD_BUNDLE: 'OPEN_REWARD_BUNDLE',
+CLAIM_REWARD_BUNDLE_CHOICE: 'CLAIM_REWARD_BUNDLE_CHOICE',
+CLOSE_REWARD_BUNDLE: 'CLOSE_REWARD_BUNDLE',
 ```
 
-### 6.2 Phase changes
-
-Add a Results phase:
+Add phase:
 
 ```js
 RESULTS: 'results'
 ```
 
-Flow after pass:
+### 8.2 Scoring pass integration
 
-Current:
+Current pass goes directly to `GAME_PHASES.MARKET` and adds `pendingReserve`. New flow should go to `GAME_PHASES.RESULTS` and create bundle data.
 
-```js
-phase: GAME_PHASES.MARKET
-```
-
-New:
+Reducer pass path:
 
 ```js
-phase: GAME_PHASES.RESULTS
-```
+const ledger = buildReadingLedger({ state, score, threshold, passed: true });
+const bundleProgress = advanceMarketBundleProgress(persist, ledger);
 
-The Results screen then transitions to Market.
-
-### 6.3 `scoreReading()` integration
-
-On pass:
-
-1. Compute score as today.
-2. Compute `ledger = buildReadingLedger({ state, score, threshold, passed: true })`.
-3. Compute `{ persist: trackPersist, trackDeltas, generatedBundles } = advanceMarketTracks(persist, ledger)`.
-4. Set `run.phase = GAME_PHASES.RESULTS`.
-5. Set `run.lastReadingLedger = ledger`.
-6. Set `run.lastResults = { score, threshold, trackDeltas, generatedBundleIds }`.
-7. Update `persist` with `trackPersist`.
-8. Keep existing `totalScore`, `thresholdIndex`, `worldCarry`, etc.
-
-Pseudo-patch:
-
-```js
-if (passed) {
-  const ledger = buildReadingLedger({ state, score, threshold, passed: true });
-  const trackResult = advanceMarketTracks(persist, ledger, { rng: action.rng || Math.random });
-
-  return {
-    run: {
-      ...run,
-      ...common,
-      phase: GAME_PHASES.RESULTS,
-      thresholdIndex: run.thresholdIndex + 1,
-      lastPassed: true,
-      lastOutcome: 'pass',
-      awaitingNextSet: false,
-      pendingReserve: 0,
-      lastReadingLedger: ledger,
-      lastResults: {
-        score: score.finalScore,
-        threshold,
-        cleared: true,
-        trackDeltas: trackResult.trackDeltas,
-        generatedBundleIds: trackResult.generatedBundles.map(b => b.id),
-      },
-      worldCarry: worldCarryFromRelics(persist.relics, roundScore, threshold),
-      relicEarned: false,
+return {
+  ...state,
+  run: {
+    ...state.run,
+    ...common,
+    phase: GAME_PHASES.RESULTS,
+    thresholdIndex: run.thresholdIndex + 1,
+    lastPassed: true,
+    lastOutcome: 'pass',
+    awaitingNextSet: false,
+    pendingReserve: 0,
+    lastReadingLedger: ledger,
+    lastResults: {
+      finalScore: roundScore,
+      threshold,
+      cleared: true,
+      trackDeltas: bundleProgress.deltas,
+      generatedBundleIds: bundleProgress.generatedBundles.map(bundle => bundle.id),
     },
-    persist: {
-      ...trackResult.persist,
-      totalScore: persist.totalScore + roundScore,
-    },
-  };
-}
+    worldCarry: worldCarryFromRelics(persist.relics, roundScore, threshold),
+    relicEarned: false,
+  },
+  persist: {
+    ...bundleProgress.persist,
+    totalScore: persist.totalScore + roundScore,
+  },
+};
 ```
 
-Reserve note:
+Reserve notes:
 
-- Do not add `roundScore` into `pendingReserve` for the new flow.
-- Keep `reserve` field for old save/UI compatibility.
-- Existing `offering` / `miser` reserve effects need follow-up redesign; for prototype, either no-op them in this mode or convert them later to bundle/reroll effects.
+- First prototype should not use Reserve to claim bundles.
+- Keep `reserve`/`pool` fields for compatibility.
+- Do not delete Reserve-related relics yet.
+- `Offering`, `Merchant's Scale`, and `Miser` need separate design conversion later. Until then, their legacy effects may remain inert or only relevant when old Market is enabled.
 
-### 6.4 Bundle actions
+### 8.3 Bundle actions
 
 ```js
 case ACTIONS.ENTER_MARKET_FROM_RESULTS:
   return replaceRun(state, { phase: GAME_PHASES.MARKET });
 
-case ACTIONS.OPEN_MARKET_BUNDLE: {
-  const persist = openMarketBundle(state.persist, action.bundleId, { rng: action.rng });
-  return replacePersist(
-    replaceRun(state, { openedBundleId: action.bundleId }),
-    persist
-  );
+case ACTIONS.OPEN_REWARD_BUNDLE: {
+  const nextPersist = openRewardBundle(state.persist, action.bundleId, { rng: action.rng || Math.random });
+  return replacePersist(replaceRun(state, { openedBundleId: action.bundleId }), nextPersist);
 }
 
-case ACTIONS.CLAIM_BUNDLE_REWARD: {
-  const persist = claimBundleReward(state.persist, action.bundleId, action.rewardId);
-  return replacePersist(
-    replaceRun(state, { openedBundleId: null }),
-    persist
-  );
+case ACTIONS.CLAIM_REWARD_BUNDLE_CHOICE: {
+  const result = claimRewardFromBundle(state.persist, action.bundleId, action.rewardKey);
+  return replacePersist(replaceRun(state, { openedBundleId: null, lastBundleClaim: result }), result.persist);
 }
 
-case ACTIONS.CLOSE_BUNDLE:
+case ACTIONS.CLOSE_REWARD_BUNDLE:
   return replaceRun(state, { openedBundleId: null });
 ```
 
 ---
 
-## 7. Legacy bridge changes
-
-The bridge currently only accepts fields in `LEGACY_RUN_FIELDS`. If Results/Market state needs to mirror between store and legacy during migration, add the new fields:
-
-```js
-'lastReadingLedger',
-'lastResults',
-'openedBundleId',
-```
-
-Persist sync should include:
-
-```js
-if ('marketTracks' in persist) next.marketTracks = { ...persist.marketTracks };
-if ('pendingBundles' in persist) next.pendingBundles = [...persist.pendingBundles];
-if ('claimedMarketRewards' in persist) next.claimedMarketRewards = [...persist.claimedMarketRewards];
-if ('pendingCardChoice' in persist) next.pendingCardChoice = persist.pendingCardChoice;
-```
-
-Also update `app/legacyBridge.mjs` if the validation script requires exact bridge field parity.
-
----
-
-## 8. Selectors
-
-Add selectors in `src/game/selectors.mjs`:
-
-```js
-export function resultsView(state) {
-  return state.run.lastResults || null;
-}
-
-export function pendingBundleViews(state) {
-  return (state.persist.pendingBundles || [])
-    .filter(bundle => bundle.state !== 'claimed')
-    .map(bundle => ({
-      ...bundle,
-      display: MARKET_BUNDLES[bundle.bundleId],
-    }));
-}
-
-export function openedBundleView(state) {
-  const id = state.run.openedBundleId;
-  if (!id) return null;
-  const bundle = (state.persist.pendingBundles || []).find(b => b.id === id);
-  if (!bundle) return null;
-  return {
-    ...bundle,
-    display: MARKET_BUNDLES[bundle.bundleId],
-    choices: (bundle.rewardChoices || []).map(id => MARKET_REWARDS[id]).filter(Boolean),
-  };
-}
-```
-
----
-
-## 9. UI implementation plan
+## 9. Results and Market UI plan
 
 ### 9.1 Results UI
 
-New file:
-
-```text
-src/ui/renderResults.mjs
-```
+Add `src/ui/renderResults.mjs`.
 
 Responsibilities:
 
-- Show final score/threshold.
-- Show only meaningful track deltas.
-- Highlight completed deltas.
-- Show count of generated bundles.
+- Show final score and threshold result.
+- Show only track deltas with `gained > 0` or `completed === true`.
+- Say how many bundles were added.
 - Button: `Enter Market`.
 
-Do not render reward choices here.
+Example:
 
-### 9.2 Market UI
+```text
+Results
+64 / 30
 
-Modify `src/ui/renderMarket.mjs` after systems are in place.
+Sequence Complete
+Restless Bundle added
 
-Market surface should use pending bundles:
+Court 1 / 2
 
-```js
-const bundles = pendingBundleViews(storeState);
+Enter Market
 ```
 
-Render row format:
+The Results screen is where track progress belongs. Do not repeat progress in the Market.
+
+### 9.2 Market surface
+
+Modify `renderMarket.mjs` so when `pendingRewardBundles` exists, it renders bundle rows instead of old scoring/pack/relic rows.
+
+Meta row:
+
+```text
+Refresh     Bundles 2
+```
+
+Bundle row:
 
 ```html
 <div class="store-card store-card--bundle store-card--bundle-sequence">
   <div class="store-card-tag">Bundle</div>
-  <div class="store-card-art">...</div>
+  <div class="store-card-art"><span class="isp isp-108 isp-pattern"></span></div>
   <div class="store-card-main">
     <div class="store-card-name">Sequence Bundle</div>
     <div class="store-card-desc">Open to reveal a Sequence reward.</div>
   </div>
-  <button class="store-card-buy">Open ✦</button>
+  <button class="store-card-buy" onclick="openRewardBundle('bundle_r3_sequence_t2')">Open ✦</button>
 </div>
 ```
 
-Top right reserve replacement:
+Do not show reward choices or thresholds in the row.
+
+### 9.3 Bundle choice overlay
+
+Reuse the existing pack picker layout, but build from saved `bundle.rewardKeys` instead of a random pack pool.
+
+Create one of:
+
+- `src/ui/renderRewardBundlePicker.mjs`, or
+- bundle-specific functions inside `shopOverlayFlow.mjs` if keeping pack UI together is simpler.
+
+Picker text:
 
 ```text
-Bundles 2
+Sequence Bundle
+Choose 1 reward.
 ```
 
-Do not remove existing reserve styles yet; add bundle-specific display path.
-
-### 9.3 Bundle open modal/drawer
-
-Can be in `renderMarket.mjs` initially or new:
-
-```text
-src/ui/renderBundleOverlay.mjs
-```
-
-Shows:
-
-- Bundle name.
-- `Choose 1 reward`.
-- Three reward cards.
-- Reroll button if enabled later.
-- Close/back button.
-
-Claiming dispatches `CLAIM_BUNDLE_REWARD`.
-
-### 9.4 Empty Market fallback
-
-If no pending bundles exist:
-
-```text
-The Market is quiet.
-```
-
-For prototype, show a fallback `General Bundle` only if we decide every clear must reward the player.
-
----
-
-## 10. Reward application details
-
-### 10.1 Upgrade rewards
-
-Use the same upgrade keys already present in `DEFAULT_UPGRADES`.
+Cards use existing `SHOP` tuple data:
 
 ```js
-function applyUpgradeReward(persist, { upgradeKey, amount = 1 }) {
-  return {
-    ...persist,
-    upgrades: {
-      ...persist.upgrades,
-      [upgradeKey]: (persist.upgrades[upgradeKey] || 0) + amount,
-    },
-  };
-}
+const row = SHOP[rewardKey];
+name = row[0];
+desc = row[1];
+icon = SHOP_ICON[rewardKey];
+level = persist.up[rewardKey] || 0;
 ```
 
-### 10.2 Relic rewards
+### 9.4 Existing pack animation
 
-Use current relic slot cap from `maxRelicSlots()`.
+Use `animatePackOpen()` for bundles if possible.
 
-If full:
+Do not call `buyPack()` because it charges Reserve and uses paid pack purchase logic.
 
-- Option A: reject and ask player to replace.
-- Option B: do not offer relic rewards when full.
-
-Prototype should use Option B to keep bundle flow simple.
-
-### 10.3 Stamp rewards
-
-Five Star Stamp and Suit Stamp require a card selection step. Do not instantly mutate.
-
-Set:
+Add a new function:
 
 ```js
-persist.pendingCardChoice = {
-  kind: 'stamp',
-  stampId: 'five_star',
-  sourceRewardId: 'five_star_stamp',
-};
+openRewardBundleWithAnimation(bundleId)
 ```
 
-Then existing stamp selection UI can be reused or added later. First implementation can avoid offering stamp rewards until card-choice flow exists, or include the field and show a simple selection modal.
+Flow:
+
+1. Dispatch `OPEN_REWARD_BUNDLE`.
+2. Animate using bundle display data.
+3. Show saved choices.
 
 ---
 
-## 11. Refresh/reroll behavior
+## 10. Bridge and migration requirements
 
-Current Market has `REFRESH ✦ 10`. In the new bundle system:
+### 10.1 Store to legacy
 
-- Top-left refresh can become **reroll unopened bundles** later.
-- First prototype: keep it visible but disabled, or let it reroll bundle identities only if there are unopened bundles.
-- Bundle reward choices should have per-bundle reroll later, inside the opened bundle overlay.
+When bundle progress is generated store-side, legacy UI needs access if `renderMarket.mjs` remains legacy-global driven.
 
-Do not retain Reserve spending as the core Market cost.
+Add bridge sync fields:
 
-Recommended prototype behavior:
-
-```text
-REFRESH ✦ 10 remains visually present but disabled until reroll design is implemented.
+```js
+marketBundleProgress
+pendingRewardBundles
+claimedRewardBundleIds
 ```
+
+Also sync `stampedFive`, which current bridge does not include.
+
+### 10.2 Legacy to store
+
+When legacy UI claims a bundle reward, it must update store-side `persist`.
+
+Preferred path:
+
+- add reducer actions for bundle open/claim,
+- call those actions from legacy UI,
+- then copy back `persist.up`, `persist.pool`, `persist.stampedMajors`, `persist.stampedFive`, and bundle fields.
+
+Avoid mutating legacy `persist` only, because that will drift from store state.
+
+### 10.3 Validation bridge parity
+
+`scripts/validate-bridge.mjs` expects bridge fields to match. Update it when adding new synced fields.
 
 ---
 
-## 12. Validation plan
+## 11. Validation plan
 
-Add new validation script:
+Add `scripts/validate-market-bundles.mjs`.
 
-```text
-scripts/validate-market-bundles.mjs
-```
+Minimum tests:
 
-Test cases:
-
-1. Initial persist has default track state and empty pending bundles.
-2. Sequence progress below threshold creates no bundle.
-3. Sequence progress crossing first threshold creates one Sequence Bundle.
-4. Crossing multiple Sequence thresholds creates one higher-tier Sequence Bundle, not multiple duplicate bundles.
-5. Restless progress creates Restless Bundle at threshold.
-6. Multiple tracks can generate multiple bundles from one ledger.
-7. Opening a bundle generates saved choices.
-8. Re-opening/rendering an opened bundle does not regenerate choices.
-9. Claiming a reward applies the upgrade/relic/stamp effect.
-10. Claimed bundle no longer appears in Market bundle list.
-11. Old save data without market fields deserializes safely.
-12. Existing `validate-all.mjs` still passes.
-
-Add this script to `scripts/validate-all.mjs` after stable.
+1. Old persist without bundle fields deserializes with valid defaults.
+2. Ledger parser counts `Sequence of 3`, `Sequence of 4`, `Full Court (3)`, and `Royal Court (3, Wands)` correctly.
+3. Sequence progress below threshold generates no bundle.
+4. Sequence progress crossing threshold generates one `sequence_bundle`.
+5. Jumping across multiple Sequence thresholds generates one highest-tier bundle.
+6. Draw/discard progress uses `roundDiscardCount` and creates `draw_discard_bundle` at threshold.
+7. Court progress uses Full/Royal Court melds and creates `court_bundle` at threshold.
+8. Opening a bundle generates and saves reward keys.
+9. Re-rendering an opened bundle does not regenerate reward keys.
+10. Claiming `sequence` increments `upgrades.sequence` and paired `upgrades.seq_mult`.
+11. Claiming `court_chips` increments paired `court_mult`.
+12. Claiming `five_stamp` does not silently mutate a random card; it enters stamp-selection flow or returns a clear pending-choice result.
+13. Claimed bundles disappear from Market rows.
+14. `validate-all.mjs` still passes after adding this validation script.
 
 ---
 
-## 13. Implementation phases
+## 12. Implementation phases
 
-### Phase 1 — Data-only track/bundle core
+### Phase 1 - repo-grounded data only
 
-Files:
+Add:
 
-- `src/data/marketTracks.mjs`
-- `src/data/marketBundles.mjs`
-- `src/data/marketRewards.mjs`
+- `src/data/marketBundleTracks.mjs`
 - `src/systems/readingLedger.mjs`
-- `src/systems/marketTracks.mjs`
-- `src/systems/marketBundles.mjs`
+- `src/systems/marketBundleProgress.mjs`
+- `src/systems/marketRewardBundles.mjs`
 - `scripts/validate-market-bundles.mjs`
 
-Goal:
+No UI changes.
 
-Pure logic passes tests. No UI changes yet.
+### Phase 2 - store state and reducer
 
-### Phase 2 — State/reducer integration
-
-Files:
+Modify:
 
 - `src/game/state.mjs`
 - `src/game/actions.mjs`
 - `src/game/reducer.mjs`
 - `src/game/selectors.mjs`
-- bridge files if needed
 
 Goal:
 
-A cleared reading creates Results data and pending bundles.
+- clearing a threshold creates `lastResults` and pending bundles.
 
-### Phase 3 — Results screen
+### Phase 3 - Results screen
 
-Files:
+Add:
 
 - `src/ui/renderResults.mjs`
-- app/router/render orchestrator files as needed
 
-Goal:
+Wire phase routing so `GAME_PHASES.RESULTS` appears before Market.
 
-Player sees track progress and generated bundle count before entering Market.
+### Phase 4 - bundle Market rows
 
-### Phase 4 — Bundle Market surface
-
-Files:
+Modify:
 
 - `src/ui/renderMarket.mjs`
-- market CSS in existing inline style or extracted stylesheet later
 
 Goal:
 
-Market shows only bundle rows and Next Reading.
+- Market shows only bundle rows when pending bundles exist.
+- Top right says bundle count instead of Reserve.
+- No track progress appears in Market.
 
-### Phase 5 — Bundle open/claim overlay
+### Phase 5 - bundle opening and claiming
 
-Files:
+Modify/add:
 
-- `src/ui/renderBundleOverlay.mjs` or `renderMarket.mjs`
+- `src/app/shopOverlayFlow.mjs`
+- optional `src/ui/renderRewardBundlePicker.mjs`
 
 Goal:
 
-Open bundle, reveal choices, choose one, apply reward.
+- opening a bundle reveals saved reward choices.
+- claiming a choice applies the free reward.
+- stamp rewards route to existing stamp picker.
 
-### Phase 6 — Balance pass
+### Phase 6 - reserve conversion pass
 
-Tune:
+Separate design pass for:
 
-- track thresholds,
-- pool contents,
-- tier scaling,
-- bundle counts,
-- fallback rewards,
-- reserve/relic effects that no longer fit.
+- `offering`,
+- `miser`,
+- `merchants_scale`,
+- refresh cost,
+- any UI still showing Reserve.
+
+Do not solve this in Phase 1.
 
 ---
 
-## 14. Open design questions before implementation
+## 13. Open decisions before coding
 
-1. Should every cleared threshold create at least one bundle, even if no track completes?
-2. Should `miser`, `offering`, and Reserve-related relics/upgrades be converted immediately or left dormant during the prototype?
-3. Should Five Star Stamp be enabled in the first bundle prototype, or delayed until card-choice UI is ready?
-4. Should bundle reward choices be exactly 3 always, or allow 2 when pools are small?
-5. Should unopened bundles persist across readings if the player skips them, or must all bundles be claimed before `NEXT READING`?
-6. Should a bundle be claimable immediately from Results, or only after entering Market?
+1. Should `draw_discard_bundle` display as `Restless Bundle` or `Restless Hands Bundle`?
+2. Should `sequence_bundle` include `first_light` in first pass, or should the pool allow only 2 rewards until a real third Sequence reward exists?
+3. Should `court_bundle` combine Full Court and Royal Court, or should Royal Court get a later separate bundle?
+4. Can the player leave Market with unopened bundles, or must all bundles be opened before `Next Reading`?
+5. Should `Refresh` reroll unopened bundles, reroll opened bundle choices, or remain disabled in the first prototype?
+6. Should bundle rewards respect current upgrade max levels? If yes, where do max levels live for legacy `SHOP` keys?
 
 Recommended defaults:
 
-- No guaranteed fallback bundle in first test unless play feels unrewarding.
-- Disable/convert Reserve-only effects later, not in the first logic pass.
-- Do not allow `NEXT READING` until all opened bundles are claimed; unopened bundles can remain pending only if this is intentional.
-- Start with exactly 3 choices where possible.
+- Display `draw_discard_bundle` as `Restless Bundle`, but keep `draw_discard` as the track id.
+- Allow 2-choice bundles if only 2 fully appropriate rewards exist.
+- Combine Full Court and Royal Court into one Court track for first pass.
+- Do not allow `Next Reading` while an opened bundle has unclaimed choices.
+- Leave Refresh disabled for first prototype.
+- Add explicit max-level metadata only if reward filtering needs it during testing.
 
 ---
 
-## 15. Definition of done for first prototype
+## 14. Definition of done for first prototype
 
-The first playable prototype is done when:
+Done means:
 
-- Clearing a reading produces a Results screen.
-- Results screen shows Sequence/Restless/Court progress.
-- Completing Sequence or Restless creates a pending bundle.
-- Market shows only pending bundle rows.
-- Opening a bundle reveals reward choices.
-- Claiming a reward applies it.
-- Reserve is not required to claim bundle rewards.
-- Existing gameplay, scoring, relics, card play, and threshold flow still pass validation.
+- Sequence, Court, and Draw/Discard progress are generated from existing score/run data.
+- Completing a threshold creates a pending bundle.
+- Results screen shows progress and bundle unlocks.
+- Market shows only bundles, not track math.
+- Opening a bundle reveals saved reward choices.
+- Claiming a reward applies an existing `SHOP` key or routes to the existing stamp picker.
+- Reserve is not required for bundle claiming.
+- Existing scoring, pack opening, Market row styling, and bridge validations continue to pass.
