@@ -185,7 +185,7 @@ export function placeCard(i){
     const _rk=_relicMeldNameToKey.get(m[0])||null;
     setTimeout(()=>ghost(anchor,meldStr(m),true,_rk),ghostDelay);
     if(_relicMeldNames.has(m[0])){
-      setTimeout(()=>{playSound('relic');haptic([0,14,30]);},ghostDelay);
+      //setTimeout(()=>{playSound('relic');haptic([0,14,30]);},ghostDelay);
     }else if(m[0]!=='Omen'&&m[0]!=='Resonance'){
       setTimeout(()=>{centerGhost(normMeldName(m[0]),m[2]>1.5||m[3]==='add'&&m[2]>=1.5);playSound('meld',meldMagnitude(m[1],m[2],m[3]==='add'));haptic([0,10,35,12]);},delay+announceOffset);
     }
