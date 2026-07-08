@@ -15,6 +15,10 @@ function call(target,name,...args){
   return undefined;
 }
 
+function notifyTrackGhosts(target, action, beforeRun, afterRun) {
+  if (typeof target.tlrMaybeFireTrackGhosts === 'function') target.tlrMaybeFireTrackGhosts(action, beforeRun, afterRun);
+}
+
 function syncLegacyFromRun(state,run){
   state.hand=[...(run.hand||[])];
   state.deck=[...(run.deck||[])];
@@ -70,6 +74,7 @@ export function discardSelected(target = window){
   target.__tlrPendingAbilityDiscardRollback=captureAbilityDiscardRollback(state,_run,card,handIndex);
 
   const isStoreReady=storeReady(target);
+  const beforeRun=isStoreReady?target.tlrStore.getState().run:null;
   if(isStoreReady){
     call(target,'tlrSyncPersistToStore');
     target.tlrStore.dispatch({type:target.tlrActions.DISCARD_SELECTED});
@@ -100,6 +105,7 @@ export function discardSelected(target = window){
     const wasReturned=currentHand.some(candidate=>candidate.uid===card.uid);
     target.__tlrPendingAbilityDiscardRollback=null;
     if(!wasReturned&&(persist.up||{}).nimble_fingers)call(target,'drawN',persist.up.nimble_fingers);
+    notifyTrackGhosts(target,{type:target.tlrActions?.DISCARD_SELECTED||'DISCARD_SELECTED',cardUid:selectedId},beforeRun,currentRun||state);
     call(target,'render');
     call(target,'checkEnd');
   };
