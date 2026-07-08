@@ -22,6 +22,7 @@ export function centerGhost(name,rare=false){const g=document.createElement('div
 function clamp(value, min, max) {return Math.max(min, Math.min(max, value));}
 function viewportSafeTrackPoint(rawX, rawY) {const marginX = Math.min(56, Math.max(32, innerWidth * .08));const minY = Math.min(110, Math.max(72, innerHeight * .095));const maxY = Math.max(minY, innerHeight - 86);return { x: clamp(rawX, marginX, innerWidth - marginX), y: clamp(rawY, minY, maxY) };}
 function scheduleLiveTrackGhost(start) {const now = Date.now();const spacing = 340;const next = Math.max(now, window.__tlrTrackGhostNextAt || 0);window.__tlrTrackGhostNextAt = next + spacing;setTimeout(start, next - now);}
+function trackGhostYForAnchor(rect, center, position) {if (center) return innerHeight * 0.34;if (position === 'above') return rect.top - 20;if (position === 'inside') return rect.top + rect.height * 0.5;return rect.top + rect.height + 28;}
 
 export function fireTrackGhost(label, options = {}) {
   const text = String(label || '').trim();
@@ -30,8 +31,9 @@ export function fireTrackGhost(label, options = {}) {
   const target = options.anchor || document.querySelector('.score-stack .score-pill') || document.querySelector('.spread') || document.body;
   const r = target.getBoundingClientRect ? target.getBoundingClientRect() : { left: innerWidth / 2, top: innerHeight * 0.34, width: 0, height: 0, bottom: innerHeight * 0.34 };
   const center = options.center === true || target === document.body;
+  const position = options.position || 'below';
   const rawX = Number.isFinite(options.x) ? options.x : (center ? innerWidth / 2 : r.left + r.width / 2);
-  const rawY = Number.isFinite(options.y) ? options.y : (center ? innerHeight * 0.34 : r.top + r.height + 28);
+  const rawY = Number.isFinite(options.y) ? options.y : trackGhostYForAnchor(r, center, position);
   const { x, y } = viewportSafeTrackPoint(rawX, rawY);
   const duration = options.duration || (center ? 1350 : 1500);
   const drift = Number.isFinite(options.drift) ? options.drift : (center ? 24 : 18);
