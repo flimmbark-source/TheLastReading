@@ -87,8 +87,12 @@ html body.single-player-v2 #spread .slot > .card.hint-multi:not(.ability-target)
   html body.single-player-v2.generated-sheet-ready .pattern-hint-stack {
     position: fixed;
     left: 50%;
-    bottom: 14px;
-    transform: translateX(-50%);
+    /* Anchor by the stack's own centre (translateY(50%) drops it half its own
+       height) onto the bottom-medallion centreline, so one pill or several
+       always share the same vertical midpoint instead of growing upward off a
+       fixed bottom edge. */
+    bottom: 47px;
+    transform: translate(-50%, 50%);
     z-index: 120;
     display: flex;
     flex-direction: column;
