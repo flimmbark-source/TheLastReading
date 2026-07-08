@@ -19,6 +19,32 @@ export function ghost(i,t,big=false,relicKey=null){const s=_slots()[i];if(!s)ret
 
 export function centerGhost(name,rare=false){const g=document.createElement('div');g.className='meld-announce'+(rare?' rare':'');g.textContent=name;document.body.appendChild(g);setTimeout(()=>g.remove(),1900)}
 
+export function fireTrackGhost(label, options = {}) {
+  const text = String(label || '').trim();
+  if (!text) return;
+  const target = options.anchor || document.querySelector('.score-stack .score-pill') || document.querySelector('.spread') || document.body;
+  const r = target.getBoundingClientRect ? target.getBoundingClientRect() : { left: innerWidth / 2, top: innerHeight * 0.34, width: 0, height: 0 };
+  const center = options.center === true || target === document.body;
+  const x = Number.isFinite(options.x) ? options.x : (center ? innerWidth / 2 : r.left + r.width / 2);
+  const y = Number.isFinite(options.y) ? options.y : (center ? innerHeight * 0.34 : r.top - 12);
+  const g = document.createElement('div');
+  g.className = 'track-progress-ghost';
+  g.textContent = text;
+  g.style.cssText = `position:fixed;left:${x}px;top:${y}px;z-index:99999;pointer-events:none;font:900 14px/1 system-ui,sans-serif;letter-spacing:.03em;color:#f0dfbd;text-shadow:0 0 10px rgba(255,190,94,.55),0 2px 4px rgba(0,0,0,.88);transform:translate(-50%,-50%);will-change:transform,opacity;`;
+  document.body.appendChild(g);
+  const duration = options.duration || 1050;
+  if (!reducedMotion() && g.animate) {
+    const drift = Number.isFinite(options.drift) ? options.drift : 24;
+    g.animate([
+      { transform: 'translate(-50%,-50%) scale(.82)', opacity: 0 },
+      { transform: 'translate(-50%,-68%) scale(1.12)', opacity: 1, offset: .22 },
+      { transform: `translate(calc(-50% + ${(Math.random() * 18 - 9).toFixed(1)}px),calc(-50% - ${drift}px)) scale(1)`, opacity: 0 },
+    ], { duration, easing: 'cubic-bezier(.16,.84,.24,1)', fill: 'forwards' });
+  }
+  spark(x, y, '#d6b056', options.big ? 4 : 2, options.big ? 24 : 14, options.big ? 3 : 2.2);
+  setTimeout(() => g.remove(), duration + 60);
+}
+
 export function bump(i){const s=_slots()[i];if(!s)return;s.classList.remove('bump');requestAnimationFrame(()=>requestAnimationFrame(()=>s.classList.add('bump')));}
 
 export function fireScoreGhost(){const pill=document.querySelector('.score-stack .score-pill');if(!pill)return;const r=pill.getBoundingClientRect();const g=document.createElement('span');g.className='score-ghost';g.textContent='+1';const centerX=r.left+r.width/2;const horizontalDrift=Math.min(28,r.width*.18);g.style.left=(centerX+(Math.random()-.5)*horizontalDrift)+'px';g.style.top=(r.top+r.height*.48)+'px';document.body.appendChild(g);setTimeout(()=>g.remove(),950)}
