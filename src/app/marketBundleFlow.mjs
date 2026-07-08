@@ -54,18 +54,18 @@ function ensureBundleStyles(target = window) {
     .store-card--reward-choice.reward-role-tool .store-card-tag{color:#80bdda}
     .store-card--reward-choice.reward-role-bridge .store-card-tag{color:#bf97df}
     .store-card-choice-lv{margin-top:6px;font:800 10px/1 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#8a7551}
-    .store-bundle-note{font:700 11px/1.35 system-ui,sans-serif;color:#8a7551;text-align:center;margin-top:8px}
-    .bundle-source-reasons{font:700 11px/1.35 system-ui,sans-serif;color:#b8a882;text-align:center;margin:6px auto 0;max-width:620px}
+    .store-bundle-note{font:800 12px/1.35 system-ui,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#b8a882;text-align:center;margin-top:8px}
     .bundle-result-row td{color:#b8a882!important}
     .bundle-result-row.complete td:first-child{color:#f0dfbd!important}
     .bundle-result-row .bundle-result-reason{display:block;color:#f0dfbd;font-weight:800}
     .bundle-result-row .bundle-result-track{display:block;color:#8a7551;font:700 10px/1.25 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+    .store-meta-spacer{min-width:118px}
     .store-front.bundle-choice-transition{pointer-events:none}
     .store-front.bundle-choice-transition-out{opacity:.18!important;transform:translateY(10px) scale(.985)!important;filter:blur(1px) brightness(.82)}
     .store-front.bundle-choice-transition-in{animation:bundleChoicesIn .3s cubic-bezier(.16,.84,.24,1) both}
     @keyframes bundleChoicesIn{from{opacity:.35;transform:translateY(-8px) scale(.992);filter:brightness(1.18)}to{opacity:1;transform:translateY(0) scale(1);filter:brightness(1)}}
     @media(prefers-reduced-motion:reduce){.store-front.bundle-choice-transition-out{opacity:1!important;transform:none!important;filter:none}.store-front.bundle-choice-transition-in{animation:none}}
-    @media(max-width:480px){.store-card-choice-lv{font-size:9px}.bundle-source-reasons{font-size:10px;padding:0 10px}}
+    @media(max-width:480px){.store-card-choice-lv{font-size:9px}}
   `;
   doc.head.appendChild(style);
 }
@@ -111,7 +111,7 @@ function bundleMarketInner(target = window) {
     <div class="store-offer-row">
       ${hasBundles ? bundles.map(renderBundleCard).join('') : renderQuietMarketCard()}
     </div>
-    <div class="store-bundle-note">${hasBundles ? `Open your reward bundle${bundles.length === 1 ? '' : 's'} to continue.` : 'Continue to the next reading.'}</div>
+    ${hasBundles ? `<div class="store-bundle-note">Open your reward bundle${bundles.length === 1 ? '' : 's'} to continue.</div>` : ''}
     <div class="store-footer">
       <button class="store-proceed" ${hasBundles ? 'disabled' : ''} onclick="storeExitToNextReading()">Next Reading →</button>
     </div>`;
@@ -180,16 +180,17 @@ function rewardRoleForKey(bundle, rewardKey) {
   return 'reward';
 }
 
-function roleLabel(role) {
-  if (role === 'core') return 'Core';
-  if (role === 'tool') return 'Tool';
-  if (role === 'bridge') return 'Bridge';
-  return 'Reward';
-}
-
-function sourceReasonText(bundle) {
-  const reasons = bundle?.source?.reasons || [];
-  return reasons.filter(Boolean).join(' · ');
+function rewardKindLabel(rewardKey, row) {
+  const category = row?.[5] || '';
+  if (category === 'relic' || rewardKey === 'relicSlot') return 'Relic';
+  if (category === 'pattern' || category === 'scoring') return 'Scoring Upgrade';
+  if (category === 'hand') return 'Hand Upgrade';
+  if (category === 'draw') return 'Draw Upgrade';
+  if (category === 'sight') return 'Sight Upgrade';
+  if (category === 'thread') return 'Thread Upgrade';
+  if (['stillness', 'echo', 'court'].includes(category)) return 'Upgrade';
+  if (category === 'foundation' || category === 'ritual') return 'Upgrade';
+  return 'Upgrade';
 }
 
 function renderRewardChoiceCard(bundle, rewardKey, target = window) {
@@ -201,7 +202,7 @@ function renderRewardChoiceCard(bundle, rewardKey, target = window) {
   const role = rewardRoleForKey(bundle, rewardKey);
   const desc = stripTags(row[1] || '');
   return `<div class="store-card store-card--reward-choice reward-role-${escapeHtml(role)}">
-    <div class="store-card-tag">${escapeHtml(roleLabel(role))}</div>
+    <div class="store-card-tag">${escapeHtml(rewardKindLabel(rewardKey, row))}</div>
     <div class="store-card-art"><span class="isp isp-108 ${escapeHtml(icon)}"></span></div>
     <div class="store-card-main">
       <div class="store-card-name">${escapeHtml(row[0])}</div>
@@ -213,21 +214,15 @@ function renderRewardChoiceCard(bundle, rewardKey, target = window) {
 }
 
 function rewardBundleChoicesInner(bundle, target = window) {
-  const display = MARKET_BUNDLES[bundle.bundleId] || {};
   const keys = bundle.rewardKeys || [];
-  const reason = sourceReasonText(bundle);
   return `
     <div class="store-meta">
-      <button class="store-refresh" onclick="openShopMain()">← Bundles</button>
+      <div class="store-meta-spacer" aria-hidden="true"></div>
       <div class="store-reserve-display"><div class="store-reserve-label">Choose</div><div class="store-reserve-amount">1</div></div>
     </div>
-    <div class="store-bundle-note"><strong>${escapeHtml(display.name || 'Reward Bundle')}</strong> — Choose 1 reward.</div>
-    ${reason ? `<div class="bundle-source-reasons">${escapeHtml(reason)}</div>` : ''}
+    <div class="store-bundle-note">Choose 1 Reward</div>
     <div class="store-offer-row">
       ${keys.map(key => renderRewardChoiceCard(bundle, key, target)).join('')}
-    </div>
-    <div class="store-footer">
-      <button class="store-proceed" onclick="openShopMain()">Back to Bundles</button>
     </div>`;
 }
 
@@ -296,6 +291,19 @@ export function openRewardBundleWithAnimation(bundleId, target = window) {
   return showRewardBundleContents(bundleId, target);
 }
 
+function openNextRewardBundleOrMarket(target = window) {
+  const remaining = bundleList(persistOf(target));
+  if (!remaining.length) return showBundleMarket(target);
+  const opened = remaining.find(bundle => bundle.state === 'opened');
+  const next = opened || remaining[0];
+  if (!next) return showBundleMarket(target);
+  if (next.state === 'opened') {
+    if (transitionToRewardBundleChoices(next, target)) return true;
+    return showRewardBundleContents(next.id, target);
+  }
+  return openRewardBundleWithAnimation(next.id, target);
+}
+
 export function pickRewardBundleChoice(bundleId, rewardKey, target = window) {
   if (!target.tlrStore || !target.tlrActions) return false;
   if (typeof target.tlrSyncPersistToStore === 'function') target.tlrSyncPersistToStore();
@@ -310,7 +318,7 @@ export function pickRewardBundleChoice(bundleId, rewardKey, target = window) {
     if (rewardKey === 'five_stamp' && typeof target.openFiveStampPicker === 'function') return target.openFiveStampPicker(0);
     if (rewardKey === 'suit_stamp' && typeof target.openStampPicker === 'function') return target.openStampPicker(0);
   }
-  return showBundleMarket(target);
+  return openNextRewardBundleOrMarket(target);
 }
 
 function trackReason(delta) {
