@@ -27,11 +27,11 @@ const STORE_PACK_CALLOUT = Object.freeze({
 });
 
 const STORE_SCORING_COPY = Object.freeze({
-  rank: { name: 'Rank of a Kind', desc: '+5 Chips / +0.25 Mult', icon: 'isp-scoring', label: 'Rank bonus' },
-  sequence: { name: 'Sequence', desc: '+5 Chips / +0.5 Mult', icon: 'isp-scoring', label: 'Sequence bonus' },
-  court_chips: { name: 'Full Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin', label: 'Court bonus' },
-  royal_court_chips: { name: 'Royal Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin', label: 'Court bonus' },
-  path_chips: { name: 'Path of the Magi', desc: '+15 Chips / +0.5 Mult', icon: 'isp-scoring', label: 'Path bonus' },
+  rank: { name: 'Rank of a Kind', desc: '+5 Chips / +0.25 Mult', icon: 'isp-scoring' },
+  sequence: { name: 'Sequence', desc: '+5 Chips / +0.5 Mult', icon: 'isp-scoring' },
+  court_chips: { name: 'Full Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin' },
+  royal_court_chips: { name: 'Royal Court', desc: '+8 Chips / +0.25 Mult', icon: 'isp-kin' },
+  path_chips: { name: 'Path of the Magi', desc: '+15 Chips / +0.5 Mult', icon: 'isp-scoring' },
   suit_stamp: { name: 'Suit Stamp', desc: 'Choose 1 Major. It counts toward Royal Court.', icon: 'isp-scoring' },
   five_stamp: { name: 'Five Star', desc: 'Choose 1 card. Counts as 5 in Sequences.', icon: 'isp-scoring' },
 });
@@ -59,14 +59,8 @@ const STORE_RELIC_COPY = Object.freeze({
 
 function runtime(target = window) { return target.tlrRuntime || {}; }
 function persistOf(target = window) { return runtime(target).persist || target.persist || {}; }
-
 function escapeHtml(value) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+  return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 function ensureStoreFrontStyles(target = window) {
@@ -84,23 +78,23 @@ function ensureStoreFrontStyles(target = window) {
     .summary.store-front-shell.store-exiting{animation:storeShellFadeOut ${STORE_FADE_MS}ms ease-in both;pointer-events:none}
     @keyframes storeShellFadeOut{from{opacity:1}to{opacity:0}}
 
-    .store-dim{position:absolute;inset:0;background:radial-gradient(circle at 50% 8%,rgba(80,54,20,.32),rgba(0,0,0,.86) 42%,rgba(0,0,0,.93));animation:storeDimIn 420ms ease-out both;pointer-events:none;z-index:0}
+    .store-dim{position:absolute;inset:0;background:radial-gradient(circle at 50% 8%,rgba(80,54,20,.36),rgba(0,0,0,.9) 42%,rgba(0,0,0,.96));animation:storeDimIn 420ms ease-out both;pointer-events:none;z-index:0}
     @keyframes storeDimIn{from{opacity:0}to{opacity:1}}
 
-    .store-front{position:relative;width:min(96vw,560px);height:min(96dvh,790px);max-height:96dvh;overflow:hidden;box-sizing:border-box;padding:clamp(8px,1.5dvh,12px);font-family:Georgia,serif;color:#eadbb9;z-index:1;opacity:0;transition:opacity 280ms ease-out;display:flex;flex-direction:column;gap:clamp(6px,1dvh,10px)}
+    .store-front{--market-gap:clamp(9px,1.25dvh,13px);--market-pad:clamp(8px,1.4dvh,12px);--card-x:clamp(9px,2vw,12px);--card-y:clamp(9px,1.25dvh,12px);position:relative;width:min(96vw,560px);height:min(96dvh,790px);max-height:96dvh;overflow:hidden;box-sizing:border-box;padding:var(--market-pad);font-family:Georgia,serif;color:#eadbb9;z-index:1;opacity:0;transition:opacity 280ms ease-out;display:flex;flex-direction:column;gap:var(--market-gap)}
     .store-front.store-visible{opacity:1}
 
     body.tlr-shop-active .score-stack{visibility:hidden;pointer-events:none}
-    body.tlr-shop-active #menuBtn,body.tlr-shop-active #scoringBtn,body.tlr-shop-active #abilitiesBtn,body.tlr-shop-active #spv2ArchiveBtn{visibility:hidden;pointer-events:none}
+    body.tlr-shop-active #menuBtn,body.tlr-shop-active #scoringBtn,body.tlr-shop-active #abilitiesBtn,body.tlr-shop-active #spv2ArchiveBtn,body.tlr-shop-active #discardBtn,body.tlr-shop-active #purgeBtn,body.tlr-shop-active #discardZone,body.tlr-shop-active #purgeZone,body.tlr-shop-active .discard-btn,body.tlr-shop-active .purge-btn,body.tlr-shop-active .discard-button,body.tlr-shop-active .purge-button,body.tlr-shop-active .discard-zone,body.tlr-shop-active .purge-zone,body.tlr-shop-active .action-drop-targets,body.tlr-shop-active .action-drop-target,body.tlr-shop-active .gesture-action-drop,body.tlr-shop-active .discard-drop,body.tlr-shop-active .purge-drop,body.tlr-shop-active [data-action="discard"],body.tlr-shop-active [data-action="purge"],body.tlr-shop-active [data-drop-action="discard"],body.tlr-shop-active [data-drop-action="purge"]{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
     .store-front button{font-family:Georgia,serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
     .store-front button:disabled{cursor:not-allowed;opacity:.42}
 
-    .store-meta{display:grid;grid-template-columns:minmax(88px,1fr) 54px minmax(88px,1fr);align-items:center;gap:8px;flex:0 0 auto}
+    .store-meta{display:grid;grid-template-columns:minmax(88px,1fr) 54px minmax(88px,1fr);align-items:center;gap:var(--market-gap);flex:0 0 auto}
     .store-candle{position:relative;width:52px;height:52px;z-index:1;pointer-events:none;animation:storeCandleIn 220ms ease-out both;opacity:.92;justify-self:center;filter:drop-shadow(0 0 10px rgba(218,159,69,.22))}
     .store-candle img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity 90ms linear}
     .store-candle .candle-off{opacity:1}.store-candle .candle-on{opacity:0}.store-candle.lit .candle-off{opacity:0}.store-candle.lit .candle-on{opacity:1}
     @keyframes storeCandleIn{from{opacity:0;transform:translateY(-6px)}to{opacity:.92;transform:translateY(0)}}
-    .store-refresh,.store-reserve-display{min-height:40px;border:1px solid rgba(226,181,100,.42);border-radius:10px;background:linear-gradient(180deg,rgba(24,18,13,.72),rgba(6,5,4,.7));box-shadow:inset 0 0 0 1px rgba(255,232,176,.06);color:#f1dfbd;text-transform:uppercase}
+    .store-refresh,.store-reserve-display{min-height:40px;border:1px solid rgba(226,181,100,.42);border-radius:10px;background:linear-gradient(180deg,rgba(24,18,13,.8),rgba(6,5,4,.82));box-shadow:inset 0 0 0 1px rgba(255,232,176,.06);color:#f1dfbd;text-transform:uppercase}
     .store-refresh{display:flex;align-items:center;justify-content:center;gap:5px;padding:5px 8px;font-size:clamp(10px,2.7vw,13px);font-weight:900;letter-spacing:.05em;transition:background .15s,opacity .15s}
     .store-refresh:not(:disabled):hover{background:rgba(226,181,100,.1)}.store-refresh:disabled{opacity:.35;cursor:not-allowed}
     .store-refresh-icon{font-size:1.2em;line-height:1}.store-refresh-cost{color:#e0b96a;font-size:.92em;white-space:nowrap}
@@ -108,54 +102,50 @@ function ensureStoreFrontStyles(target = window) {
     .store-reserve-label{font:800 clamp(9px,2.4vw,11px)/1 system-ui,sans-serif;letter-spacing:.14em;color:#b08040}
     .store-reserve-amount{font-size:clamp(21px,5.8vw,29px);color:#f1d196;text-shadow:0 1px 3px #000;line-height:1}.store-reserve-amount .coin{font-size:.48em;margin-right:.12em;color:#c89445;vertical-align:middle}
 
-    .store-section-title{display:flex;align-items:center;gap:8px;color:#d8a95b;font:900 clamp(10px,2.8vw,14px)/1 Georgia,serif;letter-spacing:.18em;text-transform:uppercase;text-align:center;white-space:nowrap;flex:0 0 auto}
-    .store-section-title::before,.store-section-title::after{content:'';height:1px;flex:1;background:linear-gradient(90deg,transparent,rgba(210,154,66,.55),transparent)}
-    .store-section-title--featured{margin-top:-1px}.store-section-title--relics{margin-top:0}
+    .store-offer-row{display:grid;grid-template-rows:minmax(0,1.16fr) clamp(92px,13dvh,112px) minmax(0,1fr);gap:var(--market-gap);align-items:stretch;min-height:0;flex:1 1 auto;width:100%}
+    .store-grid-top,.store-grid-bottom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--market-gap);height:100%;width:100%}
+    .store-pack-feature{display:block;height:100%;width:100%}
 
-    .store-offer-row{display:flex;flex-direction:column;gap:clamp(7px,1dvh,10px);justify-content:space-between;min-height:0;flex:1 1 auto}
-    .store-grid-top,.store-grid-bottom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(7px,1.7vw,10px)}
-    .store-pack-feature{display:block;flex:0 0 auto}
-
-    .store-card{--store-accent:rgba(201,162,74,.55);position:relative;display:flex;gap:8px;border:1px solid rgba(200,160,80,.32);border-radius:12px;background:linear-gradient(180deg,rgba(26,17,10,.62),rgba(9,6,4,.75));box-shadow:inset 0 0 0 1px rgba(255,235,185,.045),0 8px 22px rgba(0,0,0,.24);transition:border-color .13s;overflow:hidden}
+    .store-card{--store-accent:rgba(201,162,74,.55);position:relative;display:flex;gap:8px;border:1px solid rgba(200,160,80,.34);border-radius:12px;background:linear-gradient(180deg,rgba(26,17,10,.82),rgba(9,6,4,.88));box-shadow:inset 0 0 0 1px rgba(255,235,185,.045),0 8px 22px rgba(0,0,0,.24);transition:border-color .13s;overflow:hidden;box-sizing:border-box}
     .store-card::before{content:'';position:absolute;inset:auto 12px -1px 12px;height:2px;border-radius:2px;background:var(--store-accent);opacity:.86;pointer-events:none}
-    .store-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 24%,var(--store-glow,rgba(205,158,62,.12)),transparent 46%);pointer-events:none;opacity:.9}
+    .store-card::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 24%,var(--store-glow,rgba(205,158,62,.12)),transparent 48%);pointer-events:none;opacity:.9}
     .store-card:not(.disabled):hover{border-color:rgba(225,178,92,.58)}.store-card.disabled{opacity:.55}
-    .store-card--scoring{--store-accent:rgba(211,158,65,.74);--store-glow:rgba(205,142,42,.16)}
-    .store-card--pack,.store-card--stamp{--store-accent:rgba(145,88,184,.7);--store-glow:rgba(118,64,174,.18)}
-    .store-card--relic,.store-card--vessel{--store-accent:rgba(83,151,145,.72);--store-glow:rgba(53,139,134,.15)}
+    .store-card--scoring{--store-accent:rgba(211,158,65,.74);--store-glow:rgba(205,142,42,.14)}
+    .store-card--pack,.store-card--stamp{--store-accent:rgba(145,88,184,.7);--store-glow:rgba(118,64,174,.16)}
+    .store-card--relic,.store-card--vessel{--store-accent:rgba(83,151,145,.72);--store-glow:rgba(53,139,134,.16)}
 
-    .store-card-utility{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%}
-    .store-card-tag,.store-card-meta{display:inline-flex;align-items:center;min-height:18px;border:1px solid rgba(221,180,103,.34);border-radius:999px;background:rgba(0,0,0,.28);padding:0 8px;font:900 clamp(8px,2.15vw,10px)/1 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#d0a35a;white-space:nowrap}
+    .store-card-utility{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;min-height:20px}
+    .store-card-tag,.store-card-meta{display:inline-flex;align-items:center;min-height:18px;border:1px solid rgba(221,180,103,.34);border-radius:999px;background:rgba(0,0,0,.3);padding:0 8px;font:900 clamp(8px,2.15vw,10px)/1 system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#d0a35a;white-space:nowrap}
     .store-card--pack .store-card-tag,.store-card--stamp .store-card-tag{color:#d0a6f2;border-color:rgba(163,105,206,.45)}
     .store-card--relic .store-card-tag,.store-card--vessel .store-card-tag,.store-card--relic .store-card-meta,.store-card--vessel .store-card-meta{color:#9bd3cc;border-color:rgba(106,184,176,.42)}
     .store-card--stamp .store-card-meta{color:#e5bc76;border-color:rgba(226,181,100,.38)}
 
-    .store-card-art{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;flex:0 0 auto}.store-card-art .isp{transform-origin:center;filter:drop-shadow(0 3px 6px rgba(0,0,0,.72))}.store-card-art .relic-art-sprite{filter:drop-shadow(0 3px 8px rgba(0,0,0,.72))}
+    .store-card-art{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;flex:0 0 auto;overflow:hidden}.store-card-art .isp{transform-origin:center;filter:drop-shadow(0 3px 6px rgba(0,0,0,.72))}.store-card-art .relic-art-sprite{filter:drop-shadow(0 3px 8px rgba(0,0,0,.72))}
     .store-relic-art-btn{background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important;padding:0;margin:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
     .store-vessel-glyph{font:900 30px/1 Georgia,serif;color:#f1d196;text-shadow:0 2px 6px #000}
-    .store-card-main{position:relative;z-index:1;display:flex;flex-direction:column;min-width:0}.store-card-name{font-weight:900;text-transform:uppercase;letter-spacing:.045em;color:#f4e8ca;line-height:1.05;text-shadow:0 1px 5px rgba(0,0,0,.85)}
-    .store-card-desc{font:700 clamp(10px,2.7vw,12px)/1.28 system-ui,sans-serif;color:#cbbd98}.store-card-lines{display:flex;flex-direction:column;gap:2px}
-    .store-stat-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:100%;margin-top:3px}.store-stat-chip{border:1px solid rgba(226,181,100,.34);border-radius:7px;background:rgba(0,0,0,.24);color:#f1d196;font:900 clamp(10px,2.8vw,12px)/1 system-ui,sans-serif;padding:7px 4px;text-align:center;white-space:nowrap}
-    .store-card-buy{position:relative;z-index:1;border:1px solid rgba(226,181,100,.58);border-radius:8px;background:linear-gradient(180deg,rgba(133,84,24,.76),rgba(55,34,13,.8));box-shadow:inset 0 0 0 1px rgba(255,238,190,.08),0 2px 8px rgba(0,0,0,.32);color:#f6dfac;font:900 clamp(11px,3vw,14px)/1 Georgia,serif;text-transform:uppercase;letter-spacing:.06em}.store-card-buy:not(:disabled):hover{background:linear-gradient(180deg,rgba(159,101,28,.82),rgba(67,42,15,.86))}.store-card-buy .coin{color:#f0c46c;margin:0 .16em}
-    .store-card--stamp .store-card-buy,.store-card--pack .store-card-buy{background:linear-gradient(180deg,rgba(83,37,105,.84),rgba(38,18,53,.86));border-color:rgba(191,129,229,.55)}.store-card--relic .store-card-buy,.store-card--vessel .store-card-buy{background:linear-gradient(180deg,rgba(31,91,88,.74),rgba(14,45,43,.86));border-color:rgba(108,190,180,.48)}
+    .store-card-main{position:relative;z-index:1;display:flex;flex-direction:column;min-width:0}.store-card-name{font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#f4e8ca;line-height:1.05;text-shadow:0 1px 5px rgba(0,0,0,.85)}
+    .store-card-desc{font:800 clamp(10px,2.75vw,12.5px)/1.3 system-ui,sans-serif;color:#d5c9a6}.store-card-lines{display:flex;flex-direction:column;gap:2px}
+    .store-stat-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:100%;margin-top:3px}.store-stat-chip{border:1px solid rgba(226,181,100,.34);border-radius:7px;background:rgba(0,0,0,.28);color:#f1d196;font:900 clamp(10px,2.8vw,12px)/1 system-ui,sans-serif;padding:7px 4px;text-align:center;white-space:nowrap}
+    .store-card-buy{position:relative;z-index:1;border:1px solid rgba(226,181,100,.58);border-radius:8px;background:linear-gradient(180deg,rgba(133,84,24,.78),rgba(55,34,13,.86));box-shadow:inset 0 0 0 1px rgba(255,238,190,.08),0 2px 8px rgba(0,0,0,.32);color:#f6dfac;font:900 clamp(11px,3vw,14px)/1 Georgia,serif;text-transform:uppercase;letter-spacing:.06em}.store-card-buy:not(:disabled):hover{background:linear-gradient(180deg,rgba(159,101,28,.82),rgba(67,42,15,.88))}.store-card-buy .coin{color:#f0c46c;margin:0 .16em}
+    .store-card--stamp .store-card-buy,.store-card--pack .store-card-buy{background:linear-gradient(180deg,rgba(83,37,105,.86),rgba(38,18,53,.9));border-color:rgba(191,129,229,.55)}.store-card--relic .store-card-buy,.store-card--vessel .store-card-buy{background:linear-gradient(180deg,rgba(31,91,88,.78),rgba(14,45,43,.9));border-color:rgba(108,190,180,.48)}
 
-    .store-grid-top .store-card,.store-grid-bottom .store-card{min-height:0;align-items:center;flex-direction:column;text-align:center;padding:clamp(8px,1.25dvh,12px) clamp(8px,1.7vw,11px) clamp(10px,1.45dvh,14px);box-sizing:border-box}
-    .store-grid-top .store-card{height:clamp(210px,29dvh,236px)}.store-grid-bottom .store-card{height:clamp(190px,26dvh,218px)}
-    .store-grid-top .store-card-art{width:clamp(42px,11vw,56px);height:clamp(42px,11vw,56px);margin-top:0}.store-grid-top .store-card-art .isp{transform:scale(clamp(.35,.1vw + .32,.47))}.store-grid-top .store-card-art .store-stamp-art{transform:scale(clamp(.68,.1vw + .64,.9))}
-    .store-grid-bottom .store-card-art{width:clamp(48px,12vw,64px);height:clamp(48px,12vw,64px)}.store-grid-bottom .store-card-art .relic-art-sprite{width:clamp(48px,12vw,64px);height:clamp(48px,12vw,64px);background-size:contain!important}.store-grid-bottom .store-relic-art-btn{width:100%;height:100%}
-    .store-grid-top .store-card-main,.store-grid-bottom .store-card-main{align-items:center;justify-content:flex-start;gap:5px;width:100%;flex:1 1 auto}.store-grid-top .store-card-name{font-size:clamp(15px,4vw,20px)}.store-grid-bottom .store-card-name{font-size:clamp(13px,3.5vw,17px)}
-    .store-grid-top .store-card-desc,.store-grid-bottom .store-card-desc{max-width:100%}.store-grid-top .store-card-buy,.store-grid-bottom .store-card-buy{width:100%;min-height:clamp(36px,5dvh,44px);padding:0 8px;margin-top:auto;flex:0 0 auto}
+    .store-grid-top .store-card,.store-grid-bottom .store-card{min-height:0;align-items:stretch;display:grid;grid-template-rows:auto minmax(38px,.62fr) minmax(58px,auto) auto;text-align:center;padding:var(--card-y) var(--card-x) clamp(10px,1.45dvh,14px);row-gap:clamp(5px,.8dvh,8px)}
+    .store-grid-bottom .store-card{grid-template-rows:auto minmax(42px,.58fr) minmax(62px,auto) auto}
+    .store-grid-top .store-card-art{width:clamp(38px,10.5vw,52px);height:clamp(38px,10.5vw,52px);align-self:end;justify-self:center;border-radius:8px}.store-grid-top .store-card-art .isp{transform:scale(clamp(.28,.08vw + .26,.38))}.store-grid-top .store-card-art .store-stamp-art{transform:scale(clamp(.64,.08vw + .6,.84))}
+    .store-grid-bottom .store-card-art{width:clamp(46px,12vw,62px);height:clamp(46px,12vw,62px);align-self:end;justify-self:center;border-radius:8px}.store-grid-bottom .store-card-art .relic-art-sprite{width:clamp(46px,12vw,62px);height:clamp(46px,12vw,62px);background-size:contain!important}.store-grid-bottom .store-relic-art-btn{width:100%;height:100%}
+    .store-grid-top .store-card-main,.store-grid-bottom .store-card-main{align-items:center;justify-content:center;gap:6px;width:100%;min-height:0}.store-grid-top .store-card-name{font-size:clamp(15px,3.95vw,20px)}.store-grid-bottom .store-card-name{font-size:clamp(12px,3.25vw,16px)}
+    .store-grid-bottom .store-card-desc{font-size:clamp(10.5px,2.8vw,12.5px);color:#ded2ae}.store-grid-top .store-card-buy,.store-grid-bottom .store-card-buy{width:100%;min-height:clamp(36px,5dvh,44px);padding:0 8px;margin-top:0;align-self:end;flex:0 0 auto}
 
-    .store-pack-feature .store-card{height:clamp(92px,13dvh,112px);display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;text-align:left;padding:8px clamp(8px,2vw,12px);column-gap:clamp(8px,2vw,14px);border-color:rgba(157,91,198,.42);background:linear-gradient(180deg,rgba(34,22,38,.68),rgba(10,7,10,.78))}.store-pack-feature .store-card::before{inset:12px auto 12px -1px;width:2px;height:auto}.store-pack-feature .store-card-utility{justify-content:flex-start}.store-pack-feature .store-card-art{width:clamp(46px,12vw,64px);height:clamp(46px,12vw,64px)}.store-pack-feature .store-card-art .isp{transform:scale(clamp(.38,.1vw + .34,.54))}.store-pack-feature .store-relic-art-btn{width:clamp(46px,12vw,64px);height:clamp(46px,12vw,64px)}.store-pack-feature .store-card-main{gap:4px}.store-pack-feature .store-card-name{font-size:clamp(15px,4.1vw,22px)}.store-pack-feature .store-card-buy{min-width:clamp(94px,25vw,128px);min-height:clamp(38px,5.2dvh,48px);padding:0 10px}
+    .store-pack-feature .store-card{height:100%;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;text-align:left;padding:8px var(--card-x);column-gap:var(--market-gap);border-color:rgba(157,91,198,.42);background:linear-gradient(180deg,rgba(34,22,38,.84),rgba(10,7,10,.9))}.store-pack-feature .store-card::before{inset:12px auto 12px -1px;width:2px;height:auto}.store-pack-feature .store-card-utility{justify-content:flex-start}.store-pack-feature .store-card-art{width:clamp(44px,11.5vw,60px);height:clamp(44px,11.5vw,60px);border-radius:8px}.store-pack-feature .store-card-art .isp{transform:scale(clamp(.35,.08vw + .32,.5))}.store-pack-feature .store-relic-art-btn{width:clamp(44px,11.5vw,60px);height:clamp(44px,11.5vw,60px)}.store-pack-feature .store-card-main{gap:4px}.store-pack-feature .store-card-name{font-size:clamp(15px,4vw,21px)}.store-pack-feature .store-card-buy{min-width:clamp(94px,25vw,128px);min-height:clamp(38px,5.2dvh,48px);padding:0 10px;align-self:center}
 
-    .store-footer{display:flex;justify-content:center;flex:0 0 auto}.store-proceed{width:min(86%,420px);min-height:clamp(38px,5.2dvh,46px);background:linear-gradient(180deg,rgba(28,22,16,.82),rgba(7,6,5,.9));border:1px solid rgba(226,181,100,.58);border-radius:10px;color:#f1dfbd;font:900 clamp(14px,4.5vw,20px)/1 Georgia,serif;text-transform:uppercase;letter-spacing:.1em;padding:0 22px;transition:background .15s}.store-proceed:hover{background:rgba(200,160,60,.15)}
+    .store-footer{display:flex;justify-content:center;flex:0 0 auto;width:100%}.store-proceed{width:100%;min-height:clamp(38px,5.2dvh,46px);background:linear-gradient(180deg,rgba(28,22,16,.84),rgba(7,6,5,.92));border:1px solid rgba(226,181,100,.58);border-radius:10px;color:#f1dfbd;font:900 clamp(14px,4.5vw,20px)/1 Georgia,serif;text-transform:uppercase;letter-spacing:.1em;padding:0 22px;transition:background .15s}.store-proceed:hover{background:rgba(200,160,60,.15)}
 
     .store-replace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:12px}.store-replace-card{border:1px solid rgba(210,161,94,.42);border-radius:8px;background:rgba(255,255,255,.04);padding:9px;text-align:center}.store-replace-card button{margin-top:8px}
     .store-relic-callout{z-index:10010;max-width:220px}.store-relic-callout .relic-callout-desc{font-size:12px;line-height:1.35}.store-pack-callout{z-index:10010;max-width:240px}.store-pack-callout .relic-callout-desc{font-size:12px;line-height:1.35;margin-bottom:6px}.store-pack-callout-list{margin:0;padding:0 0 0 16px;list-style:disc}.store-pack-callout-list li{font-size:11px;line-height:1.4;color:#c8b888;margin-bottom:2px}
 
     @media(prefers-reduced-motion:reduce){.store-dim{animation:none}.store-candle{animation:none}.store-front{opacity:1;transition:none}.summary.store-front-shell.store-exiting{animation:none;opacity:0}}
-    @media(max-height:740px){.store-front{height:98dvh;max-height:98dvh;gap:5px;padding:6px}.store-meta{grid-template-columns:minmax(80px,1fr) 46px minmax(80px,1fr)}.store-candle{width:44px;height:44px}.store-grid-top .store-card{height:198px}.store-grid-bottom .store-card{height:182px}.store-pack-feature .store-card{height:88px}.store-card-desc{font-size:10px}.store-stat-chip{padding:6px 3px}.store-section-title{font-size:10px}.store-proceed{min-height:34px}}
-    @media(max-width:380px){.store-meta{grid-template-columns:minmax(74px,1fr) 44px minmax(74px,1fr);gap:5px}.store-candle{width:42px;height:42px}.store-refresh,.store-reserve-display{min-height:38px}.store-card-tag,.store-card-meta{padding:0 6px;letter-spacing:.08em}.store-stat-row{gap:4px}.store-stat-chip{font-size:9.5px}.store-card-buy{font-size:10.5px}.store-pack-feature .store-card{grid-template-columns:auto minmax(0,1fr) auto;column-gap:7px}.store-pack-feature .store-card-buy{min-width:84px}}
+    @media(max-height:740px){.store-front{height:98dvh;max-height:98dvh;gap:7px;padding:6px;--market-gap:7px;--card-y:8px}.store-meta{grid-template-columns:minmax(80px,1fr) 46px minmax(80px,1fr)}.store-candle{width:44px;height:44px}.store-offer-row{grid-template-rows:minmax(0,1.12fr) 86px minmax(0,1fr)}.store-card-desc{font-size:10px}.store-stat-chip{padding:6px 3px}.store-proceed{min-height:34px}.store-grid-top .store-card-name{font-size:15px}.store-grid-bottom .store-card-name{font-size:12.5px}}
+    @media(max-width:380px){.store-meta{grid-template-columns:minmax(74px,1fr) 44px minmax(74px,1fr);gap:6px}.store-candle{width:42px;height:42px}.store-refresh,.store-reserve-display{min-height:38px}.store-card-tag,.store-card-meta{padding:0 6px;letter-spacing:.08em}.store-stat-row{gap:4px}.store-stat-chip{font-size:9.5px}.store-card-buy{font-size:10.5px}.store-pack-feature .store-card{grid-template-columns:auto minmax(0,1fr) auto;column-gap:7px}.store-pack-feature .store-card-buy{min-width:84px}}
   `;
 }
 
@@ -200,34 +190,17 @@ function shuffleValues(values, target = window) {
 const STORE_SCORING_UPGRADES = Object.freeze(['rank', 'sequence', 'court_chips', 'royal_court_chips', 'path_chips', 'suit_stamp', 'five_stamp']);
 const STORE_STAMP_UPGRADES = Object.freeze(['suit_stamp', 'five_stamp']);
 const STORE_NORMAL_SCORING_UPGRADES = Object.freeze(STORE_SCORING_UPGRADES.filter(key => !STORE_STAMP_UPGRADES.includes(key)));
-
-function pickFromUpgradePool(pool, count, target = window) {
-  const shop = target.SHOP || {};
-  return shuffleValues(pool, target).filter(key => shop[key]).slice(0, count);
-}
+function pickFromUpgradePool(pool, count, target = window) { const shop = target.SHOP || {}; return shuffleValues(pool, target).filter(key => shop[key]).slice(0, count); }
 function pickScoringUpgrades(count, target = window) { return pickFromUpgradePool(STORE_NORMAL_SCORING_UPGRADES, count, target); }
 function pickStampUpgrades(count, target = window) { return pickFromUpgradePool(STORE_STAMP_UPGRADES, count, target); }
-function pickPacks(packIds, count, target = window) {
-  const packs = target.PACKS || {};
-  return shuffleValues(packIds, target).filter(id => packs[id]).slice(0, count);
-}
+function pickPacks(packIds, count, target = window) { const packs = target.PACKS || {}; return shuffleValues(packIds, target).filter(id => packs[id]).slice(0, count); }
 function pickRelics(count, target = window) {
   const owned = new Set((persistOf(target).relics || []));
-  const options = typeof target.relicPool === 'function'
-    ? target.relicPool(Math.max(count, 4))
-    : Object.keys(target.RELICS || {}).filter(key => !owned.has(key));
+  const options = typeof target.relicPool === 'function' ? target.relicPool(Math.max(count, 4)) : Object.keys(target.RELICS || {}).filter(key => !owned.has(key));
   return options.filter(key => !owned.has(key)).slice(0, count);
 }
 
-export function buildStoreFrontOffers(target = window) {
-  return {
-    scoring: pickScoringUpgrades(1, target),
-    stamps: pickStampUpgrades(1, target),
-    pack: pickPacks(STORE_ABILITY_PACKS, 1, target),
-    relics: pickRelics(2, target),
-  };
-}
-
+export function buildStoreFrontOffers(target = window) { return { scoring: pickScoringUpgrades(1, target), stamps: pickStampUpgrades(1, target), pack: pickPacks(STORE_ABILITY_PACKS, 1, target), relics: pickRelics(2, target) }; }
 function currentStoreFrontOffers(target = window) {
   const owned = new Set((persistOf(target).relics || []));
   if (!target._storeFrontOffers) target._storeFrontOffers = buildStoreFrontOffers(target);
@@ -244,27 +217,10 @@ function currentStoreFrontOffers(target = window) {
   return offers;
 }
 
-function packCostFor(packId, target = window) {
-  const pack = (target.PACKS || {})[packId];
-  if (!pack) return 0;
-  return target.tlrShop?.packCost
-    ? target.tlrShop.packCost(pack.cost, (target._packBuys || {})[packId] || 0, (persistOf(target).relics || []))
-    : pack.cost + (((target._packBuys || {})[packId] || 0) * 8);
-}
-function scoringCostFor(upgradeKey, target = window) {
-  if (typeof target.shopCost === 'function') return target.shopCost(upgradeKey);
-  const item = (target.SHOP || {})[upgradeKey];
-  const level = (persistOf(target).up || {})[upgradeKey] || 0;
-  return item ? Math.floor(item[2] * Math.pow(item[3], level)) : 0;
-}
+function packCostFor(packId, target = window) { const pack = (target.PACKS || {})[packId]; if (!pack) return 0; return target.tlrShop?.packCost ? target.tlrShop.packCost(pack.cost, (target._packBuys || {})[packId] || 0, (persistOf(target).relics || [])) : pack.cost + (((target._packBuys || {})[packId] || 0) * 8); }
+function scoringCostFor(upgradeKey, target = window) { if (typeof target.shopCost === 'function') return target.shopCost(upgradeKey); const item = (target.SHOP || {})[upgradeKey]; const level = (persistOf(target).up || {})[upgradeKey] || 0; return item ? Math.floor(item[2] * Math.pow(item[3], level)) : 0; }
 function pairedUpgradeKey(upgradeKey, target = window) { return (target.SHOP || {})[upgradeKey]?.[6] || null; }
-function relicCost(target = window) {
-  const pack = (target.PACKS || {})[RELIC_CACHE_PACK_ID];
-  if (!pack) return 24;
-  return target.tlrShop?.packCost
-    ? target.tlrShop.packCost(pack.cost, (target._packBuys || {})[RELIC_CACHE_PACK_ID] || 0, (persistOf(target).relics || []))
-    : pack.cost + (((target._packBuys || {})[RELIC_CACHE_PACK_ID] || 0) * 8);
-}
+function relicCost(target = window) { const pack = (target.PACKS || {})[RELIC_CACHE_PACK_ID]; if (!pack) return 24; return target.tlrShop?.packCost ? target.tlrShop.packCost(pack.cost, (target._packBuys || {})[RELIC_CACHE_PACK_ID] || 0, (persistOf(target).relics || [])) : pack.cost + (((target._packBuys || {})[RELIC_CACHE_PACK_ID] || 0) * 8); }
 function storeVesselCost(target = window) { return typeof target.shopCost === 'function' ? target.shopCost('relicSlot') : 35; }
 
 const STAMP_ART = Object.freeze({
@@ -278,9 +234,7 @@ function renderScoringEffect(upgradeKey, copy, isStamp) {
     return `<div class="store-card-lines">${parts.map(part => `<div class="store-card-desc">${escapeHtml(part)}</div>`).join('')}</div>`;
   }
   const stats = String(copy.desc || '').split('/').map(s => s.trim()).filter(Boolean);
-  if (stats.length >= 2) {
-    return `<div class="store-stat-row"><div class="store-stat-chip">${escapeHtml(stats[0])}</div><div class="store-stat-chip">${escapeHtml(stats[1])}</div></div>`;
-  }
+  if (stats.length >= 2) return `<div class="store-stat-row"><div class="store-stat-chip">${escapeHtml(stats[0])}</div><div class="store-stat-chip">${escapeHtml(stats[1])}</div></div>`;
   return `<div class="store-card-desc">${escapeHtml(copy.desc)}</div>`;
 }
 
@@ -297,24 +251,11 @@ function renderScoringCard(index, upgradeKey, target = window, options = {}) {
   const cost = scoringCostFor(upgradeKey, target);
   const ok = (persistOf(target).pool || 0) >= cost;
   const level = (persistOf(target).up || {})[upgradeKey] || 0;
-  const art = STAMP_ART[upgradeKey]
-    ? `<div class="store-card-art">${STAMP_ART[upgradeKey]}</div>`
-    : `<div class="store-card-art"><span class="isp isp-108 ${copy.icon}"></span></div>`;
-  return `<div class="store-card ${cardClass} ${ok ? '' : 'disabled'}">
-    <div class="store-card-utility"><div class="store-card-tag">${tag}</div><div class="store-card-meta">Lv ${level} → ${level + 1}</div></div>
-    ${art}
-    <div class="store-card-main">
-      <div class="store-card-name">${escapeHtml(copy.name)}</div>
-      ${renderScoringEffect(upgradeKey, copy, isStamp)}
-    </div>
-    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreScoringUpgrade(${index},'${upgradeKey}',${cost},'${purchaseSection}')">Buy <span class="coin">✦</span> ${cost}</button>
-  </div>`;
+  const art = STAMP_ART[upgradeKey] ? `<div class="store-card-art">${STAMP_ART[upgradeKey]}</div>` : `<div class="store-card-art"><span class="isp isp-108 ${copy.icon}"></span></div>`;
+  return `<div class="store-card ${cardClass} ${ok ? '' : 'disabled'}"><div class="store-card-utility"><div class="store-card-tag">${tag}</div><div class="store-card-meta">Lv ${level} → ${level + 1}</div></div>${art}<div class="store-card-main"><div class="store-card-name">${escapeHtml(copy.name)}</div>${renderScoringEffect(upgradeKey, copy, isStamp)}</div><button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreScoringUpgrade(${index},'${upgradeKey}',${cost},'${purchaseSection}')">Buy <span class="coin">✦</span> ${cost}</button></div>`;
 }
 
-function packDisplayName(name) {
-  return String(name || '').replace(/\s+pack$/i, '');
-}
-
+function packDisplayName(name) { return String(name || '').replace(/\s+pack$/i, ''); }
 function renderPackCard(index, packId, target = window) {
   const emptyRow = '<div class="store-card store-card--pack disabled"><div class="store-card-main"><div class="store-card-name">—</div></div></div>';
   if (!packId) return emptyRow;
@@ -323,23 +264,10 @@ function renderPackCard(index, packId, target = window) {
   const cost = packCostFor(packId, target);
   const ok = (persistOf(target).pool || 0) >= cost;
   const desc = STORE_PACK_COPY[packId] || pack.desc || '';
-  return `<div class="store-card store-card--pack ${ok ? '' : 'disabled'}">
-    <button type="button" class="store-relic-art-btn" onclick="showStorePackCallout('${packId}',this);event.stopPropagation()" aria-label="Show ${escapeHtml(pack.name)} details"><div class="store-card-art" style="pointer-events:none"><span class="isp isp-108 ${pack.icon}"></span></div></button>
-    <div class="store-card-main">
-      <div class="store-card-utility"><div class="store-card-tag">Pack</div></div>
-      <div class="store-card-name">${escapeHtml(packDisplayName(pack.name))}</div>
-      <div class="store-card-desc">${escapeHtml(desc)}</div>
-    </div>
-    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStorePack('pack',${index},'${packId}',${cost})">Open <span class="coin">✦</span> ${cost}</button>
-  </div>`;
+  return `<div class="store-card store-card--pack ${ok ? '' : 'disabled'}"><button type="button" class="store-relic-art-btn" onclick="showStorePackCallout('${packId}',this);event.stopPropagation()" aria-label="Show ${escapeHtml(pack.name)} details"><div class="store-card-art" style="pointer-events:none"><span class="isp isp-108 ${pack.icon}"></span></div></button><div class="store-card-main"><div class="store-card-utility"><div class="store-card-tag">Pack</div></div><div class="store-card-name">${escapeHtml(packDisplayName(pack.name))}</div><div class="store-card-desc">${escapeHtml(desc)}</div></div><button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStorePack('pack',${index},'${packId}',${cost})">Open <span class="coin">✦</span> ${cost}</button></div>`;
 }
 
-function relicMetaTag(relicKey, relic) {
-  if (relicKey === 'watcher') return 'Once / reading';
-  if (relic?.active) return 'Active';
-  return 'Passive';
-}
-
+function relicMetaTag(relicKey, relic) { if (relicKey === 'watcher') return 'Once / reading'; if (relic?.active) return 'Active'; return 'Passive'; }
 function renderRelicCard(index, relicKey, target = window) {
   if (!relicKey) return renderVesselCard(index, target);
   const relic = (target.RELICS || {})[relicKey];
@@ -348,17 +276,7 @@ function renderRelicCard(index, relicKey, target = window) {
   const ok = (persistOf(target).pool || 0) >= cost;
   const style = typeof target.relicIconStyle === 'function' ? target.relicIconStyle(relicKey, 72) : '';
   const desc = STORE_RELIC_COPY[relicKey] || relic.desc || relic.description || '';
-  return `<div class="store-card store-card--relic ${ok ? '' : 'disabled'} ${relic.rarity || ''}">
-    <div class="store-card-utility"><div class="store-card-tag">Relic</div><div class="store-card-meta">${escapeHtml(relicMetaTag(relicKey, relic))}</div></div>
-    <div class="store-card-art">
-      <button class="store-relic-art-btn" type="button" onclick="showStoreRelicCallout('${relicKey}',this);event.stopPropagation()" aria-label="Show ${escapeHtml(relic.name)} details"><div class="relic-art-sprite" style="${style}"></div></button>
-    </div>
-    <div class="store-card-main">
-      <div class="store-card-name">${escapeHtml(relic.name)}</div>
-      <div class="store-card-desc">${escapeHtml(desc)}</div>
-    </div>
-    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreRelic(${index},'${relicKey}')">Buy <span class="coin">✦</span> ${cost}</button>
-  </div>`;
+  return `<div class="store-card store-card--relic ${ok ? '' : 'disabled'} ${relic.rarity || ''}"><div class="store-card-utility"><div class="store-card-tag">Relic</div><div class="store-card-meta">${escapeHtml(relicMetaTag(relicKey, relic))}</div></div><div class="store-card-art"><button class="store-relic-art-btn" type="button" onclick="showStoreRelicCallout('${relicKey}',this);event.stopPropagation()" aria-label="Show ${escapeHtml(relic.name)} details"><div class="relic-art-sprite" style="${style}"></div></button></div><div class="store-card-main"><div class="store-card-name">${escapeHtml(relic.name)}</div><div class="store-card-desc">${escapeHtml(desc)}</div></div><button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreRelic(${index},'${relicKey}')">Buy <span class="coin">✦</span> ${cost}</button></div>`;
 }
 
 function renderVesselCard(index = 0, target = window) {
@@ -367,15 +285,7 @@ function renderVesselCard(index = 0, target = window) {
   const cost = storeVesselCost(target);
   const ok = !maxed && index === 0 && (persistOf(target).pool || 0) >= cost;
   const slots = typeof target.relicSlots === 'function' ? target.relicSlots() : 3 + level;
-  return `<div class="store-card store-card--vessel ${ok ? '' : 'disabled'}">
-    <div class="store-card-utility"><div class="store-card-tag">${index === 0 ? 'Relic Slot' : 'Empty'}</div>${index === 0 ? `<div class="store-card-meta">${maxed ? 'Max 5' : `Slots ${slots} → ${slots + 1}`}</div>` : ''}</div>
-    <div class="store-card-art"><div class="store-vessel-glyph">${index === 0 ? '＋' : '✦'}</div></div>
-    <div class="store-card-main">
-      <div class="store-card-name">${index === 0 ? 'Relic Vessel' : 'No Relic'}</div>
-      <div class="store-card-desc">${index === 0 ? (maxed ? 'Relic Slots maxed.' : 'Gain +1 Relic Slot') : 'Refresh for new stock.'}</div>
-    </div>
-    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreVessel(${index})">${index !== 0 ? 'Empty' : maxed ? 'Maxed' : `Buy <span class="coin">✦</span> ${cost}`}</button>
-  </div>`;
+  return `<div class="store-card store-card--vessel ${ok ? '' : 'disabled'}"><div class="store-card-utility"><div class="store-card-tag">${index === 0 ? 'Relic Slot' : 'Empty'}</div>${index === 0 ? `<div class="store-card-meta">${maxed ? 'Max 5' : `Slots ${slots} → ${slots + 1}`}</div>` : ''}</div><div class="store-card-art"><div class="store-vessel-glyph">${index === 0 ? '＋' : '✦'}</div></div><div class="store-card-main"><div class="store-card-name">${index === 0 ? 'Relic Vessel' : 'No Relic'}</div><div class="store-card-desc">${index === 0 ? (maxed ? 'Relic Slots maxed.' : 'Gain +1 Relic Slot') : 'Refresh for new stock.'}</div></div><button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreVessel(${index})">${index !== 0 ? 'Empty' : maxed ? 'Maxed' : `Buy <span class="coin">✦</span> ${cost}`}</button></div>`;
 }
 
 export function showStorePackCallout(packId, anchor, target = window) {
@@ -417,9 +327,7 @@ export function showStoreRelicCallout(relicKey, anchor, target = window) {
   callout.style.top = `${rect.bottom + 6}px`;
   callout.style.left = '0px';
   target.requestAnimationFrame(() => {
-    const cw = callout.offsetWidth;
-    const ch = callout.offsetHeight;
-    const mg = 8;
+    const cw = callout.offsetWidth, ch = callout.offsetHeight, mg = 8;
     let left = rect.left + rect.width / 2 - cw / 2;
     left = Math.max(mg, Math.min(target.innerWidth - cw - mg, left));
     let top = rect.bottom + 6;
@@ -438,10 +346,7 @@ function playCandleSnuff(target = window) {
     const dur = 0.22;
     const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) {
-      const t = i / d.length;
-      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.2) * Math.min(1, t * 20) * 0.6;
-    }
+    for (let i = 0; i < d.length; i++) { const t = i / d.length; d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 2.2) * Math.min(1, t * 20) * 0.6; }
     const src = ctx.createBufferSource(); src.buffer = buf;
     const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 2400;
     const g = ctx.createGain(); g.gain.setValueAtTime(0.18 * vol, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
@@ -452,29 +357,14 @@ function playCandleSnuff(target = window) {
 
 export function storeExitToNextReading(target = window) {
   const shell = target.document.querySelector('.store-front-shell');
-  if (!shell) {
-    if (typeof target.continueReading === 'function') target.continueReading();
-    return true;
-  }
+  if (!shell) { if (typeof target.continueReading === 'function') target.continueReading(); return true; }
   if (shell.classList.contains('store-exiting')) return true;
   target.document.querySelectorAll('.relic-callout,.store-relic-callout,.store-pack-callout').forEach(el => el.remove());
   const reduce = target.matchMedia && target.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduce) {
-    shell.classList.add('store-exiting');
-    target.setTimeout(() => { if (typeof target.continueReading === 'function') target.continueReading(); }, 0);
-    return true;
-  }
+  if (reduce) { shell.classList.add('store-exiting'); target.setTimeout(() => { if (typeof target.continueReading === 'function') target.continueReading(); }, 0); return true; }
   const candle = target.document.getElementById('storeCandle');
-  if (candle && candle.classList.contains('lit')) {
-    playCandleSnuff(target);
-    candle.classList.remove('lit');
-  }
-  target.setTimeout(() => {
-    shell.classList.add('store-exiting');
-    target.setTimeout(() => {
-      if (typeof target.continueReading === 'function') target.continueReading();
-    }, STORE_FADE_MS);
-  }, 200);
+  if (candle && candle.classList.contains('lit')) { playCandleSnuff(target); candle.classList.remove('lit'); }
+  target.setTimeout(() => { shell.classList.add('store-exiting'); target.setTimeout(() => { if (typeof target.continueReading === 'function') target.continueReading(); }, STORE_FADE_MS); }, 200);
   return true;
 }
 
@@ -487,25 +377,14 @@ const MARKET_AMBIENCE_FILES = Object.freeze([
 
 export function selectMarketAmbienceEntry(target = window) {
   const previous = target._lastMarketAmbienceFile || null;
-  const pool = MARKET_AMBIENCE_FILES.length > 1
-    ? MARKET_AMBIENCE_FILES.filter(entry => entry.file !== previous)
-    : MARKET_AMBIENCE_FILES;
+  const pool = MARKET_AMBIENCE_FILES.length > 1 ? MARKET_AMBIENCE_FILES.filter(entry => entry.file !== previous) : MARKET_AMBIENCE_FILES;
   const rng = target.Math?.random || Math.random;
-  const entry = pool[Math.floor(rng() * MARKET_AMBIENCE_FILES.length)] || MARKET_AMBIENCE_FILES[0];
+  const entry = pool[Math.floor(rng() * pool.length)] || MARKET_AMBIENCE_FILES[0];
   target._lastMarketAmbienceFile = entry.file;
   return entry;
 }
 
-function playMarketAmbience(target = window) {
-  const entry = selectMarketAmbienceEntry(target);
-  try {
-    const vol = typeof target._sfxVol === 'number' ? target._sfxVol : 1;
-    const a = new (target.Audio || Audio)(entry.file);
-    a.volume = vol * entry.vol;
-    a.play().catch(() => {});
-  } catch(e) {}
-}
-
+function playMarketAmbience(target = window) { const entry = selectMarketAmbienceEntry(target); try { const vol = typeof target._sfxVol === 'number' ? target._sfxVol : 1; const a = new (target.Audio || Audio)(entry.file); a.volume = vol * entry.vol; a.play().catch(() => {}); } catch(e) {} }
 function playMatchLight(target = window) {
   try {
     const ctx = target._tlrACtx || (target._tlrACtx = new (target.AudioContext || target.webkitAudioContext)());
@@ -514,10 +393,7 @@ function playMatchLight(target = window) {
     const dur = 0.18;
     const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
     const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) {
-      const t = i / d.length;
-      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 1.2) * Math.min(1, t * 12);
-    }
+    for (let i = 0; i < d.length; i++) { const t = i / d.length; d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t, 1.2) * Math.min(1, t * 12); }
     const src = ctx.createBufferSource(); src.buffer = buf;
     const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 3200; f.Q.value = 0.5;
     const g = ctx.createGain(); g.gain.setValueAtTime(0.28 * vol, ctx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
@@ -538,45 +414,20 @@ export function openShopMain(){
   const inner=`
     <div class="store-meta">
       <button class="store-refresh" ${canRefresh?'':'disabled'} onclick="refreshStoreFront()"><span class="store-refresh-icon">↻</span><span>Refresh</span><span class="store-refresh-cost">✦ ${rc}</span></button>
-      <div class="store-candle${alreadyOpen ? ' lit' : ''}" id="storeCandle">
-        <img class="candle-off" src="ui/candle_flame_off.small.webp" alt="">
-        <img class="candle-on"  src="ui/candle_flame_on.small.webp"  alt="">
-      </div>
+      <div class="store-candle${alreadyOpen ? ' lit' : ''}" id="storeCandle"><img class="candle-off" src="ui/candle_flame_off.small.webp" alt=""><img class="candle-on" src="ui/candle_flame_on.small.webp" alt=""></div>
       <div class="store-reserve-display"><div class="store-reserve-label">Reserve</div><div class="store-reserve-amount"><span class="coin">✦</span>${persist.pool}</div></div>
     </div>
-    <div class="store-section-title store-section-title--featured">Featured Offers</div>
     <div class="store-offer-row">
-      <div class="store-grid-top">
-        ${renderScoringCard(0, offers.scoring[0], window)}
-        ${renderScoringCard(0, offers.stamps[0], window, { stamp: true })}
-      </div>
-      <div class="store-pack-feature">
-        ${renderPackCard(0, offers.pack[0], window)}
-      </div>
-      <div class="store-section-title store-section-title--relics">Relics</div>
-      <div class="store-grid-bottom">
-        ${relicA ? renderRelicCard(0, relicA, window) : renderVesselCard(0, window)}
-        ${relicB ? renderRelicCard(1, relicB, window) : renderVesselCard(1, window)}
-      </div>
+      <div class="store-grid-top">${renderScoringCard(0, offers.scoring[0], window)}${renderScoringCard(0, offers.stamps[0], window, { stamp: true })}</div>
+      <div class="store-pack-feature">${renderPackCard(0, offers.pack[0], window)}</div>
+      <div class="store-grid-bottom">${relicA ? renderRelicCard(0, relicA, window) : renderVesselCard(0, window)}${relicB ? renderRelicCard(1, relicB, window) : renderVesselCard(1, window)}</div>
     </div>
-    <div class="store-footer">
-      <button class="store-proceed" onclick="storeExitToNextReading()">Next Reading →</button>
-    </div>`;
-  const html=`<div class="summary tarot-shop store-front-shell">
-    <div class="store-dim"></div>
-    <div class="store-front${alreadyOpen ? ' store-visible' : ''}" id="storeFront">${inner}</div>
-  </div>`;
+    <div class="store-footer"><button class="store-proceed" onclick="storeExitToNextReading()">Next Reading →</button></div>`;
+  const html=`<div class="summary tarot-shop store-front-shell"><div class="store-dim"></div><div class="store-front${alreadyOpen ? ' store-visible' : ''}" id="storeFront">${inner}</div></div>`;
   showOverlay(html);
   if (alreadyOpen || reduce) return;
-  setTimeout(() => {
-    const candle = document.getElementById('storeCandle');
-    if (candle) { playMatchLight(window); candle.classList.add('lit'); }
-  }, 300);
-  setTimeout(() => {
-    const front = document.getElementById('storeFront');
-    if (front) front.classList.add('store-visible');
-    playMarketAmbience(window);
-  }, 520);
+  setTimeout(() => { const candle = document.getElementById('storeCandle'); if (candle) { playMatchLight(window); candle.classList.add('lit'); } }, 300);
+  setTimeout(() => { const front = document.getElementById('storeFront'); if (front) front.classList.add('store-visible'); playMarketAmbience(window); }, 520);
 }
 
 export function refreshStoreFront(target = window){
@@ -589,161 +440,35 @@ export function refreshStoreFront(target = window){
   if(typeof target.openShopMain==='function')target.openShopMain();
   return true;
 }
-
-export function buyStorePack(sectionKey,index,packId,cost,target = window){
-  if(target._storeFrontOffers)target._storeFrontOffers.pack=[null];
-  markCardPurchased(STORE_SLOT.PACK,target);
-  if(typeof target.buyPack==='function')return target.buyPack(packId,cost);
-  return false;
-}
-
+export function buyStorePack(sectionKey,index,packId,cost,target = window){ if(target._storeFrontOffers)target._storeFrontOffers.pack=[null]; markCardPurchased(STORE_SLOT.PACK,target); if(typeof target.buyPack==='function')return target.buyPack(packId,cost); return false; }
 export function buyStoreScoringUpgrade(index,upgradeKey,cost,sectionKey = 'scoring',target = window){
-  const p=persistOf(target);
-  if((p.pool||0)<cost)return false;
-  const charged=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'pack',packId:'scoringUpgrade',cost}):false;
-  if(charged!==true)return charged;
-  const section = sectionKey === 'stamps' ? 'stamps' : 'scoring';
-  if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers[section]))target._storeFrontOffers[section][index]=null;
-  if(typeof target.render==='function')target.render();
-  if(upgradeKey==='suit_stamp'){
-    if(typeof target.openStampPicker==='function')target.openStampPicker(index);
-    return true;
-  }
-  if(upgradeKey==='five_stamp'){
-    if(typeof target.openFiveStampPicker==='function')target.openFiveStampPicker(index);
-    return true;
-  }
-  const pairedKey=pairedUpgradeKey(upgradeKey,target);
-  const upgraded=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'upgrade',upgradeKey,pairedKey}):false;
-  if(upgraded!==true)return upgraded;
-  markCardPurchased(section === 'stamps' ? STORE_SLOT.STAMP : STORE_SLOT.SCORING,target);
-  return true;
+  const p=persistOf(target); if((p.pool||0)<cost)return false;
+  const charged=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'pack',packId:'scoringUpgrade',cost}):false; if(charged!==true)return charged;
+  const section = sectionKey === 'stamps' ? 'stamps' : 'scoring'; if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers[section]))target._storeFrontOffers[section][index]=null; if(typeof target.render==='function')target.render();
+  if(upgradeKey==='suit_stamp'){ if(typeof target.openStampPicker==='function')target.openStampPicker(index); return true; }
+  if(upgradeKey==='five_stamp'){ if(typeof target.openFiveStampPicker==='function')target.openFiveStampPicker(index); return true; }
+  const pairedKey=pairedUpgradeKey(upgradeKey,target); const upgraded=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'upgrade',upgradeKey,pairedKey}):false; if(upgraded!==true)return upgraded;
+  markCardPurchased(section === 'stamps' ? STORE_SLOT.STAMP : STORE_SLOT.SCORING,target); return true;
 }
-
-function chargeStoreRelic(cost,target = window){
-  const p=persistOf(target);
-  if((p.pool||0)<cost)return false;
-  const charged=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'pack',packId:RELIC_CACHE_PACK_ID,cost}):false;
-  if(charged!==true)return charged;
-  target._packBuys ||= {};
-  target._packBuys[RELIC_CACHE_PACK_ID]=(target._packBuys[RELIC_CACHE_PACK_ID]||0)+1;
-  return true;
-}
-
+function chargeStoreRelic(cost,target = window){ const p=persistOf(target); if((p.pool||0)<cost)return false; const charged=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'pack',packId:RELIC_CACHE_PACK_ID,cost}):false; if(charged!==true)return charged; target._packBuys ||= {}; target._packBuys[RELIC_CACHE_PACK_ID]=(target._packBuys[RELIC_CACHE_PACK_ID]||0)+1; return true; }
 export function buyStoreRelic(index,relicKey,cost,target = window){
-  const finalCost = relicCost(target);
-  const p=persistOf(target);
-  if((p.pool||0)<finalCost)return false;
-  const slots=typeof target.relicSlots==='function'?target.relicSlots():3;
-  if((p.relics||[]).length>=slots)return showStoreRelicReplace(index,relicKey,finalCost,target);
-  const charged=chargeStoreRelic(finalCost,target);
-  if(charged!==true)return charged;
-  const acquired=typeof target.doAcquireRelic==='function'?target.doAcquireRelic(relicKey,()=>{
-    if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.relics))target._storeFrontOffers.relics[index]=null;
-    if(typeof target.openShopMain==='function')target.openShopMain();
-    else markCardPurchased(index === 1 ? STORE_SLOT.RELIC_B : STORE_SLOT.RELIC_A,target);
-  },target):false;
+  const finalCost = relicCost(target); const p=persistOf(target); if((p.pool||0)<finalCost)return false;
+  const slots=typeof target.relicSlots==='function'?target.relicSlots():3; if((p.relics||[]).length>=slots)return showStoreRelicReplace(index,relicKey,finalCost,target);
+  const charged=chargeStoreRelic(finalCost,target); if(charged!==true)return charged;
+  const acquired=typeof target.doAcquireRelic==='function'?target.doAcquireRelic(relicKey,()=>{ if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.relics))target._storeFrontOffers.relics[index]=null; if(typeof target.openShopMain==='function')target.openShopMain(); else markCardPurchased(index === 1 ? STORE_SLOT.RELIC_B : STORE_SLOT.RELIC_A,target); },target):false;
   return acquired;
 }
-
 export function showStoreRelicReplace(index,relicKey,cost,target = window){
-  const relic=(target.RELICS||{})[relicKey];
-  if(!relic||typeof target.showOverlay!=='function')return false;
-  let html='<div class="summary tarot-shop relic-replace-screen">';
-  html+=`<div class="pack-picker-header"><h3>Relic Slots Full</h3><p>Choose a relic to replace with <b>${escapeHtml(relic.name)}</b>.</p></div>`;
-  html+='<div class="store-replace-grid">';
-  for(const oldKey of persistOf(target).relics||[]){
-    const oldRelic=(target.RELICS||{})[oldKey];
-    if(!oldRelic)continue;
-    html+=`<div class="store-replace-card"><b>${escapeHtml(oldRelic.name)}</b><p>${escapeHtml(STORE_RELIC_COPY[oldKey]||oldRelic.desc||oldRelic.description||'')}</p><button onclick="confirmStoreRelicReplace(${index},'${oldKey}','${relicKey}',${cost})">Replace</button></div>`;
-  }
-  html+='</div><div style="text-align:center;margin-top:10px"><button onclick="openShopMain()" style="background:transparent;border:none;color:#8a7551;font-size:12px;cursor:pointer;text-decoration:underline">Cancel</button></div></div>';
-  target.showOverlay(html);
-  return true;
+  const relic=(target.RELICS||{})[relicKey]; if(!relic||typeof target.showOverlay!=='function')return false;
+  let html='<div class="summary tarot-shop relic-replace-screen">'; html+=`<div class="pack-picker-header"><h3>Relic Slots Full</h3><p>Choose a relic to replace with <b>${escapeHtml(relic.name)}</b>.</p></div>`; html+='<div class="store-replace-grid">';
+  for(const oldKey of persistOf(target).relics||[]){ const oldRelic=(target.RELICS||{})[oldKey]; if(!oldRelic)continue; html+=`<div class="store-replace-card"><b>${escapeHtml(oldRelic.name)}</b><p>${escapeHtml(STORE_RELIC_COPY[oldKey]||oldRelic.desc||oldRelic.description||'')}</p><button onclick="confirmStoreRelicReplace(${index},'${oldKey}','${relicKey}',${cost})">Replace</button></div>`; }
+  html+='</div><div style="text-align:center;margin-top:10px"><button onclick="openShopMain()" style="background:transparent;border:none;color:#8a7551;font-size:12px;cursor:pointer;text-decoration:underline">Cancel</button></div></div>'; target.showOverlay(html); return true;
 }
-
-export function confirmStoreRelicReplace(index,oldKey,newKey,cost,target = window){
-  const charged=chargeStoreRelic(cost,target);
-  if(charged!==true)return charged;
-  const bought=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'relic',relicId:newKey,replaceRelicId:oldKey}):false;
-  if(bought!==true)return bought;
-  if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.relics))target._storeFrontOffers.relics[index]=null;
-  if(typeof target.renderRelicRack==='function')target.renderRelicRack();
-  if(typeof target.openShopMain==='function')target.openShopMain();
-  return true;
-}
-
-export function buyStoreVessel(index = 0, target = window){
-  if(index !== 0)return false;
-  const level=(persistOf(target).up||{}).relicSlot||0;
-  if(level>=2)return false;
-  const cost=storeVesselCost(target);
-  if((persistOf(target).pool||0)<cost)return false;
-  const html=`<div class="summary tarot-shop"><div class="pack-picker-header"><h3>Relic Vessel</h3><p>Gain +1 Relic Slot. Max 5.</p></div><div style="display:flex;justify-content:center;gap:10px;margin-top:12px"><button onclick="confirmStoreVessel(${cost},${index})">Buy — ✦ ${cost}</button><button onclick="openShopMain()">Back</button></div></div>`;
-  if(typeof target.showOverlay==='function')target.showOverlay(html);
-  return true;
-}
-
-export function confirmStoreVessel(cost,index = 0,target = window){
-  if(index !== 0)return false;
-  const charged=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'pack',packId:'relicSlot',cost}):false;
-  if(charged!==true)return charged;
-  const upgraded=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'upgrade',upgradeKey:'relicSlot'}):false;
-  if(upgraded!==true)return upgraded;
-  if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.relics))target._storeFrontOffers.relics[index]=null;
-  if(typeof target.renderRelicRack==='function')target.renderRelicRack();
-  if(typeof target.openShopMain==='function')target.openShopMain();
-  return true;
-}
-
-export function relicIconStyle(key,size){
-  if(!RELIC_SPRITE[key])return'';
-  return`background-image:url('assets/relic_icons/${key}.webp');background-size:${size}px ${size}px;background-repeat:no-repeat;`;
-}
-
-export function renderRelicRack(){
-  const rack=$('#relicRack');if(!rack)return;
-  const key=persist.relics.join(',')+'|'+relicSlots();
-  if(key===_relicRackKey)return;
-  _relicRackKey=key;
-  rack.innerHTML='';
-  const slots=relicSlots();
-  persist.relics.forEach(key=>{
-    const r=RELICS[key];
-    const btn=document.createElement('button');
-    btn.className='relic-btn'+(r.rarity==='rare'?' relic-rare':'');
-    btn.title=r.name;
-    const ic=document.createElement('span');
-    ic.style.cssText=`display:block;width:30px;height:30px;flex-shrink:0;${relicIconStyle(key,30)}`;
-    btn.appendChild(ic);
-    btn.onclick=e=>{e.stopPropagation();toggleRelicCallout(key,btn);};
-    rack.appendChild(btn);
-  });
-  const empty=slots-persist.relics.length;
-  for(let i=0;i<empty;i++){const slot=document.createElement('div');slot.className='relic-slot-empty';rack.appendChild(slot);}
-}
-
+export function confirmStoreRelicReplace(index,oldKey,newKey,cost,target = window){ const charged=chargeStoreRelic(cost,target); if(charged!==true)return charged; const bought=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'relic',relicId:newKey,replaceRelicId:oldKey}):false; if(bought!==true)return bought; if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.relics))target._storeFrontOffers.relics[index]=null; if(typeof target.renderRelicRack==='function')target.renderRelicRack(); if(typeof target.openShopMain==='function')target.openShopMain(); return true; }
+export function buyStoreVessel(index = 0, target = window){ if(index !== 0)return false; const level=(persistOf(target).up||{}).relicSlot||0; if(level>=2)return false; const cost=storeVesselCost(target); if((persistOf(target).pool||0)<cost)return false; const html=`<div class="summary tarot-shop"><div class="pack-picker-header"><h3>Relic Vessel</h3><p>Gain +1 Relic Slot. Max 5.</p></div><div style="display:flex;justify-content:center;gap:10px;margin-top:12px"><button onclick="confirmStoreVessel(${cost},${index})">Buy — ✦ ${cost}</button><button onclick="openShopMain()">Back</button></div></div>`; if(typeof target.showOverlay==='function')target.showOverlay(html); return true; }
+export function confirmStoreVessel(cost,index = 0,target = window){ if(index !== 0)return false; const charged=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'pack',packId:'relicSlot',cost}):false; if(charged!==true)return charged; const upgraded=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'upgrade',upgradeKey:'relicSlot'}):false; if(upgraded!==true)return upgraded; if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.relics))target._storeFrontOffers.relics[index]=null; if(typeof target.renderRelicRack==='function')target.renderRelicRack(); if(typeof target.openShopMain==='function')target.openShopMain(); return true; }
+export function relicIconStyle(key,size){ if(!RELIC_SPRITE[key])return''; return`background-image:url('assets/relic_icons/${key}.webp');background-size:${size}px ${size}px;background-repeat:no-repeat;`; }
+export function renderRelicRack(){ const rack=$('#relicRack');if(!rack)return; const key=persist.relics.join(',')+'|'+relicSlots(); if(key===_relicRackKey)return; _relicRackKey=key; rack.innerHTML=''; const slots=relicSlots(); persist.relics.forEach(key=>{ const r=RELICS[key]; const btn=document.createElement('button'); btn.className='relic-btn'+(r.rarity==='rare'?' relic-rare':''); btn.title=r.name; const ic=document.createElement('span'); ic.style.cssText=`display:block;width:30px;height:30px;flex-shrink:0;${relicIconStyle(key,30)}`; btn.appendChild(ic); btn.onclick=e=>{e.stopPropagation();toggleRelicCallout(key,btn);}; rack.appendChild(btn); }); const empty=slots-persist.relics.length; for(let i=0;i<empty;i++){const slot=document.createElement('div');slot.className='relic-slot-empty';rack.appendChild(slot);} }
 export function toggleRelicCallout(key,btn){
-  document.querySelectorAll('.relic-callout').forEach(el=>el.remove());
-  if(_openRelicKey===key){_openRelicKey=null;return;}
-  _openRelicKey=key;
-  const r=RELICS[key];
-  const callout=document.createElement('div');
-  callout.className='relic-callout';
-  const used=r.active&&persist.relicUsed[key];
-  callout.innerHTML=`<div class="relic-callout-name"><div style="display:inline-block;width:24px;height:24px;vertical-align:middle;${relicIconStyle(key,24)}"></div> ${r.name}</div>
-    <div class="relic-callout-desc">${r.desc||r.description||''}</div>
-    ${r.active?`<button class="relic-activate-btn" ${used?'disabled':''} onclick="activateRelic('${key}')">${used?'Used this session':'Activate'}</button>`:''}`;
-  document.body.appendChild(callout);
-  const rect=btn.getBoundingClientRect();
-  callout.style.top=(rect.bottom+6)+'px';
-  callout.style.left='0px';
-  requestAnimationFrame(function(){
-    const cw=callout.offsetWidth,ch=callout.offsetHeight,mg=8;
-    let left=rect.right-cw;
-    left=Math.max(mg,Math.min(window.innerWidth-cw-mg,left));
-    let top=rect.bottom+6;
-    if(top+ch>window.innerHeight-mg)top=Math.max(mg,rect.top-ch-6);
-    callout.style.left=left+'px';callout.style.top=top+'px';
-  });
+  document.querySelectorAll('.relic-callout').forEach(el=>el.remove()); if(_openRelicKey===key){_openRelicKey=null;return;} _openRelicKey=key; const r=RELICS[key]; const callout=document.createElement('div'); callout.className='relic-callout'; const used=r.active&&persist.relicUsed[key]; callout.innerHTML=`<div class="relic-callout-name"><div style="display:inline-block;width:24px;height:24px;vertical-align:middle;${relicIconStyle(key,24)}"></div> ${r.name}</div><div class="relic-callout-desc">${r.desc||r.description||''}</div>${r.active?`<button class="relic-activate-btn" ${used?'disabled':''} onclick="activateRelic('${key}')">${used?'Used this session':'Activate'}</button>`:''}`; document.body.appendChild(callout); const rect=btn.getBoundingClientRect(); callout.style.top=(rect.bottom+6)+'px'; callout.style.left='0px'; requestAnimationFrame(function(){ const cw=callout.offsetWidth,ch=callout.offsetHeight,mg=8; let left=rect.right-cw; left=Math.max(mg,Math.min(window.innerWidth-cw-mg,left)); let top=rect.bottom+6; if(top+ch>window.innerHeight-mg)top=Math.max(mg,rect.top-ch-6); callout.style.left=left+'px';callout.style.top=top+'px'; });
 }
