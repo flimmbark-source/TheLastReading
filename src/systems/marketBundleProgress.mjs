@@ -59,6 +59,12 @@ function capped(trackId, value) {
   return Number.isFinite(cap) ? Math.min(cap, clean) : clean;
 }
 
+function unusedDiscards(actions = {}) {
+  const initial = Number.isFinite(actions.initialDiscards) ? actions.initialDiscards : 0;
+  const used = Number.isFinite(actions.discardsUsed) ? actions.discardsUsed : 0;
+  return Math.max(0, initial - used);
+}
+
 function trackScore(trackId, ledger) {
   const reasons = [];
   let raw = 0;
@@ -67,17 +73,23 @@ function trackScore(trackId, ledger) {
     case 'restless': {
       const discards = ledger?.actions?.discardsUsed || 0;
       const abilityTaken = ledger?.actions?.abilityTakenCards || 0;
-      if (discards > 0) {
-        raw += discards;
-        reasons.push(`${discards} Discard${discards === 1 ? '' : 's'} used`);
-      }
-      if (abilityTaken > 0) {
+      const mulligans = ledger?.actions?.mulligansUsed || 0;
+      const totalInterventions = discards + abilityTaken + mulligans;
+      if (discards >= 2) {
         raw += 1;
-        reasons.push('Ability took a card');
+        reasons.push(`${discards} Discards used`);
+      }
+      if (abilityTaken >= 2) {
+        raw += 1;
+        reasons.push(`${abilityTaken} cards taken by abilities`);
       }
       if (ledger?.actions?.allDiscardsUsed) {
         raw += 1;
         reasons.push('All Discards used');
+      }
+      if (totalInterventions >= 4) {
+        raw += 1;
+        reasons.push(`${totalInterventions} total interventions`);
       }
       break;
     }
@@ -86,17 +98,22 @@ function trackScore(trackId, ledger) {
       const discards = ledger?.actions?.discardsUsed || 0;
       const abilityTaken = ledger?.actions?.abilityTakenCards || 0;
       const openingInSpread = ledger?.cards?.openingHandCardsInSpread || 0;
-      if (discards === 0) {
-        raw += 3;
-        reasons.push('No Discards used');
+      const remaining = unusedDiscards(ledger?.actions || {});
+      if (abilityTaken === 0 && discards <= 1) {
+        raw += 1;
+        reasons.push(discards === 0 ? 'No Discards used' : 'Only 1 Discard used');
       }
       if (abilityTaken === 0) {
         raw += 1;
         reasons.push('No ability-taken cards');
       }
-      if (openingInSpread >= 4) {
+      if (openingInSpread >= 3) {
         raw += 1;
         reasons.push(`${openingInSpread} cards from opening hand`);
+      }
+      if (abilityTaken === 0 && remaining >= 2) {
+        raw += 1;
+        reasons.push(`${remaining} unused Discards`);
       }
       break;
     }
