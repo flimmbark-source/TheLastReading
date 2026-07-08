@@ -87,12 +87,7 @@ function ensureStoreFrontStyles(target = window) {
     .store-dim{position:absolute;inset:0;background:radial-gradient(circle at 50% 8%,rgba(80,54,20,.32),rgba(0,0,0,.86) 42%,rgba(0,0,0,.93));animation:storeDimIn 420ms ease-out both;pointer-events:none;z-index:0}
     @keyframes storeDimIn{from{opacity:0}to{opacity:1}}
 
-    .store-candle{position:absolute;top:8px;left:50%;width:44px;height:44px;margin-left:-22px;z-index:1;pointer-events:none;animation:storeCandleIn 220ms ease-out both;opacity:.86}
-    .store-candle img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity 90ms linear}
-    .store-candle .candle-off{opacity:1}.store-candle .candle-on{opacity:0}.store-candle.lit .candle-off{opacity:0}.store-candle.lit .candle-on{opacity:1}
-    @keyframes storeCandleIn{from{opacity:0;transform:translateY(-6px)}to{opacity:.86;transform:translateY(0)}}
-
-    .store-front{position:relative;width:min(96vw,560px);height:min(96dvh,790px);max-height:96dvh;overflow:hidden;box-sizing:border-box;padding:clamp(8px,1.7dvh,14px);font-family:Georgia,serif;color:#eadbb9;z-index:1;opacity:0;transition:opacity 280ms ease-out;display:flex;flex-direction:column;gap:clamp(6px,1dvh,10px)}
+    .store-front{position:relative;width:min(96vw,560px);height:min(96dvh,790px);max-height:96dvh;overflow:hidden;box-sizing:border-box;padding:clamp(8px,1.5dvh,12px);font-family:Georgia,serif;color:#eadbb9;z-index:1;opacity:0;transition:opacity 280ms ease-out;display:flex;flex-direction:column;gap:clamp(6px,1dvh,10px)}
     .store-front.store-visible{opacity:1}
 
     body.tlr-shop-active .score-stack{visibility:hidden;pointer-events:none}
@@ -100,21 +95,24 @@ function ensureStoreFrontStyles(target = window) {
     .store-front button{font-family:Georgia,serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
     .store-front button:disabled{cursor:not-allowed;opacity:.42}
 
-    .store-meta{display:grid;grid-template-columns:minmax(88px,1fr) auto minmax(88px,1fr);align-items:center;gap:8px;flex:0 0 auto}
-    .store-title{font:900 clamp(28px,8.2vw,48px)/.9 Georgia,serif;letter-spacing:.12em;color:#f1d196;text-shadow:0 2px 12px rgba(0,0,0,.9);text-align:center;text-transform:uppercase;filter:drop-shadow(0 0 8px rgba(223,170,72,.18))}
-    .store-refresh,.store-reserve-display{min-height:42px;border:1px solid rgba(226,181,100,.42);border-radius:10px;background:linear-gradient(180deg,rgba(24,18,13,.72),rgba(6,5,4,.7));box-shadow:inset 0 0 0 1px rgba(255,232,176,.06);color:#f1dfbd;text-transform:uppercase}
-    .store-refresh{display:flex;align-items:center;justify-content:center;gap:5px;padding:6px 8px;font-size:clamp(10px,2.7vw,13px);font-weight:900;letter-spacing:.05em;transition:background .15s,opacity .15s}
+    .store-meta{display:grid;grid-template-columns:minmax(88px,1fr) 54px minmax(88px,1fr);align-items:center;gap:8px;flex:0 0 auto}
+    .store-candle{position:relative;width:52px;height:52px;z-index:1;pointer-events:none;animation:storeCandleIn 220ms ease-out both;opacity:.92;justify-self:center;filter:drop-shadow(0 0 10px rgba(218,159,69,.22))}
+    .store-candle img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity 90ms linear}
+    .store-candle .candle-off{opacity:1}.store-candle .candle-on{opacity:0}.store-candle.lit .candle-off{opacity:0}.store-candle.lit .candle-on{opacity:1}
+    @keyframes storeCandleIn{from{opacity:0;transform:translateY(-6px)}to{opacity:.92;transform:translateY(0)}}
+    .store-refresh,.store-reserve-display{min-height:40px;border:1px solid rgba(226,181,100,.42);border-radius:10px;background:linear-gradient(180deg,rgba(24,18,13,.72),rgba(6,5,4,.7));box-shadow:inset 0 0 0 1px rgba(255,232,176,.06);color:#f1dfbd;text-transform:uppercase}
+    .store-refresh{display:flex;align-items:center;justify-content:center;gap:5px;padding:5px 8px;font-size:clamp(10px,2.7vw,13px);font-weight:900;letter-spacing:.05em;transition:background .15s,opacity .15s}
     .store-refresh:not(:disabled):hover{background:rgba(226,181,100,.1)}.store-refresh:disabled{opacity:.35;cursor:not-allowed}
     .store-refresh-icon{font-size:1.2em;line-height:1}.store-refresh-cost{color:#e0b96a;font-size:.92em;white-space:nowrap}
-    .store-reserve-display{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;padding:5px 8px}
+    .store-reserve-display{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;padding:4px 8px}
     .store-reserve-label{font:800 clamp(9px,2.4vw,11px)/1 system-ui,sans-serif;letter-spacing:.14em;color:#b08040}
-    .store-reserve-amount{font-size:clamp(22px,6.2vw,31px);color:#f1d196;text-shadow:0 1px 3px #000;line-height:1}.store-reserve-amount .coin{font-size:.48em;margin-right:.12em;color:#c89445;vertical-align:middle}
+    .store-reserve-amount{font-size:clamp(21px,5.8vw,29px);color:#f1d196;text-shadow:0 1px 3px #000;line-height:1}.store-reserve-amount .coin{font-size:.48em;margin-right:.12em;color:#c89445;vertical-align:middle}
 
-    .store-section-title{display:flex;align-items:center;gap:10px;color:#d8a95b;font:900 clamp(11px,3vw,15px)/1 Georgia,serif;letter-spacing:.18em;text-transform:uppercase;text-align:center;white-space:nowrap;flex:0 0 auto}
+    .store-section-title{display:flex;align-items:center;gap:8px;color:#d8a95b;font:900 clamp(10px,2.8vw,14px)/1 Georgia,serif;letter-spacing:.18em;text-transform:uppercase;text-align:center;white-space:nowrap;flex:0 0 auto}
     .store-section-title::before,.store-section-title::after{content:'';height:1px;flex:1;background:linear-gradient(90deg,transparent,rgba(210,154,66,.55),transparent)}
-    .store-section-title--featured{margin-top:1px}.store-section-title--relics{margin-top:0}
+    .store-section-title--featured{margin-top:-1px}.store-section-title--relics{margin-top:0}
 
-    .store-offer-row{display:flex;flex-direction:column;gap:clamp(7px,1dvh,10px);min-height:0;flex:1 1 auto}
+    .store-offer-row{display:flex;flex-direction:column;gap:clamp(7px,1dvh,10px);justify-content:space-between;min-height:0;flex:1 1 auto}
     .store-grid-top,.store-grid-bottom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(7px,1.7vw,10px)}
     .store-pack-feature{display:block;flex:0 0 auto}
 
@@ -136,18 +134,19 @@ function ensureStoreFrontStyles(target = window) {
     .store-relic-art-btn{background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important;padding:0;margin:0;cursor:pointer;display:flex;align-items:center;justify-content:center}
     .store-vessel-glyph{font:900 30px/1 Georgia,serif;color:#f1d196;text-shadow:0 2px 6px #000}
     .store-card-main{position:relative;z-index:1;display:flex;flex-direction:column;min-width:0}.store-card-name{font-weight:900;text-transform:uppercase;letter-spacing:.045em;color:#f4e8ca;line-height:1.05;text-shadow:0 1px 5px rgba(0,0,0,.85)}
-    .store-card-desc{font:700 clamp(10px,2.7vw,12px)/1.28 system-ui,sans-serif;color:#cbbd98}.store-card-kicker{font:800 clamp(8.5px,2.2vw,10px)/1 system-ui,sans-serif;color:#ad9367;text-transform:uppercase;letter-spacing:.08em}.store-card-lines{display:flex;flex-direction:column;gap:2px}
-    .store-stat-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:100%;margin-top:2px}.store-stat-chip{border:1px solid rgba(226,181,100,.34);border-radius:7px;background:rgba(0,0,0,.24);color:#f1d196;font:900 clamp(10px,2.8vw,12px)/1 system-ui,sans-serif;padding:7px 4px;text-align:center;white-space:nowrap}
+    .store-card-desc{font:700 clamp(10px,2.7vw,12px)/1.28 system-ui,sans-serif;color:#cbbd98}.store-card-lines{display:flex;flex-direction:column;gap:2px}
+    .store-stat-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:100%;margin-top:3px}.store-stat-chip{border:1px solid rgba(226,181,100,.34);border-radius:7px;background:rgba(0,0,0,.24);color:#f1d196;font:900 clamp(10px,2.8vw,12px)/1 system-ui,sans-serif;padding:7px 4px;text-align:center;white-space:nowrap}
     .store-card-buy{position:relative;z-index:1;border:1px solid rgba(226,181,100,.58);border-radius:8px;background:linear-gradient(180deg,rgba(133,84,24,.76),rgba(55,34,13,.8));box-shadow:inset 0 0 0 1px rgba(255,238,190,.08),0 2px 8px rgba(0,0,0,.32);color:#f6dfac;font:900 clamp(11px,3vw,14px)/1 Georgia,serif;text-transform:uppercase;letter-spacing:.06em}.store-card-buy:not(:disabled):hover{background:linear-gradient(180deg,rgba(159,101,28,.82),rgba(67,42,15,.86))}.store-card-buy .coin{color:#f0c46c;margin:0 .16em}
     .store-card--stamp .store-card-buy,.store-card--pack .store-card-buy{background:linear-gradient(180deg,rgba(83,37,105,.84),rgba(38,18,53,.86));border-color:rgba(191,129,229,.55)}.store-card--relic .store-card-buy,.store-card--vessel .store-card-buy{background:linear-gradient(180deg,rgba(31,91,88,.74),rgba(14,45,43,.86));border-color:rgba(108,190,180,.48)}
 
-    .store-grid-top .store-card,.store-grid-bottom .store-card{min-height:0;align-items:center;flex-direction:column;text-align:center;padding:clamp(7px,1.15dvh,10px) clamp(7px,1.6vw,10px);box-sizing:border-box}.store-grid-top .store-card{height:clamp(188px,25dvh,214px)}.store-grid-bottom .store-card{height:clamp(174px,23dvh,204px)}
-    .store-grid-top .store-card-art{width:clamp(46px,13vw,64px);height:clamp(46px,13vw,64px);margin-top:0}.store-grid-top .store-card-art .isp{transform:scale(clamp(.39,.12vw + .36,.54))}.store-grid-top .store-card-art .store-stamp-art{transform:scale(clamp(.76,.1vw + .72,1))}
-    .store-grid-bottom .store-card-art{width:clamp(52px,14vw,72px);height:clamp(52px,14vw,72px)}.store-grid-bottom .store-card-art .relic-art-sprite{width:clamp(52px,14vw,72px);height:clamp(52px,14vw,72px);background-size:contain!important}.store-grid-bottom .store-relic-art-btn{width:100%;height:100%}
-    .store-grid-top .store-card-main,.store-grid-bottom .store-card-main{align-items:center;justify-content:flex-start;gap:4px;width:100%;flex:1 1 auto}.store-grid-top .store-card-name{font-size:clamp(15px,4.2vw,21px)}.store-grid-bottom .store-card-name{font-size:clamp(13px,3.6vw,18px)}
-    .store-grid-top .store-card-desc,.store-grid-bottom .store-card-desc{max-width:100%}.store-grid-top .store-card-buy,.store-grid-bottom .store-card-buy{width:100%;min-height:clamp(34px,4.9dvh,42px);padding:0 8px;margin-top:auto;flex:0 0 auto}
+    .store-grid-top .store-card,.store-grid-bottom .store-card{min-height:0;align-items:center;flex-direction:column;text-align:center;padding:clamp(8px,1.25dvh,12px) clamp(8px,1.7vw,11px) clamp(10px,1.45dvh,14px);box-sizing:border-box}
+    .store-grid-top .store-card{height:clamp(210px,29dvh,236px)}.store-grid-bottom .store-card{height:clamp(190px,26dvh,218px)}
+    .store-grid-top .store-card-art{width:clamp(42px,11vw,56px);height:clamp(42px,11vw,56px);margin-top:0}.store-grid-top .store-card-art .isp{transform:scale(clamp(.35,.1vw + .32,.47))}.store-grid-top .store-card-art .store-stamp-art{transform:scale(clamp(.68,.1vw + .64,.9))}
+    .store-grid-bottom .store-card-art{width:clamp(48px,12vw,64px);height:clamp(48px,12vw,64px)}.store-grid-bottom .store-card-art .relic-art-sprite{width:clamp(48px,12vw,64px);height:clamp(48px,12vw,64px);background-size:contain!important}.store-grid-bottom .store-relic-art-btn{width:100%;height:100%}
+    .store-grid-top .store-card-main,.store-grid-bottom .store-card-main{align-items:center;justify-content:flex-start;gap:5px;width:100%;flex:1 1 auto}.store-grid-top .store-card-name{font-size:clamp(15px,4vw,20px)}.store-grid-bottom .store-card-name{font-size:clamp(13px,3.5vw,17px)}
+    .store-grid-top .store-card-desc,.store-grid-bottom .store-card-desc{max-width:100%}.store-grid-top .store-card-buy,.store-grid-bottom .store-card-buy{width:100%;min-height:clamp(36px,5dvh,44px);padding:0 8px;margin-top:auto;flex:0 0 auto}
 
-    .store-pack-feature .store-card{height:clamp(86px,12.2dvh,108px);display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;text-align:left;padding:8px clamp(8px,2vw,12px);column-gap:clamp(8px,2vw,14px);border-color:rgba(157,91,198,.42);background:linear-gradient(180deg,rgba(34,22,38,.68),rgba(10,7,10,.78))}.store-pack-feature .store-card::before{inset:12px auto 12px -1px;width:2px;height:auto}.store-pack-feature .store-card-utility{justify-content:flex-start}.store-pack-feature .store-card-art{width:clamp(50px,14vw,72px);height:clamp(50px,14vw,72px)}.store-pack-feature .store-card-art .isp{transform:scale(clamp(.42,.1vw + .38,.6))}.store-pack-feature .store-relic-art-btn{width:clamp(50px,14vw,72px);height:clamp(50px,14vw,72px)}.store-pack-feature .store-card-main{gap:4px}.store-pack-feature .store-card-name{font-size:clamp(15px,4.1vw,22px)}.store-pack-feature .store-card-buy{min-width:clamp(94px,25vw,128px);min-height:clamp(38px,5.2dvh,48px);padding:0 10px}
+    .store-pack-feature .store-card{height:clamp(92px,13dvh,112px);display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;text-align:left;padding:8px clamp(8px,2vw,12px);column-gap:clamp(8px,2vw,14px);border-color:rgba(157,91,198,.42);background:linear-gradient(180deg,rgba(34,22,38,.68),rgba(10,7,10,.78))}.store-pack-feature .store-card::before{inset:12px auto 12px -1px;width:2px;height:auto}.store-pack-feature .store-card-utility{justify-content:flex-start}.store-pack-feature .store-card-art{width:clamp(46px,12vw,64px);height:clamp(46px,12vw,64px)}.store-pack-feature .store-card-art .isp{transform:scale(clamp(.38,.1vw + .34,.54))}.store-pack-feature .store-relic-art-btn{width:clamp(46px,12vw,64px);height:clamp(46px,12vw,64px)}.store-pack-feature .store-card-main{gap:4px}.store-pack-feature .store-card-name{font-size:clamp(15px,4.1vw,22px)}.store-pack-feature .store-card-buy{min-width:clamp(94px,25vw,128px);min-height:clamp(38px,5.2dvh,48px);padding:0 10px}
 
     .store-footer{display:flex;justify-content:center;flex:0 0 auto}.store-proceed{width:min(86%,420px);min-height:clamp(38px,5.2dvh,46px);background:linear-gradient(180deg,rgba(28,22,16,.82),rgba(7,6,5,.9));border:1px solid rgba(226,181,100,.58);border-radius:10px;color:#f1dfbd;font:900 clamp(14px,4.5vw,20px)/1 Georgia,serif;text-transform:uppercase;letter-spacing:.1em;padding:0 22px;transition:background .15s}.store-proceed:hover{background:rgba(200,160,60,.15)}
 
@@ -155,8 +154,8 @@ function ensureStoreFrontStyles(target = window) {
     .store-relic-callout{z-index:10010;max-width:220px}.store-relic-callout .relic-callout-desc{font-size:12px;line-height:1.35}.store-pack-callout{z-index:10010;max-width:240px}.store-pack-callout .relic-callout-desc{font-size:12px;line-height:1.35;margin-bottom:6px}.store-pack-callout-list{margin:0;padding:0 0 0 16px;list-style:disc}.store-pack-callout-list li{font-size:11px;line-height:1.4;color:#c8b888;margin-bottom:2px}
 
     @media(prefers-reduced-motion:reduce){.store-dim{animation:none}.store-candle{animation:none}.store-front{opacity:1;transition:none}.summary.store-front-shell.store-exiting{animation:none;opacity:0}}
-    @media(max-height:740px){.store-front{height:98dvh;max-height:98dvh;gap:5px;padding:6px}.store-candle{display:none}.store-grid-top .store-card{height:176px}.store-grid-bottom .store-card{height:162px}.store-pack-feature .store-card{height:82px}.store-card-desc{font-size:10px}.store-stat-chip{padding:5px 3px}.store-section-title{font-size:10px}.store-proceed{min-height:34px}}
-    @media(max-width:380px){.store-meta{grid-template-columns:minmax(74px,1fr) auto minmax(74px,1fr);gap:5px}.store-refresh,.store-reserve-display{min-height:38px}.store-title{font-size:26px;letter-spacing:.08em}.store-card-tag,.store-card-meta{padding:0 6px;letter-spacing:.08em}.store-stat-row{gap:4px}.store-stat-chip{font-size:9.5px}.store-card-buy{font-size:10.5px}.store-pack-feature .store-card{grid-template-columns:auto minmax(0,1fr) auto;column-gap:7px}.store-pack-feature .store-card-buy{min-width:84px}}
+    @media(max-height:740px){.store-front{height:98dvh;max-height:98dvh;gap:5px;padding:6px}.store-meta{grid-template-columns:minmax(80px,1fr) 46px minmax(80px,1fr)}.store-candle{width:44px;height:44px}.store-grid-top .store-card{height:198px}.store-grid-bottom .store-card{height:182px}.store-pack-feature .store-card{height:88px}.store-card-desc{font-size:10px}.store-stat-chip{padding:6px 3px}.store-section-title{font-size:10px}.store-proceed{min-height:34px}}
+    @media(max-width:380px){.store-meta{grid-template-columns:minmax(74px,1fr) 44px minmax(74px,1fr);gap:5px}.store-candle{width:42px;height:42px}.store-refresh,.store-reserve-display{min-height:38px}.store-card-tag,.store-card-meta{padding:0 6px;letter-spacing:.08em}.store-stat-row{gap:4px}.store-stat-chip{font-size:9.5px}.store-card-buy{font-size:10.5px}.store-pack-feature .store-card{grid-template-columns:auto minmax(0,1fr) auto;column-gap:7px}.store-pack-feature .store-card-buy{min-width:84px}}
   `;
 }
 
@@ -280,7 +279,7 @@ function renderScoringEffect(upgradeKey, copy, isStamp) {
   }
   const stats = String(copy.desc || '').split('/').map(s => s.trim()).filter(Boolean);
   if (stats.length >= 2) {
-    return `<div class="store-card-kicker">${escapeHtml(copy.label || 'Scoring bonus')}</div><div class="store-stat-row"><div class="store-stat-chip">${escapeHtml(stats[0])}</div><div class="store-stat-chip">${escapeHtml(stats[1])}</div></div>`;
+    return `<div class="store-stat-row"><div class="store-stat-chip">${escapeHtml(stats[0])}</div><div class="store-stat-chip">${escapeHtml(stats[1])}</div></div>`;
   }
   return `<div class="store-card-desc">${escapeHtml(copy.desc)}</div>`;
 }
@@ -312,6 +311,10 @@ function renderScoringCard(index, upgradeKey, target = window, options = {}) {
   </div>`;
 }
 
+function packDisplayName(name) {
+  return String(name || '').replace(/\s+pack$/i, '');
+}
+
 function renderPackCard(index, packId, target = window) {
   const emptyRow = '<div class="store-card store-card--pack disabled"><div class="store-card-main"><div class="store-card-name">—</div></div></div>';
   if (!packId) return emptyRow;
@@ -324,7 +327,7 @@ function renderPackCard(index, packId, target = window) {
     <button type="button" class="store-relic-art-btn" onclick="showStorePackCallout('${packId}',this);event.stopPropagation()" aria-label="Show ${escapeHtml(pack.name)} details"><div class="store-card-art" style="pointer-events:none"><span class="isp isp-108 ${pack.icon}"></span></div></button>
     <div class="store-card-main">
       <div class="store-card-utility"><div class="store-card-tag">Pack</div></div>
-      <div class="store-card-name">${escapeHtml(pack.name)}</div>
+      <div class="store-card-name">${escapeHtml(packDisplayName(pack.name))}</div>
       <div class="store-card-desc">${escapeHtml(desc)}</div>
     </div>
     <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStorePack('pack',${index},'${packId}',${cost})">Open <span class="coin">✦</span> ${cost}</button>
@@ -488,7 +491,7 @@ export function selectMarketAmbienceEntry(target = window) {
     ? MARKET_AMBIENCE_FILES.filter(entry => entry.file !== previous)
     : MARKET_AMBIENCE_FILES;
   const rng = target.Math?.random || Math.random;
-  const entry = pool[Math.floor(rng() * pool.length)] || MARKET_AMBIENCE_FILES[0];
+  const entry = pool[Math.floor(rng() * MARKET_AMBIENCE_FILES.length)] || MARKET_AMBIENCE_FILES[0];
   target._lastMarketAmbienceFile = entry.file;
   return entry;
 }
@@ -535,7 +538,10 @@ export function openShopMain(){
   const inner=`
     <div class="store-meta">
       <button class="store-refresh" ${canRefresh?'':'disabled'} onclick="refreshStoreFront()"><span class="store-refresh-icon">↻</span><span>Refresh</span><span class="store-refresh-cost">✦ ${rc}</span></button>
-      <div class="store-title">Shop</div>
+      <div class="store-candle${alreadyOpen ? ' lit' : ''}" id="storeCandle">
+        <img class="candle-off" src="ui/candle_flame_off.small.webp" alt="">
+        <img class="candle-on"  src="ui/candle_flame_on.small.webp"  alt="">
+      </div>
       <div class="store-reserve-display"><div class="store-reserve-label">Reserve</div><div class="store-reserve-amount"><span class="coin">✦</span>${persist.pool}</div></div>
     </div>
     <div class="store-section-title store-section-title--featured">Featured Offers</div>
@@ -558,10 +564,6 @@ export function openShopMain(){
     </div>`;
   const html=`<div class="summary tarot-shop store-front-shell">
     <div class="store-dim"></div>
-    <div class="store-candle${alreadyOpen ? ' lit' : ''}" id="storeCandle">
-      <img class="candle-off" src="ui/candle_flame_off.small.webp" alt="">
-      <img class="candle-on"  src="ui/candle_flame_on.small.webp"  alt="">
-    </div>
     <div class="store-front${alreadyOpen ? ' store-visible' : ''}" id="storeFront">${inner}</div>
   </div>`;
   showOverlay(html);
