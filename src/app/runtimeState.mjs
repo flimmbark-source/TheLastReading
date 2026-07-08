@@ -10,7 +10,8 @@ export function createInitialPersist(){
       omen:0,resonance:0,rank:0,rank_mult:0,sequence:0,seq_mult:0,court_chips:0,court_mult:0,royal_court_chips:0,royal_court_mult:0,
       path_chips:0,path_mult:0,relicSlot:0,blessed_start:0,first_light:0,deep_reserve:0,
       nimble_fingers:0,quick_release:0,chosen:0,balanced_reading:0,balanced_reading_mult:0,
-      elemental_harmony:0,elemental_harmony_mult:0,
+      elemental_harmony:0,elemental_harmony_mult:0,patient_reading:0,first_answer:0,
+      familiar_face:0,court_favor:0,
     },
     relics:[],
     relicUsed:{},
@@ -26,9 +27,10 @@ export function createInitialPersist(){
 export function createInitialState(){
   return {
     deck:[],hand:[],discard:[],spread:Array(5).fill(null),selected:null,reading:1,th:0,
-    thBonus:0,thBonusPending:0,discards:3,mull:false,mullCharges:0,busy:false,
-    abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0,
-    setIndex:0,setsPerRound:2,roundScore:0,setScores:[],roundDiscardCount:0,roundPatternCount:0,
+    thBonus:0,thBonusPending:0,discards:3,initialDiscards:3,mull:false,mullCharges:0,busy:false,
+    abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],
+    openingHandCardIds:[],placedCardIds:[],worldCarry:0,
+    setIndex:0,setsPerRound:2,roundScore:0,setScores:[],roundDiscardCount:0,roundMulliganCount:0,roundPatternCount:0,
     constellationId:null,untargetableCardUids:[],awaitingNextSet:false,lastOutcome:null,
     lastReadingLedger:null,lastResults:null,openedBundleId:null,lastBundleClaim:null,
   };
