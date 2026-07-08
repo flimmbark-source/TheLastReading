@@ -22,7 +22,7 @@ document.addEventListener('pointerdown', () => {
 const FILE_SOUNDS = Object.freeze({
   purchase: { src: 'assets/audio/freesound_gamestudio-drop-coin-384921.mp3', gain: 0.38 },
   pack_pick: { src: 'assets/audio/gargamel10-magic-basic-game-sound-effect-380301.mp3', gain: 0.32 },
-  pack_open: { src: 'assets/audio/universfield-magic-spell-03-242245.mp3', gain: 0.8 },
+  pack_open: { src: 'assets/audio/olenchic-psycho-1-155031.mp3', gain: 0.8 },
   store_open: { src: 'src/app/floraphonic-ambient-metal-whoosh-2-174462.mp3', gain: 0.3 },
 });
 
