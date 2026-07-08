@@ -66,6 +66,10 @@ export function scoringContext(state) {
     resonationBonus: state.run.resonationBonus,
     worldCarry: state.run.worldCarry,
     constellationId: state.run.constellationId,
+    remainingDiscards: state.run.discards || 0,
+    initialDiscards: state.run.initialDiscards || 0,
+    openingHandCardIds: state.run.openingHandCardIds || [],
+    placedCardIds: state.run.placedCardIds || [],
   };
 }
 
@@ -178,40 +182,4 @@ export function unlockedFragments(state) {
   return unlockedFragmentIds(state)
     .map(id => ARCHIVE_FRAGMENTS[id])
     .filter(Boolean);
-}
-
-// Everything that renders in the Archives drawer: discovered attic items
-// first, then unlocked fragments.
-export function archiveEntries(state) {
-  const discovered = new Set(discoveredArchiveItemIds(state));
-  return [
-    ...ARCHIVE_ITEMS.filter(item => discovered.has(item.id)),
-    ...unlockedFragments(state),
-  ];
-}
-
-export function obals(state) {
-  return state.persist.obals || 0;
-}
-
-export function publicRunSnapshot(state) {
-  return {
-    phase: state.run.phase,
-    reading: state.run.reading,
-    threshold: thresholdValue(state),
-    reserve: state.persist.reserve,
-    totalScore: state.persist.totalScore,
-    handCount: state.run.hand.length,
-    deckCount: state.run.deck.length,
-    discardCount: state.run.discard.length,
-    spreadCount: placedCards(state).length,
-    discards: state.run.discards,
-    setIndex: state.run.setIndex,
-    setsPerRound: state.run.setsPerRound,
-    roundScore: state.run.roundScore,
-    constellationId: state.run.constellationId,
-    canDiscard: canDiscardSelected(state),
-    canScore: canScoreReading(state),
-    pendingBundles: (state.persist.pendingRewardBundles || []).filter(bundle => bundle.state !== 'claimed').length,
-  };
 }
