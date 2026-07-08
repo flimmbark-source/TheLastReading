@@ -97,11 +97,6 @@ function ensureStoreFrontStyles(target = window) {
     .store-front{position:relative;width:min(96vw,560px);max-height:calc(100dvh - 128px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;font-family:Georgia,serif;color:#eadbb9;z-index:1;opacity:0;transition:opacity 280ms ease-out}
     .store-front.store-visible{opacity:1}
 
-    /* While the Market is open (shopPolish sets tlr-shop-active for the
-       whole visit), hide the Score/Threshold HUD and the four persistent
-       bottom navigation medallions. visibility, not display: the layered
-       SPv2 rules force display with !important, and unlayered normal
-       declarations still win the visibility channel. */
     body.tlr-shop-active .score-stack{visibility:hidden;pointer-events:none}
     body.tlr-shop-active #menuBtn,body.tlr-shop-active #scoringBtn,body.tlr-shop-active #abilitiesBtn,body.tlr-shop-active #spv2ArchiveBtn{visibility:hidden;pointer-events:none}
     .store-front button{font-family:Georgia,serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -118,9 +113,6 @@ function ensureStoreFrontStyles(target = window) {
     .store-reserve-amount{font-size:28px;color:#f1d196;text-shadow:0 1px 3px #000;line-height:1}
     .store-reserve-amount .coin{font-size:.42em;margin-left:.1em;color:#c89445;vertical-align:middle}
 
-    /* Mobile market composition: two small top offers, one featured pack,
-       then two relic/vessel offers. The cards still use the existing purchase
-       and picker code; the wrappers only change hierarchy and spacing. */
     .store-offer-row{display:flex;flex-direction:column;gap:12px}
     .store-grid-top,.store-grid-bottom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
     .store-pack-feature{display:block}
@@ -225,7 +217,6 @@ function updateStoreReserveDisplay(target = window) {
 }
 
 function markCardPurchased(slotIndex, target = window) {
-  // Remove any open callouts so they don't block subsequent button clicks
   if (target.document) target.document.querySelectorAll('.relic-callout,.store-relic-callout,.store-pack-callout').forEach(el => el.remove());
   const row = target.document && target.document.querySelector('.store-offer-row');
   if (!row) return;
@@ -239,7 +230,6 @@ function markCardPurchased(slotIndex, target = window) {
     card.style.opacity = '1';
     card.style.pointerEvents = 'none';
     updateStoreReserveDisplay(target);
-    // also update refresh button
     const rc = target._nextRefreshCost ? target._nextRefreshCost() : 5;
     const refreshBtn = target.document.querySelector('.store-refresh');
     if (refreshBtn) refreshBtn.disabled = (persistOf(target).pool || 0) < rc;
@@ -489,7 +479,6 @@ function playCandleSnuff(target = window) {
     const ctx = target._tlrACtx || (target._tlrACtx = new (target.AudioContext || target.webkitAudioContext)());
     if (ctx.state === 'suspended') ctx.resume();
     const vol = typeof target._sfxVol === 'number' ? target._sfxVol : 1;
-    // soft puff/hiss — high-freq noise that decays quickly
     const dur = 0.22;
     const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
     const d = buf.getChannelData(0);
@@ -519,7 +508,6 @@ export function storeExitToNextReading(target = window) {
     target.setTimeout(() => { if (typeof target.continueReading === 'function') target.continueReading(); }, 0);
     return true;
   }
-  // snuff the candle first, then fade out
   const candle = target.document.getElementById('storeCandle');
   if (candle && candle.classList.contains('lit')) {
     playCandleSnuff(target);
@@ -567,7 +555,6 @@ function playMatchLight(target = window) {
     const ctx = target._tlrACtx || (target._tlrACtx = new (target.AudioContext || target.webkitAudioContext)());
     if (ctx.state === 'suspended') ctx.resume();
     const vol = typeof target._sfxVol === 'number' ? target._sfxVol : 1;
-    // scratch/hiss burst
     const dur = 0.18;
     const buf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * dur), ctx.sampleRate);
     const d = buf.getChannelData(0);
@@ -591,7 +578,6 @@ export function openShopMain(){
   const relicA = offers.relics[0] || null;
   const relicB = offers.relics[1] || null;
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // if store is already open (e.g. returning from a pack picker), skip the intro
   const alreadyOpen = !!document.querySelector('.store-front-shell:not(.store-exiting)');
 
   const inner=`
@@ -628,7 +614,6 @@ export function openShopMain(){
 
   if (alreadyOpen || reduce) return;
 
-  // light the candle after dim appears, then fade in content + play ambience
   setTimeout(() => {
     const candle = document.getElementById('storeCandle');
     if (candle) { playMatchLight(window); candle.classList.add('lit'); }
