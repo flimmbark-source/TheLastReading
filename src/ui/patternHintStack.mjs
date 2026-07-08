@@ -31,10 +31,20 @@ export function installPatternHintStack(target = window){
   if(!stack)return;
   target.__patternHintStackInstalled = true;
 
+  // The stack follows the "Text" scoring-hint level directly rather than only
+  // the card's data-hint-lines attribute: the hand renderer reuses card
+  // elements by uid, so lowering the level (Text -> Glow/None) leaves stale
+  // attributes on cards that still had hints, and pressing one would otherwise
+  // re-show the panel after the setting was turned off.
+  const textHintsEnabled = () => {
+    const settings = (target.tlrRuntime && target.tlrRuntime.hintSettings) || target.hintSettings;
+    return !settings || settings.patternText !== false;
+  };
+
   let frame = 0;
   const render = () => {
     frame = 0;
-    const card = doc.querySelector(ACTIVE_SELECTOR);
+    const card = textHintsEnabled() ? doc.querySelector(ACTIVE_SELECTOR) : null;
     const lines = card ? (card.dataset.hintLines || '').split('\n').filter(Boolean) : [];
     const key = lines.join('\n');
     if(stack.dataset.key !== key){
