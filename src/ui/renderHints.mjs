@@ -16,13 +16,23 @@ function dedupeHints(hints){
   return out;
 }
 
+function labelWithProgress(hint){
+  const p=hint&&hint.progress;
+  const have=Number(p&&p.have);
+  const need=Number(p&&p.need);
+  if(hint?.level!=='complete'&&Number.isFinite(have)&&Number.isFinite(need)&&have>0&&need>0&&have<need){
+    return `${hint.label} (${have}/${need})`;
+  }
+  return hint.label;
+}
+
 function hintLabels(hints){
   const seen=new Set();
   const labels=[];
   for(const hint of hints||[]){
     if(seen.has(hint.label))continue;
     seen.add(hint.label);
-    labels.push(hint.label);
+    labels.push(labelWithProgress(hint));
   }
   return labels;
 }
