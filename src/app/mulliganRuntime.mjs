@@ -3,6 +3,10 @@
 function runtime(target){return target.tlrRuntime || {};}
 function stateOf(target){return runtime(target).state || target.state;}
 
+function notifyTrackGhosts(target, action, beforeRun, afterRun) {
+  if (typeof target.tlrMaybeFireTrackGhosts === 'function') target.tlrMaybeFireTrackGhosts(action, beforeRun, afterRun);
+}
+
 export function mulligan(target = window){
   const state=stateOf(target);
   const _run=target.tlrStore?.getState?.()?.run;
@@ -15,6 +19,7 @@ export function mulligan(target = window){
   if(typeof target.maxHand==='function' && handLen!==target.maxHand())return false;
 
   const storeReady=typeof target.tlrStoreReady==='function'&&target.tlrStoreReady();
+  const beforeRun=storeReady?target.tlrStore.getState().run:null;
   if(storeReady){
     if(typeof target.tlrSyncRunToStore==='function')target.tlrSyncRunToStore();
     target.tlrStore.dispatch({type:target.tlrActions.MULLIGAN});
@@ -23,12 +28,14 @@ export function mulligan(target = window){
     state.hand=newRun.hand.slice();
     state.selected=newRun.selectedCardId;
     state.mullCharges=newRun.mulliganCharges;
+    notifyTrackGhosts(target,{type:target.tlrActions.MULLIGAN},beforeRun,newRun);
   } else {
     state.deck=target.shuffle([...state.deck,...state.hand]);
     state.hand=[];
     state.selected=null;
     state.mullCharges-=1;
     if(typeof target.drawTo==='function')target.drawTo(target.maxHand());
+    notifyTrackGhosts(target,{type:'MULLIGAN'},null,state);
   }
   if(typeof target.playSound==='function')target.playSound('shuffle');
   if(typeof target.haptic==='function')target.haptic(12);
