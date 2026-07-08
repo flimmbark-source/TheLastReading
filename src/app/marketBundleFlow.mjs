@@ -346,48 +346,13 @@ function patchResultsOverlay(target = window) {
   else table.insertAdjacentHTML('beforeend', [...rows, bundleSummary].join(''));
 }
 
-function maybeDelayResultsOverlayForTrackGhosts(target = window) {
-  const summary = target.document?.getElementById('summary');
-  if (!summary || !summary.classList.contains('show')) return false;
-  if (!summary.querySelector('.result-panel.pass')) return false;
-  if (summary.dataset.trackGhostDelay === 'done') return false;
-  const run = target.tlrStore?.getState?.()?.run;
-  const results = run?.lastResults;
-  const labels = finalTrackGhostLabels(results, run, target);
-  if (!labels.length) return false;
-  const key = resultGhostKey(run || {});
-  if (target.__tlrTrackGhostResultDelayKey === key) return true;
-  target.__tlrTrackGhostResultDelayKey = key;
-  summary.dataset.trackGhostDelay = 'pending';
-  summary.style.visibility = 'hidden';
-  playTrackGhostLabels(labels, () => {
-    summary.style.visibility = '';
-    summary.dataset.trackGhostDelay = 'done';
-    target.__tlrTrackGhostResultDelayKey = null;
-    target.__tlrTrackGhostResultsPlayed = key;
-    patchResultsOverlay(target);
-  }, target, { blocking: true });
-  return true;
-}
-
 function installResultsPatchObserver(target = window) {
-  const doc = target.document;
-  const summary = doc?.getElementById('summary');
+  const summary = target.document?.getElementById('summary');
   if (!summary || target.__tlrMarketBundleResultsObserver) return;
-  let queued = false;
-  const schedule = () => {
-    if (queued) return;
-    queued = true;
-    target.setTimeout?.(() => {
-      queued = false;
-      if (maybeDelayResultsOverlayForTrackGhosts(target)) return;
-      patchResultsOverlay(target);
-    }, 0);
-  };
-  const observer = new MutationObserver(schedule);
-  observer.observe(summary, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
+  const observer = new MutationObserver(() => patchResultsOverlay(target));
+  observer.observe(summary, { childList: true, subtree: true });
   target.__tlrMarketBundleResultsObserver = observer;
-  schedule();
+  patchResultsOverlay(target);
 }
 
 function trackGhostRunKey(run = {}) {
@@ -468,13 +433,11 @@ function liveTrackProgress(run = {}) {
   const initialDiscards = Number.isFinite(run.initialDiscards) ? run.initialDiscards : 3;
   const totalInterventions = discards + abilityTaken + mulligans;
   const out = emptyTrackMap();
-
   if (discards >= 2) out.restless += 1;
   if (abilityTaken >= 2) out.restless += 1;
   if (initialDiscards > 0 && (run.discards || 0) <= 0) out.restless += 1;
   if (totalInterventions >= 4) out.restless += 1;
   out.restless = Math.min(4, out.restless);
-
   if (openingHandCardsInSpread(run) >= 3) out.stillness += 1;
   out.sequence = sequenceTrackScoreForCards(cards);
   out.echo = echoTrackScoreForCards(cards);
@@ -498,7 +461,7 @@ function trackGhostLabel(trackId, amount, fallbackLabel = null) {
 function playTrackGhostLabels(labels, done = () => {}, target = window, options = {}) {
   if (!labels.length) { done(); return false; }
   const step = options.blocking ? 520 : 170;
-  const start = options.blocking ? 160 : 240;
+  const start = options.blocking ? 160 : 120;
   if (options.blocking) target.__tlrTrackGhostPlaybackActive = true;
   labels.forEach((label, index) => fireLiteralTrackGhost(target, label, start + index * step, { center: !!options.blocking }));
   const finishDelay = start + labels.length * step + (options.blocking ? 120 : 0);
@@ -558,34 +521,6 @@ function openBundleMarketAfterTrackGhosts(target = window) {
   return playTrackResultsBeforeOverlay(() => openBundleMarket(target), target);
 }
 
-function installInReadingTrackGhostWrappers(target = window) {
-  if (!target || target.__tlrTrackGhostActionWrappersInstalled) return;
-  target.__tlrTrackGhostActionWrappersInstalled = true;
-  const wrapAction = (actionFactory, fn) => function wrappedTrackGhostAction(...args) {
-    const result = fn.apply(this, args);
-    const afterRun = target.tlrStore?.getState?.()?.run;
-    fireInReadingTrackGhosts(actionFactory(...args), null, afterRun, target);
-    return result;
-  };
-  if (typeof target.placeCard === 'function') {
-    const original = target.placeCard;
-    target.placeCard = wrapAction(slotIndex => ({ type: target.tlrActions?.PLACE_CARD || 'PLACE_CARD', slotIndex }), original);
-  }
-  if (typeof target.discardSelected === 'function') {
-    const original = target.discardSelected;
-    target.discardSelected = wrapAction(() => ({ type: target.tlrActions?.DISCARD_SELECTED || 'DISCARD_SELECTED' }), original);
-  }
-  if (typeof target.tlrResolveAbilityThroughStore === 'function') {
-    const original = target.tlrResolveAbilityThroughStore;
-    target.tlrResolveAbilityThroughStore = function wrappedResolveAbilityThroughStore(result) {
-      const out = original.call(this, result);
-      const afterRun = target.tlrStore?.getState?.()?.run;
-      fireInReadingTrackGhosts({ type: target.tlrActions?.RESOLVE_ABILITY || 'RESOLVE_ABILITY', result }, null, afterRun, target);
-      return out;
-    };
-  }
-}
-
 export function installMarketBundleFlow(target = window) {
   if (!target || target.__tlrMarketBundleFlowInstalled) return;
   target.__tlrMarketBundleFlowInstalled = true;
@@ -599,5 +534,4 @@ export function installMarketBundleFlow(target = window) {
   target.pickRewardBundleChoice = (bundleId, rewardKey) => pickRewardBundleChoice(bundleId, rewardKey, target);
   target.tlrMaybeFireTrackGhosts = (action, beforeRun, afterRun) => fireInReadingTrackGhosts(action, beforeRun, afterRun, target);
   target.playTrackResultsBeforeOverlay = done => playTrackResultsBeforeOverlay(done, target);
-  installInReadingTrackGhostWrappers(target);
 }
