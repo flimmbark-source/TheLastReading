@@ -4,25 +4,28 @@ import { ACTIONS } from '../src/game/actions.mjs';
 import { createGameState, createInitialPersistState, GAME_PHASES } from '../src/game/state.mjs';
 import { reducer } from '../src/game/reducer.mjs';
 import { patternCountsFromMelds } from '../src/systems/readingLedger.mjs';
-import { advanceMarketBundleProgress } from '../src/systems/marketBundleProgress.mjs';
-import { claimRewardFromBundle, legalRewardKeysForBundle, openRewardBundle } from '../src/systems/marketRewardBundles.mjs';
+import { advanceMarketBundleProgress, evaluateMarketBundleTracks } from '../src/systems/marketBundleProgress.mjs';
+import { claimRewardFromBundle, legalRewardKeysForBundle, openRewardBundle, rewardOfferKeysForBundle } from '../src/systems/marketRewardBundles.mjs';
 
 function ledger(overrides = {}) {
   return {
     id: 'reading_1_threshold_0',
     reading: 1,
     thresholdIndex: 0,
-    patterns: { sequenceMelds: 0, courtMelds: 0, fullCourtMelds: 0, royalCourtMelds: 0, rankMelds: 0, pathMelds: 0 },
-    actions: { discardsUsed: 0, abilityTakenCards: 0 },
+    patterns: { sequenceMelds: 0, sequenceBestLength: 0, courtMelds: 0, fullCourtMelds: 0, royalCourtMelds: 0, rankMelds: 0, pathMelds: 0, echoBestKind: 0, hasPair: false, hasThreeOfKind: false, hasFourOfKind: false },
+    cards: { courtsInSpread: 0, openingHandCardsInSpread: 0 },
+    actions: { discardsUsed: 0, initialDiscards: 3, allDiscardsUsed: false, abilityTakenCards: 0, mulligansUsed: 0 },
     ...overrides,
   };
 }
 
 {
   const persist = createInitialPersistState();
+  assert.equal(persist.marketBundleProgress.restless.nextThreshold, 3, 'restless starts at first threshold');
+  assert.equal(persist.marketBundleProgress.stillness.nextThreshold, 3, 'stillness starts at first threshold');
   assert.equal(persist.marketBundleProgress.sequence.nextThreshold, 2, 'sequence starts at first threshold');
-  assert.equal(persist.marketBundleProgress.court.nextThreshold, 2, 'court starts at first threshold');
-  assert.equal(persist.marketBundleProgress.draw_discard.nextThreshold, 3, 'draw/discard starts at first threshold');
+  assert.equal(persist.marketBundleProgress.echo.nextThreshold, 2, 'echo starts at first threshold');
+  assert.equal(persist.marketBundleProgress.court.nextThreshold, 4, 'court starts at first threshold');
   assert.deepEqual(persist.pendingRewardBundles, [], 'pending bundles start empty');
 }
 
@@ -36,21 +39,41 @@ function ledger(overrides = {}) {
     { name: 'Path of the Magi' },
   ]);
   assert.equal(counts.sequenceMelds, 2, 'counts Sequence of N melds');
+  assert.equal(counts.sequenceBestLength, 4, 'captures best sequence length');
   assert.equal(counts.courtMelds, 2, 'counts Full/Royal Court melds');
   assert.equal(counts.rankMelds, 1, 'counts rank melds');
+  assert.equal(counts.echoBestKind, 3, 'captures best echo kind from melds');
   assert.equal(counts.pathMelds, 1, 'counts Path of the Magi');
 }
 
 {
+  const evaluated = evaluateMarketBundleTracks(ledger({
+    actions: { discardsUsed: 3, initialDiscards: 3, allDiscardsUsed: true, abilityTakenCards: 0 },
+    cards: { openingHandCardsInSpread: 4 },
+  }));
+  assert.ok(evaluated.awarded.restless, 'dominant restless wins intervention axis');
+  assert.ok(!evaluated.awarded.stillness, 'stillness is suppressed when restless is stronger');
+}
+
+{
+  const evaluated = evaluateMarketBundleTracks(ledger({
+    actions: { discardsUsed: 0, initialDiscards: 3, allDiscardsUsed: false, abilityTakenCards: 0 },
+    cards: { openingHandCardsInSpread: 4 },
+  }));
+  assert.ok(evaluated.awarded.stillness, 'dominant stillness wins intervention axis');
+  assert.ok(!evaluated.awarded.restless, 'restless is suppressed when stillness is stronger');
+}
+
+{
   const persist = createInitialPersistState();
-  const result = advanceMarketBundleProgress(persist, ledger({ patterns: { sequenceMelds: 1 } }));
+  const result = advanceMarketBundleProgress(persist, ledger({ patterns: { sequenceBestLength: 3 } }));
   assert.equal(result.generatedBundles.length, 0, 'sequence below threshold creates no bundle');
   assert.equal(result.persist.marketBundleProgress.sequence.total, 1, 'sequence progress is stored');
 }
 
 {
   const persist = createInitialPersistState();
-  const result = advanceMarketBundleProgress(persist, ledger({ patterns: { sequenceMelds: 2 } }));
+  const result = advanceMarketBundleProgress(persist, ledger({ patterns: { sequenceBestLength: 4 } }));
   assert.equal(result.generatedBundles.length, 1, 'sequence threshold creates one bundle');
   assert.equal(result.generatedBundles[0].bundleId, 'sequence_bundle', 'sequence creates Sequence Bundle');
   assert.equal(result.persist.marketBundleProgress.sequence.claimedTier, 1, 'sequence tier is claimed');
@@ -58,39 +81,43 @@ function ledger(overrides = {}) {
 }
 
 {
-  const persist = createInitialPersistState({
-    marketBundleProgress: { sequence: { total: 1, claimedTier: 0, nextThreshold: 2 } },
-  });
-  const result = advanceMarketBundleProgress(persist, ledger({ patterns: { sequenceMelds: 9 } }));
-  assert.equal(result.generatedBundles.length, 1, 'jumping thresholds compresses to one bundle');
-  assert.equal(result.generatedBundles[0].tier, 3, 'compressed bundle uses highest crossed tier');
+  const persist = createInitialPersistState();
+  const result = advanceMarketBundleProgress(persist, ledger({ patterns: { echoBestKind: 3, hasThreeOfKind: true } }));
+  assert.equal(result.generatedBundles[0].bundleId, 'echo_bundle', 'echo creates Echo Bundle');
 }
 
 {
   const persist = createInitialPersistState();
-  const result = advanceMarketBundleProgress(persist, ledger({ actions: { discardsUsed: 3 } }));
-  assert.equal(result.generatedBundles[0].bundleId, 'draw_discard_bundle', 'discards create Restless bundle data');
+  const result = advanceMarketBundleProgress(persist, ledger({ actions: { discardsUsed: 3, initialDiscards: 3, allDiscardsUsed: true } }));
+  assert.equal(result.generatedBundles[0].bundleId, 'restless_bundle', 'discards create Restless bundle');
 }
 
 {
   const persist = createInitialPersistState();
-  const result = advanceMarketBundleProgress(persist, ledger({ patterns: { courtMelds: 2 } }));
-  assert.equal(result.generatedBundles[0].bundleId, 'court_bundle', 'court melds create Court bundle');
+  const result = advanceMarketBundleProgress(persist, ledger({ actions: { discardsUsed: 0, initialDiscards: 3, allDiscardsUsed: false, abilityTakenCards: 0 }, cards: { openingHandCardsInSpread: 4 } }));
+  assert.equal(result.generatedBundles[0].bundleId, 'stillness_bundle', 'low intervention creates Stillness bundle');
 }
 
 {
-  const progress = advanceMarketBundleProgress(createInitialPersistState(), ledger({ patterns: { sequenceMelds: 2 } }));
+  const persist = createInitialPersistState();
+  const result = advanceMarketBundleProgress(persist, ledger({ cards: { courtsInSpread: 4 }, patterns: { fullCourtMelds: 1, courtMelds: 1 } }));
+  assert.equal(result.generatedBundles[0].bundleId, 'court_bundle', 'court play creates Court bundle');
+}
+
+{
+  const progress = advanceMarketBundleProgress(createInitialPersistState(), ledger({ patterns: { sequenceBestLength: 4 } }));
   const bundleId = progress.generatedBundles[0].id;
   const opened = openRewardBundle(progress.persist, bundleId, { rng: () => 0.1 });
   const bundle = opened.pendingRewardBundles.find(item => item.id === bundleId);
   assert.equal(bundle.state, 'opened', 'opening bundle changes state');
   assert.ok(Array.isArray(bundle.rewardKeys), 'opening stores reward keys');
+  assert.ok(bundle.rewardKeys.length <= 3, 'bundle offers at most 3 rewards');
   const reopened = openRewardBundle(opened, bundleId, { rng: () => 0.9 });
   assert.deepEqual(reopened.pendingRewardBundles.find(item => item.id === bundleId).rewardKeys, bundle.rewardKeys, 'opened bundle does not reroll on render');
 }
 
 {
-  const progress = advanceMarketBundleProgress(createInitialPersistState(), ledger({ patterns: { sequenceMelds: 2 } }));
+  const progress = advanceMarketBundleProgress(createInitialPersistState(), ledger({ patterns: { sequenceBestLength: 4 } }));
   const bundleId = progress.generatedBundles[0].id;
   const opened = openRewardBundle(progress.persist, bundleId, { rng: () => 0.1 });
   const claimed = claimRewardFromBundle(opened, bundleId, 'sequence');
@@ -101,7 +128,7 @@ function ledger(overrides = {}) {
 }
 
 {
-  const progress = advanceMarketBundleProgress(createInitialPersistState(), ledger({ patterns: { sequenceMelds: 2 } }));
+  const progress = advanceMarketBundleProgress(createInitialPersistState(), ledger({ patterns: { sequenceBestLength: 4 } }));
   const bundleId = progress.generatedBundles[0].id;
   const opened = openRewardBundle(progress.persist, bundleId, { rng: () => 0.5 });
   const claimed = claimRewardFromBundle(opened, bundleId, 'five_stamp');
@@ -111,7 +138,7 @@ function ledger(overrides = {}) {
 }
 
 {
-  const progress = advanceMarketBundleProgress(createInitialPersistState(), ledger({ patterns: { courtMelds: 2 } }));
+  const progress = advanceMarketBundleProgress(createInitialPersistState(), ledger({ cards: { courtsInSpread: 4 }, patterns: { fullCourtMelds: 1, courtMelds: 1 } }));
   const bundleId = progress.generatedBundles[0].id;
   const opened = openRewardBundle(progress.persist, bundleId, { rng: () => 0.1 });
   const claimed = claimRewardFromBundle(opened, bundleId, 'court_chips');
@@ -121,19 +148,16 @@ function ledger(overrides = {}) {
 }
 
 {
-  // Stamp rewards with no valid target must be excluded so a bundle never
-  // offers an unclaimable choice, while non-stamp rewards remain.
-  const progress = advanceMarketBundleProgress(createInitialPersistState(), ledger({ patterns: { courtMelds: 2 } }));
+  const progress = advanceMarketBundleProgress(createInitialPersistState(), ledger({ cards: { courtsInSpread: 4 }, patterns: { fullCourtMelds: 1, courtMelds: 1 } }));
   const bundleId = progress.generatedBundles[0].id;
   const bundle = progress.persist.pendingRewardBundles.find(item => item.id === bundleId);
   const filtered = legalRewardKeysForBundle(progress.persist, bundle, { excludeRewardKeys: ['suit_stamp'] });
   assert.ok(!filtered.includes('suit_stamp'), 'excluded stamp key is dropped');
   assert.ok(filtered.length >= 1, 'excluding a stamp never empties the pool');
 
-  const opened = openRewardBundle(progress.persist, bundleId, { rng: () => 0.1, excludeRewardKeys: ['suit_stamp'] });
-  const openedBundle = opened.pendingRewardBundles.find(item => item.id === bundleId);
-  assert.ok(!openedBundle.rewardKeys.includes('suit_stamp'), 'opened bundle omits the ineligible stamp');
-  assert.ok(openedBundle.rewardKeys.length >= 1, 'opened bundle still offers a reward');
+  const offer = rewardOfferKeysForBundle(progress.persist, bundle, { rng: () => 0.1, excludeRewardKeys: ['suit_stamp'] });
+  assert.ok(!offer.includes('suit_stamp'), 'role offer omits the ineligible stamp');
+  assert.ok(offer.length >= 1, 'role offer still offers a reward');
 }
 
 {
@@ -149,6 +173,9 @@ function ledger(overrides = {}) {
         card(5, 'court_Cups_Knight', 'court', { rank: 'Knight', suit: 'Cups' }),
       ],
       roundDiscardCount: 3,
+      initialDiscards: 3,
+      openingHandCardIds: [1, 2, 3, 4, 5],
+      placedCardIds: [1, 2, 3, 4, 5],
     },
   });
   state = reducer(state, { type: ACTIONS.SCORE_READING });
