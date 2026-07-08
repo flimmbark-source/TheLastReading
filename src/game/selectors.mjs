@@ -3,6 +3,7 @@ import { currentThreshold } from '../data/thresholds.mjs';
 import { getCardHints, getHandHints } from '../systems/hints.mjs';
 import { ARCHIVE_FRAGMENTS, ARCHIVE_ITEMS } from '../data/archiveFragments.mjs';
 import { blocksDiscard, constellationThreshold } from '../systems/constellations.mjs';
+import { openedBundleView, pendingBundleViews } from '../systems/marketRewardBundles.mjs';
 
 export function placedCards(state) {
   return state.run.spread.filter(Boolean);
@@ -151,6 +152,18 @@ export function scorePreview(state) {
   };
 }
 
+export function resultsView(state) {
+  return state.run.lastResults || null;
+}
+
+export function marketBundleViews(state) {
+  return pendingBundleViews(state.persist);
+}
+
+export function marketOpenedBundleView(state) {
+  return openedBundleView(state.persist, state.run.openedBundleId);
+}
+
 // ── Archive selectors (Phase 14) ──
 
 export function unlockedFragmentIds(state) {
@@ -199,5 +212,6 @@ export function publicRunSnapshot(state) {
     constellationId: state.run.constellationId,
     canDiscard: canDiscardSelected(state),
     canScore: canScoreReading(state),
+    pendingBundles: (state.persist.pendingRewardBundles || []).filter(bundle => bundle.state !== 'claimed').length,
   };
 }
