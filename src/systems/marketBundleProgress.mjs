@@ -1,4 +1,7 @@
 import {
+  MARKET_BUNDLE_AXES,
+  MARKET_BUNDLE_AXIS_ORDER,
+  MARKET_BUNDLE_MAX_BUNDLES_PER_READING,
   MARKET_BUNDLE_TRACK_ORDER,
   MARKET_BUNDLE_TRACKS,
   initialBundleProgressForTrack,
@@ -50,17 +53,146 @@ export function completedTierForTotal(trackConfig, total = 0) {
   return tier;
 }
 
-function progressFromLedger(trackId, ledger) {
+function capped(trackId, value) {
+  const cap = MARKET_BUNDLE_TRACKS[trackId]?.capPerReading;
+  const clean = Math.max(0, Math.floor(value || 0));
+  return Number.isFinite(cap) ? Math.min(cap, clean) : clean;
+}
+
+function trackScore(trackId, ledger) {
+  const reasons = [];
+  let raw = 0;
+
   switch (trackId) {
-    case 'sequence':
-      return ledger?.patterns?.sequenceMelds || 0;
-    case 'court':
-      return ledger?.patterns?.courtMelds || 0;
-    case 'draw_discard':
-      return ledger?.actions?.discardsUsed || 0;
+    case 'restless': {
+      const discards = ledger?.actions?.discardsUsed || 0;
+      const abilityTaken = ledger?.actions?.abilityTakenCards || 0;
+      if (discards > 0) {
+        raw += discards;
+        reasons.push(`${discards} Discard${discards === 1 ? '' : 's'} used`);
+      }
+      if (abilityTaken > 0) {
+        raw += 1;
+        reasons.push('Ability took a card');
+      }
+      if (ledger?.actions?.allDiscardsUsed) {
+        raw += 1;
+        reasons.push('All Discards used');
+      }
+      break;
+    }
+
+    case 'stillness': {
+      const discards = ledger?.actions?.discardsUsed || 0;
+      const abilityTaken = ledger?.actions?.abilityTakenCards || 0;
+      const openingInSpread = ledger?.cards?.openingHandCardsInSpread || 0;
+      if (discards === 0) {
+        raw += 3;
+        reasons.push('No Discards used');
+      }
+      if (abilityTaken === 0) {
+        raw += 1;
+        reasons.push('No ability-taken cards');
+      }
+      if (openingInSpread >= 4) {
+        raw += 1;
+        reasons.push(`${openingInSpread} cards from opening hand`);
+      }
+      break;
+    }
+
+    case 'sequence': {
+      const best = ledger?.patterns?.sequenceBestLength || 0;
+      if (best >= 5) {
+        raw += 3;
+        reasons.push('5-card Sequence scored');
+      } else if (best >= 4) {
+        raw += 2;
+        reasons.push('4-card Sequence scored');
+      } else if (best >= 3) {
+        raw += 1;
+        reasons.push('3-card Sequence scored');
+      }
+      break;
+    }
+
+    case 'echo': {
+      const best = ledger?.patterns?.echoBestKind || 0;
+      if (best >= 4 || ledger?.patterns?.hasFourOfKind) {
+        raw += 3;
+        reasons.push('Four of a Kind scored');
+      } else if (best >= 3 || ledger?.patterns?.hasThreeOfKind) {
+        raw += 2;
+        reasons.push('Three of a Kind scored');
+      } else if (best >= 2 || ledger?.patterns?.hasPair) {
+        raw += 1;
+        reasons.push('Pair formed');
+      }
+      break;
+    }
+
+    case 'court': {
+      const courts = ledger?.cards?.courtsInSpread ?? ledger?.cards?.courtsPlaced ?? 0;
+      const full = ledger?.patterns?.fullCourtMelds || 0;
+      const royal = ledger?.patterns?.royalCourtMelds || 0;
+      if (courts > 0) {
+        raw += courts;
+        reasons.push(`${courts} Court card${courts === 1 ? '' : 's'} placed`);
+      }
+      if (full > 0) {
+        raw += 2;
+        reasons.push('Full Court scored');
+      }
+      if (royal > 0) {
+        raw += 3;
+        reasons.push('Royal Court scored');
+      }
+      break;
+    }
+
     default:
-      return 0;
+      break;
   }
+
+  return {
+    raw,
+    gained: capped(trackId, raw),
+    reasons,
+  };
+}
+
+export function evaluateMarketBundleTracks(ledger) {
+  const raw = {};
+  for (const trackId of MARKET_BUNDLE_TRACK_ORDER) raw[trackId] = trackScore(trackId, ledger);
+
+  const awarded = {};
+  const suppressed = new Set();
+
+  for (const axisId of MARKET_BUNDLE_AXIS_ORDER) {
+    const axis = MARKET_BUNDLE_AXES[axisId];
+    if (!axis || axis.mode !== 'dominant') continue;
+    const [left, right] = axis.tracks || [];
+    const leftScore = raw[left]?.gained || 0;
+    const rightScore = raw[right]?.gained || 0;
+    if (leftScore > rightScore) {
+      awarded[left] = raw[left];
+      suppressed.add(right);
+    } else if (rightScore > leftScore) {
+      awarded[right] = raw[right];
+      suppressed.add(left);
+    } else {
+      suppressed.add(left);
+      suppressed.add(right);
+    }
+  }
+
+  for (const trackId of MARKET_BUNDLE_TRACK_ORDER) {
+    const track = MARKET_BUNDLE_TRACKS[trackId];
+    if (!track || track.axisId || suppressed.has(trackId)) continue;
+    awarded[trackId] = raw[trackId];
+  }
+
+  return { raw, awarded };
 }
 
 function existingBundleIds(persist) {
@@ -82,7 +214,7 @@ function uniqueBundleId(baseId, usedIds) {
   return id;
 }
 
-function createBundleFromTrack(trackConfig, tier, ledger, usedIds) {
+function createBundleFromTrack(trackConfig, tier, ledger, usedIds, reasons = []) {
   const baseId = `bundle_r${ledger?.reading || 1}_${trackConfig.id}_t${tier}`;
   return {
     id: uniqueBundleId(baseId, usedIds),
@@ -97,6 +229,7 @@ function createBundleFromTrack(trackConfig, tier, ledger, usedIds) {
       reading: ledger?.reading || 1,
       thresholdIndex: ledger?.thresholdIndex || 0,
       reason: `${trackConfig.label} Complete`,
+      reasons: [...reasons],
     },
   };
 }
@@ -107,45 +240,62 @@ export function advanceMarketBundleProgress(persist, ledger) {
   const usedIds = existingBundleIds(persist);
   const deltas = [];
   const generatedBundles = [];
+  const { awarded } = evaluateMarketBundleTracks(ledger);
+  const completionCandidates = [];
 
   for (const trackId of MARKET_BUNDLE_TRACK_ORDER) {
+    const score = awarded[trackId];
+    if (!score || score.gained <= 0) continue;
+
     const trackConfig = MARKET_BUNDLE_TRACKS[trackId];
     const track = progress[trackId];
     const before = track.total || 0;
-    const gained = Math.max(0, Math.floor(progressFromLedger(trackId, ledger)));
+    const gained = Math.max(0, Math.floor(score.gained));
     const after = before + gained;
     const threshold = track.nextThreshold;
     const completedTier = completedTierForTotal(trackConfig, after);
-    const completed = gained > 0 && completedTier > (track.claimedTier || 0);
-    let bundle = null;
+    const completed = completedTier > (track.claimedTier || 0);
 
     track.total = after;
+    track.nextThreshold = nextThreshold(trackConfig, track.claimedTier || 0);
 
-    if (completed) {
-      bundle = createBundleFromTrack(trackConfig, completedTier, ledger, usedIds);
-      track.claimedTier = completedTier;
-      track.nextThreshold = nextThreshold(trackConfig, completedTier);
+    const delta = {
+      trackId,
+      label: trackConfig.label,
+      before,
+      gained,
+      raw: score.raw || gained,
+      reasons: [...(score.reasons || [])],
+      after,
+      threshold,
+      nextThreshold: track.nextThreshold,
+      completed: false,
+      completedTier: completed ? completedTier : null,
+      bundleId: null,
+      deferred: false,
+    };
+
+    if (completed) completionCandidates.push({ trackId, trackConfig, track, completedTier, delta, gained, reasons: score.reasons || [] });
+    deltas.push(delta);
+  }
+
+  completionCandidates
+    .sort((a, b) => (b.gained - a.gained) || MARKET_BUNDLE_TRACK_ORDER.indexOf(a.trackId) - MARKET_BUNDLE_TRACK_ORDER.indexOf(b.trackId))
+    .forEach((candidate, index) => {
+      if (index >= MARKET_BUNDLE_MAX_BUNDLES_PER_READING) {
+        candidate.delta.deferred = true;
+        return;
+      }
+      const bundle = createBundleFromTrack(candidate.trackConfig, candidate.completedTier, ledger, usedIds, candidate.reasons);
+      candidate.track.claimedTier = candidate.completedTier;
+      candidate.track.nextThreshold = nextThreshold(candidate.trackConfig, candidate.completedTier);
+      candidate.delta.completed = true;
+      candidate.delta.completedTier = candidate.completedTier;
+      candidate.delta.bundleId = bundle.id;
+      candidate.delta.nextThreshold = candidate.track.nextThreshold;
       pendingRewardBundles.push(bundle);
       generatedBundles.push(bundle);
-    } else {
-      track.nextThreshold = nextThreshold(trackConfig, track.claimedTier || 0);
-    }
-
-    if (gained > 0 || completed) {
-      deltas.push({
-        trackId,
-        label: trackConfig.label,
-        before,
-        gained,
-        after,
-        threshold,
-        nextThreshold: track.nextThreshold,
-        completed,
-        completedTier: completed ? completedTier : null,
-        bundleId: bundle?.id || null,
-      });
-    }
-  }
+    });
 
   return {
     persist: {
