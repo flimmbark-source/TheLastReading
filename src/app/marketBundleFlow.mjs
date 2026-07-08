@@ -3,7 +3,6 @@ import { SHOP, SHOP_ICON } from '../data/legacyMarket.mjs';
 
 function runtime(target){return target.tlrRuntime || {};}
 function persistOf(target){return runtime(target).persist || target.persist || {};}
-function stateOf(target){return runtime(target).state || target.state || {};}
 
 function escapeHtml(value = '') {
   return String(value).replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[char]));
@@ -69,7 +68,7 @@ function renderBundleCard(bundle) {
   </div>`;
 }
 
-function renderBundleMarket(original, target = window) {
+function renderBundleMarket(target = window) {
   const persist = persistOf(target);
   const bundles = bundleList(persist);
   if (!bundles.length) return false;
@@ -206,8 +205,9 @@ export function installMarketBundleFlow(target = window) {
   const originalOpenShopMain = target.openShopMain;
   if (typeof originalOpenShopMain === 'function') {
     target.openShopMain = function openShopMainWithBundles(...args) {
+      syncStorePersistToLegacy(target);
       const result = originalOpenShopMain.apply(this, args);
-      renderBundleMarket(originalOpenShopMain, target);
+      renderBundleMarket(target);
       return result;
     };
   }
