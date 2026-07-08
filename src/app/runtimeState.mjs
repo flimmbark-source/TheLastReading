@@ -16,6 +16,10 @@ export function createInitialPersist(){
     relicUsed:{},
     stampedMajors:[],
     stampedFive:[],
+    marketBundleProgress:{},
+    pendingRewardBundles:[],
+    claimedRewardBundleIds:[],
+    pendingCardChoice:null,
   };
 }
 
@@ -26,6 +30,7 @@ export function createInitialState(){
     abilitySelect:null,purgeSelect:null,pendingPool:0,freeDiscardUsed:false,discardedCards:[],worldCarry:0,
     setIndex:0,setsPerRound:2,roundScore:0,setScores:[],roundDiscardCount:0,roundPatternCount:0,
     constellationId:null,untargetableCardUids:[],awaitingNextSet:false,lastOutcome:null,
+    lastReadingLedger:null,lastResults:null,openedBundleId:null,lastBundleClaim:null,
   };
 }
 
