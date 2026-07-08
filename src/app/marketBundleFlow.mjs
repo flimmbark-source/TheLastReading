@@ -33,16 +33,22 @@ function ensureBundleStyles(target = window) {
   style.id = 'market-bundle-flow-style';
   style.textContent = `
     .store-card.disabled{opacity:.72}
-    .store-card--bundle-sequence{--store-accent:rgba(214,176,86,.62)}
-    .store-card--bundle-court{--store-accent:rgba(120,160,220,.58)}
     .store-card--bundle-restless{--store-accent:rgba(110,180,220,.58)}
+    .store-card--bundle-stillness{--store-accent:rgba(180,205,170,.54)}
+    .store-card--bundle-sequence{--store-accent:rgba(214,176,86,.62)}
+    .store-card--bundle-echo{--store-accent:rgba(190,145,220,.58)}
+    .store-card--bundle-court{--store-accent:rgba(120,160,220,.58)}
     .store-card--empty{--store-accent:rgba(130,105,70,.42)}
     .store-card--bundle .store-card-tag{color:#c49a50}
-    .store-card--bundle-court .store-card-tag{color:#8faee5}
     .store-card--bundle-restless .store-card-tag{color:#80bdda}
+    .store-card--bundle-stillness .store-card-tag{color:#a8c99d}
+    .store-card--bundle-echo .store-card-tag{color:#bf97df}
+    .store-card--bundle-court .store-card-tag{color:#8faee5}
     .store-bundle-note{font:700 11px/1.35 system-ui,sans-serif;color:#8a7551;text-align:center;margin-top:8px}
     .bundle-result-row td{color:#b8a882!important}
     .bundle-result-row.complete td:first-child{color:#f0dfbd!important}
+    .bundle-result-row .bundle-result-reason{display:block;color:#f0dfbd;font-weight:800}
+    .bundle-result-row .bundle-result-track{display:block;color:#8a7551;font:700 10px/1.25 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
     .reward-bundle-picker{width:min(96vw,620px);margin:0 auto;padding:10px 0 4px;background:transparent!important;border:0!important;box-shadow:none!important}
     .reward-bundle-picker .pack-picker-header{margin:0 0 10px;padding:0 10px;background:transparent!important;border:0!important;box-shadow:none!important;text-align:center}
     .reward-bundle-picker .pack-picker-header h3{margin:0 0 4px}
@@ -191,10 +197,6 @@ export function showRewardBundleContents(bundleId, target = window) {
   return true;
 }
 
-// Stamp rewards (five_stamp / suit_stamp) route to a card picker on claim. If
-// no card is eligible, the picker silently no-ops and the claimed reward is
-// lost, so we exclude those keys from the offered choices up front. Every pool
-// pairs stamps with non-stamp rewards, so a bundle is never left empty.
 function ineligibleStampRewardKeys(target = window) {
   const persist = persistOf(target);
   const state = stateOf(target);
@@ -213,10 +215,6 @@ export function openRewardBundleWithAnimation(bundleId, target = window) {
     excludeRewardKeys: ineligibleStampRewardKeys(target),
   });
   syncStorePersistToLegacy(target);
-
-  // This is a reward bundle, not a paid pack. Do not route through
-  // animatePackOpen(packId), because that surfaces the legacy pack object
-  // (for example, "Restless Hands Pack") instead of the saved bundle choices.
   if (typeof target.playSound === 'function') target.playSound('pack_open');
   return showRewardBundleContents(bundleId, target);
 }
@@ -238,6 +236,10 @@ export function pickRewardBundleChoice(bundleId, rewardKey, target = window) {
   return showBundleMarket(target);
 }
 
+function trackReason(delta) {
+  return (delta.reasons || []).filter(Boolean).join(' · ') || delta.label;
+}
+
 function patchResultsOverlay(target = window) {
   const run = target.tlrStore?.getState?.()?.run;
   const results = run?.lastResults;
@@ -252,9 +254,8 @@ function patchResultsOverlay(target = window) {
   const rows = [];
   if (deltas.length) rows.push('<tr class="grouprow bundle-result-row"><td colspan="2">Market Signs</td></tr>');
   for (const delta of deltas) {
-    const label = delta.completed ? `${delta.label} Complete` : delta.label;
-    const value = delta.completed ? 'Bundle added' : `${delta.after} / ${delta.threshold}`;
-    rows.push(`<tr class="mrow bundle-result-row ${delta.completed ? 'complete' : ''}"><td>✦ ${escapeHtml(label)}</td><td class="r">${escapeHtml(value)}</td></tr>`);
+    const value = delta.completed ? `${delta.label} +${delta.gained} · Bundle added` : `${delta.label} +${delta.gained} (${delta.after} / ${delta.threshold})`;
+    rows.push(`<tr class="mrow bundle-result-row ${delta.completed ? 'complete' : ''}"><td><span class="bundle-result-reason">✦ ${escapeHtml(trackReason(delta))}</span><span class="bundle-result-track">${escapeHtml(delta.label)}</span></td><td class="r">${escapeHtml(value)}</td></tr>`);
   }
 
   const totals = table.querySelectorAll('tr.totrow');
