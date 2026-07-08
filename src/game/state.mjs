@@ -1,10 +1,12 @@
 import { DEFAULT_UPGRADES } from '../data/scoringPatterns.mjs';
 import { SETS_PER_ROUND } from '../data/constellations.mjs';
+import { normalizeMarketBundleProgress } from '../systems/marketBundleProgress.mjs';
 
 export const GAME_PHASES = Object.freeze({
   TABLE: 'table',
   ABILITY: 'ability',
   SCORING: 'scoring',
+  RESULTS: 'results',
   MARKET: 'market',
   ATTIC: 'attic',
   SESSION_END: 'sessionEnd',
@@ -27,6 +29,10 @@ export function createInitialPersistState(overrides = {}) {
     obals: numberOr(0, overrides.obals),
     stampedMajors: [...(overrides.stampedMajors || [])],
     stampedFive: [...(overrides.stampedFive || [])],
+    marketBundleProgress: normalizeMarketBundleProgress(overrides.marketBundleProgress || {}),
+    pendingRewardBundles: [...(overrides.pendingRewardBundles || [])],
+    claimedRewardBundleIds: [...(overrides.claimedRewardBundleIds || [])],
+    pendingCardChoice: overrides.pendingCardChoice || null,
   };
 }
 
@@ -66,6 +72,10 @@ export function createInitialRunState(overrides = {}) {
     relicEarned: false,
     abilityTakenCardIds: [],
     resonationBonus: null,
+    lastReadingLedger: null,
+    lastResults: null,
+    openedBundleId: null,
+    lastBundleClaim: null,
     ...overrides,
   };
 }
