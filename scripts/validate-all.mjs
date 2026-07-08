@@ -4,6 +4,7 @@ import './validate-scoring-cases.mjs';
 import './validate-modifier-cases.mjs';
 import './validate-economy-cases.mjs';
 import './validate-market-rebalance.mjs';
+import './validate-market-bundles.mjs';
 import './validate-market-ambience.mjs';
 import './validate-pack-opening.mjs';
 import './validate-multiplayer.mjs';
