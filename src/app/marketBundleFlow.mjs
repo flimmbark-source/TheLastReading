@@ -60,6 +60,11 @@ function ensureBundleStyles(target = window) {
     .bundle-result-row.complete td:first-child{color:#f0dfbd!important}
     .bundle-result-row .bundle-result-reason{display:block;color:#f0dfbd;font-weight:800}
     .bundle-result-row .bundle-result-track{display:block;color:#8a7551;font:700 10px/1.25 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+    .store-front.bundle-choice-transition{pointer-events:none}
+    .store-front.bundle-choice-transition-out{opacity:.18!important;transform:translateY(10px) scale(.985)!important;filter:blur(1px) brightness(.82)}
+    .store-front.bundle-choice-transition-in{animation:bundleChoicesIn .3s cubic-bezier(.16,.84,.24,1) both}
+    @keyframes bundleChoicesIn{from{opacity:.35;transform:translateY(-8px) scale(.992);filter:brightness(1.18)}to{opacity:1;transform:translateY(0) scale(1);filter:brightness(1)}}
+    @media(prefers-reduced-motion:reduce){.store-front.bundle-choice-transition-out{opacity:1!important;transform:none!important;filter:none}.store-front.bundle-choice-transition-in{animation:none}}
     @media(max-width:480px){.store-card-choice-lv{font-size:9px}.bundle-source-reasons{font-size:10px;padding:0 10px}}
   `;
   doc.head.appendChild(style);
@@ -234,6 +239,29 @@ function renderRewardBundleChoices(bundle, target = window) {
   return true;
 }
 
+function transitionToRewardBundleChoices(bundle, target = window) {
+  ensureBundleStyles(target);
+  const front = target.document?.getElementById('storeFront') || target.document?.querySelector('.store-front-shell .store-front');
+  if (!front) return false;
+  if (target.__tlrRewardChoiceTransitionActive) return true;
+
+  const reduce = target.matchMedia && target.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) return renderRewardBundleChoices(bundle, target);
+
+  target.__tlrRewardChoiceTransitionActive = true;
+  front.classList.add('bundle-choice-transition', 'bundle-choice-transition-out');
+  target.setTimeout?.(() => {
+    renderRewardBundleChoices(bundle, target);
+    front.classList.remove('bundle-choice-transition-out');
+    front.classList.add('bundle-choice-transition-in');
+    target.setTimeout?.(() => {
+      front.classList.remove('bundle-choice-transition', 'bundle-choice-transition-in');
+      target.__tlrRewardChoiceTransitionActive = false;
+    }, 330);
+  }, 170);
+  return true;
+}
+
 export function showRewardBundleContents(bundleId, target = window) {
   const bundle = bundleList(persistOf(target)).find(item => item.id === bundleId);
   if (!bundle || bundle.state !== 'opened') return false;
@@ -262,6 +290,9 @@ export function openRewardBundleWithAnimation(bundleId, target = window) {
   });
   syncStorePersistToLegacy(target);
   if (typeof target.playSound === 'function') target.playSound('pack_open');
+  const bundle = bundleList(persistOf(target)).find(item => item.id === bundleId);
+  if (!bundle || bundle.state !== 'opened') return false;
+  if (transitionToRewardBundleChoices(bundle, target)) return true;
   return showRewardBundleContents(bundleId, target);
 }
 
@@ -459,8 +490,6 @@ function trackGhostSequenceLabels(results) {
   for (const delta of results?.trackDeltas || []) {
     if (!delta || !(delta.gained > 0)) continue;
     labels.push(`+${delta.gained} ${delta.label}`);
-    const count = deltaBundleCount(delta);
-    for (let i = 0; i < count; i += 1) labels.push(`${delta.label} Bundle added`);
   }
   return labels;
 }
@@ -481,7 +510,7 @@ function openBundleMarketAfterTrackGhosts(target = window) {
   target.__tlrTrackGhostPlaybackActive = true;
   if (typeof target.clearOverlay === 'function') target.clearOverlay();
   labels.forEach((label, index) => {
-    fireLiteralTrackGhost(target, label, 180 + index * 560, { center: true, big: label.includes('Bundle') });
+    fireLiteralTrackGhost(target, label, 180 + index * 560, { center: true });
   });
   target.setTimeout?.(() => {
     target.__tlrTrackGhostPlaybackActive = false;
