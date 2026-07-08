@@ -390,17 +390,17 @@ function renderVesselCard(index = 0, target = window) {
   const level = (persistOf(target).up || {}).relicSlot || 0;
   const maxed = level >= 2;
   const cost = storeVesselCost(target);
-  const ok = !maxed && (persistOf(target).pool || 0) >= cost;
+  const ok = !maxed && index === 0 && (persistOf(target).pool || 0) >= cost;
   const slots = typeof target.relicSlots === 'function' ? target.relicSlots() : 3 + level;
   return `<div class="store-card store-card--vessel ${ok ? '' : 'disabled'}">
-    <div class="store-card-tag">Relic Slot</div>
-    <div class="store-card-art"><div class="store-vessel-glyph">＋</div></div>
+    <div class="store-card-tag">${index === 0 ? 'Relic Slot' : 'Empty'}</div>
+    <div class="store-card-art"><div class="store-vessel-glyph">${index === 0 ? '＋' : '✦'}</div></div>
     <div class="store-card-main">
-      <div class="store-card-name">Relic Vessel</div>
-      <div class="store-card-desc">${maxed ? 'Relic Slots maxed.' : 'Gain +1 Relic Slot'}</div>
-      <div class="store-card-lv">${maxed ? 'Max 5' : `Slots ${slots} → ${slots + 1}`}</div>
+      <div class="store-card-name">${index === 0 ? 'Relic Vessel' : 'No Relic'}</div>
+      <div class="store-card-desc">${index === 0 ? (maxed ? 'Relic Slots maxed.' : 'Gain +1 Relic Slot') : 'Refresh for new stock.'}</div>
+      ${index === 0 ? `<div class="store-card-lv">${maxed ? 'Max 5' : `Slots ${slots} → ${slots + 1}`}</div>` : ''}
     </div>
-    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreVessel(${index})">${maxed ? 'Maxed' : `Buy <span class="coin">✦</span> ${cost}`}</button>
+    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreVessel(${index})">${index !== 0 ? 'Empty' : maxed ? 'Maxed' : `Buy <span class="coin">✦</span> ${cost}`}</button>
   </div>`;
 }
 
@@ -698,6 +698,7 @@ export function confirmStoreRelicReplace(index,oldKey,newKey,cost,target = windo
 }
 
 export function buyStoreVessel(index = 0, target = window){
+  if(index !== 0)return false;
   const level=(persistOf(target).up||{}).relicSlot||0;
   if(level>=2)return false;
   const cost=storeVesselCost(target);
@@ -708,6 +709,7 @@ export function buyStoreVessel(index = 0, target = window){
 }
 
 export function confirmStoreVessel(cost,index = 0,target = window){
+  if(index !== 0)return false;
   const charged=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'pack',packId:'relicSlot',cost}):false;
   if(charged!==true)return charged;
   const upgraded=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'upgrade',upgradeKey:'relicSlot'}):false;
