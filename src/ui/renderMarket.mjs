@@ -7,6 +7,7 @@ const STORE_ABILITY_PACKS = Object.freeze(['innate', 'restless', 'second_sight',
 const RELIC_CACHE_PACK_ID = 'relic';
 const STORE_ASSET_PATH = './';
 const STORE_FADE_MS = 260;
+const STORE_SLOT = Object.freeze({ SCORING: 0, STAMP: 1, PACK: 2, RELIC_A: 3, RELIC_B: 4 });
 
 const STORE_PACK_COPY = Object.freeze({
   innate: 'Starting resources.',
@@ -117,21 +118,24 @@ function ensureStoreFrontStyles(target = window) {
     .store-reserve-amount{font-size:28px;color:#f1d196;text-shadow:0 1px 3px #000;line-height:1}
     .store-reserve-amount .coin{font-size:.42em;margin-left:.1em;color:#c89445;vertical-align:middle}
 
-    /* Offers as full-width horizontal rows: category tag top-left, art on
-       the left, name/effect/progression in the middle, buy button on the
-       right. Category accents stay restrained: engraved gold for scoring
-       (default), muted violet for packs, desaturated teal for relic slots. */
+    /* Mobile market composition: two small top offers, one featured pack,
+       then two relic/vessel offers. The cards still use the existing purchase
+       and picker code; the wrappers only change hierarchy and spacing. */
     .store-offer-row{display:flex;flex-direction:column;gap:12px}
+    .store-grid-top,.store-grid-bottom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .store-pack-feature{display:block}
 
     .store-card{position:relative;display:flex;align-items:center;gap:14px;min-height:96px;padding:27px 14px 12px 18px;border:1px solid rgba(200,160,80,.28);border-radius:12px;background:linear-gradient(180deg,rgba(26,17,10,.55),rgba(9,6,4,.6));text-align:left;transition:border-color .13s}
     .store-card::before{content:'';position:absolute;left:-1px;top:16px;bottom:16px;width:2px;border-radius:2px;background:var(--store-accent,rgba(201,162,74,.5));opacity:.75;pointer-events:none}
     .store-card:not(.disabled):hover{border-color:rgba(200,160,80,.5)}
     .store-card.disabled{opacity:.55}
     .store-card--pack{--store-accent:rgba(157,139,184,.55)}
-    .store-card--vessel{--store-accent:rgba(127,168,162,.55)}
+    .store-card--stamp{--store-accent:rgba(92,126,201,.6)}
+    .store-card--relic,.store-card--vessel{--store-accent:rgba(127,168,162,.55)}
     .store-card-tag{position:absolute;top:9px;left:18px;font:700 10px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#9a7840}
     .store-card--pack .store-card-tag{color:#9d8bb8}
-    .store-card--vessel .store-card-tag{color:#7fa8a2}
+    .store-card--stamp .store-card-tag{color:#89a5df}
+    .store-card--relic .store-card-tag,.store-card--vessel .store-card-tag{color:#7fa8a2}
     .store-card-art{width:56px;height:56px;flex:0 0 56px;display:flex;align-items:center;justify-content:center}
     .store-card-art .isp{transform:scale(.48);transform-origin:center;filter:drop-shadow(0 3px 5px rgba(0,0,0,.6))}
     .store-card-art .relic-art-sprite{width:56px;height:56px;flex:0 0 56px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.65))}
@@ -145,6 +149,20 @@ function ensureStoreFrontStyles(target = window) {
     .store-card-buy:not(:disabled):hover{background:rgba(226,181,100,.1)}
     .store-card-buy .coin{color:#c99443;margin-left:.2em}
     .store-relic-art-btn{background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important;padding:0;margin:0;cursor:pointer;display:flex;align-items:center;justify-content:center;width:56px;height:56px;flex:0 0 56px}
+
+    .store-grid-top .store-card,.store-grid-bottom .store-card{min-height:168px;align-items:stretch;flex-direction:column;gap:8px;padding:28px 10px 10px;text-align:center}
+    .store-grid-top .store-card::before,.store-grid-bottom .store-card::before{left:14px;right:14px;top:auto;bottom:-1px;width:auto;height:2px}
+    .store-grid-top .store-card-tag,.store-grid-bottom .store-card-tag{left:0;right:0;text-align:center}
+    .store-grid-top .store-card-art,.store-grid-bottom .store-card-art{width:50px;height:50px;flex:0 0 50px;margin:0 auto}
+    .store-grid-top .store-card-art .isp,.store-grid-bottom .store-card-art .isp{transform:scale(.42)}
+    .store-grid-top .store-card-art .relic-art-sprite,.store-grid-bottom .store-card-art .relic-art-sprite{width:50px;height:50px;flex-basis:50px}
+    .store-grid-top .store-relic-art-btn,.store-grid-bottom .store-relic-art-btn{width:50px;height:50px;flex-basis:50px;margin:0 auto}
+    .store-grid-top .store-card-main,.store-grid-bottom .store-card-main{align-items:center;justify-content:flex-start;min-height:0}
+    .store-grid-top .store-card-name,.store-grid-bottom .store-card-name{font-size:13px;line-height:1.1}
+    .store-grid-top .store-card-desc,.store-grid-bottom .store-card-desc{font-size:10.5px;line-height:1.25}
+    .store-grid-top .store-card-lv,.store-grid-bottom .store-card-lv{font-size:9.5px}
+    .store-grid-top .store-card-buy,.store-grid-bottom .store-card-buy{width:100%;min-width:0;min-height:38px;margin-top:auto;padding:0 8px;font-size:10.5px}
+    .store-pack-feature .store-card{min-height:112px;border-color:rgba(157,139,184,.42);background:linear-gradient(180deg,rgba(34,22,38,.62),rgba(10,7,10,.7))}
 
     .store-footer{display:flex;justify-content:center;margin-top:16px}
     .store-proceed{background:transparent;border:1px solid rgba(226,181,100,.55);border-radius:8px;color:#f1dfbd;font:800 14px/1 Georgia,serif;text-transform:uppercase;letter-spacing:.07em;padding:10px 22px;transition:background .15s}
@@ -182,6 +200,15 @@ function ensureStoreFrontStyles(target = window) {
       .store-refresh{font-size:11px;padding:8px 10px}
       .store-reserve-amount{font-size:24px}
       .store-candle{width:60px;height:60px}
+      .store-grid-top,.store-grid-bottom{gap:8px}
+      .store-grid-top .store-card,.store-grid-bottom .store-card{min-height:158px;padding:27px 8px 8px}
+      .store-grid-top .store-card-tag,.store-grid-bottom .store-card-tag{left:0}
+      .store-grid-top .store-card-art,.store-grid-bottom .store-card-art{width:46px;height:46px;flex-basis:46px}
+      .store-grid-top .store-card-art .isp,.store-grid-bottom .store-card-art .isp{transform:scale(.39)}
+      .store-grid-top .store-card-name,.store-grid-bottom .store-card-name{font-size:12.5px}
+      .store-grid-top .store-card-desc,.store-grid-bottom .store-card-desc{font-size:10px}
+      .store-grid-top .store-card-buy,.store-grid-bottom .store-card-buy{min-height:36px;font-size:10px}
+      .store-pack-feature .store-card{min-height:108px}
     }
   `;
 }
@@ -229,10 +256,20 @@ function shuffleValues(values, target = window) {
 }
 
 const STORE_SCORING_UPGRADES = Object.freeze(['rank', 'sequence', 'court_chips', 'royal_court_chips', 'path_chips', 'suit_stamp', 'five_stamp']);
+const STORE_STAMP_UPGRADES = Object.freeze(['suit_stamp', 'five_stamp']);
+const STORE_NORMAL_SCORING_UPGRADES = Object.freeze(STORE_SCORING_UPGRADES.filter(key => !STORE_STAMP_UPGRADES.includes(key)));
+
+function pickFromUpgradePool(pool, count, target = window) {
+  const shop = target.SHOP || {};
+  return shuffleValues(pool, target).filter(key => shop[key]).slice(0, count);
+}
 
 function pickScoringUpgrades(count, target = window) {
-  const shop = target.SHOP || {};
-  return shuffleValues(STORE_SCORING_UPGRADES, target).filter(key => shop[key]).slice(0, count);
+  return pickFromUpgradePool(STORE_NORMAL_SCORING_UPGRADES, count, target);
+}
+
+function pickStampUpgrades(count, target = window) {
+  return pickFromUpgradePool(STORE_STAMP_UPGRADES, count, target);
 }
 
 function pickPacks(packIds, count, target = window) {
@@ -251,8 +288,9 @@ function pickRelics(count, target = window) {
 export function buildStoreFrontOffers(target = window) {
   return {
     scoring: pickScoringUpgrades(1, target),
+    stamps: pickStampUpgrades(1, target),
     pack: pickPacks(STORE_ABILITY_PACKS, 1, target),
-    relics: pickRelics(1, target),
+    relics: pickRelics(2, target),
   };
 }
 
@@ -261,11 +299,12 @@ function currentStoreFrontOffers(target = window) {
   if (!target._storeFrontOffers) target._storeFrontOffers = buildStoreFrontOffers(target);
   const offers = target._storeFrontOffers;
   offers.scoring = Array.isArray(offers.scoring) ? offers.scoring.slice(0, 1) : [];
+  offers.stamps = Array.isArray(offers.stamps) ? offers.stamps.slice(0, 1) : [];
   offers.pack = Array.isArray(offers.pack) ? offers.pack.slice(0, 1) : [];
-  offers.relics = (Array.isArray(offers.relics) ? offers.relics : []).filter(key => key && !owned.has(key)).slice(0, 1);
-  if (offers.relics.length < 1) {
+  offers.relics = (Array.isArray(offers.relics) ? offers.relics : []).filter(key => key && !owned.has(key)).slice(0, 2);
+  if (offers.relics.length < 2) {
     const fill = pickRelics(4, target).filter(key => !offers.relics.includes(key));
-    while (offers.relics.length < 1 && fill.length) offers.relics.push(fill.shift());
+    while (offers.relics.length < 2 && fill.length) offers.relics.push(fill.shift());
   }
   target._storeFrontOffers = offers;
   return offers;
@@ -307,8 +346,12 @@ const STAMP_ART = Object.freeze({
   five_stamp: '<div style="width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#d4a017,#7a5800 72%,#2a1c00);display:flex;align-items:center;justify-content:center;font:900 16px/1 Georgia,serif;color:#f5e0b4;text-shadow:0 2px 4px rgba(0,0,0,.9);border:2px solid rgba(210,175,100,.65);box-shadow:0 2px 8px rgba(0,0,0,.9),0 0 0 1px rgba(0,0,0,.5)">5★</div>',
 });
 
-function renderScoringCard(index, upgradeKey, target = window) {
-  const emptyRow = '<div class="store-card store-card--scoring disabled"><div class="store-card-tag">Scoring</div><div class="store-card-main"><div class="store-card-name">—</div></div></div>';
+function renderScoringCard(index, upgradeKey, target = window, options = {}) {
+  const isStamp = !!options.stamp;
+  const tag = isStamp ? 'Stamp' : 'Scoring';
+  const cardClass = isStamp ? 'store-card--stamp' : 'store-card--scoring';
+  const purchaseSection = isStamp ? 'stamps' : 'scoring';
+  const emptyRow = `<div class="store-card ${cardClass} disabled"><div class="store-card-tag">${tag}</div><div class="store-card-main"><div class="store-card-name">—</div></div></div>`;
   if (!upgradeKey) return emptyRow;
   const item = (target.SHOP || {})[upgradeKey];
   if (!item) return emptyRow;
@@ -319,15 +362,15 @@ function renderScoringCard(index, upgradeKey, target = window) {
   const art = STAMP_ART[upgradeKey]
     ? `<div class="store-card-art">${STAMP_ART[upgradeKey]}</div>`
     : `<div class="store-card-art"><span class="isp isp-108 ${copy.icon}"></span></div>`;
-  return `<div class="store-card store-card--scoring ${ok ? '' : 'disabled'}">
-    <div class="store-card-tag">Scoring</div>
+  return `<div class="store-card ${cardClass} ${ok ? '' : 'disabled'}">
+    <div class="store-card-tag">${tag}</div>
     ${art}
     <div class="store-card-main">
       <div class="store-card-name">${escapeHtml(copy.name)}</div>
       <div class="store-card-desc">${escapeHtml(copy.desc)}</div>
       <div class="store-card-lv">Lv ${level} → ${level + 1}</div>
     </div>
-    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreScoringUpgrade(${index},'${upgradeKey}',${cost})">Buy <span class="coin">✦</span> ${cost}</button>
+    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreScoringUpgrade(${index},'${upgradeKey}',${cost},'${purchaseSection}')">Buy <span class="coin">✦</span> ${cost}</button>
   </div>`;
 }
 
@@ -545,7 +588,8 @@ export function openShopMain(){
   if(state.pendingPool){persist.pool+=state.pendingPool;state.pendingPool=0;render();}
   const offers = currentStoreFrontOffers(window);
   const rc=_nextRefreshCost(),canRefresh=persist.pool>=rc;
-  const relicKey = offers.relics[0] || null;
+  const relicA = offers.relics[0] || null;
+  const relicB = offers.relics[1] || null;
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   // if store is already open (e.g. returning from a pack picker), skip the intro
   const alreadyOpen = !!document.querySelector('.store-front-shell:not(.store-exiting)');
@@ -556,9 +600,17 @@ export function openShopMain(){
       <div class="store-reserve-display"><div class="store-reserve-label">Reserve</div><div class="store-reserve-amount">${persist.pool}<span class="coin">✦</span></div></div>
     </div>
     <div class="store-offer-row">
-      ${renderScoringCard(0, offers.scoring[0], window)}
-      ${renderPackCard(0, offers.pack[0], window)}
-      ${relicKey ? renderRelicCard(0, relicKey, window) : renderVesselCard(window)}
+      <div class="store-grid-top">
+        ${renderScoringCard(0, offers.scoring[0], window)}
+        ${renderScoringCard(0, offers.stamps[0], window, { stamp: true })}
+      </div>
+      <div class="store-pack-feature">
+        ${renderPackCard(0, offers.pack[0], window)}
+      </div>
+      <div class="store-grid-bottom">
+        ${relicA ? renderRelicCard(0, relicA, window) : renderVesselCard(window)}
+        ${relicB ? renderRelicCard(1, relicB, window) : renderVesselCard(window)}
+      </div>
     </div>
     <div class="store-footer">
       <button class="store-proceed" onclick="storeExitToNextReading()">Next Reading →</button>
@@ -602,17 +654,18 @@ export function refreshStoreFront(target = window){
 
 export function buyStorePack(sectionKey,index,packId,cost,target = window){
   if(target._storeFrontOffers)target._storeFrontOffers.pack=[null];
-  markCardPurchased(1,target);
+  markCardPurchased(STORE_SLOT.PACK,target);
   if(typeof target.buyPack==='function')return target.buyPack(packId,cost);
   return false;
 }
 
-export function buyStoreScoringUpgrade(index,upgradeKey,cost,target = window){
+export function buyStoreScoringUpgrade(index,upgradeKey,cost,sectionKey = 'scoring',target = window){
   const p=persistOf(target);
   if((p.pool||0)<cost)return false;
   const charged=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'pack',packId:'scoringUpgrade',cost}):false;
   if(charged!==true)return charged;
-  if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.scoring))target._storeFrontOffers.scoring[index]=null;
+  const section = sectionKey === 'stamps' ? 'stamps' : 'scoring';
+  if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers[section]))target._storeFrontOffers[section][index]=null;
   if(typeof target.render==='function')target.render();
   if(upgradeKey==='suit_stamp'){
     if(typeof target.openStampPicker==='function')target.openStampPicker(index);
@@ -625,7 +678,7 @@ export function buyStoreScoringUpgrade(index,upgradeKey,cost,target = window){
   const pairedKey=pairedUpgradeKey(upgradeKey,target);
   const upgraded=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'upgrade',upgradeKey,pairedKey}):false;
   if(upgraded!==true)return upgraded;
-  markCardPurchased(0,target);
+  markCardPurchased(section === 'stamps' ? STORE_SLOT.STAMP : STORE_SLOT.SCORING,target);
   return true;
 }
 
@@ -647,8 +700,8 @@ export function buyStoreRelic(index,relicKey,cost,target = window){
   const charged=chargeStoreRelic(cost,target);
   if(charged!==true)return charged;
   const acquired=typeof target.doAcquireRelic==='function'?target.doAcquireRelic(relicKey,()=>{
-    if(target._storeFrontOffers)target._storeFrontOffers.relics=[];
-    markCardPurchased(2,target);
+    if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.relics))target._storeFrontOffers.relics[index]=null;
+    markCardPurchased(index === 1 ? STORE_SLOT.RELIC_B : STORE_SLOT.RELIC_A,target);
   },target):false;
   return acquired;
 }
@@ -674,7 +727,7 @@ export function confirmStoreRelicReplace(index,oldKey,newKey,cost,target = windo
   if(charged!==true)return charged;
   const bought=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'relic',relicId:newKey,replaceRelicId:oldKey}):false;
   if(bought!==true)return bought;
-  if(target._storeFrontOffers)target._storeFrontOffers.relics=[];
+  if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.relics))target._storeFrontOffers.relics[index]=null;
   if(typeof target.renderRelicRack==='function')target.renderRelicRack();
   if(typeof target.openShopMain==='function')target.openShopMain();
   return true;
