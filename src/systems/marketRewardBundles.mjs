@@ -46,8 +46,12 @@ export function openedBundleView(persist, bundleId) {
 
 export function legalRewardKeysForBundle(persist, bundle, options = {}) {
   const shop = options.shop || SHOP;
+  const exclude = new Set(options.excludeRewardKeys || []);
   const pool = rewardPoolForBundle(bundle);
-  return pool.filter(key => Boolean(shop[key]));
+  // `excludeRewardKeys` carries rewards that have no valid target right now —
+  // chiefly stamp rewards when no eligible card exists. Every pool also holds
+  // non-stamp rewards, so excluding stamps never empties a bundle.
+  return pool.filter(key => Boolean(shop[key]) && !exclude.has(key));
 }
 
 export function openRewardBundle(persist, bundleInstanceId, options = {}) {

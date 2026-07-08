@@ -5,7 +5,7 @@ import { createGameState, createInitialPersistState, GAME_PHASES } from '../src/
 import { reducer } from '../src/game/reducer.mjs';
 import { patternCountsFromMelds } from '../src/systems/readingLedger.mjs';
 import { advanceMarketBundleProgress } from '../src/systems/marketBundleProgress.mjs';
-import { claimRewardFromBundle, openRewardBundle } from '../src/systems/marketRewardBundles.mjs';
+import { claimRewardFromBundle, legalRewardKeysForBundle, openRewardBundle } from '../src/systems/marketRewardBundles.mjs';
 
 function ledger(overrides = {}) {
   return {
@@ -108,6 +108,32 @@ function ledger(overrides = {}) {
   assert.equal(claimed.claimed, true, 'stamp reward claim succeeds');
   assert.equal(claimed.requiresPicker, true, 'stamp reward requires picker');
   assert.deepEqual(claimed.persist.pendingCardChoice, { kind: 'five_stamp', rewardKey: 'five_stamp' }, 'stamp reward does not mutate a random card');
+}
+
+{
+  const progress = advanceMarketBundleProgress(createInitialPersistState(), ledger({ patterns: { courtMelds: 2 } }));
+  const bundleId = progress.generatedBundles[0].id;
+  const opened = openRewardBundle(progress.persist, bundleId, { rng: () => 0.1 });
+  const claimed = claimRewardFromBundle(opened, bundleId, 'court_chips');
+  assert.equal(claimed.claimed, true, 'court claim succeeds');
+  assert.equal(claimed.persist.upgrades.court_chips, 1, 'court_chips upgrade is applied');
+  assert.equal(claimed.persist.upgrades.court_mult, 1, 'paired court mult is applied');
+}
+
+{
+  // Stamp rewards with no valid target must be excluded so a bundle never
+  // offers an unclaimable choice, while non-stamp rewards remain.
+  const progress = advanceMarketBundleProgress(createInitialPersistState(), ledger({ patterns: { courtMelds: 2 } }));
+  const bundleId = progress.generatedBundles[0].id;
+  const bundle = progress.persist.pendingRewardBundles.find(item => item.id === bundleId);
+  const filtered = legalRewardKeysForBundle(progress.persist, bundle, { excludeRewardKeys: ['suit_stamp'] });
+  assert.ok(!filtered.includes('suit_stamp'), 'excluded stamp key is dropped');
+  assert.ok(filtered.length >= 1, 'excluding a stamp never empties the pool');
+
+  const opened = openRewardBundle(progress.persist, bundleId, { rng: () => 0.1, excludeRewardKeys: ['suit_stamp'] });
+  const openedBundle = opened.pendingRewardBundles.find(item => item.id === bundleId);
+  assert.ok(!openedBundle.rewardKeys.includes('suit_stamp'), 'opened bundle omits the ineligible stamp');
+  assert.ok(openedBundle.rewardKeys.length >= 1, 'opened bundle still offers a reward');
 }
 
 {

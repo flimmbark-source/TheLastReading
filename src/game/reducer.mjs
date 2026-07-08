@@ -561,7 +561,10 @@ export function reducer(state, action) {
     case ACTIONS.OPEN_REWARD_BUNDLE:
       return replacePersist(
         replaceRun(state, { openedBundleId: action.bundleId }),
-        openRewardBundle(state.persist, action.bundleId, { rng: action.rng || Math.random })
+        openRewardBundle(state.persist, action.bundleId, {
+          rng: action.rng || Math.random,
+          excludeRewardKeys: action.excludeRewardKeys,
+        })
       );
     case ACTIONS.CLAIM_REWARD_BUNDLE_CHOICE: {
       const claim = claimRewardFromBundle(state.persist, action.bundleId, action.rewardKey);

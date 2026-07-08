@@ -213,20 +213,23 @@ function openStampChoice(title, prompt, eligible, onPick, target = window) {
   if (eligible.length > 1) modal?.style?.setProperty('z-index', '10160', 'important');
 }
 
-export function openStampPicker(slotIndex, target = window) {
-  if (typeof target.choice !== 'function') return;
-  const persist = persistOf(target);
-  const state = stateOf(target);
-  const stampedIds = new Set(persist.stampedMajors || []);
-  const stampedFiveIds = new Set(persist.stampedFive || []);
-  const allCards = [
+// Cards that a stamp reward could legally target, drawn from every zone the
+// picker searches. Shared by the stamp pickers and the reward-bundle flow so
+// bundles never offer a stamp with no valid target (see marketBundleFlow).
+function stampCardPool(state = {}) {
+  return [
     ...(state.deck || []),
     ...(state.hand || []),
     ...(state.discard || []),
     ...(state.spread || []).filter(Boolean),
   ];
+}
+
+export function eligibleSuitStampCards(persist = {}, state = {}) {
+  const stampedIds = new Set(persist.stampedMajors || []);
+  const stampedFiveIds = new Set(persist.stampedFive || []);
   const seen = new Set();
-  const eligible = allCards.filter(card => {
+  return stampCardPool(state).filter(card => {
     if (card.type !== 'major') return false;
     if (!Array.isArray(card.suits) || !card.suits.length) return false;
     if (stampedIds.has(card.id)) return false;
@@ -235,6 +238,24 @@ export function openStampPicker(slotIndex, target = window) {
     seen.add(card.id);
     return true;
   });
+}
+
+export function eligibleFiveStampCards(persist = {}, state = {}) {
+  const stampedFive = new Set(persist.stampedFive || []);
+  const stampedMajorIds = new Set(persist.stampedMajors || []);
+  const seen = new Set();
+  return stampCardPool(state).filter(card => {
+    if (stampedFive.has(card.id)) return false;
+    if (stampedMajorIds.has(card.id)) return false;
+    if (seen.has(card.id)) return false;
+    seen.add(card.id);
+    return true;
+  });
+}
+
+export function openStampPicker(slotIndex, target = window) {
+  if (typeof target.choice !== 'function') return;
+  const eligible = eligibleSuitStampCards(persistOf(target), stateOf(target));
   if (!eligible.length) return;
   openStampChoice('Suit Stamp', 'Choose a Major Arcana — its suit counts toward Royal Court.', eligible, card => {
     if (card?.id) applyStampTarget(card.id, target);
@@ -243,24 +264,7 @@ export function openStampPicker(slotIndex, target = window) {
 
 export function openFiveStampPicker(slotIndex, target = window) {
   if (typeof target.choice !== 'function') return;
-  const persist = persistOf(target);
-  const state = stateOf(target);
-  const stampedFive = new Set(persist.stampedFive || []);
-  const stampedMajorIds = new Set(persist.stampedMajors || []);
-  const allCards = [
-    ...(state.deck || []),
-    ...(state.hand || []),
-    ...(state.discard || []),
-    ...(state.spread || []).filter(Boolean),
-  ];
-  const seen = new Set();
-  const eligible = allCards.filter(card => {
-    if (stampedFive.has(card.id)) return false;
-    if (stampedMajorIds.has(card.id)) return false;
-    if (seen.has(card.id)) return false;
-    seen.add(card.id);
-    return true;
-  });
+  const eligible = eligibleFiveStampCards(persistOf(target), stateOf(target));
   if (!eligible.length) return;
   openStampChoice('Five Star Stamp', 'Choose any card — it slots into Sequences as a multiple of 5 (5, 10, 15, 20).', eligible, card => {
     if (card?.id) applyFiveStampTarget(card.id, target);

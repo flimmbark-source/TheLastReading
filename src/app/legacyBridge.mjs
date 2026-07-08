@@ -21,10 +21,10 @@ function persistBridgePayload(persist) {
   };
 }
 
-function copyStorePersistToLegacy(storePersist, legacyPersist) {
+export function copyStorePersistToLegacy(storePersist, legacyPersist) {
   legacyPersist.pool=storePersist.reserve;
   legacyPersist.up=Object.assign({},storePersist.upgrades);
-  legacyPersist.relics=storePersist.relics.slice();
+  legacyPersist.relics=(storePersist.relics||[]).slice();
   legacyPersist.relicUsed=Object.assign({},storePersist.relicUsed||{});
   legacyPersist.stampedMajors=(storePersist.stampedMajors||[]).slice();
   legacyPersist.stampedFive=(storePersist.stampedFive||[]).slice();

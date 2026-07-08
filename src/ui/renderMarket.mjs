@@ -67,7 +67,7 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-function ensureStoreFrontStyles(target = window) {
+export function ensureStoreFrontStyles(target = window) {
   const doc = target.document;
   if (!doc) return;
   let style = doc.getElementById('store-front-style');

@@ -1,7 +1,8 @@
 import { MARKET_BUNDLES } from '../data/marketBundleTracks.mjs';
 import { SHOP, SHOP_ICON } from '../data/legacyMarket.mjs';
-
-const STORE_FADE_MS = 260;
+import { copyStorePersistToLegacy } from './legacyBridge.mjs';
+import { eligibleFiveStampCards, eligibleSuitStampCards } from './shopOverlayFlow.mjs';
+import { ensureStoreFrontStyles } from '../ui/renderMarket.mjs';
 
 function runtime(target){return target.tlrRuntime || {};}
 function persistOf(target){return runtime(target).persist || target.persist || {};}
@@ -15,19 +16,6 @@ function bundleList(persist) {
   return (persist.pendingRewardBundles || []).filter(bundle => bundle.state !== 'claimed');
 }
 
-function copyStorePersistToLegacy(storePersist, legacyPersist) {
-  legacyPersist.pool = storePersist.reserve;
-  legacyPersist.up = Object.assign({}, storePersist.upgrades || {});
-  legacyPersist.relics = (storePersist.relics || []).slice();
-  legacyPersist.relicUsed = Object.assign({}, storePersist.relicUsed || {});
-  legacyPersist.stampedMajors = (storePersist.stampedMajors || []).slice();
-  legacyPersist.stampedFive = (storePersist.stampedFive || []).slice();
-  legacyPersist.marketBundleProgress = Object.assign({}, storePersist.marketBundleProgress || {});
-  legacyPersist.pendingRewardBundles = (storePersist.pendingRewardBundles || []).map(bundle => Object.assign({}, bundle));
-  legacyPersist.claimedRewardBundleIds = (storePersist.claimedRewardBundleIds || []).slice();
-  legacyPersist.pendingCardChoice = storePersist.pendingCardChoice || null;
-}
-
 function syncStorePersistToLegacy(target = window) {
   const storePersist = target.tlrStore?.getState?.()?.persist;
   if (!storePersist) return;
@@ -35,54 +23,16 @@ function syncStorePersistToLegacy(target = window) {
 }
 
 function ensureBundleStyles(target = window) {
+  // Reuse the shared storefront chrome (shell, candle, dim, offer rows, meta,
+  // proceed button, reduced-motion rules) that the bundle market also depends
+  // on, then layer only the bundle-specific accents and picker styles on top.
+  ensureStoreFrontStyles(target);
   const doc = target.document;
   if (!doc || doc.getElementById('market-bundle-flow-style')) return;
   const style = doc.createElement('style');
   style.id = 'market-bundle-flow-style';
   style.textContent = `
-    .modal:has(.store-front-shell){background:transparent;padding:0;align-items:center;justify-content:center}
-    .summary.store-front-shell{background:transparent;border:0;box-shadow:none;padding:0;max-width:none;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
-    .summary.store-front-shell.store-exiting{animation:storeShellFadeOut ${STORE_FADE_MS}ms ease-in both;pointer-events:none}
-    @keyframes storeShellFadeOut{from{opacity:1}to{opacity:0}}
-    .store-dim{position:absolute;inset:0;background:rgba(0,0,0,.82);animation:storeDimIn 420ms ease-out both;pointer-events:none;z-index:0}
-    @keyframes storeDimIn{from{opacity:0}to{opacity:1}}
-    .store-candle{position:relative;width:80px;height:80px;flex-shrink:0;margin-bottom:-8px;z-index:1;pointer-events:none;align-self:center;animation:storeCandleIn 220ms ease-out both}
-    .store-candle img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transition:opacity 90ms linear}
-    .store-candle .candle-off{opacity:1}
-    .store-candle .candle-on{opacity:0}
-    .store-candle.lit .candle-off{opacity:0}
-    .store-candle.lit .candle-on{opacity:1}
-    @keyframes storeCandleIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-    .store-front{position:relative;width:min(96vw,560px);max-height:calc(100dvh - 128px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;font-family:Georgia,serif;color:#eadbb9;z-index:1;opacity:0;transition:opacity 280ms ease-out}
-    .store-front.store-visible{opacity:1}
-    .store-front button{font-family:Georgia,serif;cursor:pointer;-webkit-tap-highlight-color:transparent}
-    .store-front button:disabled{cursor:not-allowed;opacity:.4}
-    body.tlr-shop-active .score-stack{visibility:hidden;pointer-events:none}
-    body.tlr-shop-active #menuBtn,body.tlr-shop-active #scoringBtn,body.tlr-shop-active #abilitiesBtn,body.tlr-shop-active #spv2ArchiveBtn{visibility:hidden;pointer-events:none}
-    .store-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px}
-    .store-refresh{display:flex;align-items:center;gap:6px;background:transparent;border:1px solid rgba(226,181,100,.35);border-radius:8px;color:#f1dfbd;padding:7px 12px;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;transition:background .15s,opacity .15s}
-    .store-refresh:disabled{opacity:.35;cursor:not-allowed}
-    .store-refresh-icon{font-size:1.15em;line-height:1}
-    .store-reserve-display{display:flex;flex-direction:column;align-items:flex-end;line-height:1}
-    .store-reserve-label{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#b08040;font-family:system-ui,sans-serif}
-    .store-reserve-amount{font-size:28px;color:#f1d196;text-shadow:0 1px 3px #000;line-height:1}
-    .store-offer-row{display:flex;flex-direction:column;gap:12px}
-    .store-card{position:relative;display:flex;align-items:center;gap:14px;min-height:96px;padding:27px 14px 12px 18px;border:1px solid rgba(200,160,80,.28);border-radius:12px;background:linear-gradient(180deg,rgba(26,17,10,.55),rgba(9,6,4,.6));text-align:left;transition:border-color .13s}
-    .store-card::before{content:'';position:absolute;left:-1px;top:16px;bottom:16px;width:2px;border-radius:2px;background:var(--store-accent,rgba(201,162,74,.5));opacity:.75;pointer-events:none}
-    .store-card:not(.disabled):hover{border-color:rgba(200,160,80,.5)}
     .store-card.disabled{opacity:.72}
-    .store-card-tag{position:absolute;top:9px;left:18px;font:700 10px/1 system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#9a7840}
-    .store-card-art{width:56px;height:56px;flex:0 0 56px;display:flex;align-items:center;justify-content:center}
-    .store-card-art .isp{transform:scale(.48);transform-origin:center;filter:drop-shadow(0 3px 5px rgba(0,0,0,.6))}
-    .store-card-main{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
-    .store-card-name{font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#f0dfbd;line-height:1.15}
-    .store-card-desc{font:600 12px/1.35 system-ui,sans-serif;color:#b8a882}
-    .store-card-lv{font:800 10px/1 system-ui,sans-serif;color:#c89445;text-transform:uppercase;margin-top:2px}
-    .store-card-buy{flex:0 0 auto;min-width:104px;min-height:46px;padding:0 14px;border:1px solid rgba(226,181,100,.5);border-radius:8px;background:transparent;color:#f5d9a0;font:800 12px/1.2 Georgia,serif;text-transform:uppercase;letter-spacing:.05em}
-    .store-card-buy:not(:disabled):hover{background:rgba(226,181,100,.1)}
-    .store-footer{display:flex;justify-content:center;margin-top:16px}
-    .store-proceed{background:transparent;border:1px solid rgba(226,181,100,.55);border-radius:8px;color:#f1dfbd;font:800 14px/1 Georgia,serif;text-transform:uppercase;letter-spacing:.07em;padding:10px 22px;transition:background .15s}
-    .store-proceed:hover{background:rgba(200,160,60,.15)}
     .store-card--bundle-sequence{--store-accent:rgba(214,176,86,.62)}
     .store-card--bundle-court{--store-accent:rgba(120,160,220,.58)}
     .store-card--bundle-restless{--store-accent:rgba(110,180,220,.58)}
@@ -99,8 +49,7 @@ function ensureBundleStyles(target = window) {
     .reward-bundle-picker .pack-picker-header p{margin:0;color:#b8a882}
     .reward-bundle-picker .shop-items-row{display:flex!important;flex-direction:row!important;align-items:stretch!important;justify-content:center!important;gap:10px!important;flex-wrap:nowrap!important;overflow-x:auto!important;padding:0 6px 8px;scroll-snap-type:x proximity}
     .reward-bundle-picker .upg-card{flex:0 0 min(30vw,170px)!important;max-width:170px!important;min-width:128px!important;scroll-snap-align:center;background:rgba(19,14,10,.74)!important}
-    @media(max-width:480px){.store-card{gap:10px;padding-left:14px}.store-card-buy{min-width:86px;padding:0 10px}.reward-bundle-picker{width:98vw}.reward-bundle-picker .shop-items-row{justify-content:flex-start!important;gap:8px!important}.reward-bundle-picker .upg-card{flex-basis:31vw!important;min-width:112px!important}.reward-bundle-picker .upg-desc{font-size:10px!important;line-height:1.25!important}}
-    @media(prefers-reduced-motion:reduce){.store-dim,.store-candle{animation:none}.store-front{opacity:1;transition:none}}
+    @media(max-width:480px){.reward-bundle-picker{width:98vw}.reward-bundle-picker .shop-items-row{justify-content:flex-start!important;gap:8px!important}.reward-bundle-picker .upg-card{flex-basis:31vw!important;min-width:112px!important}.reward-bundle-picker .upg-desc{font-size:10px!important;line-height:1.25!important}}
   `;
   doc.head.appendChild(style);
 }
@@ -242,10 +191,27 @@ export function showRewardBundleContents(bundleId, target = window) {
   return true;
 }
 
+// Stamp rewards (five_stamp / suit_stamp) route to a card picker on claim. If
+// no card is eligible, the picker silently no-ops and the claimed reward is
+// lost, so we exclude those keys from the offered choices up front. Every pool
+// pairs stamps with non-stamp rewards, so a bundle is never left empty.
+function ineligibleStampRewardKeys(target = window) {
+  const persist = persistOf(target);
+  const state = stateOf(target);
+  const excluded = [];
+  if (!eligibleFiveStampCards(persist, state).length) excluded.push('five_stamp');
+  if (!eligibleSuitStampCards(persist, state).length) excluded.push('suit_stamp');
+  return excluded;
+}
+
 export function openRewardBundleWithAnimation(bundleId, target = window) {
   if (!target.tlrStore || !target.tlrActions) return false;
   if (typeof target.tlrSyncPersistToStore === 'function') target.tlrSyncPersistToStore();
-  target.tlrStore.dispatch({ type: target.tlrActions.OPEN_REWARD_BUNDLE, bundleId });
+  target.tlrStore.dispatch({
+    type: target.tlrActions.OPEN_REWARD_BUNDLE,
+    bundleId,
+    excludeRewardKeys: ineligibleStampRewardKeys(target),
+  });
   syncStorePersistToLegacy(target);
 
   // This is a reward bundle, not a paid pack. Do not route through
