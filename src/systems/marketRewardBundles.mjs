@@ -4,6 +4,8 @@ import {
   MARKET_BUNDLES,
 } from '../data/marketBundleTracks.mjs';
 
+const REWARD_ROLE_ORDER = Object.freeze(['core', 'tool', 'bridge']);
+
 function cloneBundles(persist) {
   return (persist.pendingRewardBundles || []).map(bundle => ({
     ...bundle,
@@ -19,10 +21,25 @@ function shuffled(values, rng = Math.random) {
     .map(({ value }) => value);
 }
 
-function rewardPoolForBundle(bundle) {
+function poolSetForBundle(bundle) {
   const pools = MARKET_BUNDLE_REWARD_POOLS[bundle?.bundleId];
-  if (!pools) return [];
-  return bundle.tier > 1 ? pools.later || pools.common || [] : pools.common || [];
+  if (!pools) return null;
+  return bundle.tier > 1 ? pools.tier2 || pools.tier1 || null : pools.tier1 || null;
+}
+
+function flattenPool(poolSet) {
+  if (!poolSet) return [];
+  const keys = [];
+  for (const role of REWARD_ROLE_ORDER) {
+    for (const key of poolSet[role] || []) {
+      if (!keys.includes(key)) keys.push(key);
+    }
+  }
+  return keys;
+}
+
+export function rewardPoolForBundle(bundle) {
+  return flattenPool(poolSetForBundle(bundle));
 }
 
 export function pendingBundleViews(persist) {
@@ -54,6 +71,29 @@ export function legalRewardKeysForBundle(persist, bundle, options = {}) {
   return pool.filter(key => Boolean(shop[key]) && !exclude.has(key));
 }
 
+export function rewardOfferKeysForBundle(persist, bundle, options = {}) {
+  const shop = options.shop || SHOP;
+  const rng = options.rng || Math.random;
+  const exclude = new Set(options.excludeRewardKeys || []);
+  const poolSet = poolSetForBundle(bundle);
+  if (!poolSet) return [];
+
+  const selected = [];
+  const legalForRole = role => shuffled((poolSet[role] || []).filter(key => Boolean(shop[key]) && !exclude.has(key) && !selected.includes(key)), rng);
+
+  for (const role of REWARD_ROLE_ORDER) {
+    const [choice] = legalForRole(role);
+    if (choice) selected.push(choice);
+  }
+
+  if (selected.length < 3) {
+    const backfill = shuffled(flattenPool(poolSet).filter(key => Boolean(shop[key]) && !exclude.has(key) && !selected.includes(key)), rng);
+    while (selected.length < 3 && backfill.length) selected.push(backfill.shift());
+  }
+
+  return shuffled(selected, rng).slice(0, 3);
+}
+
 export function openRewardBundle(persist, bundleInstanceId, options = {}) {
   const bundles = cloneBundles(persist);
   const index = bundles.findIndex(bundle => bundle.id === bundleInstanceId);
@@ -62,7 +102,7 @@ export function openRewardBundle(persist, bundleInstanceId, options = {}) {
   const bundle = bundles[index];
   if (bundle.state !== 'unopened') return persist;
 
-  const choices = shuffled(legalRewardKeysForBundle(persist, bundle, options), options.rng || Math.random).slice(0, 3);
+  const choices = rewardOfferKeysForBundle(persist, bundle, options);
   bundles[index] = {
     ...bundle,
     state: 'opened',
