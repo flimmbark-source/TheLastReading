@@ -52,13 +52,16 @@ html body #spread .slot > .card[data-hint]{overflow:visible!important}
 .spread-wrap:has(#scorePreview:not(.hidden)){z-index:10060!important}
 #scorePreview:not(.hidden){position:relative;z-index:10080!important}
 /* The score-preview boost above lifts the whole spread over the hand dock,
-   which put a selected hand card's hint label pill (top:-26px, so it pokes
-   into the spread's rect) BEHIND the placed cards. While a pill is actually
-   showing, the dock must outrank that boosted spread — but stay below the
-   ability prompt (10070) and modals (10080). */
-body:has(.hand .card.sel[data-hint]) .handDock,
-body:has(.hand .card.press-highlight[data-hint]) .handDock,
-body:has(.hand .card.ability-picked[data-hint]) .handDock{z-index:10062!important}
+   which pushed any raised hand card (a lifted selection, a press, an
+   ability/purge pick, or its hint label pill at top:-26px) BEHIND the placed
+   spread cards. Whenever a hand card is active the dock must outrank that
+   boosted spread — but stay below the ability prompt (10070) and modals
+   (10080). Gated on the card state rather than the hint pill so the dock wins
+   even when no pill is showing (e.g. hint text off). */
+body:has(.hand .card.sel) .handDock,
+body:has(.hand .card.press-highlight) .handDock,
+body:has(.hand .card.ability-picked) .handDock,
+body:has(.hand .card.purge-picked) .handDock{z-index:10062!important}
 .relic-callout,.inv-tut{z-index:10090!important}
 .store-relic-callout,.store-pack-callout{z-index:10150!important}
 #summary.modal.show:has(.tarot-shop),#summary.modal.show:has(.store-front-shell){z-index:10110!important}
