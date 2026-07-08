@@ -9,6 +9,7 @@ import { installLegacyBridge } from './legacyBridge.mjs';
 import { installDeckRuntime } from './deckRuntime.mjs';
 import { installMarketFlow } from './marketFlow.mjs';
 import { installShopOverlayFlow } from './shopOverlayFlow.mjs';
+import { installMarketBundleFlow } from './marketBundleFlow.mjs';
 import { installRelicFlow } from './relicFlow.mjs';
 import { installShopPolish } from './shopPolish.mjs';
 import { installReferenceControls } from './referenceControls.mjs';
@@ -316,6 +317,7 @@ export function startApp(target = window) {
   installLegacyBridge(target);
   installMarketFlow(target);
   installShopOverlayFlow(target);
+  installMarketBundleFlow(target);
   installRelicFlow(target);
   installShopPolish(target);
   installResonationFlow(target);
