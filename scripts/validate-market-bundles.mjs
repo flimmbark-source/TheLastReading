@@ -14,7 +14,9 @@ function ledger(overrides = {}) {
     thresholdIndex: 0,
     patterns: { sequenceMelds: 0, sequenceBestLength: 0, courtMelds: 0, fullCourtMelds: 0, royalCourtMelds: 0, rankMelds: 0, pathMelds: 0, echoBestKind: 0, hasPair: false, hasThreeOfKind: false, hasFourOfKind: false },
     cards: { courtsInSpread: 0, openingHandCardsInSpread: 0 },
-    actions: { discardsUsed: 0, initialDiscards: 3, allDiscardsUsed: false, abilityTakenCards: 0, mulligansUsed: 0 },
+    // Neutral baseline for tests: this beats Stillness, but stays below the
+    // Restless threshold. Tests that care about Intervention override it.
+    actions: { discardsUsed: 1, initialDiscards: 3, allDiscardsUsed: false, abilityTakenCards: 1, mulligansUsed: 0 },
     ...overrides,
   };
 }
