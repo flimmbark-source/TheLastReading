@@ -366,9 +366,9 @@ function renderPackCard(index, packId, target = window) {
 }
 
 function renderRelicCard(index, relicKey, target = window) {
-  if (!relicKey) return renderVesselCard(target);
+  if (!relicKey) return renderVesselCard(index, target);
   const relic = (target.RELICS || {})[relicKey];
-  if (!relic) return renderVesselCard(target);
+  if (!relic) return renderVesselCard(index, target);
   const cost = relicCost(target);
   const ok = (persistOf(target).pool || 0) >= cost;
   const style = typeof target.relicIconStyle === 'function' ? target.relicIconStyle(relicKey, 56) : '';
@@ -386,7 +386,7 @@ function renderRelicCard(index, relicKey, target = window) {
   </div>`;
 }
 
-function renderVesselCard(target = window) {
+function renderVesselCard(index = 0, target = window) {
   const level = (persistOf(target).up || {}).relicSlot || 0;
   const maxed = level >= 2;
   const cost = storeVesselCost(target);
@@ -400,7 +400,7 @@ function renderVesselCard(target = window) {
       <div class="store-card-desc">${maxed ? 'Relic Slots maxed.' : 'Gain +1 Relic Slot'}</div>
       <div class="store-card-lv">${maxed ? 'Max 5' : `Slots ${slots} → ${slots + 1}`}</div>
     </div>
-    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreVessel()">${maxed ? 'Maxed' : `Buy <span class="coin">✦</span> ${cost}`}</button>
+    <button class="store-card-buy" ${ok ? '' : 'disabled'} onclick="buyStoreVessel(${index})">${maxed ? 'Maxed' : `Buy <span class="coin">✦</span> ${cost}`}</button>
   </div>`;
 }
 
@@ -575,8 +575,8 @@ export function openShopMain(){
         ${renderPackCard(0, offers.pack[0], window)}
       </div>
       <div class="store-grid-bottom">
-        ${relicA ? renderRelicCard(0, relicA, window) : renderVesselCard(window)}
-        ${relicB ? renderRelicCard(1, relicB, window) : renderVesselCard(window)}
+        ${relicA ? renderRelicCard(0, relicA, window) : renderVesselCard(0, window)}
+        ${relicB ? renderRelicCard(1, relicB, window) : renderVesselCard(1, window)}
       </div>
     </div>
     <div class="store-footer">
@@ -697,21 +697,22 @@ export function confirmStoreRelicReplace(index,oldKey,newKey,cost,target = windo
   return true;
 }
 
-export function buyStoreVessel(target = window){
+export function buyStoreVessel(index = 0, target = window){
   const level=(persistOf(target).up||{}).relicSlot||0;
   if(level>=2)return false;
   const cost=storeVesselCost(target);
   if((persistOf(target).pool||0)<cost)return false;
-  const html=`<div class="summary tarot-shop"><div class="pack-picker-header"><h3>Relic Vessel</h3><p>Gain +1 Relic Slot. Max 5.</p></div><div style="display:flex;justify-content:center;gap:10px;margin-top:12px"><button onclick="confirmStoreVessel(${cost})">Buy — ✦ ${cost}</button><button onclick="openShopMain()">Back</button></div></div>`;
+  const html=`<div class="summary tarot-shop"><div class="pack-picker-header"><h3>Relic Vessel</h3><p>Gain +1 Relic Slot. Max 5.</p></div><div style="display:flex;justify-content:center;gap:10px;margin-top:12px"><button onclick="confirmStoreVessel(${cost},${index})">Buy — ✦ ${cost}</button><button onclick="openShopMain()">Back</button></div></div>`;
   if(typeof target.showOverlay==='function')target.showOverlay(html);
   return true;
 }
 
-export function confirmStoreVessel(cost,target = window){
+export function confirmStoreVessel(cost,index = 0,target = window){
   const charged=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'pack',packId:'relicSlot',cost}):false;
   if(charged!==true)return charged;
   const upgraded=typeof target.tlrMarketPurchase==='function'?target.tlrMarketPurchase({kind:'upgrade',upgradeKey:'relicSlot'}):false;
   if(upgraded!==true)return upgraded;
+  if(target._storeFrontOffers&&Array.isArray(target._storeFrontOffers.relics))target._storeFrontOffers.relics[index]=null;
   if(typeof target.renderRelicRack==='function')target.renderRelicRack();
   if(typeof target.openShopMain==='function')target.openShopMain();
   return true;
