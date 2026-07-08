@@ -3,6 +3,7 @@ import { SHOP, SHOP_ICON } from '../data/legacyMarket.mjs';
 import { copyStorePersistToLegacy } from './legacyBridge.mjs';
 import { eligibleFiveStampCards, eligibleSuitStampCards } from './shopOverlayFlow.mjs';
 import { ensureStoreFrontStyles } from '../ui/renderMarket.mjs';
+import { rewardOfferKeysForBundle } from '../systems/marketRewardBundles.mjs';
 
 function runtime(target){return target.tlrRuntime || {};}
 function persistOf(target){return runtime(target).persist || target.persist || {};}
@@ -59,7 +60,6 @@ function ensureBundleStyles(target = window) {
     .bundle-result-row.complete td:first-child{color:#f0dfbd!important}
     .bundle-result-row .bundle-result-reason{display:block;color:#f0dfbd;font-weight:800}
     .bundle-result-row .bundle-result-track{display:block;color:#8a7551;font:700 10px/1.25 system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
-    .store-meta-spacer{min-width:118px}
     .store-front.bundle-choice-transition{pointer-events:none}
     .store-front.bundle-choice-transition-out{opacity:.18!important;transform:translateY(10px) scale(.985)!important;filter:blur(1px) brightness(.82)}
     .store-front.bundle-choice-transition-in{animation:bundleChoicesIn .3s cubic-bezier(.16,.84,.24,1) both}
@@ -105,15 +105,14 @@ function bundleMarketInner(target = window) {
   const hasBundles = bundles.length > 0;
   return `
     <div class="store-meta">
-      <button class="store-refresh" disabled><span class="store-refresh-icon">↻</span> Refresh</button>
+      <div aria-hidden="true"></div>
       <div class="store-reserve-display"><div class="store-reserve-label">Bundles</div><div class="store-reserve-amount">${bundles.length}</div></div>
     </div>
     <div class="store-offer-row">
       ${hasBundles ? bundles.map(renderBundleCard).join('') : renderQuietMarketCard()}
     </div>
-    ${hasBundles ? `<div class="store-bundle-note">Open your reward bundle${bundles.length === 1 ? '' : 's'} to continue.</div>` : ''}
     <div class="store-footer">
-      <button class="store-proceed" ${hasBundles ? 'disabled' : ''} onclick="storeExitToNextReading()">Next Reading →</button>
+      <button class="store-proceed" onclick="storeExitToNextReading()">Next Reading →</button>
     </div>`;
 }
 
@@ -183,7 +182,7 @@ function rewardRoleForKey(bundle, rewardKey) {
 function rewardKindLabel(rewardKey, row) {
   const category = row?.[5] || '';
   if (category === 'relic' || rewardKey === 'relicSlot') return 'Relic';
-  if (category === 'pattern' || category === 'scoring') return 'Scoring Upgrade';
+  if (category === 'pattern' || category === 'scoring') return 'Scoring';
   if (category === 'hand') return 'Hand Upgrade';
   if (category === 'draw') return 'Draw Upgrade';
   if (category === 'sight') return 'Sight Upgrade';
@@ -217,8 +216,8 @@ function rewardBundleChoicesInner(bundle, target = window) {
   const keys = bundle.rewardKeys || [];
   return `
     <div class="store-meta">
-      <div class="store-meta-spacer" aria-hidden="true"></div>
-      <div class="store-reserve-display"><div class="store-reserve-label">Choose</div><div class="store-reserve-amount">1</div></div>
+      <button class="store-refresh" onclick="openShopMain()">← Market</button>
+      <button class="store-refresh" onclick="refreshRewardBundleChoices('${escapeHtml(bundle.id)}')"><span class="store-refresh-icon">↻</span> Refresh</button>
     </div>
     <div class="store-bundle-note">Choose 1 Reward</div>
     <div class="store-offer-row">
@@ -291,17 +290,25 @@ export function openRewardBundleWithAnimation(bundleId, target = window) {
   return showRewardBundleContents(bundleId, target);
 }
 
-function openNextRewardBundleOrMarket(target = window) {
-  const remaining = bundleList(persistOf(target));
-  if (!remaining.length) return showBundleMarket(target);
-  const opened = remaining.find(bundle => bundle.state === 'opened');
-  const next = opened || remaining[0];
-  if (!next) return showBundleMarket(target);
-  if (next.state === 'opened') {
-    if (transitionToRewardBundleChoices(next, target)) return true;
-    return showRewardBundleContents(next.id, target);
-  }
-  return openRewardBundleWithAnimation(next.id, target);
+export function refreshRewardBundleChoices(bundleId, target = window) {
+  if (!target.tlrStore || !target.tlrActions) return false;
+  if (typeof target.tlrSyncPersistToStore === 'function') target.tlrSyncPersistToStore();
+
+  const storePersist = target.tlrStore.getState().persist;
+  const bundles = storePersist.pendingRewardBundles || [];
+  const index = bundles.findIndex(bundle => bundle.id === bundleId && bundle.state === 'opened');
+  if (index < 0) return false;
+
+  const rewardKeys = rewardOfferKeysForBundle(storePersist, bundles[index], {
+    excludeRewardKeys: ineligibleStampRewardKeys(target),
+  });
+  const pendingRewardBundles = bundles.map((bundle, i) => i === index ? { ...bundle, rewardKeys } : bundle);
+  target.tlrStore.dispatch({ type: target.tlrActions.SYNC_LEGACY_PERSIST, persist: { pendingRewardBundles } });
+  syncStorePersistToLegacy(target);
+  if (typeof target.playSound === 'function') target.playSound('pack_open');
+
+  const updated = bundleList(persistOf(target)).find(bundle => bundle.id === bundleId);
+  return updated ? renderRewardBundleChoices(updated, target) : false;
 }
 
 export function pickRewardBundleChoice(bundleId, rewardKey, target = window) {
@@ -318,7 +325,7 @@ export function pickRewardBundleChoice(bundleId, rewardKey, target = window) {
     if (rewardKey === 'five_stamp' && typeof target.openFiveStampPicker === 'function') return target.openFiveStampPicker(0);
     if (rewardKey === 'suit_stamp' && typeof target.openStampPicker === 'function') return target.openStampPicker(0);
   }
-  return openNextRewardBundleOrMarket(target);
+  return showBundleMarket(target);
 }
 
 function trackReason(delta) {
@@ -537,6 +544,7 @@ export function installMarketBundleFlow(target = window) {
   target.openShopMain = () => showBundleMarket(target);
   target.openShop = () => openBundleMarketAfterTrackGhosts(target);
   target.openRewardBundleWithAnimation = bundleId => openRewardBundleWithAnimation(bundleId, target);
+  target.refreshRewardBundleChoices = bundleId => refreshRewardBundleChoices(bundleId, target);
   target.showRewardBundleContents = bundleId => showRewardBundleContents(bundleId, target);
-  target.pickRewardBundleChoice = (bundleId, rewardKey) => pickRewardBundleChoice(bundleId, rewardKey, target);
+  target.pickRewardBundleChoice = (bundleId, rewardKey) => pickRewardBundleChoice(bundleId, target);
 }
