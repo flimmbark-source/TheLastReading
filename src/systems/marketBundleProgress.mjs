@@ -1,7 +1,4 @@
 import {
-  MARKET_BUNDLE_AXES,
-  MARKET_BUNDLE_AXIS_ORDER,
-  MARKET_BUNDLE_MAX_BUNDLES_PER_READING,
   MARKET_BUNDLE_TRACK_ORDER,
   MARKET_BUNDLE_TRACKS,
   initialBundleProgressForTrack,
@@ -180,35 +177,12 @@ function trackScore(trackId, ledger) {
 
 export function evaluateMarketBundleTracks(ledger) {
   const raw = {};
-  for (const trackId of MARKET_BUNDLE_TRACK_ORDER) raw[trackId] = trackScore(trackId, ledger);
-
   const awarded = {};
-  const suppressed = new Set();
-
-  for (const axisId of MARKET_BUNDLE_AXIS_ORDER) {
-    const axis = MARKET_BUNDLE_AXES[axisId];
-    if (!axis || axis.mode !== 'dominant') continue;
-    const [left, right] = axis.tracks || [];
-    const leftScore = raw[left]?.gained || 0;
-    const rightScore = raw[right]?.gained || 0;
-    if (leftScore > rightScore) {
-      awarded[left] = raw[left];
-      suppressed.add(right);
-    } else if (rightScore > leftScore) {
-      awarded[right] = raw[right];
-      suppressed.add(left);
-    } else {
-      suppressed.add(left);
-      suppressed.add(right);
-    }
-  }
-
   for (const trackId of MARKET_BUNDLE_TRACK_ORDER) {
-    const track = MARKET_BUNDLE_TRACKS[trackId];
-    if (!track || track.axisId || suppressed.has(trackId)) continue;
-    awarded[trackId] = raw[trackId];
+    const score = trackScore(trackId, ledger);
+    raw[trackId] = score;
+    if (score.gained > 0) awarded[trackId] = score;
   }
-
   return { raw, awarded };
 }
 
@@ -258,7 +232,6 @@ export function advanceMarketBundleProgress(persist, ledger) {
   const deltas = [];
   const generatedBundles = [];
   const { awarded } = evaluateMarketBundleTracks(ledger);
-  const completionCandidates = [];
 
   for (const trackId of MARKET_BUNDLE_TRACK_ORDER) {
     const score = awarded[trackId];
@@ -271,10 +244,10 @@ export function advanceMarketBundleProgress(persist, ledger) {
     const after = before + gained;
     const threshold = track.nextThreshold;
     const completedTier = completedTierForTotal(trackConfig, after);
-    const completed = completedTier > (track.claimedTier || 0);
+    const previousTier = track.claimedTier || 0;
+    const completed = completedTier > previousTier;
 
     track.total = after;
-    track.nextThreshold = nextThreshold(trackConfig, track.claimedTier || 0);
 
     const delta = {
       trackId,
@@ -285,34 +258,33 @@ export function advanceMarketBundleProgress(persist, ledger) {
       reasons: [...(score.reasons || [])],
       after,
       threshold,
-      nextThreshold: track.nextThreshold,
+      nextThreshold: nextThreshold(trackConfig, previousTier),
       completed: false,
       completedTier: completed ? completedTier : null,
       bundleId: null,
+      bundleIds: [],
       deferred: false,
     };
 
-    if (completed) completionCandidates.push({ trackId, trackConfig, track, completedTier, delta, gained, reasons: score.reasons || [] });
+    if (completed) {
+      for (let tier = previousTier + 1; tier <= completedTier; tier += 1) {
+        const bundle = createBundleFromTrack(trackConfig, tier, ledger, usedIds, score.reasons || []);
+        pendingRewardBundles.push(bundle);
+        generatedBundles.push(bundle);
+        delta.bundleIds.push(bundle.id);
+        if (!delta.bundleId) delta.bundleId = bundle.id;
+      }
+      track.claimedTier = completedTier;
+      track.nextThreshold = nextThreshold(trackConfig, completedTier);
+      delta.completed = true;
+      delta.nextThreshold = track.nextThreshold;
+    } else {
+      track.nextThreshold = nextThreshold(trackConfig, previousTier);
+      delta.nextThreshold = track.nextThreshold;
+    }
+
     deltas.push(delta);
   }
-
-  completionCandidates
-    .sort((a, b) => (b.gained - a.gained) || MARKET_BUNDLE_TRACK_ORDER.indexOf(a.trackId) - MARKET_BUNDLE_TRACK_ORDER.indexOf(b.trackId))
-    .forEach((candidate, index) => {
-      if (index >= MARKET_BUNDLE_MAX_BUNDLES_PER_READING) {
-        candidate.delta.deferred = true;
-        return;
-      }
-      const bundle = createBundleFromTrack(candidate.trackConfig, candidate.completedTier, ledger, usedIds, candidate.reasons);
-      candidate.track.claimedTier = candidate.completedTier;
-      candidate.track.nextThreshold = nextThreshold(candidate.trackConfig, candidate.completedTier);
-      candidate.delta.completed = true;
-      candidate.delta.completedTier = candidate.completedTier;
-      candidate.delta.bundleId = bundle.id;
-      candidate.delta.nextThreshold = candidate.track.nextThreshold;
-      pendingRewardBundles.push(bundle);
-      generatedBundles.push(bundle);
-    });
 
   return {
     persist: {
