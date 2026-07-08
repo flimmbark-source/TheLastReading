@@ -6,11 +6,18 @@ const MARKET_AMBIENCE_FILES = Object.freeze([
   'assets/audio/olenchic-psycho-1-155031.mp3',
   'assets/audio/alex_jauk-witch-laugh-256450.mp3',
 ]);
+const FIXED_AUDIO_SOURCES = Object.freeze([
+  'assets/audio/olenchic-psycho-1-155031.mp3',
+]);
 
 function fileNameFromSource(src) {
   const raw = String(src || '');
   const clean = raw.split('?')[0].split('#')[0];
   return clean.slice(clean.lastIndexOf('/') + 1);
+}
+
+function normalizedSource(src) {
+  return String(src || '').split('?')[0].split('#')[0].replace(/^\.\//, '');
 }
 
 function replaceFileName(src, nextFile) {
@@ -21,6 +28,9 @@ function replaceFileName(src, nextFile) {
 }
 
 function rotatedMarketSource(src, target = window) {
+  const normalized = normalizedSource(src);
+  if (FIXED_AUDIO_SOURCES.includes(normalized)) return src;
+
   const current = fileNameFromSource(src);
   if (!MARKET_AMBIENCE_FILES.includes(current)) return src;
 
