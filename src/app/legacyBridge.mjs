@@ -9,6 +9,31 @@ function runtime(target){return target.tlrRuntime || {};}
 function stateOf(target){return runtime(target).state;}
 function persistOf(target){return runtime(target).persist;}
 
+function persistBridgePayload(persist) {
+  return {
+    reserve:persist.pool,totalScore:persist.totalScore||0,
+    upgrades:persist.up,relics:persist.relics,relicUsed:persist.relicUsed,
+    stampedMajors:persist.stampedMajors||[],stampedFive:persist.stampedFive||[],
+    marketBundleProgress:persist.marketBundleProgress||{},
+    pendingRewardBundles:persist.pendingRewardBundles||[],
+    claimedRewardBundleIds:persist.claimedRewardBundleIds||[],
+    pendingCardChoice:persist.pendingCardChoice||null,
+  };
+}
+
+function copyStorePersistToLegacy(storePersist, legacyPersist) {
+  legacyPersist.pool=storePersist.reserve;
+  legacyPersist.up=Object.assign({},storePersist.upgrades);
+  legacyPersist.relics=storePersist.relics.slice();
+  legacyPersist.relicUsed=Object.assign({},storePersist.relicUsed||{});
+  legacyPersist.stampedMajors=(storePersist.stampedMajors||[]).slice();
+  legacyPersist.stampedFive=(storePersist.stampedFive||[]).slice();
+  legacyPersist.marketBundleProgress=Object.assign({},storePersist.marketBundleProgress||{});
+  legacyPersist.pendingRewardBundles=(storePersist.pendingRewardBundles||[]).map(bundle=>Object.assign({},bundle));
+  legacyPersist.claimedRewardBundleIds=(storePersist.claimedRewardBundleIds||[]).slice();
+  legacyPersist.pendingCardChoice=storePersist.pendingCardChoice||null;
+}
+
 export function readLiveSnapshot(target = window){
   const state=stateOf(target);
   const persist=persistOf(target);
@@ -46,11 +71,7 @@ export function storeReady(target = window){return !!(target.tlrStore&&target.tl
 export function syncPersistToStore(target = window){
   if(!storeReady(target))return;
   const persist=persistOf(target);
-  target.tlrStore.dispatch({type:target.tlrActions.SYNC_LEGACY_PERSIST,persist:{
-    reserve:persist.pool,totalScore:persist.totalScore||0,
-    upgrades:persist.up,relics:persist.relics,relicUsed:persist.relicUsed,
-    stampedMajors:persist.stampedMajors||[],
-  }});
+  target.tlrStore.dispatch({type:target.tlrActions.SYNC_LEGACY_PERSIST,persist:persistBridgePayload(persist)});
 }
 
 export function resolveAbilityThroughStore(result,target = window){
@@ -83,18 +104,11 @@ export function abilityDraw(count,target = window){
 export function marketPurchase(purchase,target = window){
   if(!storeReady(target))return false;
   const persist=persistOf(target);
-  target.tlrStore.dispatch({type:target.tlrActions.SYNC_LEGACY_PERSIST,persist:{
-    reserve:persist.pool,totalScore:persist.totalScore||0,
-    upgrades:persist.up,relics:persist.relics,relicUsed:persist.relicUsed,
-    stampedMajors:persist.stampedMajors||[],
-  }});
+  target.tlrStore.dispatch({type:target.tlrActions.SYNC_LEGACY_PERSIST,persist:persistBridgePayload(persist)});
   target.tlrStore.dispatch({type:target.tlrActions.BUY_MARKET_ITEM,purchase});
   const st=target.tlrStore.getState();
   if(!st.run.lastPurchase||!st.run.lastPurchase.purchased)return 'rejected';
-  persist.pool=st.persist.reserve;
-  persist.up=Object.assign({},st.persist.upgrades);
-  persist.relics=st.persist.relics.slice();
-  persist.stampedMajors=(st.persist.stampedMajors||[]).slice();
+  copyStorePersistToLegacy(st.persist,persist);
   if((purchase?.cost||0)>0&&typeof target.playSound==='function')target.playSound('purchase');
   if(typeof target.haptic==='function')target.haptic(14);
   return true;
