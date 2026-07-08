@@ -114,6 +114,7 @@ function ledger(overrides = {}) {
   const card = (uid, id, type, extra = {}) => ({ uid, id, type, points: 1, ...extra });
   let state = createGameState({
     run: {
+      thresholdBonus: -25,
       spread: [
         card(1, 'major_1', 'major', { number: 1 }),
         card(2, 'major_2', 'major', { number: 2 }),
