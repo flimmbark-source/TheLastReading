@@ -59,6 +59,7 @@ export const ARCHIVE_ITEMS = Object.freeze([
     type:'Sticky Note',
     title:'Note on the Table',
     emoji:'🗒️',
+    hideDetailHeader:true,
     content:'<p style="font-style:italic">The same 3 again.</p><p style="font-style:italic">Pay attention when their images begin turning up elsewhere.</p>',
   },
 ]);
