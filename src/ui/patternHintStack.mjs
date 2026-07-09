@@ -10,18 +10,27 @@
 // gap. This element lives directly under <body>, free of any transform.
 //
 // The active card is whichever card would currently show the classic pill; the
-// selector list mirrors hand.css's own ::after opacity triggers so the panel
-// appears and disappears in lockstep with that pill's show/hide states.
+// selector priority mirrors the intended interaction priority: an actively
+// pressed card wins over the previously selected card, then selection remains
+// the idle fallback when nothing is being pressed.
 
-const ACTIVE_SELECTOR = [
-  '.hand .card.sel[data-hint-lines]',
+const ACTIVE_SELECTORS = [
   '.hand .card.press-highlight[data-hint-lines]',
-  '.hand .card.ability-picked[data-hint-lines]',
-  '.spread .card.press-highlight[data-hint-lines]',
-  '.spread .card.ability-picked[data-hint-lines]',
   '.spread .card.ability-target.press-highlight[data-hint-lines]',
+  '.spread .card.press-highlight[data-hint-lines]',
   '.choices .card.press-highlight[data-hint-lines]',
-].join(',');
+  '.hand .card.ability-picked[data-hint-lines]',
+  '.spread .card.ability-picked[data-hint-lines]',
+  '.hand .card.sel[data-hint-lines]',
+];
+
+function activeHintCard(doc){
+  for(const selector of ACTIVE_SELECTORS){
+    const card = doc.querySelector(selector);
+    if(card)return card;
+  }
+  return null;
+}
 
 export function installPatternHintStack(target = window){
   if(!target || target.__patternHintStackInstalled)return;
@@ -44,7 +53,7 @@ export function installPatternHintStack(target = window){
   let frame = 0;
   const render = () => {
     frame = 0;
-    const card = textHintsEnabled() ? doc.querySelector(ACTIVE_SELECTOR) : null;
+    const card = textHintsEnabled() ? activeHintCard(doc) : null;
     const lines = card ? (card.dataset.hintLines || '').split('\n').filter(Boolean) : [];
     const key = lines.join('\n');
     if(stack.dataset.key !== key){
