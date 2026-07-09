@@ -9,14 +9,12 @@
 // resolves against the card, not the viewport, so it can't reach the medallion
 // gap. This element lives directly under <body>, free of any transform.
 //
-// The active card is whichever card would currently show the classic pill while
-// it is being pressed or ability-focused. Do not fall back to `.hand .card.sel`:
-// when the player has one hand card selected and presses another, the old
-// selected card can briefly win the DOM query before the new press state settles,
-// causing stale hint text/card visuals to flicker for a frame.
+// Press state is owned by gesturePressHighlight.mjs. When a card is actively
+// pressed, that card is the only possible hint source. This avoids the stale
+// selected-card path where `.hand .card.sel` briefly wins while a new press is
+// resolving into the next selection.
 
-const ACTIVE_SELECTOR = [
-  '.hand .card.press-highlight[data-hint-lines]',
+const FALLBACK_SELECTOR = [
   '.hand .card.ability-picked[data-hint-lines]',
   '.spread .card.press-highlight[data-hint-lines]',
   '.spread .card.ability-picked[data-hint-lines]',
@@ -24,25 +22,20 @@ const ACTIVE_SELECTOR = [
   '.choices .card.press-highlight[data-hint-lines]',
 ].join(',');
 
-const SELECTED_HINT_STYLE_ID = 'tlr-selected-hint-press-flicker-fix';
-const SELECTED_HINT_CSS = `
-.hand .card.sel[data-hint]:not(.press-highlight):not(.ability-picked)::after {
-  opacity: 0 !important;
+const ACTIVE_PRESS_EVENT = 'tlr:active-press-card-change';
+
+function escapeAttrValue(target,value){
+  const raw=String(value);
+  const esc=target.CSS&&typeof target.CSS.escape==='function'?target.CSS.escape(raw):raw.replace(/["\\]/g,'\\$&');
+  return esc;
 }
 
-.hand .card.hint-card.sel:not(.press-highlight):not(.ability-picked):not(.ability-target),
-.hand .card.hint-complete.sel:not(.press-highlight):not(.ability-picked):not(.ability-target),
-.hand .card.hint-multi.sel:not(.press-highlight):not(.ability-picked):not(.ability-target) {
-  box-shadow: 0 10px 28px rgba(0,0,0,.75), 0 0 0 2px #d4af6a !important;
-}
-`;
-
-function installSelectedHintSuppression(doc){
-  if(!doc || doc.getElementById(SELECTED_HINT_STYLE_ID))return;
-  const style = doc.createElement('style');
-  style.id = SELECTED_HINT_STYLE_ID;
-  style.textContent = SELECTED_HINT_CSS;
-  doc.head.appendChild(style);
+function activePressedCard(doc,target){
+  const uid=target.__tlrActivePressCardUid;
+  if(uid==null||uid==='')return { hasActivePress:false, card:null };
+  const escaped=escapeAttrValue(target,uid);
+  const card=doc.querySelector(`.card.press-highlight[data-uid="${escaped}"][data-hint-lines]`);
+  return { hasActivePress:true, card };
 }
 
 export function installPatternHintStack(target = window){
@@ -51,7 +44,6 @@ export function installPatternHintStack(target = window){
   if(!doc)return;
   const stack = doc.getElementById('patternHintStack');
   if(!stack)return;
-  installSelectedHintSuppression(doc);
   target.__patternHintStackInstalled = true;
 
   // The stack follows the "Text" scoring-hint level directly rather than only
@@ -67,7 +59,11 @@ export function installPatternHintStack(target = window){
   let frame = 0;
   const render = () => {
     frame = 0;
-    const card = textHintsEnabled() ? doc.querySelector(ACTIVE_SELECTOR) : null;
+    let card = null;
+    if(textHintsEnabled()){
+      const pressed=activePressedCard(doc,target);
+      card = pressed.hasActivePress ? pressed.card : doc.querySelector(FALLBACK_SELECTOR);
+    }
     const lines = card ? (card.dataset.hintLines || '').split('\n').filter(Boolean) : [];
     const key = lines.join('\n');
     if(stack.dataset.key !== key){
@@ -102,6 +98,7 @@ export function installPatternHintStack(target = window){
   observeContainer('hand');
   observeContainer('spread');
   observeContainer('choices');
+  target.addEventListener(ACTIVE_PRESS_EVENT,schedule);
 
   target.__patternHintStackRefresh = schedule;
   schedule();
