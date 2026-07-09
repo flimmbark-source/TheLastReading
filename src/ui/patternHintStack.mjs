@@ -13,7 +13,7 @@
 // it is being pressed or ability-focused. Do not fall back to `.hand .card.sel`:
 // when the player has one hand card selected and presses another, the old
 // selected card can briefly win the DOM query before the new press state settles,
-// causing stale hint text to flicker for a frame.
+// causing stale hint text/card visuals to flicker for a frame.
 
 const ACTIVE_SELECTOR = [
   '.hand .card.press-highlight[data-hint-lines]',
@@ -24,12 +24,34 @@ const ACTIVE_SELECTOR = [
   '.choices .card.press-highlight[data-hint-lines]',
 ].join(',');
 
+const SELECTED_HINT_STYLE_ID = 'tlr-selected-hint-press-flicker-fix';
+const SELECTED_HINT_CSS = `
+.hand .card.sel[data-hint]:not(.press-highlight):not(.ability-picked)::after {
+  opacity: 0 !important;
+}
+
+.hand .card.hint-card.sel:not(.press-highlight):not(.ability-picked):not(.ability-target),
+.hand .card.hint-complete.sel:not(.press-highlight):not(.ability-picked):not(.ability-target),
+.hand .card.hint-multi.sel:not(.press-highlight):not(.ability-picked):not(.ability-target) {
+  box-shadow: 0 10px 28px rgba(0,0,0,.75), 0 0 0 2px #d4af6a !important;
+}
+`;
+
+function installSelectedHintSuppression(doc){
+  if(!doc || doc.getElementById(SELECTED_HINT_STYLE_ID))return;
+  const style = doc.createElement('style');
+  style.id = SELECTED_HINT_STYLE_ID;
+  style.textContent = SELECTED_HINT_CSS;
+  doc.head.appendChild(style);
+}
+
 export function installPatternHintStack(target = window){
   if(!target || target.__patternHintStackInstalled)return;
   const doc = target.document;
   if(!doc)return;
   const stack = doc.getElementById('patternHintStack');
   if(!stack)return;
+  installSelectedHintSuppression(doc);
   target.__patternHintStackInstalled = true;
 
   // The stack follows the "Text" scoring-hint level directly rather than only
