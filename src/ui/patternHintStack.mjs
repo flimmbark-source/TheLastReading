@@ -1,6 +1,6 @@
 // Single-player pattern-hint stack. Mirrors the pattern-completion labels of
-// the currently selected/pressed card into the fixed #patternHintStack panel
-// (game.html), which CSS pins into the gap between the two bottom utility
+// the currently selected/ability-picked card into the fixed #patternHintStack
+// panel (game.html), which CSS pins into the gap between the two bottom utility
 // medallion sets on mobile. Each pattern renders on its own line, replacing the
 // classic "pattern + pattern" pill that floats above the card.
 //
@@ -9,18 +9,16 @@
 // resolves against the card, not the viewport, so it can't reach the medallion
 // gap. This element lives directly under <body>, free of any transform.
 //
-// The active card is whichever card would currently show the classic pill; the
-// selector list mirrors hand.css's own ::after opacity triggers so the panel
-// appears and disappears in lockstep with that pill's show/hide states.
+// Only committed selection states drive this stack. The transient
+// .press-highlight state is intentionally excluded: when one card is already
+// selected, tapping another card briefly clears press-highlight before click
+// selection lands, which can make the panel bounce back to the old selected
+// card for a frame.
 
 const ACTIVE_SELECTOR = [
   '.hand .card.sel[data-hint-lines]',
-  '.hand .card.press-highlight[data-hint-lines]',
   '.hand .card.ability-picked[data-hint-lines]',
-  '.spread .card.press-highlight[data-hint-lines]',
   '.spread .card.ability-picked[data-hint-lines]',
-  '.spread .card.ability-target.press-highlight[data-hint-lines]',
-  '.choices .card.press-highlight[data-hint-lines]',
 ].join(',');
 
 export function installPatternHintStack(target = window){
