@@ -48,11 +48,19 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
       : type === ABILITY_TYPES.KIN    ? 'Choose an anchor card. Kin finds cards of the same Arcana.'
       :                                  'Choose a card. Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)';
     const inPlay = [...hand.filter(c => c.uid !== sourceCardUid), ...spread].filter(isTargetable);
-    const candidates = inPlay.filter(card => abilityHeldCards(deck, ability, [card]).length > 0);
+
+    // Do not pre-disable anchors based on a live deck lookup. That made
+    // targetability feel arbitrary: a card could be a perfectly legitimate
+    // Kin/Neighbor/Mirror anchor but greyed out because the current deck query
+    // said it would reveal nothing. Keep hard blockers (source card /
+    // constellation untargetable) here; let the reveal step decide whether the
+    // chosen anchor actually finds cards.
+    const candidates = inPlay;
     if (!candidates.length) return { kind: 'fallback', count: 1 };
+
     const previewFn = anchor => {
       const n = abilityHeldCards(deck, ability, [anchor]).length;
-      return n ? `${cleanName(anchor)}: ${n} card${n === 1 ? '' : 's'} found` : 'No matching cards.';
+      return n ? `${cleanName(anchor)}: ${n} card${n === 1 ? '' : 's'} found` : `${cleanName(anchor)}: no matching cards currently in deck`;
     };
     const anchors = await selectTargets(title, anchorPrompt, candidates, 1, previewFn);
     if (targetingWasCancelled(anchors)) return {};
@@ -74,7 +82,12 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
     const betweenDef = { type: ABILITY_TYPES.BETWEEN };
     const inPlay = sortCards([...hand.filter(c => c.uid !== sourceCardUid), ...spread].filter(isTargetable));
     const resultCards = (a, b) => abilityHeldCards(deck, betweenDef, [a, b]);
-    const validAnchors = inPlay.filter(a => inPlay.some(b => b.uid !== a.uid && resultCards(a, b).length > 0));
+
+    // Same principle as relation-style abilities: the first anchor should not be
+    // greyed out because the live deck lookup finds no result yet. The second
+    // pick is still pair-specific, so only actual result-producing partners are
+    // shown there.
+    const validAnchors = inPlay;
     if (!validAnchors.length) return { kind: 'fallback', count: 1 };
 
     const firstPick = await selectTargets(
@@ -85,13 +98,14 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
       first => {
         if (!first) return '';
         const n = inPlay.filter(second => second.uid !== first.uid && resultCards(first, second).length > 0).length;
-        return `${cleanName(first)}: ${n} valid second card${n === 1 ? '' : 's'}`;
+        return `${cleanName(first)}: ${n} valid second card${n === 1 ? '' : 's'} currently in deck`;
       },
     );
     if (targetingWasCancelled(firstPick)) return {};
     if (!firstPick?.length || !firstPick[0]) return null;
     const [first] = firstPick;
     const validSeconds = inPlay.filter(second => second.uid !== first.uid && resultCards(first, second).length > 0);
+    if (!validSeconds.length) return { kind: 'fallback', count: 1 };
 
     const secondPick = await selectTargets(
       `Between — ${cleanName(first)}`,
@@ -108,6 +122,7 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
     if (!secondPick?.length || !secondPick[0]) return null;
     const [second] = secondPick;
     const found = sortCards(resultCards(first, second)).slice(0, count);
+    if (!found.length) return { kind: 'fallback', count: 1 };
     const pickedCard = await showChoice(
       `Between — ${cleanName(first)} / ${cleanName(second)}`,
       'Cards found between them. Take 1. Unchosen revealed cards go to the bottom.',
