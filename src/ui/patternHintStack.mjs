@@ -151,6 +151,7 @@ export function installPatternHintStack(target = window){
   observeContainer('hand');
   observeContainer('spread');
   observeContainer('choices');
+  if(doc.body)observer.observe(doc.body, { attributes: true, attributeFilter: ['class'] });
 
   target.__patternHintStackRefresh = schedule;
   schedule();
