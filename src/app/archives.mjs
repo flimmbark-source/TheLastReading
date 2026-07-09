@@ -296,7 +296,15 @@ function openInvDetail(item){
       });
     }
   }else{
-    bg.innerHTML='<div class="inv-detail-box"><button class="inv-detail-close" onclick="this.closest(\'.inv-detail-bg\').remove()">&#x2715;</button><div class="inv-detail-type">'+item.type+'</div><h2 class="inv-detail-title">'+item.title+'</h2><div class="inv-detail-content">'+item.content+'</div></div>';
+   const headerHtml = item.hideDetailHeader ? '' :
+  '<div class="inv-detail-type">'+item.type+'</div><h2 class="inv-detail-title">'+item.title+'</h2>';
+
+bg.innerHTML =
+  '<div class="inv-detail-box'+(item.hideDetailHeader?' inv-detail-box--artifact':'')+'">' +
+    '<button class="inv-detail-close" onclick="this.closest(\'.inv-detail-bg\').remove()">&#x2715;</button>' +
+    headerHtml +
+    '<div class="inv-detail-content">'+item.content+'</div>' +
+  '</div>';
   }
   if(item.imageFull&&item.content&&!localStorage.getItem('tlr_tut_inv_detail')){
     localStorage.setItem('tlr_tut_inv_detail','1');
