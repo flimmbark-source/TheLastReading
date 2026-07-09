@@ -183,4 +183,29 @@
   }
 }
 
+/* While a new hand card is actively pressed, that press is the visual owner of
+   the hand. Without this, the previous .sel card can briefly reclaim the lift
+   between pointerup and the click-driven selection render, reading as a card
+   and hint-text flicker. */
+body.single-player-v2 .hand.has-pressed-card .card.sel:not(.press-highlight) {
+  --lift-y: 0px !important;
+  --total-rot: calc(var(--total-a) + var(--lag) * 1.5) !important;
+  z-index: auto !important;
+}
+
+body.single-player-v2 .hand.has-pressed-card .card.press-highlight {
+  --lift-y: -92px !important;
+  --total-rot: 0deg !important;
+  --lag: 0deg !important;
+  --drift-x: 0px !important;
+  --drift-y: 0px !important;
+  z-index: 1000 !important;
+}
+
+@media (max-width: 640px) {
+  body.single-player-v2 .hand.has-pressed-card .card.press-highlight {
+    --lift-y: -86px !important;
+  }
+}
+
 }
