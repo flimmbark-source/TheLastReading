@@ -42,10 +42,31 @@ export function installPressHighlight(target = window){
   target.__pressHighlightInstalled=true;
   installPressHintStyles(doc);
 
-  const clearPressHighlight=()=>{
+  let activeClearTimer=null;
+  const cancelDeferredActiveClear=()=>{
+    if(activeClearTimer!=null){
+      target.clearTimeout(activeClearTimer);
+      activeClearTimer=null;
+    }
+  };
+  const clearPressHighlightsOnly=()=>{
     doc.querySelectorAll('.card.press-highlight').forEach(card=>card.classList.remove('press-highlight'));
+  };
+  const clearActivePressState=()=>{
+    activeClearTimer=null;
     doc.querySelectorAll('.hand.has-active-press-card').forEach(hand=>hand.classList.remove('has-active-press-card'));
     if(target.__tlrActivePressCardUid!=null)setActivePressCard(target,null);
+  };
+  const clearPressHighlight=({ deferActiveClear=false }={})=>{
+    clearPressHighlightsOnly();
+    cancelDeferredActiveClear();
+    if(deferActiveClear){
+      // Click fires after pointerup. Keep the stale selected-card hint suppressed
+      // until that click has a chance to dispatch the new selection and repaint.
+      activeClearTimer=target.setTimeout(clearActivePressState,0);
+    }else{
+      clearActivePressState();
+    }
   };
 
   doc.addEventListener('pointerdown',ev=>{
@@ -59,5 +80,6 @@ export function installPressHighlight(target = window){
     setActivePressCard(target,card);
   },true);
 
-  ['pointerup','pointercancel','dragstart'].forEach(type=>doc.addEventListener(type,clearPressHighlight,true));
+  doc.addEventListener('pointerup',()=>clearPressHighlight({deferActiveClear:true}),true);
+  ['pointercancel','dragstart'].forEach(type=>doc.addEventListener(type,()=>clearPressHighlight(),true));
 }
