@@ -53,6 +53,15 @@ export function installWorldSurfaceDirector(target = window) {
   let observer = null;
   let raf = 0;
 
+  const publishCue = (name, duration) => {
+    try {
+      const EventType = target.CustomEvent || CustomEvent;
+      target.dispatchEvent(new EventType('tlr:presentation-cue', {
+        detail: { cue: name, payload: { duration } },
+      }));
+    } catch {}
+  };
+
   const fireCue = (name, duration = 700) => {
     const className = `presentation-cue-${name}`;
     const prior = cueTimers.get(className);
@@ -61,6 +70,7 @@ export function installWorldSurfaceDirector(target = window) {
     // Force a fresh animation when a surface is reopened in the same session.
     void doc.body.offsetWidth;
     doc.body.classList.add(className);
+    publishCue(name, duration);
     const reduced = target.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
     cueTimers.set(className, target.setTimeout(() => {
       doc.body.classList.remove(className);
