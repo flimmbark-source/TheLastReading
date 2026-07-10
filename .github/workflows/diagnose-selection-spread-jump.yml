@@ -1,0 +1,41 @@
+name: Diagnose selection spread jump
+
+on:
+  push:
+    branches: [diagnose-selection-spread-jump]
+    paths:
+      - 'scripts/diagnose-selection-spread-jump.mjs'
+      - '.github/workflows/diagnose-selection-spread-jump.yml'
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out diagnostic branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Measure selection geometry
+        run: node scripts/diagnose-selection-spread-jump.mjs
+
+      - name: Upload diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selection-spread-jump-diagnostic
+          path: artifacts/selection-diagnostic/**
+          if-no-files-found: error
+          retention-days: 14
