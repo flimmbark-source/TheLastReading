@@ -1,0 +1,50 @@
+name: One-shot final lint cleanup
+
+on:
+  push:
+    branches:
+      - adventure-reward-usability
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: adventure-reward-usability
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Remove final dead helper and temporary lint artifacts
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const flowPath='src/app/readingFlow.mjs';
+          let flow=fs.readFileSync(flowPath,'utf8');
+          flow=flow.replace('function targetable(cards){return cards.filter(c=>!isTargetBlocked(c))}\n','');
+          fs.writeFileSync(flowPath,flow);
+
+          const configPath='eslint.config.js';
+          let config=fs.readFileSync(configPath,'utf8');
+          config=config.replace(", 'scripts/cleanup-lint-warnings.mjs'",'');
+          fs.writeFileSync(configPath,config);
+          NODE
+          rm -f lint-after.txt
+      - run: npm run lint -- --max-warnings=0
+      - run: npm test
+      - name: Remove one-shot workflow
+        run: rm .github/workflows/one-shot-final-lint-cleanup.yml
+      - name: Commit final cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Finish zero-warning lint cleanup"
+          git push origin HEAD:adventure-reward-usability
