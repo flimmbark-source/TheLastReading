@@ -248,16 +248,18 @@ function decorateRewardChoices(target) {
 
     if (kind === 'upgrade') {
       const current = Number(card.points || 0);
-      preview.textContent = `${current}→${Math.min(5, current + 1)}`;
+      const text = `${current}→${Math.min(5, current + 1)}`;
+      if (preview.textContent !== text) preview.textContent = text;
       element.title = `${cardTitle(card)}: ${current} to ${Math.min(5, current + 1)}`;
     } else if (kind === 'seal') {
-      preview.textContent = '◆';
+      if (preview.textContent !== '◆') preview.textContent = '◆';
       element.title = `${cardTitle(card)} will appear in every opening hand`;
     } else if (kind === 'banish') {
-      preview.textContent = '×';
+      if (preview.textContent !== '×') preview.textContent = '×';
       element.title = `Banish ${cardTitle(card)}`;
     } else if (kind === 'transmute') {
-      preview.textContent = `→ ${sigilForNode('transformation')?.glyph || '∿'}`;
+      const text = `→ ${sigilForNode('transformation')?.glyph || '∿'}`;
+      if (preview.textContent !== text) preview.textContent = text;
       element.title = `${cardTitle(card)} gains the Serpent sigil`;
     }
   }
@@ -301,7 +303,8 @@ function decorateApproachRequirements(target) {
     }
     marker.setAttribute('x', circle.getAttribute('cx') || '0');
     marker.setAttribute('y', circle.getAttribute('cy') || '0');
-    marker.textContent = String(requirement);
+    const text = String(requirement);
+    if (marker.textContent !== text) marker.textContent = text;
   }
 }
 
@@ -364,7 +367,7 @@ function decorate(target = window) {
       element.prepend(seal);
     }
     seal.dataset.sigilId = sigil.id;
-    seal.textContent = sigil.glyph;
+    if (seal.textContent !== sigil.glyph) seal.textContent = sigil.glyph;
     seal.title = `${sigil.name} Sigil`;
     seal.setAttribute('aria-label', `${sigil.name} Sigil`);
   });
