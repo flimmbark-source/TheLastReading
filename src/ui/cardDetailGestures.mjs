@@ -67,7 +67,8 @@ function ensureTriggerStyles(target=window){
   style.id='card-detail-trigger-style';
   style.textContent=`
     .card-detail-trigger{
-      position:fixed;
+      position:absolute;
+      top:0;
       width:${TRIGGER_SIZE}px;
       height:${TRIGGER_SIZE}px;
       margin:0;
@@ -102,10 +103,6 @@ function selectedHandCard(target=window){
 
 function viewportWidth(target=window){
   return target.visualViewport?.width||target.innerWidth||target.document?.documentElement?.clientWidth||0;
-}
-
-function viewportHeight(target=window){
-  return target.visualViewport?.height||target.innerHeight||target.document?.documentElement?.clientHeight||0;
 }
 
 export function syncCardDetailTrigger(target=window){
@@ -146,27 +143,27 @@ export function installCardDetailGestures(target=window){
       trigger.textContent='?';
       trigger.setAttribute('aria-label','View selected card details');
       trigger.title='View card details';
-      doc.body.appendChild(trigger);
     }
+    if(trigger.parentElement!==cardEl)cardEl.appendChild(trigger);
 
     trigger.dataset.uid=String(uid);
     const rect=cardEl.getBoundingClientRect();
     const vw=viewportWidth(target);
-    const vh=viewportHeight(target);
     const rightLeft=rect.right+TRIGGER_GAP;
     const leftLeft=rect.left-TRIGGER_GAP-TRIGGER_SIZE;
     const rightFits=rightLeft+TRIGGER_SIZE<=vw-VIEWPORT_MARGIN;
     const leftFits=leftLeft>=VIEWPORT_MARGIN;
     const side=rightFits||!leftFits?'right':'left';
-    const rawLeft=side==='right'?rightLeft:leftLeft;
-    const maxLeft=Math.max(VIEWPORT_MARGIN,vw-TRIGGER_SIZE-VIEWPORT_MARGIN);
-    const left=Math.max(VIEWPORT_MARGIN,Math.min(maxLeft,rawLeft));
-    const maxTop=Math.max(0,vh-TRIGGER_SIZE);
-    const top=Math.max(0,Math.min(maxTop,rect.top));
 
     trigger.dataset.side=side;
-    trigger.style.left=`${left}px`;
-    trigger.style.top=`${top}px`;
+    trigger.style.top='0px';
+    if(side==='right'){
+      trigger.style.left=`calc(100% + ${TRIGGER_GAP}px)`;
+      trigger.style.right='auto';
+    }else{
+      trigger.style.left='auto';
+      trigger.style.right=`calc(100% + ${TRIGGER_GAP}px)`;
+    }
     return true;
   };
 
