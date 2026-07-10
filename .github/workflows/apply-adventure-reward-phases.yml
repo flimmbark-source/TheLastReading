@@ -7,6 +7,16 @@ on:
     paths:
       - .github/workflows/apply-adventure-reward-phases.yml
       - scripts/.apply-adventure-reward-phases.mjs.gz.b64
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+    paths:
+      - .github/workflows/apply-adventure-reward-phases.yml
+      - scripts/.apply-adventure-reward-phases.mjs.gz.b64
 
 permissions:
   contents: write
@@ -21,22 +31,35 @@ jobs:
           ref: adventure-reward-usability
           fetch-depth: 0
 
+      - name: Check whether phases are already applied
+        id: phase-state
+        run: |
+          if [ -f docs/adventure-passive-audit.md ]; then
+            echo "applied=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "applied=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Set up Node
+        if: steps.phase-state.outputs.applied != 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
       - name: Decode and apply exact source transforms
+        if: steps.phase-state.outputs.applied != 'true'
         run: |
           base64 -d scripts/.apply-adventure-reward-phases.mjs.gz.b64 | gunzip > /tmp/apply-adventure-reward-phases.mjs
           node --check /tmp/apply-adventure-reward-phases.mjs
           node /tmp/apply-adventure-reward-phases.mjs
 
       - name: Install dependencies
+        if: steps.phase-state.outputs.applied != 'true'
         run: npm ci
 
       - name: Validate modified modules
+        if: steps.phase-state.outputs.applied != 'true'
         run: |
           node --check src/app/adventureModeV3.mjs
           node --check src/app/adventureCardSigils.mjs
@@ -45,9 +68,11 @@ jobs:
           git diff --check
 
       - name: Run repository validation suite
+        if: steps.phase-state.outputs.applied != 'true'
         run: npm test
 
       - name: Commit validated phase implementation
+        if: steps.phase-state.outputs.applied != 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
