@@ -1,4 +1,6 @@
 import { installMpGame as installBaseMpGame } from './mpGame.mjs?v=persona-bonus-fix-1';
+import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
+import { abilityHeldCards, worldResetPool } from '../systems/abilities.mjs';
 
 function normalizeMult(value) {
   const number = Number(value);
@@ -48,6 +50,7 @@ function installMpHostFixes(target = window) {
     target.tlrMpOnMatchStart = function (state, meta = {}) {
       stateRef = state;
       myIndex = meta.role === 'host' ? 0 : 1;
+      installAbilityChoiceDispatchGuard(target, () => stateRef, () => myIndex);
       const result = onMatchStart.apply(this, arguments);
       syncLater();
       return result;
@@ -89,6 +92,67 @@ function installMpHostFixes(target = window) {
       return onLeave.apply(this, arguments);
     };
   }
+}
+
+function installAbilityChoiceDispatchGuard(target, getState, getMyIndex) {
+  const dispatch = target.tlrMpDispatch;
+  if (typeof dispatch !== 'function' || dispatch.__tlrAbilityChoiceGuard) return;
+  const guarded = function (action) {
+    return dispatch.call(this, reconcileAbilityAction(action, getState(), getMyIndex()));
+  };
+  guarded.__tlrAbilityChoiceGuard = true;
+  guarded.__tlrAbilityChoiceGuardOriginal = dispatch;
+  target.tlrMpDispatch = guarded;
+}
+
+export function reconcileAbilityAction(action, state, fallbackPlayerIndex = 0) {
+  if (action?.type !== 'MP_SUBMIT_ACTION' || action.action?.type !== 'MP_INVOKE_ABILITY') return action;
+  const playerIndex = Number.isInteger(action.playerIndex) ? action.playerIndex : fallbackPlayerIndex;
+  const player = state?.players?.[playerIndex];
+  const source = player?.hand?.find(card => card.uid === action.action.cardUid);
+  const ability = source?.ability ? getAbility(source.ability) : null;
+  if (!player || !ability) return action;
+
+  const originalChoice = action.action.abilityChoice || {};
+  let abilityChoice = { ...originalChoice };
+
+  if (
+    ability.type === ABILITY_TYPES.NEIGHBOR
+    || ability.type === ABILITY_TYPES.KIN
+    || ability.type === ABILITY_TYPES.MIRROR
+    || ability.type === ABILITY_TYPES.BETWEEN
+  ) {
+    const inPlay = [...(player.hand || []), ...(player.spread || []).filter(Boolean)];
+    const anchors = (originalChoice.anchorUids || []).map(uid => inPlay.find(card => card.uid === uid)).filter(Boolean);
+    const requiredAnchors = ability.type === ABILITY_TYPES.BETWEEN ? 2 : 1;
+    if (anchors.length >= requiredAnchors) {
+      const held = abilityHeldCards(player.deck || [], ability, anchors).slice(0, ability.count ?? 2);
+      abilityChoice.heldCardUids = held.map(card => card.uid);
+    }
+  }
+
+  if (ability.type === ABILITY_TYPES.WORLD) {
+    const pool = worldResetPool(player);
+    const byUid = new Map(pool.map(card => [card.uid, card]));
+    const requested = [...(originalChoice.handUids || []), ...(originalChoice.deckUids || [])];
+    const ordered = [];
+    for (const uid of requested) {
+      const card = byUid.get(uid);
+      if (!card) continue;
+      ordered.push(card);
+      byUid.delete(uid);
+    }
+    ordered.push(...byUid.values());
+    const requestedHandSize = Array.isArray(originalChoice.handUids) ? originalChoice.handUids.length : 0;
+    const handSize = Math.min(requestedHandSize || player.hand.length, ordered.length);
+    abilityChoice = {
+      ...abilityChoice,
+      handUids: ordered.slice(0, handSize).map(card => card.uid),
+      deckUids: ordered.slice(handSize).map(card => card.uid),
+    };
+  }
+
+  return { ...action, action: { ...action.action, abilityChoice } };
 }
 
 function installOverlayLayerFix(doc) {
@@ -356,7 +420,7 @@ function syncMultSpans(doc, state, myIndex) {
 
 function syncOneMultSpan(doc, scoreId, player) {
   const scoreNode = doc.getElementById(scoreId);
-  const pill = scoreNode?.closest?.('.mp-pill-score') || scoreNode?.parentElement;
+  const pill = scoreNode?.closest('.mp-pill-score') || scoreNode?.parentElement;
   const parent = pill?.parentElement;
   if (!pill || !parent) return;
 
