@@ -1,0 +1,57 @@
+name: Capture presentation states
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'game.html'
+      - 'package.json'
+      - 'src/styles/**'
+      - 'src/ui/**'
+      - 'src/app/**'
+      - 'scripts/capture-presentation-states.mjs'
+      - 'scripts/validate-*-presentation.mjs'
+      - 'scripts/validate-adventure-style-extraction.mjs'
+      - 'scripts/adventure-style-extraction.mjs'
+      - 'scripts/build-bundle.mjs'
+      - '.github/workflows/capture-presentation.yml'
+  workflow_dispatch:
+
+jobs:
+  validate-and-capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install project dependencies
+        run: npm ci
+
+      - name: Validate presentation architecture
+        run: npm run test:presentation
+
+      - name: Verify production bundle
+        run: npm run build:bundle
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Capture full mobile scene matrix
+        run: npm run capture:presentation
+
+      - name: Upload presentation screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: presentation-mobile-scene-matrix
+          path: artifacts/presentation-*.png
+          if-no-files-found: error
+          retention-days: 14
