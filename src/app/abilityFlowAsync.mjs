@@ -68,7 +68,9 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
     if (targetingWasCancelled(anchors)) return {};
     if (!anchors?.length || !anchors[0]) return null;
     const [anchor] = anchors;
-    const found = sortCards(abilityHeldCards(deck, ability, [anchor])).slice(0, count);
+    // The cap applies to the live deck order. Sorting only changes how those
+    // already-revealed cards are presented, not which matching cards were drawn.
+    const found = sortCards(abilityHeldCards(deck, ability, [anchor]).slice(0, count));
     if (!found.length) return { kind: 'fallback', count: 1 };
     const pickedCard = await showChoice(
       `${title} — ${cleanName(anchor)}`,
@@ -124,7 +126,7 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
     if (targetingWasCancelled(secondPick)) return {};
     if (!secondPick?.length || !secondPick[0]) return null;
     const [second] = secondPick;
-    const found = sortCards(resultCards(first, second)).slice(0, count);
+    const found = sortCards(resultCards(first, second).slice(0, count));
     if (!found.length) return { kind: 'fallback', count: 1 };
     const pickedCard = await showChoice(
       `Between — ${cleanName(first)} / ${cleanName(second)}`,
