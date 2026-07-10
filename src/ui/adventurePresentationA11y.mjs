@@ -58,7 +58,7 @@ export function installAdventurePresentationA11y(target = window) {
     }
 
     const confirm = panel.querySelector(':scope > .rbtns .btn-gold');
-    if (confirm) confirm.setAttribute('aria-describedby', heading?.id || '');
+    if (confirm && heading?.id) confirm.setAttribute('aria-describedby', heading.id);
   };
 
   const schedule = () => {
@@ -76,7 +76,7 @@ export function installAdventurePresentationA11y(target = window) {
     choices[(current + direction + choices.length) % choices.length]?.focus();
   };
 
-  doc.addEventListener('keydown', event => {
+  const onKeyDown = event => {
     if (!isAdventure() || !(event.target instanceof Element)) return;
     const card = event.target.closest('.adv-reward');
     if (!card || card.classList.contains('adv-reward--disabled')) return;
@@ -92,7 +92,9 @@ export function installAdventurePresentationA11y(target = window) {
       event.preventDefault();
       focusRelativeChoice(card, -1);
     }
-  }, true);
+  };
+
+  doc.addEventListener('keydown', onKeyDown, true);
 
   const attach = () => {
     const summary = doc.getElementById('summary');
@@ -106,7 +108,7 @@ export function installAdventurePresentationA11y(target = window) {
       childList: true,
       characterData: true,
       attributes: true,
-      attributeFilter: ['class', 'aria-pressed', 'disabled'],
+      attributeFilter: ['class', 'disabled'],
     });
     schedule();
   };
@@ -117,6 +119,7 @@ export function installAdventurePresentationA11y(target = window) {
   target.__tlrAdventurePresentationA11yDestroy = () => {
     observer?.disconnect();
     observer = null;
+    doc.removeEventListener('keydown', onKeyDown, true);
     if (raf) target.cancelAnimationFrame(raf);
     target.__tlrAdventurePresentationA11yInstalled = false;
   };
