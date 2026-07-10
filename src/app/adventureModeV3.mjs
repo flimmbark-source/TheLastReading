@@ -769,7 +769,7 @@ export function installAdventureModeV3(target = window) {
       ...resolution.removeStatuses.map(id => `<span class="adv-statuschg adv-statuschg--lose">− ${esc(getStatus(id)?.name || id)}</span>`),
     ].join(' ');
     const resolveBit = resolution.resolveChange
-      ? `<div class="adv-statuschg ${resolution.resolveChange > 0 ? 'adv-statuschg--gain' : 'adv-statuschg--lose'}">Resolve ${resolution.resolveChange > 0 ? '+' : ''}${resolution.resolveChange}</div>` : '';
+      ? `<div class="adv-statuschg ${resolution.resolveChange > 0 ? 'adv-statuschg--gain' : 'adv-statuschg--lose'}">[[resolve]] ${resolution.resolveChange > 0 ? '+' : ''}${resolution.resolveChange}</div>` : '';
     const marked = !failed && !great && hasItem('marked_coin')
       ? `<button class="adv-mini-btn" onclick="tlrAdventureV3UseMarkedCoin()">Use Marked Coin</button>` : '';
     show(`<div class="result-panel ${failed ? 'fail' : 'pass'}"><div class="rhead"><h3 class="${failed ? 'fail' : 'pass'}">${label}</h3></div>
@@ -780,24 +780,24 @@ export function installAdventureModeV3(target = window) {
   }
 
   function rewardLabel(offer) {
-    if (offer.type === 'ADD_SIGIL_CARD') return `Echo a ${offer.nodes.map(sigilName).join(' or ')} card`;
-    if (offer.type === 'SEAL_CARD') return offer.nodes?.length ? `Seal a ${offer.nodes.map(sigilName).join(' or ')} card` : 'Seal a card';
-    if (offer.type === 'UPGRADE_CARD') return offer.nodes?.length ? `Upgrade a ${offer.nodes.map(sigilName).join(' or ')} card` : 'Upgrade any card';
-    if (offer.type === 'BANISH_TWO') return 'Banish 2 cards';
-    if (offer.type === 'RESTORE_RESOLVE') return `Restore ${offer.amount || 1} Resolve`;
-    if (offer.type === 'CHOOSE_CONSUMABLE') return 'Choose 1 of 3 Consumables';
-    if (offer.type === 'CHOOSE_PASSIVE') return 'Choose 1 of 3 Passive Items';
+    if (offer.type === 'ADD_SIGIL_CARD') return `[[echo]] a ${offer.nodes.map(sigilName).join(' or ')} card`;
+    if (offer.type === 'SEAL_CARD') return offer.nodes?.length ? `[[seal]] a ${offer.nodes.map(sigilName).join(' or ')} card` : '[[seal]] a card';
+    if (offer.type === 'UPGRADE_CARD') return offer.nodes?.length ? `[[upgrade]] a ${offer.nodes.map(sigilName).join(' or ')} card` : '[[upgrade]] any card';
+    if (offer.type === 'BANISH_TWO') return '[[banish]] 2 cards';
+    if (offer.type === 'RESTORE_RESOLVE') return `Restore ${offer.amount || 1} [[resolve]]`;
+    if (offer.type === 'CHOOSE_CONSUMABLE') return '[[choose]] 1 of 3 Consumables';
+    if (offer.type === 'CHOOSE_PASSIVE') return '[[choose]] 1 of 3 Passive Items';
     if (offer.type === 'CONSUMABLE' || offer.type === 'SIGNATURE_ITEM') return ADVENTURE_ITEMS[offer.itemId]?.name || offer.itemId;
     return offer.label || 'Reward';
   }
 
   function rewardDescription(offer) {
     if (offer.type === 'CONSUMABLE' || offer.type === 'SIGNATURE_ITEM') return ADVENTURE_ITEMS[offer.itemId]?.text || '';
-    if (offer.type === 'ADD_SIGIL_CARD') return 'Choose a matching card — add a second copy to your deck.';
-    if (offer.type === 'SEAL_CARD') return 'This card appears in every opening hand. Costs one draw slot.';
-    if (offer.type === 'UPGRADE_CARD') return 'Choose a card to increase its value by 1.';
-    if (offer.type === 'CHOOSE_PASSIVE') return 'Choose an unowned passive item.';
-    if (offer.type === 'BANISH_TWO') return 'Permanently remove two cards from this run.';
+    if (offer.type === 'ADD_SIGIL_CARD') return '[[choose]] a matching card. Add a second copy to your [[deck]].';
+    if (offer.type === 'SEAL_CARD') return 'The chosen card appears in every opening [[hand]]. Costs 1 [[draw]] slot.';
+    if (offer.type === 'UPGRADE_CARD') return '[[choose]] a card. Increase its value by 1.';
+    if (offer.type === 'CHOOSE_PASSIVE') return '[[choose]] an unowned passive item.';
+    if (offer.type === 'BANISH_TWO') return 'Permanently remove 2 cards from this run.';
     return '';
   }
 

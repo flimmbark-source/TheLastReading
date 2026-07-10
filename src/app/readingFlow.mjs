@@ -420,7 +420,7 @@ const _patternMelds=res.melds.filter(m=>m[4]!=='relic'&&!m[0].startsWith('⚷'))
 const _resMelds=res.melds.filter(m=>m[4]!=='relic'&&m[0].startsWith('⚷'));
 if(_patternMelds.length||_resMelds.length||_relicMelds.length){
   if(_patternMelds.length||_resMelds.length){
-    html+='<tr class="grouprow"><td colspan="2">Card Points &amp; Patterns</td></tr>';
+    html+='<tr class="grouprow"><td colspan="2">[[chips]] &amp; [[pattern|Patterns]]</td></tr>';
     _patternMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);
     _resMelds.forEach(m=>{const _rn=m[0].replace(/^⚷\s*/,'');html+=`<tr class="res-mrow"><td colspan="2"><div class="res-result-banner"><div class="res-result-label">⚷ &nbsp;Hidden Pattern Revealed</div><div class="res-result-row"><span class="res-result-name">${_rn}</span><span class="res-result-score">${meldStr(m)}</span></div></div></td></tr>`;});
   }
@@ -428,9 +428,9 @@ if(_patternMelds.length||_resMelds.length||_relicMelds.length){
     html+='<tr class="grouprow"><td colspan="2">Relics &amp; Status</td></tr>';
     _relicMelds.forEach(m=>html+=`<tr class="mrow"><td>⚜ ${m[0]}</td><td class="r">${meldStr(m)}</td></tr>`);
   }
-}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No patterns formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}
-if(res.mult>1)html+=`<tr class="multrow"><td>Multiplier</td><td class="r">×${res.mult.toFixed(2)}</td></tr>`;
-html+=`<tr class="totrow"><td>Round total</td><td class="r">${roundTotal} / ${curTH}</td></tr>`;
+}else{html+=`<tr><td style="color:#5a4828;font-style:italic">No [[pattern|Patterns]] formed</td><td class="r" style="color:#5a4828">—</td></tr>`;}
+if(res.mult>1)html+=`<tr class="multrow"><td>[[mult]]</td><td class="r">×${res.mult.toFixed(2)}</td></tr>`;
+html+=`<tr class="totrow"><td>[[score]] / [[threshold]]</td><td class="r">${roundTotal} / ${curTH}</td></tr>`;
 if(pass){const miserBonus=persist.relics.includes('miser')?5:0;
 {const _st=window.tlrStore.getState();
 state.worldCarry=_st.run.worldCarry||0;
@@ -439,7 +439,7 @@ persist.totalScore=_st.persist.totalScore||0;
 state.relicEarned=!!_st.run.relicEarned;
 state.th=_st.run.thresholdIndex;}
 const worldCarry=state.worldCarry;
-html+=`<tr class="totrow"><td>Added to reserve</td><td class="r">+${roundTotal}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}
+html+=`<tr class="totrow"><td>[[reserve]] gained</td><td class="r">+${roundTotal}${miserBonus?` <span style="color:#ffd978">(+${miserBonus} Miser)</span>`:''}${worldCarry?` <span style="color:#ffd978">(+${worldCarry} carry→next)</span>`:''}</td></tr>`;}
 html+='</table><div class="rbtns">';
 if(pass){if(state.th>=TH.length)html+='<button class="btn-gold" onclick="endSession()">Complete the Session</button>';else html+='<button class="btn-gold" onclick="openShop()">Visit the Market →</button>';}
 else{html+='<button onclick="endSession()">End Session</button>';}

@@ -67,11 +67,11 @@ export function renderScoringSheet(target = window){
     ['Path of the Magi','0·I·XXI in spread',`+${15+pathChips}`,fmtBonus(pathMult)],
   ];
   const upgrades=[];
-  if(u.rank||u.rank_mult)upgrades.push(`Rank +${rankBonus}chips ${fmtBonus(rankMult)}mult`);
-  if(u.court_chips||u.court_mult)upgrades.push(`Full Court +${fullCourtChips}chips ${fmtBonus(fullCourtMult)}mult`);
-  if(u.royal_court_chips||u.royal_court_mult)upgrades.push(`Royal Court +${royalCourtChips}chips ${fmtBonus(royalCourtMult)}mult`);
-  if(u.sequence||u.seq_mult)upgrades.push(`Seq +${seqBonus}chips ${fmtBonus(seqMult)}mult`);
-  if(u.path_chips||u.path_mult)upgrades.push(`Path +${pathChips}chips ${fmtBonus(pathMult)}mult`);
+  if(u.rank||u.rank_mult)upgrades.push(`Rank +${rankBonus} Chips ${fmtBonus(rankMult)} Mult`);
+  if(u.court_chips||u.court_mult)upgrades.push(`Full Court +${fullCourtChips} Chips ${fmtBonus(fullCourtMult)} Mult`);
+  if(u.royal_court_chips||u.royal_court_mult)upgrades.push(`Royal Court +${royalCourtChips} Chips ${fmtBonus(royalCourtMult)} Mult`);
+  if(u.sequence||u.seq_mult)upgrades.push(`Sequence +${seqBonus} Chips ${fmtBonus(seqMult)} Mult`);
+  if(u.path_chips||u.path_mult)upgrades.push(`Path +${pathChips} Chips ${fmtBonus(pathMult)} Mult`);
   const minorRows=rows.slice(0,4);
   const majorRows=rows.slice(4);
   let html='<table class="ref-table"><thead><tr><th>Pattern</th><th>Condition</th><th>Chips</th><th>Mult</th></tr></thead><tbody>';
