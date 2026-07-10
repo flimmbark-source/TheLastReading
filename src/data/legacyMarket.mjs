@@ -57,7 +57,7 @@ export const SHOP = Object.freeze({
   relicSlot:       ['Relic Vessel',      'Gain +1 Relic Slot (max 5).',                                                                                                      35,2,   '🎁','relic'],
 
   // ── Second Sight Pack (sight) ──
-  lens_mastery:    ['Lens Mastery',      'Peek, Kin, and Neighbor reveal +1 extra card',                                                                                     30,1.8, '🔭','sight'],
+  lens_mastery:    ['Lens Mastery',      'Peek, Kin, Neighbor, and Mirror reveal +1 extra card',                                                                              30,1.8, '🔭','sight'],
   sight_cost:      ["Seer's Grace",      'Once per reading, use Peek, Search, or Mirror without spending a Discard',                                                         28,1.8, '🔭','sight'],
   chosen:          ['Chosen',            'Cards taken via abilities each gain +5 Chips in the spread',                                                                       26,1.8, '🔭','sight'],
 
