@@ -45,7 +45,8 @@ assert.doesNotMatch(deckFx, /addCardToAdventureDeck|removeCardFromAdventureDeck|
   'Deck action FX must observe reward confirmation without applying rewards');
 
 assert.match(camera, /tlr:presentation-cue/);
-assert.match(camera, /name === 'card-place'/);
+assert.doesNotMatch(camera, /name === 'card-place'/,
+  'Card placement must not animate fixed layout containers');
 assert.match(camera, /name === 'pattern'/);
 assert.match(camera, /name === 'threshold-clear'/);
 assert.match(cameraCss, /presentation-card-selected/);
@@ -62,7 +63,7 @@ assert.match(capture, /readSpreadGeometry/);
 assert.match(capture, /assertSelectionKeepsSpreadFixed/);
 assert.match(capture, /Selecting a card moved the play geometry/);
 for (const captureName of ['archives-open', 'archive-detail', 'market', 'score-result', 'run-ending']) {
-  assert.match(capture, new RegExp(`outputPath\\(label, ['\"]${captureName}['\"]\\)`), `Capture harness missing ${captureName}`);
+  assert.match(capture, new RegExp(`outputPath\\(label, ['"]${captureName}['"]\\)`), `Capture harness missing ${captureName}`);
 }
 
 console.log('World surface, deck-action, and selection-geometry validation passed.');
