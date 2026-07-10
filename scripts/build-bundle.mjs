@@ -13,11 +13,17 @@
 // see src/app/menuBoot.mjs and src/app/main.mjs.
 import * as esbuild from 'esbuild';
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join, posix, resolve } from 'node:path';
+import { dirname, join, posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  ADVENTURE_STYLE_OUTPUT,
+  extractAdventureCss,
+  externalizeAdventureStyles,
+} from './adventure-style-extraction.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const distDir = join(root, 'dist');
+const adventureModePath = join(root, 'src/app/adventureModeV3.mjs');
 
 const CSS_GROUPS = [
   {
@@ -100,6 +106,31 @@ async function buildCss() {
   }
 }
 
+async function buildAdventureCss() {
+  const source = readFileSync(adventureModePath, 'utf8');
+  const extracted = extractAdventureCss(source);
+  const { code } = await esbuild.transform(extracted, { loader: 'css', minify: true });
+  writeFileSync(join(root, ADVENTURE_STYLE_OUTPUT), code);
+  console.log(`[build-bundle] ${ADVENTURE_STYLE_OUTPUT}  (${code.length} bytes, extracted from adventureModeV3.mjs)`);
+}
+
+function adventureStylePlugin() {
+  return {
+    name: 'externalize-adventure-mode-style',
+    setup(build) {
+      build.onLoad({ filter: /adventureModeV3\.mjs$/ }, args => {
+        if (resolve(args.path) !== adventureModePath) return null;
+        const source = readFileSync(args.path, 'utf8');
+        return {
+          contents: externalizeAdventureStyles(source),
+          loader: 'js',
+          resolveDir: dirname(args.path),
+        };
+      });
+    },
+  };
+}
+
 async function buildJs() {
   const result = await esbuild.build({
     absWorkingDir: root,
@@ -113,6 +144,7 @@ async function buildJs() {
     minify: true,
     metafile: true,
     logLevel: 'warning',
+    plugins: [adventureStylePlugin()],
   });
   const outputs = Object.keys(result.metafile.outputs).filter(f => !f.endsWith('.map'));
   const bytes = Object.values(result.metafile.outputs).reduce((sum, o) => sum + o.bytes, 0);
@@ -123,6 +155,7 @@ export async function buildBundle() {
   rmSync(distDir, { recursive: true, force: true });
   mkdirSync(distDir, { recursive: true });
   await buildCss();
+  await buildAdventureCss();
   await buildJs();
 }
 
