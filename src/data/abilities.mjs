@@ -52,7 +52,7 @@ export const ABILITIES = Object.freeze({
     type: ABILITY_TYPES.SEARCH,
     title: 'Search',
     take: 1,
-    prompt: 'Search the deck. Take 1 card.',
+    prompt: 'Search the deck. Take 1 card, then shuffle.',
   },
   WORLD: {
     id: 'WORLD',
@@ -66,7 +66,7 @@ export const ABILITIES = Object.freeze({
     title: 'Neighbor',
     count: 2,
     take: 1,
-    prompt: 'Reveal up to 2 neighboring cards from the deck. Take 1.',
+    prompt: 'Choose a card. Reveal up to 2 neighboring cards from the deck. Take 1.',
   },
   KIN_2: {
     id: 'KIN_2',
@@ -74,15 +74,17 @@ export const ABILITIES = Object.freeze({
     title: 'Kin',
     count: 2,
     take: 1,
-    prompt: 'Reveal up to 2 cards of the same Arcana from the deck. Take 1.',
+    prompt: 'Choose a card. Reveal up to 2 cards of the same Arcana from the deck. Take 1.',
   },
   MIRROR_1: {
+    // The legacy id is retained for save/card compatibility. Mirror's actual
+    // base reveal count is 2, matching the player-facing card rule.
     id: 'MIRROR_1',
     type: ABILITY_TYPES.MIRROR,
     title: 'Mirror',
-    count: 1,
+    count: 2,
     take: 1,
-    prompt: 'Choose a card. Major Arcana reveal their opposite across the centerline; Court cards reveal every card of the opposite rank. Take 1.',
+    prompt: 'Choose a card. Reveal up to 2 cards opposite it across its Arcana. Major Arcana mirror across the centerline; Court cards mirror by rank across all suits. Take 1.',
   },
   BETWEEN_2: {
     id: 'BETWEEN_2',
@@ -90,7 +92,7 @@ export const ABILITIES = Object.freeze({
     title: 'Between',
     count: 2,
     take: 1,
-    prompt: 'Choose two cards. Reveal cards between them in sequence. Take 1.',
+    prompt: 'Choose two cards. Reveal up to 2 cards between them in sequence. Take 1.',
   },
 });
 
