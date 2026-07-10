@@ -2,7 +2,7 @@
 // movement is deliberately tiny so card geometry and touch targets remain stable.
 
 const STYLE_ID = 'table-camera-presentation-style';
-const STYLE_HREF = '/src/styles/presentation/tableCamera.css?v=1';
+const STYLE_HREF = '/src/styles/presentation/tableCamera.css?v=2';
 
 function ensureStyles(doc) {
   if (doc.getElementById(STYLE_ID)) return;
