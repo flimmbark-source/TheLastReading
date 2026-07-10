@@ -59,8 +59,24 @@ export function installPresentationDirector(target = window) {
   let primaryState = 'idle';
   let observer = null;
   let syncRaf = 0;
+  let adventureA11yPromise = null;
 
   const body = () => doc.body;
+
+  const ensureAdventureA11y = () => {
+    if (adventureA11yPromise) return adventureA11yPromise;
+    adventureA11yPromise = import('../ui/adventurePresentationA11y.mjs')
+      .then(module => {
+        module.installAdventurePresentationA11y(target);
+        return true;
+      })
+      .catch(error => {
+        adventureA11yPromise = null;
+        console.error('Adventure presentation accessibility failed to load', error);
+        return false;
+      });
+    return adventureA11yPromise;
+  };
 
   const setStyleValue = (root, property, value) => {
     if (root.style.getPropertyValue(property) === value) return;
@@ -181,6 +197,7 @@ export function installPresentationDirector(target = window) {
     }
 
     const inAdventure = root.classList.contains('mode-adventure');
+    if (inAdventure) ensureAdventureA11y();
     const rewardHeading = doc.querySelector('#summary .result-panel h3')?.textContent?.trim().toLowerCase() || '';
     const hasRewards = Boolean(doc.querySelector('#summary .adv-rewards'));
     const adventureReward = inAdventure && hasRewards && rewardHeading.includes('choose your reward');
