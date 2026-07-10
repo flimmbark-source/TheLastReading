@@ -7,6 +7,28 @@ import { getPendingPreviewFn } from '../app/abilityTargetBridge.mjs';
 
 let activeChoiceCancel=null;
 
+function ensureChoiceLayoutStyles(){
+  if(document.getElementById('ability-choice-layout-style'))return;
+  const style=document.createElement('style');
+  style.id='ability-choice-layout-style';
+  style.textContent=`
+    .modal:not(.collapsed) #choices.choices{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:center;
+      align-items:flex-start;
+      gap:12px;
+    }
+    #choices.choices>.choice-card{
+      position:relative!important;
+      inset:auto!important;
+      flex:0 0 auto;
+      margin:0!important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 function ensureModalCancelButton(){
   let cancel=$('#modalCancel');
   if(cancel)return cancel;
@@ -60,6 +82,7 @@ function ensureAbilityCancelButton(){
 export function choice(title,prompt,cards,cb){
   // A single candidate isn't a choice — hand it over without popping the modal.
   if(cards.length===1){activeChoiceCancel=null;playSound('flip');cb(cards[0]);return}
+  ensureChoiceLayoutStyles();
   $('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';
   let ch=$('#choices');ch.innerHTML='';
   cards.forEach(c=>{
@@ -89,6 +112,7 @@ export function choiceAsync(title,prompt,cards){return new Promise(resolve=>choi
 // header Cancel button closes the window. The card-browse class marks the
 // modal as browse-owned so the attic flow can close it when leaving.
 export function browseCards(title,prompt,cards){
+  ensureChoiceLayoutStyles();
   $('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';
   const ch=$('#choices');ch.innerHTML='';
   cards.forEach(c=>{
