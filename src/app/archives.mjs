@@ -226,6 +226,8 @@ function renderDeskItem(desk,item,memoryView){
   }
   const el=document.createElement('div');
   el.className='inv-item'+((pos.named||memoryView)?' named':'');
+  el.dataset.gameTerms='off';
+  el.dataset.contentKind=item.contentKind||'source';
   el.dataset.invId=item.id;
   el.style.cssText='left:'+pos.x+'px;top:'+pos.y+'px;transform:rotate('+pos.rot+'deg)';
   const iconHtml=item.image?'<img class="inv-item-img" src="'+item.image+'" alt="">':`<span class="inv-item-emoji">${item.emoji}</span>`;
@@ -285,6 +287,8 @@ function openInvDetail(item){
   if(item.imageFull){
     const wrap=document.createElement('div');
     wrap.className='inv-detail-fullart-wrap';
+    wrap.dataset.gameTerms=item.gameTerms||'off';
+    wrap.dataset.contentKind=item.contentKind||'source';
     wrap.innerHTML='<img class="inv-detail-fullart" src="'+item.imageFull+'" alt="'+item.title+'">'
       +(item.content?'<div class="inv-detail-text-overlay"><div class="inv-detail-text-overlay-inner">'+item.content+'</div></div>':'');
     bg.appendChild(wrap);
@@ -303,7 +307,7 @@ bg.innerHTML =
   '<div class="inv-detail-box'+(item.hideDetailHeader?' inv-detail-box--artifact':'')+'">' +
     '<button class="inv-detail-close" onclick="this.closest(\'.inv-detail-bg\').remove()">&#x2715;</button>' +
     headerHtml +
-    '<div class="inv-detail-content">'+item.content+'</div>' +
+    '<div class="inv-detail-content" data-game-terms="'+(item.gameTerms||'off')+'" data-content-kind="'+(item.contentKind||'source')+'">'+item.content+'</div>' +
   '</div>';
   }
   if(item.imageFull&&item.content&&!localStorage.getItem('tlr_tut_inv_detail')){
