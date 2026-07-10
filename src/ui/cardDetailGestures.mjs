@@ -3,7 +3,7 @@
 /* global state, expandCard */
 
 const DETAIL_PULL_CANCEL_PX=80;
-const TRIGGER_SIZE=34;
+const TRIGGER_SIZE=24;
 const TRIGGER_GAP=7;
 const VIEWPORT_MARGIN=8;
 

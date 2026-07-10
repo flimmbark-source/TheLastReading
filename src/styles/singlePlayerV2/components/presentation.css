@@ -50,10 +50,6 @@
     filter: brightness(.84) saturate(.9);
   }
 
-  body.single-player-v2.presentation-flag-card-dragging .spread-wrap {
-    translate: 0 -2px;
-  }
-
   body.single-player-v2 .hand-card-dragging {
     filter: brightness(1.08) saturate(1.04) !important;
     box-shadow:
@@ -117,9 +113,6 @@
       opacity: .7;
     }
 
-    body.single-player-v2.presentation-flag-card-selected .spread-wrap {
-      translate: 0 -1px;
-    }
   }
 
   @media (prefers-reduced-motion: reduce) {

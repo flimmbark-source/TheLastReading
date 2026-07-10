@@ -34,13 +34,7 @@ export function installTableCameraDirector(target = window) {
     const score = doc.querySelector('.score-stack');
 
     if (name === 'card-place') {
-      animate(spread, [
-        { scale: '1' },
-        { scale: '1.008', offset: .35 },
-        { scale: '.998', offset: .7 },
-        { scale: '1' },
-      ], { duration: 260, easing: 'cubic-bezier(.16,.82,.24,1)' });
-      animate(hand, [{ translate: '0 0' }, { translate: '0 1px' }, { translate: '0 0' }], { duration: 220, easing: 'ease-out' });
+
     }
 
     if (name === 'pattern') {

@@ -33,11 +33,6 @@ body.single-player-v2 #roomAmbient {
 /* presentation.css is layered and historically applied small translate values to
    the spread for selection and dragging. This unlayered geometry lock wins that
    cascade without touching the spread's existing transform-based layout. */
-body.single-player-v2.presentation-flag-card-selected .spread-wrap,
-body.single-player-v2.presentation-flag-card-dragging .spread-wrap {
-  scale: 1;
-  translate: 0 0;
-}
 
 body.single-player-v2.presentation-card-selected #roomAmbient {
   scale: 1.006;
