@@ -79,14 +79,25 @@ jobs:
         if: steps.phase-state.outputs.applied != 'true'
         run: npm ci
 
-      - name: Syntax-check generated modules
+      - name: Syntax-check Adventure mode
         if: steps.phase-state.outputs.applied != 'true'
-        run: |
-          node --check src/app/adventureModeV3.mjs
-          node --check src/app/adventureCardSigils.mjs
-          node --check src/data/adventure/sigils.mjs
-          node --check src/data/adventure/adventureContentV3.mjs
-          node --check scripts/validate-adventure-reward-phases.mjs
+        run: node --check src/app/adventureModeV3.mjs
+
+      - name: Syntax-check card sigil UI
+        if: steps.phase-state.outputs.applied != 'true'
+        run: node --check src/app/adventureCardSigils.mjs
+
+      - name: Syntax-check sigil data
+        if: steps.phase-state.outputs.applied != 'true'
+        run: node --check src/data/adventure/sigils.mjs
+
+      - name: Syntax-check Adventure reward data
+        if: steps.phase-state.outputs.applied != 'true'
+        run: node --check src/data/adventure/adventureContentV3.mjs
+
+      - name: Syntax-check phase validator
+        if: steps.phase-state.outputs.applied != 'true'
+        run: node --check scripts/validate-adventure-reward-phases.mjs
 
       - name: Run Adventure phase assertions
         if: steps.phase-state.outputs.applied != 'true'
