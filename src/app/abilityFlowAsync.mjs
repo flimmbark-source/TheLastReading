@@ -46,16 +46,12 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
     const anchorPrompt =
       type === ABILITY_TYPES.NEIGHBOR ? 'Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers or court ranks in the same suit.'
       : type === ABILITY_TYPES.KIN    ? 'Choose an anchor card. Kin finds cards of the same Arcana.'
-      :                                  'Choose a card. Take the card opposite it across the centerline of its Arcana. (Knight/Queen, 10/11)';
+      :                                  'Choose an anchor card. Major Arcana mirror across the centerline; Court cards mirror by opposite rank across all suits.';
     const inPlay = [...hand.filter(c => c.uid !== sourceCardUid), ...spread].filter(isTargetable);
 
-    // Do not pre-disable anchors based on a live deck lookup. That made
-    // targetability feel arbitrary: a card could be a perfectly legitimate
-    // Kin/Neighbor/Mirror anchor but greyed out because the current deck query
-    // said it would reveal nothing. Keep hard blockers (source card /
-    // constellation untargetable) here; let the reveal step decide whether the
-    // chosen anchor actually finds cards.
-    const candidates = inPlay;
+    // Only cards that can currently produce a legal result are selectable.
+    // The renderer greys every other in-play card from this candidate list.
+    const candidates = inPlay.filter(card => abilityHeldCards(deck, ability, [card]).length > 0);
     if (!candidates.length) return { kind: 'fallback', count: 1 };
 
     const previewFn = anchor => {
@@ -66,7 +62,10 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
     if (targetingWasCancelled(anchors)) return {};
     if (!anchors?.length || !anchors[0]) return null;
     const [anchor] = anchors;
-    const found = sortCards(abilityHeldCards(deck, ability, [anchor])).slice(0, count);
+    const eligible = sortCards(abilityHeldCards(deck, ability, [anchor]));
+    // Court Mirror presents every opposite-rank card so the player chooses
+    // which suit to take. Other relation abilities retain their reveal cap.
+    const found = type === ABILITY_TYPES.MIRROR ? eligible : eligible.slice(0, count);
     if (!found.length) return { kind: 'fallback', count: 1 };
     const pickedCard = await showChoice(
       `${title} — ${cleanName(anchor)}`,
@@ -83,11 +82,9 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
     const inPlay = sortCards([...hand.filter(c => c.uid !== sourceCardUid), ...spread].filter(isTargetable));
     const resultCards = (a, b) => abilityHeldCards(deck, betweenDef, [a, b]);
 
-    // Same principle as relation-style abilities: the first anchor should not be
-    // greyed out because the live deck lookup finds no result yet. The second
-    // pick is still pair-specific, so only actual result-producing partners are
-    // shown there.
-    const validAnchors = inPlay;
+    // The first anchor is legal only when at least one currently playable
+    // partner produces a card from the live deck.
+    const validAnchors = inPlay.filter(first => inPlay.some(second => second.uid !== first.uid && resultCards(first, second).length > 0));
     if (!validAnchors.length) return { kind: 'fallback', count: 1 };
 
     const firstPick = await selectTargets(
