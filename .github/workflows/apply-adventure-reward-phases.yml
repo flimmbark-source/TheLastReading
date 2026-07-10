@@ -1,0 +1,60 @@
+name: Apply Adventure reward phases
+
+on:
+  push:
+    branches:
+      - adventure-reward-usability
+    paths:
+      - .github/workflows/apply-adventure-reward-phases.yml
+      - scripts/.apply-adventure-reward-phases.mjs.gz.b64
+
+permissions:
+  contents: write
+
+jobs:
+  apply-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: adventure-reward-usability
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Decode and apply exact source transforms
+        run: |
+          base64 -d scripts/.apply-adventure-reward-phases.mjs.gz.b64 | gunzip > /tmp/apply-adventure-reward-phases.mjs
+          node --check /tmp/apply-adventure-reward-phases.mjs
+          node /tmp/apply-adventure-reward-phases.mjs
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate modified modules
+        run: |
+          node --check src/app/adventureModeV3.mjs
+          node --check src/app/adventureCardSigils.mjs
+          node --check src/data/adventure/sigils.mjs
+          node --check src/data/adventure/adventureContentV3.mjs
+          git diff --check
+
+      - name: Run repository validation suite
+        run: npm test
+
+      - name: Commit validated phase implementation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src scripts/validate-all.mjs scripts/validate-adventure-reward-phases.mjs docs/adventure-passive-audit.md
+          if git diff --cached --quiet; then
+            echo "No generated changes to commit."
+            exit 0
+          fi
+          git commit -m "Complete Adventure reward phases"
+          git push origin HEAD:adventure-reward-usability
