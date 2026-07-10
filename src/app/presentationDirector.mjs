@@ -57,27 +57,52 @@ export function installPresentationDirector(target = window) {
     adventureOutcome: false,
     adventureReward: false,
     adventureRecovery: false,
+    runEnding: false,
   };
   let primaryState = 'idle';
   let observer = null;
   let syncRaf = 0;
-  let adventureA11yPromise = null;
+  let corePresentationModulesPromise = null;
+  let adventurePresentationModulesPromise = null;
 
   const body = () => doc.body;
 
-  const ensureAdventureA11y = () => {
-    if (adventureA11yPromise) return adventureA11yPromise;
-    adventureA11yPromise = import('../ui/adventurePresentationA11y.mjs')
-      .then(module => {
-        module.installAdventurePresentationA11y(target);
+  const ensureCorePresentationModules = () => {
+    if (corePresentationModulesPromise) return corePresentationModulesPromise;
+    corePresentationModulesPromise = Promise.all([
+      import('./worldSurfaceDirector.mjs'),
+      import('./tableCameraDirector.mjs'),
+    ])
+      .then(([worldSurfaces, tableCamera]) => {
+        worldSurfaces.installWorldSurfaceDirector(target);
+        tableCamera.installTableCameraDirector(target);
         return true;
       })
       .catch(error => {
-        adventureA11yPromise = null;
-        console.error('Adventure presentation accessibility failed to load', error);
+        corePresentationModulesPromise = null;
+        console.error('Core presentation modules failed to load', error);
         return false;
       });
-    return adventureA11yPromise;
+    return corePresentationModulesPromise;
+  };
+
+  const ensureAdventurePresentationModules = () => {
+    if (adventurePresentationModulesPromise) return adventurePresentationModulesPromise;
+    adventurePresentationModulesPromise = Promise.all([
+      import('../ui/adventurePresentationA11y.mjs'),
+      import('./adventureDeckActionFx.mjs'),
+    ])
+      .then(([a11y, deckActionFx]) => {
+        a11y.installAdventurePresentationA11y(target);
+        deckActionFx.installAdventureDeckActionFx(target);
+        return true;
+      })
+      .catch(error => {
+        adventurePresentationModulesPromise = null;
+        console.error('Adventure presentation modules failed to load', error);
+        return false;
+      });
+    return adventurePresentationModulesPromise;
   };
 
   const setStyleValue = (root, property, value) => {
@@ -185,6 +210,9 @@ export function installPresentationDirector(target = window) {
     setFlag('card-placing', placing);
     setFlag('ability-reveal', abilityReveal);
 
+    if (placing && !domState.placing) {
+      cue('card-place', { duration: 320, intensity: .42 });
+    }
     if (patterning && !domState.patterning) {
       cue('pattern', { duration: 700, intensity: .65 });
     }
@@ -203,12 +231,15 @@ export function installPresentationDirector(target = window) {
       cue('threshold-clear', { duration: 1100, intensity: 1 });
     }
 
+    const summaryHeading = doc.querySelector('#summary .result-panel h3')?.textContent?.trim().toLowerCase() || '';
+    const runEnding = summaryHeading === 'the reading ends';
+    setFlag('run-ending', runEnding);
+
     const inAdventure = root.classList.contains('mode-adventure');
-    if (inAdventure) ensureAdventureA11y();
-    const rewardHeading = doc.querySelector('#summary .result-panel h3')?.textContent?.trim().toLowerCase() || '';
+    if (inAdventure) ensureAdventurePresentationModules();
     const hasRewards = Boolean(doc.querySelector('#summary .adv-rewards'));
-    const adventureReward = inAdventure && hasRewards && rewardHeading.includes('choose your reward');
-    const adventureRecovery = inAdventure && hasRewards && !rewardHeading.includes('choose your reward');
+    const adventureReward = inAdventure && hasRewards && summaryHeading.includes('choose your reward');
+    const adventureRecovery = inAdventure && hasRewards && !summaryHeading.includes('choose your reward');
     const adventureOutcome = inAdventure && Boolean(doc.querySelector('#summary .adv-narrative')) && !hasRewards;
     setFlag('adventure-reward', adventureReward);
     setFlag('adventure-recovery', adventureRecovery);
@@ -224,7 +255,8 @@ export function installPresentationDirector(target = window) {
       cue('adventure-recovery', { duration: 620, intensity: .45 });
     }
 
-    const nextPrimary = adventureReward ? 'adventure-reward'
+    const nextPrimary = runEnding ? 'run-ending'
+      : adventureReward ? 'adventure-reward'
       : adventureRecovery ? 'adventure-recovery'
       : adventureOutcome ? 'adventure-outcome'
       : abilityReveal ? 'ability-reveal'
@@ -243,6 +275,7 @@ export function installPresentationDirector(target = window) {
     domState.adventureOutcome = adventureOutcome;
     domState.adventureReward = adventureReward;
     domState.adventureRecovery = adventureRecovery;
+    domState.runEnding = runEnding;
   };
 
   const scheduleSync = () => {
@@ -295,6 +328,10 @@ export function installPresentationDirector(target = window) {
       observer?.disconnect();
       observer = null;
       if (syncRaf) target.cancelAnimationFrame(syncRaf);
+      target.__tlrWorldSurfaceDirectorDestroy?.();
+      target.__tlrTableCameraDirectorDestroy?.();
+      target.__tlrAdventurePresentationA11yDestroy?.();
+      target.__tlrAdventureDeckActionFxDestroy?.();
       reset();
       delete target.tlrPresentation;
     },
@@ -304,6 +341,7 @@ export function installPresentationDirector(target = window) {
   const boot = () => {
     body()?.classList.add('presentation-idle');
     if (body()) body().dataset.presentationState = 'idle';
+    ensureCorePresentationModules();
     observe();
   };
   if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', boot, { once: true });
