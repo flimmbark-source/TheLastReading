@@ -2,7 +2,6 @@
    composes with existing transform-based hand and card geometry. */
 
 body.single-player-v2 #roomAmbient,
-body.single-player-v2 .spread-wrap,
 body.single-player-v2 .handDock,
 body.single-player-v2 .score-stack {
   transition:
@@ -22,7 +21,6 @@ body.single-player-v2.presentation-card-selected #roomAmbient {
 }
 
 body.single-player-v2.presentation-card-selected .handDock { scale: 1.01; }
-body.single-player-v2.presentation-card-selected .spread-wrap { scale: 1.004; }
 body.single-player-v2.presentation-card-selected .score-stack { scale: .997; }
 
 body.single-player-v2.presentation-card-dragging #roomAmbient {
@@ -30,7 +28,8 @@ body.single-player-v2.presentation-card-dragging #roomAmbient {
   translate: 0 -2px;
 }
 
-body.single-player-v2.presentation-card-dragging .spread-wrap { scale: 1.009; }
+/* The spread is the drag target. Its screen geometry must remain fixed from
+   pointer-down through drop so slots never move away from the player's card. */
 body.single-player-v2.presentation-card-dragging .handDock { scale: 1.014; }
 body.single-player-v2.presentation-card-dragging .score-stack { scale: .994; }
 
@@ -47,7 +46,6 @@ body.single-player-v2.presentation-threshold-near #roomAmbient {
 
 @media (prefers-reduced-motion: reduce) {
   body.single-player-v2 #roomAmbient,
-  body.single-player-v2 .spread-wrap,
   body.single-player-v2 .handDock,
   body.single-player-v2 .score-stack {
     transition-duration: 60ms;
