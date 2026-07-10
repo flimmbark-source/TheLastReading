@@ -12,6 +12,7 @@ import './validate-table-view.mjs';
 import './validate-purge-reducer.mjs';
 import './validate-ability-targeting.mjs';
 import './validate-ability-targeting-bridge.mjs';
+import './validate-ability-rules.mjs';
 import './validate-ability-choice-flow.mjs';
 import './validate-action-card-drops.mjs';
 import './validate-draw-animation.mjs';
