@@ -420,7 +420,7 @@ function syncMultSpans(doc, state, myIndex) {
 
 function syncOneMultSpan(doc, scoreId, player) {
   const scoreNode = doc.getElementById(scoreId);
-  const pill = scoreNode?.closest('.mp-pill-score') || scoreNode?.parentElement;
+  const pill = scoreNode?.closest?.('.mp-pill-score') || scoreNode?.parentElement;
   const parent = pill?.parentElement;
   if (!pill || !parent) return;
 
