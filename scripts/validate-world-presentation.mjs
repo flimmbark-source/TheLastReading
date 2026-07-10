@@ -53,8 +53,10 @@ assert.match(cameraCss, /presentation-card-selected/);
 assert.match(cameraCss, /presentation-card-dragging/);
 assert.match(cameraCss, /#scorePreview\s*\{[\s\S]*position:\s*absolute/,
   'The score preview must overlay the spread instead of changing wrapper height');
-assert.match(cameraCss, /presentation-flag-card-selected \.spread-wrap,[\s\S]*presentation-flag-card-dragging \.spread-wrap\s*\{[\s\S]*translate:\s*0 0/,
-  'Selection and drag flags must leave spread translation at zero');
+assert.match(cameraCss, /presentation-flag-card-selected \.spread-wrap/);
+assert.match(cameraCss, /presentation-flag-card-dragging \.spread-wrap/);
+assert.match(cameraCss, /translate:\s*none\s*!important/);
+assert.match(cameraCss, /scale:\s*none\s*!important/);
 assert.doesNotMatch(camera, /dispatch\(|PLACE_CARD|SCORE_READING|session\.run/,
   'Camera director must remain presentation-only');
 

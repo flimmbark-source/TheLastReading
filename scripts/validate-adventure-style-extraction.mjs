@@ -27,7 +27,8 @@ assert.match(transformed, /link\.rel = 'stylesheet'/);
 assert.match(buildScript, /extractAdventureCss/);
 assert.match(buildScript, /externalizeAdventureStyles/);
 assert.match(buildScript, /externalize-adventure-mode-style/);
-assert.match(buildScript, new RegExp(ADVENTURE_STYLE_OUTPUT.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+assert.match(buildScript, /ADVENTURE_STYLE_OUTPUT/);
+assert.equal(ADVENTURE_STYLE_OUTPUT, 'dist/adventure-mode-v3.css');
 assert.match(buildScript, /await buildAdventureCss\(\)/);
 assert.match(buildScript, /plugins: \[adventureStylePlugin\(\)\]/);
 

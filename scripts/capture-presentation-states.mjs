@@ -115,6 +115,20 @@ async function captureReadingStates(page, label) {
   }
 }
 
+async function captureTerminologyStates(page, label) {
+  await page.evaluate(() => window.tlrOpenGameTermsGlossary?.());
+  await page.waitForSelector('#gameTermsGlossary:not([hidden])');
+  await page.screenshot({ path: outputPath(label, 'game-terms-glossary'), fullPage: true });
+  await page.keyboard.press('Escape');
+  const token = page.locator('.score-stack .game-term').first();
+  if (await token.count()) {
+    await token.evaluate(element => element.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
+    await page.waitForSelector('#gameTermPopover:not([hidden])');
+    await page.screenshot({ path: outputPath(label, 'game-term-popover'), fullPage: true });
+    await page.keyboard.press('Escape');
+  }
+}
+
 async function captureArchives(page, label) {
   await page.evaluate(() => {
     const first = window.INV_ITEMS?.[0];
@@ -235,6 +249,7 @@ async function main() {
       const label = `${viewport.width}x${viewport.height}`;
       await startReading(page);
       await captureReadingStates(page, label);
+      await captureTerminologyStates(page, label);
       await captureArchives(page, label);
       await captureMarket(page, label);
       await captureResultSurfaces(page, label);

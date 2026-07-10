@@ -2,14 +2,18 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { GAME_TERM_IDS, GAME_TERMS, gameTermMarkup } from '../src/ui/gameTerms.mjs';
+import { JSDOM } from 'jsdom';
+import { GAME_TERM_IDS, GAME_TERMS, applyGameTerms, gameTermMarkup, registerGameTermsLocale } from '../src/ui/gameTerms.mjs';
+import { ABILITIES } from '../src/data/abilities.mjs';
+import { RELIC_LIST } from '../src/data/relics.mjs';
+import { SHOP_ITEMS } from '../src/data/shopItems.mjs';
+import { STATUS_LIST } from '../src/data/adventure/statuses.mjs';
+import { ADVENTURE_ITEMS } from '../src/data/adventure/adventureContentV3.mjs';
+import { INTERACTION_CARD_DEFS } from '../src/multiplayer/interactionCards.mjs';
+import { PERSONAS } from '../src/multiplayer/personas.mjs';
+import { ARCHIVE_FRAGMENTS, ARCHIVE_ITEMS } from '../src/data/archiveFragments.mjs';
 
-const required = [
-  'chips', 'mult', 'score', 'threshold', 'reserve',
-  'play', 'draw', 'discard', 'reveal', 'take', 'banish',
-  'hand', 'spread', 'deck', 'ability', 'pattern', 'relic',
-];
-
+const required = ['chips','mult','score','threshold','reserve','play','draw','discard','reveal','take','banish','echo','upgrade','seal','transmute','hand','spread','deck','ability','pattern','relic','status','reading','resolve','event','potency'];
 for (const id of required) {
   assert(GAME_TERM_IDS.includes(id), `Missing game term: ${id}`);
   assert(GAME_TERMS[id]?.label, `Missing label for game term: ${id}`);
@@ -17,15 +21,21 @@ for (const id of required) {
 }
 assert.equal(gameTermMarkup('chips'), '[[chips]]');
 assert.equal(gameTermMarkup('take', 'Take 1'), '[[take|Take 1]]');
+assert(registerGameTermsLocale('test', { chips: { label: 'Test Chips' } }));
 
-const main = fs.readFileSync(new URL('../src/app/main.mjs', import.meta.url), 'utf8');
-assert.match(main, /installGameTerms/);
-assert.match(main, /installGameTerms\(target\)/);
+const dom = new JSDOM('<main><p id="mechanic">[[chips]] and Mult</p><p id="archive" data-game-terms="off">[[chips]] stays literal</p></main>');
+const mechanic = dom.window.document.getElementById('mechanic');
+applyGameTerms(mechanic, { auto: true });
+assert.equal(mechanic.querySelectorAll('.game-term').length, 2, 'explicit and automatic terms render');
+const archive = dom.window.document.getElementById('archive');
+applyGameTerms(archive, { auto: true });
+assert.equal(archive.querySelectorAll('.game-term').length, 0, 'archive opt-out blocks tokens');
+assert.match(archive.textContent, /\[\[chips\]\]/);
 
 const sourceFiles = [];
 function collect(directory) {
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-    if (['node_modules', 'dist', 'coverage', '.git'].includes(entry.name)) continue;
+    if (['node_modules','dist','coverage','.git'].includes(entry.name)) continue;
     const full = path.join(directory, entry.name);
     if (entry.isDirectory()) collect(full);
     else if (/\.(?:mjs|js|html|md)$/.test(entry.name)) sourceFiles.push(full);
@@ -33,15 +43,31 @@ function collect(directory) {
 }
 collect(fileURLToPath(new URL('../src/', import.meta.url)));
 collect(fileURLToPath(new URL('../scripts/', import.meta.url)));
-
 const known = new Set(GAME_TERM_IDS);
 const markup = /\[\[([a-z0-9_-]+)(?:\|[^\]]+)?\]\]/gi;
 for (const file of sourceFiles) {
   const text = fs.readFileSync(file, 'utf8');
   let match;
-  while ((match = markup.exec(text))) {
-    assert(known.has(match[1].toLowerCase()), `Unknown game term "${match[1]}" in ${file}`);
-  }
+  while ((match = markup.exec(text))) assert(known.has(match[1].toLowerCase()), `Unknown game term "${match[1]}" in ${file}`);
+  if (!file.endsWith('src/ui/gameTerms.mjs')) assert(!/<span[^>]+class=["'][^"']*game-term/.test(text), `Hand-authored game-term span in ${file}`);
 }
 
+const deprecated = /\b(?:points?|point value|multiplier|target score|pick up|put into your hand)\b/i;
+const mechanical = [
+  ...Object.values(ABILITIES).map(item=>item.prompt),
+  ...RELIC_LIST.map(item=>item.description),
+  ...SHOP_ITEMS.map(item=>item.description),
+  ...STATUS_LIST.map(item=>item.description),
+  ...Object.values(ADVENTURE_ITEMS).map(item=>item.text),
+  ...Object.values(INTERACTION_CARD_DEFS).map(item=>item.prompt),
+  ...Object.values(PERSONAS).flatMap(item=>[item.tagline,item.ability?.rules,item.ability?.reminder].filter(Boolean)),
+];
+for (const copy of mechanical) assert(!deprecated.test(copy), `Deprecated mechanical wording: ${copy}`);
+for (const item of [...Object.values(ARCHIVE_FRAGMENTS), ...ARCHIVE_ITEMS]) {
+  assert(['source','analysis'].includes(item.contentKind), `Archive item ${item.id} lacks content classification`);
+  assert.equal(item.gameTerms, 'off', `Archive item ${item.id} must opt out of automatic terms`);
+  assert(!/\[\[/.test(item.content), `Archive item ${item.id} contains mechanical markup`);
+}
+const main = fs.readFileSync(new URL('../src/app/main.mjs', import.meta.url), 'utf8');
+assert.match(main, /installGameTerms\(target\)/);
 console.log('Game terminology validation passed.');

@@ -70,3 +70,9 @@ body.single-player-v2.presentation-threshold-near #roomAmbient {
     transition-duration: 60ms;
   }
 }
+/* Fixed-layout containers must never acquire transform longhands. */
+body.single-player-v2.presentation-flag-card-selected .spread-wrap,
+body.single-player-v2.presentation-flag-card-dragging .spread-wrap {
+  translate: none !important;
+  scale: none !important;
+}
