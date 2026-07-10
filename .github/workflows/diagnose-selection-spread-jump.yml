@@ -41,7 +41,15 @@ jobs:
           echo "Using $CHROME as $EXPECTED"
 
       - name: Measure selection geometry
-        run: node scripts/diagnose-selection-spread-jump.mjs
+        shell: bash
+        run: |
+          mkdir -p artifacts/selection-diagnostic
+          set +e
+          node scripts/diagnose-selection-spread-jump.mjs > artifacts/selection-diagnostic/run.log 2>&1
+          STATUS=$?
+          cat artifacts/selection-diagnostic/run.log
+          echo "$STATUS" > artifacts/selection-diagnostic/exit-code.txt
+          exit 0
 
       - name: Upload diagnostic report
         if: always()
