@@ -31,6 +31,7 @@ assert.match(world, /the reading ends/);
 assert.match(world, /threshold cleared/);
 assert.match(world, /Reading result/);
 assert.match(world, /event\.key !== 'Escape'/);
+assert.match(world, /tlr:presentation-cue/);
 assert.doesNotMatch(world, /SCORE_READING|ADD_CARD|REMOVE_CARD|rewardChoose|session\.run|persist\./,
   'World surface director must not own gameplay mechanics');
 
@@ -52,8 +53,9 @@ assert.match(cameraCss, /presentation-card-dragging/);
 assert.doesNotMatch(camera, /dispatch\(|PLACE_CARD|SCORE_READING|session\.run/,
   'Camera director must remain presentation-only');
 
+assert.match(capture, /const outputPath = \(label, state\) =>/);
 for (const captureName of ['archives-open', 'archive-detail', 'market', 'score-result', 'run-ending']) {
-  assert.match(capture, new RegExp(`presentation-\\$\\{label\\}-${captureName}\\.png`), `Capture harness missing ${captureName}`);
+  assert.match(capture, new RegExp(`outputPath\\(label, ['\"]${captureName}['\"]\\)`), `Capture harness missing ${captureName}`);
 }
 
 console.log('World surface and deck-action presentation validation passed.');
