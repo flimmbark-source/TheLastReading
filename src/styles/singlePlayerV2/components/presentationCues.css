@@ -1,0 +1,77 @@
+@layer spv2.components {
+  /* Override the continuously-derived intensity expression with a broadly
+     supported fixed treatment. The state still carries intensity for future
+     art-directed consumers, but core readability cannot depend on typed CSS
+     arithmetic support. */
+  body.single-player-v2.presentation-flag-threshold-near .threshold-pill {
+    filter: brightness(1.06) drop-shadow(0 0 7px rgba(224,151,58,.34));
+  }
+
+  body.single-player-v2.presentation-cue-card-place #spread .slot:has(.card.landing) {
+    animation: presentation-slot-impact 280ms cubic-bezier(.16,.82,.26,1);
+  }
+
+  body.single-player-v2.presentation-cue-pattern #spread .card.bump {
+    filter: brightness(1.12) saturate(1.06);
+  }
+
+  body.single-player-v2.presentation-cue-threshold-clear #roomAmbient {
+    animation: presentation-room-release 900ms cubic-bezier(.16,.8,.24,1);
+  }
+
+  @keyframes presentation-slot-impact {
+    0% { filter: brightness(1); }
+    36% { filter: brightness(1.2) drop-shadow(0 0 9px rgba(232,180,92,.35)); }
+    100% { filter: brightness(1); }
+  }
+
+  @keyframes presentation-room-release {
+    0% { filter: brightness(1) saturate(1); }
+    18% { filter: brightness(.82) saturate(.86); }
+    46% { filter: brightness(1.12) saturate(1.04); }
+    100% { filter: brightness(1) saturate(1); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body.single-player-v2.presentation-cue-card-place #spread .slot:has(.card.landing),
+    body.single-player-v2.presentation-cue-threshold-clear #roomAmbient {
+      animation: none;
+    }
+  }
+}
+
+body.mode-adventure.presentation-cue-adventure-outcome #summary.show > .result-panel,
+body.mode-adventure.presentation-cue-adventure-reward #summary.show > .result-panel,
+body.mode-adventure.presentation-cue-adventure-recovery #summary.show > .result-panel {
+  animation: presentation-adventure-scene-in 620ms cubic-bezier(.16,.82,.26,1) both;
+  transform-origin: 50% 58%;
+}
+
+body.mode-adventure.presentation-cue-adventure-reward #summary.show .adv-reward {
+  animation: presentation-reward-deal 420ms cubic-bezier(.16,.82,.26,1) both;
+}
+
+body.mode-adventure.presentation-cue-adventure-reward #summary.show .adv-reward:nth-child(2) { animation-delay: 45ms; }
+body.mode-adventure.presentation-cue-adventure-reward #summary.show .adv-reward:nth-child(3) { animation-delay: 90ms; }
+body.mode-adventure.presentation-cue-adventure-reward #summary.show .adv-reward:nth-child(4) { animation-delay: 135ms; }
+body.mode-adventure.presentation-cue-adventure-reward #summary.show .adv-reward:nth-child(5) { animation-delay: 180ms; }
+
+@keyframes presentation-adventure-scene-in {
+  0% { opacity: 0; transform: translateY(12px) scale(.985); filter: brightness(.78); }
+  52% { opacity: 1; filter: brightness(1.05); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
+}
+
+@keyframes presentation-reward-deal {
+  0% { opacity: 0; transform: translateY(14px) rotate(.5deg); }
+  100% { opacity: 1; transform: translateY(0) rotate(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.mode-adventure.presentation-cue-adventure-outcome #summary.show > .result-panel,
+  body.mode-adventure.presentation-cue-adventure-reward #summary.show > .result-panel,
+  body.mode-adventure.presentation-cue-adventure-recovery #summary.show > .result-panel,
+  body.mode-adventure.presentation-cue-adventure-reward #summary.show .adv-reward {
+    animation: none;
+  }
+}
