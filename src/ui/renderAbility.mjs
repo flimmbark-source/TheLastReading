@@ -84,9 +84,9 @@ export function choice(title,prompt,cards,cb){
   if(cards.length===1){activeChoiceCancel=null;playSound('flip');cb(cards[0]);return}
   ensureChoiceLayoutStyles();
   $('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';
-  let ch=$('#choices');ch.innerHTML='';
+  const ch=$('#choices');ch.innerHTML='';
   cards.forEach(c=>{
-    let e=document.createElement('div');
+    const e=document.createElement('div');
     e.className='card choice-card '+(c.type==='major'?'major':'');
     applyHint(e,c,uniqueCards([...state.spread.filter(Boolean),...state.hand,c]));
     e.innerHTML=cardHTML(c);applyCardPhoto(e,c);
@@ -130,7 +130,7 @@ export function browseCards(title,prompt,cards){
   playSound('flip');tlrArchitectureSync()
 }
 
-export function toggleModalCollapse(){let m=$('#modal');if(!m.classList.contains('show'))return;m.classList.toggle('collapsed');$('#modalToggle').textContent=m.classList.contains('collapsed')?'Show':'Hide'}
+export function toggleModalCollapse(){const m=$('#modal');if(!m.classList.contains('show'))return;m.classList.toggle('collapsed');$('#modalToggle').textContent=m.classList.contains('collapsed')?'Show':'Hide'}
 
 export function renderAbilityPrompt(){
   const el=$('#abilityPrompt');

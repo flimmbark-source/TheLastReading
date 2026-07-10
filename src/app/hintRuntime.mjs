@@ -77,7 +77,7 @@ export function slotsForMeld(name,target = window){
     return rank?filled.filter(x=>x.c.type==='court'&&x.c.rank===rank).slice(0,limit).map(x=>x.i):[];
   }
   if(name.startsWith('Full Court')){
-    const eligible=['Page','Knight','Queen','King'];let seen=new Set(),out=[],limit=tierFrom()||4;
+    const eligible=['Page','Knight','Queen','King'];const seen=new Set(),out=[],limit=tierFrom()||4;
     for(const x of filled){if(out.length>=limit)break;if(x.c.type==='court'&&!seen.has(x.c.rank)&&eligible.includes(x.c.rank)){seen.add(x.c.rank);out.push(x.i);}}
     return out;
   }

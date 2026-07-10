@@ -142,11 +142,11 @@ assert.deepEqual(mirrorTarget.tlrStore.getState().run.legacySnapshot, syncedRepo
 
   // A legacy-supplied deck is used as-is.
   const suppliedDeck = buildDeck();
-  let l = reducer(createGameState(), { type: ACTIONS.START_READING, deck: suppliedDeck });
+  const l = reducer(createGameState(), { type: ACTIONS.START_READING, deck: suppliedDeck });
   assert.equal(l.run.hand[0].uid, suppliedDeck[0].uid, 'supplied deck should deal from the top');
 
   // END_SESSION records the end screen state.
-  let e = reducer(createGameState(), { type: ACTIONS.END_SESSION, totalScore: 123, obals: 3 });
+  const e = reducer(createGameState(), { type: ACTIONS.END_SESSION, totalScore: 123, obals: 3 });
   assert.equal(e.run.phase, 'sessionEnd', 'end session should set the phase');
   assert.equal(e.run.lastSessionScore, 123, 'end session should record the score');
   assert.equal(e.run.lastSessionObals, 3, 'end session should record the obals');

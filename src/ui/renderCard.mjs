@@ -80,7 +80,7 @@ export function cardHTML(c){
   return html;
 }
 
-export function sortCards(cards){return [...cards].sort((a,b)=>{let o={major:0,court:1,interaction:2};if(o[a.type]!==o[b.type])return o[a.type]-o[b.type];if(a.type==='major')return(majorNumber(a)??0)-(majorNumber(b)??0);if(a.type==='interaction')return String(a.name).localeCompare(String(b.name));return(a.suit||'').localeCompare(b.suit)||RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank)})}
+export function sortCards(cards){return [...cards].sort((a,b)=>{const o={major:0,court:1,interaction:2};if(o[a.type]!==o[b.type])return o[a.type]-o[b.type];if(a.type==='major')return(majorNumber(a)??0)-(majorNumber(b)??0);if(a.type==='interaction')return String(a.name).localeCompare(String(b.name));return(a.suit||'').localeCompare(b.suit)||RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank)})}
 
 export function cleanName(c){return c?.type==='major'?majorName(c):(c?.name||'')}
 

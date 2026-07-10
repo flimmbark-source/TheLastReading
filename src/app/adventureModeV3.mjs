@@ -646,11 +646,11 @@ export function installAdventureModeV3(target = window) {
     const outcome = event.outcomes.find(candidate => candidate.id === approach.outcomeId) || event.outcomes[0];
     const failure = approach.failure || event.failure || {};
     const failed = !forcedGreat && potency < requirement;
-    let tier = failed ? RESULT.FAILURE : (forcedGreat || route.exact ? RESULT.GREAT_SUCCESS : RESULT.SUCCESS);
+    const tier = failed ? RESULT.FAILURE : (forcedGreat || route.exact ? RESULT.GREAT_SUCCESS : RESULT.SUCCESS);
     let resolveChange = failed ? (failure.resolveChange ?? event.failure?.resolveChange ?? -1) : (outcome.resolveChange ?? 0);
     let gainStatuses = [...(failed ? (failure.gainStatuses || event.failure?.gainStatuses || []) : (outcome.gainStatuses || []))];
-    let removeStatuses = [...(failed ? (failure.removeStatuses || []) : (outcome.removeStatuses || []))];
-    let narrative = failed ? (failure.text || event.failure?.text || 'The attempt fails.') : (tier === RESULT.GREAT_SUCCESS && outcome.triumphText ? outcome.triumphText : outcome.text);
+    const removeStatuses = [...(failed ? (failure.removeStatuses || []) : (outcome.removeStatuses || []))];
+    const narrative = failed ? (failure.text || event.failure?.text || 'The attempt fails.') : (tier === RESULT.GREAT_SUCCESS && outcome.triumphText ? outcome.triumphText : outcome.text);
     const notes = [];
 
     if (!failed && outcome.specialConsequence === 'release_spirit') {

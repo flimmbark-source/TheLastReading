@@ -154,9 +154,9 @@ export function continueSet(){
 
 export function placeCard(i){
   if(state.selected===null||state.spread[i])return;
-  let idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;
+  const idx=state.hand.findIndex(c=>c.uid===state.selected);if(idx<0)return;
   const beforeMelds=new Map(_scoreLegacy(state.spread.filter(Boolean)).melds.map(x=>[x[0],x]));
-  let c=state.hand[idx];
+  const c=state.hand[idx];
   window.tlrStore.dispatch({type:window.tlrActions.PLACE_CARD,slotIndex:i});
   const _run=window.tlrStore.getState().run;
   state.hand=_run.hand.slice();
@@ -168,8 +168,8 @@ export function placeCard(i){
     if(_landEl){_landEl.classList.add('landing');_landEl.addEventListener('animationend',()=>_landEl.classList.remove('landing'),{once:true});}
     fireChipProjectile(i,c.points);
   });
-  let after=_getPlacedScore();
-  let newMelds=after.melds.flatMap(x=>{
+  const after=_getPlacedScore();
+  const newMelds=after.melds.flatMap(x=>{
     if(!beforeMelds.has(x[0]))return[x];
     const bm=beforeMelds.get(x[0]);
     const dc=x[1]-bm[1],dm=x[2]-bm[2];
@@ -178,10 +178,10 @@ export function placeCard(i){
   });
   let delay=420;let announceOffset=0;
   newMelds.forEach(m=>{
-    let slots=slotsForMeld(m[0]);
+    const slots=slotsForMeld(m[0]);
     slots.forEach((si,k)=>setTimeout(()=>bump(si),delay+k*130));
-    let anchor=slots.length?slots[slots.length-1]:i;
-    let ghostDelay=delay+slots.length*130+120;
+    const anchor=slots.length?slots[slots.length-1]:i;
+    const ghostDelay=delay+slots.length*130+120;
     const _rk=_relicMeldNameToKey.get(m[0])||null;
     setTimeout(()=>ghost(anchor,meldStr(m),true,_rk),ghostDelay);
     if(_relicMeldNames.has(m[0])){
@@ -200,7 +200,7 @@ export function placeCard(i){
 
 export function setCounterTarget(v){const floor=Math.max(counterShown,counterTarget,visibleCounterValue());counterTarget=Math.max(v,floor);if(counterTimer)clearTimeout(counterTimer);counterTimer=setTimeout(()=>{if(counterCancel)counterCancel();const from=Math.max(counterShown,visibleCounterValue());const to=Math.max(counterTarget,from);counterCancel=rollCounter(from,to,650);counterShown=to;counterTimer=null},SCORE_COUNTER_AFTER_CHIP_MS)}
 export function snapCounter(v){if(counterTimer){clearTimeout(counterTimer);counterTimer=null}if(counterCancel){counterCancel();counterCancel=null}counterShown=counterTarget=v;_cacheEls();_elCurrent.textContent=v;_elCurrent.style.color=''}
-export function rollCounter(from,to,dur){_cacheEls();const threshold=Number(_elThreshold?.textContent)||Infinity;let el=_elCurrent,start=performance.now(),dead=false,lastVal=from,popAnim=null,thCrossed=from>=threshold;if(to<=from){el.textContent=from;el.style.color='';return()=>{dead=true}}function step(now){if(dead)return;let t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++){fireScoreGhost();}if(val!==lastVal){if(popAnim)popAnim.cancel();popAnim=el.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});}if(!thCrossed&&val>=threshold){thCrossed=true;const thPill=_elThreshold?.closest('.pill');if(thPill)thPill.animate([{boxShadow:'inset 0 -3px 0 rgba(154,111,235,.62)',filter:'brightness(1)'},{boxShadow:'inset 0 -3px 0 rgba(80,220,100,.9), 0 0 24px 6px rgba(80,220,100,.55)',filter:'brightness(1.45)',offset:.2},{boxShadow:'inset 0 -3px 0 rgba(154,111,235,.62)',filter:'brightness(1)'}],{duration:750,easing:'ease-out',fill:'none'});try{haptic([0,15,60,25,80]);}catch(e){}}lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color='';holdEffects(1000);}}requestAnimationFrame(step);return()=>{dead=true;if(popAnim)popAnim.cancel();el.style.color=''}}
+export function rollCounter(from,to,dur){_cacheEls();const threshold=Number(_elThreshold?.textContent)||Infinity;let el=_elCurrent,start=performance.now(),dead=false,lastVal=from,popAnim=null,thCrossed=from>=threshold;if(to<=from){el.textContent=from;el.style.color='';return()=>{dead=true}}function step(now){if(dead)return;const t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++){fireScoreGhost();}if(val!==lastVal){if(popAnim)popAnim.cancel();popAnim=el.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});}if(!thCrossed&&val>=threshold){thCrossed=true;const thPill=_elThreshold?.closest('.pill');if(thPill)thPill.animate([{boxShadow:'inset 0 -3px 0 rgba(154,111,235,.62)',filter:'brightness(1)'},{boxShadow:'inset 0 -3px 0 rgba(80,220,100,.9), 0 0 24px 6px rgba(80,220,100,.55)',filter:'brightness(1.45)',offset:.2},{boxShadow:'inset 0 -3px 0 rgba(154,111,235,.62)',filter:'brightness(1)'}],{duration:750,easing:'ease-out',fill:'none'});try{haptic([0,15,60,25,80]);}catch(e){}}lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color='';holdEffects(1000);}}requestAnimationFrame(step);return()=>{dead=true;if(popAnim)popAnim.cancel();el.style.color=''}}
 
 export function startPurge(){
   const _run=tlrStoreReady()?window.tlrStore.getState().run:null;
@@ -235,8 +235,8 @@ export function discardSelected(){
   const selectedBefore=state.selected;
   const free=persist.relics.includes('gilded_discard')&&!state.freeDiscardUsed;
   if(!free&&state.discards<=0)return;
-  let idx=state.hand.findIndex(c=>c.uid===selectedBefore);if(idx<0)return;
-  let c=state.hand[idx];
+  const idx=state.hand.findIndex(c=>c.uid===selectedBefore);if(idx<0)return;
+  const c=state.hand[idx];
   if(!abilityHasValidTargets(c.ability,c)){
     fireNoValidTargetsGhost(c.uid);
     playSound('fail');haptic([0,30]);
@@ -325,7 +325,7 @@ export async function resolveAbility(ab, done, sourceCard = null) {
 function peek(n, done) {
   setBusy(true);
   function attempt() {
-    let cards = [];
+    const cards = [];
     for (let i = 0; i < n; i++) {
       if (!state.deck.length && state.discard.length) state.deck = shuffle(state.discard.splice(0));
       if (!state.deck.length) break;
@@ -460,7 +460,7 @@ if(_run.lastScore){
 const previousRoundScore=Math.max(0,roundTotal-total);
 if(needsNext){recordScorePillBase(roundTotal);continueSet();return;}
 snapCounter(roundTotal);
-let title=pass?'Threshold Cleared':'Reading Failed';
+const title=pass?'Threshold Cleared':'Reading Failed';
 let html=`<div class="result-panel ${pass?'pass':'fail'}">`;
 html+=`<div class="rhead"><h3 class="${pass?'pass':'fail'}">${title}</h3></div>`;
 html+=`<div class="rscore"><span class="rsc">${previousRoundScore}</span><span class="rop">+</span><span class="rsm">${total}</span><span class="rop">=</span><span class="rsf${pass?'':' fail'}">${roundTotal}</span></div>`;
@@ -500,8 +500,8 @@ else{html+='<button onclick="endSession()">End Session</button>';}
 html+='</div></div>';playSound(pass?'store_open':'fail');haptic(pass?[0,18,40,18,90]:[0,50]);showOverlay(html);render();}
 function tlSyncBeforeScore(){tlrSyncPersistToStore()}
 
-export function showOverlay(html){let s=$('#summary');s.className='modal show';s.innerHTML=html;tlrArchitectureSync()}
-export function clearOverlay(){let s=$('#summary');s.className='';s.innerHTML='';tlrArchitectureSync()}
+export function showOverlay(html){const s=$('#summary');s.className='modal show';s.innerHTML=html;tlrArchitectureSync()}
+export function clearOverlay(){const s=$('#summary');s.className='';s.innerHTML='';tlrArchitectureSync()}
 function summaryIsFailedReading(){const s=$('#summary');if(!s||!s.classList.contains('show'))return false;return !!s.querySelector('.result-panel.fail')}
 
 // Called when the player enters the market. Advances the round state (reading

@@ -6,9 +6,9 @@ export function installHandSwipeScroll(target = window){
   target.__handSwipeScrollInstalled=true;
   let zone=null,hand=null;
   let offset=0,startOffset=0,startX=0,startY=0,startLift=0,lift=0,startDockH=157;
-  let samples=[];                                    // {t,deg} ring for horizontal swipe velocity
-  let liftSamples=[];                                // {t,y} ring for vertical swipe velocity
-  let pointers=new Map();                            // active pointer id -> {x,y}
+  const samples=[];                                    // {t,deg} ring for horizontal swipe velocity
+  const liftSamples=[];                                // {t,y} ring for vertical swipe velocity
+  const pointers=new Map();                            // active pointer id -> {x,y}
   let mode=null;                                     // 'slide' | 'pinch' | null
   let pinchStart=null;                               // {dist,spacing,ids}
   let pinchSuppressClickUntil=0;
