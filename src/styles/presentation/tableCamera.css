@@ -1,0 +1,55 @@
+/* Restrained parallax and focus language. Uses scale/translate longhands so it
+   composes with existing transform-based hand and card geometry. */
+
+body.single-player-v2 #roomAmbient,
+body.single-player-v2 .spread-wrap,
+body.single-player-v2 .handDock,
+body.single-player-v2 .score-stack {
+  transition:
+    scale 240ms cubic-bezier(.2,.74,.24,1),
+    translate 240ms cubic-bezier(.2,.74,.24,1),
+    filter 220ms ease,
+    opacity 180ms ease;
+}
+
+body.single-player-v2 #roomAmbient {
+  transform-origin: var(--presentation-origin-x, 50%) var(--presentation-origin-y, 52%);
+}
+
+body.single-player-v2.presentation-card-selected #roomAmbient {
+  scale: 1.006;
+  translate: 0 -1px;
+}
+
+body.single-player-v2.presentation-card-selected .handDock { scale: 1.01; }
+body.single-player-v2.presentation-card-selected .spread-wrap { scale: 1.004; }
+body.single-player-v2.presentation-card-selected .score-stack { scale: .997; }
+
+body.single-player-v2.presentation-card-dragging #roomAmbient {
+  scale: 1.012;
+  translate: 0 -2px;
+}
+
+body.single-player-v2.presentation-card-dragging .spread-wrap { scale: 1.009; }
+body.single-player-v2.presentation-card-dragging .handDock { scale: 1.014; }
+body.single-player-v2.presentation-card-dragging .score-stack { scale: .994; }
+
+body.single-player-v2.presentation-ability-reveal #roomAmbient,
+body.single-player-v2.presentation-adventure-outcome #roomAmbient,
+body.single-player-v2.presentation-adventure-reward #roomAmbient,
+body.single-player-v2.presentation-adventure-recovery #roomAmbient {
+  scale: 1.01;
+}
+
+body.single-player-v2.presentation-threshold-near #roomAmbient {
+  scale: 1.004;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.single-player-v2 #roomAmbient,
+  body.single-player-v2 .spread-wrap,
+  body.single-player-v2 .handDock,
+  body.single-player-v2 .score-stack {
+    transition-duration: 60ms;
+  }
+}
