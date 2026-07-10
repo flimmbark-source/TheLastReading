@@ -6,6 +6,11 @@ on:
     paths:
       - 'scripts/diagnose-selection-spread-jump.mjs'
       - '.github/workflows/diagnose-selection-spread-jump.yml'
+  pull_request:
+    branches: [adventure-reward-usability]
+    paths:
+      - 'scripts/diagnose-selection-spread-jump.mjs'
+      - '.github/workflows/diagnose-selection-spread-jump.yml'
   workflow_dispatch:
 
 jobs:
