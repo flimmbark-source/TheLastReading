@@ -1,10 +1,4 @@
-Warnings: 126
-
-### netlify/functions/ably-token.mjs:48:43 no-unused-vars
-'_' is defined but never used.
-  47 |   if (!body) return {};
-  48 |   try { return JSON.parse(body); } catch (_) { return {}; }
-  49 | }
+Warnings: 44
 
 ### scripts/_ab/reduceB2.mjs:300:13 no-unused-vars
 'rel' is assigned a value but never used. Allowed unused vars must match /^_/u.
@@ -23,30 +17,6 @@ Warnings: 126
   81 | 
   82 | function fillSpread(state, playerIndex) {
   83 |   let s = state;
-
-### src/app/ablyRoomPeer.mjs:84:184 no-unused-vars
-'_' is defined but never used.
-  83 |     this._channel = null;
-  84 |     try { await channel?.publish(MESSAGE_EVENT, { v: 1, roomCode: this.roomCode, from: this.clientId, role: this.role, payload: { type: 'peer-left' }, sentAt: Date.now() }); } catch (_) {}
-  85 |     try { await channel?.presence.leave(); } catch (_) {}
-
-### src/app/ablyRoomPeer.mjs:85:53 no-unused-vars
-'_' is defined but never used.
-  84 |     try { await channel?.publish(MESSAGE_EVENT, { v: 1, roomCode: this.roomCode, from: this.clientId, role: this.role, payload: { type: 'peer-left' }, sentAt: Date.now() }); } catch (_) {}
-  85 |     try { await channel?.presence.leave(); } catch (_) {}
-  86 |     try { await channel?.detach(); } catch (_) {}
-
-### src/app/ablyRoomPeer.mjs:86:45 no-unused-vars
-'_' is defined but never used.
-  85 |     try { await channel?.presence.leave(); } catch (_) {}
-  86 |     try { await channel?.detach(); } catch (_) {}
-  87 |     try { this._client?.close(); } catch (_) {}
-
-### src/app/ablyRoomPeer.mjs:87:43 no-unused-vars
-'_' is defined but never used.
-  86 |     try { await channel?.detach(); } catch (_) {}
-  87 |     try { this._client?.close(); } catch (_) {}
-  88 |     this._client = null;
 
 ### src/app/adventureCardSigils.mjs:2:10 no-unused-vars
 'getEventApproaches' is defined but never used. Allowed unused vars must match /^_/u.
@@ -78,77 +48,11 @@ Warnings: 126
    9 |    getUnlockedFragments, playSound, applyResonationGlows, _resStateKey */
   10 | 
 
-### src/app/archives.mjs:11:174 no-unused-vars
-'e' is defined but never used.
-  10 | 
-  11 | let _saveInvTimer=null;function _saveInvPos(){clearTimeout(_saveInvTimer);_saveInvTimer=setTimeout(()=>{try{localStorage.setItem('tlr_inv_pos',JSON.stringify(invPos))}catch(e){}},300);}
-  12 | 
-
-### src/app/archives.mjs:67:54 no-unused-vars
-'e' is defined but never used.
-  66 |       const nx=parseFloat(tab.style.left)||0;
-  67 |       try{localStorage.setItem('tlr_tab_x',nx)}catch(e){}
-  68 |     } else {
-
-### src/app/archives.mjs:95:10 no-unused-vars
-'e' is defined but never used.
-  94 |     return v&&typeof v==='object'&&!Array.isArray(v)?v:{};
-  95 |   }catch(e){return {};}
-  96 | }
-
-### src/app/archives.mjs:103:67 no-unused-vars
-'e' is defined but never used.
- 102 |   vault[resId]=itemIds.slice();
- 103 |   try{localStorage.setItem(VAULT_KEY,JSON.stringify(vault))}catch(e){}
- 104 |   try{
-
-### src/app/archives.mjs:106:71 no-unused-vars
-'e' is defined but never used.
- 105 |     const key='tlr_attic_found_items';
- 106 |     let arr;try{arr=JSON.parse(localStorage.getItem(key)||'[]')}catch(e){arr=null}
- 107 |     if(Array.isArray(arr))localStorage.setItem(key,JSON.stringify(arr.filter(id=>!itemIds.includes(id))));
-
-### src/app/archives.mjs:108:10 no-unused-vars
-'e' is defined but never used.
- 107 |     if(Array.isArray(arr))localStorage.setItem(key,JSON.stringify(arr.filter(id=>!itemIds.includes(id))));
- 108 |   }catch(e){}
- 109 |   renderInventory();
-
-### src/app/archives.mjs:117:66 no-unused-vars
-'e' is defined but never used.
- 116 | export function tlrMetaPuzzleSolved(id=1){
- 117 |   try{return !!localStorage.getItem('tlr_meta_puzzle_'+id)}catch(e){return false}
- 118 | }
-
-### src/app/archives.mjs:120:61 no-unused-vars
-'e' is defined but never used.
- 119 | export function tlrSolveMetaPuzzle(id=1){
- 120 |   try{localStorage.setItem('tlr_meta_puzzle_'+id,'1')}catch(e){}
- 121 |   renderInventory();
-
-### src/app/archives.mjs:210:112 no-unused-vars
-'e' is defined but never used.
- 209 | 
- 210 |   const foundAtticItems=(()=>{try{return JSON.parse(localStorage.getItem('tlr_attic_found_items')||'[]')}catch(e){return []}})();const allItems=[...INV_ITEMS.filter(item=>foundAtticItems.includes(item.id)),...getUnlockedFragments().map(id=>INV_FRAGMENTS[id]).filter(Boolean)];
- 211 |   allItems.forEach(item=>renderDeskItem(desk,item,false));
-
 ### src/app/archives.mjs:233:32 no-unused-vars
 'ih' is assigned a value but never used. Allowed unused vars must match /^_/u.
  232 |   el.innerHTML='<div class="inv-item-paper">'+iconHtml+'<span class="inv-item-type">'+item.type+'</span><span class="inv-item-name">'+item.title+'</span></div>';
  233 |   let psx,psy,esx,esy,dw,dh,iw,ih,moved=false,active=false;
  234 |   el.addEventListener('pointerdown',e=>{
-
-### src/app/atticFlow.mjs:30:210 no-unused-vars
-'e' is defined but never used.
-  29 | 
-  30 |   function vaultedItemIds(){try{const v=JSON.parse(target.localStorage.getItem('tlr_resonation_vault')||'{}');return Object.keys(v).reduce(function(a,k){return a.concat(Array.isArray(v[k])?v[k]:[])},[])}catch(e){return []}}
-  31 |   // Vaulted items count as found: completing a resonation moves them out of
-
-### src/app/atticFlow.mjs:33:170 no-unused-vars
-'e' is defined but never used.
-  32 |   // the drawer, but the attic props they came from must stay searched.
-  33 |   function foundItems(){try{const v=JSON.parse(target.localStorage.getItem('tlr_attic_found_items')||'[]');return (Array.isArray(v)?v:[]).concat(vaultedItemIds())}catch(e){return vaultedItemIds()}}
-  34 |   function candlesFromScore(score){if(score>=1000)return 7;if(score>=700)return 6;if(score>=450)return 5;if(score>=250)return 4;if(score>=100)return 3;if(score>=50)return 2;return 1;}
 
 ### src/app/atticFlow.mjs:36:12 no-unused-vars
 'candleSpend' is defined but never used. Allowed unused vars must match /^_/u.
@@ -156,263 +60,17 @@ Warnings: 126
   36 |   function candleSpend(){const h=document.getElementById('obalsHud');if(!h)return;h.classList.remove('spend');requestAnimationFrame(()=>requestAnimationFrame(()=>{h.classList.add('spend');setTimeout(function(){h.classList.remove('spend')},460);}));}
   37 |   function whisper(text,duration){const w=document.getElementById('atticWhisper');if(!w)return;w.textContent=text;w.classList.add('show');clearTimeout(whisper.t);whisper.t=setTimeout(function(){w.classList.remove('show')},duration||2600);}
 
-### src/app/atticFlow.mjs:61:72 no-unused-vars
-'e' is defined but never used.
-  60 |       let arr;
-  61 |       try{arr=JSON.parse(target.localStorage.getItem(key)||'[]')}catch(e){arr=null}
-  62 |       if(!Array.isArray(arr))arr=[];
-
-### src/app/atticFlow.mjs:70:12 no-unused-vars
-'e' is defined but never used.
-  69 |       }
-  70 |     }catch(e){}
-  71 |     if(target.tlrStore&&target.tlrActions)target.tlrStore.dispatch({type:target.tlrActions.DISCOVER_ARCHIVE_ITEM,itemId:itemId});}
-
-### src/app/atticFlow.mjs:113:81 no-unused-vars
-'e' is defined but never used.
- 112 |   function showAtticTutorial(){
- 113 |     try{if(target.localStorage.getItem('tlr_attic_tutored_obals'))return;}catch(e){}
- 114 |     const t=document.getElementById('atticTutorial');if(!t)return;
-
-### src/app/atticFlow.mjs:134:128 no-unused-vars
-'e' is defined but never used.
- 133 |     const t=document.getElementById('atticTutorial');if(t){t.classList.remove('show');}
- 134 |     try{target.localStorage.setItem('tlr_attic_tutored_obals','1');target.localStorage.setItem('tlr_attic_tutored','1');}catch(e){}
- 135 |   }
-
-### src/app/atticFlow.mjs:138:69 no-unused-vars
-'e' is defined but never used.
- 137 |   function closeArchives(){
- 138 |     try{ if(typeof invOpen !== 'undefined') invOpen = false; }catch(e){}
- 139 |     // Leaving the drawer behind (attic, new reading, menu) drops any
-
-### src/app/atticFlow.mjs:161:183 no-unused-vars
-'e' is defined but never used.
- 160 |   function positionAtticView(){const pan=document.getElementById('atticPan');if(!pan)return;requestAnimationFrame(function(){const maxX=Math.max(0,pan.scrollWidth-pan.clientWidth);pan.scrollLeft=Math.round(maxX*.34);pan.scrollTop=0;});}
- 161 |   function showPanHint(){if(target.innerWidth>980)return;try{if(target.localStorage.getItem('tlr_attic_pan_hint'))return;target.localStorage.setItem('tlr_attic_pan_hint','1');}catch(e){}const scene=document.getElementById('atticScene');if(!scene)return;const hint=document.createElement('div');hint.className='attic-pan-hint';hint.textContent='Swipe to look around';scene.appendChild(hint);setTimeout(function(){hint.remove();},3600);}
- 162 |   function installDragPan(){const pan=document.getElementById('atticPan');if(!pan||pan.__tlrDragPan)return;pan.__tlrDragPan=true;let active=false,startX=0,startLeft=0;pan.addEventListener('pointerdown',function(e){if(e.target&&e.target.closest&&e.target.closest('.attic-prop,.attic-note,#atticPickup'))return;active=true;startX=e.clientX;startLeft=pan.scrollLeft;pan.classList.add('dragging');});pan.addEventListener('pointermove',function(e){if(!active)return;pan.scrollLeft=startLeft-(e.clientX-startX);});function end(){active=false;pan.classList.remove('dragging');}pan.addEventListener('pointerup',end);pan.addEventListener('pointercancel',end);}
-
-### src/app/atticFlow.mjs:172:111 no-unused-vars
-'e' is defined but never used.
- 171 |   target.tlrInstallAtticPan=installDragPan;
- 172 |   target.tlrResetAtticFoundItems=function(){try{target.localStorage.removeItem('tlr_attic_found_items')}catch(e){};if(typeof target.renderInventory==='function')target.renderInventory();else if(typeof renderInventory==='function')renderInventory();};
- 173 | 
-
-### src/app/deferredAssets.mjs:72:12 no-unused-vars
-'e' is defined but never used.
-  71 |     img.src = src;
-  72 |   } catch (e) {}
-  73 | }
-
-### src/app/effects.mjs:9:9 no-unused-vars
-'e' is defined but never used.
-   8 |   try { return window._tlrACtx || (window._tlrACtx = new (window.AudioContext || window.webkitAudioContext)()); }
-   9 |   catch(e) { return null; }
-  10 | };
-
-### src/app/effects.mjs:36:60 no-unused-vars
-'e' is defined but never used.
-  35 |     audio.volume=Math.max(0,Math.min(1,master*(sound.gain ?? 0.25)));
-  36 |     const done=()=>{try{audio.src='';audio.load?.();}catch(e){}};
-  37 |     audio.addEventListener?.('ended',done,{once:true});
-
-### src/app/effects.mjs:42:10 no-unused-vars
-'e' is defined but never used.
-  41 |     return true;
-  42 |   }catch(e){
-  43 |     return false;
-
-### src/app/effects.mjs:56:12 no-unused-vars
-'e' is defined but never used.
-  55 |     return await new Promise((resolve, reject) => ctx.decodeAudioData(arrayBuffer, resolve, reject));
-  56 |   } catch (e) {
-  57 |     return null;
-
-### src/app/effects.mjs:99:10 no-unused-vars
-'e' is defined but never used.
-  98 |     reverbIn.connect(conv);conv.connect(reverbOut);reverbOut.connect(comp);
-  99 |   }catch(e){reverbIn.connect(comp);}
- 100 |   _bus={ctx,dry,reverbIn};
-
-### src/app/effects.mjs:134:46 no-unused-vars
-'e' is defined but never used.
- 133 |     o.connect(g);o.start(at);o.stop(end+0.05);
- 134 |     o.onended=()=>{try{o.disconnect();}catch(e){}};
- 135 |   }
-
-### src/app/effects.mjs:136:105 no-unused-vars
-'e' is defined but never used.
- 135 |   }
- 136 |   setTimeout(()=>{try{g.disconnect();if(out!==g)out.disconnect();if(tail!==out)tail.disconnect();}catch(e){}},Math.max(50,(end-ctx.currentTime+0.15)*1000));
- 137 | }
-
-### src/app/effects.mjs:176:18 no-unused-vars
-'e' is defined but never used.
- 175 |           src.stop(ctx.currentTime + 4.01);
- 176 |         } catch (e) {
- 177 |           fallbackSynth();
-
-### src/app/effects.mjs:293:10 no-unused-vars
-'e' is defined but never used.
- 292 |     }
- 293 |   }catch(e){}
- 294 | }
-
-### src/app/effects.mjs:325:71 no-unused-vars
-'e' is defined but never used.
- 324 |   motes.forEach(m=>{
- 325 |     m.getAnimations().forEach(a=>{try{a.updatePlaybackRate(.4);}catch(e){}});
- 326 |     const leftPct=parseFloat(m.style.left)||50;
-
-### src/app/effects.mjs:336:74 no-unused-vars
-'e' is defined but never used.
- 335 |     document.querySelectorAll('#ambientFX .mote').forEach(m=>{
- 336 |       m.getAnimations().forEach(a=>{try{a.updatePlaybackRate(1.5);}catch(e){}});
- 337 |     });
-
-### src/app/effects.mjs:341:74 no-unused-vars
-'e' is defined but never used.
- 340 |     document.querySelectorAll('#ambientFX .mote').forEach(m=>{
- 341 |       m.getAnimations().forEach(a=>{try{a.updatePlaybackRate(1.0);}catch(e){}});
- 342 |     });
-
-### src/app/effects.mjs:349:79 no-unused-vars
-'e' is defined but never used.
- 348 | 
- 349 | export function haptic(p){try{if(navigator.vibrate)navigator.vibrate(p)}catch(e){}}
- 350 | 
-
-### src/app/legacyBridge.mjs:41:69 no-unused-vars
-'e' is defined but never used.
-  40 |   if(typeof target.tlrSyncArchitectureToLiveSnapshot!=='function')return;
-  41 |   try{target.tlrSyncArchitectureToLiveSnapshot({quiet:true});}catch(e){}
-  42 | }
-
-### src/app/loadoutScreen.mjs:35:12 no-unused-vars
-'_' is defined but never used.
-  34 |     };
-  35 |   } catch (_) {
-  36 |     return { ...DEFAULT_PROFILE };
-
-### src/app/loadoutScreen.mjs:41:74 no-unused-vars
-'_' is defined but never used.
-  40 | function saveProfile(storage, profile) {
-  41 |   try { storage?.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch (_) {}
-  42 | }
-
-### src/app/loadoutScreen.mjs:81:16 no-unused-vars
-'_' is defined but never used.
-  80 |         img.decode?.().catch(() => {});
-  81 |       } catch (_) {}
-  82 |     }
-
-### src/app/loadoutScreen.mjs:104:12 no-unused-vars
-'_' is defined but never used.
- 103 |     try { return target.matchMedia?.('(prefers-reduced-motion: reduce)').matches; }
- 104 |     catch (_) { return false; }
- 105 |   }
-
 ### src/app/loadoutScreen.mjs:109:12 no-unused-vars
 'playSwitchCue' is defined but never used. Allowed unused vars must match /^_/u.
  108 |   // restarts the cue rather than stacking overlapping sounds.
  109 |   function playSwitchCue() {
  110 |     try {
 
-### src/app/loadoutScreen.mjs:117:14 no-unused-vars
-'_' is defined but never used.
- 116 |       switchAudio.play().catch(() => {});
- 117 |     } catch (_) {}
- 118 |   }
-
 ### src/app/mainMenu.mjs:4:10 no-unused-vars
 'hasSavedProgress' is defined but never used. Allowed unused vars must match /^_/u.
    3 | 
    4 | function hasSavedProgress(storage) {
    5 |   try {
-
-### src/app/mainMenu.mjs:14:12 no-unused-vars
-'_' is defined but never used.
-  13 |     return (reserve > 0) || (p.relics?.length > 0) || Object.values(upgrades).some(v => v > 0);
-  14 |   } catch (_) {
-  15 |     return false;
-
-### src/app/mainMenu.mjs:304:64 no-unused-vars
-'_' is defined but never used.
- 303 |   function startFresh() {
- 304 |     try { target.localStorage.removeItem('tlr_save'); } catch (_) {}
- 305 | 
-
-### src/app/marketFlow.mjs:75:45 no-unused-vars
-'e' is defined but never used.
-  74 |   if(target.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  75 |   try{target.playSound('resonation');}catch(e){}
-  76 |   try{target.haptic([0,40,30,60,40,80]);}catch(e){}
-
-### src/app/marketFlow.mjs:76:48 no-unused-vars
-'e' is defined but never used.
-  75 |   try{target.playSound('resonation');}catch(e){}
-  76 |   try{target.haptic([0,40,30,60,40,80]);}catch(e){}
-  77 |   const veil=document.createElement('div');veil.className='relic-vision-veil';document.body.appendChild(veil);
-
-### src/app/matchmakingScreen.mjs:37:10 no-unused-vars
-'_' is defined but never used.
-  36 |   try { return normalizeShuffleMode(target.localStorage?.getItem(SHUFFLE_STORAGE_KEY)); }
-  37 |   catch (_) { return MP_SHUFFLE_MODES.EACH_ROUND; }
-  38 | }
-
-### src/app/matchmakingScreen.mjs:42:75 no-unused-vars
-'_' is defined but never used.
-  41 |   const mode = normalizeShuffleMode(value);
-  42 |   try { target.localStorage?.setItem(SHUFFLE_STORAGE_KEY, mode); } catch (_) {}
-  43 |   return mode;
-
-### src/app/matchmakingScreen.mjs:365:14 no-unused-vars
-'_' is defined but never used.
- 364 |       if (saved === 100 || saved === 200 || saved === 300) _profile.scoreTarget = saved;
- 365 |     } catch (_) {}
- 366 |     if (!_profile.scoreTarget) _profile.scoreTarget = 200;
-
-### src/app/matchmakingScreen.mjs:376:82 no-unused-vars
-'_' is defined but never used.
- 375 |     _profile = { ..._profile, scoreTarget: Number(value) };
- 376 |     try { target.localStorage?.setItem('tlr_mm_target', String(value)); } catch (_) {}
- 377 |     renderIdlePhase();
-
-### src/app/matchmakingScreen.mjs:572:13 no-unused-vars
-'card' is assigned a value but never used. Allowed unused vars must match /^_/u.
- 571 |   function stripCpuCandidate(candidate) {
- 572 |     const { card, ...action } = candidate;
- 573 |     return action;
-
-### src/app/mpGame.mjs:1164:12 no-unused-vars
-'_' is defined but never used.
-1163 |     try { return structuredClone(state); }
-1164 |     catch (_) { return JSON.parse(JSON.stringify(state)); }
-1165 |   }
-
-### src/app/mpGame.mjs:1169:12 no-unused-vars
-'_' is defined but never used.
-1168 |     try { return !!target.matchMedia?.('(prefers-reduced-motion: reduce)').matches; }
-1169 |     catch (_) { return false; }
-1170 |   }
-
-### src/app/mpGame.mjs:1626:97 no-unused-vars
-'_' is defined but never used.
-1625 |   function sortChoiceCards(cards) { if (typeof target.sortCards === 'function') return target.sortCards(cards.slice()); return cards.slice().sort((a, b) => cleanCardName(a).localeCompare(cleanCardName(b))); }
-1626 |   function cleanCardName(card) { try { return cardTitle(card).replace(/<[^>]+>/g, ''); } catch (_) { return card?.name || card?.id || 'Card'; } }
-1627 | 
-
-### src/app/mpMatchSettings.mjs:12:10 no-unused-vars
-'_' is defined but never used.
-  11 |   try { return normalizeShuffleMode(target.localStorage?.getItem(STORAGE_KEY)); }
-  12 |   catch (_) { return MP_SHUFFLE_MODES.EACH_ROUND; }
-  13 | }
-
-### src/app/mpMatchSettings.mjs:17:67 no-unused-vars
-'_' is defined but never used.
-  16 |   const mode = normalizeShuffleMode(value);
-  17 |   try { target.localStorage?.setItem(STORAGE_KEY, mode); } catch (_) {}
-  18 |   target.__tlrMpShuffleMode = mode;
 
 ### src/app/readingFlow.mjs:8:31 no-unused-vars
 'SUITS' is defined but never used.
@@ -492,12 +150,6 @@ Warnings: 126
  203 | export function rollCounter(from,to,dur){_cacheEls();const threshold=Number(_elThreshold?.textContent)||Infinity;let el=_elCurrent,start=performance.now(),dead=false,lastVal=from,popAnim=null,thCrossed=from>=threshold;if(to<=from){el.textContent=from;el.style.color='';return()=>{dead=true}}function step(now){if(dead)return;const t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++){fireScoreGhost();}if(val!==lastVal){if(popAnim)popAnim.cancel();popAnim=el.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});}if(!thCrossed&&val>=threshold){thCrossed=true;const thPill=_elThreshold?.closest('.pill');if(thPill)thPill.animate([{boxShadow:'inset 0 -3px 0 rgba(154,111,235,.62)',filter:'brightness(1)'},{boxShadow:'inset 0 -3px 0 rgba(80,220,100,.9), 0 0 24px 6px rgba(80,220,100,.55)',filter:'brightness(1.45)',offset:.2},{boxShadow:'inset 0 -3px 0 rgba(154,111,235,.62)',filter:'brightness(1)'}],{duration:750,easing:'ease-out',fill:'none'});try{haptic([0,15,60,25,80]);}catch(e){}}lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color='';holdEffects(1000);}}requestAnimationFrame(step);return()=>{dead=true;if(popAnim)popAnim.cancel();el.style.color=''}}
  204 | 
 
-### src/app/readingFlow.mjs:203:1130 no-unused-vars
-'e' is defined but never used.
- 202 | export function snapCounter(v){if(counterTimer){clearTimeout(counterTimer);counterTimer=null}if(counterCancel){counterCancel();counterCancel=null}counterShown=counterTarget=v;_cacheEls();_elCurrent.textContent=v;_elCurrent.style.color=''}
- 203 | export function rollCounter(from,to,dur){_cacheEls();const threshold=Number(_elThreshold?.textContent)||Infinity;let el=_elCurrent,start=performance.now(),dead=false,lastVal=from,popAnim=null,thCrossed=from>=threshold;if(to<=from){el.textContent=from;el.style.color='';return()=>{dead=true}}function step(now){if(dead)return;const t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++){fireScoreGhost();}if(val!==lastVal){if(popAnim)popAnim.cancel();popAnim=el.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});}if(!thCrossed&&val>=threshold){thCrossed=true;const thPill=_elThreshold?.closest('.pill');if(thPill)thPill.animate([{boxShadow:'inset 0 -3px 0 rgba(154,111,235,.62)',filter:'brightness(1)'},{boxShadow:'inset 0 -3px 0 rgba(80,220,100,.9), 0 0 24px 6px rgba(80,220,100,.55)',filter:'brightness(1.45)',offset:.2},{boxShadow:'inset 0 -3px 0 rgba(154,111,235,.62)',filter:'brightness(1)'}],{duration:750,easing:'ease-out',fill:'none'});try{haptic([0,15,60,25,80]);}catch(e){}}lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color='';holdEffects(1000);}}requestAnimationFrame(step);return()=>{dead=true;if(popAnim)popAnim.cancel();el.style.color=''}}
- 204 | 
-
 ### src/app/readingFlow.mjs:384:10 no-unused-vars
 'betweenAbility' is defined but never used. Allowed unused vars must match /^_/u.
  383 | // it now lives here in the host.
@@ -528,36 +180,6 @@ Warnings: 126
  457 |   setsPerRound=_run.setsPerRound||setsPerRound;
  458 |   syncRoundFields(_run);
 
-### src/app/resonationFlow.mjs:17:9 no-unused-vars
-'e' is defined but never used.
-  16 |   try{return Function("try{return typeof invPos==='undefined'?undefined:invPos}catch(e){return undefined}")() || {};}
-  17 |   catch(e){return {};}
-  18 | }
-
-### src/app/resonationFlow.mjs:94:16 no-unused-vars
-'e' is defined but never used.
-  93 |           if(!invOpen&&typeof target.toggleInventory==='function')target.toggleInventory();
-  94 |         }catch(e){}
-  95 |       },1400);
-
-### src/app/runtimeState.mjs:36:9 no-unused-vars
-'e' is defined but never used.
-  35 |   try{return Function(`try{return typeof ${name}==='undefined'?undefined:${name}}catch(e){return undefined}`)();}
-  36 |   catch(e){return undefined;}
-  37 | }
-
-### src/app/runtimeState.mjs:71:111 no-unused-vars
-'e' is defined but never used.
-  70 |   ensure(target,'invOpen',false);
-  71 |   ensure(target,'invPos',(()=>{try{return JSON.parse(target.localStorage.getItem('tlr_inv_pos')||'{}');}catch(e){return {};}})());
-  72 | 
-
-### src/app/save.mjs:18:12 no-unused-vars
-'_error' is defined but never used.
-  17 |     return createInitialPersistState(parsed.persist);
-  18 |   } catch (_error) {
-  19 |     return createInitialPersistState();
-
 ### src/app/tutorialCore.mjs:65:5 no-unused-vars
 'placementCount' is assigned a value but never used. Allowed unused vars must match /^_/u.
   64 | let queuedTipTimer = null;
@@ -569,18 +191,6 @@ Warnings: 126
    2 | import { MP_ACTIONS } from './mpActions.mjs';
    3 | import { MP_ABILITY_TYPES } from './interactionCards.mjs';
    4 | import { getPersona } from './personas.mjs';
-
-### src/systems/resonations.mjs:5:9 no-unused-vars
-'e' is defined but never used.
-   4 |   try{return JSON.parse(storage.getItem('tlr_inv_unlocked')||'[]');}
-   5 |   catch(e){return [];}
-   6 | }
-
-### src/systems/resonations.mjs:10:9 no-unused-vars
-'e' is defined but never used.
-   9 |   try{storage.setItem('tlr_inv_unlocked',JSON.stringify(unlocked));}
-  10 |   catch(e){}
-  11 | }
 
 ### src/ui/gestureCard.mjs:3:56 no-unused-vars
 'placeCard' is defined but never used.
@@ -606,119 +216,17 @@ Warnings: 126
  134 |   const restoreCardToHand=()=>{
  135 |     if(!g||!g.cardEl||!g.originalParent)return;
 
-### src/ui/gestureCard.mjs:157:56 no-unused-vars
-'e' is defined but never used.
- 156 |     g.pendingUids=[];
- 157 |     try{g.cardEl.setPointerCapture(g.pointerId);}catch(e){}
- 158 |     target.__handGestureSuppressClickUntil=performance.now()+800;
-
-### src/ui/gestureCard.mjs:229:56 no-unused-vars
-'e' is defined but never used.
- 228 |     g.cardEl.style.setProperty('z-index','100000','important');
- 229 |     try{g.cardEl.setPointerCapture(g.pointerId);}catch(e){}
- 230 |     target.__handGestureSuppressClickUntil=performance.now()+800;
-
-### src/ui/gestureCard.mjs:319:58 no-unused-vars
-'e' is defined but never used.
- 318 |     if(g.dragRafId){cancelAnimationFrame(g.dragRafId);g.dragRafId=null;}
- 319 |     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
- 320 |     cardEl.classList.remove('hand-card-dragging');
-
-### src/ui/gestureDrawers.mjs:78:112 no-unused-vars
-'e' is defined but never used.
-  77 |         if(!active)return;active=false;
-  78 |         if(moved)try{target.localStorage.setItem('tlr_'+id+'_pull_tab_x',parseFloat(tab.style.left)||0);}catch(e){}
-  79 |       },{passive:true});
-
-### src/ui/gestureDrawers.mjs:184:66 no-unused-vars
-'e' is defined but never used.
- 183 |         t.el.style.left=nx+'px';
- 184 |         try{target.localStorage.setItem(t.key,String(nx));}catch(e){}
- 185 |         x=nx+t.w+gap;
-
-### src/ui/gestureDrawers.mjs:191:66 no-unused-vars
-'e' is defined but never used.
- 190 |         a.el.style.left=nx+'px';
- 191 |         try{target.localStorage.setItem(a.key,String(nx));}catch(e){}
- 192 |       }
-
-### src/ui/gestureDrawers.mjs:200:64 no-unused-vars
-'e' is defined but never used.
- 199 |       t.el.style.left=nx+'px';
- 200 |       try{target.localStorage.setItem(t.key,String(nx));}catch(e){}
- 201 |       x+=t.w+gap;
-
-### src/ui/gestureDrawers.mjs:230:64 no-unused-vars
-'e' is defined but never used.
- 229 |       t.el.style.left=nx+'px';
- 230 |       try{target.localStorage.setItem(t.key,String(nx));}catch(e){}
- 231 |     }
-
-### src/ui/gestureDrawers.mjs:242:12 no-unused-vars
-'e' is defined but never used.
- 241 |       }
- 242 |     }catch(e){seedDefaultPositions();}
- 243 |     target.requestAnimationFrame(fanTabs);
-
 ### src/ui/gestureHand.mjs:45:36 prefer-const
 'springState' is never reassigned. Use 'const' instead.
   44 |   // Center cards are stiff, edge cards soft and underdamped — center-out wave.
   45 |   let springRaf=null,springLastT=0,springState=new WeakMap();
   46 |   const OMEGA_CENTER=0.030,OMEGA_EDGE=0.016;
 
-### src/ui/gestureHand.mjs:104:152 no-unused-vars
-'e' is defined but never used.
- 103 |   };
- 104 |   try{target.__handHintStep=Number(localStorage.getItem('tlr_hand_hint_step')||'1');if(target.__handHintStep>=4)target.__handHasBeenSwiped=true;}catch(e){target.__handHintStep=1;}
- 105 |   const handEl=()=>{if(hand&&hand.isConnected)return hand;hand=document.querySelector('.hand');return hand;};
-
-### src/ui/gestureHand.mjs:316:16 no-unused-vars
-'e' is defined but never used.
- 315 |           document.dispatchEvent(ev);
- 316 |         }catch(e){}
- 317 |       }
-
-### src/ui/gestureHand.mjs:365:72 no-unused-vars
-'e' is defined but never used.
- 364 |     target.__handHintStep=next;
- 365 |     try{localStorage.setItem('tlr_hand_hint_step',String(next));}catch(e){}
- 366 |     const z2=zoneEl();
-
-### src/ui/gestureHand.mjs:417:116 no-unused-vars
-'e' is defined but never used.
- 416 |       if(isMiddleMouse)ev.preventDefault();
- 417 |       try{(isMouse?ev.target.closest('.handDock,#handSwipeZone'):zoneEl())?.setPointerCapture(ev.pointerId);}catch(e){}
- 418 |       startSlideMode(ev);
-
-### src/ui/gestureHand.mjs:459:50 no-unused-vars
-'e' is defined but never used.
- 458 |         if(rp.x>=rect.left&&rp.x<=rect.right&&rp.y>=rect.top&&rp.y<=rect.bottom){
- 459 |           try{z2.setPointerCapture(remId);}catch(e){}
- 460 |           startSlideMode({clientX:rp.x,clientY:rp.y});
-
 ### src/ui/renderMarket.mjs:8:7 no-unused-vars
 'STORE_ASSET_PATH' is assigned a value but never used. Allowed unused vars must match /^_/u.
    7 | const RELIC_CACHE_PACK_ID = 'relic';
    8 | const STORE_ASSET_PATH = './';
    9 | const STORE_FADE_MS = 260;
-
-### src/ui/renderMarket.mjs:462:11 no-unused-vars
-'e' is defined but never used.
- 461 |     src.onended = () => { src.disconnect(); f.disconnect(); g.disconnect(); };
- 462 |   } catch(e) {}
- 463 | }
-
-### src/ui/renderMarket.mjs:519:11 no-unused-vars
-'e' is defined but never used.
- 518 |     a.play().catch(() => {});
- 519 |   } catch(e) {}
- 520 | }
-
-### src/ui/renderMarket.mjs:540:11 no-unused-vars
-'e' is defined but never used.
- 539 |     src.onended = () => { src.disconnect(); f.disconnect(); g.disconnect(); };
- 540 |   } catch(e) {}
- 541 | }
 
 ### src/ui/renderTable.mjs:5:34 no-unused-vars
 '_cachedPlacedScore' is defined but never used.
