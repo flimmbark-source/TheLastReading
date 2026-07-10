@@ -2,6 +2,11 @@ import { ABILITY_TYPES, getAbility } from '../data/abilities.mjs';
 import { ALL_CARD_DEFINITIONS } from '../data/cards.mjs';
 import { shuffleDeck } from './deck.mjs';
 
+const RANK_ORDER = ['Page', 'Knight', 'Queen', 'King'];
+const SUIT_ORDER = ['Cups', 'Wands', 'Swords', 'Pentacles'];
+// Court ranks mapped onto the 0-21 major ladder for Between with major anchors.
+const COURT_LADDER_POSITIONS = [0, 5, 10, 15];
+
 function majorDefinition(number) {
   return ALL_CARD_DEFINITIONS.find(card => card.type === 'major' && card.number === number) || null;
 }
@@ -23,20 +28,31 @@ export function isSightAbility(abilityId) {
   return Boolean(ability) && SIGHT_ABILITY_TYPES.has(ability.type);
 }
 
-export function mirrorCardId(card) {
-  if (!card) return null;
+export function mirrorCardIds(card) {
+  if (!card) return [];
   if (card.type === 'major') {
     const mirrored = majorDefinition(21 - (card.number ?? card.num));
-    return mirrored?.id || null;
+    return mirrored ? [mirrored.id] : [];
   }
 
   if (card.type === 'court') {
-    // Courts mirror within their own suit: Page<->King, Knight<->Queen.
+    // Court cards mirror by rank across the whole Court Arcana. A Queen can
+    // therefore reach every Knight still in the deck, regardless of suit.
     const mirroredRank = { Page: 'King', King: 'Page', Knight: 'Queen', Queen: 'Knight' }[card.rank];
-    return courtDefinition(card.suit, mirroredRank)?.id || null;
+    if (!mirroredRank) return [];
+    return SUIT_ORDER
+      .map(suit => courtDefinition(suit, mirroredRank)?.id)
+      .filter(Boolean);
   }
 
-  return null;
+  return [];
+}
+
+// Kept for callers that require a genuinely singular mirror (Major Arcana).
+// Court mirrors are plural by design and therefore return null here.
+export function mirrorCardId(card) {
+  const ids = mirrorCardIds(card);
+  return ids.length === 1 ? ids[0] : null;
 }
 
 export function neighborCardIds(card, distance = 1) {
@@ -49,10 +65,9 @@ export function neighborCardIds(card, distance = 1) {
   }
 
   if (card.type === 'court') {
-    const rankOrder = ['Page', 'Knight', 'Queen', 'King'];
-    const index = rankOrder.indexOf(card.rank);
+    const index = RANK_ORDER.indexOf(card.rank);
     return [index - distance, index + distance]
-      .map(nextIndex => rankOrder[nextIndex])
+      .map(nextIndex => RANK_ORDER[nextIndex])
       .filter(Boolean)
       .map(rank => courtDefinition(card.suit, rank)?.id)
       .filter(Boolean);
@@ -60,11 +75,6 @@ export function neighborCardIds(card, distance = 1) {
 
   return [];
 }
-
-const RANK_ORDER = ['Page', 'Knight', 'Queen', 'King'];
-const SUIT_ORDER = ['Cups', 'Wands', 'Swords', 'Pentacles'];
-// Court ranks mapped onto the 0-21 major ladder for Between with major anchors.
-const COURT_LADDER_POSITIONS = [0, 5, 10, 15];
 
 export function betweenCardIds(a, b) {
   if (!a || !b || a.type !== b.type) return [];
@@ -120,6 +130,23 @@ export function cardsInDeckByIds(deck, ids) {
   return deck.filter(card => idSet.has(card.id));
 }
 
+export function abilityWithRevealUpgrades(ability, upgrades = {}) {
+  if (!ability) return null;
+  const next = { ...ability };
+  const lens = Math.max(0, Number(upgrades.lens_mastery) || 0);
+  const relation = Math.max(0, Number(upgrades.relation_plus) || 0);
+
+  if (next.type === ABILITY_TYPES.NEIGHBOR || next.type === ABILITY_TYPES.KIN) {
+    next.count = (next.count ?? 2) + lens + relation;
+  } else if (next.type === ABILITY_TYPES.BETWEEN) {
+    next.count = (next.count ?? 2) + relation;
+  }
+
+  // Mirror reveals every legal opposite-rank Court card, so a numeric reveal
+  // bonus cannot enlarge it. Major mirrors remain singular.
+  return next;
+}
+
 export function validHandTargetsForAbility(abilityId, state) {
   const ability = getAbility(abilityId);
   if (!ability) return [];
@@ -134,7 +161,7 @@ export function validHandTargetsForAbility(abilityId, state) {
       return hand.filter(card => deck.some(deckCard => isSameArcana(deckCard, card)));
 
     case ABILITY_TYPES.MIRROR:
-      return hand.filter(card => deck.some(deckCard => deckCard.id === mirrorCardId(card)));
+      return hand.filter(card => cardsInDeckByIds(deck, mirrorCardIds(card)).length > 0);
 
     case ABILITY_TYPES.BETWEEN:
       return hand.filter((card, index) => hand.some((other, otherIndex) => otherIndex !== index && cardsInDeckByIds(deck, betweenCardIds(card, other)).length > 0));
@@ -149,7 +176,8 @@ export function validHandTargetsForAbility(abilityId, state) {
 // the full set of eligible cards the ability would reveal/hold from the deck.
 // Callers apply their own count limits (singleplayer factors in upgrades, the
 // multiplayer reducer slices by ability.count) so this stays a single source of
-// truth for *which* cards an ability can reach.
+// truth for *which* cards an ability can reach. Mirror is the exception: all
+// legal Court mirrors are choices, while Major mirrors are naturally singular.
 export function abilityHeldCards(deck = [], ability, anchors = []) {
   if (!ability) return [];
   const picked = (Array.isArray(anchors) ? anchors : [anchors]).filter(Boolean);
@@ -162,7 +190,7 @@ export function abilityHeldCards(deck = [], ability, anchors = []) {
       return picked[0] ? deck.filter(card => isSameArcana(card, picked[0])) : [];
 
     case ABILITY_TYPES.MIRROR:
-      return picked[0] ? cardsInDeckByIds(deck, [mirrorCardId(picked[0])].filter(Boolean)) : [];
+      return picked[0] ? cardsInDeckByIds(deck, mirrorCardIds(picked[0])) : [];
 
     case ABILITY_TYPES.BETWEEN:
       return picked.length >= 2 ? cardsInDeckByIds(deck, betweenCardIds(picked[0], picked[1])) : [];
@@ -222,7 +250,8 @@ export function applySearchTake(run, takenCardId, rng) {
   return { deck: shuffleDeck(deck, rng), hand: [...run.hand, taken], taken };
 }
 
-// Full Reset (The World): everything back into the deck, shuffle, redraw.
+// Full Reset (The World): shuffle the unplayed piles and redraw while leaving
+// the spread intact. The reducer preserves run.spread when applying this result.
 export function applyWorldReset(run, handSize, rng) {
   const deck = shuffleDeck([...run.deck, ...run.discard, ...run.hand], rng);
   return { deck: deck.slice(handSize), discard: [], hand: deck.slice(0, handSize) };
