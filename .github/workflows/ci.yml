@@ -37,18 +37,31 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - name: Decode source transformer
+      - name: Reassemble and decode source transformer
         if: steps.phase-state.outputs.applied != 'true'
         run: |
           python - <<'PY'
           import base64
           import gzip
+          import hashlib
+          import json
           from pathlib import Path
 
-          encoded = Path('scripts/.apply-adventure-reward-phases.mjs.gz.b64').read_text(encoding='utf-8')
-          encoded = ''.join(encoded.split())
-          encoded += '=' * (-len(encoded) % 4)
-          compressed = base64.b64decode(encoded, validate=False)
+          parts = []
+          for index in (1, 2):
+              path = Path(f'scripts/.apply-adventure-reward-phases.part{index:02d}')
+              parts.append(''.join(path.read_text(encoding='utf-8').split()))
+          for index in (3, 4, 5):
+              path = Path(f'scripts/.apply-adventure-reward-phases.part{index:02d}.json')
+              parts.append(json.loads(path.read_text(encoding='utf-8'))['data'])
+
+          encoded = ''.join(parts)
+          expected = '33870c474159518511be4edce67fcf3eeb93d5955015be65a5dbecd6d1e3bec8'
+          actual = hashlib.sha256(encoded.encode('ascii')).hexdigest()
+          if actual != expected:
+              raise SystemExit(f'Transformer checksum mismatch: expected {expected}, got {actual}')
+
+          compressed = base64.b64decode(encoded, validate=True)
           source = gzip.decompress(compressed)
           Path('/tmp/apply-adventure-reward-phases.mjs').write_bytes(source)
           print(f'Decoded {len(compressed)} compressed bytes into {len(source)} source bytes.')
@@ -87,7 +100,11 @@ jobs:
           git checkout origin/main -- .github/workflows/ci.yml
           rm -f .github/workflows/apply-adventure-reward-phases.yml
           rm -f scripts/.apply-adventure-reward-phases.mjs.gz.b64
+          rm -f scripts/.apply-adventure-reward-phases.part01 scripts/.apply-adventure-reward-phases.part02
+          rm -f scripts/.apply-adventure-reward-phases.part03.json scripts/.apply-adventure-reward-phases.part04.json scripts/.apply-adventure-reward-phases.part05.json
           git add -A .github/workflows/ci.yml .github/workflows/apply-adventure-reward-phases.yml scripts/.apply-adventure-reward-phases.mjs.gz.b64
+          git add -A scripts/.apply-adventure-reward-phases.part01 scripts/.apply-adventure-reward-phases.part02
+          git add -A scripts/.apply-adventure-reward-phases.part03.json scripts/.apply-adventure-reward-phases.part04.json scripts/.apply-adventure-reward-phases.part05.json
           git add src/app/adventureModeV3.mjs src/app/adventureCardSigils.mjs
           git add src/data/adventure/sigils.mjs src/data/adventure/adventureContentV3.mjs
           git add scripts/validate-adventure-reward-phases.mjs docs/adventure-passive-audit.md
