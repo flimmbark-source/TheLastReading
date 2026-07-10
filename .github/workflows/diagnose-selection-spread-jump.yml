@@ -30,8 +30,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Use runner Chrome with Playwright
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME"
+          EXPECTED="$(node -e "const { chromium } = require('playwright'); process.stdout.write(chromium.executablePath())")"
+          mkdir -p "$(dirname "$EXPECTED")"
+          ln -sf "$CHROME" "$EXPECTED"
+          echo "Using $CHROME as $EXPECTED"
 
       - name: Measure selection geometry
         run: node scripts/diagnose-selection-spread-jump.mjs
