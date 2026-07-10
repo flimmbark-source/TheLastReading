@@ -10,7 +10,9 @@ permissions:
 
 jobs:
   apply-adventure-reward-phases:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/adventure-reward-usability'
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/adventure-reward-usability') ||
+      (github.event_name == 'pull_request' && github.head_ref == 'adventure-reward-usability')
     runs-on: ubuntu-latest
     steps:
       - name: Check out branch
@@ -35,12 +37,17 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      - name: Decode and apply exact source transforms
+      - name: Decode source transformer
         if: steps.phase-state.outputs.applied != 'true'
-        run: |
-          base64 -d scripts/.apply-adventure-reward-phases.mjs.gz.b64 | gunzip > /tmp/apply-adventure-reward-phases.mjs
-          node --check /tmp/apply-adventure-reward-phases.mjs
-          node /tmp/apply-adventure-reward-phases.mjs
+        run: base64 -d scripts/.apply-adventure-reward-phases.mjs.gz.b64 | gunzip > /tmp/apply-adventure-reward-phases.mjs
+
+      - name: Syntax-check source transformer
+        if: steps.phase-state.outputs.applied != 'true'
+        run: node --check /tmp/apply-adventure-reward-phases.mjs
+
+      - name: Apply exact source transforms
+        if: steps.phase-state.outputs.applied != 'true'
+        run: node /tmp/apply-adventure-reward-phases.mjs
 
       - name: Install dependencies
         if: steps.phase-state.outputs.applied != 'true'
