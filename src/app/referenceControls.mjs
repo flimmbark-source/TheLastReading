@@ -17,8 +17,8 @@ function patternLabel(label){return scoreCardIcon()+'<b>'+label+'</b>';}
 
 export function abilityReferenceRows(){
   return [
-    ['Draw','Draw the listed number of cards.'],
-    ['Peek','Reveal the listed number of cards. Take 1. Put the rest on the bottom.'],
+    ['Draw','[[draw]] the listed number of cards.'],
+    ['Peek','[[reveal]] the listed number of cards. [[take]] 1. Put the rest on the bottom.'],
     ['Search',getAbility('SEARCH')?.prompt||''],
     ['Full Reset',getAbility('WORLD')?.prompt||''],
     ['Neighbor',getAbility('NEIGHBOR_2')?.prompt||''],
@@ -35,6 +35,7 @@ export function renderAbilitySheet(target = window){
   ability.innerHTML='<table><tr><td><b>Ability</b></td><td class="r"><b>What it does</b></td></tr>'
     +rows.map(([name,description])=>`<tr><td>${escapeHtml(name)}</td><td class="r">${escapeHtml(description)}</td></tr>`).join('')
     +'</table>';
+  target.tlrApplyGameTerms?.(ability, { auto: true });
 }
 
 export function closeRefs(){
@@ -92,6 +93,7 @@ export function renderScoringSheet(target = window){
   html+='</tbody></table>';
   if(upgrades.length)html+=`<div class="ref-upgrades"><b>Your upgrades:</b> ${upgrades.join(' · ')}</div>`;
   ref.innerHTML=html;
+  target.tlrApplyGameTerms?.(ref, { auto: true });
 }
 
 export function positionRefsLayer(button){

@@ -68,42 +68,42 @@ let tutPositionTimer = null;
 
 const TUT_STEPS = [
   { center: true, text: 'Your relative left behind their tarot deck. You used to play this game together.' },
-  { sel: '#hand .card[data-uid]', fallbackSel: '.handDock .hand', arrow: 'down', waitFor: 'cardSelected', text: 'Tap a card to select it.' },
-  { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', waitFor: 'cardPlaced', text: 'Tap an empty slot to place it.' },
-  { sel: '#current', fallbackSel: '.score-pill', arrow: 'up', text: 'That card added points to your total.' },
-  { sel: '#hand .card[data-uid] .seal.tr', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The red circle on each card shows how many points it adds.' },
-  { sel: '#threshold', fallbackSel: '.threshold-pill', arrow: 'up', key: TUT_THRESHOLD_KEY, text: 'You have 2 sets in which to beat the Threshold and advance.' },
-  { sel: '#discardBtn', arrow: 'down', key: TUT_DISCARD_KEY, text: '<b>Discard</b> a card to use its <b>Ability</b> instead of placing it.' },
-  { sel: '#hand .card[data-hint], #hand .card.hint-complete, #hand .card.hint-card', fallbackSel: '#hand .card[data-uid]', arrow: 'down', key: TUT_PATTERN_KEY, text: 'Some of your cards may work together.' },
-  { center: true, text: 'Each cleared Threshold makes the next one harder. Clear the 10th Threshold to win.' },
-  { sel: '#relicRack .relic-btn', fallbackSel: '#relicRack', arrow: 'up', text: 'You found a <b>Relic</b>. Relics carry passive effects across every reading until you lose. Tap a relic icon to see what it does.' },
-  { sel: '#scoringBtn', fallbackSel: '#scoringPullTab', arrow: 'up', key: TUT_PATTERN_KEY, text: 'Check <b>Scoring</b> to see if you can complete a pattern. Place the cards down to activate a pattern.' },
-  { sel: '#purgeBtn', arrow: 'down', key: TUT_PURGE_KEY, text: 'Remove 3 cards from your hand to gain 1 Discard.' },
-  { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', key: TUT_READING_KEY, text: 'One more card completes the reading.' },
-  { sel: '#spv2ArchiveBtn', fallbackSel: '#invTab', arrow: 'up', key: TUT_ARCHIVES_KEY, text: 'The <b>Archives</b> hold discovered items. Tap to open and investigate.' },
-  { sel: '.store-reserve-display', arrow: 'down', key: TUT_MARKET_KEY, text: '<b>Reserve</b><br>Your currency for upgrades in the Market.' },
-  { sel: '.store-offer-row .store-card:nth-child(1)', arrow: 'down', key: TUT_MARKET_KEY, text: '<b>Scoring</b><br>Buy pattern upgrades. Chips and Mult increase by the amount shown.' },
-  { sel: '.store-offer-row .store-card:nth-child(2)', arrow: 'down', key: TUT_MARKET_KEY, text: '<b>Pack</b><br>Open a pack to choose a hand, discard, draw, or ability upgrade.' },
-  { sel: '.store-offer-row .store-card:nth-child(3)', arrow: 'up', key: TUT_MARKET_KEY, text: '<b>Relic</b><br>Buy a relic to add its passive effect to your relic row.' },
-  { sel: '.store-refresh', arrow: 'up', key: TUT_MARKET_KEY, text: '<b>Refresh</b><br>Spend Reserve to replace the Market offers.' },
-  { sel: '.store-proceed', arrow: 'up', key: TUT_MARKET_KEY, text: '<b>Next Reading</b><br>Leave the Market and start the next reading.' },
-  { sel: '#constellationPill:not(.hidden)', arrow: 'up', key: TUT_CONSTELLATION_KEY, text: '<b>Constellation</b><br>A constellation changes this reading. Tap its sign to see the rule.' },
-  { center: true, text: 'In Adventure Mode, each Event is resolved by playing one card.' },
-  { sel: '#advEventDeck .adv-event-hero', fallbackSel: '#advEventDeck', arrow: 'up', text: 'Read the Event and decide how you want to respond.' },
-  { sel: '#hand .card[data-uid] .adv-sigil-seal', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The text above this card shows the kind of approach it represents.' },
-  { sel: '#hand .card[data-uid] .seal.tr', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The red number shows how strong that response is.' },
-  { sel: '#scoringBtn', fallbackSel: '#scoringPullTab', arrow: 'up', text: 'Press to see a map that shows how well your cards match this Event before you commit to a play.' },
-  { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', waitFor: 'advCardPlaced', text: 'Place one card to face the Event and see what happens.' },
-  { sel: '#advHud .adv-hud__main', fallbackSel: '#advHud', arrow: 'up', text: 'A failed response costs Resolve. Reach zero and the run ends.' },
-  { center: true, key: TUT_ADV_APPROACH_KEY, text: 'Each card has an approach, a way of facing the Event. When played, it chains to the nearest approach the Event accepts.' },
-  { center: true, key: TUT_ADV_APPROACH_CHAIN_KEY, text: 'Each approach has one of three hidden difficulty levels, with harder ones needing a stronger response.' },
-  { center: true, key: TUT_ADV_APPROACH_GREAT_KEY, text: 'Playing a card with an exact approach for an Event may grant a Great Success and special rewards.' },
-  { sel: '.adv-rewards', fallbackSel: '.result-panel', arrow: 'up', key: TUT_ADV_REWARD_KEY, text: 'When you succeed, pick a reward. Rewards shape your run.' },
-  { sel: '#relicRack', arrow: 'up', key: TUT_ADV_ITEMS_KEY, text: 'Items you earn are carried here. Tap a consumable to use it.' },
-  { center: true, key: TUT_ADV_COMPLETE_KEY, text: "You finished a Set. Complete one more to win the adventure." },
-  // Reached only via the PATTERN_NOTICE branch in tutNext() below (index kept
-  // out of the linear array order so every other step's index stays stable).
-  { sel: '#hintLevelBar', fallbackSel: '#settingsPanel', arrow: 'up', text: 'Use hints to see potential scoring patterns.' },
+  { sel: '#hand .card[data-uid]', fallbackSel: '.handDock .hand', arrow: 'down', waitFor: 'cardSelected', text: 'Tap a card in your [[hand]] to select it.' },
+  { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', waitFor: 'cardPlaced', text: 'Tap an empty slot to [[play]] it into the [[spread]].' },
+  { sel: '#current', fallbackSel: '.score-pill', arrow: 'up', text: 'That card added [[chips]] to your [[score]].' },
+  { sel: '#hand .card[data-uid] .seal.tr', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The red seal shows the card’s [[chips]].' },
+  { sel: '#threshold', fallbackSel: '.threshold-pill', arrow: 'up', key: TUT_THRESHOLD_KEY, text: 'Reach the [[threshold]] within 2 sets to advance.' },
+  { sel: '#discardBtn', arrow: 'down', key: TUT_DISCARD_KEY, text: '[[discard]] a card to activate its [[ability]] instead of [[play|Playing]] it.' },
+  { sel: '#hand .card[data-hint], #hand .card.hint-complete, #hand .card.hint-card', fallbackSel: '#hand .card[data-uid]', arrow: 'down', key: TUT_PATTERN_KEY, text: 'Some cards can combine into a [[pattern]].' },
+  { center: true, text: 'Each cleared [[threshold]] is harder. Clear the 10th to win.' },
+  { sel: '#relicRack .relic-btn', fallbackSel: '#relicRack', arrow: 'up', text: 'A [[relic]] grants a passive effect across Readings. Tap it to read the rule.' },
+  { sel: '#scoringBtn', fallbackSel: '#scoringPullTab', arrow: 'up', key: TUT_PATTERN_KEY, text: 'Open Scoring to check [[pattern|Patterns]]. Complete one in your [[spread]] to gain [[chips]], [[mult]], or both.' },
+  { sel: '#purgeBtn', arrow: 'down', key: TUT_PURGE_KEY, text: 'Remove 3 cards from your [[hand]] to gain 1 [[discard]].' },
+  { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', key: TUT_READING_KEY, text: 'One more card completes this [[reading]].' },
+  { sel: '#spv2ArchiveBtn', fallbackSel: '#invTab', arrow: 'up', key: TUT_ARCHIVES_KEY, text: 'The Archives hold discovered items and clues.' },
+  { sel: '.store-reserve-display', arrow: 'down', key: TUT_MARKET_KEY, text: '[[reserve]] is the currency you spend in the Market.' },
+  { sel: '.store-offer-row .store-card:nth-child(1)', arrow: 'down', key: TUT_MARKET_KEY, text: 'Scoring upgrades increase a [[pattern]]’s [[chips]] or [[mult]].' },
+  { sel: '.store-offer-row .store-card:nth-child(2)', arrow: 'down', key: TUT_MARKET_KEY, text: 'Packs offer Hand, [[discard]], [[draw]], or [[ability]] upgrades.' },
+  { sel: '.store-offer-row .store-card:nth-child(3)', arrow: 'up', key: TUT_MARKET_KEY, text: 'Buy a [[relic]] to add its passive effect to your relic row.' },
+  { sel: '.store-refresh', arrow: 'up', key: TUT_MARKET_KEY, text: 'Spend [[reserve]] to replace the Market offers.' },
+  { sel: '.store-proceed', arrow: 'up', key: TUT_MARKET_KEY, text: 'Leave the Market and begin the next [[reading]].' },
+  { sel: '#constellationPill:not(.hidden)', arrow: 'up', key: TUT_CONSTELLATION_KEY, text: 'A Constellation changes the current [[reading]]. Tap its sign to read the rule.' },
+  { center: true, text: 'In Adventure Mode, [[play]] 1 card to resolve each [[event]].' },
+  { sel: '#advEventDeck .adv-event-hero', fallbackSel: '#advEventDeck', arrow: 'up', text: 'Read the [[event]] and decide how to respond.' },
+  { sel: '#hand .card[data-uid] .adv-sigil-seal', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The sigil shows the card’s approach.' },
+  { sel: '#hand .card[data-uid] .seal.tr', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The red number shows the response’s Potency.' },
+  { sel: '#scoringBtn', fallbackSel: '#scoringPullTab', arrow: 'up', text: 'Open the approach map to preview how your cards match this [[event]].' },
+  { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', waitFor: 'advCardPlaced', text: '[[play]] 1 card to face the [[event]].' },
+  { sel: '#advHud .adv-hud__main', fallbackSel: '#advHud', arrow: 'up', text: 'Failure can cost [[resolve]]. The run ends at 0.' },
+  { center: true, key: TUT_ADV_APPROACH_KEY, text: 'Each card has an approach. When [[play|Played]], it routes to the nearest approach the [[event]] accepts.' },
+  { center: true, key: TUT_ADV_APPROACH_CHAIN_KEY, text: 'Accepted approaches have hidden difficulty. Stronger responses clear harder approaches.' },
+  { center: true, key: TUT_ADV_APPROACH_GREAT_KEY, text: 'An exact approach can produce a Great Success and stronger rewards.' },
+  { sel: '.adv-rewards', fallbackSel: '.result-panel', arrow: 'up', key: TUT_ADV_REWARD_KEY, text: 'After a Success, [[choose]] a reward to shape the run.' },
+  { sel: '#relicRack', arrow: 'up', key: TUT_ADV_ITEMS_KEY, text: 'Adventure items are carried here. Tap a Consumable to use it.' },
+  { center: true, key: TUT_ADV_COMPLETE_KEY, text: 'Set complete. Finish 1 more Set to win the Adventure.' },
+  // Reached only through the Pattern notice branch; kept last so all stable
+  // tutorial step indices remain unchanged.
+  { sel: '#hintLevelBar', fallbackSel: '#settingsPanel', arrow: 'up', text: 'Hints can reveal possible [[pattern|Patterns]].' },
 ];
 
 const MARKET_TUT_STEPS = [
@@ -279,6 +279,7 @@ export function tutShow(step, options = {}) {
   // this for the next tutShow call regardless of which step follows).
   if (step === TUT_STEP.HINT_SETTING) tip.style.setProperty('z-index', '2147483300', 'important');
   text.innerHTML = s.text;
+  window.tlrApplyGameTerms?.(text, { auto: true });
   const tapPrompt = tip.querySelector('.tut-tap-prompt');
   if (tapPrompt) tapPrompt.style.display = s.waitFor ? 'none' : '';
   if (s.center) {

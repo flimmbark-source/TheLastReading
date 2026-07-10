@@ -84,6 +84,7 @@ export function choice(title,prompt,cards,cb){
   if(cards.length===1){activeChoiceCancel=null;playSound('flip');cb(cards[0]);return}
   ensureChoiceLayoutStyles();
   $('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';
+  window.tlrApplyGameTerms?.($('#modalPrompt'), { auto: true });
   const ch=$('#choices');ch.innerHTML='';
   cards.forEach(c=>{
     const e=document.createElement('div');
@@ -114,6 +115,7 @@ export function choiceAsync(title,prompt,cards){return new Promise(resolve=>choi
 export function browseCards(title,prompt,cards){
   ensureChoiceLayoutStyles();
   $('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';
+  window.tlrApplyGameTerms?.($('#modalPrompt'), { auto: true });
   const ch=$('#choices');ch.innerHTML='';
   cards.forEach(c=>{
     const e=document.createElement('div');
@@ -148,6 +150,7 @@ export function renderAbilityPrompt(){
     preview=previewFn(...picked)||'';
   }
   $('#abilityPromptText').innerHTML=preview?a.prompt+'<br><b>'+preview+'</b>':a.prompt;
+  window.tlrApplyGameTerms?.($('#abilityPromptText'), { auto: true });
   $('#abilityConfirm').disabled=a.picked.length<a.count;
   if(cancel)cancel.hidden=!(typeof window.tlrCanCancelAbilitySelection==='function'&&window.tlrCanCancelAbilitySelection());
   el.classList.add('show');
