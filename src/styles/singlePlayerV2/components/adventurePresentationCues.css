@@ -1,9 +1,41 @@
+body.mode-adventure.presentation-flag-adventure-outcome #advEventDeck,
+body.mode-adventure.presentation-flag-adventure-reward #advEventDeck,
+body.mode-adventure.presentation-flag-adventure-recovery #advEventDeck {
+  opacity: .42;
+  filter: brightness(.68) saturate(.72);
+  transform: translateX(-50%) translateY(-4px) scale(.97);
+  transition: opacity 220ms ease, filter 220ms ease, transform 260ms cubic-bezier(.2,.75,.25,1);
+}
+
+body.mode-adventure.presentation-flag-adventure-outcome #relicRack,
+body.mode-adventure.presentation-flag-adventure-reward #relicRack,
+body.mode-adventure.presentation-flag-adventure-recovery #relicRack {
+  opacity: .48;
+  filter: brightness(.72) saturate(.76);
+  transition: opacity 220ms ease, filter 220ms ease;
+}
+
 body.mode-adventure.presentation-cue-adventure-outcome #summary.show > .result-panel,
 body.mode-adventure.presentation-cue-adventure-reward #summary.show > .result-panel,
 body.mode-adventure.presentation-cue-adventure-recovery #summary.show > .result-panel {
   animation: presentation-adventure-scene-in 620ms cubic-bezier(.16,.82,.26,1) both;
   transform-origin: 50% 58%;
 }
+
+body.mode-adventure.presentation-cue-adventure-outcome #summary.show .adv-played-card {
+  animation: presentation-adventure-result-line 420ms 120ms ease-out both;
+}
+
+body.mode-adventure.presentation-cue-adventure-outcome #summary.show .adv-narrative {
+  animation: presentation-adventure-result-line 460ms 190ms ease-out both;
+}
+
+body.mode-adventure.presentation-cue-adventure-outcome #summary.show .adv-statuschg {
+  animation: presentation-adventure-status 380ms 290ms cubic-bezier(.16,.82,.26,1) both;
+}
+
+body.mode-adventure.presentation-cue-adventure-outcome #summary.show .adv-statuschg:nth-child(2) { animation-delay: 350ms; }
+body.mode-adventure.presentation-cue-adventure-outcome #summary.show .adv-statuschg:nth-child(3) { animation-delay: 410ms; }
 
 body.mode-adventure.presentation-cue-adventure-reward #summary.show .adv-reward {
   animation: presentation-reward-deal 420ms cubic-bezier(.16,.82,.26,1) both;
@@ -14,6 +46,19 @@ body.mode-adventure.presentation-cue-adventure-reward #summary.show .adv-reward:
 body.mode-adventure.presentation-cue-adventure-reward #summary.show .adv-reward:nth-child(4) { animation-delay: 135ms; }
 body.mode-adventure.presentation-cue-adventure-reward #summary.show .adv-reward:nth-child(5) { animation-delay: 180ms; }
 
+body.mode-adventure #summary.show .adv-reward:focus-visible {
+  outline: 2px solid rgba(246,211,139,.92);
+  outline-offset: 3px;
+  box-shadow:
+    0 0 0 1px rgba(34,19,10,.88),
+    0 0 22px rgba(228,180,92,.34),
+    inset 0 1px 0 rgba(255,239,202,.08);
+}
+
+body.mode-adventure #summary.show .adv-reward[aria-pressed="true"] {
+  border-color: rgba(178,222,139,.78);
+}
+
 @keyframes presentation-adventure-scene-in {
   0% {
     opacity: 0;
@@ -23,6 +68,33 @@ body.mode-adventure.presentation-cue-adventure-reward #summary.show .adv-reward:
   52% {
     opacity: 1;
     filter: brightness(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes presentation-adventure-result-line {
+  0% {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes presentation-adventure-status {
+  0% {
+    opacity: 0;
+    transform: translateY(7px) scale(.94);
+    filter: brightness(.78);
+  }
+  65% {
+    filter: brightness(1.12);
   }
   100% {
     opacity: 1;
@@ -43,9 +115,21 @@ body.mode-adventure.presentation-cue-adventure-reward #summary.show .adv-reward:
 }
 
 @media (prefers-reduced-motion: reduce) {
+  body.mode-adventure.presentation-flag-adventure-outcome #advEventDeck,
+  body.mode-adventure.presentation-flag-adventure-reward #advEventDeck,
+  body.mode-adventure.presentation-flag-adventure-recovery #advEventDeck,
+  body.mode-adventure.presentation-flag-adventure-outcome #relicRack,
+  body.mode-adventure.presentation-flag-adventure-reward #relicRack,
+  body.mode-adventure.presentation-flag-adventure-recovery #relicRack {
+    transition-duration: 80ms;
+  }
+
   body.mode-adventure.presentation-cue-adventure-outcome #summary.show > .result-panel,
   body.mode-adventure.presentation-cue-adventure-reward #summary.show > .result-panel,
   body.mode-adventure.presentation-cue-adventure-recovery #summary.show > .result-panel,
+  body.mode-adventure.presentation-cue-adventure-outcome #summary.show .adv-played-card,
+  body.mode-adventure.presentation-cue-adventure-outcome #summary.show .adv-narrative,
+  body.mode-adventure.presentation-cue-adventure-outcome #summary.show .adv-statuschg,
   body.mode-adventure.presentation-cue-adventure-reward #summary.show .adv-reward {
     animation: none;
   }
