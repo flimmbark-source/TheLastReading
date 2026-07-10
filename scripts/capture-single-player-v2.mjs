@@ -1,5 +1,6 @@
 import { chromium } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { spawn } from 'node:child_process';
 
 const baseUrl = process.env.TLR_CAPTURE_URL || 'http://127.0.0.1:8080';
 const outputDir = process.env.TLR_CAPTURE_DIR || 'artifacts/single-player-v2';
@@ -217,3 +218,22 @@ try {
 }
 
 await writeFile(`${outputDir}/metrics.json`, JSON.stringify(results, null, 2));
+
+// PR capture workflows already invoke this established script from main. Run the
+// broader scene matrix against the same server and place its images inside the
+// same artifact directory so new presentation work is reviewable immediately.
+await new Promise((resolve, reject) => {
+  const child = spawn(process.execPath, ['scripts/capture-presentation-states.mjs'], {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      PRESENTATION_CAPTURE_URL: baseUrl,
+      PRESENTATION_CAPTURE_DIR: `${outputDir}/presentation`,
+    },
+  });
+  child.once('error', reject);
+  child.once('exit', code => {
+    if (code === 0) resolve();
+    else reject(new Error(`Presentation scene capture exited with code ${code}`));
+  });
+});
