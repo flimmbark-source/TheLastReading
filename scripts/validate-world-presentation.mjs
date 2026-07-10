@@ -50,6 +50,8 @@ assert.match(camera, /name === 'pattern'/);
 assert.match(camera, /name === 'threshold-clear'/);
 assert.match(cameraCss, /presentation-card-selected/);
 assert.match(cameraCss, /presentation-card-dragging/);
+assert.doesNotMatch(cameraCss, /presentation-card-(?:selected|dragging)\s+\.spread-wrap/,
+  'The spread is the drag target and must not move during card selection or dragging');
 assert.doesNotMatch(camera, /dispatch\(|PLACE_CARD|SCORE_READING|session\.run/,
   'Camera director must remain presentation-only');
 
