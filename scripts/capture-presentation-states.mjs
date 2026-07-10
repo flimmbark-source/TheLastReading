@@ -61,6 +61,84 @@ async function captureReadingStates(page, label) {
   }
 }
 
+async function captureArchives(page, label) {
+  await page.evaluate(() => {
+    const first = window.INV_ITEMS?.[0];
+    if (first) {
+      localStorage.setItem('tlr_attic_found_items', JSON.stringify([first.id]));
+      window.renderInventory?.();
+    }
+    document.getElementById('spv2ArchiveBtn')?.click();
+  });
+  await page.waitForSelector('#invWrap.open');
+  await page.waitForFunction(() => document.body.classList.contains('presentation-surface-archives'));
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `artifacts/presentation-${label}-archives-open.png`, fullPage: true });
+
+  const item = page.locator('#invDesk .inv-item').first();
+  if (await item.count()) {
+    await item.click();
+    await page.waitForTimeout(80);
+    await item.click();
+    await page.waitForSelector('.inv-detail-bg');
+    await page.waitForTimeout(260);
+    await page.screenshot({ path: `artifacts/presentation-${label}-archive-detail.png`, fullPage: true });
+    await page.keyboard.press('Escape');
+  }
+  await page.evaluate(() => document.getElementById('spv2ArchiveBtn')?.click());
+  await page.waitForTimeout(180);
+}
+
+async function captureMarket(page, label) {
+  await page.evaluate(() => {
+    if (typeof window.openShop === 'function') window.openShop();
+  });
+  try {
+    await page.waitForSelector('.store-front-shell', { timeout: 1800 });
+  } catch {
+    await page.evaluate(() => {
+      const summary = document.getElementById('summary');
+      summary.className = 'modal show';
+      summary.innerHTML = `<div class="summary store-front-shell"><div class="store-dim"></div><div class="store-candle"></div><div class="store-front store-visible"><div class="store-meta"><button class="store-refresh">Refresh</button><div class="store-reserve-display"><span class="store-reserve-label">Reserve</span><span class="store-reserve-amount">72</span></div></div><div class="store-offer-row"><div class="store-card"><div class="store-card-tag">Scoring</div><div class="store-card-main"><div class="store-card-name">Sequence</div><div class="store-card-desc">Strengthen a scoring pattern.</div></div><button class="store-card-buy">Buy ✦ 25</button></div><div class="store-card store-card--pack"><div class="store-card-tag">Pack</div><div class="store-card-main"><div class="store-card-name">Second Sight</div><div class="store-card-desc">Ability reveals.</div></div><button class="store-card-buy">Buy ✦ 30</button></div><div class="store-card store-card--vessel"><div class="store-card-tag">Relic Slot</div><div class="store-card-main"><div class="store-card-name">Relic Vessel</div><div class="store-card-desc">Gain one Relic Slot.</div></div><button class="store-card-buy">Buy ✦ 35</button></div></div><div class="store-footer"><button class="store-proceed">Continue Reading</button></div></div></div>`;
+    });
+    await page.waitForSelector('.store-front-shell');
+  }
+  await page.waitForFunction(() => document.body.classList.contains('presentation-surface-market'));
+  await page.waitForTimeout(520);
+  await page.screenshot({ path: `artifacts/presentation-${label}-market.png`, fullPage: true });
+  await page.evaluate(() => {
+    document.getElementById('summary').className = '';
+    document.getElementById('summary').innerHTML = '';
+    document.body.classList.remove('tlr-shop-active');
+  });
+  await page.waitForTimeout(180);
+}
+
+async function captureResultSurfaces(page, label) {
+  await page.evaluate(() => {
+    const summary = document.getElementById('summary');
+    summary.className = 'modal show';
+    summary.innerHTML = `<div class="result-panel pass"><div class="rhead"><h3 class="pass">Threshold Cleared</h3></div><div class="rscore"><span class="rsc">30</span><span class="rop">+</span><span class="rsm">48</span><span class="rop">=</span><span class="rsf">78</span></div><hr class="rdiv"><table class="rtable"><tbody><tr class="grouprow"><td colspan="2">Card Points &amp; Patterns</td></tr><tr class="mrow"><td>⚜ Sequence</td><td class="r">+15</td></tr><tr class="totrow"><td>Round total</td><td class="r">78 / 60</td></tr></tbody></table><div class="rbtns"><button class="btn-gold">Visit the Market →</button></div></div>`;
+  });
+  await page.waitForFunction(() => document.body.classList.contains('presentation-surface-score-result'));
+  await page.waitForTimeout(520);
+  await page.screenshot({ path: `artifacts/presentation-${label}-score-result.png`, fullPage: true });
+
+  await page.evaluate(() => {
+    const summary = document.getElementById('summary');
+    summary.className = 'modal show';
+    summary.innerHTML = `<div class="result-panel pass"><div class="rhead"><span class="rorn">✦ &nbsp; ✦ &nbsp; ✦</span><h3 class="pass">The Reading Ends</h3></div><div class="rscore"><span class="rsf">1240</span></div><span class="rverdict pass">Total Score</span><div class="rscore"><span class="rsf">12</span></div><span class="rverdict pass">Obals</span><p>Tap to close.</p></div>`;
+  });
+  await page.waitForFunction(() => document.body.classList.contains('presentation-surface-run-end'));
+  await page.waitForTimeout(700);
+  await page.screenshot({ path: `artifacts/presentation-${label}-run-ending.png`, fullPage: true });
+  await page.evaluate(() => {
+    document.getElementById('summary').className = '';
+    document.getElementById('summary').innerHTML = '';
+  });
+  await page.waitForTimeout(180);
+}
+
 async function captureAdventureState(page, label) {
   await page.evaluate(async () => {
     if (typeof window.tlrShowMainMenu === 'function') window.tlrShowMainMenu();
@@ -103,6 +181,9 @@ async function main() {
       const label = `${viewport.width}x${viewport.height}`;
       await startReading(page);
       await captureReadingStates(page, label);
+      await captureArchives(page, label);
+      await captureMarket(page, label);
+      await captureResultSurfaces(page, label);
       await captureAdventureState(page, label);
       await page.close();
     }
