@@ -7,12 +7,7 @@ const STYLE_ID = 'adventure-card-sigils-runtime-style';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const REQUIREMENT_SET_KEY = '__tlrAdventureRequirementSetIndex';
 
-const REWARD_CHOICE_KIND = Object.freeze({
-  'Upgrade a Card': 'upgrade',
-  'Seal a Card': 'seal',
-  'Banish a Card': 'banish',
-  'Transmutation Dust': 'transmute',
-});
+const REWARD_CHOICE_KIND = Object.freeze({});
 
 function ensureStyle(doc) {
   if (!doc || doc.getElementById(STYLE_ID)) return;
@@ -265,81 +260,9 @@ function decorateRewardChoices(target) {
   }
 }
 
-function decorateApproachRequirements(target) {
-  const doc = target.document;
-  const web = doc.getElementById('advApproachWeb');
-  if (!web || web.classList.contains('hidden')) return;
-  const eventId = doc.getElementById('advEventDeck')?.dataset?.eventId;
-  if (!eventId) return;
+function decorateApproachRequirements() {}
 
-  const setIndex = Math.max(0, Number(target[REQUIREMENT_SET_KEY] || 0));
-  const requirements = new Map(getEventApproaches(eventId).map(approach => [
-    approach.node,
-    Math.min(5, Math.max(1, Number(approach.requirement || 1) + setIndex)),
-  ]));
-
-  const svg = web.querySelector('svg');
-  if (!svg) return;
-  const groups = [...svg.children].filter(child => child.tagName?.toLowerCase() === 'g');
-
-  for (const group of groups) {
-    const circle = group.querySelector(':scope > circle');
-    const label = [...group.querySelectorAll(':scope > text')]
-      .find(text => !text.hasAttribute('data-adv-approach-requirement'));
-    const node = label?.textContent?.trim().toLowerCase();
-    const requirement = requirements.get(node);
-    let marker = group.querySelector(':scope > text[data-adv-approach-requirement]');
-
-    if (!circle || !requirement) {
-      marker?.remove();
-      continue;
-    }
-
-    if (!marker) {
-      marker = doc.createElementNS(SVG_NS, 'text');
-      marker.setAttribute('data-adv-approach-requirement', '1');
-      marker.setAttribute('class', 'adv-approach-requirement');
-      group.appendChild(marker);
-    }
-    marker.setAttribute('x', circle.getAttribute('cx') || '0');
-    marker.setAttribute('y', circle.getAttribute('cy') || '0');
-    const text = String(requirement);
-    if (marker.textContent !== text) marker.textContent = text;
-  }
-}
-
-function installRequirementSetTracking(target) {
-  if (target.__tlrAdventureRequirementTrackingInstalled) return;
-  target.__tlrAdventureRequirementTrackingInstalled = true;
-  target[REQUIREMENT_SET_KEY] = 0;
-
-  const wrapReset = name => {
-    const original = target[name];
-    if (typeof original !== 'function' || original.__tlrRequirementResetWrapped) return;
-    const wrapped = function (...args) {
-      target[REQUIREMENT_SET_KEY] = 0;
-      return original.apply(this, args);
-    };
-    wrapped.__tlrRequirementResetWrapped = true;
-    target[name] = wrapped;
-  };
-
-  wrapReset('tlrStartAdventure');
-  wrapReset('tlrAdventureV3Restart');
-  wrapReset('tlrAdventureRestart');
-
-  const recovery = target.tlrAdventureV3Recovery;
-  if (typeof recovery === 'function' && !recovery.__tlrRequirementAdvanceWrapped) {
-    const wrappedRecovery = function (...args) {
-      const result = recovery.apply(this, args);
-      target[REQUIREMENT_SET_KEY] = Number(target[REQUIREMENT_SET_KEY] || 0) + 1;
-      target.__tlrAdventureCardSigilsSchedule?.();
-      return result;
-    };
-    wrappedRecovery.__tlrRequirementAdvanceWrapped = true;
-    target.tlrAdventureV3Recovery = wrappedRecovery;
-  }
-}
+function installRequirementSetTracking() {}
 
 function decorate(target = window) {
   const doc = target?.document;

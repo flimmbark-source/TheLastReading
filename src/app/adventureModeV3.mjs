@@ -32,6 +32,7 @@ import {
   beginNextSet,
   isAdventureRunComplete,
   setEchoText,
+  effectiveEventRequirement,
 } from '../systems/adventure/singleCardRun.mjs';
 import { applyResolution, clampResolve } from '../systems/adventure/run.mjs';
 
@@ -165,6 +166,19 @@ function ensureStyles(doc) {
     .adv-reward__lane{font:700 8px/1 system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#9a8060;margin-bottom:5px}
     .adv-reward__lane--trophy{color:#f3c969}
     body.mode-adventure .card.adv-card-sealed{box-shadow:0 0 0 2px rgba(168,216,240,.7),0 8px 20px rgba(0,0,0,.5)!important}
+    .adv-reward-card-actions{display:flex;align-items:center;gap:6px;margin-left:auto}
+    .adv-reward-card-actions button{font-size:10px;padding:5px 9px}
+    #choices .choice-card.adv-reward-card-selected{outline:2px solid #f3c969;box-shadow:0 0 18px rgba(243,201,105,.65)!important}
+    #choices .choice-card .adv-reward-card-effect{position:absolute;z-index:40;pointer-events:none;font:900 10px/1 system-ui,sans-serif;text-shadow:0 1px 2px #000}
+    #choices .choice-card .adv-reward-card-effect--upgrade{right:3px;top:29px;padding:2px 4px;border-radius:8px;color:#eaffdf;background:rgba(25,93,43,.94);border:1px solid rgba(173,239,157,.8)}
+    #choices .choice-card .adv-reward-card-effect--echo{right:4px;bottom:5px;padding:3px 5px;border-radius:9px;color:#fff1bd;background:rgba(110,72,17,.94);border:1px solid rgba(243,201,105,.82)}
+    #choices .choice-card .adv-reward-card-effect--seal{left:50%;top:5px;transform:translateX(-50%);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#3b1d0a;background:radial-gradient(circle at 35% 30%,#ffd46d,#a55718 68%,#5d270b);border:1px solid #ffe29a;font-size:11px}
+    #choices .choice-card .adv-reward-card-effect--banish{inset:0;display:flex;align-items:center;justify-content:center;color:#ffbbb1;background:rgba(68,8,5,.5);border:2px solid rgba(220,76,62,.82);border-radius:inherit;font:900 42px/1 Georgia,serif}
+    #choices .choice-card .adv-reward-card-effect--transmute{left:23px;top:3px;padding:2px 5px;border-radius:8px;color:#d9f5c9;background:rgba(44,89,34,.94);border:1px solid rgba(164,220,137,.8);font-size:11px}
+    #advDebugPanel{position:fixed;right:8px;bottom:8px;z-index:2147482000;width:min(320px,92vw);max-height:72vh;overflow:auto;padding:10px;border:1px solid rgba(243,201,105,.65);border-radius:10px;background:rgba(15,10,7,.96);box-shadow:0 10px 32px rgba(0,0,0,.72);color:#eadbb9;font:700 10px/1.25 system-ui,sans-serif}
+    #advDebugPanel .adv-debug-title{font-size:11px;color:#f3c969;text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px}
+    #advDebugPanel .adv-debug-row{display:grid;grid-template-columns:1fr auto;gap:5px;margin:5px 0}
+    #advDebugPanel select,#advDebugPanel input,#advDebugPanel button{min-width:0;font-size:10px;padding:4px 6px}
 
     @media(max-width:640px){
       #advEventDeck{top:20px}.adv-event-desc{max-width:245px;font-size:10px}#advHud{max-width:64vw}.adv-hud__main{padding:6px 9px}
@@ -482,7 +496,8 @@ export function installAdventureModeV3(target = window) {
     if (!event) return '<p style="color:#e6d29a;padding:4px">No active event.</p>';
     const approaches = getEventApproaches(event);
     if (!approaches || !approaches.length) return '';
-    const accepted = new Set(approaches.map(a => a.node));
+    const approachByNode = new Map(approaches.map(approach => [approach.node, approach]));
+    const accepted = new Set(approachByNode.keys());
 
     const handNodes = new Set(
       (target.state?.hand || []).map(c => cardNode(c)).filter(Boolean)
@@ -516,8 +531,10 @@ export function installAdventureModeV3(target = window) {
     for (const node of APPROACH_WEB_NODE_ORDER) {
       const p = pos[node];
       const sigil = sigilForNode(node);
-      const isAcc = accepted.has(node);
+      const approach = approachByNode.get(node);
+      const isAcc = Boolean(approach);
       const inHand = handNodes.has(node);
+      const requirement = approach ? effectiveEventRequirement(session.run, approach) : null;
       const angle = Math.atan2(p.y - CY, p.x - CX);
       const lx = +(CX + LABEL_R * Math.cos(angle)).toFixed(1);
       const ly = +(CY + LABEL_R * Math.sin(angle)).toFixed(1);
@@ -526,15 +543,16 @@ export function installAdventureModeV3(target = window) {
       const textFill = isAcc ? '#f3c969' : 'rgba(200,180,140,.88)';
       const circleStroke = isAcc ? '#f3c969' : 'rgba(180,150,90,.55)';
       const circleFill = isAcc ? 'rgba(36,22,8,.97)' : 'rgba(22,13,7,.95)';
-      const handIcon = inHand ? `<g transform="translate(${p.x},${p.y})">
-        <rect x="-5" y="-7" width="10" height="14" rx="1" fill="rgba(22,13,7,.95)" stroke="rgba(200,180,140,.88)" stroke-width="1" transform="rotate(-14,0,7)"/>
-        <rect x="-5" y="-7" width="10" height="14" rx="1" fill="rgba(22,13,7,.95)" stroke="rgba(200,180,140,.88)" stroke-width="1"/>
-        <rect x="-5" y="-7" width="10" height="14" rx="1" fill="rgba(22,13,7,.95)" stroke="rgba(200,180,140,.88)" stroke-width="1" transform="rotate(14,0,7)"/>
-      </g>` : '';
-      nodesSvg += `<g>
-        <circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${circleFill}" stroke="${circleStroke}" stroke-width="${isAcc ? 1.5 : 1}"/>
-        ${handIcon}
-        <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" fill="${textFill}" stroke="rgba(18,10,4,.8)" stroke-width="3" paint-order="stroke" font-size="14" font-weight="${isAcc ? 700 : 400}" font-family="system-ui,sans-serif">${esc(node.charAt(0).toUpperCase() + node.slice(1))}</text>
+      const handRing = inHand
+        ? `<circle cx="${p.x}" cy="${p.y}" r="${NR + 4}" fill="none" stroke="rgba(127,199,255,.95)" stroke-width="2" stroke-dasharray="2.5 2.5"/>`
+        : '';
+      const requirementText = requirement === null ? ''
+        : `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="central" fill="#fff0bd" stroke="#160b05" stroke-width="2.5" paint-order="stroke" font-size="10" font-weight="900" font-family="system-ui,sans-serif">${requirement}</text>`;
+      const label = sigil?.name || node.charAt(0).toUpperCase() + node.slice(1);
+      nodesSvg += `<g data-approach-node="${esc(node)}">
+        ${handRing}<circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${circleFill}" stroke="${circleStroke}" stroke-width="${isAcc ? 1.5 : 1}"/>
+        ${requirementText}
+        <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" fill="${textFill}" stroke="rgba(18,10,4,.8)" stroke-width="3" paint-order="stroke" font-size="14" font-weight="${isAcc ? 700 : 400}" font-family="system-ui,sans-serif">${esc(label)}</text>
       </g>`;
     }
 
@@ -763,12 +781,13 @@ export function installAdventureModeV3(target = window) {
   }
 
   function rewardLabel(offer) {
-    if (offer.type === 'ADD_SIGIL_CARD') return `Echo a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card`;
-    if (offer.type === 'SEAL_CARD') return offer.nodes?.length ? `Seal a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card` : 'Seal a card';
-    if (offer.type === 'UPGRADE_CARD') return offer.nodes?.length ? `Upgrade a ${offer.nodes.map(n=>n.charAt(0).toUpperCase()+n.slice(1)).join(' or ')} card` : 'Upgrade any card';
+    if (offer.type === 'ADD_SIGIL_CARD') return `Echo a ${offer.nodes.map(sigilName).join(' or ')} card`;
+    if (offer.type === 'SEAL_CARD') return offer.nodes?.length ? `Seal a ${offer.nodes.map(sigilName).join(' or ')} card` : 'Seal a card';
+    if (offer.type === 'UPGRADE_CARD') return offer.nodes?.length ? `Upgrade a ${offer.nodes.map(sigilName).join(' or ')} card` : 'Upgrade any card';
     if (offer.type === 'BANISH_TWO') return 'Banish 2 cards';
     if (offer.type === 'RESTORE_RESOLVE') return `Restore ${offer.amount || 1} Resolve`;
     if (offer.type === 'CHOOSE_CONSUMABLE') return 'Choose 1 of 3 Consumables';
+    if (offer.type === 'CHOOSE_PASSIVE') return 'Choose 1 of 3 Passive Items';
     if (offer.type === 'CONSUMABLE' || offer.type === 'SIGNATURE_ITEM') return ADVENTURE_ITEMS[offer.itemId]?.name || offer.itemId;
     return offer.label || 'Reward';
   }
@@ -777,18 +796,8 @@ export function installAdventureModeV3(target = window) {
     if (offer.type === 'CONSUMABLE' || offer.type === 'SIGNATURE_ITEM') return ADVENTURE_ITEMS[offer.itemId]?.text || '';
     if (offer.type === 'ADD_SIGIL_CARD') return 'Choose a matching card — add a second copy to your deck.';
     if (offer.type === 'SEAL_CARD') return 'This card appears in every opening hand. Costs one draw slot.';
-    if (offer.type === 'UPGRADE_CARD') {
-      if (!session) return 'Increase its printed value by 1.';
-      const nodes = offer.nodes || [];
-      const eligible = buildAdventureDeckCards().filter(card =>
-        (!nodes.length || nodes.includes(cardNode(card))) && card.points < 5
-      );
-      if (!eligible.length) return 'No eligible cards to upgrade.';
-      const potencies = eligible.map(c => c.points);
-      const lo = Math.min(...potencies), hi = Math.max(...potencies);
-      const range = lo === hi ? `${lo} → ${lo + 1}` : `${lo}–${hi} → ${lo + 1}–${hi + 1}`;
-      return `Increase its printed value by 1. Current potency: ${range}.`;
-    }
+    if (offer.type === 'UPGRADE_CARD') return 'Choose a card to increase its value by 1.';
+    if (offer.type === 'CHOOSE_PASSIVE') return 'Choose an unowned passive item.';
     if (offer.type === 'BANISH_TWO') return 'Permanently remove two cards from this run.';
     return '';
   }
@@ -800,6 +809,16 @@ export function installAdventureModeV3(target = window) {
   function isOfferUseful(offer) {
     if (!offer) return false;
     if (offer.type === 'RESTORE_RESOLVE') return session.run.resolve < session.run.maxResolve;
+    if (offer.type === 'ADD_SIGIL_CARD') {
+      const nodes = offer.nodes || [];
+      return ALL_CARD_DEFINITIONS.some(card => !nodes.length || nodes.includes(session.run.sigilOverrides[card.id] || cardAdventureProfile(card)?.node));
+    }
+    if (offer.type === 'SEAL_CARD') {
+      const nodes = offer.nodes || [];
+      const sealed = new Set(session.run.sealedCards || []);
+      return buildAdventureDeckCards().some(card => (!nodes.length || nodes.includes(cardNode(card))) && !sealed.has(card.id));
+    }
+    if (offer.type === 'CHOOSE_PASSIVE') return PASSIVE_ITEM_LIST.some(item => !hasItem(item.id));
     if (offer.type === 'UPGRADE_CARD') {
       const nodes = offer.nodes || [];
       return buildAdventureDeckCards().some(card => (!nodes.length || nodes.includes(cardNode(card))) && card.points < 5);
@@ -832,6 +851,65 @@ export function installAdventureModeV3(target = window) {
     return cloneOffer(available[Math.floor(rng() * available.length)] || { type: 'CHOOSE_CONSUMABLE' });
   }
 
+  function chooseRandomOffer(offers, excludeLabels = [], fallback = null) {
+    const useful = offers.filter(Boolean).filter(isOfferUseful);
+    const distinct = useful.filter(offer => !excludeLabels.includes(rewardLabel(offer)));
+    const pool = distinct.length ? distinct : useful;
+    return cloneOffer(pool[Math.floor(rng() * pool.length)] || fallback || offers.find(Boolean));
+  }
+
+  function randomProvisionOffer(excludeLabels = []) {
+    const offers = CONSUMABLE_LIST.map(item => ({ type: 'CONSUMABLE', itemId: item.id }));
+    return chooseRandomOffer(offers, excludeLabels, randomConsumableOffer());
+  }
+
+  function randomReinforceOffer(currentOffer, excludeLabels = []) {
+    const nodes = currentOffer?.nodes || [];
+    const offers = [
+      { type: 'ADD_SIGIL_CARD', nodes },
+      { type: 'UPGRADE_CARD', nodes },
+      { type: 'SEAL_CARD', nodes },
+    ];
+    return chooseRandomOffer(offers, excludeLabels, { type: 'ADD_SIGIL_CARD', nodes });
+  }
+
+  function randomCrossroadsOffer(currentOffer, excludeLabels = []) {
+    const nodes = currentOffer?.nodes || [];
+    const offers = [
+      { type: 'BANISH_TWO' },
+      { type: 'CHOOSE_CONSUMABLE' },
+      { type: 'RESTORE_RESOLVE', amount: 1 },
+      { type: 'CONSUMABLE', itemId: 'transmutation_dust' },
+      nodes.length ? { type: 'UPGRADE_CARD', nodes } : null,
+    ];
+    return chooseRandomOffer(offers, excludeLabels, { type: 'CHOOSE_CONSUMABLE' });
+  }
+
+  function randomTrophyOffer(excludeLabels = []) {
+    const offers = PASSIVE_ITEM_LIST
+      .filter(item => !hasItem(item.id))
+      .map(item => ({ type: 'SIGNATURE_ITEM', itemId: item.id }));
+    return chooseRandomOffer(offers, excludeLabels, { type: 'CHOOSE_PASSIVE' });
+  }
+
+  function randomOfferForLane(lane, currentOffer, excludeLabels = []) {
+    if (lane === 'Reinforce') return randomReinforceOffer(currentOffer, excludeLabels);
+    if (lane === 'Provision') return randomProvisionOffer(excludeLabels);
+    if (lane === 'Trophy') return randomTrophyOffer(excludeLabels);
+    return randomCrossroadsOffer(currentOffer, excludeLabels);
+  }
+
+  function rewardLanesForState(state) {
+    return state?.isTriumph ? TRIUMPH_LANES : SUCCESS_LANES;
+  }
+
+  function randomDifferentLaneOffer(currentLane, currentOffer, excludeLabels = []) {
+    if (currentLane === 'Trophy') return randomTrophyOffer(excludeLabels);
+    const candidates = SUCCESS_LANES.filter(lane => lane !== currentLane);
+    const lane = candidates[Math.floor(rng() * candidates.length)] || 'Crossroads';
+    return { ...randomOfferForLane(lane, currentOffer, excludeLabels), laneOverride: lane };
+  }
+
   function buildRewardOffers(resolution) {
     const event = session.lastEvent;
     const outcomeId = resolution.successOutcome?.id || resolution.outcome?.id;
@@ -857,19 +935,18 @@ export function installAdventureModeV3(target = window) {
     if (resolution.tier === RESULT.GREAT_SUCCESS) {
       const sig = cloneOffer(profile.signature);
       const trophy = (sig.itemId && hasItem(sig.itemId) && ADVENTURE_ITEMS[sig.itemId]?.kind !== 'cache')
-        ? { type: 'CHOOSE_CONSUMABLE' } : sig;
+        ? { type: 'CHOOSE_PASSIVE' } : sig;
       offers.unshift(trophy);
     }
     while (offers.length < resolution.rewardShow) offers.push(randomOrdinaryOffer(offers.map(rewardLabel)));
     return offers.slice(0, resolution.rewardShow);
   }
 
-  function sourceForOneReroll() {
+  function sourceForOneReroll(lane) {
     const state = session?.rewardState;
     if (!state) return null;
-    for (const id of ['lucky_bones', 'merchants_signet']) {
-      if (hasItem(id) && !state.rerollsUsed[id]) return id;
-    }
+    if (hasItem('lucky_bones') && !state.rerollsUsed.lucky_bones) return 'lucky_bones';
+    if (lane !== 'Trophy' && hasItem('merchants_signet') && !state.rerollsUsed.merchants_signet) return 'merchants_signet';
     if (hasItem('lucky_token') && !state.rerollsUsed.lucky_token) return 'lucky_token';
     return null;
   }
@@ -882,13 +959,13 @@ export function installAdventureModeV3(target = window) {
     const state = session.rewardState;
     const offers = state.selectedSet === 'alt' && state.altOffers ? state.altOffers : state.offers;
     const isTriumph = state.choose >= 2;
-    const lanes = isTriumph ? TRIUMPH_LANES : SUCCESS_LANES;
+    const lanes = rewardLanesForState(state);
     const cards = offers.map((offer, index) => {
       const selected = state.picked.includes(index);
       const disabled = !selected && state.picked.length >= state.choose;
-      const rerollSource = sourceForOneReroll();
+      const lane = offer.laneOverride || lanes[index] || '';
+      const rerollSource = sourceForOneReroll(lane);
       const reroll = rerollSource ? `<button class="adv-mini-btn" onclick="event.stopPropagation();tlrAdventureV3RerollOffer(${index},'${rerollSource}')">Replace</button>` : '';
-      const lane = lanes[index] || '';
       const laneHtml = lane ? `<div class="adv-reward__lane${lane === 'Trophy' ? ' adv-reward__lane--trophy' : ''}">${esc(lane)}</div>` : '';
       return `<div class="adv-reward${selected ? ' adv-reward--picked' : ''}${disabled ? ' adv-reward--disabled' : ''}" onclick="tlrAdventureV3PickReward(${index})">
         ${laneHtml}<div class="adv-reward__name">${esc(rewardLabel(offer))}</div><div class="adv-reward__desc">${esc(rewardDescription(offer))}</div>${reroll}</div>`;
@@ -1005,33 +1082,145 @@ export function installAdventureModeV3(target = window) {
     return pool;
   }
 
-  function pickCard(title, prompt, cards, done) {
-    if (typeof target.choice !== 'function' || !cards.length) { done(null); return; }
+  function cloneRunForRewardApplication() {
+    return JSON.parse(JSON.stringify(session.run));
+  }
+
+  function closeRewardCardPicker() {
+    const choice = session?.rewardCardChoice;
+    if (choice?.keyHandler) doc.removeEventListener('keydown', choice.keyHandler, true);
+    session.rewardCardChoice = null;
+    doc.getElementById('modal')?.classList.remove('show', 'collapsed', 'ability-reveal', 'card-browse');
+    doc.querySelector('#modal .adv-reward-card-actions')?.remove();
+    const legacyCancel = doc.getElementById('modalCancel');
+    if (legacyCancel) legacyCancel.hidden = true;
+  }
+
+  function cancelRewardCardPicker() {
+    const state = session?.rewardState;
+    const wasApplying = Boolean(state?.applying);
+    if (wasApplying && state.applicationSnapshot) {
+      session.run = JSON.parse(JSON.stringify(state.applicationSnapshot));
+      state.applicationSnapshot = null;
+      state.applying = false;
+    }
+    closeRewardCardPicker();
+    updateChrome();
+    if (wasApplying) showRewards();
+    else { clear(); setBusy(false); }
+  }
+
+  function rewardCardEffect(kind, card) {
+    if (kind === 'upgrade') return { className: 'upgrade', text: `${card.points}→${Math.min(5, Number(card.points || 0) + 1)}` };
+    if (kind === 'echo') return { className: 'echo', text: '×2' };
+    if (kind === 'seal') return { className: 'seal', text: '◆' };
+    if (kind === 'banish') return { className: 'banish', text: '×' };
+    if (kind === 'transmute') return { className: 'transmute', text: `→ ${sigilForNode(NODES.TRANSFORMATION)?.glyph || '∿'}` };
+    return null;
+  }
+
+  function refreshRewardCardPicker() {
+    const choice = session?.rewardCardChoice;
+    if (!choice) return;
+    for (const element of doc.querySelectorAll('#choices .choice-card')) {
+      const selected = String(element.dataset.uid) === String(choice.selected?.uid);
+      element.classList.toggle('adv-reward-card-selected', selected);
+      element.setAttribute('aria-pressed', String(selected));
+      element.querySelectorAll('.adv-reward-card-effect').forEach(effect => effect.remove());
+      if (!selected) continue;
+      const effectData = rewardCardEffect(choice.kind, choice.selected);
+      if (!effectData) continue;
+      const effect = doc.createElement('span');
+      effect.className = `adv-reward-card-effect adv-reward-card-effect--${effectData.className}`;
+      effect.textContent = effectData.text;
+      effect.setAttribute('aria-hidden', 'true');
+      element.appendChild(effect);
+    }
+    if (choice.confirmButton) choice.confirmButton.disabled = !choice.selected;
+  }
+
+  function pickCard(title, prompt, cards, done, kind = 'choose') {
+    if (!cards.length) { done(null); return; }
     const ordered = typeof target.sortCards === 'function' ? target.sortCards(cards) : cards;
     clear();
-    target.choice(title, prompt, ordered, picked => done(picked));
+    const modal = doc.getElementById('modal');
+    const modalTitle = doc.getElementById('modalTitle');
+    const modalPrompt = doc.getElementById('modalPrompt');
+    const choices = doc.getElementById('choices');
+    const head = modal?.querySelector('.modalHead');
+    if (!modal || !modalTitle || !modalPrompt || !choices || !head || typeof target.cardHTML !== 'function') { done(null); return; }
+
+    modalTitle.textContent = title;
+    modalPrompt.textContent = prompt;
+    choices.innerHTML = '';
+    const actions = doc.createElement('div');
+    actions.className = 'adv-reward-card-actions';
+    const cancelButton = doc.createElement('button');
+    cancelButton.type = 'button';
+    cancelButton.textContent = 'Cancel';
+    const confirmButton = doc.createElement('button');
+    confirmButton.type = 'button';
+    confirmButton.className = 'btn-gold';
+    confirmButton.textContent = 'Confirm';
+    confirmButton.disabled = true;
+    actions.append(cancelButton, confirmButton);
+    head.appendChild(actions);
+
+    const choice = { kind, selected: null, done, confirmButton, keyHandler: null };
+    session.rewardCardChoice = choice;
+    for (const card of ordered) {
+      const element = doc.createElement('button');
+      element.type = 'button';
+      element.className = 'card choice-card ' + (card.type === 'major' ? 'major' : '');
+      element.dataset.uid = String(card.uid);
+      element.setAttribute('aria-pressed', 'false');
+      element.innerHTML = target.cardHTML(card);
+      target.applyCardPhoto?.(element, card);
+      target.__tlrAdventureApplyHint?.(element, card);
+      element.addEventListener('click', () => {
+        choice.selected = card;
+        refreshRewardCardPicker();
+      });
+      choices.appendChild(element);
+    }
+
+    cancelButton.addEventListener('click', cancelRewardCardPicker);
+    confirmButton.addEventListener('click', () => {
+      if (!choice.selected) return;
+      const picked = choice.selected;
+      closeRewardCardPicker();
+      done(picked);
+    });
+    choice.keyHandler = event => { if (event.key === 'Escape') { event.preventDefault(); cancelRewardCardPicker(); } };
+    doc.addEventListener('keydown', choice.keyHandler, true);
+    const legacyCancel = doc.getElementById('modalCancel');
+    if (legacyCancel) legacyCancel.hidden = true;
+    modal.classList.remove('collapsed', 'card-browse');
+    modal.classList.add('show', 'ability-reveal');
+    target.playSound?.('flip');
+    target.tlrArchitectureSync?.();
   }
 
   function pickCardToAdd(nodes, done) {
     pickCard('Echo a Card', 'Choose a card — a second copy will be added to your deck.', addPool(nodes), picked => {
       if (picked) addCardToAdventureDeck(session.run, picked.id);
       updateChrome(); done();
-    });
+    }, 'echo');
   }
 
   function pickCardToRemove(done) {
     pickCard('Banish a Card', 'Choose a card to permanently remove from your deck.', buildAdventureDeckCards(), picked => {
       if (picked) removeCardFromAdventureDeck(session.run, picked.id);
       updateChrome(); done();
-    });
+    }, 'banish');
   }
 
   function pickCardToUpgrade(nodes, done) {
     const cards = buildAdventureDeckCards().filter(card => (!nodes?.length || nodes.includes(cardNode(card))) && card.points < 5);
-    pickCard('Upgrade a Card', 'Increase one card’s value by 1.', cards, picked => {
+    pickCard('Upgrade a Card', 'Choose a card to increase its value by 1.', cards, picked => {
       if (picked) session.run.cardBonuses[picked.id] = Number(session.run.cardBonuses[picked.id] || 0) + 1;
       updateChrome(); done();
-    });
+    }, 'upgrade');
   }
 
   function pickCardToSeal(nodes, done) {
@@ -1039,20 +1228,20 @@ export function installAdventureModeV3(target = window) {
     const cards = buildAdventureDeckCards().filter(card =>
       (!nodes?.length || nodes.includes(cardNode(card))) && !alreadySealed.has(card.id)
     );
-    pickCard('Seal a Card', 'This card will always appear in your opening hand.', cards, picked => {
+    pickCard('Seal a Card', 'Choose a card to place in every opening hand.', cards, picked => {
       if (picked) {
         if (!session.run.sealedCards) session.run.sealedCards = [];
         if (!session.run.sealedCards.includes(picked.id)) session.run.sealedCards.push(picked.id);
       }
       updateChrome(); done();
-    });
+    }, 'seal');
   }
 
   function pickCardSigilOverride(done) {
     pickCard('Transmutation Dust', 'Choose a card to give the Serpent sigil.', buildAdventureDeckCards(), picked => {
       if (picked) session.run.sigilOverrides[picked.id] = NODES.TRANSFORMATION;
-      updateChrome(); done();
-    });
+      updateChrome(); done(picked);
+    }, 'transmute');
   }
 
   function chooseConsumable(count, done) {
@@ -1068,11 +1257,20 @@ export function installAdventureModeV3(target = window) {
     acquireInventoryItem(itemId, done);
   }
 
-  function openStrongbox(done) {
+  function openPassiveChoice(title, done) {
     const pool = PASSIVE_ITEM_LIST.filter(item => !hasItem(item.id)).sort(() => rng() - .5).slice(0, 3);
+    if (!pool.length) {
+      session.run.resolve = clampResolve(session.run.resolve + 2, session.run.maxResolve);
+      toast('No unowned passive items remain. Restored 2 Resolve instead.');
+      updateChrome(); done(); return;
+    }
     const cards = pool.map(item => `<div class="adv-reward" onclick="tlrAdventureV3TakeStrongbox('${item.id}')"><div class="adv-reward__name">${esc(item.name)}</div><div class="adv-reward__desc">${esc(item.text)}</div></div>`).join('');
     session.strongboxDone = done;
-    show(`<div class="result-panel pass"><div class="rhead"><h3 class="pass">Stolen Strongbox</h3></div><div class="adv-rewards">${cards}</div></div>`);
+    show(`<div class="result-panel pass"><div class="rhead"><h3 class="pass">${esc(title)}</h3></div><div class="adv-rewards">${cards}</div></div>`);
+  }
+
+  function openStrongbox(done) {
+    openPassiveChoice('Stolen Strongbox', done);
   }
 
   function takeStrongbox(itemId) {
@@ -1092,11 +1290,20 @@ export function installAdventureModeV3(target = window) {
     }
     if (offer.type === 'CONSUMABLE' || offer.type === 'SIGNATURE_ITEM') { acquireInventoryItem(offer.itemId, done); return; }
     if (offer.type === 'CHOOSE_CONSUMABLE') { chooseConsumable(3, done); return; }
+    if (offer.type === 'CHOOSE_PASSIVE') { openPassiveChoice('Trophy Cache', done); return; }
     done();
   }
 
   function applyRewardsSequentially(rewards, index) {
-    if (index >= rewards.length) { session.rewardState = null; advanceAfterResolution(); return; }
+    if (index >= rewards.length) {
+      if (session.rewardState) {
+        session.rewardState.applicationSnapshot = null;
+        session.rewardState.applying = false;
+      }
+      session.rewardState = null;
+      advanceAfterResolution();
+      return;
+    }
     applyRewardOffer(rewards[index], () => applyRewardsSequentially(rewards, index + 1));
   }
 
@@ -1107,6 +1314,7 @@ export function installAdventureModeV3(target = window) {
       session.rewardState = {
         offers: buildRewardOffers(resolution), altOffers: null, selectedSet: 'base',
         choose: Math.min(resolution.rewardChoose, resolution.rewardShow), picked: [], rerollsUsed: {},
+        isTriumph: resolution.rewardTier === 'triumph', applying: false, applicationSnapshot: null,
       };
       showRewards();
       return;
@@ -1125,8 +1333,10 @@ export function installAdventureModeV3(target = window) {
 
   function confirmRewards() {
     const state = session?.rewardState;
-    if (!state || state.picked.length !== state.choose) return;
+    if (!state || state.picked.length !== state.choose || state.applying) return;
     const offers = state.selectedSet === 'alt' && state.altOffers ? state.altOffers : state.offers;
+    state.applicationSnapshot = cloneRunForRewardApplication();
+    state.applying = true;
     applyRewardsSequentially(state.picked.map(index => offers[index]), 0);
   }
 
@@ -1142,7 +1352,12 @@ export function installAdventureModeV3(target = window) {
     const state = session?.rewardState;
     if (!state || state.rerollsUsed[sourceId]) return;
     const offers = state.selectedSet === 'alt' && state.altOffers ? state.altOffers : state.offers;
-    offers[index] = randomOrdinaryOffer(offers.map(rewardLabel));
+    const lanes = rewardLanesForState(state);
+    const lane = offers[index]?.laneOverride || lanes[index] || 'Crossroads';
+    const excludeLabels = offers.map(rewardLabel);
+    offers[index] = sourceId === 'merchants_signet'
+      ? randomDifferentLaneOffer(lane, offers[index], excludeLabels)
+      : randomOfferForLane(lane, offers[index], excludeLabels);
     state.rerollsUsed[sourceId] = true;
     if (sourceId === 'lucky_token') removeInventoryItem('lucky_token');
     state.picked = state.picked.filter(picked => picked !== index);
@@ -1152,7 +1367,11 @@ export function installAdventureModeV3(target = window) {
   function useLoadedDice() {
     const state = session?.rewardState;
     if (!state || state.altOffers || itemState().usedSet.loaded_dice) return;
-    state.altOffers = state.offers.map(() => randomOrdinaryOffer());
+    const lanes = rewardLanesForState(state);
+    state.altOffers = state.offers.map((offer, index) => {
+      const lane = offer.laneOverride || lanes[index] || 'Crossroads';
+      return { ...randomOfferForLane(lane, offer, []), ...(offer.laneOverride ? { laneOverride: lane } : {}) };
+    });
     state.selectedSet = 'alt';
     state.picked = [];
     itemState().usedSet.loaded_dice = true;
@@ -1319,8 +1538,10 @@ export function installAdventureModeV3(target = window) {
       }); return;
     }
     if (item.id === 'transmutation_dust') {
-      removeInventoryIndex(index);
-      pickCardSigilOverride(() => { clear(); updateChrome(); });
+      pickCardSigilOverride(picked => {
+        if (picked) removeInventoryIndex(index);
+        clear(); updateChrome();
+      });
     }
   }
 
@@ -1338,6 +1559,119 @@ export function installAdventureModeV3(target = window) {
         toast(`House Whisper: ${resolution.tier === RESULT.GREAT_SUCCESS ? 'Great Success' : resolution.tier === RESULT.SUCCESS ? 'Success' : 'Failure'}`);
       } catch { }
     }, true);
+  }
+
+  function debugRefresh() {
+    updateChrome();
+    scheduleDecorateCards();
+    target.renderHand?.();
+    target.tlrArchitectureSync?.();
+    const web = doc.getElementById('advApproachWeb');
+    if (web && !web.classList.contains('hidden')) web.innerHTML = renderApproachWebHTML();
+  }
+
+  function debugSetEvent(eventId) {
+    if (!session || !getAdventureEventV3(eventId)) return false;
+    session.run.eventDeck[session.run.eventIndexInSet] = eventId;
+    session.awaitingOutcome = false;
+    session.lastResolution = null;
+    clear(); setBusy(false); updateChrome(); beginReading();
+    return true;
+  }
+
+  function debugSetSet(index) {
+    if (!session) return false;
+    session.run.setIndex = Math.max(0, Math.min(TOTAL_SETS - 1, Number(index) || 0));
+    debugRefresh();
+    return true;
+  }
+
+  function debugGrantItem(itemId) {
+    if (!session || !ADVENTURE_ITEMS[itemId]) return false;
+    if (!session.run.inventory.includes(itemId)) session.run.inventory.push(itemId);
+    session.run.inventoryCapacity = Math.max(session.run.inventoryCapacity, session.run.inventory.length);
+    debugRefresh();
+    return true;
+  }
+
+  function debugAddStatus(statusId) {
+    if (!session || !getStatus(statusId)) return false;
+    if (!session.run.statuses.includes(statusId)) session.run.statuses.push(statusId);
+    debugRefresh();
+    return true;
+  }
+
+  function debugSetResolve(value) {
+    if (!session) return false;
+    session.run.resolve = clampResolve(Number(value) || 0, session.run.maxResolve);
+    debugRefresh();
+    return true;
+  }
+
+  function debugPutCardInHand(cardId) {
+    if (!session || !target.state || !CARD_BY_ID.has(cardId)) return false;
+    const existing = [...(target.state.hand || []), ...(target.state.deck || [])].find(card => card.id === cardId);
+    const card = existing || cardWithRunChanges(CARD_BY_ID.get(cardId), Date.now());
+    target.state.hand = Array.isArray(target.state.hand) ? target.state.hand : [];
+    const handIndex = target.state.hand.findIndex(candidate => candidate.id === cardId);
+    if (handIndex < 0) {
+      const deckIndex = target.state.deck?.findIndex(candidate => candidate.id === cardId) ?? -1;
+      if (deckIndex >= 0) target.state.deck.splice(deckIndex, 1);
+      if (target.state.hand.length) target.state.hand[0] = card;
+      else target.state.hand.push(card);
+    }
+    debugRefresh();
+    return true;
+  }
+
+  function debugOpenApproachMap() {
+    const web = doc.getElementById('advApproachWeb');
+    if (!web) return false;
+    web.innerHTML = renderApproachWebHTML();
+    web.classList.remove('hidden');
+    return true;
+  }
+
+  function installDebugHarness() {
+    if (!doc || !session) return;
+    const api = {
+      snapshot: () => JSON.parse(JSON.stringify(session)),
+      setEvent: debugSetEvent,
+      setSet: debugSetSet,
+      grantItem: debugGrantItem,
+      addStatus: debugAddStatus,
+      setResolve: debugSetResolve,
+      putCardInHand: debugPutCardInHand,
+      openApproachMap: debugOpenApproachMap,
+    };
+    target.tlrAdventureDebug = api;
+    const enabled = new URLSearchParams(target.location?.search || '').get('advdebug') === '1';
+    if (!enabled || doc.getElementById('advDebugPanel')) return;
+    const panel = doc.createElement('div');
+    panel.id = 'advDebugPanel';
+    const option = (value, label) => `<option value="${esc(value)}">${esc(label)}</option>`;
+    panel.innerHTML = `<div class="adv-debug-title">Adventure Test Harness</div>
+      <div class="adv-debug-row"><select data-debug="event">${ADVENTURE_EVENTS_V3.map(event => option(event.id, event.title)).join('')}</select><button data-action="event">Set Event</button></div>
+      <div class="adv-debug-row"><select data-debug="set">${option(0, 'Set 1')}${option(1, 'Set 2')}</select><button data-action="set">Set</button></div>
+      <div class="adv-debug-row"><select data-debug="item">${Object.values(ADVENTURE_ITEMS).map(item => option(item.id, item.name)).join('')}</select><button data-action="item">Grant</button></div>
+      <div class="adv-debug-row"><select data-debug="status">${['blessed','haunted','prepared','distrusted','exposed'].map(id => option(id, getStatus(id)?.name || id)).join('')}</select><button data-action="status">Add</button></div>
+      <div class="adv-debug-row"><select data-debug="card">${ALL_CARD_DEFINITIONS.map(card => option(card.id, card.name)).join('')}</select><button data-action="card">Put in Hand</button></div>
+      <div class="adv-debug-row"><input data-debug="resolve" type="number" min="0" max="${session.run.maxResolve}" value="${session.run.resolve}"><button data-action="resolve">Set Resolve</button></div>
+      <div class="adv-debug-row"><button data-action="map">Open Approach Map</button><button data-action="snapshot">Log Snapshot</button></div>`;
+    panel.addEventListener('click', event => {
+      const action = event.target.closest('button')?.dataset.action;
+      if (!action) return;
+      const value = key => panel.querySelector(`[data-debug="${key}"]`)?.value;
+      if (action === 'event') api.setEvent(value('event'));
+      if (action === 'set') api.setSet(value('set'));
+      if (action === 'item') api.grantItem(value('item'));
+      if (action === 'status') api.addStatus(value('status'));
+      if (action === 'card') api.putCardInHand(value('card'));
+      if (action === 'resolve') api.setResolve(value('resolve'));
+      if (action === 'map') api.openApproachMap();
+      if (action === 'snapshot') console.info('Adventure debug snapshot', api.snapshot());
+    });
+    doc.body.appendChild(panel);
   }
 
   function onCardPlaced(card, slotIndex) {
@@ -1422,6 +1756,7 @@ export function installAdventureModeV3(target = window) {
     session = newSession();
     ensureStyles(doc); ensureChrome(); forceTable(); installCardSigilBridge(); installPreviewListener();
     installApproachWebControls();
+    installDebugHarness();
     updateChrome(); clear(); setBusy(false);
     beginReading();
   }
@@ -1433,6 +1768,7 @@ export function installAdventureModeV3(target = window) {
     session = newSession();
     ensureChrome(); forceTable(); installCardSigilBridge();
     installApproachWebControls();
+    installDebugHarness();
     updateChrome(); clear(); setBusy(false);
     beginReading();
   }
@@ -1451,10 +1787,13 @@ export function installAdventureModeV3(target = window) {
       for (const cls of session?.addedClasses || []) if (cls !== MODE_CLASS) doc.body.classList.remove(cls);
       doc.getElementById('advEventDeck')?.remove();
       doc.getElementById('advHud')?.remove();
+      doc.getElementById('advDebugPanel')?.remove();
       const rack = doc.getElementById('relicRack');
       if (rack) { rack.classList.remove('adv-inventory-rack'); rack.innerHTML = ''; }
     }
-    session = null; clear();
+    session = null;
+    delete target.tlrAdventureDebug;
+    clear();
     if (typeof target.renderRelicRack === 'function') target.renderRelicRack();
   }
 
