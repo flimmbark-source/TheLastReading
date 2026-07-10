@@ -11,22 +11,13 @@
     "build:bundle": "node scripts/build-bundle.mjs",
     "build": "node scripts/build-bundle.mjs && node scripts/validate-all.mjs",
     "test": "node scripts/validate-all.mjs",
+    "test:presentation": "node scripts/validate-presentation-director.mjs && node scripts/validate-adventure-presentation.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:spv2-visual": "node scripts/validate-single-player-v2-visual-smoke.mjs",
     "test:mp-prompt-visual": "node scripts/validate-mp-prompt-visual.mjs",
-    "css:dead-candidates": "node scripts/find-css-dead-declaration-candidates.mjs",
-    "build:pages": "node scripts/prepare-pages-artifact.mjs"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.0.0",
-    "esbuild": "^0.28.1",
-    "eslint": "^9.0.0",
-    "globals": "^15.0.0",
-    "jsdom": "^29.1.1",
-    "playwright": "^1.61.1",
-    "prettier": "^3.0.0"
+    "css:dead-candidates": "node scripts/find-css-dead-declaration-candidates.mjs"
   }
 }
