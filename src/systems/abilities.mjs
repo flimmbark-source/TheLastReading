@@ -138,12 +138,12 @@ export function abilityWithRevealUpgrades(ability, upgrades = {}) {
 
   if (next.type === ABILITY_TYPES.NEIGHBOR || next.type === ABILITY_TYPES.KIN) {
     next.count = (next.count ?? 2) + lens + relation;
+  } else if (next.type === ABILITY_TYPES.MIRROR) {
+    next.count = (next.count ?? 2) + lens;
   } else if (next.type === ABILITY_TYPES.BETWEEN) {
     next.count = (next.count ?? 2) + relation;
   }
 
-  // Mirror reveals every legal opposite-rank Court card, so a numeric reveal
-  // bonus cannot enlarge it. Major mirrors remain singular.
   return next;
 }
 
@@ -172,12 +172,9 @@ export function validHandTargetsForAbility(abilityId, state) {
 }
 
 // Canonical reveal computation shared by both singleplayer and multiplayer.
-// Given a deck, an ability definition, and the chosen anchor card(s), it returns
-// the full set of eligible cards the ability would reveal/hold from the deck.
-// Callers apply their own count limits (singleplayer factors in upgrades, the
-// multiplayer reducer slices by ability.count) so this stays a single source of
-// truth for *which* cards an ability can reach. Mirror is the exception: all
-// legal Court mirrors are choices, while Major mirrors are naturally singular.
+// It returns every eligible card in deck order. The interactive flow applies
+// the ability's reveal count (including upgrades) and records the exact revealed
+// UIDs so multiplayer peers resolve the same capped set the player actually saw.
 export function abilityHeldCards(deck = [], ability, anchors = []) {
   if (!ability) return [];
   const picked = (Array.isArray(anchors) ? anchors : [anchors]).filter(Boolean);
@@ -250,9 +247,15 @@ export function applySearchTake(run, takenCardId, rng) {
   return { deck: shuffleDeck(deck, rng), hand: [...run.hand, taken], taken };
 }
 
+// The exact cards Full Reset is allowed to shuffle. Keeping this pure and
+// shared prevents a mode adapter from accidentally adding placed spread cards.
+export function worldResetPool(run) {
+  return [...(run.deck || []), ...(run.discard || []), ...(run.hand || [])];
+}
+
 // Full Reset (The World): shuffle the unplayed piles and redraw while leaving
 // the spread intact. The reducer preserves run.spread when applying this result.
 export function applyWorldReset(run, handSize, rng) {
-  const deck = shuffleDeck([...run.deck, ...run.discard, ...run.hand], rng);
+  const deck = shuffleDeck(worldResetPool(run), rng);
   return { deck: deck.slice(handSize), discard: [], hand: deck.slice(0, handSize) };
 }
