@@ -12,6 +12,7 @@ const PRIMARY_STATES = new Set([
   'pattern-resolving',
   'threshold-near',
   'threshold-clearing',
+  'ability-reveal',
   'adventure-outcome',
   'adventure-reward',
   'adventure-recovery',
@@ -52,6 +53,7 @@ export function installPresentationDirector(target = window) {
     placing: false,
     patterning: false,
     thresholdComplete: false,
+    abilityReveal: false,
     adventureOutcome: false,
     adventureReward: false,
     adventureRecovery: false,
@@ -177,12 +179,17 @@ export function installPresentationDirector(target = window) {
     const dragging = Boolean(doc.querySelector('.hand-card-dragging'));
     const placing = Boolean(doc.querySelector('#spread .card.landing'));
     const patterning = Boolean(doc.querySelector('#spread .card.bump'));
+    const abilityReveal = Boolean(doc.querySelector('#modal.modal.ability-reveal.show'));
     setFlag('card-selected', selected);
     setFlag('card-dragging', dragging);
     setFlag('card-placing', placing);
+    setFlag('ability-reveal', abilityReveal);
 
     if (patterning && !domState.patterning) {
       cue('pattern', { duration: 700, intensity: .65 });
+    }
+    if (abilityReveal && !domState.abilityReveal) {
+      cue('ability-reveal', { duration: 520, intensity: .55 });
     }
 
     const threshold = readNumber('threshold');
@@ -220,6 +227,7 @@ export function installPresentationDirector(target = window) {
     const nextPrimary = adventureReward ? 'adventure-reward'
       : adventureRecovery ? 'adventure-recovery'
       : adventureOutcome ? 'adventure-outcome'
+      : abilityReveal ? 'ability-reveal'
       : patterning ? 'pattern-resolving'
       : placing ? 'card-placing'
       : dragging ? 'card-dragging'
@@ -231,6 +239,7 @@ export function installPresentationDirector(target = window) {
     domState.placing = placing;
     domState.patterning = patterning;
     domState.thresholdComplete = thresholdComplete;
+    domState.abilityReveal = abilityReveal;
     domState.adventureOutcome = adventureOutcome;
     domState.adventureReward = adventureReward;
     domState.adventureRecovery = adventureRecovery;
