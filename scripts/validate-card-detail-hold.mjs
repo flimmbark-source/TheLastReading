@@ -53,9 +53,11 @@ syncCardDetailTrigger(target);
 const trigger=target.document.querySelector('.card-detail-trigger');
 assert.ok(trigger,'the selected hand card should expose a detail trigger');
 assert.equal(trigger.dataset.uid,'11','the trigger should belong to the selected card only');
+assert.equal(trigger.parentElement,handEl,'the trigger should be attached to the selected card so it inherits card animation');
 assert.equal(trigger.dataset.side,'left','the trigger should swap to the left when the right edge would overflow');
-assert.equal(trigger.style.left,'309px','the trigger should sit directly beside the card with the configured gap');
-assert.equal(trigger.style.top,'100px','the trigger top should be flush with the selected card top');
+assert.equal(trigger.style.left,'auto');
+assert.equal(trigger.style.right,'calc(100% + 7px)','the left-side trigger should stay directly beside the animated card');
+assert.equal(trigger.style.top,'0px','the trigger top should remain flush with the card top');
 
 click(trigger);
 assert.equal(expanded,handCard,'clicking the selected-card trigger should open that card detail view');
@@ -87,9 +89,11 @@ syncCardDetailTrigger(target);
 const movedTrigger=target.document.querySelector('.card-detail-trigger');
 assert.ok(movedTrigger,'the detail trigger should follow the newly selected card');
 assert.equal(movedTrigger.dataset.uid,'12');
+assert.equal(movedTrigger.parentElement,otherHandEl,'the same trigger should move into the newly selected card');
 assert.equal(movedTrigger.dataset.side,'right','the trigger should use the top-right corner when it fits on screen');
-assert.equal(movedTrigger.style.left,'257px');
-assert.equal(movedTrigger.style.top,'100px');
+assert.equal(movedTrigger.style.left,'calc(100% + 7px)');
+assert.equal(movedTrigger.style.right,'auto');
+assert.equal(movedTrigger.style.top,'0px');
 
 otherHandEl.classList.remove('sel');
 run={...run,selectedCardId:null};
