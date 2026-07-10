@@ -130,10 +130,10 @@ export const COURT_MEANINGS = {
 };
 
 export const SUIT_MEANINGS = {
-  Cups: ['Emotion, connection', 'Blocked feelings'],
-  Wands: ['Passion, action', 'Burnout, delay'],
-  Swords: ['Thought, conflict', 'Confusion, cruelty'],
-  Pentacles: ['Material, stability', 'Loss, imbalance'],
+  Cups: ['Emotion, love', 'Hidden feelings'],
+  Wands: ['Will, creation', 'Burnout, delay'],
+  Swords: ['Truth, conflict', 'Deceit, anguish'],
+  Pentacles: ['Work, abundance', 'Greed, loss'],
 };
 
 export const ALL_CARD_DEFINITIONS = [...MAJOR_ARCANA, ...COURT_CARDS];
