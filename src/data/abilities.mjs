@@ -58,7 +58,7 @@ export const ABILITIES = Object.freeze({
     id: 'WORLD',
     type: ABILITY_TYPES.WORLD,
     title: 'Full Reset',
-    prompt: 'Shuffle hand, spread, and discard into the deck. Draw a new hand.',
+    prompt: 'Shuffle your hand and discard pile into the deck. Draw a new hand. Your spread stays in place.',
   },
   NEIGHBOR_2: {
     id: 'NEIGHBOR_2',
@@ -82,7 +82,7 @@ export const ABILITIES = Object.freeze({
     title: 'Mirror',
     count: 1,
     take: 1,
-    prompt: 'Take the opposite card across the Arcana centerline.',
+    prompt: 'Choose a card. Major Arcana reveal their opposite across the centerline; Court cards reveal every card of the opposite rank. Take 1.',
   },
   BETWEEN_2: {
     id: 'BETWEEN_2',

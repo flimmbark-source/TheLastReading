@@ -17,7 +17,7 @@
    maxHand, hasMull, tlrArchitectureSync, tlrScoreToObals */
 import { isCardUntargetable, hasActiveConstellation } from '../systems/constellations.mjs';
 import { getAbility, ABILITY_TYPES } from '../data/abilities.mjs';
-import { abilityHeldCards } from '../systems/abilities.mjs';
+import { abilityHeldCards, abilityWithRevealUpgrades } from '../systems/abilities.mjs';
 import { buildAbilityChoiceAsync } from './abilityFlowAsync.mjs';
 import { choiceAsync } from '../ui/renderAbility.mjs';
 
@@ -274,9 +274,7 @@ export async function resolveAbility(ab, done, sourceCard = null) {
   const baseAbility = getAbility(ab);
   if (!baseAbility) { if (ab && tlrStoreReady()) window.tlrStore.dispatch({ type: window.tlrActions.CANCEL_ABILITY }); done(); return; }
 
-  const ability = { ...baseAbility };
-  if (ability.type === ABILITY_TYPES.NEIGHBOR || ability.type === ABILITY_TYPES.KIN) ability.count = (ability.count ?? 2) + lens + (persist.up.relation_plus || 0);
-  if (ability.type === ABILITY_TYPES.MIRROR) ability.count = (ability.count ?? 1) + lens;
+  const ability = abilityWithRevealUpgrades(baseAbility, persist.up);
 
   setBusy(true);
 
