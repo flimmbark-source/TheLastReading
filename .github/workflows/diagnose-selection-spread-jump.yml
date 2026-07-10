@@ -38,7 +38,22 @@ jobs:
           EXPECTED="$(node -e "const { chromium } = require('playwright'); process.stdout.write(chromium.executablePath())")"
           mkdir -p "$(dirname "$EXPECTED")"
           ln -sf "$CHROME" "$EXPECTED"
-          echo "Using $CHROME as $EXPECTED"
+
+          REVISION="$(node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const root = path.dirname(require.resolve('playwright-core/package.json'));
+          const registry = JSON.parse(fs.readFileSync(path.join(root, 'browsers.json'), 'utf8'));
+          const browser = registry.browsers.find(entry => entry.name === 'chromium-headless-shell');
+          process.stdout.write(String(browser.revision));
+          NODE
+          )"
+          for DIRECTORY in chrome-headless-shell-linux64 chrome-headless-shell-linux; do
+            HEADLESS="$HOME/.cache/ms-playwright/chromium_headless_shell-$REVISION/$DIRECTORY/chrome-headless-shell"
+            mkdir -p "$(dirname "$HEADLESS")"
+            ln -sf "$CHROME" "$HEADLESS"
+          done
+          echo "Using runner Chrome $CHROME for Playwright revision $REVISION"
 
       - name: Measure selection geometry
         shell: bash
