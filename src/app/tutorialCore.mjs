@@ -150,6 +150,7 @@ function hasPendingTip() {
 function finishIntro() {
   localStorage.setItem(TUT_KEY, '1');
   tutDone = true;
+  window.dispatchEvent(new CustomEvent('tlr:tutorial-complete', { detail: { step: tutStep } }));
   tutHide();
 }
 
@@ -263,6 +264,7 @@ export function tutShow(step, options = {}) {
   tutTimer = null;
   tutPositionTimer = null;
   tutStep = step;
+  window.dispatchEvent(new CustomEvent('tlr:tutorial-step', { detail: { step } }));
   tutIgnoreClicksUntil = Date.now() + (step === TUT_STEP.PATTERN_NOTICE ? 450 : 180);
   const s = TUT_STEPS[step];
   if (!s) return;

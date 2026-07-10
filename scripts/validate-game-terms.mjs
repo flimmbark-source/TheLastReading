@@ -68,6 +68,9 @@ for (const item of [...Object.values(ARCHIVE_FRAGMENTS), ...ARCHIVE_ITEMS]) {
   assert.equal(item.gameTerms, 'off', `Archive item ${item.id} must opt out of automatic terms`);
   assert(!/\[\[/.test(item.content), `Archive item ${item.id} contains mechanical markup`);
 }
+const instrumentation = fs.readFileSync(new URL('../src/app/comprehensionInstrumentation.mjs', import.meta.url), 'utf8');
+assert(!instrumentation.includes('fetch(') && !instrumentation.includes('sendBeacon') && !instrumentation.includes('XMLHttpRequest'), 'Comprehension instrumentation must remain local-only');
 const main = fs.readFileSync(new URL('../src/app/main.mjs', import.meta.url), 'utf8');
 assert.match(main, /installGameTerms\(target\)/);
+assert.match(main, /installComprehensionInstrumentation\(target\)/);
 console.log('Game terminology validation passed.');
