@@ -50,14 +50,19 @@ assert.match(camera, /name === 'pattern'/);
 assert.match(camera, /name === 'threshold-clear'/);
 assert.match(cameraCss, /presentation-card-selected/);
 assert.match(cameraCss, /presentation-card-dragging/);
-assert.doesNotMatch(cameraCss, /presentation-card-(?:selected|dragging)\s+\.spread-wrap/,
-  'The spread is the drag target and must not move during card selection or dragging');
+assert.match(cameraCss, /#scorePreview\s*\{[\s\S]*position:\s*absolute/,
+  'The score preview must overlay the spread instead of changing wrapper height');
+assert.match(cameraCss, /presentation-flag-card-selected \.spread-wrap,[\s\S]*presentation-flag-card-dragging \.spread-wrap\s*\{[\s\S]*translate:\s*0 0/,
+  'Selection and drag flags must leave spread translation at zero');
 assert.doesNotMatch(camera, /dispatch\(|PLACE_CARD|SCORE_READING|session\.run/,
   'Camera director must remain presentation-only');
 
 assert.match(capture, /const outputPath = \(label, state\) =>/);
+assert.match(capture, /readSpreadGeometry/);
+assert.match(capture, /assertSelectionKeepsSpreadFixed/);
+assert.match(capture, /Selecting a card moved the play geometry/);
 for (const captureName of ['archives-open', 'archive-detail', 'market', 'score-result', 'run-ending']) {
   assert.match(capture, new RegExp(`outputPath\\(label, ['\"]${captureName}['\"]\\)`), `Capture harness missing ${captureName}`);
 }
 
-console.log('World surface and deck-action presentation validation passed.');
+console.log('World surface, deck-action, and selection-geometry validation passed.');
