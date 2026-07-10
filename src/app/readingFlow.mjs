@@ -40,7 +40,6 @@ function syncRoundFields(_run){
   state.lastOutcome=_run.lastOutcome||null;
 }
 function isTargetBlocked(card){return isCardUntargetable({th:state.th,constellationId:state.constellationId,untargetableCardIds:state.untargetableCardUids},card)}
-function targetable(cards){return cards.filter(c=>!isTargetBlocked(c))}
 
 function abilityHasValidTargets(ab, sourceCard = null) {
   if (!ab) return true;
