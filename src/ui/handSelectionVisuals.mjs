@@ -1,7 +1,6 @@
 // Hand selected-card visual lock extracted from the legacy inline tail.
 
 import { installPresentationDirector } from '../app/presentationDirector.mjs';
-import { installAdventurePresentationA11y } from './adventurePresentationA11y.mjs';
 
 function runtime(target){return target.tlrRuntime || {};}
 function stateOf(target){return runtime(target).state || target.state;}
@@ -65,7 +64,6 @@ export function installHandSelectionVisuals(target = window){
   if(!target || target.__handHoverSelectedLockInstalled)return;
   target.__handHoverSelectedLockInstalled=true;
   const presentation=installPresentationDirector(target);
-  installAdventurePresentationA11y(target);
   let rafPending=false;
   const flush=()=>{
     rafPending=false;
