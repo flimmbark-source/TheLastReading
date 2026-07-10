@@ -48,6 +48,11 @@ export function installPresentationDirector(target = window) {
   const doc = target.document;
   const cueTimers = new Map();
   const flags = new Set();
+  const domState = {
+    placing: false,
+    patterning: false,
+    thresholdComplete: false,
+  };
   let primaryState = 'idle';
   let observer = null;
   let syncRaf = 0;
@@ -152,22 +157,50 @@ export function installPresentationDirector(target = window) {
     const selected = Boolean(doc.querySelector('#hand .card.sel, #hand .card.ability-picked'));
     const dragging = Boolean(doc.querySelector('.hand-card-dragging'));
     const placing = Boolean(doc.querySelector('#spread .card.landing'));
+    const patterning = Boolean(doc.querySelector('#spread .card.bump'));
     setFlag('card-selected', selected);
     setFlag('card-dragging', dragging);
     setFlag('card-placing', placing);
 
+    if (patterning && !domState.patterning) {
+      cue('pattern', { duration: 700, intensity: .65 });
+    }
+
     const threshold = readNumber('threshold');
     const current = readNumber('current');
     const ratio = threshold > 0 ? current / threshold : 0;
-    setFlag('threshold-near', ratio >= 0.8 && ratio < 1, { intensity: Math.min(1, ratio) });
-    setFlag('threshold-complete', threshold > 0 && ratio >= 1, { intensity: 1 });
+    const thresholdNear = ratio >= 0.8 && ratio < 1;
+    const thresholdComplete = threshold > 0 && ratio >= 1;
+    setFlag('threshold-near', thresholdNear, { intensity: Math.min(1, ratio) });
+    setFlag('threshold-complete', thresholdComplete, { intensity: 1 });
+    if (thresholdComplete && !domState.thresholdComplete) {
+      cue('threshold-clear', { duration: 1100, intensity: 1 });
+    }
 
     const inAdventure = root.classList.contains('mode-adventure');
     const rewardHeading = doc.querySelector('#summary .result-panel h3')?.textContent?.trim().toLowerCase() || '';
     const hasRewards = Boolean(doc.querySelector('#summary .adv-rewards'));
-    setFlag('adventure-reward', inAdventure && hasRewards && rewardHeading.includes('choose your reward'));
-    setFlag('adventure-recovery', inAdventure && hasRewards && !rewardHeading.includes('choose your reward'));
-    setFlag('adventure-outcome', inAdventure && Boolean(doc.querySelector('#summary .adv-narrative')) && !hasRewards);
+    const adventureReward = inAdventure && hasRewards && rewardHeading.includes('choose your reward');
+    const adventureRecovery = inAdventure && hasRewards && !rewardHeading.includes('choose your reward');
+    const adventureOutcome = inAdventure && Boolean(doc.querySelector('#summary .adv-narrative')) && !hasRewards;
+    setFlag('adventure-reward', adventureReward);
+    setFlag('adventure-recovery', adventureRecovery);
+    setFlag('adventure-outcome', adventureOutcome);
+
+    const nextPrimary = adventureReward ? 'adventure-reward'
+      : adventureRecovery ? 'adventure-recovery'
+      : adventureOutcome ? 'adventure-outcome'
+      : patterning ? 'pattern-resolving'
+      : placing ? 'card-placing'
+      : dragging ? 'card-dragging'
+      : selected ? 'card-selected'
+      : thresholdNear ? 'threshold-near'
+      : 'idle';
+    applyPrimary(nextPrimary);
+
+    domState.placing = placing;
+    domState.patterning = patterning;
+    domState.thresholdComplete = thresholdComplete;
   };
 
   const scheduleSync = () => {
@@ -199,6 +232,7 @@ export function installPresentationDirector(target = window) {
       root.style.removeProperty('--presentation-origin-x');
       root.style.removeProperty('--presentation-origin-y');
     }
+    Object.keys(domState).forEach(key => { domState[key] = false; });
     flags.clear();
     primaryState = 'idle';
     applyPrimary('idle');
