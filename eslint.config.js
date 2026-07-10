@@ -9,7 +9,7 @@ import globals from 'globals';
 // trees are dependency-light and should stay lint-clean.
 export default [
   {
-    ignores: ['node_modules/**', 'dist/**', 'coverage/**'],
+    ignores: ['node_modules/**', 'dist/**', 'coverage/**', 'scripts/cleanup-lint-warnings.mjs'],
   },
   js.configs.recommended,
   {
