@@ -34,7 +34,15 @@ export default [
       // migrated onto the store.
       'no-redeclare': 'off',
       'no-global-assign': 'off',
-      'no-unused-vars': ['warn', { args: 'none', varsIgnorePattern: '^_' }],
+      // Catch bindings are routinely omitted semantically in fallback paths; do
+      // not require dozens of meaningless `catch (error)` names. Rest destructuring
+      // is also used to intentionally strip fields before returning an object.
+      'no-unused-vars': ['warn', {
+        args: 'none',
+        caughtErrors: 'none',
+        ignoreRestSiblings: true,
+        varsIgnorePattern: '^_',
+      }],
       'no-empty': ['warn', { allowEmptyCatch: true }],
       eqeqeq: ['warn', 'smart'],
       'no-var': 'warn',
