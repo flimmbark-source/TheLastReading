@@ -23,7 +23,7 @@ for (const state of [
   'adventure-recovery',
   'run-ending',
 ]) {
-  assert.match(director, new RegExp(`['\"]${state}['\"]`), `Missing presentation state: ${state}`);
+  assert.match(director, new RegExp(`['"]${state}['"]`), `Missing presentation state: ${state}`);
 }
 
 assert.match(director, /export function installPresentationDirector/);
