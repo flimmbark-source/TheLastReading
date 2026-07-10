@@ -3,7 +3,9 @@ import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
 
 const port = Number(process.env.PRESENTATION_CAPTURE_PORT || 18082);
-const baseUrl = `http://127.0.0.1:${port}`;
+const externalBaseUrl = process.env.PRESENTATION_CAPTURE_URL || '';
+const baseUrl = externalBaseUrl || `http://127.0.0.1:${port}`;
+const outputDir = process.env.PRESENTATION_CAPTURE_DIR || 'artifacts';
 const viewports = [
   { width: 360, height: 740 },
   { width: 375, height: 812 },
@@ -12,7 +14,10 @@ const viewports = [
   { width: 430, height: 932 },
 ];
 
+const outputPath = (label, state) => `${outputDir}/presentation-${label}-${state}.png`;
+
 function startServer() {
+  if (externalBaseUrl) return null;
   const child = spawn(process.execPath, ['scripts/serve.mjs', String(port)], {
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -42,11 +47,11 @@ async function startReading(page) {
 }
 
 async function captureReadingStates(page, label) {
-  await page.screenshot({ path: `artifacts/presentation-${label}-reading-idle.png`, fullPage: true });
+  await page.screenshot({ path: outputPath(label, 'reading-idle'), fullPage: true });
 
   await page.click('#hand .card[data-uid]');
   await page.waitForFunction(() => document.body.classList.contains('presentation-flag-card-selected'));
-  await page.screenshot({ path: `artifacts/presentation-${label}-card-selected.png`, fullPage: true });
+  await page.screenshot({ path: outputPath(label, 'card-selected'), fullPage: true });
 
   const card = await page.locator('#hand .card[data-uid]').first().boundingBox();
   const slot = await page.locator('#spread .slot').first().boundingBox();
@@ -55,7 +60,7 @@ async function captureReadingStates(page, label) {
     await page.mouse.down();
     await page.mouse.move(slot.x + slot.width / 2, slot.y + slot.height / 2, { steps: 8 });
     await page.waitForFunction(() => document.body.classList.contains('presentation-flag-card-dragging'));
-    await page.screenshot({ path: `artifacts/presentation-${label}-card-dragging.png`, fullPage: true });
+    await page.screenshot({ path: outputPath(label, 'card-dragging'), fullPage: true });
     await page.mouse.up();
     await page.waitForTimeout(350);
   }
@@ -73,7 +78,7 @@ async function captureArchives(page, label) {
   await page.waitForSelector('#invWrap.open');
   await page.waitForFunction(() => document.body.classList.contains('presentation-surface-archives'));
   await page.waitForTimeout(300);
-  await page.screenshot({ path: `artifacts/presentation-${label}-archives-open.png`, fullPage: true });
+  await page.screenshot({ path: outputPath(label, 'archives-open'), fullPage: true });
 
   const item = page.locator('#invDesk .inv-item').first();
   if (await item.count()) {
@@ -82,7 +87,7 @@ async function captureArchives(page, label) {
     await item.click();
     await page.waitForSelector('.inv-detail-bg');
     await page.waitForTimeout(260);
-    await page.screenshot({ path: `artifacts/presentation-${label}-archive-detail.png`, fullPage: true });
+    await page.screenshot({ path: outputPath(label, 'archive-detail'), fullPage: true });
     await page.keyboard.press('Escape');
   }
   await page.evaluate(() => document.getElementById('spv2ArchiveBtn')?.click());
@@ -105,7 +110,7 @@ async function captureMarket(page, label) {
   }
   await page.waitForFunction(() => document.body.classList.contains('presentation-surface-market'));
   await page.waitForTimeout(520);
-  await page.screenshot({ path: `artifacts/presentation-${label}-market.png`, fullPage: true });
+  await page.screenshot({ path: outputPath(label, 'market'), fullPage: true });
   await page.evaluate(() => {
     document.getElementById('summary').className = '';
     document.getElementById('summary').innerHTML = '';
@@ -122,7 +127,7 @@ async function captureResultSurfaces(page, label) {
   });
   await page.waitForFunction(() => document.body.classList.contains('presentation-surface-score-result'));
   await page.waitForTimeout(520);
-  await page.screenshot({ path: `artifacts/presentation-${label}-score-result.png`, fullPage: true });
+  await page.screenshot({ path: outputPath(label, 'score-result'), fullPage: true });
 
   await page.evaluate(() => {
     const summary = document.getElementById('summary');
@@ -131,7 +136,7 @@ async function captureResultSurfaces(page, label) {
   });
   await page.waitForFunction(() => document.body.classList.contains('presentation-surface-run-end'));
   await page.waitForTimeout(700);
-  await page.screenshot({ path: `artifacts/presentation-${label}-run-ending.png`, fullPage: true });
+  await page.screenshot({ path: outputPath(label, 'run-ending'), fullPage: true });
   await page.evaluate(() => {
     document.getElementById('summary').className = '';
     document.getElementById('summary').innerHTML = '';
@@ -149,7 +154,7 @@ async function captureAdventureState(page, label) {
   await page.waitForFunction(() => document.body.classList.contains('mode-adventure'));
   await page.waitForSelector('#advEventDeck');
   await page.waitForTimeout(500);
-  await page.screenshot({ path: `artifacts/presentation-${label}-adventure-event.png`, fullPage: true });
+  await page.screenshot({ path: outputPath(label, 'adventure-event'), fullPage: true });
 }
 
 async function main() {
@@ -167,7 +172,7 @@ async function main() {
   const server = startServer();
   try {
     await waitForServer();
-    mkdirSync('artifacts', { recursive: true });
+    mkdirSync(outputDir, { recursive: true });
 
     for (const viewport of viewports) {
       const page = await browser.newPage({ viewport, isMobile: true, hasTouch: true });
@@ -189,10 +194,10 @@ async function main() {
     }
   } finally {
     await browser?.close();
-    server.kill('SIGTERM');
+    server?.kill('SIGTERM');
   }
 
-  console.log('Presentation state captures written to artifacts/.');
+  console.log(`Presentation state captures written to ${outputDir}.`);
 }
 
 await main();
