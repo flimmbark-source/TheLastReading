@@ -79,7 +79,7 @@ jobs:
         if: steps.phase-state.outputs.applied != 'true'
         run: npm ci
 
-      - name: Validate generated implementation
+      - name: Syntax-check generated modules
         if: steps.phase-state.outputs.applied != 'true'
         run: |
           node --check src/app/adventureModeV3.mjs
@@ -87,10 +87,22 @@ jobs:
           node --check src/data/adventure/sigils.mjs
           node --check src/data/adventure/adventureContentV3.mjs
           node --check scripts/validate-adventure-reward-phases.mjs
-          node scripts/validate-adventure-reward-phases.mjs
-          git diff --check
-          npm run lint
-          npm test
+
+      - name: Run Adventure phase assertions
+        if: steps.phase-state.outputs.applied != 'true'
+        run: node scripts/validate-adventure-reward-phases.mjs
+
+      - name: Check generated diff
+        if: steps.phase-state.outputs.applied != 'true'
+        run: git diff --check
+
+      - name: Lint generated implementation
+        if: steps.phase-state.outputs.applied != 'true'
+        run: npm run lint
+
+      - name: Test generated implementation
+        if: steps.phase-state.outputs.applied != 'true'
+        run: npm test
 
       - name: Commit validated implementation and remove temporary machinery
         if: steps.phase-state.outputs.applied != 'true'
