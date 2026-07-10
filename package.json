@@ -11,7 +11,7 @@
     "build:bundle": "node scripts/build-bundle.mjs",
     "build": "node scripts/build-bundle.mjs && node scripts/validate-all.mjs",
     "test": "node scripts/validate-all.mjs",
-    "test:presentation": "node scripts/validate-presentation-director.mjs && node scripts/validate-adventure-presentation.mjs && node scripts/validate-world-presentation.mjs",
+    "test:presentation": "node scripts/validate-presentation-director.mjs && node scripts/validate-adventure-presentation.mjs && node scripts/validate-world-presentation.mjs && node scripts/validate-adventure-style-extraction.mjs",
     "capture:presentation": "node scripts/capture-presentation-states.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
