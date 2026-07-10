@@ -958,7 +958,7 @@ export function installAdventureModeV3(target = window) {
     target.tutSignal?.('advRewardShown');
     const state = session.rewardState;
     const offers = state.selectedSet === 'alt' && state.altOffers ? state.altOffers : state.offers;
-    const isTriumph = state.choose >= 2;
+    const isTriumph = Boolean(state.isTriumph);
     const lanes = rewardLanesForState(state);
     const cards = offers.map((offer, index) => {
       const selected = state.picked.includes(index);
