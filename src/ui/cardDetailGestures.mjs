@@ -146,7 +146,8 @@ export function installCardDetailGestures(target=window){
     }
     if(trigger.parentElement!==cardEl)cardEl.appendChild(trigger);
 
-    trigger.dataset.uid=String(uid);
+    const uidText=String(uid);
+    if(trigger.dataset.uid!==uidText)trigger.dataset.uid=uidText;
     const rect=cardEl.getBoundingClientRect();
     const vw=viewportWidth(target);
     const rightLeft=rect.right+TRIGGER_GAP;
