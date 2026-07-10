@@ -42,7 +42,7 @@ export function installHandSwipeScroll(target = window){
   // Per-card underdamped spring engine. Each spring chases the master offset;
   // the deviation is --lag, which feeds arc angle so position AND rotation trail.
   // Center cards are stiff, edge cards soft and underdamped — center-out wave.
-  let springRaf=null,springLastT=0,springState=new WeakMap();
+  let springRaf=null,springLastT=0;const springState=new WeakMap();
   const OMEGA_CENTER=0.030,OMEGA_EDGE=0.016;
   const ZETA_CENTER=0.88,ZETA_EDGE=0.70;
   const LAG_EPS=0.02,VEL_EPS=0.0005;

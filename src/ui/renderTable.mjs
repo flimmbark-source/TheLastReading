@@ -2,7 +2,7 @@
 // index.html: render() drives the bars, spread, hand, prompts, and preview;
 // refreshHandState() is the cheap selection-only repaint. Hot DOM elements
 // are cached in the legacy global _el* bindings (snapCounter shares them).
-/* global state, persist, TH, $, _cachedPlacedScore, _hintsKey, _hintsCacheKey, _hintsCache, _unlockedFragmentsCache, _spreadScoreForHints, _resStateKey, _getPlacedScore, applyResonationGlows, _scoreLegacy, hasMull, maxHand, tlrArchitectureSync, _elThreshold, _elPool, _elDiscards, _elDiscardBtn, _elPurgeBtn, _elMullBtn, _elHand, _elCurrent */
+/* global state, persist, TH, $, _hintsKey, _hintsCacheKey, _hintsCache, _getPlacedScore, applyResonationGlows, _scoreLegacy, hasMull, maxHand, tlrArchitectureSync, _elThreshold, _elPool, _elDiscards, _elDiscardBtn, _elPurgeBtn, _elMullBtn */
 import { renderSpread } from './renderSpread.mjs';
 import { renderHand } from './renderHand.mjs';
 import { renderAbilityPrompt, renderPurgePrompt } from './renderAbility.mjs';

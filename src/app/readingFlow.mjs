@@ -5,16 +5,14 @@
 // holdEffects via the global declarative environment). _slotEls stays in the
 // classic script (shared write with renderSpread.mjs). slotsForMeld stays
 // inline (function declaration → window, accessed via global env here).
-/* global state, persist, TH, SUITS, $, effectsUntil, _slotEls,
-   _scoreLegacy, _getPlacedScore, _cachedPlacedScore, _resStateKey,
-   _relicMeldNameToKey, _relicMeldNames, _packBuys, _shopPacks, _shopRefreshCount,
-   getUnlockedFragments, render, refreshHandState,
+/* global state, persist, TH, $, effectsUntil, _slotEls,
+   _scoreLegacy, _getPlacedScore, _relicMeldNameToKey, _relicMeldNames,
+   render, refreshHandState,
    ghost, bump, centerGhost, fireMultGhost, fireScoreGhost, holdEffects, fireChipProjectile,
-   meldStr, normMeldName, sortCards, cardDisplayName, cleanName, choice,
+   meldStr, normMeldName, sortCards, cleanName, choice,
    buildDeck, shuffle, drawN, slotsForMeld, playSound, haptic, meldMagnitude,
    tlrSyncPersistToStore, tlrStoreReady, tlrResolveAbilityThroughStore,
-   tlrAbilityDraw, openShop,
-   maxHand, hasMull, tlrArchitectureSync, tlrScoreToObals */
+   tlrAbilityDraw, maxHand, tlrArchitectureSync */
 import { isCardUntargetable, hasActiveConstellation } from '../systems/constellations.mjs';
 import { getAbility, ABILITY_TYPES } from '../data/abilities.mjs';
 import { abilityHeldCards, abilityWithRevealUpgrades } from '../systems/abilities.mjs';
@@ -200,7 +198,7 @@ export function placeCard(i){
 
 export function setCounterTarget(v){const floor=Math.max(counterShown,counterTarget,visibleCounterValue());counterTarget=Math.max(v,floor);if(counterTimer)clearTimeout(counterTimer);counterTimer=setTimeout(()=>{if(counterCancel)counterCancel();const from=Math.max(counterShown,visibleCounterValue());const to=Math.max(counterTarget,from);counterCancel=rollCounter(from,to,650);counterShown=to;counterTimer=null},SCORE_COUNTER_AFTER_CHIP_MS)}
 export function snapCounter(v){if(counterTimer){clearTimeout(counterTimer);counterTimer=null}if(counterCancel){counterCancel();counterCancel=null}counterShown=counterTarget=v;_cacheEls();_elCurrent.textContent=v;_elCurrent.style.color=''}
-export function rollCounter(from,to,dur){_cacheEls();const threshold=Number(_elThreshold?.textContent)||Infinity;let el=_elCurrent,start=performance.now(),dead=false,lastVal=from,popAnim=null,thCrossed=from>=threshold;if(to<=from){el.textContent=from;el.style.color='';return()=>{dead=true}}function step(now){if(dead)return;const t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++){fireScoreGhost();}if(val!==lastVal){if(popAnim)popAnim.cancel();popAnim=el.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});}if(!thCrossed&&val>=threshold){thCrossed=true;const thPill=_elThreshold?.closest('.pill');if(thPill)thPill.animate([{boxShadow:'inset 0 -3px 0 rgba(154,111,235,.62)',filter:'brightness(1)'},{boxShadow:'inset 0 -3px 0 rgba(80,220,100,.9), 0 0 24px 6px rgba(80,220,100,.55)',filter:'brightness(1.45)',offset:.2},{boxShadow:'inset 0 -3px 0 rgba(154,111,235,.62)',filter:'brightness(1)'}],{duration:750,easing:'ease-out',fill:'none'});try{haptic([0,15,60,25,80]);}catch(e){}}lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color='';holdEffects(1000);}}requestAnimationFrame(step);return()=>{dead=true;if(popAnim)popAnim.cancel();el.style.color=''}}
+export function rollCounter(from,to,dur){_cacheEls();const threshold=Number(_elThreshold?.textContent)||Infinity;const el=_elCurrent,start=performance.now();let dead=false,lastVal=from,popAnim=null,thCrossed=from>=threshold;if(to<=from){el.textContent=from;el.style.color='';return()=>{dead=true}}function step(now){if(dead)return;const t=Math.min(1,(now-start)/dur),e=1-Math.pow(1-t,3),val=Math.round(from+(to-from)*e);for(let v=lastVal+1;v<=val;v++){fireScoreGhost();}if(val!==lastVal){if(popAnim)popAnim.cancel();popAnim=el.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(.97)'},{transform:'scale(1)'}],{duration:220,easing:'ease-out'});}if(!thCrossed&&val>=threshold){thCrossed=true;const thPill=_elThreshold?.closest('.pill');if(thPill)thPill.animate([{boxShadow:'inset 0 -3px 0 rgba(154,111,235,.62)',filter:'brightness(1)'},{boxShadow:'inset 0 -3px 0 rgba(80,220,100,.9), 0 0 24px 6px rgba(80,220,100,.55)',filter:'brightness(1.45)',offset:.2},{boxShadow:'inset 0 -3px 0 rgba(154,111,235,.62)',filter:'brightness(1)'}],{duration:750,easing:'ease-out',fill:'none'});try{haptic([0,15,60,25,80]);}catch(e){}}lastVal=val;el.textContent=val;el.style.color='#ff9b52';if(t<1)requestAnimationFrame(step);else{el.textContent=to;el.style.color='';holdEffects(1000);}}requestAnimationFrame(step);return()=>{dead=true;if(popAnim)popAnim.cancel();el.style.color=''}}
 
 export function startPurge(){
   const _run=tlrStoreReady()?window.tlrStore.getState().run:null;
@@ -378,55 +376,6 @@ export function confirmAbilitySelection(){
   cb(...picked);
 }
 
-// Between reveals only the ability's `count` cards (2), matching the multiplayer
-// reducer. The reveal cap was previously bolted on by betweenAbilityLimitPatch;
-// it now lives here in the host.
-function betweenAbility(done,sourceCard=null){
-  setBusy(true);
-  const limit=Math.max(1,Number(getAbility('BETWEEN_2')?.count||2));
-  const anchors=sortCards(targetable([...state.hand,...state.spread.filter(Boolean)]));
-  const validAnchors=anchors.filter(a=>anchors.some(b=>b.uid!==a.uid&&betweenPool(a,b).length>0));
-  if(!validAnchors.length){fallbackAbility(done,'Between — no cards between');return}
-  const previewFn=(a,b)=>{
-    if(!a||!b)return'';
-    const total=betweenPool(a,b).length;
-    if(!total)return'No cards between these anchors.';
-    const shown=Math.min(limit,total);
-    return 'Between these anchors: '+shown+' of '+total+' card'+(total===1?'':'s')+' will be revealed';
-  };
-  selectFromHand('Between','Choose 2 cards. Between reveals up to '+limit+' cards whose values fall between them in sequence.',validAnchors,2,(a,b)=>{
-    const found=sortCards(uniqueCards(betweenPool(a,b))).slice(0,limit);
-    if(!found.length){
-      setBusy(false);done();return;
-    }
-    choice('Between — '+cleanName(a)+' / '+cleanName(b),'Cards found between them. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
-      tlrResolveAbilityThroughStore({kind:'take',heldCards:found,takenCardId:p.uid,threadBond:true});
-      setBusy(false);done();
-    });
-  },previewFn);
-}
-
-function relation(title,prompt,poolFn,n,done){
-  setBusy(true);
-  const candidates=targetable(inPlay()).filter(c=>poolFn(c).length>0);
-  if(!candidates.length){fallbackAbility(done,title+' — no matching cards');return}
-  const previewFn=(t)=>{
-    if(!t)return'';
-    const total=poolFn(t).length;
-    return total?(cleanName(t)+': '+total+' card'+(total===1?'':'s')+' found'):'No matching cards.';
-  };
-  selectFromHand(title,prompt,candidates,1,(t)=>{
-    const found=sortCards(poolFn(t)).slice(0,n);
-    if(!found.length){
-      setBusy(false);done();return;
-    }
-    choice(title+' — '+cleanName(t),'Cards found from '+cleanName(t)+'. Take 1. Unchosen revealed cards go to the bottom.',found,p=>{
-      tlrResolveAbilityThroughStore({kind:'take',heldCards:found,takenCardId:p.uid,threadBond:title==='Kin'||title==='Neighbor'});
-      setBusy(false);done();
-    });
-  },previewFn);
-}
-
 export function checkEnd(){if(!state.spread.every(Boolean)&&state.hand.length)return;waitForCounterThenScore()}
 function waitForCounterThenScore(){if(counterShown===counterTarget&&!counterTimer&&Date.now()>=effectsUntil)setTimeout(scoreReading,120);else setTimeout(waitForCounterThenScore,100)}
 
@@ -441,10 +390,10 @@ if(typeof window!=='undefined'&&window.__tlrAdventureActive&&typeof window.tlrAd
   window.tlrAdventureResolveReading(advRes.finalScore,advCards);
   return;
 }
-let cards=state.spread.filter(Boolean),res=_scoreLegacy(cards),total=res.finalScore,curTH=TH[state.th]+(state.thBonus||0),pass=total>=curTH;
+const cards=state.spread.filter(Boolean);let res=_scoreLegacy(cards),total=res.finalScore,curTH=TH[state.th]+(state.thBonus||0),pass=total>=curTH;
 tlSyncBeforeScore();
 window.tlrStore.dispatch({type:window.tlrActions.SCORE_READING});
-let needsNext=false,roundTotal=total,setNumber=(state.setIndex||0)+1,setsPerRound=state.setsPerRound||2;
+let needsNext=false,roundTotal=total;
 {const _run=window.tlrStore.getState().run;
 if(_run.lastScore){
   res=legacyScore(_run.lastScore);
@@ -453,8 +402,6 @@ if(_run.lastScore){
   pass=!!_run.lastPassed;
   needsNext=_run.lastOutcome==='nextSet';
   roundTotal=_run.roundScore||total;
-  setNumber=(_run.setIndex||0)+1;
-  setsPerRound=_run.setsPerRound||setsPerRound;
   syncRoundFields(_run);
 }}
 const previousRoundScore=Math.max(0,roundTotal-total);

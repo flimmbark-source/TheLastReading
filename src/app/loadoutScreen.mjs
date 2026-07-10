@@ -2,7 +2,6 @@ import { allPersonas } from '../multiplayer/personas.mjs';
 import { SCORE_TARGETS } from '../multiplayer/mpState.mjs';
 
 const PROFILE_KEY = 'tlr_mp_profile';
-const SWITCH_CUE_FILE = 'assets/audio/soundreality-bell-fx-410608.mp3';
 
 // Per-persona portrait art (relative to the document root). `tile` is the
 // half-body card used in the slot carousel; `full` is the full-body display.
@@ -65,7 +64,6 @@ export function installLoadoutScreen(target = window) {
   let profile = loadProfile(target.localStorage);
   let swipeStartX = 0;
   let swipeStartY = 0;
-  let switchAudio = null;
   let artPreloaded = false;
 
   function preloadPersonaArt() {
@@ -104,18 +102,6 @@ export function installLoadoutScreen(target = window) {
     catch (_) { return false; }
   }
 
-  // Plays the persona-switch chime. Reuses one element so rapid switching
-  // restarts the cue rather than stacking overlapping sounds.
-  function playSwitchCue() {
-    try {
-      const vol = typeof target._sfxVol === 'number' ? target._sfxVol : 1;
-      if (vol <= 0) return;
-      if (!switchAudio) switchAudio = new (target.Audio || Audio)(SWITCH_CUE_FILE);
-      switchAudio.volume = Math.max(0, Math.min(1, vol * 0.3));
-      switchAudio.currentTime = 0;
-      switchAudio.play().catch(() => {});
-    } catch (_) {}
-  }
 
   // Central selection entry point. `dir` is 'next' | 'prev' | null and drives
   // the enter animation direction; null = a neutral fade (e.g. roster tap).

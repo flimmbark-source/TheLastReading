@@ -1,13 +1,12 @@
 // Hand card gesture controller (Step 4). Verbatim port target from the
 // legacy inline hand card gestures handler patch.
-/* global state, refreshHandState, expandCard, render, placeCard */
+/* global state, refreshHandState, expandCard, render */
 import { abilityTargetView as selectAbilityTargetView } from '../game/selectors.mjs';
 
 export function installHandCardGestures(target = window){
   if(!target || target.__handCardGesturesInstalled)return;
   target.__handCardGesturesInstalled=true;
 
-  const HOLD_MS=400;
   const DRAG_THRESHOLD=10;
   const TILT_SCALE=0.32;
   const TILT_MAX=14;
@@ -66,7 +65,6 @@ export function installHandCardGestures(target = window){
     if(adapter?.isSpreadSlotOccupied)return !!adapter.isSpreadSlotOccupied(idx);
     return !!state.spread[idx];
   };
-  const inSelectionMode=()=>!!(gestureTargeting()||purgeSelecting()||gestureBusy());
   const cancelHold=()=>{if(g&&g.holdTimer){clearTimeout(g.holdTimer);g.holdTimer=null;}};
   const queueUid=(arr,uid,max)=>{if(arr.includes(uid))return arr;const a=[...arr,uid];return a.length>max?a.slice(-max):a;};
 
@@ -129,24 +127,6 @@ export function installHandCardGestures(target = window){
     const n=cards.length;
     cards.forEach((el,i)=>el.style.setProperty('--slot',(i-(n-1)/2).toString()));
     if(g)g.hoverIndex=g.origIndex;
-  };
-
-  const restoreCardToHand=()=>{
-    if(!g||!g.cardEl||!g.originalParent)return;
-    const cardEl=g.cardEl;
-    if(cardEl.parentNode===g.originalParent)return;
-    cardEl.style.removeProperty('position');
-    cardEl.style.removeProperty('left');
-    cardEl.style.removeProperty('top');
-    cardEl.style.removeProperty('width');
-    cardEl.style.removeProperty('height');
-    cardEl.style.removeProperty('margin');
-    cardEl.style.removeProperty('z-index');
-    if(g.originalNextSibling&&g.originalNextSibling.parentNode===g.originalParent){
-      g.originalParent.insertBefore(cardEl,g.originalNextSibling);
-    }else{
-      g.originalParent.appendChild(cardEl);
-    }
   };
 
   const startSelectDrag=ev=>{

@@ -79,37 +79,6 @@ function initMatch(scoreTarget = SCORE_TARGETS.QUICK) {
 
 // --- Final turn triggered when spread fills ---
 
-function fillSpread(state, playerIndex) {
-  let s = state;
-  for (let slot = 0; slot < MP_SPREAD_SIZE; slot++) {
-    const p = s.players[playerIndex];
-    if (p.hand.length === 0) break;
-    const cardUid = p.hand[0].uid;
-    s = mpReducer(s, { type: MP_ACTIONS.MP_PLACE_CARD, playerIndex, cardUid, slotIndex: slot });
-    if (s.error) return s; // propagate error
-    // If turn passed to other player, pass it back by having them invoke a no-op
-    // Actually we need to force p's turn. For test purposes, manipulate directly.
-    // Simpler: alternate normally. For this helper we only fill one player's spread
-    // by interleaving dummy moves from the other player.
-    if (s.activePlayerIndex !== playerIndex && slot < MP_SPREAD_SIZE - 1) {
-      // Other player places too (into their own spread)
-      const other = sel.playerByIndex(s, s.activePlayerIndex);
-      if (other && other.hand.length > 0) {
-        const emptySlot = sel.emptySlots(s, s.activePlayerIndex)[0];
-        if (emptySlot !== undefined) {
-          s = mpReducer(s, {
-            type: MP_ACTIONS.MP_PLACE_CARD,
-            playerIndex: s.activePlayerIndex,
-            cardUid: other.hand[0].uid,
-            slotIndex: emptySlot,
-          });
-        }
-      }
-    }
-  }
-  return s;
-}
-
 {
   // In the simultaneous model both spreads must fill before scoring begins.
   let s = initMatch();

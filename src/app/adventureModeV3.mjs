@@ -31,7 +31,6 @@ import {
   completeCurrentSet,
   beginNextSet,
   isAdventureRunComplete,
-  setEchoText,
   effectiveEventRequirement,
 } from '../systems/adventure/singleCardRun.mjs';
 import { applyResolution, clampResolve } from '../systems/adventure/run.mjs';

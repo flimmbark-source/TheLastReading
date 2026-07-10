@@ -1,6 +1,5 @@
 import { MP_PHASES } from './mpState.mjs?v=persona-bonus-fix-1';
 import { MP_ACTIONS } from './mpActions.mjs';
-import { MP_ABILITY_TYPES } from './interactionCards.mjs';
 import { getPersona } from './personas.mjs';
 import { exchangeStatus } from './mpReducer.mjs?v=persona-bonus-fix-1';
 

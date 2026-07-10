@@ -1,11 +1,8 @@
 import { cardAdventureProfile } from '../data/adventure/cardNodes.mjs';
-import { getEventApproaches } from '../data/adventure/eventApproaches.mjs';
 import { sigilForNode } from '../data/adventure/sigils.mjs';
 import { title as cardTitle } from '../ui/renderCard.mjs';
 
 const STYLE_ID = 'adventure-card-sigils-runtime-style';
-const SVG_NS = 'http://www.w3.org/2000/svg';
-const REQUIREMENT_SET_KEY = '__tlrAdventureRequirementSetIndex';
 
 const REWARD_CHOICE_KIND = Object.freeze({});
 

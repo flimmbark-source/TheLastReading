@@ -62,7 +62,6 @@ let tutDone = !!localStorage.getItem(TUT_KEY);
 let tutIgnoreClicksUntil = 0;
 let queuedTipSteps = [];
 let queuedTipTimer = null;
-let placementCount = 0;
 let activeTutTarget = null;
 let activeTutArrow = 'up';
 let tutPositionTimer = null;

@@ -219,7 +219,7 @@ function addPairs(map, pairs) {
 }
 function mergedWith(pairs) {
   const merged = new Map();
-  for (const [rel, s] of accepted) merged.set(rel, new Set(s));
+  for (const [, s] of accepted) merged.set(rel, new Set(s));
   for (const [rel, i] of pairs) { if (!merged.has(rel)) merged.set(rel, new Set()); merged.get(rel).add(i); }
   return merged;
 }
@@ -297,6 +297,6 @@ checkpoint();
 if (finalDiffs !== 0) { console.log('B FINAL VERIFY FAILED'); process.exit(2); }
 
 let removedTotal = 0, keptTotal = 0;
-for (const [rel, s] of accepted) removedTotal += s.size;
-for (const [rel, s] of keptImportant) keptTotal += s.size;
+for (const [, s] of accepted) removedTotal += s.size;
+for (const [, s] of keptImportant) keptTotal += s.size;
 console.log(`B DONE: removed ${removedTotal}, kept ${keptTotal}, of ${totalCandidates}. Checkpoint at ${CHECKPOINT}`);

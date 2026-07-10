@@ -6,7 +6,7 @@
 // atticFlow's closeArchives writes invOpen and checkResonationTriggers reads
 // both through the global declarative environment.
 /* global state, invOpen, invPos, INV_ITEMS, INV_FRAGMENTS,
-   getUnlockedFragments, playSound, applyResonationGlows, _resStateKey */
+   getUnlockedFragments, playSound, applyResonationGlows */
 
 let _saveInvTimer=null;function _saveInvPos(){clearTimeout(_saveInvTimer);_saveInvTimer=setTimeout(()=>{try{localStorage.setItem('tlr_inv_pos',JSON.stringify(invPos))}catch(e){}},300);}
 
@@ -230,7 +230,7 @@ function renderDeskItem(desk,item,memoryView){
   el.style.cssText='left:'+pos.x+'px;top:'+pos.y+'px;transform:rotate('+pos.rot+'deg)';
   const iconHtml=item.image?'<img class="inv-item-img" src="'+item.image+'" alt="">':`<span class="inv-item-emoji">${item.emoji}</span>`;
   el.innerHTML='<div class="inv-item-paper">'+iconHtml+'<span class="inv-item-type">'+item.type+'</span><span class="inv-item-name">'+item.title+'</span></div>';
-  let psx,psy,esx,esy,dw,dh,iw,ih,moved=false,active=false;
+  let psx,psy,esx,esy,dw,dh,iw,moved=false,active=false;
   el.addEventListener('pointerdown',e=>{
     e.stopPropagation();
     el.setPointerCapture(e.pointerId);
@@ -239,7 +239,7 @@ function renderDeskItem(desk,item,memoryView){
     const desk=document.getElementById('invDesk');
     dw=desk?desk.clientWidth:window.innerWidth;
     dh=desk?desk.clientHeight:300;
-    iw=el.offsetWidth||84;ih=el.offsetHeight||100;
+    iw=el.offsetWidth||84;
     moved=false;active=true;el.style.zIndex=50;
   });
   el.addEventListener('pointermove',e=>{
