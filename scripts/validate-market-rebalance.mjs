@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 
 import { ACTIONS } from '../src/game/actions.mjs';
-import { installMarketRebalance } from '../src/app/marketRebalance.mjs';
+import { generateMarketBiasFromSummary, installMarketRebalance } from '../src/app/marketRebalance.mjs';
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>');
 const persist = {
@@ -13,7 +13,7 @@ const persist = {
 
 let run = {
   selectedCardId: 1,
-  hand: [{ uid: 1, id: 'major_3', points: 1 }],
+  hand: [{ uid: 1, id: 'major_3', type: 'major', number: 3, points: 1, ability: 'DRAW_2' }],
   discard: [],
   discardedCards: [],
   worldCarry: 7,
@@ -45,6 +45,15 @@ const target = {
   document: dom.window.document,
   tlrRuntime: { persist },
   tlrStore: store,
+  SHOP: {
+    rank: [],
+    sequence: [],
+    court_chips: [],
+    royal_court_chips: [],
+    path_chips: [],
+    suit_stamp: [],
+    five_stamp: [],
+  },
   PACKS: {
     foundation: {},
     innate: {},
@@ -86,6 +95,30 @@ const target = {
   },
 };
 
+const adaptiveBias = generateMarketBiasFromSummary({
+  score: 35,
+  threshold: 30,
+  clearedThreshold: true,
+  overkillAmount: 5,
+  missedBy: 0,
+  placedCards: [{}, {}, {}, {}, {}],
+  abilityUses: [{ ability: 'DRAW_2' }],
+  scoringPatterns: ['Sequence of 3'],
+  suitCounts: { Cups: 3 },
+  arcanaCounts: { major: 2, minor: 3 },
+  rankCounts: { Queen: 2 },
+  courtCount: 2,
+  majorRunLength: 3,
+  discardCount: 1,
+  usedNoDiscards: false,
+  mult: 1,
+});
+assert.ok(adaptiveBias.cups > 0, 'three Cups should bias Cups-tagged market items');
+assert.ok(adaptiveBias.draw_support > 0, 'Draw ability use should bias Draw support');
+assert.ok(adaptiveBias.sequence_support > 0, 'sequence play should bias sequence support');
+assert.ok(adaptiveBias.threshold_help > 0, 'barely clearing should bias threshold help');
+assert.ok(adaptiveBias.multiplier > 0, 'low-mult readings should bias multiplier help');
+
 const originalRandom = Math.random;
 Math.random = () => 0;
 try {
@@ -97,6 +130,8 @@ try {
   target.tlrStore.dispatch({ type: ACTIONS.DISCARD_SELECTED });
   assert.equal(run.discardedCards.length, 1, 'all successful discards should be tracked for scoring relics');
   assert.equal(run.discardedCards[0].uid, 1);
+  assert.equal(target.__tlrAdaptiveMarket.tracker.discardCount, 1, 'market tracker should count discard behavior');
+  assert.equal(target.__tlrAdaptiveMarket.tracker.abilityUses[0].ability, 'DRAW_2', 'market tracker should remember discarded ability type');
 
   target.tlrStore.dispatch({ type: ACTIONS.START_NEXT_SET });
   assert.deepEqual(run.discardedCards, [], 'discard tracking should reset between sets');
@@ -104,7 +139,7 @@ try {
 
   target.openShopMain();
   assert.equal(target._storeFrontOffers.pack[0], 'foundation', 'dormant Thread offers should be replaced with an active pack');
-  assert.ok(openCount >= 2, 'sanitizing a dormant pack should rerender the storefront');
+  assert.ok(openCount >= 1, 'storefront should render after adaptive offer preparation');
   assert.match(
     target.document.querySelector('.store-offer-row .store-card:nth-child(3)').textContent,
     /Relic Vessel/,

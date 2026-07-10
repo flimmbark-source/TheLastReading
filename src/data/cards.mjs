@@ -20,7 +20,7 @@ export const ABILITY_LABELS = {
   PEEK_5: 'Peek 5',
   SEARCH: 'Search',
   WORLD: 'Full Reset',
-  NEIGHBOR_2: '',
+  NEIGHBOR_2: 'Neighbor',
   KIN_2: 'Kin',
   MIRROR_1: 'Mirror',
   BETWEEN_2: 'Between',

@@ -5,6 +5,12 @@ function targetingWasCancelled(selection) {
   return Array.isArray(selection) && selection.length === 1 && selection[0] === null;
 }
 
+function revealPreview(cleanName, anchor, total, count) {
+  const shown = Math.min(total, count);
+  if (total <= count) return `${cleanName(anchor)}: ${total} card${total === 1 ? '' : 's'} found`;
+  return `${cleanName(anchor)}: ${shown} of ${total} matching cards will be revealed`;
+}
+
 /**
  * Builds the player's interactive ability choice asynchronously.
  * Shared by singleplayer and multiplayer; callers inject their own state and UI.
@@ -44,9 +50,9 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
 
   if (type === ABILITY_TYPES.NEIGHBOR || type === ABILITY_TYPES.KIN || type === ABILITY_TYPES.MIRROR) {
     const anchorPrompt =
-      type === ABILITY_TYPES.NEIGHBOR ? 'Choose an anchor card. Neighbor finds adjacent cards: nearby Major numbers or court ranks in the same suit.'
-      : type === ABILITY_TYPES.KIN    ? 'Choose an anchor card. Kin finds cards of the same Arcana.'
-      :                                  'Choose an anchor card. Major Arcana mirror across the centerline; Court cards mirror by opposite rank across all suits.';
+      type === ABILITY_TYPES.NEIGHBOR ? `Choose an anchor card. Neighbor reveals up to ${count} adjacent cards: nearby Major numbers or court ranks in the same suit.`
+      : type === ABILITY_TYPES.KIN    ? `Choose an anchor card. Kin reveals up to ${count} cards of the same Arcana.`
+      :                                  `Choose an anchor card. Mirror reveals up to ${count} opposite cards: Major Arcana mirror across the centerline; Court cards mirror by rank across all suits.`;
     const inPlay = [...hand.filter(c => c.uid !== sourceCardUid), ...spread].filter(isTargetable);
 
     // Only cards that can currently produce a legal result are selectable.
@@ -55,21 +61,20 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
     if (!candidates.length) return { kind: 'fallback', count: 1 };
 
     const previewFn = anchor => {
-      const n = abilityHeldCards(deck, ability, [anchor]).length;
-      return n ? `${cleanName(anchor)}: ${n} card${n === 1 ? '' : 's'} found` : `${cleanName(anchor)}: no matching cards currently in deck`;
+      const total = abilityHeldCards(deck, ability, [anchor]).length;
+      return revealPreview(cleanName, anchor, total, count);
     };
     const anchors = await selectTargets(title, anchorPrompt, candidates, 1, previewFn);
     if (targetingWasCancelled(anchors)) return {};
     if (!anchors?.length || !anchors[0]) return null;
     const [anchor] = anchors;
-    const eligible = sortCards(abilityHeldCards(deck, ability, [anchor]));
-    // Court Mirror presents every opposite-rank card so the player chooses
-    // which suit to take. Other relation abilities retain their reveal cap.
-    const found = type === ABILITY_TYPES.MIRROR ? eligible : eligible.slice(0, count);
+    // The cap applies to the live deck order. Sorting only changes how those
+    // already-revealed cards are presented, not which matching cards were drawn.
+    const found = sortCards(abilityHeldCards(deck, ability, [anchor]).slice(0, count));
     if (!found.length) return { kind: 'fallback', count: 1 };
     const pickedCard = await showChoice(
       `${title} — ${cleanName(anchor)}`,
-      `Cards found from ${cleanName(anchor)}. Take 1. Unchosen revealed cards go to the bottom.`,
+      `Revealed from ${cleanName(anchor)}. Take 1. Unchosen revealed cards go to the bottom.`,
       found,
     );
     if (pickedCard === null) return null;
@@ -95,7 +100,7 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
       first => {
         if (!first) return '';
         const n = inPlay.filter(second => second.uid !== first.uid && resultCards(first, second).length > 0).length;
-        return `${cleanName(first)}: ${n} valid second card${n === 1 ? '' : 's'} currently in deck`;
+        return `${cleanName(first)}: ${n} valid second card${n === 1 ? '' : 's'}`;
       },
     );
     if (targetingWasCancelled(firstPick)) return {};
@@ -111,14 +116,17 @@ export async function buildAbilityChoiceAsync(ability, stateCtx, uiCtx) {
       1,
       second => {
         if (!second) return '';
-        const n = resultCards(first, second).length;
-        return `Between these anchors: ${n} card${n === 1 ? '' : 's'}`;
+        const total = resultCards(first, second).length;
+        const shown = Math.min(count, total);
+        return total <= count
+          ? `Between these anchors: ${total} card${total === 1 ? '' : 's'}`
+          : `Between these anchors: ${shown} of ${total} cards will be revealed`;
       },
     );
     if (targetingWasCancelled(secondPick)) return {};
     if (!secondPick?.length || !secondPick[0]) return null;
     const [second] = secondPick;
-    const found = sortCards(resultCards(first, second)).slice(0, count);
+    const found = sortCards(resultCards(first, second).slice(0, count));
     if (!found.length) return { kind: 'fallback', count: 1 };
     const pickedCard = await showChoice(
       `Between — ${cleanName(first)} / ${cleanName(second)}`,
