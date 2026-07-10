@@ -36,7 +36,8 @@ function finite(value, fallback = 0) {
 
 function dispatch(target, name, detail) {
   try {
-    target.dispatchEvent(new CustomEvent(name, { detail }));
+    const EventType = target.CustomEvent || CustomEvent;
+    target.dispatchEvent(new EventType(name, { detail }));
   } catch {}
 }
 
@@ -53,27 +54,41 @@ export function installPresentationDirector(target = window) {
 
   const body = () => doc.body;
 
+  const setStyleValue = (root, property, value) => {
+    if (root.style.getPropertyValue(property) === value) return;
+    root.style.setProperty(property, value);
+  };
+
   const writePayload = payload => {
     const root = body();
-    if (!root) return;
-    const intensity = Math.max(0, Math.min(1, finite(payload?.intensity, 0)));
-    root.style.setProperty('--presentation-intensity', String(intensity));
-    root.style.setProperty('--presentation-origin-x', `${finite(payload?.x, 50)}%`);
-    root.style.setProperty('--presentation-origin-y', `${finite(payload?.y, 50)}%`);
+    if (!root || !payload || typeof payload !== 'object') return;
+    if (Object.hasOwn(payload, 'intensity')) {
+      const intensity = Math.max(0, Math.min(1, finite(payload.intensity, 0)));
+      setStyleValue(root, '--presentation-intensity', String(intensity));
+    }
+    if (Object.hasOwn(payload, 'x')) {
+      setStyleValue(root, '--presentation-origin-x', `${finite(payload.x, 50)}%`);
+    }
+    if (Object.hasOwn(payload, 'y')) {
+      setStyleValue(root, '--presentation-origin-y', `${finite(payload.y, 50)}%`);
+    }
   };
 
   const applyPrimary = (name, payload = {}) => {
     const root = body();
     if (!root) return false;
     const state = PRIMARY_STATES.has(name) ? name : 'idle';
-    if (primaryState !== state) {
+    const changed = primaryState !== state;
+    if (changed) {
       root.classList.remove(`presentation-${primaryState}`);
       primaryState = state;
       root.classList.add(`presentation-${primaryState}`);
       root.dataset.presentationState = primaryState;
     }
     writePayload(payload);
-    dispatch(target, 'tlr:presentation-state', { state: primaryState, payload });
+    if (changed || Object.keys(payload).length) {
+      dispatch(target, 'tlr:presentation-state', { state: primaryState, payload });
+    }
     return true;
   };
 
@@ -81,12 +96,18 @@ export function installPresentationDirector(target = window) {
     const token = safeToken(name);
     const root = body();
     if (!token || !root) return false;
-    const className = `${FLAG_PREFIX}${token}`;
-    root.classList.toggle(className, Boolean(active));
-    if (active) flags.add(token);
-    else flags.delete(token);
-    if (active) writePayload(payload);
-    dispatch(target, 'tlr:presentation-flag', { flag: token, active: Boolean(active), payload });
+    const next = Boolean(active);
+    const previous = flags.has(token);
+    const changed = previous !== next;
+    if (changed) {
+      root.classList.toggle(`${FLAG_PREFIX}${token}`, next);
+      if (next) flags.add(token);
+      else flags.delete(token);
+    }
+    if (next) writePayload(payload);
+    if (changed || Object.keys(payload).length) {
+      dispatch(target, 'tlr:presentation-flag', { flag: token, active: next, payload });
+    }
     return true;
   };
 
@@ -162,7 +183,7 @@ export function installPresentationDirector(target = window) {
       childList: true,
       characterData: true,
       attributes: true,
-      attributeFilter: ['class', 'style', 'aria-hidden'],
+      attributeFilter: ['class', 'aria-hidden'],
     });
     scheduleSync();
   };
