@@ -20,7 +20,7 @@ export const ABILITY_LABELS = {
   PEEK_5: 'Peek 5',
   SEARCH: 'Search',
   WORLD: 'Full Reset',
-  NEIGHBOR_2: '',
+  NEIGHBOR_2: 'Neighbor',
   KIN_2: 'Kin',
   MIRROR_1: 'Mirror',
   BETWEEN_2: 'Between',
@@ -130,10 +130,10 @@ export const COURT_MEANINGS = {
 };
 
 export const SUIT_MEANINGS = {
-  Cups: ['Emotion, love', 'Hidden feelings'],
-  Wands: ['Will, creation', 'Burnout, delay'],
-  Swords: ['Truth, conflict', 'Deceit, anguish'],
-  Pentacles: ['Work, abundance', 'Greed, loss'],
+  Cups: ['Emotion, connection', 'Blocked feelings'],
+  Wands: ['Passion, action', 'Burnout, delay'],
+  Swords: ['Thought, conflict', 'Confusion, cruelty'],
+  Pentacles: ['Material, stability', 'Loss, imbalance'],
 };
 
 export const ALL_CARD_DEFINITIONS = [...MAJOR_ARCANA, ...COURT_CARDS];
