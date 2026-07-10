@@ -52,6 +52,9 @@ export function installPresentationDirector(target = window) {
     placing: false,
     patterning: false,
     thresholdComplete: false,
+    adventureOutcome: false,
+    adventureReward: false,
+    adventureRecovery: false,
   };
   let primaryState = 'idle';
   let observer = null;
@@ -187,6 +190,16 @@ export function installPresentationDirector(target = window) {
     setFlag('adventure-recovery', adventureRecovery);
     setFlag('adventure-outcome', adventureOutcome);
 
+    if (adventureOutcome && !domState.adventureOutcome) {
+      cue('adventure-outcome', { duration: 620, intensity: .65 });
+    }
+    if (adventureReward && !domState.adventureReward) {
+      cue('adventure-reward', { duration: 620, intensity: .7 });
+    }
+    if (adventureRecovery && !domState.adventureRecovery) {
+      cue('adventure-recovery', { duration: 620, intensity: .45 });
+    }
+
     const nextPrimary = adventureReward ? 'adventure-reward'
       : adventureRecovery ? 'adventure-recovery'
       : adventureOutcome ? 'adventure-outcome'
@@ -201,6 +214,9 @@ export function installPresentationDirector(target = window) {
     domState.placing = placing;
     domState.patterning = patterning;
     domState.thresholdComplete = thresholdComplete;
+    domState.adventureOutcome = adventureOutcome;
+    domState.adventureReward = adventureReward;
+    domState.adventureRecovery = adventureRecovery;
   };
 
   const scheduleSync = () => {
