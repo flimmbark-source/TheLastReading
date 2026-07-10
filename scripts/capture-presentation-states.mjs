@@ -92,7 +92,10 @@ async function captureReadingStates(page, label) {
   await page.screenshot({ path: outputPath(label, 'reading-idle'), fullPage: true });
   const beforeSelection = await readSpreadGeometry(page);
 
-  await page.click('#hand .card[data-uid]');
+  // Hand cards have a continuous idle transform, so Playwright's normal click
+  // actionability check never sees the card become geometrically stable. Invoke
+  // the exact card element's real click handler directly for this state capture.
+  await page.locator('#hand .card[data-uid]').first().evaluate(card => card.click());
   await page.waitForFunction(() => document.body.classList.contains('presentation-flag-card-selected'));
   await page.waitForTimeout(380);
   const afterSelection = await readSpreadGeometry(page);
