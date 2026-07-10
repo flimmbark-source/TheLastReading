@@ -1,6 +1,20 @@
 name: Capture presentation states
 
 on:
+  push:
+    branches: [adventure-reward-usability]
+    paths:
+      - 'game.html'
+      - 'package.json'
+      - 'src/styles/**'
+      - 'src/ui/**'
+      - 'src/app/**'
+      - 'scripts/capture-presentation-states.mjs'
+      - 'scripts/validate-*-presentation.mjs'
+      - 'scripts/validate-adventure-style-extraction.mjs'
+      - 'scripts/adventure-style-extraction.mjs'
+      - 'scripts/build-bundle.mjs'
+      - '.github/workflows/capture-presentation.yml'
   pull_request:
     branches: [main]
     paths:
