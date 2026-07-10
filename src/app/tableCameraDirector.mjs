@@ -29,13 +29,8 @@ export function installTableCameraDirector(target = window) {
     if (reduced()) return;
     const name = event.detail?.cue;
     const spread = doc.querySelector('.spread-wrap');
-    const hand = doc.querySelector('.handDock');
     const ambient = doc.getElementById('roomAmbient');
     const score = doc.querySelector('.score-stack');
-
-    if (name === 'card-place') {
-
-    }
 
     if (name === 'pattern') {
       animate(ambient, [
