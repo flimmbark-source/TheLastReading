@@ -1,0 +1,342 @@
+/* World-attached presentation for non-table gameplay surfaces. */
+
+body.presentation-surface-market #roomAmbient,
+body.presentation-surface-archives #roomAmbient,
+body.presentation-surface-run-end #roomAmbient,
+body.presentation-surface-score-result #roomAmbient {
+  transition: filter 260ms ease, opacity 260ms ease, scale 300ms cubic-bezier(.2,.74,.24,1);
+}
+
+body.presentation-surface-market .spread-wrap,
+body.presentation-surface-market .handDock,
+body.presentation-surface-archives .spread-wrap,
+body.presentation-surface-archives .handDock,
+body.presentation-surface-run-end .spread-wrap,
+body.presentation-surface-run-end .handDock {
+  transition: opacity 220ms ease, filter 240ms ease, scale 300ms cubic-bezier(.2,.74,.24,1);
+}
+
+/* Market: the table remains physically present, but becomes the dark floor of a booth. */
+body.presentation-surface-market #roomAmbient {
+  opacity: .56;
+  filter: brightness(.68) saturate(.76) sepia(.08);
+  scale: 1.012;
+}
+
+body.presentation-surface-market .spread-wrap,
+body.presentation-surface-market .handDock {
+  opacity: .2;
+  filter: brightness(.52) saturate(.58) blur(.7px);
+  scale: .988;
+}
+
+body.presentation-surface-market .store-front-shell {
+  perspective: 900px;
+}
+
+body.presentation-surface-market .store-front {
+  transform-origin: 50% 58%;
+  filter: drop-shadow(0 28px 54px rgba(0,0,0,.76));
+}
+
+body.presentation-cue-market-open .store-front {
+  animation: presentationMarketFrontIn 620ms cubic-bezier(.16,.82,.24,1) both;
+}
+
+body.presentation-cue-market-open .store-card {
+  animation: presentationMarketOfferIn 420ms 130ms cubic-bezier(.16,.82,.24,1) both;
+}
+
+body.presentation-cue-market-open .store-card:nth-child(2) { animation-delay: 180ms; }
+body.presentation-cue-market-open .store-card:nth-child(3) { animation-delay: 230ms; }
+body.presentation-cue-market-open .store-card:nth-child(4) { animation-delay: 280ms; }
+body.presentation-cue-market-open .store-card:nth-child(5) { animation-delay: 330ms; }
+
+body.presentation-surface-market .store-reserve-display {
+  min-width: 84px;
+  padding: 7px 11px 8px;
+  border: 1px solid rgba(213,170,90,.34);
+  border-radius: 999px 999px 12px 12px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255,225,158,.1), transparent 50%),
+    linear-gradient(180deg, rgba(54,35,18,.92), rgba(21,13,8,.94));
+  box-shadow: 0 8px 18px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,240,199,.07);
+}
+
+body.presentation-surface-market .store-card.presentation-market-buying {
+  z-index: 4;
+  animation: presentationMarketPurchase 520ms cubic-bezier(.16,.82,.24,1) both;
+}
+
+body.presentation-cue-market-purchase .store-reserve-amount {
+  animation: presentationReserveSpend 420ms ease-out;
+}
+
+/* Archives: the lower drawer becomes the active scene, not another HUD panel. */
+body.presentation-surface-archives #roomAmbient {
+  opacity: .68;
+  filter: brightness(.7) saturate(.72) sepia(.1);
+  scale: 1.008;
+}
+
+body.presentation-surface-archives .spread-wrap,
+body.presentation-surface-archives .score-stack,
+body.presentation-surface-archives .handDock {
+  opacity: .34;
+  filter: brightness(.58) saturate(.62);
+}
+
+body.presentation-surface-archives #invWrap.open {
+  filter: drop-shadow(0 -22px 38px rgba(0,0,0,.68));
+}
+
+body.presentation-surface-archives #invWrap.open #invDesk {
+  isolation: isolate;
+  border-top: 1px solid rgba(217,174,100,.42);
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.018), transparent 24%, rgba(255,255,255,.012) 70%, transparent),
+    repeating-linear-gradient(3deg, rgba(91,53,25,.08) 0 2px, transparent 2px 17px),
+    linear-gradient(180deg, rgba(74,46,25,.97), rgba(34,20,12,.985));
+  box-shadow:
+    inset 0 14px 28px rgba(0,0,0,.34),
+    inset 0 1px 0 rgba(255,225,174,.08),
+    0 -18px 46px rgba(0,0,0,.5);
+}
+
+body.presentation-surface-archives #invWrap.open #invDesk::before {
+  content: "Archives";
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  z-index: 0;
+  transform: translateX(-50%);
+  color: rgba(225,193,135,.42);
+  font: 700 11px/1 'Cinzel', Georgia, serif;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+body.presentation-cue-archives-open #invWrap.open {
+  animation: presentationDrawerOpen 560ms cubic-bezier(.18,.78,.24,1) both;
+}
+
+body.presentation-cue-archives-open #invWrap.open .inv-item {
+  animation: presentationArchiveItemIn 380ms 150ms cubic-bezier(.18,.78,.24,1) both;
+}
+body.presentation-cue-archives-open #invWrap.open .inv-item:nth-of-type(2) { animation-delay: 190ms; }
+body.presentation-cue-archives-open #invWrap.open .inv-item:nth-of-type(3) { animation-delay: 230ms; }
+body.presentation-cue-archives-open #invWrap.open .inv-item:nth-of-type(4) { animation-delay: 270ms; }
+body.presentation-cue-archives-open #invWrap.open .inv-item:nth-of-type(5) { animation-delay: 310ms; }
+
+body.presentation-surface-archive-detail .inv-detail-bg {
+  background:
+    radial-gradient(circle at 50% 45%, rgba(124,78,34,.14), transparent 42%),
+    rgba(3,2,2,.84);
+  backdrop-filter: blur(4px);
+}
+
+body.presentation-cue-archive-detail .inv-detail-box,
+body.presentation-cue-archive-detail .inv-detail-fullart-wrap {
+  animation: presentationArchiveDetailIn 520ms cubic-bezier(.16,.82,.24,1) both;
+  transform-origin: 50% 58%;
+}
+
+body.presentation-surface-archive-detail .inv-detail-box {
+  border-color: rgba(134,95,40,.76);
+  box-shadow:
+    0 34px 90px rgba(0,0,0,.86),
+    0 0 0 1px rgba(255,243,203,.09),
+    inset 0 1px 0 rgba(255,255,255,.22);
+}
+
+body.presentation-surface-archive-detail .inv-detail-fullart {
+  box-shadow:
+    0 34px 90px rgba(0,0,0,.9),
+    0 0 0 1px rgba(234,204,145,.2),
+    0 0 42px rgba(154,99,41,.14);
+}
+
+body.presentation-surface-archive-detail .res-vault-screen {
+  box-shadow: 0 32px 84px rgba(0,0,0,.84), inset 0 1px 0 rgba(255,232,183,.08);
+}
+
+/* Threshold result: still a report, but staged as the immediate payoff of play. */
+body.presentation-surface-score-result #roomAmbient {
+  opacity: .62;
+  filter: brightness(.72) saturate(.78);
+  scale: 1.008;
+}
+
+body.presentation-surface-score-result #summary.show {
+  background:
+    radial-gradient(circle at 50% 43%, rgba(148,96,39,.12), transparent 46%),
+    rgba(4,3,2,.72);
+  backdrop-filter: blur(2px);
+}
+
+body.presentation-cue-score-result #summary.show > .result-panel {
+  animation: presentationScoreResultIn 580ms cubic-bezier(.16,.82,.24,1) both;
+}
+
+body.presentation-cue-score-result #summary.show .rscore {
+  animation: presentationScoreEquationIn 520ms 150ms cubic-bezier(.16,.82,.24,1) both;
+}
+
+body.presentation-cue-score-result #summary.show .rtable {
+  animation: presentationScoreBreakdownIn 480ms 260ms ease-out both;
+}
+
+/* Session ending: a quiet closing ritual rather than the standard score modal. */
+body.presentation-surface-run-end #roomAmbient {
+  opacity: .34;
+  filter: brightness(.48) saturate(.55) sepia(.12);
+  scale: 1.025;
+}
+
+body.presentation-surface-run-end .spread-wrap,
+body.presentation-surface-run-end .score-stack,
+body.presentation-surface-run-end .handDock,
+body.presentation-surface-run-end #titleWrap,
+body.presentation-surface-run-end #relicRack {
+  opacity: .12;
+  filter: brightness(.42) saturate(.45);
+  scale: .985;
+}
+
+body.presentation-surface-run-end #summary.show {
+  align-items: center;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(151,102,48,.16), transparent 42%),
+    linear-gradient(rgba(3,2,2,.76), rgba(1,1,1,.9));
+  backdrop-filter: blur(4px);
+}
+
+body.presentation-surface-run-end #summary.show > .result-panel {
+  width: min(88vw, 460px);
+  border: 1px solid rgba(218,179,104,.38);
+  border-radius: 18px;
+  padding: clamp(26px, 7vw, 42px) clamp(22px, 6vw, 36px);
+  background:
+    radial-gradient(circle at 50% 12%, rgba(255,226,164,.06), transparent 44%),
+    linear-gradient(155deg, rgba(45,29,17,.98), rgba(13,9,6,.99));
+  box-shadow:
+    0 38px 100px rgba(0,0,0,.88),
+    inset 0 1px 0 rgba(255,235,191,.08),
+    inset 0 0 70px rgba(117,73,28,.08);
+}
+
+body.presentation-cue-run-end #summary.show > .result-panel {
+  animation: presentationRunEndPanel 900ms cubic-bezier(.14,.78,.2,1) both;
+}
+
+body.presentation-cue-run-end #summary.show .rhead {
+  animation: presentationRunEndLine 520ms 180ms ease-out both;
+}
+
+body.presentation-cue-run-end #summary.show .rscore:first-of-type {
+  animation: presentationRunEndScore 620ms 330ms cubic-bezier(.16,.82,.24,1) both;
+}
+
+body.presentation-cue-run-end #summary.show .rverdict,
+body.presentation-cue-run-end #summary.show .rscore:nth-of-type(2),
+body.presentation-cue-run-end #summary.show p {
+  animation: presentationRunEndLine 480ms 520ms ease-out both;
+}
+
+@keyframes presentationMarketFrontIn {
+  0% { opacity: 0; transform: translateY(14px) rotateX(2deg) scale(.985); filter: brightness(.72); }
+  55% { opacity: 1; filter: brightness(1.05); }
+  100% { opacity: 1; transform: translateY(0) rotateX(0) scale(1); filter: brightness(1); }
+}
+
+@keyframes presentationMarketOfferIn {
+  0% { opacity: 0; transform: translateX(-12px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes presentationMarketPurchase {
+  0%, 100% { transform: translateY(0) scale(1); filter: brightness(1); }
+  36% { transform: translateY(-5px) scale(1.012); filter: brightness(1.18); }
+  70% { transform: translateY(1px) scale(.996); filter: brightness(.92); }
+}
+
+@keyframes presentationReserveSpend {
+  0%, 100% { transform: scale(1); color: #f1d196; }
+  42% { transform: scale(1.15); color: #ffcc70; }
+}
+
+@keyframes presentationDrawerOpen {
+  0% { opacity: 0; transform: translateY(32px); filter: brightness(.72); }
+  100% { opacity: 1; transform: translateY(0); filter: brightness(1); }
+}
+
+@keyframes presentationArchiveItemIn {
+  0% { opacity: 0; translate: 0 18px; scale: .94; }
+  100% { opacity: 1; translate: 0 0; scale: 1; }
+}
+
+@keyframes presentationArchiveDetailIn {
+  0% { opacity: 0; transform: translateY(12px) scale(.975) rotate(-.5deg); filter: brightness(.75); }
+  60% { opacity: 1; filter: brightness(1.04); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); filter: brightness(1); }
+}
+
+@keyframes presentationScoreResultIn {
+  0% { opacity: 0; transform: translateY(10px) scale(.985); filter: brightness(.76); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
+}
+
+@keyframes presentationScoreEquationIn {
+  0% { opacity: 0; transform: translateY(8px) scale(.94); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes presentationScoreBreakdownIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes presentationRunEndPanel {
+  0% { opacity: 0; transform: translateY(18px) scale(.972); filter: brightness(.62); }
+  48% { opacity: 1; filter: brightness(1.04); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
+}
+
+@keyframes presentationRunEndScore {
+  0% { opacity: 0; transform: translateY(8px) scale(.78); }
+  58% { opacity: 1; transform: translateY(0) scale(1.08); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes presentationRunEndLine {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  body.presentation-surface-market .store-front { max-height: calc(100dvh - 104px); }
+  body.presentation-surface-archives #invWrap.open #invDesk::before { top: 7px; font-size: 9px; }
+  body.presentation-surface-run-end #summary.show > .result-panel { width: calc(100% - 28px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.presentation-cue-market-open .store-front,
+  body.presentation-cue-market-open .store-card,
+  body.presentation-surface-market .store-card.presentation-market-buying,
+  body.presentation-cue-market-purchase .store-reserve-amount,
+  body.presentation-cue-archives-open #invWrap.open,
+  body.presentation-cue-archives-open #invWrap.open .inv-item,
+  body.presentation-cue-archive-detail .inv-detail-box,
+  body.presentation-cue-archive-detail .inv-detail-fullart-wrap,
+  body.presentation-cue-score-result #summary.show > .result-panel,
+  body.presentation-cue-score-result #summary.show .rscore,
+  body.presentation-cue-score-result #summary.show .rtable,
+  body.presentation-cue-run-end #summary.show > .result-panel,
+  body.presentation-cue-run-end #summary.show .rhead,
+  body.presentation-cue-run-end #summary.show .rscore,
+  body.presentation-cue-run-end #summary.show .rverdict,
+  body.presentation-cue-run-end #summary.show p {
+    animation: none;
+  }
+}
