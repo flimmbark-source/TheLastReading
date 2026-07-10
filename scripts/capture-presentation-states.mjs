@@ -46,11 +46,57 @@ async function startReading(page) {
   await page.waitForTimeout(450);
 }
 
+async function readSpreadGeometry(page) {
+  return page.evaluate(() => {
+    const spread = document.getElementById('spread');
+    const wrap = spread?.closest('.spread-wrap');
+    if (!spread || !wrap) return null;
+    const spreadRect = spread.getBoundingClientRect();
+    const wrapRect = wrap.getBoundingClientRect();
+    return {
+      scrollY: window.scrollY,
+      spread: {
+        top: spreadRect.top,
+        left: spreadRect.left,
+        width: spreadRect.width,
+        height: spreadRect.height,
+      },
+      wrap: {
+        top: wrapRect.top,
+        left: wrapRect.left,
+        width: wrapRect.width,
+        height: wrapRect.height,
+      },
+    };
+  });
+}
+
+function assertSelectionKeepsSpreadFixed(before, after, label) {
+  if (!before || !after) throw new Error(`[${label}] Spread geometry was unavailable`);
+  const tolerance = 1.5;
+  const failures = [];
+  for (const target of ['spread', 'wrap']) {
+    for (const key of ['top', 'left', 'width']) {
+      const delta = after[target][key] - before[target][key];
+      if (Math.abs(delta) > tolerance) failures.push(`${target}.${key} changed ${delta.toFixed(2)}px`);
+    }
+  }
+  const scrollDelta = after.scrollY - before.scrollY;
+  if (Math.abs(scrollDelta) > tolerance) failures.push(`window.scrollY changed ${scrollDelta.toFixed(2)}px`);
+  if (failures.length) {
+    throw new Error(`[${label}] Selecting a card moved the play geometry: ${failures.join(', ')}`);
+  }
+}
+
 async function captureReadingStates(page, label) {
   await page.screenshot({ path: outputPath(label, 'reading-idle'), fullPage: true });
+  const beforeSelection = await readSpreadGeometry(page);
 
   await page.click('#hand .card[data-uid]');
   await page.waitForFunction(() => document.body.classList.contains('presentation-flag-card-selected'));
+  await page.waitForTimeout(380);
+  const afterSelection = await readSpreadGeometry(page);
+  assertSelectionKeepsSpreadFixed(beforeSelection, afterSelection, label);
   await page.screenshot({ path: outputPath(label, 'card-selected'), fullPage: true });
 
   const card = await page.locator('#hand .card[data-uid]').first().boundingBox();
