@@ -49,8 +49,17 @@ jobs:
       - name: Install project dependencies
         run: npm ci
 
-      - name: Validate presentation architecture
-        run: npm run test:presentation
+      - name: Validate presentation director
+        run: node scripts/validate-presentation-director.mjs
+
+      - name: Validate Adventure presentation
+        run: node scripts/validate-adventure-presentation.mjs
+
+      - name: Validate world and selection presentation
+        run: node scripts/validate-world-presentation.mjs
+
+      - name: Validate Adventure style extraction
+        run: node scripts/validate-adventure-style-extraction.mjs
 
       - name: Verify production bundle
         run: npm run build:bundle
