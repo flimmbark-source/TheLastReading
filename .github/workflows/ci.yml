@@ -39,7 +39,20 @@ jobs:
 
       - name: Decode source transformer
         if: steps.phase-state.outputs.applied != 'true'
-        run: base64 -d scripts/.apply-adventure-reward-phases.mjs.gz.b64 | gunzip > /tmp/apply-adventure-reward-phases.mjs
+        run: |
+          python - <<'PY'
+          import base64
+          import gzip
+          from pathlib import Path
+
+          encoded = Path('scripts/.apply-adventure-reward-phases.mjs.gz.b64').read_text(encoding='utf-8')
+          encoded = ''.join(encoded.split())
+          encoded += '=' * (-len(encoded) % 4)
+          compressed = base64.b64decode(encoded, validate=False)
+          source = gzip.decompress(compressed)
+          Path('/tmp/apply-adventure-reward-phases.mjs').write_bytes(source)
+          print(f'Decoded {len(compressed)} compressed bytes into {len(source)} source bytes.')
+          PY
 
       - name: Syntax-check source transformer
         if: steps.phase-state.outputs.applied != 'true'
