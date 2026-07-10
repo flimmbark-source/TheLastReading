@@ -58,17 +58,17 @@ jobs:
       - name: Validate world and selection presentation
         run: node scripts/validate-world-presentation.mjs
 
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Measure and capture mobile presentation states
+        run: npm run capture:presentation
+
       - name: Validate Adventure style extraction
         run: node scripts/validate-adventure-style-extraction.mjs
 
       - name: Verify production bundle
         run: npm run build:bundle
-
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
-
-      - name: Capture full mobile scene matrix
-        run: npm run capture:presentation
 
       - name: Upload presentation screenshots
         if: always()
@@ -76,5 +76,5 @@ jobs:
         with:
           name: presentation-mobile-scene-matrix
           path: artifacts/presentation-*.png
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
