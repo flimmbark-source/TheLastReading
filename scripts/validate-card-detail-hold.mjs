@@ -8,6 +8,8 @@ const dom=new JSDOM('<!doctype html><html><head></head><body><div id="hand"><div
 const target=dom.window;
 Object.defineProperty(target,'innerWidth',{configurable:true,value:430});
 Object.defineProperty(target,'innerHeight',{configurable:true,value:800});
+let clock=0;
+Object.defineProperty(target.performance,'now',{configurable:true,value:()=>clock});
 
 const handCard={uid:11,id:'major_1'};
 const otherHandCard={uid:12,id:'major_3'};
@@ -15,9 +17,10 @@ const spreadCard={uid:22,id:'major_2'};
 let run={hand:[handCard,otherHandCard],spread:[spreadCard,null,null,null,null],selectedCardId:11,busy:false,ability:null,purge:null};
 const legacy={hand:[handCard,otherHandCard],spread:[spreadCard,null,null,null,null],selected:11,busy:false,abilitySelect:null,purgeSelect:null};
 let expanded=null;
+let expandCount=0;
 let cancelledPulls=0;
 
-target.tlrRuntime={state:legacy};
+ target.tlrRuntime={state:legacy};
 target.tlrActions={SELECT_CARD:'SELECT_CARD'};
 target.tlrStore={
   getState:()=>({run}),
@@ -25,7 +28,7 @@ target.tlrStore={
     if(action.type==='SELECT_CARD')run={...run,selectedCardId:action.cardId};
   },
 };
-target.expandCard=card=>{expanded=card;};
+target.expandCard=card=>{expanded=card;expandCount+=1;};
 target.tlrCancelHandDrag=()=>{cancelledPulls+=1;return true;};
 
 const handEl=target.document.querySelector('#hand .card[data-uid="11"]');
@@ -60,15 +63,35 @@ assert.equal(trigger.style.left,'auto');
 assert.equal(trigger.style.right,'calc(100% + 7px)','the left-side trigger should stay directly beside the animated card');
 assert.equal(trigger.style.top,'0px','the trigger top should remain flush with the card top');
 
+// Reproduce the real runtime problem: later card-gesture code may suppress the
+// browser-generated click. The detail trigger must therefore finish on its own
+// pointer sequence before that click exists.
+target.document.addEventListener('click',event=>{
+  if(event.target.closest?.('#hand .card[data-uid]')){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
+},true);
+
 let triggerReceivedPointerDown=false;
 trigger.addEventListener('pointerdown',()=>{triggerReceivedPointerDown=true;});
 pointer('pointerdown',trigger,{pointerId:3,clientY:100});
+handEl.classList.add('press-highlight');
 pointer('pointerup',trigger,{pointerId:3,clientY:100});
-assert.equal(triggerReceivedPointerDown,true,'the detail button must receive pointerdown so touch browsers can generate a click');
+assert.equal(triggerReceivedPointerDown,true,'the detail button must receive pointerdown');
+assert.equal(expanded,handCard,'pointerup on the selected-card trigger should open that card detail view without waiting for click synthesis');
+assert.equal(expandCount,1,'one pointer sequence should open the detail exactly once');
 
 click(trigger);
-assert.equal(expanded,handCard,'clicking the selected-card trigger should open that card detail view');
+assert.equal(expandCount,1,'the native click following pointerup must not reopen the detail view');
 
+clock=1000;
+expanded=null;
+click(trigger);
+assert.equal(expanded,handCard,'keyboard or programmatic click should remain a working fallback');
+assert.equal(expandCount,2,'the fallback click should open once');
+
+clock=2000;
 target.__handGestureSuppressClickUntil=0;
 expanded=null;
 click(handEl);
