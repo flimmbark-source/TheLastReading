@@ -226,7 +226,6 @@ export function replayTutorial() {
   queuedTipSteps = [];
   clearTimeout(queuedTipTimer);
   queuedTipTimer = null;
-  placementCount = 0;
   tutDone = false;
   tutShow(TUT_STEP.INTRO, { force: true });
 }
@@ -392,7 +391,6 @@ export function tutNext() {
 
 function onPlacement() {
   if (window.__tlrAdventureActive) return;
-  placementCount++;
   if (!tutDone || localStorage.getItem(TUT_DISCARD_KEY)) return;
   queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
 }
