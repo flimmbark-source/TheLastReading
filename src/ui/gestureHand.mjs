@@ -6,9 +6,9 @@ export function installHandSwipeScroll(target = window){
   target.__handSwipeScrollInstalled=true;
   let zone=null,hand=null;
   let offset=0,startOffset=0,startX=0,startY=0,startLift=0,lift=0,startDockH=157;
-  let samples=[];                                    // {t,deg} ring for horizontal swipe velocity
-  let liftSamples=[];                                // {t,y} ring for vertical swipe velocity
-  let pointers=new Map();                            // active pointer id -> {x,y}
+  const samples=[];                                    // {t,deg} ring for horizontal swipe velocity
+  const liftSamples=[];                                // {t,y} ring for vertical swipe velocity
+  const pointers=new Map();                            // active pointer id -> {x,y}
   let mode=null;                                     // 'slide' | 'pinch' | null
   let pinchStart=null;                               // {dist,spacing,ids}
   let pinchSuppressClickUntil=0;
@@ -42,7 +42,7 @@ export function installHandSwipeScroll(target = window){
   // Per-card underdamped spring engine. Each spring chases the master offset;
   // the deviation is --lag, which feeds arc angle so position AND rotation trail.
   // Center cards are stiff, edge cards soft and underdamped — center-out wave.
-  let springRaf=null,springLastT=0,springState=new WeakMap();
+  let springRaf=null,springLastT=0;const springState=new WeakMap();
   const OMEGA_CENTER=0.030,OMEGA_EDGE=0.016;
   const ZETA_CENTER=0.88,ZETA_EDGE=0.70;
   const LAG_EPS=0.02,VEL_EPS=0.0005;
@@ -400,6 +400,7 @@ export function installHandSwipeScroll(target = window){
   // ── Pointer event routing ──
   document.addEventListener('pointerdown',ev=>{
     if(target.__handPinchSynthetic)return;
+    if(ev.target instanceof Element&&ev.target.closest('.card-detail-trigger'))return;
     if(!inHandArea(ev.target))return;
     pointers.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
     if(pointers.size>=2){

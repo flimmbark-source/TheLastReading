@@ -1,0 +1,155 @@
+@layer spv2.components {
+  body.single-player-v2.presentation-flag-ability-reveal #roomAmbient {
+    filter: brightness(.82) saturate(.86);
+  }
+
+  body.single-player-v2.presentation-flag-ability-reveal .handDock,
+  body.single-player-v2.presentation-flag-ability-reveal .score-stack {
+    opacity: .62;
+    filter: brightness(.78) saturate(.75);
+  }
+
+  body.single-player-v2 #modal.modal.ability-reveal.show {
+    padding:
+      max(14px, env(safe-area-inset-top))
+      max(12px, env(safe-area-inset-right))
+      max(14px, env(safe-area-inset-bottom))
+      max(12px, env(safe-area-inset-left));
+    background:
+      radial-gradient(circle at 50% 30%, rgba(128,86,43,.14), transparent 48%),
+      rgba(5,4,3,.62);
+    backdrop-filter: blur(2px);
+  }
+
+  body.single-player-v2 #modal.modal.ability-reveal.show .box {
+    width: min(100%, 820px);
+    max-height: min(78vh, 720px);
+    border: 1px solid rgba(213,173,101,.48);
+    border-radius: 17px;
+    padding: clamp(16px, 3.5vw, 24px);
+    background:
+      linear-gradient(150deg, rgba(49,32,20,.98), rgba(18,12,8,.985) 68%),
+      #18100c;
+    box-shadow:
+      0 26px 72px rgba(0,0,0,.78),
+      inset 0 1px 0 rgba(255,235,190,.08),
+      inset 0 0 58px rgba(113,71,28,.07);
+  }
+
+  body.single-player-v2 #modal.modal.ability-reveal.show .modalHead {
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  body.single-player-v2 #modal.modal.ability-reveal.show .box h2 {
+    color: #f0d8a5;
+    font-family: 'Cinzel', Georgia, serif;
+    letter-spacing: .045em;
+    text-wrap: balance;
+  }
+
+  body.single-player-v2 #modal.modal.ability-reveal.show #modalPrompt {
+    max-width: 620px;
+    margin: 0 auto 14px;
+    color: #cdbb98;
+    line-height: 1.45;
+    text-align: center;
+    text-wrap: pretty;
+  }
+
+  body.single-player-v2 #modal.modal.ability-reveal.show .choices {
+    grid-template-columns: repeat(auto-fit, minmax(122px, 142px));
+    gap: 12px;
+    padding: 4px 2px 8px;
+    justify-content: center;
+  }
+
+  body.single-player-v2 #modal.modal.ability-reveal.show .choice-card {
+    scroll-snap-align: center;
+    transition:
+      translate 140ms ease,
+      filter 140ms ease,
+      box-shadow 140ms ease;
+  }
+
+  body.single-player-v2 #modal.modal.ability-reveal.show .choice-card:active {
+    translate: 0 2px;
+  }
+
+  body.single-player-v2.presentation-cue-ability-reveal #modal.modal.ability-reveal.show .box {
+    animation: presentation-ability-tray-in 480ms cubic-bezier(.16,.82,.26,1) both;
+  }
+
+  body.single-player-v2.presentation-cue-ability-reveal #modal.modal.ability-reveal.show .choice-card {
+    animation: presentation-ability-card-in 360ms 90ms cubic-bezier(.16,.82,.26,1) both;
+  }
+
+  body.single-player-v2.presentation-cue-ability-reveal #modal.modal.ability-reveal.show .choice-card:nth-child(2) { animation-delay: 130ms; }
+  body.single-player-v2.presentation-cue-ability-reveal #modal.modal.ability-reveal.show .choice-card:nth-child(3) { animation-delay: 170ms; }
+  body.single-player-v2.presentation-cue-ability-reveal #modal.modal.ability-reveal.show .choice-card:nth-child(4) { animation-delay: 210ms; }
+  body.single-player-v2.presentation-cue-ability-reveal #modal.modal.ability-reveal.show .choice-card:nth-child(5) { animation-delay: 250ms; }
+
+  @keyframes presentation-ability-tray-in {
+    0% {
+      opacity: 0;
+      transform: translateY(10px) scale(.988);
+      filter: brightness(.8);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: brightness(1);
+    }
+  }
+
+  @keyframes presentation-ability-card-in {
+    0% {
+      opacity: 0;
+      transform: translateY(12px) rotate(.7deg);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) rotate(0);
+    }
+  }
+
+  @media (max-width: 640px) {
+    body.single-player-v2 #modal.modal.ability-reveal.show {
+      align-items: flex-start;
+      padding-top: max(10px, env(safe-area-inset-top));
+    }
+
+    body.single-player-v2 #modal.modal.ability-reveal.show .box {
+      width: 100%;
+      max-height: calc(100dvh - max(20px, env(safe-area-inset-top)) - max(20px, env(safe-area-inset-bottom)));
+      padding: 16px 12px 14px;
+    }
+
+    body.single-player-v2 #modal.modal.ability-reveal.show .choices {
+      display: flex;
+      justify-content: flex-start;
+      gap: 10px;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+      padding: 5px max(8px, calc((100vw - 138px) / 2)) 12px;
+      margin-inline: -12px;
+    }
+
+    body.single-player-v2 #modal.modal.ability-reveal.show .choices::-webkit-scrollbar {
+      display: none;
+    }
+
+    body.single-player-v2 #modal.modal.ability-reveal.show .choice-card {
+      flex: 0 0 138px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    body.single-player-v2.presentation-cue-ability-reveal #modal.modal.ability-reveal.show .box,
+    body.single-player-v2.presentation-cue-ability-reveal #modal.modal.ability-reveal.show .choice-card {
+      animation: none;
+    }
+  }
+}

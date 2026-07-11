@@ -1,21 +1,6 @@
 // Main menu overlay. Shown on first load and via "Return to Menu" in-game.
 import { createInitialPersist, createInitialState } from './runtimeState.mjs';
 
-function hasSavedProgress(storage) {
-  try {
-    const raw = storage?.getItem('tlr_save');
-    if (!raw) return false;
-    const parsed = JSON.parse(raw);
-    if (!parsed?.persist) return false;
-    const p = parsed.persist;
-    const reserve = Number(p.reserve ?? p.pool ?? 0);
-    const upgrades = p.upgrades || p.up || {};
-    return (reserve > 0) || (p.relics?.length > 0) || Object.values(upgrades).some(v => v > 0);
-  } catch (_) {
-    return false;
-  }
-}
-
 function syncInitialRunToStore(target, initialState) {
   if (!target.tlrStore || !target.tlrActions) return;
   target.tlrStore.dispatch({
@@ -361,7 +346,7 @@ export function installMainMenu(target = window) {
           if (Array.isArray(dealtHand) && dealtHand.length) target.tlrQueueDrawAnimation(dealtHand);
         }
         if (!target.localStorage.getItem('tlr_tut_done') && typeof target.tutShow === 'function') {
-          target.setTimeout(() => target.tutShow(0), 400);
+          target.setTimeout(() => target.tutShow('story-intro'), 400);
         }
       } else {
         console.error('The Last Reading: startReading is not available from the main menu.');

@@ -1,17 +1,45 @@
 // Reference/scoring controls adapter.
 // These functions mirror the remaining inline Scoring/Abilities reference logic
 // and install only when the inline functions have been removed.
+import { getAbility } from '../data/abilities.mjs';
 
 function runtime(target){return target.tlrRuntime || {};}
 function persistOf(target){return runtime(target).persist || {};}
 
 function fmtBonus(value){return '+'+(value-1).toFixed(2).replace(/\.?0+$/,'');}
+function escapeHtml(value){return String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function plainGameTermText(value,target){
+  return String(value??'').replace(/\[\[([a-z0-9_-]+)(?:\|([^\]]+))?\]\]/gi,(_,id,label)=>label||target.tlrGetGameTerm?.(id)?.label||id.replace(/(^|[-_])(\w)/g,(_match,_sep,char)=>char.toUpperCase()));
+}
 
 function scoreCardIcon(){
   return '<span aria-hidden="true" style="display:inline-block;width:13px;height:17px;margin-right:7px;vertical-align:-3px;border:1px solid rgba(243,207,118,.82);border-radius:3px;background:linear-gradient(160deg,#ead9b5,#b98243 54%,#352012);box-shadow:inset 0 0 0 2px rgba(45,22,8,.55),0 0 8px rgba(243,207,118,.28)"></span>';
 }
 
 function patternLabel(label){return scoreCardIcon()+'<b>'+label+'</b>';}
+
+export function abilityReferenceRows(){
+  return [
+    ['Draw','[[draw]] the listed number of cards.'],
+    ['Peek','[[reveal]] the listed number of cards. [[take]] 1. Put the rest on the bottom.'],
+    ['Search',getAbility('SEARCH')?.prompt||''],
+    ['Full Reset',getAbility('WORLD')?.prompt||''],
+    ['Neighbor',getAbility('NEIGHBOR_2')?.prompt||''],
+    ['Kin',getAbility('KIN_2')?.prompt||''],
+    ['Mirror',getAbility('MIRROR_1')?.prompt||''],
+    ['Between',getAbility('BETWEEN_2')?.prompt||''],
+  ];
+}
+
+export function renderAbilitySheet(target = window){
+  const ability=target.document?.getElementById('abilityRef');
+  if(!ability)return;
+  ability.dataset.gameTerms='off';
+  const rows=abilityReferenceRows();
+  ability.innerHTML='<table><tr><td><b>Ability</b></td><td class="r"><b>What it does</b></td></tr>'
+    +rows.map(([name,description])=>`<tr><td>${escapeHtml(name)}</td><td class="r">${escapeHtml(plainGameTermText(description,target))}</td></tr>`).join('')
+    +'</table>';
+}
 
 export function closeRefs(){
   const ref=document.getElementById('ref');
@@ -42,11 +70,11 @@ export function renderScoringSheet(target = window){
     ['Path of the Magi','0·I·XXI in spread',`+${15+pathChips}`,fmtBonus(pathMult)],
   ];
   const upgrades=[];
-  if(u.rank||u.rank_mult)upgrades.push(`Rank +${rankBonus}chips ${fmtBonus(rankMult)}mult`);
-  if(u.court_chips||u.court_mult)upgrades.push(`Full Court +${fullCourtChips}chips ${fmtBonus(fullCourtMult)}mult`);
-  if(u.royal_court_chips||u.royal_court_mult)upgrades.push(`Royal Court +${royalCourtChips}chips ${fmtBonus(royalCourtMult)}mult`);
-  if(u.sequence||u.seq_mult)upgrades.push(`Seq +${seqBonus}chips ${fmtBonus(seqMult)}mult`);
-  if(u.path_chips||u.path_mult)upgrades.push(`Path +${pathChips}chips ${fmtBonus(pathMult)}mult`);
+  if(u.rank||u.rank_mult)upgrades.push(`Rank +${rankBonus} Chips ${fmtBonus(rankMult)} Mult`);
+  if(u.court_chips||u.court_mult)upgrades.push(`Full Court +${fullCourtChips} Chips ${fmtBonus(fullCourtMult)} Mult`);
+  if(u.royal_court_chips||u.royal_court_mult)upgrades.push(`Royal Court +${royalCourtChips} Chips ${fmtBonus(royalCourtMult)} Mult`);
+  if(u.sequence||u.seq_mult)upgrades.push(`Sequence +${seqBonus} Chips ${fmtBonus(seqMult)} Mult`);
+  if(u.path_chips||u.path_mult)upgrades.push(`Path +${pathChips} Chips ${fmtBonus(pathMult)} Mult`);
   const minorRows=rows.slice(0,4);
   const majorRows=rows.slice(4);
   let html='<table class="ref-table"><thead><tr><th>Pattern</th><th>Condition</th><th>Chips</th><th>Mult</th></tr></thead><tbody>';
@@ -68,6 +96,7 @@ export function renderScoringSheet(target = window){
   html+='</tbody></table>';
   if(upgrades.length)html+=`<div class="ref-upgrades"><b>Your upgrades:</b> ${upgrades.join(' · ')}</div>`;
   ref.innerHTML=html;
+  target.tlrApplyGameTerms?.(ref, { auto: true });
 }
 
 export function positionRefsLayer(button){
@@ -87,23 +116,25 @@ export function toggleRef(event,target = window){
   if(wasHidden){renderScoringSheet(target);positionRefsLayer(event&&event.currentTarget);ref.classList.remove('hidden');}
 }
 
-export function toggleAbilityRef(event){
+export function toggleAbilityRef(event,target = window){
   if(event)event.stopPropagation();
   const ref=document.getElementById('ref');
   const ability=document.getElementById('abilityRef');
   if(!ref||!ability)return;
   const wasHidden=ability.classList.contains('hidden');
   closeRefs();
-  if(wasHidden){positionRefsLayer(event&&event.currentTarget);ability.classList.remove('hidden');}
+  if(wasHidden){renderAbilitySheet(target);positionRefsLayer(event&&event.currentTarget);ability.classList.remove('hidden');}
 }
 
 export function installReferenceControls(target = window){
   if(!target || target.__tlrReferenceControlsInstalled)return;
   target.__tlrReferenceControlsInstalled=true;
-  target.tlrReferenceControls={closeRefs,renderScoringSheet,positionRefsLayer,toggleRef,toggleAbilityRef};
+  renderAbilitySheet(target);
+  target.tlrReferenceControls={closeRefs,renderScoringSheet,renderAbilitySheet,abilityReferenceRows,positionRefsLayer,toggleRef,toggleAbilityRef};
   if(typeof target.closeRefs!=='function')target.closeRefs=closeRefs;
   if(typeof target.renderScoringSheet!=='function')target.renderScoringSheet=()=>renderScoringSheet(target);
+  if(typeof target.renderAbilitySheet!=='function')target.renderAbilitySheet=()=>renderAbilitySheet(target);
   if(typeof target._positionRefsLayer!=='function')target._positionRefsLayer=positionRefsLayer;
   if(typeof target.toggleRef!=='function')target.toggleRef=event=>toggleRef(event,target);
-  if(typeof target.toggleAbilityRef!=='function')target.toggleAbilityRef=toggleAbilityRef;
+  if(typeof target.toggleAbilityRef!=='function')target.toggleAbilityRef=event=>toggleAbilityRef(event,target);
 }

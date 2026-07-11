@@ -7,6 +7,43 @@ import { getPendingPreviewFn } from '../app/abilityTargetBridge.mjs';
 
 let activeChoiceCancel=null;
 
+function prepareChoiceGrid(cards){
+  const ch=$('#choices');
+  if(!ch)return null;
+  ch.innerHTML='';
+
+  // Small ability reveals are decisions between a handful of cards, not a
+  // generic card browser. Give them a deterministic two-column composition so
+  // auto-fill cannot collapse a two-card reveal into one centered stack on a
+  // narrow modal. Larger sets flow through a responsive grid.
+  //
+  // Own the layout inline: the mobile ability-reveal stylesheet lives in a
+  // cascade layer that lost the `display` fight to the unlayered base grid, so
+  // its carousel `padding` (~half the viewport per side) landed on a grid
+  // container instead, collapsing the tracks to a few px and stacking every
+  // card on top of the next. Inline styles sit above every layer, so pinning
+  // display/columns/padding/overflow here keeps the cards in real rows and
+  // columns regardless of which stylesheet rule wins.
+  const compact=cards.length>=2&&cards.length<=4;
+  ch.style.display='grid';
+  ch.style.gridTemplateColumns=compact?'repeat(2, minmax(0, 1fr))':'repeat(auto-fit, minmax(104px, 1fr))';
+  ch.style.gap='12px';
+  ch.style.padding='4px 2px 8px';
+  ch.style.overflowX='visible';
+  ch.style.width=compact?'min(100%, 272px)':'';
+  ch.style.maxWidth=compact?'272px':'';
+  ch.style.marginInline='auto';
+  ch.style.justifyContent='center';
+  ch.style.justifyItems='center';
+  return {ch,compact};
+}
+
+function finishChoiceGrid(ch,count,compact){
+  if(compact&&count%2===1&&ch.lastElementChild){
+    ch.lastElementChild.style.gridColumn='1 / -1';
+  }
+}
+
 function ensureModalCancelButton(){
   let cancel=$('#modalCancel');
   if(cancel)return cancel;
@@ -61,15 +98,19 @@ export function choice(title,prompt,cards,cb){
   // A single candidate isn't a choice — hand it over without popping the modal.
   if(cards.length===1){activeChoiceCancel=null;playSound('flip');cb(cards[0]);return}
   $('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';
-  let ch=$('#choices');ch.innerHTML='';
+  window.tlrApplyGameTerms?.($('#modalPrompt'), { auto: true });
+  const layout=prepareChoiceGrid(cards);
+  if(!layout)return;
+  const {ch,compact}=layout;
   cards.forEach(c=>{
-    let e=document.createElement('div');
+    const e=document.createElement('div');
     e.className='card choice-card '+(c.type==='major'?'major':'');
     applyHint(e,c,uniqueCards([...state.spread.filter(Boolean),...state.hand,c]));
     e.innerHTML=cardHTML(c);applyCardPhoto(e,c);
     e.onclick=()=>{activeChoiceCancel=null;$('#modal').classList.remove('show','collapsed','ability-reveal','card-browse');cb(c)};
     ch.appendChild(e);
   });
+  finishChoiceGrid(ch,cards.length,compact);
   // Reaching this modal always means an ability is actively resolving, so
   // Cancel is unconditionally available — it never touches the discard,
   // just resolves with no card taken so resolveAbility's retry loop can
@@ -90,7 +131,10 @@ export function choiceAsync(title,prompt,cards){return new Promise(resolve=>choi
 // modal as browse-owned so the attic flow can close it when leaving.
 export function browseCards(title,prompt,cards){
   $('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';
-  const ch=$('#choices');ch.innerHTML='';
+  window.tlrApplyGameTerms?.($('#modalPrompt'), { auto: true });
+  const layout=prepareChoiceGrid(cards);
+  if(!layout)return;
+  const {ch,compact}=layout;
   cards.forEach(c=>{
     const e=document.createElement('div');
     e.className='card choice-card '+(c.type==='major'?'major':'');
@@ -98,6 +142,7 @@ export function browseCards(title,prompt,cards){
     e.onclick=()=>{window.expandCard?.(c)};
     ch.appendChild(e);
   });
+  finishChoiceGrid(ch,cards.length,compact);
   const cancelBtn=ensureModalCancelButton();
   if(cancelBtn)cancelBtn.hidden=false;
   activeChoiceCancel=null;
@@ -106,7 +151,7 @@ export function browseCards(title,prompt,cards){
   playSound('flip');tlrArchitectureSync()
 }
 
-export function toggleModalCollapse(){let m=$('#modal');if(!m.classList.contains('show'))return;m.classList.toggle('collapsed');$('#modalToggle').textContent=m.classList.contains('collapsed')?'Show':'Hide'}
+export function toggleModalCollapse(){const m=$('#modal');if(!m.classList.contains('show'))return;m.classList.toggle('collapsed');$('#modalToggle').textContent=m.classList.contains('collapsed')?'Show':'Hide'}
 
 export function renderAbilityPrompt(){
   const el=$('#abilityPrompt');
@@ -124,6 +169,7 @@ export function renderAbilityPrompt(){
     preview=previewFn(...picked)||'';
   }
   $('#abilityPromptText').innerHTML=preview?a.prompt+'<br><b>'+preview+'</b>':a.prompt;
+  window.tlrApplyGameTerms?.($('#abilityPromptText'), { auto: true });
   $('#abilityConfirm').disabled=a.picked.length<a.count;
   if(cancel)cancel.hidden=!(typeof window.tlrCanCancelAbilitySelection==='function'&&window.tlrCanCancelAbilitySelection());
   el.classList.add('show');

@@ -22,7 +22,7 @@ export const INTERACTION_CARD_DEFS = Object.freeze({
     ability: 'MP_BANISH',
     abilityType: MP_ABILITY_TYPES.MP_BANISH,
     tier: INTERACTION_TIER.HARD,
-    prompt: 'Remove the last played card from the opponent\'s spread.',
+    prompt: '[[banish]] the last card your opponent [[play|Played]].',
     // Requires no target. The reducer finds the opponent's most recent live placement.
   },
   mp_seal: {
@@ -33,7 +33,7 @@ export const INTERACTION_CARD_DEFS = Object.freeze({
     ability: 'MP_SEAL',
     abilityType: MP_ABILITY_TYPES.MP_SEAL,
     tier: INTERACTION_TIER.SOFT,
-    prompt: 'Silence a card in the opponent\'s spread — it does not score this round.',
+    prompt: 'Silence 1 card in the opponent’s [[spread]]. It adds no [[chips]] or [[mult]] this round.',
     // Requires action.target = { playerIndex, slotIndex }
   },
 });

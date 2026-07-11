@@ -14,108 +14,379 @@ const TUT_ADV_APPROACH_GREAT_KEY = 'tlr_tut_adv_approach_great';
 const TUT_ADV_REWARD_KEY = 'tlr_tut_adv_reward';
 const TUT_ADV_ITEMS_KEY = 'tlr_tut_adv_items';
 const TUT_ADV_COMPLETE_KEY = 'tlr_tut_adv_complete';
-const INTRO_LAST_STEP = 2;
-const ADVENTURE_FIRST_STEP = 21;
-const ADVENTURE_LAST_STEP = 27;
 
+const TUT_STEPS = [
+  // ─────────────────────────────────────────────
+  // BASE GAME: FIRST READING
+  // ─────────────────────────────────────────────
+
+  {
+    id: 'story-intro',
+    center: true,
+    text: 'Your relative left behind their tarot deck. You used to play this game together.',
+  },
+
+  {
+    id: 'select-card',
+    sel: '#hand .card[data-uid]',
+    fallbackSel: '.handDock .hand',
+    arrow: 'up',
+    waitFor: 'cardSelected',
+    text: 'Tap a card in your [[hand]].',
+  },
+
+  {
+    id: 'play-card',
+    sel: '#spread .slot.empty',
+    fallbackSel: '#spread',
+    arrow: 'down',
+    waitFor: 'cardPlaced',
+    text: 'Tap an empty slot to [[play]] it into the [[spread]].',
+  },
+
+  {
+    id: 'chips-added',
+    sel: '#current',
+    fallbackSel: '.score-pill',
+    arrow: 'up',
+    text: 'That card added [[chips]].',
+  },
+
+  {
+    id: 'chip-seal',
+    sel: '#hand .card[data-uid] .seal.tr',
+    fallbackSel: '#hand .card[data-uid]',
+    arrow: 'down',
+    text: 'The red seal shows how many [[chips]] a card adds. [[chips]] × [[mult]] = [[score]].',
+  },
+
+  {
+    id: 'reading-goal',
+    sel: '#spread',
+    arrow: 'up',
+    text: 'Fill all 5 slots to complete the [[reading]].',
+  },
+
+  {
+    id: 'threshold',
+    sel: '#threshold',
+    fallbackSel: '.threshold-pill',
+    arrow: 'up',
+    key: TUT_THRESHOLD_KEY,
+    text: 'Reach the [[threshold]] within 2 [[reading|Readings]].',
+  },
+
+  {
+    id: 'discard-card',
+    sel: '#discardBtn',
+    arrow: 'down',
+    key: TUT_DISCARD_KEY,
+    text: 'Instead of [[play|playing]] a card, [[discard]] it to activate its [[ability]].',
+  },
+
+  {
+    id: 'pattern-found',
+    sel: '#hand .card[data-hint], #hand .card.hint-complete, #hand .card.hint-card',
+    fallbackSel: '#hand .card[data-uid]',
+    arrow: 'down',
+    key: TUT_PATTERN_KEY,
+    text: 'Highlighted cards can form a [[pattern]]. [[pattern|Patterns]] add [[chips]], [[mult]], or both.',
+  },
+
+  {
+    id: 'scoring-reference',
+    sel: '#scoringBtn',
+    fallbackSel: '#scoringPullTab',
+    arrow: 'up',
+    key: TUT_PATTERN_KEY,
+    text: 'Open Scoring to review [[pattern|Patterns]].',
+  },
+
+  {
+    id: 'win-condition',
+    center: true,
+    text: 'Each [[threshold]] is harder. Clear the 10th to win.',
+  },
+
+  // ─────────────────────────────────────────────
+  // CONTEXTUAL BASE-GAME SYSTEMS
+  // ─────────────────────────────────────────────
+
+  {
+    id: 'relic',
+    sel: '#relicRack .relic-btn',
+    fallbackSel: '#relicRack',
+    arrow: 'up',
+    text: 'A [[relic]] grants a passive effect across Readings. Tap it to read its rule.',
+  },
+
+  {
+    id: 'purge',
+    sel: '#purgeBtn',
+    arrow: 'down',
+    key: TUT_PURGE_KEY,
+    text: 'Remove 3 cards from your [[hand]] to regain 1 [[discard_charge|Discard]].',
+  },
+
+  {
+    id: 'reading-final-card',
+    sel: '#spread .slot.empty',
+    fallbackSel: '#spread',
+    arrow: 'up',
+    key: TUT_READING_KEY,
+    text: 'One more card completes this [[reading]].',
+  },
+
+  {
+    id: 'archives',
+    sel: '#spv2ArchiveBtn',
+    fallbackSel: '#invTab',
+    arrow: 'up',
+    key: TUT_ARCHIVES_KEY,
+    text: 'The Archives hold discovered items and clues.',
+  },
+
+  // ─────────────────────────────────────────────
+  // MARKET
+  // ─────────────────────────────────────────────
+
+  {
+    id: 'market-reserve',
+    sel: '.store-reserve-display',
+    arrow: 'down',
+    key: TUT_MARKET_KEY,
+    text: '[[reserve]] is the currency you spend in the Market.',
+  },
+
+  {
+    id: 'market-offers',
+    sel: '.store-offer-row',
+    fallbackSel: '.store-offer-row .store-card',
+    arrow: 'down',
+    key: TUT_MARKET_KEY,
+    text: 'Market offers can improve [[pattern|Patterns]], your [[deck]], or your relics. Tap an offer to read it.',
+  },
+
+  {
+    id: 'market-refresh',
+    sel: '.store-refresh',
+    arrow: 'up',
+    key: TUT_MARKET_KEY,
+    text: 'Spend [[reserve]] to replace the current offers.',
+  },
+
+  {
+    id: 'market-proceed',
+    sel: '.store-proceed',
+    arrow: 'up',
+    key: TUT_MARKET_KEY,
+    text: 'Leave the Market to begin the next [[reading]].',
+  },
+
+  {
+    id: 'constellation',
+    sel: '#constellationPill:not(.hidden)',
+    arrow: 'up',
+    key: TUT_CONSTELLATION_KEY,
+    text: 'A Constellation changes the current [[reading]]. Tap its sign to read the rule.',
+  },
+
+  // ─────────────────────────────────────────────
+  // ADVENTURE MODE
+  // ─────────────────────────────────────────────
+
+  {
+    id: 'adventure-intro',
+    center: true,
+    text: 'In Adventure Mode, [[play]] 1 card to resolve each [[event]].',
+  },
+
+  {
+    id: 'adventure-event',
+    sel: '#advEventDeck .adv-event-hero',
+    fallbackSel: '#advEventDeck',
+    arrow: 'up',
+    text: 'The [[event]] shows which [[approach|Approaches]] it accepts.',
+  },
+
+  {
+    id: 'adventure-approach',
+    sel: '#hand .card[data-uid] .adv-sigil-seal',
+    fallbackSel: '#hand .card[data-uid]',
+    arrow: 'down',
+    text: 'The sigil shows the card’s [[approach]].',
+  },
+
+  {
+    id: 'adventure-potency',
+    sel: '#hand .card[data-uid] .seal.tr',
+    fallbackSel: '#hand .card[data-uid]',
+    arrow: 'down',
+    text: 'The red number is the card’s [[potency]].',
+  },
+
+  {
+    id: 'adventure-approach-map',
+    sel: '#scoringBtn',
+    fallbackSel: '#scoringPullTab',
+    arrow: 'up',
+    key: TUT_ADV_APPROACH_KEY,
+    text: 'Open the approach map to preview the nearest accepted [[approach]] for each card.',
+  },
+
+  {
+    id: 'adventure-play-card',
+    sel: '#spread .slot.empty',
+    fallbackSel: '#spread',
+    arrow: 'up',
+    waitFor: 'advCardPlaced',
+    text: 'Choose a card and [[play]] it to face the [[event]].',
+  },
+
+  {
+    id: 'adventure-resolve',
+    sel: '#advHud .adv-hud__main',
+    fallbackSel: '#advHud',
+    arrow: 'up',
+    text: 'Failure can cost [[resolve]]. The run ends at 0.',
+  },
+
+  {
+    id: 'adventure-difficulty',
+    center: true,
+    key: TUT_ADV_APPROACH_CHAIN_KEY,
+    text: 'Each accepted [[approach]] has a hidden difficulty. Your [[potency]] must meet it.',
+  },
+
+  {
+    id: 'adventure-great-success',
+    center: true,
+    key: TUT_ADV_APPROACH_GREAT_KEY,
+    text: 'Matching the [[event]]’s exact [[approach]] can produce a Great Success and stronger rewards.',
+  },
+
+  {
+    id: 'adventure-reward',
+    sel: '.adv-rewards',
+    fallbackSel: '.result-panel',
+    arrow: 'up',
+    key: TUT_ADV_REWARD_KEY,
+    text: 'After a Success, [[choose]] a reward to shape the run.',
+  },
+
+  {
+    id: 'adventure-items',
+    sel: '#relicRack',
+    arrow: 'up',
+    key: TUT_ADV_ITEMS_KEY,
+    text: 'Adventure items are carried here. Tap a Consumable to use it.',
+  },
+
+  {
+    id: 'adventure-complete',
+    center: true,
+    key: TUT_ADV_COMPLETE_KEY,
+    text: 'Set complete. Finish 1 more Set to win the Adventure.',
+  },
+
+  // ─────────────────────────────────────────────
+  // OPTIONAL HINT SYSTEM
+  // ─────────────────────────────────────────────
+
+  {
+    id: 'pattern-hints',
+    sel: '#hintLevelBar',
+    fallbackSel: '#settingsPanel',
+    arrow: 'up',
+    text: 'Hints can reveal possible [[pattern|Patterns]].',
+  },
+];
+
+// Steps are addressed by their stable `id`, never by array position, so they can
+// be inserted, removed, or reordered without silently rerouting the flow or
+// invalidating saved progress. STEP_INDEX only backs "the next step in reading
+// order" for the linear walk-throughs; it is never persisted or branched on.
+const STEP_INDEX = new Map(TUT_STEPS.map((step, index) => [step.id, index]));
+function stepById(id) { const i = STEP_INDEX.get(id); return i === undefined ? null : TUT_STEPS[i]; }
+function nextStepId(id) {
+  const i = STEP_INDEX.get(id);
+  return i === undefined || i + 1 >= TUT_STEPS.length ? null : TUT_STEPS[i + 1].id;
+}
+
+// Semantic names for the steps the flow logic references by id.
 export const TUT_STEP = Object.freeze({
-  INTRO: 0,
-  SELECT_CARD: 1,
-  PLACE_CARD: 2,
-  SCORE_ADDED: 3,
-  CARD_POINTS: 4,
-  THRESHOLD: 5,
-  DISCARD_ABILITY: 6,
-  PATTERN_NOTICE: 7,
-  THRESHOLD_PROGRESS: 8,
-  RELIC: 9,
-  PATTERN_SCORING: 10,
-  PURGE: 11,
-  READING_COMPLETE: 12,
-  ARCHIVES: 13,
-  MARKET_RESERVE: 14,
-  MARKET_SCORING: 15,
-  MARKET_ABILITIES: 16,
-  MARKET_RELICS: 17,
-  MARKET_REFRESH: 18,
-  MARKET_NEXT: 19,
-  CONSTELLATION: 20,
-  ADVENTURE_INTRO: 21,
-  ADVENTURE_EVENT: 22,
-  ADVENTURE_SIGIL: 23,
-  ADVENTURE_POTENCY: 24,
-  ADVENTURE_APPROACH_BTN: 25,
-  ADVENTURE_PLACE: 26,
-  ADVENTURE_RESOLVE: 27,
-  ADVENTURE_APPROACH_WEB: 28,
-  ADVENTURE_APPROACH_CHAIN: 29,
-  ADVENTURE_APPROACH_GREAT: 30,
-  ADVENTURE_REWARD: 31,
-  ADVENTURE_ITEMS: 32,
-  ADVENTURE_COMPLETE: 33,
-  HINT_SETTING: 34,
+  INTRO: 'story-intro',
+  SELECT_CARD: 'select-card',
+  PLACE_CARD: 'play-card',
+  SCORE_ADDED: 'chips-added',
+  CARD_POINTS: 'chip-seal',
+  READING_GOAL: 'reading-goal',
+  THRESHOLD: 'threshold',
+  DISCARD_ABILITY: 'discard-card',
+  PATTERN_NOTICE: 'pattern-found',
+  PATTERN_SCORING: 'scoring-reference',
+  WIN_CONDITION: 'win-condition',
+  RELIC: 'relic',
+  PURGE: 'purge',
+  READING_COMPLETE: 'reading-final-card',
+  ARCHIVES: 'archives',
+  MARKET_RESERVE: 'market-reserve',
+  MARKET_OFFERS: 'market-offers',
+  MARKET_REFRESH: 'market-refresh',
+  MARKET_NEXT: 'market-proceed',
+  CONSTELLATION: 'constellation',
+  ADVENTURE_INTRO: 'adventure-intro',
+  ADVENTURE_EVENT: 'adventure-event',
+  ADVENTURE_SIGIL: 'adventure-approach',
+  ADVENTURE_POTENCY: 'adventure-potency',
+  ADVENTURE_APPROACH_MAP: 'adventure-approach-map',
+  ADVENTURE_PLACE: 'adventure-play-card',
+  ADVENTURE_RESOLVE: 'adventure-resolve',
+  ADVENTURE_DIFFICULTY: 'adventure-difficulty',
+  ADVENTURE_GREAT: 'adventure-great-success',
+  ADVENTURE_REWARD: 'adventure-reward',
+  ADVENTURE_ITEMS: 'adventure-items',
+  ADVENTURE_COMPLETE: 'adventure-complete',
+  HINT_SETTING: 'pattern-hints',
 });
 
-let tutStep = -1;
+// The forced first-run onboarding steps: hidden once the intro is complete.
+const INTRO_STEP_IDS = new Set([TUT_STEP.INTRO, TUT_STEP.SELECT_CARD, TUT_STEP.PLACE_CARD]);
+// The linear Adventure walk-through (tap/place to advance, one after another).
+// The remaining adventure-* steps are contextual tips surfaced by signals.
+const ADVENTURE_WALKTHROUGH_IDS = new Set([
+  TUT_STEP.ADVENTURE_INTRO,
+  TUT_STEP.ADVENTURE_EVENT,
+  TUT_STEP.ADVENTURE_SIGIL,
+  TUT_STEP.ADVENTURE_POTENCY,
+  TUT_STEP.ADVENTURE_APPROACH_MAP,
+  TUT_STEP.ADVENTURE_PLACE,
+  TUT_STEP.ADVENTURE_RESOLVE,
+]);
+const ADVENTURE_WALKTHROUGH_LAST = TUT_STEP.ADVENTURE_RESOLVE;
+
+// Market tips advance through one another as the player taps.
+const MARKET_TUT_STEPS = [
+  TUT_STEP.MARKET_RESERVE,
+  TUT_STEP.MARKET_OFFERS,
+  TUT_STEP.MARKET_REFRESH,
+  TUT_STEP.MARKET_NEXT,
+];
+
+let tutStep = null;
 let tutTimer = null;
 let tutDone = !!localStorage.getItem(TUT_KEY);
 let tutIgnoreClicksUntil = 0;
 let queuedTipSteps = [];
 let queuedTipTimer = null;
-let placementCount = 0;
 let activeTutTarget = null;
 let activeTutArrow = 'up';
 let tutPositionTimer = null;
 
-const TUT_STEPS = [
-  { center: true, text: 'Your relative left behind their tarot deck. You used to play this game together.' },
-  { sel: '#hand .card[data-uid]', fallbackSel: '.handDock .hand', arrow: 'down', waitFor: 'cardSelected', text: 'Tap a card to select it.' },
-  { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', waitFor: 'cardPlaced', text: 'Tap an empty slot to place it.' },
-  { sel: '#current', fallbackSel: '.score-pill', arrow: 'up', text: 'That card added points to your total.' },
-  { sel: '#hand .card[data-uid] .seal.tr', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The red circle on each card shows how many points it adds.' },
-  { sel: '#threshold', fallbackSel: '.threshold-pill', arrow: 'up', key: TUT_THRESHOLD_KEY, text: 'You have 2 sets in which to beat the Threshold and advance.' },
-  { sel: '#discardBtn', arrow: 'down', key: TUT_DISCARD_KEY, text: '<b>Discard</b> a card to use its <b>Ability</b> instead of placing it.' },
-  { sel: '#hand .card[data-hint], #hand .card.hint-complete, #hand .card.hint-card', fallbackSel: '#hand .card[data-uid]', arrow: 'down', key: TUT_PATTERN_KEY, text: 'Some of your cards may work together.' },
-  { center: true, text: 'Each cleared Threshold makes the next one harder. Clear the 10th Threshold to win.' },
-  { sel: '#relicRack .relic-btn', fallbackSel: '#relicRack', arrow: 'up', text: 'You found a <b>Relic</b>. Relics carry passive effects across every reading until you lose. Tap a relic icon to see what it does.' },
-  { sel: '#scoringBtn', fallbackSel: '#scoringPullTab', arrow: 'up', key: TUT_PATTERN_KEY, text: 'Check <b>Scoring</b> to see if you can complete a pattern. Place the cards down to activate a pattern.' },
-  { sel: '#purgeBtn', arrow: 'down', key: TUT_PURGE_KEY, text: 'Remove 3 cards from your hand to gain 1 Discard.' },
-  { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', key: TUT_READING_KEY, text: 'One more card completes the reading.' },
-  { sel: '#spv2ArchiveBtn', fallbackSel: '#invTab', arrow: 'up', key: TUT_ARCHIVES_KEY, text: 'The <b>Archives</b> hold discovered items. Tap to open and investigate.' },
-  { sel: '.store-reserve-display', arrow: 'down', key: TUT_MARKET_KEY, text: '<b>Reserve</b><br>Your currency for upgrades in the Market.' },
-  { sel: '.store-offer-row .store-card:nth-child(1)', arrow: 'down', key: TUT_MARKET_KEY, text: '<b>Scoring</b><br>Buy pattern upgrades. Chips and Mult increase by the amount shown.' },
-  { sel: '.store-offer-row .store-card:nth-child(2)', arrow: 'down', key: TUT_MARKET_KEY, text: '<b>Pack</b><br>Open a pack to choose a hand, discard, draw, or ability upgrade.' },
-  { sel: '.store-offer-row .store-card:nth-child(3)', arrow: 'up', key: TUT_MARKET_KEY, text: '<b>Relic</b><br>Buy a relic to add its passive effect to your relic row.' },
-  { sel: '.store-refresh', arrow: 'up', key: TUT_MARKET_KEY, text: '<b>Refresh</b><br>Spend Reserve to replace the Market offers.' },
-  { sel: '.store-proceed', arrow: 'up', key: TUT_MARKET_KEY, text: '<b>Next Reading</b><br>Leave the Market and start the next reading.' },
-  { sel: '#constellationPill:not(.hidden)', arrow: 'up', key: TUT_CONSTELLATION_KEY, text: '<b>Constellation</b><br>A constellation changes this reading. Tap its sign to see the rule.' },
-  { center: true, text: 'In Adventure Mode, each Event is resolved by playing one card.' },
-  { sel: '#advEventDeck .adv-event-hero', fallbackSel: '#advEventDeck', arrow: 'up', text: 'Read the Event and decide how you want to respond.' },
-  { sel: '#hand .card[data-uid] .adv-sigil-seal', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The text above this card shows the kind of approach it represents.' },
-  { sel: '#hand .card[data-uid] .seal.tr', fallbackSel: '#hand .card[data-uid]', arrow: 'down', text: 'The red number shows how strong that response is.' },
-  { sel: '#scoringBtn', fallbackSel: '#scoringPullTab', arrow: 'up', text: 'Press to see a map that shows how well your cards match this Event before you commit to a play.' },
-  { sel: '#spread .slot.empty', fallbackSel: '#spread', arrow: 'up', waitFor: 'advCardPlaced', text: 'Place one card to face the Event and see what happens.' },
-  { sel: '#advHud .adv-hud__main', fallbackSel: '#advHud', arrow: 'up', text: 'A failed response costs Resolve. Reach zero and the run ends.' },
-  { center: true, key: TUT_ADV_APPROACH_KEY, text: 'Each card has an approach, a way of facing the Event. When played, it chains to the nearest approach the Event accepts.' },
-  { center: true, key: TUT_ADV_APPROACH_CHAIN_KEY, text: 'Each approach has one of three hidden difficulty levels, with harder ones needing a stronger response.' },
-  { center: true, key: TUT_ADV_APPROACH_GREAT_KEY, text: 'Playing a card with an exact approach for an Event may grant a Great Success and special rewards.' },
-  { sel: '.adv-rewards', fallbackSel: '.result-panel', arrow: 'up', key: TUT_ADV_REWARD_KEY, text: 'When you succeed, pick a reward. Rewards shape your run.' },
-  { sel: '#relicRack', arrow: 'up', key: TUT_ADV_ITEMS_KEY, text: 'Items you earn are carried here. Tap a consumable to use it.' },
-  { center: true, key: TUT_ADV_COMPLETE_KEY, text: "You finished a Set. Complete one more to win the adventure." },
-  // Reached only via the PATTERN_NOTICE branch in tutNext() below (index kept
-  // out of the linear array order so every other step's index stays stable).
-  { sel: '#hintLevelBar', fallbackSel: '#settingsPanel', arrow: 'up', text: 'Use hints to see potential scoring patterns.' },
-];
-
-const MARKET_TUT_STEPS = [
-  TUT_STEP.MARKET_RESERVE,
-  TUT_STEP.MARKET_NEXT,
-];
-
 function q(sel) { return document.querySelector(sel); }
-function stepKey(step) { return TUT_STEPS[step] && TUT_STEPS[step].key ? TUT_STEPS[step].key : null; }
-function markStepSeen(step) { const key = stepKey(step); if (key) localStorage.setItem(key, '1'); }
-function isAdventureTutorialStep(step) { return step >= ADVENTURE_FIRST_STEP && step <= ADVENTURE_LAST_STEP; }
+function stepKey(id) { const s = stepById(id); return s && s.key ? s.key : null; }
+function markStepSeen(id) { const key = stepKey(id); if (key) localStorage.setItem(key, '1'); }
+function isAdventureTutorialStep(id) { return ADVENTURE_WALKTHROUGH_IDS.has(id); }
 
 function isVisibleTarget(element) {
   if (!element || !element.isConnected) return false;
@@ -135,9 +406,9 @@ function targetForStep(s) {
 }
 
 function canShowStep(step, force = false) {
-  const s = TUT_STEPS[step];
+  const s = stepById(step);
   if (!s) return false;
-  if (!force && step <= INTRO_LAST_STEP && tutDone) return false;
+  if (!force && INTRO_STEP_IDS.has(step) && tutDone) return false;
   if (!force && isAdventureTutorialStep(step) && localStorage.getItem(TUT_ADVENTURE_KEY)) return false;
   const key = stepKey(step);
   if (!force && key && localStorage.getItem(key)) return false;
@@ -145,12 +416,13 @@ function canShowStep(step, force = false) {
 }
 
 function hasPendingTip() {
-  return tutStep >= 0 || queuedTipSteps.length > 0 || !!queuedTipTimer;
+  return tutStep !== null || queuedTipSteps.length > 0 || !!queuedTipTimer;
 }
 
 function finishIntro() {
   localStorage.setItem(TUT_KEY, '1');
   tutDone = true;
+  window.dispatchEvent(new CustomEvent('tlr:tutorial-complete', { detail: { step: tutStep } }));
   tutHide();
 }
 
@@ -158,7 +430,7 @@ function scheduleQueuedTips(delay = 180) {
   clearTimeout(queuedTipTimer);
   queuedTipTimer = setTimeout(() => {
     queuedTipTimer = null;
-    if (tutStep >= 0) { scheduleQueuedTips(450); return; }
+    if (tutStep !== null) { scheduleQueuedTips(450); return; }
     while (queuedTipSteps.length) {
       const next = queuedTipSteps.shift();
       if (!canShowStep(next)) continue;
@@ -226,7 +498,6 @@ export function replayTutorial() {
   queuedTipSteps = [];
   clearTimeout(queuedTipTimer);
   queuedTipTimer = null;
-  placementCount = 0;
   tutDone = false;
   tutShow(TUT_STEP.INTRO, { force: true });
 }
@@ -236,7 +507,7 @@ export function tutHide() {
   clearTimeout(tutPositionTimer);
   tutTimer = null;
   tutPositionTimer = null;
-  tutStep = -1;
+  tutStep = null;
   activeTutTarget = null;
   const tip = q('#tutTip');
   if (!tip) return;
@@ -252,7 +523,7 @@ export function tutResetTransient() {
 }
 
 function positionActiveTip() {
-  if (tutStep < 0 || !activeTutTarget) return;
+  if (tutStep === null || !activeTutTarget) return;
   posTutTip(activeTutTarget, activeTutArrow);
 }
 
@@ -264,8 +535,9 @@ export function tutShow(step, options = {}) {
   tutTimer = null;
   tutPositionTimer = null;
   tutStep = step;
+  window.dispatchEvent(new CustomEvent('tlr:tutorial-step', { detail: { step } }));
   tutIgnoreClicksUntil = Date.now() + (step === TUT_STEP.PATTERN_NOTICE ? 450 : 180);
-  const s = TUT_STEPS[step];
+  const s = stepById(step);
   if (!s) return;
   const tip = q('#tutTip');
   const text = q('#tutText');
@@ -280,6 +552,7 @@ export function tutShow(step, options = {}) {
   // this for the next tutShow call regardless of which step follows).
   if (step === TUT_STEP.HINT_SETTING) tip.style.setProperty('z-index', '2147483300', 'important');
   text.innerHTML = s.text;
+  window.tlrApplyGameTerms?.(text, { auto: true });
   const tapPrompt = tip.querySelector('.tut-tap-prompt');
   if (tapPrompt) tapPrompt.style.display = s.waitFor ? 'none' : '';
   if (s.center) {
@@ -324,21 +597,22 @@ function closeHintSettingsMenu() {
 }
 
 export function tutNext() {
-  if (tutStep < 0) return;
-  const s = TUT_STEPS[tutStep];
+  if (tutStep === null) return;
+  const s = stepById(tutStep);
   if (!s || s.waitFor) return;
   if (isAdventureTutorialStep(tutStep)) {
-    if (tutStep < ADVENTURE_LAST_STEP) {
-      tutShow(tutStep + 1, { force: true });
+    if (tutStep !== ADVENTURE_WALKTHROUGH_LAST) {
+      tutShow(nextStepId(tutStep), { force: true });
     } else {
       localStorage.setItem(TUT_ADVENTURE_KEY, '1');
       tutHide();
     }
     return;
   }
-  if (tutStep < TUT_STEP.SELECT_CARD) { tutShow(tutStep + 1); return; }
+  if (tutStep === TUT_STEP.INTRO) { tutShow(TUT_STEP.SELECT_CARD); return; }
   if (tutStep === TUT_STEP.SCORE_ADDED) { tutShow(TUT_STEP.CARD_POINTS); return; }
-  if (tutStep === TUT_STEP.CARD_POINTS) { tutShow(TUT_STEP.THRESHOLD); return; }
+  if (tutStep === TUT_STEP.CARD_POINTS) { tutShow(TUT_STEP.READING_GOAL); return; }
+  if (tutStep === TUT_STEP.READING_GOAL) { tutShow(TUT_STEP.THRESHOLD); return; }
   if (tutStep === TUT_STEP.THRESHOLD) {
     markStepSeen(tutStep);
     finishIntro();
@@ -371,9 +645,13 @@ export function tutNext() {
     return;
   }
   if (tutStep === TUT_STEP.PATTERN_SCORING) {
-    // THRESHOLD moved into the intro flow (after CARD_POINTS), so the
-    // discard/pattern chain just ends here.
+    // Mark the pattern chain seen here so it never re-runs; the win-condition
+    // note (no key of its own) then closes out the base-game teaching chain.
     markStepSeen(tutStep);
+    tutShow(TUT_STEP.WIN_CONDITION);
+    return;
+  }
+  if (tutStep === TUT_STEP.WIN_CONDITION) {
     tutHide();
     scheduleQueuedTips(260);
     return;
@@ -390,32 +668,30 @@ export function tutNext() {
 
 function onPlacement() {
   if (window.__tlrAdventureActive) return;
-  placementCount++;
   if (!tutDone || localStorage.getItem(TUT_DISCARD_KEY)) return;
   queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
 }
 
 export function tutSignal(eventName) {
   if (eventName === 'cardPlaced') onPlacement();
-  if (eventName === 'advApproachWebOpened') { queueTip(TUT_STEP.ADVENTURE_APPROACH_WEB, 300); queueTip(TUT_STEP.ADVENTURE_APPROACH_CHAIN, 300); queueTip(TUT_STEP.ADVENTURE_APPROACH_GREAT, 300); return; }
+  if (eventName === 'advApproachWebOpened') { queueTip(TUT_STEP.ADVENTURE_DIFFICULTY, 300); queueTip(TUT_STEP.ADVENTURE_GREAT, 300); return; }
   if (eventName === 'advRewardShown') { queueTip(TUT_STEP.ADVENTURE_REWARD, 350); return; }
   if (eventName === 'advItemGained') { queueTip(TUT_STEP.ADVENTURE_ITEMS, 350); return; }
   if (eventName === 'advSetComplete') { queueTip(TUT_STEP.ADVENTURE_COMPLETE, 350); return; }
-  if (tutStep < 0) return;
-  const s = TUT_STEPS[tutStep];
+  if (tutStep === null) return;
+  const s = stepById(tutStep);
   if (!s || s.waitFor !== eventName) return;
   tutIgnoreClicksUntil = Date.now() + 180;
   if (isAdventureTutorialStep(tutStep)) {
-    if (tutStep < ADVENTURE_LAST_STEP) { tutShow(tutStep + 1, { force: true }); }
+    if (tutStep !== ADVENTURE_WALKTHROUGH_LAST) { tutShow(nextStepId(tutStep), { force: true }); }
     else { localStorage.setItem(TUT_ADVENTURE_KEY, '1'); tutHide(); }
     return;
   }
   // cardSelected (SELECT_CARD) and cardPlaced (PLACE_CARD) both land here after
-  // their waitFor match; advancing one step turns PLACE_CARD into SCORE_ADDED
-  // (index 3) rather than finishing the intro. SCORE_ADDED and CARD_POINTS have
-  // no waitFor, so they're tap-advanced through tutNext(), which finishes the
-  // intro after CARD_POINTS.
-  if (tutStep <= TUT_STEP.PLACE_CARD) { tutShow(tutStep + 1); return; }
+  // their waitFor match; advancing to the next reading-order step turns
+  // PLACE_CARD into the first no-waitFor teaching step. Those later steps are
+  // tap-advanced through tutNext(), which finishes the intro after THRESHOLD.
+  if (tutStep === TUT_STEP.SELECT_CARD || tutStep === TUT_STEP.PLACE_CARD) { tutShow(nextStepId(tutStep)); return; }
   finishIntro();
   queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
 }
@@ -439,7 +715,7 @@ export function maybeShowDiscardTutorial() { }
 
 export function maybeShowPurgeTutorial() {
   const st = window.state;
-  if (!tutDone || tutStep >= 0 || localStorage.getItem(TUT_PURGE_KEY) || !st) return;
+  if (!tutDone || tutStep !== null || localStorage.getItem(TUT_PURGE_KEY) || !st) return;
   if (st.discards !== 0 || !Array.isArray(st.hand) || st.hand.length < 4 || st.busy || (window.tlrStore?.getState?.()?.run?.ability?.targeting||st.abilitySelect) || st.purgeSelect !== null) return;
   const btn = document.querySelector('#purgeBtn');
   if (!btn || btn.disabled) return;
@@ -508,11 +784,15 @@ function posTutTip(target, preferredArrow) {
 }
 
 window.addEventListener('resize', () => {
-  if (tutStep < 0 || !activeTutTarget) return;
+  if (tutStep === null || !activeTutTarget) return;
   requestAnimationFrame(positionActiveTip);
 });
 
-document.addEventListener('click', () => {
+document.addEventListener('click', event => {
   if (Date.now() < tutIgnoreClicksUntil) return;
+  // Tapping a highlighted game term (or its definition popover/glossary) opens
+  // an explanation; it must not also advance the current tutorial step.
+  const el = event.target instanceof Element ? event.target : null;
+  if (el && el.closest('.game-term, .game-term-popover, .game-terms-glossary')) return;
   tutNext();
 });

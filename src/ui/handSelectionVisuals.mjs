@@ -1,5 +1,7 @@
 // Hand selected-card visual lock extracted from the legacy inline tail.
 
+import { installPresentationDirector } from '../app/presentationDirector.mjs';
+
 function runtime(target){return target.tlrRuntime || {};}
 function stateOf(target){return runtime(target).state || target.state;}
 
@@ -61,11 +63,13 @@ function installEmptySpaceDeselect(target = window){
 export function installHandSelectionVisuals(target = window){
   if(!target || target.__handHoverSelectedLockInstalled)return;
   target.__handHoverSelectedLockInstalled=true;
+  const presentation=installPresentationDirector(target);
   let rafPending=false;
   const flush=()=>{
     rafPending=false;
     const hasSelection=!!document.querySelector('.card.sel,.card.ability-picked');
     document.querySelectorAll('.hand').forEach(hand=>hand.classList.toggle('has-selected-card',hasSelection));
+    presentation?.setFlag('card-selected',hasSelection);
   };
   // Only schedule work if the class change happened inside #hand — sel and
   // ability-picked are exclusively set on hand cards, so spread/slot class

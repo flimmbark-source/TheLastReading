@@ -1,7 +1,10 @@
 import { cardAdventureProfile } from '../data/adventure/cardNodes.mjs';
 import { sigilForNode } from '../data/adventure/sigils.mjs';
+import { title as cardTitle } from '../ui/renderCard.mjs';
 
 const STYLE_ID = 'adventure-card-sigils-runtime-style';
+
+const REWARD_CHOICE_KIND = Object.freeze({});
 
 function ensureStyle(doc) {
   if (!doc || doc.getElementById(STYLE_ID)) return;
@@ -50,6 +53,99 @@ function ensureStyle(doc) {
       border-width:2px;
       box-shadow:0 2px 4px #000,0 0 0 1px rgba(0,0,0,.78),0 0 7px rgba(65,158,220,.65);
     }
+
+    body.mode-adventure #advApproachWeb .adv-approach-requirement{
+      fill:#fff0bd;
+      stroke:#160b05;
+      stroke-width:2.6px;
+      paint-order:stroke;
+      font:900 10px/1 system-ui,sans-serif;
+      text-anchor:middle;
+      dominant-baseline:central;
+      pointer-events:none;
+    }
+
+    body.mode-adventure #choices .choice-card[data-adv-reward-choice]{overflow:visible}
+    body.mode-adventure #choices .choice-card .adv-choice-preview{
+      position:absolute;
+      z-index:35;
+      pointer-events:none;
+      font-family:system-ui,sans-serif;
+      font-weight:900;
+      line-height:1;
+      text-shadow:0 1px 2px #000;
+      transition:opacity .1s ease,transform .1s ease,filter .1s ease;
+    }
+    body.mode-adventure #choices .choice-card .adv-choice-preview--upgrade{
+      top:31px;
+      right:3px;
+      padding:2px 4px;
+      border-radius:8px;
+      color:#eaffdf;
+      background:rgba(25,93,43,.94);
+      border:1px solid rgba(173,239,157,.8);
+      font-size:8px;
+      opacity:.88;
+    }
+    body.mode-adventure #choices .choice-card:hover .adv-choice-preview--upgrade,
+    body.mode-adventure #choices .choice-card.adv-choice-preview-active .adv-choice-preview--upgrade{
+      opacity:1;
+      transform:scale(1.08);
+      filter:drop-shadow(0 0 5px rgba(150,235,130,.75));
+    }
+    body.mode-adventure #choices .choice-card .adv-choice-preview--seal{
+      left:50%;
+      top:5px;
+      transform:translateX(-50%) scale(.82);
+      width:21px;
+      height:21px;
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#3b1d0a;
+      background:radial-gradient(circle at 35% 30%,#ffd46d,#a55718 68%,#5d270b);
+      border:1px solid #ffe29a;
+      box-shadow:0 1px 3px #000;
+      opacity:.28;
+      font-size:10px;
+    }
+    body.mode-adventure #choices .choice-card:hover .adv-choice-preview--seal,
+    body.mode-adventure #choices .choice-card.adv-choice-preview-active .adv-choice-preview--seal{
+      opacity:1;
+      transform:translateX(-50%) scale(1);
+    }
+    body.mode-adventure #choices .choice-card .adv-choice-preview--banish{
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#ffbbb1;
+      background:rgba(68,8,5,.44);
+      border:2px solid rgba(220,76,62,.82);
+      border-radius:inherit;
+      font:900 42px/1 Georgia,serif;
+      opacity:0;
+    }
+    body.mode-adventure #choices .choice-card:hover .adv-choice-preview--banish,
+    body.mode-adventure #choices .choice-card.adv-choice-preview-active .adv-choice-preview--banish{opacity:1}
+    body.mode-adventure #choices .choice-card .adv-choice-preview--transmute{
+      top:3px;
+      left:23px;
+      color:#d9f5c9;
+      background:rgba(44,89,34,.94);
+      border:1px solid rgba(164,220,137,.8);
+      border-radius:8px;
+      padding:2px 5px;
+      font-size:10px;
+      opacity:.7;
+    }
+    body.mode-adventure #choices .choice-card:hover .adv-choice-preview--transmute,
+    body.mode-adventure #choices .choice-card.adv-choice-preview-active .adv-choice-preview--transmute{
+      opacity:1;
+      transform:scale(1.08);
+    }
+
     @media(max-width:640px){
       body.mode-adventure .card > .adv-sigil-seal{
         width:13px;
@@ -58,6 +154,7 @@ function ensureStyle(doc) {
         left:2px;
         font-size:10px;
       }
+      body.mode-adventure #choices .choice-card .adv-choice-preview--upgrade{top:26px;font-size:7px}
     }
   `;
   doc.head.appendChild(style);
@@ -73,10 +170,28 @@ function allRuntimeCards(target) {
   ];
 }
 
+function adventureDeckCards(target) {
+  const cards = target.tlrAdventureBuildDeck?.();
+  return Array.isArray(cards) ? cards : [];
+}
+
 function cardForElement(target, element) {
   const uid = String(element?.dataset?.uid ?? '');
-  if (!uid) return null;
-  return allRuntimeCards(target).find(card => String(card?.uid ?? '') === uid) || null;
+  if (uid) {
+    const runtime = allRuntimeCards(target).find(card => String(card?.uid ?? '') === uid);
+    if (runtime) return runtime;
+  }
+
+  const renderedTitle = element?.querySelector?.('.title')?.textContent?.trim();
+  if (!renderedTitle) return null;
+  const pool = [...adventureDeckCards(target), ...allRuntimeCards(target)];
+  return pool.find(card => {
+    try {
+      return cardTitle(card) === renderedTitle;
+    } catch {
+      return card?.name === renderedTitle;
+    }
+  }) || null;
 }
 
 function sigilForCard(card) {
@@ -88,6 +203,64 @@ function removeSigils(doc) {
   doc?.querySelectorAll('.adv-sigil-seal[data-adv-runtime-sigil="1"]').forEach(element => element.remove());
 }
 
+function clearRewardChoicePreview(element) {
+  element?.removeAttribute('data-adv-reward-choice');
+  element?.classList.remove('adv-choice-preview-active');
+  element?.querySelectorAll('.adv-choice-preview').forEach(preview => preview.remove());
+}
+
+function decorateRewardChoices(target) {
+  const doc = target.document;
+  const title = doc.getElementById('modalTitle')?.textContent?.trim() || '';
+  const kind = REWARD_CHOICE_KIND[title] || null;
+  const choices = [...doc.querySelectorAll('#choices .choice-card')];
+
+  for (const element of choices) {
+    if (!kind || !target.__tlrAdventureActive) {
+      clearRewardChoicePreview(element);
+      continue;
+    }
+
+    const card = cardForElement(target, element);
+    if (!card) {
+      clearRewardChoicePreview(element);
+      continue;
+    }
+
+    if (element.dataset.advRewardChoice !== kind) clearRewardChoicePreview(element);
+    element.dataset.advRewardChoice = kind;
+
+    let preview = element.querySelector(`:scope > .adv-choice-preview--${kind}`);
+    if (!preview) {
+      preview = doc.createElement('span');
+      preview.className = `adv-choice-preview adv-choice-preview--${kind}`;
+      preview.setAttribute('aria-hidden', 'true');
+      element.appendChild(preview);
+    }
+
+    if (kind === 'upgrade') {
+      const current = Number(card.points || 0);
+      const text = `${current}→${Math.min(5, current + 1)}`;
+      if (preview.textContent !== text) preview.textContent = text;
+      element.title = `${cardTitle(card)}: ${current} to ${Math.min(5, current + 1)}`;
+    } else if (kind === 'seal') {
+      if (preview.textContent !== '◆') preview.textContent = '◆';
+      element.title = `${cardTitle(card)} will appear in every opening hand`;
+    } else if (kind === 'banish') {
+      if (preview.textContent !== '×') preview.textContent = '×';
+      element.title = `Banish ${cardTitle(card)}`;
+    } else if (kind === 'transmute') {
+      const text = `→ ${sigilForNode('transformation')?.glyph || '∿'}`;
+      if (preview.textContent !== text) preview.textContent = text;
+      element.title = `${cardTitle(card)} gains the Serpent sigil`;
+    }
+  }
+}
+
+function decorateApproachRequirements() {}
+
+function installRequirementSetTracking() {}
+
 function decorate(target = window) {
   const doc = target?.document;
   if (!doc) return;
@@ -95,10 +268,11 @@ function decorate(target = window) {
 
   if (!target.__tlrAdventureActive || !doc.body.classList.contains('mode-adventure')) {
     removeSigils(doc);
+    doc.querySelectorAll('#choices .choice-card').forEach(clearRewardChoicePreview);
     return;
   }
 
-  doc.querySelectorAll('#hand .card[data-uid], #spread .card[data-uid], .choices .card[data-uid], .card-detail-card .card[data-uid]').forEach(element => {
+  doc.querySelectorAll('#hand .card, #spread .card, #choices .card, .card-detail-card .card').forEach(element => {
     const card = cardForElement(target, element);
     const sigil = sigilForCard(card);
     if (!sigil) return;
@@ -113,16 +287,20 @@ function decorate(target = window) {
       element.prepend(seal);
     }
     seal.dataset.sigilId = sigil.id;
-    seal.textContent = sigil.glyph;
+    if (seal.textContent !== sigil.glyph) seal.textContent = sigil.glyph;
     seal.title = `${sigil.name} Sigil`;
     seal.setAttribute('aria-label', `${sigil.name} Sigil`);
   });
+
+  decorateRewardChoices(target);
+  decorateApproachRequirements(target);
 }
 
 export function installAdventureCardSigils(target = window) {
   const doc = target?.document;
   if (!doc) return;
   ensureStyle(doc);
+  installRequirementSetTracking(target);
 
   if (target.__tlrAdventureCardSigilsInstalled) {
     target.__tlrAdventureCardSigilsSchedule?.();
@@ -144,6 +322,8 @@ export function installAdventureCardSigils(target = window) {
     doc.getElementById('hand'),
     doc.getElementById('spread'),
     doc.getElementById('summary'),
+    doc.getElementById('modal'),
+    doc.getElementById('advApproachWeb'),
   ].filter(Boolean);
 
   const disconnectContent = () => {
@@ -156,19 +336,31 @@ export function installAdventureCardSigils(target = window) {
     if (!target.__tlrAdventureActive && !doc.body.classList.contains('mode-adventure')) return;
     target.__tlrAdventureCardSigilsContentObservers = roots().map(root => {
       const observer = new target.MutationObserver(schedule);
-      observer.observe(root, { childList: true, subtree: true });
+      observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
       return observer;
     });
     schedule();
   };
 
   const syncMode = () => {
-    if (target.__tlrAdventureActive || doc.body.classList.contains('mode-adventure')) observeContent();
-    else {
+    if (target.__tlrAdventureActive || doc.body.classList.contains('mode-adventure')) {
+      target.requestAnimationFrame(observeContent);
+    } else {
       disconnectContent();
       removeSigils(doc);
     }
   };
+
+  doc.addEventListener('pointerdown', event => {
+    const card = event.target.closest?.('#choices .choice-card[data-adv-reward-choice]');
+    if (card) card.classList.add('adv-choice-preview-active');
+  }, true);
+  doc.addEventListener('pointerup', event => {
+    event.target.closest?.('#choices .choice-card[data-adv-reward-choice]')?.classList.remove('adv-choice-preview-active');
+  }, true);
+  doc.addEventListener('pointercancel', () => {
+    doc.querySelectorAll('#choices .choice-card.adv-choice-preview-active').forEach(card => card.classList.remove('adv-choice-preview-active'));
+  }, true);
 
   target.__tlrAdventureCardSigilsModeObserver?.disconnect?.();
   const modeObserver = new target.MutationObserver(syncMode);

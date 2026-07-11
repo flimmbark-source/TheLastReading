@@ -7,7 +7,7 @@ export const ADVENTURE_SIGILS = Object.freeze({
   [ACTION_NODES.ENDURANCE]: Object.freeze({ id: 'mountain', name: 'Mountain', glyph: '▲' }),
   [ACTION_NODES.COMPASSION]: Object.freeze({ id: 'heart', name: 'Heart', glyph: '♥' }),
   [ACTION_NODES.AUTHORITY]: Object.freeze({ id: 'crown', name: 'Crown', glyph: '♚' }),
-  [ACTION_NODES.MYSTERY]: Object.freeze({ id: 'moon', name: 'Moon', glyph: '☾' }),
+  [ACTION_NODES.MYSTERY]: Object.freeze({ id: 'moon', name: 'Omen', glyph: '☾' }),
   [ACTION_NODES.DECEPTION]: Object.freeze({ id: 'mask', name: 'Mask', glyph: '◐' }),
   [ACTION_NODES.INVESTIGATION]: Object.freeze({ id: 'eye', name: 'Eye', glyph: '⊙' }),
   [ACTION_NODES.TRANSFORMATION]: Object.freeze({ id: 'serpent', name: 'Serpent', glyph: '∿' }),

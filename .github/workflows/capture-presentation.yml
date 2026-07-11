@@ -1,0 +1,80 @@
+name: Capture presentation states
+
+on:
+  push:
+    branches: [adventure-reward-usability]
+    paths:
+      - 'game.html'
+      - 'package.json'
+      - 'src/styles/**'
+      - 'src/ui/**'
+      - 'src/app/**'
+      - 'scripts/capture-presentation-states.mjs'
+      - 'scripts/validate-*-presentation.mjs'
+      - 'scripts/validate-adventure-style-extraction.mjs'
+      - 'scripts/adventure-style-extraction.mjs'
+      - 'scripts/build-bundle.mjs'
+      - '.github/workflows/capture-presentation.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'game.html'
+      - 'package.json'
+      - 'src/styles/**'
+      - 'src/ui/**'
+      - 'src/app/**'
+      - 'scripts/capture-presentation-states.mjs'
+      - 'scripts/validate-*-presentation.mjs'
+      - 'scripts/validate-adventure-style-extraction.mjs'
+      - 'scripts/adventure-style-extraction.mjs'
+      - 'scripts/build-bundle.mjs'
+      - '.github/workflows/capture-presentation.yml'
+  workflow_dispatch:
+
+jobs:
+  validate-and-capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install project dependencies
+        run: npm ci
+
+      - name: Validate presentation director
+        run: node scripts/validate-presentation-director.mjs
+
+      - name: Validate Adventure presentation
+        run: node scripts/validate-adventure-presentation.mjs
+
+      - name: Validate world and selection presentation
+        run: node scripts/validate-world-presentation.mjs
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Measure and capture mobile presentation states
+        run: npm run capture:presentation
+
+      - name: Validate Adventure style extraction
+        run: node scripts/validate-adventure-style-extraction.mjs
+
+      - name: Verify production bundle
+        run: npm run build:bundle
+
+      - name: Upload presentation screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: presentation-mobile-scene-matrix
+          path: artifacts/presentation-*.png
+          if-no-files-found: warn
+          retention-days: 14

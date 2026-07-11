@@ -1,0 +1,167 @@
+.game-term{
+  --term-color:#d7c69b;
+  color:var(--term-color);
+  font-weight:800;
+  white-space:nowrap;
+  text-decoration-line:underline;
+  text-decoration-style:dotted;
+  text-decoration-thickness:1px;
+  text-underline-offset:3px;
+  cursor:help;
+}
+.game-term::before{
+  content:attr(data-term-icon);
+  display:inline-block;
+  margin-right:.24em;
+  font-size:.82em;
+  line-height:1;
+  opacity:.95;
+}
+.game-term[data-term-icon=""]::before{display:none}
+.score-pill .game-term::before,
+.threshold-pill .game-term::before{display:none}
+.game-term:focus-visible{
+  outline:2px solid currentColor;
+  outline-offset:3px;
+  border-radius:3px;
+}
+.game-term--chips{--term-color:#f1c45f}
+.game-term--mult{--term-color:#c493ff}
+.game-term--score{--term-color:#ff9b52}
+.game-term--threshold{--term-color:#72d6ad}
+.game-term--reserve{--term-color:#91c9ff}
+.game-term--action{--term-color:#8fd5f2}
+.game-term--zone{--term-color:#e4d3a8;font-weight:700}
+.game-term--system{--term-color:#e2bd77}
+.game-term--resource{--term-color:#f0ae7e}
+.game-term--ability{--term-color:#bca6f2}
+.game-term--instruction{--term-color:#d7c69b;font-weight:700}
+
+.game-term-popover{
+  position:fixed;
+  z-index:2147483500;
+  width:min(280px,calc(100vw - 20px));
+  padding:10px 12px;
+  border:1px solid rgba(226,189,119,.58);
+  border-radius:8px;
+  background:linear-gradient(180deg,rgba(35,25,17,.98),rgba(18,12,8,.99));
+  color:#eadbb9;
+  box-shadow:0 12px 34px rgba(0,0,0,.74);
+  pointer-events:none;
+}
+.game-term-popover[hidden]{display:none!important}
+.game-term-popover__title{
+  color:#f2d597;
+  font:800 13px/1.15 Georgia,serif;
+  margin-bottom:4px;
+}
+.game-term-popover__definition{
+  color:#d7c8aa;
+  font:600 11px/1.42 system-ui,sans-serif;
+}
+
+.game-terms-glossary{
+  position:fixed;
+  inset:0;
+  z-index:2147483450;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  background:rgba(0,0,0,.72);
+  backdrop-filter:blur(4px);
+}
+.game-terms-glossary[hidden]{display:none!important}
+.game-terms-glossary__panel{
+  position:relative;
+  width:min(720px,100%);
+  max-height:min(760px,90vh);
+  overflow:auto;
+  padding:24px 24px 28px;
+  border:1px solid rgba(226,189,119,.48);
+  border-radius:14px;
+  background:linear-gradient(180deg,#251a11,#130d09);
+  color:#eadbb9;
+  box-shadow:0 24px 70px rgba(0,0,0,.82);
+}
+.game-terms-glossary__panel h2{
+  margin:0 0 18px;
+  color:#f2d597;
+  font:800 24px/1.1 Georgia,serif;
+  text-align:center;
+}
+.game-terms-glossary__close{
+  position:absolute;
+  top:9px;
+  right:10px;
+  width:34px;
+  height:34px;
+  border:1px solid rgba(226,189,119,.38);
+  border-radius:50%;
+  background:rgba(255,255,255,.04);
+  color:#eadbb9;
+  font:700 22px/1 system-ui,sans-serif;
+  cursor:pointer;
+}
+.game-terms-glossary__groups{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+.game-terms-glossary__group{
+  min-width:0;
+  padding:13px;
+  border:1px solid rgba(226,189,119,.18);
+  border-radius:10px;
+  background:rgba(255,255,255,.025);
+}
+.game-terms-glossary__group h3{
+  margin:0 0 9px;
+  color:#b99b68;
+  font:800 10px/1 system-ui,sans-serif;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.game-terms-glossary__row{
+  display:grid;
+  grid-template-columns:minmax(78px,auto) 1fr;
+  align-items:start;
+  gap:9px;
+  padding:7px 0;
+  border-top:1px solid rgba(226,189,119,.1);
+}
+.game-terms-glossary__row:first-of-type{border-top:0}
+.game-terms-glossary__row p{
+  margin:0;
+  color:#cfc0a2;
+  font:500 11px/1.4 system-ui,sans-serif;
+}
+.game-terms-glossary-button{
+  display:block;
+  width:100%;
+  margin-top:8px;
+}
+
+@media(max-width:640px){
+  .game-term{font-weight:850;text-underline-offset:2px}
+  .game-term-popover{font-size:12px}
+  .game-terms-glossary{padding:8px}
+  .game-terms-glossary__panel{max-height:94vh;padding:20px 14px 22px}
+  .game-terms-glossary__panel h2{font-size:20px}
+  .game-terms-glossary__groups{grid-template-columns:1fr;gap:10px}
+}
+
+@media(prefers-contrast:more){
+  .game-term{
+    text-decoration-style:solid;
+    text-decoration-thickness:2px;
+    text-shadow:none!important;
+  }
+  .game-term-popover,
+  .game-terms-glossary__panel{border-width:2px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .game-term-popover,
+  .game-terms-glossary{transition:none!important;animation:none!important}
+}

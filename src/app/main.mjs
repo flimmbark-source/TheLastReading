@@ -33,6 +33,8 @@ import { installPressHighlight } from '../ui/gesturePressHighlight.mjs';
 import { installPatternHintStack } from '../ui/patternHintStack.mjs';
 import { installHandSelectionVisuals } from '../ui/handSelectionVisuals.mjs?v=deselect-raf-1';
 import { installSinglePlayerV2 } from '../ui/singlePlayerV2.mjs?v=phase1-2';
+import { installGameTerms } from '../ui/gameTerms.mjs';
+import { installComprehensionInstrumentation } from './comprehensionInstrumentation.mjs';
 import * as abilitySystem from '../systems/abilities.mjs';
 import * as shopSystem from '../systems/shop.mjs';
 import * as scoringSystem from '../systems/scoring.mjs';
@@ -300,6 +302,8 @@ export function startApp(target = window) {
   installMenuControls(target);
   installMainMenu(target);
   installSinglePlayerV2(target);
+  installGameTerms(target);
+  installComprehensionInstrumentation(target);
   target.__tlrInstallAdventureModules = () => installAdventureFeatureModules(target);
   target.__tlrInstallMultiplayerModules = () => installMultiplayerFeatureModules(target);
   installStoreFrontTuning(target);

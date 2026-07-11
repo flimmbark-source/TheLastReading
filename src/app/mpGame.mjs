@@ -49,18 +49,18 @@ export function installMpGame(target = window) {
   let _origRenderHand   = null;
   let _origTogglePurgeCard = null;
   let _origRefreshHandState = null;
-  let _oppRevealPending = new Set();
-  let _oppRevealShown = new Set();
-  let _oppRevealTimers = new Set();
+  const _oppRevealPending = new Set();
+  const _oppRevealShown = new Set();
+  const _oppRevealTimers = new Set();
   let _lastShownScores = [0, 0];
   let _lastScoringState = null;
   let _latestEffectsUntil = 0;
   let _delayedNextRoundQueued = false;
-  let _localPlacementFeedbackKeys = new Set();
+  const _localPlacementFeedbackKeys = new Set();
   // Cards submitted for discard/purge/invoke stay in _state until the round
   // resolves, causing a one-frame flash where they reappear as unselected cards.
   // Track them here and filter in selfHandView until _state catches up.
-  let _pendingRemovalUids = new Set();
+  const _pendingRemovalUids = new Set();
   // Optimistic local resolution of MY own local-only actions. Card abilities
   // affect the acting player's own piles, and Surgeon's swap only exchanges one
   // of my Spread cards with one of my Hand cards, so we apply the effect to a

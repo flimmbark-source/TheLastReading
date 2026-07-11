@@ -1,20 +1,18 @@
 // Hand card gesture controller (Step 4). Verbatim port target from the
 // legacy inline hand card gestures handler patch.
-/* global state, refreshHandState, expandCard, render, placeCard */
+/* global state, refreshHandState, render */
 import { abilityTargetView as selectAbilityTargetView } from '../game/selectors.mjs';
 
 export function installHandCardGestures(target = window){
   if(!target || target.__handCardGesturesInstalled)return;
   target.__handCardGesturesInstalled=true;
 
-  const HOLD_MS=400;
   const DRAG_THRESHOLD=10;
   const TILT_SCALE=0.32;
   const TILT_MAX=14;
   const TILT_LERP=0.22;
   const SPREAD_ZONE_SLACK=72;
   const SLOT_HIT_PAD=28;
-  const DETAIL_DRAG_DOWN_PX=80;
 
   let g=null;
   const handEl=()=>document.querySelector('.hand');
@@ -55,18 +53,11 @@ export function installHandCardGestures(target = window){
     if(adapter?.refreshHand)return adapter.refreshHand();
     if(typeof refreshHandState==='function')return refreshHandState();
   };
-  const activeHand=()=>{
-    const adapter=handAdapter();
-    if(adapter?.getHand)return adapter.getHand()||[];
-    const s=storeState();
-    return [...((s?.run?.hand)||state?.hand||[])];
-  };
   const isSpreadSlotOccupied=idx=>{
     const adapter=handAdapter();
     if(adapter?.isSpreadSlotOccupied)return !!adapter.isSpreadSlotOccupied(idx);
     return !!state.spread[idx];
   };
-  const inSelectionMode=()=>!!(gestureTargeting()||purgeSelecting()||gestureBusy());
   const cancelHold=()=>{if(g&&g.holdTimer){clearTimeout(g.holdTimer);g.holdTimer=null;}};
   const queueUid=(arr,uid,max)=>{if(arr.includes(uid))return arr;const a=[...arr,uid];return a.length>max?a.slice(-max):a;};
 
@@ -131,24 +122,6 @@ export function installHandCardGestures(target = window){
     if(g)g.hoverIndex=g.origIndex;
   };
 
-  const restoreCardToHand=()=>{
-    if(!g||!g.cardEl||!g.originalParent)return;
-    const cardEl=g.cardEl;
-    if(cardEl.parentNode===g.originalParent)return;
-    cardEl.style.removeProperty('position');
-    cardEl.style.removeProperty('left');
-    cardEl.style.removeProperty('top');
-    cardEl.style.removeProperty('width');
-    cardEl.style.removeProperty('height');
-    cardEl.style.removeProperty('margin');
-    cardEl.style.removeProperty('z-index');
-    if(g.originalNextSibling&&g.originalNextSibling.parentNode===g.originalParent){
-      g.originalParent.insertBefore(cardEl,g.originalNextSibling);
-    }else{
-      g.originalParent.appendChild(cardEl);
-    }
-  };
-
   const startSelectDrag=ev=>{
     if(!g||g.mode!=='pending')return;
     cancelHold();
@@ -207,7 +180,6 @@ export function installHandCardGestures(target = window){
     g.cardHalfH=naturalH/2;
     g.prevX=ev.clientX;
     g.tiltDeg=0;
-    g.inDetailZone=false;
     g.mode='drag';
     const spEl=document.querySelector('#spread');
     g.spreadRect=spEl?spEl.getBoundingClientRect():null;
@@ -280,9 +252,6 @@ export function installHandCardGestures(target = window){
       const moveX=cardLeft-g.dragOriginLeft;
       const moveY=cardTop-g.dragOriginTop;
       g.cardEl.style.setProperty('transform','translate('+moveX.toFixed(1)+'px,'+moveY.toFixed(1)+'px) rotate('+g.tiltDeg.toFixed(2)+'deg)','important');
-      const cardCY=cardTop+g.cardHalfH;
-      const nowDetail=(y-g.startY)>DETAIL_DRAG_DOWN_PX&&!isInSpreadZone(cardCY);
-      if(nowDetail!==g.inDetailZone){g.inDetailZone=nowDetail;g.cardEl.classList.toggle('hand-card-detail-pull',nowDetail);}
     });
   };
 
@@ -306,11 +275,10 @@ export function installHandCardGestures(target = window){
   const endDrag=committed=>{
     if(!g)return;
     cancelHold();
-    const{uid,cardEl,origIndex,hoverIndex,mode,pendingUids=[],inDetailZone=false,originalParent,originalNextSibling}=g;
+    const{uid,cardEl,origIndex,hoverIndex,mode,pendingUids=[]}=g;
     let dropSlot=g.dropSlot;
     const wasDrag=mode==='drag';
     const wasSelectDrag=mode==='select-drag';
-    const firstRect=wasDrag?cardEl.getBoundingClientRect():null;
     if(wasDrag&&committed&&g.lastDragEv){
       const last=calcDropTarget(g.lastDragEv.clientX,g.lastDragEv.clientY);
       if(last.inSpread)dropSlot=last.hit||null;
@@ -318,7 +286,6 @@ export function installHandCardGestures(target = window){
     if(g.dragRafId){cancelAnimationFrame(g.dragRafId);g.dragRafId=null;}
     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
     cardEl.classList.remove('hand-card-dragging');
-    cardEl.classList.remove('hand-card-detail-pull');
     cardEl.style.removeProperty('transform');
     cardEl.style.removeProperty('position');
     cardEl.style.removeProperty('left');
@@ -332,29 +299,6 @@ export function installHandCardGestures(target = window){
     const spEl3=document.querySelector('#spread');if(spEl3)spEl3.classList.remove('drag-active');
     target.__handReorderActive=false;
     g=null;
-
-    if(wasDrag&&committed&&inDetailZone){
-      if(cardEl.parentNode!==originalParent){
-        if(originalNextSibling&&originalNextSibling.parentNode===originalParent){
-          originalParent.insertBefore(cardEl,originalNextSibling);
-        }else{
-          originalParent.appendChild(cardEl);
-        }
-      }
-      applyNaturalSlots();
-      slideLanding(cardEl,firstRect);
-      const card=activeHand().find(c=>c.uid===uid)||null;
-      if(card){
-        const adapter=handAdapter();
-        if(adapter?.showDetail)adapter.showDetail(card);
-        else{
-          const showDetail=typeof target.expandCard==='function'?target.expandCard:(typeof expandCard==='function'?expandCard:null);
-          if(showDetail)showDetail(card,target);
-        }
-      }
-      target.__handGestureSuppressClickUntil=performance.now()+800;
-      return;
-    }
 
     if(wasSelectDrag){
       if(!committed)return;
@@ -436,7 +380,7 @@ export function installHandCardGestures(target = window){
   document.addEventListener('pointerdown',ev=>{
     if(target.__handPinchSynthetic||target.__handPinchActive)return;
     const t=ev.target instanceof Element?ev.target:null;
-    if(!t||t.closest('#spread'))return;
+    if(!t||t.closest('#spread,.card-detail-trigger'))return;
     const cardEl=t.closest('#hand .card[data-uid]');
     if(!cardEl)return;
     if(g)endDrag(false);

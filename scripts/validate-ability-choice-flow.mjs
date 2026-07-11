@@ -50,22 +50,25 @@ const baseUi = {
   assert.equal(choice.takenCardUid, onlyResult.uid, 'Between takes the chosen result card');
 }
 
-// MIRROR: a Court anchor exposes every opposite-rank card in the deck even
-// though the legacy ability id/count is MIRROR_1. Invalid anchors are greyed.
+// MIRROR: Court eligibility spans every suit, but only the first `count`
+// matching cards in live deck order are revealed. Presentation sorting happens
+// after that cap and must not change which cards were revealed.
 {
   const queenCups = court('Cups', 'Queen', 300);
   const invalidMajor = major(0, 301);
   const knightWands = court('Wands', 'Knight', 400);
   const knightSwords = court('Swords', 'Knight', 401);
+  const knightPentacles = court('Pentacles', 'Knight', 402);
   let offeredAnchors = [];
   let offeredResults = [];
 
   const choice = await buildAbilityChoiceAsync(
-    { type: ABILITY_TYPES.MIRROR, count: 1, title: 'Mirror' },
-    { deck: [knightWands, knightSwords], hand: [queenCups, invalidMajor], spread: [], sourceCardUid: null },
+    { type: ABILITY_TYPES.MIRROR, count: 2, title: 'Mirror' },
+    { deck: [knightWands, knightSwords, knightPentacles], hand: [queenCups, invalidMajor], spread: [], sourceCardUid: null },
     {
       ...baseUi,
-      selectTargets: async (_title, _prompt, cards) => {
+      selectTargets: async (_title, prompt, cards) => {
+        assert.match(prompt, /up to 2/i, 'Mirror targeting prompt states the cap');
         offeredAnchors = cards.map(card => card.uid);
         return [queenCups];
       },
@@ -77,9 +80,38 @@ const baseUi = {
   );
 
   assert.deepEqual(offeredAnchors, [queenCups.uid], 'Mirror offers only anchors with a live legal result');
-  assert.deepEqual(offeredResults, [knightSwords.uid, knightWands.uid], 'Mirror offers every opposite-rank Court card for selection');
-  assert.deepEqual(choice.heldCardUids, offeredResults, 'Mirror records every revealed option');
+  assert.deepEqual(offeredResults, [knightSwords.uid, knightWands.uid], 'Mirror reveals exactly 2 cards, capped in deck order then sorted for display');
+  assert.deepEqual(choice.heldCardUids, offeredResults, 'Mirror records exactly the 2 revealed cards');
   assert.equal(choice.takenCardUid, knightSwords.uid, 'Mirror records the Knight selected by the player');
+}
+
+// Lens Mastery raises Mirror's count; the same flow then reveals 3 rather than 2.
+{
+  const queenCups = court('Cups', 'Queen', 310);
+  const knights = [
+    court('Wands', 'Knight', 410),
+    court('Swords', 'Knight', 411),
+    court('Pentacles', 'Knight', 412),
+    court('Cups', 'Knight', 413),
+  ];
+  let offeredResults = [];
+  const choice = await buildAbilityChoiceAsync(
+    { type: ABILITY_TYPES.MIRROR, count: 3, title: 'Mirror' },
+    { deck: knights, hand: [queenCups], spread: [], sourceCardUid: null },
+    {
+      ...baseUi,
+      selectTargets: async (_title, prompt) => {
+        assert.match(prompt, /up to 3/i, 'upgraded Mirror prompt states the upgraded cap');
+        return [queenCups];
+      },
+      showChoice: async (_title, _prompt, cards) => {
+        offeredResults = cards.map(card => card.uid);
+        return cards[0];
+      },
+    },
+  );
+  assert.equal(offeredResults.length, 3, 'Lens-upgraded Mirror reveals 3 cards');
+  assert.equal(choice.heldCardUids.length, 3, 'upgraded Mirror records exactly its 3 revealed cards');
 }
 
 // NEIGHBOR: an anchor whose adjacent card is absent is not selectable.
@@ -134,7 +166,7 @@ const baseUi = {
   let targetingOpened = false;
   let choiceOpened = false;
   const fallback = await buildAbilityChoiceAsync(
-    { type: ABILITY_TYPES.MIRROR, count: 1, title: 'Mirror' },
+    { type: ABILITY_TYPES.MIRROR, count: 2, title: 'Mirror' },
     { deck: [major(8, 701)], hand: [major(0, 700)], spread: [], sourceCardUid: null },
     {
       ...baseUi,

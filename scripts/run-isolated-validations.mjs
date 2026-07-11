@@ -3,5 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
+execFileSync(process.execPath, [join(here, 'validate-tutorial-placement.mjs')], { stdio: 'inherit' });
 execFileSync(process.execPath, [join(here, 'validate-card-detail-hold.mjs')], { stdio: 'inherit' });
+execFileSync(process.execPath, [join(here, 'validate-ability-choice-layout.mjs')], { stdio: 'inherit' });
 execFileSync(process.execPath, [join(here, 'validate-mp-ability-flow.mjs')], { stdio: 'inherit' });

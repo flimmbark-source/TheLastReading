@@ -1,0 +1,78 @@
+/* Restrained parallax and focus language. Uses scale/translate longhands so it
+   composes with existing transform-based hand and card geometry. */
+
+body.single-player-v2 #roomAmbient,
+body.single-player-v2 .handDock,
+body.single-player-v2 .score-stack {
+  transition:
+    scale 240ms cubic-bezier(.2,.74,.24,1),
+    translate 240ms cubic-bezier(.2,.74,.24,1),
+    filter 220ms ease,
+    opacity 180ms ease;
+}
+
+body.single-player-v2 #roomAmbient {
+  transform-origin: var(--presentation-origin-x, 50%) var(--presentation-origin-y, 52%);
+}
+
+/* Selecting a card unhides #scorePreview. It is the first child of .spread-wrap,
+   so it must be an overlay: allowing it into normal flow changes the wrapper's
+   height, and the inherited translateY(-50%) then moves the whole spread by
+   roughly half that new height. */
+@media (max-width: 640px) {
+  body.single-player-v2.generated-sheet-ready #scorePreview {
+    position: absolute;
+    left: 50%;
+    right: auto;
+    top: -86px;
+    margin: 0;
+    transform: translateX(-50%);
+  }
+}
+
+/* presentation.css is layered and historically applied small translate values to
+   the spread for selection and dragging. This unlayered geometry lock wins that
+   cascade without touching the spread's existing transform-based layout. */
+
+body.single-player-v2.presentation-card-selected #roomAmbient {
+  scale: 1.006;
+  translate: 0 -1px;
+}
+
+body.single-player-v2.presentation-card-selected .handDock { scale: 1.01; }
+body.single-player-v2.presentation-card-selected .score-stack { scale: .997; }
+
+body.single-player-v2.presentation-card-dragging #roomAmbient {
+  scale: 1.012;
+  translate: 0 -2px;
+}
+
+/* The spread is the drag target. Its screen geometry must remain fixed from
+   pointer-down through drop so slots never move away from the player's card. */
+body.single-player-v2.presentation-card-dragging .handDock { scale: 1.014; }
+body.single-player-v2.presentation-card-dragging .score-stack { scale: .994; }
+
+body.single-player-v2.presentation-ability-reveal #roomAmbient,
+body.single-player-v2.presentation-adventure-outcome #roomAmbient,
+body.single-player-v2.presentation-adventure-reward #roomAmbient,
+body.single-player-v2.presentation-adventure-recovery #roomAmbient {
+  scale: 1.01;
+}
+
+body.single-player-v2.presentation-threshold-near #roomAmbient {
+  scale: 1.004;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.single-player-v2 #roomAmbient,
+  body.single-player-v2 .handDock,
+  body.single-player-v2 .score-stack {
+    transition-duration: 60ms;
+  }
+}
+/* Fixed-layout containers must never acquire transform longhands. */
+body.single-player-v2.presentation-flag-card-selected .spread-wrap,
+body.single-player-v2.presentation-flag-card-dragging .spread-wrap {
+  translate: none !important;
+  scale: none !important;
+}

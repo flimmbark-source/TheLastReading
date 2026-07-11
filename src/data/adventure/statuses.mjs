@@ -16,7 +16,7 @@ export const STATUSES = Object.freeze({
   haunted: {
     id: 'haunted',
     name: 'Haunted',
-    description: 'Sways Supernatural Events towards eerier Outcomes.',
+    description: 'Sways Supernatural Events toward eerier Outcomes.',
     // Amplifies supernatural meaning axes already present in the spread.
     modifyMeanings(meanings, spread) {
       for (const tag of SUPERNATURAL_TAGS) {
@@ -28,28 +28,28 @@ export const STATUSES = Object.freeze({
   exposed: {
     id: 'exposed',
     name: 'Exposed',
-    description: 'Your weaknesses are known. Failing a Hostile Event costs 1 additional Resolve.',
+    description: 'Fail a Hostile [[event]]: lose 1 additional [[resolve]].',
     // Behaviour lives in run.mjs: hostile failures cost +1 Resolve.
     extraHostileFailureResolveCost: 1,
   },
   prepared: {
     id: 'prepared',
     name: 'Prepared',
-    description: 'You know what waits ahead. Reveals the title of your next Event, then fades.',
+    description: '[[reveal]] the next [[event]]’s title, then remove Prepared.',
     // Behaviour: HUD may reveal the next event while this is active.
     revealsNextEvent: true,
   },
   distrusted: {
     id: 'distrusted',
     name: 'Distrusted',
-    description: 'Word spread about you. A Great Success on a Social Event only lets you choose 1 reward instead of 2.',
+    description: 'A Social Great Success lets you [[choose]] 1 reward instead of 2.',
     // Behaviour: suppresses the extra triumph reward on SOCIAL events.
     suppressesSocialTriumphBonus: true,
   },
   blessed: {
     id: 'blessed',
     name: 'Blessed',
-    description: 'Fortune favours you. Your next Great Success offers 1 extra reward to choose from, then fades.',
+    description: 'Your next Great Success offers +1 reward, then removes Blessed.',
     // Behaviour: +1 triumph reward, then the status removes itself.
     bonusTriumphReward: 1,
     consumedByTriumph: true,

@@ -5,7 +5,6 @@
 
 const STORE_ABILITY_PACKS = Object.freeze(['innate', 'restless', 'second_sight', 'thread', 'foundation']);
 const RELIC_CACHE_PACK_ID = 'relic';
-const STORE_ASSET_PATH = './';
 const STORE_FADE_MS = 260;
 
 const STORE_PACK_COPY = Object.freeze({

@@ -15,7 +15,8 @@ export const RELICS = Object.freeze({
     name: 'The Gilded Fool',
     icon: '🃏',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'If the spread has at least 1 card, add +10 Chips.',
+    tags: ['first_card', 'chips', 'tempo', 'scaling'],
+    description: 'If your [[spread]] contains a card, gain [[chips|+10 Chips]].',
   },
   hermit_lantern: {
     id: 'hermit_lantern',
@@ -23,7 +24,8 @@ export const RELICS = Object.freeze({
     name: "Hermit's Lantern",
     icon: '🔦',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'Each Major Arcana in the spread adds +0.25 Mult.',
+    tags: ['major_support', 'multiplier', 'scaling'],
+    description: 'Each Major Arcana in your [[spread]] grants [[mult|+0.25 Mult]].',
   },
   mirror_shard: {
     id: 'mirror_shard',
@@ -31,7 +33,8 @@ export const RELICS = Object.freeze({
     name: 'Mirror Shard',
     icon: '🪞',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'Each pair of matching Court ranks adds +0.5 Mult.',
+    tags: ['pair_support', 'rank_support', 'multiplier', 'pattern_support'],
+    description: 'Each pair of matching Court ranks grants [[mult|+0.5 Mult]].',
   },
   still_pool: {
     id: 'still_pool',
@@ -39,7 +42,8 @@ export const RELICS = Object.freeze({
     name: 'The Still Pool',
     icon: '🪷',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'If no Discards were used this set, add +0.75 Mult.',
+    tags: ['no_discard', 'risk_reward', 'multiplier', 'scaling'],
+    description: 'Use no [[discard|Discards]] this Set: gain [[mult|+0.75 Mult]].',
   },
   loaded_die: {
     id: 'loaded_die',
@@ -47,7 +51,8 @@ export const RELICS = Object.freeze({
     name: 'Loaded Die',
     icon: '🎲',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'Court cards in the spread add their point values again as Chips.',
+    tags: ['court_support', 'chips', 'pattern_support'],
+    description: 'Court cards in your [[spread]] add their values again as [[chips]].',
   },
   gilded_discard: {
     id: 'gilded_discard',
@@ -55,7 +60,8 @@ export const RELICS = Object.freeze({
     name: 'Gilded Discard',
     icon: '✨',
     event: RELIC_EVENT_TYPES.DISCARD_USED,
-    description: 'The first Discard each reading costs no charge.',
+    tags: ['discard_support', 'ability_support', 'recovery'],
+    description: 'Your first [[discard]] each [[reading]] costs no charge.',
   },
   threadbare_tarot: {
     id: 'threadbare_tarot',
@@ -63,7 +69,8 @@ export const RELICS = Object.freeze({
     name: 'Threadbare Tarot',
     icon: '🎴',
     event: RELIC_EVENT_TYPES.READING_START,
-    description: 'Draw 1 extra card at the start of each reading.',
+    tags: ['draw_support', 'hand_support', 'consistency', 'recovery'],
+    description: '[[draw]] 1 extra card at the start of each [[reading]].',
   },
   merchants_scale: {
     id: 'merchants_scale',
@@ -71,7 +78,8 @@ export const RELICS = Object.freeze({
     name: "Merchant's Scale",
     icon: '⚖',
     event: RELIC_EVENT_TYPES.MARKET,
-    description: 'All packs cost 3 fewer Reserve.',
+    tags: ['economy', 'market_support', 'discount'],
+    description: 'Packs cost 3 less [[reserve]].',
   },
   court_favor: {
     id: 'court_favor',
@@ -79,7 +87,8 @@ export const RELICS = Object.freeze({
     name: 'Court Favor',
     icon: '👑',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'Each Court card in the spread adds +0.25 Mult.',
+    tags: ['court_support', 'multiplier', 'pattern_support'],
+    description: 'Each Court card in your [[spread]] grants [[mult|+0.25 Mult]].',
   },
   hanged_coin: {
     id: 'hanged_coin',
@@ -87,7 +96,8 @@ export const RELICS = Object.freeze({
     name: "Hanged Man's Coin",
     icon: '🪙',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'Discarded cards contribute their full base Chips to the score.',
+    tags: ['discard_support', 'chips', 'ability_support'],
+    description: 'Discarded cards add their full base [[chips]] to your [[score]].',
   },
   miser: {
     id: 'miser',
@@ -95,7 +105,8 @@ export const RELICS = Object.freeze({
     name: 'The Miser',
     icon: '💰',
     event: RELIC_EVENT_TYPES.SESSION_END,
-    description: 'Gain +5 bonus Reserve each time you clear a threshold.',
+    tags: ['economy', 'reserve_gain', 'recovery'],
+    description: 'Clear a [[threshold]]: gain [[reserve|+5 Reserve]].',
   },
   arcana_codex: {
     id: 'arcana_codex',
@@ -103,7 +114,8 @@ export const RELICS = Object.freeze({
     name: 'Arcana Codex',
     icon: '📖',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'Each distinct scoring upgrade you own adds +0.1 Mult.',
+    tags: ['market_support', 'scaling', 'multiplier'],
+    description: 'Each distinct scoring upgrade grants [[mult|+0.1 Mult]].',
   },
   lovers_knot: {
     id: 'lovers_knot',
@@ -111,7 +123,8 @@ export const RELICS = Object.freeze({
     name: "The Lovers' Knot",
     icon: '🔗',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'If a Court rank appears 3 or more times, add +1 Mult.',
+    tags: ['rank_support', 'court_support', 'multiplier', 'pattern_support'],
+    description: 'If a Court rank appears 3+ times, gain [[mult|+1 Mult]].',
   },
   temperance_flask: {
     id: 'temperance_flask',
@@ -119,7 +132,8 @@ export const RELICS = Object.freeze({
     name: 'Temperance Flask',
     icon: '⚗',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'Using exactly 1 Discard this set grants +1 Mult when scoring.',
+    tags: ['exact_one_discard', 'multiplier', 'risk_reward'],
+    description: 'Use exactly 1 [[discard]] this Set: gain [[mult|+1 Mult]].',
   },
   strengths_grip: {
     id: 'strengths_grip',
@@ -127,7 +141,8 @@ export const RELICS = Object.freeze({
     name: 'Strength',
     icon: '💪',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'If the spread contains exactly 3 Court cards, gain +1 Mult.',
+    tags: ['court_support', 'multiplier', 'pattern_support'],
+    description: 'If your [[spread]] contains exactly 3 Court cards, gain [[mult|+1 Mult]].',
   },
   the_world: {
     id: 'the_world',
@@ -135,7 +150,8 @@ export const RELICS = Object.freeze({
     name: 'The World',
     icon: '🌍',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: '10% of Chips scored above the threshold carry into the first set of the next reading.',
+    tags: ['threshold_help', 'score_carry', 'scaling', 'recovery'],
+    description: '10% of [[chips]] scored above the [[threshold]] carry into the next [[reading]]’s first Set.',
   },
   fool_reversed: {
     id: 'fool_reversed',
@@ -143,7 +159,8 @@ export const RELICS = Object.freeze({
     name: 'The Fool Reversed',
     icon: '🙃',
     event: RELIC_EVENT_TYPES.SCORING,
-    description: 'Your hand size is reduced by 1, but all cards in the spread gain +3 Chips.',
+    tags: ['chips', 'risk_reward', 'scaling'],
+    description: '−1 Hand Size. Cards in your [[spread]] gain [[chips|+3 Chips]].',
   },
   watcher: {
     id: 'watcher',
@@ -152,7 +169,8 @@ export const RELICS = Object.freeze({
     icon: '👁',
     event: RELIC_EVENT_TYPES.READING_START,
     active: true,
-    description: 'Once per reading: reveal the top 3 cards of your deck, take 1, return the rest to the bottom.',
+    tags: ['peek_support', 'sight_support', 'consistency', 'ability_support'],
+    description: 'Once per [[reading]]: [[reveal]] the top 3 cards of your [[deck]]. [[take]] 1; put the rest on the bottom.',
   },
 });
 

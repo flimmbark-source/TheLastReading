@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 
 import { ABILITY_TYPES, getAbility } from '../src/data/abilities.mjs';
+import { ABILITY_LABELS } from '../src/data/cards.mjs';
+import { abilityReferenceRows } from '../src/app/referenceControls.mjs';
 import { ACTIONS } from '../src/game/actions.mjs';
 import { reducer } from '../src/game/reducer.mjs';
 import { createGameState } from '../src/game/state.mjs';
@@ -13,31 +15,34 @@ import {
   mirrorCardIds,
   neighborCardIds,
   validHandTargetsForAbility,
+  worldResetPool,
 } from '../src/systems/abilities.mjs';
 
 const deck = buildDeck();
 const byId = new Map(deck.map(card => [card.id, card]));
 const clone = (id, uid) => ({ ...byId.get(id), uid });
 
-// Mirror: Majors remain singular; Courts mirror by opposite rank across suits.
+// Mirror eligibility spans suits, but the ability reveals only its configured count.
 assert.equal(mirrorCardId(byId.get('major_18')), 'major_3', 'Moon has one singular Major mirror');
-assert.equal(mirrorCardId(byId.get('court_Cups_Queen')), null, 'Court mirrors require the plural API');
+assert.equal(mirrorCardId(byId.get('court_Cups_Queen')), null, 'Court mirrors require the plural eligibility API');
 assert.deepEqual(
   mirrorCardIds(byId.get('court_Cups_Queen')),
   ['court_Cups_Knight', 'court_Wands_Knight', 'court_Swords_Knight', 'court_Pentacles_Knight'],
-  'a Queen can mirror to every Knight regardless of suit',
+  'a Queen is eligible to mirror to every Knight regardless of suit',
 );
+assert.equal(getAbility('MIRROR_1').count, 2, 'Mirror base rule reveals up to 2 cards despite its legacy id');
+assert.match(getAbility('MIRROR_1').prompt, /up to 2/i, 'Mirror player-facing rule states its reveal cap');
 
 const queenCups = clone('court_Cups_Queen', 5001);
 const knightWands = clone('court_Wands_Knight', 5002);
 const knightSwords = clone('court_Swords_Knight', 5003);
 const unrelatedKing = clone('court_Cups_King', 5004);
-const mirrorHeld = abilityHeldCards(
+const mirrorEligible = abilityHeldCards(
   [knightWands, unrelatedKing, knightSwords],
   getAbility('MIRROR_1'),
   [queenCups],
 );
-assert.deepEqual(mirrorHeld.map(card => card.uid), [knightWands.uid, knightSwords.uid], 'Mirror returns every available opposite-rank card and nothing else');
+assert.deepEqual(mirrorEligible.map(card => card.uid), [knightWands.uid, knightSwords.uid], 'Mirror eligibility contains every available opposite-rank card and nothing else');
 
 const mirrorTargets = validHandTargetsForAbility('MIRROR_1', {
   hand: [queenCups, unrelatedKing, clone('major_0', 5005)],
@@ -69,7 +74,7 @@ assert.deepEqual(
 assert.deepEqual(
   validHandTargetsForAbility('KIN_2', { hand: [kinMajor, kinCourt], deck: [clone('major_8', 5024)] }).map(card => card.uid),
   [kinMajor.uid],
-  'Kin greys an Arcana with no matching card in the deck',
+  'Kin greys an Arcana with no matching deck card',
 );
 
 // Between: both anchors must share an Arcana and have a live result between them.
@@ -83,7 +88,7 @@ assert.deepEqual(
   'Between greys anchors that have no legal partner producing a live deck result',
 );
 
-// Reveal upgrades: Deeper Threads now affects Between; Mirror is already reveal-all.
+// Reveal upgrades must match their market descriptions.
 assert.equal(
   abilityWithRevealUpgrades(getAbility('BETWEEN_2'), { relation_plus: 2 }).count,
   4,
@@ -100,23 +105,21 @@ assert.equal(
   'Lens Mastery and Deeper Threads both increase Kin',
 );
 assert.equal(
-  abilityWithRevealUpgrades(getAbility('MIRROR_1'), { lens_mastery: 5 }).count,
-  1,
-  'Mirror does not apply a meaningless reveal bonus when every legal mirror is already shown',
+  abilityWithRevealUpgrades(getAbility('MIRROR_1'), { lens_mastery: 1 }).count,
+  3,
+  'Lens Mastery increases Mirror from 2 reveals to 3',
 );
 
 // Shuffle / Full Reset intentionally leaves the placed spread intact.
 const placed = clone('major_17', 5040);
-let worldState = createGameState({
-  run: {
-    deck: [clone('major_1', 5041)],
-    hand: [clone('major_2', 5042)],
-    discard: [clone('major_3', 5043)],
-    spread: [placed, null, null, null, null],
-    ability: { id: 'WORLD' },
-    busy: true,
-  },
-});
+const worldInput = {
+  deck: [clone('major_1', 5041)],
+  hand: [clone('major_2', 5042)],
+  discard: [clone('major_3', 5043)],
+  spread: [placed, null, null, null, null],
+};
+assert.deepEqual(worldResetPool(worldInput).map(card => card.uid), [5041, 5043, 5042], 'Shuffle pool excludes placed spread cards');
+let worldState = createGameState({ run: { ...worldInput, ability: { id: 'WORLD' }, busy: true } });
 worldState = reducer(worldState, {
   type: ACTIONS.RESOLVE_ABILITY,
   result: { kind: 'world', handSize: 2 },
@@ -125,6 +128,12 @@ worldState = reducer(worldState, {
 assert.equal(worldState.run.spread[0]?.uid, placed.uid, 'Shuffle preserves cards already placed in the spread');
 assert.equal(worldState.run.spread.filter(Boolean).length, 1, 'Shuffle does not add or remove spread cards');
 assert.match(getAbility('WORLD').prompt, /spread stays in place/i, 'Shuffle text states that the spread is preserved');
+
+// Public labels and the reference drawer must come from the same rule contract.
+assert.equal(ABILITY_LABELS.NEIGHBOR_2, 'Neighbor', 'Neighbor has a visible card/detail label');
+const reference = new Map(abilityReferenceRows());
+assert.match(reference.get('Mirror'), /up to 2/i, 'ability reference uses Mirror base cap');
+assert.match(reference.get('Full Reset'), /spread stays in place/i, 'ability reference states that Shuffle preserves the spread');
 
 // Non-targeted abilities retain their basic definitions.
 for (const id of ['DRAW_1', 'DRAW_2', 'DRAW_3', 'PEEK_3', 'PEEK_5', 'SEARCH', 'WORLD']) {
