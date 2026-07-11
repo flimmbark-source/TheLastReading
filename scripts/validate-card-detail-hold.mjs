@@ -18,9 +18,8 @@ let run={hand:[handCard,otherHandCard],spread:[spreadCard,null,null,null,null],s
 const legacy={hand:[handCard,otherHandCard],spread:[spreadCard,null,null,null,null],selected:11,busy:false,abilitySelect:null,purgeSelect:null};
 let expanded=null;
 let expandCount=0;
-let cancelledPulls=0;
 
- target.tlrRuntime={state:legacy};
+target.tlrRuntime={state:legacy};
 target.tlrActions={SELECT_CARD:'SELECT_CARD'};
 target.tlrStore={
   getState:()=>({run}),
@@ -29,7 +28,6 @@ target.tlrStore={
   },
 };
 target.expandCard=card=>{expanded=card;expandCount+=1;};
-target.tlrCancelHandDrag=()=>{cancelledPulls+=1;return true;};
 
 const handEl=target.document.querySelector('#hand .card[data-uid="11"]');
 const otherHandEl=target.document.querySelector('#hand .card[data-uid="12"]');
@@ -51,50 +49,32 @@ function pointer(type,element,{pointerId=1,clientY=0}={}){
   element.dispatchEvent(event);
 }
 
-installCardDetailGestures(target);
+const cleanup=installCardDetailGestures(target);
 syncCardDetailTrigger(target);
 
 const trigger=target.document.querySelector('.card-detail-trigger');
 assert.ok(trigger,'the selected hand card should expose a detail trigger');
 assert.equal(trigger.dataset.uid,'11','the trigger should belong to the selected card only');
-assert.equal(trigger.parentElement,target.document.body,'the trigger should live in the viewport layer instead of an inert hand-card subtree');
+assert.equal(trigger.parentElement,target.document.body,'the trigger should use the viewport portal instead of the transformed hand subtree');
 assert.equal(trigger.dataset.side,'left','the trigger should swap to the left when the right edge would overflow');
-assert.equal(trigger.style.left,'319px','the left-side trigger should track the selected card in viewport coordinates');
+assert.equal(trigger.style.left,'299px','the 44px hit target should track the selected card in viewport coordinates');
 assert.equal(trigger.style.right,'auto');
-assert.equal(trigger.style.top,'100px','the trigger top should track the card top in viewport coordinates');
-assert.match(target.document.getElementById('card-detail-trigger-style').textContent,/position:fixed/,'the viewport trigger must use fixed positioning');
-assert.match(target.document.getElementById('card-detail-trigger-style').textContent,/pointer-events:auto/,'the viewport trigger must be a real hit target');
+assert.equal(trigger.style.top,'90px','the nested 24px medallion should stay aligned with the card top');
+assert.equal(trigger.type,'button');
+assert.equal(trigger.getAttribute('aria-haspopup'),'dialog');
+assert.equal(trigger.querySelector('.card-detail-trigger-glyph')?.textContent,'?');
+assert.equal(target.document.getElementById('card-detail-trigger-style'),null,'trigger styling should come from the stylesheet rather than an injected style element');
 
-// Reproduce the real runtime problem: later card-gesture code may suppress the
-// browser-generated click. The detail trigger must therefore finish on its own
-// pointer sequence before that click exists.
-target.document.addEventListener('click',event=>{
-  if(event.target.closest?.('#hand .card[data-uid]')){
-    event.preventDefault();
-    event.stopImmediatePropagation();
-  }
-},true);
-
-let triggerReceivedPointerDown=false;
-trigger.addEventListener('pointerdown',()=>{triggerReceivedPointerDown=true;});
+// Pointer events alone must not bypass the native button click lifecycle.
 pointer('pointerdown',trigger,{pointerId:3,clientY:100});
-handEl.classList.add('press-highlight');
 pointer('pointerup',trigger,{pointerId:3,clientY:100});
-assert.equal(triggerReceivedPointerDown,true,'the detail button must receive pointerdown');
-assert.equal(expanded,handCard,'pointerup on the selected-card trigger should open that card detail view without waiting for click synthesis');
-assert.equal(expandCount,1,'one pointer sequence should open the detail exactly once');
+assert.equal(expanded,null,'pointerup without a click should not activate the detail button');
 
 click(trigger);
-assert.equal(expandCount,1,'the native click following pointerup must not reopen the detail view');
+assert.equal(expanded,handCard,'a native button click should open the selected card detail view');
+assert.equal(expandCount,1,'one click should open the detail exactly once');
 
 clock=1000;
-expanded=null;
-click(trigger);
-assert.equal(expanded,handCard,'keyboard or programmatic click should remain a working fallback');
-assert.equal(expandCount,2,'the fallback click should open once');
-
-clock=2000;
-target.__handGestureSuppressClickUntil=0;
 expanded=null;
 click(handEl);
 click(handEl);
@@ -110,7 +90,6 @@ target.__handGestureSuppressClickUntil=0;
 pointer('pointerdown',handEl,{pointerId:7,clientY:100});
 pointer('pointermove',handEl,{pointerId:7,clientY:190});
 pointer('pointerup',handEl,{pointerId:7,clientY:190});
-assert.equal(cancelledPulls,1,'the retired downward detail pull should be cancelled before it can open details');
 assert.equal(expanded,null,'pulling a hand card downward should no longer open the detail view');
 
 handEl.classList.remove('sel');
@@ -121,21 +100,36 @@ syncCardDetailTrigger(target);
 const movedTrigger=target.document.querySelector('.card-detail-trigger');
 assert.ok(movedTrigger,'the detail trigger should follow the newly selected card');
 assert.equal(movedTrigger.dataset.uid,'12');
-assert.equal(movedTrigger.parentElement,target.document.body,'the same viewport trigger should track the newly selected card without re-entering the hand subtree');
+assert.equal(movedTrigger.parentElement,target.document.body);
 assert.equal(movedTrigger.dataset.side,'right','the trigger should use the top-right side when it fits on screen');
 assert.equal(movedTrigger.style.left,'257px');
 assert.equal(movedTrigger.style.right,'auto');
-assert.equal(movedTrigger.style.top,'100px');
+assert.equal(movedTrigger.style.top,'90px');
 
+movedTrigger.focus();
+assert.equal(target.document.activeElement,movedTrigger,'the native button should accept keyboard focus');
 otherHandEl.classList.remove('sel');
 run={...run,selectedCardId:null};
 legacy.selected=null;
 syncCardDetailTrigger(target);
 assert.equal(target.document.querySelector('.card-detail-trigger'),null,'the trigger should disappear when no hand card is selected');
+assert.equal(target.document.activeElement,target.document.getElementById('hand'),'focus should return to the hand when a focused trigger disappears');
 
 const cardGestureSource=fs.readFileSync(new URL('../src/ui/gestureCard.mjs',import.meta.url),'utf8');
 const handGestureSource=fs.readFileSync(new URL('../src/ui/gestureHand.mjs',import.meta.url),'utf8');
+const detailGestureSource=fs.readFileSync(new URL('../src/ui/cardDetailGestures.mjs',import.meta.url),'utf8');
+const utilityButtonCss=fs.readFileSync(new URL('../src/styles/singlePlayerV2/components/utilityButtons.css',import.meta.url),'utf8');
+
 assert.match(cardGestureSource,/#spread,\.card-detail-trigger/,'card dragging must ignore the detail button');
 assert.match(handGestureSource,/closest\('\.card-detail-trigger'\)/,'hand swiping must ignore the detail button');
+assert.doesNotMatch(cardGestureSource,/DETAIL_DRAG_DOWN_PX|hand-card-detail-pull|inDetailZone/,'the retired drag-down detail implementation must be removed from the card gesture controller');
+assert.doesNotMatch(detailGestureSource,/triggerPointer|POINTER_CLICK_DEDUPE_MS|requestAnimationFrame\(trackPosition\)/,'the trigger should not use pointerup dedupe or an endless position loop');
+assert.match(detailGestureSource,/addEventListener\('click',onTriggerClick\)/,'the trigger should use the native button click event');
+assert.match(detailGestureSource,/MOTION_TRACK_MS/,'position tracking should be bounded to active motion');
+assert.match(utilityButtonCss,/\.card-detail-trigger\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s,'the real mobile hit target should be 44px square');
+assert.match(utilityButtonCss,/\.card-detail-trigger-glyph\s*\{[^}]*width:\s*24px;[^}]*height:\s*24px;/s,'the visible medallion should retain its 24px size');
+
+cleanup();
+assert.equal(target.__cardDetailGesturesInstalled,false,'the controller should expose a working teardown path');
 
 console.log('Card-detail trigger and spread double-tap checks passed.');
