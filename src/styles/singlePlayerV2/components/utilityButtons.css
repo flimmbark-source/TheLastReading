@@ -64,3 +64,65 @@
     }
   }
 }
+
+@layer legacy {
+  /* The selected-card detail control is rendered through a body-level portal
+     because the hand fan is transformed. The 44px button is the real input
+     target; the nested 24px medallion preserves the existing visual size. */
+  .card-detail-trigger {
+    position: fixed;
+    top: 0;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    align-items: center;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    pointer-events: auto;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    z-index: 10010;
+  }
+
+  .card-detail-trigger[data-side="right"] {
+    justify-items: start;
+  }
+
+  .card-detail-trigger[data-side="left"] {
+    justify-items: end;
+  }
+
+  .card-detail-trigger-glyph {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(232,195,126,.68);
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 38% 30%,rgba(255,241,201,.18),transparent 36%),
+      linear-gradient(160deg,rgba(54,39,27,.98),rgba(20,15,13,.98));
+    color: #f0d69c;
+    box-shadow: 0 7px 18px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,245,213,.12);
+    font: 800 20px/1 Georgia,serif;
+    text-align: center;
+    transition: transform 110ms ease,filter 110ms ease,box-shadow 110ms ease;
+  }
+
+  .card-detail-trigger:hover .card-detail-trigger-glyph {
+    filter: brightness(1.12);
+  }
+
+  .card-detail-trigger:active .card-detail-trigger-glyph {
+    transform: scale(.94);
+  }
+
+  .card-detail-trigger:focus-visible {
+    outline: 2px solid rgba(247,214,151,.9);
+    outline-offset: 1px;
+    border-radius: 50%;
+  }
+}
