@@ -613,7 +613,10 @@ function ensureGlossaryButton(doc) {
   button.className = 'game-terms-glossary-button';
   button.textContent = 'Game Terms';
   button.addEventListener('click', () => openGameTermsGlossary(doc.defaultView));
-  host.appendChild(button);
+  // Sit directly above Replay Tutorial rather than at the very bottom of the menu.
+  const replay = host.querySelector('#replayTutorialBtn');
+  if (replay) host.insertBefore(button, replay);
+  else host.appendChild(button);
 }
 
 export function setGameTermsLocale(locale, target = window) {

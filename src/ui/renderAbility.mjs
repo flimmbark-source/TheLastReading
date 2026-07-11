@@ -15,13 +15,26 @@ function prepareChoiceGrid(cards){
   // Small ability reveals are decisions between a handful of cards, not a
   // generic card browser. Give them a deterministic two-column composition so
   // auto-fill cannot collapse a two-card reveal into one centered stack on a
-  // narrow modal. Larger sets retain the shared responsive browser grid.
+  // narrow modal. Larger sets flow through a responsive grid.
+  //
+  // Own the layout inline: the mobile ability-reveal stylesheet lives in a
+  // cascade layer that lost the `display` fight to the unlayered base grid, so
+  // its carousel `padding` (~half the viewport per side) landed on a grid
+  // container instead, collapsing the tracks to a few px and stacking every
+  // card on top of the next. Inline styles sit above every layer, so pinning
+  // display/columns/padding/overflow here keeps the cards in real rows and
+  // columns regardless of which stylesheet rule wins.
   const compact=cards.length>=2&&cards.length<=4;
+  ch.style.display='grid';
+  ch.style.gridTemplateColumns=compact?'repeat(2, minmax(0, 1fr))':'repeat(auto-fit, minmax(104px, 1fr))';
+  ch.style.gap='12px';
+  ch.style.padding='4px 2px 8px';
+  ch.style.overflowX='visible';
   ch.style.width=compact?'min(100%, 272px)':'';
   ch.style.maxWidth=compact?'272px':'';
-  ch.style.marginInline=compact?'auto':'';
-  ch.style.gridTemplateColumns=compact?'repeat(2, minmax(0, 1fr))':'';
-  ch.style.justifyItems=compact?'center':'';
+  ch.style.marginInline='auto';
+  ch.style.justifyContent='center';
+  ch.style.justifyItems='center';
   return {ch,compact};
 }
 
