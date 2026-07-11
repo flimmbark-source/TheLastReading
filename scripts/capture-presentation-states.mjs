@@ -241,8 +241,19 @@ async function main() {
       const page = await browser.newPage({ viewport, isMobile: true, hasTouch: true });
       await page.addInitScript(() => {
         try {
-          window.localStorage.setItem('tlr_tut_done', '1');
-          window.localStorage.setItem('tlr_spv2_hand_hint_seen', '1');
+          // Mark every tutorial coach-mark seen, not just the intro. Otherwise
+          // contextual tips (e.g. the discard tip queued when a card is placed
+          // during the reading capture) linger and overlay later scenes, whose
+          // #tutText then intercepts pointer events and blocks the capture.
+          [
+            'tlr_tut_done', 'tlr_spv2_hand_hint_seen',
+            'tlr_tut_pattern', 'tlr_tut_reading_complete', 'tlr_tut_purge',
+            'tlr_tut_archives_found', 'tlr_tut_oracle_market', 'tlr_tut_constellation',
+            'tlr_tut_threshold', 'tlr_tut_discard', 'tlr_tut_relic',
+            'tlr_tut_adventure', 'tlr_tut_adv_approach', 'tlr_tut_adv_approach_chain',
+            'tlr_tut_adv_approach_great', 'tlr_tut_adv_reward', 'tlr_tut_adv_items',
+            'tlr_tut_adv_complete',
+          ].forEach(key => window.localStorage.setItem(key, '1'));
         } catch {}
       });
       await page.goto(`${baseUrl}/game.html`, { waitUntil: 'networkidle' });
