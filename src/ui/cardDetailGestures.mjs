@@ -80,6 +80,17 @@ function readIdleOffset(cardEl,target){
   return {tx:Number.isFinite(tx)?tx:0,ty:Number.isFinite(ty)?ty:0};
 }
 
+// Signature of the card's looping animations (names), so the trigger can detect
+// when they appear/change -- a freshly selected card registers its CSS animation
+// a frame or two after the .sel class lands, so the first mirror attempt is empty.
+function idleAnimSignature(cardEl){
+  if(typeof cardEl.getAnimations!=='function')return '';
+  let names;
+  try{names=cardEl.getAnimations().filter(a=>typeof a.animationName==='string').map(a=>a.animationName);}
+  catch{return '';}
+  return names.sort().join(',');
+}
+
 // Replay the card's looping idle animation on the trigger via the Web Animations
 // API, sharing the card's phase so the medallion bobs in lockstep. The compositor
 // runs this with no per-frame JS, so following the fan costs nothing on the main
@@ -308,11 +319,16 @@ export function installCardDetailGestures(target=window){
     detailTrigger.style.right='auto';
     detailTrigger.style.left=`${left}px`;
 
-    // Re-mirror only when the followed card changes -- re-creating the WAAPI
-    // animation every frame would fight the compositor. The shared phase keeps
-    // it aligned across resizes and lift tracking without touching it again.
-    if(detailTrigger.__idleMirrorUid!==uid){
+    // Re-mirror when the followed card changes or when its set of looping
+    // animations changes (e.g. card-wave registering a frame after selection).
+    // Otherwise leave the compositor-driven mirror untouched -- re-creating it
+    // every frame would fight the compositor. positionTrigger runs repeatedly
+    // during the post-select lift window, so an initially-empty mirror is
+    // upgraded once the animation appears, then stays put.
+    const sig=idleAnimSignature(cardEl);
+    if(detailTrigger.__idleMirrorUid!==uid||detailTrigger.__idleMirrorSig!==sig){
       detailTrigger.__idleMirrorUid=uid;
+      detailTrigger.__idleMirrorSig=sig;
       mirrorIdleMotion(cardEl,detailTrigger,target);
     }
     return true;
