@@ -68,7 +68,7 @@ function ensureTriggerStyles(target=window){
   style.id='card-detail-trigger-style';
   style.textContent=`
     .card-detail-trigger{
-      position:absolute;
+      position:fixed;
       top:0;
       width:${TRIGGER_SIZE}px;
       height:${TRIGGER_SIZE}px;
@@ -86,6 +86,7 @@ function ensureTriggerStyles(target=window){
       font:800 20px/1 Georgia,serif;
       text-align:center;
       cursor:pointer;
+      pointer-events:auto;
       touch-action:manipulation;
       -webkit-tap-highlight-color:transparent;
       z-index:10010;
@@ -106,6 +107,10 @@ function viewportWidth(target=window){
   return target.visualViewport?.width||target.innerWidth||target.document?.documentElement?.clientWidth||0;
 }
 
+function viewportHeight(target=window){
+  return target.visualViewport?.height||target.innerHeight||target.document?.documentElement?.clientHeight||0;
+}
+
 export function syncCardDetailTrigger(target=window){
   return target?.__tlrSyncCardDetailTrigger?.()??false;
 }
@@ -124,7 +129,6 @@ export function installCardDetailGestures(target=window){
   let triggerPointer=null;
   let triggerPointerActivationAt=-Infinity;
   let settleRaf=0;
-  let settleUntil=0;
   let pull=null;
 
   const activateDetailTrigger=detailTrigger=>{
@@ -141,6 +145,8 @@ export function installCardDetailGestures(target=window){
     trigger?.remove();
     trigger=null;
     triggerPointer=null;
+    if(settleRaf&&typeof target.cancelAnimationFrame==='function')target.cancelAnimationFrame(settleRaf);
+    settleRaf=0;
   };
 
   const positionTrigger=()=>{
@@ -158,38 +164,37 @@ export function installCardDetailGestures(target=window){
       trigger.setAttribute('aria-label','View selected card details');
       trigger.title='View card details';
     }
-    if(trigger.parentElement!==cardEl)cardEl.appendChild(trigger);
+    if(trigger.parentElement!==doc.body)doc.body.appendChild(trigger);
 
     const uidText=String(uid);
     if(trigger.dataset.uid!==uidText)trigger.dataset.uid=uidText;
     const rect=cardEl.getBoundingClientRect();
     const vw=viewportWidth(target);
+    const vh=viewportHeight(target);
     const rightLeft=rect.right+TRIGGER_GAP;
     const leftLeft=rect.left-TRIGGER_GAP-TRIGGER_SIZE;
     const rightFits=rightLeft+TRIGGER_SIZE<=vw-VIEWPORT_MARGIN;
     const leftFits=leftLeft>=VIEWPORT_MARGIN;
     const side=rightFits||!leftFits?'right':'left';
+    const maxTop=Math.max(VIEWPORT_MARGIN,vh-TRIGGER_SIZE-VIEWPORT_MARGIN);
+    const top=Math.max(VIEWPORT_MARGIN,Math.min(rect.top,maxTop));
 
     trigger.dataset.side=side;
-    trigger.style.top='0px';
-    if(side==='right'){
-      trigger.style.left=`calc(100% + ${TRIGGER_GAP}px)`;
-      trigger.style.right='auto';
-    }else{
-      trigger.style.left='auto';
-      trigger.style.right=`calc(100% + ${TRIGGER_GAP}px)`;
-    }
+    trigger.style.top=`${top}px`;
+    trigger.style.right='auto';
+    trigger.style.left=`${side==='right'?rightLeft:leftLeft}px`;
     return true;
   };
 
-  const trackPosition=time=>{
+  const trackPosition=()=>{
     settleRaf=0;
     const visible=positionTrigger();
-    if(visible&&time<settleUntil)settleRaf=target.requestAnimationFrame(trackPosition);
+    if(visible&&typeof target.requestAnimationFrame==='function'){
+      settleRaf=target.requestAnimationFrame(trackPosition);
+    }
   };
 
-  const scheduleTriggerSync=(duration=360)=>{
-    settleUntil=Math.max(settleUntil,now(target)+duration);
+  const scheduleTriggerSync=()=>{
     if(settleRaf)return;
     if(typeof target.requestAnimationFrame==='function'){
       settleRaf=target.requestAnimationFrame(trackPosition);
@@ -210,12 +215,12 @@ export function installCardDetailGestures(target=window){
   });
   target.__tlrCardDetailTriggerObserver=observer;
 
-  target.addEventListener?.('resize',()=>scheduleTriggerSync(120),{passive:true});
-  target.visualViewport?.addEventListener?.('resize',()=>scheduleTriggerSync(120),{passive:true});
-  target.visualViewport?.addEventListener?.('scroll',()=>scheduleTriggerSync(120),{passive:true});
+  target.addEventListener?.('resize',()=>scheduleTriggerSync(),{passive:true});
+  target.visualViewport?.addEventListener?.('resize',()=>scheduleTriggerSync(),{passive:true});
+  target.visualViewport?.addEventListener?.('scroll',()=>scheduleTriggerSync(),{passive:true});
   doc.addEventListener('transitionrun',ev=>{
     const source=target.Element&&ev.target instanceof target.Element?ev.target:null;
-    if(source?.matches?.('#hand > .card.sel[data-uid]'))scheduleTriggerSync(420);
+    if(source?.matches?.('#hand > .card.sel[data-uid]'))scheduleTriggerSync();
   },true);
 
   const cancelOldDetailPull=()=>{
@@ -341,7 +346,7 @@ export function installCardDetailGestures(target=window){
     ev.stopImmediatePropagation();
   },true);
 
-  scheduleTriggerSync(0);
+  scheduleTriggerSync();
 }
 
 if(typeof window!=='undefined')installCardDetailGestures(window);
