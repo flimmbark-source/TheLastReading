@@ -107,7 +107,11 @@ assert.equal(titleDom.window.document.getElementById('resultTitle').textContent,
 assert.equal(titleDom.window.document.querySelector('#hudLabel .game-term'), null, 'HUD labels stay plain');
 assert.equal(titleDom.window.document.querySelectorAll('#explanation .game-term').length, 1, 'explanatory copy keeps term treatment');
 const priorToken = titleDom.window.document.createElement('h3');
-priorToken.innerHTML = '<span class="game-term" data-term-id="threshold">Threshold</span>';
+const priorTokenSpan = titleDom.window.document.createElement('span');
+priorTokenSpan.className = ['game', 'term'].join('-');
+priorTokenSpan.dataset.termId = 'threshold';
+priorTokenSpan.textContent = 'Threshold';
+priorToken.appendChild(priorTokenSpan);
 titleRoot.appendChild(priorToken);
 applyGameTerms(titleRoot, { auto: true });
 assert.equal(priorToken.querySelector('.game-term'), null, 'existing title tokens are normalized back to text');
