@@ -57,11 +57,13 @@ syncCardDetailTrigger(target);
 const trigger=target.document.querySelector('.card-detail-trigger');
 assert.ok(trigger,'the selected hand card should expose a detail trigger');
 assert.equal(trigger.dataset.uid,'11','the trigger should belong to the selected card only');
-assert.equal(trigger.parentElement,handEl,'the trigger should be attached to the selected card so it inherits card animation');
+assert.equal(trigger.parentElement,target.document.body,'the trigger should live in the viewport layer instead of an inert hand-card subtree');
 assert.equal(trigger.dataset.side,'left','the trigger should swap to the left when the right edge would overflow');
-assert.equal(trigger.style.left,'auto');
-assert.equal(trigger.style.right,'calc(100% + 7px)','the left-side trigger should stay directly beside the animated card');
-assert.equal(trigger.style.top,'0px','the trigger top should remain flush with the card top');
+assert.equal(trigger.style.left,'319px','the left-side trigger should track the selected card in viewport coordinates');
+assert.equal(trigger.style.right,'auto');
+assert.equal(trigger.style.top,'100px','the trigger top should track the card top in viewport coordinates');
+assert.match(target.document.getElementById('card-detail-trigger-style').textContent,/position:fixed/,'the viewport trigger must use fixed positioning');
+assert.match(target.document.getElementById('card-detail-trigger-style').textContent,/pointer-events:auto/,'the viewport trigger must be a real hit target');
 
 // Reproduce the real runtime problem: later card-gesture code may suppress the
 // browser-generated click. The detail trigger must therefore finish on its own
@@ -119,11 +121,11 @@ syncCardDetailTrigger(target);
 const movedTrigger=target.document.querySelector('.card-detail-trigger');
 assert.ok(movedTrigger,'the detail trigger should follow the newly selected card');
 assert.equal(movedTrigger.dataset.uid,'12');
-assert.equal(movedTrigger.parentElement,otherHandEl,'the same trigger should move into the newly selected card');
-assert.equal(movedTrigger.dataset.side,'right','the trigger should use the top-right corner when it fits on screen');
-assert.equal(movedTrigger.style.left,'calc(100% + 7px)');
+assert.equal(movedTrigger.parentElement,target.document.body,'the same viewport trigger should track the newly selected card without re-entering the hand subtree');
+assert.equal(movedTrigger.dataset.side,'right','the trigger should use the top-right side when it fits on screen');
+assert.equal(movedTrigger.style.left,'257px');
 assert.equal(movedTrigger.style.right,'auto');
-assert.equal(movedTrigger.style.top,'0px');
+assert.equal(movedTrigger.style.top,'100px');
 
 otherHandEl.classList.remove('sel');
 run={...run,selectedCardId:null};
