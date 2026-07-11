@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { chromium } from 'playwright';
 
@@ -45,38 +45,22 @@ async function verifyCardDetailTrigger(page, width) {
     const y = rect.top + rect.height / 2;
     const top = document.elementFromPoint(x, y);
     const chain = [];
-    for (let node = top; node && chain.length < 8; node = node.parentElement) {
+    for (let node = top; node && chain.length < 6; node = node.parentElement) {
       chain.push(`${node.tagName.toLowerCase()}${node.id ? `#${node.id}` : ''}${node.className ? `.${String(node.className).trim().replace(/\s+/g, '.')}` : ''}`);
     }
-    const triggerStyle = getComputedStyle(trigger);
-    const topStyle = top ? getComputedStyle(top) : null;
     return {
       x,
       y,
-      triggerRect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height },
-      triggerStyle: {
-        zIndex: triggerStyle.zIndex,
-        pointerEvents: triggerStyle.pointerEvents,
-        visibility: triggerStyle.visibility,
-        display: triggerStyle.display,
-      },
-      topTag: top?.tagName || null,
-      topId: top?.id || null,
-      topClass: typeof top?.className === 'string' ? top.className : null,
-      topStyle: topStyle ? { zIndex: topStyle.zIndex, pointerEvents: topStyle.pointerEvents, position: topStyle.position } : null,
       triggerIsTop: top === trigger || trigger.contains(top),
       chain,
+      rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
     };
   });
 
   assert.ok(hit, `detail trigger should have live geometry at ${width}px`);
-  writeFileSync(`artifacts/spv2-smoke-detail-hit-${width}.json`, `${JSON.stringify(hit, null, 2)}\n`);
-  await page.screenshot({ path: `artifacts/spv2-smoke-detail-hit-${width}.png`, fullPage: true });
-  console.log(`Detail trigger hit test at ${width}px: ${JSON.stringify(hit)}`);
-
   assert.ok(
     hit.triggerIsTop,
-    `detail trigger is visibly present but not hit-testable at ${width}px; topmost=${hit.chain.join(' > ')} rect=${JSON.stringify(hit.triggerRect)}`,
+    `detail trigger should be the live hit target at ${width}px; topmost=${hit.chain.join(' > ')} rect=${JSON.stringify(hit.rect)}`,
   );
 
   await page.touchscreen.tap(hit.x, hit.y);
