@@ -215,6 +215,24 @@ export const GAME_TERMS = EN_TERMS;
 
 const REQUIRED_IDS = Object.freeze(Object.keys(EN_TERMS));
 const INTERACTIVE_SELECTOR = 'button,a,input,select,textarea,[role="button"],[role="link"]';
+const TITLE_SELECTOR = [
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'legend',
+  'caption',
+  'th',
+  'label',
+  '[role="heading"]',
+  '.spv2-label',
+  '[class*="title"]',
+  '[class*="heading"]',
+  '[class*="header"]',
+  '[class*="label"]',
+].join(',');
 const SKIP_SELECTOR = [
   '[data-game-terms="off"]',
   '.game-term',
@@ -354,11 +372,47 @@ function autoIdForLabel(label) {
   return Object.entries(localeTerms()).find(([, term]) => term.auto && term.label.toLowerCase() === lower)?.[0] || null;
 }
 
+function plainTitleText(text) {
+  return String(text).replace(/\[\[([a-z0-9_-]+)(?:\|([^\]]+))?\]\]/gi, (_match, id, label) => {
+    return label || getGameTerm(id)?.label || id;
+  });
+}
+
+function normalizeTitleSurfaces(root) {
+  const surfaces = [];
+  if (root?.nodeType === 1 && root.matches?.(TITLE_SELECTOR)) surfaces.push(root);
+  root?.querySelectorAll?.(TITLE_SELECTOR).forEach(surface => surfaces.push(surface));
+
+  for (const surface of surfaces) {
+    surface.querySelectorAll('.game-term').forEach(term => {
+      term.replaceWith(surface.ownerDocument.createTextNode(term.textContent || ''));
+    });
+    const doc = surface.ownerDocument;
+    const showText = doc.defaultView?.NodeFilter?.SHOW_TEXT ?? 4;
+    const walker = doc.createTreeWalker(surface, showText);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    for (const node of nodes) {
+      const plain = plainTitleText(node.nodeValue || '');
+      if (plain !== node.nodeValue) node.nodeValue = plain;
+    }
+    if (surface.dataset.gameTerms !== 'off') surface.dataset.gameTerms = 'off';
+  }
+}
+
 function replaceTextNode(node, auto) {
   const text = node.nodeValue || '';
   if (!text || (!text.includes('[[') && !auto)) return false;
   const parent = node.parentElement;
-  if (!parent || parent.closest(SKIP_SELECTOR)) return false;
+  if (!parent) return false;
+  const titleSurface = parent.closest(TITLE_SELECTOR);
+  if (titleSurface) {
+    const plain = plainTitleText(text);
+    if (plain !== text) node.nodeValue = plain;
+    if (titleSurface.dataset.gameTerms !== 'off') titleSurface.dataset.gameTerms = 'off';
+    return false;
+  }
+  if (parent.closest(SKIP_SELECTOR)) return false;
 
   const doc = node.ownerDocument;
   const fragment = doc.createDocumentFragment();
@@ -402,6 +456,7 @@ function replaceTextNode(node, auto) {
 
 export function applyGameTerms(root, options = {}) {
   if (!root) return 0;
+  normalizeTitleSurfaces(root);
   const auto = options.auto ?? root.dataset?.gameTerms === 'auto';
   const doc = root.ownerDocument || root;
   const showText = doc.defaultView?.NodeFilter?.SHOW_TEXT ?? 4;

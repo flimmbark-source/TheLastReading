@@ -33,6 +33,26 @@ applyGameTerms(archive, { auto: true });
 assert.equal(archive.querySelectorAll('.game-term').length, 0, 'archive opt-out blocks tokens');
 assert.match(archive.textContent, /\[\[chips\]\]/);
 
+const titleDom = new JSDOM('<main><h2 id="heading">Threshold</h2><div id="resultTitle" class="result-title">[[score|Final Score]]</div><div id="hudLabel" class="spv2-label">Threshold</div><p id="explanation">Reach the Threshold to continue.</p></main>');
+const titleRoot = titleDom.window.document.querySelector('main');
+applyGameTerms(titleRoot, { auto: true });
+assert.equal(titleDom.window.document.querySelector('#heading .game-term'), null, 'semantic headings stay plain');
+assert.equal(titleDom.window.document.getElementById('heading').textContent, 'Threshold');
+assert.equal(titleDom.window.document.querySelector('#resultTitle .game-term'), null, 'title classes stay plain');
+assert.equal(titleDom.window.document.getElementById('resultTitle').textContent, 'Final Score', 'explicit title markup becomes normal text');
+assert.equal(titleDom.window.document.querySelector('#hudLabel .game-term'), null, 'HUD labels stay plain');
+assert.equal(titleDom.window.document.querySelectorAll('#explanation .game-term').length, 1, 'explanatory copy keeps term treatment');
+const priorToken = titleDom.window.document.createElement('h3');
+const priorTokenSpan = titleDom.window.document.createElement('span');
+priorTokenSpan.className = ['game', 'term'].join('-');
+priorTokenSpan.dataset.termId = 'threshold';
+priorTokenSpan.textContent = 'Threshold';
+priorToken.appendChild(priorTokenSpan);
+titleRoot.appendChild(priorToken);
+applyGameTerms(titleRoot, { auto: true });
+assert.equal(priorToken.querySelector('.game-term'), null, 'existing title tokens are normalized back to text');
+assert.equal(priorToken.textContent, 'Threshold');
+
 const abilityDom = new JSDOM('<div id="abilityRef"></div>');
 let abilityTermRenderCalls = 0;
 abilityDom.window.tlrGetGameTerm = id => GAME_TERMS[id] || null;
