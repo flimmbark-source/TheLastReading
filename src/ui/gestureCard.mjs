@@ -416,7 +416,7 @@ export function installHandCardGestures(target = window){
   document.addEventListener('pointerdown',ev=>{
     if(target.__handPinchSynthetic||target.__handPinchActive)return;
     const t=ev.target instanceof Element?ev.target:null;
-    if(!t||t.closest('#spread'))return;
+    if(!t||t.closest('#spread,.card-detail-trigger'))return;
     const cardEl=t.closest('#hand .card[data-uid]');
     if(!cardEl)return;
     if(g)endDrag(false);

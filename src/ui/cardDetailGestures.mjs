@@ -214,8 +214,9 @@ export function installCardDetailGestures(target=window){
   doc.addEventListener('pointerdown',ev=>{
     const source=target.Element&&ev.target instanceof target.Element?ev.target:null;
     if(source?.closest?.('.card-detail-trigger')){
+      // Let the real button receive pointerdown so browsers can synthesize
+      // its click. The hand gesture controllers explicitly ignore it.
       pull=null;
-      ev.stopImmediatePropagation();
       return;
     }
     const cardEl=source?.closest?.('#hand .card[data-uid]');

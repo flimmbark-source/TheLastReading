@@ -400,6 +400,7 @@ export function installHandSwipeScroll(target = window){
   // ── Pointer event routing ──
   document.addEventListener('pointerdown',ev=>{
     if(target.__handPinchSynthetic)return;
+    if(ev.target instanceof Element&&ev.target.closest('.card-detail-trigger'))return;
     if(!inHandArea(ev.target))return;
     pointers.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
     if(pointers.size>=2){

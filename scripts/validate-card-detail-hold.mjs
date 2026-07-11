@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { JSDOM } from 'jsdom';
 
 import { installCardDetailGestures, syncCardDetailTrigger } from '../src/ui/cardDetailGestures.mjs';
@@ -59,6 +60,12 @@ assert.equal(trigger.style.left,'auto');
 assert.equal(trigger.style.right,'calc(100% + 7px)','the left-side trigger should stay directly beside the animated card');
 assert.equal(trigger.style.top,'0px','the trigger top should remain flush with the card top');
 
+let triggerReceivedPointerDown=false;
+trigger.addEventListener('pointerdown',()=>{triggerReceivedPointerDown=true;});
+pointer('pointerdown',trigger,{pointerId:3,clientY:100});
+pointer('pointerup',trigger,{pointerId:3,clientY:100});
+assert.equal(triggerReceivedPointerDown,true,'the detail button must receive pointerdown so touch browsers can generate a click');
+
 click(trigger);
 assert.equal(expanded,handCard,'clicking the selected-card trigger should open that card detail view');
 
@@ -100,5 +107,10 @@ run={...run,selectedCardId:null};
 legacy.selected=null;
 syncCardDetailTrigger(target);
 assert.equal(target.document.querySelector('.card-detail-trigger'),null,'the trigger should disappear when no hand card is selected');
+
+const cardGestureSource=fs.readFileSync(new URL('../src/ui/gestureCard.mjs',import.meta.url),'utf8');
+const handGestureSource=fs.readFileSync(new URL('../src/ui/gestureHand.mjs',import.meta.url),'utf8');
+assert.match(cardGestureSource,/#spread,\.card-detail-trigger/,'card dragging must ignore the detail button');
+assert.match(handGestureSource,/closest\('\.card-detail-trigger'\)/,'hand swiping must ignore the detail button');
 
 console.log('Card-detail trigger and spread double-tap checks passed.');
