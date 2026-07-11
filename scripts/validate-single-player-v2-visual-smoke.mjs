@@ -29,6 +29,48 @@ async function waitForServer() {
   throw new Error(`Timed out waiting for ${baseUrl}`);
 }
 
+async function verifyCardDetailTrigger(page, width) {
+  // Select through the app's real card click handler, but invoke it directly so
+  // the perpetual hand idle animation cannot make Playwright reject the setup
+  // click as "not stable" before the detail-button test even begins.
+  await page.evaluate(() => document.querySelector('#hand > .card[data-uid]')?.click());
+  await page.waitForSelector('.card-detail-trigger');
+  await page.waitForTimeout(450);
+
+  const hit = await page.evaluate(() => {
+    const trigger = document.querySelector('.card-detail-trigger');
+    const rect = trigger?.getBoundingClientRect();
+    if (!trigger || !rect) return null;
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    const top = document.elementFromPoint(x, y);
+    const chain = [];
+    for (let node = top; node && chain.length < 6; node = node.parentElement) {
+      chain.push(`${node.tagName.toLowerCase()}${node.id ? `#${node.id}` : ''}${node.className ? `.${String(node.className).trim().replace(/\s+/g, '.')}` : ''}`);
+    }
+    return {
+      x,
+      y,
+      triggerRect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+      topTag: top?.tagName || null,
+      topId: top?.id || null,
+      topClass: typeof top?.className === 'string' ? top.className : null,
+      triggerIsTop: top === trigger || trigger.contains(top),
+      chain,
+    };
+  });
+
+  assert.ok(hit, `detail trigger should have live geometry at ${width}px`);
+  assert.ok(
+    hit.triggerIsTop,
+    `detail trigger is visibly present but not hit-testable at ${width}px; topmost=${hit.chain.join(' > ')} rect=${JSON.stringify(hit.triggerRect)}`,
+  );
+
+  await page.touchscreen.tap(hit.x, hit.y);
+  await page.waitForSelector('.card-detail-backdrop', { timeout: 1500 });
+  await page.evaluate(() => window.closeCardDetail?.());
+}
+
 async function main() {
   let browser;
   try {
@@ -51,7 +93,7 @@ async function main() {
     mkdirSync('artifacts', { recursive: true });
 
     for (const width of widths) {
-      const page = await browser.newPage({ viewport: { width, height }, isMobile: true });
+      const page = await browser.newPage({ viewport: { width, height }, isMobile: true, hasTouch: true });
       // Skip the first-run tutorial overlay so it can't intercept the clicks below.
       await page.addInitScript(() => {
         try { window.localStorage.setItem('tlr_tut_done', '1'); } catch {}
@@ -107,6 +149,8 @@ async function main() {
       assert.ok(topSpread <= 28, `utility medallions should remain in one top cluster at ${width}px`);
       assert.ok(snapshot.scoreHud.top < snapshot.spread.top, `score HUD should render above spread at ${width}px`);
       assert.ok(snapshot.spread.top < snapshot.handDock.top, `spread should render above hand dock at ${width}px`);
+
+      await verifyCardDetailTrigger(page, width);
 
       await page.click('#abilitiesBtn');
       await page.waitForFunction(() => document.querySelector('#abilitiesPullWrap')?.classList.contains('open'));
