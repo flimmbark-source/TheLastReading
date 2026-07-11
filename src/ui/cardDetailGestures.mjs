@@ -302,11 +302,12 @@ export function installCardDetailGestures(target=window){
     const restRight=rect.right-idle.tx;
     const restLeft=rect.left-idle.tx;
     const restBottom=rect.bottom-idle.ty;
-    // The medallion (visible circle) hugs the card edge with TRIGGER_GAP. The
-    // 44px hit box is centred on that medallion, so it extends visualInset past
-    // the circle on every side -- pressing anywhere on the circle registers.
-    const rightGlyphLeft=restRight+TRIGGER_GAP;
-    const leftGlyphLeft=restLeft-TRIGGER_GAP-TRIGGER_VISUAL_SIZE;
+    // Tuck the medallion under the card at its outer corner: the visible circle
+    // sits flush inside the card's outer side edge, and hangs just below the
+    // card's bottom edge. The 44px hit box is centred on the medallion, so it
+    // extends visualInset past the circle on every side.
+    const rightGlyphLeft=restRight-TRIGGER_VISUAL_SIZE;
+    const leftGlyphLeft=restLeft;
     const rightBoxLeft=rightGlyphLeft-visualInset;
     const leftBoxLeft=leftGlyphLeft-visualInset;
     const rightFits=rightBoxLeft+TRIGGER_HIT_SIZE<=vw-VIEWPORT_MARGIN;
@@ -315,10 +316,9 @@ export function installCardDetailGestures(target=window){
     const desiredLeft=side==='right'?rightBoxLeft:leftBoxLeft;
     const maxLeft=Math.max(VIEWPORT_MARGIN,vw-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN);
     const left=Math.max(VIEWPORT_MARGIN,Math.min(desiredLeft,maxLeft));
-    // Align the medallion's bottom with the card's bottom edge (it used to sit
-    // at the top). The glyph is centred in the 44px hit box, so its bottom is
-    // visualInset+TRIGGER_VISUAL_SIZE below the box top.
-    const desiredTop=restBottom-visualInset-TRIGGER_VISUAL_SIZE;
+    // Hang the medallion below the card: its top sits at the card's bottom edge
+    // (box top is visualInset above the glyph), so it extends down past it.
+    const desiredTop=restBottom-visualInset;
     const maxTop=Math.max(VIEWPORT_MARGIN,vh-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN);
     const top=Math.max(VIEWPORT_MARGIN,Math.min(desiredTop,maxTop));
 

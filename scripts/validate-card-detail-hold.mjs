@@ -58,9 +58,9 @@ assert.ok(trigger,'the selected hand card should expose a detail trigger');
 assert.equal(trigger.dataset.uid,'11','the trigger should belong to the selected card only');
 assert.equal(trigger.parentElement,target.document.body,'the trigger should use the viewport portal instead of the transformed hand subtree');
 assert.equal(trigger.dataset.side,'left','the trigger should swap to the left when the right edge would overflow');
-assert.equal(trigger.style.left,'309px','the 44px hit target should track the selected card in viewport coordinates');
+assert.equal(trigger.style.left,'340px','the medallion tucks flush inside the card left edge (350 - inset 10)');
 assert.equal(trigger.style.right,'auto');
-assert.equal(trigger.style.top,'171px','the nested 24px medallion should sit at the card bottom (bottom 205 - inset 10 - 24)');
+assert.equal(trigger.style.top,'195px','the medallion hangs below the card, glyph top at the card bottom (205 - inset 10)');
 assert.equal(trigger.type,'button');
 assert.equal(trigger.getAttribute('aria-haspopup'),'dialog');
 assert.equal(trigger.querySelector('.card-detail-trigger-glyph')?.textContent,'?');
@@ -72,10 +72,10 @@ assert.equal(target.document.getElementById('card-detail-trigger-style'),null,'t
 pointer('pointerdown',trigger,{pointerId:3,clientX:330,clientY:100});
 handRect={left:330,right:400,top:100,bottom:205,width:70,height:105,x:330,y:100,toJSON(){return this;}};
 syncCardDetailTrigger(target);
-assert.equal(trigger.style.left,'309px','the trigger should remain fixed while its pointer is held');
+assert.equal(trigger.style.left,'340px','the trigger should remain fixed while its pointer is held');
 pointer('pointerup',trigger,{pointerId:3,clientX:330,clientY:100});
 syncCardDetailTrigger(target);
-assert.equal(trigger.style.left,'289px','the trigger should resume alignment after pointerup');
+assert.equal(trigger.style.left,'366px','the trigger should resume alignment after pointerup');
 assert.equal(expanded,null,'pointerup without a click should not activate the detail button');
 
 click(trigger);
@@ -109,10 +109,10 @@ const movedTrigger=target.document.querySelector('.card-detail-trigger');
 assert.ok(movedTrigger,'the detail trigger should follow the newly selected card');
 assert.equal(movedTrigger.dataset.uid,'12');
 assert.equal(movedTrigger.parentElement,target.document.body);
-assert.equal(movedTrigger.dataset.side,'right','the trigger should use the top-right side when it fits on screen');
-assert.equal(movedTrigger.style.left,'247px');
+assert.equal(movedTrigger.dataset.side,'right','the trigger should use the right side when it fits on screen');
+assert.equal(movedTrigger.style.left,'216px');
 assert.equal(movedTrigger.style.right,'auto');
-assert.equal(movedTrigger.style.top,'171px');
+assert.equal(movedTrigger.style.top,'195px');
 
 movedTrigger.focus();
 assert.equal(target.document.activeElement,movedTrigger,'the native button should accept keyboard focus');
