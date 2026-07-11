@@ -788,7 +788,11 @@ window.addEventListener('resize', () => {
   requestAnimationFrame(positionActiveTip);
 });
 
-document.addEventListener('click', () => {
+document.addEventListener('click', event => {
   if (Date.now() < tutIgnoreClicksUntil) return;
+  // Tapping a highlighted game term (or its definition popover/glossary) opens
+  // an explanation; it must not also advance the current tutorial step.
+  const el = event.target instanceof Element ? event.target : null;
+  if (el && el.closest('.game-term, .game-term-popover, .game-terms-glossary')) return;
   tutNext();
 });
