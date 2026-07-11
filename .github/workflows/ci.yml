@@ -5,37 +5,7 @@ on:
     branches: ['**']
   pull_request:
 
-permissions:
-  contents: write
-
 jobs:
-  apply-game-term-title-guard:
-    if: github.event_name == 'pull_request' && github.head_ref == 'adventure-reward-usability' && github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: adventure-reward-usability
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-      - run: npm ci
-      - run: node scripts/apply-game-term-title-guard.mjs
-      - run: npm run lint -- --max-warnings=0
-      - run: npm test
-      - name: Commit clean title behavior
-        run: |
-          rm scripts/apply-game-term-title-guard.mjs
-          rm .github/workflows/apply-game-term-title-guard.yml
-          git show HEAD^:.github/workflows/ci.yml > .github/workflows/ci.yml
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Keep game terms out of titles"
-          git push origin HEAD:adventure-reward-usability
-
   validate:
     runs-on: ubuntu-latest
     steps:
