@@ -124,4 +124,39 @@ assert.ok(!cards.some(el => el.classList.contains('sel')), 'clearing selection r
   assert.equal(targeted, target.uid, 'ability spread click routes to view onAbilityTarget handler');
 }
 
+// --- Ability result chooser: candidates stay in one horizontal row ---
+{
+  dom.window.document.body.insertAdjacentHTML('beforeend', `
+    <div id="modal" class="modal">
+      <div class="box">
+        <div class="modalHead"><h2 id="modalTitle"></h2><button id="modalToggle"></button></div>
+        <p id="modalPrompt"></p>
+        <div id="choices" class="choices"></div>
+      </div>
+    </div>`);
+  globalThis.uniqueCards = entries => entries;
+  globalThis.applyHint = () => {};
+  globalThis.cardHTML = card => `<div>${card.name || card.id}</div>`;
+  globalThis.applyCardPhoto = () => {};
+  globalThis.playSound = () => {};
+  globalThis.tlrArchitectureSync = () => {};
+  dom.window.tlrApplyGameTerms = () => {};
+
+  const { choice } = await import('../src/ui/renderAbility.mjs');
+  choice('Take a card', 'Choose 1.', hand.slice(0, 3), () => {});
+
+  const choices = dom.window.document.getElementById('choices');
+  const resultCards = [...choices.querySelectorAll(':scope > .choice-card')];
+  assert.equal(resultCards.length, 3, 'ability result chooser renders every candidate');
+  assert.equal(choices.style.getPropertyValue('grid-auto-flow'), 'column', 'ability results use one horizontal grid flow');
+  assert.equal(choices.style.getPropertyPriority('grid-auto-flow'), 'important', 'horizontal flow cannot be overridden by legacy modal CSS');
+  assert.equal(choices.style.getPropertyValue('overflow-x'), 'auto', 'long result rows scroll horizontally instead of stacking');
+  for (const card of resultCards) {
+    assert.equal(card.style.getPropertyValue('position'), 'relative', 'choice cards stay in normal layout flow');
+    assert.equal(card.style.getPropertyPriority('position'), 'important');
+    assert.equal(card.style.getPropertyValue('transform'), 'none', 'choice cards do not inherit hand-fan transforms');
+    assert.equal(card.style.getPropertyValue('width'), '130px', 'choice cards keep a stable row width');
+  }
+}
+
 console.log('Render smoke checks passed.');
