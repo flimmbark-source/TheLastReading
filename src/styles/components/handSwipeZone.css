@@ -27,17 +27,4 @@
 .hand-swipe-zone-lower{position:absolute;left:0;right:0;top:100%;height:240px;pointer-events:auto;touch-action:none;background:transparent;cursor:grab}
 #handSwipeZone.dragging .hand-swipe-zone-lower,#handSwipeZone.pinching .hand-swipe-zone-lower{cursor:grabbing}
 @media(max-width:640px){.hand-swipe-zone-lower{height:200px}}
-
-/* The detail trigger sits in the upper swipe region beside a selected card.
-   Restore the button and its otherwise inert hand ancestors as hit-testable
-   only while that trigger exists. At the same time, let the upper transparent
-   swipe surface pass taps through; its lower extension remains active, so the
-   hand can still be moved below the cards. These declarations are important
-   because this component is intentionally earlier than the hand composition
-   in the cascade, and earlier layers win the important tier. */
-.card-detail-trigger{pointer-events:auto!important}
-body:has(.card-detail-trigger) .handDock,
-body:has(.card-detail-trigger) .handDock .hand{pointer-events:auto!important}
-body:has(.card-detail-trigger) #handSwipeZone.hand-swipe-zone{pointer-events:none!important}
-body:has(.card-detail-trigger) #handSwipeZone .hand-swipe-zone-lower{pointer-events:auto!important}
 }
