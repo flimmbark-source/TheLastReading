@@ -20,7 +20,6 @@
   }
 
   body.single-player-v2.presentation-flag-card-selected .hand .card:not(.sel):not(.ability-picked) {
-    opacity: .78;
     filter: brightness(.82) saturate(.78);
   }
 
@@ -106,13 +105,6 @@
     18% { translate: 0 2px; filter: brightness(1.22); }
     48% { translate: 0 -3px; filter: brightness(1.12); }
     100% { translate: 0 0; filter: brightness(1); }
-  }
-
-  @media (max-width: 640px) {
-    body.single-player-v2.presentation-flag-card-selected .hand .card:not(.sel):not(.ability-picked) {
-      opacity: .7;
-    }
-
   }
 
   @media (prefers-reduced-motion: reduce) {
