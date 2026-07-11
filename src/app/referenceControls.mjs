@@ -8,6 +8,9 @@ function persistOf(target){return runtime(target).persist || {};}
 
 function fmtBonus(value){return '+'+(value-1).toFixed(2).replace(/\.?0+$/,'');}
 function escapeHtml(value){return String(value??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function plainGameTermText(value,target){
+  return String(value??'').replace(/\[\[([a-z0-9_-]+)(?:\|([^\]]+))?\]\]/gi,(_,id,label)=>label||target.tlrGetGameTerm?.(id)?.label||id.replace(/(^|[-_])(\w)/g,(_match,_sep,char)=>char.toUpperCase()));
+}
 
 function scoreCardIcon(){
   return '<span aria-hidden="true" style="display:inline-block;width:13px;height:17px;margin-right:7px;vertical-align:-3px;border:1px solid rgba(243,207,118,.82);border-radius:3px;background:linear-gradient(160deg,#ead9b5,#b98243 54%,#352012);box-shadow:inset 0 0 0 2px rgba(45,22,8,.55),0 0 8px rgba(243,207,118,.28)"></span>';
@@ -31,11 +34,11 @@ export function abilityReferenceRows(){
 export function renderAbilitySheet(target = window){
   const ability=target.document?.getElementById('abilityRef');
   if(!ability)return;
+  ability.dataset.gameTerms='off';
   const rows=abilityReferenceRows();
   ability.innerHTML='<table><tr><td><b>Ability</b></td><td class="r"><b>What it does</b></td></tr>'
-    +rows.map(([name,description])=>`<tr><td>${escapeHtml(name)}</td><td class="r">${escapeHtml(description)}</td></tr>`).join('')
+    +rows.map(([name,description])=>`<tr><td>${escapeHtml(name)}</td><td class="r">${escapeHtml(plainGameTermText(description,target))}</td></tr>`).join('')
     +'</table>';
-  target.tlrApplyGameTerms?.(ability, { auto: true });
 }
 
 export function closeRefs(){
