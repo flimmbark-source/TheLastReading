@@ -30,7 +30,7 @@ const TUT_STEPS = [
     id: 'select-card',
     sel: '#hand .card[data-uid]',
     fallbackSel: '.handDock .hand',
-    arrow: 'down',
+    arrow: 'up',
     waitFor: 'cardSelected',
     text: 'Tap a card in your [[hand]].',
   },
@@ -39,7 +39,7 @@ const TUT_STEPS = [
     id: 'play-card',
     sel: '#spread .slot.empty',
     fallbackSel: '#spread',
-    arrow: 'up',
+    arrow: 'down',
     waitFor: 'cardPlaced',
     text: 'Tap an empty slot to [[play]] it into the [[spread]].',
   },
@@ -49,7 +49,7 @@ const TUT_STEPS = [
     sel: '#current',
     fallbackSel: '.score-pill',
     arrow: 'up',
-    text: 'That card added [[chips]]. [[score]] = [[chips]] × [[mult]].',
+    text: 'That card added [[chips]].<br>[[chips]] × [[mult]] = [[score]].',
   },
 
   {
