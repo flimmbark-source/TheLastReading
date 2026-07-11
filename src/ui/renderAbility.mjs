@@ -7,6 +7,30 @@ import { getPendingPreviewFn } from '../app/abilityTargetBridge.mjs';
 
 let activeChoiceCancel=null;
 
+function prepareChoiceGrid(cards){
+  const ch=$('#choices');
+  if(!ch)return null;
+  ch.innerHTML='';
+
+  // Small ability reveals are decisions between a handful of cards, not a
+  // generic card browser. Give them a deterministic two-column composition so
+  // auto-fill cannot collapse a two-card reveal into one centered stack on a
+  // narrow modal. Larger sets retain the shared responsive browser grid.
+  const compact=cards.length>=2&&cards.length<=4;
+  ch.style.width=compact?'min(100%, 272px)':'';
+  ch.style.maxWidth=compact?'272px':'';
+  ch.style.marginInline=compact?'auto':'';
+  ch.style.gridTemplateColumns=compact?'repeat(2, minmax(0, 1fr))':'';
+  ch.style.justifyItems=compact?'center':'';
+  return {ch,compact};
+}
+
+function finishChoiceGrid(ch,count,compact){
+  if(compact&&count%2===1&&ch.lastElementChild){
+    ch.lastElementChild.style.gridColumn='1 / -1';
+  }
+}
+
 function ensureModalCancelButton(){
   let cancel=$('#modalCancel');
   if(cancel)return cancel;
@@ -62,7 +86,9 @@ export function choice(title,prompt,cards,cb){
   if(cards.length===1){activeChoiceCancel=null;playSound('flip');cb(cards[0]);return}
   $('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';
   window.tlrApplyGameTerms?.($('#modalPrompt'), { auto: true });
-  const ch=$('#choices');ch.innerHTML='';
+  const layout=prepareChoiceGrid(cards);
+  if(!layout)return;
+  const {ch,compact}=layout;
   cards.forEach(c=>{
     const e=document.createElement('div');
     e.className='card choice-card '+(c.type==='major'?'major':'');
@@ -71,6 +97,7 @@ export function choice(title,prompt,cards,cb){
     e.onclick=()=>{activeChoiceCancel=null;$('#modal').classList.remove('show','collapsed','ability-reveal','card-browse');cb(c)};
     ch.appendChild(e);
   });
+  finishChoiceGrid(ch,cards.length,compact);
   // Reaching this modal always means an ability is actively resolving, so
   // Cancel is unconditionally available — it never touches the discard,
   // just resolves with no card taken so resolveAbility's retry loop can
@@ -92,7 +119,9 @@ export function choiceAsync(title,prompt,cards){return new Promise(resolve=>choi
 export function browseCards(title,prompt,cards){
   $('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';
   window.tlrApplyGameTerms?.($('#modalPrompt'), { auto: true });
-  const ch=$('#choices');ch.innerHTML='';
+  const layout=prepareChoiceGrid(cards);
+  if(!layout)return;
+  const {ch,compact}=layout;
   cards.forEach(c=>{
     const e=document.createElement('div');
     e.className='card choice-card '+(c.type==='major'?'major':'');
@@ -100,6 +129,7 @@ export function browseCards(title,prompt,cards){
     e.onclick=()=>{window.expandCard?.(c)};
     ch.appendChild(e);
   });
+  finishChoiceGrid(ch,cards.length,compact);
   const cancelBtn=ensureModalCancelButton();
   if(cancelBtn)cancelBtn.hidden=false;
   activeChoiceCancel=null;
