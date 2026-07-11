@@ -18,6 +18,8 @@
   opacity:.95;
 }
 .game-term[data-term-icon=""]::before{display:none}
+.score-pill .game-term::before,
+.threshold-pill .game-term::before{display:none}
 .game-term:focus-visible{
   outline:2px solid currentColor;
   outline-offset:3px;
