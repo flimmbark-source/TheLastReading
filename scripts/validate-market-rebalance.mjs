@@ -3,6 +3,7 @@ import { JSDOM } from 'jsdom';
 
 import { ACTIONS } from '../src/game/actions.mjs';
 import { generateMarketBiasFromSummary, installMarketRebalance } from '../src/app/marketRebalance.mjs';
+import { installRelicFlow } from '../src/app/relicFlow.mjs';
 
 const dom = new JSDOM('<!doctype html><html><body></body></html>');
 const persist = {
@@ -164,5 +165,39 @@ try {
 } finally {
   Math.random = originalRandom;
 }
+
+const relicDom = new JSDOM('<!doctype html><html><body><button class="relic-btn">Relic</button><button id="outside">Outside</button></body></html>', { pretendToBeVisual: true });
+const relicTarget = relicDom.window;
+relicTarget._openRelicKey = null;
+relicTarget.tlrRuntime = { persist: { up: {}, relics: [], relicUsed: {} }, state: {} };
+installRelicFlow(relicTarget);
+
+const relicButton = relicTarget.document.querySelector('.relic-btn');
+const outsideButton = relicTarget.document.getElementById('outside');
+const openRelicDescription = () => {
+  relicTarget._openRelicKey = 'watcher';
+  const callout = relicTarget.document.createElement('div');
+  callout.className = 'relic-callout';
+  callout.innerHTML = '<button class="inside">Inside</button>';
+  relicTarget.document.body.appendChild(callout);
+};
+relicButton.addEventListener('click', openRelicDescription);
+const click = element => element.dispatchEvent(new relicTarget.MouseEvent('click', { bubbles: true, cancelable: true }));
+const afterClick = () => new Promise(resolve => relicTarget.setTimeout(resolve, 0));
+
+click(relicButton);
+await afterClick();
+assert.ok(relicTarget.document.querySelector('.relic-callout'), 'the relic-opening click must not immediately dismiss its description');
+click(relicTarget.document.querySelector('.relic-callout .inside'));
+await afterClick();
+assert.equal(relicTarget.document.querySelector('.relic-callout'), null, 'clicking inside an open relic description should close it');
+assert.equal(relicTarget._openRelicKey, null, 'closing the description should clear the open relic key');
+
+click(relicButton);
+await afterClick();
+assert.ok(relicTarget.document.querySelector('.relic-callout'));
+click(outsideButton);
+await afterClick();
+assert.equal(relicTarget.document.querySelector('.relic-callout'), null, 'clicking elsewhere should close an open relic description');
 
 console.log('Market rebalance validation cases passed.');
