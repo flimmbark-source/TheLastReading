@@ -1,0 +1,76 @@
+name: Diagnose selection spread jump
+
+on:
+  push:
+    branches: [diagnose-selection-spread-jump]
+    paths:
+      - 'scripts/diagnose-selection-spread-jump.mjs'
+      - '.github/workflows/diagnose-selection-spread-jump.yml'
+  pull_request:
+    branches: [adventure-reward-usability]
+    paths:
+      - 'scripts/diagnose-selection-spread-jump.mjs'
+      - '.github/workflows/diagnose-selection-spread-jump.yml'
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out diagnostic branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Use runner Chrome with Playwright
+        shell: bash
+        run: |
+          CHROME="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          test -n "$CHROME"
+          EXPECTED="$(node -e "const { chromium } = require('playwright'); process.stdout.write(chromium.executablePath())")"
+          mkdir -p "$(dirname "$EXPECTED")"
+          ln -sf "$CHROME" "$EXPECTED"
+
+          REVISION="$(node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const root = path.dirname(require.resolve('playwright-core/package.json'));
+          const registry = JSON.parse(fs.readFileSync(path.join(root, 'browsers.json'), 'utf8'));
+          const browser = registry.browsers.find(entry => entry.name === 'chromium-headless-shell');
+          process.stdout.write(String(browser.revision));
+          NODE
+          )"
+          for DIRECTORY in chrome-headless-shell-linux64 chrome-headless-shell-linux; do
+            HEADLESS="$HOME/.cache/ms-playwright/chromium_headless_shell-$REVISION/$DIRECTORY/chrome-headless-shell"
+            mkdir -p "$(dirname "$HEADLESS")"
+            ln -sf "$CHROME" "$HEADLESS"
+          done
+          echo "Using runner Chrome $CHROME for Playwright revision $REVISION"
+
+      - name: Measure selection geometry
+        shell: bash
+        run: |
+          mkdir -p artifacts/selection-diagnostic
+          set +e
+          node scripts/diagnose-selection-spread-jump.mjs > artifacts/selection-diagnostic/run.log 2>&1
+          STATUS=$?
+          cat artifacts/selection-diagnostic/run.log
+          echo "$STATUS" > artifacts/selection-diagnostic/exit-code.txt
+          exit 0
+
+      - name: Upload diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: selection-spread-jump-diagnostic
+          path: artifacts/selection-diagnostic/**
+          if-no-files-found: error
+          retention-days: 14
