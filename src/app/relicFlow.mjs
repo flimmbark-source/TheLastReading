@@ -111,6 +111,33 @@ export function selectRelicReplace(oldKey,newKey,target = window){
   return true;
 }
 
+export function closeRelicDescription(target = window){
+  const doc=target.document;
+  if(!doc)return false;
+  const hadOpenKey=target._openRelicKey!==null&&target._openRelicKey!==undefined;
+  const callouts=[...doc.querySelectorAll('.relic-callout')];
+  if(!hadOpenKey&&!callouts.length)return false;
+  callouts.forEach(el=>el.remove());
+  target._openRelicKey=null;
+  const rt=market(target).marketRuntime?market(target).marketRuntime(target):target.__tlrMarketRuntime;
+  if(rt)rt.openRelicKey=null;
+  return true;
+}
+
+function installRelicDescriptionDismiss(target = window){
+  if(!target||target.__tlrRelicDescriptionDismissInstalled)return;
+  const doc=target.document;
+  if(!doc)return;
+  target.__tlrRelicDescriptionDismissInstalled=true;
+  doc.addEventListener('click',event=>{
+    if(target._openRelicKey===null||target._openRelicKey===undefined)return;
+    const source=event.target;
+    if(source&&typeof source.closest==='function'&&source.closest('.relic-btn'))return;
+    const defer=typeof target.setTimeout==='function'?target.setTimeout.bind(target):setTimeout;
+    defer(()=>closeRelicDescription(target),0);
+  },true);
+}
+
 export function activateRelic(key,target = window){
   const persist=persistOf(target);
   const state=stateOf(target);
@@ -119,9 +146,7 @@ export function activateRelic(key,target = window){
     if(!state.deck.length)return false;
     const top=state.deck.splice(0,Math.min(3,state.deck.length));
     persist.relicUsed[key]=true;
-    document.querySelectorAll('.relic-callout').forEach(el=>el.remove());
-    const rt=market(target).marketRuntime?market(target).marketRuntime(target):target.__tlrMarketRuntime;
-    if(rt)rt.openRelicKey=null;
+    closeRelicDescription(target);
     let html='<div class="box" style="max-width:520px;width:min(90vw,520px)">';
     html+='<div class="modalHead"><h2>The Watcher</h2></div>';
     html+='<p style="color:#b99a5d;font-size:12px">Choose one card to take into your hand. The rest return to the bottom of your deck.</p>';
@@ -154,7 +179,8 @@ export function watcherPick(uid,target = window){
 export function installRelicFlow(target = window){
   if(!target || target.__tlrRelicFlowInstalled)return;
   target.__tlrRelicFlowInstalled=true;
-  const api={relicSlots,doAcquireRelic,acquireRelicFree,acquireRelic,showRelicReplace,selectRelicReplace,activateRelic,watcherPick};
+  installRelicDescriptionDismiss(target);
+  const api={relicSlots,doAcquireRelic,acquireRelicFree,acquireRelic,showRelicReplace,selectRelicReplace,closeRelicDescription,activateRelic,watcherPick};
   target.tlrRelicFlow=api;
   if(typeof target.relicSlots!=='function')target.relicSlots=()=>relicSlots(target);
   if(typeof target.doAcquireRelic!=='function')target.doAcquireRelic=(key,afterFn)=>doAcquireRelic(key,afterFn,target);
@@ -162,6 +188,7 @@ export function installRelicFlow(target = window){
   if(typeof target.acquireRelic!=='function')target.acquireRelic=key=>acquireRelic(key,target);
   if(typeof target.showRelicReplace!=='function')target.showRelicReplace=(newKey,afterFn)=>showRelicReplace(newKey,afterFn,target);
   if(typeof target.selectRelicReplace!=='function')target.selectRelicReplace=(oldKey,newKey)=>selectRelicReplace(oldKey,newKey,target);
+  if(typeof target.closeRelicDescription!=='function')target.closeRelicDescription=()=>closeRelicDescription(target);
   if(typeof target.activateRelic!=='function')target.activateRelic=key=>activateRelic(key,target);
   if(typeof target.watcherPick!=='function')target.watcherPick=uid=>watcherPick(uid,target);
 }
