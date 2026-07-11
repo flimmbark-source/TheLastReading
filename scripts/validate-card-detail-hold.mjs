@@ -32,19 +32,20 @@ target.expandCard=card=>{expanded=card;expandCount+=1;};
 const handEl=target.document.querySelector('#hand .card[data-uid="11"]');
 const otherHandEl=target.document.querySelector('#hand .card[data-uid="12"]');
 const spreadEl=target.document.querySelector('#spread .card');
-handEl.getBoundingClientRect=()=>({left:350,right:420,top:100,bottom:205,width:70,height:105,x:350,y:100,toJSON(){return this;}});
+let handRect={left:350,right:420,top:100,bottom:205,width:70,height:105,x:350,y:100,toJSON(){return this;}};
+handEl.getBoundingClientRect=()=>handRect;
 otherHandEl.getBoundingClientRect=()=>({left:180,right:250,top:100,bottom:205,width:70,height:105,x:180,y:100,toJSON(){return this;}});
 
 function click(element){
   element.dispatchEvent(new target.MouseEvent('click',{bubbles:true,cancelable:true,button:0}));
 }
 
-function pointer(type,element,{pointerId=1,clientY=0}={}){
+function pointer(type,element,{pointerId=1,clientX=200,clientY=0}={}){
   const event=new target.Event(type,{bubbles:true,cancelable:true});
   Object.defineProperties(event,{
     pointerId:{value:pointerId},
     clientY:{value:clientY},
-    clientX:{value:200},
+    clientX:{value:clientX},
   });
   element.dispatchEvent(event);
 }
@@ -65,9 +66,16 @@ assert.equal(trigger.getAttribute('aria-haspopup'),'dialog');
 assert.equal(trigger.querySelector('.card-detail-trigger-glyph')?.textContent,'?');
 assert.equal(target.document.getElementById('card-detail-trigger-style'),null,'trigger styling should come from the stylesheet rather than an injected style element');
 
-// Pointer events alone must not bypass the native button click lifecycle.
-pointer('pointerdown',trigger,{pointerId:3,clientY:100});
-pointer('pointerup',trigger,{pointerId:3,clientY:100});
+// The selected card can still be moving when the user presses the body-level
+// trigger. Freeze the hit target through pointerup so native click synthesis is
+// not cancelled by the element moving out from under the pointer.
+pointer('pointerdown',trigger,{pointerId:3,clientX:330,clientY:100});
+handRect={left:330,right:400,top:100,bottom:205,width:70,height:105,x:330,y:100,toJSON(){return this;}};
+syncCardDetailTrigger(target);
+assert.equal(trigger.style.left,'299px','the trigger should remain fixed while its pointer is held');
+pointer('pointerup',trigger,{pointerId:3,clientX:330,clientY:100});
+syncCardDetailTrigger(target);
+assert.equal(trigger.style.left,'279px','the trigger should resume alignment after pointerup');
 assert.equal(expanded,null,'pointerup without a click should not activate the detail button');
 
 click(trigger);
@@ -123,8 +131,10 @@ const utilityButtonCss=fs.readFileSync(new URL('../src/styles/singlePlayerV2/com
 assert.match(cardGestureSource,/#spread,\.card-detail-trigger/,'card dragging must ignore the detail button');
 assert.match(handGestureSource,/closest\('\.card-detail-trigger'\)/,'hand swiping must ignore the detail button');
 assert.doesNotMatch(cardGestureSource,/DETAIL_DRAG_DOWN_PX|hand-card-detail-pull|inDetailZone/,'the retired drag-down detail implementation must be removed from the card gesture controller');
-assert.doesNotMatch(detailGestureSource,/triggerPointer|POINTER_CLICK_DEDUPE_MS|requestAnimationFrame\(trackPosition\)/,'the trigger should not use pointerup dedupe or an endless position loop');
+assert.doesNotMatch(detailGestureSource,/triggerPointer|POINTER_CLICK_DEDUPE_MS|requestAnimationFrame\(trackPosition\)/,'the trigger should not use pointerup activation or an endless position loop');
 assert.match(detailGestureSource,/addEventListener\('click',onTriggerClick\)/,'the trigger should use the native button click event');
+assert.match(detailGestureSource,/setPointerCapture/,'the moving viewport trigger should capture its active pointer');
+assert.match(detailGestureSource,/if\(triggerPress&&trigger\?\.isConnected\)return true/,'the trigger should freeze while pressed');
 assert.match(detailGestureSource,/MOTION_TRACK_MS/,'position tracking should be bounded to active motion');
 assert.match(utilityButtonCss,/\.card-detail-trigger\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s,'the real mobile hit target should be 44px square');
 assert.match(utilityButtonCss,/\.card-detail-trigger-glyph\s*\{[^}]*width:\s*24px;[^}]*height:\s*24px;/s,'the visible medallion should retain its 24px size');
