@@ -8,6 +8,10 @@ const TRIGGER_GAP=7;
 const VIEWPORT_MARGIN=8;
 const MOTION_TRACK_MS=420;
 const MOTION_TRACK_MAX_FRAMES=40;
+// Hard ceiling so a stuck transition can never pin the tracker on forever. The
+// whole-hand idle reposition (ambientEffects handAnim) runs up to ~1.4s, so the
+// base window is extended to cover any running transition up to this cap.
+const MOTION_TRACK_MAX_MS=2600;
 
 function legacyState(target=window){
   if(target?.tlrRuntime?.state)return target.tlrRuntime.state;
@@ -179,6 +183,7 @@ export function installCardDetailGestures(target=window){
   let motionRaf=0;
   let motionDeadline=0;
   let motionFramesRemaining=0;
+  let motionHardStop=0;
   let observer=null;
 
   const cancelScheduledPosition=()=>{
@@ -191,6 +196,7 @@ export function installCardDetailGestures(target=window){
     motionRaf=0;
     motionDeadline=0;
     motionFramesRemaining=0;
+    motionHardStop=0;
   };
 
   const restoreHandFocus=()=>{
@@ -346,9 +352,23 @@ export function installCardDetailGestures(target=window){
     }
   };
 
+  // True while a transition (the lift, or the whole-hand idle reposition) is
+  // still running on the followed card or the hand. Those transitions can last
+  // ~1.4s -- far past the base window -- so the tracker follows until they end.
+  // The infinite card-wave bob is a CSSAnimation ridden by the compositor mirror
+  // and is deliberately excluded, or it would pin this loop on forever.
+  const transitionRunning=el=>{
+    if(!el||typeof el.getAnimations!=='function')return false;
+    let anims;
+    try{anims=el.getAnimations();}catch{return false;}
+    return anims.some(a=>a.playState==='running'&&typeof a.transitionProperty==='string');
+  };
+  const motionActive=()=>transitionRunning(selectedHandCard(target))||transitionRunning(doc.getElementById('hand'));
+
   const startMotionTracking=(duration=MOTION_TRACK_MS)=>{
     motionDeadline=Math.max(motionDeadline,now(target)+duration);
     motionFramesRemaining=Math.max(motionFramesRemaining,MOTION_TRACK_MAX_FRAMES);
+    motionHardStop=Math.max(motionHardStop,now(target)+MOTION_TRACK_MAX_MS);
     if(motionRaf||typeof target.requestAnimationFrame!=='function'){
       if(!motionRaf)positionTrigger();
       return;
@@ -358,8 +378,12 @@ export function installCardDetailGestures(target=window){
       cancelScheduledPosition();
       const visible=positionTrigger();
       motionFramesRemaining-=1;
-      if(visible&&now(target)<motionDeadline&&motionFramesRemaining>0)motionRaf=target.requestAnimationFrame(step);
-      else{motionDeadline=0;motionFramesRemaining=0;}
+      const t=now(target);
+      const withinBaseWindow=t<motionDeadline&&motionFramesRemaining>0;
+      // Extend past the base window while a transition is still moving the hand.
+      const stillTransitioning=t<motionHardStop&&motionActive();
+      if(visible&&(withinBaseWindow||stillTransitioning))motionRaf=target.requestAnimationFrame(step);
+      else{motionDeadline=0;motionFramesRemaining=0;motionHardStop=0;}
     };
     motionRaf=target.requestAnimationFrame(step);
   };
