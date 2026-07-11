@@ -19,4 +19,17 @@ const tutorial = await import('../src/app/tutorialCore.mjs?placement-regression=
 assert.doesNotThrow(() => tutorial.tutSignal('cardPlaced'), 'placing a card must not throw in tutorial signaling');
 assert.doesNotThrow(() => tutorial.replayTutorial(), 'replaying the tutorial must not reference removed placement state');
 
+// Steps are addressed by stable id, never array position, so guard that ids are
+// unique and that every semantic TUT_STEP name maps to a real step -- a stale
+// (renamed/removed) id would otherwise silently route the flow nowhere.
+const ids = [...source.matchAll(/\bid:\s*'([^']+)'/g)].map(m => m[1]);
+assert.ok(ids.length >= 20, 'tutorial steps should carry id fields');
+assert.equal(ids.length, new Set(ids).size, 'every tutorial step id must be unique');
+const idSet = new Set(ids);
+for (const [name, id] of Object.entries(tutorial.TUT_STEP)) {
+  assert.ok(idSet.has(id), `TUT_STEP.${name} ('${id}') must reference an existing step id`);
+}
+assert.doesNotMatch(source, /indices remain unchanged|kept last so/, 'the array-position technical-debt note must be gone');
+assert.doesNotMatch(source, /INTRO_LAST_STEP|ADVENTURE_FIRST_STEP|ADVENTURE_LAST_STEP/, 'hardcoded numeric step-index constants must be gone');
+
 console.log('Tutorial placement runtime checks passed.');

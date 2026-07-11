@@ -57,6 +57,14 @@ const EN_TERMS = Object.freeze({
     definition: 'Spend a Discard to use a card’s Ability instead of Playing it.',
     auto: true,
   },
+  discard_charge: {
+    label: 'Discard',
+    category: 'resource',
+    definition: 'A limited charge you spend to Discard a card for its Ability.',
+    // Not auto-linked: bare "Discard" text resolves to the discard action; the
+    // resource is reached only through explicit [[discard_charge|Discard]] markup.
+    auto: false,
+  },
   reveal: {
     label: 'Reveal',
     category: 'action',
@@ -169,6 +177,12 @@ const EN_TERMS = Object.freeze({
     label: 'Event',
     category: 'system',
     definition: 'An Adventure challenge resolved by Playing a card.',
+    auto: true,
+  },
+  approach: {
+    label: 'Approach',
+    category: 'system',
+    definition: 'How a card engages an Adventure Event; each Event accepts certain Approaches.',
     auto: true,
   },
   search: {

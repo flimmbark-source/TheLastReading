@@ -346,7 +346,7 @@ export function installMainMenu(target = window) {
           if (Array.isArray(dealtHand) && dealtHand.length) target.tlrQueueDrawAnimation(dealtHand);
         }
         if (!target.localStorage.getItem('tlr_tut_done') && typeof target.tutShow === 'function') {
-          target.setTimeout(() => target.tutShow(0), 400);
+          target.setTimeout(() => target.tutShow('story-intro'), 400);
         }
       } else {
         console.error('The Last Reading: startReading is not available from the main menu.');
