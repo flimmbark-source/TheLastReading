@@ -109,6 +109,7 @@ export function installCardDetailGestures(target=window){
   const DOUBLE_TAP_MS=380;
   let lastTap=null;
   let trigger=null;
+  let triggerPress=null;
   let positionRaf=0;
   let motionRaf=0;
   let motionDeadline=0;
@@ -147,12 +148,34 @@ export function installCardDetailGestures(target=window){
   const removeTrigger=(restoreFocus=true)=>{
     if(!trigger)return;
     if(restoreFocus&&doc.activeElement===trigger)restoreHandFocus();
+    trigger.removeEventListener('pointerdown',onTriggerPointerDown);
+    trigger.removeEventListener('pointerup',onTriggerPointerEnd);
+    trigger.removeEventListener('pointercancel',onTriggerPointerEnd);
     trigger.removeEventListener('click',onTriggerClick);
     trigger.remove();
     trigger=null;
+    triggerPress=null;
     cancelScheduledPosition();
     cancelMotionTracking();
   };
+
+  function onTriggerPointerDown(event){
+    if(event.pointerType==='mouse'&&event.button!==0)return;
+    triggerPress={pointerId:event.pointerId};
+    cancelScheduledPosition();
+    cancelMotionTracking();
+    try{trigger?.setPointerCapture?.(event.pointerId);}catch{}
+  }
+
+  function onTriggerPointerEnd(event){
+    if(!triggerPress||event.pointerId!==triggerPress.pointerId)return;
+    try{trigger?.releasePointerCapture?.(event.pointerId);}catch{}
+    triggerPress=null;
+    // Native click is dispatched after pointerup. Queue alignment for the next
+    // frame so the hit target stays fixed through the complete click sequence.
+    if(typeof target.requestAnimationFrame==='function')target.requestAnimationFrame(()=>schedulePosition());
+    else schedulePosition();
+  }
 
   function onTriggerClick(event){
     event.preventDefault();
@@ -173,12 +196,19 @@ export function installCardDetailGestures(target=window){
     trigger.setAttribute('aria-label','View selected card details');
     trigger.setAttribute('aria-haspopup','dialog');
     trigger.title='View card details';
+    trigger.addEventListener('pointerdown',onTriggerPointerDown);
+    trigger.addEventListener('pointerup',onTriggerPointerEnd);
+    trigger.addEventListener('pointercancel',onTriggerPointerEnd);
     trigger.addEventListener('click',onTriggerClick);
     doc.body.appendChild(trigger);
     return trigger;
   };
 
   const positionTrigger=()=>{
+    // A moving target can lose the browser-generated click between pointerdown
+    // and pointerup. Hold the viewport portal still for the active press.
+    if(triggerPress&&trigger?.isConnected)return true;
+
     const cardEl=selectedHandCard(target);
     if(!cardEl||!cardEl.isConnected){removeTrigger();return false;}
 
