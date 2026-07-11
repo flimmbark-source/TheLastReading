@@ -236,6 +236,7 @@ const TITLE_SELECTOR = [
 const SKIP_SELECTOR = [
   '[data-game-terms="off"]',
   '.game-term',
+  '.scoring-sheet',
   'script',
   'style',
   'code',
