@@ -7,68 +7,6 @@ import { getPendingPreviewFn } from '../app/abilityTargetBridge.mjs';
 
 let activeChoiceCancel=null;
 
-function ensureChoiceLayoutStyles(){
-  if(document.getElementById('ability-choice-layout-style'))return;
-  const style=document.createElement('style');
-  style.id='ability-choice-layout-style';
-  style.textContent=`
-    .modal:not(.collapsed) #choices.choices{
-      display:grid!important;
-      grid-auto-flow:column!important;
-      grid-auto-columns:130px!important;
-      grid-template-columns:none!important;
-      justify-content:safe center!important;
-      align-items:start!important;
-      gap:12px!important;
-      width:100%!important;
-      max-width:100%!important;
-      overflow-x:auto!important;
-      overflow-y:visible!important;
-      padding:4px 2px 12px!important;
-      box-sizing:border-box!important;
-      overscroll-behavior-x:contain;
-      scroll-snap-type:x proximity;
-    }
-    #choices.choices>.choice-card{
-      position:relative!important;
-      inset:auto!important;
-      width:130px!important;
-      min-width:130px!important;
-      max-width:130px!important;
-      height:195px!important;
-      margin:0!important;
-      transform:none!important;
-      scroll-snap-align:center;
-    }
-  `;
-  document.head.appendChild(style);
-}
-
-function applyChoiceLayout(container){
-  container.style.setProperty('display','grid','important');
-  container.style.setProperty('grid-auto-flow','column','important');
-  container.style.setProperty('grid-auto-columns','130px','important');
-  container.style.setProperty('grid-template-columns','none','important');
-  container.style.setProperty('justify-content','safe center','important');
-  container.style.setProperty('align-items','start','important');
-  container.style.setProperty('gap','12px','important');
-  container.style.setProperty('width','100%','important');
-  container.style.setProperty('max-width','100%','important');
-  container.style.setProperty('overflow-x','auto','important');
-  container.style.setProperty('overflow-y','visible','important');
-}
-
-function applyChoiceCardLayout(card){
-  card.style.setProperty('position','relative','important');
-  card.style.setProperty('inset','auto','important');
-  card.style.setProperty('width','130px','important');
-  card.style.setProperty('min-width','130px','important');
-  card.style.setProperty('max-width','130px','important');
-  card.style.setProperty('height','195px','important');
-  card.style.setProperty('margin','0','important');
-  card.style.setProperty('transform','none','important');
-}
-
 function ensureModalCancelButton(){
   let cancel=$('#modalCancel');
   if(cancel)return cancel;
@@ -122,14 +60,12 @@ function ensureAbilityCancelButton(){
 export function choice(title,prompt,cards,cb){
   // A single candidate isn't a choice — hand it over without popping the modal.
   if(cards.length===1){activeChoiceCancel=null;playSound('flip');cb(cards[0]);return}
-  ensureChoiceLayoutStyles();
   $('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';
   window.tlrApplyGameTerms?.($('#modalPrompt'), { auto: true });
-  const ch=$('#choices');ch.innerHTML='';applyChoiceLayout(ch);
+  const ch=$('#choices');ch.innerHTML='';
   cards.forEach(c=>{
     const e=document.createElement('div');
     e.className='card choice-card '+(c.type==='major'?'major':'');
-    applyChoiceCardLayout(e);
     applyHint(e,c,uniqueCards([...state.spread.filter(Boolean),...state.hand,c]));
     e.innerHTML=cardHTML(c);applyCardPhoto(e,c);
     e.onclick=()=>{activeChoiceCancel=null;$('#modal').classList.remove('show','collapsed','ability-reveal','card-browse');cb(c)};
@@ -154,14 +90,12 @@ export function choiceAsync(title,prompt,cards){return new Promise(resolve=>choi
 // header Cancel button closes the window. The card-browse class marks the
 // modal as browse-owned so the attic flow can close it when leaving.
 export function browseCards(title,prompt,cards){
-  ensureChoiceLayoutStyles();
   $('#modalTitle').textContent=title;$('#modalPrompt').textContent=prompt;$('#modalToggle').textContent='Hide';
   window.tlrApplyGameTerms?.($('#modalPrompt'), { auto: true });
-  const ch=$('#choices');ch.innerHTML='';applyChoiceLayout(ch);
+  const ch=$('#choices');ch.innerHTML='';
   cards.forEach(c=>{
     const e=document.createElement('div');
     e.className='card choice-card '+(c.type==='major'?'major':'');
-    applyChoiceCardLayout(e);
     e.innerHTML=cardHTML(c);applyCardPhoto(e,c);
     e.onclick=()=>{window.expandCard?.(c)};
     ch.appendChild(e);
