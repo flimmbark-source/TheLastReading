@@ -49,7 +49,7 @@ const TUT_STEPS = [
     sel: '#current',
     fallbackSel: '.score-pill',
     arrow: 'up',
-    text: 'That card added [[chips]].<br>[[chips]] × [[mult]] = [[score]].',
+    text: 'That card added [[chips]].',
   },
 
   {
@@ -57,7 +57,7 @@ const TUT_STEPS = [
     sel: '#hand .card[data-uid] .seal.tr',
     fallbackSel: '#hand .card[data-uid]',
     arrow: 'down',
-    text: 'The red seal shows how many [[chips]] a card adds.',
+    text: 'The red seal shows how many [[chips]] a card adds. [[chips]] × [[mult]] = [[score]].',
   },
 
   {
