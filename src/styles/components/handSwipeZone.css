@@ -27,14 +27,15 @@
 .hand-swipe-zone-lower{position:absolute;left:0;right:0;top:100%;height:240px;pointer-events:auto;touch-action:none;background:transparent;cursor:grab}
 #handSwipeZone.dragging .hand-swipe-zone-lower,#handSwipeZone.pinching .hand-swipe-zone-lower{cursor:grabbing}
 @media(max-width:640px){.hand-swipe-zone-lower{height:200px}}
-}
 
-/* The detail trigger is deliberately positioned outside the selected card's
-   rectangle, where the transparent swipe surface also exists. The card's
-   descendants normally inherit pointer-events:none from the hand shell, so
-   explicitly restore this real button as a hit target. Raising the dock only
-   while the trigger exists keeps it above the swipe surface but below the
-   bottom action rail (z-index 29). These rules stay unlayered so they win the
-   layered hand/swipe composition without adding more !important debt. */
-.card-detail-trigger{pointer-events:auto}
-body.single-player-v2.generated-sheet-ready .handDock:has(.card-detail-trigger){z-index:28}
+/* The detail trigger sits in the upper swipe region beside a selected card.
+   Restore the button as an explicit hit target, and while it exists let taps in
+   that upper transparent region pass through to the selected card/button. The
+   lower swipe extension remains active, so horizontal hand movement is still
+   available below the cards. These declarations are important because this
+   component is intentionally earlier than the hand composition in the cascade,
+   and earlier layers win the important tier. */
+.card-detail-trigger{pointer-events:auto!important}
+body:has(.card-detail-trigger) #handSwipeZone.hand-swipe-zone{pointer-events:none!important}
+body:has(.card-detail-trigger) #handSwipeZone .hand-swipe-zone-lower{pointer-events:auto!important}
+}
