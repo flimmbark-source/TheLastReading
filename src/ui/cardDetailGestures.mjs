@@ -63,6 +63,60 @@ function now(target=window){
   return target.performance?.now?.()??performance.now();
 }
 
+// The hand fan bobs each card with a looping CSS keyframe animation (card-wave /
+// handCardIdleCycle) driven off the `translate`/`rotate` properties. Read the
+// card's current animated offset so the body-level trigger can be parked at the
+// card's resting position -- the mirrored animation below re-adds the bob.
+function readIdleOffset(cardEl,target){
+  const compute=target?.getComputedStyle;
+  if(typeof compute!=='function')return {tx:0,ty:0};
+  let cs;
+  try{cs=compute.call(target,cardEl);}catch{return {tx:0,ty:0};}
+  const raw=cs?.translate;
+  if(!raw||raw==='none')return {tx:0,ty:0};
+  const parts=String(raw).trim().split(/\s+/);
+  const tx=parseFloat(parts[0]);
+  const ty=parseFloat(parts[1]??'0');
+  return {tx:Number.isFinite(tx)?tx:0,ty:Number.isFinite(ty)?ty:0};
+}
+
+// Replay the card's looping idle animation on the trigger via the Web Animations
+// API, sharing the card's phase so the medallion bobs in lockstep. The compositor
+// runs this with no per-frame JS, so following the fan costs nothing on the main
+// thread. Transitions (lift/reorder) are skipped -- those are tracked in JS.
+function mirrorIdleMotion(cardEl,trigger,target){
+  if(!trigger)return;
+  if(Array.isArray(trigger.__idleMirrors)){
+    for(const anim of trigger.__idleMirrors){try{anim.cancel();}catch{}}
+  }
+  trigger.__idleMirrors=[];
+  if(typeof cardEl.getAnimations!=='function'||typeof trigger.animate!=='function')return;
+  let sourceAnims;
+  try{sourceAnims=cardEl.getAnimations();}catch{return;}
+  for(const source of sourceAnims){
+    if(!source||typeof source.animationName!=='string')continue;
+    const effect=source.effect;
+    if(!effect||typeof effect.getKeyframes!=='function')continue;
+    let keyframes,timing,mirror;
+    try{keyframes=effect.getKeyframes();timing=effect.getTiming();}catch{continue;}
+    try{mirror=trigger.animate(keyframes,timing);}catch{continue;}
+    try{
+      if(source.startTime!=null)mirror.startTime=source.startTime;
+      else if(source.currentTime!=null)mirror.currentTime=source.currentTime;
+    }catch{}
+    trigger.__idleMirrors.push(mirror);
+  }
+}
+
+// Freeze the bob while the trigger is pressed so the click target stays put
+// through the whole pointer sequence (native click can be lost if it moves).
+function setIdleMirrorPaused(trigger,paused){
+  if(!trigger||!Array.isArray(trigger.__idleMirrors))return;
+  for(const anim of trigger.__idleMirrors){
+    try{paused?anim.pause():anim.play();}catch{}
+  }
+}
+
 function showCardDetail(card,target=window){
   if(!card)return false;
   const adapter=handAdapter(target);
@@ -164,6 +218,7 @@ export function installCardDetailGestures(target=window){
     triggerPress={pointerId:event.pointerId};
     cancelScheduledPosition();
     cancelMotionTracking();
+    setIdleMirrorPaused(trigger,true);
     try{trigger?.setPointerCapture?.(event.pointerId);}catch{}
   }
 
@@ -171,6 +226,7 @@ export function installCardDetailGestures(target=window){
     if(!triggerPress||event.pointerId!==triggerPress.pointerId)return;
     try{trigger?.releasePointerCapture?.(event.pointerId);}catch{}
     triggerPress=null;
+    setIdleMirrorPaused(trigger,false);
     // Native click is dispatched after pointerup. Queue alignment for the next
     // frame so the hit target stays fixed through the complete click sequence.
     if(typeof target.requestAnimationFrame==='function')target.requestAnimationFrame(()=>schedulePosition());
@@ -222,11 +278,18 @@ export function installCardDetailGestures(target=window){
     const vw=viewportWidth(target);
     const vh=viewportHeight(target);
     const visualInset=(TRIGGER_HIT_SIZE-TRIGGER_VISUAL_SIZE)/2;
+    // Park the trigger at the card's resting spot (rect minus the live idle-bob
+    // offset). The mirrored animation re-adds that bob on the compositor, so the
+    // medallion rides the fan's wave without the trigger snapping every cycle.
+    const idle=readIdleOffset(cardEl,target);
+    const restRight=rect.right-idle.tx;
+    const restLeft=rect.left-idle.tx;
+    const restTop=rect.top-idle.ty;
     // The medallion (visible circle) hugs the card edge with TRIGGER_GAP. The
     // 44px hit box is centred on that medallion, so it extends visualInset past
     // the circle on every side -- pressing anywhere on the circle registers.
-    const rightGlyphLeft=rect.right+TRIGGER_GAP;
-    const leftGlyphLeft=rect.left-TRIGGER_GAP-TRIGGER_VISUAL_SIZE;
+    const rightGlyphLeft=restRight+TRIGGER_GAP;
+    const leftGlyphLeft=restLeft-TRIGGER_GAP-TRIGGER_VISUAL_SIZE;
     const rightBoxLeft=rightGlyphLeft-visualInset;
     const leftBoxLeft=leftGlyphLeft-visualInset;
     const rightFits=rightBoxLeft+TRIGGER_HIT_SIZE<=vw-VIEWPORT_MARGIN;
@@ -235,7 +298,7 @@ export function installCardDetailGestures(target=window){
     const desiredLeft=side==='right'?rightBoxLeft:leftBoxLeft;
     const maxLeft=Math.max(VIEWPORT_MARGIN,vw-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN);
     const left=Math.max(VIEWPORT_MARGIN,Math.min(desiredLeft,maxLeft));
-    const desiredTop=rect.top-visualInset;
+    const desiredTop=restTop-visualInset;
     const maxTop=Math.max(VIEWPORT_MARGIN,vh-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN);
     const top=Math.max(VIEWPORT_MARGIN,Math.min(desiredTop,maxTop));
 
@@ -244,6 +307,14 @@ export function installCardDetailGestures(target=window){
     detailTrigger.style.top=`${top}px`;
     detailTrigger.style.right='auto';
     detailTrigger.style.left=`${left}px`;
+
+    // Re-mirror only when the followed card changes -- re-creating the WAAPI
+    // animation every frame would fight the compositor. The shared phase keeps
+    // it aligned across resizes and lift tracking without touching it again.
+    if(detailTrigger.__idleMirrorUid!==uid){
+      detailTrigger.__idleMirrorUid=uid;
+      mirrorIdleMotion(cardEl,detailTrigger,target);
+    }
     return true;
   };
 

@@ -136,6 +136,7 @@ assert.match(detailGestureSource,/addEventListener\('click',onTriggerClick\)/,'t
 assert.match(detailGestureSource,/setPointerCapture/,'the moving viewport trigger should capture its active pointer');
 assert.match(detailGestureSource,/if\(triggerPress&&trigger\?\.isConnected\)return true/,'the trigger should freeze while pressed');
 assert.match(detailGestureSource,/MOTION_TRACK_MS/,'position tracking should be bounded to active motion');
+assert.match(detailGestureSource,/mirrorIdleMotion|__idleMirrors/,'the trigger should ride the fan idle animation via a compositor-driven WAAPI mirror, not a per-frame position loop');
 assert.match(utilityButtonCss,/\.card-detail-trigger\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s,'the real mobile hit target should be 44px square');
 assert.match(utilityButtonCss,/\.card-detail-trigger-glyph\s*\{[^}]*width:\s*24px;[^}]*height:\s*24px;/s,'the visible medallion should retain its 24px size');
 
