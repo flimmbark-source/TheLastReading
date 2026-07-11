@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
 import { GAME_TERM_IDS, GAME_TERMS, applyGameTerms, gameTermMarkup, registerGameTermsLocale } from '../src/ui/gameTerms.mjs';
+import { renderAbilitySheet } from '../src/app/referenceControls.mjs';
 import { ABILITIES } from '../src/data/abilities.mjs';
 import { RELIC_LIST } from '../src/data/relics.mjs';
 import { SHOP_ITEMS } from '../src/data/shopItems.mjs';
@@ -31,6 +32,18 @@ const archive = dom.window.document.getElementById('archive');
 applyGameTerms(archive, { auto: true });
 assert.equal(archive.querySelectorAll('.game-term').length, 0, 'archive opt-out blocks tokens');
 assert.match(archive.textContent, /\[\[chips\]\]/);
+
+const abilityDom = new JSDOM('<div id="abilityRef"></div>');
+let abilityTermRenderCalls = 0;
+abilityDom.window.tlrGetGameTerm = id => GAME_TERMS[id] || null;
+abilityDom.window.tlrApplyGameTerms = () => { abilityTermRenderCalls += 1; };
+renderAbilitySheet(abilityDom.window);
+const abilityRef = abilityDom.window.document.getElementById('abilityRef');
+assert.equal(abilityRef.dataset.gameTerms, 'off', 'Ability reference opts out of interactive game terms');
+assert.equal(abilityTermRenderCalls, 0, 'Ability reference does not invoke the interactive term renderer');
+assert.equal(abilityRef.querySelectorAll('.game-term').length, 0, 'Ability descriptions contain no term links');
+assert.doesNotMatch(abilityRef.textContent, /\[\[/, 'Ability descriptions do not expose term markup');
+assert.match(abilityRef.textContent, /Reveal the listed number of cards\. Take 1\./, 'Ability descriptions retain canonical wording as plain text');
 
 const sourceFiles = [];
 function collect(directory) {
