@@ -77,22 +77,19 @@
     margin: 0;
     padding: 0;
     display: grid;
-    align-items: center;
+    /* Centre the 24px medallion inside the 44px hit box so press slop is
+       symmetric on every side of the visible circle. The positioning logic
+       centres the hit box on the medallion's intended spot beside the card. */
+    place-items: center;
     border: 0;
     background: transparent;
     cursor: pointer;
     pointer-events: auto;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-    z-index: 10010;
-  }
-
-  .card-detail-trigger[data-side="right"] {
-    justify-items: start;
-  }
-
-  .card-detail-trigger[data-side="left"] {
-    justify-items: end;
+    /* Sit above the spread even when .spread-wrap is boosted to 10060 (score
+       preview), while staying below the detail modal/backdrop. */
+    z-index: 10075;
   }
 
   .card-detail-trigger-glyph {

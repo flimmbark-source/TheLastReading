@@ -221,12 +221,20 @@ export function installCardDetailGestures(target=window){
     const detailTrigger=ensureTrigger();
     const vw=viewportWidth(target);
     const vh=viewportHeight(target);
-    const rightLeft=rect.right+TRIGGER_GAP;
-    const leftLeft=rect.left-TRIGGER_GAP-TRIGGER_HIT_SIZE;
-    const rightFits=rightLeft+TRIGGER_HIT_SIZE<=vw-VIEWPORT_MARGIN;
-    const leftFits=leftLeft>=VIEWPORT_MARGIN;
-    const side=rightFits||!leftFits?'right':'left';
     const visualInset=(TRIGGER_HIT_SIZE-TRIGGER_VISUAL_SIZE)/2;
+    // The medallion (visible circle) hugs the card edge with TRIGGER_GAP. The
+    // 44px hit box is centred on that medallion, so it extends visualInset past
+    // the circle on every side -- pressing anywhere on the circle registers.
+    const rightGlyphLeft=rect.right+TRIGGER_GAP;
+    const leftGlyphLeft=rect.left-TRIGGER_GAP-TRIGGER_VISUAL_SIZE;
+    const rightBoxLeft=rightGlyphLeft-visualInset;
+    const leftBoxLeft=leftGlyphLeft-visualInset;
+    const rightFits=rightBoxLeft+TRIGGER_HIT_SIZE<=vw-VIEWPORT_MARGIN;
+    const leftFits=leftBoxLeft>=VIEWPORT_MARGIN;
+    const side=rightFits||!leftFits?'right':'left';
+    const desiredLeft=side==='right'?rightBoxLeft:leftBoxLeft;
+    const maxLeft=Math.max(VIEWPORT_MARGIN,vw-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN);
+    const left=Math.max(VIEWPORT_MARGIN,Math.min(desiredLeft,maxLeft));
     const desiredTop=rect.top-visualInset;
     const maxTop=Math.max(VIEWPORT_MARGIN,vh-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN);
     const top=Math.max(VIEWPORT_MARGIN,Math.min(desiredTop,maxTop));
@@ -235,7 +243,7 @@ export function installCardDetailGestures(target=window){
     detailTrigger.dataset.side=side;
     detailTrigger.style.top=`${top}px`;
     detailTrigger.style.right='auto';
-    detailTrigger.style.left=`${side==='right'?rightLeft:leftLeft}px`;
+    detailTrigger.style.left=`${left}px`;
     return true;
   };
 
