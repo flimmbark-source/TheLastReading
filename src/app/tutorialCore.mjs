@@ -49,7 +49,7 @@ const TUT_STEPS = [
     sel: '#current',
     fallbackSel: '.score-pill',
     arrow: 'up',
-    text: 'That card added [[chips]].',
+    text: 'That card added [[chips]]. [[score]] = [[chips]] × [[mult]].',
   },
 
   {
@@ -73,7 +73,7 @@ const TUT_STEPS = [
     fallbackSel: '.threshold-pill',
     arrow: 'up',
     key: TUT_THRESHOLD_KEY,
-    text: 'Reach the [[threshold]] within 2 [[reading|Readings]]. Your [[score]] carries between them.',
+    text: 'Reach the [[threshold]] within 2 [[reading|Readings]].',
   },
 
   {
@@ -99,7 +99,7 @@ const TUT_STEPS = [
     fallbackSel: '#scoringPullTab',
     arrow: 'up',
     key: TUT_PATTERN_KEY,
-    text: 'Open Scoring to review [[pattern|Patterns]]. [[score]] = [[chips]] × [[mult]].',
+    text: 'Open Scoring to review [[pattern|Patterns]].',
   },
 
   {
