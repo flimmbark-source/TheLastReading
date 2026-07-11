@@ -6,6 +6,7 @@ const DETAIL_PULL_CANCEL_PX=80;
 const TRIGGER_SIZE=24;
 const TRIGGER_GAP=7;
 const VIEWPORT_MARGIN=8;
+const POINTER_CLICK_DEDUPE_MS=800;
 
 function legacyState(target=window){
   if(target?.tlrRuntime?.state)return target.tlrRuntime.state;
@@ -120,13 +121,26 @@ export function installCardDetailGestures(target=window){
   const DOUBLE_TAP_MS=380;
   let lastTap=null;
   let trigger=null;
+  let triggerPointer=null;
+  let triggerPointerActivationAt=-Infinity;
   let settleRaf=0;
   let settleUntil=0;
   let pull=null;
 
+  const activateDetailTrigger=detailTrigger=>{
+    const uid=Number(detailTrigger?.dataset?.uid);
+    const card=Number.isFinite(uid)?cardByUid(uid,target):null;
+    if(!card)return false;
+    const time=now(target);
+    target.__handGestureSuppressClickUntil=time+POINTER_CLICK_DEDUPE_MS;
+    lastTap=null;
+    return showCardDetail(card,target);
+  };
+
   const removeTrigger=()=>{
     trigger?.remove();
     trigger=null;
+    triggerPointer=null;
   };
 
   const positionTrigger=()=>{
@@ -213,12 +227,16 @@ export function installCardDetailGestures(target=window){
 
   doc.addEventListener('pointerdown',ev=>{
     const source=target.Element&&ev.target instanceof target.Element?ev.target:null;
-    if(source?.closest?.('.card-detail-trigger')){
-      // Let the real button receive pointerdown so browsers can synthesize
-      // its click. The hand gesture controllers explicitly ignore it.
+    const detailTrigger=source?.closest?.('.card-detail-trigger');
+    if(detailTrigger){
+      // Track the button's own pointer sequence. Opening on pointerup avoids
+      // relying on a browser-generated click, which card gesture suppression
+      // or DOM motion can cancel on touch devices.
+      triggerPointer={pointerId:ev.pointerId,uid:detailTrigger.dataset.uid};
       pull=null;
       return;
     }
+    triggerPointer=null;
     const cardEl=source?.closest?.('#hand .card[data-uid]');
     pull=cardEl?{
       pointerId:ev.pointerId,
@@ -248,8 +266,20 @@ export function installCardDetailGestures(target=window){
     cancelOldDetailPull();
     pull=null;
   };
-  doc.addEventListener('pointerup',finishPull,true);
-  doc.addEventListener('pointercancel',()=>{pull=null;},true);
+
+  doc.addEventListener('pointerup',ev=>{
+    const source=target.Element&&ev.target instanceof target.Element?ev.target:null;
+    const detailTrigger=source?.closest?.('.card-detail-trigger');
+    if(triggerPointer&&ev.pointerId===triggerPointer.pointerId&&detailTrigger?.dataset.uid===triggerPointer.uid){
+      triggerPointer=null;
+      ev.preventDefault();
+      if(activateDetailTrigger(detailTrigger))triggerPointerActivationAt=now(target);
+      return;
+    }
+    triggerPointer=null;
+    finishPull(ev);
+  },true);
+  doc.addEventListener('pointercancel',()=>{triggerPointer=null;pull=null;},true);
 
   doc.addEventListener('click',ev=>{
     if(target.__handPinchSynthetic||target.__handPinchActive){lastTap=null;return;}
@@ -261,12 +291,9 @@ export function installCardDetailGestures(target=window){
       ev.preventDefault();
       ev.stopPropagation();
       ev.stopImmediatePropagation();
-      const uid=Number(detailTrigger.dataset.uid);
-      const card=Number.isFinite(uid)?cardByUid(uid,target):null;
-      if(card){
-        target.__handGestureSuppressClickUntil=time+800;
-        showCardDetail(card,target);
-      }
+      // A normal pointer interaction already opened the detail on pointerup.
+      // Keep click as the keyboard/programmatic fallback without opening twice.
+      if(time-triggerPointerActivationAt>POINTER_CLICK_DEDUPE_MS)activateDetailTrigger(detailTrigger);
       lastTap=null;
       return;
     }
