@@ -265,7 +265,7 @@ export function installCardDetailGestures(target=window){
     trigger=doc.createElement('button');
     trigger.type='button';
     trigger.className='card-detail-trigger';
-    trigger.innerHTML='<span class="card-detail-trigger-glyph" aria-hidden="true">?</span>';
+    trigger.innerHTML='<span class="card-detail-trigger-glyph" aria-hidden="true"></span>';
     trigger.setAttribute('aria-label','View selected card details');
     trigger.setAttribute('aria-haspopup','dialog');
     trigger.title='View card details';
