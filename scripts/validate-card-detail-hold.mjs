@@ -60,10 +60,10 @@ assert.equal(trigger.parentElement,target.document.body,'the trigger should use 
 assert.equal(trigger.dataset.side,'left','the trigger should swap to the left when the right edge would overflow');
 assert.equal(trigger.style.left,'340px','the medallion tucks flush inside the card left edge (350 - inset 10)');
 assert.equal(trigger.style.right,'auto');
-assert.equal(trigger.style.top,'195px','the medallion hangs below the card, glyph top at the card bottom (205 - inset 10)');
+assert.equal(trigger.style.top,'202px','the medallion hangs below the card with a gap, glyph top at 205 + gap 7 - inset 10');
 assert.equal(trigger.type,'button');
 assert.equal(trigger.getAttribute('aria-haspopup'),'dialog');
-assert.equal(trigger.querySelector('.card-detail-trigger-glyph')?.textContent,'?');
+assert.ok(trigger.querySelector('.card-detail-trigger-glyph'),'the trigger renders the info-medallion glyph element');
 assert.equal(target.document.getElementById('card-detail-trigger-style'),null,'trigger styling should come from the stylesheet rather than an injected style element');
 
 // The selected card can still be moving when the user presses the body-level
@@ -112,7 +112,7 @@ assert.equal(movedTrigger.parentElement,target.document.body);
 assert.equal(movedTrigger.dataset.side,'right','the trigger should use the right side when it fits on screen');
 assert.equal(movedTrigger.style.left,'216px');
 assert.equal(movedTrigger.style.right,'auto');
-assert.equal(movedTrigger.style.top,'195px');
+assert.equal(movedTrigger.style.top,'202px');
 
 movedTrigger.focus();
 assert.equal(target.document.activeElement,movedTrigger,'the native button should accept keyboard focus');
@@ -139,6 +139,7 @@ assert.match(detailGestureSource,/MOTION_TRACK_MS/,'position tracking should be 
 assert.match(detailGestureSource,/mirrorIdleMotion|__idleMirrors/,'the trigger should ride the fan idle animation via a compositor-driven WAAPI mirror, not a per-frame position loop');
 assert.match(utilityButtonCss,/\.card-detail-trigger\s*\{[^}]*width:\s*44px;[^}]*height:\s*44px;/s,'the real mobile hit target should be 44px square');
 assert.match(utilityButtonCss,/\.card-detail-trigger-glyph\s*\{[^}]*width:\s*24px;[^}]*height:\s*24px;/s,'the visible medallion should retain its 24px size');
+assert.match(utilityButtonCss,/\.card-detail-trigger-glyph\s*\{[^}]*info%20button\.png/s,'the medallion should render the info-button art');
 
 cleanup();
 assert.equal(target.__cardDetailGesturesInstalled,false,'the controller should expose a working teardown path');

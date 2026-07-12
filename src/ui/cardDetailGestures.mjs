@@ -265,7 +265,7 @@ export function installCardDetailGestures(target=window){
     trigger=doc.createElement('button');
     trigger.type='button';
     trigger.className='card-detail-trigger';
-    trigger.innerHTML='<span class="card-detail-trigger-glyph" aria-hidden="true">?</span>';
+    trigger.innerHTML='<span class="card-detail-trigger-glyph" aria-hidden="true"></span>';
     trigger.setAttribute('aria-label','View selected card details');
     trigger.setAttribute('aria-haspopup','dialog');
     trigger.title='View card details';
@@ -316,9 +316,10 @@ export function installCardDetailGestures(target=window){
     const desiredLeft=side==='right'?rightBoxLeft:leftBoxLeft;
     const maxLeft=Math.max(VIEWPORT_MARGIN,vw-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN);
     const left=Math.max(VIEWPORT_MARGIN,Math.min(desiredLeft,maxLeft));
-    // Hang the medallion below the card: its top sits at the card's bottom edge
-    // (box top is visualInset above the glyph), so it extends down past it.
-    const desiredTop=restBottom-visualInset;
+    // Hang the medallion below the card with a small gap: its top sits
+    // TRIGGER_GAP under the card's bottom edge (box top is visualInset above
+    // the glyph).
+    const desiredTop=restBottom+TRIGGER_GAP-visualInset;
     const maxTop=Math.max(VIEWPORT_MARGIN,vh-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN);
     const top=Math.max(VIEWPORT_MARGIN,Math.min(desiredTop,maxTop));
 

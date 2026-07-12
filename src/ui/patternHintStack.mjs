@@ -13,22 +13,33 @@
 // selector list mirrors hand.css's own ::after opacity triggers so the panel
 // appears and disappears in lockstep with that pill's show/hide states.
 
-const ACTIVE_SELECTOR = [
+// A committed selection (sel / ability-picked) owns the hint panel; a transient
+// press only drives it when nothing is committed. These are queried separately
+// and in that order because querySelector returns the first match in DOM order,
+// not selector order -- otherwise pressing any card to the left of a selected
+// card (always the case for a selected rightmost card) would hijack its hint.
+const COMMITTED_SELECTOR = [
   '.hand .card.sel[data-hint-lines]',
-  '.hand .card.press-highlight[data-hint-lines]',
   '.hand .card.ability-picked[data-hint-lines]',
-  '.spread .card.press-highlight[data-hint-lines]',
   '.spread .card.ability-picked[data-hint-lines]',
+].join(',');
+
+const PRESS_SELECTOR = [
+  '.hand .card.press-highlight[data-hint-lines]',
+  '.spread .card.press-highlight[data-hint-lines]',
   '.spread .card.ability-target.press-highlight[data-hint-lines]',
   '.choices .card.press-highlight[data-hint-lines]',
 ].join(',');
 
-const ADVENTURE_ACTIVE_SELECTOR = [
+const COMMITTED_ADVENTURE_SELECTOR = [
   '.hand .card.sel[data-hint]',
-  '.hand .card.press-highlight[data-hint]',
   '.hand .card.ability-picked[data-hint]',
-  '.spread .card.press-highlight[data-hint]',
   '.spread .card.ability-picked[data-hint]',
+].join(',');
+
+const PRESS_ADVENTURE_SELECTOR = [
+  '.hand .card.press-highlight[data-hint]',
+  '.spread .card.press-highlight[data-hint]',
   '.spread .card.ability-target.press-highlight[data-hint]',
   '.choices .card.press-highlight[data-hint]',
 ].join(',');
@@ -114,8 +125,9 @@ export function installPatternHintStack(target = window){
   let frame = 0;
   const render = () => {
     frame = 0;
-    const activeSelector = adventureModeActive() ? `${ACTIVE_SELECTOR},${ADVENTURE_ACTIVE_SELECTOR}` : ACTIVE_SELECTOR;
-    const card = textHintsEnabled() ? doc.querySelector(activeSelector) : null;
+    const committedSelector = adventureModeActive() ? `${COMMITTED_SELECTOR},${COMMITTED_ADVENTURE_SELECTOR}` : COMMITTED_SELECTOR;
+    const pressSelector = adventureModeActive() ? `${PRESS_SELECTOR},${PRESS_ADVENTURE_SELECTOR}` : PRESS_SELECTOR;
+    const card = textHintsEnabled() ? (doc.querySelector(committedSelector) || doc.querySelector(pressSelector)) : null;
     const raw = card ? (adventureModeActive() ? (card.dataset.hintLines || card.dataset.hint || '') : (card.dataset.hintLines || '')) : '';
     const lines = raw.split('\n').filter(Boolean);
     const key = lines.join('\n');

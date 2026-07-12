@@ -158,7 +158,27 @@ export function installAudioControls(target = window) {
     cur = buildAudio(currentTrack, activeContext);
     cur.volume = contextVolume(activeContext);
     cur.preload = 'none';
-    cur.play().catch(() => { started = false; cur = null; currentTrack = null; });
+    let playResult;
+    try { playResult = cur.play(); } catch { playResult = null; }
+    Promise.resolve(playResult).then(() => {
+      // Autoplay (on load) or the gesture succeeded -- the fallback is done.
+      disarmGestureStart();
+    }).catch(() => {
+      // The browser blocked autoplay before any user gesture. Reset and leave
+      // the touch/click fallback armed so the first interaction starts it.
+      started = false;
+      if (cur) { try { cur.pause(); } catch {} cur.src = ''; cur = null; }
+      currentTrack = null;
+    });
+  }
+
+  function armGestureStart() {
+    document.addEventListener('touchstart', start, { capture: true });
+    document.addEventListener('click', start, { capture: true });
+  }
+  function disarmGestureStart() {
+    document.removeEventListener('touchstart', start, { capture: true });
+    document.removeEventListener('click', start, { capture: true });
   }
 
   const music = {
@@ -177,6 +197,9 @@ export function installAudioControls(target = window) {
   target.tlrSetMusicContext = function (name, options) { music.setContext(name, options); };
   target.setSfxVol = function (v) { target._sfxVol = v; };
 
-  document.addEventListener('touchstart', start, { capture: true, once: true });
-  document.addEventListener('click', start, { capture: true, once: true });
+  // Try to start the (main-menu) music as soon as the game loads. Browsers that
+  // permit autoplay begin immediately; those that block it before a user gesture
+  // fall through to the armed touch/click fallback (the historical behaviour).
+  armGestureStart();
+  start();
 }
