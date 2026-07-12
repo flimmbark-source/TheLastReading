@@ -1,6 +1,7 @@
 import { RANKS, SUITS } from '../data/cards.mjs';
 import { DEFAULT_UPGRADES, SCORING_PATTERNS, upgradedChips, upgradedMult } from '../data/scoringPatterns.mjs';
 import { applyRelicMeldsToScore, getScoringRelicMelds } from './relics.mjs';
+import { getConstellation } from '../data/constellations.mjs';
 
 function addChipMeld(result, name, chips, source = 'upgrade') {
   if (!chips) return;
@@ -76,7 +77,11 @@ function applyConstellationScoreAdjustments(result, cards, context) {
   if (!lost) return;
   result.baseChips -= lost;
   result.chips -= lost;
-  result.melds.push({ name: 'The Ashen Hand', chips: -lost, mult: 0, mode: 'chips', source: 'constellation' });
+  // Label the penalty with the active constellation's name (e.g. "Gemini") so
+  // players recognise it -- "The Ashen Hand" is the effect's internal name and
+  // appears nowhere else in the UI.
+  const constellationName = getConstellation(context.constellationId)?.name || 'Constellation';
+  result.melds.push({ name: constellationName, chips: -lost, mult: 0, mode: 'chips', source: 'constellation' });
 }
 
 function applyRankPatterns(result, cards, upgrades) {

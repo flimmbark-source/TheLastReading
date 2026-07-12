@@ -45,7 +45,7 @@ assert.equal(
   'real scoring patterns still create centered announcements',
 );
 assert.equal(
-  shouldAnnounceMeld(['The Ashen Hand', -1, 0, 'chips', 'constellation'], {}),
+  shouldAnnounceMeld(['Gemini', -1, 0, 'chips', 'constellation'], {}),
   false,
   'constellation score adjustments do not create centered pattern announcements',
 );
