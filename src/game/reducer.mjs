@@ -112,6 +112,7 @@ function scoringContext(run) {
     resonationBonus: run.resonationBonus,
     worldCarry: run.worldCarry,
     constellationId: run.constellationId,
+    carriedMult: run.carriedMult || 0,
   };
 }
 
@@ -132,6 +133,11 @@ function scoreReading(state) {
   const setNumber = (run.setIndex || 0) + 1;
   const setsPerRound = run.setsPerRound || SETS_PER_ROUND;
 
+  // The Endless Thread relic: carry this Set's built-up mult (above the base 1)
+  // into the next Set of the round. leaveMarket/flushHand clear it at round end.
+  const carriesMult = (persist.relics || []).includes('endless_thread');
+  const carriedMult = carriesMult ? Math.max(0, (score.mult || 1) - 1) : 0;
+
   const common = {
     lastScore: score,
     lastSetScore: score,
@@ -139,6 +145,7 @@ function scoreReading(state) {
     roundScore,
     setScores,
     roundPatternCount,
+    carriedMult,
   };
 
   if (passed) {
@@ -226,6 +233,7 @@ function flushHand(state, rng = Math.random) {
     thresholdBonus: (run.thresholdBonus || 0) + 10,
     roundScore: 0,
     setScores: [],
+    carriedMult: 0,
     ability: null,
     sourceCardId: null,
     busy: false,
@@ -490,6 +498,7 @@ function leaveMarket(state, rng = Math.random) {
     setScores: [],
     roundDiscardCount: 0,
     roundPatternCount: 0,
+    carriedMult: 0,
   });
 }
 
