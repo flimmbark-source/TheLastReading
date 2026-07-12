@@ -60,7 +60,7 @@ assert.equal(trigger.parentElement,target.document.body,'the trigger should use 
 assert.equal(trigger.dataset.side,'left','the trigger should swap to the left when the right edge would overflow');
 assert.equal(trigger.style.left,'340px','the medallion tucks flush inside the card left edge (350 - inset 10)');
 assert.equal(trigger.style.right,'auto');
-assert.equal(trigger.style.top,'195px','the medallion hangs below the card, glyph top at the card bottom (205 - inset 10)');
+assert.equal(trigger.style.top,'202px','the medallion hangs below the card with a gap, glyph top at 205 + gap 7 - inset 10');
 assert.equal(trigger.type,'button');
 assert.equal(trigger.getAttribute('aria-haspopup'),'dialog');
 assert.equal(trigger.querySelector('.card-detail-trigger-glyph')?.textContent,'?');
@@ -112,7 +112,7 @@ assert.equal(movedTrigger.parentElement,target.document.body);
 assert.equal(movedTrigger.dataset.side,'right','the trigger should use the right side when it fits on screen');
 assert.equal(movedTrigger.style.left,'216px');
 assert.equal(movedTrigger.style.right,'auto');
-assert.equal(movedTrigger.style.top,'195px');
+assert.equal(movedTrigger.style.top,'202px');
 
 movedTrigger.focus();
 assert.equal(target.document.activeElement,movedTrigger,'the native button should accept keyboard focus');
