@@ -169,7 +169,10 @@ function installStoreFrontTuning(target = window) {
 
     const callout = doc.querySelector('.relic-callout,.store-relic-callout,.store-pack-callout');
     if (!callout) return;
-    if (callout.contains(event.target)) return;
+    // A press on a contextual meaning word (a game-term) opens that term's own
+    // popover, so leave the market popup open in that case. Any other press --
+    // elsewhere inside the popup or outside it -- dismisses the popup.
+    if (event.target.closest?.('.game-term')) return;
     callout.remove();
     if (!event.target.closest('button,a,[role="button"]')) {
       event.preventDefault();
