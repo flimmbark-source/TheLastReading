@@ -1751,6 +1751,8 @@ export function installAdventureModeV3(target = window) {
     wrapReturnToMenuOnce();
     target.__tlrAdventureActive = true;
     target.__tlrAdventureApplyHint = adventureApplyHint;
+    // Load adventure's saved hint settings (defaults to hint text on).
+    target.tlrApplyModeHintSettings?.();
     installFreshProfile();
     session = newSession();
     ensureStyles(doc); ensureChrome(); forceTable(); installCardSigilBridge(); installPreviewListener();
