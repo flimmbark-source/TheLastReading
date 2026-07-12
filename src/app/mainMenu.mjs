@@ -130,6 +130,8 @@ export function installMainMenu(target = window) {
       'mode-return-hard-hide'
     );
     doc.body.classList.add('mode-reading');
+    // Restore the reading table's saved hint settings on entry.
+    (doc.defaultView || window).tlrApplyModeHintSettings?.();
 
     const mp = doc.getElementById('mpGame');
     if (mp) mp.classList.add('mp-hidden');

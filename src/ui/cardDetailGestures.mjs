@@ -13,6 +13,31 @@ const MOTION_TRACK_MAX_FRAMES=40;
 // base window is extended to cover any running transition up to this cap.
 const MOTION_TRACK_MAX_MS=2600;
 
+// Drag-to-place: the player can drag the medallion off the card and drop it
+// anywhere; that viewport spot is remembered for every selected card. Dropping
+// it back near the card's natural spot re-attaches it.
+const DETAIL_POS_KEY='tlr_card_detail_pos';
+const DRAG_THRESHOLD=6;   // px of movement before a press becomes a drag
+const REATTACH_DIST=48;   // drop within this of the natural spot to re-attach
+
+function clampVal(v,min,max){return Math.max(min,Math.min(v,max));}
+
+function loadCustomPos(target){
+  try{
+    const raw=target.localStorage?.getItem(DETAIL_POS_KEY);
+    if(!raw)return null;
+    const p=JSON.parse(raw);
+    if(p&&Number.isFinite(p.left)&&Number.isFinite(p.top))return {left:p.left,top:p.top};
+  }catch{}
+  return null;
+}
+function saveCustomPos(target,pos){
+  try{target.localStorage?.setItem(DETAIL_POS_KEY,JSON.stringify(pos));}catch{}
+}
+function clearCustomPos(target){
+  try{target.localStorage?.removeItem(DETAIL_POS_KEY);}catch{}
+}
+
 function legacyState(target=window){
   if(target?.tlrRuntime?.state)return target.tlrRuntime.state;
   if(target?.state)return target.state;
@@ -185,6 +210,8 @@ export function installCardDetailGestures(target=window){
   let motionFramesRemaining=0;
   let motionHardStop=0;
   let observer=null;
+  let customPos=loadCustomPos(target);
+  let dragged=false;
 
   const cancelScheduledPosition=()=>{
     if(positionRaf&&typeof target.cancelAnimationFrame==='function')target.cancelAnimationFrame(positionRaf);
@@ -220,6 +247,7 @@ export function installCardDetailGestures(target=window){
     if(!trigger)return;
     if(restoreFocus&&doc.activeElement===trigger)restoreHandFocus();
     trigger.removeEventListener('pointerdown',onTriggerPointerDown);
+    trigger.removeEventListener('pointermove',onTriggerPointerMove);
     trigger.removeEventListener('pointerup',onTriggerPointerEnd);
     trigger.removeEventListener('pointercancel',onTriggerPointerEnd);
     trigger.removeEventListener('click',onTriggerClick);
@@ -232,18 +260,67 @@ export function installCardDetailGestures(target=window){
 
   function onTriggerPointerDown(event){
     if(event.pointerType==='mouse'&&event.button!==0)return;
-    triggerPress={pointerId:event.pointerId};
+    dragged=false;
+    const rect=trigger.getBoundingClientRect();
+    triggerPress={
+      pointerId:event.pointerId,
+      startX:event.clientX,startY:event.clientY,
+      grabX:event.clientX-rect.left,grabY:event.clientY-rect.top,
+      lastLeft:rect.left,lastTop:rect.top,
+      dragging:false,
+    };
     cancelScheduledPosition();
     cancelMotionTracking();
     setIdleMirrorPaused(trigger,true);
     try{trigger?.setPointerCapture?.(event.pointerId);}catch{}
   }
 
+  function onTriggerPointerMove(event){
+    if(!triggerPress||event.pointerId!==triggerPress.pointerId||!trigger)return;
+    const dx=event.clientX-triggerPress.startX;
+    const dy=event.clientY-triggerPress.startY;
+    if(!triggerPress.dragging){
+      if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
+      triggerPress.dragging=true;
+      trigger.classList.add('is-dragging');
+      clearTriggerMirror(trigger); // stop riding the card's animation mid-drag
+    }
+    const vw=viewportWidth(target);
+    const vh=viewportHeight(target);
+    const left=clampVal(event.clientX-triggerPress.grabX,VIEWPORT_MARGIN,Math.max(VIEWPORT_MARGIN,vw-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN));
+    const top=clampVal(event.clientY-triggerPress.grabY,VIEWPORT_MARGIN,Math.max(VIEWPORT_MARGIN,vh-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN));
+    triggerPress.lastLeft=left;
+    triggerPress.lastTop=top;
+    trigger.style.right='auto';
+    trigger.style.left=`${left}px`;
+    trigger.style.top=`${top}px`;
+    if(event.cancelable)event.preventDefault();
+  }
+
   function onTriggerPointerEnd(event){
     if(!triggerPress||event.pointerId!==triggerPress.pointerId)return;
+    const {dragging,lastLeft,lastTop}=triggerPress;
     try{trigger?.releasePointerCapture?.(event.pointerId);}catch{}
     triggerPress=null;
     setIdleMirrorPaused(trigger,false);
+    if(dragging){
+      trigger?.classList.remove('is-dragging');
+      dragged=true; // the click synthesised after a drag must not open the detail
+      // Suppress the trailing click so it can't deselect the card or open detail.
+      target.__handGestureSuppressClickUntil=now(target)+800;
+      const cardEl=selectedHandCard(target);
+      const nat=cardEl&&cardEl.isConnected?naturalPosition(cardEl):null;
+      if(nat&&Math.hypot(lastLeft-nat.left,lastTop-nat.top)<=REATTACH_DIST){
+        // Dropped back on the card -- re-attach so it follows the card again.
+        customPos=null;
+        clearCustomPos(target);
+      }else{
+        customPos={left:lastLeft,top:lastTop};
+        saveCustomPos(target,customPos);
+      }
+      schedulePosition();
+      return;
+    }
     // Native click is dispatched after pointerup. Queue alignment for the next
     // frame so the hit target stays fixed through the complete click sequence.
     if(typeof target.requestAnimationFrame==='function')target.requestAnimationFrame(()=>schedulePosition());
@@ -253,6 +330,7 @@ export function installCardDetailGestures(target=window){
   function onTriggerClick(event){
     event.preventDefault();
     event.stopPropagation();
+    if(dragged){dragged=false;return;} // a drag just ended -- don't open the detail
     const uid=Number(trigger?.dataset?.uid);
     const card=Number.isFinite(uid)?cardByUid(uid,target):null;
     if(!card)return;
@@ -270,6 +348,7 @@ export function installCardDetailGestures(target=window){
     trigger.setAttribute('aria-haspopup','dialog');
     trigger.title='View card details';
     trigger.addEventListener('pointerdown',onTriggerPointerDown);
+    trigger.addEventListener('pointermove',onTriggerPointerMove);
     trigger.addEventListener('pointerup',onTriggerPointerEnd);
     trigger.addEventListener('pointercancel',onTriggerPointerEnd);
     trigger.addEventListener('click',onTriggerClick);
@@ -277,9 +356,41 @@ export function installCardDetailGestures(target=window){
     return trigger;
   };
 
+  const clearTriggerMirror=el=>{
+    if(Array.isArray(el.__idleMirrors))for(const anim of el.__idleMirrors){try{anim.cancel();}catch{}}
+    el.__idleMirrors=[];
+    el.__idleMirrorUid=undefined;
+    el.__idleMirrorSig=undefined;
+  };
+
+  // The card-following spot: the medallion tucks under the card at its outer
+  // corner -- flush inside the card's outer side edge, hanging just below the
+  // bottom edge, at the card's resting position (rect minus the live idle bob).
+  const naturalPosition=cardEl=>{
+    const rect=cardEl.getBoundingClientRect();
+    if(rect.width<=0||rect.height<=0)return null;
+    const vw=viewportWidth(target);
+    const vh=viewportHeight(target);
+    const visualInset=(TRIGGER_HIT_SIZE-TRIGGER_VISUAL_SIZE)/2;
+    const idle=readIdleOffset(cardEl,target);
+    const restRight=rect.right-idle.tx;
+    const restLeft=rect.left-idle.tx;
+    const restBottom=rect.bottom-idle.ty;
+    const rightBoxLeft=restRight-TRIGGER_VISUAL_SIZE-visualInset;
+    const leftBoxLeft=restLeft-visualInset;
+    const rightFits=rightBoxLeft+TRIGGER_HIT_SIZE<=vw-VIEWPORT_MARGIN;
+    const leftFits=leftBoxLeft>=VIEWPORT_MARGIN;
+    const side=rightFits||!leftFits?'right':'left';
+    const maxLeft=Math.max(VIEWPORT_MARGIN,vw-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN);
+    const left=clampVal(side==='right'?rightBoxLeft:leftBoxLeft,VIEWPORT_MARGIN,maxLeft);
+    const maxTop=Math.max(VIEWPORT_MARGIN,vh-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN);
+    const top=clampVal(restBottom+TRIGGER_GAP-visualInset,VIEWPORT_MARGIN,maxTop);
+    return {left,top,side};
+  };
+
   const positionTrigger=()=>{
     // A moving target can lose the browser-generated click between pointerdown
-    // and pointerup. Hold the viewport portal still for the active press.
+    // and pointerup. Hold the viewport portal still for the active press/drag.
     if(triggerPress&&trigger?.isConnected)return true;
 
     const cardEl=selectedHandCard(target);
@@ -288,46 +399,31 @@ export function installCardDetailGestures(target=window){
     const uid=Number(cardEl.dataset.uid);
     if(!Number.isFinite(uid)){removeTrigger();return false;}
 
-    const rect=cardEl.getBoundingClientRect();
-    if(rect.width<=0||rect.height<=0){removeTrigger();return false;}
-
     const detailTrigger=ensureTrigger();
-    const vw=viewportWidth(target);
-    const vh=viewportHeight(target);
-    const visualInset=(TRIGGER_HIT_SIZE-TRIGGER_VISUAL_SIZE)/2;
-    // Park the trigger at the card's resting spot (rect minus the live idle-bob
-    // offset). The mirrored animation re-adds that bob on the compositor, so the
-    // medallion rides the fan's wave without the trigger snapping every cycle.
-    const idle=readIdleOffset(cardEl,target);
-    const restRight=rect.right-idle.tx;
-    const restLeft=rect.left-idle.tx;
-    const restBottom=rect.bottom-idle.ty;
-    // Tuck the medallion under the card at its outer corner: the visible circle
-    // sits flush inside the card's outer side edge, and hangs just below the
-    // card's bottom edge. The 44px hit box is centred on the medallion, so it
-    // extends visualInset past the circle on every side.
-    const rightGlyphLeft=restRight-TRIGGER_VISUAL_SIZE;
-    const leftGlyphLeft=restLeft;
-    const rightBoxLeft=rightGlyphLeft-visualInset;
-    const leftBoxLeft=leftGlyphLeft-visualInset;
-    const rightFits=rightBoxLeft+TRIGGER_HIT_SIZE<=vw-VIEWPORT_MARGIN;
-    const leftFits=leftBoxLeft>=VIEWPORT_MARGIN;
-    const side=rightFits||!leftFits?'right':'left';
-    const desiredLeft=side==='right'?rightBoxLeft:leftBoxLeft;
-    const maxLeft=Math.max(VIEWPORT_MARGIN,vw-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN);
-    const left=Math.max(VIEWPORT_MARGIN,Math.min(desiredLeft,maxLeft));
-    // Hang the medallion below the card with a small gap: its top sits
-    // TRIGGER_GAP under the card's bottom edge (box top is visualInset above
-    // the glyph).
-    const desiredTop=restBottom+TRIGGER_GAP-visualInset;
-    const maxTop=Math.max(VIEWPORT_MARGIN,vh-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN);
-    const top=Math.max(VIEWPORT_MARGIN,Math.min(desiredTop,maxTop));
-
     detailTrigger.dataset.uid=String(uid);
-    detailTrigger.dataset.side=side;
-    detailTrigger.style.top=`${top}px`;
+
+    if(customPos){
+      // Detached: the medallion sits where the player dropped it -- the same
+      // spot for every selected card -- clamped into the current viewport. No
+      // card-animation mirror while it is off the card.
+      const vw=viewportWidth(target);
+      const vh=viewportHeight(target);
+      const left=clampVal(customPos.left,VIEWPORT_MARGIN,Math.max(VIEWPORT_MARGIN,vw-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN));
+      const top=clampVal(customPos.top,VIEWPORT_MARGIN,Math.max(VIEWPORT_MARGIN,vh-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN));
+      detailTrigger.dataset.side='free';
+      detailTrigger.style.right='auto';
+      detailTrigger.style.left=`${left}px`;
+      detailTrigger.style.top=`${top}px`;
+      clearTriggerMirror(detailTrigger);
+      return true;
+    }
+
+    const nat=naturalPosition(cardEl);
+    if(!nat){removeTrigger();return false;}
+    detailTrigger.dataset.side=nat.side;
+    detailTrigger.style.top=`${nat.top}px`;
     detailTrigger.style.right='auto';
-    detailTrigger.style.left=`${left}px`;
+    detailTrigger.style.left=`${nat.left}px`;
 
     // Re-mirror when the followed card changes or when its set of looping
     // animations changes (e.g. card-wave registering a frame after selection).
@@ -393,6 +489,12 @@ export function installCardDetailGestures(target=window){
   };
 
   target.__tlrSyncCardDetailTrigger=positionTrigger;
+  // Reset the medallion back under the card, discarding any dragged placement.
+  target.tlrResetInfoButton=()=>{
+    customPos=null;
+    clearCustomPos(target);
+    schedulePosition();
+  };
 
   const hand=doc.getElementById('hand');
   if(hand&&typeof target.MutationObserver==='function'){
@@ -496,6 +598,7 @@ export function installCardDetailGestures(target=window){
     doc.removeEventListener('click',onDocumentClick,true);
     doc.removeEventListener('dblclick',onDocumentDoubleClick,true);
     delete target.__tlrSyncCardDetailTrigger;
+    delete target.tlrResetInfoButton;
     delete target.__tlrCardDetailGesturesCleanup;
     target.__cardDetailGesturesInstalled=false;
   };

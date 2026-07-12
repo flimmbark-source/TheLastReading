@@ -56,7 +56,9 @@ body.presentation-surface-market .store-reserve-display {
   min-width: 84px;
   padding: 7px 11px 8px;
   border: 1px solid rgba(213,170,90,.34);
-  border-radius: 999px 999px 12px 12px;
+  /* Plain rounded rectangle -- the old 999px top corners read as an odd
+     half-circle dome above the reserve. */
+  border-radius: 12px;
   background:
     radial-gradient(circle at 50% 18%, rgba(255,225,158,.1), transparent 50%),
     linear-gradient(180deg, rgba(54,35,18,.92), rgba(21,13,8,.94));

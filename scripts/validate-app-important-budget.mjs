@@ -128,7 +128,13 @@ const appStyleFiles = [
 // #abilityPrompt/#purgePrompt out into their own :not(.show)-qualified rule,
 // leaving the other 5 selectors' blanket hide alone — two rules where there
 // was one, so a second declaration, not a tracking-gap artifact.
-const importantBudget = 652;
+// 652 -> 653 (hand.css, a REAL +1): the combined hover/sel z-index:999 rule was
+// split so the :hover raise is scoped to @media(hover:hover) -- stopping a
+// touch-press from lifting a card's z-index before it's selected -- while
+// .card.sel keeps its own always-on important z-index (needed to beat the
+// per-card inline zIndex renderHand sets). One rule became two important
+// declarations.
+const importantBudget = 653;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);

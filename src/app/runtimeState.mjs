@@ -31,6 +31,44 @@ export function createInitialState(){
 
 export function createInitialHintSettings(){return {patterns:false,relics:false,patternText:false};}
 
+// Hint settings are remembered separately per mode. Adventure starts with hint
+// text on; the reading table starts with hints off. Whatever the player last
+// chose in a mode is restored when they re-enter it.
+const HINT_MODE_DEFAULTS={
+  reading:{patterns:false,relics:false,patternText:false},
+  adventure:{patterns:true,relics:false,patternText:true},
+};
+function hintMode(target){
+  return (target.__tlrAdventureActive||document.body?.classList?.contains('mode-adventure'))?'adventure':'reading';
+}
+function hintStorageKey(target){return 'tlr_hint_settings_'+hintMode(target);}
+function loadHintSettingsForMode(target){
+  try{
+    const raw=target.localStorage?.getItem(hintStorageKey(target));
+    if(raw){const p=JSON.parse(raw);if(p&&typeof p==='object')return {patterns:!!p.patterns,relics:!!p.relics,patternText:!!p.patternText};}
+  }catch(e){}
+  return {...(HINT_MODE_DEFAULTS[hintMode(target)]||HINT_MODE_DEFAULTS.reading)};
+}
+function saveHintSettingsForMode(target){
+  try{target.localStorage?.setItem(hintStorageKey(target),JSON.stringify(target.hintSettings));}catch(e){}
+}
+function hintLevelFromSettings(s){return s.patternText?2:(s.patterns?1:0);}
+function syncHintBar(level){
+  const bar=document.getElementById('hintLevelBar');
+  if(!bar)return;
+  bar.querySelectorAll('.hint-level-seg').forEach(btn=>{
+    const segLevel=Number(btn.dataset.level);
+    const isActive=segLevel===level;
+    btn.classList.toggle('active',isActive);
+    btn.classList.toggle('on',segLevel>=1&&segLevel<=level);
+    btn.setAttribute('aria-pressed',String(isActive));
+  });
+}
+function syncHintCheckboxes(target){
+  const relics=document.getElementById('hintRelics');
+  if(relics)relics.checked=!!target.hintSettings.relics;
+}
+
 function readGlobalLexical(name){
   try{return Function(`try{return typeof ${name}==='undefined'?undefined:${name}}catch(e){return undefined}`)();}
   catch(e){return undefined;}
@@ -83,22 +121,25 @@ export function installRuntimeState(target = window){
   if(typeof target.$!=='function')target.$=selector=>document.querySelector(selector);
   if(typeof target.shuffle!=='function')target.shuffle=array=>{for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;};
   if(typeof target._slots!=='function')target._slots=()=>target._slotEls||(target._slotEls=Array.from(document.querySelectorAll('.slot')));
-  if(typeof target.toggleHintSetting!=='function')target.toggleHintSetting=(key,value)=>{target.hintSettings[key]=value;if(target._hintsCache)target._hintsCache.clear();if(typeof target.render==='function')target.render();};
+  if(typeof target.toggleHintSetting!=='function')target.toggleHintSetting=(key,value)=>{target.hintSettings[key]=value;saveHintSettingsForMode(target);if(target._hintsCache)target._hintsCache.clear();if(typeof target.render==='function')target.render();};
   if(typeof target.setHintLevel!=='function')target.setHintLevel=(level)=>{
     target.hintSettings.patterns=level>=1;
     target.hintSettings.patternText=level>=2;
-    const bar=document.getElementById('hintLevelBar');
-    if(bar){
-      bar.querySelectorAll('.hint-level-seg').forEach(btn=>{
-        const segLevel=Number(btn.dataset.level);
-        const isActive=segLevel===level;
-        btn.classList.toggle('active',isActive);
-        btn.classList.toggle('on',segLevel>=1&&segLevel<=level);
-        btn.setAttribute('aria-pressed',String(isActive));
-      });
-    }
+    syncHintBar(level);
+    saveHintSettingsForMode(target);
     if(target._hintsCache)target._hintsCache.clear();
     if(typeof target.render==='function')target.render();
+    target.__patternHintStackRefresh?.();
+  };
+  // Load and apply the hint settings saved for the current mode (adventure vs
+  // reading), or that mode's default. Called on mode entry.
+  target.tlrApplyModeHintSettings=()=>{
+    target.hintSettings=loadHintSettingsForMode(target);
+    syncHintBar(hintLevelFromSettings(target.hintSettings));
+    syncHintCheckboxes(target);
+    if(target._hintsCache)target._hintsCache.clear();
+    if(typeof target.render==='function')target.render();
+    target.__patternHintStackRefresh?.();
   };
 
   const runtime={

@@ -172,6 +172,15 @@ export const RELICS = Object.freeze({
     tags: ['peek_support', 'sight_support', 'consistency', 'ability_support'],
     description: 'Once per [[reading]]: [[reveal]] the top 3 cards of your [[deck]]. [[take]] 1; put the rest on the bottom.',
   },
+  endless_thread: {
+    id: 'endless_thread',
+    rarity: 'rare',
+    name: 'The Endless Thread',
+    icon: '🧵',
+    event: RELIC_EVENT_TYPES.SCORING,
+    tags: ['multiplier', 'score_carry', 'scaling', 'round_support'],
+    description: '[[mult|Mult]] persists between [[reading|Readings]].',
+  },
 });
 
 export const RELIC_LIST = Object.freeze(Object.values(RELICS));

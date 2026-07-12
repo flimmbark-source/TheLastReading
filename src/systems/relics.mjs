@@ -94,6 +94,11 @@ export function getScoringRelicMelds(cards, relics = [], context = {}) {
     melds.push(chipMeld(RELICS.the_world.name, context.worldCarry));
   }
 
+  // The mult built up in earlier Sets of this round carries forward.
+  if (hasRelic(relics, RELICS.endless_thread.id) && (context.carriedMult || 0) > 0) {
+    melds.push(additiveMultMeld(RELICS.endless_thread.name, Number((context.carriedMult || 0).toFixed(2))));
+  }
+
   return melds.filter(Boolean);
 }
 
