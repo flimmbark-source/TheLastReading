@@ -489,6 +489,12 @@ export function installCardDetailGestures(target=window){
   };
 
   target.__tlrSyncCardDetailTrigger=positionTrigger;
+  // Reset the medallion back under the card, discarding any dragged placement.
+  target.tlrResetInfoButton=()=>{
+    customPos=null;
+    clearCustomPos(target);
+    schedulePosition();
+  };
 
   const hand=doc.getElementById('hand');
   if(hand&&typeof target.MutationObserver==='function'){
@@ -592,6 +598,7 @@ export function installCardDetailGestures(target=window){
     doc.removeEventListener('click',onDocumentClick,true);
     doc.removeEventListener('dblclick',onDocumentDoubleClick,true);
     delete target.__tlrSyncCardDetailTrigger;
+    delete target.tlrResetInfoButton;
     delete target.__tlrCardDetailGesturesCleanup;
     target.__cardDetailGesturesInstalled=false;
   };
