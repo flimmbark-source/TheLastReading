@@ -529,7 +529,6 @@ export function installAdventureModeV3(target = window) {
     let nodesSvg = '';
     for (const node of APPROACH_WEB_NODE_ORDER) {
       const p = pos[node];
-      const sigil = sigilForNode(node);
       const approach = approachByNode.get(node);
       const isAcc = Boolean(approach);
       const inHand = handNodes.has(node);
@@ -542,15 +541,26 @@ export function installAdventureModeV3(target = window) {
       const textFill = isAcc ? '#f3c969' : 'rgba(200,180,140,.88)';
       const circleStroke = isAcc ? '#f3c969' : 'rgba(180,150,90,.55)';
       const circleFill = isAcc ? 'rgba(36,22,8,.97)' : 'rgba(22,13,7,.95)';
-      const handRing = inHand
-        ? `<circle cx="${p.x}" cy="${p.y}" r="${NR + 4}" fill="none" stroke="rgba(127,199,255,.95)" stroke-width="2" stroke-dasharray="2.5 2.5"/>`
+      // Deck badge: a small twin-card glyph tucked against the node circle for
+      // every approach the player is currently holding a card for, so the web
+      // reads which approaches are live in hand. Replaces an earlier ambiguous
+      // blue dashed ring that looked like an unexplained status marker.
+      const bx = p.x + NR - 3, by = p.y - NR - 4;
+      const handBadge = inHand
+        ? `<g class="adv-web-deck-badge">
+            <rect x="${bx - 1}" y="${(by + 2).toFixed(1)}" width="6.5" height="9" rx="1.5" fill="#241608" stroke="#f3c969" stroke-width="1"/>
+            <rect x="${bx + 2}" y="${by}" width="6.5" height="9" rx="1.5" fill="#3a2413" stroke="#f3c969" stroke-width="1"/>
+          </g>`
         : '';
       const requirementText = requirement === null ? ''
         : `<text x="${p.x}" y="${p.y}" text-anchor="middle" dominant-baseline="central" fill="#fff0bd" stroke="#160b05" stroke-width="2.5" paint-order="stroke" font-size="10" font-weight="900" font-family="system-ui,sans-serif">${requirement}</text>`;
-      const label = sigil?.name || node.charAt(0).toUpperCase() + node.slice(1);
+      // Match the adventure hint system, which labels cards with the raw
+      // approach (node) name rather than the sigil name.
+      const label = node.charAt(0).toUpperCase() + node.slice(1);
       nodesSvg += `<g data-approach-node="${esc(node)}">
-        ${handRing}<circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${circleFill}" stroke="${circleStroke}" stroke-width="${isAcc ? 1.5 : 1}"/>
+        <circle cx="${p.x}" cy="${p.y}" r="${NR}" fill="${circleFill}" stroke="${circleStroke}" stroke-width="${isAcc ? 1.5 : 1}"/>
         ${requirementText}
+        ${handBadge}
         <text x="${lx}" y="${ly}" text-anchor="${anchor}" dominant-baseline="middle" fill="${textFill}" stroke="rgba(18,10,4,.8)" stroke-width="3" paint-order="stroke" font-size="14" font-weight="${isAcc ? 700 : 400}" font-family="system-ui,sans-serif">${esc(label)}</text>
       </g>`;
     }
