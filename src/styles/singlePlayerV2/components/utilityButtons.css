@@ -83,13 +83,20 @@
     place-items: center;
     border: 0;
     background: transparent;
-    cursor: pointer;
+    cursor: grab;
     pointer-events: auto;
-    touch-action: manipulation;
+    /* none (not manipulation) so a touch-drag repositions the medallion instead
+       of scrolling the page. */
+    touch-action: none;
     -webkit-tap-highlight-color: transparent;
     /* Sit above the spread even when .spread-wrap is boosted to 10060 (score
        preview), while staying below the detail modal/backdrop. */
     z-index: 10075;
+  }
+
+  .card-detail-trigger.is-dragging {
+    cursor: grabbing;
+    z-index: 10079;
   }
 
   .card-detail-trigger-glyph {
