@@ -184,8 +184,25 @@ function ensureStyle(doc) {
         padding:5px 12px 6px!important;
         pointer-events:none!important;
       }
+      /* Status chips otherwise sit static in the full-width HUD directly
+         under the event hero, overlapping the board/cards. Pull them out to
+         a stacked column pinned to the top-right corner (placeholder spot)
+         so they clear the play area. Chips re-enable pointer-events below. */
       body.mode-adventure #advHud .adv-hud__statuses{
-        position:static!important;
+        position:fixed!important;
+        top:max(8px,env(safe-area-inset-top))!important;
+        right:4px!important;
+        left:auto!important;
+        flex-direction:column!important;
+        align-items:flex-end!important;
+        gap:5px!important;
+        z-index:47!important;
+        pointer-events:none!important;
+      }
+      body.mode-adventure #advHud .adv-hud__status-row{
+        flex-direction:column!important;
+        align-items:flex-end!important;
+        gap:5px!important;
       }
       .adv-event-hero{height:clamp(128px,38vw,156px);border-radius:7px}
       .adv-event-hero__title{top:7px;left:10px;right:10px}
