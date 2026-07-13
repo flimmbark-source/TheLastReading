@@ -1873,7 +1873,11 @@ export function installAdventureModeV3(target = window) {
     const trait = `<div class="adv-pilot-trait">${esc(packet.traitLabel)}${packet.choiceLabel ? ' · ' + esc(packet.choiceLabel) : ''}</div>`;
     const warn = terminal ? `<div class="adv-warnline">The danger you carried: ${esc(pilotWarningForSource(terminal.warningSource) || terminal.warningSource)}</div>` : '';
     const cons = lines ? `<ul class="adv-consequences">${lines}</ul>` : '';
-    show(`<div class="result-panel ${terminal ? 'fail' : 'pass'}">${head}${trait}${narrative}${warn}${cons}
+    // data-adv-fx lets the interaction-FX bridge play the card animation for a
+    // pilot outcome (which has no Failure/Success/Great Success tier of its own):
+    // a terminal reads as the "failure" flourish, any other outcome as "success".
+    const fxTier = terminal ? 'failure' : 'success';
+    show(`<div class="result-panel ${terminal ? 'fail' : 'pass'}" data-adv-fx="${fxTier}">${head}${trait}${narrative}${warn}${cons}
       <div class="rbtns"><button class="btn-gold" onclick="tlrAdventureV3AfterOutcome()">Continue</button></div></div>`);
     target.tutSignal?.('advCardPlaced');
   }

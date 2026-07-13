@@ -2,6 +2,7 @@ import { installAdventureCardSigils } from './adventureCardSigils.mjs?v=5';
 import { installAdventureSetHandFlow } from './adventureSetHandFlow.mjs?v=1';
 import { installAdventureItemPopups } from './adventureItemPopups.mjs?v=5';
 import { ADVENTURE_EVENTS } from '../data/adventure/events.mjs';
+import { getPilotEvent } from '../data/adventure/pilot/pilotContent.mjs';
 import { getEventApproaches } from '../data/adventure/eventApproaches.mjs';
 import { cardAdventureProfile } from '../data/adventure/cardNodes.mjs';
 import { routeNode } from '../systems/adventure/nodeGraph.mjs';
@@ -15,7 +16,12 @@ import {
 export { NODE_VISUALS, OUTCOME_VISUALS, playAdventureInteractionFx };
 
 function tierFromHtml(html) {
-  const match = String(html || '').match(/<div class="rhead"><h3[^>]*>(Great Success|Success|Failure)<\/h3>/i);
+  const source = String(html || '');
+  // Consequence-pilot outcomes carry no Failure/Success/Great Success tier; they
+  // declare the animation flourish they want via data-adv-fx.
+  const fx = source.match(/data-adv-fx="(failure|success|great_success)"/i);
+  if (fx) return fx[1].toLowerCase();
+  const match = source.match(/<div class="rhead"><h3[^>]*>(Great Success|Success|Failure)<\/h3>/i);
   if (!match) return null;
   const label = match[1].toLowerCase();
   return label === 'great success' ? 'great_success' : label;
@@ -25,8 +31,14 @@ function eventFromDeck(doc) {
   const deck = doc.getElementById('advEventDeck');
   const id = deck?.dataset?.eventId;
   if (id) {
+    // Pilot events take precedence so the animation resolves against the pilot's
+    // card-first node rather than a legacy routing table.
+    const pilot = getPilotEvent(id);
+    if (pilot) return pilot;
     const byId = ADVENTURE_EVENTS.find(event => event.id === id);
     if (byId) return byId;
+    // A generated/placeholder pilot stage still animates from the deck snapshot.
+    return { id };
   }
   const title = deck?.querySelector('.adv-event-hero__title, .adv-deck__title')?.textContent?.trim() || '';
   return ADVENTURE_EVENTS.find(event => event.title === title) || null;
