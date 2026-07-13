@@ -204,6 +204,26 @@ function ensureStyles(doc) {
     #advDebugPanel .adv-debug-row{display:grid;grid-template-columns:1fr auto;gap:5px;margin:5px 0}
     #advDebugPanel select,#advDebugPanel input,#advDebugPanel button{min-width:0;font-size:10px;padding:4px 6px}
 
+    /* Consequence-pilot declutter: a one-card consequence event does not use the
+       Score-Mode reading apparatus, so hide the card ability plaques and the
+       discard / purge / mulligan / abilities / scoring controls (and their
+       drag drop-target labels). Scoped to body.adv-pilot so legacy Adventure and
+       Score Mode are untouched. */
+    body.adv-pilot .card .plaque{display:none!important}
+    body.adv-pilot #discardBtn,
+    body.adv-pilot #purgeBtn,
+    body.adv-pilot #purgeConfirm,
+    body.adv-pilot #mullBtn,
+    body.adv-pilot #abilitiesBtn,
+    body.adv-pilot #scoringBtn,
+    body.adv-pilot .spread-actions .sbtn-discard,
+    body.adv-pilot .spread-actions .sbtn-purge,
+    body.adv-pilot .spread-actions .sbtn-mull{display:none!important}
+    body.adv-pilot .spread-actions .sbtn.card-drop-target::after{content:none!important}
+
+    /* Keep the event description readable above any residual table chrome. */
+    body.adv-pilot .adv-event-desc{position:relative;z-index:30}
+
     /* Consequence pilot chrome — strain + dangerous-status warnings replace the
        Resolve pips, and outcomes show authored consequence lines, no tiers. */
     .adv-strain{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(180deg,rgba(30,21,13,.93),rgba(17,11,7,.92));
@@ -347,7 +367,8 @@ export function installAdventureModeV3(target = window) {
     const body = doc.body;
     body.classList.remove('mp-game-active', 'mode-attic', 'mode-to-attic', 'mode-to-table', 'mode-table-return', 'mode-return-hard-hide');
     session.addedClasses = [];
-    for (const cls of [...TABLE_CLASSES, MODE_CLASS]) {
+    const modeClasses = USE_CONSEQUENCE_PILOT ? [...TABLE_CLASSES, MODE_CLASS, 'adv-pilot'] : [...TABLE_CLASSES, MODE_CLASS];
+    for (const cls of modeClasses) {
       if (!body.classList.contains(cls)) { body.classList.add(cls); session.addedClasses.push(cls); }
     }
     for (const [id, cls] of [['mpGame', 'mp-hidden'], ['loadoutScreen', 'loadout-hidden'], ['matchmakingScreen', 'mm-screen-hidden']]) {
