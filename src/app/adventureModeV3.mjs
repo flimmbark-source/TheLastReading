@@ -34,6 +34,31 @@ import {
   effectiveEventRequirement,
 } from '../systems/adventure/singleCardRun.mjs';
 import { applyResolution, clampResolve } from '../systems/adventure/run.mjs';
+// Consequence pilot engine. When USE_CONSEQUENCE_PILOT is on, Adventure Mode
+// resolves each played card DIRECTLY by its Adventure trait (no routing, no
+// potency-vs-requirement, no Failure/Success/Great Success tier, no Resolve) and
+// carries authored consequences forward through the eight-stage run. The legacy
+// routed/Resolve resolver below is left intact but is no longer the path a
+// player hits.
+import {
+  startPilotRun,
+  enterStage,
+  resolveCurrent as resolvePilotCurrent,
+  resolveChoice as resolvePilotChoice,
+  applyResolution as applyPilotResolution,
+  applyRecovery as applyPilotRecovery,
+  advanceStage as advancePilotStage,
+} from '../systems/adventure/pilot/pilotRun.mjs';
+import { buildFinalePayload as buildPilotFinale } from '../systems/adventure/pilot/pilotFinale.mjs';
+import {
+  PILOT_STATUSES,
+  PILOT_MATERIALS,
+  pilotNounName,
+} from '../data/adventure/pilot/vocab.mjs';
+import { warningForSource as pilotWarningForSource } from '../systems/adventure/pilot/pilotTerminal.mjs';
+
+// The consequence pilot IS Adventure Mode's play experience now.
+const USE_CONSEQUENCE_PILOT = true;
 
 const STYLE_ID = 'adventure-mode-v3-style';
 const MODE_CLASS = 'mode-adventure';
@@ -178,6 +203,29 @@ function ensureStyles(doc) {
     #advDebugPanel .adv-debug-title{font-size:11px;color:#f3c969;text-transform:uppercase;letter-spacing:.1em;margin-bottom:7px}
     #advDebugPanel .adv-debug-row{display:grid;grid-template-columns:1fr auto;gap:5px;margin:5px 0}
     #advDebugPanel select,#advDebugPanel input,#advDebugPanel button{min-width:0;font-size:10px;padding:4px 6px}
+
+    /* Consequence pilot chrome — strain + dangerous-status warnings replace the
+       Resolve pips, and outcomes show authored consequence lines, no tiers. */
+    .adv-strain{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(180deg,rgba(30,21,13,.93),rgba(17,11,7,.92));
+      border:1px solid rgba(228,188,111,.34);border-radius:12px;padding:7px 11px}
+    .adv-strain__label{font:800 9px/1 'Cinzel',Georgia,serif;letter-spacing:.17em;text-transform:uppercase;color:#bd9c63}
+    .adv-strain__val{font:800 11px/1 'Cinzel',Georgia,serif;letter-spacing:.06em;text-transform:capitalize}
+    .adv-strain--clear .adv-strain__val{color:#9fd17f}.adv-strain--spent .adv-strain__val{color:#e5c06a}.adv-strain--exhausted .adv-strain__val{color:#e08b6a}
+    #advHud .adv-pstatus{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font:700 10px/1 'Cinzel',Georgia,serif;
+      letter-spacing:.05em;border:1px solid rgba(228,188,111,.4);background:rgba(16,11,7,.82);color:#ead9b5;cursor:default}
+    #advHud .adv-pstatus--danger{border-color:rgba(210,104,95,.6);color:#f0b8a6}
+    #advHud .adv-pstatus__warn{color:#e08b6a}
+    .adv-consequences{list-style:none;padding:0;margin:10px auto 4px;max-width:340px;text-align:left}
+    .adv-consequences li{position:relative;padding:6px 10px 6px 16px;color:#e6d6b4;font:500 12.5px/1.4 Georgia,serif}
+    .adv-consequences li::before{content:'';position:absolute;left:4px;top:11px;width:5px;height:5px;border-radius:50%;background:#cdb883}
+    .adv-warnline{color:#f0b8a6;font:700 11px system-ui,sans-serif;text-align:center;margin:6px 0}
+    .adv-pilot-trait{text-align:center;color:#cdb883;font:800 11px system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase}
+    .adv-fin h4{color:#cdb883;font:800 9px system-ui,sans-serif;letter-spacing:.12em;text-transform:uppercase;margin:10px 0 3px;text-align:left}
+    .adv-fin p,.adv-fin li{font:500 12px/1.45 Georgia,serif;color:#e6d6b4;text-align:left}
+    .adv-fin ul{margin:2px 0;padding-left:16px}
+    .adv-fin__banner{border-radius:8px;padding:9px 11px;margin-bottom:8px;font:700 12px Georgia,serif}
+    .adv-fin__banner--win{background:rgba(52,86,52,.35);border:1px solid rgba(120,180,120,.5);color:#cfe6cf}
+    .adv-fin__banner--end{background:rgba(90,32,32,.35);border:1px solid rgba(180,90,80,.5);color:#f0c9b6}
 
     @media(max-width:640px){
       #advEventDeck{top:20px}.adv-event-desc{max-width:245px;font-size:10px}#advHud{max-width:64vw}.adv-hud__main{padding:6px 9px}
@@ -325,6 +373,7 @@ export function installAdventureModeV3(target = window) {
 
   function currentEvent() {
     if (!session) return null;
+    if (USE_CONSEQUENCE_PILOT) return pilotEvent();
     return getAdventureEventV3(session.run.eventDeck[session.run.eventIndexInSet]);
   }
 
@@ -376,25 +425,73 @@ export function installAdventureModeV3(target = window) {
 
     const hud = doc.getElementById('advHud');
     if (hud) {
-      const hudKey = `${run.resolve}|${run.maxResolve}|${run.statuses.join(',')}`;
-      if (hud.__advKey !== hudKey) {
-        hud.__advKey = hudKey;
-        const pips = [...Array(Math.max(0, run.maxResolve)).keys()]
-          .map(i => `<span class="adv-pip adv-pip--${i < run.resolve ? 'full' : 'empty'}"></span>`).join('');
-        const pill = id => `<button class="adv-status adv-status--${esc(id)}" type="button" data-status-id="${esc(id)}" title="${esc(getStatus(id)?.description || '')}" aria-label="${esc(getStatus(id)?.name || id)} status. ${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</button>`;
-        const s = run.statuses;
-        const rows = s.length === 0 ? [] :
-          s.length <= 2 ? [s] :
-          s.length === 3 ? [[s[2]], [s[0], s[1]]] :
-          [[s[2], s[3]], [s[0], s[1]]];
-        const statusHtml = rows.map(row => `<div class="adv-hud__status-row">${row.map(pill).join('')}</div>`).join('');
-        hud.innerHTML = `<div class="adv-hud__statuses">${statusHtml}</div><div class="adv-hud__main"><div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div></div>`;
+      if (USE_CONSEQUENCE_PILOT) {
+        const p = session.pilot;
+        const hudKey = `pilot|${p.strain}|${p.statuses.join(',')}`;
+        if (hud.__advKey !== hudKey) {
+          hud.__advKey = hudKey;
+          hud.innerHTML = pilotHudHtml(p);
+        }
+      } else {
+        const hudKey = `${run.resolve}|${run.maxResolve}|${run.statuses.join(',')}`;
+        if (hud.__advKey !== hudKey) {
+          hud.__advKey = hudKey;
+          const pips = [...Array(Math.max(0, run.maxResolve)).keys()]
+            .map(i => `<span class="adv-pip adv-pip--${i < run.resolve ? 'full' : 'empty'}"></span>`).join('');
+          const pill = id => `<button class="adv-status adv-status--${esc(id)}" type="button" data-status-id="${esc(id)}" title="${esc(getStatus(id)?.description || '')}" aria-label="${esc(getStatus(id)?.name || id)} status. ${esc(getStatus(id)?.description || '')}">${esc(getStatus(id)?.name || id)}</button>`;
+          const s = run.statuses;
+          const rows = s.length === 0 ? [] :
+            s.length <= 2 ? [s] :
+            s.length === 3 ? [[s[2]], [s[0], s[1]]] :
+            [[s[2], s[3]], [s[0], s[1]]];
+          const statusHtml = rows.map(row => `<div class="adv-hud__status-row">${row.map(pill).join('')}</div>`).join('');
+          hud.innerHTML = `<div class="adv-hud__statuses">${statusHtml}</div><div class="adv-hud__main"><div class="adv-hud__resolve"><span class="adv-hud__label">Resolve</span><span class="adv-pips" title="Resolve ${run.resolve} / ${run.maxResolve}">${pips}</span></div></div>`;
+        }
       }
     }
-    renderInventory();
+    if (USE_CONSEQUENCE_PILOT) renderPilotInventory();
+    else renderInventory();
     scheduleDecorateCards();
-    const web = doc.getElementById('advApproachWeb');
-    if (web && !web.classList.contains('hidden')) web.innerHTML = renderApproachWebHTML();
+    if (!USE_CONSEQUENCE_PILOT) {
+      const web = doc.getElementById('advApproachWeb');
+      if (web && !web.classList.contains('hidden')) web.innerHTML = renderApproachWebHTML();
+    }
+  }
+
+  // ----- Consequence pilot HUD, inventory, and outcome rendering -----
+  function pilotHudHtml(p) {
+    const strain = `<div class="adv-strain adv-strain--${esc(p.strain)}"><span class="adv-strain__label">Strain</span><span class="adv-strain__val">${esc(p.strain)}</span></div>`;
+    const pill = id => {
+      const def = PILOT_STATUSES[id];
+      const danger = def?.danger ? ' adv-pstatus--danger' : '';
+      const warn = def?.warning ? ` — ${def.warning}` : '';
+      return `<span class="adv-pstatus${danger}" title="${esc((def?.description || id) + warn)}">${esc(def?.name || id)}${def?.warning ? ' <span class="adv-pstatus__warn">⚠</span>' : ''}</span>`;
+    };
+    const statusHtml = p.statuses.map(pill).join('');
+    return `<div class="adv-hud__statuses"><div class="adv-hud__status-row">${statusHtml}</div></div><div class="adv-hud__main">${strain}</div>`;
+  }
+
+  function renderPilotInventory() {
+    const rack = doc?.getElementById('relicRack');
+    if (!rack || !session?.pilot) return;
+    rack.classList.add('adv-inventory-rack');
+    const p = session.pilot;
+    const entries = [
+      ...p.companions.map(id => ({ name: pilotNounName(id), kind: 'ally' })),
+      ...p.items.filter(id => id !== 'provision').map(id => ({ name: pilotNounName(id), kind: 'item' })),
+      ...p.materials.map(id => ({ name: PILOT_MATERIALS[id]?.name || id, kind: 'mat' })),
+    ];
+    const key = entries.map(e => e.name).join(',') + `|prov:${p.provisions}`;
+    if (rack.__advKey === key) return;
+    rack.__advKey = key;
+    const cap = Math.max(6, entries.length);
+    const slots = [];
+    for (let i = 0; i < cap; i += 1) {
+      const item = entries[i];
+      if (!item) { slots.push('<button class="adv-inventory-slot adv-inventory-slot--empty" type="button" aria-label="Empty slot"></button>'); continue; }
+      slots.push(`<button class="adv-inventory-slot" type="button" title="${esc(item.name)}"><span class="adv-inventory-icon">${esc(item.name)}</span><span class="adv-inventory-kind">${esc(item.kind)}</span></button>`);
+    }
+    rack.innerHTML = slots.join('');
   }
 
   function show(html) {
@@ -491,6 +588,12 @@ export function installAdventureModeV3(target = window) {
   const APPROACH_WEB_NODE_ORDER = ['transformation','aggression','authority','fortune','compassion','creation','investigation','protection','endurance','mystery','physical','deception'];
 
   function renderApproachWebHTML() {
+    // The approach web is a legacy routing artifact and is disabled in the
+    // consequence pilot: the card's trait is the answer, so there is no route,
+    // no requirement number, and no accepted-node set to visualize.
+    if (USE_CONSEQUENCE_PILOT) {
+      return '<div class="adv-web-panel"><div class="adv-web-title">Adventure resolves by the card you play — there is no approach map.</div></div>';
+    }
     const event = currentEvent();
     if (!event) return '<p style="color:#e6d29a;padding:4px">No active event.</p>';
     const approaches = getEventApproaches(event);
@@ -1317,6 +1420,7 @@ export function installAdventureModeV3(target = window) {
   }
 
   function afterOutcome() {
+    if (USE_CONSEQUENCE_PILOT) return pilotAfterOutcome();
     const resolution = session?.lastResolution;
     if (!resolution) return;
     if (resolution.rewardTier && resolution.rewardShow > 0) {
@@ -1685,6 +1789,7 @@ export function installAdventureModeV3(target = window) {
 
   function onCardPlaced(card, slotIndex) {
     if (!session || session.awaitingOutcome || !card) return false;
+    if (USE_CONSEQUENCE_PILOT) return pilotOnCardPlaced(card, slotIndex);
     const event = currentEvent();
     if (!event) return false;
     session.awaitingOutcome = true;
@@ -1708,12 +1813,150 @@ export function installAdventureModeV3(target = window) {
     }
   }
 
+  // ----- Consequence pilot play flow -----
+  function pilotOnCardPlaced(card) {
+    const event = pilotEvent();
+    if (!event) return false;
+    const trait = cardNode(card);
+    session.awaitingOutcome = true;
+    setBusy(true);
+    try {
+      const liveCard = cardWithRunChanges(CARD_BY_ID.get(card.id) || card, card.uid);
+      session.lastCard = liveCard;
+      session.pilotTrait = trait;
+      const packet = resolvePilotCurrent(session.pilot, event, liveCard, trait);
+      if (packet.pendingChoices) {
+        session.pilotPending = packet;
+        pilotShowChoices(packet);
+        return true;
+      }
+      applyPilotResolution(session.pilot, event, packet);
+      session.lastPilotPacket = packet;
+      updateChrome();
+      pilotShowOutcome(packet, liveCard);
+      return true;
+    } catch (err) {
+      session.awaitingOutcome = false;
+      setBusy(false);
+      throw err;
+    }
+  }
+
+  function pilotShowChoices(packet) {
+    const buttons = packet.pendingChoices.map(choice =>
+      `<div class="adv-reward" onclick="tlrAdventureV3PilotChoice('${esc(choice.id)}')"><div class="adv-reward__name">${esc(choice.label)}</div><div class="adv-reward__desc">${esc(choice.description || '')}</div></div>`,
+    ).join('');
+    show(`<div class="result-panel pass"><div class="rhead"><h3 class="pass">${esc(packet.traitLabel)}</h3></div>
+      <div class="adv-pilot-trait">A supernatural choice</div>
+      <p class="adv-narrative">${esc(packet.action || 'The contact supports more than one answer. Choose how you meet it.')}</p>
+      <div class="adv-rewards">${buttons}</div></div>`);
+  }
+
+  function pilotChoose(choiceId) {
+    if (!session?.pilotPending) return;
+    const event = pilotEvent();
+    const packet = resolvePilotChoice(session.pilot, event, session.pilotTrait, choiceId);
+    session.pilotPending = null;
+    applyPilotResolution(session.pilot, event, packet);
+    session.lastPilotPacket = packet;
+    updateChrome();
+    pilotShowOutcome(packet, session.lastCard);
+  }
+
+  function pilotShowOutcome(packet, card) {
+    const terminal = packet.terminal;
+    const narrative = (packet.narrative || []).map(text => `<p class="adv-narrative">${esc(text)}</p>`).join('');
+    const lines = (packet.consequenceLines || []).slice(0, 3).map(line => `<li>${esc(line)}</li>`).join('');
+    const head = terminal
+      ? `<div class="rhead"><h3 class="fail">${esc(terminal.title)}</h3></div>`
+      : `<div class="rhead"><h3 class="pass">${esc(card?.name || '')}</h3></div>`;
+    const trait = `<div class="adv-pilot-trait">${esc(packet.traitLabel)}${packet.choiceLabel ? ' · ' + esc(packet.choiceLabel) : ''}</div>`;
+    const warn = terminal ? `<div class="adv-warnline">The danger you carried: ${esc(pilotWarningForSource(terminal.warningSource) || terminal.warningSource)}</div>` : '';
+    const cons = lines ? `<ul class="adv-consequences">${lines}</ul>` : '';
+    show(`<div class="result-panel ${terminal ? 'fail' : 'pass'}">${head}${trait}${narrative}${warn}${cons}
+      <div class="rbtns"><button class="btn-gold" onclick="tlrAdventureV3AfterOutcome()">Continue</button></div></div>`);
+    target.tutSignal?.('advCardPlaced');
+  }
+
+  function pilotAfterOutcome() {
+    if (!session) return;
+    session.awaitingOutcome = false;
+    if (session.pilot.terminalEnding) { pilotShowFinale(); return; }
+    session.pilotStage = advancePilotStage(session.pilot);
+    pilotEnterStage();
+  }
+
+  function pilotEnterStage() {
+    const stage = session.pilotStage;
+    session.lastPilotPacket = null;
+    if (!stage || stage.isFinale || session.pilot.finished) { pilotShowFinale(); return; }
+    if (stage.isRecovery) { pilotShowRecovery(); return; }
+    clear(); updateChrome(); setBusy(false); beginReading();
+  }
+
+  function pilotShowRecovery() {
+    setBusy(false);
+    const choices = (session.pilotStage.recoveryChoices || []).map(choice =>
+      `<div class="adv-reward" onclick="tlrAdventureV3PilotRecovery('${esc(choice.id)}')"><div class="adv-reward__name">${esc(choice.label)}</div><div class="adv-reward__desc">${esc(choice.description || '')}</div></div>`,
+    ).join('');
+    show(`<div class="result-panel pass"><div class="rhead"><h3 class="pass">A Place to Rest</h3></div>
+      <p class="adv-narrative">The road offers a pause. Spend the respite on one thing.</p>
+      <div class="adv-rewards">${choices}</div></div>`);
+  }
+
+  function pilotRecovery(choiceId) {
+    const choice = (session?.pilotStage?.recoveryChoices || []).find(candidate => candidate.id === choiceId);
+    if (choice) applyPilotRecovery(session.pilot, choice);
+    updateChrome();
+    session.pilotStage = advancePilotStage(session.pilot);
+    pilotEnterStage();
+  }
+
+  function pilotShowFinale() {
+    setBusy(true);
+    const p = buildPilotFinale(session.pilot);
+    const li = arr => (arr.length ? `<ul>${arr.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p>—</p>');
+    const banner = p.terminalEnding
+      ? `<div class="adv-fin__banner adv-fin__banner--end">Journey ended — ${esc(p.terminalEnding.title)}</div>`
+      : `<div class="adv-fin__banner adv-fin__banner--win">You reached the Woman in the Well. The final encounter is not part of this playtest.</div>`;
+    const toll = [`Strain: ${p.toll.strain}`, ...p.toll.dangerStatuses.map(s => PILOT_STATUSES[s]?.name || s), ...p.toll.obligations.map(o => o.replace(/_/g, ' '))];
+    const remains = [
+      ...p.remains.companions.map(c => pilotNounName(c)),
+      ...p.remains.items.filter(i => i !== 'provision').map(i => pilotNounName(i)),
+      ...p.remains.materials.map(m => PILOT_MATERIALS[m]?.name || m),
+      ...p.remains.allies.map(a => a.replace(/_/g, ' ')),
+    ];
+    const world = [...p.world.lines, p.world.roadTruth].filter(Boolean);
+    show(`<div class="result-panel ${p.terminalEnding ? 'fail' : 'pass'} adv-fin"><div class="rhead"><h3 class="${p.terminalEnding ? 'fail' : 'pass'}">Temporary Finale — Playtest</h3></div>
+      ${banner}
+      <h4>Who the road made you</h4><p>${esc(p.identity.sentence)}</p>
+      <h4>What the journey did to you</h4>${li(toll)}
+      <h4>What remains with you</h4>${li(remains)}
+      <h4>What changed in the world</h4>${li(world)}
+      <h4>Causal run summary</h4>${li(p.causalSummary)}
+      <div class="rbtns"><button class="btn-gold" onclick="tlrAdventureV3Restart()">New Run</button><button onclick="tlrAdventureV3Leave()">Leave</button></div></div>`);
+  }
+
   function newSession() {
-    return {
+    const base = {
       run: initialiseRun(createSingleCardRunState(rng)),
       lastEvent: null, lastResolution: null, lastCard: null, rewardState: null,
       pendingSetProfile: null, awaitingOutcome: false, addedClasses: [],
     };
+    if (USE_CONSEQUENCE_PILOT) {
+      const seed = (Math.floor(rng() * 0x7fffffff) >>> 0) || 1;
+      base.pilot = startPilotRun({ seed });
+      base.pilotStage = enterStage(base.pilot);
+      base.lastPilotPacket = null;
+    }
+    return base;
+  }
+
+  // The pilot event currently in play, or null on recovery/finale stages.
+  function pilotEvent() {
+    return session?.pilotStage && !session.pilotStage.isRecovery && !session.pilotStage.isFinale
+      ? session.pilotStage.event
+      : null;
   }
 
   function wrapReturnToMenuOnce() {
@@ -1819,6 +2062,8 @@ export function installAdventureModeV3(target = window) {
   target.tlrAdventureOnCardPlaced = onCardPlaced;
   target.tlrAdventureResolveReading = () => {};
   target.tlrAdventureV3AfterOutcome = afterOutcome;
+  target.tlrAdventureV3PilotChoice = pilotChoose;
+  target.tlrAdventureV3PilotRecovery = pilotRecovery;
   target.tlrAdventureV3PickReward = pickReward;
   target.tlrAdventureV3ConfirmRewards = confirmRewards;
   target.tlrAdventureV3SkipRewards = skipRewards;

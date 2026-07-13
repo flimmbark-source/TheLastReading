@@ -6,9 +6,17 @@ and Multiplayer without modifying them.
 
 ## How to play it
 
-The pilot is a **dev-only** screen, kept out of ordinary navigation. Open the
-game and add the hash `#adv-pilot` to the URL (e.g. `game.html#adv-pilot`), or
-call `window.__tlrAdventurePilot.start({ seed: 12345 })` from the console.
+The consequence pilot **is** Adventure Mode now. Enter Adventure Mode from the
+normal menu and you play it in the real V3 screen — the event hero, the tarot
+hand, card art, visible card sigils, the inventory rack, and app navigation are
+all reused. `adventureModeV3.mjs` resolves each played card through the pilot
+engine (flag `USE_CONSEQUENCE_PILOT`); the legacy routed/Resolve resolver is
+left in the file but is no longer the path a player hits.
+
+There is also a **dev-only debug harness** at `game.html#adv-pilot` (or
+`window.__tlrAdventurePilot.start({ seed })`) — the same engine with seeding,
+event-forcing, state-editing, and packet-inspection controls that don't belong
+in production navigation.
 
 - An event asks a question. You see its description, your visible conditions and
   their warnings, your companions / items / materials, and a hand of tarot
@@ -60,10 +68,17 @@ Pure, serializable, deterministic engine (testable in Node, no DOM):
   `pilotInterventions`, `pilotResolver`, `pilotTerminal`, `pilotScheduler`,
   `pilotRun`, `pilotFinale`.
 
-Playable UI:
+UI:
 
-- `src/app/adventurePilotMode.mjs` — self-contained screen + debug controls,
-  loaded lazily on the `#adv-pilot` hash (wired from `src/app/menuBoot.mjs`).
+- `src/app/adventureModeV3.mjs` — the **real Adventure Mode screen**, with the
+  play loop swapped to the pilot engine behind `USE_CONSEQUENCE_PILOT`.
+  Reuses the event hero, tarot hand, card art, card sigils, inventory rack, and
+  navigation; replaces the HUD's Resolve pips with a Strain + dangerous-status
+  readout; hides the approach web, requirement numbers, tier banners, and the
+  generic reward picker; and renders authored consequence lines + a temporary
+  finale.
+- `src/app/adventurePilotMode.mjs` — the dev-only debug harness on the
+  `#adv-pilot` hash (wired from `src/app/menuBoot.mjs`).
 
 ## New validators (wired into `scripts/validate-all.mjs`)
 
