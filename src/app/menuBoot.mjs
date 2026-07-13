@@ -18,6 +18,24 @@ installCardDetailGestures(window);
 installAudioControls(window);
 installPremiumStore(window);
 
+// Dev-only Adventure consequence pilot. It is never reachable through ordinary
+// navigation: it loads and activates only when the URL carries the `#adv-pilot`
+// hash, keeping the playtest instrument out of production menus.
+let advPilotPromise = null;
+function maybeLoadAdventurePilot() {
+  if (window.location.hash !== '#adv-pilot') return;
+  if (!advPilotPromise) {
+    advPilotPromise = import('./adventurePilotMode.mjs')
+      .then(mod => mod.installAdventurePilotMode(window))
+      .catch(error => {
+        advPilotPromise = null;
+        console.error('Adventure pilot failed to load', error);
+      });
+  }
+}
+window.addEventListener('hashchange', maybeLoadAdventurePilot);
+maybeLoadAdventurePilot();
+
 const CANDLELIGHT_KEY = 'tlr_candlelight_lighting';
 
 function candlelightEnabled(storage = window.localStorage) {
