@@ -20,13 +20,28 @@ installPremiumStore(window);
 
 // Dev-only Adventure consequence pilot. It is never reachable through ordinary
 // navigation: it loads and activates only when the URL carries the `#adv-pilot`
-// hash, keeping the playtest instrument out of production menus.
+// hash, keeping the playtest instrument out of production menus. The game runs
+// inside an iframe (index.html hosts game.html), so the hash may live on the
+// parent document; we read the effective hash from whichever frame has it.
 let advPilotPromise = null;
+function effectiveHash() {
+  try {
+    if (window.top && window.top !== window && window.top.location) {
+      return window.top.location.hash || window.location.hash;
+    }
+  } catch {
+    /* cross-origin parent — fall back to our own hash */
+  }
+  return window.location.hash;
+}
 function maybeLoadAdventurePilot() {
-  if (window.location.hash !== '#adv-pilot') return;
+  if (effectiveHash() !== '#adv-pilot') return;
   if (!advPilotPromise) {
     advPilotPromise = import('./adventurePilotMode.mjs')
-      .then(mod => mod.installAdventurePilotMode(window))
+      .then(mod => {
+        mod.installAdventurePilotMode(window);
+        mod.start({});
+      })
       .catch(error => {
         advPilotPromise = null;
         console.error('Adventure pilot failed to load', error);
@@ -34,6 +49,11 @@ function maybeLoadAdventurePilot() {
   }
 }
 window.addEventListener('hashchange', maybeLoadAdventurePilot);
+try {
+  if (window.top && window.top !== window) window.top.addEventListener('hashchange', maybeLoadAdventurePilot);
+} catch {
+  /* cross-origin parent */
+}
 maybeLoadAdventurePilot();
 
 const CANDLELIGHT_KEY = 'tlr_candlelight_lighting';
