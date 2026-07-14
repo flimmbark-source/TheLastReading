@@ -358,6 +358,17 @@ export function installHandCardGestures(target = window){
     ghost.style.setProperty('pointer-events','none','important');
     document.body.appendChild(ghost);
 
+    // Remove the real card from the DOM now. It was reparented to <body> when
+    // the drag began; endDrag() below strips its fixed positioning, which would
+    // otherwise drop it into normal document flow at the top-left of the page
+    // for a frame (a visible flash + reflow flicker) until render() clears it.
+    // The ghost is the only visible copy from here on. Removing rather than just
+    // hiding also keeps the ability-cancel rollback correct: renderSpread()
+    // re-parents a surviving `body > .card` back into the hand on rollback, so a
+    // hidden-but-present node would return invisible; a fresh node is built
+    // instead once the card is restored to hand state.
+    cardEl.remove();
+
     // End the ordinary drag without placing or reordering the card.
     endDrag(false);
 
