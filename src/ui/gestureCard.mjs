@@ -335,11 +335,27 @@ export function installHandCardGestures(target = window){
     const ghost=cardEl.cloneNode(true);
     ghost.classList.add('ability-flick-ghost');
     ghost.classList.remove('hand-card-dragging','ability-flick-arming');
-    Object.assign(ghost.style,{
-      position:'fixed',left:rect.left+'px',top:rect.top+'px',
-      width:rect.width+'px',height:rect.height+'px',margin:'0',
-      zIndex:'100001',pointerEvents:'none',
-    });
+    // discardCardUid() renders immediately, and renderSpread() sweeps every
+    // `body > .card[data-uid]` orphan whose uid is no longer in hand -- which
+    // would delete this clone the instant it is added, cancelling the flick FX.
+    // Strip the uid so the ghost is not seen as a stray card to reclaim.
+    ghost.removeAttribute('data-uid');
+    ghost.querySelectorAll('[data-uid]').forEach(el=>el.removeAttribute('data-uid'));
+    // The clone inherits the dragged card's !important inline transform/left/top
+    // (set by startDrag/stepDrag). In the CSS cascade important author styles beat
+    // WAAPI animations, so leaving them on the clone would silently cancel the
+    // pop animation's transform -- the card would activate with no visible flick.
+    // Strip them, then pin the ghost at the card's on-screen position so the
+    // animation's transform is the only one in play.
+    ['transform','left','top','right','bottom','width','height','margin','position','z-index'].forEach(p=>ghost.style.removeProperty(p));
+    ghost.style.setProperty('position','fixed','important');
+    ghost.style.setProperty('left',rect.left+'px','important');
+    ghost.style.setProperty('top',rect.top+'px','important');
+    ghost.style.setProperty('width',rect.width+'px','important');
+    ghost.style.setProperty('height',rect.height+'px','important');
+    ghost.style.setProperty('margin','0','important');
+    ghost.style.setProperty('z-index','100001','important');
+    ghost.style.setProperty('pointer-events','none','important');
     document.body.appendChild(ghost);
 
     // End the ordinary drag without placing or reordering the card.
