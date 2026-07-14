@@ -59,4 +59,7 @@ assert.ok(!menuWrap.classList.contains('open'),'a later ordinary outside click s
 const renderTableSource=readFileSync(new URL('../src/ui/renderTable.mjs',import.meta.url),'utf8');
 assert.ok(!renderTableSource.includes("window.maybeShowHandNavTutorial()"),'the swipe-through-hand tutorial is no longer scheduled');
 
+delete globalThis.document;
+delete globalThis.Element;
+
 console.log('Tutorial scoring-close and removed hand-navigation checks passed.');
