@@ -117,25 +117,52 @@ function ensureStyle(doc){
     }
     #${LAYER_ID} .tlr-card-activation-burst{
       position:absolute;
-      width:150px;
-      height:150px;
-      margin:-75px 0 0 -75px;
-      border-radius:50%;
-      border:2px solid rgba(255,224,151,.94);
-      background:radial-gradient(circle,rgba(255,242,199,.90) 0 8%,rgba(255,168,70,.58) 9% 28%,rgba(255,116,34,.20) 29% 52%,transparent 53%);
+      width:120px;
+      height:120px;
+      margin:-60px 0 0 -60px;
       opacity:0;
       pointer-events:none;
       transform-origin:50% 50%;
       backface-visibility:hidden;
       will-change:transform,opacity;
       contain:strict;
+      background:
+        radial-gradient(circle at 50% 50%,rgba(255,236,190,.28) 0 10%,transparent 28%),
+        radial-gradient(circle at 22% 28%,rgba(255,245,220,.98) 0 2px,transparent 3px),
+        radial-gradient(circle at 74% 24%,rgba(255,228,160,.95) 0 2px,transparent 3px),
+        radial-gradient(circle at 32% 72%,rgba(255,214,120,.90) 0 2.5px,transparent 3.5px),
+        radial-gradient(circle at 68% 68%,rgba(255,243,214,.96) 0 1.8px,transparent 3px),
+        radial-gradient(circle at 48% 18%,rgba(255,232,170,.88) 0 1.6px,transparent 2.8px),
+        radial-gradient(circle at 18% 56%,rgba(255,220,140,.86) 0 1.7px,transparent 2.9px),
+        radial-gradient(circle at 82% 58%,rgba(255,240,210,.92) 0 1.8px,transparent 3px);
     }
+    #${LAYER_ID} .tlr-card-activation-burst::before,
     #${LAYER_ID} .tlr-card-activation-burst::after{
       content:'';
       position:absolute;
-      inset:27%;
-      border:2px solid rgba(255,241,202,.88);
-      border-radius:50%;
+      inset:0;
+      pointer-events:none;
+      background-repeat:no-repeat;
+    }
+    #${LAYER_ID} .tlr-card-activation-burst::before{
+      opacity:.95;
+      transform:rotate(12deg) scale(.92);
+      background:
+        radial-gradient(circle at 16% 18%,rgba(255,255,240,.98) 0 1.5px,transparent 2.6px),
+        radial-gradient(circle at 84% 20%,rgba(255,238,188,.96) 0 1.6px,transparent 2.8px),
+        radial-gradient(circle at 24% 84%,rgba(255,223,132,.94) 0 1.7px,transparent 2.9px),
+        radial-gradient(circle at 78% 78%,rgba(255,248,226,.98) 0 1.5px,transparent 2.6px);
+    }
+    #${LAYER_ID} .tlr-card-activation-burst::after{
+      opacity:.88;
+      transform:rotate(-10deg) scale(.88);
+      background:
+        linear-gradient(rgba(255,248,225,.95),rgba(255,248,225,.95)) 50% 18% / 2px 10px no-repeat,
+        linear-gradient(rgba(255,248,225,.95),rgba(255,248,225,.95)) 50% 18% / 10px 2px no-repeat,
+        linear-gradient(rgba(255,234,180,.92),rgba(255,234,180,.92)) 24% 54% / 2px 8px no-repeat,
+        linear-gradient(rgba(255,234,180,.92),rgba(255,234,180,.92)) 24% 54% / 8px 2px no-repeat,
+        linear-gradient(rgba(255,245,215,.94),rgba(255,245,215,.94)) 78% 44% / 2px 9px no-repeat,
+        linear-gradient(rgba(255,245,215,.94),rgba(255,245,215,.94)) 78% 44% / 9px 2px no-repeat;
     }
   `;
   doc.head?.appendChild(style);
@@ -232,7 +259,7 @@ async function playCardActivation(target,transaction){
   burst.style.left=motion.anchorX+'px';
   burst.style.top=motion.anchorY+'px';
   burst.style.opacity='0';
-  burst.style.transform='translate3d(0,0,0) scale(.35)';
+  burst.style.transform='translate3d(0,0,0) scale(.55) rotate(-6deg)';
 
   await nextFrame(target);
   if(reducedMotion(target))return;
@@ -247,10 +274,11 @@ async function playCardActivation(target,transaction){
     {transform:`translate3d(${motion.dx.toFixed(1)}px,${motion.dy.toFixed(1)}px,0) scale(1.40) rotate(${motion.spinDeg.toFixed(1)}deg)`,opacity:0,offset:1},
   ],{duration:CARD_DURATION_MS,easing:'linear',fill:'forwards'});
   const burstAnimation=burst.animate?.([
-    {transform:'translate3d(0,0,0) scale(.35)',opacity:0,offset:0},
-    {transform:'translate3d(0,0,0) scale(.92)',opacity:.94,offset:.28},
-    {transform:'translate3d(0,0,0) scale(1.7)',opacity:0,offset:1},
-  ],{duration:BURST_DURATION_MS,delay:BURST_DELAY_MS,easing:'cubic-bezier(.15,.7,.25,1)',fill:'forwards'});
+    {transform:'translate3d(0,0,0) scale(.55) rotate(-6deg)',opacity:0,offset:0},
+    {transform:'translate3d(0,-2px,0) scale(.92) rotate(2deg)',opacity:1,offset:.22},
+    {transform:'translate3d(0,-4px,0) scale(1.06) rotate(8deg)',opacity:.96,offset:.58},
+    {transform:'translate3d(0,-8px,0) scale(1.18) rotate(12deg)',opacity:0,offset:1},
+  ],{duration:BURST_DURATION_MS,delay:BURST_DELAY_MS,easing:'cubic-bezier(.16,.72,.24,1)',fill:'forwards'});
 
   await Promise.all([
     settleAnimation(cardAnimation,CARD_DURATION_MS),
