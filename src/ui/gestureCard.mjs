@@ -249,17 +249,12 @@ export function installHandCardGestures(target=window){
     return{inSpread:false,hover};
   };
 
-  const stepDrag=event=>{
-    if(!g||g.mode!=='drag')return;
-    g.lastDragEv=event;
-    if(g.dragRafId)return;
-    g.dragRafId=requestFrame(()=>{
-      if(!g||g.mode!=='drag')return;
-      g.dragRafId=null;
-      const latest=g.lastDragEv;
-      const x=latest.clientX;
-      const y=latest.clientY;
-      const {inSpread,hit,hover}=calcDropTarget(x,y);
+  const applyDragFrame=(latest,{updateTargets=true}={})=>{
+    if(!g||g.mode!=='drag'||!latest)return null;
+    const x=latest.clientX;
+    const y=latest.clientY;
+    const {inSpread,hit,hover}=calcDropTarget(x,y);
+    if(updateTargets){
       if(inSpread){
         const nextIndex=hit?.idx??-1;
         const previousIndex=g.dropSlot?.idx??-1;
@@ -273,15 +268,42 @@ export function installHandCardGestures(target=window){
         if(g.dropSlot){g.dropSlot.slotEl.classList.remove('drop-target');g.dropSlot=null;}
         if(hover!==g.hoverIndex)applyReorderSlots(hover);
       }
-      const deltaX=x-g.prevX;
-      const targetTilt=Math.max(-TILT_MAX,Math.min(TILT_MAX,deltaX*TILT_SCALE));
-      g.tiltDeg+=(targetTilt-g.tiltDeg)*TILT_LERP;
-      g.prevX=x;
-      const moveX=x-g.grabOffsetX-g.dragOriginLeft;
-      const moveY=y-g.grabOffsetY-g.dragOriginTop;
-      g.cardEl.style.setProperty('transform',`translate3d(${moveX.toFixed(1)}px,${moveY.toFixed(1)}px,0) rotate(${g.tiltDeg.toFixed(2)}deg)`,'important');
-      updateFlickArming(x,y,inSpread);
+    }
+    const deltaX=x-g.prevX;
+    const targetTilt=Math.max(-TILT_MAX,Math.min(TILT_MAX,deltaX*TILT_SCALE));
+    g.tiltDeg+=(targetTilt-g.tiltDeg)*TILT_LERP;
+    g.prevX=x;
+    const left=x-g.grabOffsetX;
+    const top=y-g.grabOffsetY;
+    const moveX=left-g.dragOriginLeft;
+    const moveY=top-g.dragOriginTop;
+    g.cardEl.style.setProperty('transform',`translate3d(${moveX.toFixed(1)}px,${moveY.toFixed(1)}px,0) rotate(${g.tiltDeg.toFixed(2)}deg)`,'important');
+    if(updateTargets)updateFlickArming(x,y,inSpread);
+    return{
+      left,
+      top,
+      width:g.cardHalfW*2,
+      height:g.cardHalfH*2,
+      rotationDeg:g.tiltDeg,
+    };
+  };
+
+  const stepDrag=event=>{
+    if(!g||g.mode!=='drag')return;
+    g.lastDragEv=event;
+    if(g.dragRafId)return;
+    g.dragRafId=requestFrame(()=>{
+      if(!g||g.mode!=='drag')return;
+      g.dragRafId=null;
+      applyDragFrame(g.lastDragEv);
     });
+  };
+
+  const flushDragPose=event=>{
+    if(!g||g.mode!=='drag')return null;
+    if(g.dragRafId){cancelFrame(g.dragRafId);g.dragRafId=null;}
+    g.lastDragEv=event;
+    return applyDragFrame(event,{updateTargets:false});
   };
 
   const inEdgeZone=(x,y)=>y>=target.innerHeight-EDGE_BOTTOM_PX||x<=EDGE_SIDE_PX||x>=target.innerWidth-EDGE_SIDE_PX;
@@ -373,23 +395,33 @@ export function installHandCardGestures(target=window){
     }
   };
 
+  const schedulePostActivationHandLayout=()=>{
+    requestFrame(()=>requestFrame(()=>{
+      applyNaturalSlots();
+      target.__handTriggerLayout?.();
+    }));
+  };
+
   const commitAbilityFlick=event=>{
     if(!g)return;
     const card=cardByUid(g.uid);
     if(!card){endDrag(false);return;}
+    const startPose=flushDragPose(event);
+    if(!startPose){endDrag(false);return;}
     const transaction={
       cardUid:g.uid,
       card,
-      startRect:g.cardEl.getBoundingClientRect(),
+      startPose,
       vector:g.flickVec||{x:0,y:1,speed:FLICK_ACTIVATE_SPEED},
-      startTiltDeg:g.tiltDeg||0,
     };
+    // Stage the permanent proxy over the real card before removing the dragged
+    // element. Because startPose uses the unrotated natural box plus one explicit
+    // rotation, the replacement does not resize or rotate twice at handoff.
+    target.tlrStageCardActivation?.(transaction);
     try{event.preventDefault();event.stopPropagation();event.stopImmediatePropagation?.();}catch{}
     const snapshot=releaseDragChrome({removeCard:true,cancelPrepared:false});
     if(!snapshot)return;
     clearActivationSelection(snapshot.uid);
-    applyNaturalSlots();
-    target.__handTriggerLayout?.();
 
     const activate=target.tlrActivateCardFromGesture;
     if(typeof activate==='function'){
@@ -402,6 +434,9 @@ export function installHandCardGestures(target=window){
       const committed=target.discardCardUid?.(snapshot.uid);
       if(!committed)target.render?.();
     }
+    // Let the proxy paint and begin its WAAPI animation before recalculating the
+    // remaining hand. This keeps synchronous hand geometry out of the handoff.
+    schedulePostActivationHandLayout();
   };
 
   const slideLanding=(cardEl,firstRect,duration=320)=>{
