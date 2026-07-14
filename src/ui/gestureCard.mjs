@@ -26,6 +26,11 @@ export function installHandCardGestures(target = window){
   const FLICK_ARM_SPEED=640;        // px/s over the window: card lights up (armed)
   const FLICK_ACTIVATE_SPEED=940;   // px/s over the window: release activates
   const FLICK_ABILITY_DELAY_MS=200; // ability begins resolving this long after release (180-250ms)
+  // Second way to activate: hold the card against a screen edge and release. A
+  // slow carry to the edge counts even without a throw. Side strips are kept thin
+  // so they clear the fanned hand's edge cards / reorder targets.
+  const EDGE_BOTTOM_PX=84;          // card center within this of the bottom edge
+  const EDGE_SIDE_PX=30;            // ...or this of the left/right edge
 
   let g=null;
   const handEl=()=>document.querySelector('.hand');
@@ -275,6 +280,13 @@ export function installHandCardGestures(target = window){
 
   const abilityFlickAllowed=uid=>typeof target.canDiscardCardUid==='function'&&target.canDiscardCardUid(uid);
 
+  // Held against a screen edge: the bottom edge (below / on the hand), or the
+  // thin left / right strips beside the hand. Measured at the finger, not the
+  // card centre -- the card is wide, so its centre can't reach the edge, but the
+  // finger dragging it there is the natural "hold it to the edge" gesture.
+  const inEdgeZone=(x,y)=>
+    y>=target.innerHeight-EDGE_BOTTOM_PX||x<=EDGE_SIDE_PX||x>=target.innerWidth-EDGE_SIDE_PX;
+
   // Record pointer samples so recognition can measure only the final burst of
   // motion, not the whole (possibly slow) carry.
   const recordSample=(x,y,t)=>{
@@ -297,32 +309,48 @@ export function installHandCardGestures(target = window){
     return{dx,dy,dist,ms,speed:dist/(ms/1000)};
   };
 
-  // A flick: a fast throw (measured over the release window) that is not a
-  // placement into the spread. `inSpread` (from calcDropTarget) already means
-  // "over a slot or up in the spread zone" -- a play, not a throw. flickEligible
+  // Activation on release: either a fast throw (measured over the release
+  // window) OR the card held against a screen edge. Neither counts when the card
+  // is being placed into the spread. `inSpread` (from calcDropTarget) means "over
+  // a slot or up in the spread zone" -- a play, not an activation. flickEligible
   // is cached at drag start so we don't hit the store every frame.
   const detectAbilityFlick=ev=>{
     if(!g||g.mode!=='drag'||!g.flickEligible)return false;
-    const now=performance.now();
-    if(now-g.dragStartTime<FLICK_MIN_DRAG_MS)return false;
-    if(calcDropTarget(ev.clientX,ev.clientY).inSpread)return false;
-    const m=flickWindowMetrics(ev.clientX,ev.clientY,now);
-    if(!m||m.ms<FLICK_MIN_WINDOW_MS||m.speed<FLICK_ACTIVATE_SPEED)return false;
-    g.flickVec={x:m.dx,y:m.dy,speed:m.speed};
-    return true;
+    const drop=calcDropTarget(ev.clientX,ev.clientY);
+    if(drop.inSpread&&drop.hit)return false;               // over an actual slot: placement wins
+    // Held against a screen edge -- unambiguous even in the spread-zone band,
+    // since the edge strips never sit over a centre slot.
+    if(inEdgeZone(ev.clientX,ev.clientY)){
+      g.flickVec={x:0,y:1,speed:FLICK_ACTIVATE_SPEED};
+      return true;
+    }
+    // A fast throw, as long as it is not aimed up into the spread zone.
+    if(!drop.inSpread&&performance.now()-g.dragStartTime>=FLICK_MIN_DRAG_MS){
+      const m=flickWindowMetrics(ev.clientX,ev.clientY,performance.now());
+      if(m&&m.ms>=FLICK_MIN_WINDOW_MS&&m.speed>=FLICK_ACTIVATE_SPEED){
+        g.flickVec={x:m.dx,y:m.dy,speed:m.speed};
+        return true;
+      }
+    }
+    return false;
   };
 
-  // Glow the card the instant the throw crosses the arm speed, so the flick
-  // reads as reactive before release. Feedback lives on the card, nowhere else.
-  // Reuses the inSpread already computed by stepDrag -- no extra hit-testing.
+  // Glow the card the instant it crosses the arm speed OR reaches a screen edge,
+  // so activation reads as reactive before release. Feedback lives on the card,
+  // nowhere else. Reuses the inSpread already computed by stepDrag.
   const updateFlickArming=(nowX,nowY,inSpread)=>{
     if(!g)return;
     let armed=false;
-    if(g.flickEligible&&!g.dropSlot&&!inSpread){
-      const m=flickWindowMetrics(nowX,nowY,performance.now());
-      // Hysteresis: a little easier to stay armed than to arm in the first place.
-      const gate=g.flickArmed?FLICK_ARM_SPEED*0.72:FLICK_ARM_SPEED;
-      armed=!!m&&m.ms>=FLICK_MIN_WINDOW_MS&&m.speed>=gate;
+    if(g.flickEligible&&!g.dropSlot){
+      // Edge hold arms regardless of the spread zone (the edge is never a slot);
+      // the velocity throw only counts when not aimed up into the spread.
+      if(inEdgeZone(nowX,nowY))armed=true;
+      else if(!inSpread){
+        const m=flickWindowMetrics(nowX,nowY,performance.now());
+        // Hysteresis: a little easier to stay armed than to arm in the first place.
+        const gate=g.flickArmed?FLICK_ARM_SPEED*0.72:FLICK_ARM_SPEED;
+        armed=!!m&&m.ms>=FLICK_MIN_WINDOW_MS&&m.speed>=gate;
+      }
     }
     if(armed!==g.flickArmed){
       g.flickArmed=armed;
