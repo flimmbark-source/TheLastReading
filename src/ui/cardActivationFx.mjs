@@ -2,8 +2,11 @@ import { cardHTML, applyCardPhoto, CARD_SHEET } from './renderCard.mjs';
 
 const STYLE_ID='tlr-card-activation-fx-style';
 const LAYER_ID='tlrCardActivationLayer';
-const CARD_DURATION_MS=300;
-const BURST_DURATION_MS=280;
+// Activation is intentionally readable rather than instant: a short charge,
+// a visible flight, then a brief dissolve before gameplay resolves.
+const CARD_DURATION_MS=620;
+const BURST_DURATION_MS=420;
+const BURST_DELAY_MS=170;
 
 function nextFrame(target){
   return new Promise(resolve=>{
@@ -218,12 +221,13 @@ async function playCardActivation(target,transaction){
     viewportWidth:target.innerWidth,
     viewportHeight:target.innerHeight,
   });
+  const startTilt=(Number(transaction.startTiltDeg)||0).toFixed(2);
   proxy.style.left=rect.left+'px';
   proxy.style.top=rect.top+'px';
   proxy.style.width=rect.width+'px';
   proxy.style.height=rect.height+'px';
   proxy.style.opacity='1';
-  proxy.style.transform='translate3d(0,0,0) scale(1) rotate('+(Number(transaction.startTiltDeg)||0).toFixed(2)+'deg)';
+  proxy.style.transform=`translate3d(0,0,0) scale(1) rotate(${startTilt}deg)`;
 
   burst.style.left=motion.anchorX+'px';
   burst.style.top=motion.anchorY+'px';
@@ -233,20 +237,24 @@ async function playCardActivation(target,transaction){
   await nextFrame(target);
   if(reducedMotion(target))return;
 
+  // Three readable beats:
+  // 1) charge/anticipation, 2) visible travel, 3) arrival and dissolve.
   const cardAnimation=proxy.animate?.([
-    {transform:`translate3d(0,0,0) scale(1) rotate(${(Number(transaction.startTiltDeg)||0).toFixed(2)}deg)`,opacity:1,offset:0},
-    {transform:`translate3d(${(motion.dx*.58).toFixed(1)}px,${(motion.dy*.58).toFixed(1)}px,0) scale(1.15) rotate(${(motion.spinDeg*.55).toFixed(1)}deg)`,opacity:1,offset:.54},
-    {transform:`translate3d(${motion.dx.toFixed(1)}px,${motion.dy.toFixed(1)}px,0) scale(1.38) rotate(${motion.spinDeg.toFixed(1)}deg)`,opacity:0,offset:1},
-  ],{duration:CARD_DURATION_MS,easing:'cubic-bezier(.18,.72,.24,1)',fill:'forwards'});
+    {transform:`translate3d(0,0,0) scale(1) rotate(${startTilt}deg)`,opacity:1,offset:0,easing:'cubic-bezier(.2,.8,.2,1)'},
+    {transform:`translate3d(0,-4px,0) scale(1.055) rotate(${startTilt}deg)`,opacity:1,offset:.13,easing:'cubic-bezier(.15,.72,.24,1)'},
+    {transform:`translate3d(${(motion.dx*.62).toFixed(1)}px,${(motion.dy*.62).toFixed(1)}px,0) scale(1.14) rotate(${(motion.spinDeg*.48).toFixed(1)}deg)`,opacity:1,offset:.62,easing:'cubic-bezier(.18,.74,.24,1)'},
+    {transform:`translate3d(${motion.dx.toFixed(1)}px,${motion.dy.toFixed(1)}px,0) scale(1.29) rotate(${motion.spinDeg.toFixed(1)}deg)`,opacity:1,offset:.82,easing:'ease-out'},
+    {transform:`translate3d(${motion.dx.toFixed(1)}px,${motion.dy.toFixed(1)}px,0) scale(1.40) rotate(${motion.spinDeg.toFixed(1)}deg)`,opacity:0,offset:1},
+  ],{duration:CARD_DURATION_MS,easing:'linear',fill:'forwards'});
   const burstAnimation=burst.animate?.([
     {transform:'translate3d(0,0,0) scale(.35)',opacity:0,offset:0},
     {transform:'translate3d(0,0,0) scale(.92)',opacity:.94,offset:.28},
     {transform:'translate3d(0,0,0) scale(1.7)',opacity:0,offset:1},
-  ],{duration:BURST_DURATION_MS,easing:'cubic-bezier(.15,.7,.25,1)',fill:'forwards'});
+  ],{duration:BURST_DURATION_MS,delay:BURST_DELAY_MS,easing:'cubic-bezier(.15,.7,.25,1)',fill:'forwards'});
 
   await Promise.all([
     settleAnimation(cardAnimation,CARD_DURATION_MS),
-    settleAnimation(burstAnimation,BURST_DURATION_MS),
+    settleAnimation(burstAnimation,BURST_DURATION_MS+BURST_DELAY_MS),
   ]);
 }
 
