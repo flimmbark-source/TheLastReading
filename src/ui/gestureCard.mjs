@@ -13,6 +13,7 @@ export function installHandCardGestures(target = window){
   const TILT_LERP=0.22;
   const SPREAD_ZONE_SLACK=72;
   const SLOT_HIT_PAD=28;
+  const FAILED_FLICK_RETURN_MS=950;
 
   // Ability flick. Recognition looks only at the final burst of motion before
   // release (velocity over the last ~100ms), so the player can carry the card
@@ -79,21 +80,22 @@ export function installHandCardGestures(target = window){
   const cancelHold=()=>{if(g&&g.holdTimer){clearTimeout(g.holdTimer);g.holdTimer=null;}};
   const queueUid=(arr,uid,max)=>{if(arr.includes(uid))return arr;const a=[...arr,uid];return a.length>max?a.slice(-max):a;};
 
+  // The arc geometry is cached once at drag start. The hand cannot change shape
+  // while one card owns the pointer, so reading it again every animation frame
+  // only forces layout and makes fast flicks look under-sampled.
   const xToFracSlot=cx=>{
-    const ts=typeof target.__handGetTrackState==='function'?target.__handGetTrackState():null;
-    if(!ts||!ts.spacingDeg)return 0;
-    const centerX=ts.handRect.left+ts.handRect.width/2;
-    const dx=cx-centerX;
-    const ratio=Math.max(-.95,Math.min(.95,dx/Math.max(1,ts.radius)));
+    if(!g||!g.trackSpacingDeg)return 0;
+    const dx=cx-g.trackCenterX;
+    const ratio=Math.max(-.95,Math.min(.95,dx/Math.max(1,g.trackRadius)));
     const totalA=Math.asin(ratio)*180/Math.PI;
-    return (totalA-ts.offsetDeg)/ts.spacingDeg;
+    return (totalA-g.trackOffsetDeg)/g.trackSpacingDeg;
   };
 
   const hitTestSpreadSlots=(cardCX,cardCY)=>{
     const rects=g&&g.slotRects?g.slotRects:
-      [...document.querySelectorAll('#spread .slot')].map((el,i)=>({el,idx:i,r:el.getBoundingClientRect()}));
-    for(const{el,idx,r}of rects){
-      if(isSpreadSlotOccupied(idx)||el.querySelector('.card'))continue;
+      [...document.querySelectorAll('#spread .slot')].map((el,i)=>({el,idx:i,r:el.getBoundingClientRect(),blocked:isSpreadSlotOccupied(i)||!!el.querySelector('.card')}));
+    for(const{el,idx,r,blocked}of rects){
+      if(blocked)continue;
       if(cardCX>=r.left-SLOT_HIT_PAD&&cardCX<=r.right+SLOT_HIT_PAD&&
          cardCY>=r.top-SLOT_HIT_PAD&&cardCY<=r.bottom+SLOT_HIT_PAD){
         return{slotEl:el,idx};
@@ -192,8 +194,14 @@ export function installHandCardGestures(target = window){
     g.grabOffsetY=ev.clientY-fixedTop;
     const h=handEl();
     const hRect=h?h.getBoundingClientRect():{left:0,top:0,width:target.innerWidth,height:200};
+    const trackState=typeof target.__handGetTrackState==='function'?target.__handGetTrackState():null;
     g.handCenterX=hRect.left+hRect.width/2;
     g.handTop=hRect.top;
+    g.trackCenterX=trackState?trackState.handRect.left+trackState.handRect.width/2:g.handCenterX;
+    g.trackRadius=trackState?.radius||720;
+    g.trackOffsetDeg=trackState?.offsetDeg||0;
+    g.trackSpacingDeg=trackState?.spacingDeg||5;
+    g.dragHandCount=handCards().length;
     g.cardHalfW=naturalW/2;
     g.cardHalfH=naturalH/2;
     g.prevX=ev.clientX;
@@ -205,10 +213,12 @@ export function installHandCardGestures(target = window){
     g.mode='drag';
     const spEl=document.querySelector('#spread');
     g.spreadRect=spEl?spEl.getBoundingClientRect():null;
-    g.slotRects=[...document.querySelectorAll('#spread .slot')].map((el,i)=>({el,idx:i,r:el.getBoundingClientRect()}));
+    g.slotRects=[...document.querySelectorAll('#spread .slot')].map((el,i)=>({
+      el,idx:i,r:el.getBoundingClientRect(),blocked:isSpreadSlotOccupied(i)||!!el.querySelector('.card'),
+    }));
     target.__handReorderActive=true;
     if(h)h.classList.add('hand-parting');
-    const spEl2=document.querySelector('#spread');if(spEl2)spEl2.classList.add('drag-active');
+    if(spEl)spEl.classList.add('drag-active');
     g.cardEl.classList.add('hand-card-dragging');
     g.dragOriginLeft=fixedLeft;
     g.dragOriginTop=fixedTop;
@@ -220,6 +230,8 @@ export function installHandCardGestures(target = window){
     g.cardEl.style.setProperty('height',`${naturalH}px`,'important');
     g.cardEl.style.setProperty('margin','0','important');
     g.cardEl.style.setProperty('z-index','100000','important');
+    g.cardEl.style.setProperty('will-change','transform','important');
+    g.cardEl.style.setProperty('backface-visibility','hidden','important');
     try{g.cardEl.setPointerCapture(g.pointerId);}catch(e){}
     target.__handGestureSuppressClickUntil=performance.now()+800;
     stepDrag(ev);
@@ -233,10 +245,7 @@ export function installHandCardGestures(target = window){
     if(isInSpreadZone(cardCY)){
       return{inSpread:true,hit:hitTestSpreadSlots(cardCX,cardCY)};
     }
-    const cards=handCards();
-    const n=cards.length;
-    const inHand=cards.includes(g.cardEl);
-    const total=inHand?n:n+1;
+    const total=Math.max(1,g.dragHandCount||1);
     const frac=xToFracSlot(x);
     const hover=Math.max(0,Math.min(total-1,Math.round(frac+(total-1)/2)));
     return{inSpread:false,hover};
@@ -273,7 +282,7 @@ export function installHandCardGestures(target = window){
       const cardTop=y-g.grabOffsetY;
       const moveX=cardLeft-g.dragOriginLeft;
       const moveY=cardTop-g.dragOriginTop;
-      g.cardEl.style.setProperty('transform','translate('+moveX.toFixed(1)+'px,'+moveY.toFixed(1)+'px) rotate('+g.tiltDeg.toFixed(2)+'deg)','important');
+      g.cardEl.style.setProperty('transform','translate3d('+moveX.toFixed(1)+'px,'+moveY.toFixed(1)+'px,0) rotate('+g.tiltDeg.toFixed(2)+'deg)','important');
       updateFlickArming(x,y,inSpread);
     });
   };
@@ -438,7 +447,7 @@ export function installHandCardGestures(target = window){
     // pop animation's transform -- the card would activate with no visible flick.
     // Strip them, then pin the ghost at the card's on-screen position so the
     // animation's transform is the only one in play.
-    ['transform','left','top','right','bottom','width','height','margin','position','z-index','filter','box-shadow'].forEach(p=>ghost.style.removeProperty(p));
+    ['transform','left','top','right','bottom','width','height','margin','position','z-index','filter','box-shadow','will-change','backface-visibility'].forEach(p=>ghost.style.removeProperty(p));
     ghost.style.setProperty('position','fixed','important');
     ghost.style.setProperty('left',rect.left+'px','important');
     ghost.style.setProperty('top',rect.top+'px','important');
@@ -474,9 +483,9 @@ export function installHandCardGestures(target = window){
     // The card rises into the play area along the throw, swells, then dissolves.
     // Transform + opacity only, so it stays smooth on the compositor.
     const anim=ghost.animate?.([
-      {transform:'translate(0,0) scale(1) rotate(0deg)',opacity:1,offset:0},
-      {transform:`translate(${(dx*0.6).toFixed(1)}px,${(dy*0.6).toFixed(1)}px) scale(1.2) rotate(${(spinDeg*0.5).toFixed(1)}deg)`,opacity:1,offset:0.45},
-      {transform:`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(1.55) rotate(${spinDeg.toFixed(1)}deg)`,opacity:0,offset:1},
+      {transform:'translate3d(0,0,0) scale(1) rotate(0deg)',opacity:1,offset:0},
+      {transform:`translate3d(${(dx*0.6).toFixed(1)}px,${(dy*0.6).toFixed(1)}px,0) scale(1.2) rotate(${(spinDeg*0.5).toFixed(1)}deg)`,opacity:1,offset:0.45},
+      {transform:`translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0) scale(1.55) rotate(${spinDeg.toFixed(1)}deg)`,opacity:0,offset:1},
     ],{duration:260,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'});
     const cleanup=()=>ghost.remove();
     if(anim&&anim.finished&&typeof anim.finished.finally==='function')anim.finished.finally(cleanup);
@@ -488,20 +497,35 @@ export function installHandCardGestures(target = window){
     setTimeout(()=>{if(typeof target.discardCardUid==='function')target.discardCardUid(uid);},FLICK_ABILITY_DELAY_MS);
   };
 
-  const slideLanding=(cardEl,firstRect)=>{
-    if(!firstRect)return;
+  const slideLanding=(cardEl,firstRect,duration=320)=>{
+    if(!firstRect||!cardEl?.isConnected)return;
     const finalRect=cardEl.getBoundingClientRect();
     const dx=firstRect.left-finalRect.left;
     const dy=firstRect.top-finalRect.top;
     if(Math.abs(dx)<1&&Math.abs(dy)<1)return;
+    const reduced=target.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const ms=reduced?0:duration;
+    const cleanup=()=>{
+      const isDragging=cardEl.classList.contains('hand-card-dragging');
+      cardEl.classList.remove('hand-card-landing');
+      cardEl.style.removeProperty('transition');
+      if(!isDragging){
+        cardEl.style.removeProperty('will-change');
+        cardEl.style.removeProperty('backface-visibility');
+      }
+    };
+    cardEl.classList.add('hand-card-landing');
     cardEl.style.setProperty('transition','none','important');
-    cardEl.style.setProperty('transform','translate('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px)','important');
+    cardEl.style.setProperty('will-change','transform','important');
+    cardEl.style.setProperty('backface-visibility','hidden','important');
+    cardEl.style.setProperty('transform','translate3d('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px,0)','important');
     void cardEl.offsetWidth;
     requestAnimationFrame(()=>{
-      cardEl.classList.add('hand-card-landing');
-      cardEl.style.removeProperty('transition');
+      if(!cardEl.isConnected){cleanup();return;}
+      if(ms<=0){cardEl.style.removeProperty('transform');cleanup();return;}
+      cardEl.style.setProperty('transition','transform '+ms+'ms cubic-bezier(.16,.76,.2,1)','important');
       cardEl.style.removeProperty('transform');
-      setTimeout(()=>cardEl.classList.remove('hand-card-landing'),320);
+      setTimeout(cleanup,ms+80);
     });
   };
 
@@ -528,6 +552,7 @@ export function installHandCardGestures(target = window){
       const last=calcDropTarget(g.lastDragEv.clientX,g.lastDragEv.clientY);
       if(last.inSpread)dropSlot=last.hit||null;
     }
+    const releaseRect=wasDrag&&cardEl.isConnected?cardEl.getBoundingClientRect():null;
     if(g.dragRafId){cancelAnimationFrame(g.dragRafId);g.dragRafId=null;}
     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
     cardEl.classList.remove('hand-card-dragging','ability-flick-arming');
@@ -541,6 +566,8 @@ export function installHandCardGestures(target = window){
     cardEl.style.removeProperty('height');
     cardEl.style.removeProperty('margin');
     cardEl.style.removeProperty('z-index');
+    cardEl.style.removeProperty('will-change');
+    cardEl.style.removeProperty('backface-visibility');
     if(g.dropSlot)g.dropSlot.slotEl.classList.remove('drop-target');
     const h=handEl();if(h)h.classList.remove('hand-parting');
     const spEl3=document.querySelector('#spread');if(spEl3)spEl3.classList.remove('drag-active');
@@ -618,6 +645,8 @@ export function installHandCardGestures(target = window){
     restoreOrphanCard(cardEl,originalParent,originalNextSibling);
     if(selectedUid()===uid){setSelected(null);refreshActiveHand();}
     if(typeof target.__handTriggerLayout==='function')target.__handTriggerLayout();
+    const returnedCard=cardEl.isConnected?cardEl:document.querySelector(`#hand .card[data-uid="${uid}"]`);
+    slideLanding(returnedCard,releaseRect,FAILED_FLICK_RETURN_MS);
   };
 
   document.addEventListener('pointerdown',ev=>{
@@ -660,7 +689,10 @@ export function installHandCardGestures(target = window){
 
   document.addEventListener('pointermove',ev=>{
     if(!g||ev.pointerId!==g.pointerId)return;
-    recordSample(ev.clientX,ev.clientY,performance.now());
+    const coalesced=typeof ev.getCoalescedEvents==='function'?ev.getCoalescedEvents():null;
+    if(coalesced?.length){
+      for(const point of coalesced)recordSample(point.clientX,point.clientY,point.timeStamp||performance.now());
+    }else recordSample(ev.clientX,ev.clientY,performance.now());
     if(g.mode==='pending'){
       const dx=ev.clientX-g.startX,dy=ev.clientY-g.startY;
       if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
