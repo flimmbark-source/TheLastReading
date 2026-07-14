@@ -5,6 +5,7 @@ import { dirname, join } from 'node:path';
 const here = dirname(fileURLToPath(import.meta.url));
 execFileSync(process.execPath, [join(here, 'validate-hint-settings.mjs')], { stdio: 'inherit' });
 execFileSync(process.execPath, [join(here, 'validate-tutorial-controls.mjs')], { stdio: 'inherit' });
+execFileSync(process.execPath, [join(here, 'validate-card-activation-fx.mjs')], { stdio: 'inherit' });
 execFileSync(process.execPath, [join(here, 'validate-tutorial-placement.mjs')], { stdio: 'inherit' });
 execFileSync(process.execPath, [join(here, 'validate-pattern-hint-stack.mjs')], { stdio: 'inherit' });
 execFileSync(process.execPath, [join(here, 'validate-card-detail-hold.mjs')], { stdio: 'inherit' });
