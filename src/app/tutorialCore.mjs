@@ -87,7 +87,7 @@ const TUT_STEPS = [
     arrow: 'up',
     demo: 'flick',
     key: TUT_ABILITY_KEY,
-    text: 'Flick a card off the table to use its [[ability|Ability]]. It is then [[discard|discarded]].',
+    text: 'Flick a card off the table, or drag it to a screen edge, to use its [[ability|Ability]]. It is then [[discard|discarded]].',
   },
 
   {
