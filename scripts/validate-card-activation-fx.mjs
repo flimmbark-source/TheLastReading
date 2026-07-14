@@ -29,6 +29,11 @@ assert.ok(fxSource.includes('CARD_DURATION_MS=620'),'activation lasts long enoug
 assert.ok(fxSource.includes('BURST_DELAY_MS=170'),'impact is separated from the initial charge');
 assert.ok(fxSource.includes("offset:.13"),'animation contains an anticipation beat');
 assert.ok(fxSource.includes("offset:.82"),'card remains visible through arrival before dissolving');
+assert.ok(fxSource.includes('.tlr-card-activation-burst::before'),'sparkle bloom has a secondary fleck layer');
+assert.ok(fxSource.includes('.tlr-card-activation-burst::after'),'sparkle bloom has cross-shaped twinkles');
+assert.ok(fxSource.includes('linear-gradient(rgba(255,248,225,.95)'),'sparkle bloom includes crisp star glints');
+assert.ok(!fxSource.includes('border:2px solid rgba(255,224,151,.94)'),'sparkle bloom no longer draws the old shockwave ring');
+assert.ok(fxSource.includes("translate3d(0,-8px,0) scale(1.18) rotate(12deg)"),'sparkles drift upward as they disperse');
 const playIndex=fxSource.indexOf('await playCardActivation');
 const discardIndex=fxSource.indexOf('target.discardCardUid(uid)');
 assert.ok(playIndex>=0&&discardIndex>playIndex,'gameplay commit occurs after presentation completion');
@@ -59,6 +64,7 @@ class FakeClassList{
 }
 const animationResolvers=[];
 const animationOptions=[];
+const animationFrames=[];
 class FakeElement{
   constructor(tag){
     this.tagName=String(tag).toUpperCase();this.children=[];this.parentNode=null;this.style=new FakeStyle();
@@ -74,10 +80,11 @@ class FakeElement{
     const walk=node=>{for(const child of node.children){if(matches(child))return child;const nested=walk(child);if(nested)return nested;}return null;};
     return walk(this);
   }
-  animate(_frames,options){
+  animate(frames,options){
     let resolve;
     const finished=new Promise(done=>{resolve=done;});
     const animation={finished,cancel(){resolve();}};
+    animationFrames.push(frames);
     animationOptions.push(options);
     animationResolvers.push(resolve);
     return animation;
@@ -110,10 +117,12 @@ const activation=api.activate({cardUid:1,card,startRect:{left:100,top:650,width:
 await new Promise(resolve=>setTimeout(resolve,0));
 assert.equal(discardCount,0,'gameplay remains uncommitted while the animation is running');
 assert.equal(target.__tlrCardActivationPending,true,'activation transaction locks input');
-assert.equal(animationResolvers.length,2,'card flight and burst animations both start');
+assert.equal(animationResolvers.length,2,'card flight and sparkle animations both start');
 assert.equal(animationOptions[0].duration,620,'card presentation uses readable duration');
-assert.equal(animationOptions[1].duration,420,'impact burst has a distinct duration');
-assert.equal(animationOptions[1].delay,170,'impact burst begins after anticipation');
+assert.equal(animationOptions[1].duration,420,'sparkle bloom has a distinct duration');
+assert.equal(animationOptions[1].delay,170,'sparkle bloom begins after anticipation');
+assert.equal(animationFrames[1].length,4,'sparkle bloom has appear, twinkle, drift, and fade beats');
+assert.equal(animationFrames[1][3].opacity,0,'sparkle bloom fully disperses before gameplay commits');
 animationResolvers.splice(0).forEach(resolve=>resolve());
 assert.equal(await activation,true,'activation resolves successfully');
 assert.equal(discardCount,1,'gameplay commits once after animation completion');
