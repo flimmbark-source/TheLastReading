@@ -14,6 +14,19 @@ export function installHandCardGestures(target = window){
   const SPREAD_ZONE_SLACK=72;
   const SLOT_HIT_PAD=28;
 
+  // Ability flick recognition. The gesture measures only the final burst of
+  // movement right before release, not the whole time the card was held: a
+  // player can carry the card around slowly and still flick it by finishing
+  // with a sharp downward push. Prototype numbers -- tune on device.
+  const FLICK_SAMPLE_WINDOW_MS=120;   // release window we measure over
+  const FLICK_SAMPLE_RETAIN_MS=160;   // keep slightly more than the window
+  const FLICK_MIN_VELOCITY=700;       // CSS pixels per second (downward)
+  const FLICK_MIN_DISTANCE_RATIO=0.3; // fraction of card height travelled
+  const FLICK_VERTICAL_RATIO=1.4;     // downward travel must dominate sideways
+  // A softer threshold used only to pre-arm the visual glow while dragging, so
+  // the card starts reacting during the final downward acceleration.
+  const FLICK_ARM_VELOCITY=460;
+
   let g=null;
   const handEl=()=>document.querySelector('.hand');
   const handCards=()=>{const h=handEl();return h?[...h.querySelectorAll(':scope > .card[data-uid]')]:[]};
@@ -252,7 +265,98 @@ export function installHandCardGestures(target = window){
       const moveX=cardLeft-g.dragOriginLeft;
       const moveY=cardTop-g.dragOriginTop;
       g.cardEl.style.setProperty('transform','translate('+moveX.toFixed(1)+'px,'+moveY.toFixed(1)+'px) rotate('+g.tiltDeg.toFixed(2)+'deg)','important');
+      updateFlickArming(x,y);
     });
+  };
+
+  const abilityFlickAllowed=uid=>typeof target.canDiscardCardUid==='function'&&target.canDiscardCardUid(uid);
+
+  const recordSample=(x,y,t)=>{
+    if(!g)return;
+    if(!g.samples)g.samples=[];
+    g.samples.push({x,y,time:t});
+    const cutoff=t-FLICK_SAMPLE_RETAIN_MS;
+    while(g.samples.length>2&&g.samples[0].time<cutoff)g.samples.shift();
+  };
+
+  // Metrics for the final release burst: distance and velocity measured only
+  // over the last ~120ms of samples, not the whole drag.
+  const flickWindowMetrics=(nowX,nowY,nowT)=>{
+    if(!g||!g.samples||!g.samples.length)return null;
+    const windowStart=nowT-FLICK_SAMPLE_WINDOW_MS;
+    const start=g.samples.find(s=>s.time>=windowStart)||g.samples[0];
+    if(!start)return null;
+    const durationMs=Math.max(16,nowT-start.time);
+    const dx=nowX-start.x;
+    const dy=nowY-start.y;
+    return{dx,dy,durationMs,velocityY:dy/(durationMs/1000)};
+  };
+
+  const detectAbilityFlick=ev=>{
+    if(!g||g.mode!=='drag')return false;
+    if(!abilityFlickAllowed(g.uid))return false;
+    // A valid spread placement always wins over a flick.
+    const drop=calcDropTarget(ev.clientX,ev.clientY);
+    if(drop.inSpread&&drop.hit)return false;
+    const m=flickWindowMetrics(ev.clientX,ev.clientY,performance.now());
+    if(!m)return false;
+    const minDistance=Math.max(36,g.cardHalfH*2*FLICK_MIN_DISTANCE_RATIO);
+    return m.dy>=minDistance&&m.velocityY>=FLICK_MIN_VELOCITY&&m.dy>=Math.abs(m.dx)*FLICK_VERTICAL_RATIO;
+  };
+
+  // Light the ability glow while the card is already accelerating downward, so
+  // the flick feels reactive before release rather than only resolving on it.
+  const updateFlickArming=(nowX,nowY)=>{
+    if(!g)return;
+    let armed=false;
+    if(abilityFlickAllowed(g.uid)&&!g.dropSlot){
+      const m=flickWindowMetrics(nowX,nowY,performance.now());
+      if(m){
+        const minDistance=Math.max(24,g.cardHalfH*2*FLICK_MIN_DISTANCE_RATIO*0.6);
+        armed=m.dy>=minDistance&&m.velocityY>=FLICK_ARM_VELOCITY&&m.dy>=Math.abs(m.dx)*FLICK_VERTICAL_RATIO;
+      }
+    }
+    if(armed!==g.flickArmed){
+      g.flickArmed=armed;
+      g.cardEl.classList.toggle('ability-flick-arming',armed);
+      if(armed&&!g.flickHapticDone){g.flickHapticDone=true;if(typeof target.haptic==='function')target.haptic(8);}
+      if(!armed)g.flickHapticDone=false;
+    }
+  };
+
+  const commitAbilityFlick=ev=>{
+    const uid=g.uid;
+    const cardEl=g.cardEl;
+    const rect=cardEl.getBoundingClientRect();
+    if(ev){try{ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation?.();}catch(e){}}
+
+    // Clone the card because the game-state render() may immediately remove the
+    // real one; the clone lets the flick-and-pop play without delaying the ability.
+    const ghost=cardEl.cloneNode(true);
+    ghost.classList.add('ability-flick-ghost');
+    ghost.classList.remove('hand-card-dragging','ability-flick-arming');
+    Object.assign(ghost.style,{
+      position:'fixed',left:rect.left+'px',top:rect.top+'px',
+      width:rect.width+'px',height:rect.height+'px',margin:'0',
+      zIndex:'100001',pointerEvents:'none',
+    });
+    document.body.appendChild(ghost);
+
+    // End the ordinary drag without placing or reordering the card.
+    endDrag(false);
+
+    // Selection, resource spend, hand removal, ability resolution and rollback
+    // all stay owned by the existing discard runtime.
+    if(typeof target.discardCardUid==='function')target.discardCardUid(uid);
+
+    const anim=ghost.animate?.([
+      {transform:'translateY(0) scale(1)',filter:'brightness(1)',opacity:1},
+      {transform:'translateY(42px) scale(0.94)',filter:'brightness(1.8)',opacity:1,offset:0.65},
+      {transform:'translateY(58px) scale(1.12)',filter:'brightness(2.8)',opacity:0},
+    ],{duration:190,easing:'cubic-bezier(.2,.8,.3,1)',fill:'forwards'});
+    const cleanup=()=>ghost.remove();
+    if(anim&&anim.finished&&typeof anim.finished.finally==='function')anim.finished.finally(cleanup);
+    else setTimeout(cleanup,240);
   };
 
   const slideLanding=(cardEl,firstRect)=>{
@@ -285,7 +389,7 @@ export function installHandCardGestures(target = window){
     }
     if(g.dragRafId){cancelAnimationFrame(g.dragRafId);g.dragRafId=null;}
     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
-    cardEl.classList.remove('hand-card-dragging');
+    cardEl.classList.remove('hand-card-dragging','ability-flick-arming');
     cardEl.style.removeProperty('transform');
     cardEl.style.removeProperty('position');
     cardEl.style.removeProperty('left');
@@ -401,6 +505,9 @@ export function installHandCardGestures(target = window){
       tiltDeg:0,
       dragRafId:null,
       lastDragEv:null,
+      samples:[{x:ev.clientX,y:ev.clientY,time:performance.now()}],
+      flickArmed:false,
+      flickHapticDone:false,
       originalParent:cardEl.parentNode,
       originalNextSibling:cardEl.nextSibling,
     };
@@ -408,6 +515,7 @@ export function installHandCardGestures(target = window){
 
   document.addEventListener('pointermove',ev=>{
     if(!g||ev.pointerId!==g.pointerId)return;
+    recordSample(ev.clientX,ev.clientY,performance.now());
     if(g.mode==='pending'){
       const dx=ev.clientX-g.startX,dy=ev.clientY-g.startY;
       if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
@@ -423,6 +531,13 @@ export function installHandCardGestures(target = window){
   const onEnd=ev=>{
     if(!g||ev.pointerId!==g.pointerId)return;
     if(g.mode==='pending'){cancelHold();g=null;return;}
+    // Release priority: valid spread slot (handled in endDrag) is checked first
+    // inside detectAbilityFlick; a recognized downward flick activates the
+    // ability; otherwise endDrag reorders or returns the card.
+    if(ev.type==='pointerup'&&g.mode==='drag'&&detectAbilityFlick(ev)){
+      commitAbilityFlick(ev);
+      return;
+    }
     endDrag(ev.type!=='pointercancel');
   };
   document.addEventListener('pointerup',onEnd,true);

@@ -134,4 +134,35 @@ body:has(#summary .store-front-shell) #spv2ArchiveBtn{z-index:10!important}
 }
 
 @media(prefers-reduced-motion:reduce){.spread-actions .sbtn.card-drop-target{transition:none!important}}
+
+/* ── Ability flick gesture ──────────────────────────────────────────────
+   While a held card is already accelerating downward (before release) the
+   ability area lights up so the flick reads as reactive, not all-or-nothing. */
+#hand .card.ability-flick-arming,
+.card.hand-card-dragging.ability-flick-arming{
+  filter:brightness(1.26) drop-shadow(0 6px 10px rgba(255,150,60,.5)) drop-shadow(0 0 16px rgba(255,120,40,.5))!important;
+  box-shadow:0 0 0 1px rgba(255,214,140,.7),0 6px 22px rgba(255,120,40,.5),0 0 34px rgba(255,90,30,.42)!important;
+}
+/* A short particle trail streams above the moving card. */
+.card.ability-flick-arming::after{
+  content:'';position:absolute;left:50%;top:-15px;width:60%;height:26px;
+  transform:translateX(-50%);pointer-events:none;border-radius:50%;z-index:-1;
+  background:radial-gradient(ellipse at center,rgba(255,196,110,.85),rgba(255,120,40,.28) 55%,transparent 72%);
+  filter:blur(2px);
+  animation:tlr-flick-trail .5s ease-out infinite;
+}
+@keyframes tlr-flick-trail{
+  0%{opacity:0;transform:translateX(-50%) translateY(6px) scaleY(.6)}
+  40%{opacity:1}
+  100%{opacity:0;transform:translateX(-50%) translateY(-18px) scaleY(1.3)}
+}
+/* The flick-and-pop clone left behind on release (animated via WAAPI). */
+.ability-flick-ghost{
+  border-radius:12px;
+  filter:brightness(1.4) drop-shadow(0 0 18px rgba(255,150,60,.7));
+  will-change:transform,opacity,filter;
+}
+@media(prefers-reduced-motion:reduce){
+  .card.ability-flick-arming::after{animation:none}
+}
 }

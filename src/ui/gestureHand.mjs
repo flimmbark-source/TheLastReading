@@ -373,7 +373,7 @@ export function installHandSwipeScroll(target = window){
     // Flush gesture: drag 2/3 of the hand dock below the screen edge.
     if(dy>startDockH*2/3&&typeof target.flushHand==='function'){endGesture();target.flushHand();return;}
     const targetOffset=softClamp(startOffset+dx*DEG_PER_PX_SWIPE);
-    if(Math.abs(targetOffset-startOffset)>1.15)completeHandHintStep(1);
+    if(Math.abs(targetOffset-startOffset)>1.15){completeHandHintStep(1);if(typeof target.tutSignal==='function')target.tutSignal('handScrolled');}
     const y=softClampLift(startLift+dy);
     applyOffset(targetOffset);
     applyLift(y);

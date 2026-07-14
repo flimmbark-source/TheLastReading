@@ -464,7 +464,7 @@ export function enterMarket(){
 export function continueReading(){_packBuys={};_shopPacks=null;_shopRefreshCount=0;const pendingRelic=window._pendingRelicTut;window._pendingRelicTut=false;
 // Fallback: if enterMarket() wasn't called at store entry (legacy path), advance now.
 if(window.tlrStore.getState().run.phase==='market'){window.tlrStore.dispatch({type:window.tlrActions.LEAVE_MARKET});const _run=window.tlrStore.getState().run;state.reading=_run.reading;state.constellationId=_run.constellationId||null;state.untargetableCardUids=(_run.untargetableCardIds||[]).slice();}
-startReading();if(pendingRelic){setTimeout(()=>tutShow(9),400)}}
+startReading();if(pendingRelic){setTimeout(()=>tutShow('relic'),400)}}
 
 export function endSession(skipSummary){const total=persist.totalScore||0;const candles=window.tlrScoreToObals?window.tlrScoreToObals(total):1;
 window.tlrStore.dispatch({type:window.tlrActions.END_SESSION,totalScore:total,obals:candles});

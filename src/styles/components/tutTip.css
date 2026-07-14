@@ -24,4 +24,25 @@
 .tut-foot{display:flex;gap:8px;margin-top:10px;justify-content:flex-end;align-items:center}
 .tut-tap-prompt{flex:1;font-size:10px;color:#8a7551;font-style:italic;text-align:left}
 #tutSkipBtn{background:transparent;border:1px solid #5f4c29;color:#7a6540;font-size:11px;padding:3px 8px;font-weight:400}
+
+/* Looping demonstration of the flick gesture that accompanies the Ability tip.
+   The card glyph is held/lifted slowly, then flicked sharply downward and pops
+   away -- mirroring the real gesture (slow carry, decisive downward release). */
+#tutTip.tut-demo-flick #tutText::after{
+  content:'\1F0CF';                 /* 🃏 playing-card glyph */
+  display:block;margin:9px auto 1px;width:1.5em;height:1.5em;line-height:1.5em;
+  text-align:center;font-size:22px;color:#f0d58a;
+  filter:drop-shadow(0 0 6px rgba(255,150,60,.6));
+  animation:tlr-flick-demo 1.6s cubic-bezier(.2,.8,.3,1) infinite;
+}
+@keyframes tlr-flick-demo{
+  0%,20%{transform:translateY(-9px) scale(1);opacity:.55}   /* held / thinking */
+  40%{transform:translateY(-11px) scale(1.03);opacity:.9}    /* slow lift */
+  58%{transform:translateY(15px) scale(.9);opacity:1;filter:brightness(1.9) drop-shadow(0 0 10px rgba(255,150,60,.9))} /* sharp flick down */
+  72%{transform:translateY(24px) scale(1.06);opacity:0}      /* pop away */
+  100%{transform:translateY(-9px) scale(1);opacity:0}
+}
+@media(prefers-reduced-motion:reduce){
+  #tutTip.tut-demo-flick #tutText::after{animation:none;transform:none;opacity:.85}
+}
 }
