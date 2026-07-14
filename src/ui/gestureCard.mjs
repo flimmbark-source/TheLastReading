@@ -14,27 +14,20 @@ export function installHandCardGestures(target = window){
   const SPREAD_ZONE_SLACK=72;
   const SLOT_HIT_PAD=28;
 
-  // Ability activation zone. Dragging a card into the bottom band of the screen
-  // (clearly below the resting hand, so it never collides with the horizontal
-  // reorder gesture or the upward drag-to-spread) arms a glow + a bottom tray;
-  // releasing there activates the card's ability. Position-based, not velocity-
-  // based: the player can move slowly and hold in the zone as long as they like.
-  const ABILITY_ZONE_HAND_FRAC=0.68;  // zone begins this far down the hand band
-  const ABILITY_ZONE_MIN_GAP=92;      // ...but always leaves this much above the screen bottom
-  const ABILITY_ZONE_SLACK=6;         // small hysteresis so the arm state doesn't flicker at the edge
+  // Ability flick. Recognition looks only at the final burst of motion before
+  // release (velocity over the last ~100ms), so the player can carry the card
+  // slowly and still flick it with a quick throw. All feedback lives on the card
+  // itself: it glows the instant the throw crosses the arm threshold, then on
+  // release flies off along the throw and dissolves as the ability resolves.
+  const FLICK_WINDOW_MS=110;        // velocity sample window before release (80-120ms)
+  const FLICK_RETAIN_MS=170;        // keep slightly more than the window
+  const FLICK_MIN_DRAG_MS=70;       // minimum gesture duration to count as a flick
+  const FLICK_MIN_WINDOW_MS=45;     // need this much sampled motion in the window
+  const FLICK_ARM_SPEED=640;        // px/s over the window: card lights up (armed)
+  const FLICK_ACTIVATE_SPEED=940;   // px/s over the window: release activates
+  const FLICK_ABILITY_DELAY_MS=200; // ability begins resolving this long after release (180-250ms)
 
   let g=null;
-  const ensureZoneTray=()=>{
-    let tray=document.getElementById('abilityZoneTray');
-    if(!tray){
-      tray=document.createElement('div');
-      tray.id='abilityZoneTray';
-      tray.setAttribute('aria-hidden','true');
-      tray.innerHTML='<span class="ability-zone-tray-label">Release to use ability</span>';
-      document.body.appendChild(tray);
-    }
-    return tray;
-  };
   const handEl=()=>document.querySelector('.hand');
   const handCards=()=>{const h=handEl();return h?[...h.querySelectorAll(':scope > .card[data-uid]')]:[]};
   const storeState=()=>target.tlrStore?.getState?.()??null;
@@ -196,27 +189,16 @@ export function installHandCardGestures(target = window){
     const hRect=h?h.getBoundingClientRect():{left:0,top:0,width:target.innerWidth,height:200};
     g.handCenterX=hRect.left+hRect.width/2;
     g.handTop=hRect.top;
-    // Y line at/below which the card sits "in the bottom activation zone". Kept
-    // below the resting hand band so reordering (which stays at hand height)
-    // never crosses it, and above the very bottom edge so it stays reachable.
-    g.abilityZoneY=Math.min(hRect.top+hRect.height*ABILITY_ZONE_HAND_FRAC,target.innerHeight-ABILITY_ZONE_MIN_GAP);
     g.cardHalfW=naturalW/2;
     g.cardHalfH=naturalH/2;
     g.prevX=ev.clientX;
     g.tiltDeg=0;
+    g.dragStartTime=performance.now();
     g.mode='drag';
     const spEl=document.querySelector('#spread');
     g.spreadRect=spEl?spEl.getBoundingClientRect():null;
     g.slotRects=[...document.querySelectorAll('#spread .slot')].map((el,i)=>({el,idx:i,r:el.getBoundingClientRect()}));
     target.__handReorderActive=true;
-    // Telegraph the activation zone for the whole drag when this card can use an
-    // ability, so the player sees where to release before reaching the zone. The
-    // tray is pinned to the exact zone line so the hint matches the hit-test.
-    if(abilityFlickAllowed(g.uid)){
-      ensureZoneTray();
-      document.body?.style.setProperty('--ability-zone-top',g.abilityZoneY+'px');
-      document.body?.classList.add('ability-zone-drag-active');
-    }
     if(h)h.classList.add('hand-parting');
     const spEl2=document.querySelector('#spread');if(spEl2)spEl2.classList.add('drag-active');
     g.cardEl.classList.add('hand-card-dragging');
@@ -294,37 +276,64 @@ export function installHandCardGestures(target = window){
   // geometry calcDropTarget uses for its own hit-testing.
   const cardCenterFromPointer=(x,y)=>({cx:x-g.grabOffsetX+g.cardHalfW,cy:y-g.grabOffsetY+g.cardHalfH});
 
-  // In the bottom activation zone: card center at/below the zone line, and not
-  // over a valid spread slot (placement always wins). `slack` adds hysteresis so
-  // the armed state doesn't chatter right at the boundary.
-  const inAbilityZone=(x,y,slack=0)=>{
+  // Record pointer samples so recognition can measure only the final burst of
+  // motion, not the whole (possibly slow) carry.
+  const recordSample=(x,y,t)=>{
+    if(!g)return;
+    if(!g.samples)g.samples=[];
+    g.samples.push({x,y,t});
+    const cutoff=t-FLICK_RETAIN_MS;
+    while(g.samples.length>2&&g.samples[0].t<cutoff)g.samples.shift();
+  };
+
+  // Velocity of the last ~110ms of motion: {dx,dy,dist,ms,speed} or null.
+  const flickWindowMetrics=(nowX,nowY,nowT)=>{
+    if(!g||!g.samples||!g.samples.length)return null;
+    const windowStart=nowT-FLICK_WINDOW_MS;
+    const start=g.samples.find(s=>s.t>=windowStart)||g.samples[0];
+    const ms=nowT-start.t;
+    if(ms<=0)return null;
+    const dx=nowX-start.x,dy=nowY-start.y;
+    const dist=Math.hypot(dx,dy);
+    return{dx,dy,dist,ms,speed:dist/(ms/1000)};
+  };
+
+  // A release that should place into the spread rather than flick: over a valid
+  // slot, or up in the spread zone (a play, not a throw).
+  const releaseIsPlacement=(x,y)=>{
+    const drop=calcDropTarget(x,y);
+    if(drop.inSpread&&drop.hit)return true;
+    return isInSpreadZone(cardCenterFromPointer(x,y).cy);
+  };
+
+  // A flick: a fast throw (measured over the release window) that is not a
+  // placement into the spread. Direction is free -- the card flies where thrown.
+  const detectAbilityFlick=ev=>{
     if(!g||g.mode!=='drag')return false;
     if(!abilityFlickAllowed(g.uid))return false;
-    const drop=calcDropTarget(x,y);
-    if(drop.inSpread&&drop.hit)return false;
-    return cardCenterFromPointer(x,y).cy>=g.abilityZoneY-slack;
+    const now=performance.now();
+    if(now-g.dragStartTime<FLICK_MIN_DRAG_MS)return false;
+    if(releaseIsPlacement(ev.clientX,ev.clientY))return false;
+    const m=flickWindowMetrics(ev.clientX,ev.clientY,now);
+    if(!m||m.ms<FLICK_MIN_WINDOW_MS||m.speed<FLICK_ACTIVATE_SPEED)return false;
+    g.flickVec={x:m.dx,y:m.dy,speed:m.speed};
+    return true;
   };
 
-  const detectAbilityFlick=ev=>inAbilityZone(ev.clientX,ev.clientY);
-
-  const setZoneChrome=on=>{
-    const body=document.body;
-    if(!body)return;
-    body.classList.toggle('ability-zone-armed',on);
-  };
-
-  // Glow the card and light the bottom tray while the card sits in the zone, so
-  // the activation reads clearly before release rather than only resolving on it.
+  // Glow the card the instant the throw crosses the arm speed, so the flick
+  // reads as reactive before release. Feedback lives on the card, nowhere else.
   const updateFlickArming=(nowX,nowY)=>{
     if(!g)return;
-    // A little hysteresis: harder to arm, easier to stay armed.
-    const armed=g.flickArmed
-      ?inAbilityZone(nowX,nowY,ABILITY_ZONE_SLACK)
-      :inAbilityZone(nowX,nowY,-ABILITY_ZONE_SLACK);
+    let armed=false;
+    if(abilityFlickAllowed(g.uid)&&!g.dropSlot&&!releaseIsPlacement(nowX,nowY)){
+      const m=flickWindowMetrics(nowX,nowY,performance.now());
+      // Hysteresis: a little easier to stay armed than to arm in the first place.
+      const gate=g.flickArmed?FLICK_ARM_SPEED*0.72:FLICK_ARM_SPEED;
+      armed=!!m&&m.ms>=FLICK_MIN_WINDOW_MS&&m.speed>=gate;
+    }
     if(armed!==g.flickArmed){
       g.flickArmed=armed;
       g.cardEl.classList.toggle('ability-flick-arming',armed);
-      setZoneChrome(armed);
       if(armed&&!g.flickHapticDone){g.flickHapticDone=true;if(typeof target.haptic==='function')target.haptic(8);}
       if(!armed)g.flickHapticDone=false;
     }
@@ -334,8 +343,13 @@ export function installHandCardGestures(target = window){
     const uid=g.uid;
     const cardEl=g.cardEl;
     const rect=cardEl.getBoundingClientRect();
-    // The card was released in the bottom zone, so it pops downward and away.
-    const ux=0,uy=1;
+    // Fly the card off along the throw. Momentum distance scales with the throw
+    // speed (clamped), so a harder flick sends the card further.
+    const vec=g.flickVec||{x:0,y:1,speed:FLICK_ACTIVATE_SPEED};
+    const mag=Math.hypot(vec.x,vec.y)||1;
+    const ux=vec.x/mag,uy=vec.y/mag;
+    const flyDist=Math.max(90,Math.min(280,vec.speed*0.17));
+    const spinDeg=(ux>=0?1:-1)*Math.min(22,vec.speed*0.012);
     if(ev){try{ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation?.();}catch(e){}}
 
     // Clone the card because the game-state render() may immediately remove the
@@ -380,18 +394,22 @@ export function installHandCardGestures(target = window){
     // End the ordinary drag without placing or reordering the card.
     endDrag(false);
 
-    // Selection, resource spend, hand removal, ability resolution and rollback
-    // all stay owned by the existing discard runtime.
-    if(typeof target.discardCardUid==='function')target.discardCardUid(uid);
-
+    // Ghost flight (momentum) then pop/dissolve. Two phases in one timeline:
+    //  - fly: ~150ms carrying on along the throw (the "card keeps flying").
+    //  - pop: last ~130ms brightening, scaling up and dissolving away.
     const anim=ghost.animate?.([
-      {transform:'translate(0,0) scale(1)',filter:'brightness(1)',opacity:1},
-      {transform:`translate(${(ux*42).toFixed(1)}px,${(uy*42).toFixed(1)}px) scale(0.94)`,filter:'brightness(1.8)',opacity:1,offset:0.65},
-      {transform:`translate(${(ux*58).toFixed(1)}px,${(uy*58).toFixed(1)}px) scale(1.12)`,filter:'brightness(2.8)',opacity:0},
-    ],{duration:190,easing:'cubic-bezier(.2,.8,.3,1)',fill:'forwards'});
+      {transform:'translate(0,0) scale(1) rotate(0deg)',filter:'brightness(1.05)',opacity:1,offset:0},
+      {transform:`translate(${(ux*flyDist*0.72).toFixed(1)}px,${(uy*flyDist*0.72).toFixed(1)}px) scale(1.03) rotate(${(spinDeg*0.6).toFixed(1)}deg)`,filter:'brightness(1.5)',opacity:1,offset:0.52},
+      {transform:`translate(${(ux*flyDist).toFixed(1)}px,${(uy*flyDist).toFixed(1)}px) scale(1.22) rotate(${spinDeg.toFixed(1)}deg)`,filter:'brightness(2.9)',opacity:0,offset:1},
+    ],{duration:290,easing:'cubic-bezier(.17,.72,.24,1)',fill:'forwards'});
     const cleanup=()=>ghost.remove();
     if(anim&&anim.finished&&typeof anim.finished.finally==='function')anim.finished.finally(cleanup);
-    else setTimeout(cleanup,240);
+    else setTimeout(cleanup,320);
+
+    // The ability begins resolving a beat after release (once the card has flown),
+    // not instantly. Selection, resource spend, hand removal, ability resolution
+    // and rollback all stay owned by the existing discard runtime.
+    setTimeout(()=>{if(typeof target.discardCardUid==='function')target.discardCardUid(uid);},FLICK_ABILITY_DELAY_MS);
   };
 
   const slideLanding=(cardEl,firstRect)=>{
@@ -436,7 +454,6 @@ export function installHandCardGestures(target = window){
     if(g.dropSlot)g.dropSlot.slotEl.classList.remove('drop-target');
     const h=handEl();if(h)h.classList.remove('hand-parting');
     const spEl3=document.querySelector('#spread');if(spEl3)spEl3.classList.remove('drag-active');
-    document.body?.classList.remove('ability-zone-drag-active','ability-zone-armed');
     target.__handReorderActive=false;
     g=null;
 
@@ -541,6 +558,7 @@ export function installHandCardGestures(target = window){
       tiltDeg:0,
       dragRafId:null,
       lastDragEv:null,
+      samples:[{x:ev.clientX,y:ev.clientY,t:performance.now()}],
       flickArmed:false,
       flickHapticDone:false,
       originalParent:cardEl.parentNode,
@@ -550,6 +568,7 @@ export function installHandCardGestures(target = window){
 
   document.addEventListener('pointermove',ev=>{
     if(!g||ev.pointerId!==g.pointerId)return;
+    recordSample(ev.clientX,ev.clientY,performance.now());
     if(g.mode==='pending'){
       const dx=ev.clientX-g.startX,dy=ev.clientY-g.startY;
       if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
