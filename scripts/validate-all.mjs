@@ -18,6 +18,8 @@ import './validate-ability-rule-reconciliation.mjs';
 import './validate-action-card-drops.mjs';
 import './validate-draw-animation.mjs';
 import './validate-hints.mjs';
+import './validate-hint-settings.mjs';
+import './validate-tutorial-controls.mjs';
 import './validate-game-terms.mjs';
 import './validate-adventure.mjs';
 import './validate-adventure-single-card.mjs';
