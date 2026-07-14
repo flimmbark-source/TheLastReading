@@ -33,9 +33,11 @@ assert.ok(fxSource.includes('isolation:isolate'),'FX compositing is isolated fro
 assert.ok(!fxSource.includes('mix-blend-mode'),'activation FX avoids blend-mode compositing');
 assert.ok(!fxSource.includes('drop-shadow'),'activation flight avoids live blur filters');
 assert.ok(fxSource.includes('CARD_DURATION_MS=620'),'activation lasts long enough to read');
-assert.ok(fxSource.includes('BURST_DELAY_MS=170'),'impact is separated from the initial charge');
-assert.ok(fxSource.includes("offset:.13"),'animation contains an anticipation beat');
-assert.ok(fxSource.includes("offset:.82"),'card remains visible through arrival before dissolving');
+assert.ok(fxSource.includes('BURST_DELAY_MS=170'),'impact is separated from release');
+assert.ok(fxSource.includes('motion.dx*.13'),'the first intermediate frame continues forward motion');
+assert.ok(fxSource.includes('motion.dx*.82'),'the pre-fade frame has not already stopped at the destination');
+assert.ok(!fxSource.includes('offset:0,easing:'),'card keyframes do not reset easing per segment');
+assert.ok(fxSource.includes("easing:'cubic-bezier(.18,.62,.25,1)'"),'one smooth curve controls the entire card flight');
 assert.ok(fxSource.includes('.tlr-card-activation-burst::before'),'sparkle bloom has a secondary fleck layer');
 assert.ok(fxSource.includes('.tlr-card-activation-burst::after'),'sparkle bloom has cross-shaped twinkles');
 assert.ok(fxSource.includes('linear-gradient(rgba(255,248,225,.95)'),'sparkle bloom includes crisp star glints');
@@ -133,8 +135,11 @@ assert.equal(discardCount,0,'gameplay remains uncommitted while the animation is
 assert.equal(target.__tlrCardActivationPending,true,'activation transaction locks input');
 assert.equal(animationResolvers.length,2,'card flight and sparkle animations start synchronously');
 assert.equal(animationOptions[0].duration,620,'card presentation uses readable duration');
+assert.equal(animationOptions[0].easing,'cubic-bezier(.18,.62,.25,1)','one easing curve spans the full card flight');
+assert.ok(animationFrames[0].every(frame=>frame.easing===undefined),'intermediate card keyframes do not introduce velocity resets');
+assert.equal(new Set(animationFrames[0].map(frame=>frame.transform.match(/translate3d\(([^)]+)\)/)?.[1])).size,5,'card position changes at every keyframe including the fade');
 assert.equal(animationOptions[1].duration,420,'sparkle bloom has a distinct duration');
-assert.equal(animationOptions[1].delay,170,'sparkle bloom begins after anticipation');
+assert.equal(animationOptions[1].delay,170,'sparkle bloom begins after release');
 assert.equal(animationFrames[1].length,4,'sparkle bloom has appear, twinkle, drift, and fade beats');
 assert.equal(animationFrames[1][3].opacity,0,'sparkle bloom fully disperses before gameplay commits');
 animationResolvers.splice(0).forEach(resolve=>resolve());
