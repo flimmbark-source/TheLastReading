@@ -161,6 +161,19 @@ body:has(#summary .store-front-shell) #spv2ArchiveBtn{z-index:10!important}
   filter:brightness(1.45) saturate(1.1) drop-shadow(0 0 20px rgba(255,160,70,.8));
   will-change:transform,opacity,filter;
 }
+/* Release burst: a hot flare core plus a shockwave ring, screen-blended so it
+   reads as light over the dark table. Anchored at the release point. */
+.ability-flick-burst{
+  position:fixed;z-index:100000;pointer-events:none;
+  width:220px;height:220px;border-radius:50%;
+  mix-blend-mode:screen;will-change:transform,opacity;
+  background:radial-gradient(circle,rgba(255,244,206,.98) 0%,rgba(255,168,74,.72) 26%,rgba(255,96,32,.34) 52%,transparent 70%);
+}
+.ability-flick-burst::before{
+  content:'';position:absolute;inset:24%;border-radius:50%;
+  border:3px solid rgba(255,230,166,.95);
+  box-shadow:0 0 22px rgba(255,170,74,.9),inset 0 0 18px rgba(255,190,100,.7);
+}
 @media(prefers-reduced-motion:reduce){
   .card.ability-flick-arming::after{animation:none}
 }

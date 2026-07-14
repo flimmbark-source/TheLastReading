@@ -334,22 +334,68 @@ export function installHandCardGestures(target = window){
     if(armed!==g.flickArmed){
       g.flickArmed=armed;
       g.cardEl.classList.toggle('ability-flick-arming',armed);
+      // Inline the glow too, so the on-card "armed" feedback shows even if the
+      // gesture stylesheet is not served/loaded in the host environment.
+      if(armed){
+        g.cardEl.style.setProperty('filter','brightness(1.34) drop-shadow(0 0 12px rgba(255,175,85,.9)) drop-shadow(0 0 30px rgba(255,110,40,.62))','important');
+        g.cardEl.style.setProperty('box-shadow','0 0 0 1.5px rgba(255,232,168,.95),0 0 22px rgba(255,150,60,.75),0 0 48px rgba(255,90,30,.5)','important');
+      }else{
+        g.cardEl.style.removeProperty('filter');
+        g.cardEl.style.removeProperty('box-shadow');
+      }
       if(armed&&!g.flickHapticDone){g.flickHapticDone=true;if(typeof target.haptic==='function')target.haptic(8);}
       if(!armed)g.flickHapticDone=false;
     }
+  };
+
+  // A bright expanding flare + shockwave ring at the anchor point. All styling
+  // is inlined (not reliant on any stylesheet being served/fresh), screen-blended
+  // over the dark table so the activation is unmistakable.
+  const spawnFlickBurst=(cx,cy)=>{
+    const burst=document.createElement('div');
+    burst.className='ability-flick-burst';
+    Object.assign(burst.style,{
+      position:'fixed',left:cx+'px',top:cy+'px',width:'220px',height:'220px',
+      borderRadius:'50%',zIndex:'100000',pointerEvents:'none',mixBlendMode:'screen',
+      transform:'translate(-50%,-50%) scale(0.25)',
+      background:'radial-gradient(circle,rgba(255,244,206,.98) 0%,rgba(255,168,74,.72) 26%,rgba(255,96,32,.34) 52%,rgba(255,96,32,0) 70%)',
+    });
+    const ring=document.createElement('div');
+    Object.assign(ring.style,{
+      position:'absolute',inset:'24%',borderRadius:'50%',
+      border:'3px solid rgba(255,230,166,.95)',
+      boxShadow:'0 0 22px rgba(255,170,74,.9),inset 0 0 18px rgba(255,190,100,.7)',
+    });
+    burst.appendChild(ring);
+    document.body.appendChild(burst);
+    const anim=burst.animate?.([
+      {transform:'translate(-50%,-50%) scale(0.25)',opacity:0,offset:0},
+      {transform:'translate(-50%,-50%) scale(1.05)',opacity:1,offset:0.22},
+      {transform:'translate(-50%,-50%) scale(2.7)',opacity:0,offset:1},
+    ],{duration:340,easing:'cubic-bezier(.15,.7,.25,1)',fill:'forwards'});
+    const done=()=>burst.remove();
+    if(anim&&anim.finished&&typeof anim.finished.finally==='function')anim.finished.finally(done);
+    else setTimeout(done,380);
   };
 
   const commitAbilityFlick=ev=>{
     const uid=g.uid;
     const cardEl=g.cardEl;
     const rect=cardEl.getBoundingClientRect();
-    // Fly the card off along the throw. Momentum distance scales with the throw
-    // speed (clamped), so a harder flick sends the card further.
+    // Where the pop + burst play. A downward flick releases near the bottom edge
+    // (over the busy table rim), so instead of flying further down and off-screen
+    // the card rises a little in the throw direction into the visible play area,
+    // over the dark starfield where the screen-blended burst reads brightest.
     const vec=g.flickVec||{x:0,y:1,speed:FLICK_ACTIVATE_SPEED};
     const mag=Math.hypot(vec.x,vec.y)||1;
     const ux=vec.x/mag,uy=vec.y/mag;
-    const flyDist=Math.max(90,Math.min(280,vec.speed*0.17));
-    const spinDeg=(ux>=0?1:-1)*Math.min(22,vec.speed*0.012);
+    const spinDeg=(ux>=0?1:-1)*Math.min(18,vec.speed*0.01);
+    const startCX=rect.left+rect.width/2,startCY=rect.top+rect.height/2;
+    const vw=target.innerWidth,vh=target.innerHeight;
+    const drift=Math.max(24,Math.min(72,vec.speed*0.035));
+    const anchorX=Math.max(vw*0.14,Math.min(vw*0.86,startCX+ux*drift));
+    const anchorY=Math.max(vh*0.28,Math.min(vh*0.60,startCY+uy*drift));
+    const dx=anchorX-startCX,dy=anchorY-startCY;
     if(ev){try{ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation?.();}catch(e){}}
 
     // Clone the card because the game-state render() may immediately remove the
@@ -369,7 +415,7 @@ export function installHandCardGestures(target = window){
     // pop animation's transform -- the card would activate with no visible flick.
     // Strip them, then pin the ghost at the card's on-screen position so the
     // animation's transform is the only one in play.
-    ['transform','left','top','right','bottom','width','height','margin','position','z-index'].forEach(p=>ghost.style.removeProperty(p));
+    ['transform','left','top','right','bottom','width','height','margin','position','z-index','filter','box-shadow'].forEach(p=>ghost.style.removeProperty(p));
     ghost.style.setProperty('position','fixed','important');
     ghost.style.setProperty('left',rect.left+'px','important');
     ghost.style.setProperty('top',rect.top+'px','important');
@@ -394,17 +440,19 @@ export function installHandCardGestures(target = window){
     // End the ordinary drag without placing or reordering the card.
     endDrag(false);
 
-    // Ghost flight (momentum) then pop/dissolve. Two phases in one timeline:
-    //  - fly: ~150ms carrying on along the throw (the "card keeps flying").
-    //  - pop: last ~130ms brightening, scaling up and dissolving away.
+    // The unmistakable part: a bright burst radiating from the anchor point.
+    spawnFlickBurst(anchorX,anchorY);
+
+    // The card rises into the play area along the throw, swells and flares
+    // white-hot, then dissolves -- a punchy pop that stays on-screen.
     const anim=ghost.animate?.([
-      {transform:'translate(0,0) scale(1) rotate(0deg)',filter:'brightness(1.05)',opacity:1,offset:0},
-      {transform:`translate(${(ux*flyDist*0.72).toFixed(1)}px,${(uy*flyDist*0.72).toFixed(1)}px) scale(1.03) rotate(${(spinDeg*0.6).toFixed(1)}deg)`,filter:'brightness(1.5)',opacity:1,offset:0.52},
-      {transform:`translate(${(ux*flyDist).toFixed(1)}px,${(uy*flyDist).toFixed(1)}px) scale(1.22) rotate(${spinDeg.toFixed(1)}deg)`,filter:'brightness(2.9)',opacity:0,offset:1},
-    ],{duration:290,easing:'cubic-bezier(.17,.72,.24,1)',fill:'forwards'});
+      {transform:'translate(0,0) scale(1) rotate(0deg)',filter:'brightness(1.2) drop-shadow(0 0 14px rgba(255,170,80,.85))',opacity:1,offset:0},
+      {transform:`translate(${(dx*0.6).toFixed(1)}px,${(dy*0.6).toFixed(1)}px) scale(1.18) rotate(${(spinDeg*0.5).toFixed(1)}deg)`,filter:'brightness(2.3) drop-shadow(0 0 26px rgba(255,180,90,1))',opacity:1,offset:0.45},
+      {transform:`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(1.5) rotate(${spinDeg.toFixed(1)}deg)`,filter:'brightness(3.6) drop-shadow(0 0 34px rgba(255,190,100,1))',opacity:0,offset:1},
+    ],{duration:260,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'});
     const cleanup=()=>ghost.remove();
     if(anim&&anim.finished&&typeof anim.finished.finally==='function')anim.finished.finally(cleanup);
-    else setTimeout(cleanup,320);
+    else setTimeout(cleanup,310);
 
     // The ability begins resolving a beat after release (once the card has flown),
     // not instantly. Selection, resource spend, hand removal, ability resolution
@@ -443,6 +491,8 @@ export function installHandCardGestures(target = window){
     if(g.dragRafId){cancelAnimationFrame(g.dragRafId);g.dragRafId=null;}
     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
     cardEl.classList.remove('hand-card-dragging','ability-flick-arming');
+    cardEl.style.removeProperty('filter');
+    cardEl.style.removeProperty('box-shadow');
     cardEl.style.removeProperty('transform');
     cardEl.style.removeProperty('position');
     cardEl.style.removeProperty('left');
