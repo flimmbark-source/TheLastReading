@@ -383,6 +383,20 @@ function finishIntro() {
   tutHide();
 }
 
+// Temporary conditions are rechecked at display time, not just when queued: a
+// tip whose triggering game state has since changed is dropped, never shown
+// stale. Persistent discoveries (no live condition) always return true.
+function stillValidAtShowTime(step) {
+  if (step === TUT_STEP.PURGE) {
+    const st = window.state;
+    if (!st || st.discards !== 0 || !Array.isArray(st.hand) || st.hand.length < 4) return false;
+    const btn = document.querySelector('#purgeBtn');
+    return !!btn && !btn.disabled;
+  }
+  if (step === TUT_STEP.CONSTELLATION) return !!document.querySelector('#constellationPill:not(.hidden)');
+  return true;
+}
+
 function scheduleQueuedTips(delay = 180) {
   clearTimeout(queuedTipTimer);
   queuedTipTimer = setTimeout(() => {
@@ -390,7 +404,7 @@ function scheduleQueuedTips(delay = 180) {
     if (tutStep !== null) { scheduleQueuedTips(450); return; }
     while (queuedTipSteps.length) {
       const next = queuedTipSteps.shift();
-      if (!canShowStep(next)) continue;
+      if (!canShowStep(next) || !stillValidAtShowTime(next)) continue;
       tutShow(next);
       return;
     }
@@ -410,6 +424,13 @@ function queuePriorityTip(step, delay = 180) {
   scheduleQueuedTips(delay);
 }
 
+// Every base-game contextual tip key. Skip Tutorial marks them all seen so no
+// further instructional prompt appears (normal game feedback still shows).
+const BASE_CONTEXTUAL_KEYS = [
+  TUT_ABILITY_KEY, TUT_PATTERN_KEY, TUT_PURGE_KEY, TUT_MARKET_KEY,
+  TUT_CONSTELLATION_KEY, TUT_RELIC_KEY, TUT_ARCHIVES_KEY, TUT_HANDNAV_KEY,
+];
+
 export function tutSkip() {
   if (isAdventureTutorialStep(tutStep)) {
     localStorage.setItem(TUT_ADVENTURE_KEY, '1');
@@ -424,6 +445,12 @@ export function tutSkip() {
   markStepSeen(tutStep);
   localStorage.setItem(TUT_KEY, '1');
   tutDone = true;
+  // Suppress all remaining instructional prompts, opening and contextual alike.
+  BASE_CONTEXTUAL_KEYS.forEach(key => localStorage.setItem(key, '1'));
+  queuedTipSteps = [];
+  clearTimeout(queuedTipTimer);
+  queuedTipTimer = null;
+  awaitingScoringClose = false;
   tutHide();
 }
 
