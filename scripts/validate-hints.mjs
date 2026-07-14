@@ -36,6 +36,11 @@ for (const card of cards) {
     hasHint(hints, HINT_LEVELS.NEAR, SCORING_PATTERNS.THREE_OF_A_KIND.label),
     `split hand/spread Page ${card.uid} keeps its Three of a Kind hint`,
   );
+  assert.deepEqual(
+    getCardHints(card, splitState, { poolCards: cards, patterns: false }),
+    [],
+    `None suppresses pattern hints for Page ${card.uid}`,
+  );
 }
 
 // Once all three are placed, every participating card must keep the completed
@@ -54,4 +59,4 @@ for (const card of cards) {
   );
 }
 
-console.log('Hint persistence checks passed.');
+console.log('Hint persistence and disable-state checks passed.');

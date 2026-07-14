@@ -38,35 +38,62 @@ const HINT_MODE_DEFAULTS={
   reading:{patterns:false,relics:false,patternText:false},
   adventure:{patterns:true,relics:false,patternText:true},
 };
+function documentFor(target){return target.document||(typeof document!=='undefined'?document:null);}
 function hintMode(target){
-  return (target.__tlrAdventureActive||document.body?.classList?.contains('mode-adventure'))?'adventure':'reading';
+  const body=documentFor(target)?.body;
+  return (target.__tlrAdventureActive||body?.classList?.contains('mode-adventure'))?'adventure':'reading';
 }
 function hintStorageKey(target){return 'tlr_hint_settings_'+hintMode(target);}
+function normalizeHintSettings(value){
+  const patternText=!!value?.patternText;
+  return {patterns:patternText||!!value?.patterns,relics:!!value?.relics,patternText};
+}
 function loadHintSettingsForMode(target){
   try{
     const raw=target.localStorage?.getItem(hintStorageKey(target));
-    if(raw){const p=JSON.parse(raw);if(p&&typeof p==='object')return {patterns:!!p.patterns,relics:!!p.relics,patternText:!!p.patternText};}
+    if(raw){const parsed=JSON.parse(raw);if(parsed&&typeof parsed==='object')return normalizeHintSettings(parsed);}
   }catch(e){}
-  return {...(HINT_MODE_DEFAULTS[hintMode(target)]||HINT_MODE_DEFAULTS.reading)};
+  return normalizeHintSettings(HINT_MODE_DEFAULTS[hintMode(target)]||HINT_MODE_DEFAULTS.reading);
+}
+function writeHintSettings(target,next){
+  const normalized=normalizeHintSettings(next);
+  if(!target.hintSettings||typeof target.hintSettings!=='object')target.hintSettings=createInitialHintSettings();
+  Object.assign(target.hintSettings,normalized);
+  return target.hintSettings;
 }
 function saveHintSettingsForMode(target){
-  try{target.localStorage?.setItem(hintStorageKey(target),JSON.stringify(target.hintSettings));}catch(e){}
+  try{target.localStorage?.setItem(hintStorageKey(target),JSON.stringify(normalizeHintSettings(target.hintSettings)));}catch(e){}
 }
-function hintLevelFromSettings(s){return s.patternText?2:(s.patterns?1:0);}
-function syncHintBar(level){
-  const bar=document.getElementById('hintLevelBar');
+function hintLevelFromSettings(settings){return settings.patternText?2:(settings.patterns?1:0);}
+function syncHintBar(target,level){
+  const bar=documentFor(target)?.getElementById('hintLevelBar');
   if(!bar)return;
-  bar.querySelectorAll('.hint-level-seg').forEach(btn=>{
-    const segLevel=Number(btn.dataset.level);
-    const isActive=segLevel===level;
-    btn.classList.toggle('active',isActive);
-    btn.classList.toggle('on',segLevel>=1&&segLevel<=level);
-    btn.setAttribute('aria-pressed',String(isActive));
+  bar.querySelectorAll('.hint-level-seg').forEach(button=>{
+    const segmentLevel=Number(button.dataset.level);
+    const isActive=segmentLevel===level;
+    button.classList.toggle('active',isActive);
+    button.classList.toggle('on',segmentLevel>=1&&segmentLevel<=level);
+    button.setAttribute('aria-pressed',String(isActive));
   });
 }
 function syncHintCheckboxes(target){
-  const relics=document.getElementById('hintRelics');
+  const relics=documentFor(target)?.getElementById('hintRelics');
   if(relics)relics.checked=!!target.hintSettings.relics;
+}
+function invalidateHintState(target){
+  if(target._hintsCache&&typeof target._hintsCache.clear==='function')target._hintsCache.clear();
+  target._hintsCacheKey=null;
+  target._spreadScoreForHints=null;
+}
+function applyHintSettings(target,next,{persist=true,render=true}={}){
+  const settings=writeHintSettings(target,next);
+  syncHintBar(target,hintLevelFromSettings(settings));
+  syncHintCheckboxes(target);
+  if(persist)saveHintSettingsForMode(target);
+  invalidateHintState(target);
+  if(render&&typeof target.render==='function')target.render();
+  target.__patternHintStackRefresh?.();
+  return settings;
 }
 
 function readGlobalLexical(name){
@@ -91,6 +118,7 @@ export function installRuntimeState(target = window){
   target.persist = readGlobalLexical('persist') || target.persist || createInitialPersist();
   target.state = readGlobalLexical('state') || target.state || createInitialState();
   target.hintSettings = readGlobalLexical('hintSettings') || target.hintSettings || createInitialHintSettings();
+  writeHintSettings(target,target.hintSettings);
 
   target.__tlrRuntimeCaches ||= {
     hints:new Map(),hintsKey:null,spreadScoreForHints:null,unlockedFragments:null,
@@ -118,34 +146,40 @@ export function installRuntimeState(target = window){
 
   for(const name of ['_elThreshold','_elPool','_elDiscards','_elDiscardBtn','_elPurgeBtn','_elMullBtn','_elHand','_elCurrent'])ensure(target,name,null);
 
-  if(typeof target.$!=='function')target.$=selector=>document.querySelector(selector);
+  if(typeof target.$!=='function')target.$=selector=>documentFor(target)?.querySelector(selector)||null;
   if(typeof target.shuffle!=='function')target.shuffle=array=>{for(let i=array.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[array[i],array[j]]=[array[j],array[i]];}return array;};
-  if(typeof target._slots!=='function')target._slots=()=>target._slotEls||(target._slotEls=Array.from(document.querySelectorAll('.slot')));
-  if(typeof target.toggleHintSetting!=='function')target.toggleHintSetting=(key,value)=>{target.hintSettings[key]=value;saveHintSettingsForMode(target);if(target._hintsCache)target._hintsCache.clear();if(typeof target.render==='function')target.render();};
-  if(typeof target.setHintLevel!=='function')target.setHintLevel=(level)=>{
-    target.hintSettings.patterns=level>=1;
-    target.hintSettings.patternText=level>=2;
-    syncHintBar(level);
-    saveHintSettingsForMode(target);
-    if(target._hintsCache)target._hintsCache.clear();
-    if(typeof target.render==='function')target.render();
-    target.__patternHintStackRefresh?.();
+  if(typeof target._slots!=='function')target._slots=()=>target._slotEls||(target._slotEls=Array.from(documentFor(target)?.querySelectorAll('.slot')||[]));
+
+  // Runtime state owns these controls. Always replace any boot/legacy stub so a
+  // button cannot update only its visual segment while leaving the live setting
+  // and persisted mode value unchanged.
+  target.toggleHintSetting=(key,value)=>{
+    const next={...target.hintSettings,[key]:!!value};
+    if(key==='patterns'&&!value)next.patternText=false;
+    if(key==='patternText'&&value)next.patterns=true;
+    return applyHintSettings(target,next);
+  };
+  target.setHintLevel=level=>{
+    const numeric=Number(level);
+    const normalized=Number.isFinite(numeric)?Math.max(0,Math.min(2,Math.round(numeric))):0;
+    return applyHintSettings(target,{
+      ...target.hintSettings,
+      patterns:normalized>=1,
+      patternText:normalized>=2,
+    });
   };
   // Load and apply the hint settings saved for the current mode (adventure vs
-  // reading), or that mode's default. Called on mode entry.
-  target.tlrApplyModeHintSettings=()=>{
-    target.hintSettings=loadHintSettingsForMode(target);
-    syncHintBar(hintLevelFromSettings(target.hintSettings));
-    syncHintCheckboxes(target);
-    if(target._hintsCache)target._hintsCache.clear();
-    if(typeof target.render==='function')target.render();
-    target.__patternHintStackRefresh?.();
-  };
+  // reading), or that mode's default. Mutate the existing object rather than
+  // replacing it so every renderer/reference observes the same live settings.
+  target.tlrApplyModeHintSettings=()=>applyHintSettings(target,loadHintSettingsForMode(target),{persist:false});
+  target.tlrGetHintLevel=()=>hintLevelFromSettings(target.hintSettings);
+  syncHintBar(target,hintLevelFromSettings(target.hintSettings));
+  syncHintCheckboxes(target);
 
   const runtime={
     get persist(){return target.persist;},set persist(v){target.persist=v;},
     get state(){return target.state;},set state(v){target.state=v;},
-    get hintSettings(){return target.hintSettings;},set hintSettings(v){target.hintSettings=v;},
+    get hintSettings(){return target.hintSettings;},set hintSettings(v){writeHintSettings(target,v);},
     get caches(){return target.__tlrRuntimeCaches;},
   };
 
