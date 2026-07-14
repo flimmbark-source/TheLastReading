@@ -1,41 +1,40 @@
-// Hand card gesture controller (Step 4). Verbatim port target from the
-// legacy inline hand card gestures handler patch.
+// Hand card gesture controller. Owns pointer intent (select sweep, reorder,
+// placement, ability flick) while card-activation presentation/gameplay timing is
+// delegated to cardActivationFx.mjs.
 /* global state, refreshHandState, render */
 import { abilityTargetView as selectAbilityTargetView } from '../game/selectors.mjs';
+import { installCardActivationFx } from './cardActivationFx.mjs';
 
-export function installHandCardGestures(target = window){
-  if(!target || target.__handCardGesturesInstalled)return;
+export function installHandCardGestures(target=window){
+  if(!target||target.__handCardGesturesInstalled)return;
   target.__handCardGesturesInstalled=true;
+  installCardActivationFx(target);
 
+  const doc=target.document||document;
   const DRAG_THRESHOLD=10;
-  const TILT_SCALE=0.32;
+  const TILT_SCALE=.32;
   const TILT_MAX=14;
-  const TILT_LERP=0.22;
+  const TILT_LERP=.22;
   const SPREAD_ZONE_SLACK=72;
   const SLOT_HIT_PAD=28;
   const FAILED_FLICK_RETURN_MS=950;
 
-  // Ability flick. Recognition looks only at the final burst of motion before
-  // release (velocity over the last ~100ms), so the player can carry the card
-  // slowly and still flick it with a quick throw. All feedback lives on the card
-  // itself: it glows the instant the throw crosses the arm threshold, then on
-  // release flies off along the throw and dissolves as the ability resolves.
-  const FLICK_WINDOW_MS=110;        // velocity sample window before release (80-120ms)
-  const FLICK_RETAIN_MS=170;        // keep slightly more than the window
-  const FLICK_MIN_DRAG_MS=70;       // minimum gesture duration to count as a flick
-  const FLICK_MIN_WINDOW_MS=45;     // need this much sampled motion in the window
-  const FLICK_ARM_SPEED=640;        // px/s over the window: card lights up (armed)
-  const FLICK_ACTIVATE_SPEED=940;   // px/s over the window: release activates
-  const FLICK_ABILITY_DELAY_MS=200; // ability begins resolving this long after release (180-250ms)
-  // Second way to activate: hold the card against a screen edge and release. A
-  // slow carry to the edge counts even without a throw. Side strips are kept thin
-  // so they clear the fanned hand's edge cards / reorder targets.
-  const EDGE_BOTTOM_PX=84;          // card center within this of the bottom edge
-  const EDGE_SIDE_PX=30;            // ...or this of the left/right edge
+  const FLICK_WINDOW_MS=110;
+  const FLICK_RETAIN_MS=170;
+  const FLICK_MIN_DRAG_MS=70;
+  const FLICK_MIN_WINDOW_MS=45;
+  const FLICK_ARM_SPEED=640;
+  const FLICK_ACTIVATE_SPEED=940;
+  const EDGE_BOTTOM_PX=84;
+  const EDGE_SIDE_PX=30;
+
+  const requestFrame=callback=>(target.requestAnimationFrame||requestAnimationFrame)(callback);
+  const cancelFrame=id=>(target.cancelAnimationFrame||cancelAnimationFrame)(id);
+  const now=()=>target.performance?.now?.()??performance.now();
 
   let g=null;
-  const handEl=()=>document.querySelector('.hand');
-  const handCards=()=>{const h=handEl();return h?[...h.querySelectorAll(':scope > .card[data-uid]')]:[]};
+  const handEl=()=>doc.querySelector('.hand');
+  const handCards=()=>{const hand=handEl();return hand?[...hand.querySelectorAll(':scope > .card[data-uid]')]:[];};
   const storeState=()=>target.tlrStore?.getState?.()??null;
   const handAdapter=()=>{
     const adapter=target.tlrHandGestureAdapter;
@@ -45,8 +44,8 @@ export function installHandCardGestures(target = window){
   const gestureTargeting=()=>{
     const adapter=handAdapter();
     if(adapter)return adapter.getTargeting?.()??null;
-    const s=storeState();
-    return s?selectAbilityTargetView(s):state.abilitySelect;
+    const current=storeState();
+    return current?selectAbilityTargetView(current):state.abilitySelect;
   };
   const purgeSelecting=()=>{
     const adapter=handAdapter();
@@ -54,6 +53,7 @@ export function installHandCardGestures(target = window){
     return (storeState()?.run?.purge??state.purgeSelect)!==null;
   };
   const gestureBusy=()=>{
+    if(target.__tlrCardActivationPending)return true;
     const adapter=handAdapter();
     if(adapter)return !!adapter.isBusy?.();
     return !!(storeState()?.run?.busy??state.busy);
@@ -72,100 +72,98 @@ export function installHandCardGestures(target = window){
     if(adapter?.refreshHand)return adapter.refreshHand();
     if(typeof refreshHandState==='function')return refreshHandState();
   };
-  const isSpreadSlotOccupied=idx=>{
+  const isSpreadSlotOccupied=index=>{
     const adapter=handAdapter();
-    if(adapter?.isSpreadSlotOccupied)return !!adapter.isSpreadSlotOccupied(idx);
-    return !!state.spread[idx];
+    if(adapter?.isSpreadSlotOccupied)return !!adapter.isSpreadSlotOccupied(index);
+    return !!state.spread[index];
   };
-  const cancelHold=()=>{if(g&&g.holdTimer){clearTimeout(g.holdTimer);g.holdTimer=null;}};
-  const queueUid=(arr,uid,max)=>{if(arr.includes(uid))return arr;const a=[...arr,uid];return a.length>max?a.slice(-max):a;};
+  const cardByUid=uid=>{
+    const adapter=handAdapter();
+    const adapterCard=adapter?.getCardByUid?.(uid);
+    if(adapterCard)return adapterCard;
+    const run=storeState()?.run;
+    return (run?.hand||state.hand||[]).find(card=>card.uid===uid)||null;
+  };
+  const cancelHold=()=>{if(g?.holdTimer){clearTimeout(g.holdTimer);g.holdTimer=null;}};
+  const queueUid=(items,uid,max)=>items.includes(uid)?items:[...items,uid].slice(-max);
 
-  // The arc geometry is cached once at drag start. The hand cannot change shape
-  // while one card owns the pointer, so reading it again every animation frame
-  // only forces layout and makes fast flicks look under-sampled.
-  const xToFracSlot=cx=>{
+  const xToFracSlot=centerX=>{
     if(!g||!g.trackSpacingDeg)return 0;
-    const dx=cx-g.trackCenterX;
+    const dx=centerX-g.trackCenterX;
     const ratio=Math.max(-.95,Math.min(.95,dx/Math.max(1,g.trackRadius)));
-    const totalA=Math.asin(ratio)*180/Math.PI;
-    return (totalA-g.trackOffsetDeg)/g.trackSpacingDeg;
+    return (Math.asin(ratio)*180/Math.PI-g.trackOffsetDeg)/g.trackSpacingDeg;
   };
 
-  const hitTestSpreadSlots=(cardCX,cardCY)=>{
-    const rects=g&&g.slotRects?g.slotRects:
-      [...document.querySelectorAll('#spread .slot')].map((el,i)=>({el,idx:i,r:el.getBoundingClientRect(),blocked:isSpreadSlotOccupied(i)||!!el.querySelector('.card')}));
-    for(const{el,idx,r,blocked}of rects){
-      if(blocked)continue;
-      if(cardCX>=r.left-SLOT_HIT_PAD&&cardCX<=r.right+SLOT_HIT_PAD&&
-         cardCY>=r.top-SLOT_HIT_PAD&&cardCY<=r.bottom+SLOT_HIT_PAD){
-        return{slotEl:el,idx};
+  const hitTestSpreadSlots=(cardCenterX,cardCenterY)=>{
+    const rects=g?.slotRects||[...doc.querySelectorAll('#spread .slot')].map((element,index)=>({
+      element,index,rect:element.getBoundingClientRect(),blocked:isSpreadSlotOccupied(index)||!!element.querySelector('.card'),
+    }));
+    for(const item of rects){
+      if(item.blocked)continue;
+      const rect=item.rect;
+      if(cardCenterX>=rect.left-SLOT_HIT_PAD&&cardCenterX<=rect.right+SLOT_HIT_PAD&&
+         cardCenterY>=rect.top-SLOT_HIT_PAD&&cardCenterY<=rect.bottom+SLOT_HIT_PAD){
+        return{slotEl:item.element,idx:item.index};
       }
     }
     return null;
   };
 
-  const isInSpreadZone=cardCY=>{
-    if(g&&g.spreadRect)return cardCY<g.spreadRect.bottom+SPREAD_ZONE_SLACK;
-    const sp=document.querySelector('#spread');
-    if(!sp)return false;
-    return cardCY<sp.getBoundingClientRect().bottom+SPREAD_ZONE_SLACK;
+  const isInSpreadZone=cardCenterY=>{
+    if(g?.spreadRect)return cardCenterY<g.spreadRect.bottom+SPREAD_ZONE_SLACK;
+    const spread=doc.querySelector('#spread');
+    return !!spread&&cardCenterY<spread.getBoundingClientRect().bottom+SPREAD_ZONE_SLACK;
   };
 
   const applyReorderSlots=hoverIndex=>{
     if(!g)return;
     const cards=handCards();
-    const n=cards.length;
-    if(!n)return;
+    if(!cards.length)return;
     const inHand=cards.includes(g.cardEl);
-    const total=inHand?n:n+1;
-    cards.forEach((el,i)=>{
-      let ni;
-      if(el===g.cardEl){
-        ni=hoverIndex;
+    const total=inHand?cards.length:cards.length+1;
+    cards.forEach((element,index)=>{
+      let nextIndex;
+      if(element===g.cardEl){
+        nextIndex=hoverIndex;
       }else{
-        const orig=inHand?i:(i<g.origIndex?i:i+1);
-        if(orig<g.origIndex){
-          ni=orig>=hoverIndex?orig+1:orig;
-        }else{
-          ni=orig<=hoverIndex?orig-1:orig;
-        }
+        const original=inHand?index:(index<g.origIndex?index:index+1);
+        if(original<g.origIndex)nextIndex=original>=hoverIndex?original+1:original;
+        else nextIndex=original<=hoverIndex?original-1:original;
       }
-      el.style.setProperty('--slot',(ni-(total-1)/2).toString());
+      element.style.setProperty('--slot',String(nextIndex-(total-1)/2));
     });
     g.hoverIndex=hoverIndex;
   };
 
   const applyNaturalSlots=()=>{
     const cards=handCards();
-    const n=cards.length;
-    cards.forEach((el,i)=>el.style.setProperty('--slot',(i-(n-1)/2).toString()));
+    cards.forEach((element,index)=>element.style.setProperty('--slot',String(index-(cards.length-1)/2)));
     if(g)g.hoverIndex=g.origIndex;
   };
 
-  const startSelectDrag=ev=>{
+  const startSelectDrag=event=>{
     if(!g||g.mode!=='pending')return;
     cancelHold();
     g.mode='select-drag';
     g.pendingUids=[];
-    try{g.cardEl.setPointerCapture(g.pointerId);}catch(e){}
-    target.__handGestureSuppressClickUntil=performance.now()+800;
-    stepSelectDrag(ev);
+    try{g.cardEl.setPointerCapture(g.pointerId);}catch{}
+    target.__handGestureSuppressClickUntil=now()+800;
+    stepSelectDrag(event);
   };
 
-  const stepSelectDrag=ev=>{
+  const stepSelectDrag=event=>{
     if(!g||g.mode!=='select-drag')return;
-    const els=document.elementsFromPoint(ev.clientX,ev.clientY);
-    for(const el of els){
-      if(!(el instanceof Element))continue;
-      const cardEl=el.closest('#hand .card[data-uid]');
+    for(const element of doc.elementsFromPoint(event.clientX,event.clientY)){
+      if(!(element instanceof Element))continue;
+      const cardEl=element.closest('#hand .card[data-uid]');
       if(!cardEl)continue;
       const uid=Number(cardEl.dataset.uid);
       if(!Number.isFinite(uid))break;
       const adapter=handAdapter();
-      const _t=gestureTargeting();
-      if(_t){
-        if(!_t.validIds.has(uid))break;
-        g.pendingUids=queueUid(g.pendingUids,uid,_t.count);
+      const targeting=gestureTargeting();
+      if(targeting){
+        if(!targeting.validIds.has(uid))break;
+        g.pendingUids=queueUid(g.pendingUids,uid,targeting.count);
       }else if(adapter?.getPurgeLimit&&purgeSelecting()){
         g.pendingUids=queueUid(g.pendingUids,uid,adapter.getPurgeLimit());
       }else if(!adapter&&purgeSelecting()){
@@ -175,7 +173,9 @@ export function installHandCardGestures(target = window){
     }
   };
 
-  const startDrag=ev=>{
+  const abilityFlickAllowed=uid=>typeof target.canDiscardCardUid==='function'&&target.canDiscardCardUid(uid);
+
+  const startDrag=event=>{
     if(!g||g.mode!=='pending')return;
     cancelHold();
     const selected=selectedUid();
@@ -183,90 +183,89 @@ export function installHandCardGestures(target = window){
       setSelected(null);
       refreshActiveHand();
     }
+
     const rect=g.cardEl.getBoundingClientRect();
-    const naturalW=g.cardEl.offsetWidth;
-    const naturalH=g.cardEl.offsetHeight;
-    const centerX=rect.left+rect.width/2;
-    const centerY=rect.top+rect.height/2;
-    const fixedLeft=centerX-naturalW/2;
-    const fixedTop=centerY-naturalH/2;
-    g.grabOffsetX=ev.clientX-fixedLeft;
-    g.grabOffsetY=ev.clientY-fixedTop;
-    const h=handEl();
-    const hRect=h?h.getBoundingClientRect():{left:0,top:0,width:target.innerWidth,height:200};
+    const naturalWidth=g.cardEl.offsetWidth;
+    const naturalHeight=g.cardEl.offsetHeight;
+    const fixedLeft=rect.left+rect.width/2-naturalWidth/2;
+    const fixedTop=rect.top+rect.height/2-naturalHeight/2;
+    g.grabOffsetX=event.clientX-fixedLeft;
+    g.grabOffsetY=event.clientY-fixedTop;
+
+    const hand=handEl();
+    const handRect=hand?hand.getBoundingClientRect():{left:0,top:0,width:target.innerWidth,height:200};
     const trackState=typeof target.__handGetTrackState==='function'?target.__handGetTrackState():null;
-    g.handCenterX=hRect.left+hRect.width/2;
-    g.handTop=hRect.top;
+    g.handCenterX=handRect.left+handRect.width/2;
+    g.handTop=handRect.top;
     g.trackCenterX=trackState?trackState.handRect.left+trackState.handRect.width/2:g.handCenterX;
     g.trackRadius=trackState?.radius||720;
     g.trackOffsetDeg=trackState?.offsetDeg||0;
     g.trackSpacingDeg=trackState?.spacingDeg||5;
     g.dragHandCount=handCards().length;
-    g.cardHalfW=naturalW/2;
-    g.cardHalfH=naturalH/2;
-    g.prevX=ev.clientX;
+    g.cardHalfW=naturalWidth/2;
+    g.cardHalfH=naturalHeight/2;
+    g.prevX=event.clientX;
     g.tiltDeg=0;
-    g.dragStartTime=performance.now();
-    // Cached once: whether this card can flick its ability. It cannot change mid
-    // drag, so we avoid querying the store on every animation frame.
+    g.dragStartTime=now();
     g.flickEligible=abilityFlickAllowed(g.uid);
     g.mode='drag';
-    const spEl=document.querySelector('#spread');
-    g.spreadRect=spEl?spEl.getBoundingClientRect():null;
-    g.slotRects=[...document.querySelectorAll('#spread .slot')].map((el,i)=>({
-      el,idx:i,r:el.getBoundingClientRect(),blocked:isSpreadSlotOccupied(i)||!!el.querySelector('.card'),
+
+    const spread=doc.querySelector('#spread');
+    g.spreadRect=spread?spread.getBoundingClientRect():null;
+    g.slotRects=[...doc.querySelectorAll('#spread .slot')].map((element,index)=>({
+      element,index,rect:element.getBoundingClientRect(),blocked:isSpreadSlotOccupied(index)||!!element.querySelector('.card'),
     }));
     target.__handReorderActive=true;
-    if(h)h.classList.add('hand-parting');
-    if(spEl)spEl.classList.add('drag-active');
+    hand?.classList.add('hand-parting');
+    spread?.classList.add('drag-active');
     g.cardEl.classList.add('hand-card-dragging');
     g.dragOriginLeft=fixedLeft;
     g.dragOriginTop=fixedTop;
-    if(g.cardEl.parentNode!==document.body)document.body.appendChild(g.cardEl);
+    if(g.cardEl.parentNode!==doc.body)doc.body.appendChild(g.cardEl);
     g.cardEl.style.setProperty('position','fixed','important');
-    g.cardEl.style.setProperty('left',`${fixedLeft}px`,'important');
-    g.cardEl.style.setProperty('top',`${fixedTop}px`,'important');
-    g.cardEl.style.setProperty('width',`${naturalW}px`,'important');
-    g.cardEl.style.setProperty('height',`${naturalH}px`,'important');
+    g.cardEl.style.setProperty('left',fixedLeft+'px','important');
+    g.cardEl.style.setProperty('top',fixedTop+'px','important');
+    g.cardEl.style.setProperty('width',naturalWidth+'px','important');
+    g.cardEl.style.setProperty('height',naturalHeight+'px','important');
     g.cardEl.style.setProperty('margin','0','important');
     g.cardEl.style.setProperty('z-index','100000','important');
     g.cardEl.style.setProperty('will-change','transform','important');
     g.cardEl.style.setProperty('backface-visibility','hidden','important');
-    try{g.cardEl.setPointerCapture(g.pointerId);}catch(e){}
-    target.__handGestureSuppressClickUntil=performance.now()+800;
-    stepDrag(ev);
+    try{g.cardEl.setPointerCapture(g.pointerId);}catch{}
+    target.__handGestureSuppressClickUntil=now()+800;
+
+    if(g.flickEligible)target.tlrPrepareCardActivation?.(cardByUid(g.uid));
+    stepDrag(event);
   };
 
   const calcDropTarget=(x,y)=>{
     const cardLeft=x-g.grabOffsetX;
     const cardTop=y-g.grabOffsetY;
-    const cardCX=cardLeft+g.cardHalfW;
-    const cardCY=cardTop+g.cardHalfH;
-    if(isInSpreadZone(cardCY)){
-      return{inSpread:true,hit:hitTestSpreadSlots(cardCX,cardCY)};
-    }
+    const cardCenterX=cardLeft+g.cardHalfW;
+    const cardCenterY=cardTop+g.cardHalfH;
+    if(isInSpreadZone(cardCenterY))return{inSpread:true,hit:hitTestSpreadSlots(cardCenterX,cardCenterY)};
     const total=Math.max(1,g.dragHandCount||1);
-    const frac=xToFracSlot(x);
-    const hover=Math.max(0,Math.min(total-1,Math.round(frac+(total-1)/2)));
+    const hover=Math.max(0,Math.min(total-1,Math.round(xToFracSlot(x)+(total-1)/2)));
     return{inSpread:false,hover};
   };
 
-  const stepDrag=ev=>{
+  const stepDrag=event=>{
     if(!g||g.mode!=='drag')return;
-    g.lastDragEv=ev;
+    g.lastDragEv=event;
     if(g.dragRafId)return;
-    g.dragRafId=requestAnimationFrame(()=>{
-      g.dragRafId=null;
+    g.dragRafId=requestFrame(()=>{
       if(!g||g.mode!=='drag')return;
-      const ev2=g.lastDragEv;
-      const x=ev2.clientX,y=ev2.clientY;
-      const{inSpread,hit,hover}=calcDropTarget(x,y);
+      g.dragRafId=null;
+      const latest=g.lastDragEv;
+      const x=latest.clientX;
+      const y=latest.clientY;
+      const {inSpread,hit,hover}=calcDropTarget(x,y);
       if(inSpread){
-        const newIdx=hit?hit.idx:-1;
-        const oldIdx=g.dropSlot?g.dropSlot.idx:-1;
-        if(newIdx!==oldIdx){
-          if(g.dropSlot)g.dropSlot.slotEl.classList.remove('drop-target');
-          if(hit)hit.slotEl.classList.add('drop-target');
+        const nextIndex=hit?.idx??-1;
+        const previousIndex=g.dropSlot?.idx??-1;
+        if(nextIndex!==previousIndex){
+          g.dropSlot?.slotEl.classList.remove('drop-target');
+          hit?.slotEl.classList.add('drop-target');
           g.dropSlot=hit||null;
         }
         if(g.hoverIndex!==g.origIndex)applyNaturalSlots();
@@ -278,223 +277,131 @@ export function installHandCardGestures(target = window){
       const targetTilt=Math.max(-TILT_MAX,Math.min(TILT_MAX,deltaX*TILT_SCALE));
       g.tiltDeg+=(targetTilt-g.tiltDeg)*TILT_LERP;
       g.prevX=x;
-      const cardLeft=x-g.grabOffsetX;
-      const cardTop=y-g.grabOffsetY;
-      const moveX=cardLeft-g.dragOriginLeft;
-      const moveY=cardTop-g.dragOriginTop;
-      g.cardEl.style.setProperty('transform','translate3d('+moveX.toFixed(1)+'px,'+moveY.toFixed(1)+'px,0) rotate('+g.tiltDeg.toFixed(2)+'deg)','important');
+      const moveX=x-g.grabOffsetX-g.dragOriginLeft;
+      const moveY=y-g.grabOffsetY-g.dragOriginTop;
+      g.cardEl.style.setProperty('transform',`translate3d(${moveX.toFixed(1)}px,${moveY.toFixed(1)}px,0) rotate(${g.tiltDeg.toFixed(2)}deg)`,'important');
       updateFlickArming(x,y,inSpread);
     });
   };
 
-  const abilityFlickAllowed=uid=>typeof target.canDiscardCardUid==='function'&&target.canDiscardCardUid(uid);
+  const inEdgeZone=(x,y)=>y>=target.innerHeight-EDGE_BOTTOM_PX||x<=EDGE_SIDE_PX||x>=target.innerWidth-EDGE_SIDE_PX;
 
-  // Held against a screen edge: the bottom edge (below / on the hand), or the
-  // thin left / right strips beside the hand. Measured at the finger, not the
-  // card centre -- the card is wide, so its centre can't reach the edge, but the
-  // finger dragging it there is the natural "hold it to the edge" gesture.
-  const inEdgeZone=(x,y)=>
-    y>=target.innerHeight-EDGE_BOTTOM_PX||x<=EDGE_SIDE_PX||x>=target.innerWidth-EDGE_SIDE_PX;
-
-  // Record pointer samples so recognition can measure only the final burst of
-  // motion, not the whole (possibly slow) carry.
-  const recordSample=(x,y,t)=>{
+  const recordSample=(x,y,time)=>{
     if(!g)return;
-    if(!g.samples)g.samples=[];
-    g.samples.push({x,y,t});
-    const cutoff=t-FLICK_RETAIN_MS;
+    g.samples||=[];
+    g.samples.push({x,y,t:time});
+    const cutoff=time-FLICK_RETAIN_MS;
     while(g.samples.length>2&&g.samples[0].t<cutoff)g.samples.shift();
   };
 
-  // Velocity of the last ~110ms of motion: {dx,dy,dist,ms,speed} or null.
-  const flickWindowMetrics=(nowX,nowY,nowT)=>{
-    if(!g||!g.samples||!g.samples.length)return null;
-    const windowStart=nowT-FLICK_WINDOW_MS;
-    const start=g.samples.find(s=>s.t>=windowStart)||g.samples[0];
-    const ms=nowT-start.t;
+  const flickWindowMetrics=(x,y,time)=>{
+    if(!g?.samples?.length)return null;
+    const start=g.samples.find(sample=>sample.t>=time-FLICK_WINDOW_MS)||g.samples[0];
+    const ms=time-start.t;
     if(ms<=0)return null;
-    const dx=nowX-start.x,dy=nowY-start.y;
-    const dist=Math.hypot(dx,dy);
-    return{dx,dy,dist,ms,speed:dist/(ms/1000)};
+    const dx=x-start.x;
+    const dy=y-start.y;
+    return{dx,dy,dist:Math.hypot(dx,dy),ms,speed:Math.hypot(dx,dy)/(ms/1000)};
   };
 
-  // Activation on release: either a fast throw (measured over the release
-  // window) OR the card held against a screen edge. Neither counts when the card
-  // is being placed into the spread. `inSpread` (from calcDropTarget) means "over
-  // a slot or up in the spread zone" -- a play, not an activation. flickEligible
-  // is cached at drag start so we don't hit the store every frame.
-  const detectAbilityFlick=ev=>{
+  const detectAbilityFlick=event=>{
     if(!g||g.mode!=='drag'||!g.flickEligible)return false;
-    const drop=calcDropTarget(ev.clientX,ev.clientY);
-    if(drop.inSpread&&drop.hit)return false;               // over an actual slot: placement wins
-    // Held against a screen edge -- unambiguous even in the spread-zone band,
-    // since the edge strips never sit over a centre slot.
-    if(inEdgeZone(ev.clientX,ev.clientY)){
+    const drop=calcDropTarget(event.clientX,event.clientY);
+    if(drop.inSpread&&drop.hit)return false;
+    if(inEdgeZone(event.clientX,event.clientY)){
       g.flickVec={x:0,y:1,speed:FLICK_ACTIVATE_SPEED};
       return true;
     }
-    // A fast throw, as long as it is not aimed up into the spread zone.
-    if(!drop.inSpread&&performance.now()-g.dragStartTime>=FLICK_MIN_DRAG_MS){
-      const m=flickWindowMetrics(ev.clientX,ev.clientY,performance.now());
-      if(m&&m.ms>=FLICK_MIN_WINDOW_MS&&m.speed>=FLICK_ACTIVATE_SPEED){
-        g.flickVec={x:m.dx,y:m.dy,speed:m.speed};
+    const currentTime=now();
+    if(!drop.inSpread&&currentTime-g.dragStartTime>=FLICK_MIN_DRAG_MS){
+      const metrics=flickWindowMetrics(event.clientX,event.clientY,currentTime);
+      if(metrics&&metrics.ms>=FLICK_MIN_WINDOW_MS&&metrics.speed>=FLICK_ACTIVATE_SPEED){
+        g.flickVec={x:metrics.dx,y:metrics.dy,speed:metrics.speed};
         return true;
       }
     }
     return false;
   };
 
-  // Glow the card the instant it crosses the arm speed OR reaches a screen edge,
-  // so activation reads as reactive before release. Feedback lives on the card,
-  // nowhere else. Reuses the inSpread already computed by stepDrag.
-  const updateFlickArming=(nowX,nowY,inSpread)=>{
+  const updateFlickArming=(x,y,inSpread)=>{
     if(!g)return;
     let armed=false;
     if(g.flickEligible&&!g.dropSlot){
-      // Edge hold arms regardless of the spread zone (the edge is never a slot);
-      // the velocity throw only counts when not aimed up into the spread.
-      if(inEdgeZone(nowX,nowY))armed=true;
+      if(inEdgeZone(x,y))armed=true;
       else if(!inSpread){
-        const m=flickWindowMetrics(nowX,nowY,performance.now());
-        // Hysteresis: a little easier to stay armed than to arm in the first place.
-        const gate=g.flickArmed?FLICK_ARM_SPEED*0.72:FLICK_ARM_SPEED;
-        armed=!!m&&m.ms>=FLICK_MIN_WINDOW_MS&&m.speed>=gate;
+        const metrics=flickWindowMetrics(x,y,now());
+        const gate=g.flickArmed?FLICK_ARM_SPEED*.72:FLICK_ARM_SPEED;
+        armed=!!metrics&&metrics.ms>=FLICK_MIN_WINDOW_MS&&metrics.speed>=gate;
       }
     }
-    if(armed!==g.flickArmed){
-      g.flickArmed=armed;
-      g.cardEl.classList.toggle('ability-flick-arming',armed);
-      // Inline the glow too, so the on-card "armed" feedback shows even if the
-      // gesture stylesheet is not served/loaded in the host environment.
-      if(armed){
-        // Light-weight while the card is moving fast: one GPU drop-shadow for the
-        // glow and a blur-less ring, instead of stacked blurred box-shadows.
-        g.cardEl.style.setProperty('filter','brightness(1.34) saturate(1.12) drop-shadow(0 0 16px rgba(255,162,68,.95))','important');
-        g.cardEl.style.setProperty('box-shadow','0 0 0 2px rgba(255,232,168,.95)','important');
-      }else{
-        g.cardEl.style.removeProperty('filter');
-        g.cardEl.style.removeProperty('box-shadow');
-      }
-      if(armed&&!g.flickHapticDone){g.flickHapticDone=true;if(typeof target.haptic==='function')target.haptic(8);}
-      if(!armed)g.flickHapticDone=false;
+    if(armed===g.flickArmed)return;
+    g.flickArmed=armed;
+    g.cardEl.classList.toggle('tlr-ability-flick-armed',armed);
+    if(armed)g.cardEl.style.setProperty('box-shadow','0 0 0 2px rgba(255,232,168,.95)','important');
+    else g.cardEl.style.removeProperty('box-shadow');
+    if(armed&&!g.flickHapticDone){g.flickHapticDone=true;target.haptic?.(8);}
+    if(!armed)g.flickHapticDone=false;
+  };
+
+  const releaseDragChrome=({removeCard=false,cancelPrepared=true}={})=>{
+    if(!g)return null;
+    cancelHold();
+    const snapshot=g;
+    if(snapshot.dragRafId){cancelFrame(snapshot.dragRafId);snapshot.dragRafId=null;}
+    try{snapshot.cardEl.releasePointerCapture(snapshot.pointerId);}catch{}
+    snapshot.cardEl.classList.remove('hand-card-dragging','tlr-ability-flick-armed');
+    for(const property of ['filter','box-shadow','transform','position','left','top','width','height','margin','z-index','will-change','backface-visibility']){
+      snapshot.cardEl.style.removeProperty(property);
+    }
+    snapshot.dropSlot?.slotEl.classList.remove('drop-target');
+    handEl()?.classList.remove('hand-parting');
+    doc.querySelector('#spread')?.classList.remove('drag-active');
+    target.__handReorderActive=false;
+    if(cancelPrepared)target.tlrCancelPreparedCardActivation?.(snapshot.uid);
+    if(removeCard)snapshot.cardEl.remove();
+    g=null;
+    return snapshot;
+  };
+
+  const clearActivationSelection=uid=>{
+    if(state.selected===uid)state.selected=null;
+    const store=target.tlrStore;
+    const actions=target.tlrActions;
+    const run=store?.getState?.()?.run;
+    if(store&&actions&&run?.selectedCardId===uid&&actions.CLEAR_SELECTION){
+      store.dispatch({type:actions.CLEAR_SELECTION});
     }
   };
 
-  // A bright expanding flare + shockwave ring at the anchor point. All styling
-  // is inlined (not reliant on any stylesheet being served/fresh), screen-blended
-  // over the dark table so the activation is unmistakable.
-  const spawnFlickBurst=(cx,cy)=>{
-    const burst=document.createElement('div');
-    burst.className='ability-flick-burst';
-    Object.assign(burst.style,{
-      position:'fixed',left:cx+'px',top:cy+'px',width:'220px',height:'220px',
-      borderRadius:'50%',zIndex:'100000',pointerEvents:'none',mixBlendMode:'screen',
-      transform:'translate(-50%,-50%) scale(0.25)',willChange:'transform,opacity',
-      background:'radial-gradient(circle,rgba(255,244,206,.98) 0%,rgba(255,168,74,.72) 26%,rgba(255,96,32,.34) 52%,rgba(255,96,32,0) 70%)',
-    });
-    const ring=document.createElement('div');
-    Object.assign(ring.style,{
-      position:'absolute',inset:'24%',borderRadius:'50%',
-      border:'3px solid rgba(255,230,166,.95)',
-      boxShadow:'0 0 22px rgba(255,170,74,.9),inset 0 0 18px rgba(255,190,100,.7)',
-    });
-    burst.appendChild(ring);
-    document.body.appendChild(burst);
-    const anim=burst.animate?.([
-      {transform:'translate(-50%,-50%) scale(0.25)',opacity:0,offset:0},
-      {transform:'translate(-50%,-50%) scale(1.05)',opacity:1,offset:0.22},
-      {transform:'translate(-50%,-50%) scale(2.7)',opacity:0,offset:1},
-    ],{duration:340,easing:'cubic-bezier(.15,.7,.25,1)',fill:'forwards'});
-    const done=()=>burst.remove();
-    if(anim&&anim.finished&&typeof anim.finished.finally==='function')anim.finished.finally(done);
-    else setTimeout(done,380);
-  };
+  const commitAbilityFlick=event=>{
+    if(!g)return;
+    const card=cardByUid(g.uid);
+    if(!card){endDrag(false);return;}
+    const transaction={
+      cardUid:g.uid,
+      card,
+      startRect:g.cardEl.getBoundingClientRect(),
+      vector:g.flickVec||{x:0,y:1,speed:FLICK_ACTIVATE_SPEED},
+      startTiltDeg:g.tiltDeg||0,
+    };
+    try{event.preventDefault();event.stopPropagation();event.stopImmediatePropagation?.();}catch{}
+    const snapshot=releaseDragChrome({removeCard:true,cancelPrepared:false});
+    if(!snapshot)return;
+    clearActivationSelection(snapshot.uid);
+    applyNaturalSlots();
+    target.__handTriggerLayout?.();
 
-  const commitAbilityFlick=ev=>{
-    const uid=g.uid;
-    const cardEl=g.cardEl;
-    const rect=cardEl.getBoundingClientRect();
-    // Where the pop + burst play. A downward flick releases near the bottom edge
-    // (over the busy table rim), so instead of flying further down and off-screen
-    // the card rises a little in the throw direction into the visible play area,
-    // over the dark starfield where the screen-blended burst reads brightest.
-    const vec=g.flickVec||{x:0,y:1,speed:FLICK_ACTIVATE_SPEED};
-    const mag=Math.hypot(vec.x,vec.y)||1;
-    const ux=vec.x/mag,uy=vec.y/mag;
-    const spinDeg=(ux>=0?1:-1)*Math.min(18,vec.speed*0.01);
-    const startCX=rect.left+rect.width/2,startCY=rect.top+rect.height/2;
-    const vw=target.innerWidth,vh=target.innerHeight;
-    const drift=Math.max(24,Math.min(72,vec.speed*0.035));
-    const anchorX=Math.max(vw*0.14,Math.min(vw*0.86,startCX+ux*drift));
-    const anchorY=Math.max(vh*0.28,Math.min(vh*0.60,startCY+uy*drift));
-    const dx=anchorX-startCX,dy=anchorY-startCY;
-    if(ev){try{ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation?.();}catch(e){}}
-
-    // Clone the card because the game-state render() may immediately remove the
-    // real one; the clone lets the flick-and-pop play without delaying the ability.
-    const ghost=cardEl.cloneNode(true);
-    ghost.classList.add('ability-flick-ghost');
-    ghost.classList.remove('hand-card-dragging','ability-flick-arming');
-    // discardCardUid() renders immediately, and renderSpread() sweeps every
-    // `body > .card[data-uid]` orphan whose uid is no longer in hand -- which
-    // would delete this clone the instant it is added, cancelling the flick FX.
-    // Strip the uid so the ghost is not seen as a stray card to reclaim.
-    ghost.removeAttribute('data-uid');
-    ghost.querySelectorAll('[data-uid]').forEach(el=>el.removeAttribute('data-uid'));
-    // The clone inherits the dragged card's !important inline transform/left/top
-    // (set by startDrag/stepDrag). In the CSS cascade important author styles beat
-    // WAAPI animations, so leaving them on the clone would silently cancel the
-    // pop animation's transform -- the card would activate with no visible flick.
-    // Strip them, then pin the ghost at the card's on-screen position so the
-    // animation's transform is the only one in play.
-    ['transform','left','top','right','bottom','width','height','margin','position','z-index','filter','box-shadow','will-change','backface-visibility'].forEach(p=>ghost.style.removeProperty(p));
-    ghost.style.setProperty('position','fixed','important');
-    ghost.style.setProperty('left',rect.left+'px','important');
-    ghost.style.setProperty('top',rect.top+'px','important');
-    ghost.style.setProperty('width',rect.width+'px','important');
-    ghost.style.setProperty('height',rect.height+'px','important');
-    ghost.style.setProperty('margin','0','important');
-    ghost.style.setProperty('z-index','100001','important');
-    ghost.style.setProperty('pointer-events','none','important');
-    // Static glow set once (animating filter/drop-shadow every frame is the
-    // expensive path); the pop then animates only transform + opacity, which the
-    // compositor can run on the GPU without per-frame re-rasterization.
-    ghost.style.setProperty('filter','brightness(1.6) saturate(1.1) drop-shadow(0 0 22px rgba(255,182,92,.95))','important');
-    ghost.style.setProperty('will-change','transform,opacity','important');
-    document.body.appendChild(ghost);
-
-    // Remove the real card from the DOM now. It was reparented to <body> when
-    // the drag began; endDrag() below strips its fixed positioning, which would
-    // otherwise drop it into normal document flow at the top-left of the page
-    // for a frame (a visible flash + reflow flicker) until render() clears it.
-    // The ghost is the only visible copy from here on. Removing rather than just
-    // hiding also keeps the ability-cancel rollback correct: renderSpread()
-    // re-parents a surviving `body > .card` back into the hand on rollback, so a
-    // hidden-but-present node would return invisible; a fresh node is built
-    // instead once the card is restored to hand state.
-    cardEl.remove();
-
-    // End the ordinary drag without placing or reordering the card.
-    endDrag(false);
-
-    // The unmistakable part: a bright burst radiating from the anchor point.
-    spawnFlickBurst(anchorX,anchorY);
-
-    // The card rises into the play area along the throw, swells, then dissolves.
-    // Transform + opacity only, so it stays smooth on the compositor.
-    const anim=ghost.animate?.([
-      {transform:'translate3d(0,0,0) scale(1) rotate(0deg)',opacity:1,offset:0},
-      {transform:`translate3d(${(dx*0.6).toFixed(1)}px,${(dy*0.6).toFixed(1)}px,0) scale(1.2) rotate(${(spinDeg*0.5).toFixed(1)}deg)`,opacity:1,offset:0.45},
-      {transform:`translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0) scale(1.55) rotate(${spinDeg.toFixed(1)}deg)`,opacity:0,offset:1},
-    ],{duration:260,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'});
-    const cleanup=()=>ghost.remove();
-    if(anim&&anim.finished&&typeof anim.finished.finally==='function')anim.finished.finally(cleanup);
-    else setTimeout(cleanup,310);
-
-    // The ability begins resolving a beat after release (once the card has flown),
-    // not instantly. Selection, resource spend, hand removal, ability resolution
-    // and rollback all stay owned by the existing discard runtime.
-    setTimeout(()=>{if(typeof target.discardCardUid==='function')target.discardCardUid(uid);},FLICK_ABILITY_DELAY_MS);
+    const activate=target.tlrActivateCardFromGesture;
+    if(typeof activate==='function'){
+      void Promise.resolve(activate(transaction)).catch(error=>{
+        console.error('Ability flick activation failed',error);
+        target.__tlrCardActivationPending=false;
+        target.render?.();
+      });
+    }else{
+      const committed=target.discardCardUid?.(snapshot.uid);
+      if(!committed)target.render?.();
+    }
   };
 
   const slideLanding=(cardEl,firstRect,duration=320)=>{
@@ -503,8 +410,7 @@ export function installHandCardGestures(target = window){
     const dx=firstRect.left-finalRect.left;
     const dy=firstRect.top-finalRect.top;
     if(Math.abs(dx)<1&&Math.abs(dy)<1)return;
-    const reduced=target.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    const ms=reduced?0:duration;
+    const milliseconds=target.matchMedia?.('(prefers-reduced-motion: reduce)').matches?0:duration;
     const cleanup=()=>{
       const isDragging=cardEl.classList.contains('hand-card-dragging');
       cardEl.classList.remove('hand-card-landing');
@@ -518,24 +424,20 @@ export function installHandCardGestures(target = window){
     cardEl.style.setProperty('transition','none','important');
     cardEl.style.setProperty('will-change','transform','important');
     cardEl.style.setProperty('backface-visibility','hidden','important');
-    cardEl.style.setProperty('transform','translate3d('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px,0)','important');
+    cardEl.style.setProperty('transform',`translate3d(${dx.toFixed(1)}px,${dy.toFixed(1)}px,0)`,'important');
     void cardEl.offsetWidth;
-    requestAnimationFrame(()=>{
+    requestFrame(()=>{
       if(!cardEl.isConnected){cleanup();return;}
-      if(ms<=0){cardEl.style.removeProperty('transform');cleanup();return;}
-      cardEl.style.setProperty('transition','transform '+ms+'ms cubic-bezier(.16,.76,.2,1)','important');
+      if(milliseconds<=0){cardEl.style.removeProperty('transform');cleanup();return;}
+      cardEl.style.setProperty('transition',`transform ${milliseconds}ms cubic-bezier(.16,.76,.2,1)`,'important');
       cardEl.style.removeProperty('transform');
-      setTimeout(cleanup,ms+80);
+      setTimeout(cleanup,milliseconds+80);
     });
   };
 
-  // If a drag ends without placing, reordering or removing the card, the card is
-  // still parented to <body> from startDrag. Left there with its fixed position
-  // stripped it would fall into normal flow at the page's top-left for a frame.
-  // Put it back where it came from in the hand so it never flashes in the corner.
   const restoreOrphanCard=(cardEl,originalParent,originalNextSibling)=>{
-    if(!cardEl||!cardEl.isConnected||cardEl.parentNode!==document.body)return;
-    if(!originalParent||!originalParent.isConnected)return;
+    if(!cardEl||!cardEl.isConnected||cardEl.parentNode!==doc.body)return;
+    if(!originalParent?.isConnected)return;
     if(originalNextSibling&&originalNextSibling.parentNode===originalParent)originalParent.insertBefore(cardEl,originalNextSibling);
     else originalParent.appendChild(cardEl);
     applyNaturalSlots();
@@ -543,143 +445,111 @@ export function installHandCardGestures(target = window){
 
   const endDrag=committed=>{
     if(!g)return;
-    cancelHold();
-    const{uid,cardEl,origIndex,hoverIndex,mode,pendingUids=[],originalParent,originalNextSibling}=g;
-    let dropSlot=g.dropSlot;
-    const wasDrag=mode==='drag';
-    const wasSelectDrag=mode==='select-drag';
-    if(wasDrag&&committed&&g.lastDragEv){
-      const last=calcDropTarget(g.lastDragEv.clientX,g.lastDragEv.clientY);
+    const snapshot=g;
+    let dropSlot=snapshot.dropSlot;
+    const wasDrag=snapshot.mode==='drag';
+    const wasSelectDrag=snapshot.mode==='select-drag';
+    if(wasDrag&&committed&&snapshot.lastDragEv){
+      const last=calcDropTarget(snapshot.lastDragEv.clientX,snapshot.lastDragEv.clientY);
       if(last.inSpread)dropSlot=last.hit||null;
     }
-    const releaseRect=wasDrag&&cardEl.isConnected?cardEl.getBoundingClientRect():null;
-    if(g.dragRafId){cancelAnimationFrame(g.dragRafId);g.dragRafId=null;}
-    try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
-    cardEl.classList.remove('hand-card-dragging','ability-flick-arming');
-    cardEl.style.removeProperty('filter');
-    cardEl.style.removeProperty('box-shadow');
-    cardEl.style.removeProperty('transform');
-    cardEl.style.removeProperty('position');
-    cardEl.style.removeProperty('left');
-    cardEl.style.removeProperty('top');
-    cardEl.style.removeProperty('width');
-    cardEl.style.removeProperty('height');
-    cardEl.style.removeProperty('margin');
-    cardEl.style.removeProperty('z-index');
-    cardEl.style.removeProperty('will-change');
-    cardEl.style.removeProperty('backface-visibility');
-    if(g.dropSlot)g.dropSlot.slotEl.classList.remove('drop-target');
-    const h=handEl();if(h)h.classList.remove('hand-parting');
-    const spEl3=document.querySelector('#spread');if(spEl3)spEl3.classList.remove('drag-active');
-    target.__handReorderActive=false;
-    g=null;
+    const releaseRect=wasDrag&&snapshot.cardEl.isConnected?snapshot.cardEl.getBoundingClientRect():null;
+    releaseDragChrome();
 
     if(wasSelectDrag){
       if(!committed)return;
       const adapter=handAdapter();
-      const _t=gestureTargeting();
+      const targeting=gestureTargeting();
+      const pendingUids=snapshot.pendingUids||[];
       if(adapter?.commitSelectionSweep){
         adapter.commitSelectionSweep(pendingUids);
-      }else if(_t&&pendingUids.length){
-        const s=storeState();
-        if(s&&target.tlrStore){
-          target.tlrStore.dispatch({type:'SET_ABILITY_PICKS',cardIds:pendingUids});
-        }else if(state.abilitySelect){
-          state.abilitySelect.picked=pendingUids.slice(-_t.count);
-        }
+      }else if(targeting&&pendingUids.length){
+        const current=storeState();
+        if(current&&target.tlrStore)target.tlrStore.dispatch({type:'SET_ABILITY_PICKS',cardIds:pendingUids});
+        else if(state.abilitySelect)state.abilitySelect.picked=pendingUids.slice(-targeting.count);
         if(typeof refreshHandState==='function')refreshHandState();
       }else if(purgeSelecting()&&pendingUids.length){
-        const s=storeState();
-        if(s&&target.tlrStore){
+        const current=storeState();
+        if(current&&target.tlrStore){
           target.tlrStore.dispatch({type:'SET_PURGE_PICKS',cardIds:pendingUids});
           state.purgeSelect=target.tlrStore.getState().run.purge?.slice()??null;
-        }else{
-          state.purgeSelect=pendingUids.slice(0,3);
-        }
+        }else state.purgeSelect=pendingUids.slice(0,3);
         if(typeof render==='function')render();
       }
       return;
     }
 
-    if(!wasDrag){
-      if(typeof target.__handTriggerLayout==='function')target.__handTriggerLayout();
-      return;
-    }
-
+    if(!wasDrag){target.__handTriggerLayout?.();return;}
     if(!committed){
-      restoreOrphanCard(cardEl,originalParent,originalNextSibling);
-      if(typeof target.__handTriggerLayout==='function')target.__handTriggerLayout();
+      restoreOrphanCard(snapshot.cardEl,snapshot.originalParent,snapshot.originalNextSibling);
+      target.__handTriggerLayout?.();
       return;
     }
 
     const adapter=handAdapter();
     if(dropSlot){
-      if(adapter?.placeCard)adapter.placeCard(uid,dropSlot.idx);
-      else if(typeof target.placeCardUid==='function')target.placeCardUid(uid,dropSlot.idx);
+      if(adapter?.placeCard)adapter.placeCard(snapshot.uid,dropSlot.idx);
+      else target.placeCardUid?.(snapshot.uid,dropSlot.idx);
       return;
     }
 
-    if(hoverIndex!==origIndex){
-      if(adapter?.reorderHand){
-        adapter.reorderHand(uid,hoverIndex);
-        return;
-      }
-      const s=storeState();
-      if(s&&target.tlrStore){
-        target.tlrStore.dispatch({type:'REORDER_HAND',uid,toIndex:hoverIndex});
+    if(snapshot.hoverIndex!==snapshot.origIndex){
+      if(adapter?.reorderHand){adapter.reorderHand(snapshot.uid,snapshot.hoverIndex);return;}
+      const current=storeState();
+      if(current&&target.tlrStore){
+        target.tlrStore.dispatch({type:'REORDER_HAND',uid:snapshot.uid,toIndex:snapshot.hoverIndex});
         state.hand=target.tlrStore.getState().run.hand.slice();
-        if(state.selected===uid)state.selected=null;
+        if(state.selected===snapshot.uid)state.selected=null;
         if(typeof render==='function')render();
         return;
       }
-      const idx=state.hand.findIndex(c=>c.uid===uid);
-      if(idx>=0){
-        const card=state.hand.splice(idx,1)[0];
-        state.hand.splice(hoverIndex,0,card);
-        if(state.selected===uid){state.selected=null;}
+      const index=state.hand.findIndex(card=>card.uid===snapshot.uid);
+      if(index>=0){
+        const [card]=state.hand.splice(index,1);
+        state.hand.splice(snapshot.hoverIndex,0,card);
+        if(state.selected===snapshot.uid)state.selected=null;
         if(typeof render==='function')render();
         return;
       }
     }
 
-    restoreOrphanCard(cardEl,originalParent,originalNextSibling);
-    if(selectedUid()===uid){setSelected(null);refreshActiveHand();}
-    if(typeof target.__handTriggerLayout==='function')target.__handTriggerLayout();
-    const returnedCard=cardEl.isConnected?cardEl:document.querySelector(`#hand .card[data-uid="${uid}"]`);
+    restoreOrphanCard(snapshot.cardEl,snapshot.originalParent,snapshot.originalNextSibling);
+    if(selectedUid()===snapshot.uid){setSelected(null);refreshActiveHand();}
+    target.__handTriggerLayout?.();
+    const returnedCard=snapshot.cardEl.isConnected?snapshot.cardEl:doc.querySelector(`#hand .card[data-uid="${snapshot.uid}"]`);
     slideLanding(returnedCard,releaseRect,FAILED_FLICK_RETURN_MS);
   };
 
-  document.addEventListener('pointerdown',ev=>{
+  doc.addEventListener('pointerdown',event=>{
     if(!g||g.mode!=='drag')return;
-    const t=ev.target instanceof Element?ev.target:null;
-    if(t&&t.closest('button'))target.tlrCancelHandDrag();
+    const element=event.target instanceof Element?event.target:null;
+    if(element?.closest('button'))target.tlrCancelHandDrag();
   },true);
 
-  document.addEventListener('pointerdown',ev=>{
-    if(target.__handPinchSynthetic||target.__handPinchActive)return;
-    const t=ev.target instanceof Element?ev.target:null;
-    if(!t||t.closest('#spread,.card-detail-trigger'))return;
-    const cardEl=t.closest('#hand .card[data-uid]');
+  doc.addEventListener('pointerdown',event=>{
+    if(target.__handPinchSynthetic||target.__handPinchActive||target.__tlrCardActivationPending)return;
+    const element=event.target instanceof Element?event.target:null;
+    if(!element||element.closest('#spread,.card-detail-trigger'))return;
+    const cardEl=element.closest('#hand .card[data-uid]');
     if(!cardEl)return;
     if(g)endDrag(false);
     const uid=Number(cardEl.dataset.uid);
     if(!Number.isFinite(uid))return;
-    const cards=handCards();
-    const origIndex=cards.indexOf(cardEl);
+    const origIndex=handCards().indexOf(cardEl);
     if(origIndex<0)return;
     g={
-      pointerId:ev.pointerId,
+      pointerId:event.pointerId,
       uid,cardEl,origIndex,
       mode:'pending',
-      startX:ev.clientX,startY:ev.clientY,
+      startX:event.clientX,startY:event.clientY,
       hoverIndex:origIndex,
       dropSlot:null,
       holdTimer:null,
-      prevX:ev.clientX,
+      prevX:event.clientX,
       tiltDeg:0,
       dragRafId:null,
       lastDragEv:null,
-      samples:[{x:ev.clientX,y:ev.clientY,t:performance.now()}],
+      samples:[{x:event.clientX,y:event.clientY,t:now()}],
       flickArmed:false,
       flickHapticDone:false,
       originalParent:cardEl.parentNode,
@@ -687,59 +557,54 @@ export function installHandCardGestures(target = window){
     };
   },true);
 
-  document.addEventListener('pointermove',ev=>{
-    if(!g||ev.pointerId!==g.pointerId)return;
-    const coalesced=typeof ev.getCoalescedEvents==='function'?ev.getCoalescedEvents():null;
+  doc.addEventListener('pointermove',event=>{
+    if(!g||event.pointerId!==g.pointerId)return;
+    const coalesced=typeof event.getCoalescedEvents==='function'?event.getCoalescedEvents():null;
     if(coalesced?.length){
-      for(const point of coalesced)recordSample(point.clientX,point.clientY,point.timeStamp||performance.now());
-    }else recordSample(ev.clientX,ev.clientY,performance.now());
+      for(const point of coalesced)recordSample(point.clientX,point.clientY,point.timeStamp||now());
+    }else recordSample(event.clientX,event.clientY,now());
+
     if(g.mode==='pending'){
-      const dx=ev.clientX-g.startX,dy=ev.clientY-g.startY;
-      if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
+      if(Math.hypot(event.clientX-g.startX,event.clientY-g.startY)<DRAG_THRESHOLD)return;
       if(gestureBusy()){cancelHold();g=null;return;}
-      if(gestureTargeting()||purgeSelecting()){startSelectDrag(ev);return;}
-      startDrag(ev);
+      if(gestureTargeting()||purgeSelecting()){startSelectDrag(event);return;}
+      startDrag(event);
       return;
     }
-    if(g.mode==='drag'){ev.preventDefault();stepDrag(ev);return;}
-    if(g.mode==='select-drag'){stepSelectDrag(ev);}
+    if(g.mode==='drag'){event.preventDefault();stepDrag(event);return;}
+    if(g.mode==='select-drag')stepSelectDrag(event);
   },{capture:true,passive:false});
 
-  const onEnd=ev=>{
-    if(!g||ev.pointerId!==g.pointerId)return;
+  const onEnd=event=>{
+    if(!g||event.pointerId!==g.pointerId)return;
     if(g.mode==='pending'){cancelHold();g=null;return;}
-    // Release priority: valid spread slot (handled in endDrag) is checked first
-    // inside detectAbilityFlick; a recognized downward flick activates the
-    // ability; otherwise endDrag reorders or returns the card.
-    if(ev.type==='pointerup'&&g.mode==='drag'&&detectAbilityFlick(ev)){
-      commitAbilityFlick(ev);
+    if(event.type==='pointerup'&&g.mode==='drag'&&detectAbilityFlick(event)){
+      commitAbilityFlick(event);
       return;
     }
-    endDrag(ev.type!=='pointercancel');
+    endDrag(event.type!=='pointercancel');
   };
-  document.addEventListener('pointerup',onEnd,true);
-  document.addEventListener('pointercancel',onEnd,true);
+  doc.addEventListener('pointerup',onEnd,true);
+  doc.addEventListener('pointercancel',onEnd,true);
 
-  document.addEventListener('click',ev=>{
-    const until=target.__handGestureSuppressClickUntil||0;
-    if(performance.now()>until)return;
-    const t=ev.target instanceof Element?ev.target:null;
-    if(t&&t.closest('#hand .card[data-uid]')){
-      ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation();
+  doc.addEventListener('click',event=>{
+    if(now()>(target.__handGestureSuppressClickUntil||0))return;
+    const element=event.target instanceof Element?event.target:null;
+    if(element?.closest('#hand .card[data-uid]')){
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
     }
   },true);
 
-  target.tlrCancelHandDrag=function(){
+  target.tlrCancelHandDrag=()=>{
     if(!g||g.mode!=='drag')return false;
-    const{cardEl,originalParent,originalNextSibling}=g;
+    const {cardEl,originalParent,originalNextSibling}=g;
     const firstRect=cardEl.getBoundingClientRect();
     endDrag(false);
     if(originalParent&&cardEl.parentNode!==originalParent){
-      if(originalNextSibling&&originalNextSibling.parentNode===originalParent){
-        originalParent.insertBefore(cardEl,originalNextSibling);
-      }else{
-        originalParent.appendChild(cardEl);
-      }
+      if(originalNextSibling&&originalNextSibling.parentNode===originalParent)originalParent.insertBefore(cardEl,originalNextSibling);
+      else originalParent.appendChild(cardEl);
     }
     applyNaturalSlots();
     slideLanding(cardEl,firstRect);
