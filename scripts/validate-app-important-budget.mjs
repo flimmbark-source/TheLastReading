@@ -134,7 +134,12 @@ const appStyleFiles = [
 // .card.sel keeps its own always-on important z-index (needed to beat the
 // per-card inline zIndex renderHand sets). One rule became two important
 // declarations.
-const importantBudget = 653;
+// 653 -> 655 (actionDropTargets.css, a REAL +2): the ability-flick arming glow
+// (filter + box-shadow on .ability-flick-arming) has to beat the card's own
+// drag-tier styling while a card is held, so both declarations are important.
+// The flick-and-pop clone, particle trail, and reduced-motion fallbacks are all
+// plain -- only these two need the marked-important tier.
+const importantBudget = 655;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);

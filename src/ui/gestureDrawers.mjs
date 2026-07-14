@@ -43,6 +43,9 @@ export function installGestureDrawers(target = window){
       closeOthers(id);
       target.requestAnimationFrame?.(fitDrawerHeights);
     }
+    if(id==='scoring'&&typeof target.tutSignal==='function'){
+      target.tutSignal(opening?'scoringOpened':'scoringClosed');
+    }
   }
   function moveContentIntoDesks(){
     for(const id of Object.keys(LABELS)){

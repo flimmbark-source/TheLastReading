@@ -134,4 +134,47 @@ body:has(#summary .store-front-shell) #spv2ArchiveBtn{z-index:10!important}
 }
 
 @media(prefers-reduced-motion:reduce){.spread-actions .sbtn.card-drop-target{transition:none!important}}
+
+/* ── Ability flick FX (all on the card) ─────────────────────────────────
+   The instant a throw crosses the arm speed the card lights up "charged": a
+   warm rim glow plus a pulsing aura hugging its edges. On release the flying
+   clone (.ability-flick-ghost) carries the look as it arcs off and dissolves.
+   Nothing else on screen lights up -- the card itself is the feedback. */
+#hand .card.ability-flick-arming,
+.card.hand-card-dragging.ability-flick-arming{
+  filter:brightness(1.34) saturate(1.12) drop-shadow(0 0 10px rgba(255,175,85,.8)) drop-shadow(0 0 28px rgba(255,110,40,.62))!important;
+  box-shadow:0 0 0 1.5px rgba(255,232,168,.95),0 0 22px rgba(255,150,60,.72),0 0 48px rgba(255,90,30,.5)!important;
+}
+/* Pulsing energy aura around the card while it is armed. */
+.card.ability-flick-arming::after{
+  content:'';position:absolute;inset:-7px;border-radius:16px;pointer-events:none;z-index:3;
+  background:radial-gradient(ellipse at 50% 46%,rgba(255,198,120,.42),rgba(255,120,40,.16) 54%,transparent 72%);
+  animation:tlr-flick-charge .5s ease-in-out infinite alternate;
+}
+@keyframes tlr-flick-charge{
+  from{opacity:.55;transform:scale(.985)}
+  to{opacity:1;transform:scale(1.05)}
+}
+/* The flying clone left behind on release; WAAPI drives its arc + dissolve. */
+.ability-flick-ghost{
+  border-radius:12px;
+  filter:brightness(1.45) saturate(1.1) drop-shadow(0 0 20px rgba(255,160,70,.8));
+  will-change:transform,opacity,filter;
+}
+/* Release burst: a hot flare core plus a shockwave ring, screen-blended so it
+   reads as light over the dark table. Anchored at the release point. */
+.ability-flick-burst{
+  position:fixed;z-index:100000;pointer-events:none;
+  width:220px;height:220px;border-radius:50%;
+  mix-blend-mode:screen;will-change:transform,opacity;
+  background:radial-gradient(circle,rgba(255,244,206,.98) 0%,rgba(255,168,74,.72) 26%,rgba(255,96,32,.34) 52%,transparent 70%);
+}
+.ability-flick-burst::before{
+  content:'';position:absolute;inset:24%;border-radius:50%;
+  border:3px solid rgba(255,230,166,.95);
+  box-shadow:0 0 22px rgba(255,170,74,.9),inset 0 0 18px rgba(255,190,100,.7);
+}
+@media(prefers-reduced-motion:reduce){
+  .card.ability-flick-arming::after{animation:none}
+}
 }

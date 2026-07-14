@@ -14,6 +14,19 @@ export function installHandCardGestures(target = window){
   const SPREAD_ZONE_SLACK=72;
   const SLOT_HIT_PAD=28;
 
+  // Ability flick. Recognition looks only at the final burst of motion before
+  // release (velocity over the last ~100ms), so the player can carry the card
+  // slowly and still flick it with a quick throw. All feedback lives on the card
+  // itself: it glows the instant the throw crosses the arm threshold, then on
+  // release flies off along the throw and dissolves as the ability resolves.
+  const FLICK_WINDOW_MS=110;        // velocity sample window before release (80-120ms)
+  const FLICK_RETAIN_MS=170;        // keep slightly more than the window
+  const FLICK_MIN_DRAG_MS=70;       // minimum gesture duration to count as a flick
+  const FLICK_MIN_WINDOW_MS=45;     // need this much sampled motion in the window
+  const FLICK_ARM_SPEED=640;        // px/s over the window: card lights up (armed)
+  const FLICK_ACTIVATE_SPEED=940;   // px/s over the window: release activates
+  const FLICK_ABILITY_DELAY_MS=200; // ability begins resolving this long after release (180-250ms)
+
   let g=null;
   const handEl=()=>document.querySelector('.hand');
   const handCards=()=>{const h=handEl();return h?[...h.querySelectorAll(':scope > .card[data-uid]')]:[]};
@@ -180,6 +193,7 @@ export function installHandCardGestures(target = window){
     g.cardHalfH=naturalH/2;
     g.prevX=ev.clientX;
     g.tiltDeg=0;
+    g.dragStartTime=performance.now();
     g.mode='drag';
     const spEl=document.querySelector('#spread');
     g.spreadRect=spEl?spEl.getBoundingClientRect():null;
@@ -252,7 +266,198 @@ export function installHandCardGestures(target = window){
       const moveX=cardLeft-g.dragOriginLeft;
       const moveY=cardTop-g.dragOriginTop;
       g.cardEl.style.setProperty('transform','translate('+moveX.toFixed(1)+'px,'+moveY.toFixed(1)+'px) rotate('+g.tiltDeg.toFixed(2)+'deg)','important');
+      updateFlickArming(x,y);
     });
+  };
+
+  const abilityFlickAllowed=uid=>typeof target.canDiscardCardUid==='function'&&target.canDiscardCardUid(uid);
+
+  // Card center (screen coords) for the current pointer position, matching the
+  // geometry calcDropTarget uses for its own hit-testing.
+  const cardCenterFromPointer=(x,y)=>({cx:x-g.grabOffsetX+g.cardHalfW,cy:y-g.grabOffsetY+g.cardHalfH});
+
+  // Record pointer samples so recognition can measure only the final burst of
+  // motion, not the whole (possibly slow) carry.
+  const recordSample=(x,y,t)=>{
+    if(!g)return;
+    if(!g.samples)g.samples=[];
+    g.samples.push({x,y,t});
+    const cutoff=t-FLICK_RETAIN_MS;
+    while(g.samples.length>2&&g.samples[0].t<cutoff)g.samples.shift();
+  };
+
+  // Velocity of the last ~110ms of motion: {dx,dy,dist,ms,speed} or null.
+  const flickWindowMetrics=(nowX,nowY,nowT)=>{
+    if(!g||!g.samples||!g.samples.length)return null;
+    const windowStart=nowT-FLICK_WINDOW_MS;
+    const start=g.samples.find(s=>s.t>=windowStart)||g.samples[0];
+    const ms=nowT-start.t;
+    if(ms<=0)return null;
+    const dx=nowX-start.x,dy=nowY-start.y;
+    const dist=Math.hypot(dx,dy);
+    return{dx,dy,dist,ms,speed:dist/(ms/1000)};
+  };
+
+  // A release that should place into the spread rather than flick: over a valid
+  // slot, or up in the spread zone (a play, not a throw).
+  const releaseIsPlacement=(x,y)=>{
+    const drop=calcDropTarget(x,y);
+    if(drop.inSpread&&drop.hit)return true;
+    return isInSpreadZone(cardCenterFromPointer(x,y).cy);
+  };
+
+  // A flick: a fast throw (measured over the release window) that is not a
+  // placement into the spread. Direction is free -- the card flies where thrown.
+  const detectAbilityFlick=ev=>{
+    if(!g||g.mode!=='drag')return false;
+    if(!abilityFlickAllowed(g.uid))return false;
+    const now=performance.now();
+    if(now-g.dragStartTime<FLICK_MIN_DRAG_MS)return false;
+    if(releaseIsPlacement(ev.clientX,ev.clientY))return false;
+    const m=flickWindowMetrics(ev.clientX,ev.clientY,now);
+    if(!m||m.ms<FLICK_MIN_WINDOW_MS||m.speed<FLICK_ACTIVATE_SPEED)return false;
+    g.flickVec={x:m.dx,y:m.dy,speed:m.speed};
+    return true;
+  };
+
+  // Glow the card the instant the throw crosses the arm speed, so the flick
+  // reads as reactive before release. Feedback lives on the card, nowhere else.
+  const updateFlickArming=(nowX,nowY)=>{
+    if(!g)return;
+    let armed=false;
+    if(abilityFlickAllowed(g.uid)&&!g.dropSlot&&!releaseIsPlacement(nowX,nowY)){
+      const m=flickWindowMetrics(nowX,nowY,performance.now());
+      // Hysteresis: a little easier to stay armed than to arm in the first place.
+      const gate=g.flickArmed?FLICK_ARM_SPEED*0.72:FLICK_ARM_SPEED;
+      armed=!!m&&m.ms>=FLICK_MIN_WINDOW_MS&&m.speed>=gate;
+    }
+    if(armed!==g.flickArmed){
+      g.flickArmed=armed;
+      g.cardEl.classList.toggle('ability-flick-arming',armed);
+      // Inline the glow too, so the on-card "armed" feedback shows even if the
+      // gesture stylesheet is not served/loaded in the host environment.
+      if(armed){
+        g.cardEl.style.setProperty('filter','brightness(1.34) drop-shadow(0 0 12px rgba(255,175,85,.9)) drop-shadow(0 0 30px rgba(255,110,40,.62))','important');
+        g.cardEl.style.setProperty('box-shadow','0 0 0 1.5px rgba(255,232,168,.95),0 0 22px rgba(255,150,60,.75),0 0 48px rgba(255,90,30,.5)','important');
+      }else{
+        g.cardEl.style.removeProperty('filter');
+        g.cardEl.style.removeProperty('box-shadow');
+      }
+      if(armed&&!g.flickHapticDone){g.flickHapticDone=true;if(typeof target.haptic==='function')target.haptic(8);}
+      if(!armed)g.flickHapticDone=false;
+    }
+  };
+
+  // A bright expanding flare + shockwave ring at the anchor point. All styling
+  // is inlined (not reliant on any stylesheet being served/fresh), screen-blended
+  // over the dark table so the activation is unmistakable.
+  const spawnFlickBurst=(cx,cy)=>{
+    const burst=document.createElement('div');
+    burst.className='ability-flick-burst';
+    Object.assign(burst.style,{
+      position:'fixed',left:cx+'px',top:cy+'px',width:'220px',height:'220px',
+      borderRadius:'50%',zIndex:'100000',pointerEvents:'none',mixBlendMode:'screen',
+      transform:'translate(-50%,-50%) scale(0.25)',
+      background:'radial-gradient(circle,rgba(255,244,206,.98) 0%,rgba(255,168,74,.72) 26%,rgba(255,96,32,.34) 52%,rgba(255,96,32,0) 70%)',
+    });
+    const ring=document.createElement('div');
+    Object.assign(ring.style,{
+      position:'absolute',inset:'24%',borderRadius:'50%',
+      border:'3px solid rgba(255,230,166,.95)',
+      boxShadow:'0 0 22px rgba(255,170,74,.9),inset 0 0 18px rgba(255,190,100,.7)',
+    });
+    burst.appendChild(ring);
+    document.body.appendChild(burst);
+    const anim=burst.animate?.([
+      {transform:'translate(-50%,-50%) scale(0.25)',opacity:0,offset:0},
+      {transform:'translate(-50%,-50%) scale(1.05)',opacity:1,offset:0.22},
+      {transform:'translate(-50%,-50%) scale(2.7)',opacity:0,offset:1},
+    ],{duration:340,easing:'cubic-bezier(.15,.7,.25,1)',fill:'forwards'});
+    const done=()=>burst.remove();
+    if(anim&&anim.finished&&typeof anim.finished.finally==='function')anim.finished.finally(done);
+    else setTimeout(done,380);
+  };
+
+  const commitAbilityFlick=ev=>{
+    const uid=g.uid;
+    const cardEl=g.cardEl;
+    const rect=cardEl.getBoundingClientRect();
+    // Where the pop + burst play. A downward flick releases near the bottom edge
+    // (over the busy table rim), so instead of flying further down and off-screen
+    // the card rises a little in the throw direction into the visible play area,
+    // over the dark starfield where the screen-blended burst reads brightest.
+    const vec=g.flickVec||{x:0,y:1,speed:FLICK_ACTIVATE_SPEED};
+    const mag=Math.hypot(vec.x,vec.y)||1;
+    const ux=vec.x/mag,uy=vec.y/mag;
+    const spinDeg=(ux>=0?1:-1)*Math.min(18,vec.speed*0.01);
+    const startCX=rect.left+rect.width/2,startCY=rect.top+rect.height/2;
+    const vw=target.innerWidth,vh=target.innerHeight;
+    const drift=Math.max(24,Math.min(72,vec.speed*0.035));
+    const anchorX=Math.max(vw*0.14,Math.min(vw*0.86,startCX+ux*drift));
+    const anchorY=Math.max(vh*0.28,Math.min(vh*0.60,startCY+uy*drift));
+    const dx=anchorX-startCX,dy=anchorY-startCY;
+    if(ev){try{ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation?.();}catch(e){}}
+
+    // Clone the card because the game-state render() may immediately remove the
+    // real one; the clone lets the flick-and-pop play without delaying the ability.
+    const ghost=cardEl.cloneNode(true);
+    ghost.classList.add('ability-flick-ghost');
+    ghost.classList.remove('hand-card-dragging','ability-flick-arming');
+    // discardCardUid() renders immediately, and renderSpread() sweeps every
+    // `body > .card[data-uid]` orphan whose uid is no longer in hand -- which
+    // would delete this clone the instant it is added, cancelling the flick FX.
+    // Strip the uid so the ghost is not seen as a stray card to reclaim.
+    ghost.removeAttribute('data-uid');
+    ghost.querySelectorAll('[data-uid]').forEach(el=>el.removeAttribute('data-uid'));
+    // The clone inherits the dragged card's !important inline transform/left/top
+    // (set by startDrag/stepDrag). In the CSS cascade important author styles beat
+    // WAAPI animations, so leaving them on the clone would silently cancel the
+    // pop animation's transform -- the card would activate with no visible flick.
+    // Strip them, then pin the ghost at the card's on-screen position so the
+    // animation's transform is the only one in play.
+    ['transform','left','top','right','bottom','width','height','margin','position','z-index','filter','box-shadow'].forEach(p=>ghost.style.removeProperty(p));
+    ghost.style.setProperty('position','fixed','important');
+    ghost.style.setProperty('left',rect.left+'px','important');
+    ghost.style.setProperty('top',rect.top+'px','important');
+    ghost.style.setProperty('width',rect.width+'px','important');
+    ghost.style.setProperty('height',rect.height+'px','important');
+    ghost.style.setProperty('margin','0','important');
+    ghost.style.setProperty('z-index','100001','important');
+    ghost.style.setProperty('pointer-events','none','important');
+    document.body.appendChild(ghost);
+
+    // Remove the real card from the DOM now. It was reparented to <body> when
+    // the drag began; endDrag() below strips its fixed positioning, which would
+    // otherwise drop it into normal document flow at the top-left of the page
+    // for a frame (a visible flash + reflow flicker) until render() clears it.
+    // The ghost is the only visible copy from here on. Removing rather than just
+    // hiding also keeps the ability-cancel rollback correct: renderSpread()
+    // re-parents a surviving `body > .card` back into the hand on rollback, so a
+    // hidden-but-present node would return invisible; a fresh node is built
+    // instead once the card is restored to hand state.
+    cardEl.remove();
+
+    // End the ordinary drag without placing or reordering the card.
+    endDrag(false);
+
+    // The unmistakable part: a bright burst radiating from the anchor point.
+    spawnFlickBurst(anchorX,anchorY);
+
+    // The card rises into the play area along the throw, swells and flares
+    // white-hot, then dissolves -- a punchy pop that stays on-screen.
+    const anim=ghost.animate?.([
+      {transform:'translate(0,0) scale(1) rotate(0deg)',filter:'brightness(1.2) drop-shadow(0 0 14px rgba(255,170,80,.85))',opacity:1,offset:0},
+      {transform:`translate(${(dx*0.6).toFixed(1)}px,${(dy*0.6).toFixed(1)}px) scale(1.18) rotate(${(spinDeg*0.5).toFixed(1)}deg)`,filter:'brightness(2.3) drop-shadow(0 0 26px rgba(255,180,90,1))',opacity:1,offset:0.45},
+      {transform:`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(1.5) rotate(${spinDeg.toFixed(1)}deg)`,filter:'brightness(3.6) drop-shadow(0 0 34px rgba(255,190,100,1))',opacity:0,offset:1},
+    ],{duration:260,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'});
+    const cleanup=()=>ghost.remove();
+    if(anim&&anim.finished&&typeof anim.finished.finally==='function')anim.finished.finally(cleanup);
+    else setTimeout(cleanup,310);
+
+    // The ability begins resolving a beat after release (once the card has flown),
+    // not instantly. Selection, resource spend, hand removal, ability resolution
+    // and rollback all stay owned by the existing discard runtime.
+    setTimeout(()=>{if(typeof target.discardCardUid==='function')target.discardCardUid(uid);},FLICK_ABILITY_DELAY_MS);
   };
 
   const slideLanding=(cardEl,firstRect)=>{
@@ -285,7 +490,9 @@ export function installHandCardGestures(target = window){
     }
     if(g.dragRafId){cancelAnimationFrame(g.dragRafId);g.dragRafId=null;}
     try{cardEl.releasePointerCapture(g.pointerId);}catch(e){}
-    cardEl.classList.remove('hand-card-dragging');
+    cardEl.classList.remove('hand-card-dragging','ability-flick-arming');
+    cardEl.style.removeProperty('filter');
+    cardEl.style.removeProperty('box-shadow');
     cardEl.style.removeProperty('transform');
     cardEl.style.removeProperty('position');
     cardEl.style.removeProperty('left');
@@ -401,6 +608,9 @@ export function installHandCardGestures(target = window){
       tiltDeg:0,
       dragRafId:null,
       lastDragEv:null,
+      samples:[{x:ev.clientX,y:ev.clientY,t:performance.now()}],
+      flickArmed:false,
+      flickHapticDone:false,
       originalParent:cardEl.parentNode,
       originalNextSibling:cardEl.nextSibling,
     };
@@ -408,6 +618,7 @@ export function installHandCardGestures(target = window){
 
   document.addEventListener('pointermove',ev=>{
     if(!g||ev.pointerId!==g.pointerId)return;
+    recordSample(ev.clientX,ev.clientY,performance.now());
     if(g.mode==='pending'){
       const dx=ev.clientX-g.startX,dy=ev.clientY-g.startY;
       if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
@@ -423,6 +634,13 @@ export function installHandCardGestures(target = window){
   const onEnd=ev=>{
     if(!g||ev.pointerId!==g.pointerId)return;
     if(g.mode==='pending'){cancelHold();g=null;return;}
+    // Release priority: valid spread slot (handled in endDrag) is checked first
+    // inside detectAbilityFlick; a recognized downward flick activates the
+    // ability; otherwise endDrag reorders or returns the card.
+    if(ev.type==='pointerup'&&g.mode==='drag'&&detectAbilityFlick(ev)){
+      commitAbilityFlick(ev);
+      return;
+    }
     endDrag(ev.type!=='pointercancel');
   };
   document.addEventListener('pointerup',onEnd,true);

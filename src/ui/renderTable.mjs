@@ -28,6 +28,7 @@ function maybeShowContextualTutorials(){
   if(typeof window.maybeShowPurgeTutorial==='function')window.maybeShowPurgeTutorial();
   if(typeof window.maybeShowDiscardTutorial==='function')window.maybeShowDiscardTutorial();
   if(typeof window.maybeShowConstellationTutorial==='function')window.maybeShowConstellationTutorial();
+  if(typeof window.maybeShowHandNavTutorial==='function')window.maybeShowHandNavTutorial();
 }
 
 export function _cacheEls(){

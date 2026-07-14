@@ -1,6 +1,11 @@
-// Companion layer for dragging hand cards onto the singleplayer action buttons.
-// The existing gestureCard controller continues to own movement, hand reordering,
-// and spread placement. This layer only intercepts release over Discard/Purge.
+// Companion layer for dragging hand cards onto the singleplayer Remove (Purge)
+// button. The existing gestureCard controller continues to own movement, hand
+// reordering, and spread placement. This layer only intercepts release over
+// the Remove button.
+//
+// Ability activation no longer lives here: abilities are triggered by flicking
+// a held card downward (see gestureCard.mjs). The Discard button remains in the
+// UI purely as a discards-left indicator and is no longer a drop target.
 
 const DRAG_THRESHOLD = 10;
 const ACTION_HIT_PAD = 14;
@@ -35,7 +40,7 @@ export function installActionDropGestures(target = window) {
     const link = doc.createElement('link');
     link.id = 'action-drop-target-styles';
     link.rel = 'stylesheet';
-    link.href = 'src/styles/actionDropTargets.css?v=14';
+    link.href = 'src/styles/actionDropTargets.css?v=18';
     doc.head.appendChild(link);
   }
 
@@ -43,17 +48,12 @@ export function installActionDropGestures(target = window) {
   let activeAction = null;
   let syncTimer = null;
 
-  const buttons = () => ({
-    discard: doc.getElementById('discardBtn'),
-    purge: doc.getElementById('purgeBtn'),
-  });
+  const purgeButton = () => doc.getElementById('purgeBtn');
 
   const clearButtonState = () => {
-    const current = buttons();
-    current.discard?.classList.remove('card-drop-target');
-    current.discard?.removeAttribute('data-drop-label');
-    current.purge?.classList.remove('card-drop-target');
-    current.purge?.removeAttribute('data-drop-label');
+    const purge = purgeButton();
+    purge?.classList.remove('card-drop-target');
+    purge?.removeAttribute('data-drop-label');
     activeAction = null;
   };
 
@@ -66,20 +66,16 @@ export function installActionDropGestures(target = window) {
     doc.body?.classList.remove('hand-card-action-drag-active');
   };
 
-  const allowed = (kind, uid) => {
-    if (kind === 'discard') return typeof target.canDiscardCardUid === 'function' && target.canDiscardCardUid(uid);
-    if (kind === 'purge') return typeof target.canStartPurgeWithCardUid === 'function' && target.canStartPurgeWithCardUid(uid);
-    return false;
-  };
+  const allowed = uid => typeof target.canStartPurgeWithCardUid === 'function' && target.canStartPurgeWithCardUid(uid);
 
-  const setActiveAction = kind => {
-    if (activeAction === kind) return;
+  const setActiveAction = () => {
+    if (activeAction === 'purge') return;
     clearButtonState();
-    activeAction = kind;
-    const button = buttons()[kind];
+    activeAction = 'purge';
+    const button = purgeButton();
     if (!button) return;
     button.classList.add('card-drop-target');
-    button.dataset.dropLabel = kind === 'discard' ? 'Release to discard' : 'Release to start purge';
+    button.dataset.dropLabel = 'Release to start purge';
   };
 
   const syncFromPointer = (force = false) => {
@@ -100,14 +96,9 @@ export function installActionDropGestures(target = window) {
 
     const cardCenterX = drag.x - drag.grabOffsetX;
     const cardCenterY = drag.y - drag.grabOffsetY;
-    const current = buttons();
 
-    if (allowed('discard', drag.uid) && containsPoint(current.discard?.getBoundingClientRect(), cardCenterX, cardCenterY)) {
-      setActiveAction('discard');
-      return;
-    }
-    if (allowed('purge', drag.uid) && containsPoint(current.purge?.getBoundingClientRect(), cardCenterX, cardCenterY)) {
-      setActiveAction('purge');
+    if (allowed(drag.uid) && containsPoint(purgeButton()?.getBoundingClientRect(), cardCenterX, cardCenterY)) {
+      setActiveAction();
       return;
     }
     clearButtonState();
@@ -177,8 +168,7 @@ export function installActionDropGestures(target = window) {
     clearVisualState();
 
     target.setTimeout(() => {
-      if (action === 'discard') target.discardCardUid?.(uid);
-      else if (action === 'purge') target.startPurgeWithCardUid?.(uid);
+      target.startPurgeWithCardUid?.(uid);
     }, 0);
   }, true);
 

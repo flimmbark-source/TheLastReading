@@ -1,12 +1,12 @@
 const TUT_KEY = 'tlr_tut_done';
 const TUT_PATTERN_KEY = 'tlr_tut_pattern';
-const TUT_READING_KEY = 'tlr_tut_reading_complete';
 const TUT_PURGE_KEY = 'tlr_tut_purge';
 const TUT_ARCHIVES_KEY = 'tlr_tut_archives_found';
 const TUT_MARKET_KEY = 'tlr_tut_oracle_market';
 const TUT_CONSTELLATION_KEY = 'tlr_tut_constellation';
-const TUT_THRESHOLD_KEY = 'tlr_tut_threshold';
-const TUT_DISCARD_KEY = 'tlr_tut_discard';
+const TUT_ABILITY_KEY = 'tlr_tut_ability';
+const TUT_RELIC_KEY = 'tlr_tut_relic';
+const TUT_HANDNAV_KEY = 'tlr_tut_hand_nav';
 const TUT_ADVENTURE_KEY = 'tlr_tut_adventure';
 const TUT_ADV_APPROACH_KEY = 'tlr_tut_adv_approach';
 const TUT_ADV_APPROACH_CHAIN_KEY = 'tlr_tut_adv_approach_chain';
@@ -19,6 +19,11 @@ const TUT_STEPS = [
   // ─────────────────────────────────────────────
   // BASE GAME: FIRST READING
   // ─────────────────────────────────────────────
+
+  // ── MANDATORY OPENING ──────────────────────────
+  // Forced, exclusive first-run chain. No contextual tutorial interrupts while
+  // any of these are active. Chips and Mult are deliberately NOT explained here;
+  // they are introduced only when the player forms their first Pattern.
 
   {
     id: 'story-intro',
@@ -45,142 +50,79 @@ const TUT_STEPS = [
   },
 
   {
-    id: 'chips-added',
-    sel: '#current',
-    fallbackSel: '.score-pill',
-    arrow: 'up',
-    text: 'That card added [[chips]].',
-  },
-
-  {
-    id: 'chip-seal',
-    sel: '#hand .card[data-uid] .seal.tr',
-    fallbackSel: '#hand .card[data-uid]',
-    arrow: 'down',
-    text: 'The red seal shows how many [[chips]] a card adds. [[chips]] × [[mult]] = [[score]].',
-  },
-
-  {
     id: 'reading-goal',
     sel: '#spread',
+    fallbackSel: '.spread-wrap',
     arrow: 'up',
-    text: 'Fill all 5 slots to complete the [[reading]].',
+    text: 'Fill all 5 slots to complete the [[reading]]. Reach the [[threshold]] to continue.',
   },
 
   {
-    id: 'threshold',
-    sel: '#threshold',
-    fallbackSel: '.threshold-pill',
-    arrow: 'up',
-    key: TUT_THRESHOLD_KEY,
-    text: 'Reach the [[threshold]] within 2 [[reading|Readings]].',
-  },
-
-  {
-    id: 'discard-card',
-    sel: '#discardBtn',
-    arrow: 'down',
-    key: TUT_DISCARD_KEY,
-    text: 'Instead of [[play|playing]] a card, [[discard]] it to activate its [[ability]].',
-  },
-
-  {
-    id: 'pattern-found',
-    sel: '#hand .card[data-hint], #hand .card.hint-complete, #hand .card.hint-card',
-    fallbackSel: '#hand .card[data-uid]',
-    arrow: 'down',
-    key: TUT_PATTERN_KEY,
-    text: 'Highlighted cards can form a [[pattern]]. [[pattern|Patterns]] add [[chips]], [[mult]], or both.',
-  },
-
-  {
-    id: 'scoring-reference',
+    id: 'patterns-intro',
     sel: '#scoringBtn',
     fallbackSel: '#scoringPullTab',
     arrow: 'up',
-    key: TUT_PATTERN_KEY,
-    text: 'Open Scoring to review [[pattern|Patterns]].',
+    waitFor: 'scoringOpened',
+    text: 'Your cards can form [[pattern|Patterns]]. Open Scoring to see these [[pattern|Patterns]].',
   },
 
   {
-    id: 'win-condition',
-    center: true,
-    text: 'Each [[threshold]] is harder. Clear the 10th to win.',
+    id: 'pattern-hints',
+    sel: '#hintLevelBar',
+    fallbackSel: '#settingsPanel',
+    arrow: 'up',
+    text: 'Control your [[pattern]] Hint level here.',
   },
 
   // ─────────────────────────────────────────────
   // CONTEXTUAL BASE-GAME SYSTEMS
+  // Surfaced independently once each system becomes relevant; they do not form
+  // another compulsory chain.
   // ─────────────────────────────────────────────
 
   {
-    id: 'relic',
-    sel: '#relicRack .relic-btn',
-    fallbackSel: '#relicRack',
+    id: 'ability-flick',
+    sel: '#hand .card[data-uid]',
+    fallbackSel: '.handDock .hand',
     arrow: 'up',
-    text: 'A [[relic]] grants a passive effect across Readings. Tap it to read its rule.',
+    demo: 'flick',
+    key: TUT_ABILITY_KEY,
+    text: 'Flick a card off the table to use its [[ability|Ability]]. It is then [[discard|discarded]].',
   },
 
   {
-    id: 'purge',
+    id: 'first-pattern',
+    sel: '#current',
+    fallbackSel: '.score-pill',
+    arrow: 'up',
+    key: TUT_PATTERN_KEY,
+    text: 'You formed a [[pattern|Pattern]]. It added [[chips]] and [[mult]] to your [[score]].',
+  },
+
+  {
+    id: 'first-pattern-formula',
+    sel: '#current',
+    fallbackSel: '.score-pill',
+    arrow: 'up',
+    key: TUT_PATTERN_KEY,
+    text: '[[chips]] × [[mult]] determines your [[score]].',
+  },
+
+  {
+    id: 'remove-cards',
     sel: '#purgeBtn',
     arrow: 'down',
     key: TUT_PURGE_KEY,
-    text: 'Remove 3 cards from your [[hand]] to regain 1 [[discard_charge|Discard]].',
+    text: 'With no [[discard_charge|Discards]] left, Remove Cards trades 3 cards from your [[hand]] for 1 [[discard_charge|Discard]].',
   },
 
   {
-    id: 'reading-final-card',
-    sel: '#spread .slot.empty',
-    fallbackSel: '#spread',
-    arrow: 'up',
-    key: TUT_READING_KEY,
-    text: 'One more card completes this [[reading]].',
-  },
-
-  {
-    id: 'archives',
-    sel: '#spv2ArchiveBtn',
-    fallbackSel: '#invTab',
-    arrow: 'up',
-    key: TUT_ARCHIVES_KEY,
-    text: 'The Archives hold discovered items and clues.',
-  },
-
-  // ─────────────────────────────────────────────
-  // MARKET
-  // ─────────────────────────────────────────────
-
-  {
-    id: 'market-reserve',
+    id: 'market-visit',
     sel: '.store-reserve-display',
+    fallbackSel: '.store-front',
     arrow: 'down',
     key: TUT_MARKET_KEY,
-    text: '[[reserve]] is the currency you spend in the Market.',
-  },
-
-  {
-    id: 'market-offers',
-    sel: '.store-offer-row',
-    fallbackSel: '.store-offer-row .store-card',
-    arrow: 'down',
-    key: TUT_MARKET_KEY,
-    text: 'Market offers can improve [[pattern|Patterns]], your [[deck]], or your relics. Tap an offer to read it.',
-  },
-
-  {
-    id: 'market-refresh',
-    sel: '.store-refresh',
-    arrow: 'up',
-    key: TUT_MARKET_KEY,
-    text: 'Spend [[reserve]] to replace the current offers.',
-  },
-
-  {
-    id: 'market-proceed',
-    sel: '.store-proceed',
-    arrow: 'up',
-    key: TUT_MARKET_KEY,
-    text: 'Leave the Market to begin the next [[reading]].',
+    text: 'Spend [[reserve]] on Scoring upgrades, Packs, and Relics.',
   },
 
   {
@@ -189,6 +131,34 @@ const TUT_STEPS = [
     arrow: 'up',
     key: TUT_CONSTELLATION_KEY,
     text: 'A Constellation changes the current [[reading]]. Tap its sign to read the rule.',
+  },
+
+  {
+    id: 'relic',
+    sel: '#relicRack .relic-btn',
+    fallbackSel: '#relicRack',
+    arrow: 'up',
+    key: TUT_RELIC_KEY,
+    text: 'Relics grant passive effects. Tap a [[relic|Relic]] to read its rule.',
+  },
+
+  {
+    id: 'archives',
+    sel: '#spv2ArchiveBtn',
+    fallbackSel: '#invTab',
+    arrow: 'up',
+    key: TUT_ARCHIVES_KEY,
+    text: 'Discovered items and clues are stored in the Archives.',
+  },
+
+  {
+    id: 'hand-nav',
+    sel: '#handSwipeZone',
+    fallbackSel: '.handDock',
+    arrow: 'up',
+    waitFor: 'handScrolled',
+    key: TUT_HANDNAV_KEY,
+    text: 'Swipe to move through your [[hand]].',
   },
 
   // ─────────────────────────────────────────────
@@ -288,18 +258,6 @@ const TUT_STEPS = [
     key: TUT_ADV_COMPLETE_KEY,
     text: 'Set complete. Finish 1 more Set to win the Adventure.',
   },
-
-  // ─────────────────────────────────────────────
-  // OPTIONAL HINT SYSTEM
-  // ─────────────────────────────────────────────
-
-  {
-    id: 'pattern-hints',
-    sel: '#hintLevelBar',
-    fallbackSel: '#settingsPanel',
-    arrow: 'up',
-    text: 'Hints can reveal possible [[pattern|Patterns]].',
-  },
 ];
 
 // Steps are addressed by their stable `id`, never by array position, so they can
@@ -318,23 +276,18 @@ export const TUT_STEP = Object.freeze({
   INTRO: 'story-intro',
   SELECT_CARD: 'select-card',
   PLACE_CARD: 'play-card',
-  SCORE_ADDED: 'chips-added',
-  CARD_POINTS: 'chip-seal',
   READING_GOAL: 'reading-goal',
-  THRESHOLD: 'threshold',
-  DISCARD_ABILITY: 'discard-card',
-  PATTERN_NOTICE: 'pattern-found',
-  PATTERN_SCORING: 'scoring-reference',
-  WIN_CONDITION: 'win-condition',
+  PATTERNS_INTRO: 'patterns-intro',
+  HINT_SETTING: 'pattern-hints',
+  ABILITY_FLICK: 'ability-flick',
+  FIRST_PATTERN: 'first-pattern',
+  FIRST_PATTERN_FORMULA: 'first-pattern-formula',
   RELIC: 'relic',
-  PURGE: 'purge',
-  READING_COMPLETE: 'reading-final-card',
+  PURGE: 'remove-cards',
   ARCHIVES: 'archives',
-  MARKET_RESERVE: 'market-reserve',
-  MARKET_OFFERS: 'market-offers',
-  MARKET_REFRESH: 'market-refresh',
-  MARKET_NEXT: 'market-proceed',
+  MARKET: 'market-visit',
   CONSTELLATION: 'constellation',
+  HAND_NAV: 'hand-nav',
   ADVENTURE_INTRO: 'adventure-intro',
   ADVENTURE_EVENT: 'adventure-event',
   ADVENTURE_SIGIL: 'adventure-approach',
@@ -347,11 +300,19 @@ export const TUT_STEP = Object.freeze({
   ADVENTURE_REWARD: 'adventure-reward',
   ADVENTURE_ITEMS: 'adventure-items',
   ADVENTURE_COMPLETE: 'adventure-complete',
-  HINT_SETTING: 'pattern-hints',
 });
 
 // The forced first-run onboarding steps: hidden once the intro is complete.
-const INTRO_STEP_IDS = new Set([TUT_STEP.INTRO, TUT_STEP.SELECT_CARD, TUT_STEP.PLACE_CARD]);
+// This is the full mandatory opening chain; no contextual tip interrupts while
+// any of these is active.
+const INTRO_STEP_IDS = new Set([
+  TUT_STEP.INTRO,
+  TUT_STEP.SELECT_CARD,
+  TUT_STEP.PLACE_CARD,
+  TUT_STEP.READING_GOAL,
+  TUT_STEP.PATTERNS_INTRO,
+  TUT_STEP.HINT_SETTING,
+]);
 // The linear Adventure walk-through (tap/place to advance, one after another).
 // The remaining adventure-* steps are contextual tips surfaced by signals.
 const ADVENTURE_WALKTHROUGH_IDS = new Set([
@@ -365,13 +326,9 @@ const ADVENTURE_WALKTHROUGH_IDS = new Set([
 ]);
 const ADVENTURE_WALKTHROUGH_LAST = TUT_STEP.ADVENTURE_RESOLVE;
 
-// Market tips advance through one another as the player taps.
-const MARKET_TUT_STEPS = [
-  TUT_STEP.MARKET_RESERVE,
-  TUT_STEP.MARKET_OFFERS,
-  TUT_STEP.MARKET_REFRESH,
-  TUT_STEP.MARKET_NEXT,
-];
+// Set true after the player opens Scoring during the patterns-intro step; the
+// Pattern Hint tip then waits for Scoring to close before pointing at the menu.
+let awaitingScoringClose = false;
 
 let tutStep = null;
 let tutTimer = null;
@@ -426,6 +383,20 @@ function finishIntro() {
   tutHide();
 }
 
+// Temporary conditions are rechecked at display time, not just when queued: a
+// tip whose triggering game state has since changed is dropped, never shown
+// stale. Persistent discoveries (no live condition) always return true.
+function stillValidAtShowTime(step) {
+  if (step === TUT_STEP.PURGE) {
+    const st = window.state;
+    if (!st || st.discards !== 0 || !Array.isArray(st.hand) || st.hand.length < 4) return false;
+    const btn = document.querySelector('#purgeBtn');
+    return !!btn && !btn.disabled;
+  }
+  if (step === TUT_STEP.CONSTELLATION) return !!document.querySelector('#constellationPill:not(.hidden)');
+  return true;
+}
+
 function scheduleQueuedTips(delay = 180) {
   clearTimeout(queuedTipTimer);
   queuedTipTimer = setTimeout(() => {
@@ -433,7 +404,7 @@ function scheduleQueuedTips(delay = 180) {
     if (tutStep !== null) { scheduleQueuedTips(450); return; }
     while (queuedTipSteps.length) {
       const next = queuedTipSteps.shift();
-      if (!canShowStep(next)) continue;
+      if (!canShowStep(next) || !stillValidAtShowTime(next)) continue;
       tutShow(next);
       return;
     }
@@ -453,6 +424,13 @@ function queuePriorityTip(step, delay = 180) {
   scheduleQueuedTips(delay);
 }
 
+// Every base-game contextual tip key. Skip Tutorial marks them all seen so no
+// further instructional prompt appears (normal game feedback still shows).
+const BASE_CONTEXTUAL_KEYS = [
+  TUT_ABILITY_KEY, TUT_PATTERN_KEY, TUT_PURGE_KEY, TUT_MARKET_KEY,
+  TUT_CONSTELLATION_KEY, TUT_RELIC_KEY, TUT_ARCHIVES_KEY, TUT_HANDNAV_KEY,
+];
+
 export function tutSkip() {
   if (isAdventureTutorialStep(tutStep)) {
     localStorage.setItem(TUT_ADVENTURE_KEY, '1');
@@ -467,6 +445,12 @@ export function tutSkip() {
   markStepSeen(tutStep);
   localStorage.setItem(TUT_KEY, '1');
   tutDone = true;
+  // Suppress all remaining instructional prompts, opening and contextual alike.
+  BASE_CONTEXTUAL_KEYS.forEach(key => localStorage.setItem(key, '1'));
+  queuedTipSteps = [];
+  clearTimeout(queuedTipTimer);
+  queuedTipTimer = null;
+  awaitingScoringClose = false;
   tutHide();
 }
 
@@ -482,22 +466,22 @@ export function replayTutorial() {
   }
   [
     TUT_KEY,
-    'tlr_tut_relic',
+    TUT_RELIC_KEY,
     'tlr_tut_inv_open',
     'tlr_tut_inv_name',
     'tlr_tut_inv_detail',
     TUT_PATTERN_KEY,
-    TUT_READING_KEY,
+    TUT_ABILITY_KEY,
     TUT_PURGE_KEY,
     TUT_ARCHIVES_KEY,
     TUT_MARKET_KEY,
     TUT_CONSTELLATION_KEY,
-    TUT_THRESHOLD_KEY,
-    TUT_DISCARD_KEY,
+    TUT_HANDNAV_KEY,
   ].forEach(k => localStorage.removeItem(k));
   queuedTipSteps = [];
   clearTimeout(queuedTipTimer);
   queuedTipTimer = null;
+  awaitingScoringClose = false;
   tutDone = false;
   tutShow(TUT_STEP.INTRO, { force: true });
 }
@@ -511,7 +495,7 @@ export function tutHide() {
   activeTutTarget = null;
   const tip = q('#tutTip');
   if (!tip) return;
-  tip.classList.remove('show', 'tut-center');
+  tip.classList.remove('show', 'tut-center', 'tut-demo-flick');
   tip.style.cssText = '';
 }
 
@@ -536,14 +520,17 @@ export function tutShow(step, options = {}) {
   tutPositionTimer = null;
   tutStep = step;
   window.dispatchEvent(new CustomEvent('tlr:tutorial-step', { detail: { step } }));
-  tutIgnoreClicksUntil = Date.now() + (step === TUT_STEP.PATTERN_NOTICE ? 450 : 180);
+  tutIgnoreClicksUntil = Date.now() + (step === TUT_STEP.FIRST_PATTERN ? 450 : 180);
   const s = stepById(step);
   if (!s) return;
   const tip = q('#tutTip');
   const text = q('#tutText');
   if (!tip || !text) return;
-  tip.classList.remove('show', 'tut-center');
+  tip.classList.remove('show', 'tut-center', 'tut-demo-flick');
   tip.style.cssText = '';
+  // A looping visual demonstration of the flick gesture accompanies the ability
+  // tip. The class drives the animation from tutTip.css; it never blocks input.
+  if (s.demo === 'flick') tip.classList.add('tut-demo-flick');
   // The settings drawer opens above nearly everything (menuPullWrap.open is
   // z-index 2147483250, see drawers.css) so it can never be covered by the
   // table underneath it. This is the one step that points at something
@@ -596,9 +583,18 @@ function closeHintSettingsMenu() {
   q('#settingsPanel')?.classList.add('hidden');
 }
 
+// Mandatory onboarding is done. Persist completion and, once the hand is back
+// in normal play, introduce the flick ability.
+function completeIntro() {
+  finishIntro();
+  queuePriorityTip(TUT_STEP.ABILITY_FLICK, 320);
+}
+
 export function tutNext() {
   if (tutStep === null) return;
   const s = stepById(tutStep);
+  // waitFor steps (select-card, play-card, patterns-intro, hand-nav) advance
+  // only when their action succeeds, never on a stray tap.
   if (!s || s.waitFor) return;
   if (isAdventureTutorialStep(tutStep)) {
     if (tutStep !== ADVENTURE_WALKTHROUGH_LAST) {
@@ -609,58 +605,19 @@ export function tutNext() {
     }
     return;
   }
+  // ── Mandatory opening (tap-advanced links) ──
   if (tutStep === TUT_STEP.INTRO) { tutShow(TUT_STEP.SELECT_CARD); return; }
-  if (tutStep === TUT_STEP.SCORE_ADDED) { tutShow(TUT_STEP.CARD_POINTS); return; }
-  if (tutStep === TUT_STEP.CARD_POINTS) { tutShow(TUT_STEP.READING_GOAL); return; }
-  if (tutStep === TUT_STEP.READING_GOAL) { tutShow(TUT_STEP.THRESHOLD); return; }
-  if (tutStep === TUT_STEP.THRESHOLD) {
-    markStepSeen(tutStep);
-    finishIntro();
-    queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
-    return;
-  }
-  if (tutStep === TUT_STEP.DISCARD_ABILITY) {
-    markStepSeen(tutStep);
-    if (canShowStep(TUT_STEP.PATTERN_NOTICE)) tutShow(TUT_STEP.PATTERN_NOTICE);
-    else { tutHide(); scheduleQueuedTips(260); }
-    return;
-  }
-  if (tutStep === TUT_STEP.PATTERN_NOTICE) {
-    tutHide();
-    // Deferred a tick: menuControls.mjs's own document click listener (bound
-    // after this module's, so it runs later in the same event) closes the
-    // menu drawer on any click outside it. Opening the drawer synchronously
-    // inside this click handler would make that same click look like an
-    // outside click on the drawer we just opened, undoing it instantly.
-    // Waiting for the next task lets that listener finish first.
-    tutTimer = setTimeout(() => {
-      openHintSettingsMenu();
-      tutTimer = setTimeout(() => tutShow(TUT_STEP.HINT_SETTING), 480);
-    }, 0);
-    return;
-  }
+  if (tutStep === TUT_STEP.READING_GOAL) { tutShow(TUT_STEP.PATTERNS_INTRO); return; }
   if (tutStep === TUT_STEP.HINT_SETTING) {
+    // Final onboarding step. The player need not change the setting; tapping
+    // closes the menu and ends the forced chain.
     closeHintSettingsMenu();
-    tutShow(TUT_STEP.PATTERN_SCORING);
+    completeIntro();
     return;
   }
-  if (tutStep === TUT_STEP.PATTERN_SCORING) {
-    // Mark the pattern chain seen here so it never re-runs; the win-condition
-    // note (no key of its own) then closes out the base-game teaching chain.
-    markStepSeen(tutStep);
-    tutShow(TUT_STEP.WIN_CONDITION);
-    return;
-  }
-  if (tutStep === TUT_STEP.WIN_CONDITION) {
-    tutHide();
-    scheduleQueuedTips(260);
-    return;
-  }
-  const marketIndex = MARKET_TUT_STEPS.indexOf(tutStep);
-  if (marketIndex >= 0 && marketIndex < MARKET_TUT_STEPS.length - 1) {
-    tutShow(MARKET_TUT_STEPS[marketIndex + 1]);
-    return;
-  }
+  // ── Contextual: First Pattern is a two-beat message ──
+  if (tutStep === TUT_STEP.FIRST_PATTERN) { tutShow(TUT_STEP.FIRST_PATTERN_FORMULA, { force: true }); return; }
+  // Every other contextual tip is single-tap dismiss.
   markStepSeen(tutStep);
   tutHide();
   scheduleQueuedTips(260);
@@ -668,12 +625,59 @@ export function tutNext() {
 
 function onPlacement() {
   if (window.__tlrAdventureActive) return;
-  if (!tutDone || localStorage.getItem(TUT_DISCARD_KEY)) return;
-  queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
+  // The flick ability tip belongs to normal play, once onboarding is complete.
+  if (!tutDone || localStorage.getItem(TUT_ABILITY_KEY)) return;
+  queuePriorityTip(TUT_STEP.ABILITY_FLICK, 320);
+}
+
+// A real scoring Pattern just formed: introduce Chips and Mult, tied to
+// something the player has just caused and observed. Not triggered by a
+// possible pattern, a hint, opening Scoring, or a mere placement.
+function onPatternFormed() {
+  if (window.__tlrAdventureActive) return;
+  // Opening exclusivity: never interrupt the mandatory chain. If the first
+  // Pattern forms during onboarding, Chips/Mult are taught on the next one.
+  if (!tutDone || localStorage.getItem(TUT_PATTERN_KEY)) return;
+  queueTip(TUT_STEP.FIRST_PATTERN, 400);
+}
+
+// Opening Scoring advances the patterns-intro step. Hide the tip so the Scoring
+// sheet is readable, then wait for it to close before pointing at Pattern Hints.
+function onScoringOpened() {
+  if (tutStep !== TUT_STEP.PATTERNS_INTRO) return;
+  awaitingScoringClose = true;
+  tutHide();
+}
+
+function onScoringClosed() {
+  if (!awaitingScoringClose) return;
+  awaitingScoringClose = false;
+  clearTimeout(tutTimer);
+  // Deferred a tick so menuControls' outside-click handler (bound after this
+  // module's) doesn't treat the opening tap as an outside click that would
+  // immediately re-close the drawer we are about to open.
+  tutTimer = setTimeout(() => {
+    openHintSettingsMenu();
+    tutTimer = setTimeout(() => tutShow(TUT_STEP.HINT_SETTING, { force: true }), 480);
+  }, 0);
+}
+
+// Interface hint completion: only a real horizontal hand move counts, never a
+// tap or selection. Mark it seen regardless of whether the tip was showing so
+// it never nags a player who already swipes.
+function onHandScrolled() {
+  if (localStorage.getItem(TUT_HANDNAV_KEY)) return;
+  localStorage.setItem(TUT_HANDNAV_KEY, '1');
+  queuedTipSteps = queuedTipSteps.filter(step => step !== TUT_STEP.HAND_NAV);
+  if (tutStep === TUT_STEP.HAND_NAV) { tutHide(); scheduleQueuedTips(260); }
 }
 
 export function tutSignal(eventName) {
   if (eventName === 'cardPlaced') onPlacement();
+  if (eventName === 'patternFormed') { onPatternFormed(); return; }
+  if (eventName === 'scoringOpened') { onScoringOpened(); return; }
+  if (eventName === 'scoringClosed') { onScoringClosed(); return; }
+  if (eventName === 'handScrolled') { onHandScrolled(); return; }
   if (eventName === 'advApproachWebOpened') { queueTip(TUT_STEP.ADVENTURE_DIFFICULTY, 300); queueTip(TUT_STEP.ADVENTURE_GREAT, 300); return; }
   if (eventName === 'advRewardShown') { queueTip(TUT_STEP.ADVENTURE_REWARD, 350); return; }
   if (eventName === 'advItemGained') { queueTip(TUT_STEP.ADVENTURE_ITEMS, 350); return; }
@@ -687,13 +691,9 @@ export function tutSignal(eventName) {
     else { localStorage.setItem(TUT_ADVENTURE_KEY, '1'); tutHide(); }
     return;
   }
-  // cardSelected (SELECT_CARD) and cardPlaced (PLACE_CARD) both land here after
-  // their waitFor match; advancing to the next reading-order step turns
-  // PLACE_CARD into the first no-waitFor teaching step. Those later steps are
-  // tap-advanced through tutNext(), which finishes the intro after THRESHOLD.
+  // cardSelected (SELECT_CARD) and cardPlaced (PLACE_CARD) advance in reading
+  // order: select-card -> play-card -> reading-goal, the first tap-advanced step.
   if (tutStep === TUT_STEP.SELECT_CARD || tutStep === TUT_STEP.PLACE_CARD) { tutShow(nextStepId(tutStep)); return; }
-  finishIntro();
-  queuePriorityTip(TUT_STEP.DISCARD_ABILITY, 260);
 }
 
 export function maybeShowAdventureTutorial(options = {}) {
@@ -729,7 +729,7 @@ export function maybeShowArchivesTutorial() {
 
 export function maybeShowMarketTutorial() {
   if (localStorage.getItem(TUT_MARKET_KEY)) return;
-  queueTip(TUT_STEP.MARKET_RESERVE, 260);
+  queueTip(TUT_STEP.MARKET, 260);
 }
 
 export function maybeShowConstellationTutorial() {
@@ -737,6 +737,19 @@ export function maybeShowConstellationTutorial() {
   const pill = document.querySelector('#constellationPill:not(.hidden)');
   if (!pill) return;
   queueTip(TUT_STEP.CONSTELLATION, hasPendingTip() ? 650 : 500);
+}
+
+// Interface hint: shown only with touch controls when the Hand actually
+// overflows the readable area. Completed by tutSignal('handScrolled').
+export function maybeShowHandNavTutorial() {
+  if (!tutDone || localStorage.getItem(TUT_HANDNAV_KEY)) return;
+  // Touch only: a mouse/keyboard player is not being taught a swipe gesture.
+  const coarse = typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
+  if (!coarse) return;
+  const zone = document.querySelector('#handSwipeZone');
+  // The swipe zone marks its own overflow state (see gestureHand.mjs).
+  if (!zone || !zone.classList.contains('has-overflow')) return;
+  queueTip(TUT_STEP.HAND_NAV, hasPendingTip() ? 650 : 500);
 }
 
 function posTutTip(target, preferredArrow) {
@@ -794,5 +807,8 @@ document.addEventListener('click', event => {
   // an explanation; it must not also advance the current tutorial step.
   const el = event.target instanceof Element ? event.target : null;
   if (el && el.closest('.game-term, .game-term-popover, .game-terms-glossary')) return;
+  // On the Pattern Hint step, tapping the hint-level control changes the setting
+  // in place; the player advances by tapping elsewhere, not by adjusting it.
+  if (tutStep === TUT_STEP.HINT_SETTING && el && el.closest('#hintLevelBar')) return;
   tutNext();
 });

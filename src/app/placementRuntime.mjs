@@ -97,6 +97,10 @@ export function placeCard(slotIndex,target = window, explicitCardUid = null){
     return chips>0||mult>0?[[m[0],chips,mult,m[3],m[4]]]:[];
   });
 
+  // A real scoring Pattern just formed (not a hint or a mere placement). This
+  // is what unlocks the First Pattern tutorial that introduces Chips and Mult.
+  if(newMelds.length)call(target,'tutSignal','patternFormed');
+
   let delay=420,announceOffset=0;
   for(const meld of newMelds){
     const slots=typeof target.slotsForMeld==='function'?target.slotsForMeld(meld[0]):[];
