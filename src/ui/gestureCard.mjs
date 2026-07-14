@@ -292,6 +292,21 @@ export function installHandCardGestures(target = window){
     return{dx,dy,durationMs,velocityY:dy/(durationMs/1000)};
   };
 
+  // A flick is a fast release burst in a "discard" direction -- down, left, or
+  // right -- that clearly dominates its perpendicular axis. Upward is excluded
+  // (that is toward the spread, and a valid placement always wins anyway). The
+  // per-axis velocity gate is what separates a flick from a slow reorder drag
+  // that happens to end sideways: a reorder settles slowly, a flick releases
+  // fast. Returns the release vector when it qualifies, else null.
+  const flickReleaseVector=(m,minVelocity,minDistance)=>{
+    if(!m)return null;
+    const absX=Math.abs(m.dx),absY=Math.abs(m.dy);
+    const speedX=absX/(m.durationMs/1000);
+    const down=m.dy>=minDistance&&m.velocityY>=minVelocity&&m.dy>=absX*FLICK_VERTICAL_RATIO;
+    const sideways=absX>=minDistance&&speedX>=minVelocity&&absX>=absY*FLICK_VERTICAL_RATIO&&m.dy>-minDistance;
+    return down||sideways?{x:m.dx,y:m.dy}:null;
+  };
+
   const detectAbilityFlick=ev=>{
     if(!g||g.mode!=='drag')return false;
     if(!abilityFlickAllowed(g.uid))return false;
@@ -299,22 +314,21 @@ export function installHandCardGestures(target = window){
     const drop=calcDropTarget(ev.clientX,ev.clientY);
     if(drop.inSpread&&drop.hit)return false;
     const m=flickWindowMetrics(ev.clientX,ev.clientY,performance.now());
-    if(!m)return false;
     const minDistance=Math.max(36,g.cardHalfH*2*FLICK_MIN_DISTANCE_RATIO);
-    return m.dy>=minDistance&&m.velocityY>=FLICK_MIN_VELOCITY&&m.dy>=Math.abs(m.dx)*FLICK_VERTICAL_RATIO;
+    const vec=flickReleaseVector(m,FLICK_MIN_VELOCITY,minDistance);
+    if(vec)g.flickReleaseDir=vec;
+    return !!vec;
   };
 
-  // Light the ability glow while the card is already accelerating downward, so
-  // the flick feels reactive before release rather than only resolving on it.
+  // Light the ability glow while the card is already accelerating in a flick
+  // direction, so the gesture feels reactive before release, not only on it.
   const updateFlickArming=(nowX,nowY)=>{
     if(!g)return;
     let armed=false;
     if(abilityFlickAllowed(g.uid)&&!g.dropSlot){
       const m=flickWindowMetrics(nowX,nowY,performance.now());
-      if(m){
-        const minDistance=Math.max(24,g.cardHalfH*2*FLICK_MIN_DISTANCE_RATIO*0.6);
-        armed=m.dy>=minDistance&&m.velocityY>=FLICK_ARM_VELOCITY&&m.dy>=Math.abs(m.dx)*FLICK_VERTICAL_RATIO;
-      }
+      const minDistance=Math.max(24,g.cardHalfH*2*FLICK_MIN_DISTANCE_RATIO*0.6);
+      armed=!!flickReleaseVector(m,FLICK_ARM_VELOCITY,minDistance);
     }
     if(armed!==g.flickArmed){
       g.flickArmed=armed;
@@ -328,6 +342,11 @@ export function installHandCardGestures(target = window){
     const uid=g.uid;
     const cardEl=g.cardEl;
     const rect=cardEl.getBoundingClientRect();
+    // Pop the ghost along the flick direction (down, left, or right) rather than
+    // always downward, so a sideways flick reads as throwing the card that way.
+    const rawDir=g.flickReleaseDir||{x:0,y:1};
+    const dirMag=Math.hypot(rawDir.x,rawDir.y)||1;
+    const ux=rawDir.x/dirMag,uy=rawDir.y/dirMag;
     if(ev){try{ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation?.();}catch(e){}}
 
     // Clone the card because the game-state render() may immediately remove the
@@ -377,9 +396,9 @@ export function installHandCardGestures(target = window){
     if(typeof target.discardCardUid==='function')target.discardCardUid(uid);
 
     const anim=ghost.animate?.([
-      {transform:'translateY(0) scale(1)',filter:'brightness(1)',opacity:1},
-      {transform:'translateY(42px) scale(0.94)',filter:'brightness(1.8)',opacity:1,offset:0.65},
-      {transform:'translateY(58px) scale(1.12)',filter:'brightness(2.8)',opacity:0},
+      {transform:'translate(0,0) scale(1)',filter:'brightness(1)',opacity:1},
+      {transform:`translate(${(ux*42).toFixed(1)}px,${(uy*42).toFixed(1)}px) scale(0.94)`,filter:'brightness(1.8)',opacity:1,offset:0.65},
+      {transform:`translate(${(ux*58).toFixed(1)}px,${(uy*58).toFixed(1)}px) scale(1.12)`,filter:'brightness(2.8)',opacity:0},
     ],{duration:190,easing:'cubic-bezier(.2,.8,.3,1)',fill:'forwards'});
     const cleanup=()=>ghost.remove();
     if(anim&&anim.finished&&typeof anim.finished.finally==='function')anim.finished.finally(cleanup);

@@ -807,5 +807,8 @@ document.addEventListener('click', event => {
   // an explanation; it must not also advance the current tutorial step.
   const el = event.target instanceof Element ? event.target : null;
   if (el && el.closest('.game-term, .game-term-popover, .game-terms-glossary')) return;
+  // On the Pattern Hint step, tapping the hint-level control changes the setting
+  // in place; the player advances by tapping elsewhere, not by adjusting it.
+  if (tutStep === TUT_STEP.HINT_SETTING && el && el.closest('#hintLevelBar')) return;
   tutNext();
 });
