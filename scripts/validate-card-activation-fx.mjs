@@ -25,6 +25,10 @@ assert.ok(fxSource.includes('contain:layout paint style'),'permanent FX layer co
 assert.ok(fxSource.includes('isolation:isolate'),'FX compositing is isolated from the table');
 assert.ok(!fxSource.includes('mix-blend-mode'),'activation FX avoids blend-mode compositing');
 assert.ok(!fxSource.includes('drop-shadow'),'activation flight avoids live blur filters');
+assert.ok(fxSource.includes('CARD_DURATION_MS=620'),'activation lasts long enough to read');
+assert.ok(fxSource.includes('BURST_DELAY_MS=170'),'impact is separated from the initial charge');
+assert.ok(fxSource.includes("offset:.13"),'animation contains an anticipation beat');
+assert.ok(fxSource.includes("offset:.82"),'card remains visible through arrival before dissolving');
 const playIndex=fxSource.indexOf('await playCardActivation');
 const discardIndex=fxSource.indexOf('target.discardCardUid(uid)');
 assert.ok(playIndex>=0&&discardIndex>playIndex,'gameplay commit occurs after presentation completion');
@@ -54,6 +58,7 @@ class FakeClassList{
   sync(){this.owner._className=[...this.values].join(' ');}
 }
 const animationResolvers=[];
+const animationOptions=[];
 class FakeElement{
   constructor(tag){
     this.tagName=String(tag).toUpperCase();this.children=[];this.parentNode=null;this.style=new FakeStyle();
@@ -69,10 +74,11 @@ class FakeElement{
     const walk=node=>{for(const child of node.children){if(matches(child))return child;const nested=walk(child);if(nested)return nested;}return null;};
     return walk(this);
   }
-  animate(){
+  animate(_frames,options){
     let resolve;
     const finished=new Promise(done=>{resolve=done;});
     const animation={finished,cancel(){resolve();}};
+    animationOptions.push(options);
     animationResolvers.push(resolve);
     return animation;
   }
@@ -105,6 +111,9 @@ await new Promise(resolve=>setTimeout(resolve,0));
 assert.equal(discardCount,0,'gameplay remains uncommitted while the animation is running');
 assert.equal(target.__tlrCardActivationPending,true,'activation transaction locks input');
 assert.equal(animationResolvers.length,2,'card flight and burst animations both start');
+assert.equal(animationOptions[0].duration,620,'card presentation uses readable duration');
+assert.equal(animationOptions[1].duration,420,'impact burst has a distinct duration');
+assert.equal(animationOptions[1].delay,170,'impact burst begins after anticipation');
 animationResolvers.splice(0).forEach(resolve=>resolve());
 assert.equal(await activation,true,'activation resolves successfully');
 assert.equal(discardCount,1,'gameplay commits once after animation completion');
