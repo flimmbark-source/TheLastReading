@@ -63,7 +63,7 @@ const TUT_STEPS = [
     fallbackSel: '#scoringPullTab',
     arrow: 'up',
     waitFor: 'scoringOpened',
-    text: 'Cards sometimes form [[pattern|Patterns]]. Open Scoring to see these [[pattern|Patterns]].',
+    text: 'Your cards can form [[pattern|Patterns]]. Open Scoring to see these [[pattern|Patterns]].',
   },
 
   {
