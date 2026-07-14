@@ -8,38 +8,31 @@ const CARD_DURATION_MS=620;
 const BURST_DURATION_MS=420;
 const BURST_DELAY_MS=170;
 
-function nextFrame(target){
-  return new Promise(resolve=>{
-    const raf=target.requestAnimationFrame||globalThis.requestAnimationFrame;
-    if(typeof raf==='function')raf.call(target,()=>resolve());
-    else setTimeout(resolve,16);
-  });
-}
-
 function reducedMotion(target){
   return !!target.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 }
 
-function rectSnapshot(rect){
-  if(!rect)return null;
+function poseSnapshot(input,fallbackRotation=0){
+  if(!input)return null;
   return {
-    left:Number(rect.left)||0,
-    top:Number(rect.top)||0,
-    width:Math.max(1,Number(rect.width)||1),
-    height:Math.max(1,Number(rect.height)||1),
+    left:Number(input.left)||0,
+    top:Number(input.top)||0,
+    width:Math.max(1,Number(input.width)||1),
+    height:Math.max(1,Number(input.height)||1),
+    rotationDeg:Number(input.rotationDeg??fallbackRotation)||0,
   };
 }
 
-export function calculateCardActivationMotion({startRect,vector,viewportWidth,viewportHeight}){
-  const rect=rectSnapshot(startRect)||{left:0,top:0,width:1,height:1};
+export function calculateCardActivationMotion({startPose,startRect,vector,viewportWidth,viewportHeight}){
+  const pose=poseSnapshot(startPose||startRect)||{left:0,top:0,width:1,height:1,rotationDeg:0};
   const vx=Number(vector?.x)||0;
   const vy=Number(vector?.y)||1;
   const speed=Math.max(1,Number(vector?.speed)||940);
   const magnitude=Math.hypot(vx,vy)||1;
   const ux=vx/magnitude;
   const uy=vy/magnitude;
-  const startCenterX=rect.left+rect.width/2;
-  const startCenterY=rect.top+rect.height/2;
+  const startCenterX=pose.left+pose.width/2;
+  const startCenterY=pose.top+pose.height/2;
   const width=Math.max(1,Number(viewportWidth)||1);
   const height=Math.max(1,Number(viewportHeight)||1);
   const drift=Math.max(28,Math.min(76,speed*0.036));
@@ -204,18 +197,19 @@ function nodes(target){
   };
 }
 
-function applyProxyGeometry(proxy,rect){
-  const snapshot=rectSnapshot(rect);
-  if(!proxy||!snapshot)return;
-  proxy.style.left=snapshot.left+'px';
-  proxy.style.top=snapshot.top+'px';
-  proxy.style.width=snapshot.width+'px';
-  proxy.style.height=snapshot.height+'px';
-  proxy.style.opacity='0';
-  proxy.style.transform='translate3d(0,0,0)';
+function applyProxyPose(proxy,input,{visible=false}={}){
+  const pose=poseSnapshot(input);
+  if(!proxy||!pose)return null;
+  proxy.style.left=pose.left+'px';
+  proxy.style.top=pose.top+'px';
+  proxy.style.width=pose.width+'px';
+  proxy.style.height=pose.height+'px';
+  proxy.style.opacity=visible?'1':'0';
+  proxy.style.transform=`translate3d(0,0,0) scale(1) rotate(${pose.rotationDeg.toFixed(2)}deg)`;
+  return pose;
 }
 
-function renderPreparedCard(target,card,startRect=null){
+function renderPreparedCard(target,card,startPose=null){
   const {proxy,visual}=nodes(target);
   if(!proxy||!visual||!card)return false;
   visual.className='card tlr-card-activation-card '+(card.type==='major'?'major ':'')+(CARD_SHEET[card.id]?'photo ':'');
@@ -224,8 +218,17 @@ function renderPreparedCard(target,card,startRect=null){
   visual.style.removeProperty('background-position');
   if(CARD_SHEET[card.id])applyCardPhoto(visual,card);
   proxy.dataset.cardUid=String(card.uid);
-  applyProxyGeometry(proxy,startRect);
+  if(startPose)applyProxyPose(proxy,startPose);
   return true;
+}
+
+function stageCardActivation(target,transaction){
+  const {proxy}=nodes(target);
+  const pose=poseSnapshot(transaction?.startPose||transaction?.startRect,transaction?.startTiltDeg);
+  if(!proxy||!transaction?.card||!pose)return null;
+  if(proxy.dataset.cardUid!==String(transaction.card.uid))renderPreparedCard(target,transaction.card);
+  applyProxyPose(proxy,pose,{visible:true});
+  return pose;
 }
 
 function settleAnimation(animation,duration){
@@ -238,30 +241,21 @@ function settleAnimation(animation,duration){
 async function playCardActivation(target,transaction){
   const {proxy,burst}=nodes(target);
   if(!proxy||!burst)return;
-  const rect=rectSnapshot(transaction.startRect);
-  if(!rect)return;
-  if(proxy.dataset.cardUid!==String(transaction.card.uid))renderPreparedCard(target,transaction.card,rect);
+  const pose=stageCardActivation(target,transaction);
+  if(!pose)return;
 
   const motion=calculateCardActivationMotion({
-    startRect:rect,
+    startPose:pose,
     vector:transaction.vector,
     viewportWidth:target.innerWidth,
     viewportHeight:target.innerHeight,
   });
-  const startTilt=(Number(transaction.startTiltDeg)||0).toFixed(2);
-  proxy.style.left=rect.left+'px';
-  proxy.style.top=rect.top+'px';
-  proxy.style.width=rect.width+'px';
-  proxy.style.height=rect.height+'px';
-  proxy.style.opacity='1';
-  proxy.style.transform=`translate3d(0,0,0) scale(1) rotate(${startTilt}deg)`;
-
+  const startTilt=pose.rotationDeg.toFixed(2);
   burst.style.left=motion.anchorX+'px';
   burst.style.top=motion.anchorY+'px';
   burst.style.opacity='0';
   burst.style.transform='translate3d(0,0,0) scale(.55) rotate(-6deg)';
 
-  await nextFrame(target);
   if(reducedMotion(target))return;
 
   // Three readable beats:
@@ -306,22 +300,26 @@ export function installCardActivationFx(target=window){
 
   const prepare=input=>{
     const card=input?.card||input;
-    const startRect=input?.card?input.startRect:null;
+    const startPose=input?.card?(input.startPose||input.startRect):null;
     if(!card||pending)return false;
-    return renderPreparedCard(target,card,startRect);
+    return renderPreparedCard(target,card,startPose);
+  };
+  const stage=transaction=>{
+    if(pending)return false;
+    return !!stageCardActivation(target,transaction);
   };
   const cancelPrepared=uid=>{
     if(pending)return false;
     const {proxy}=nodes(target);
     if(!proxy)return false;
     if(uid==null||proxy.dataset.cardUid===String(uid)){
-      proxy.style.cssText='';
+      resetVisual(target);
       return true;
     }
     return false;
   };
   const activate=async transaction=>{
-    if(pending||!transaction?.card||!transaction?.startRect)return false;
+    if(pending||!transaction?.card||!(transaction.startPose||transaction.startRect))return false;
     const uid=transaction.cardUid??transaction.card.uid;
     if(typeof target.canDiscardCardUid==='function'&&!target.canDiscardCardUid(uid)){
       cancelPrepared(uid);
@@ -356,9 +354,10 @@ export function installCardActivationFx(target=window){
     }
   };
 
-  const api={prepare,cancelPrepared,activate,isPending:()=>!!pending};
+  const api={prepare,stage,cancelPrepared,activate,isPending:()=>!!pending};
   target.tlrCardActivationFx=api;
   target.tlrPrepareCardActivation=prepare;
+  target.tlrStageCardActivation=stage;
   target.tlrCancelPreparedCardActivation=cancelPrepared;
   target.tlrActivateCardFromGesture=activate;
   return api;
