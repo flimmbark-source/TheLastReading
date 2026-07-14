@@ -91,8 +91,6 @@ function ensureStyle(doc){
       contain:layout paint style;
       border-radius:10px;
     }
-    #${LAYER_ID} .tlr-card-activation-proxy[hidden],
-    #${LAYER_ID} .tlr-card-activation-burst[hidden]{display:none!important}
     #${LAYER_ID} .tlr-card-activation-proxy>.card{
       position:absolute!important;
       inset:0!important;
@@ -152,7 +150,6 @@ function ensureLayer(target){
 
   const proxy=doc.createElement('div');
   proxy.className='tlr-card-activation-proxy';
-  proxy.hidden=true;
   const visual=doc.createElement('div');
   visual.className='card tlr-card-activation-card';
   const glow=doc.createElement('div');
@@ -161,7 +158,6 @@ function ensureLayer(target){
 
   const burst=doc.createElement('div');
   burst.className='tlr-card-activation-burst';
-  burst.hidden=true;
   layer.append(proxy,burst);
   doc.body.appendChild(layer);
   return layer;
@@ -178,7 +174,18 @@ function nodes(target){
   };
 }
 
-function renderPreparedCard(target,card){
+function applyProxyGeometry(proxy,rect){
+  const snapshot=rectSnapshot(rect);
+  if(!proxy||!snapshot)return;
+  proxy.style.left=snapshot.left+'px';
+  proxy.style.top=snapshot.top+'px';
+  proxy.style.width=snapshot.width+'px';
+  proxy.style.height=snapshot.height+'px';
+  proxy.style.opacity='0';
+  proxy.style.transform='translate3d(0,0,0)';
+}
+
+function renderPreparedCard(target,card,startRect=null){
   const {proxy,visual}=nodes(target);
   if(!proxy||!visual||!card)return false;
   visual.className='card tlr-card-activation-card '+(card.type==='major'?'major ':'')+(CARD_SHEET[card.id]?'photo ':'');
@@ -187,6 +194,7 @@ function renderPreparedCard(target,card){
   visual.style.removeProperty('background-position');
   if(CARD_SHEET[card.id])applyCardPhoto(visual,card);
   proxy.dataset.cardUid=String(card.uid);
+  applyProxyGeometry(proxy,startRect);
   return true;
 }
 
@@ -202,7 +210,7 @@ async function playCardActivation(target,transaction){
   if(!proxy||!burst)return;
   const rect=rectSnapshot(transaction.startRect);
   if(!rect)return;
-  if(proxy.dataset.cardUid!==String(transaction.card.uid))renderPreparedCard(target,transaction.card);
+  if(proxy.dataset.cardUid!==String(transaction.card.uid))renderPreparedCard(target,transaction.card,rect);
 
   const motion=calculateCardActivationMotion({
     startRect:rect,
@@ -216,13 +224,11 @@ async function playCardActivation(target,transaction){
   proxy.style.height=rect.height+'px';
   proxy.style.opacity='1';
   proxy.style.transform='translate3d(0,0,0) scale(1) rotate('+(Number(transaction.startTiltDeg)||0).toFixed(2)+'deg)';
-  proxy.hidden=false;
 
   burst.style.left=motion.anchorX+'px';
   burst.style.top=motion.anchorY+'px';
   burst.style.opacity='0';
   burst.style.transform='translate3d(0,0,0) scale(.35)';
-  burst.hidden=false;
 
   await nextFrame(target);
   if(reducedMotion(target))return;
@@ -248,12 +254,10 @@ function resetVisual(target){
   const {proxy,burst}=nodes(target);
   if(proxy){
     proxy.getAnimations?.().forEach(animation=>animation.cancel());
-    proxy.hidden=true;
     proxy.style.cssText='';
   }
   if(burst){
     burst.getAnimations?.().forEach(animation=>animation.cancel());
-    burst.hidden=true;
     burst.style.cssText='';
   }
 }
@@ -264,16 +268,18 @@ export function installCardActivationFx(target=window){
   ensureLayer(target);
   let pending=null;
 
-  const prepare=card=>{
+  const prepare=input=>{
+    const card=input?.card||input;
+    const startRect=input?.card?input.startRect:null;
     if(!card||pending)return false;
-    return renderPreparedCard(target,card);
+    return renderPreparedCard(target,card,startRect);
   };
   const cancelPrepared=uid=>{
     if(pending)return false;
     const {proxy}=nodes(target);
     if(!proxy)return false;
     if(uid==null||proxy.dataset.cardUid===String(uid)){
-      proxy.hidden=true;
+      proxy.style.cssText='';
       return true;
     }
     return false;
