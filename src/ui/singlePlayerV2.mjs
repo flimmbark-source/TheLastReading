@@ -26,9 +26,16 @@ export function installSinglePlayerV2(target = window) {
   const refreshCompositionLayer=()=>{};
 
   const closePullDrawer=(id,label)=>{
-    doc.getElementById(`${id}PullWrap`)?.classList.remove('open');
+    const wrap=doc.getElementById(`${id}PullWrap`);
+    const wasOpen=!!wrap?.classList.contains('open');
+    wrap?.classList.remove('open');
     const tab=doc.getElementById(`${id}PullTab`);
     if(tab)tab.innerHTML=`&#9660; ${label}`;
+    // The Scoring drawer can close this way (outside-press, close tab, closing
+    // another drawer) without going through gestureDrawers' togglePullTab, where
+    // the tutorial's scoring signal fires. Emit it here too so the pattern-hints
+    // step still advances instead of stranding the onboarding chain.
+    if(id==='scoring'&&wasOpen&&typeof target.tutSignal==='function')target.tutSignal('scoringClosed');
   };
 
   const closeSettings=()=>closePullDrawer('menu','Menu');
