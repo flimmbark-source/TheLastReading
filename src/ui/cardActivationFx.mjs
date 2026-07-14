@@ -2,8 +2,7 @@ import { cardHTML, applyCardPhoto, CARD_SHEET } from './renderCard.mjs';
 
 const STYLE_ID='tlr-card-activation-fx-style';
 const LAYER_ID='tlrCardActivationLayer';
-// Activation is intentionally readable rather than instant: a short charge,
-// a visible flight, then a brief dissolve before gameplay resolves.
+// Activation stays readable while travelling continuously from release through fade.
 const CARD_DURATION_MS=620;
 const BURST_DURATION_MS=420;
 const BURST_DELAY_MS=170;
@@ -258,15 +257,15 @@ async function playCardActivation(target,transaction){
 
   if(reducedMotion(target))return;
 
-  // Three readable beats:
-  // 1) charge/anticipation, 2) visible travel, 3) arrival and dissolve.
+  // Position, rotation, and scale all progress continuously. Intermediate
+  // keyframes change the silhouette without introducing velocity resets.
   const cardAnimation=proxy.animate?.([
-    {transform:`translate3d(0,0,0) scale(1) rotate(${startTilt}deg)`,opacity:1,offset:0,easing:'cubic-bezier(.2,.8,.2,1)'},
-    {transform:`translate3d(0,-4px,0) scale(1.055) rotate(${startTilt}deg)`,opacity:1,offset:.13,easing:'cubic-bezier(.15,.72,.24,1)'},
-    {transform:`translate3d(${(motion.dx*.62).toFixed(1)}px,${(motion.dy*.62).toFixed(1)}px,0) scale(1.14) rotate(${(motion.spinDeg*.48).toFixed(1)}deg)`,opacity:1,offset:.62,easing:'cubic-bezier(.18,.74,.24,1)'},
-    {transform:`translate3d(${motion.dx.toFixed(1)}px,${motion.dy.toFixed(1)}px,0) scale(1.29) rotate(${motion.spinDeg.toFixed(1)}deg)`,opacity:1,offset:.82,easing:'ease-out'},
+    {transform:`translate3d(0,0,0) scale(1) rotate(${startTilt}deg)`,opacity:1,offset:0},
+    {transform:`translate3d(${(motion.dx*.13).toFixed(1)}px,${(motion.dy*.13).toFixed(1)}px,0) scale(1.045) rotate(${(motion.spinDeg*.13).toFixed(1)}deg)`,opacity:1,offset:.13},
+    {transform:`translate3d(${(motion.dx*.62).toFixed(1)}px,${(motion.dy*.62).toFixed(1)}px,0) scale(1.14) rotate(${(motion.spinDeg*.62).toFixed(1)}deg)`,opacity:1,offset:.62},
+    {transform:`translate3d(${(motion.dx*.82).toFixed(1)}px,${(motion.dy*.82).toFixed(1)}px,0) scale(1.25) rotate(${(motion.spinDeg*.82).toFixed(1)}deg)`,opacity:1,offset:.82},
     {transform:`translate3d(${motion.dx.toFixed(1)}px,${motion.dy.toFixed(1)}px,0) scale(1.40) rotate(${motion.spinDeg.toFixed(1)}deg)`,opacity:0,offset:1},
-  ],{duration:CARD_DURATION_MS,easing:'linear',fill:'forwards'});
+  ],{duration:CARD_DURATION_MS,easing:'cubic-bezier(.18,.62,.25,1)',fill:'forwards'});
   const burstAnimation=burst.animate?.([
     {transform:'translate3d(0,0,0) scale(.55) rotate(-6deg)',opacity:0,offset:0},
     {transform:'translate3d(0,-2px,0) scale(.92) rotate(2deg)',opacity:1,offset:.22},
