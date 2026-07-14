@@ -14,20 +14,27 @@ export function installHandCardGestures(target = window){
   const SPREAD_ZONE_SLACK=72;
   const SLOT_HIT_PAD=28;
 
-  // Ability flick recognition. The gesture measures only the final burst of
-  // movement right before release, not the whole time the card was held: a
-  // player can carry the card around slowly and still flick it by finishing
-  // with a sharp downward push. Prototype numbers -- tune on device.
-  const FLICK_SAMPLE_WINDOW_MS=120;   // release window we measure over
-  const FLICK_SAMPLE_RETAIN_MS=160;   // keep slightly more than the window
-  const FLICK_MIN_VELOCITY=700;       // CSS pixels per second (downward)
-  const FLICK_MIN_DISTANCE_RATIO=0.3; // fraction of card height travelled
-  const FLICK_VERTICAL_RATIO=1.4;     // downward travel must dominate sideways
-  // A softer threshold used only to pre-arm the visual glow while dragging, so
-  // the card starts reacting during the final downward acceleration.
-  const FLICK_ARM_VELOCITY=460;
+  // Ability activation zone. Dragging a card into the bottom band of the screen
+  // (clearly below the resting hand, so it never collides with the horizontal
+  // reorder gesture or the upward drag-to-spread) arms a glow + a bottom tray;
+  // releasing there activates the card's ability. Position-based, not velocity-
+  // based: the player can move slowly and hold in the zone as long as they like.
+  const ABILITY_ZONE_HAND_FRAC=0.68;  // zone begins this far down the hand band
+  const ABILITY_ZONE_MIN_GAP=92;      // ...but always leaves this much above the screen bottom
+  const ABILITY_ZONE_SLACK=6;         // small hysteresis so the arm state doesn't flicker at the edge
 
   let g=null;
+  const ensureZoneTray=()=>{
+    let tray=document.getElementById('abilityZoneTray');
+    if(!tray){
+      tray=document.createElement('div');
+      tray.id='abilityZoneTray';
+      tray.setAttribute('aria-hidden','true');
+      tray.innerHTML='<span class="ability-zone-tray-label">Release to use ability</span>';
+      document.body.appendChild(tray);
+    }
+    return tray;
+  };
   const handEl=()=>document.querySelector('.hand');
   const handCards=()=>{const h=handEl();return h?[...h.querySelectorAll(':scope > .card[data-uid]')]:[]};
   const storeState=()=>target.tlrStore?.getState?.()??null;
@@ -189,6 +196,10 @@ export function installHandCardGestures(target = window){
     const hRect=h?h.getBoundingClientRect():{left:0,top:0,width:target.innerWidth,height:200};
     g.handCenterX=hRect.left+hRect.width/2;
     g.handTop=hRect.top;
+    // Y line at/below which the card sits "in the bottom activation zone". Kept
+    // below the resting hand band so reordering (which stays at hand height)
+    // never crosses it, and above the very bottom edge so it stays reachable.
+    g.abilityZoneY=Math.min(hRect.top+hRect.height*ABILITY_ZONE_HAND_FRAC,target.innerHeight-ABILITY_ZONE_MIN_GAP);
     g.cardHalfW=naturalW/2;
     g.cardHalfH=naturalH/2;
     g.prevX=ev.clientX;
@@ -198,6 +209,14 @@ export function installHandCardGestures(target = window){
     g.spreadRect=spEl?spEl.getBoundingClientRect():null;
     g.slotRects=[...document.querySelectorAll('#spread .slot')].map((el,i)=>({el,idx:i,r:el.getBoundingClientRect()}));
     target.__handReorderActive=true;
+    // Telegraph the activation zone for the whole drag when this card can use an
+    // ability, so the player sees where to release before reaching the zone. The
+    // tray is pinned to the exact zone line so the hint matches the hit-test.
+    if(abilityFlickAllowed(g.uid)){
+      ensureZoneTray();
+      document.body?.style.setProperty('--ability-zone-top',g.abilityZoneY+'px');
+      document.body?.classList.add('ability-zone-drag-active');
+    }
     if(h)h.classList.add('hand-parting');
     const spEl2=document.querySelector('#spread');if(spEl2)spEl2.classList.add('drag-active');
     g.cardEl.classList.add('hand-card-dragging');
@@ -271,68 +290,41 @@ export function installHandCardGestures(target = window){
 
   const abilityFlickAllowed=uid=>typeof target.canDiscardCardUid==='function'&&target.canDiscardCardUid(uid);
 
-  const recordSample=(x,y,t)=>{
-    if(!g)return;
-    if(!g.samples)g.samples=[];
-    g.samples.push({x,y,time:t});
-    const cutoff=t-FLICK_SAMPLE_RETAIN_MS;
-    while(g.samples.length>2&&g.samples[0].time<cutoff)g.samples.shift();
-  };
+  // Card center (screen coords) for the current pointer position, matching the
+  // geometry calcDropTarget uses for its own hit-testing.
+  const cardCenterFromPointer=(x,y)=>({cx:x-g.grabOffsetX+g.cardHalfW,cy:y-g.grabOffsetY+g.cardHalfH});
 
-  // Metrics for the final release burst: distance and velocity measured only
-  // over the last ~120ms of samples, not the whole drag.
-  const flickWindowMetrics=(nowX,nowY,nowT)=>{
-    if(!g||!g.samples||!g.samples.length)return null;
-    const windowStart=nowT-FLICK_SAMPLE_WINDOW_MS;
-    const start=g.samples.find(s=>s.time>=windowStart)||g.samples[0];
-    if(!start)return null;
-    const durationMs=Math.max(16,nowT-start.time);
-    const dx=nowX-start.x;
-    const dy=nowY-start.y;
-    return{dx,dy,durationMs,velocityY:dy/(durationMs/1000)};
-  };
-
-  // A flick is a fast release burst in a "discard" direction -- down, left, or
-  // right -- that clearly dominates its perpendicular axis. Upward is excluded
-  // (that is toward the spread, and a valid placement always wins anyway). The
-  // per-axis velocity gate is what separates a flick from a slow reorder drag
-  // that happens to end sideways: a reorder settles slowly, a flick releases
-  // fast. Returns the release vector when it qualifies, else null.
-  const flickReleaseVector=(m,minVelocity,minDistance)=>{
-    if(!m)return null;
-    const absX=Math.abs(m.dx),absY=Math.abs(m.dy);
-    const speedX=absX/(m.durationMs/1000);
-    const down=m.dy>=minDistance&&m.velocityY>=minVelocity&&m.dy>=absX*FLICK_VERTICAL_RATIO;
-    const sideways=absX>=minDistance&&speedX>=minVelocity&&absX>=absY*FLICK_VERTICAL_RATIO&&m.dy>-minDistance;
-    return down||sideways?{x:m.dx,y:m.dy}:null;
-  };
-
-  const detectAbilityFlick=ev=>{
+  // In the bottom activation zone: card center at/below the zone line, and not
+  // over a valid spread slot (placement always wins). `slack` adds hysteresis so
+  // the armed state doesn't chatter right at the boundary.
+  const inAbilityZone=(x,y,slack=0)=>{
     if(!g||g.mode!=='drag')return false;
     if(!abilityFlickAllowed(g.uid))return false;
-    // A valid spread placement always wins over a flick.
-    const drop=calcDropTarget(ev.clientX,ev.clientY);
+    const drop=calcDropTarget(x,y);
     if(drop.inSpread&&drop.hit)return false;
-    const m=flickWindowMetrics(ev.clientX,ev.clientY,performance.now());
-    const minDistance=Math.max(36,g.cardHalfH*2*FLICK_MIN_DISTANCE_RATIO);
-    const vec=flickReleaseVector(m,FLICK_MIN_VELOCITY,minDistance);
-    if(vec)g.flickReleaseDir=vec;
-    return !!vec;
+    return cardCenterFromPointer(x,y).cy>=g.abilityZoneY-slack;
   };
 
-  // Light the ability glow while the card is already accelerating in a flick
-  // direction, so the gesture feels reactive before release, not only on it.
+  const detectAbilityFlick=ev=>inAbilityZone(ev.clientX,ev.clientY);
+
+  const setZoneChrome=on=>{
+    const body=document.body;
+    if(!body)return;
+    body.classList.toggle('ability-zone-armed',on);
+  };
+
+  // Glow the card and light the bottom tray while the card sits in the zone, so
+  // the activation reads clearly before release rather than only resolving on it.
   const updateFlickArming=(nowX,nowY)=>{
     if(!g)return;
-    let armed=false;
-    if(abilityFlickAllowed(g.uid)&&!g.dropSlot){
-      const m=flickWindowMetrics(nowX,nowY,performance.now());
-      const minDistance=Math.max(24,g.cardHalfH*2*FLICK_MIN_DISTANCE_RATIO*0.6);
-      armed=!!flickReleaseVector(m,FLICK_ARM_VELOCITY,minDistance);
-    }
+    // A little hysteresis: harder to arm, easier to stay armed.
+    const armed=g.flickArmed
+      ?inAbilityZone(nowX,nowY,ABILITY_ZONE_SLACK)
+      :inAbilityZone(nowX,nowY,-ABILITY_ZONE_SLACK);
     if(armed!==g.flickArmed){
       g.flickArmed=armed;
       g.cardEl.classList.toggle('ability-flick-arming',armed);
+      setZoneChrome(armed);
       if(armed&&!g.flickHapticDone){g.flickHapticDone=true;if(typeof target.haptic==='function')target.haptic(8);}
       if(!armed)g.flickHapticDone=false;
     }
@@ -342,11 +334,8 @@ export function installHandCardGestures(target = window){
     const uid=g.uid;
     const cardEl=g.cardEl;
     const rect=cardEl.getBoundingClientRect();
-    // Pop the ghost along the flick direction (down, left, or right) rather than
-    // always downward, so a sideways flick reads as throwing the card that way.
-    const rawDir=g.flickReleaseDir||{x:0,y:1};
-    const dirMag=Math.hypot(rawDir.x,rawDir.y)||1;
-    const ux=rawDir.x/dirMag,uy=rawDir.y/dirMag;
+    // The card was released in the bottom zone, so it pops downward and away.
+    const ux=0,uy=1;
     if(ev){try{ev.preventDefault();ev.stopPropagation();ev.stopImmediatePropagation?.();}catch(e){}}
 
     // Clone the card because the game-state render() may immediately remove the
@@ -447,6 +436,7 @@ export function installHandCardGestures(target = window){
     if(g.dropSlot)g.dropSlot.slotEl.classList.remove('drop-target');
     const h=handEl();if(h)h.classList.remove('hand-parting');
     const spEl3=document.querySelector('#spread');if(spEl3)spEl3.classList.remove('drag-active');
+    document.body?.classList.remove('ability-zone-drag-active','ability-zone-armed');
     target.__handReorderActive=false;
     g=null;
 
@@ -551,7 +541,6 @@ export function installHandCardGestures(target = window){
       tiltDeg:0,
       dragRafId:null,
       lastDragEv:null,
-      samples:[{x:ev.clientX,y:ev.clientY,time:performance.now()}],
       flickArmed:false,
       flickHapticDone:false,
       originalParent:cardEl.parentNode,
@@ -561,7 +550,6 @@ export function installHandCardGestures(target = window){
 
   document.addEventListener('pointermove',ev=>{
     if(!g||ev.pointerId!==g.pointerId)return;
-    recordSample(ev.clientX,ev.clientY,performance.now());
     if(g.mode==='pending'){
       const dx=ev.clientX-g.startX,dy=ev.clientY-g.startY;
       if(Math.hypot(dx,dy)<DRAG_THRESHOLD)return;
