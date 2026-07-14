@@ -194,6 +194,9 @@ export function installHandCardGestures(target = window){
     g.prevX=ev.clientX;
     g.tiltDeg=0;
     g.dragStartTime=performance.now();
+    // Cached once: whether this card can flick its ability. It cannot change mid
+    // drag, so we avoid querying the store on every animation frame.
+    g.flickEligible=abilityFlickAllowed(g.uid);
     g.mode='drag';
     const spEl=document.querySelector('#spread');
     g.spreadRect=spEl?spEl.getBoundingClientRect():null;
@@ -266,15 +269,11 @@ export function installHandCardGestures(target = window){
       const moveX=cardLeft-g.dragOriginLeft;
       const moveY=cardTop-g.dragOriginTop;
       g.cardEl.style.setProperty('transform','translate('+moveX.toFixed(1)+'px,'+moveY.toFixed(1)+'px) rotate('+g.tiltDeg.toFixed(2)+'deg)','important');
-      updateFlickArming(x,y);
+      updateFlickArming(x,y,inSpread);
     });
   };
 
   const abilityFlickAllowed=uid=>typeof target.canDiscardCardUid==='function'&&target.canDiscardCardUid(uid);
-
-  // Card center (screen coords) for the current pointer position, matching the
-  // geometry calcDropTarget uses for its own hit-testing.
-  const cardCenterFromPointer=(x,y)=>({cx:x-g.grabOffsetX+g.cardHalfW,cy:y-g.grabOffsetY+g.cardHalfH});
 
   // Record pointer samples so recognition can measure only the final burst of
   // motion, not the whole (possibly slow) carry.
@@ -298,22 +297,15 @@ export function installHandCardGestures(target = window){
     return{dx,dy,dist,ms,speed:dist/(ms/1000)};
   };
 
-  // A release that should place into the spread rather than flick: over a valid
-  // slot, or up in the spread zone (a play, not a throw).
-  const releaseIsPlacement=(x,y)=>{
-    const drop=calcDropTarget(x,y);
-    if(drop.inSpread&&drop.hit)return true;
-    return isInSpreadZone(cardCenterFromPointer(x,y).cy);
-  };
-
   // A flick: a fast throw (measured over the release window) that is not a
-  // placement into the spread. Direction is free -- the card flies where thrown.
+  // placement into the spread. `inSpread` (from calcDropTarget) already means
+  // "over a slot or up in the spread zone" -- a play, not a throw. flickEligible
+  // is cached at drag start so we don't hit the store every frame.
   const detectAbilityFlick=ev=>{
-    if(!g||g.mode!=='drag')return false;
-    if(!abilityFlickAllowed(g.uid))return false;
+    if(!g||g.mode!=='drag'||!g.flickEligible)return false;
     const now=performance.now();
     if(now-g.dragStartTime<FLICK_MIN_DRAG_MS)return false;
-    if(releaseIsPlacement(ev.clientX,ev.clientY))return false;
+    if(calcDropTarget(ev.clientX,ev.clientY).inSpread)return false;
     const m=flickWindowMetrics(ev.clientX,ev.clientY,now);
     if(!m||m.ms<FLICK_MIN_WINDOW_MS||m.speed<FLICK_ACTIVATE_SPEED)return false;
     g.flickVec={x:m.dx,y:m.dy,speed:m.speed};
@@ -322,10 +314,11 @@ export function installHandCardGestures(target = window){
 
   // Glow the card the instant the throw crosses the arm speed, so the flick
   // reads as reactive before release. Feedback lives on the card, nowhere else.
-  const updateFlickArming=(nowX,nowY)=>{
+  // Reuses the inSpread already computed by stepDrag -- no extra hit-testing.
+  const updateFlickArming=(nowX,nowY,inSpread)=>{
     if(!g)return;
     let armed=false;
-    if(abilityFlickAllowed(g.uid)&&!g.dropSlot&&!releaseIsPlacement(nowX,nowY)){
+    if(g.flickEligible&&!g.dropSlot&&!inSpread){
       const m=flickWindowMetrics(nowX,nowY,performance.now());
       // Hysteresis: a little easier to stay armed than to arm in the first place.
       const gate=g.flickArmed?FLICK_ARM_SPEED*0.72:FLICK_ARM_SPEED;
@@ -337,8 +330,10 @@ export function installHandCardGestures(target = window){
       // Inline the glow too, so the on-card "armed" feedback shows even if the
       // gesture stylesheet is not served/loaded in the host environment.
       if(armed){
-        g.cardEl.style.setProperty('filter','brightness(1.34) drop-shadow(0 0 12px rgba(255,175,85,.9)) drop-shadow(0 0 30px rgba(255,110,40,.62))','important');
-        g.cardEl.style.setProperty('box-shadow','0 0 0 1.5px rgba(255,232,168,.95),0 0 22px rgba(255,150,60,.75),0 0 48px rgba(255,90,30,.5)','important');
+        // Light-weight while the card is moving fast: one GPU drop-shadow for the
+        // glow and a blur-less ring, instead of stacked blurred box-shadows.
+        g.cardEl.style.setProperty('filter','brightness(1.34) saturate(1.12) drop-shadow(0 0 16px rgba(255,162,68,.95))','important');
+        g.cardEl.style.setProperty('box-shadow','0 0 0 2px rgba(255,232,168,.95)','important');
       }else{
         g.cardEl.style.removeProperty('filter');
         g.cardEl.style.removeProperty('box-shadow');
@@ -357,7 +352,7 @@ export function installHandCardGestures(target = window){
     Object.assign(burst.style,{
       position:'fixed',left:cx+'px',top:cy+'px',width:'220px',height:'220px',
       borderRadius:'50%',zIndex:'100000',pointerEvents:'none',mixBlendMode:'screen',
-      transform:'translate(-50%,-50%) scale(0.25)',
+      transform:'translate(-50%,-50%) scale(0.25)',willChange:'transform,opacity',
       background:'radial-gradient(circle,rgba(255,244,206,.98) 0%,rgba(255,168,74,.72) 26%,rgba(255,96,32,.34) 52%,rgba(255,96,32,0) 70%)',
     });
     const ring=document.createElement('div');
@@ -424,6 +419,11 @@ export function installHandCardGestures(target = window){
     ghost.style.setProperty('margin','0','important');
     ghost.style.setProperty('z-index','100001','important');
     ghost.style.setProperty('pointer-events','none','important');
+    // Static glow set once (animating filter/drop-shadow every frame is the
+    // expensive path); the pop then animates only transform + opacity, which the
+    // compositor can run on the GPU without per-frame re-rasterization.
+    ghost.style.setProperty('filter','brightness(1.6) saturate(1.1) drop-shadow(0 0 22px rgba(255,182,92,.95))','important');
+    ghost.style.setProperty('will-change','transform,opacity','important');
     document.body.appendChild(ghost);
 
     // Remove the real card from the DOM now. It was reparented to <body> when
@@ -443,12 +443,12 @@ export function installHandCardGestures(target = window){
     // The unmistakable part: a bright burst radiating from the anchor point.
     spawnFlickBurst(anchorX,anchorY);
 
-    // The card rises into the play area along the throw, swells and flares
-    // white-hot, then dissolves -- a punchy pop that stays on-screen.
+    // The card rises into the play area along the throw, swells, then dissolves.
+    // Transform + opacity only, so it stays smooth on the compositor.
     const anim=ghost.animate?.([
-      {transform:'translate(0,0) scale(1) rotate(0deg)',filter:'brightness(1.2) drop-shadow(0 0 14px rgba(255,170,80,.85))',opacity:1,offset:0},
-      {transform:`translate(${(dx*0.6).toFixed(1)}px,${(dy*0.6).toFixed(1)}px) scale(1.18) rotate(${(spinDeg*0.5).toFixed(1)}deg)`,filter:'brightness(2.3) drop-shadow(0 0 26px rgba(255,180,90,1))',opacity:1,offset:0.45},
-      {transform:`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(1.5) rotate(${spinDeg.toFixed(1)}deg)`,filter:'brightness(3.6) drop-shadow(0 0 34px rgba(255,190,100,1))',opacity:0,offset:1},
+      {transform:'translate(0,0) scale(1) rotate(0deg)',opacity:1,offset:0},
+      {transform:`translate(${(dx*0.6).toFixed(1)}px,${(dy*0.6).toFixed(1)}px) scale(1.2) rotate(${(spinDeg*0.5).toFixed(1)}deg)`,opacity:1,offset:0.45},
+      {transform:`translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(1.55) rotate(${spinDeg.toFixed(1)}deg)`,opacity:0,offset:1},
     ],{duration:260,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'});
     const cleanup=()=>ghost.remove();
     if(anim&&anim.finished&&typeof anim.finished.finally==='function')anim.finished.finally(cleanup);
@@ -477,10 +477,22 @@ export function installHandCardGestures(target = window){
     });
   };
 
+  // If a drag ends without placing, reordering or removing the card, the card is
+  // still parented to <body> from startDrag. Left there with its fixed position
+  // stripped it would fall into normal flow at the page's top-left for a frame.
+  // Put it back where it came from in the hand so it never flashes in the corner.
+  const restoreOrphanCard=(cardEl,originalParent,originalNextSibling)=>{
+    if(!cardEl||!cardEl.isConnected||cardEl.parentNode!==document.body)return;
+    if(!originalParent||!originalParent.isConnected)return;
+    if(originalNextSibling&&originalNextSibling.parentNode===originalParent)originalParent.insertBefore(cardEl,originalNextSibling);
+    else originalParent.appendChild(cardEl);
+    applyNaturalSlots();
+  };
+
   const endDrag=committed=>{
     if(!g)return;
     cancelHold();
-    const{uid,cardEl,origIndex,hoverIndex,mode,pendingUids=[]}=g;
+    const{uid,cardEl,origIndex,hoverIndex,mode,pendingUids=[],originalParent,originalNextSibling}=g;
     let dropSlot=g.dropSlot;
     const wasDrag=mode==='drag';
     const wasSelectDrag=mode==='select-drag';
@@ -540,6 +552,7 @@ export function installHandCardGestures(target = window){
     }
 
     if(!committed){
+      restoreOrphanCard(cardEl,originalParent,originalNextSibling);
       if(typeof target.__handTriggerLayout==='function')target.__handTriggerLayout();
       return;
     }
@@ -574,6 +587,7 @@ export function installHandCardGestures(target = window){
       }
     }
 
+    restoreOrphanCard(cardEl,originalParent,originalNextSibling);
     if(selectedUid()===uid){setSelected(null);refreshActiveHand();}
     if(typeof target.__handTriggerLayout==='function')target.__handTriggerLayout();
   };
