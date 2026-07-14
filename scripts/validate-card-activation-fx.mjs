@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { calculateCardActivationMotion, installCardActivationFx } from '../src/ui/cardActivationFx.mjs';
 
 const motion=calculateCardActivationMotion({
-  startRect:{left:140,top:700,width:100,height:150},
+  startPose:{left:140,top:700,width:100,height:150,rotationDeg:8},
   vector:{x:0,y:1,speed:1100},
   viewportWidth:390,
   viewportHeight:844,
@@ -17,6 +17,13 @@ const fxSource=readFileSync(new URL('../src/ui/cardActivationFx.mjs',import.meta
 assert.ok(gestureSource.includes('installCardActivationFx(target)'),'gesture installs the activation coordinator');
 assert.ok(gestureSource.includes('tlrPrepareCardActivation'),'card visual is prepared before release');
 assert.ok(gestureSource.includes('tlrActivateCardFromGesture'),'gesture delegates activation instead of resolving gameplay');
+assert.ok(gestureSource.includes('const flushDragPose='),'release flushes the latest pointer pose');
+assert.ok(gestureSource.includes('startPose=flushDragPose(event)'),'activation captures an unrotated natural card box');
+assert.ok(!gestureSource.includes('startRect:g.cardEl.getBoundingClientRect()'),'activation no longer reuses the rotated bounding box');
+const stageIndex=gestureSource.indexOf('target.tlrStageCardActivation?.(transaction)');
+const releaseIndex=gestureSource.indexOf('releaseDragChrome({removeCard:true,cancelPrepared:false})');
+assert.ok(stageIndex>=0&&releaseIndex>stageIndex,'proxy is staged before the dragged card is removed');
+assert.ok(gestureSource.includes('requestFrame(()=>requestFrame(()=>'),'hand relayout waits until after the proxy begins animating');
 assert.ok(!gestureSource.includes('cloneNode('),'release path no longer deep-clones the live card');
 assert.ok(!gestureSource.includes('FLICK_ABILITY_DELAY_MS'),'gameplay no longer runs on an overlapping guessed timer');
 assert.ok(!gestureSource.includes('mixBlendMode'),'gesture no longer creates screen-blended burst DOM');
@@ -34,6 +41,8 @@ assert.ok(fxSource.includes('.tlr-card-activation-burst::after'),'sparkle bloom 
 assert.ok(fxSource.includes('linear-gradient(rgba(255,248,225,.95)'),'sparkle bloom includes crisp star glints');
 assert.ok(!fxSource.includes('border:2px solid rgba(255,224,151,.94)'),'sparkle bloom no longer draws the old shockwave ring');
 assert.ok(fxSource.includes("translate3d(0,-8px,0) scale(1.18) rotate(12deg)"),'sparkles drift upward as they disperse');
+assert.ok(fxSource.includes('tlrStageCardActivation=stage'),'FX coordinator exposes an explicit pre-removal staging step');
+assert.ok(!fxSource.includes('await nextFrame'),'animation starts without a forced stationary frame');
 const playIndex=fxSource.indexOf('await playCardActivation');
 const discardIndex=fxSource.indexOf('target.discardCardUid(uid)');
 assert.ok(playIndex>=0&&discardIndex>playIndex,'gameplay commit occurs after presentation completion');
@@ -112,12 +121,17 @@ const target={
 };
 const api=installCardActivationFx(target);
 const card={uid:1,id:'major_0',type:'major',name:'The Fool',num:0,points:5,ability:'DRAW_1'};
-assert.equal(api.prepare(card),true,'activation proxy can be prepared before release');
-const activation=api.activate({cardUid:1,card,startRect:{left:100,top:650,width:100,height:150},vector:{x:0,y:1,speed:1000},startTiltDeg:4});
-await new Promise(resolve=>setTimeout(resolve,0));
+const transaction={cardUid:1,card,startPose:{left:100,top:650,width:100,height:150,rotationDeg:4},vector:{x:0,y:1,speed:1000}};
+assert.equal(api.prepare(card),true,'activation proxy can be prepared during drag');
+assert.equal(api.stage(transaction),true,'activation proxy can be staged before real-card removal');
+const proxy=document.getElementById('tlrCardActivationLayer').querySelector('.tlr-card-activation-proxy');
+assert.equal(proxy.style.width,'100px','staged proxy keeps the natural card width');
+assert.equal(proxy.style.height,'150px','staged proxy keeps the natural card height');
+assert.ok(proxy.style.transform.includes('rotate(4.00deg)'),'staged proxy applies rotation exactly once');
+const activation=api.activate(transaction);
 assert.equal(discardCount,0,'gameplay remains uncommitted while the animation is running');
 assert.equal(target.__tlrCardActivationPending,true,'activation transaction locks input');
-assert.equal(animationResolvers.length,2,'card flight and sparkle animations both start');
+assert.equal(animationResolvers.length,2,'card flight and sparkle animations start synchronously');
 assert.equal(animationOptions[0].duration,620,'card presentation uses readable duration');
 assert.equal(animationOptions[1].duration,420,'sparkle bloom has a distinct duration');
 assert.equal(animationOptions[1].delay,170,'sparkle bloom begins after anticipation');
