@@ -3,9 +3,9 @@ import { cardHTML, applyCardPhoto, CARD_SHEET } from './renderCard.mjs';
 const STYLE_ID='tlr-card-activation-fx-style';
 const LAYER_ID='tlrCardActivationLayer';
 // Activation stays readable while travelling continuously from release through fade.
-const CARD_DURATION_MS=1620;
+const CARD_DURATION_MS=1200;
 const BURST_DURATION_MS=420;
-const BURST_DELAY_MS=1200;
+const BURST_DELAY_MS=780;
 
 function reducedMotion(target){
   return !!target.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
