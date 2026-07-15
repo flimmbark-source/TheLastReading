@@ -1,6 +1,10 @@
 @layer dragStability {
-/* Drag stability overrides: active hand cards should follow the pointer directly. */
-.hand .card.hand-card-dragging{
+/* Drag stability overrides: active hand cards should follow the pointer directly.
+   The dragged card is reparented to <body> for the duration of the drag, so the
+   selector must not be scoped under .hand or the transition-suppression would
+   stop matching exactly when it's needed — leaving the arc transition to fight
+   the per-pointer transform and reintroduce lag. */
+.card.hand-card-dragging{
   transition:none!important;
   will-change:transform;
 }

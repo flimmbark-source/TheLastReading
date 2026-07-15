@@ -241,7 +241,10 @@ export function installHandCardGestures(target=window){
 
     if(g.flickEligible)target.tlrPrepareCardActivation?.(cardByUid(g.uid));
     g.lastDragEv=event;
-    applyDragFrame(event);
+    // Snap the card under the pointer immediately, then let the first rAF settle
+    // drop targets so the initial frame isn't blocked on hit-testing.
+    applyDragPose(event);
+    updateDragTargets(event);
   };
 
   const calcDropTarget=(x,y)=>{
@@ -255,26 +258,13 @@ export function installHandCardGestures(target=window){
     return{inSpread:false,hover};
   };
 
-  const applyDragFrame=(latest,{updateTargets=true}={})=>{
+  // Position-only update. Kept deliberately cheap (no layout reads, no
+  // hit-testing) so it can run on every raw pointermove and the card sticks to
+  // the pointer with zero rAF latency.
+  const applyDragPose=latest=>{
     if(!g||g.mode!=='drag'||!latest)return null;
     const x=latest.clientX;
     const y=latest.clientY;
-    const {inSpread,hit,hover}=calcDropTarget(x,y);
-    if(updateTargets){
-      if(inSpread){
-        const nextIndex=hit?.idx??-1;
-        const previousIndex=g.dropSlot?.idx??-1;
-        if(nextIndex!==previousIndex){
-          g.dropSlot?.slotEl.classList.remove('drop-target');
-          hit?.slotEl.classList.add('drop-target');
-          g.dropSlot=hit||null;
-        }
-        if(g.hoverIndex!==g.origIndex)applyNaturalSlots();
-      }else{
-        if(g.dropSlot){g.dropSlot.slotEl.classList.remove('drop-target');g.dropSlot=null;}
-        if(hover!==g.hoverIndex)applyReorderSlots(hover);
-      }
-    }
     const deltaX=x-g.prevX;
     const targetTilt=Math.max(-TILT_MAX,Math.min(TILT_MAX,deltaX*TILT_SCALE));
     g.tiltDeg+=(targetTilt-g.tiltDeg)*TILT_LERP;
@@ -284,7 +274,6 @@ export function installHandCardGestures(target=window){
     const moveX=left-g.dragOriginLeft;
     const moveY=top-g.dragOriginTop;
     g.cardEl.style.setProperty('transform',`translate3d(${moveX.toFixed(1)}px,${moveY.toFixed(1)}px,0) rotate(${g.tiltDeg.toFixed(2)}deg)`,'important');
-    if(updateTargets)updateFlickArming(x,y,inSpread);
     return{
       left,
       top,
@@ -294,14 +283,42 @@ export function installHandCardGestures(target=window){
     };
   };
 
+  // Drop-target detection, hand parting and flick arming. This is the heavier
+  // half (spread hit-testing + per-card slot reassignment), so it stays
+  // throttled to one pass per animation frame.
+  const updateDragTargets=latest=>{
+    if(!g||g.mode!=='drag'||!latest)return;
+    const x=latest.clientX;
+    const y=latest.clientY;
+    const {inSpread,hit,hover}=calcDropTarget(x,y);
+    if(inSpread){
+      const nextIndex=hit?.idx??-1;
+      const previousIndex=g.dropSlot?.idx??-1;
+      if(nextIndex!==previousIndex){
+        g.dropSlot?.slotEl.classList.remove('drop-target');
+        hit?.slotEl.classList.add('drop-target');
+        g.dropSlot=hit||null;
+      }
+      if(g.hoverIndex!==g.origIndex)applyNaturalSlots();
+    }else{
+      if(g.dropSlot){g.dropSlot.slotEl.classList.remove('drop-target');g.dropSlot=null;}
+      if(hover!==g.hoverIndex)applyReorderSlots(hover);
+    }
+    updateFlickArming(x,y,inSpread);
+  };
+
   const stepDrag=event=>{
     if(!g||g.mode!=='drag')return;
     g.lastDragEv=event;
+    // Move the card now — the pointer position is already known, so there is no
+    // reason to wait a frame to show it following the finger.
+    applyDragPose(event);
+    // Coalesce the expensive target/flick work to rAF using the latest sample.
     if(g.dragRafId)return;
     g.dragRafId=requestFrame(()=>{
       if(!g||g.mode!=='drag')return;
       g.dragRafId=null;
-      applyDragFrame(g.lastDragEv);
+      updateDragTargets(g.lastDragEv);
     });
   };
 
@@ -309,7 +326,7 @@ export function installHandCardGestures(target=window){
     if(!g||g.mode!=='drag')return null;
     if(g.dragRafId){cancelFrame(g.dragRafId);g.dragRafId=null;}
     g.lastDragEv=event;
-    return applyDragFrame(event,{updateTargets:false});
+    return applyDragPose(event);
   };
 
   const inEdgeZone=(x,y)=>y>=target.innerHeight-EDGE_BOTTOM_PX||x<=EDGE_SIDE_PX||x>=target.innerWidth-EDGE_SIDE_PX;
