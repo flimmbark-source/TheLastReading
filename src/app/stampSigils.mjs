@@ -44,6 +44,42 @@ function ensureStyle(doc) {
       font-size: 13px;
       border-width: 2px;
     }
+    .card > .stamp-chips {
+      position: absolute;
+      top: 27px;
+      left: 4px;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 2px;
+      pointer-events: none;
+    }
+    .card > .stamp-chips .stamp-chip {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 999px;
+      font: 800 8px/1.5 Georgia, serif;
+      color: #f5e0b4;
+      text-shadow: 0 1px 2px rgba(0,0,0,.9);
+      border: 1px solid rgba(210,175,100,.55);
+      box-shadow: 0 1px 3px rgba(0,0,0,.8);
+      white-space: nowrap;
+      letter-spacing: .01em;
+    }
+    .card > .stamp-chips .stamp-chip.rank {
+      background: radial-gradient(circle at 35% 35%,#d4a017,#7a5800 72%,#2a1c00);
+    }
+    .card-detail-card .card > .stamp-chips {
+      top: 36px;
+      left: 7px;
+      gap: 3px;
+    }
+    .card-detail-card .card > .stamp-chips .stamp-chip {
+      padding: 2px 8px;
+      font-size: 10px;
+      border-width: 1.5px;
+    }
     .stamp-suit-badge {
       display: inline-block;
       width: 36px;
@@ -136,6 +172,30 @@ function decorate(target = window) {
       const label = card.rank ? `Suit Stamp: ${suits.join(', ')} · ${card.rank}` : `Suit Stamp: ${suits.join(', ')}`;
       seal.title = label;
       seal.setAttribute('aria-label', label);
+    }
+
+    // Suit + rank name chips, stacked under the suit stamp badge (top-left)
+    const existingChips = element.querySelector(':scope > .stamp-chips[data-stamp-runtime="1"]');
+    if (!card || card.type !== 'major' || !stampedIds.has(card.id) || !Array.isArray(card.suits) || !card.suits.length) {
+      if (existingChips) existingChips.remove();
+    } else if (!existingChips) {
+      const chips = doc.createElement('div');
+      chips.className = 'stamp-chips';
+      chips.dataset.stampRuntime = '1';
+      for (const suit of card.suits) {
+        const chip = doc.createElement('span');
+        chip.className = 'stamp-chip';
+        chip.style.background = SUIT_GRADIENT[suit] || 'radial-gradient(circle at 35% 35%,#555,#222 72%,#111)';
+        chip.textContent = suit;
+        chips.appendChild(chip);
+      }
+      if (card.rank) {
+        const rankChip = doc.createElement('span');
+        rankChip.className = 'stamp-chip rank';
+        rankChip.textContent = card.rank;
+        chips.appendChild(rankChip);
+      }
+      element.appendChild(chips);
     }
 
     // Five Star stamp badge (top-right)
