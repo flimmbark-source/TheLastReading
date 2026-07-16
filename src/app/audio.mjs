@@ -71,8 +71,14 @@ export function installAudioControls(target = window) {
     return tracks[i];
   }
 
+  // Crossfade step interval. Media-element volume writes dirty style, so a
+  // rAF-driven fade forced a style recalc on every frame for the fade's whole
+  // 6s run (measured ~60 recalcs/s after every track change). A 100ms volume
+  // staircase is inaudible on a multi-second music fade and costs 1/10th of it.
+  const FADE_TICK_MS = 100;
+
   function stopFadeTick() {
-    if (fadeTick != null) target.cancelAnimationFrame(fadeTick);
+    if (fadeTick != null) target.clearTimeout(fadeTick);
     fadeTick = null;
     fading = false;
   }
@@ -113,7 +119,7 @@ export function installAudioControls(target = window) {
       if (outgoing) outgoing.volume = fromVol * (1 - p);
       if (nxt) nxt.volume = contextVolume(contextName) * p;
       if (p < 1) {
-        fadeTick = target.requestAnimationFrame(tick);
+        fadeTick = target.setTimeout(tick, FADE_TICK_MS);
       } else {
         if (outgoing) {
           outgoing.pause();
@@ -126,7 +132,7 @@ export function installAudioControls(target = window) {
         fadeTick = null;
       }
     }
-    fadeTick = target.requestAnimationFrame(tick);
+    fadeTick = target.setTimeout(tick, FADE_TICK_MS);
   }
 
   function beginFade() {

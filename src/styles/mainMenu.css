@@ -30,9 +30,15 @@ body.main-menu-mode-booting :where(#titleWrap,.bar,.score-stack,#constellationPi
 #tlrBootCurtain.show{opacity:1;pointer-events:auto}
 /* Loading spinner shown while the curtain is fully black, so the cut to
    black never reads as a stall -- delayed/eased in so a curtain that lifts
-   again quickly (a fast transition) never shows a flash of spinner. */
-.tlr-boot-spinner{width:52px;height:52px;border-radius:50%;border:3px solid rgba(224,195,109,.18);border-top-color:#e0c36d;opacity:0;transition:opacity .2s ease .35s;animation:tlr-boot-spin 1s linear infinite}
-#tlrBootCurtain.show .tlr-boot-spinner{opacity:1}
+   again quickly (a fast transition) never shows a flash of spinner.
+
+   The spin animation MUST stay paused while the curtain is hidden: the
+   curtain element outlives boot (it is kept for later fade transitions),
+   and an infinite animation on an invisible element can't be composited,
+   so it ticks on the main thread and forces a style recalc every frame
+   for the entire session (~40 recalcs/s measured at the table). */
+.tlr-boot-spinner{width:52px;height:52px;border-radius:50%;border:3px solid rgba(224,195,109,.18);border-top-color:#e0c36d;opacity:0;transition:opacity .2s ease .35s;animation:tlr-boot-spin 1s linear infinite;animation-play-state:paused}
+#tlrBootCurtain.show .tlr-boot-spinner{opacity:1;animation-play-state:running}
 @keyframes tlr-boot-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){#tlrBootCurtain{transition:none}.tlr-boot-spinner{animation:none;transition:none}}
 
