@@ -87,6 +87,40 @@ assertMeld(result, 'Royal Court (3, Cups)');
 assertMeld(result, 'Royal Court (4, Cups)');
 assert.equal(meld(result, 'Royal Court (4, Cups)').mult, 1.5);
 
+// Suit Stamp: a stamped Major gains the rank and suits shown in its own card
+// art, and plays as a wildcard court card for Rank and Court patterns.
+result = score(['court_Cups_Queen', 'court_Wands_Queen', 'major_2'], {
+  context: { stampedMajors: ['major_2'] },
+});
+assertMeld(result, 'Three of a Kind (Queens)');
+
+result = score(['court_Cups_Queen', 'court_Wands_Queen', 'major_2']);
+assertNoMeld(result, 'Three of a Kind (Queens)');
+
+result = score(['court_Cups_Page', 'court_Cups_Knight', 'major_2'], {
+  context: { stampedMajors: ['major_2'] },
+});
+assertMeld(result, 'Royal Court (3, Cups)');
+assertNoMeld(result, 'Full Court (3)');
+
+result = score(['court_Cups_Page', 'court_Cups_Knight', 'major_2']);
+assertNoMeld(result, 'Royal Court (3, Cups)');
+assertNoMeld(result, 'Full Court (3)');
+
+// Two stamped Majors sharing the same rank must not double-count as distinct
+// Royal Court tokens (the wildcard token is the Major's real rank now, not
+// its unique card id).
+result = score(['court_Cups_Page', 'major_2', 'major_17'], {
+  context: { stampedMajors: ['major_2', 'major_17'] },
+});
+assertNoMeld(result, 'Royal Court (3, Cups)');
+
+result = score(['court_Cups_King', 'court_Wands_King', 'court_Swords_King', 'major_1'], {
+  context: { stampedMajors: ['major_1'] },
+});
+assertMeld(result, 'Three of a Kind (Kings)');
+assertMeld(result, 'Four of a Kind (Kings)');
+
 result = score(['major_17', 'court_Cups_Page'], {
   upgrades: { balanced_reading: 1 },
 });

@@ -133,8 +133,9 @@ function decorate(target = window) {
       const primarySuit = suits[0];
       seal.style.background = SUIT_GRADIENT[primarySuit] || 'radial-gradient(circle at 35% 35%,#555,#222 72%,#111)';
       seal.textContent = SUIT_GLYPH[primarySuit] || primarySuit[0];
-      seal.title = `Suit Stamp: ${suits.join(', ')}`;
-      seal.setAttribute('aria-label', `Suit Stamp: ${suits.join(', ')}`);
+      const label = card.rank ? `Suit Stamp: ${suits.join(', ')} · ${card.rank}` : `Suit Stamp: ${suits.join(', ')}`;
+      seal.title = label;
+      seal.setAttribute('aria-label', label);
     }
 
     // Five Star stamp badge (top-right)
