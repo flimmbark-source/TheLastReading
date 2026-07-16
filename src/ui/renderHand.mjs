@@ -76,9 +76,10 @@ export function renderHand(ability, inPurge, view = null) {
     e.style.removeProperty('--draw-delay');
     const drawEntry=consumeDrawAnimation(c.uid,window);
     if(drawEntry)queuedDraws.push({element:e,delayMs:drawEntry.delayMs});
-    // onclick captures the current render's ability/inPurge snapshot, so
-    // rebind every render even for reused nodes.
-    e.onclick=()=>{
+    // The gesture controller commits pointer taps on pointerup, while native
+    // click remains the keyboard/accessibility path. Both invoke the same
+    // current-render action so tap and click cannot drift apart.
+    const commitTap=()=>{
       if(ability){handleAbilityHandClick(c);return}
       if(inPurge){togglePurgeCard(c.uid);return}
       // When the caller owns selection (multiplayer passes its own store via the
@@ -101,6 +102,8 @@ export function renderHand(ability, inPurge, view = null) {
       refreshHandState();
       if(typeof window.tutSignal==='function')window.tutSignal('cardSelected');
     };
+    e.__tlrCommitTap=commitTap;
+    e.onclick=commitTap;
     // Move into correct position only if not already there (avoids needless
     // DOM mutations that would trigger the swipe handler's MutationObserver).
     const at=h.children[i];

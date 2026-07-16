@@ -20,7 +20,8 @@ export function installHandSwipeScroll(target = window){
   const MIN_VEL=0.010;                               // deg/ms
   const RUBBER=0.42;
   const SPACING_MIN=1.2;                             // deg / slot (closest together)
-  const SPACING_MAX=8;                               // deg / slot (most spread)
+  const SPACING_MAX=8;                               // deg / slot (auto-fit ceiling — packs the fan to fit the dock)
+  const SPACING_MAX_MANUAL=16;                       // deg / slot (most spread when the player pulls the fan open past auto-fit)
   const OFFSET_LIMIT=30;                             // hard cap on slide deg
   const DEG_PER_PX_SWIPE=0.11;                       // swipe pixels -> degrees of slide
   const DEG_PER_PX_PINCH=0.013;                      // pinch pixels -> degrees of spacing
@@ -189,8 +190,9 @@ export function installHandSwipeScroll(target = window){
     const spacing=(maxAngleDeg*2)/(n-1);
     return Math.max(SPACING_MIN,Math.min(SPACING_MAX,spacing));
   };
-  const spacingMaxForFit=()=>autoSpacing!=null?autoSpacing:SPACING_MAX;
-  const clampSpacingForFit=d=>Math.max(SPACING_MIN,Math.min(spacingMaxForFit(),d));
+  // Manual spacing (pinch / pull-open / scroll) may exceed the auto-fit ceiling
+  // so the player can fan the hand out wider than it would pack itself.
+  const clampSpacing=d=>Math.max(SPACING_MIN,Math.min(SPACING_MAX_MANUAL,d));
   const refreshLayout=()=>{
     const h=handEl();if(!h)return;
     // Re-apply lift to the live element in case render() replaced the DOM node.
@@ -205,7 +207,7 @@ export function installHandSwipeScroll(target = window){
     if(!target.__handReorderActive)applySlots();
     const auto=calcAutoSpacing();
     if(auto!=null)autoSpacing=auto;
-    if(manualSpacing!=null)manualSpacing=clampSpacingForFit(manualSpacing);
+    if(manualSpacing!=null)manualSpacing=clampSpacing(manualSpacing);
     const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
     applySpacing(s);
     cachedCap=null;
@@ -337,7 +339,7 @@ export function installHandSwipeScroll(target = window){
     if(!a||!b)return;
     const delta=distOf(a,b)-pinchStart.dist;
     let next=pinchStart.spacing+delta*DEG_PER_PX_PINCH;
-    next=clampSpacingForFit(next);
+    next=clampSpacing(next);
     if(next===manualSpacing)return;
     if(next<pinchStart.spacing-.15)completeHandHintStep(2);
     if(next>pinchStart.spacing+.15)completeHandHintStep(3);
@@ -568,7 +570,7 @@ export function installHandSwipeScroll(target = window){
         // deltaY > 0 = scroll down = constrict (reduce spacing)
         const s=manualSpacing!=null?manualSpacing:(autoSpacing!=null?autoSpacing:5);
         let next=s - delta*DEG_PER_SCROLL;
-        next=clampSpacingForFit(next);
+        next=clampSpacing(next);
         if(next!==manualSpacing){
           manualSpacing=next;
           cachedCap=null;

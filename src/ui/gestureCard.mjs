@@ -11,7 +11,9 @@ export function installHandCardGestures(target=window){
   installCardActivationFx(target);
 
   const doc=target.document||document;
-  const DRAG_THRESHOLD=10;
+  const TAP_SLOP_MOUSE=2;
+  const TAP_SLOP_PEN=3;
+  const TAP_SLOP_TOUCH=4;
   const TILT_SCALE=.32;
   const TILT_MAX=14;
   const TILT_LERP=.22;
@@ -31,6 +33,7 @@ export function installHandCardGestures(target=window){
   const requestFrame=callback=>(target.requestAnimationFrame||requestAnimationFrame)(callback);
   const cancelFrame=id=>(target.cancelAnimationFrame||cancelAnimationFrame)(id);
   const now=()=>target.performance?.now?.()??performance.now();
+  const tapSlopFor=pointerType=>pointerType==='mouse'?TAP_SLOP_MOUSE:pointerType==='pen'?TAP_SLOP_PEN:TAP_SLOP_TOUCH;
 
   let g=null;
   const handEl=()=>doc.querySelector('.hand');
@@ -86,6 +89,11 @@ export function installHandCardGestures(target=window){
   };
   const cancelHold=()=>{if(g?.holdTimer){clearTimeout(g.holdTimer);g.holdTimer=null;}};
   const queueUid=(items,uid,max)=>items.includes(uid)?items:[...items,uid].slice(-max);
+  const suppressTrailingClick=(uid,{allHand=false}={})=>{
+    target.__handGestureSuppressCardUid=uid;
+    target.__handGestureSuppressAllHandClicks=allHand;
+    target.__handGestureSuppressClickUntil=now()+800;
+  };
 
   const xToFracSlot=centerX=>{
     if(!g||!g.trackSpacingDeg)return 0;
@@ -147,7 +155,7 @@ export function installHandCardGestures(target=window){
     g.mode='select-drag';
     g.pendingUids=[];
     try{g.cardEl.setPointerCapture(g.pointerId);}catch{}
-    target.__handGestureSuppressClickUntil=now()+800;
+    suppressTrailingClick(g.uid,{allHand:true});
     stepSelectDrag(event);
   };
 
@@ -184,13 +192,10 @@ export function installHandCardGestures(target=window){
       refreshActiveHand();
     }
 
-    const rect=g.cardEl.getBoundingClientRect();
-    const naturalWidth=g.cardEl.offsetWidth;
-    const naturalHeight=g.cardEl.offsetHeight;
-    const fixedLeft=rect.left+rect.width/2-naturalWidth/2;
-    const fixedTop=rect.top+rect.height/2-naturalHeight/2;
-    g.grabOffsetX=event.clientX-fixedLeft;
-    g.grabOffsetY=event.clientY-fixedTop;
+    const naturalWidth=g.naturalWidth;
+    const naturalHeight=g.naturalHeight;
+    const fixedLeft=g.fixedLeft;
+    const fixedTop=g.fixedTop;
 
     const hand=handEl();
     const handRect=hand?hand.getBoundingClientRect():{left:0,top:0,width:target.innerWidth,height:200};
@@ -204,9 +209,9 @@ export function installHandCardGestures(target=window){
     g.dragHandCount=handCards().length;
     g.cardHalfW=naturalWidth/2;
     g.cardHalfH=naturalHeight/2;
-    g.prevX=event.clientX;
+    g.prevX=g.startX;
     g.tiltDeg=0;
-    g.dragStartTime=now();
+    g.dragStartTime=g.startTime;
     g.flickEligible=abilityFlickAllowed(g.uid);
     g.mode='drag';
 
@@ -232,10 +237,14 @@ export function installHandCardGestures(target=window){
     g.cardEl.style.setProperty('will-change','transform','important');
     g.cardEl.style.setProperty('backface-visibility','hidden','important');
     try{g.cardEl.setPointerCapture(g.pointerId);}catch{}
-    target.__handGestureSuppressClickUntil=now()+800;
+    suppressTrailingClick(g.uid,{allHand:true});
 
     if(g.flickEligible)target.tlrPrepareCardActivation?.(cardByUid(g.uid));
-    stepDrag(event);
+    g.lastDragEv=event;
+    // Snap the card under the pointer immediately, then let the first rAF settle
+    // drop targets so the initial frame isn't blocked on hit-testing.
+    applyDragPose(event);
+    updateDragTargets(event);
   };
 
   const calcDropTarget=(x,y)=>{
@@ -249,26 +258,13 @@ export function installHandCardGestures(target=window){
     return{inSpread:false,hover};
   };
 
-  const applyDragFrame=(latest,{updateTargets=true}={})=>{
+  // Position-only update. Kept deliberately cheap (no layout reads, no
+  // hit-testing) so it can run on every raw pointermove and the card sticks to
+  // the pointer with zero rAF latency.
+  const applyDragPose=latest=>{
     if(!g||g.mode!=='drag'||!latest)return null;
     const x=latest.clientX;
     const y=latest.clientY;
-    const {inSpread,hit,hover}=calcDropTarget(x,y);
-    if(updateTargets){
-      if(inSpread){
-        const nextIndex=hit?.idx??-1;
-        const previousIndex=g.dropSlot?.idx??-1;
-        if(nextIndex!==previousIndex){
-          g.dropSlot?.slotEl.classList.remove('drop-target');
-          hit?.slotEl.classList.add('drop-target');
-          g.dropSlot=hit||null;
-        }
-        if(g.hoverIndex!==g.origIndex)applyNaturalSlots();
-      }else{
-        if(g.dropSlot){g.dropSlot.slotEl.classList.remove('drop-target');g.dropSlot=null;}
-        if(hover!==g.hoverIndex)applyReorderSlots(hover);
-      }
-    }
     const deltaX=x-g.prevX;
     const targetTilt=Math.max(-TILT_MAX,Math.min(TILT_MAX,deltaX*TILT_SCALE));
     g.tiltDeg+=(targetTilt-g.tiltDeg)*TILT_LERP;
@@ -278,7 +274,6 @@ export function installHandCardGestures(target=window){
     const moveX=left-g.dragOriginLeft;
     const moveY=top-g.dragOriginTop;
     g.cardEl.style.setProperty('transform',`translate3d(${moveX.toFixed(1)}px,${moveY.toFixed(1)}px,0) rotate(${g.tiltDeg.toFixed(2)}deg)`,'important');
-    if(updateTargets)updateFlickArming(x,y,inSpread);
     return{
       left,
       top,
@@ -288,14 +283,42 @@ export function installHandCardGestures(target=window){
     };
   };
 
+  // Drop-target detection, hand parting and flick arming. This is the heavier
+  // half (spread hit-testing + per-card slot reassignment), so it stays
+  // throttled to one pass per animation frame.
+  const updateDragTargets=latest=>{
+    if(!g||g.mode!=='drag'||!latest)return;
+    const x=latest.clientX;
+    const y=latest.clientY;
+    const {inSpread,hit,hover}=calcDropTarget(x,y);
+    if(inSpread){
+      const nextIndex=hit?.idx??-1;
+      const previousIndex=g.dropSlot?.idx??-1;
+      if(nextIndex!==previousIndex){
+        g.dropSlot?.slotEl.classList.remove('drop-target');
+        hit?.slotEl.classList.add('drop-target');
+        g.dropSlot=hit||null;
+      }
+      if(g.hoverIndex!==g.origIndex)applyNaturalSlots();
+    }else{
+      if(g.dropSlot){g.dropSlot.slotEl.classList.remove('drop-target');g.dropSlot=null;}
+      if(hover!==g.hoverIndex)applyReorderSlots(hover);
+    }
+    updateFlickArming(x,y,inSpread);
+  };
+
   const stepDrag=event=>{
     if(!g||g.mode!=='drag')return;
     g.lastDragEv=event;
+    // Move the card now — the pointer position is already known, so there is no
+    // reason to wait a frame to show it following the finger.
+    applyDragPose(event);
+    // Coalesce the expensive target/flick work to rAF using the latest sample.
     if(g.dragRafId)return;
     g.dragRafId=requestFrame(()=>{
       if(!g||g.mode!=='drag')return;
       g.dragRafId=null;
-      applyDragFrame(g.lastDragEv);
+      updateDragTargets(g.lastDragEv);
     });
   };
 
@@ -303,7 +326,7 @@ export function installHandCardGestures(target=window){
     if(!g||g.mode!=='drag')return null;
     if(g.dragRafId){cancelFrame(g.dragRafId);g.dragRafId=null;}
     g.lastDragEv=event;
-    return applyDragFrame(event,{updateTargets:false});
+    return applyDragPose(event);
   };
 
   const inEdgeZone=(x,y)=>y>=target.innerHeight-EDGE_BOTTOM_PX||x<=EDGE_SIDE_PX||x>=target.innerWidth-EDGE_SIDE_PX;
@@ -555,6 +578,21 @@ export function installHandCardGestures(target=window){
     slideLanding(returnedCard,releaseRect,FAILED_FLICK_RETURN_MS);
   };
 
+  const finishPendingGesture=event=>{
+    if(!g||g.mode!=='pending')return;
+    const snapshot=g;
+    cancelHold();
+    try{snapshot.cardEl.releasePointerCapture(snapshot.pointerId);}catch{}
+    g=null;
+    if(event.type!=='pointerup'||gestureBusy())return;
+    suppressTrailingClick(snapshot.uid);
+    if(event.cancelable)event.preventDefault();
+    const cardEl=snapshot.cardEl?.isConnected?snapshot.cardEl:doc.querySelector(`#hand .card[data-uid="${snapshot.uid}"]`);
+    const commitTap=cardEl?.__tlrCommitTap;
+    if(typeof commitTap==='function')commitTap();
+    else if(typeof cardEl?.onclick==='function')cardEl.onclick.call(cardEl);
+  };
+
   doc.addEventListener('pointerdown',event=>{
     if(!g||g.mode!=='drag')return;
     const element=event.target instanceof Element?event.target:null;
@@ -572,11 +610,22 @@ export function installHandCardGestures(target=window){
     if(!Number.isFinite(uid))return;
     const origIndex=handCards().indexOf(cardEl);
     if(origIndex<0)return;
+    const rect=cardEl.getBoundingClientRect();
+    const naturalWidth=cardEl.offsetWidth;
+    const naturalHeight=cardEl.offsetHeight;
+    const fixedLeft=rect.left+rect.width/2-naturalWidth/2;
+    const fixedTop=rect.top+rect.height/2-naturalHeight/2;
+    const pointerType=event.pointerType||'touch';
     g={
       pointerId:event.pointerId,
+      pointerType,
+      tapSlop:tapSlopFor(pointerType),
       uid,cardEl,origIndex,
       mode:'pending',
-      startX:event.clientX,startY:event.clientY,
+      startX:event.clientX,startY:event.clientY,startTime:now(),
+      fixedLeft,fixedTop,naturalWidth,naturalHeight,
+      grabOffsetX:event.clientX-fixedLeft,
+      grabOffsetY:event.clientY-fixedTop,
       hoverIndex:origIndex,
       dropSlot:null,
       holdTimer:null,
@@ -590,6 +639,7 @@ export function installHandCardGestures(target=window){
       originalParent:cardEl.parentNode,
       originalNextSibling:cardEl.nextSibling,
     };
+    try{cardEl.setPointerCapture(event.pointerId);}catch{}
   },true);
 
   doc.addEventListener('pointermove',event=>{
@@ -600,8 +650,14 @@ export function installHandCardGestures(target=window){
     }else recordSample(event.clientX,event.clientY,now());
 
     if(g.mode==='pending'){
-      if(Math.hypot(event.clientX-g.startX,event.clientY-g.startY)<DRAG_THRESHOLD)return;
-      if(gestureBusy()){cancelHold();g=null;return;}
+      if(Math.hypot(event.clientX-g.startX,event.clientY-g.startY)<g.tapSlop)return;
+      if(gestureBusy()){
+        cancelHold();
+        try{g.cardEl.releasePointerCapture(g.pointerId);}catch{}
+        g=null;
+        return;
+      }
+      if(event.cancelable)event.preventDefault();
       if(gestureTargeting()||purgeSelecting()){startSelectDrag(event);return;}
       startDrag(event);
       return;
@@ -612,7 +668,7 @@ export function installHandCardGestures(target=window){
 
   const onEnd=event=>{
     if(!g||event.pointerId!==g.pointerId)return;
-    if(g.mode==='pending'){cancelHold();g=null;return;}
+    if(g.mode==='pending'){finishPendingGesture(event);return;}
     if(event.type==='pointerup'&&g.mode==='drag'&&detectAbilityFlick(event)){
       commitAbilityFlick(event);
       return;
@@ -625,7 +681,9 @@ export function installHandCardGestures(target=window){
   doc.addEventListener('click',event=>{
     if(now()>(target.__handGestureSuppressClickUntil||0))return;
     const element=event.target instanceof Element?event.target:null;
-    if(element?.closest('#hand .card[data-uid]')){
+    const cardEl=element?.closest('.card[data-uid]');
+    const uid=Number(cardEl?.dataset.uid);
+    if(cardEl&&(uid===target.__handGestureSuppressCardUid||(target.__handGestureSuppressAllHandClicks&&cardEl.closest('#hand')))){
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation();
