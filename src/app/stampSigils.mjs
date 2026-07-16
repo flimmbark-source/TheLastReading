@@ -69,7 +69,7 @@ function ensureStyle(doc) {
     }
     .card > .stamp-chips .stamp-chip.rank {
       background: radial-gradient(circle at 35% 35%,#d4a017,#7a5800 72%,#2a1c00);
-      color: #000;
+      color: #333;
     }
     .card-detail-card .card > .stamp-chips {
       top: 36px;
