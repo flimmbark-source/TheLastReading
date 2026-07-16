@@ -299,6 +299,20 @@ const MECHANICAL_SURFACES = Object.freeze([
 let activeLocale = 'en';
 let activePopoverAnchor = null;
 let scanQueued = false;
+let scanWholeDocument = false;
+const scanRoots = new Set();
+// Above this many distinct mutation roots per frame, a single full-document
+// scan is cheaper than many scoped ones.
+const SCAN_ROOT_LIMIT = 24;
+let autoRegexCache = null;
+let autoIdByLabelCache = null;
+let autoCacheLocale = null;
+
+function invalidateAutoTermCache() {
+  autoRegexCache = null;
+  autoIdByLabelCache = null;
+  autoCacheLocale = null;
+}
 
 function localeTerms(locale = activeLocale) {
   return GAME_TERM_LOCALES[locale] || GAME_TERM_LOCALES.en;
@@ -314,6 +328,7 @@ export function registerGameTermsLocale(locale, terms) {
     merged[id] = Object.freeze({ ...base, ...translated });
   }
   localeRegistry[key] = Object.freeze(merged);
+  invalidateAutoTermCache();
   return true;
 }
 
@@ -373,18 +388,34 @@ function explicitParts(text) {
   return parts;
 }
 
-function autoRegex() {
-  const labels = Object.values(localeTerms())
-    .filter(term => term.auto)
-    .map(term => term.label)
+// The auto regex and label lookup are rebuilt only when the locale (or its
+// registered terms) changes -- scans run on every DOM mutation batch, so
+// rebuilding them per text node showed up in interaction profiles.
+function ensureAutoTermCache() {
+  if (autoRegexCache && autoCacheLocale === activeLocale) return;
+  const terms = Object.entries(localeTerms()).filter(([, term]) => term.auto);
+  const labels = terms
+    .map(([, term]) => term.label)
     .sort((a, b) => b.length - a.length)
     .map(label => label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  return new RegExp(`\\b(${labels.join('|')})\\b`, 'gi');
+  autoRegexCache = new RegExp(`\\b(${labels.join('|')})\\b`, 'gi');
+  autoIdByLabelCache = new Map();
+  for (const [id, term] of terms) {
+    const key = term.label.toLowerCase();
+    if (!autoIdByLabelCache.has(key)) autoIdByLabelCache.set(key, id);
+  }
+  autoCacheLocale = activeLocale;
+}
+
+function autoRegex() {
+  ensureAutoTermCache();
+  autoRegexCache.lastIndex = 0;
+  return autoRegexCache;
 }
 
 function autoIdForLabel(label) {
-  const lower = String(label).toLowerCase();
-  return Object.entries(localeTerms()).find(([, term]) => term.auto && term.label.toLowerCase() === lower)?.[0] || null;
+  ensureAutoTermCache();
+  return autoIdByLabelCache.get(String(label).toLowerCase()) || null;
 }
 
 function plainTitleText(text) {
@@ -484,29 +515,100 @@ export function applyGameTerms(root, options = {}) {
   return count;
 }
 
+const MECHANICAL_SURFACE_SELECTOR = MECHANICAL_SURFACES.join(',');
+const MARKED_SELECTOR = '[data-game-terms="auto"],[data-game-terms="markup"]';
+
 function markMechanicalSurfaces(doc) {
-  for (const selector of MECHANICAL_SURFACES) {
-    doc.querySelectorAll(selector).forEach(element => {
-      if (element.closest('[data-game-terms="off"]')) return;
-      element.dataset.gameTerms = 'auto';
-    });
-  }
+  doc.querySelectorAll(MECHANICAL_SURFACE_SELECTOR).forEach(element => {
+    if (element.closest('[data-game-terms="off"]')) return;
+    element.dataset.gameTerms = 'auto';
+  });
 }
 
 function scanDocument(doc) {
   applyGameTerms(doc.body, { auto: false });
   markMechanicalSurfaces(doc);
-  doc.querySelectorAll('[data-game-terms="auto"],[data-game-terms="markup"]').forEach(element => {
+  doc.querySelectorAll(MARKED_SELECTOR).forEach(element => {
     applyGameTerms(element, { auto: element.dataset.gameTerms === 'auto' });
   });
 }
 
-function queueScan(target) {
+// Scoped equivalent of scanDocument for one mutated subtree. Full-document
+// scans walk every text node in the body, which is far too expensive to run
+// per mutation batch (every mote spawn, card move, and score tick was paying
+// for a whole-document TreeWalker pass).
+function scanMutatedRoot(root) {
+  if (!root.isConnected) return;
+  // Mutations produced by term wrapping itself land inside .game-term spans;
+  // their text is skipped by replaceTextNode anyway, so don't rescan at all.
+  if (root.closest('.game-term')) return;
+  // Same marking the full scan does, restricted to surfaces that contain or
+  // sit inside the mutated subtree.
+  const surface = root.closest(MECHANICAL_SURFACE_SELECTOR);
+  if (surface && !surface.closest('[data-game-terms="off"]')) surface.dataset.gameTerms = 'auto';
+  root.querySelectorAll(MECHANICAL_SURFACE_SELECTOR).forEach(element => {
+    if (element.closest('[data-game-terms="off"]')) return;
+    element.dataset.gameTerms = 'auto';
+  });
+  // The nearest marked ancestor decides the auto flag, mirroring the full
+  // scan's second pass; applyGameTerms on it also covers the explicit-markup
+  // pass for the mutated text within it.
+  const marked = root.closest(MARKED_SELECTOR);
+  if (marked) {
+    applyGameTerms(marked, { auto: marked.dataset.gameTerms === 'auto' });
+    return;
+  }
+  applyGameTerms(root, { auto: false });
+  root.querySelectorAll(MARKED_SELECTOR).forEach(element => {
+    applyGameTerms(element, { auto: element.dataset.gameTerms === 'auto' });
+  });
+}
+
+function collectScanRoots(mutations) {
+  if (scanWholeDocument) return;
+  for (const mutation of mutations) {
+    let root = null;
+    if (mutation.type === 'characterData') {
+      root = mutation.target.parentElement;
+    } else if (mutation.addedNodes && mutation.addedNodes.length) {
+      // Removals can't introduce new term text; only additions need a scan.
+      const target = mutation.target;
+      root = target.nodeType === 1 ? target : target.parentElement;
+    }
+    if (!root) continue;
+    scanRoots.add(root);
+    if (scanRoots.size > SCAN_ROOT_LIMIT) {
+      scanWholeDocument = true;
+      scanRoots.clear();
+      return;
+    }
+  }
+}
+
+function flushScan(doc) {
+  if (scanWholeDocument) {
+    scanWholeDocument = false;
+    scanRoots.clear();
+    scanDocument(doc);
+    return;
+  }
+  const roots = [...scanRoots];
+  scanRoots.clear();
+  for (const root of roots) {
+    // Skip roots covered by another pending root's subtree scan.
+    if (roots.some(other => other !== root && other.contains(root))) continue;
+    scanMutatedRoot(root);
+  }
+}
+
+function queueScan(target, mutations) {
+  if (mutations) collectScanRoots(mutations);
+  else scanWholeDocument = true;
   if (scanQueued) return;
   scanQueued = true;
   target.requestAnimationFrame(() => {
     scanQueued = false;
-    scanDocument(target.document);
+    flushScan(target.document);
   });
 }
 
@@ -681,9 +783,9 @@ export function installGameTerms(target = window) {
     closePopover(doc);
   });
 
-  const observer = new MutationObserver(() => {
+  const observer = new MutationObserver(mutations => {
     ensureGlossaryButton(doc);
-    queueScan(target);
+    queueScan(target, mutations);
   });
   observer.observe(doc.body, { childList: true, subtree: true, characterData: true });
   target.__tlrGameTermsObserver = observer;

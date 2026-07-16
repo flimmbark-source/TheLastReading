@@ -356,6 +356,18 @@ export function installCardDetailGestures(target=window){
     return trigger;
   };
 
+  // Write-avoidance: the tracking loop repositions per frame, but most tracked
+  // frames follow a card that isn't actually moving (class toggles start the
+  // loop too). Skipping identical writes keeps layout clean, so the next
+  // frame's getBoundingClientRect doesn't force a re-layout.
+  const setTriggerPos=(el,left,top)=>{
+    const l=`${left}px`;
+    const t=`${top}px`;
+    if(el.style.right!=='auto')el.style.right='auto';
+    if(el.style.left!==l)el.style.left=l;
+    if(el.style.top!==t)el.style.top=t;
+  };
+
   const clearTriggerMirror=el=>{
     if(Array.isArray(el.__idleMirrors))for(const anim of el.__idleMirrors){try{anim.cancel();}catch{}}
     el.__idleMirrors=[];
@@ -400,7 +412,8 @@ export function installCardDetailGestures(target=window){
     if(!Number.isFinite(uid)){removeTrigger();return false;}
 
     const detailTrigger=ensureTrigger();
-    detailTrigger.dataset.uid=String(uid);
+    const uidValue=String(uid);
+    if(detailTrigger.dataset.uid!==uidValue)detailTrigger.dataset.uid=uidValue;
 
     if(customPos){
       // Detached: the medallion sits where the player dropped it -- the same
@@ -411,19 +424,15 @@ export function installCardDetailGestures(target=window){
       const left=clampVal(customPos.left,VIEWPORT_MARGIN,Math.max(VIEWPORT_MARGIN,vw-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN));
       const top=clampVal(customPos.top,VIEWPORT_MARGIN,Math.max(VIEWPORT_MARGIN,vh-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN));
       detailTrigger.dataset.side='free';
-      detailTrigger.style.right='auto';
-      detailTrigger.style.left=`${left}px`;
-      detailTrigger.style.top=`${top}px`;
+      setTriggerPos(detailTrigger,left,top);
       clearTriggerMirror(detailTrigger);
       return true;
     }
 
     const nat=naturalPosition(cardEl);
     if(!nat){removeTrigger();return false;}
-    detailTrigger.dataset.side=nat.side;
-    detailTrigger.style.top=`${nat.top}px`;
-    detailTrigger.style.right='auto';
-    detailTrigger.style.left=`${nat.left}px`;
+    if(detailTrigger.dataset.side!==nat.side)detailTrigger.dataset.side=nat.side;
+    setTriggerPos(detailTrigger,nat.left,nat.top);
 
     // Re-mirror when the followed card changes or when its set of looping
     // animations changes (e.g. card-wave registering a frame after selection).
@@ -481,7 +490,9 @@ export function installCardDetailGestures(target=window){
       const t=now(target);
       const withinBaseWindow=t<motionDeadline&&motionFramesRemaining>0;
       // Extend past the base window while a transition is still moving the hand.
-      const stillTransitioning=t<motionHardStop&&motionActive();
+      // motionActive() costs getAnimations + querySelector, so only ask once the
+      // base window alone no longer keeps the loop alive.
+      const stillTransitioning=!withinBaseWindow&&t<motionHardStop&&motionActive();
       if(visible&&(withinBaseWindow||stillTransitioning))motionRaf=target.requestAnimationFrame(step);
       else{motionDeadline=0;motionFramesRemaining=0;motionHardStop=0;}
     };
