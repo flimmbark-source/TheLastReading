@@ -597,20 +597,51 @@ export function installHandCardGestures(target=window){
     return travel<=g.tapToggle;
   };
 
+  // The select/unselect pose change animates through the card's base
+  // transform (--lift-y transitions over .32s), and its "before" style is
+  // whatever the card last painted at — the hand slot, after a restore. Prime
+  // --drift-x/--drift-y (already terms of that same transform calc) to the
+  // release point with transitions suppressed, so that zeroing them after the
+  // tap commits glides the card from where the finger let go straight to its
+  // new pose instead of snapping to the slot first. Inline !important because
+  // the .sel rule pins the drifts to 0 with !important.
+  const primeTapGlide=(cardEl,releaseRect)=>{
+    const restRect=cardEl.getBoundingClientRect();
+    const dx=releaseRect.left-restRect.left;
+    const dy=releaseRect.top-restRect.top;
+    if(Math.abs(dx)<1&&Math.abs(dy)<1)return null;
+    cardEl.style.setProperty('transition','none','important');
+    cardEl.style.setProperty('--drift-x',dx.toFixed(1)+'px','important');
+    cardEl.style.setProperty('--drift-y',dy.toFixed(1)+'px','important');
+    void cardEl.offsetWidth;   // commit the release-point pose as the "before" style
+    return()=>{
+      cardEl.style.removeProperty('transition');
+      cardEl.style.setProperty('--drift-x','0px','important');
+      cardEl.style.setProperty('--drift-y','0px','important');
+      target.setTimeout?.(()=>{
+        cardEl.style.removeProperty('--drift-x');
+        cardEl.style.removeProperty('--drift-y');
+      },420);
+    };
+  };
+
   // A drag that never left the tap window commits as a selection toggle: put
   // the card back where it was grabbed and run the same current-render tap
   // action the pending path uses, so tap and click cannot drift apart.
   const commitTapFromDrag=event=>{
     if(!g||g.mode!=='drag')return;
     const snapshot=g;
+    const releaseRect=snapshot.cardEl.isConnected?snapshot.cardEl.getBoundingClientRect():null;
     endDrag(false);
     if(gestureBusy())return;
     suppressTrailingClick(snapshot.uid,{allHand:true});
     if(event.cancelable)event.preventDefault();
     const cardEl=snapshot.cardEl?.isConnected?snapshot.cardEl:doc.querySelector(`#hand .card[data-uid="${snapshot.uid}"]`);
+    const glide=releaseRect&&cardEl?.isConnected?primeTapGlide(cardEl,releaseRect):null;
     const commitTap=cardEl?.__tlrCommitTap;
     if(typeof commitTap==='function')commitTap();
     else if(typeof cardEl?.onclick==='function')cardEl.onclick.call(cardEl);
+    glide?.();
   };
 
   const finishPendingGesture=event=>{
