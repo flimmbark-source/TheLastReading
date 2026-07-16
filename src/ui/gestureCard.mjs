@@ -14,6 +14,12 @@ export function installHandCardGestures(target=window){
   const TAP_SLOP_MOUSE=2;
   const TAP_SLOP_PEN=3;
   const TAP_SLOP_TOUCH=4;
+  // Release window for the immediate-drag model: the card is dragging from the
+  // moment it's touched, and a release whose whole travel stayed inside this
+  // radius commits as a select/unselect toggle instead of a drop.
+  const TAP_TOGGLE_MOUSE=4;
+  const TAP_TOGGLE_PEN=6;
+  const TAP_TOGGLE_TOUCH=9;
   const TILT_SCALE=.32;
   const TILT_MAX=14;
   const TILT_LERP=.22;
@@ -34,6 +40,7 @@ export function installHandCardGestures(target=window){
   const cancelFrame=id=>(target.cancelAnimationFrame||cancelAnimationFrame)(id);
   const now=()=>target.performance?.now?.()??performance.now();
   const tapSlopFor=pointerType=>pointerType==='mouse'?TAP_SLOP_MOUSE:pointerType==='pen'?TAP_SLOP_PEN:TAP_SLOP_TOUCH;
+  const tapToggleFor=pointerType=>pointerType==='mouse'?TAP_TOGGLE_MOUSE:pointerType==='pen'?TAP_TOGGLE_PEN:TAP_TOGGLE_TOUCH;
 
   let g=null;
   const handEl=()=>doc.querySelector('.hand');
@@ -333,6 +340,8 @@ export function installHandCardGestures(target=window){
 
   const recordSample=(x,y,time)=>{
     if(!g)return;
+    const travel=Math.hypot(x-g.startX,y-g.startY);
+    if(travel>g.maxMove)g.maxMove=travel;
     g.samples||=[];
     g.samples.push({x,y,t:time});
     const cutoff=time-FLICK_RETAIN_MS;
@@ -578,6 +587,32 @@ export function installHandCardGestures(target=window){
     slideLanding(returnedCard,releaseRect,FAILED_FLICK_RETURN_MS);
   };
 
+  // True when a drag released with its entire travel inside the tap-toggle
+  // radius — the "touched but never really moved" case of the immediate-drag
+  // model. Checked with the release coords too: pointerup can land past the
+  // last recorded move sample.
+  const isTapRelease=event=>{
+    if(!g)return false;
+    const travel=Math.max(g.maxMove||0,Math.hypot(event.clientX-g.startX,event.clientY-g.startY));
+    return travel<=g.tapToggle;
+  };
+
+  // A drag that never left the tap window commits as a selection toggle: put
+  // the card back where it was grabbed and run the same current-render tap
+  // action the pending path uses, so tap and click cannot drift apart.
+  const commitTapFromDrag=event=>{
+    if(!g||g.mode!=='drag')return;
+    const snapshot=g;
+    endDrag(false);
+    if(gestureBusy())return;
+    suppressTrailingClick(snapshot.uid,{allHand:true});
+    if(event.cancelable)event.preventDefault();
+    const cardEl=snapshot.cardEl?.isConnected?snapshot.cardEl:doc.querySelector(`#hand .card[data-uid="${snapshot.uid}"]`);
+    const commitTap=cardEl?.__tlrCommitTap;
+    if(typeof commitTap==='function')commitTap();
+    else if(typeof cardEl?.onclick==='function')cardEl.onclick.call(cardEl);
+  };
+
   const finishPendingGesture=event=>{
     if(!g||g.mode!=='pending')return;
     const snapshot=g;
@@ -620,6 +655,8 @@ export function installHandCardGestures(target=window){
       pointerId:event.pointerId,
       pointerType,
       tapSlop:tapSlopFor(pointerType),
+      tapToggle:tapToggleFor(pointerType),
+      maxMove:0,
       uid,cardEl,origIndex,
       mode:'pending',
       startX:event.clientX,startY:event.clientY,startTime:now(),
@@ -640,6 +677,13 @@ export function installHandCardGestures(target=window){
       originalNextSibling:cardEl.nextSibling,
     };
     try{cardEl.setPointerCapture(event.pointerId);}catch{}
+    // Immediate drag: the card is draggable from the moment it's touched. The
+    // pending gate only remains for selection sweeps (ability targeting /
+    // purge picks), busy states, and non-primary mouse buttons — there a
+    // release inside the tap window still commits via finishPendingGesture,
+    // while everywhere else it commits via commitTapFromDrag.
+    const primaryPress=pointerType!=='mouse'||event.button===0;
+    if(primaryPress&&!gestureBusy()&&!gestureTargeting()&&!purgeSelecting())startDrag(event);
   },true);
 
   doc.addEventListener('pointermove',event=>{
@@ -669,6 +713,13 @@ export function installHandCardGestures(target=window){
   const onEnd=event=>{
     if(!g||event.pointerId!==g.pointerId)return;
     if(g.mode==='pending'){finishPendingGesture(event);return;}
+    // Tap-toggle must be decided before flick detection: the hand dock sits
+    // inside the bottom flick edge zone, so a plain tap on a flick-eligible
+    // card would otherwise read as an edge-zone ability activation.
+    if(event.type==='pointerup'&&g.mode==='drag'&&isTapRelease(event)){
+      commitTapFromDrag(event);
+      return;
+    }
     if(event.type==='pointerup'&&g.mode==='drag'&&detectAbilityFlick(event)){
       commitAbilityFlick(event);
       return;
