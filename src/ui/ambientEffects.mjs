@@ -28,6 +28,7 @@ function installHandIdleAnimation(target){
   let pendingDragY=null;
   let releaseGuardRaf=null;
   let userLift=0;
+  let cachedDockTop=null;
   const activeHandPointers=new Set();
   const observedHands=new WeakSet();
 
@@ -39,11 +40,18 @@ function installHandIdleAnimation(target){
     const value=parseFloat(raw);
     return Number.isFinite(value)?value:userLift;
   };
+  // The dock doesn't move mid-gesture, but this used to be read with
+  // getBoundingClientRect() on every vertical-drag frame -- a forced layout
+  // on every pointermove sample for a value that can't have changed since the
+  // gesture (or the last resize) started. Cached and invalidated on resize
+  // and at the start of each new hand gesture instead.
   const maxUpwardLift=()=>{
-    const dock=document.querySelector('.handDock');
-    const dockTop=dock?.getBoundingClientRect().top??target.innerHeight;
+    if(cachedDockTop===null){
+      const dock=document.querySelector('.handDock');
+      cachedDockTop=dock?dock.getBoundingClientRect().top:target.innerHeight;
+    }
     const safeTop=target.innerWidth<640?72:96;
-    return Math.max(30,dockTop-safeTop);
+    return Math.max(30,cachedDockTop-safeTop);
   };
   const clampUserLift=value=>Math.max(-maxUpwardLift(),Math.min(0,Number.isFinite(value)?value:0));
   const applyLiftToHandAndZone=value=>{
@@ -153,6 +161,7 @@ function installHandIdleAnimation(target){
     cancelDragMove();
     cancelReleaseGuard();
     settleIdleToAnchor(120);
+    cachedDockTop=null;
 
     const startsInSwipeZone=!!el.closest('#handSwipeZone');
     if(event.pointerType!=='mouse'&&startsInSwipeZone&&activeHandPointers.size===1){
@@ -205,7 +214,7 @@ function installHandIdleAnimation(target){
   document.addEventListener('pointerup',endHandGesture,true);
   document.addEventListener('pointercancel',endHandGesture,true);
 
-  target.addEventListener('resize',()=>writeUserLift(userLift));
+  target.addEventListener('resize',()=>{cachedDockTop=null;writeUserLift(userLift);});
   observeHand(handEl());
   userLift=clampUserLift(readLift(handEl()));
   applyLiftToHandAndZone(userLift);

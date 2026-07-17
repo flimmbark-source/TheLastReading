@@ -6,7 +6,11 @@ const TRIGGER_HIT_SIZE=44;
 const TRIGGER_VISUAL_SIZE=24;
 const TRIGGER_GAP=7;
 const VIEWPORT_MARGIN=8;
-const MOTION_TRACK_MS=420;
+// The tracked transition itself is .32s (mobile.css's .hand .card transition);
+// the extra margin only needs to cover MutationObserver dispatch latency
+// between the class landing and this loop's first frame, not re-chase a card
+// that finished moving 100ms ago.
+const MOTION_TRACK_MS=360;
 const MOTION_TRACK_MAX_FRAMES=40;
 // Hard ceiling so a stuck transition can never pin the tracker on forever. The
 // whole-hand idle reposition (ambientEffects handAnim) runs up to ~1.4s, so the
@@ -209,6 +213,8 @@ export function installCardDetailGestures(target=window){
   let motionDeadline=0;
   let motionFramesRemaining=0;
   let motionHardStop=0;
+  let motionSkipFrame=false;
+  let motionLastVisible=true;
   let observer=null;
   let customPos=loadCustomPos(target);
   let dragged=false;
@@ -489,10 +495,17 @@ export function installCardDetailGestures(target=window){
       if(!motionRaf)positionTrigger();
       return;
     }
+    motionSkipFrame=true; // flips false on the first step() below, so that frame always checks
     const step=()=>{
       motionRaf=0;
       cancelScheduledPosition();
-      const visible=positionTrigger();
+      // positionTrigger()'s getBoundingClientRect/getComputedStyle reads force
+      // a synchronous layout every call. A 24px helper button trailing a
+      // moving card doesn't need 60fps precision to look attached to it, so
+      // only every other tracked frame actually repositions it -- halving the
+      // forced-layout cost of the whole burst with no visible stepping.
+      motionSkipFrame=!motionSkipFrame;
+      const visible=motionSkipFrame?motionLastVisible:(motionLastVisible=positionTrigger());
       motionFramesRemaining-=1;
       const t=now(target);
       const withinBaseWindow=t<motionDeadline&&motionFramesRemaining>0;

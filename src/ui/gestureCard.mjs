@@ -325,6 +325,10 @@ export function installHandCardGestures(target=window){
     if(!g.spreadActiveShown&&g.maxMove>=g.tapToggle){
       g.spreadActiveShown=true;
       doc.querySelector('#spread')?.classList.add('drag-active');
+      // Same "empty slots are a valid destination" affordance renderSpread.mjs
+      // draws for a tap-selected card (.target) -- reused here instead of a
+      // second, drag-only highlight so the two interactions read identically.
+      doc.querySelectorAll('#spread .slot.empty').forEach(slotEl=>slotEl.classList.add('target'));
     }
     const {inSpread,hit,hover}=calcDropTarget(x,y);
     if(inSpread){
@@ -439,6 +443,7 @@ export function installHandCardGestures(target=window){
     snapshot.dropSlot?.slotEl.classList.remove('drop-target');
     handEl()?.classList.remove('hand-parting');
     doc.querySelector('#spread')?.classList.remove('drag-active');
+    doc.querySelectorAll('#spread .slot.target').forEach(slotEl=>slotEl.classList.remove('target'));
     target.__handReorderActive=false;
     if(cancelPrepared)target.tlrCancelPreparedCardActivation?.(snapshot.uid);
     if(removeCard)snapshot.cardEl.remove();
