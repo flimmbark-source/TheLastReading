@@ -123,6 +123,43 @@ syncCardDetailTrigger(target);
 assert.equal(target.document.querySelector('.card-detail-trigger'),null,'the trigger should disappear when no hand card is selected');
 assert.equal(target.document.activeElement,target.document.getElementById('hand'),'focus should return to the hand when a focused trigger disappears');
 
+// Dragging the medallion off the card should keep it visible at all times --
+// even with no card selected -- until the player resets it.
+handEl.classList.add('sel');
+run={...run,selectedCardId:11};
+legacy.selected=11;
+syncCardDetailTrigger(target);
+const draggableTrigger=target.document.querySelector('.card-detail-trigger');
+assert.ok(draggableTrigger,'re-selecting the card should bring the trigger back');
+
+pointer('pointerdown',draggableTrigger,{pointerId:9,clientX:366,clientY:202});
+pointer('pointermove',draggableTrigger,{pointerId:9,clientX:416,clientY:702});
+pointer('pointerup',draggableTrigger,{pointerId:9,clientX:416,clientY:702});
+syncCardDetailTrigger(target);
+assert.equal(draggableTrigger.dataset.side,'free','a dragged-off medallion should be flagged as detached');
+assert.equal(draggableTrigger.style.left,'50px','the medallion should land where the player dropped it');
+assert.equal(draggableTrigger.style.top,'500px','the medallion should land where the player dropped it');
+
+handEl.classList.remove('sel');
+run={...run,selectedCardId:null};
+legacy.selected=null;
+syncCardDetailTrigger(target);
+assert.ok(target.document.querySelector('.card-detail-trigger'),'a dragged-off medallion must stay visible even once the selection clears');
+assert.equal(draggableTrigger.style.left,'50px','the detached medallion should not snap back while unselected');
+assert.equal(draggableTrigger.style.top,'500px','the detached medallion should not snap back while unselected');
+
+target.tlrResetInfoButton();
+syncCardDetailTrigger(target);
+assert.equal(target.document.querySelector('.card-detail-trigger'),null,'resetting the medallion with no card selected should hide it again');
+
+handEl.classList.add('sel');
+run={...run,selectedCardId:11};
+legacy.selected=11;
+syncCardDetailTrigger(target);
+const resetTrigger=target.document.querySelector('.card-detail-trigger');
+assert.ok(resetTrigger,'selecting a card again after reset should bring the trigger back');
+assert.notEqual(resetTrigger.dataset.side,'free','reset should re-attach the medallion to card tracking instead of the dropped spot');
+
 const cardGestureSource=fs.readFileSync(new URL('../src/ui/gestureCard.mjs',import.meta.url),'utf8');
 const handGestureSource=fs.readFileSync(new URL('../src/ui/gestureHand.mjs',import.meta.url),'utf8');
 const detailGestureSource=fs.readFileSync(new URL('../src/ui/cardDetailGestures.mjs',import.meta.url),'utf8');
