@@ -244,7 +244,6 @@ export function installHandCardGestures(target=window){
     }));
     target.__handReorderActive=true;
     hand?.classList.add('hand-parting');
-    spread?.classList.add('drag-active');
     g.cardEl.classList.add('hand-card-dragging');
     g.dragOriginLeft=fixedLeft;
     g.dragOriginTop=fixedTop;
@@ -318,6 +317,15 @@ export function installHandCardGestures(target=window){
     if(!g||g.mode!=='drag'||!latest)return;
     const x=latest.clientX;
     const y=latest.clientY;
+    // The "every empty slot glows" indicator should only appear once the drag
+    // clears the tap-toggle radius — the same threshold that decides a
+    // release is a selection toggle rather than a drop — so merely touching
+    // a card doesn't flash the whole spread before the player has committed
+    // to actually dragging it.
+    if(!g.spreadActiveShown&&g.maxMove>=g.tapToggle){
+      g.spreadActiveShown=true;
+      doc.querySelector('#spread')?.classList.add('drag-active');
+    }
     const {inSpread,hit,hover}=calcDropTarget(x,y);
     if(inSpread){
       const nextIndex=hit?.idx??-1;
@@ -717,6 +725,7 @@ export function installHandCardGestures(target=window){
       grabOffsetY:event.clientY-fixedTop,
       hoverIndex:origIndex,
       dropSlot:null,
+      spreadActiveShown:false,
       holdTimer:null,
       prevX:event.clientX,
       tiltDeg:0,
