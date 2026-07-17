@@ -4,8 +4,6 @@ import { shuffleDeck } from './deck.mjs';
 
 const RANK_ORDER = ['Page', 'Knight', 'Queen', 'King'];
 const SUIT_ORDER = ['Cups', 'Wands', 'Swords', 'Pentacles'];
-// Court ranks mapped onto the 0-21 major ladder for Between with major anchors.
-const COURT_LADDER_POSITIONS = [0, 5, 10, 15];
 
 function majorDefinition(number) {
   return ALL_CARD_DEFINITIONS.find(card => card.type === 'major' && card.number === number) || null;
@@ -80,8 +78,7 @@ export function betweenCardIds(a, b) {
   if (!a || !b || a.type !== b.type) return [];
   if (a.uid != null && b.uid != null && a.uid === b.uid) return [];
 
-  // Major anchors: majors numerically between, plus courts whose ladder
-  // position falls strictly inside the window (any suit).
+  // Major anchors: only Major cards numerically between them.
   if (a.type === 'major') {
     const aNum = a.number ?? a.num;
     const bNum = b.number ?? b.num;
@@ -93,14 +90,6 @@ export function betweenCardIds(a, b) {
       const card = majorDefinition(number);
       if (card) out.push(card.id);
     }
-    RANK_ORDER.forEach((rank, index) => {
-      const position = COURT_LADDER_POSITIONS[index];
-      if (position <= low || position >= high) return;
-      for (const suit of SUIT_ORDER) {
-        const card = courtDefinition(suit, rank);
-        if (card) out.push(card.id);
-      }
-    });
     return out;
   }
 
