@@ -14,13 +14,26 @@ import { installDataGlobals } from '../src/app/dataGlobals.mjs';
 import { installRuntimeState } from '../src/app/runtimeState.mjs';
 import { installHintRuntime } from '../src/app/hintRuntime.mjs';
 
-const dom = new JSDOM('<!DOCTYPE html><body><div id="hand"></div><div id="spread"></div></body>');
+const dom = new JSDOM('<!DOCTYPE html><body><div id="hand"></div><div id="spread"></div><div id="threshold"></div><div id="pool"></div><div id="discards"></div><div id="current"></div><button id="discardBtn"></button><button id="purgeBtn"></button><button id="mullBtn"></button></body>');
 globalThis.window = dom.window;
 globalThis.document = dom.window.document;
 globalThis.$ = selector => dom.window.document.querySelector(selector);
 globalThis._slotEls = null;
 globalThis.handleAbilityHandClick = () => {};
 globalThis.placeCard = () => {};
+// refreshHandState()'s legacy globals (renderTable.mjs's cached element refs
+// and score/architecture hooks) -- not needed by renderHand/renderSpread
+// alone, only by the refreshHandState regression test below.
+globalThis._elThreshold = null;
+globalThis._elPool = null;
+globalThis._elDiscards = null;
+globalThis._elDiscardBtn = null;
+globalThis._elPurgeBtn = null;
+globalThis._elMullBtn = null;
+globalThis._elHand = null;
+globalThis._elCurrent = null;
+globalThis._getPlacedScore = () => ({ melds: [], finalScore: 0 });
+globalThis.tlrArchitectureSync = () => {};
 
 const deck = buildDeck();
 const hand = deck.slice(0, 5).map((card, i) => ({ ...card, uid: 100 + i }));
@@ -37,6 +50,7 @@ installHintRuntime(globalThis);
 
 const { renderHand } = await import('../src/ui/renderHand.mjs');
 const { renderSpread } = await import('../src/ui/renderSpread.mjs');
+const { refreshHandState } = await import('../src/ui/renderTable.mjs');
 
 // --- Initial hand render: one DOM card per hand card, in order ---
 renderHand(null, false);
@@ -122,6 +136,51 @@ assert.ok(!cards.some(el => el.classList.contains('sel')), 'clearing selection r
   });
   dom.window.document.querySelector('#spread > .slot .card').click();
   assert.equal(targeted, target.uid, 'ability spread click routes to view onAbilityTarget handler');
+}
+
+// --- refreshHandState: the cheap selection-only repaint must keep the empty
+// spread slots' .target highlight in sync, not just renderSpread's full pass.
+// commitTap() (renderHand.mjs) calls refreshHandState after every tap-select,
+// never a full render, so this is the only path a real selection goes through.
+{
+  // renderTable.mjs's _cacheEls() reads the bare `document` global and caches
+  // its element refs behind "if (_elThreshold) return" -- fine for the real
+  // single-page app, but this suite runs many scripts in one shared process/
+  // globalThis, and sibling scripts' own leftover async work can repoint
+  // globalThis.document at their own (by then orphaned) jsdom document
+  // between awaits. Pin both back to this test's own document immediately
+  // before every call that goes through _cacheEls, so neither a stale cache
+  // nor a swapped-out document can leak in.
+  const forceRecacheEls = () => {
+    globalThis.document = dom.window.document;
+    globalThis._elThreshold = null;
+    globalThis._elPool = null;
+    globalThis._elDiscards = null;
+    globalThis._elDiscardBtn = null;
+    globalThis._elPurgeBtn = null;
+    globalThis._elMullBtn = null;
+    globalThis._elHand = null;
+    globalThis._elCurrent = null;
+  };
+
+  globalThis.state.spread = Array(5).fill(null);
+  globalThis.state.selected = null;
+  renderSpread(null, false);
+  let slots = [...dom.window.document.querySelectorAll('#spread > .slot')];
+  assert.ok(slots.every(slot => !slot.classList.contains('target')), 'no selection -> no empty-slot targets at baseline');
+
+  globalThis.state.selected = hand[2].uid;
+  forceRecacheEls();
+  refreshHandState();
+  slots = [...dom.window.document.querySelectorAll('#spread > .slot')];
+  assert.ok(slots.every(slot => !slot.querySelector('.card') && slot.classList.contains('target')),
+    'refreshHandState alone must mark empty spread slots as targets once a card is selected');
+
+  globalThis.state.selected = null;
+  forceRecacheEls();
+  refreshHandState();
+  slots = [...dom.window.document.querySelectorAll('#spread > .slot')];
+  assert.ok(slots.every(slot => !slot.classList.contains('target')), 'refreshHandState must clear the target class once selection is cleared');
 }
 
 console.log('Render smoke checks passed.');
