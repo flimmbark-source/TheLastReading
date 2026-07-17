@@ -80,6 +80,27 @@ assert.deepEqual(
 // Between: both anchors must share an Arcana and have a live result between them.
 assert.deepEqual(betweenCardIds(byId.get('major_5'), byId.get('major_8')), ['major_6', 'major_7'], 'Major Between returns the strict numeric interior');
 assert.deepEqual(
+  betweenCardIds(byId.get('major_3'), byId.get('major_12')),
+  ['major_4', 'major_5', 'major_6', 'major_7', 'major_8', 'major_9', 'major_10', 'major_11'],
+  'Major Between never inserts Court cards into the Major sequence',
+);
+const majorBetweenDeck = [
+  clone('court_Cups_Knight', 5034),
+  clone('major_4', 5035),
+  clone('court_Wands_Queen', 5036),
+  clone('major_11', 5037),
+];
+assert.deepEqual(
+  abilityHeldCards(majorBetweenDeck, getAbility('BETWEEN_2'), [clone('major_3', 5038), clone('major_12', 5039)]).map(card => card.uid),
+  [5035, 5037],
+  'Major Between reveals only Major cards from a mixed deck',
+);
+assert.deepEqual(
+  betweenCardIds(byId.get('major_3'), byId.get('court_Cups_King')),
+  [],
+  'Between rejects anchors from different Arcana',
+);
+assert.deepEqual(
   validHandTargetsForAbility('BETWEEN_2', {
     hand: [clone('major_5', 5030), clone('major_8', 5031), clone('court_Cups_Page', 5032)],
     deck: [clone('major_7', 5033)],
