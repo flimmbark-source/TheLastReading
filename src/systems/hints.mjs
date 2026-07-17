@@ -145,14 +145,19 @@ function addNearMajorHints({ hints, seen, card, allCards }) {
   }
 }
 
+function isRankScoring(card, stampedIds) {
+  return card.type === 'court' || (card.type === 'major' && stampedIds.has(card.id) && Boolean(card.rank));
+}
+
 function addNearCourtHints({ hints, seen, card, allCards, stampedMajors = [] }) {
   const stampedIds = new Set(stampedMajors);
   const isStampedMajor = card.type === 'major' && stampedIds.has(card.id) && Array.isArray(card.suits) && card.suits.length > 0;
+  const isRankCard = isRankScoring(card, stampedIds);
 
   if (card.type !== 'court' && !isStampedMajor) return;
 
-  if (card.type === 'court') {
-    const sameRank = allCards.filter(other => other.type === 'court' && other.rank === card.rank);
+  if (isRankCard) {
+    const sameRank = allCards.filter(other => isRankScoring(other, stampedIds) && other.rank === card.rank);
     if (sameRank.length >= 4) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.FOUR_OF_A_KIND.label, `rank:${card.rank}`, {
       have: sameRank.length,
       need: 4,
@@ -166,15 +171,15 @@ function addNearCourtHints({ hints, seen, card, allCards, stampedMajors = [] }) 
   const cardSuits = card.type === 'court' ? [card.suit] : (card.suits || []);
   for (const suit of cardSuits) {
     const tokens = new Set(allCards.filter(other => other.type === 'court' && other.suit === suit).map(other => other.rank));
-    allCards.filter(other => other.type === 'major' && stampedIds.has(other.id) && (other.suits || []).includes(suit)).forEach(other => tokens.add(other.id));
+    allCards.filter(other => other.type === 'major' && stampedIds.has(other.id) && other.rank && (other.suits || []).includes(suit)).forEach(other => tokens.add(other.rank));
     if (tokens.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.ROYAL_COURT.label, `flush:${suit}`, {
       have: tokens.size,
       need: 3,
     });
   }
 
-  if (card.type === 'court') {
-    const ranks = new Set(allCards.filter(other => other.type === 'court').map(other => other.rank));
+  if (isRankCard) {
+    const ranks = new Set(allCards.filter(other => isRankScoring(other, stampedIds)).map(other => other.rank));
     if (ranks.size >= 2) addHint(hints, seen, HINT_LEVELS.NEAR, SCORING_PATTERNS.FULL_COURT.label, null, {
       have: ranks.size,
       need: 3,

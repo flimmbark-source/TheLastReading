@@ -31,11 +31,13 @@ export function installSinglePlayerV2(target = window) {
     wrap?.classList.remove('open');
     const tab=doc.getElementById(`${id}PullTab`);
     if(tab)tab.innerHTML=`&#9660; ${label}`;
-    // The Scoring drawer can close this way (outside-press, close tab, closing
-    // another drawer) without going through gestureDrawers' togglePullTab, where
-    // the tutorial's scoring signal fires. Emit it here too so the pattern-hints
-    // step still advances instead of stranding the onboarding chain.
+    // The Scoring/Abilities drawers can close this way (outside-press, close
+    // tab, closing another drawer) without going through gestureDrawers'
+    // togglePullTab, where the tutorial's open/close signals fire. Emit them
+    // here too so patterns-intro/ability-panel-intro still advance instead of
+    // stranding the onboarding chain.
     if(id==='scoring'&&wasOpen&&typeof target.tutSignal==='function')target.tutSignal('scoringClosed');
+    if(id==='abilities'&&wasOpen&&typeof target.tutSignal==='function')target.tutSignal('abilitiesClosed');
   };
 
   const closeSettings=()=>closePullDrawer('menu','Menu');

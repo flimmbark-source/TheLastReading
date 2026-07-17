@@ -236,7 +236,7 @@ export function openStampPicker(slotIndex, target = window) {
     return true;
   });
   if (!eligible.length) return;
-  openStampChoice('Suit Stamp', 'Choose a Major Arcana — its suit counts toward Royal Court.', eligible, card => {
+  openStampChoice('Suit Stamp', 'Choose a Major Arcana — it gains suits and a rank based on its art.', eligible, card => {
     if (card?.id) applyStampTarget(card.id, target);
   }, target);
 }

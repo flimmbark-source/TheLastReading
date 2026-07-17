@@ -3,6 +3,9 @@ import { ALL_CARD_DEFINITIONS, MAJOR_ARCANA, ROMAN, SUIT_GLYPHS } from '../data/
 const MAJOR_SUITS_BY_ID = Object.fromEntries(
   MAJOR_ARCANA.filter(c => c.suits).map(c => [c.id, c.suits])
 );
+const MAJOR_RANK_BY_ID = Object.fromEntries(
+  MAJOR_ARCANA.filter(c => c.rank).map(c => [c.id, c.rank])
+);
 
 export function buildDeck() {
   return ALL_CARD_DEFINITIONS.map((card, uid) => ({ ...card, uid }));
@@ -29,6 +32,7 @@ export function buildLegacyDeck({ majors, courts, suits, roman } = {}) {
       ability,
     };
     if (MAJOR_SUITS_BY_ID[id]) card.suits = MAJOR_SUITS_BY_ID[id];
+    if (MAJOR_RANK_BY_ID[id]) card.rank = MAJOR_RANK_BY_ID[id];
     deck.push(card);
   }
   for (const suit of suitRows) {

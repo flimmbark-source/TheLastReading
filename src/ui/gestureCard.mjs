@@ -41,6 +41,21 @@ export function installHandCardGestures(target=window){
   const now=()=>target.performance?.now?.()??performance.now();
   const tapSlopFor=pointerType=>pointerType==='mouse'?TAP_SLOP_MOUSE:pointerType==='pen'?TAP_SLOP_PEN:TAP_SLOP_TOUCH;
   const tapToggleFor=pointerType=>pointerType==='mouse'?TAP_TOGGLE_MOUSE:pointerType==='pen'?TAP_TOGGLE_PEN:TAP_TOGGLE_TOUCH;
+  // The card's current on-screen fan angle, read before the drag detaches
+  // the card from the hand's layout. Pulled from the resolved transform
+  // matrix rather than getPropertyValue('--total-rot') (the fan angle's own
+  // custom property) because that read is unreliable synchronously inside
+  // event dispatch — it can report a stale 0deg mid-pointerdown even though
+  // the matrix the engine actually painted with is correct.
+  const readNaturalTiltDeg=cardEl=>{
+    const compute=target.getComputedStyle||getComputedStyle;
+    const raw=compute(cardEl).transform;
+    const parens=raw&&raw!=='none'?raw.match(/matrix(?:3d)?\(([^)]+)\)/):null;
+    if(!parens)return 0;
+    const [a,b]=parens[1].split(',').map(Number);
+    if(!Number.isFinite(a)||!Number.isFinite(b))return 0;
+    return Math.atan2(b,a)*180/Math.PI;
+  };
 
   let g=null;
   const handEl=()=>doc.querySelector('.hand');
@@ -217,7 +232,7 @@ export function installHandCardGestures(target=window){
     g.cardHalfW=naturalWidth/2;
     g.cardHalfH=naturalHeight/2;
     g.prevX=g.startX;
-    g.tiltDeg=0;
+    g.tiltDeg=g.naturalTiltDeg;
     g.dragStartTime=g.startTime;
     g.flickEligible=abilityFlickAllowed(g.uid);
     g.mode='drag';
@@ -229,7 +244,6 @@ export function installHandCardGestures(target=window){
     }));
     target.__handReorderActive=true;
     hand?.classList.add('hand-parting');
-    spread?.classList.add('drag-active');
     g.cardEl.classList.add('hand-card-dragging');
     g.dragOriginLeft=fixedLeft;
     g.dragOriginTop=fixedTop;
@@ -273,9 +287,15 @@ export function installHandCardGestures(target=window){
     const x=latest.clientX;
     const y=latest.clientY;
     const deltaX=x-g.prevX;
-    const targetTilt=Math.max(-TILT_MAX,Math.min(TILT_MAX,deltaX*TILT_SCALE));
-    g.tiltDeg+=(targetTilt-g.tiltDeg)*TILT_LERP;
     g.prevX=x;
+    // Hold the card at its natural hand-fan angle until the drag clears the
+    // tap-toggle radius — the same threshold that decides a release is a
+    // selection toggle rather than a drop. Below it, this might still resolve
+    // as a tap, so the card shouldn't visibly reorient toward upright yet.
+    if(g.maxMove>=g.tapToggle){
+      const targetTilt=Math.max(-TILT_MAX,Math.min(TILT_MAX,deltaX*TILT_SCALE));
+      g.tiltDeg+=(targetTilt-g.tiltDeg)*TILT_LERP;
+    }
     const left=x-g.grabOffsetX;
     const top=y-g.grabOffsetY;
     const moveX=left-g.dragOriginLeft;
@@ -297,6 +317,15 @@ export function installHandCardGestures(target=window){
     if(!g||g.mode!=='drag'||!latest)return;
     const x=latest.clientX;
     const y=latest.clientY;
+    // The "every empty slot glows" indicator should only appear once the drag
+    // clears the tap-toggle radius — the same threshold that decides a
+    // release is a selection toggle rather than a drop — so merely touching
+    // a card doesn't flash the whole spread before the player has committed
+    // to actually dragging it.
+    if(!g.spreadActiveShown&&g.maxMove>=g.tapToggle){
+      g.spreadActiveShown=true;
+      doc.querySelector('#spread')?.classList.add('drag-active');
+    }
     const {inSpread,hit,hover}=calcDropTarget(x,y);
     if(inSpread){
       const nextIndex=hit?.idx??-1;
@@ -696,9 +725,11 @@ export function installHandCardGestures(target=window){
       grabOffsetY:event.clientY-fixedTop,
       hoverIndex:origIndex,
       dropSlot:null,
+      spreadActiveShown:false,
       holdTimer:null,
       prevX:event.clientX,
       tiltDeg:0,
+      naturalTiltDeg:readNaturalTiltDeg(cardEl),
       dragRafId:null,
       lastDragEv:null,
       samples:[{x:event.clientX,y:event.clientY,t:now()}],

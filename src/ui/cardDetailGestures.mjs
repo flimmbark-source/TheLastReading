@@ -406,19 +406,26 @@ export function installCardDetailGestures(target=window){
     if(triggerPress&&trigger?.isConnected)return true;
 
     const cardEl=selectedHandCard(target);
-    if(!cardEl||!cardEl.isConnected){removeTrigger();return false;}
+    const hasSelection=!!(cardEl&&cardEl.isConnected&&Number.isFinite(Number(cardEl.dataset.uid)));
 
-    const uid=Number(cardEl.dataset.uid);
-    if(!Number.isFinite(uid)){removeTrigger();return false;}
+    // Once the player has dragged the medallion off a card, it stays put --
+    // and visible -- even after the selection clears, instead of disappearing
+    // with the card. It only goes back to tracking the selected card when
+    // reset (tlrResetInfoButton clears customPos below).
+    if(!hasSelection&&!customPos){removeTrigger();return false;}
 
+    const uid=hasSelection?Number(cardEl.dataset.uid):NaN;
     const detailTrigger=ensureTrigger();
-    const uidValue=String(uid);
-    if(detailTrigger.dataset.uid!==uidValue)detailTrigger.dataset.uid=uidValue;
+    if(hasSelection){
+      const uidValue=String(uid);
+      if(detailTrigger.dataset.uid!==uidValue)detailTrigger.dataset.uid=uidValue;
+    }
 
     if(customPos){
       // Detached: the medallion sits where the player dropped it -- the same
-      // spot for every selected card -- clamped into the current viewport. No
-      // card-animation mirror while it is off the card.
+      // spot for every selected card, and it stays there with no card
+      // selected too -- clamped into the current viewport. No card-animation
+      // mirror while it is off the card.
       const vw=viewportWidth(target);
       const vh=viewportHeight(target);
       const left=clampVal(customPos.left,VIEWPORT_MARGIN,Math.max(VIEWPORT_MARGIN,vw-TRIGGER_HIT_SIZE-VIEWPORT_MARGIN));

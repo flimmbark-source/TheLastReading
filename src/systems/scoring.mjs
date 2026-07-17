@@ -84,12 +84,23 @@ function applyConstellationScoreAdjustments(result, cards, context) {
   result.melds.push({ name: constellationName, chips: -lost, mult: 0, mode: 'chips', source: 'constellation' });
 }
 
-function applyRankPatterns(result, cards, upgrades) {
+// A Major stamped with the Suit Stamp gains the suit(s) and rank shown in its
+// own card art, so it plays as a wildcard court card for rank- and
+// suit-based patterns below.
+function stampedMajorsInPlay(cards, context = {}) {
+  const stampedIds = new Set(context.stampedMajors || []);
+  return majorCards(cards).filter(
+    card => stampedIds.has(card.id) && Array.isArray(card.suits) && card.suits.length > 0 && card.rank
+  );
+}
+
+function applyRankPatterns(result, cards, upgrades, context = {}) {
   const three = SCORING_PATTERNS.THREE_OF_A_KIND;
   const four = SCORING_PATTERNS.FOUR_OF_A_KIND;
+  const rankable = [...courtCards(cards), ...stampedMajorsInPlay(cards, context)];
 
   for (const rank of RANKS) {
-    const count = cards.filter(card => card.type === 'court' && card.rank === rank).length;
+    const count = rankable.filter(card => card.rank === rank).length;
     if (count >= 3) addPatternMeld(result, `Three of a Kind (${rank}s)`, upgradedChips(three, upgrades), upgradedMult(three, upgrades));
     if (count >= 4) addPatternMeld(result, `Four of a Kind (${rank}s)`, upgradedChips(four, upgrades), upgradedMult(four, upgrades));
   }
@@ -97,18 +108,17 @@ function applyRankPatterns(result, cards, upgrades) {
 
 function applyCourtPatterns(result, cards, upgrades, context = {}) {
   const courts = courtCards(cards);
-  const stampedIds = new Set(context.stampedMajors || []);
-  const stampedMajorsInPlay = majorCards(cards).filter(
-    card => stampedIds.has(card.id) && Array.isArray(card.suits) && card.suits.length > 0
-  );
-  const distinctRanks = new Set(courts.map(card => card.rank)).size;
+  const stampedMajors = stampedMajorsInPlay(cards, context);
+  const rankTokens = new Set(courts.map(card => card.rank));
+  stampedMajors.forEach(card => rankTokens.add(card.rank));
+  const distinctRanks = rankTokens.size;
   let royalSuit = null;
   let royalCount = 0;
 
-  if (distinctRanks >= 3 || (stampedMajorsInPlay.length > 0 && distinctRanks + stampedMajorsInPlay.length >= 3)) {
+  if (distinctRanks >= 3) {
     for (const suit of SUITS) {
       const tokensInSuit = new Set(courts.filter(card => card.suit === suit).map(card => card.rank));
-      stampedMajorsInPlay.filter(card => card.suits.includes(suit)).forEach(card => tokensInSuit.add(card.id));
+      stampedMajors.filter(card => card.suits.includes(suit)).forEach(card => tokensInSuit.add(card.rank));
       if (tokensInSuit.size >= 3) {
         royalSuit = suit;
         royalCount = tokensInSuit.size;
@@ -233,7 +243,7 @@ export function computeScore(cards, options = {}) {
 
   applyConstellationScoreAdjustments(result, cards, context);
   if (!options.skipFlatBonuses) applyFlatUpgradeBonuses(result, cards, upgrades, context);
-  applyRankPatterns(result, cards, upgrades);
+  applyRankPatterns(result, cards, upgrades, context);
   applyCourtPatterns(result, cards, upgrades, context);
   applyMajorPatterns(result, cards, upgrades, context);
   applySpecialUpgradePatterns(result, cards, upgrades);

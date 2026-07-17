@@ -145,7 +145,8 @@ export function expandCard(card,target=window){
   const stampedFive=new Set(persist.stampedFive||[]);
   const stampParts=[];
   if(card.type==='major'&&stampedMajors.has(card.id)&&Array.isArray(card.suits)&&card.suits.length){
-    stampParts.push(`<span class="card-detail-stamp suit-stamp">♡ Suit Stamp — counts as ${escapeHtml(card.suits.join(', '))} toward Royal Court</span>`);
+    const rankText=card.rank?` and ${escapeHtml(card.rank)}`:'';
+    stampParts.push(`<span class="card-detail-stamp suit-stamp">♡ Suit Stamp — gained ${escapeHtml(card.suits.join(', '))}${rankText} from its art</span>`);
   }
   if(stampedFive.has(card.id)){
     stampParts.push(`<span class="card-detail-stamp five-stamp">5★ Five Star Stamp — slots into Sequences as a multiple of 5 (5, 10, 15, 20)</span>`);
