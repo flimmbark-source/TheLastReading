@@ -119,9 +119,17 @@ export function refreshHandState(){
     if(ability){const isPicked=ability.picked.includes(uid);el.classList.toggle('ability-picked',isPicked);el.classList.toggle('ability-target',!isPicked&&ability.validIds.has(uid));el.classList.toggle('ability-disabled',!ability.validIds.has(uid));}
     if(inPurge){const isPicked=state.purgeSelect.includes(uid);el.classList.toggle('purge-picked',isPicked);el.classList.toggle('purge-target',!isPicked);}
   });
+  // renderSpread() only recomputes .target (the "you can place here" empty-slot
+  // highlight) on a full render; this cheap repaint is what actually runs when
+  // a card is merely selected, so it has to keep that class in sync itself or
+  // the highlight never appears until something else forces a full render.
+  const dragActive=typeof window!=='undefined'&&window.__handReorderActive;
   document.querySelectorAll('#spread .slot').forEach(slot=>{
     const el=slot.querySelector('.card[data-uid]');
-    if(!el)return;
+    if(!el){
+      slot.classList.toggle('target',state.selected!==null&&!dragActive);
+      return;
+    }
     const uid=Number(el.dataset.uid);
     if(ability){const isValid=ability.validIds.has(uid);const isPicked=isValid&&ability.picked.includes(uid);el.classList.toggle('ability-picked',isPicked);el.classList.toggle('ability-target',isValid&&!isPicked);el.classList.toggle('ability-disabled',!isValid);slot.classList.toggle('ability-target-slot',isValid&&!isPicked);slot.classList.toggle('ability-picked-slot',isPicked);slot.classList.toggle('ability-disabled-slot',!isValid);}else{el.classList.remove('ability-picked','ability-target','ability-disabled');slot.classList.remove('ability-target-slot','ability-picked-slot','ability-disabled-slot','ability-empty-slot');}
   });
