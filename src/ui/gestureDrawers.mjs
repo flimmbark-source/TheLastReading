@@ -46,6 +46,9 @@ export function installGestureDrawers(target = window){
     if(id==='scoring'&&typeof target.tutSignal==='function'){
       target.tutSignal(opening?'scoringOpened':'scoringClosed');
     }
+    if(id==='abilities'&&typeof target.tutSignal==='function'){
+      target.tutSignal(opening?'abilitiesOpened':'abilitiesClosed');
+    }
   }
   function moveContentIntoDesks(){
     for(const id of Object.keys(LABELS)){

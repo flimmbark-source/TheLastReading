@@ -58,6 +58,25 @@ const TUT_STEPS = [
   },
 
   {
+    id: 'ability-flick',
+    sel: '#hand .card[data-uid]',
+    fallbackSel: '.handDock .hand',
+    arrow: 'up',
+    demo: 'flick',
+    key: TUT_ABILITY_KEY,
+    text: 'Flick a card off the table, or drag it to a screen edge, to use its [[ability|Ability]]. It is then [[discard|discarded]].',
+  },
+
+  {
+    id: 'ability-panel-intro',
+    sel: '#abilitiesBtn',
+    fallbackSel: '#abilitiesPullTab',
+    arrow: 'up',
+    waitFor: 'abilitiesOpened',
+    text: 'Open the Abilities panel to see how they work.',
+  },
+
+  {
     id: 'patterns-intro',
     sel: '#scoringBtn',
     fallbackSel: '#scoringPullTab',
@@ -79,16 +98,6 @@ const TUT_STEPS = [
   // Surfaced independently once each system becomes relevant; they do not form
   // another compulsory chain.
   // ─────────────────────────────────────────────
-
-  {
-    id: 'ability-flick',
-    sel: '#hand .card[data-uid]',
-    fallbackSel: '.handDock .hand',
-    arrow: 'up',
-    demo: 'flick',
-    key: TUT_ABILITY_KEY,
-    text: 'Flick a card off the table, or drag it to a screen edge, to use its [[ability|Ability]]. It is then [[discard|discarded]].',
-  },
 
   {
     id: 'first-pattern',
@@ -280,6 +289,7 @@ export const TUT_STEP = Object.freeze({
   PATTERNS_INTRO: 'patterns-intro',
   HINT_SETTING: 'pattern-hints',
   ABILITY_FLICK: 'ability-flick',
+  ABILITY_PANEL_INTRO: 'ability-panel-intro',
   FIRST_PATTERN: 'first-pattern',
   FIRST_PATTERN_FORMULA: 'first-pattern-formula',
   RELIC: 'relic',
@@ -310,6 +320,8 @@ const INTRO_STEP_IDS = new Set([
   TUT_STEP.SELECT_CARD,
   TUT_STEP.PLACE_CARD,
   TUT_STEP.READING_GOAL,
+  TUT_STEP.ABILITY_FLICK,
+  TUT_STEP.ABILITY_PANEL_INTRO,
   TUT_STEP.PATTERNS_INTRO,
   TUT_STEP.HINT_SETTING,
 ]);
@@ -329,6 +341,10 @@ const ADVENTURE_WALKTHROUGH_LAST = TUT_STEP.ADVENTURE_RESOLVE;
 // Set true after the player opens Scoring during the patterns-intro step; the
 // Pattern Hint tip then waits for Scoring to close before pointing at the menu.
 let awaitingScoringClose = false;
+// Set true after the player opens Abilities during the ability-panel-intro
+// step; that step then waits for Abilities to close before advancing to
+// patterns-intro, the same way patterns-intro hands off to Pattern Hint.
+let awaitingAbilitiesClose = false;
 
 let tutStep = null;
 let tutTimer = null;
@@ -451,6 +467,7 @@ export function tutSkip() {
   clearTimeout(queuedTipTimer);
   queuedTipTimer = null;
   awaitingScoringClose = false;
+  awaitingAbilitiesClose = false;
   tutHide();
 }
 
@@ -482,6 +499,7 @@ export function replayTutorial() {
   clearTimeout(queuedTipTimer);
   queuedTipTimer = null;
   awaitingScoringClose = false;
+  awaitingAbilitiesClose = false;
   tutDone = false;
   tutShow(TUT_STEP.INTRO, { force: true });
 }
@@ -583,18 +601,11 @@ function closeHintSettingsMenu() {
   q('#settingsPanel')?.classList.add('hidden');
 }
 
-// Mandatory onboarding is done. Persist completion and, once the hand is back
-// in normal play, introduce the flick ability.
-function completeIntro() {
-  finishIntro();
-  queuePriorityTip(TUT_STEP.ABILITY_FLICK, 320);
-}
-
 export function tutNext() {
   if (tutStep === null) return;
   const s = stepById(tutStep);
-  // waitFor steps (select-card, play-card, patterns-intro, hand-nav) advance
-  // only when their action succeeds, never on a stray tap.
+  // waitFor steps (select-card, play-card, ability-panel-intro, patterns-intro,
+  // hand-nav) advance only when their action succeeds, never on a stray tap.
   if (!s || s.waitFor) return;
   if (isAdventureTutorialStep(tutStep)) {
     if (tutStep !== ADVENTURE_WALKTHROUGH_LAST) {
@@ -607,12 +618,13 @@ export function tutNext() {
   }
   // ── Mandatory opening (tap-advanced links) ──
   if (tutStep === TUT_STEP.INTRO) { tutShow(TUT_STEP.SELECT_CARD); return; }
-  if (tutStep === TUT_STEP.READING_GOAL) { tutShow(TUT_STEP.PATTERNS_INTRO); return; }
+  if (tutStep === TUT_STEP.READING_GOAL) { tutShow(TUT_STEP.ABILITY_FLICK); return; }
+  if (tutStep === TUT_STEP.ABILITY_FLICK) { markStepSeen(tutStep); tutShow(TUT_STEP.ABILITY_PANEL_INTRO); return; }
   if (tutStep === TUT_STEP.HINT_SETTING) {
     // Final onboarding step. The player need not change the setting; tapping
     // closes the menu and ends the forced chain.
     closeHintSettingsMenu();
-    completeIntro();
+    finishIntro();
     return;
   }
   // ── Contextual: First Pattern is a two-beat message ──
@@ -662,6 +674,26 @@ function onScoringClosed() {
   }, 0);
 }
 
+// Opening Abilities advances the ability-panel-intro step, the same way
+// opening Scoring advances patterns-intro. Hide the tip so the Abilities
+// sheet is readable, then wait for it to close before moving on to
+// patterns-intro.
+function onAbilitiesOpened() {
+  if (tutStep !== TUT_STEP.ABILITY_PANEL_INTRO) return;
+  awaitingAbilitiesClose = true;
+  tutHide();
+}
+
+function onAbilitiesClosed() {
+  if (!awaitingAbilitiesClose) return;
+  awaitingAbilitiesClose = false;
+  clearTimeout(tutTimer);
+  // Deferred a tick for the same reason as onScoringClosed above, even though
+  // patterns-intro does not open a drawer itself -- it keeps this handler
+  // consistent with its sibling and safe against a stray synchronous click.
+  tutTimer = setTimeout(() => tutShow(TUT_STEP.PATTERNS_INTRO, { force: true }), 0);
+}
+
 // Interface hint completion: only a real horizontal hand move counts, never a
 // tap or selection. Mark it seen regardless of whether the tip was showing so
 // it never nags a player who already swipes.
@@ -677,6 +709,8 @@ export function tutSignal(eventName) {
   if (eventName === 'patternFormed') { onPatternFormed(); return; }
   if (eventName === 'scoringOpened') { onScoringOpened(); return; }
   if (eventName === 'scoringClosed') { onScoringClosed(); return; }
+  if (eventName === 'abilitiesOpened') { onAbilitiesOpened(); return; }
+  if (eventName === 'abilitiesClosed') { onAbilitiesClosed(); return; }
   if (eventName === 'handScrolled') { onHandScrolled(); return; }
   if (eventName === 'advApproachWebOpened') { queueTip(TUT_STEP.ADVENTURE_DIFFICULTY, 300); queueTip(TUT_STEP.ADVENTURE_GREAT, 300); return; }
   if (eventName === 'advRewardShown') { queueTip(TUT_STEP.ADVENTURE_REWARD, 350); return; }
