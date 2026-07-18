@@ -15,13 +15,11 @@
       translate 220ms cubic-bezier(.2,.75,.25,1);
   }
 
-  body.single-player-v2.presentation-flag-card-selected #roomAmbient {
-    filter: brightness(.9) saturate(.94);
-  }
-
-  body.single-player-v2.presentation-flag-card-selected .hand .card:not(.sel):not(.ability-picked) {
-    filter: brightness(.82) saturate(.78);
-  }
+  /* Selecting or dragging a card must not restyle the room or the rest of the
+     hand. The old #roomAmbient brightness filter (full-screen repaint) and the
+     per-card dim on every non-selected card started 220ms transitions one
+     frame into the card's own lift/drag movement, which read as stutter on
+     phones. Focus accents stay local to the selected card and the spread. */
 
   body.single-player-v2.presentation-flag-card-selected .hand .card.sel,
   body.single-player-v2.presentation-flag-card-selected .hand .card.ability-picked {
@@ -43,10 +41,6 @@
   body.single-player-v2.presentation-flag-card-selected #discardBtn,
   body.single-player-v2.presentation-flag-card-selected .spread-actions > button:not(:active) {
     opacity: .82;
-  }
-
-  body.single-player-v2.presentation-flag-card-dragging #roomAmbient {
-    filter: brightness(.84) saturate(.9);
   }
 
   body.single-player-v2 .hand-card-dragging {

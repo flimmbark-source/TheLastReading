@@ -49,8 +49,13 @@ assert.doesNotMatch(camera, /name === 'card-place'/,
   'Card placement must not animate fixed layout containers');
 assert.match(camera, /name === 'pattern'/);
 assert.match(camera, /name === 'threshold-clear'/);
-assert.match(cameraCss, /presentation-card-selected/);
-assert.match(cameraCss, /presentation-card-dragging/);
+// Selection/drag must not move the camera: the old micro-scales on
+// #roomAmbient/.handDock/.score-stack forced full-screen rasterisation in the
+// exact frames the card lift/drag needs, causing visible stutter on phones.
+assert.doesNotMatch(cameraCss, /presentation-card-selected[^{]*\{/,
+  'Card selection must not trigger a camera move');
+assert.doesNotMatch(cameraCss, /presentation-card-dragging[^{]*\{/,
+  'Card dragging must not trigger a camera move');
 assert.match(cameraCss, /#scorePreview\s*\{[\s\S]*position:\s*absolute/,
   'The score preview must overlay the spread instead of changing wrapper height');
 assert.match(cameraCss, /presentation-flag-card-selected \.spread-wrap/);

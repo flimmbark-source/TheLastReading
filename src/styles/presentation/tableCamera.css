@@ -34,23 +34,12 @@ body.single-player-v2 #roomAmbient {
    the spread for selection and dragging. This unlayered geometry lock wins that
    cascade without touching the spread's existing transform-based layout. */
 
-body.single-player-v2.presentation-card-selected #roomAmbient {
-  scale: 1.006;
-  translate: 0 -1px;
-}
-
-body.single-player-v2.presentation-card-selected .handDock { scale: 1.01; }
-body.single-player-v2.presentation-card-selected .score-stack { scale: .997; }
-
-body.single-player-v2.presentation-card-dragging #roomAmbient {
-  scale: 1.012;
-  translate: 0 -2px;
-}
-
-/* The spread is the drag target. Its screen geometry must remain fixed from
-   pointer-down through drop so slots never move away from the player's card. */
-body.single-player-v2.presentation-card-dragging .handDock { scale: 1.014; }
-body.single-player-v2.presentation-card-dragging .score-stack { scale: .994; }
+/* Selection and drag deliberately trigger NO camera move. The old micro-scales
+   on #roomAmbient/.handDock/.score-stack (1.006-1.014) landed one frame after
+   the card's own lift/drag transform began, forcing full-screen rasterisation
+   mid-gesture on mobile GPUs — the visible result was a staggered card rise
+   and a card that lagged the finger at drag start, for a zoom too small to
+   read as intentional. Pointer-driven states must leave the world static. */
 
 body.single-player-v2.presentation-ability-reveal #roomAmbient,
 body.single-player-v2.presentation-adventure-outcome #roomAmbient,

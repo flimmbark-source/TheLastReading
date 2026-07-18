@@ -1,7 +1,6 @@
 /* World-attached presentation for non-table gameplay surfaces. */
 
 body.presentation-surface-market #roomAmbient,
-body.presentation-surface-archives #roomAmbient,
 body.presentation-surface-run-end #roomAmbient,
 body.presentation-surface-score-result #roomAmbient {
   transition: filter 260ms ease, opacity 260ms ease, scale 300ms cubic-bezier(.2,.74,.24,1);
@@ -9,8 +8,6 @@ body.presentation-surface-score-result #roomAmbient {
 
 body.presentation-surface-market .spread-wrap,
 body.presentation-surface-market .handDock,
-body.presentation-surface-archives .spread-wrap,
-body.presentation-surface-archives .handDock,
 body.presentation-surface-run-end .spread-wrap,
 body.presentation-surface-run-end .handDock {
   transition: opacity 220ms ease, filter 240ms ease, scale 300ms cubic-bezier(.2,.74,.24,1);
@@ -74,20 +71,10 @@ body.presentation-cue-market-purchase .store-reserve-amount {
   animation: presentationReserveSpend 420ms ease-out;
 }
 
-/* Archives: the lower drawer becomes the active scene, not another HUD panel. */
-body.presentation-surface-archives #roomAmbient {
-  opacity: .68;
-  filter: brightness(.7) saturate(.72) sepia(.1);
-  scale: 1.008;
-}
-
-body.presentation-surface-archives .spread-wrap,
-body.presentation-surface-archives .score-stack,
-body.presentation-surface-archives .handDock {
-  opacity: .34;
-  filter: brightness(.58) saturate(.62);
-}
-
+/* Archives: the drawer gets its own staging (shadow, desk texture, open
+   animation) but must NOT dim or alter the table behind it — the meta puzzle
+   requires reading the game screen and the drawer at the same time, so the
+   room, spread, score stack, and hand stay exactly as they are. */
 body.presentation-surface-archives #invWrap.open {
   filter: drop-shadow(0 -22px 38px rgba(0,0,0,.68));
 }

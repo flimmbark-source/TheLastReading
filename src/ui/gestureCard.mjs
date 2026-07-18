@@ -260,7 +260,17 @@ export function installHandCardGestures(target=window){
     try{g.cardEl.setPointerCapture(g.pointerId);}catch{}
     suppressTrailingClick(g.uid,{allHand:true});
 
-    if(g.flickEligible)target.tlrPrepareCardActivation?.(cardByUid(g.uid));
+    // Pre-render the activation proxy off the pointerdown critical path: it
+    // rebuilds proxy DOM (innerHTML + card photo), which is dead weight in the
+    // first drag frame. A flick can't commit for at least FLICK_MIN_DRAG_MS,
+    // and stage() re-renders on uid mismatch anyway, so a one-frame delay is
+    // safe.
+    if(g.flickEligible){
+      const flickUid=g.uid;
+      requestFrame(()=>{
+        if(g&&g.mode==='drag'&&g.uid===flickUid)target.tlrPrepareCardActivation?.(cardByUid(flickUid));
+      });
+    }
     g.lastDragEv=event;
     // Snap the card under the pointer immediately, then let the first rAF settle
     // drop targets so the initial frame isn't blocked on hit-testing.
