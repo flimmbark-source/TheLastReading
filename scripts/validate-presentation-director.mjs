@@ -46,7 +46,14 @@ assert.match(utilityCss, /^@import url\('\.\/presentation\.css'\);/);
 assert.match(utilityCss, /@import url\('\.\/adventurePresentationCues\.css'\);/);
 assert.match(utilityCss, /@import url\('\.\/abilityPresentation\.css'\);/);
 assert.match(presentationCss, /presentation-flag-card-selected/);
-assert.match(presentationCss, /presentation-flag-card-dragging/);
+// Pointer-driven states must stay cheap: selecting or dragging a card must not
+// start a full-screen #roomAmbient filter transition or dim the rest of the
+// hand — those repaints landed one frame into the card's own lift/drag motion
+// and read as stutter on phones (see presentation.css).
+assert.doesNotMatch(presentationCss, /presentation-flag-card-selected[^{]*#roomAmbient/,
+  'Card selection must not restyle the room ambient layer');
+assert.doesNotMatch(presentationCss, /presentation-flag-card-dragging[^{]*#roomAmbient/,
+  'Card dragging must not restyle the room ambient layer');
 assert.match(presentationCss, /presentation-flag-threshold-near/);
 assert.match(presentationCss, /@media \(prefers-reduced-motion: reduce\)/);
 assert.match(adventureCueCss, /presentation-cue-adventure-outcome/);

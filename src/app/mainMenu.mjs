@@ -1,5 +1,6 @@
 // Main menu overlay. Shown on first load and via "Return to Menu" in-game.
 import { createInitialPersist, createInitialState } from './runtimeState.mjs';
+import { CARD_SHEET } from '../ui/renderCard.mjs';
 
 function syncInitialRunToStore(target, initialState) {
   if (!target.tlrStore || !target.tlrActions) return;
@@ -273,10 +274,50 @@ export function installMainMenu(target = window) {
   function waitForSinglePlayerSkin() {
     const ready = target.__tlrSinglePlayerV2Ready;
     if (!ready || typeof ready.then !== 'function') return Promise.resolve();
+    // Hold the curtain until the SPv2 art is genuinely applied. The promise
+    // settles on both load AND error of every image (see
+    // generatedSheetAssets.mjs), so waiting on it directly cannot hang on an
+    // ordinary failure — the long timer is only a failsafe against a network
+    // stall that never fires either event. The old 2.5s race lifted the
+    // curtain mid-download on a cold first load, exposing the unskinned
+    // table while its UI was still streaming in.
     return Promise.race([
       ready.catch(() => false),
-      new Promise(resolve => target.setTimeout(resolve, 2500)),
+      new Promise(resolve => target.setTimeout(resolve, 15000)),
     ]);
+  }
+
+  // Warm the card-photo sheet tiles used by the dealt hand so the cards don't
+  // reveal artless and pop their photos in after the curtain lifts. Same
+  // contract as the skin wait: every image resolves on load or error, and the
+  // race is only a stall failsafe.
+  function waitForDealtCardArt() {
+    const hand = target.tlrStore?.getState?.()?.run?.hand || target.state?.hand || [];
+    const sheets = new Set();
+    for (const card of hand) {
+      const entry = CARD_SHEET[card?.id];
+      if (entry) sheets.add(String(entry[0]).padStart(2, '0'));
+    }
+    if (!sheets.size) return Promise.resolve();
+    const loads = [...sheets].map(num => new Promise(resolve => {
+      const image = new target.Image();
+      image.decoding = 'async';
+      image.onload = () => resolve(true);
+      image.onerror = () => resolve(false);
+      image.src = `assets/sheets/sheet${num}.small.webp`;
+    }));
+    return Promise.race([
+      Promise.all(loads),
+      new Promise(resolve => target.setTimeout(resolve, 8000)),
+    ]);
+  }
+
+  function afterPaint() {
+    // Two frames so freshly applied styles/art actually paint while still
+    // safely behind the opaque curtain.
+    return new Promise(resolve => {
+      target.requestAnimationFrame(() => target.requestAnimationFrame(resolve));
+    });
   }
 
   function clearSingleplayerBootVeil() {
@@ -332,7 +373,8 @@ export function installMainMenu(target = window) {
         forceSingleplayerTable();
         closeModeChrome();
         hide();
-        await waitForSinglePlayerSkin();
+        await Promise.all([waitForSinglePlayerSkin(), waitForDealtCardArt()]);
+        await afterPaint();
         clearSingleplayerBootVeil();
         hideCurtain();
         target.document.body.classList.remove('main-menu-mode-booting', 'main-menu-blackout');
