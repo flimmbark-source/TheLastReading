@@ -83,14 +83,61 @@ export function installAtticFlow(target = window){
     if(searched[id]){whisper('You already searched there.');return;}
     dismissAtticTutorial();searched[id]=true;renderCandles();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);},430);
   }
+  // ── 3D attic (react-three-fiber) ─────────────────────────────────────
+  // Opt-in walkable attic. The lazy chunk (React + three + the scene) only
+  // ever loads when the flag is on, and every game behavior — rummage rules,
+  // pickups, obals, archive unlocks, the return-to-table transition — still
+  // runs through this module via the adapter below. On any failure (no
+  // WebGL, chunk failed to load) the classic 2D attic continues untouched.
+  function attic3dEnabled(){
+    try{
+      const q=new URLSearchParams(target.location.search||'');
+      if(q.get('attic3d')==='1')return true;
+      if(q.get('attic3d')==='0')return false;
+      return target.localStorage.getItem('tlr_attic_3d')==='1';
+    }catch(e){return false}
+  }
+  let attic3d=null;
+  function maybeMountAttic3d(){
+    // A hard exit (main menu, Adventure boot) unmounts the 3D layer behind
+    // our back; drop the dead handle so the next visit can mount again.
+    if(attic3d&&attic3d.mounted===false)attic3d=null;
+    if(!attic3dEnabled()||attic3d)return;
+    attic3d={pending:true};
+    import('../three/atticEntry.mjs').then(function(mod){
+      if(!attic3d||!inAttic){attic3d=null;return}
+      attic3d=mod.mountAttic3D({
+        objects:objects,
+        note:note,
+        isSearched:function(id){return !!searched[id]},
+        foundItemIds:foundItems,
+        obalCount:function(){return candleCount},
+        rummage:function(id){rummage(id,null)},
+        collectNote:collectNote,
+        browseDeck:openDeckBrowser,
+        leave:leave,
+      })||null;
+    }).catch(function(err){
+      attic3d=null;
+      console.warn('The Last Reading 3D attic failed to load; using the classic attic.',err);
+    });
+  }
+  function unmountAttic3d(){
+    const inst=attic3d;attic3d=null;
+    if(inst&&typeof inst.unmount==='function')inst.unmount();
+  }
+
   function enter(candles,shouldReset){
     if(target.tlrCloseArchives)target.tlrCloseArchives();
     inAttic=true;resetOnLeave=!!shouldReset;maxCandles=Math.max(1,Number(candles)||1);candleCount=maxCandles;searched={};awaitingPickup=false;renderCandles();renderObjects();renderDeck();renderNote();
     if(target.tlrStore&&target.tlrActions)target.tlrStore.dispatch({type:target.tlrActions.ENTER_ATTIC,obals:maxCandles});
     document.body.classList.remove('mode-reading','mode-to-table','mode-table-return');document.body.classList.add('mode-to-attic');
     const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','false');
+    maybeMountAttic3d();
     setTimeout(function(){document.body.classList.remove('mode-to-attic');document.body.classList.add('mode-attic');if(typeof tlrArchitectureSync==='function')tlrArchitectureSync();},900);
-    setTimeout(function(){showAtticTutorial();},1400);
+    // The 3D attic shows its own movement-controls hint; the 2D tutorial's
+    // swipe/tap copy would be wrong there.
+    setTimeout(function(){if(!attic3d)showAtticTutorial();},1400);
   }
   function leave(){
     if(target.tlrCloseArchives)target.tlrCloseArchives();
@@ -103,6 +150,9 @@ export function installAtticFlow(target = window){
     if(resetOnLeave&&typeof target.resetSession==='function'){resetOnLeave=false;target.resetSession();}else if(resetOnLeave&&typeof resetSession==='function'){resetOnLeave=false;resetSession();}
     setTimeout(function(){document.body.classList.remove('mode-attic','mode-to-attic','mode-reading');document.body.classList.add('mode-to-table');const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','true');},60);
     setTimeout(function(){
+      // Unmount only after the attic has fully faded so the seated 3D view
+      // stays on screen underneath the attic->table cross-fade.
+      unmountAttic3d();
       document.body.classList.remove('mode-to-table','mode-table-return','mode-return-hard-hide');document.body.classList.add('mode-reading');if(typeof tlrArchitectureSync==='function')tlrArchitectureSync();
       if(showArchivesAfterReturn&&typeof target.maybeShowArchivesTutorial==='function')target.maybeShowArchivesTutorial();
     },1080);
@@ -162,6 +212,7 @@ export function installAtticFlow(target = window){
 
   target.tlrCloseArchives=closeArchives;
   target.tlrBrowseDeck=openDeckBrowser;
+  target.tlrSetAttic3d=function(on){try{target.localStorage.setItem('tlr_attic_3d',on?'1':'0')}catch(e){};return attic3dEnabled()};
   target.tlrScoreToObals=candlesFromScore;
   target.tlrDebugEnterAttic=enter;
   target.tlrDebugLeaveAttic=leave;

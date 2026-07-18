@@ -1,0 +1,123 @@
+/* 3D attic (react-three-fiber) presentation layer.
+   Everything here keys off body.attic3d-live, which src/three/atticEntry.mjs
+   adds only after a successful WebGL mount — with the flag off, or on any
+   mount failure, none of this applies and the classic 2D attic is untouched.
+
+   Stacking inside #atticScene while 3D is live:
+     canvas (3) < vignette ::before (4) < fog ::after (5) < pickup/whisper (8)
+     < tutorial hint (9). The DOM pickup card and deck-browse modal stay in
+   charge of themselves; the canvas only replaces the pannable 2D room. */
+
+#attic3dRoot {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: none;
+  background: #0d0703;
+}
+#attic3dRoot canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+body.attic3d-live #attic3dRoot {
+  display: block;
+}
+
+/* The 2D room and its screen-space HUD hand over to the diegetic scene:
+   candles on the shelf are the obal counter, the chair is the return
+   button. The background image is dropped so the fade reveals the room. */
+body.attic3d-live #atticPan {
+  display: none;
+}
+body.attic3d-live #obalsHud {
+  display: none;
+}
+body.attic3d-live #atticTableReturn {
+  display: none;
+}
+body.attic3d-live .attic-deck {
+  display: none;
+}
+body.attic3d-live #atticScene {
+  background: #0d0703 !important;
+}
+
+/* Keep the existing vignette + fog overlays as free atmosphere on top of the
+   canvas; they already animate with the attic fade transitions. Softened so
+   the lit 3D room reads through them. */
+body.attic3d-live #atticScene::before {
+  z-index: 4;
+  opacity: 0.48;
+}
+body.attic3d-live #atticScene::after {
+  z-index: 5;
+  opacity: 0.18;
+}
+
+body.attic3d-live #atticPickup {
+  z-index: 8;
+}
+body.attic3d-live #atticWhisper {
+  z-index: 8;
+}
+body.attic3d-live #atticTutorial {
+  z-index: 9;
+}
+
+/* First-visit controls hint (plain DOM, not in-canvas). */
+#attic3dHint {
+  position: absolute;
+  left: 50%;
+  bottom: 9%;
+  transform: translateX(-50%);
+  z-index: 8;
+  max-width: min(440px, 84vw);
+  padding: 13px 18px;
+  border: 1px solid rgba(198, 150, 77, 0.65);
+  border-radius: 12px;
+  background: rgba(17, 10, 5, 0.82);
+  color: #ead9b5;
+  font-family: Georgia, serif;
+  text-align: center;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  opacity: 0;
+  animation: attic3d-hint-in 0.8s ease 0.9s forwards;
+}
+#attic3dHint b {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 15px;
+  color: #ffd978;
+}
+#attic3dHint span {
+  display: block;
+  font-size: 13px;
+  line-height: 1.45;
+  opacity: 0.92;
+}
+#attic3dHint.fade {
+  animation: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+@keyframes attic3d-hint-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #attic3dHint {
+    animation: none;
+    opacity: 1;
+  }
+}

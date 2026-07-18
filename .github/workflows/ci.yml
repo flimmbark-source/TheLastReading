@@ -37,3 +37,23 @@ jobs:
           path: artifacts/spv2-smoke-*.png
           if-no-files-found: warn
           retention-days: 14
+
+  attic3d-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: ATTIC3D_VISUAL_REQUIRED=1 npm run test:attic3d
+      - name: Upload 3D attic smoke screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: attic3d-smoke-screenshots
+          path: artifacts/attic3d-*.png
+          if-no-files-found: warn
+          retention-days: 14
