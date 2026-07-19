@@ -7,7 +7,7 @@ import { useFrame, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
 import { AtticContext } from './AtticExperience.jsx';
 import { PROP_STATIONS, NOTE_SPOT, DECK_SPOT } from './atticLayout.mjs';
-import { promptTexture, radialGlowTexture } from './canvasTextures.mjs';
+import { promptTexture, radialGlowTexture, ringTexture } from './canvasTextures.mjs';
 
 // A texture that fails to load must cost us that one prop, not the whole
 // canvas — the classic 2D attic already proved the art paths, but stay safe.
@@ -120,6 +120,38 @@ function FocusPrompt() {
   );
 }
 
+// Gold ring on the floor marking an in-flight tap-to-walk destination.
+// PlayerRig writes the shared ref every time a walk starts/ends; reading it
+// per-frame here keeps the marker out of React state entirely.
+function WalkMarker() {
+  const { autoWalkRef } = useContext(AtticContext);
+  const texture = useMemo(() => ringTexture(), []);
+  const ref = useRef();
+  useFrame(({ clock }) => {
+    const mesh = ref.current;
+    const walk = autoWalkRef?.current;
+    if (!mesh) return;
+    if (!walk?.active) {
+      mesh.visible = false;
+      return;
+    }
+    mesh.visible = true;
+    mesh.position.set(walk.x, 0.03, walk.z);
+    const pulse = 1 + 0.12 * Math.sin(clock.elapsedTime * 5.2);
+    mesh.scale.set(pulse, pulse, 1);
+    mesh.material.opacity = 0.55 + 0.25 * Math.sin(clock.elapsedTime * 5.2);
+  });
+  return (
+    <mesh ref={ref} visible={false} rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[0.52, 0.52]} />
+      <meshBasicMaterial map={texture} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
+    </mesh>
+  );
+}
+
+// Prop art, note, and deck render in both modes (they are the room's set
+// dressing); the focus prompt and walk marker self-hide while the approach
+// cinematic plays because focus/auto-walk never engage there.
 export function Interactables() {
   const { adapter, snapshot } = useContext(AtticContext);
   return (
@@ -138,6 +170,7 @@ export function Interactables() {
       <NoteOnTable found={snapshot.noteFound} />
       <DeckBox />
       <FocusPrompt />
+      <WalkMarker />
     </group>
   );
 }

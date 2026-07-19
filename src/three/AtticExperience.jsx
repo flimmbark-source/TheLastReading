@@ -1,9 +1,15 @@
-// Root of the react-three-fiber attic. Owns the Canvas, the shared runtime
-// context (adapter snapshot, interactable registry, focus state), and the
-// composition of the room, props, diegetic UI, and the first-person rig.
+// Root of the react-three-fiber scene. Owns the Canvas, the shared runtime
+// context (adapter snapshot, interactable registry, focus + tap-walk state),
+// and the composition of the room, props, diegetic UI, and the player rig.
+//
+// Two modes share the one scene:
+//   'attic'    — the interactive walkable attic (mounted by atticFlow)
+//   'approach' — the run-start cinematic: walk in from the door, sit at the
+//                table, hand off to the 2D table UI (mounted by
+//                tableApproachFlow). No interactables, timeline camera.
 
 import { createContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { AtticRoom } from './AtticRoom.jsx';
 import { Interactables } from './Interactables.jsx';
 import { Diegetics } from './Diegetics.jsx';
@@ -35,15 +41,20 @@ function useAdapterSnapshot(adapter) {
 }
 
 function readSnapshot(adapter) {
-  let noteFound = false;
+  let found = [];
   try {
-    noteFound = adapter.foundItemIds().includes(adapter.note.itemId);
+    found = adapter.foundItemIds() || [];
   } catch {
-    noteFound = false;
+    found = [];
   }
   return {
-    searched: PROP_STATIONS.map(station => adapter.isSearched(station.id)),
-    noteFound,
+    // A prop counts as searched if it was rummaged this visit OR its item was
+    // taken on an earlier visit — matching the 2D attic's "done" rendering.
+    searched: PROP_STATIONS.map(station => {
+      const prop = adapter.objects[station.id];
+      return adapter.isSearched(station.id) || Boolean(prop && found.includes(prop.itemId));
+    }),
+    noteFound: found.includes(adapter.note.itemId),
   };
 }
 
@@ -57,14 +68,30 @@ export function domSurfaceOpen() {
   );
 }
 
-export function AtticExperience({ adapter, onFirstMove, registerApi }) {
+// Portrait screens get a wider vertical FOV so the horizontal slice of the
+// room (and the focus prompts in it) stays usable on phones.
+function FovTuner() {
+  const { camera, size } = useThree();
+  useEffect(() => {
+    const fov = size.width < size.height ? 74 : 62;
+    if (camera.fov !== fov) {
+      camera.fov = fov;
+      camera.updateProjectionMatrix();
+    }
+  }, [camera, size.width, size.height]);
+  return null;
+}
+
+export function AtticExperience({ adapter, mode = 'attic', onFirstMove, onSequenceComplete, registerApi }) {
   const snapshot = useAdapterSnapshot(adapter);
   const [focusId, setFocusId] = useState(null);
   const sitRef = useRef(null); // PlayerRig registers its beginSit here
+  const autoWalkRef = useRef({ active: false, x: 0, z: 0 }); // PlayerRig writes, WalkMarker reads
 
   const reducedMotion = useMemo(() => Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches), []);
 
   const interactables = useMemo(() => {
+    if (mode !== 'attic') return []; // the approach is a cinematic, not a place yet
     const list = [];
     PROP_STATIONS.forEach((station, index) => {
       if (snapshot.searched[index]) return; // searched props go quiet
@@ -106,21 +133,24 @@ export function AtticExperience({ adapter, onFirstMove, registerApi }) {
       action: () => sitRef.current?.(),
     });
     return list;
-  }, [adapter, snapshot]);
+  }, [adapter, mode, snapshot]);
 
   const context = useMemo(
     () => ({
       adapter,
+      mode,
       snapshot,
       interactables,
       focusId,
       setFocusId,
       sitRef,
+      autoWalkRef,
       reducedMotion,
       onFirstMove,
+      onSequenceComplete,
       registerApi,
     }),
-    [adapter, snapshot, interactables, focusId, reducedMotion, onFirstMove, registerApi],
+    [adapter, mode, snapshot, interactables, focusId, reducedMotion, onFirstMove, onSequenceComplete, registerApi],
   );
 
   return (
@@ -133,6 +163,7 @@ export function AtticExperience({ adapter, onFirstMove, registerApi }) {
       onCreated={({ gl }) => gl.setClearColor('#0d0703')}
     >
       <AtticContext.Provider value={context}>
+        <FovTuner />
         <fog attach="fog" args={['#140b06', 6.5, 14.5]} />
         <hemisphereLight args={['#2b3b58', '#3a2413', 0.8]} />
         <ambientLight color="#8a6a4a" intensity={0.34} />

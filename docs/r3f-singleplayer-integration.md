@@ -43,6 +43,11 @@ An opt-in, fully walkable 3D attic, feature-complete with the 2D attic:
   drag-to-look on desktop; on touch the left 45% of the screen is a virtual
   move stick and the rest drag-look. Collision keep-outs for the table and
   clutter, clamped room bounds, subtle head-bob.
+- **Tap/click-to-move**: pressing a spot on the floor auto-walks there (a
+  gold ring marks the destination); pressing an interactable — from any
+  distance — walks into range, turns to face it, and uses it, so the whole
+  attic is playable one-handed on a phone or point-and-click on desktop.
+  Any manual input (WASD or the stick) cancels an auto-walk instantly.
 - **The game inside the world**: the three rummage props reuse their existing
   PNG art on planes (unsearched → searched states), and interacting with them
   drives the *same* `atticFlow` code path — pickup card, archive unlock,
@@ -54,33 +59,52 @@ An opt-in, fully walkable 3D attic, feature-complete with the 2D attic:
   Interaction prompts float over what you look at ("Check pocket · E").
   Moonlit window, volumetric light shaft, drifting dust motes
   (`fx/dust_mote_particle.png`).
+- **Run-start approach (Phase 2, also landed)**: with the flag on, New
+  Reading / Continue opens on a cinematic — you walk into the attic through
+  its door, cross the room, and sit down at the table while the real game
+  boots beneath the overlay; the overlay then cross-fades into the finished
+  2D table UI. Any key or tap skips the walk. The overlay is gated on the
+  boot promise (it never reveals a half-built table), aborts instantly if
+  the player lands back on the main menu or the boot throws, carries a 14s
+  safety ceiling so a stalled WebGL context can never trap the player, and
+  is skipped entirely under `prefers-reduced-motion` or when the chunk/WebGL
+  is unavailable. Timeline data lives in `APPROACH_KEYFRAMES`
+  (src/three/atticLayout.mjs); the flow seam is
+  `src/app/tableApproachFlow.mjs`, installed right after `installMainMenu`.
 - **Bundle discipline**: React + three + fiber + the scene land in one lazy
   `atticEntry` chunk (~1.1 MB minified / ~300 KB gzip) fetched only when the
-  flag is on and the attic is entered. `menuBoot.js` is unchanged (28 KB).
+  flag is on and the attic (or a run start) needs it. `menuBoot.js` is
+  unchanged (28 KB).
 
 ### Files
 
 ```
 src/three/
-  atticEntry.mjs      mount/unmount seam (plain JS, no JSX). WebGL check,
-                      hard-exit observer, body.attic3d-live, window.__tlrAttic3d
+  atticEntry.mjs      mount/unmount seams (plain JS, no JSX): mountAttic3D for
+                      the attic, mountTableApproach for the run-start overlay.
+                      WebGL check, hard-exit/menu observers, window.__tlrAttic3d
+                      + window.__tlrTable3d debug handles
   useTlrStore.mjs     useSyncExternalStore bridge onto window.tlrStore
   atticLayout.mjs     room dimensions, table/chair, prop stations, camera poses,
-                      collision keep-outs — the one place spatial numbers live
-  AtticExperience.jsx Canvas root, adapter snapshot polling, interactable registry
-  AtticRoom.jsx       floor/walls/roof/window/table/chair/clutter
-  Interactables.jsx   prop planes, note, deck box, focus prompt sprite
+                      approach keyframes, collision keep-outs — the one place
+                      spatial numbers live
+  AtticExperience.jsx Canvas root ('attic' | 'approach' modes), adapter snapshot
+                      polling, interactable registry, portrait FOV tuner
+  AtticRoom.jsx       floor/walls/roof/window/door/table/chair/clutter
+  Interactables.jsx   prop planes, note, deck box, focus prompt, walk marker
   Diegetics.jsx       candle-shelf obal counter, table candle, dust field
-  PlayerRig.jsx       movement, input, collision, focus raycast, sit/stand
-                      choreography, debug api
-  canvasTextures.mjs  runtime canvas textures (prompt tags, glows, light shaft)
-src/styles/attic3d.css  canvas layering inside #atticScene, DOM handovers, hint
+  PlayerRig.jsx       movement, input, tap-to-move, collision, focus raycast,
+                      sit/stand + approach choreography, debug api
+  canvasTextures.mjs  runtime canvas textures (prompt tags, glows, ring, shaft)
+src/app/tableApproachFlow.mjs  wraps New Reading/Continue with the approach
+src/styles/attic3d.css  canvas layering, DOM handovers, hint, approach overlay
 scripts/validate-attic3d-smoke.mjs  headless end-to-end smoke (npm run test:attic3d)
 ```
 
 Integration touch points in existing code are deliberately tiny: `atticFlow.mjs`
-(flag check, lazy mount/unmount, the adapter object), `build-bundle.mjs`
-(`jsx: 'automatic'`, one CSS entry), `package.json` (deps + script).
+(flag check, lazy mount/unmount, the adapter object), `main.mjs` (one
+`installTableApproachFlow` line), `build-bundle.mjs` (`jsx: 'automatic'`, one
+CSS entry), `package.json` (deps + script).
 
 ### Trying it
 
@@ -88,7 +112,8 @@ Integration touch points in existing code are deliberately tiny: `atticFlow.mjs`
 npm install
 npm run dev
 # open http://localhost:8080/game.html?attic3d=1
-# play a reading to its end, or press Shift+A to jump into the attic
+# New Reading plays the walk-in-and-sit approach;
+# finish a reading (or press Shift+A) for the walkable attic
 ```
 
 Headless verification (also exercises the flag-off path):
@@ -97,14 +122,18 @@ Headless verification (also exercises the flag-off path):
 npm run test:attic3d
 ```
 
-The smoke drives the real loop — boot, enter, stand up, focus a prop, rummage,
-take the pickup, verify the store, sit back down, land on the table UI — and
-screenshots each beat into `artifacts/`.
+The smoke drives the real loop — boot through the approach (and skip it),
+enter the attic, stand up, tap-walk across the floor, auto-walk to a prop and
+rummage it, take the pickup, verify the store, sit back down, land on the
+table UI — and screenshots each beat into `artifacts/`.
 
 ### Debug surface
 
-`window.__tlrAttic3d.api` while mounted: `getState()` (phase/position/focus),
-`teleport(x, z, yaw, pitch)`, `interact()`, `sit()`, `dumpScene()`.
+`window.__tlrAttic3d.api` while the attic is mounted: `getState()`
+(phase/position/focus/autoWalk), `teleport(x, z, yaw, pitch)`,
+`walkTo(x, z, interactId?)`, `tapAt(clientX, clientY)`, `interact()`,
+`sit()`, `skip()`, `dumpScene()`. During a run-start approach,
+`window.__tlrTable3d` exposes `skip()` and `abort()`.
 
 ## The architecture rules that keep this safe
 
@@ -125,20 +154,14 @@ screenshots each beat into `artifacts/`.
 
 ## Roadmap: from walkable attic to the full 3D single-player
 
-### Phase 2 — The table as a place: approach and sit-down on run start
+### Phase 2 — The table as a place: approach and sit-down on run start ✅
 
-The dream sequence "approach the table and sit down" belongs to the *reading*
-flow, not the attic. Reuse the identical rig:
-
-- On `New Reading` (flag on), mount the same scene in a `table3d` mode:
-  camera starts standing near the attic door, plays a short scripted approach
-  (walk path → pull out chair beat → seat descent), then cross-fades into the
-  existing 2D table UI exactly like the attic's sit-down already does.
-- `menuBoot.launch()` is the seam: it already awaits boot work before showing
-  the table; the approach plays over that load time, turning dead time into a
-  scene-setting beat. Skippable by tap/keypress and by reduced-motion.
-- Estimated new code: a camera-path module (curve + eased playback) plus a
-  `mode-to-table-3d` guard in the flow; the room and rig are already built.
+Landed on this branch (see "What is already working"). The approach plays
+over the boot's dead time, turning loading into a scene-setting beat, and the
+`completeWith(bootPromise)` gate keeps the reveal honest. Polish still open:
+walking sound + door creak, a slower "first ever run" variant, and easing the
+final camera pose into pixel-alignment with the SPv2 table art for a truly
+seamless cross-fade.
 
 ### Phase 3 — Presentation cues drive the 3D table
 
@@ -184,8 +207,11 @@ and new searchable stations added as data in `atticLayout.mjs` + entries in
 
 ## Known limitations / polish backlog
 
-- Portrait phones have a narrow horizontal FOV, so focus prompts can sit
-  off-screen; clamp prompt sprites to the view or raise portrait FOV.
+- Portrait FOV now widens to 74° (see `FovTuner`), which keeps most prompts
+  on-screen; a true screen-clamp for prompt sprites is still worth doing.
+- Tap-to-walk drives straight lines with collision sliding — good enough for
+  this room, but a nav-mesh (or waypoint graph) is the upgrade if the attic
+  ever grows internal walls.
 - The first-visit hint is DOM, not diegetic; a later pass can carve it into
   the room (chalk on a beam).
 - Candle/prop glows are billboard sprites; a bloom pass (postprocessing) would

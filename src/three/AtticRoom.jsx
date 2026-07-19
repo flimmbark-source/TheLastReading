@@ -5,7 +5,7 @@
 
 import { useMemo } from 'react';
 import * as THREE from 'three';
-import { ROOM, TABLE, CHAIR, DECK_SPOT, WINDOW_SPOT } from './atticLayout.mjs';
+import { ROOM, TABLE, CHAIR, DECK_SPOT, WINDOW_SPOT, DOOR_SPOT } from './atticLayout.mjs';
 import { radialGlowTexture, shaftTexture } from './canvasTextures.mjs';
 
 function lambert(color, extra = {}) {
@@ -242,6 +242,24 @@ export function AtticRoom() {
             <boxGeometry args={[0.06, 0.44, 0.06]} />
           </mesh>
         ))}
+      </group>
+
+      {/* the attic door on the +Z gable — where the run-start approach walks
+          in from; slightly ajar with a cold sliver of stairwell light */}
+      <group position={[DOOR_SPOT.position[0], 0, ROOM.halfZ - 0.02]}>
+        <mesh position={[0, DOOR_SPOT.height / 2, 0]} material={materials.frame}>
+          <boxGeometry args={[DOOR_SPOT.width + 0.16, DOOR_SPOT.height + 0.08, 0.08]} />
+        </mesh>
+        <mesh position={[0.06, DOOR_SPOT.height / 2, -0.05]} rotation={[0, -0.16, 0]} material={materials.trunk}>
+          <boxGeometry args={[DOOR_SPOT.width, DOOR_SPOT.height, 0.05]} />
+        </mesh>
+        <mesh position={[-DOOR_SPOT.width / 2 + 0.02, DOOR_SPOT.height / 2, -0.03]} rotation={[0, Math.PI, 0]}>
+          <planeGeometry args={[0.05, DOOR_SPOT.height - 0.1]} />
+          <meshBasicMaterial color="#5a698c" transparent opacity={0.5} />
+        </mesh>
+        <mesh position={[0.34, 1.02, -0.09]} material={materials.brass}>
+          <sphereGeometry args={[0.035, 8, 6]} />
+        </mesh>
       </group>
 
       {/* rug under the table */}

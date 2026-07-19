@@ -12,8 +12,10 @@
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AtticExperience } from './AtticExperience.jsx';
+import { ATTIC_OBJECTS } from '../data/atticObjects.mjs';
 
 const CONTAINER_ID = 'attic3dRoot';
+const APPROACH_ID = 'table3dApproach';
 const HINT_ID = 'attic3dHint';
 const HINT_KEY = 'tlr_attic3d_hint_seen';
 const LIVE_CLASS = 'attic3d-live';
@@ -30,9 +32,9 @@ function webglAvailable() {
 function controlsHintHtml() {
   const coarse = window.matchMedia?.('(pointer: coarse)')?.matches;
   if (coarse) {
-    return '<b>You stand up from the table.</b><span>Drag the left side to walk, the right side to look. Tap a glowing object to search it. Sit back down at the chair when you are done.</span>';
+    return '<b>You stand up from the table.</b><span>Tap a spot or a glowing object to walk to it, or drag the left side to walk and the right side to look. Sit back down at the chair when you are done.</span>';
   }
-  return '<b>You stand up from the table.</b><span>WASD to walk, drag the mouse to look. Press E (or click) on a glowing object to search it. Sit back down at the chair when you are done.</span>';
+  return '<b>You stand up from the table.</b><span>Click a spot or a glowing object to walk to it, or use WASD and drag the mouse to look. Press E to search what you face. Sit back down at the chair when you are done.</span>';
 }
 
 function showControlsHint(scene) {
@@ -136,5 +138,132 @@ export function mountAttic3D(adapter) {
   hint = showControlsHint(scene);
   observer = observeHardExit(() => handle.unmount());
   window.__tlrAttic3d = handle;
+  return handle;
+}
+
+// ── run-start approach overlay ───────────────────────────────────────────
+//
+// Mounted by src/app/tableApproachFlow.mjs over the whole viewport while a
+// New Reading / Continue boots the table beneath it. Plays the walk-in +
+// sit-down cinematic, then (once the caller's boot promise settles too)
+// fades itself away to reveal the 2D table UI. Any key or tap skips the
+// walk; the overlay also aborts if the player lands back on the main menu.
+
+function approachAdapterStub() {
+  const foundItemIds = () => {
+    try {
+      const raw = JSON.parse(localStorage.getItem('tlr_attic_found_items') || '[]');
+      return Array.isArray(raw) ? raw : [];
+    } catch {
+      return [];
+    }
+  };
+  return {
+    objects: ATTIC_OBJECTS,
+    note: { itemId: 'note_01' },
+    isSearched: () => false,
+    foundItemIds,
+    obalCount: () => 0,
+    rummage() {},
+    collectNote() {},
+    browseDeck() {},
+    leave() {},
+  };
+}
+
+export function mountTableApproach({ onDone } = {}) {
+  if (document.getElementById(APPROACH_ID) || !webglAvailable()) return null;
+
+  const container = document.createElement('div');
+  container.id = APPROACH_ID;
+  document.body.appendChild(container);
+  const root = createRoot(container);
+
+  let disposed = false;
+  let sequenceDone = false;
+  let gate = null; // optional promise the fade waits on (the boot beneath)
+  let fadeTimer = 0;
+  let safetyTimer = 0;
+  let observer = null;
+
+  const dispose = () => {
+    if (disposed) return;
+    disposed = true;
+    handle.mounted = false;
+    clearTimeout(fadeTimer);
+    clearTimeout(safetyTimer);
+    observer?.disconnect();
+    try {
+      root.unmount();
+    } catch (error) {
+      console.warn('The Last Reading: approach overlay unmount failed.', error);
+    }
+    container.remove();
+    if (window.__tlrTable3d === handle) delete window.__tlrTable3d;
+    onDone?.();
+  };
+
+  const fadeOut = () => {
+    if (disposed || container.classList.contains('fade')) return;
+    container.classList.add('fade');
+    fadeTimer = setTimeout(dispose, 750);
+  };
+
+  const maybeFinish = () => {
+    if (!sequenceDone) return;
+    if (gate) {
+      gate.finally(fadeOut);
+    } else {
+      fadeOut();
+    }
+  };
+
+  const handle = {
+    mounted: true,
+    api: null,
+    // The flow module hands us the boot promise so the reveal never happens
+    // over a half-built table; a settled/failed promise still reveals.
+    completeWith(promise) {
+      gate = Promise.resolve(promise).catch(() => {});
+      maybeFinish();
+    },
+    abort: dispose,
+    skip() {
+      handle.api?.skip?.();
+    },
+  };
+
+  try {
+    root.render(
+      createElement(AtticExperience, {
+        adapter: approachAdapterStub(),
+        mode: 'approach',
+        onSequenceComplete: () => {
+          sequenceDone = true;
+          maybeFinish();
+        },
+        registerApi: api => {
+          handle.api = api;
+        },
+      }),
+    );
+  } catch (error) {
+    console.warn('The Last Reading: approach overlay failed to start.', error);
+    dispose();
+    return null;
+  }
+
+  // If anything yanks the player back to the menu mid-approach, get out of
+  // the way immediately rather than playing over the menu.
+  observer = new MutationObserver(() => {
+    if (document.body.classList.contains('main-menu-active')) dispose();
+  });
+  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+  // Absolute ceiling so a stalled WebGL context can never trap the player
+  // behind an opaque overlay.
+  safetyTimer = setTimeout(fadeOut, 14000);
+
+  window.__tlrTable3d = handle;
   return handle;
 }

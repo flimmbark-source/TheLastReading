@@ -21,6 +21,7 @@ import { installSpreadPlacementBridge } from './spreadPlacementBridge.mjs';
 import { installAtticFlow } from './atticFlow.mjs';
 import { installAudioControls } from './audio.mjs';
 import { installMainMenu } from './mainMenu.mjs?v=duel-curtain-1';
+import { installTableApproachFlow } from './tableApproachFlow.mjs';
 import { installMenuControls } from './menuControls.mjs';
 import { installResonationFlow } from './resonationFlow.mjs';
 import { installHintRuntime } from './hintRuntime.mjs';
@@ -304,6 +305,9 @@ export function startApp(target = window) {
   installAudioControls(target);
   installMenuControls(target);
   installMainMenu(target);
+  // After installMainMenu: wraps the single-player entries it just defined
+  // with the opt-in 3D approach-and-sit overlay.
+  installTableApproachFlow(target);
   installSinglePlayerV2(target);
   installGameTerms(target);
   installComprehensionInstrumentation(target);

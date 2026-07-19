@@ -63,6 +63,27 @@ export function radialGlowTexture(inner, outer) {
   return texture;
 }
 
+// Gold ring used as the tap-to-walk destination marker on the floor.
+export function ringTexture() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  ctx.strokeStyle = 'rgba(255, 214, 128, 0.9)';
+  ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.arc(64, 64, 44, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(255, 214, 128, 0.35)';
+  ctx.lineWidth = 16;
+  ctx.beginPath();
+  ctx.arc(64, 64, 44, 0, Math.PI * 2);
+  ctx.stroke();
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+
 // Vertical gradient used on the moonlight shaft quad.
 export function shaftTexture() {
   const canvas = document.createElement('canvas');

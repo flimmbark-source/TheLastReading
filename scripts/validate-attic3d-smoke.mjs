@@ -1,11 +1,13 @@
-// Headless smoke for the opt-in react-three-fiber attic (?attic3d=1).
+// Headless smoke for the opt-in react-three-fiber single-player layer
+// (?attic3d=1): the run-start approach cinematic and the walkable 3D attic.
 //
-// Drives the full loop the feature promises: boot a reading, enter the attic,
-// let the stand-up choreography finish, focus + rummage a prop through the
-// 3D scene (asserting the existing pickup/archive flow still runs), then sit
-// back down at the chair and confirm the game lands back on the table UI with
-// the 3D layer fully unmounted. Also asserts the flag-off default never
-// mounts the chunk.
+// Drives the full loop the feature promises: boot a reading through the
+// approach overlay (and skip it), enter the attic, let the stand-up
+// choreography finish, tap-walk across the room, auto-walk to a prop and
+// rummage it through the 3D interact path (asserting the existing
+// pickup/archive flow still runs), then sit back down at the chair and
+// confirm the game lands back on the table UI with the 3D layer fully
+// unmounted. Also asserts the flag-off default never mounts either surface.
 //
 // Requires a Playwright chromium (npx playwright install chromium). Software
 // WebGL (SwiftShader) is fine — the scene is deliberately light.
@@ -68,9 +70,12 @@ async function newGamePage(browser, { attic3d }) {
   await page.goto(`${baseUrl}/game.html${attic3d ? '?attic3d=1' : ''}`, { waitUntil: 'load' });
   await page.waitForSelector('button[onclick="tlrMainMenuNewGame()"]');
   await page.click('button[onclick="tlrMainMenuNewGame()"]');
-  await page.waitForFunction(() => document.getElementById('mainMenu')?.hidden === true, null, { timeout: 20000 });
-  await page.waitForFunction(() => typeof window.tlrDebugEnterAttic === 'function', null, { timeout: 20000 });
   return { page, pageErrors };
+}
+
+async function finishBoot(page) {
+  await page.waitForFunction(() => document.getElementById('mainMenu')?.hidden === true, null, { timeout: 30000 });
+  await page.waitForFunction(() => typeof window.tlrDebugEnterAttic === 'function', null, { timeout: 20000 });
 }
 
 const rigState = () => window.__tlrAttic3d?.api?.getState?.() || null;
@@ -96,9 +101,14 @@ async function main() {
     await waitForServer();
     mkdirSync('artifacts', { recursive: true });
 
-    // ── flag off: the classic attic must stay classic ──
+    // ── flag off: no approach overlay, and the classic attic stays classic ──
     {
       const { page, pageErrors } = await newGamePage(browser, { attic3d: false });
+      await finishBoot(page);
+      const overlayOff = await page.evaluate(() => ({
+        approach: Boolean(document.getElementById('table3dApproach') || window.__tlrTable3d),
+      }));
+      assert.equal(overlayOff.approach, false, 'flag off: no approach overlay should mount');
       await page.evaluate(() => window.tlrDebugEnterAttic(3, false));
       await page.waitForFunction(() => document.body.classList.contains('mode-attic'), null, { timeout: 8000 });
       await page.waitForTimeout(700);
@@ -114,10 +124,31 @@ async function main() {
       await page.close();
     }
 
-    // ── flag on: full stand up → rummage → sit down loop ──
+    // ── flag on: approach cinematic, then the full attic loop ──
     const { page, pageErrors } = await newGamePage(browser, { attic3d: true });
-    await page.evaluate(() => window.tlrDebugEnterAttic(3, false));
 
+    // Run-start approach: overlay mounts, walks in from the door, and a tap
+    // (or api skip) jumps to the seat; the fade waits for the boot beneath.
+    await page.waitForFunction(() => Boolean(window.__tlrTable3d?.api?.getState?.()), null, { timeout: 45000 });
+    const approachState = await page.evaluate(() => window.__tlrTable3d.api.getState());
+    assert.ok(
+      ['approach', 'done'].includes(approachState.phase),
+      `approach overlay should be playing its timeline, got ${approachState.phase}`,
+    );
+    await page.waitForTimeout(900);
+    await page.screenshot({ path: 'artifacts/attic3d-6-approach.png' });
+    await page.evaluate(() => window.__tlrTable3d.skip());
+    await page.waitForFunction(() => !document.getElementById('table3dApproach'), null, { timeout: 20000 });
+    await finishBoot(page);
+    const afterApproach = await page.evaluate(() => ({
+      spread: Boolean(document.querySelector('.spread-wrap')),
+      overlayGone: !window.__tlrTable3d,
+    }));
+    assert.ok(afterApproach.spread, 'table UI should be live after the approach fades');
+    assert.ok(afterApproach.overlayGone, 'approach debug handle should clear on dispose');
+
+    // Enter the attic and let the stand-up finish.
+    await page.evaluate(() => window.tlrDebugEnterAttic(3, false));
     await page.waitForFunction(
       () => document.body.classList.contains('attic3d-live') && window.__tlrAttic3d?.mounted === true,
       null,
@@ -145,29 +176,39 @@ async function main() {
     await page.waitForFunction(() => Boolean(window.__tlrAttic3d?.api?.getState?.()), null, { timeout: 15000 });
     const early = await page.evaluate(rigState);
     assert.ok(['rising', 'free'].includes(early.phase), `rig should start in the stand-up beat, got ${early.phase}`);
-    await page.waitForFunction(state => window.__tlrAttic3d?.api?.getState?.()?.phase === 'free', null, {
+    await page.waitForFunction(() => window.__tlrAttic3d?.api?.getState?.()?.phase === 'free', null, {
       timeout: 20000,
     });
     const standing = await page.evaluate(rigState);
     assert.ok(Math.abs(standing.position[1] - 1.58) < 0.08, `standing eye height, got ${standing.position[1]}`);
     await page.screenshot({ path: 'artifacts/attic3d-1-standing.png' });
 
-    // Room view toward the candle shelf + window (art review shot).
-    await page.evaluate(() => window.__tlrAttic3d.api.teleport(2.4, 1.9, 0.71, 0.02));
-    await page.waitForTimeout(600);
-    await page.screenshot({ path: 'artifacts/attic3d-5-room-view.png' });
-
-    // Walk to the coat and focus it: the diegetic prompt should appear.
-    await page.evaluate(() => window.__tlrAttic3d.api.teleport(-2.35, -0.4, Math.PI / 2, -0.1));
-    await page.waitForFunction(() => window.__tlrAttic3d?.api?.getState?.()?.focusId === 'coat_01', null, {
-      timeout: 8000,
+    // Tap-to-move on open floor: a real canvas click on empty floor should
+    // engage an auto-walk (gold ring marker) and actually travel. Aim down
+    // the -X wall from beside the trunk — no interactable projects anywhere
+    // near the tap point, so this exercises the pure floor path.
+    await page.evaluate(() => window.__tlrAttic3d.api.teleport(2.6, -1.0, Math.PI / 2, -0.3));
+    await page.waitForTimeout(250);
+    await page.mouse.click(640, 620); // floor a couple of meters ahead
+    await page.waitForFunction(() => Boolean(window.__tlrAttic3d?.api?.getState?.()?.autoWalk), null, {
+      timeout: 5000,
     });
-    await page.screenshot({ path: 'artifacts/attic3d-2-focus-coat.png' });
+    await page.waitForFunction(
+      () => {
+        const state = window.__tlrAttic3d?.api?.getState?.();
+        return state && !state.autoWalk && state.position[0] < 1.7;
+      },
+      null,
+      { timeout: 15000 },
+    );
+    const noStrayPickup = await page.evaluate(() => Boolean(document.getElementById('atticPickup')));
+    assert.equal(noStrayPickup, false, 'a pure floor tap must not open any pickup');
 
-    // Rummage through the 3D interact path: the existing DOM pickup flow and
-    // archive unlock must run unchanged.
-    await page.evaluate(() => window.__tlrAttic3d.api.interact());
-    await page.waitForSelector('#atticPickup', { timeout: 8000 });
+    // Tap-to-use: walking to a prop by pointing at it rummages it on arrival —
+    // the existing DOM pickup flow and archive unlock must run unchanged.
+    await page.evaluate(() => window.__tlrAttic3d.api.teleport(-0.5, 1.6, 0.4, 0));
+    await page.evaluate(() => window.__tlrAttic3d.api.walkTo(-2.35, -0.4, 'coat_01'));
+    await page.waitForSelector('#atticPickup', { timeout: 20000 });
     await page.screenshot({ path: 'artifacts/attic3d-3-pickup.png' });
     await page.click('#atticPickup');
     await page.waitForFunction(

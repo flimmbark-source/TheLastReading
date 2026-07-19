@@ -84,6 +84,26 @@ export const WINDOW_SPOT = {
   height: 1.35,
 };
 
+// The attic door the run-start approach walks in from (set dressing on the
+// +Z gable wall, near the corner opposite the deck crate).
+export const DOOR_SPOT = {
+  position: [-2.7, 0, 2.79],
+  width: 0.95,
+  height: 2.0,
+};
+
+// Run-start approach: the camera walks from the attic door to the chair and
+// sits, then the overlay cross-fades into the 2D table UI. `t` is seconds;
+// `look` is a world-space aim point. Sampled with per-segment smoothing in
+// PlayerRig; a subtle head-bob is layered on until the standing beat.
+export const APPROACH_KEYFRAMES = [
+  { t: 0.0, eye: [-2.45, 1.58, 2.25], look: [0, 1.0, 0.1] },
+  { t: 1.7, eye: [-1.2, 1.58, 2.5], look: [0, 0.95, 0.25] },
+  { t: 3.0, eye: [-0.3, 1.58, 2.25], look: [0, 0.95, 0.35] },
+  { t: 3.9, eye: [0, 1.58, 2.05], look: [0, 1.05, 0.1] },
+  { t: 5.2, eye: [0, 1.04, 1.46], look: [0, 0.82, 0.35] },
+];
+
 // Solid clutter the player cannot walk through: [x, z, radius].
 export const KEEP_OUT = [
   [TABLE.position[0], TABLE.position[2], 1.15],
