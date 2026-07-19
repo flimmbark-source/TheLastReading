@@ -402,11 +402,13 @@ export function PlayerRig() {
         scene.traverse(object => {
           if (object.isMesh || object.isSprite || object.isPoints || object.isLight) {
             const p = object.getWorldPosition(new THREE.Vector3());
-            out.push({
+            const entry = {
               type: object.type,
               position: [+p.x.toFixed(2), +p.y.toFixed(2), +p.z.toFixed(2)],
               visible: object.visible,
-            });
+            };
+            if (object.name) entry.name = object.name;
+            out.push(entry);
           }
         });
         return out;

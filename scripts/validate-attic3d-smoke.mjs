@@ -232,6 +232,30 @@ async function main() {
       timeout: 5000,
     });
 
+    // The discovery becomes physical: a keepsake for the letter appears on
+    // the trunk lid, driven by the store's discoveredArchiveItems.
+    await page.waitForFunction(
+      () => window.__tlrAttic3d?.api?.dumpScene?.().some(object => object.name === 'keepsake-letter_01'),
+      null,
+      { timeout: 8000 },
+    );
+
+    // The trunk is the archives: focusing and using it opens the drawer.
+    await page.evaluate(() => window.__tlrAttic3d.api.teleport(2.4, -0.5, -0.3, -0.25));
+    await page.waitForFunction(() => window.__tlrAttic3d?.api?.getState?.()?.focusId === 'archives_trunk', null, {
+      timeout: 8000,
+    });
+    await page.evaluate(() => window.__tlrAttic3d.api.interact());
+    await page.waitForFunction(() => document.getElementById('invWrap')?.classList.contains('open'), null, {
+      timeout: 5000,
+    });
+    await page.waitForTimeout(700); // drawer slide-in
+    await page.screenshot({ path: 'artifacts/attic3d-7-trunk-archives.png' });
+    await page.evaluate(() => window.tlrCloseArchives());
+    await page.waitForFunction(() => !document.getElementById('invWrap')?.classList.contains('open'), null, {
+      timeout: 5000,
+    });
+
     // Sit back down at the chair: choreography plays, then the normal
     // attic->table transition runs and the 3D layer unmounts. (Stand behind
     // the chair looking down at it — the table itself is a collision zone.)

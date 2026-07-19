@@ -115,6 +115,10 @@ export function installAtticFlow(target = window){
         rummage:function(id){rummage(id,null)},
         collectNote:collectNote,
         browseDeck:openDeckBrowser,
+        openArchives:function(){
+          const wrap=document.getElementById('invWrap');
+          if(wrap&&!wrap.classList.contains('open')&&typeof target.toggleInventory==='function')target.toggleInventory();
+        },
         leave:leave,
       })||null;
     }).catch(function(err){

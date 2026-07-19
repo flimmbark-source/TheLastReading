@@ -78,6 +78,15 @@ export const CANDLE_SHELF = {
   spacing: 0.34,
 };
 
+// The trunk doubles as the archives: discovered items appear on its lid as
+// keepsakes, and interacting with it opens the archives drawer.
+export const TRUNK_SPOT = {
+  position: [2.85, 0, -1.95],
+  rotationY: -0.28,
+  lidY: 0.68, // top surface of the lid — keepsakes stand here
+  focusPoint: [2.85, 0.62, -1.95],
+};
+
 export const WINDOW_SPOT = {
   center: [1.1, 1.72, -ROOM.halfZ],
   width: 1.05,

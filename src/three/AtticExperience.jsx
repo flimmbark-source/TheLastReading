@@ -14,9 +14,41 @@ import { AtticRoom } from './AtticRoom.jsx';
 import { Interactables } from './Interactables.jsx';
 import { Diegetics } from './Diegetics.jsx';
 import { PlayerRig } from './PlayerRig.jsx';
-import { NOTE_SPOT, DECK_SPOT, CHAIR, PROP_STATIONS } from './atticLayout.mjs';
+import { NOTE_SPOT, DECK_SPOT, CHAIR, PROP_STATIONS, TRUNK_SPOT } from './atticLayout.mjs';
 
 export const AtticContext = createContext(null);
+
+// ── presentation-cue bridge ──────────────────────────────────────────────
+// The presentation director broadcasts tlr:presentation-cue window events
+// (card placements, pattern resolves, threshold clears). While a 3D scene is
+// mounted, the latest cue lands in a shared ref and light/effect components
+// convert it into short mood surges — the same event contract
+// tableCameraDirector.mjs consumes for the 2D table. During the run-start
+// approach these fire from the table booting underneath, so the room
+// flickers in answer to the shuffle.
+function CueListener({ cueRef }) {
+  useEffect(() => {
+    const onCue = event => {
+      cueRef.current = {
+        cue: event.detail?.cue || null,
+        at: performance.now(),
+        intensity: Number(event.detail?.payload?.intensity) || 0.5,
+      };
+    };
+    window.addEventListener('tlr:presentation-cue', onCue);
+    return () => window.removeEventListener('tlr:presentation-cue', onCue);
+  }, [cueRef]);
+  return null;
+}
+
+// 0..1 decaying energy for the most recent cue if it matches `names`.
+export function cueEnergy(cueRef, names, span = 900) {
+  const current = cueRef?.current;
+  if (!current?.cue || !names.includes(current.cue)) return 0;
+  const age = performance.now() - current.at;
+  if (age < 0 || age >= span) return 0;
+  return (1 - age / span) * (0.5 + 0.5 * Math.min(1, current.intensity * 1.4));
+}
 
 // The 2D attic flow owns all real state (searched props, pickups, archive
 // unlocks). Poll the few bits the 3D view mirrors instead of patching hooks
@@ -87,6 +119,7 @@ export function AtticExperience({ adapter, mode = 'attic', onFirstMove, onSequen
   const [focusId, setFocusId] = useState(null);
   const sitRef = useRef(null); // PlayerRig registers its beginSit here
   const autoWalkRef = useRef({ active: false, x: 0, z: 0 }); // PlayerRig writes, WalkMarker reads
+  const cueRef = useRef({ cue: null, at: 0, intensity: 0 }); // CueListener writes, mood consumers read
 
   const reducedMotion = useMemo(() => Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches), []);
 
@@ -125,6 +158,14 @@ export function AtticExperience({ adapter, mode = 'attic', onFirstMove, onSequen
       action: () => adapter.browseDeck(),
     });
     list.push({
+      id: 'archives_trunk',
+      kind: 'archives',
+      focusPoint: TRUNK_SPOT.focusPoint,
+      reach: 2.2,
+      label: 'Open the archives',
+      action: () => adapter.openArchives?.(),
+    });
+    list.push({
       id: 'chair',
       kind: 'chair',
       focusPoint: [CHAIR.position[0], 0.9, CHAIR.position[2]],
@@ -145,6 +186,7 @@ export function AtticExperience({ adapter, mode = 'attic', onFirstMove, onSequen
       setFocusId,
       sitRef,
       autoWalkRef,
+      cueRef,
       reducedMotion,
       onFirstMove,
       onSequenceComplete,
@@ -164,6 +206,7 @@ export function AtticExperience({ adapter, mode = 'attic', onFirstMove, onSequen
     >
       <AtticContext.Provider value={context}>
         <FovTuner />
+        <CueListener cueRef={cueRef} />
         <fog attach="fog" args={['#140b06', 6.5, 14.5]} />
         <hemisphereLight args={['#2b3b58', '#3a2413', 0.8]} />
         <ambientLight color="#8a6a4a" intensity={0.34} />

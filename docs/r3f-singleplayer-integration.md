@@ -55,10 +55,22 @@ An opt-in, fully walkable 3D attic, feature-complete with the 2D attic:
   the deck browser work the same way.
 - **Diegetic UI**: the obal counter is a candle shelf — one lit candle per
   obal, read live from `persist.obals` through `useTlrStore` (the DOM obal HUD
-  hides in 3D mode). The "Return to Table" button is the chair itself.
-  Interaction prompts float over what you look at ("Check pocket · E").
-  Moonlit window, volumetric light shaft, drifting dust motes
-  (`fx/dust_mote_particle.png`).
+  hides in 3D mode). Entering the attic plays an ignition ceremony: your
+  earned candles catch light one by one as you stand up. The "Return to
+  Table" button is the chair itself. Interaction prompts float over what you
+  look at ("Check pocket · E"). Moonlit window, volumetric light shaft,
+  drifting dust motes (`fx/dust_mote_particle.png`).
+- **The archive made physical (Phase 5, first slice)**: every discovered
+  archive item stands on the trunk lid as a small framed keepsake (live from
+  `persist.discoveredArchiveItems` — take a pickup and the keepsake appears),
+  and the trunk itself is an interactable that opens the existing archives
+  drawer over the scene.
+- **Presentation cues reach the room (Phase 3, in-scene half)**: a
+  `CueListener` bridges `tlr:presentation-cue` window events into the scene;
+  candle flames and lights surge and the moonlight shaft shimmers on
+  `card-place` / `pattern` / `threshold-clear` / `run-end` cues. During the
+  run-start approach the table dealing cards underneath makes the room
+  flicker in answer to the shuffle.
 - **Run-start approach (Phase 2, also landed)**: with the flag on, New
   Reading / Continue opens on a cinematic — you walk into the attic through
   its door, cross the room, and sit down at the table while the real game
@@ -163,23 +175,30 @@ walking sound + door creak, a slower "first ever run" variant, and easing the
 final camera pose into pixel-alignment with the SPv2 table art for a truly
 seamless cross-fade.
 
-### Phase 3 — Presentation cues drive the 3D table
+### Phase 3 — Presentation cues drive the 3D scene ◐ (in-scene half landed)
 
-While seated, keep a paused (`frameloop="demand"`) canvas behind the 2D table
-UI and let `tlr:presentation-cue` events drive it: `threshold-clear` pushes
-candlelight intensity, `pattern` ripples the light shaft, `run-end` slowly
-pulls the camera back from the table. This *replaces* today's CSS scale
-approximations in `tableCameraDirector.mjs` with a true camera — the module's
-event contract is already the right one; only its output changes.
+The cue bridge is in: `CueListener` (AtticExperience.jsx) captures
+`tlr:presentation-cue` into a shared ref and `cueEnergy()` converts it into
+decaying mood surges wherever the scene is mounted — flames, lights, and the
+moonlight shaft all answer today, with a live firing source during the
+approach (the booting table underneath deals cards).
 
-### Phase 4 — Diegetic table UI
+The remaining half — cue-driven camera work *while seated at the reading* —
+deliberately waits for Phase 4's hybrid table: the SPv2 seated view is opaque
+painted art, so there is no visible 3D surface behind it yet. When the hybrid
+lands, `tableCameraDirector.mjs`'s CSS scale approximations become real
+camera pushes; its event contract is already the right one.
 
-Move HUD surfaces into the world incrementally, keeping DOM for text-heavy
-interactions:
+### Phase 4 — Diegetic table UI (the honest scoping)
 
-- **Hybrid (recommended next)**: the 3D table renders the environment (cloth,
-  candle, frame) while cards/score stay DOM — the current cross-fade already
-  proves the alignment trick works.
+The painted SPv2 table art is currently *better looking* than a low-poly 3D
+replacement would be — swapping it wholesale would be a downgrade, so this
+phase is gated on art, not engineering:
+
+- **Hybrid (recommended next)**: the 3D room renders around/behind a
+  transparent-margin version of the table art while cards/score stay DOM —
+  the approach's final camera pose already lines up with the seated view, so
+  the cross-fade seam is proven.
 - **In-world panels**: score/threshold as objects (wax seals, a brass scale)
   driven by `useTlrStore` selectors, like the candle shelf today.
 - **Full diegetic reading** (stretch): cards as textured meshes using the
@@ -188,13 +207,17 @@ interactions:
   at which adding `@react-three/drei` pays for itself; before it, plain fiber
   keeps the dependency surface small.
 
-### Phase 5 — More attic, more game
+### Phase 5 — More attic, more game ◐ (first slice landed)
 
-The walkable room makes new single-player systems cheap to stage: resonation
-memories as objects that appear after unlocks (store selectors already exist),
-the archives drawer as a physical trunk, seasonal props keyed to save state,
-and new searchable stations added as data in `atticLayout.mjs` + entries in
-`atticFlow`'s catalog.
+Landed: discovered archive items accumulate as framed keepsakes on the trunk
+lid (pure store selectors — take a pickup and the shelf updates live), and
+the trunk is an interactable that opens the archives drawer in place.
+
+Next content, all cheap now that the room exists: resonation memories as
+objects that appear after unlocks (`persist.unlockedFragments` is already in
+the store), seasonal props keyed to save state, and new searchable stations
+added as data in `atticLayout.mjs` + entries in the attic prop catalog
+(`src/data/atticObjects.mjs`).
 
 ### Asset pipeline (when hand-built primitives stop being enough)
 

@@ -3,13 +3,48 @@
 // non-interactive clutter. Low-poly primitives + flat Lambert shading on
 // purpose — the game's ps1aesthetic direction, not a budget shortcut.
 
-import { useMemo } from 'react';
+import { useContext, useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { ROOM, TABLE, CHAIR, DECK_SPOT, WINDOW_SPOT, DOOR_SPOT } from './atticLayout.mjs';
+import { AtticContext, cueEnergy } from './AtticExperience.jsx';
+import { ROOM, TABLE, CHAIR, DECK_SPOT, WINDOW_SPOT, DOOR_SPOT, TRUNK_SPOT } from './atticLayout.mjs';
 import { radialGlowTexture, shaftTexture } from './canvasTextures.mjs';
 
 function lambert(color, extra = {}) {
   return new THREE.MeshLambertMaterial({ color, ...extra });
+}
+
+// The moonlight shaft breathes slowly and answers presentation cues — the
+// clearest place the room reacts to what happens at the table (pattern
+// resolves and threshold clears ripple the light).
+function MoonShaft({ shaft }) {
+  const { cueRef } = useContext(AtticContext);
+  const material = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        map: shaft.texture,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        opacity: 0.78,
+      }),
+    [shaft],
+  );
+  useFrame(({ clock }) => {
+    const breathe = 0.78 + 0.07 * Math.sin(clock.elapsedTime * 0.6);
+    const shimmer = cueEnergy(cueRef, ['pattern', 'threshold-clear', 'card-place'], 1100) * 0.25;
+    material.opacity = Math.min(1, breathe + shimmer);
+  });
+  return (
+    <group position={shaft.mid} quaternion={shaft.quaternion}>
+      {[0, Math.PI / 2].map(rotation => (
+        <mesh key={rotation} rotation={[0, rotation, 0]} material={material}>
+          <planeGeometry args={[1.15, shaft.length]} />
+        </mesh>
+      ))}
+    </group>
+  );
 }
 
 export function AtticRoom() {
@@ -182,20 +217,7 @@ export function AtticRoom() {
         </mesh>
         <pointLight position={[0, 0.1, 0.55]} color="#9fb6e8" intensity={3.2} distance={6.5} decay={1.6} />
       </group>
-      <group position={shaft.mid} quaternion={shaft.quaternion}>
-        {[0, Math.PI / 2].map(rotation => (
-          <mesh key={rotation} rotation={[0, rotation, 0]}>
-            <planeGeometry args={[1.15, shaft.length]} />
-            <meshBasicMaterial
-              map={shaft.texture}
-              transparent
-              depthWrite={false}
-              side={THREE.DoubleSide}
-              blending={THREE.AdditiveBlending}
-            />
-          </mesh>
-        ))}
-      </group>
+      <MoonShaft shaft={shaft} />
 
       {/* the reading table */}
       <group position={TABLE.position}>
@@ -276,7 +298,7 @@ export function AtticRoom() {
           <boxGeometry args={[0.62, 0.55, 0.62]} />
         </mesh>
       </group>
-      <group position={[2.85, 0, -1.95]} rotation={[0, -0.28, 0]}>
+      <group position={TRUNK_SPOT.position} rotation={[0, TRUNK_SPOT.rotationY, 0]}>
         <mesh position={[0, 0.3, 0]} material={materials.trunk}>
           <boxGeometry args={[1.15, 0.6, 0.65]} />
         </mesh>

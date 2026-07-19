@@ -1,17 +1,25 @@
 // Diegetic UI: game state rendered as things in the room instead of HUD chrome.
-// The candle shelf is the obal counter — one lit candle per obal, read live
-// from the architecture store through useTlrStore. Dust motes drift through
-// the moonlight using the existing fx/dust_mote_particle.png sprite.
+//
+// - The candle shelf is the obal counter — one lit candle per obal, read live
+//   from the architecture store through useTlrStore. Entering the attic plays
+//   an ignition ceremony: the candles you earned catch light one by one while
+//   you stand up from the table.
+// - Discovered archive items accumulate as keepsakes on the trunk lid.
+// - All flames and their lights answer tlr:presentation-cue events through
+//   cueEnergy (see AtticExperience.jsx) — during the run-start approach the
+//   table dealing cards underneath makes the room flicker in response.
+// - Dust motes drift through the moonlight using fx/dust_mote_particle.png.
 
-import { Component, Suspense, useContext, useMemo, useRef } from 'react';
+import { Component, Suspense, useContext, useMemo, useRef, useState } from 'react';
 import { useFrame, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
-import { AtticContext } from './AtticExperience.jsx';
-import { CANDLE_SHELF, TABLE } from './atticLayout.mjs';
+import { AtticContext, cueEnergy } from './AtticExperience.jsx';
+import { CANDLE_SHELF, TABLE, TRUNK_SPOT } from './atticLayout.mjs';
 import { radialGlowTexture } from './canvasTextures.mjs';
 import { useTlrStore } from './useTlrStore.mjs';
 
 const MAX_CANDLES = 7; // the obal score ladder tops out at 7
+const FLAME_CUES = ['card-place', 'pattern', 'ability-reveal', 'threshold-clear'];
 
 class QuietBoundary extends Component {
   constructor(props) {
@@ -30,12 +38,14 @@ class QuietBoundary extends Component {
 }
 
 function Flame({ position, seed, scale = 1 }) {
+  const { cueRef } = useContext(AtticContext);
   const texture = useMemo(() => radialGlowTexture('rgba(255,224,150,0.95)', 'rgba(255,150,50,0.35)'), []);
   const ref = useRef();
   useFrame(({ clock }) => {
     if (!ref.current) return;
     const t = clock.elapsedTime * 7 + seed * 13.7;
-    const flicker = 0.86 + 0.14 * Math.sin(t) * Math.sin(t * 0.37 + seed);
+    const surge = 1 + cueEnergy(cueRef, FLAME_CUES, 800) * 0.65;
+    const flicker = (0.86 + 0.14 * Math.sin(t) * Math.sin(t * 0.37 + seed)) * surge;
     ref.current.scale.set(0.11 * scale * flicker, 0.17 * scale * flicker, 1);
     ref.current.material.opacity = 0.75 + 0.25 * Math.sin(t * 1.7 + seed * 3);
   });
@@ -47,12 +57,26 @@ function Flame({ position, seed, scale = 1 }) {
 }
 
 function CandleShelf() {
-  const { adapter } = useContext(AtticContext);
+  const { adapter, mode, cueRef, reducedMotion } = useContext(AtticContext);
   // Live store read: ENTER_ATTIC writes the visit's obals into persist.obals,
   // so the shelf lights itself from the same state the reducer owns. The
   // adapter count is only a fallback for a missing store.
   const storeObals = useTlrStore(state => state?.persist?.obals ?? null);
   const lit = Math.max(0, Math.min(MAX_CANDLES, storeObals ?? adapter.obalCount()));
+
+  // Ignition ceremony (attic visits only): candles catch one by one while
+  // the stand-up choreography plays, so the reward is read off the room.
+  const instant = mode !== 'attic' || reducedMotion;
+  const [ignited, setIgnited] = useState(instant ? lit : 0);
+  const mountTimeRef = useRef(null);
+  useFrame(({ clock }) => {
+    if (mountTimeRef.current === null) mountTimeRef.current = clock.elapsedTime;
+    const target = instant
+      ? lit
+      : Math.min(lit, Math.floor((clock.elapsedTime - mountTimeRef.current - 1.1) / 0.36) + 1);
+    const next = Math.max(0, Math.min(lit, target));
+    if (next !== ignited) setIgnited(next);
+  });
 
   const candles = useMemo(() => {
     const list = [];
@@ -68,8 +92,14 @@ function CandleShelf() {
   const lightRef = useRef();
   useFrame(({ clock }) => {
     if (!lightRef.current) return;
+    const surge = 1 + cueEnergy(cueRef, FLAME_CUES, 800) * 0.8;
     lightRef.current.intensity =
-      lit > 0 ? 1.7 + 0.35 * Math.sin(clock.elapsedTime * 9.3) * Math.sin(clock.elapsedTime * 3.1) : 0;
+      ignited > 0
+        ? (1.35 +
+            0.35 * (ignited / MAX_CANDLES) +
+            0.35 * Math.sin(clock.elapsedTime * 9.3) * Math.sin(clock.elapsedTime * 3.1)) *
+          surge
+        : 0;
   });
 
   return (
@@ -88,9 +118,9 @@ function CandleShelf() {
         <group key={i} position={[candle.x, sy, 0]}>
           <mesh position={[0, candle.height / 2, 0]}>
             <cylinderGeometry args={[0.028, 0.034, candle.height, 8]} />
-            <meshLambertMaterial color={i < lit ? '#e8d9b0' : '#7a705c'} />
+            <meshLambertMaterial color={i < ignited ? '#e8d9b0' : '#7a705c'} />
           </mesh>
-          {i < lit && <Flame position={[0, candle.height + 0.06, 0]} seed={i} />}
+          {i < ignited && <Flame position={[0, candle.height + 0.06, 0]} seed={i} />}
         </group>
       ))}
       <pointLight
@@ -107,10 +137,12 @@ function CandleShelf() {
 
 // A fixed candle by the spread keeps the table warm even at zero obals.
 function TableCandle() {
+  const { cueRef } = useContext(AtticContext);
   const lightRef = useRef();
   useFrame(({ clock }) => {
     if (!lightRef.current) return;
-    lightRef.current.intensity = 1.25 + 0.22 * Math.sin(clock.elapsedTime * 8.1 + 2);
+    const surge = 1 + cueEnergy(cueRef, FLAME_CUES, 800) * 0.8;
+    lightRef.current.intensity = (1.25 + 0.22 * Math.sin(clock.elapsedTime * 8.1 + 2)) * surge;
   });
   const [tx, , tz] = TABLE.position;
   return (
@@ -121,6 +153,89 @@ function TableCandle() {
       </mesh>
       <Flame position={[0, 0.2, 0]} seed={11} scale={1.15} />
       <pointLight ref={lightRef} position={[0, 0.42, 0]} color="#ffb45e" intensity={1.25} distance={4.5} decay={1.8} />
+    </group>
+  );
+}
+
+// ── keepsakes: the archive made physical ─────────────────────────────────
+// Every discovered archive item stands on the trunk lid as a small framed
+// keepsake, so the attic visibly accumulates the story you have uncovered.
+// Store-driven (DISCOVER_ARCHIVE_ITEM lands here live when a pickup is
+// taken), with the adapter's persisted list unioned in as a fallback.
+
+const KEEPSAKE_SLOTS = [-0.36, -0.12, 0.12, 0.36];
+
+function KeepsakeFrame({ itemId, slot, children }) {
+  return (
+    <group position={[slot, 0, 0]} rotation={[-0.14, 0, 0]}>
+      <mesh name={`keepsake-${itemId}`} position={[0, 0.15, 0]}>
+        <planeGeometry args={[0.2, 0.26]} />
+        {children}
+      </mesh>
+      <mesh position={[0, 0.15, -0.008]}>
+        <planeGeometry args={[0.24, 0.3]} />
+        <meshLambertMaterial color="#2e1f12" />
+      </mesh>
+    </group>
+  );
+}
+
+function TexturedKeepsake({ itemId, thumb, slot }) {
+  const texture = useLoader(THREE.TextureLoader, `/${thumb}`);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return (
+    <KeepsakeFrame itemId={itemId} slot={slot}>
+      <meshLambertMaterial map={texture} />
+    </KeepsakeFrame>
+  );
+}
+
+function PaperKeepsake({ itemId, slot }) {
+  return (
+    <KeepsakeFrame itemId={itemId} slot={slot}>
+      <meshLambertMaterial color="#e8d998" emissive="#3a3012" />
+    </KeepsakeFrame>
+  );
+}
+
+function Keepsakes() {
+  const { adapter } = useContext(AtticContext);
+  const storeKey = useTlrStore(state => (state?.persist?.discoveredArchiveItems || []).join(','));
+  const items = useMemo(() => {
+    const union = new Set(storeKey ? storeKey.split(',') : []);
+    try {
+      for (const id of adapter.foundItemIds()) union.add(id);
+    } catch {
+      /* adapter list is a bonus, not a requirement */
+    }
+    const thumbs = new Map();
+    for (const prop of Object.values(adapter.objects || {})) thumbs.set(prop.itemId, prop.thumb);
+    thumbs.set(adapter.note?.itemId, null); // the note keepsake is plain paper
+    return [...union]
+      .filter(id => thumbs.has(id))
+      .slice(0, KEEPSAKE_SLOTS.length)
+      .map((id, index) => ({
+        itemId: id,
+        thumb: thumbs.get(id),
+        slot: KEEPSAKE_SLOTS[index],
+      }));
+  }, [adapter, storeKey]);
+
+  if (!items.length) return null;
+  const [tx, , tz] = TRUNK_SPOT.position;
+  return (
+    <group position={[tx, TRUNK_SPOT.lidY, tz]} rotation={[0, TRUNK_SPOT.rotationY, 0]}>
+      {items.map(item => (
+        <QuietBoundary key={item.itemId}>
+          <Suspense fallback={null}>
+            {item.thumb ? (
+              <TexturedKeepsake itemId={item.itemId} thumb={item.thumb} slot={item.slot} />
+            ) : (
+              <PaperKeepsake itemId={item.itemId} slot={item.slot} />
+            )}
+          </Suspense>
+        </QuietBoundary>
+      ))}
     </group>
   );
 }
@@ -174,6 +289,7 @@ export function Diegetics() {
     <group>
       <CandleShelf />
       <TableCandle />
+      <Keepsakes />
       <QuietBoundary>
         <Suspense fallback={null}>
           <DustField />
