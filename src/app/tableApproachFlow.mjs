@@ -35,7 +35,7 @@ export function installTableApproachFlow(target = window) {
     const original = target[name];
     if (typeof original !== 'function' || original.__tlrApproachWrapped) return;
     const wrapped = async function () {
-      if (!enabled() || reducedMotion()) return original.apply(this, arguments);
+      if (!enabled()) return original.apply(this, arguments);
 
       let entry = null;
       try {
@@ -44,6 +44,15 @@ export function installTableApproachFlow(target = window) {
         console.warn('The Last Reading: 3D approach chunk failed to load; starting plainly.', error);
         return original.apply(this, arguments);
       }
+
+      // Reduced motion: no cinematic, but the hybrid seated table (a static
+      // camera) still applies.
+      if (reducedMotion()) {
+        const result = await original.apply(this, arguments);
+        entry.mountSeatedTable?.();
+        return result;
+      }
+
       const overlay = entry.mountTableApproach?.({});
       if (!overlay) return original.apply(this, arguments);
 
@@ -52,7 +61,12 @@ export function installTableApproachFlow(target = window) {
       // so the reveal never lands on a half-built table.
       overlay.completeWith(boot);
       try {
-        return await boot;
+        const result = await boot;
+        // Mount the seated backdrop while the opaque overlay still covers the
+        // screen: the fade then reveals the DOM table already sitting on the
+        // live 3D room, on the same camera the cinematic ended with.
+        entry.mountSeatedTable?.();
+        return result;
       } catch (error) {
         overlay.abort();
         throw error;

@@ -153,7 +153,7 @@ function WalkMarker() {
 // dressing); the focus prompt and walk marker self-hide while the approach
 // cinematic plays because focus/auto-walk never engage there.
 export function Interactables() {
-  const { adapter, snapshot } = useContext(AtticContext);
+  const { adapter, mode, snapshot } = useContext(AtticContext);
   return (
     <group>
       {PROP_STATIONS.map((station, index) => {
@@ -167,7 +167,8 @@ export function Interactables() {
           </StationBoundary>
         );
       })}
-      <NoteOnTable found={snapshot.noteFound} />
+      {/* the note sits where the DOM spread lives in seated-table mode */}
+      {mode !== 'table' && <NoteOnTable found={snapshot.noteFound} />}
       <DeckBox />
       <FocusPrompt />
       <WalkMarker />

@@ -110,6 +110,7 @@ export function PlayerRig() {
   } = useContext(AtticContext);
   const { camera, gl, scene, size } = useThree();
   const approach = mode === 'approach';
+  const seatedTable = mode === 'table'; // hybrid reading backdrop: static camera, no input
 
   const rig = useRef(null);
   if (!rig.current) {
@@ -117,11 +118,17 @@ export function PlayerRig() {
       ? anglesFor(new THREE.Vector3(...APPROACH_KEYFRAMES[0].eye), new THREE.Vector3(...APPROACH_KEYFRAMES[0].look))
       : null;
     rig.current = {
-      phase: approach ? 'approach' : reducedMotion ? 'free' : 'rising',
+      phase: seatedTable ? 'table' : approach ? 'approach' : reducedMotion ? 'free' : 'rising',
       phaseT: 0,
-      pos: approach ? start.eye.clone() : reducedMotion ? STANDING.eye.clone() : SEATED.eye.clone(),
-      yaw: approach ? start.yaw : reducedMotion ? STANDING.yaw : SEATED.yaw,
-      pitch: approach ? start.pitch : reducedMotion ? STANDING.pitch : SEATED.pitch,
+      pos: seatedTable
+        ? SEATED.eye.clone()
+        : approach
+          ? start.eye.clone()
+          : reducedMotion
+            ? STANDING.eye.clone()
+            : SEATED.eye.clone(),
+      yaw: seatedTable ? SEATED.yaw : approach ? start.yaw : reducedMotion ? STANDING.yaw : SEATED.yaw,
+      pitch: seatedTable ? SEATED.pitch : approach ? start.pitch : reducedMotion ? STANDING.pitch : SEATED.pitch,
       vel: new THREE.Vector3(),
       keys: new Set(),
       stick: { x: 0, y: 0 },
@@ -272,6 +279,7 @@ export function PlayerRig() {
 
   // ── input listeners ──
   useEffect(() => {
+    if (seatedTable) return undefined; // pure backdrop: the DOM owns all input
     const element = gl.domElement;
 
     const onKeyDown = event => {

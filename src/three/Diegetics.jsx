@@ -145,8 +145,10 @@ function TableCandle() {
     lightRef.current.intensity = (1.25 + 0.22 * Math.sin(clock.elapsedTime * 8.1 + 2)) * surge;
   });
   const [tx, , tz] = TABLE.position;
+  // Beside the discard rail: on the cloth, but clear of the seated-table
+  // spread row and the hand fan.
   return (
-    <group position={[tx - 0.52, TABLE.topY, tz - 0.35]}>
+    <group position={[tx - 0.55, TABLE.topY, tz + 0.07]}>
       <mesh position={[0, 0.07, 0]}>
         <cylinderGeometry args={[0.035, 0.045, 0.14, 8]} />
         <meshLambertMaterial color="#e8d9b0" />

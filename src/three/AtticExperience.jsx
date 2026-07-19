@@ -9,11 +9,12 @@
 //                tableApproachFlow). No interactables, timeline camera.
 
 import { createContext, useEffect, useMemo, useRef, useState } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { AtticRoom } from './AtticRoom.jsx';
 import { Interactables } from './Interactables.jsx';
 import { Diegetics } from './Diegetics.jsx';
 import { PlayerRig } from './PlayerRig.jsx';
+import { applyTableAnchors, clearTableAnchors } from './tableAnchors.mjs';
 import { NOTE_SPOT, DECK_SPOT, CHAIR, PROP_STATIONS, TRUNK_SPOT } from './atticLayout.mjs';
 
 export const AtticContext = createContext(null);
@@ -98,6 +99,33 @@ export function domSurfaceOpen() {
     document.getElementById('modal')?.classList.contains('show') ||
     document.getElementById('atticTutorial')?.classList.contains('show'),
   );
+}
+
+// Hybrid seated-table mode: after the camera settles each frame, project the
+// named table anchors into CSS variables exactly once per mount/resize (the
+// seated camera is stationary, so per-frame writes would be pure waste). A
+// couple of delayed re-applies catch the SPv2 layout settling (first deal,
+// font load) since the scales divide by DOM layout measurements.
+function TableAnchorProjector() {
+  const { camera, size } = useThree();
+  const appliedRef = useRef(false);
+  useEffect(() => {
+    appliedRef.current = false;
+  }, [camera, size.width, size.height]);
+  useFrame(() => {
+    if (appliedRef.current) return;
+    appliedRef.current = true; // PlayerRig has already posed the camera this frame
+    applyTableAnchors(camera, size);
+  });
+  useEffect(() => {
+    const timers = [
+      setTimeout(() => applyTableAnchors(camera, size), 450),
+      setTimeout(() => applyTableAnchors(camera, size), 1400),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [camera, size]);
+  useEffect(() => () => clearTableAnchors(), []);
+  return null;
 }
 
 // Portrait screens get a wider vertical FOV so the horizontal slice of the
@@ -216,6 +244,7 @@ export function AtticExperience({ adapter, mode = 'attic', onFirstMove, onSequen
         <Interactables />
         <Diegetics />
         <PlayerRig />
+        {mode === 'table' && <TableAnchorProjector />}
       </AtticContext.Provider>
     </Canvas>
   );

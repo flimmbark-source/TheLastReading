@@ -6,11 +6,14 @@ A tarot-inspired single-player card game. Draw cards, build spreads, score readi
 
 Opt-in with `?attic3d=1` on `game.html` (or `localStorage.tlr_attic_3d = '1'`):
 starting a reading walks you into the attic and sits you down at the table
-(skippable cinematic), and between sessions the attic is a walkable
-first-person room — move with WASD or tap/click anywhere to walk there, tap a
-glowing object to search it, then sit back down at the chair to return to the
-table. Ships as a lazy chunk, changes nothing when the flag is off, and falls
-back to the classic attic without WebGL. Architecture, controls, and the
+(skippable cinematic), and on wide screens the reading itself is played on
+the 3D table — the real SPv2 cards sit on the cloth via projected world
+anchors while the room's candlelight answers your plays. Between sessions
+the attic is a walkable first-person room — move with WASD or tap/click
+anywhere to walk there, tap a glowing object to search it, then sit back
+down at the chair to return to the table. Ships as a lazy chunk, changes
+nothing when the flag is off, and falls back to the classic attic (and the
+painted table) without WebGL. Architecture, controls, and the
 roadmap toward a fully 3D single-player mode:
 [`docs/r3f-singleplayer-integration.md`](docs/r3f-singleplayer-integration.md).
 Headless check: `npm run test:attic3d`.

@@ -12,13 +12,16 @@
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { AtticExperience } from './AtticExperience.jsx';
+import { clearTableAnchors } from './tableAnchors.mjs';
 import { ATTIC_OBJECTS } from '../data/atticObjects.mjs';
 
 const CONTAINER_ID = 'attic3dRoot';
 const APPROACH_ID = 'table3dApproach';
+const SEAT_ID = 'table3dSeat';
 const HINT_ID = 'attic3dHint';
 const HINT_KEY = 'tlr_attic3d_hint_seen';
 const LIVE_CLASS = 'attic3d-live';
+const SEAT_CLASS = 'table3d-live';
 
 function webglAvailable() {
   try {
@@ -265,5 +268,86 @@ export function mountTableApproach({ onDone } = {}) {
   safetyTimer = setTimeout(fadeOut, 14000);
 
   window.__tlrTable3d = handle;
+  return handle;
+}
+
+// ── hybrid seated-table backdrop ─────────────────────────────────────────
+//
+// The smallest-useful-prototype of the diegetic table: after sitting down,
+// the 3D room STAYS mounted as a fixed, pointer-transparent canvas beneath
+// the live SPv2 DOM (body.table3d-live drops the opaque painted background
+// and re-seats #spread + the hand onto projected table anchors — see
+// src/styles/attic3d.css and src/three/tableAnchors.mjs). All game input
+// remains pure DOM; the scene is a stationary seated camera on the exact
+// pose the approach/attic sit-down ends on.
+
+export function mountSeatedTable() {
+  if (document.getElementById(SEAT_ID) || !webglAvailable()) return null;
+  // Only meaningful over a live SPv2 reading.
+  if (!document.body.classList.contains('single-player-v2')) return null;
+
+  const container = document.createElement('div');
+  container.id = SEAT_ID;
+  document.body.appendChild(container);
+  const root = createRoot(container);
+
+  let unmounted = false;
+  let observer = null;
+
+  const handle = {
+    mounted: true,
+    api: null,
+    unmount() {
+      if (unmounted) return;
+      unmounted = true;
+      handle.mounted = false;
+      observer?.disconnect();
+      document.body.classList.remove(SEAT_CLASS);
+      clearTableAnchors();
+      try {
+        root.unmount();
+      } catch (error) {
+        console.warn('The Last Reading: seated table unmount failed.', error);
+      }
+      container.remove();
+      if (window.__tlrTableSeat === handle) delete window.__tlrTableSeat;
+    },
+  };
+
+  try {
+    root.render(
+      createElement(AtticExperience, {
+        adapter: approachAdapterStub(),
+        mode: 'table',
+        registerApi: api => {
+          handle.api = api;
+        },
+      }),
+    );
+  } catch (error) {
+    console.warn('The Last Reading: seated table failed to start.', error);
+    handle.unmount();
+    return null;
+  }
+
+  document.body.classList.add(SEAT_CLASS);
+
+  // The backdrop belongs to the seated reading only: leave for the attic,
+  // the menu, or another mode and it gets out of the way. (The attic flow
+  // remounts it on the way back to the table.)
+  observer = new MutationObserver(() => {
+    const cls = document.body.classList;
+    const elsewhere =
+      cls.contains('main-menu-active') ||
+      cls.contains('mode-attic') ||
+      cls.contains('mode-to-attic') ||
+      cls.contains('mode-adventure') ||
+      cls.contains('mp-game-active') ||
+      !cls.contains('single-player-v2');
+    if (elsewhere) handle.unmount();
+  });
+  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+  window.__tlrTableSeat = handle;
   return handle;
 }

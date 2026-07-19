@@ -23,10 +23,16 @@ export const CHAIR = {
 };
 
 // Camera poses for the player rig. `look` is a world-space point.
+//
+// The seated pose doubles as the hybrid reading camera: it is deliberately
+// more top-down than a natural sitting eye-line so the cloth offers enough
+// usable acreage for the five SPv2 spread slots plus the hand fan (the
+// approach cinematic, the attic sit-down, and the seated table mode all end
+// on this exact pose, so the cross-fade into the live table is continuous).
 export const POSES = {
   seated: {
-    eye: [0, 1.04, 1.46],
-    look: [0, 0.82, 0.35],
+    eye: [0, 1.46, 1.28],
+    look: [0, 0.7, 0.05],
   },
   standing: {
     eye: [0, 1.58, 2.05],
@@ -110,8 +116,36 @@ export const APPROACH_KEYFRAMES = [
   { t: 1.7, eye: [-1.2, 1.58, 2.5], look: [0, 0.95, 0.25] },
   { t: 3.0, eye: [-0.3, 1.58, 2.25], look: [0, 0.95, 0.35] },
   { t: 3.9, eye: [0, 1.58, 2.05], look: [0, 1.05, 0.1] },
-  { t: 5.2, eye: [0, 1.04, 1.46], look: [0, 0.82, 0.35] },
+  // Ends exactly on POSES.seated so the reveal of the live hybrid table
+  // continues from the same camera.
+  { t: 5.2, eye: [0, 1.46, 1.28], look: [0, 0.7, 0.05] },
 ];
+
+// ── hybrid seated-table anchors ──────────────────────────────────────────
+// Named world-space points on the cloth. While the seated table mode is
+// live, these are projected through the camera into screen coordinates and
+// published as CSS variables (--t3d-*) so the real SPv2 DOM spread and hand
+// sit ON the 3D table instead of at viewport percentages. Span pairs are
+// used to derive px-per-meter scales at each row's depth.
+export const TABLE_ANCHORS = {
+  'spread-1': [-0.62, 0.79, 0.08],
+  'spread-2': [-0.31, 0.79, 0.02],
+  'spread-3': [0, 0.79, 0.0],
+  'spread-4': [0.31, 0.79, 0.02],
+  'spread-5': [0.62, 0.79, 0.08],
+  'spread-c': [0, 0.79, 0.04],
+  discard: [-0.82, 0.79, 0.42],
+  purge: [0.82, 0.79, 0.42],
+  'hand-c': [0, 0.79, 0.95],
+};
+
+// World widths the DOM rows are scaled to occupy at their anchor depth.
+// Tuned against the seated camera: tarot-card scale on the cloth, with clear
+// margins to the Discard/Purge rail and no spread/hand overlap. The hand
+// renders moderately larger than the spread (it is nearer), but softer than
+// strict perspective so it never eats the tabletop.
+export const SPREAD_WORLD_WIDTH = 1.0; // five slots across the mid cloth
+export const HAND_WORLD_WIDTH = 0.52; // fan resting along the near edge
 
 // Solid clutter the player cannot walk through: [x, z, radius].
 export const KEEP_OUT = [

@@ -71,6 +71,24 @@ An opt-in, fully walkable 3D attic, feature-complete with the 2D attic:
   `card-place` / `pattern` / `threshold-clear` / `run-end` cues. During the
   run-start approach the table dealing cards underneath makes the room
   flicker in answer to the shuffle.
+- **Hybrid seated table (Phase 4's first form, landed)**: after sitting down
+  the 3D room stays mounted as a fixed, pointer-transparent canvas beneath
+  the live SPv2 DOM. The opaque painted background comes off the body (its
+  film-grain/vignette `::before` stays as free texture over the canvas), and
+  the spread + hand are re-seated onto **named world-space table anchors**
+  (`TABLE_ANCHORS` in atticLayout) projected through the seated camera into
+  CSS variables by `src/three/tableAnchors.mjs` — no new viewport
+  percentages. The cards remain the real SPv2 DOM (drag, hints, abilities,
+  accessibility all untouched); a fit gate (`body.table3d-anchored`) applies
+  the re-seating only when the projected rows fit the viewport, so narrow
+  portrait keeps SPv2's native layout over the 3D backdrop. Score/Threshold,
+  menus, Discard/Purge, and utility chrome stay in screen space, exactly per
+  the smallest-useful-prototype scoping. Because the room is live during
+  real play, presentation cues (card placements, pattern resolves, threshold
+  clears) visibly surge the candlelight and moonlight shaft around the table
+  as you play. `tableCameraDirector`'s CSS scale approximations are disabled
+  in this mode (a WAAPI transform on `.spread-wrap` would break the anchored
+  fixed positioning; the 3D scene supplies the response instead).
 - **Run-start approach (Phase 2, also landed)**: with the flag on, New
   Reading / Continue opens on a cinematic — you walk into the attic through
   its door, cross the room, and sit down at the table while the real game
@@ -108,8 +126,14 @@ src/three/
   PlayerRig.jsx       movement, input, tap-to-move, collision, focus raycast,
                       sit/stand + approach choreography, debug api
   canvasTextures.mjs  runtime canvas textures (prompt tags, glows, ring, shaft)
-src/app/tableApproachFlow.mjs  wraps New Reading/Continue with the approach
-src/styles/attic3d.css  canvas layering, DOM handovers, hint, approach overlay
+  tableAnchors.mjs    world-anchor -> CSS-variable projector for the hybrid
+                      seated table (+ the table3d-anchored fit gate)
+src/app/tableApproachFlow.mjs  wraps New Reading/Continue with the approach,
+                      then mounts the seated backdrop
+src/styles/attic3d.css  canvas layering, DOM handovers, hint, approach
+                      overlay, hybrid seated-table overrides (incl. the
+                      spv2.tokens-layer !important counter to SPv2's mobile
+                      spread transform)
 scripts/validate-attic3d-smoke.mjs  headless end-to-end smoke (npm run test:attic3d)
 ```
 
@@ -175,37 +199,35 @@ walking sound + door creak, a slower "first ever run" variant, and easing the
 final camera pose into pixel-alignment with the SPv2 table art for a truly
 seamless cross-fade.
 
-### Phase 3 — Presentation cues drive the 3D scene ◐ (in-scene half landed)
+### Phase 3 — Presentation cues drive the 3D scene ✅ (via the hybrid)
 
-The cue bridge is in: `CueListener` (AtticExperience.jsx) captures
-`tlr:presentation-cue` into a shared ref and `cueEnergy()` converts it into
-decaying mood surges wherever the scene is mounted — flames, lights, and the
-moonlight shaft all answer today, with a live firing source during the
-approach (the booting table underneath deals cards).
+The cue bridge (`CueListener` + `cueEnergy()` in AtticExperience.jsx) turns
+`tlr:presentation-cue` events into decaying mood surges wherever the scene is
+mounted. With the hybrid seated table keeping the room live during real play,
+this now fires throughout the reading itself: placements, patterns, and
+threshold clears ripple the candlelight and moonlight around the table.
+Cue-driven *camera* movement while seated is intentionally still off — the
+anchored DOM rows assume a stationary camera; if a camera push is ever
+wanted, the projector must re-run per animation frame for its duration (the
+plumbing exists: `applyTableAnchors` is idempotent).
 
-The remaining half — cue-driven camera work *while seated at the reading* —
-deliberately waits for Phase 4's hybrid table: the SPv2 seated view is opaque
-painted art, so there is no visible 3D surface behind it yet. When the hybrid
-lands, `tableCameraDirector.mjs`'s CSS scale approximations become real
-camera pushes; its event contract is already the right one.
+### Phase 4 — Diegetic table UI ◐ (hybrid landed, panels next)
 
-### Phase 4 — Diegetic table UI (the honest scoping)
+The hybrid landed in its strongest form: the low-poly table *replaced* the
+painted background outright while the interactive SPv2 DOM stays on top,
+positioned by projected world anchors (see "What is already working").
+Remaining stages:
 
-The painted SPv2 table art is currently *better looking* than a low-poly 3D
-replacement would be — swapping it wholesale would be a downgrade, so this
-phase is gated on art, not engineering:
-
-- **Hybrid (recommended next)**: the 3D room renders around/behind a
-  transparent-margin version of the table art while cards/score stay DOM —
-  the approach's final camera pose already lines up with the seated view, so
-  the cross-fade seam is proven.
 - **In-world panels**: score/threshold as objects (wax seals, a brass scale)
-  driven by `useTlrStore` selectors, like the candle shelf today.
-- **Full diegetic reading** (stretch): cards as textured meshes using the
-  existing card-sheet atlases, drag = physical card movement. Needs drei's
-  `Html` (or render-to-texture) for card text legibility — this is the point
-  at which adding `@react-three/drei` pays for itself; before it, plain fiber
-  keeps the dependency surface small.
+  driven by `useTlrStore` selectors, like the candle shelf today. The
+  `discard`/`purge` anchors are already projected and published as CSS
+  variables for when those medallions want to sit on the cloth.
+- **Full diegetic reading** (stretch, deliberately deferred): cards as
+  textured meshes using the existing card-sheet atlases. Card text
+  legibility, rebuilt drag/ability/hint behavior, and mobile hit-testing
+  make this expensive without initially improving the game — needs drei's
+  `Html` (or render-to-texture), which is the point at which adding
+  `@react-three/drei` pays for itself.
 
 ### Phase 5 — More attic, more game ◐ (first slice landed)
 
@@ -230,6 +252,17 @@ added as data in `atticLayout.mjs` + entries in the attic prop catalog
 
 ## Known limitations / polish backlog
 
+- The hybrid's fit gate falls back to SPv2's native layout on narrow
+  portrait (the projected rows exceed the viewport at the seated camera's
+  FOV). A portrait-specific seated framing — camera higher and further back
+  so the whole table width fits — is the designed next step.
+- Entering the attic from the hybrid drops `table3d-live` immediately, so
+  the painted background flashes beneath the attic fade for a beat. Holding
+  the backdrop until the attic canvas is live would remove it.
+- Anchor projection re-runs on mount, resize, and two settle timers; if the
+  hand's card count changes the fan span (draws/discards), the scale is only
+  corrected on the next re-apply. Per-deal re-projection is a trivial add if
+  it ever reads as drift.
 - Portrait FOV now widens to 74° (see `FovTuner`), which keeps most prompts
   on-screen; a true screen-clamp for prompt sprites is still worth doing.
 - Tap-to-walk drives straight lines with collision sliding — good enough for

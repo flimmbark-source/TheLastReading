@@ -103,6 +103,72 @@ body.attic3d-live #atticTutorial {
   pointer-events: none;
 }
 
+/* ── hybrid seated-table mode (body.table3d-live) ─────────────────────────
+   The 3D room stays mounted as a fixed, pointer-transparent backdrop under
+   the live SPv2 DOM. The opaque painted table background comes off the body
+   (its grain/vignette ::before stays as free film over the canvas), and the
+   spread + hand are re-seated onto projected world anchors written by
+   src/three/tableAnchors.mjs. Score/Threshold, menus, Discard/Purge, and
+   utility chrome deliberately stay in their screen-space positions. These
+   rules are unlayered, so they win over the @layer'd SPv2 declarations. */
+
+#table3dSeat {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: #0d0703;
+}
+#table3dSeat canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+html body.single-player-v2.generated-sheet-ready.table3d-live {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* The painted reading-circle belonged to the old background; the cloth is
+   the surface now. */
+body.table3d-live .spread-wrap::before {
+  display: none;
+}
+
+/* Five spread slots across the mid cloth: #spread leaves the wrap's grid and
+   pins to the projected spread-center anchor, scaled so its slot row spans
+   SPREAD_WORLD_WIDTH meters of table. (.spread-actions — Discard/Purge —
+   remain untouched in the wrap.)
+
+   body.table3d-anchored is the fit gate: src/three/tableAnchors.mjs adds it
+   only when the projected rows actually fit the viewport. Narrow portrait
+   keeps SPv2's own layout over the 3D backdrop instead of overflowing.
+
+   Declared in spv2.tokens (the first layer in game.html's master @layer
+   statement) with !important: SPv2's mobile spread rule pins position/top/
+   transform with !important from spv2.components, and among important
+   declarations the EARLIER layer wins. */
+@layer spv2.tokens {
+  html body.single-player-v2.generated-sheet-ready.table3d-live.table3d-anchored #spread {
+    position: fixed !important;
+    left: var(--t3d-spread-c-x, 50vw) !important;
+    top: var(--t3d-spread-c-y, 44dvh) !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    transform: translate(-50%, -50%) scale(var(--t3d-spread-scale, 1)) !important;
+  }
+}
+
+/* The hand fan rests along the near edge of the cloth: dock + its gesture
+   zone shift and scale together around their pinned bottom edge. */
+html body.single-player-v2.generated-sheet-ready.table3d-live.table3d-anchored .handDock,
+html body.single-player-v2.generated-sheet-ready.table3d-live.table3d-anchored #handSwipeZone {
+  transform: translateY(var(--t3d-hand-dy, 0px)) scale(var(--t3d-hand-scale, 1));
+  transform-origin: 50% 100%;
+}
+
 /* First-visit controls hint (plain DOM, not in-canvas). */
 #attic3dHint {
   position: absolute;

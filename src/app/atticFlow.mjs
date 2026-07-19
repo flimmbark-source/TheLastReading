@@ -158,6 +158,13 @@ export function installAtticFlow(target = window){
       // stays on screen underneath the attic->table cross-fade.
       unmountAttic3d();
       document.body.classList.remove('mode-to-table','mode-table-return','mode-return-hard-hide');document.body.classList.add('mode-reading');if(typeof tlrArchitectureSync==='function')tlrArchitectureSync();
+      // Back at the table with the flag on: swap in the hybrid seated
+      // backdrop (same chunk, already cached from the attic mount).
+      if(attic3dEnabled()&&document.body.classList.contains('single-player-v2')){
+        import('../three/atticEntry.mjs').then(function(mod){
+          if(!inAttic&&document.body.classList.contains('single-player-v2'))mod.mountSeatedTable&&mod.mountSeatedTable();
+        }).catch(function(){});
+      }
       if(showArchivesAfterReturn&&typeof target.maybeShowArchivesTutorial==='function')target.maybeShowArchivesTutorial();
     },1080);
   }

@@ -120,6 +120,8 @@ async function main() {
       assert.equal(classic.canvas, false, 'flag off: no 3D container should mount');
       assert.equal(classic.live, false, 'flag off: attic3d-live must not be set');
       assert.equal(classic.panVisible, true, 'flag off: 2D pan layer should be visible');
+      const noSeat = await page.evaluate(() => Boolean(document.getElementById('table3dSeat')));
+      assert.equal(noSeat, false, 'flag off: no seated-table backdrop should mount');
       assert.deepEqual(pageErrors, [], `flag off: no page errors, got: ${pageErrors.join(' | ')}`);
       await page.close();
     }
@@ -147,8 +149,55 @@ async function main() {
     assert.ok(afterApproach.spread, 'table UI should be live after the approach fades');
     assert.ok(afterApproach.overlayGone, 'approach debug handle should clear on dispose');
 
-    // Enter the attic and let the stand-up finish.
+    // Hybrid seated table: the 3D room stays mounted beneath the live SPv2
+    // DOM, the painted body background comes off, and the spread + hand are
+    // anchored onto the projected table points.
+    await page.waitForFunction(() => window.__tlrTableSeat?.mounted === true, null, { timeout: 15000 });
+    await page.waitForFunction(
+      () => document.body.classList.contains('table3d-live') && document.body.classList.contains('table3d-anchored'),
+      null,
+      { timeout: 12000 },
+    );
+    const hybrid = await page.evaluate(() => {
+      const canvas = document.querySelector('#table3dSeat canvas');
+      const rootStyle = getComputedStyle(document.documentElement);
+      const spread = document.getElementById('spread');
+      const rect = spread.getBoundingClientRect();
+      return {
+        hasCanvas: Boolean(canvas),
+        bodyBackgroundImage: getComputedStyle(document.body).backgroundImage,
+        anchorX: Number.parseFloat(rootStyle.getPropertyValue('--t3d-spread-c-x')),
+        anchorY: Number.parseFloat(rootStyle.getPropertyValue('--t3d-spread-c-y')),
+        spreadCenterX: rect.left + rect.width / 2,
+        spreadCenterY: rect.top + rect.height / 2,
+      };
+    });
+    assert.ok(hybrid.hasCanvas, 'seated backdrop canvas should be mounted');
+    assert.equal(hybrid.bodyBackgroundImage, 'none', 'painted table background should be off in hybrid mode');
+    assert.ok(
+      Math.abs(hybrid.spreadCenterX - hybrid.anchorX) < 30 && Math.abs(hybrid.spreadCenterY - hybrid.anchorY) < 30,
+      `spread should sit on its projected anchor (anchor ${hybrid.anchorX},${hybrid.anchorY} vs rect ${hybrid.spreadCenterX},${hybrid.spreadCenterY})`,
+    );
+    await page.screenshot({ path: 'artifacts/attic3d-8-seated-hybrid.png' });
+
+    // The transformed hand must stay fully interactive: a real click on a
+    // card (through the scaled dock) selects it.
+    const cardPoint = await page.evaluate(() => {
+      const cards = document.querySelectorAll('#hand .card[data-uid]');
+      const card = cards[cards.length - 1]; // rightmost: top of the fan stack
+      const r = card.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height * 0.65 };
+    });
+    await page.mouse.click(cardPoint.x, cardPoint.y);
+    await page.waitForFunction(
+      () => document.querySelector('#hand .card.sel, #hand .card.ability-picked, .card-detail-trigger'),
+      null,
+      { timeout: 6000 },
+    );
+
+    // Enter the attic: the seated backdrop hands over to the walkable scene.
     await page.evaluate(() => window.tlrDebugEnterAttic(3, false));
+    await page.waitForFunction(() => !document.getElementById('table3dSeat'), null, { timeout: 8000 });
     await page.waitForFunction(
       () => document.body.classList.contains('attic3d-live') && window.__tlrAttic3d?.mounted === true,
       null,
@@ -279,6 +328,13 @@ async function main() {
     assert.ok(backAtTable.spreadVisible, 'table spread should be back after sitting down');
     assert.ok(backAtTable.atticHidden, 'attic scene should be aria-hidden after leaving');
 
+    // ...and the seated backdrop returns for the reading.
+    await page.waitForFunction(
+      () => window.__tlrTableSeat?.mounted === true && document.body.classList.contains('table3d-live'),
+      null,
+      { timeout: 10000 },
+    );
+
     // Re-entry must remount cleanly (fresh visit, fresh canvas).
     await page.evaluate(() => window.tlrDebugEnterAttic(2, false));
     await page.waitForFunction(
@@ -288,6 +344,16 @@ async function main() {
     );
     await page.evaluate(() => window.tlrDebugLeaveAttic());
     await page.waitForFunction(() => !document.getElementById('attic3dRoot'), null, { timeout: 8000 });
+
+    // Returning to the main menu tears the backdrop down and restores the
+    // painted background for whatever comes next.
+    await page.waitForFunction(() => window.__tlrTableSeat?.mounted === true, null, { timeout: 10000 });
+    await page.evaluate(() => window.tlrReturnToMenu());
+    await page.waitForFunction(
+      () => !document.getElementById('table3dSeat') && !document.body.classList.contains('table3d-live'),
+      null,
+      { timeout: 8000 },
+    );
 
     assert.deepEqual(pageErrors, [], `flag on: no page errors, got: ${pageErrors.join(' | ')}`);
     await page.close();
