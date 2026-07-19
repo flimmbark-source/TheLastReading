@@ -268,8 +268,13 @@ export function mountTableApproach({ onDone } = {}) {
     const veil = document.createElement('div');
     veil.className = 'table3d-reveal-veil';
     document.body.appendChild(veil);
-    requestAnimationFrame(() => requestAnimationFrame(() => veil.classList.add('out')));
-    setTimeout(() => veil.remove(), 800);
+    // Hold the veil opaque while the seated backdrop renders and the anchor
+    // projector runs its first settle pass (~450ms) — otherwise the spread
+    // and hand are seen snapping into their anchored positions the instant
+    // the loading screen clears ("janky shit right after loading"). Then
+    // fade to reveal an already-settled table.
+    setTimeout(() => veil.classList.add('out'), 650);
+    setTimeout(() => veil.remove(), 1300);
 
     container.id = SEAT_ID;
     container.classList.remove('fade');

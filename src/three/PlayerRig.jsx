@@ -169,6 +169,7 @@ export function PlayerRig() {
       firstMoveSeen: false,
       autoWalk: null, // { x, z, interactId } while walking to a tapped point
       stallT: 0,
+      bestDist: Infinity, // closest we have gotten to the auto-walk target
       completed: false,
     };
   }
@@ -182,6 +183,7 @@ export function PlayerRig() {
   const setAutoWalk = target => {
     rig.current.autoWalk = target;
     rig.current.stallT = 0;
+    rig.current.bestDist = Infinity;
     if (autoWalkRef) {
       autoWalkRef.current = target ? { active: true, x: target.x, z: target.z } : { active: false, x: 0, z: 0 };
     }
@@ -246,6 +248,11 @@ export function PlayerRig() {
     const pickRadius = isTouch ? TAP_PICK_RADIUS_TOUCH_PX : TAP_PICK_RADIUS_MOUSE_PX;
 
     // Screen-space pick over interactables (generous touch-target radius).
+    // The chair and the big prop stations are large physical objects, so a
+    // tap landing near them — not dead on the focus point — should still
+    // count; missing the chair this way is what left players unable to sit
+    // by tapping it. The note stays tight (radius ×1) because it sits on the
+    // table where floor-walk taps land and must not swallow them.
     let picked = null;
     const projected = new THREE.Vector3();
     for (const item of interactables) {
@@ -254,7 +261,8 @@ export function PlayerRig() {
       const sx = ((projected.x + 1) / 2) * size.width;
       const sy = ((1 - projected.y) / 2) * size.height;
       const distPx = Math.hypot(sx - px, sy - py);
-      if (distPx <= pickRadius && (!picked || distPx < picked.distPx)) {
+      const itemRadius = pickRadius * (item.kind === 'chair' ? 1.6 : item.kind === 'note' ? 1 : 1.3);
+      if (distPx <= itemRadius && (!picked || distPx < picked.distPx)) {
         picked = { item, distPx };
       }
     }
@@ -393,6 +401,10 @@ export function PlayerRig() {
         if (r.phase === 'free') {
           r.yaw -= dx * yawSens;
           r.pitch = THREE.MathUtils.clamp(r.pitch - dy * pitchSens, -1.25, 1.25);
+          // Looking by hand during a tap-walk takes the wheel: stop the walk
+          // from re-steering the facing so the player can rotate the view
+          // freely while still travelling to the destination.
+          if (r.autoWalk && (dx || dy)) r.autoWalk.userAimed = true;
         }
         // Smoothed px/ms velocity feeds the release flick.
         const now = performance.now();
@@ -470,7 +482,13 @@ export function PlayerRig() {
         r.vel.set(0, 0, 0);
       },
       walkTo: (x, z, interactId = null) => walkToRef.current(x, z, interactId),
-      tapAt: (clientX, clientY) => tapRef.current(clientX, clientY),
+      tapAt: (clientX, clientY, isTouch = false) => tapRef.current(clientX, clientY, isTouch),
+      // World point -> screen px (for tests: tap exactly where a prop or the
+      // chair projects). Returns [sx, sy, ndcZ]; ndcZ >= 1 means off-screen.
+      projectPoint: point => {
+        const v = new THREE.Vector3(...point).project(camera);
+        return [((v.x + 1) / 2) * size.width, ((1 - v.y) / 2) * size.height, v.z];
+      },
       interact: () => interactRef.current(),
       sit: () => beginSit(),
       skip: () => skipApproach(),
@@ -656,18 +674,27 @@ function stepMovement(r, delta, reducedMotion, interactables, setFocusId, setAut
         const ease = THREE.MathUtils.clamp(dist / 0.6, 0.4, 1);
         targetX = (dx / dist) * WALK_SPEED * ease;
         targetZ = (dz / dist) * WALK_SPEED * ease;
-        // Turn to face the direction of travel unless the player is
-        // actively drag-looking.
+        // Turn to face the direction of travel unless the player is actively
+        // drag-looking, or aimed the view by hand earlier in this walk.
         let looking = false;
         for (const pointer of r.pointers.values()) if (pointer.moved) looking = true;
-        if (!looking) {
+        if (!looking && !walk.userAimed) {
           const walkYaw = Math.atan2(-dx / dist, -dz / dist);
           r.yaw = lerpAngle(r.yaw, walkYaw, 1 - Math.exp(-delta * 5));
         }
-        // Bail out if clutter has us pinned short of the destination.
-        const speedNow = Math.hypot(r.vel.x, r.vel.z);
-        r.stallT = speedNow < 0.18 ? r.stallT + delta : 0;
-        if (r.stallT > 0.8) setAutoWalk(null);
+        // Time out if we stop making progress toward the destination —
+        // whether we walked into an obstacle and dead-stopped, or are
+        // sliding along one without ever arriving. Progress (distance
+        // shrinking), not raw speed, is the test: grazing clutter still
+        // closes on the goal and is allowed to complete, but a genuine
+        // block gives up after ~1.1s instead of walking forever.
+        if (dist < r.bestDist - 0.05) {
+          r.bestDist = dist;
+          r.stallT = 0;
+        } else {
+          r.stallT += delta;
+          if (r.stallT > 1.1) setAutoWalk(null);
+        }
       }
     }
     if (targetX === undefined) {

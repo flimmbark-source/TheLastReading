@@ -260,6 +260,23 @@ async function main() {
     const noStrayPickup = await page.evaluate(() => Boolean(document.getElementById('atticPickup')));
     assert.equal(noStrayPickup, false, 'a pure floor tap must not open any pickup');
 
+    // Blocked auto-walk must TIME OUT, not walk forever: stand just north of
+    // the trunk and aim at a point directly behind it. The trunk keep-out
+    // pins the player, so no progress is made — the walk should give up
+    // within ~1.5s instead of grinding against the obstacle indefinitely.
+    await page.evaluate(() => window.__tlrAttic3d.api.teleport(2.85, -0.9, Math.PI, -0.2));
+    await page.waitForTimeout(200);
+    await page.evaluate(() => window.__tlrAttic3d.api.walkTo(2.85, -2.9, null));
+    await page.waitForFunction(() => Boolean(window.__tlrAttic3d?.api?.getState?.()?.autoWalk), null, {
+      timeout: 3000,
+    });
+    await page.waitForFunction(() => !window.__tlrAttic3d?.api?.getState?.()?.autoWalk, null, { timeout: 3000 });
+    const afterBlocked = await page.evaluate(() => window.__tlrAttic3d.api.getState());
+    assert.ok(
+      afterBlocked.position[2] > -1.6,
+      `blocked walk should stall at the trunk, not pass through it (z=${afterBlocked.position[2]})`,
+    );
+
     // Tap-to-use: walking to a prop by pointing at it rummages it on arrival —
     // the existing DOM pickup flow and archive unlock must run unchanged.
     await page.evaluate(() => window.__tlrAttic3d.api.teleport(-0.5, 1.6, 0.4, 0));
@@ -312,14 +329,25 @@ async function main() {
       timeout: 5000,
     });
 
-    // Sit back down at the chair: choreography plays, then the normal
-    // attic->table transition runs and the 3D layer unmounts. (Stand behind
-    // the chair looking down at it — the table itself is a collision zone.)
-    await page.evaluate(() => window.__tlrAttic3d.api.teleport(0, 2.25, 0, -0.62));
-    await page.waitForFunction(() => window.__tlrAttic3d?.api?.getState?.()?.focusId === 'chair', null, {
-      timeout: 8000,
-    });
-    await page.evaluate(() => window.__tlrAttic3d.api.interact());
+    // Sit back down by TAPPING the chair from across the room: the tap must
+    // pick the chair (enlarged hit radius), auto-walk into range, and trigger
+    // the sit on arrival — the whole one-tap "go sit down" the player expects.
+    // Then the normal attic->table transition runs and the 3D layer unmounts.
+    await page.evaluate(() => window.__tlrAttic3d.api.teleport(-2.0, 2.0, -1.38, -0.12));
+    await page.waitForTimeout(200);
+    const chairPt = await page.evaluate(() => window.__tlrAttic3d.api.projectPoint([0, 0.9, 1.62]));
+    assert.ok(chairPt[2] < 1, 'chair should project on-screen for the tap');
+    await page.evaluate(pt => window.__tlrAttic3d.api.tapAt(pt[0], pt[1]), chairPt);
+    // The tap resolves to the chair: either already walking to it, or (once
+    // arrived) the sit choreography / seated hand-off has begun.
+    await page.waitForFunction(
+      () => {
+        const s = window.__tlrAttic3d?.api?.getState?.();
+        return s && (s.autoWalk?.interactId === 'chair' || s.phase === 'sitting' || s.phase === 'done');
+      },
+      null,
+      { timeout: 6000 },
+    );
     await page.waitForFunction(() => document.body.classList.contains('mode-reading'), null, { timeout: 20000 });
     await page.waitForFunction(
       () => !document.getElementById('attic3dRoot') && !document.body.classList.contains('attic3d-live'),

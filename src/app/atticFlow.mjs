@@ -161,6 +161,16 @@ export function installAtticFlow(target = window){
     pendingArchivesTutorial=false;
     if(target.tlrStore&&target.tlrActions)target.tlrStore.dispatch({type:target.tlrActions.LEAVE_ATTIC});
     document.body.classList.add('mode-return-hard-hide');
+    // Cover the whole attic->table swap — the attic canvas unmounting to
+    // nothing, the intermediate SPv2 mode states, and the seated canvas
+    // mounting — with the reveal veil so those old 2D table screens never
+    // flash through before the seated table settles into view.
+    let returnVeil=null;
+    if(attic3dEnabled()&&document.body.classList.contains('single-player-v2')){
+      returnVeil=document.createElement('div');
+      returnVeil.className='table3d-reveal-veil';
+      document.body.appendChild(returnVeil);
+    }
     if(resetOnLeave&&typeof target.resetSession==='function'){resetOnLeave=false;target.resetSession();}else if(resetOnLeave&&typeof resetSession==='function'){resetOnLeave=false;resetSession();}
     setTimeout(function(){document.body.classList.remove('mode-attic','mode-to-attic','mode-reading');document.body.classList.add('mode-to-table');const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','true');},60);
     setTimeout(function(){
@@ -179,9 +189,12 @@ export function installAtticFlow(target = window){
         import('../three/atticEntry.mjs').then(function(mod){
           let seat=null;
           if(!inAttic&&document.body.classList.contains('single-player-v2'))seat=mod.mountSeatedTable&&mod.mountSeatedTable();
-          if(!seat)document.body.classList.remove('attic3d-pending');
-        }).catch(function(){document.body.classList.remove('attic3d-pending');});
-      }
+          if(!seat){document.body.classList.remove('attic3d-pending');if(returnVeil){returnVeil.remove();returnVeil=null;}}
+          // Seat is up: let it render and settle under the veil for a beat,
+          // then fade the veil to reveal the finished table.
+          else if(returnVeil){setTimeout(function(){if(returnVeil)returnVeil.classList.add('out');},650);setTimeout(function(){if(returnVeil){returnVeil.remove();returnVeil=null;}},1300);}
+        }).catch(function(){document.body.classList.remove('attic3d-pending');if(returnVeil){returnVeil.remove();returnVeil=null;}});
+      }else if(returnVeil){returnVeil.remove();returnVeil=null;}
       if(showArchivesAfterReturn&&typeof target.maybeShowArchivesTutorial==='function')target.maybeShowArchivesTutorial();
     },1080);
   }
