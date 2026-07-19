@@ -40,6 +40,19 @@ export const POSES = {
   },
 };
 
+// Portrait reading camera: deliberately NOT pose-parity with desktop. It is
+// higher, more top-down (~45°), and closer, so the cloth dominates the tall
+// frame and proves play space; the composition keeps a sliver of the far
+// wall (the window's glow just clears the top edge), the light shaft's pool
+// on the floor, and the table candle. The approach cinematic retargets its
+// final keyframe to this pose on portrait so the reveal stays continuous.
+export const PORTRAIT_POSES = {
+  seated: {
+    eye: [0, 1.78, 1.05],
+    look: [0, 0.74, 0.0],
+  },
+};
+
 export const EYE_HEIGHT = 1.58;
 
 // Interactable stations. Prop art planes reuse the existing 2D attic PNGs;
@@ -146,6 +159,23 @@ export const TABLE_ANCHORS = {
 // strict perspective so it never eats the tabletop.
 export const SPREAD_WORLD_WIDTH = 1.0; // five slots across the mid cloth
 export const HAND_WORLD_WIDTH = 0.52; // fan resting along the near edge
+
+// Portrait rebuilds the composition rather than reprojecting desktop's:
+// the spread rides higher on the cloth and spans it more fully (SPv2's
+// mobile slots already overlap, so a tighter world span still reads), and
+// the hand row hugs the near edge to close the vertical gap.
+export const PORTRAIT_TABLE_ANCHORS = {
+  ...TABLE_ANCHORS,
+  'spread-1': [-0.42, 0.79, 0.02],
+  'spread-2': [-0.21, 0.79, -0.02],
+  'spread-3': [0, 0.79, -0.04],
+  'spread-4': [0.21, 0.79, -0.02],
+  'spread-5': [0.42, 0.79, 0.02],
+  'spread-c': [0, 0.79, -0.02],
+  'hand-c': [0, 0.79, 0.82],
+};
+export const PORTRAIT_SPREAD_WORLD_WIDTH = 0.9;
+export const PORTRAIT_HAND_WORLD_WIDTH = 0.5;
 
 // Solid clutter the player cannot walk through: [x, z, radius].
 export const KEEP_OUT = [

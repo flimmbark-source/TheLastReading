@@ -17,11 +17,11 @@
 // move stick and the rest drag-look. E (or click/tap) interacts with the
 // focused station. prefers-reduced-motion skips all camera choreography.
 
-import { useContext, useEffect, useLayoutEffect, useRef } from 'react';
+import { useContext, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { AtticContext, domSurfaceOpen } from './AtticExperience.jsx';
-import { POSES, ROOM, KEEP_OUT, EYE_HEIGHT, APPROACH_KEYFRAMES } from './atticLayout.mjs';
+import { POSES, PORTRAIT_POSES, ROOM, KEEP_OUT, EYE_HEIGHT, APPROACH_KEYFRAMES } from './atticLayout.mjs';
 
 const RISE_SECONDS = 1.7;
 const SIT_SECONDS = 1.6;
@@ -40,6 +40,7 @@ function poseAngles(pose) {
 }
 
 const SEATED = poseAngles(POSES.seated);
+const PORTRAIT_SEATED = poseAngles(PORTRAIT_POSES.seated);
 const STANDING = poseAngles(POSES.standing);
 
 function smooth(t) {
@@ -111,6 +112,16 @@ export function PlayerRig() {
   const { camera, gl, scene, size } = useThree();
   const approach = mode === 'approach';
   const seatedTable = mode === 'table'; // hybrid reading backdrop: static camera, no input
+  const portrait = size.width < size.height;
+
+  // Portrait sacrifices pose parity: the approach ends (and the seated table
+  // holds) the dedicated top-down portrait pose, so the reveal into the
+  // hybrid stays continuous on both orientations.
+  const approachFrames = useMemo(() => {
+    const last = APPROACH_KEYFRAMES[APPROACH_KEYFRAMES.length - 1];
+    const pose = portrait ? PORTRAIT_POSES.seated : POSES.seated;
+    return [...APPROACH_KEYFRAMES.slice(0, -1), { t: last.t, eye: pose.eye, look: pose.look }];
+  }, [portrait]);
 
   const rig = useRef(null);
   if (!rig.current) {
@@ -168,7 +179,7 @@ export function PlayerRig() {
   const skipApproach = () => {
     const r = rig.current;
     if (r.phase !== 'approach') return;
-    const end = poseAngles(APPROACH_KEYFRAMES[APPROACH_KEYFRAMES.length - 1]);
+    const end = poseAngles(approachFrames[approachFrames.length - 1]);
     r.pos.copy(end.eye);
     r.yaw = end.yaw;
     r.pitch = end.pitch;
@@ -434,21 +445,29 @@ export function PlayerRig() {
 
     if (r.phase === 'approach') {
       r.phaseT += delta;
-      const sample = sampleKeyframes(APPROACH_KEYFRAMES, r.phaseT);
+      const sample = sampleKeyframes(approachFrames, r.phaseT);
       r.pos.copy(sample.eye);
       r.yaw = sample.yaw;
       r.pitch = sample.pitch;
       // Head-bob only while walking; fade it out approaching the chair.
-      const standT = APPROACH_KEYFRAMES[APPROACH_KEYFRAMES.length - 2].t;
+      const standT = approachFrames[approachFrames.length - 2].t;
       const amp = 0.02 * THREE.MathUtils.clamp((standT - r.phaseT) / 0.45, 0, 1);
       if (!reducedMotion && amp > 0) {
         r.bobT += delta * 5.4;
         r.pos.y += Math.sin(r.bobT) * amp;
       }
-      if (r.phaseT >= APPROACH_KEYFRAMES[APPROACH_KEYFRAMES.length - 1].t + 0.05) {
+      if (r.phaseT >= approachFrames[approachFrames.length - 1].t + 0.05) {
         r.phase = 'done';
         completeSequence();
       }
+    } else if (r.phase === 'table') {
+      // Stationary seated backdrop; the pose tracks orientation live so a
+      // rotation mid-reading re-frames the table (the anchor projector
+      // re-runs on the same resize).
+      const pose = portrait ? PORTRAIT_SEATED : SEATED;
+      r.pos.copy(pose.eye);
+      r.yaw = pose.yaw;
+      r.pitch = pose.pitch;
     } else if (r.phase === 'rising') {
       r.phaseT += delta / RISE_SECONDS;
       const t = smooth(Math.min(1, r.phaseT));

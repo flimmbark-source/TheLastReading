@@ -154,7 +154,11 @@ async function main() {
     // anchored onto the projected table points.
     await page.waitForFunction(() => window.__tlrTableSeat?.mounted === true, null, { timeout: 15000 });
     await page.waitForFunction(
-      () => document.body.classList.contains('table3d-live') && document.body.classList.contains('table3d-anchored'),
+      () =>
+        document.body.classList.contains('table3d-live') &&
+        document.body.classList.contains('table3d-anchored') &&
+        // landscape/desktop anchors the hand as well (portrait keeps it native)
+        document.body.classList.contains('table3d-anchored-hand'),
       null,
       { timeout: 12000 },
     );

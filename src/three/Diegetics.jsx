@@ -135,6 +135,31 @@ function CandleShelf() {
   );
 }
 
+// Seated-table mode only: a soft warm pool over the cloth so the play
+// surface reads as the stage under the DOM cards — especially on the
+// top-down portrait framing, where the shelf and rafter lights barely
+// graze it.
+function TableReadingGlow() {
+  const { cueRef } = useContext(AtticContext);
+  const lightRef = useRef();
+  useFrame(({ clock }) => {
+    if (!lightRef.current) return;
+    const surge = 1 + cueEnergy(cueRef, FLAME_CUES, 800) * 0.5;
+    lightRef.current.intensity = (1.15 + 0.08 * Math.sin(clock.elapsedTime * 2.3)) * surge;
+  });
+  const [tx, , tz] = TABLE.position;
+  return (
+    <pointLight
+      ref={lightRef}
+      position={[tx, TABLE.topY + 0.9, tz - 0.05]}
+      color="#d9a25e"
+      intensity={1.15}
+      distance={3.4}
+      decay={1.8}
+    />
+  );
+}
+
 // A fixed candle by the spread keeps the table warm even at zero obals.
 function TableCandle() {
   const { cueRef } = useContext(AtticContext);
@@ -287,10 +312,12 @@ function DustField() {
 }
 
 export function Diegetics() {
+  const { mode } = useContext(AtticContext);
   return (
     <group>
       <CandleShelf />
       <TableCandle />
+      {mode === 'table' && <TableReadingGlow />}
       <Keepsakes />
       <QuietBoundary>
         <Suspense fallback={null}>

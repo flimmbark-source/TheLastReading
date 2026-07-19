@@ -79,16 +79,31 @@ An opt-in, fully walkable 3D attic, feature-complete with the 2D attic:
   (`TABLE_ANCHORS` in atticLayout) projected through the seated camera into
   CSS variables by `src/three/tableAnchors.mjs` — no new viewport
   percentages. The cards remain the real SPv2 DOM (drag, hints, abilities,
-  accessibility all untouched); a fit gate (`body.table3d-anchored`) applies
-  the re-seating only when the projected rows fit the viewport, so narrow
-  portrait keeps SPv2's native layout over the 3D backdrop. Score/Threshold,
-  menus, Discard/Purge, and utility chrome stay in screen space, exactly per
-  the smallest-useful-prototype scoping. Because the room is live during
-  real play, presentation cues (card placements, pattern resolves, threshold
+  accessibility all untouched). Score/Threshold, menus, Discard/Purge, and
+  utility chrome stay in screen space, exactly per the
+  smallest-useful-prototype scoping. Because the room is live during real
+  play, presentation cues (card placements, pattern resolves, threshold
   clears) visibly surge the candlelight and moonlight shaft around the table
-  as you play. `tableCameraDirector`'s CSS scale approximations are disabled
-  in this mode (a WAAPI transform on `.spread-wrap` would break the anchored
-  fixed positioning; the 3D scene supplies the response instead).
+  as you play, and a soft reading glow pools over the cloth so the play
+  surface reads as the stage. `tableCameraDirector`'s CSS scale
+  approximations are disabled in this mode (a WAAPI transform on
+  `.spread-wrap` would break the anchored fixed positioning; the 3D scene
+  supplies the response instead).
+- **Portrait gets its own composition, not desktop's reprojection**: a
+  dedicated portrait reading camera (`PORTRAIT_POSES.seated`) sits higher,
+  ~45° top-down, and closer, so the cloth dominates the tall frame — play
+  space over atmosphere, keeping the shaft's floor pool and the candle. It
+  has its own anchor set and world widths (`PORTRAIT_*`), and the approach
+  cinematic retargets its final keyframe to it so the reveal stays
+  continuous. Anchoring escalates in the tested order: the **spread anchors
+  on portrait** (`body.table3d-anchored`) while the **hand stays native**
+  (Test A — the winner: anchoring the hand shrank touch targets for no
+  compositional gain). The hand gate (`body.table3d-anchored-hand`) is
+  always attempted on landscape/desktop and remains available on portrait
+  behind `localStorage.tlr_t3d_hand_anchor_portrait = '1'` (Test B, with a
+  flatter portrait fan via `--track-*` overrides) — flip it and call
+  `window.__tlrT3dReproject()` to compare live. Either gate failing its fit
+  check falls back to SPv2's native layout over the 3D backdrop.
 - **Run-start approach (Phase 2, also landed)**: with the flag on, New
   Reading / Continue opens on a cinematic — you walk into the attic through
   its door, cross the room, and sit down at the table while the real game
@@ -252,10 +267,10 @@ added as data in `atticLayout.mjs` + entries in the attic prop catalog
 
 ## Known limitations / polish backlog
 
-- The hybrid's fit gate falls back to SPv2's native layout on narrow
-  portrait (the projected rows exceed the viewport at the seated camera's
-  FOV). A portrait-specific seated framing — camera higher and further back
-  so the whole table width fits — is the designed next step.
+- Portrait Test B (anchored hand) is parked, not polished: making it win
+  needs a wider portrait hand world-width plus real fan-geometry design so
+  cards neither shrink below comfortable touch size nor clip the dock.
+  Test A (anchored spread + native hand) is the shipping portrait default.
 - Entering the attic from the hybrid drops `table3d-live` immediately, so
   the painted background flashes beneath the attic fade for a beat. Holding
   the backdrop until the attic canvas is live would remove it.

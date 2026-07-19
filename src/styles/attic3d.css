@@ -162,11 +162,24 @@ body.table3d-live .spread-wrap::before {
 }
 
 /* The hand fan rests along the near edge of the cloth: dock + its gesture
-   zone shift and scale together around their pinned bottom edge. */
-html body.single-player-v2.generated-sheet-ready.table3d-live.table3d-anchored .handDock,
-html body.single-player-v2.generated-sheet-ready.table3d-live.table3d-anchored #handSwipeZone {
+   zone shift and scale together around their pinned bottom edge.
+   table3d-anchored-hand is set separately from the spread gate — always on
+   landscape/desktop when it fits, opt-in on portrait (Test B; see
+   tableAnchors.mjs). */
+html body.single-player-v2.generated-sheet-ready.table3d-live.table3d-anchored-hand .handDock,
+html body.single-player-v2.generated-sheet-ready.table3d-live.table3d-anchored-hand #handSwipeZone {
   transform: translateY(var(--t3d-hand-dy, 0px)) scale(var(--t3d-hand-scale, 1));
   transform-origin: 50% 100%;
+}
+
+/* Portrait Test B: when the hand is anchored on a tall screen, flatten the
+   fan (wider arc radius, tighter per-card angle) so the row hugs the near
+   cloth edge instead of towering. */
+@media (orientation: portrait) {
+  html body.single-player-v2.generated-sheet-ready.table3d-live.table3d-anchored-hand .handDock .hand {
+    --track-spacing: 4.6deg;
+    --track-radius: 940px;
+  }
 }
 
 /* First-visit controls hint (plain DOM, not in-canvas). */

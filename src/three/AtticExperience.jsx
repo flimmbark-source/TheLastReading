@@ -122,7 +122,13 @@ function TableAnchorProjector() {
       setTimeout(() => applyTableAnchors(camera, size), 450),
       setTimeout(() => applyTableAnchors(camera, size), 1400),
     ];
-    return () => timers.forEach(clearTimeout);
+    // Debug/tuning hook: re-run the projection on demand (e.g. after
+    // flipping the portrait hand-anchoring flag) without a resize.
+    window.__tlrT3dReproject = () => applyTableAnchors(camera, size);
+    return () => {
+      timers.forEach(clearTimeout);
+      delete window.__tlrT3dReproject;
+    };
   }, [camera, size]);
   useEffect(() => () => clearTableAnchors(), []);
   return null;
