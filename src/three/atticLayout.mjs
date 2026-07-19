@@ -17,6 +17,11 @@ export const TABLE = {
   radius: 0.85,
 };
 
+// Shared world-space centre for the playable reading surface. The seated
+// camera and the DOM spread both target this point so moving the reading on
+// the cloth cannot leave the camera looking at the old position.
+export const READING_CENTER = [0, TABLE.topY + 0.01, TABLE.position[2]];
+
 export const CHAIR = {
   position: [0, 0, 1.62],
   facing: Math.PI, // seat faces -Z, toward the table
@@ -26,13 +31,13 @@ export const CHAIR = {
 //
 // The seated pose doubles as the hybrid reading camera: it is deliberately
 // more top-down than a natural sitting eye-line so the cloth offers enough
-// usable acreage for the five SPv2 spread slots plus the hand fan (the
-// approach cinematic, the attic sit-down, and the seated table mode all end
-// on this exact pose, so the cross-fade into the live table is continuous).
+// usable acreage for the five SPv2 spread slots plus the hand fan. The camera
+// has moved back with the reading centre, keeping the middle of the cloth in
+// the middle of the screen instead of chasing the old far-table anchor.
 export const POSES = {
   seated: {
-    eye: [0, 1.46, 1.28],
-    look: [0, 0.7, 0.05],
+    eye: [0, 1.46, 1.58],
+    look: [...READING_CENTER],
   },
   standing: {
     eye: [0, 1.58, 2.05],
@@ -48,8 +53,8 @@ export const POSES = {
 // final keyframe to this pose on portrait so the reveal stays continuous.
 export const PORTRAIT_POSES = {
   seated: {
-    eye: [0, 1.78, 1.05],
-    look: [0, 0.74, 0.0],
+    eye: [0, 1.78, 1.4],
+    look: [...READING_CENTER],
   },
 };
 
@@ -131,7 +136,7 @@ export const APPROACH_KEYFRAMES = [
   { t: 3.9, eye: [0, 1.58, 2.05], look: [0, 1.05, 0.1] },
   // Ends exactly on POSES.seated so the reveal of the live hybrid table
   // continues from the same camera.
-  { t: 5.2, eye: [0, 1.46, 1.28], look: [0, 0.7, 0.05] },
+  { t: 5.2, eye: POSES.seated.eye, look: POSES.seated.look },
 ];
 
 // ── hybrid seated-table anchors ──────────────────────────────────────────
@@ -141,12 +146,12 @@ export const APPROACH_KEYFRAMES = [
 // sit ON the 3D table instead of at viewport percentages. Span pairs are
 // used to derive px-per-meter scales at each row's depth.
 export const TABLE_ANCHORS = {
-  'spread-1': [-0.62, 0.79, 0.08],
-  'spread-2': [-0.31, 0.79, 0.02],
-  'spread-3': [0, 0.79, 0.0],
-  'spread-4': [0.31, 0.79, 0.02],
-  'spread-5': [0.62, 0.79, 0.08],
-  'spread-c': [0, 0.79, 0.04],
+  'spread-1': [-0.62, READING_CENTER[1], READING_CENTER[2] + 0.04],
+  'spread-2': [-0.31, READING_CENTER[1], READING_CENTER[2] - 0.02],
+  'spread-3': [0, READING_CENTER[1], READING_CENTER[2] - 0.04],
+  'spread-4': [0.31, READING_CENTER[1], READING_CENTER[2] - 0.02],
+  'spread-5': [0.62, READING_CENTER[1], READING_CENTER[2] + 0.04],
+  'spread-c': [...READING_CENTER],
   discard: [-0.82, 0.79, 0.42],
   purge: [0.82, 0.79, 0.42],
   'hand-c': [0, 0.79, 0.95],
@@ -161,17 +166,17 @@ export const SPREAD_WORLD_WIDTH = 1.0; // five slots across the mid cloth
 export const HAND_WORLD_WIDTH = 0.52; // fan resting along the near edge
 
 // Portrait rebuilds the composition rather than reprojecting desktop's:
-// the spread rides higher on the cloth and spans it more fully (SPv2's
-// mobile slots already overlap, so a tighter world span still reads), and
-// the hand row hugs the near edge to close the vertical gap.
+// the spread spans less of the narrow cloth, while its centre remains the
+// same physical table centre as landscape. The hand row hugs the near edge
+// to close the vertical gap.
 export const PORTRAIT_TABLE_ANCHORS = {
   ...TABLE_ANCHORS,
-  'spread-1': [-0.42, 0.79, 0.02],
-  'spread-2': [-0.21, 0.79, -0.02],
-  'spread-3': [0, 0.79, -0.04],
-  'spread-4': [0.21, 0.79, -0.02],
-  'spread-5': [0.42, 0.79, 0.02],
-  'spread-c': [0, 0.79, -0.02],
+  'spread-1': [-0.42, READING_CENTER[1], READING_CENTER[2] + 0.04],
+  'spread-2': [-0.21, READING_CENTER[1], READING_CENTER[2]],
+  'spread-3': [0, READING_CENTER[1], READING_CENTER[2] - 0.02],
+  'spread-4': [0.21, READING_CENTER[1], READING_CENTER[2]],
+  'spread-5': [0.42, READING_CENTER[1], READING_CENTER[2] + 0.04],
+  'spread-c': [...READING_CENTER],
   'hand-c': [0, 0.79, 0.82],
 };
 export const PORTRAIT_SPREAD_WORLD_WIDTH = 0.9;
