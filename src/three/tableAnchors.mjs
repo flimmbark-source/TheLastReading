@@ -32,10 +32,9 @@ import * as THREE from 'three';
 import {
   TABLE_ANCHORS,
   PORTRAIT_TABLE_ANCHORS,
-  SPREAD_WORLD_WIDTH,
   HAND_WORLD_WIDTH,
-  PORTRAIT_SPREAD_WORLD_WIDTH,
   PORTRAIT_HAND_WORLD_WIDTH,
+  CLOTH_FAR_RIM,
 } from './atticLayout.mjs';
 
 const ANCHORED_CLASS = 'table3d-anchored';
@@ -97,7 +96,6 @@ export function applyTableAnchors(camera, size) {
   const body = document.body;
   const portrait = size.width < size.height;
   const anchors = portrait ? PORTRAIT_TABLE_ANCHORS : TABLE_ANCHORS;
-  const spreadWorldWidth = portrait ? PORTRAIT_SPREAD_WORLD_WIDTH : SPREAD_WORLD_WIDTH;
   const handWorldWidth = portrait ? PORTRAIT_HAND_WORLD_WIDTH : HAND_WORLD_WIDTH;
 
   // The projector can run before the first render tick; make sure the
@@ -112,6 +110,11 @@ export function applyTableAnchors(camera, size) {
     setVar(style, `--t3d-${name}-y`, `${projected.y.toFixed(1)}px`);
   }
 
+  // Real geometric reference for the rim-overlap acceptance check: the
+  // screen Y of the cloth's far rim. Card tops belong below this line.
+  const rim = projectPoint(camera, size, CLOTH_FAR_RIM);
+  if (rim) setVar(style, '--t3d-cloth-rim-y', `${rim.y.toFixed(1)}px`);
+
   // Strip our transforms and flush styles so all rects below are natural.
   body.classList.remove(ANCHORED_CLASS, HAND_CLASS);
   void body.offsetWidth;
@@ -119,14 +122,20 @@ export function applyTableAnchors(camera, size) {
   let spreadFits = false;
   let handFits = false;
 
+  // The spread is repositioned onto the table, never resized: these are the
+  // real SPv2 DOM cards, and their native size (already tuned by SPv2's own
+  // responsive CSS) is what "looks like SPv2" means. --t3d-spread-scale is
+  // fixed at 1 rather than derived from projecting SPREAD_WORLD_WIDTH, so
+  // the fit-gate below checks only whether the native-size row clears the
+  // viewport at its new, centered screen position.
   const spread = document.getElementById('spread');
   const slots = spread ? [...spread.querySelectorAll('.slot')] : [];
   const slotRect = unionRect(slots);
-  const spreadSpanPx = projectedSpan(camera, size, anchors['spread-c'], spreadWorldWidth);
-  if (slotRect && spreadSpanPx > 0) {
-    const scale = THREE.MathUtils.clamp(spreadSpanPx / slotRect.width, 0.45, 1.6);
-    setVar(style, '--t3d-spread-scale', scale.toFixed(4));
-    spreadFits = slotRect.width * scale <= size.width * 0.97;
+  const spreadCenter = projectPoint(camera, size, anchors['spread-c']);
+  if (slotRect && spreadCenter) {
+    setVar(style, '--t3d-spread-scale', '1');
+    const halfWidth = slotRect.width / 2;
+    spreadFits = spreadCenter.x - halfWidth >= 0 && spreadCenter.x + halfWidth <= size.width;
   }
 
   // Controlled escalation: the hand only anchors where it has room —

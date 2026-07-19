@@ -145,6 +145,12 @@ export const APPROACH_KEYFRAMES = [
 // published as CSS variables (--t3d-*) so the real SPv2 DOM spread and hand
 // sit ON the 3D table instead of at viewport percentages. Span pairs are
 // used to derive px-per-meter scales at each row's depth.
+// The cloth's far rim (center) — projected as --t3d-cloth-rim-y so the
+// hybrid's rim-overlap check (scripts/validate-attic3d-mobile-states.mjs)
+// has a real geometric reference instead of an eyeballed screenshot. The
+// spread row's card tops should stay below this line.
+export const CLOTH_FAR_RIM = [0, TABLE.topY, TABLE.position[2] - TABLE.radius];
+
 export const TABLE_ANCHORS = {
   'spread-1': [-0.62, READING_CENTER[1], READING_CENTER[2] + 0.04],
   'spread-2': [-0.31, READING_CENTER[1], READING_CENTER[2] - 0.02],
@@ -157,12 +163,9 @@ export const TABLE_ANCHORS = {
   'hand-c': [0, 0.79, 0.95],
 };
 
-// World widths the DOM rows are scaled to occupy at their anchor depth.
-// Tuned against the seated camera: tarot-card scale on the cloth, with clear
-// margins to the Discard/Purge rail and no spread/hand overlap. The hand
-// renders moderately larger than the spread (it is nearer), but softer than
-// strict perspective so it never eats the tabletop.
-export const SPREAD_WORLD_WIDTH = 1.0; // five slots across the mid cloth
+// World width the hand DOM row is scaled to occupy at its anchor depth (only
+// used where hand-anchoring is engaged — Test B / landscape). The spread is
+// never scaled: it is repositioned only, at its native SPv2 size.
 export const HAND_WORLD_WIDTH = 0.52; // fan resting along the near edge
 
 // Portrait rebuilds the composition rather than reprojecting desktop's:
@@ -179,7 +182,6 @@ export const PORTRAIT_TABLE_ANCHORS = {
   'spread-c': [...READING_CENTER],
   'hand-c': [0, 0.79, 0.82],
 };
-export const PORTRAIT_SPREAD_WORLD_WIDTH = 0.9;
 export const PORTRAIT_HAND_WORLD_WIDTH = 0.5;
 
 // Solid clutter the player cannot walk through: [x, z, radius].
