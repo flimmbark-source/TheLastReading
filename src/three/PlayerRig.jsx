@@ -168,7 +168,7 @@ export function PlayerRig() {
       left: false,
       firstMoveSeen: false,
       autoWalk: null, // { x, z, interactId } while walking to a tapped point
-      stallT: 0,
+      stallSince: 0, // performance.now() when progress toward the target stalled (0 = moving)
       bestDist: Infinity, // closest we have gotten to the auto-walk target
       completed: false,
     };
@@ -182,7 +182,7 @@ export function PlayerRig() {
 
   const setAutoWalk = target => {
     rig.current.autoWalk = target;
-    rig.current.stallT = 0;
+    rig.current.stallSince = 0;
     rig.current.bestDist = Infinity;
     if (autoWalkRef) {
       autoWalkRef.current = target ? { active: true, x: target.x, z: target.z } : { active: false, x: 0, z: 0 };
@@ -687,13 +687,16 @@ function stepMovement(r, delta, reducedMotion, interactables, setFocusId, setAut
         // sliding along one without ever arriving. Progress (distance
         // shrinking), not raw speed, is the test: grazing clutter still
         // closes on the goal and is allowed to complete, but a genuine
-        // block gives up after ~1.1s instead of walking forever.
+        // block gives up after ~1.2s. Timed in real wall-clock (not
+        // accumulated frame delta, which is capped per frame): a low-FPS
+        // device should bail after the same ~1.2s, not drag it out.
         if (dist < r.bestDist - 0.05) {
           r.bestDist = dist;
-          r.stallT = 0;
+          r.stallSince = 0;
         } else {
-          r.stallT += delta;
-          if (r.stallT > 1.1) setAutoWalk(null);
+          const nowMs = performance.now();
+          if (!r.stallSince) r.stallSince = nowMs;
+          else if (nowMs - r.stallSince > 1200) setAutoWalk(null);
         }
       }
     }
