@@ -27,12 +27,18 @@ small adapter object and the store, honoring the repo's standing boundary:
 
 ## What is already working on this branch (Phase 1)
 
-An opt-in, fully walkable 3D attic, feature-complete with the 2D attic:
+A fully walkable 3D attic, feature-complete with the 2D attic — and **the
+default implementation** as of this branch:
 
-- **Flag**: `?attic3d=1` in the URL, or `localStorage.tlr_attic_3d = '1'`
-  (console helper: `tlrSetAttic3d(true)`). Flag off → nothing loads, nothing
-  changes. Mount failure (no WebGL, chunk error) → silent fallback to the
-  classic 2D attic.
+- **Flag**: on by default. `?attic3d=0` in the URL, or
+  `localStorage.tlr_attic_3d = '0'` (console helper: `tlrSetAttic3d(false)`)
+  is the kill-switch back to the classic 2D attic and painted table;
+  `?attic3d=1` still force-enables over a stored '0'. Mount failure (no
+  WebGL, chunk error) → silent fallback to the classic 2D attic. While the
+  lazy chunk loads, `body.attic3d-pending` suppresses the classic attic art
+  (and the painted SPv2 background on the attic→table return) so the old 2D
+  scene never flashes through; every failure path removes the class,
+  restoring the classic visuals.
 - **Sitting and standing**: the scene mounts seated at the 3D reading table —
   matching the table UI you just left — and the camera stands up over ~1.7s.
   Leaving happens by walking back to the chair and sitting down: the camera
@@ -40,14 +46,22 @@ An opt-in, fully walkable 3D attic, feature-complete with the 2D attic:
   attic→table cross-fade back to the 2D table UI. `prefers-reduced-motion`
   skips both camera moves.
 - **A real room to move around in**: first-person WASD/arrow movement with
-  drag-to-look on desktop; on touch the left 45% of the screen is a virtual
-  move stick and the rest drag-look. Collision keep-outs for the table and
-  clutter, clamped room bounds, subtle head-bob.
+  drag-to-look on desktop. On touch the whole screen looks — there is no
+  virtual stick eating glass or splitting it into invisible zones;
+  tap-to-move covers locomotion. Touch look sensitivity scales with the
+  screen (a full-width swipe turns ~155°), and a released swipe carries
+  flick inertia (decaying spin, grab the glass to stop it dead), so turning
+  away from a wall you are stuck facing is one flick instead of repeated
+  sawing. Only the first finger down steers, so a second resting finger
+  can't fight the camera. Collision keep-outs for the table and clutter,
+  clamped room bounds, subtle head-bob.
 - **Tap/click-to-move**: pressing a spot on the floor auto-walks there (a
   gold ring marks the destination); pressing an interactable — from any
   distance — walks into range, turns to face it, and uses it, so the whole
   attic is playable one-handed on a phone or point-and-click on desktop.
-  Any manual input (WASD or the stick) cancels an auto-walk instantly.
+  The screen-space pick radius is 96px on touch (64px mouse) so items don't
+  demand pixel-accurate presses. Any manual WASD input cancels an auto-walk
+  instantly.
 - **The game inside the world**: the three rummage props reuse their existing
   PNG art on planes (unsearched → searched states), and interacting with them
   drives the *same* `atticFlow` code path — pickup card, archive unlock,
@@ -104,31 +118,40 @@ An opt-in, fully walkable 3D attic, feature-complete with the 2D attic:
   flatter portrait fan via `--track-*` overrides) — flip it and call
   `window.__tlrT3dReproject()` to compare live. Either gate failing its fit
   check falls back to SPv2's native layout over the 3D backdrop.
-- **Run-start approach (Phase 2, also landed)**: with the flag on, New
-  Reading / Continue opens on a cinematic — you walk into the attic through
-  its door, cross the room, and sit down at the table while the real game
-  boots beneath the overlay; the overlay then cross-fades into the finished
-  2D table UI. Any key or tap skips the walk. The overlay is gated on the
-  boot promise (it never reveals a half-built table), aborts instantly if
-  the player lands back on the main menu or the boot throws, carries a 14s
-  safety ceiling so a stalled WebGL context can never trap the player, and
-  is skipped entirely under `prefers-reduced-motion` or when the chunk/WebGL
-  is unavailable. Timeline data lives in `APPROACH_KEYFRAMES`
+- **Run-start approach (Phase 2, also landed)**: New Reading / Continue
+  opens on a cinematic — you walk into the attic through its door, cross the
+  room, and sit down at the table while the real game boots beneath the
+  overlay. Any key or tap skips the walk. The handoff is **single-canvas**:
+  once the cinematic and the boot both settle, the same root/WebGL context
+  re-renders in `'table'` mode and the container morphs in place from opaque
+  overlay into the pointer-transparent seated backdrop
+  (`atticEntry.convertToSeated`), covered by a brief plain-DOM veil — no
+  second canvas, no duplicate shader compile, which was the sit-down hitch.
+  The chunk itself is prefetched from an idle callback while the player is
+  still reading the menu. The overlay is gated on the boot promise (it never
+  reveals a half-built table), aborts instantly if the player lands back on
+  the main menu or the boot throws, carries a 14s safety ceiling so a
+  stalled WebGL context can never trap the player, and is skipped (straight
+  to the seated backdrop) under `prefers-reduced-motion` or when the
+  chunk/WebGL is unavailable. Timeline data lives in `APPROACH_KEYFRAMES`
   (src/three/atticLayout.mjs); the flow seam is
   `src/app/tableApproachFlow.mjs`, installed right after `installMainMenu`.
 - **Bundle discipline**: React + three + fiber + the scene land in one lazy
-  `atticEntry` chunk (~1.1 MB minified / ~300 KB gzip) fetched only when the
-  flag is on and the attic (or a run start) needs it. `menuBoot.js` is
-  unchanged (28 KB).
+  `atticEntry` chunk (~1.1 MB minified / ~300 KB gzip) — never part of the
+  menu boot. With 3D on (the default) it is warmed from an idle callback on
+  the menu and otherwise fetched on first need; with the kill-switch off it
+  is never fetched at all. `menuBoot.js` is unchanged (28 KB).
 
 ### Files
 
 ```
 src/three/
   atticEntry.mjs      mount/unmount seams (plain JS, no JSX): mountAttic3D for
-                      the attic, mountTableApproach for the run-start overlay.
-                      WebGL check, hard-exit/menu observers, window.__tlrAttic3d
-                      + window.__tlrTable3d debug handles
+                      the attic, mountTableApproach for the run-start overlay
+                      (which converts in place to the seated backdrop),
+                      mountSeatedTable for the attic-return path. WebGL check,
+                      hard-exit/menu observers, window.__tlrAttic3d +
+                      window.__tlrTable3d + window.__tlrTableSeat debug handles
   useTlrStore.mjs     useSyncExternalStore bridge onto window.tlrStore
   atticLayout.mjs     room dimensions, table/chair, prop stations, camera poses,
                       approach keyframes, collision keep-outs — the one place
@@ -143,8 +166,9 @@ src/three/
   canvasTextures.mjs  runtime canvas textures (prompt tags, glows, ring, shaft)
   tableAnchors.mjs    world-anchor -> CSS-variable projector for the hybrid
                       seated table (+ the table3d-anchored fit gate)
-src/app/tableApproachFlow.mjs  wraps New Reading/Continue with the approach,
-                      then mounts the seated backdrop
+src/app/tableApproachFlow.mjs  wraps New Reading/Continue with the approach
+                      (which converts itself into the seated backdrop) +
+                      idle-prefetches the chunk from the menu
 src/styles/attic3d.css  canvas layering, DOM handovers, hint, approach
                       overlay, hybrid seated-table overrides (incl. the
                       spv2.tokens-layer !important counter to SPv2's mobile
@@ -162,12 +186,13 @@ CSS entry), `package.json` (deps + script).
 ```sh
 npm install
 npm run dev
-# open http://localhost:8080/game.html?attic3d=1
+# open http://localhost:8080/game.html   (3D is on by default)
 # New Reading plays the walk-in-and-sit approach;
 # finish a reading (or press Shift+A) for the walkable attic
+# ?attic3d=0 for the classic 2D presentation
 ```
 
-Headless verification (also exercises the flag-off path):
+Headless verification (also exercises the ?attic3d=0 kill-switch path):
 
 ```sh
 npm run test:attic3d
@@ -271,9 +296,14 @@ added as data in `atticLayout.mjs` + entries in the attic prop catalog
   needs a wider portrait hand world-width plus real fan-geometry design so
   cards neither shrink below comfortable touch size nor clip the dock.
   Test A (anchored spread + native hand) is the shipping portrait default.
-- Entering the attic from the hybrid drops `table3d-live` immediately, so
-  the painted background flashes beneath the attic fade for a beat. Holding
-  the backdrop until the attic canvas is live would remove it.
+- The attic↔table transitions no longer flash the painted 2D art
+  (`attic3d-pending`/`attic3d-live` keep the body background suppressed
+  across both fades), but they pass over flat dark rather than a live 3D
+  view: the seated backdrop and the walkable attic never overlap, so the
+  beat between them is a black interstitial. Keeping one canvas alive
+  across the attic transition (as the run-start approach now does via
+  `convertToSeated`) is the polish upgrade if the dark beat ever reads as a
+  hitch.
 - Anchor projection re-runs on mount, resize, and two settle timers; if the
   hand's card count changes the fan span (draws/discards), the scale is only
   corrected on the next re-apply. Per-deal re-projection is a trivial add if

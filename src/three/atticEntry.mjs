@@ -21,7 +21,53 @@ const SEAT_ID = 'table3dSeat';
 const HINT_ID = 'attic3dHint';
 const HINT_KEY = 'tlr_attic3d_hint_seen';
 const LIVE_CLASS = 'attic3d-live';
+const PENDING_CLASS = 'attic3d-pending';
 const SEAT_CLASS = 'table3d-live';
+
+// Seated-backdrop plumbing shared by mountSeatedTable (attic-return path)
+// and the approach overlay's in-place conversion: one unmount contract and
+// one "leave when the reading leaves" observer.
+function createSeatedHandle(container, root) {
+  let unmounted = false;
+  let observer = null;
+  const handle = {
+    mounted: true,
+    api: null,
+    unmount() {
+      if (unmounted) return;
+      unmounted = true;
+      handle.mounted = false;
+      observer?.disconnect();
+      document.body.classList.remove(SEAT_CLASS);
+      clearTableAnchors();
+      try {
+        root.unmount();
+      } catch (error) {
+        console.warn('The Last Reading: seated table unmount failed.', error);
+      }
+      container.remove();
+      if (window.__tlrTableSeat === handle) delete window.__tlrTableSeat;
+    },
+    // The backdrop belongs to the seated reading only: leave for the attic,
+    // the menu, or another mode and it gets out of the way. (The attic flow
+    // remounts it on the way back to the table.)
+    observe() {
+      observer = new MutationObserver(() => {
+        const cls = document.body.classList;
+        const elsewhere =
+          cls.contains('main-menu-active') ||
+          cls.contains('mode-attic') ||
+          cls.contains('mode-to-attic') ||
+          cls.contains('mode-adventure') ||
+          cls.contains('mp-game-active') ||
+          !cls.contains('single-player-v2');
+        if (elsewhere) handle.unmount();
+      });
+      observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    },
+  };
+  return handle;
+}
 
 function webglAvailable() {
   try {
@@ -35,7 +81,7 @@ function webglAvailable() {
 function controlsHintHtml() {
   const coarse = window.matchMedia?.('(pointer: coarse)')?.matches;
   if (coarse) {
-    return '<b>You stand up from the table.</b><span>Tap a spot or a glowing object to walk to it, or drag the left side to walk and the right side to look. Sit back down at the chair when you are done.</span>';
+    return '<b>You stand up from the table.</b><span>Tap anywhere to walk there — tap a glowing object to use it. Drag to look around; flick to turn fast. Sit back down at the chair when you are done.</span>';
   }
   return '<b>You stand up from the table.</b><span>Click a spot or a glowing object to walk to it, or use WASD and drag the mouse to look. Press E to search what you face. Sit back down at the chair when you are done.</span>';
 }
@@ -110,7 +156,7 @@ export function mountAttic3D(adapter) {
       handle.mounted = false;
       observer?.disconnect();
       hint?.el?.remove();
-      document.body.classList.remove(LIVE_CLASS);
+      document.body.classList.remove(LIVE_CLASS, PENDING_CLASS);
       try {
         root.unmount();
       } catch (error) {
@@ -138,6 +184,7 @@ export function mountAttic3D(adapter) {
   }
 
   document.body.classList.add(LIVE_CLASS);
+  document.body.classList.remove(PENDING_CLASS);
   hint = showControlsHint(scene);
   observer = observeHardExit(() => handle.unmount());
   window.__tlrAttic3d = handle;
@@ -175,25 +222,25 @@ function approachAdapterStub() {
 }
 
 export function mountTableApproach({ onDone } = {}) {
-  if (document.getElementById(APPROACH_ID) || !webglAvailable()) return null;
+  if (document.getElementById(APPROACH_ID) || document.getElementById(SEAT_ID) || !webglAvailable()) return null;
 
   const container = document.createElement('div');
   container.id = APPROACH_ID;
   document.body.appendChild(container);
   const root = createRoot(container);
+  const adapter = approachAdapterStub();
 
   let disposed = false;
+  let converted = false;
   let sequenceDone = false;
-  let gate = null; // optional promise the fade waits on (the boot beneath)
-  let fadeTimer = 0;
+  let gate = null; // optional promise the handoff waits on (the boot beneath)
   let safetyTimer = 0;
   let observer = null;
 
   const dispose = () => {
-    if (disposed) return;
+    if (disposed || converted) return;
     disposed = true;
     handle.mounted = false;
-    clearTimeout(fadeTimer);
     clearTimeout(safetyTimer);
     observer?.disconnect();
     try {
@@ -206,18 +253,53 @@ export function mountTableApproach({ onDone } = {}) {
     onDone?.();
   };
 
-  const fadeOut = () => {
-    if (disposed || container.classList.contains('fade')) return;
-    container.classList.add('fade');
-    fadeTimer = setTimeout(dispose, 750);
+  // The performance-critical handoff: instead of fading this overlay out and
+  // mounting a SECOND canvas for the seated backdrop (two live WebGL
+  // contexts + duplicate shader compiles right as the reading begins — the
+  // sit-down hitch), the same root/context re-renders in table mode and the
+  // container morphs from opaque overlay to pointer-transparent backdrop. A
+  // brief plain-DOM veil covers the z-order swap, no canvas work involved.
+  const convertToSeated = () => {
+    if (disposed || converted) return;
+    converted = true;
+    clearTimeout(safetyTimer);
+    observer?.disconnect();
+
+    const veil = document.createElement('div');
+    veil.className = 'table3d-reveal-veil';
+    document.body.appendChild(veil);
+    requestAnimationFrame(() => requestAnimationFrame(() => veil.classList.add('out')));
+    setTimeout(() => veil.remove(), 800);
+
+    container.id = SEAT_ID;
+    container.classList.remove('fade');
+
+    const seatHandle = createSeatedHandle(container, root);
+    root.render(
+      createElement(AtticExperience, {
+        adapter,
+        mode: 'table',
+        registerApi: api => {
+          seatHandle.api = api;
+        },
+      }),
+    );
+    document.body.classList.add(SEAT_CLASS);
+    document.body.classList.remove(PENDING_CLASS);
+    seatHandle.observe();
+    window.__tlrTableSeat = seatHandle;
+
+    handle.mounted = false;
+    if (window.__tlrTable3d === handle) delete window.__tlrTable3d;
+    onDone?.();
   };
 
   const maybeFinish = () => {
     if (!sequenceDone) return;
     if (gate) {
-      gate.finally(fadeOut);
+      gate.finally(convertToSeated);
     } else {
-      fadeOut();
+      convertToSeated();
     }
   };
 
@@ -239,7 +321,7 @@ export function mountTableApproach({ onDone } = {}) {
   try {
     root.render(
       createElement(AtticExperience, {
-        adapter: approachAdapterStub(),
+        adapter,
         mode: 'approach',
         onSequenceComplete: () => {
           sequenceDone = true;
@@ -265,7 +347,7 @@ export function mountTableApproach({ onDone } = {}) {
 
   // Absolute ceiling so a stalled WebGL context can never trap the player
   // behind an opaque overlay.
-  safetyTimer = setTimeout(fadeOut, 14000);
+  safetyTimer = setTimeout(convertToSeated, 14000);
 
   window.__tlrTable3d = handle;
   return handle;
@@ -290,29 +372,7 @@ export function mountSeatedTable() {
   container.id = SEAT_ID;
   document.body.appendChild(container);
   const root = createRoot(container);
-
-  let unmounted = false;
-  let observer = null;
-
-  const handle = {
-    mounted: true,
-    api: null,
-    unmount() {
-      if (unmounted) return;
-      unmounted = true;
-      handle.mounted = false;
-      observer?.disconnect();
-      document.body.classList.remove(SEAT_CLASS);
-      clearTableAnchors();
-      try {
-        root.unmount();
-      } catch (error) {
-        console.warn('The Last Reading: seated table unmount failed.', error);
-      }
-      container.remove();
-      if (window.__tlrTableSeat === handle) delete window.__tlrTableSeat;
-    },
-  };
+  const handle = createSeatedHandle(container, root);
 
   try {
     root.render(
@@ -331,23 +391,9 @@ export function mountSeatedTable() {
   }
 
   document.body.classList.add(SEAT_CLASS);
+  document.body.classList.remove(PENDING_CLASS);
 
-  // The backdrop belongs to the seated reading only: leave for the attic,
-  // the menu, or another mode and it gets out of the way. (The attic flow
-  // remounts it on the way back to the table.)
-  observer = new MutationObserver(() => {
-    const cls = document.body.classList;
-    const elsewhere =
-      cls.contains('main-menu-active') ||
-      cls.contains('mode-attic') ||
-      cls.contains('mode-to-attic') ||
-      cls.contains('mode-adventure') ||
-      cls.contains('mp-game-active') ||
-      !cls.contains('single-player-v2');
-    if (elsewhere) handle.unmount();
-  });
-  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-
+  handle.observe();
   window.__tlrTableSeat = handle;
   return handle;
 }

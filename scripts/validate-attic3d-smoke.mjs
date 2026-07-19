@@ -1,5 +1,6 @@
-// Headless smoke for the opt-in react-three-fiber single-player layer
-// (?attic3d=1): the run-start approach cinematic and the walkable 3D attic.
+// Headless smoke for the react-three-fiber single-player layer (on by
+// default; ?attic3d=0 is the kill-switch): the run-start approach cinematic
+// and the walkable 3D attic.
 //
 // Drives the full loop the feature promises: boot a reading through the
 // approach overlay (and skip it), enter the attic, let the stand-up
@@ -67,7 +68,9 @@ async function newGamePage(browser, { attic3d }) {
       window.localStorage.setItem('tlr_attic_tutored_obals', '1');
     } catch {}
   });
-  await page.goto(`${baseUrl}/game.html${attic3d ? '?attic3d=1' : ''}`, { waitUntil: 'load' });
+  // 3D is on by default now: the on-pass uses the plain URL to prove the
+  // default path, the off-pass exercises the ?attic3d=0 kill-switch.
+  await page.goto(`${baseUrl}/game.html${attic3d ? '' : '?attic3d=0'}`, { waitUntil: 'load' });
   await page.waitForSelector('button[onclick="tlrMainMenuNewGame()"]');
   await page.click('button[onclick="tlrMainMenuNewGame()"]');
   return { page, pageErrors };
@@ -101,7 +104,7 @@ async function main() {
     await waitForServer();
     mkdirSync('artifacts', { recursive: true });
 
-    // ── flag off: no approach overlay, and the classic attic stays classic ──
+    // ── kill-switch (?attic3d=0): no approach overlay, classic attic stays classic ──
     {
       const { page, pageErrors } = await newGamePage(browser, { attic3d: false });
       await finishBoot(page);

@@ -3,7 +3,7 @@
 // non-interactive clutter. Low-poly primitives + flat Lambert shading on
 // purpose — the game's ps1aesthetic direction, not a budget shortcut.
 
-import { useContext, useMemo, useRef } from 'react';
+import { useContext, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { AtticContext, cueEnergy } from './AtticExperience.jsx';

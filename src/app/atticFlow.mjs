@@ -84,18 +84,21 @@ export function installAtticFlow(target = window){
     dismissAtticTutorial();searched[id]=true;renderCandles();tagNear(el,o.verb);dustNear(el);if(el){el.classList.add('spend');setTimeout(function(){el.classList.remove('spend')},560);}setTimeout(function(){renderObjects();showPickup(o);},430);
   }
   // ── 3D attic (react-three-fiber) ─────────────────────────────────────
-  // Opt-in walkable attic. The lazy chunk (React + three + the scene) only
-  // ever loads when the flag is on, and every game behavior — rummage rules,
-  // pickups, obals, archive unlocks, the return-to-table transition — still
-  // runs through this module via the adapter below. On any failure (no
-  // WebGL, chunk failed to load) the classic 2D attic continues untouched.
+  // The walkable attic IS the attic now: on by default, with ?attic3d=0 (or
+  // localStorage tlr_attic_3d='0' via tlrSetAttic3d(false)) as the
+  // kill-switch back to the classic 2D scene. The lazy chunk (React + three
+  // + the scene) still only loads when actually needed, and every game
+  // behavior — rummage rules, pickups, obals, archive unlocks, the
+  // return-to-table transition — still runs through this module via the
+  // adapter below. On any failure (no WebGL, chunk failed to load) the
+  // classic 2D attic continues untouched.
   function attic3dEnabled(){
     try{
       const q=new URLSearchParams(target.location.search||'');
-      if(q.get('attic3d')==='1')return true;
       if(q.get('attic3d')==='0')return false;
-      return target.localStorage.getItem('tlr_attic_3d')==='1';
-    }catch(e){return false}
+      if(q.get('attic3d')==='1')return true;
+      return target.localStorage.getItem('tlr_attic_3d')!=='0';
+    }catch(e){return true}
   }
   let attic3d=null;
   function maybeMountAttic3d(){
@@ -103,9 +106,14 @@ export function installAtticFlow(target = window){
     // our back; drop the dead handle so the next visit can mount again.
     if(attic3d&&attic3d.mounted===false)attic3d=null;
     if(!attic3dEnabled()||attic3d)return;
+    // Suppress the classic attic's big background art immediately so it is
+    // never fetched/painted during the beat before the 3D chunk mounts; the
+    // mount promotes this to attic3d-live, and any failure path below (or
+    // atticEntry's own fallbacks) removes it to restore the 2D scene.
+    document.body.classList.add('attic3d-pending');
     attic3d={pending:true};
     import('../three/atticEntry.mjs').then(function(mod){
-      if(!attic3d||!inAttic){attic3d=null;return}
+      if(!attic3d||!inAttic){attic3d=null;document.body.classList.remove('attic3d-pending');return}
       attic3d=mod.mountAttic3D({
         objects:objects,
         note:note,
@@ -121,8 +129,10 @@ export function installAtticFlow(target = window){
         },
         leave:leave,
       })||null;
+      if(!attic3d)document.body.classList.remove('attic3d-pending');
     }).catch(function(err){
       attic3d=null;
+      document.body.classList.remove('attic3d-pending');
       console.warn('The Last Reading 3D attic failed to load; using the classic attic.',err);
     });
   }
@@ -159,11 +169,18 @@ export function installAtticFlow(target = window){
       unmountAttic3d();
       document.body.classList.remove('mode-to-table','mode-table-return','mode-return-hard-hide');document.body.classList.add('mode-reading');if(typeof tlrArchitectureSync==='function')tlrArchitectureSync();
       // Back at the table with the flag on: swap in the hybrid seated
-      // backdrop (same chunk, already cached from the attic mount).
+      // backdrop (same chunk, already cached from the attic mount). Keep the
+      // painted SPv2 background suppressed (attic3d-pending) across the gap
+      // between the attic unmount above and the seat mount so the old 2D art
+      // never flashes through; mountSeatedTable clears it on success, the
+      // paths below clear it on any bail-out or failure.
       if(attic3dEnabled()&&document.body.classList.contains('single-player-v2')){
+        document.body.classList.add('attic3d-pending');
         import('../three/atticEntry.mjs').then(function(mod){
-          if(!inAttic&&document.body.classList.contains('single-player-v2'))mod.mountSeatedTable&&mod.mountSeatedTable();
-        }).catch(function(){});
+          let seat=null;
+          if(!inAttic&&document.body.classList.contains('single-player-v2'))seat=mod.mountSeatedTable&&mod.mountSeatedTable();
+          if(!seat)document.body.classList.remove('attic3d-pending');
+        }).catch(function(){document.body.classList.remove('attic3d-pending');});
       }
       if(showArchivesAfterReturn&&typeof target.maybeShowArchivesTutorial==='function')target.maybeShowArchivesTutorial();
     },1080);
@@ -218,7 +235,11 @@ export function installAtticFlow(target = window){
   }
 
   function positionAtticView(){const pan=document.getElementById('atticPan');if(!pan)return;requestAnimationFrame(function(){const maxX=Math.max(0,pan.scrollWidth-pan.clientWidth);pan.scrollLeft=Math.round(maxX*.34);pan.scrollTop=0;});}
-  function showPanHint(){if(target.innerWidth>980)return;try{if(target.localStorage.getItem('tlr_attic_pan_hint'))return;target.localStorage.setItem('tlr_attic_pan_hint','1');}catch(e){}const scene=document.getElementById('atticScene');if(!scene)return;const hint=document.createElement('div');hint.className='attic-pan-hint';hint.textContent='Swipe to look around';scene.appendChild(hint);setTimeout(function(){hint.remove();},3600);}
+  function showPanHint(){if(target.innerWidth>980)return;
+    // The 3D attic shows its own controls hint; the 2D pan copy would be
+    // wrong there (and must not burn the once-only flag while 3D is on).
+    if(document.body.classList.contains('attic3d-live')||document.body.classList.contains('attic3d-pending'))return;
+    try{if(target.localStorage.getItem('tlr_attic_pan_hint'))return;target.localStorage.setItem('tlr_attic_pan_hint','1');}catch(e){}const scene=document.getElementById('atticScene');if(!scene)return;const hint=document.createElement('div');hint.className='attic-pan-hint';hint.textContent='Swipe to look around';scene.appendChild(hint);setTimeout(function(){hint.remove();},3600);}
   function installDragPan(){const pan=document.getElementById('atticPan');if(!pan||pan.__tlrDragPan)return;pan.__tlrDragPan=true;let active=false,startX=0,startLeft=0;pan.addEventListener('pointerdown',function(e){if(e.target&&e.target.closest&&e.target.closest('.attic-prop,.attic-note,#atticPickup'))return;active=true;startX=e.clientX;startLeft=pan.scrollLeft;pan.classList.add('dragging');});pan.addEventListener('pointermove',function(e){if(!active)return;pan.scrollLeft=startLeft-(e.clientX-startX);});function end(){active=false;pan.classList.remove('dragging');}pan.addEventListener('pointerup',end);pan.addEventListener('pointercancel',end);}
 
   target.tlrCloseArchives=closeArchives;

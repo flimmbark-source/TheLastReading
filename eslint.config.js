@@ -49,4 +49,35 @@ export default [
       'prefer-const': 'warn',
     },
   },
+  // The 3D layer (react-three-fiber) is the default single-player
+  // presentation now, so its JSX lints like everything else. esbuild's
+  // automatic JSX runtime means no `React` import is needed (or flagged).
+  {
+    files: ['**/*.jsx'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      parserOptions: { ecmaFeatures: { jsx: true } },
+      globals: {
+        ...globals.browser,
+      },
+    },
+    rules: {
+      'no-undef': 'off',
+      // Core no-unused-vars can't see JSX usage (`<Candle />` doesn't mark
+      // `Candle` used) — that detection lives in eslint-plugin-react, which
+      // isn't worth a dependency here. Components are PascalCase by
+      // convention, so ignore that class instead.
+      'no-unused-vars': ['warn', {
+        args: 'none',
+        caughtErrors: 'none',
+        ignoreRestSiblings: true,
+        varsIgnorePattern: '^(_|[A-Z])',
+      }],
+      'no-empty': ['warn', { allowEmptyCatch: true }],
+      eqeqeq: ['warn', 'smart'],
+      'no-var': 'warn',
+      'prefer-const': 'warn',
+    },
+  },
 ];

@@ -13,8 +13,10 @@
 //
 // Movement: WASD/arrows plus tap/click-to-walk — a tap on an interactable
 // walks over and uses it, a tap on open floor walks there (gold ring marks
-// the destination). On touch the left 45% of the screen is also a virtual
-// move stick and the rest drag-look. E (or click/tap) interacts with the
+// the destination). Dragging anywhere on the screen looks around; on touch
+// the sensitivity scales with the screen (a full-width swipe ≈ 155°) and a
+// released swipe carries flick inertia, so turning away from a wall is one
+// gesture instead of repeated sawing. E (or click/tap) interacts with the
 // focused station. prefers-reduced-motion skips all camera choreography.
 
 import { useContext, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
@@ -26,8 +28,23 @@ import { POSES, PORTRAIT_POSES, ROOM, KEEP_OUT, EYE_HEIGHT, APPROACH_KEYFRAMES }
 const RISE_SECONDS = 1.7;
 const SIT_SECONDS = 1.6;
 const WALK_SPEED = 2.1;
-const TAP_PICK_RADIUS_PX = 64;
+// Touch fingers are far less precise than a mouse cursor; give taps on
+// interactables a much larger forgiving radius there.
+const TAP_PICK_RADIUS_MOUSE_PX = 64;
+const TAP_PICK_RADIUS_TOUCH_PX = 96;
+const MOUSE_YAW_SENS = 0.0044;
+const MOUSE_PITCH_SENS = 0.0038;
 const MOVE_KEYS = new Set(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+
+// Touch look sensitivity is proportional to the screen, not fixed per-pixel:
+// a full-width swipe turns ~155°, so a small phone can whip a 180° in one
+// comfortable flick-and-a-nudge instead of sawing at the glass.
+function touchYawSens() {
+  return 2.7 / Math.max(320, window.innerWidth);
+}
+function touchPitchSens() {
+  return 2.1 / Math.max(480, window.innerHeight);
+}
 
 function poseAngles(pose) {
   const eye = new THREE.Vector3(...pose.eye);
@@ -142,8 +159,9 @@ export function PlayerRig() {
       pitch: seatedTable ? SEATED.pitch : approach ? start.pitch : reducedMotion ? STANDING.pitch : SEATED.pitch,
       vel: new THREE.Vector3(),
       keys: new Set(),
-      stick: { x: 0, y: 0 },
       pointers: new Map(),
+      lookPointerId: null, // only the first finger down steers the camera
+      lookVel: { yaw: 0, pitch: 0 }, // flick inertia, decays in useFrame
       bobT: 0,
       focusId: null,
       sitFrom: null,
@@ -214,7 +232,7 @@ export function PlayerRig() {
 
   // A clean tap: prefer an interactable near the tap point on screen, else
   // walk to the tapped floor position.
-  const handleTap = (clientX, clientY) => {
+  const handleTap = (clientX, clientY, isTouch = false) => {
     const r = rig.current;
     if (r.phase === 'approach') {
       skipApproach();
@@ -225,6 +243,7 @@ export function PlayerRig() {
     const rect = gl.domElement.getBoundingClientRect();
     const px = clientX - rect.left;
     const py = clientY - rect.top;
+    const pickRadius = isTouch ? TAP_PICK_RADIUS_TOUCH_PX : TAP_PICK_RADIUS_MOUSE_PX;
 
     // Screen-space pick over interactables (generous touch-target radius).
     let picked = null;
@@ -235,7 +254,7 @@ export function PlayerRig() {
       const sx = ((projected.x + 1) / 2) * size.width;
       const sy = ((1 - projected.y) / 2) * size.height;
       const distPx = Math.hypot(sx - px, sy - py);
-      if (distPx <= TAP_PICK_RADIUS_PX && (!picked || distPx < picked.distPx)) {
+      if (distPx <= pickRadius && (!picked || distPx < picked.distPx)) {
         picked = { item, distPx };
       }
     }
@@ -272,6 +291,23 @@ export function PlayerRig() {
   const tapRef = useRef(handleTap);
   tapRef.current = handleTap;
 
+  // The approach overlay converts to the seated backdrop in place (same
+  // mounted rig, mode prop flips to 'table'): drop into the static seated
+  // phase and shed every bit of transient input state.
+  useEffect(() => {
+    if (!seatedTable) return;
+    const r = rig.current;
+    if (r.phase !== 'table') {
+      r.phase = 'table';
+      r.keys.clear();
+      r.pointers.clear();
+      r.lookPointerId = null;
+      r.lookVel.yaw = 0;
+      r.lookVel.pitch = 0;
+      setAutoWalk(null);
+    }
+  }, [seatedTable]);
+
   const beginSit = () => {
     const r = rig.current;
     if (r.phase !== 'free') return;
@@ -290,7 +326,7 @@ export function PlayerRig() {
 
   // ── input listeners ──
   useEffect(() => {
-    if (seatedTable) return undefined; // pure backdrop: the DOM owns all input
+    if (seatedTable) return undefined; // pure backdrop: the DOM owns all input (re-runs on convert)
     const element = gl.domElement;
 
     const onKeyDown = event => {
@@ -311,61 +347,84 @@ export function PlayerRig() {
     };
     const onKeyUp = event => rig.current.keys.delete(event.code);
     const onBlur = () => {
-      rig.current.keys.clear();
-      rig.current.stick.x = 0;
-      rig.current.stick.y = 0;
-      rig.current.pointers.clear();
+      const r = rig.current;
+      r.keys.clear();
+      r.pointers.clear();
+      r.lookPointerId = null;
+      r.lookVel.yaw = 0;
+      r.lookVel.pitch = 0;
     };
 
+    // The whole screen looks: any drag steers the camera (tap-to-move covers
+    // locomotion on touch, WASD on desktop, so no virtual stick eats screen
+    // space or splits the glass into invisible zones).
     const onPointerDown = event => {
       element.setPointerCapture?.(event.pointerId);
-      const isTouch = event.pointerType === 'touch';
-      const stickZone = isTouch && event.clientX < window.innerWidth * 0.45;
-      rig.current.pointers.set(event.pointerId, {
-        mode: stickZone ? 'stick' : 'look',
+      const r = rig.current;
+      r.pointers.set(event.pointerId, {
+        isTouch: event.pointerType === 'touch',
         startX: event.clientX,
         startY: event.clientY,
         lastX: event.clientX,
         lastY: event.clientY,
         moved: false,
         t0: performance.now(),
+        lastMoveT: performance.now(),
+        flickVx: 0,
+        flickVy: 0,
       });
+      if (r.lookPointerId === null) r.lookPointerId = event.pointerId;
+      // Grabbing the view again stops any in-flight flick spin dead.
+      r.lookVel.yaw = 0;
+      r.lookVel.pitch = 0;
     };
     const onPointerMove = event => {
-      const pointer = rig.current.pointers.get(event.pointerId);
+      const r = rig.current;
+      const pointer = r.pointers.get(event.pointerId);
       if (!pointer) return;
       const totalX = event.clientX - pointer.startX;
       const totalY = event.clientY - pointer.startY;
       if (Math.hypot(totalX, totalY) > 7) pointer.moved = true;
-      if (pointer.mode === 'stick') {
-        const radius = 56;
-        rig.current.stick.x = THREE.MathUtils.clamp(totalX / radius, -1, 1);
-        rig.current.stick.y = THREE.MathUtils.clamp(totalY / radius, -1, 1);
-        if (pointer.moved) noteFirstMove();
-      } else {
+      if (event.pointerId === r.lookPointerId) {
         const dx = event.clientX - pointer.lastX;
         const dy = event.clientY - pointer.lastY;
-        if (rig.current.phase === 'free') {
-          rig.current.yaw -= dx * 0.0044;
-          rig.current.pitch = THREE.MathUtils.clamp(rig.current.pitch - dy * 0.0038, -1.25, 1.25);
+        const yawSens = pointer.isTouch ? touchYawSens() : MOUSE_YAW_SENS;
+        const pitchSens = pointer.isTouch ? touchPitchSens() : MOUSE_PITCH_SENS;
+        if (r.phase === 'free') {
+          r.yaw -= dx * yawSens;
+          r.pitch = THREE.MathUtils.clamp(r.pitch - dy * pitchSens, -1.25, 1.25);
         }
+        // Smoothed px/ms velocity feeds the release flick.
+        const now = performance.now();
+        const dt = Math.max(1, now - pointer.lastMoveT);
+        pointer.flickVx = 0.75 * pointer.flickVx + (0.25 * dx) / dt;
+        pointer.flickVy = 0.75 * pointer.flickVy + (0.25 * dy) / dt;
+        pointer.lastMoveT = now;
         if (pointer.moved) noteFirstMove();
       }
       pointer.lastX = event.clientX;
       pointer.lastY = event.clientY;
     };
     const onPointerEnd = event => {
-      const pointer = rig.current.pointers.get(event.pointerId);
-      rig.current.pointers.delete(event.pointerId);
-      if (!pointer) return;
-      if (pointer.mode === 'stick') {
-        rig.current.stick.x = 0;
-        rig.current.stick.y = 0;
+      const r = rig.current;
+      const pointer = r.pointers.get(event.pointerId);
+      r.pointers.delete(event.pointerId);
+      if (event.pointerId === r.lookPointerId) {
+        r.lookPointerId = r.pointers.keys().next().value ?? null;
       }
-      // A clean short press in either zone is a tap: use/walk to what was
-      // pressed (or skip the approach).
-      if (!pointer.moved && performance.now() - pointer.t0 < 350) {
-        tapRef.current(event.clientX, event.clientY);
+      if (!pointer) return;
+      const now = performance.now();
+      // A clean short press is a tap: use/walk to what was pressed (or skip
+      // the approach).
+      if (!pointer.moved && now - pointer.t0 < 350) {
+        tapRef.current(event.clientX, event.clientY, pointer.isTouch);
+        return;
+      }
+      // A released swipe keeps spinning with inertia (touch only): flicking
+      // the glass turns you around instead of demanding three careful drags.
+      if (pointer.isTouch && pointer.moved && now - pointer.lastMoveT < 90 && r.phase === 'free') {
+        r.lookVel.yaw = THREE.MathUtils.clamp(-pointer.flickVx * touchYawSens() * 1000, -6, 6);
+        r.lookVel.pitch = THREE.MathUtils.clamp(-pointer.flickVy * touchPitchSens() * 1000, -3, 3) * 0.6;
       }
     };
 
@@ -385,7 +444,7 @@ export function PlayerRig() {
       element.removeEventListener('pointerup', onPointerEnd);
       element.removeEventListener('pointercancel', onPointerEnd);
     };
-  }, [gl]);
+  }, [gl, seatedTable]);
 
   // ── debug/test surface (also used by the smoke script) ──
   useEffect(() => {
@@ -523,14 +582,25 @@ function leaveOnce(r, adapter) {
 }
 
 function stepMovement(r, delta, reducedMotion, interactables, setFocusId, setAutoWalk) {
+  // Flick inertia: a released swipe keeps turning the view, decaying out.
+  if (r.lookVel.yaw !== 0 || r.lookVel.pitch !== 0) {
+    r.yaw += r.lookVel.yaw * delta;
+    r.pitch = THREE.MathUtils.clamp(r.pitch + r.lookVel.pitch * delta, -1.25, 1.25);
+    const decay = Math.exp(-delta * 3.2);
+    r.lookVel.yaw *= decay;
+    r.lookVel.pitch *= decay;
+    if (Math.abs(r.lookVel.yaw) < 0.02 && Math.abs(r.lookVel.pitch) < 0.02) {
+      r.lookVel.yaw = 0;
+      r.lookVel.pitch = 0;
+    }
+  }
+
   let forward = 0;
   let strafe = 0;
   if (r.keys.has('KeyW') || r.keys.has('ArrowUp')) forward += 1;
   if (r.keys.has('KeyS') || r.keys.has('ArrowDown')) forward -= 1;
   if (r.keys.has('KeyD') || r.keys.has('ArrowRight')) strafe += 1;
   if (r.keys.has('KeyA') || r.keys.has('ArrowLeft')) strafe -= 1;
-  forward += -r.stick.y;
-  strafe += r.stick.x;
   let magnitude = Math.hypot(forward, strafe);
   if (magnitude > 1) {
     forward /= magnitude;
@@ -589,7 +659,7 @@ function stepMovement(r, delta, reducedMotion, interactables, setFocusId, setAut
         // Turn to face the direction of travel unless the player is
         // actively drag-looking.
         let looking = false;
-        for (const pointer of r.pointers.values()) if (pointer.mode === 'look' && pointer.moved) looking = true;
+        for (const pointer of r.pointers.values()) if (pointer.moved) looking = true;
         if (!looking) {
           const walkYaw = Math.atan2(-dx / dist, -dz / dist);
           r.yaw = lerpAngle(r.yaw, walkYaw, 1 - Math.exp(-delta * 5));

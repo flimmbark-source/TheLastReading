@@ -46,6 +46,32 @@ body.attic3d-live #atticScene {
   background: #0d0703 !important;
 }
 
+/* attic3d-pending covers the beats where 3D is the destination but no canvas
+   is live yet: entering the attic while the lazy chunk loads, and the gap in
+   the attic→table return between the attic unmount and the seat mount. The
+   classic art (attic background image, pannable room, painted SPv2 table)
+   must never be fetched/painted during those beats — the flash of the old 2D
+   scene was the documented transition bug. Every failure path removes this
+   class, restoring the classic visuals. */
+body.attic3d-pending #atticScene {
+  background: #0d0703 !important;
+}
+/* display (not visibility): keeps Chrome from even fetching the big 2D room
+   art (#atticRoom's background) during the pending beat. */
+body.attic3d-pending #atticPan {
+  display: none;
+}
+/* attic3d-live joins in so the suppression is continuous across the
+   pending→live handoff: the chunk often mounts before the attic fade
+   finishes, and during the attic→table fade attic3d-live is still on for
+   the whole beat where table3d-live is not yet back. Both fades pass over
+   flat dark instead of the painted 2D table. */
+html body.single-player-v2.generated-sheet-ready.attic3d-pending,
+html body.single-player-v2.generated-sheet-ready.attic3d-live {
+  background-color: #0d0703 !important;
+  background-image: none !important;
+}
+
 /* Keep the existing vignette + fog overlays as free atmosphere on top of the
    canvas; they already animate with the attic fade transitions. Softened so
    the lit 3D room reads through them. */
@@ -101,6 +127,24 @@ body.attic3d-live #atticTutorial {
   background: url('../../fx/transition_dark_vignette_1080x1920.png') center center/cover no-repeat;
   opacity: 0.5;
   pointer-events: none;
+}
+
+/* Single-canvas sit-down handoff: while the approach overlay converts itself
+   into the seated backdrop in place (atticEntry.convertToSeated), this veil
+   covers the id/z-index swap and the first anchored SPv2 paint, then fades
+   to reveal the finished table. Cheaper than a second WebGL context and
+   invisible to input (pointer-events none throughout). */
+.table3d-reveal-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 30001;
+  background: #050302;
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 0.55s ease;
+}
+.table3d-reveal-veil.out {
+  opacity: 0;
 }
 
 /* ── hybrid seated-table mode (body.table3d-live) ─────────────────────────
