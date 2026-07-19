@@ -20,7 +20,23 @@ export const TABLE = {
 // Shared world-space centre for the playable reading surface. The seated
 // camera and the DOM spread both target this point so moving the reading on
 // the cloth cannot leave the camera looking at the old position.
-export const READING_CENTER = [0, TABLE.topY + 0.01, TABLE.position[2]];
+//
+// It sits 0.15m toward the player from the table's geometric centre, not on
+// it: the seated camera looks across the cloth at a downward slant, so the
+// near half foreshortens larger and the geometric centre projects high into
+// the frame (all the empty cloth ends up below the reading). Nudging the
+// reading toward the near edge lands it in the *visual* centre of the table
+// as seen, which is what "the spread is in the middle of the table" means on
+// screen. The seated eye (POSES.seated) pulls back to match so the whole
+// cloth — far rim to near rim — stays in frame around it.
+export const READING_CENTER = [0, TABLE.topY + 0.01, TABLE.position[2] + 0.15];
+
+// Portrait frames the table more top-down and taller, so the near/far
+// foreshortening is stronger: the reading has to sit a little further toward
+// the player again to land on the visual centre of the cloth oval. Its own
+// centre (used by PORTRAIT_POSES.seated.look and PORTRAIT_TABLE_ANCHORS)
+// keeps this off the desktop composition, which is already centred at 0.5.
+export const PORTRAIT_READING_CENTER = [0, TABLE.topY + 0.01, TABLE.position[2] + 0.25];
 
 export const CHAIR = {
   position: [0, 0, 1.62],
@@ -36,7 +52,11 @@ export const CHAIR = {
 // the middle of the screen instead of chasing the old far-table anchor.
 export const POSES = {
   seated: {
-    eye: [0, 1.46, 1.58],
+    // Pulled back and up from the chair so the whole cloth (far rim to near
+    // rim) sits in frame with the reading centred, instead of the near half
+    // running off the bottom of the screen. This is a presentation backdrop,
+    // not a literal sitting eye-line.
+    eye: [0, 1.64, 2.05],
     look: [...READING_CENTER],
   },
   standing: {
@@ -53,8 +73,12 @@ export const POSES = {
 // final keyframe to this pose on portrait so the reveal stays continuous.
 export const PORTRAIT_POSES = {
   seated: {
-    eye: [0, 1.78, 1.4],
-    look: [...READING_CENTER],
+    // Raised (and kept in front of the chair, z < CHAIR.z) so the near cloth
+    // edge tucks up into frame and the reading sits at the table's visual
+    // centre instead of its upper third. The far rim barely moves, so the
+    // window glow still clears the top edge.
+    eye: [0, 2.0, 1.5],
+    look: [...PORTRAIT_READING_CENTER],
   },
 };
 
@@ -174,12 +198,12 @@ export const HAND_WORLD_WIDTH = 0.52; // fan resting along the near edge
 // to close the vertical gap.
 export const PORTRAIT_TABLE_ANCHORS = {
   ...TABLE_ANCHORS,
-  'spread-1': [-0.42, READING_CENTER[1], READING_CENTER[2] + 0.04],
-  'spread-2': [-0.21, READING_CENTER[1], READING_CENTER[2]],
-  'spread-3': [0, READING_CENTER[1], READING_CENTER[2] - 0.02],
-  'spread-4': [0.21, READING_CENTER[1], READING_CENTER[2]],
-  'spread-5': [0.42, READING_CENTER[1], READING_CENTER[2] + 0.04],
-  'spread-c': [...READING_CENTER],
+  'spread-1': [-0.42, PORTRAIT_READING_CENTER[1], PORTRAIT_READING_CENTER[2] + 0.04],
+  'spread-2': [-0.21, PORTRAIT_READING_CENTER[1], PORTRAIT_READING_CENTER[2]],
+  'spread-3': [0, PORTRAIT_READING_CENTER[1], PORTRAIT_READING_CENTER[2] - 0.02],
+  'spread-4': [0.21, PORTRAIT_READING_CENTER[1], PORTRAIT_READING_CENTER[2]],
+  'spread-5': [0.42, PORTRAIT_READING_CENTER[1], PORTRAIT_READING_CENTER[2] + 0.04],
+  'spread-c': [...PORTRAIT_READING_CENTER],
   'hand-c': [0, 0.79, 0.82],
 };
 export const PORTRAIT_HAND_WORLD_WIDTH = 0.5;

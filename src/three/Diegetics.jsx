@@ -14,7 +14,7 @@ import { Component, Suspense, useContext, useMemo, useRef, useState } from 'reac
 import { useFrame, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
 import { AtticContext, cueEnergy } from './AtticExperience.jsx';
-import { CANDLE_SHELF, TABLE, TRUNK_SPOT } from './atticLayout.mjs';
+import { CANDLE_SHELF, TABLE, TRUNK_SPOT, READING_CENTER } from './atticLayout.mjs';
 import { radialGlowTexture } from './canvasTextures.mjs';
 import { useTlrStore } from './useTlrStore.mjs';
 
@@ -147,11 +147,13 @@ function TableReadingGlow() {
     const surge = 1 + cueEnergy(cueRef, FLAME_CUES, 800) * 0.5;
     lightRef.current.intensity = (1.15 + 0.08 * Math.sin(clock.elapsedTime * 2.3)) * surge;
   });
-  const [tx, , tz] = TABLE.position;
+  // Follow the reading centre (not the table centre) so the pool stays under
+  // the cards after the seated framing moved the reading toward the player.
+  const [rx, , rz] = READING_CENTER;
   return (
     <pointLight
       ref={lightRef}
-      position={[tx, TABLE.topY + 0.9, tz - 0.05]}
+      position={[rx, TABLE.topY + 0.9, rz - 0.05]}
       color="#d9a25e"
       intensity={1.15}
       distance={3.4}

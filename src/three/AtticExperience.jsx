@@ -135,16 +135,20 @@ function TableAnchorProjector() {
 }
 
 // Portrait screens get a wider vertical FOV so the horizontal slice of the
-// room (and the focus prompts in it) stays usable on phones.
-function FovTuner() {
+// room (and the focus prompts in it) stays usable on phones — EXCEPT the
+// seated table, which tightens the portrait FOV to zoom the cloth so it
+// dominates the frame (the walkable attic keeps the wide 74° for looking
+// around). Desktop is unchanged.
+function FovTuner({ mode }) {
   const { camera, size } = useThree();
   useEffect(() => {
-    const fov = size.width < size.height ? 74 : 62;
+    const portrait = size.width < size.height;
+    const fov = portrait ? (mode === 'table' ? 64 : 74) : 62;
     if (camera.fov !== fov) {
       camera.fov = fov;
       camera.updateProjectionMatrix();
     }
-  }, [camera, size.width, size.height]);
+  }, [camera, size.width, size.height, mode]);
   return null;
 }
 
@@ -239,7 +243,7 @@ export function AtticExperience({ adapter, mode = 'attic', onFirstMove, onSequen
       onCreated={({ gl }) => gl.setClearColor('#0d0703')}
     >
       <AtticContext.Provider value={context}>
-        <FovTuner />
+        <FovTuner mode={mode} />
         <CueListener cueRef={cueRef} />
         <fog attach="fog" args={['#140b06', 6.5, 14.5]} />
         <hemisphereLight args={['#2b3b58', '#3a2413', 0.8]} />
