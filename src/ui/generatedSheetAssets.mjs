@@ -6,6 +6,7 @@
 
 import { installDiscardPips } from './discardPips.mjs';
 import { installInGameMenu } from './inGameMenu.mjs';
+import { installAtticReturnPolish } from './atticReturnPolish.mjs';
 
 const ELEMENT_BASE = '/public/ui/single-player-v2/elements/';
 
@@ -23,7 +24,6 @@ const ELEMENT_ART = {
   '--spv2-action-eye-art': 'action-eye.webp',
   '--spv2-action-center-art': 'action-center.webp',
   '--spv2-action-deck-art': 'action-deck.webp',
-  // Art-directed utility medallions (sliced from Options-Discs.png).
   '--spv2-option-menu-art': 'option-menu.webp',
   '--spv2-option-scoring-art': 'option-abilities.webp',
   '--spv2-option-abilities-art': 'option-scoring.webp',
@@ -48,11 +48,9 @@ export function installGeneratedSheetAssets(target = window) {
   const document = target?.document;
   if (!document) return Promise.resolve(false);
 
-  // The discard indicators and full in-game menu are live DOM surfaces, not
-  // part of the baked sheet. Install them alongside the SPv2 skin so they share
-  // the same lifecycle and are absent from non-SPv2 modes.
   installDiscardPips(target);
   installInGameMenu(target);
+  installAtticReturnPolish(target);
 
   if (applied) return applied;
 
@@ -66,8 +64,6 @@ export function installGeneratedSheetAssets(target = window) {
   root.style.setProperty('--spv2-table-bg-art', `url("${TABLE_BG}")`);
   urls.push(TABLE_BG);
 
-  // Reveal the skin once the art is warmed in cache so the layout does not
-  // flash a frame of empty frames. Any individual miss does not block the skin.
   applied = Promise.all(urls.map(url => preload(target, url)))
     .then(results => {
       document.body?.classList.remove('generated-sheet-failed');
