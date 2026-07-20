@@ -2,8 +2,9 @@
 // context (adapter snapshot, interactable registry, focus + tap-walk state),
 // and the composition of the room, props, diegetic UI, and the player rig.
 //
-// Three modes share the one scene:
+// Four modes share the one scene:
 //   'attic'    — the interactive walkable attic
+//   'rising'   — the seated table canvas standing up before attic control
 //   'approach' — the run-start walk-in and sit-down cinematic
 //   'table'    — the stationary hybrid reading backdrop
 
@@ -83,7 +84,7 @@ export function domSurfaceOpen() {
   );
 }
 
-function TableAnchorProjector({ onReady }) {
+function TableAnchorProjector({ onReady, continuous = false }) {
   const { camera, size } = useThree();
   const firstFrameApplied = useRef(false);
   const readySent = useRef(false);
@@ -98,6 +99,10 @@ function TableAnchorProjector({ onReady }) {
   }, [camera, size.width, size.height]);
 
   useFrame(() => {
+    if (continuous) {
+      applyTableAnchors(camera, size);
+      return;
+    }
     if (firstFrameApplied.current) return;
     firstFrameApplied.current = true;
     applyTableAnchors(camera, size);
@@ -143,7 +148,8 @@ function FovTuner({ mode }) {
   const { camera, size } = useThree();
   useEffect(() => {
     const portrait = size.width < size.height;
-    const fov = portrait ? (mode === 'table' ? 64 : 74) : 62;
+    const tableLike = mode === 'table' || mode === 'rising';
+    const fov = portrait ? (tableLike ? 64 : 74) : 62;
     if (camera.fov !== fov) {
       camera.fov = fov;
       camera.updateProjectionMatrix();
@@ -257,6 +263,10 @@ export function AtticExperience({
     [adapter, mode, snapshot, interactables, focusId, hoverId, reducedMotion, onFirstMove, onSequenceComplete, registerApi],
   );
 
+  // Table -> rising remounts only the first-person rig, not the Canvas or room.
+  // Rising -> attic keeps that rig alive so the camera hands directly to input.
+  const rigKey = mode === 'table' ? 'table' : mode === 'approach' ? 'approach' : 'attic';
+
   return (
     <Canvas
       flat
@@ -276,8 +286,10 @@ export function AtticExperience({
         <AtticRoom />
         <Interactables />
         <Diegetics />
-        <PlayerRig />
-        {mode === 'table' && <TableAnchorProjector onReady={onTableReady} />}
+        <PlayerRig key={rigKey} />
+        {(mode === 'table' || mode === 'rising') && (
+          <TableAnchorProjector onReady={onTableReady} continuous={mode === 'rising'} />
+        )}
       </AtticContext.Provider>
     </Canvas>
   );
