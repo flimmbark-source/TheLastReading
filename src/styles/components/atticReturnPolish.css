@@ -8,12 +8,13 @@ body.table3d-settling .table3d-reveal-veil.out {
   opacity: 1;
 }
 
-/* atticFlow removes mode-return-hard-hide before the asynchronously mounted
-   seated table is ready. The synchronizer reasserts the class until readiness;
-   visibility prevents any old 2D table fragments from painting in that gap. */
+/* Keep every legacy table fragment out of the attic-return handoff. Several
+   controls live directly under <body> rather than inside #titleWrap, so hiding
+   only the main layout groups still allowed the archive eye/action rail to flash. */
 body.mode-return-hard-hide #titleWrap,
 body.mode-return-hard-hide .score-stack,
 body.mode-return-hard-hide .spread-wrap,
+body.mode-return-hard-hide .spread-actions,
 body.mode-return-hard-hide .handDock,
 body.mode-return-hard-hide #handSwipeZone,
 body.mode-return-hard-hide #relicRack,
@@ -21,11 +22,14 @@ body.mode-return-hard-hide .refs-layer,
 body.mode-return-hard-hide .tlr-pull-wrap,
 body.mode-return-hard-hide #invWrap,
 body.mode-return-hard-hide #invTab,
+body.mode-return-hard-hide #spv2ArchiveBtn,
 body.mode-return-hard-hide #table3dDiscardPips,
 body.mode-return-hard-hide #patternHintStack,
 body.mode-return-hard-hide #constellationPill,
 body.mode-return-hard-hide #abilityPrompt,
-body.mode-return-hard-hide #purgePrompt {
+body.mode-return-hard-hide #purgePrompt,
+body.mode-return-hard-hide #tutTip,
+body.mode-return-hard-hide .bar {
   visibility: hidden;
   opacity: 0;
   pointer-events: none;
@@ -45,8 +49,7 @@ body.mode-return-hard-hide #purgePrompt {
   padding: 8px 12px 9px;
   border: 1px solid rgba(211, 166, 88, 0.72);
   border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(37, 24, 13, 0.96), rgba(13, 9, 6, 0.97));
+  background: linear-gradient(180deg, rgba(37, 24, 13, 0.96), rgba(13, 9, 6, 0.97));
   color: #ecd8ae;
   font-family: Georgia, 'Times New Roman', serif;
   text-align: center;
