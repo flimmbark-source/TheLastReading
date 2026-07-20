@@ -1,6 +1,8 @@
 // Small discard-count cards pinned directly beneath the spread.
 // Gameplay continues to own the discard count; this view only mirrors it.
 
+import { installDiscardPipsTutorial } from './discardPipsTutorial.mjs';
+
 const STYLE_ID = 'table3d-discard-pips-style';
 const PIPS_ID = 'table3dDiscardPips';
 
@@ -87,6 +89,7 @@ export function installDiscardPips(target = window) {
     pips.setAttribute('role', 'img');
     document.body.appendChild(pips);
   }
+  installDiscardPipsTutorial(target, pips);
 
   let positionFrame = 0;
   let settleTimer = 0;
