@@ -127,22 +127,35 @@ function preserveHiddenControls(document, controls) {
 
 function installDimensionGuard(target, panel) {
   const wrap = target.document.getElementById('menuPullWrap');
-  if (!wrap) return () => {};
+  const desk = target.document.getElementById('menuPullDesk');
+  const shell = panel.querySelector('.game-menu-shell');
+  if (!wrap || !desk || !shell) return () => {};
+
+  // The CSS originally stretched the decorative frame to the old, taller menu.
+  // Let it hug the remaining controls, then size the drawer/tab to that frame.
+  shell.style.minHeight = '0px';
 
   let scheduled = 0;
   const apply = () => {
     scheduled = 0;
     const narrow = target.innerWidth <= 520;
-    const drawerHeight = narrow ? 'calc(100dvh - 46px)' : 'min(94dvh, 900px)';
     const panelWidth = narrow ? 'calc(100vw - 12px)' : 'min(94vw, 620px)';
+
+    if (panel.style.getPropertyValue('max-width') !== panelWidth
+      || panel.style.getPropertyPriority('max-width') !== 'important') {
+      panel.style.setProperty('max-width', panelWidth, 'important');
+    }
+
+    const deskStyle = target.getComputedStyle?.(desk);
+    const paddingTop = Number.parseFloat(deskStyle?.paddingTop || '0') || 0;
+    const paddingBottom = Number.parseFloat(deskStyle?.paddingBottom || '0') || 0;
+    const contentHeight = Math.ceil(panel.getBoundingClientRect().height + paddingTop + paddingBottom + 2);
+    const viewportLimit = Math.max(320, target.innerHeight - (narrow ? 46 : 48));
+    const drawerHeight = `${Math.min(viewportLimit, Math.max(280, contentHeight))}px`;
 
     if (wrap.style.getPropertyValue('--tlr-drawer-h') !== drawerHeight
       || wrap.style.getPropertyPriority('--tlr-drawer-h') !== 'important') {
       wrap.style.setProperty('--tlr-drawer-h', drawerHeight, 'important');
-    }
-    if (panel.style.getPropertyValue('max-width') !== panelWidth
-      || panel.style.getPropertyPriority('max-width') !== 'important') {
-      panel.style.setProperty('max-width', panelWidth, 'important');
     }
   };
 
@@ -151,13 +164,22 @@ function installDimensionGuard(target, panel) {
     scheduled = target.requestAnimationFrame(apply);
   };
 
-  const observer = new MutationObserver(schedule);
-  observer.observe(wrap, { attributes: true, attributeFilter: ['style'] });
+  const styleObserver = new MutationObserver(schedule);
+  styleObserver.observe(wrap, { attributes: true, attributeFilter: ['style'] });
+
+  let resizeObserver = null;
+  if (typeof ResizeObserver === 'function') {
+    resizeObserver = new ResizeObserver(schedule);
+    resizeObserver.observe(panel);
+  }
+
   target.addEventListener('resize', schedule, { passive: true });
-  apply();
+  schedule();
+  target.setTimeout(schedule, 120);
 
   return () => {
-    observer.disconnect();
+    styleObserver.disconnect();
+    resizeObserver?.disconnect();
     target.removeEventListener('resize', schedule);
     if (scheduled) target.cancelAnimationFrame(scheduled);
   };
