@@ -3818,6 +3818,10 @@ html body.single-player-v2 #spread .slot > .card.hint-multi:not(.ability-target)
     display: none;
   }
 
+  /* Move the spread up 10px */
+  html body.single-player-v2.generated-sheet-ready .spread {
+    translate: 0 -50px !important;
+  }
   body.single-player-v2.generated-sheet-ready .score-stack .pill::before {
     content: none;
   }
