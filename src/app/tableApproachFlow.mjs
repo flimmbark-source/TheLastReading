@@ -166,19 +166,70 @@ export function installTableApproachFlow(target = window) {
         }
       }
 
-      let revealGate = { release() {} };
-      const overlay = entry.mountTableApproach?.({
-        onDone: () => releaseEffectsAtTableReveal(revealGate),
-      });
-      if (!overlay) return original.apply(this, arguments);
-
-      revealGate = createTableRevealGate();
+      // Start the real game first. The cinematic is presentation-only and must
+      // never be able to prevent the underlying single-player boot from running.
+      const revealGate = createTableRevealGate();
       const boot = (async () => original.apply(this, arguments))();
-      overlay.completeWith(boot);
+      let overlay = null;
+      let firstFrameWatchdog = 0;
+      let hardFailOpen = 0;
+      const clearWatchdogs = () => {
+        target.clearTimeout(firstFrameWatchdog);
+        target.clearTimeout(hardFailOpen);
+      };
+
+      try {
+        overlay = entry.mountTableApproach?.({
+          onDone: () => {
+            clearWatchdogs();
+            releaseEffectsAtTableReveal(revealGate);
+          },
+        });
+      } catch (error) {
+        console.warn('The Last Reading: 3D approach failed to mount; starting plainly.', error);
+        revealGate.release();
+        return boot;
+      }
+
+      if (!overlay) {
+        revealGate.release();
+        return boot;
+      }
+
+      // React render errors occur after root.render() returns, so atticEntry's
+      // synchronous try/catch cannot see them. If the rig never registers its
+      // API, remove the opaque overlay and let the already-running game show.
+      firstFrameWatchdog = target.setTimeout(() => {
+        if (overlay.mounted === false || overlay.api) return;
+        console.warn('The Last Reading: 3D approach did not render; continuing without it.');
+        overlay.abort?.();
+        revealGate.release();
+      }, 6000);
+
+      // Absolute presentation ceiling. A broken cinematic or failed in-place
+      // conversion may not throw, but it still cannot be allowed to cover the
+      // successfully booted table indefinitely.
+      hardFailOpen = target.setTimeout(() => {
+        if (overlay.mounted === false || !target.document?.getElementById('table3dApproach')) return;
+        console.warn('The Last Reading: 3D approach timed out; revealing the table.');
+        overlay.abort?.();
+        revealGate.release();
+      }, 16500);
+
+      try {
+        overlay.completeWith(boot);
+      } catch (error) {
+        clearWatchdogs();
+        console.warn('The Last Reading: 3D approach handoff failed; continuing without it.', error);
+        overlay.abort?.();
+        revealGate.release();
+      }
+
       try {
         return await boot;
       } catch (error) {
-        overlay.abort();
+        clearWatchdogs();
+        overlay.abort?.();
         revealGate.release();
         throw error;
       }
