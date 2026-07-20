@@ -61,10 +61,12 @@ export function installAtticReturnPolish(target = window) {
   const afterVeil = (veil, callback) => {
     let done = false;
     let timer = 0;
+    let removalObserver = null;
     const finish = () => {
       if (done) return;
       done = true;
       target.clearTimeout(timer);
+      removalObserver?.disconnect();
       veil?.removeEventListener?.('transitionend', onEnd);
       callback();
     };
@@ -77,6 +79,10 @@ export function installAtticReturnPolish(target = window) {
       return;
     }
     veil.addEventListener('transitionend', onEnd);
+    removalObserver = new MutationObserver(() => {
+      if (!veil.isConnected) finish();
+    });
+    removalObserver.observe(veil.parentNode || document.body, { childList: true });
     timer = target.setTimeout(finish, 760);
   };
 
