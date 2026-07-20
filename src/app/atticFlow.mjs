@@ -187,6 +187,50 @@ export function installAtticFlow(target = window){
     const showArchivesAfterReturn=pendingArchivesTutorial;
     pendingArchivesTutorial=false;
     if(target.tlrStore&&target.tlrActions)target.tlrStore.dispatch({type:target.tlrActions.LEAVE_ATTIC});
+
+    // Continuous single-canvas return — the mirror of enter()'s promoteToAttic.
+    // The live attic canvas (its camera already lowered into the seat by
+    // PlayerRig's sit) becomes the seated table in place while the 2D reading
+    // chrome fades back in. No reveal veil, no attic unmount + seat remount, and
+    // none of the intermediate mode-to-table screens that used to flash the old
+    // 2D table UI through on the way back.
+    const live3d=window.__tlrAttic3d;
+    if(attic3dEnabled()&&document.body.classList.contains('single-player-v2')&&live3d&&live3d.mounted!==false&&typeof live3d.convertToSeat==='function'){
+      let converted=null;try{converted=live3d.convertToSeat();}catch(e){converted=null;}
+      if(converted){
+        const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','true');
+        // Leave mode-attic (and any stale transition classes) before dealing a
+        // fresh reading: atticReturnPolish's resetSession wrapper only forces the
+        // hard-hide blackout while mode-attic/mode-to-table/mode-return-hard-hide
+        // is set, and mode-table-return is none of those. convertToSeat's
+        // RETURNING class holds the chrome hidden through the swap regardless.
+        document.body.classList.remove('mode-attic','mode-to-attic','mode-to-table','mode-table-return','mode-return-hard-hide');
+        document.body.classList.add('mode-table-return');
+        if(resetOnLeave&&typeof target.resetSession==='function'){resetOnLeave=false;target.resetSession();}else if(resetOnLeave&&typeof resetSession==='function'){resetOnLeave=false;resetSession();}
+        // RETURNING keeps the chrome at opacity 0 until the seat's anchors have
+        // settled; when convertToSeat drops RETURNING on tlr:table3d-ready the
+        // mode-table-return transition carries the chrome up to full, then we
+        // settle onto the plain reading state.
+        let settled=false;
+        const settle=function(){
+          // A fresh attic visit may have started before this fired (enter()
+          // clears mode-table-return); never stamp mode-reading over a visit
+          // that has already moved on.
+          if(inAttic||!document.body.classList.contains('mode-table-return'))return;
+          document.body.classList.remove('mode-table-return');
+          document.body.classList.add('mode-reading');
+          if(typeof tlrArchitectureSync==='function')tlrArchitectureSync();
+          if(showArchivesAfterReturn&&typeof target.maybeShowArchivesTutorial==='function')target.maybeShowArchivesTutorial();
+        };
+        const settleOnce=function(){if(settled)return;settled=true;target.removeEventListener('tlr:table3d-ready',onReady);target.clearTimeout(fallback);setTimeout(settle,850);};
+        const onReady=function(){settleOnce();};
+        target.addEventListener('tlr:table3d-ready',onReady);
+        const fallback=setTimeout(settleOnce,2200);
+        return;
+      }
+      // convertToSeat bailed (rare); fall through to the classic veiled return.
+    }
+
     document.body.classList.add('mode-return-hard-hide');
     // Cover the whole attic->table swap — the attic canvas unmounting to
     // nothing, the intermediate SPv2 mode states, and the seated canvas
