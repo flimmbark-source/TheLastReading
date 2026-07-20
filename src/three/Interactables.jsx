@@ -1,16 +1,14 @@
-// Interactive stations: the three rummage props (reusing the 2D attic's PNG
-// art on planes), the sticky note on the table, the deck box, and the floating
-// diegetic prompt that appears over whatever the player is looking at.
+// Interactive stations: the three rummage props, sticky note, deck box,
+// player-facing name/action label, and the tap-walk destination marker.
 
-import { Component, Suspense, useContext, useMemo, useRef } from 'react';
-import { useFrame, useLoader } from '@react-three/fiber';
+import { Component, Suspense, useContext, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { useFrame, useLoader, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { AtticContext } from './AtticExperience.jsx';
 import { PROP_STATIONS, NOTE_SPOT, DECK_SPOT } from './atticLayout.mjs';
-import { promptTexture, radialGlowTexture, ringTexture } from './canvasTextures.mjs';
+import { radialGlowTexture, ringTexture } from './canvasTextures.mjs';
 
-// A texture that fails to load must cost us that one prop, not the whole
-// canvas — the classic 2D attic already proved the art paths, but stay safe.
 class StationBoundary extends Component {
   constructor(props) {
     super(props);
@@ -46,14 +44,28 @@ function Glow({ position, scale = 1.4, speed = 1 }) {
   );
 }
 
-function PropArt({ station, searched, prop }) {
+function hoverHandlers(id, setHoverId, enabled) {
+  if (!enabled) return {};
+  return {
+    onPointerOver: event => {
+      event.stopPropagation();
+      setHoverId(id);
+    },
+    onPointerOut: event => {
+      event.stopPropagation();
+      setHoverId(current => (current === id ? null : current));
+    },
+  };
+}
+
+function PropArt({ station, searched, prop, hover }) {
   const beforeTexture = useLoader(THREE.TextureLoader, `/${prop.before}`);
   const afterTexture = useLoader(THREE.TextureLoader, `/${prop.after}`);
   beforeTexture.colorSpace = THREE.SRGBColorSpace;
   afterTexture.colorSpace = THREE.SRGBColorSpace;
   const texture = searched ? afterTexture : beforeTexture;
   return (
-    <group position={station.position} rotation={[0, station.rotationY, 0]}>
+    <group position={station.position} rotation={[0, station.rotationY, 0]} {...hover}>
       <mesh>
         <planeGeometry args={station.size} />
         <meshLambertMaterial map={texture} transparent alphaTest={0.3} side={THREE.DoubleSide} />
@@ -63,10 +75,10 @@ function PropArt({ station, searched, prop }) {
   );
 }
 
-function NoteOnTable({ found }) {
+function NoteOnTable({ found, hover }) {
   if (found) return null;
   return (
-    <group position={NOTE_SPOT.position}>
+    <group position={NOTE_SPOT.position} {...hover}>
       <mesh rotation={[-Math.PI / 2, 0, 0.4]}>
         <planeGeometry args={[0.16, 0.16]} />
         <meshLambertMaterial color="#e8d998" emissive="#5a4a1c" side={THREE.DoubleSide} />
@@ -76,9 +88,9 @@ function NoteOnTable({ found }) {
   );
 }
 
-function DeckBox() {
+function DeckBox({ hover }) {
   return (
-    <group position={[DECK_SPOT.position[0], 0.72, DECK_SPOT.position[2]]} rotation={[0, 0.45, 0]}>
+    <group position={[DECK_SPOT.position[0], 0.72, DECK_SPOT.position[2]]} rotation={[0, 0.45, 0]} {...hover}>
       <mesh>
         <boxGeometry args={[0.24, 0.1, 0.34]} />
         <meshLambertMaterial color="#27354e" />
@@ -92,37 +104,54 @@ function DeckBox() {
   );
 }
 
-// Floating label over the focused interactable. Text is a cached canvas
-// texture; position eases toward the target so focus changes feel physical.
-function FocusPrompt() {
-  const { interactables, focusId } = useContext(AtticContext);
+// Screen-space, viewport-clamped label. The old sprite lived inside the room,
+// so walls, the camera edge, and portrait framing could cut it off. This DOM
+// surface is formatted for the player and stays readable at every angle.
+function PlayerPrompt() {
+  const { interactables, focusId, hoverId } = useContext(AtticContext);
+  const { camera, gl } = useThree();
   const ref = useRef();
-  const target = interactables.find(item => item.id === focusId) || null;
+  const sceneElement = document.getElementById('atticScene');
+  const target = interactables.find(item => item.id === (hoverId || focusId)) || null;
+  const actionable = Boolean(target && focusId === target.id);
   const coarse = useMemo(() => Boolean(window.matchMedia?.('(pointer: coarse)')?.matches), []);
-  const texture = target ? promptTexture(coarse ? target.label : `${target.label}  ·  E`) : null;
-  useFrame(({ clock }) => {
-    if (!ref.current || !target) return;
-    const [x, y, z] = target.focusPoint;
-    const bob = 0.025 * Math.sin(clock.elapsedTime * 2.4);
-    ref.current.position.set(x, y + 0.62 + bob, z);
+  const projected = useMemo(() => new THREE.Vector3(), []);
+
+  useFrame(() => {
+    const element = ref.current;
+    if (!element || !target || !sceneElement) return;
+    projected.set(...target.focusPoint).project(camera);
+    if (projected.z >= 1 || projected.z <= -1) {
+      element.style.visibility = 'hidden';
+      return;
+    }
+
+    const canvasRect = gl.domElement.getBoundingClientRect();
+    const sceneRect = sceneElement.getBoundingClientRect();
+    const x = canvasRect.left - sceneRect.left + ((projected.x + 1) / 2) * canvasRect.width;
+    const y = canvasRect.top - sceneRect.top + ((1 - projected.y) / 2) * canvasRect.height;
+    const width = element.offsetWidth || 150;
+    const height = element.offsetHeight || 48;
+    const margin = 10;
+    const left = THREE.MathUtils.clamp(x - width / 2, margin, Math.max(margin, sceneRect.width - width - margin));
+    let top = y - height - 18;
+    if (top < margin) top = y + 18;
+    top = THREE.MathUtils.clamp(top, margin, Math.max(margin, sceneRect.height - height - margin));
+    element.style.left = `${left.toFixed(1)}px`;
+    element.style.top = `${top.toFixed(1)}px`;
+    element.style.visibility = 'visible';
   });
-  if (!target || !texture) return null;
-  const aspect = texture.image.width / texture.image.height;
-  const height = 0.19;
-  return (
-    <sprite
-      ref={ref}
-      position={[target.focusPoint[0], target.focusPoint[1] + 0.62, target.focusPoint[2]]}
-      scale={[height * aspect, height, 1]}
-    >
-      <spriteMaterial map={texture} transparent depthWrite={false} depthTest={false} />
-    </sprite>
+
+  if (!target || !sceneElement) return null;
+  return createPortal(
+    <div ref={ref} className={`attic3d-item-label${actionable ? ' actionable' : ''}`} aria-hidden="true">
+      <b>{target.name || target.label}</b>
+      {actionable && <span>{coarse ? target.label : `${target.label} · E`}</span>}
+    </div>,
+    sceneElement,
   );
 }
 
-// Gold ring on the floor marking an in-flight tap-to-walk destination.
-// PlayerRig writes the shared ref every time a walk starts/ends; reading it
-// per-frame here keeps the marker out of React state entirely.
 function WalkMarker() {
   const { autoWalkRef } = useContext(AtticContext);
   const texture = useMemo(() => ringTexture(), []);
@@ -149,11 +178,12 @@ function WalkMarker() {
   );
 }
 
-// Prop art, note, and deck render in both modes (they are the room's set
-// dressing); the focus prompt and walk marker self-hide while the approach
-// cinematic plays because focus/auto-walk never engage there.
 export function Interactables() {
-  const { adapter, mode, snapshot } = useContext(AtticContext);
+  const { adapter, mode, snapshot, setHoverId } = useContext(AtticContext);
+  const interactive = mode === 'attic';
+
+  useEffect(() => () => setHoverId(null), [setHoverId]);
+
   return (
     <group>
       {PROP_STATIONS.map((station, index) => {
@@ -162,15 +192,24 @@ export function Interactables() {
         return (
           <StationBoundary key={station.id}>
             <Suspense fallback={null}>
-              <PropArt station={station} searched={Boolean(snapshot.searched[index])} prop={prop} />
+              <PropArt
+                station={station}
+                searched={Boolean(snapshot.searched[index])}
+                prop={prop}
+                hover={hoverHandlers(station.id, setHoverId, interactive && !snapshot.searched[index])}
+              />
             </Suspense>
           </StationBoundary>
         );
       })}
-      {/* the note sits where the DOM spread lives in seated-table mode */}
-      {mode !== 'table' && <NoteOnTable found={snapshot.noteFound} />}
-      <DeckBox />
-      <FocusPrompt />
+      {mode !== 'table' && (
+        <NoteOnTable
+          found={snapshot.noteFound}
+          hover={hoverHandlers('sticky_note_01', setHoverId, interactive && !snapshot.noteFound)}
+        />
+      )}
+      <DeckBox hover={hoverHandlers('deck_box', setHoverId, interactive)} />
+      <PlayerPrompt />
       <WalkMarker />
     </group>
   );
