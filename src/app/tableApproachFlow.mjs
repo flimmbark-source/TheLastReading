@@ -18,8 +18,6 @@ export function installTableApproachFlow(target = window) {
   if (!target || target.__tlrTableApproachInstalled) return;
   target.__tlrTableApproachInstalled = true;
 
-  // Same flag as the 3D attic (see atticFlow.mjs): one switch, one feature.
-  // On by default; ?attic3d=0 (or tlrSetAttic3d(false)) is the kill-switch.
   function enabled() {
     try {
       const q = new URLSearchParams(target.location.search || '');
@@ -35,19 +33,14 @@ export function installTableApproachFlow(target = window) {
     return Boolean(target.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
   }
 
-  // mainMenu.mjs deliberately replays both the initial shuffle and the initial
-  // deal animation after its own loading curtain lifts. During the 3D approach
-  // that curtain is underneath the still-running walk/sit cinematic, so both
-  // effects used to complete out of sight. Hold those two replay calls and
-  // release them together when the final table reveal veil starts fading out.
   function createTableRevealGate() {
     const originalPlaySound = target.playSound;
-    const originalQueueDrawAnimation = target.tlrQueueDrawAnimation;
+    const releaseDrawHold = typeof target.tlrHoldDrawAnimations === 'function'
+      ? target.tlrHoldDrawAnimations()
+      : null;
 
     let pendingShuffle = false;
-    let pendingDraw = null;
     let released = false;
-
     const gatedPlaySound = typeof originalPlaySound === 'function'
       ? function (soundName, ...args) {
           if (soundName === 'shuffle') {
@@ -58,37 +51,43 @@ export function installTableApproachFlow(target = window) {
         }
       : null;
 
-    const gatedQueueDrawAnimation = typeof originalQueueDrawAnimation === 'function'
-      ? function (cards, ...args) {
-          pendingDraw = { cards, args };
-          return Array.isArray(cards) ? cards : [cards];
-        }
-      : null;
-
     if (gatedPlaySound) target.playSound = gatedPlaySound;
-    if (gatedQueueDrawAnimation) target.tlrQueueDrawAnimation = gatedQueueDrawAnimation;
 
     return {
       release({ play = false } = {}) {
         if (released) return;
         released = true;
-
-        if (gatedPlaySound && target.playSound === gatedPlaySound) {
-          target.playSound = originalPlaySound;
-        }
-        if (gatedQueueDrawAnimation && target.tlrQueueDrawAnimation === gatedQueueDrawAnimation) {
-          target.tlrQueueDrawAnimation = originalQueueDrawAnimation;
-        }
-
-        if (play) {
-          if (pendingShuffle) originalPlaySound?.call(target, 'shuffle');
-          if (pendingDraw) originalQueueDrawAnimation?.call(target, pendingDraw.cards, ...pendingDraw.args);
-        }
-
+        if (gatedPlaySound && target.playSound === gatedPlaySound) target.playSound = originalPlaySound;
+        releaseDrawHold?.({ play });
+        if (play && pendingShuffle) originalPlaySound?.call(target, 'shuffle');
         pendingShuffle = false;
-        pendingDraw = null;
       },
     };
+  }
+
+  function releaseAfterVeilClears(gate, veil) {
+    let settled = false;
+    let fallback = 0;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      target.clearTimeout(fallback);
+      veil?.removeEventListener?.('transitionend', onTransitionEnd);
+      gate.release({ play: true });
+    };
+    const onTransitionEnd = event => {
+      if (event.target === veil && event.propertyName === 'opacity') finish();
+    };
+
+    if (!veil || !veil.isConnected) {
+      target.requestAnimationFrame(() => target.requestAnimationFrame(finish));
+      return;
+    }
+    veil.addEventListener('transitionend', onTransitionEnd);
+    // The veil transition is currently 550ms. Keep a generous fallback so a
+    // reduced-motion stylesheet or interrupted transition cannot swallow the
+    // initial shuffle/deal forever.
+    fallback = target.setTimeout(finish, 760);
   }
 
   function releaseEffectsAtTableReveal(gate) {
@@ -99,8 +98,12 @@ export function installTableApproachFlow(target = window) {
     }
 
     const veil = target.document.querySelector('.table3d-reveal-veil');
-    if (!veil || veil.classList.contains('out')) {
+    if (!veil) {
       gate.release({ play: true });
+      return;
+    }
+    if (veil.classList.contains('out')) {
+      releaseAfterVeilClears(gate, veil);
       return;
     }
 
@@ -109,15 +112,13 @@ export function installTableApproachFlow(target = window) {
       if (!veil.classList.contains('out')) return;
       observer.disconnect();
       target.clearTimeout(fallbackTimer);
-      gate.release({ play: true });
+      releaseAfterVeilClears(gate, veil);
     });
     observer.observe(veil, { attributes: true, attributeFilter: ['class'] });
-
-    // Fail open if styling or another transition path removes/changes the veil.
     fallbackTimer = target.setTimeout(() => {
       observer.disconnect();
-      gate.release({ play: true });
-    }, 2000);
+      releaseAfterVeilClears(gate, veil);
+    }, 2600);
   }
 
   function wrap(name) {
@@ -134,12 +135,19 @@ export function installTableApproachFlow(target = window) {
         return original.apply(this, arguments);
       }
 
-      // Reduced motion: no cinematic, but the hybrid seated table (a static
-      // camera) still applies.
       if (reducedMotion()) {
-        const result = await original.apply(this, arguments);
-        entry.mountSeatedTable?.();
-        return result;
+        const revealGate = createTableRevealGate();
+        try {
+          const result = await original.apply(this, arguments);
+          const seat = entry.mountSeatedTable?.({
+            onReady: () => revealGate.release({ play: true }),
+          });
+          if (!seat) revealGate.release({ play: true });
+          return result;
+        } catch (error) {
+          revealGate.release();
+          throw error;
+        }
       }
 
       let revealGate = { release() {} };
@@ -150,9 +158,6 @@ export function installTableApproachFlow(target = window) {
 
       revealGate = createTableRevealGate();
       const boot = (async () => original.apply(this, arguments))();
-      // Once both the cinematic and the boot settle, the overlay converts
-      // itself into the seated backdrop in place — never over a half-built
-      // table, and never with two live canvases.
       overlay.completeWith(boot);
       try {
         return await boot;
@@ -169,9 +174,6 @@ export function installTableApproachFlow(target = window) {
   wrap('tlrMainMenuNewGame');
   wrap('tlrMainMenuContinue');
 
-  // With 3D on by default, the chunk is part of the normal start path — warm
-  // it while the player is still reading the menu so clicking New Reading
-  // doesn't stack the download onto the boot.
   if (enabled()) {
     const idle = target.requestIdleCallback?.bind(target) || (fn => target.setTimeout(fn, 2500));
     idle(
