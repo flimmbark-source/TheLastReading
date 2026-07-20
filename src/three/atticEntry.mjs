@@ -23,7 +23,11 @@ const HINT_KEY = 'tlr_attic3d_hint_seen';
 const LIVE_CLASS = 'attic3d-live';
 const PENDING_CLASS = 'attic3d-pending';
 const SEAT_CLASS = 'table3d-live';
+const RETURN_CLASS = 'table3d-continuous-return';
+const RETURN_REVEAL_CLASS = 'table3d-return-reveal';
+const TRANSITION_STYLE_ID = 'table3d-continuous-transition-style';
 const STAND_TRANSFER_CEILING_MS = 4500;
+const RETURN_SETTLE_CEILING_MS = 1800;
 
 function clearPromotionSceneStyles(scene) {
   if (!scene) return;
@@ -32,18 +36,97 @@ function clearPromotionSceneStyles(scene) {
   scene.style.removeProperty('transition');
 }
 
+function ensureContinuousTransitionStyles() {
+  if (document.getElementById(TRANSITION_STYLE_ID)) return;
+  const style = document.createElement('style');
+  style.id = TRANSITION_STYLE_ID;
+  style.textContent = `
+    /* The action rail is old screen-space UI. Hide the complete surface —
+       both medallions, the discard badge, and its ::before pips — before the
+       first rising frame while the cards themselves continue their table fade. */
+    body.table3d-live.attic3d-pending .spread-actions,
+    body.table3d-live.attic3d-pending #spv2DiscardBadge {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+      transition: none !important;
+    }
+    body.table3d-live.attic3d-pending .score-stack,
+    body.${RETURN_CLASS} .score-stack {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
+    /* A normal chair sit keeps the live room visible. atticFlow still creates
+       its defensive veil and mode-to-table shell for the fallback path, but
+       they become transparent while this same root is being converted. */
+    body.${RETURN_CLASS} .table3d-reveal-veil {
+      opacity: 0 !important;
+      background: transparent !important;
+      transition: none !important;
+    }
+    body.${RETURN_CLASS}.mode-to-table #atticScene,
+    body.${RETURN_CLASS}.mode-table-return #atticScene {
+      opacity: 1 !important;
+      filter: none !important;
+      transform: none !important;
+    }
+    body.${RETURN_CLASS} .spread-actions {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+const RETURN_VISUAL_SELECTORS = ['.spread-wrap', '.handDock', '#relicRack'];
+const RETURN_INPUT_SELECTORS = ['#spread', '#hand'];
+
+function setReturningTableVisible(visible) {
+  for (const selector of RETURN_VISUAL_SELECTORS) {
+    const element = document.querySelector(selector);
+    if (!element) continue;
+    if (visible) {
+      element.style.setProperty('opacity', '1', 'important');
+      element.style.setProperty('transform', 'none', 'important');
+      element.style.setProperty('filter', 'none', 'important');
+      element.style.setProperty('transition', 'opacity .55s ease, transform .65s ease, filter .55s ease', 'important');
+    } else {
+      element.style.removeProperty('opacity');
+      element.style.removeProperty('transform');
+      element.style.removeProperty('filter');
+      element.style.removeProperty('transition');
+    }
+  }
+  for (const selector of RETURN_INPUT_SELECTORS) {
+    const element = document.querySelector(selector);
+    if (!element) continue;
+    if (visible) element.style.setProperty('pointer-events', 'none', 'important');
+    else element.style.removeProperty('pointer-events');
+  }
+}
+
 // Seated-backdrop plumbing shared by mountSeatedTable (attic-return path)
 // and the approach overlay's in-place conversion: one unmount contract and
 // one "leave when the reading leaves" observer.
 function createSeatedHandle(container, root) {
+  ensureContinuousTransitionStyles();
+
   let unmounted = false;
   let promoted = false;
   let observer = null;
+  let returnObserver = null;
   let hint = null;
   let transferTimer = 0;
+  let returnSafetyTimer = 0;
   let promotionScene = null;
+  let activeAdapter = null;
+  let returnFinished = false;
 
-  const renderAtticMode = (adapter, mode) => {
+  const renderAtticMode = (adapter, mode, extra = {}) => {
+    activeAdapter = adapter;
     root.render(
       createElement(AtticExperience, {
         adapter,
@@ -52,31 +135,139 @@ function createSeatedHandle(container, root) {
         registerApi: api => {
           handle.api = api;
         },
+        ...extra,
       }),
     );
+  };
+
+  const clearReturnPresentation = () => {
+    clearTimeout(returnSafetyTimer);
+    returnFinished = true;
+    setReturningTableVisible(false);
+    document.body.classList.remove(RETURN_CLASS, RETURN_REVEAL_CLASS);
+  };
+
+  const revealReturningTable = () => {
+    if (unmounted || returnFinished) return;
+    document.body.classList.add(RETURN_REVEAL_CLASS);
+    setReturningTableVisible(true);
+  };
+
+  const inspectReturnState = () => {
+    if (unmounted || !promoted) return;
+    const classes = document.body.classList;
+    const phase = handle.api?.getState?.().phase;
+
+    if (phase === 'sitting') classes.add(RETURN_CLASS);
+    if (
+      classes.contains('mode-return-hard-hide') &&
+      (phase === 'sitting' || phase === 'done')
+    ) {
+      classes.add(RETURN_CLASS);
+    }
+    if (
+      classes.contains(RETURN_CLASS) &&
+      (classes.contains('mode-return-hard-hide') || classes.contains('mode-to-table'))
+    ) {
+      revealReturningTable();
+    }
+  };
+
+  const armReturnWatch = () => {
+    returnObserver?.disconnect();
+    returnObserver = new MutationObserver(inspectReturnState);
+    returnObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    const tick = () => {
+      if (unmounted || !promoted) return;
+      inspectReturnState();
+      transferTimer = setTimeout(tick, 50);
+    };
+    transferTimer = setTimeout(tick, 0);
+  };
+
+  const destroy = () => {
+    if (unmounted) return;
+    unmounted = true;
+    handle.mounted = false;
+    clearTimeout(transferTimer);
+    clearTimeout(returnSafetyTimer);
+    observer?.disconnect();
+    returnObserver?.disconnect();
+    hint?.el?.remove();
+    clearPromotionSceneStyles(promotionScene);
+    clearReturnPresentation();
+    document.body.classList.remove(SEAT_CLASS, LIVE_CLASS, PENDING_CLASS);
+    clearTableAnchors();
+    try {
+      root.unmount();
+    } catch (error) {
+      console.warn('The Last Reading: 3D room unmount failed.', error);
+    }
+    container.remove();
+    if (window.__tlrTableSeat === handle) delete window.__tlrTableSeat;
+    if (window.__tlrAttic3d === handle) delete window.__tlrAttic3d;
+  };
+
+  const convertPromotedRoomToSeat = () => {
+    if (unmounted || !promoted || !activeAdapter) return false;
+    if (!document.body.classList.contains('single-player-v2')) return false;
+
+    promoted = false;
+    returnFinished = false;
+    clearTimeout(transferTimer);
+    observer?.disconnect();
+    returnObserver?.disconnect();
+    hint?.el?.remove();
+    hint = null;
+
+    container.id = SEAT_ID;
+    container.classList.remove('fade');
+    document.body.appendChild(container);
+
+    const finishReturn = () => {
+      if (unmounted || returnFinished) return;
+      clearReturnPresentation();
+    };
+
+    try {
+      renderAtticMode(activeAdapter, 'table', { onTableReady: finishReturn });
+    } catch (error) {
+      console.warn('The Last Reading: continuous attic return failed; using the fallback table mount.', error);
+      container.id = CONTAINER_ID;
+      promotionScene?.insertBefore(container, promotionScene.querySelector('#obalsHud'));
+      return false;
+    }
+
+    document.body.classList.add(SEAT_CLASS);
+    document.body.classList.remove(LIVE_CLASS, PENDING_CLASS);
+    clearPromotionSceneStyles(promotionScene);
+
+    if (window.__tlrAttic3d === handle) delete window.__tlrAttic3d;
+    window.__tlrTableSeat = handle;
+    handle.observe();
+
+    // TableAnchorProjector reports when the DOM cards have settled onto their
+    // world anchors. This ceiling prevents a failed ready event from leaving
+    // the transitional inline styles or input lock behind forever.
+    returnSafetyTimer = setTimeout(finishReturn, RETURN_SETTLE_CEILING_MS);
+    return true;
   };
 
   const handle = {
     mounted: true,
     api: null,
     unmount() {
-      if (unmounted) return;
-      unmounted = true;
-      handle.mounted = false;
-      clearTimeout(transferTimer);
-      observer?.disconnect();
-      hint?.el?.remove();
-      clearPromotionSceneStyles(promotionScene);
-      document.body.classList.remove(SEAT_CLASS, LIVE_CLASS, PENDING_CLASS);
-      clearTableAnchors();
-      try {
-        root.unmount();
-      } catch (error) {
-        console.warn('The Last Reading: 3D room unmount failed.', error);
-      }
-      container.remove();
-      if (window.__tlrTableSeat === handle) delete window.__tlrTableSeat;
-      if (window.__tlrAttic3d === handle) delete window.__tlrAttic3d;
+      const classes = document.body.classList;
+      const continuousReturn =
+        promoted &&
+        classes.contains(RETURN_CLASS) &&
+        (classes.contains('mode-return-hard-hide') ||
+          classes.contains('mode-to-table') ||
+          classes.contains('mode-table-return'));
+
+      if (continuousReturn && convertPromotedRoomToSeat()) return;
+      destroy();
     },
     // Turn the live seated reading backdrop into the walkable attic without
     // destroying its Canvas/WebGL context. The room remains visible beneath
@@ -89,12 +280,14 @@ function createSeatedHandle(container, root) {
       if (!scene) return null;
 
       promoted = true;
+      returnFinished = false;
       promotionScene = scene;
       observer?.disconnect();
       observer = null;
 
       // Keep the classic attic shell from painting over the still-live seated
-      // canvas. #atticScene is held transparent until the canvas moves into it.
+      // canvas. The pending class is applied before the first rising render;
+      // it also suppresses the obsolete Discard/Purge rail and its pips.
       document.body.classList.add(PENDING_CLASS);
       scene.style.setProperty('opacity', '0', 'important');
       scene.style.setProperty('pointer-events', 'none', 'important');
@@ -139,7 +332,7 @@ function createSeatedHandle(container, root) {
           renderAtticMode(adapter, 'attic');
         } catch (error) {
           console.warn('The Last Reading: promoted attic failed to become interactive.', error);
-          handle.unmount();
+          destroy();
           return;
         }
 
@@ -149,6 +342,7 @@ function createSeatedHandle(container, root) {
             if (!unmounted) clearPromotionSceneStyles(scene);
           }),
         );
+        armReturnWatch();
       };
 
       const waitForStanding = () => {
