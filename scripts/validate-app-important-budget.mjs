@@ -40,6 +40,8 @@ const appStyleFiles = [
   '../src/styles/components/titleWrap.css',
   '../src/styles/components/atticFade.css',
   '../src/styles/components/mpGameChrome.css',
+  '../src/styles/components/inGameMenu.css',
+  '../src/styles/components/atticReturnPolish.css',
 ];
 
 // Budget jumped 693 -> 706 not from new !important declarations but from
@@ -139,6 +141,9 @@ const appStyleFiles = [
 // drag-tier styling while a card is held, so both declarations are important.
 // The flick-and-pop clone, particle trail, and reduced-motion fallbacks are all
 // plain -- only these two need the marked-important tier.
+// inGameMenu.css and atticReturnPolish.css are tracked from their creation;
+// both currently add zero marked-important declarations, so the ceiling stays
+// unchanged while future edits remain visible to this guard.
 const importantBudget = 655;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)
