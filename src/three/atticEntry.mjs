@@ -24,7 +24,6 @@ const LIVE_CLASS = 'attic3d-live';
 const PENDING_CLASS = 'attic3d-pending';
 const SEAT_CLASS = 'table3d-live';
 const RETURN_CLASS = 'table3d-continuous-return';
-const RETURN_REVEAL_CLASS = 'table3d-return-reveal';
 const TRANSITION_STYLE_ID = 'table3d-continuous-transition-style';
 const STAND_TRANSFER_CEILING_MS = 4500;
 const RETURN_SETTLE_CEILING_MS = 1800;
@@ -51,8 +50,7 @@ function ensureContinuousTransitionStyles() {
       pointer-events: none !important;
       transition: none !important;
     }
-    body.table3d-live.attic3d-pending .score-stack,
-    body.${RETURN_CLASS} .score-stack {
+    body.table3d-live.attic3d-pending .score-stack {
       opacity: 0 !important;
       visibility: hidden !important;
       pointer-events: none !important;
@@ -67,45 +65,30 @@ function ensureContinuousTransitionStyles() {
       transition: none !important;
     }
     body.${RETURN_CLASS}.mode-to-table #atticScene,
-    body.${RETURN_CLASS}.mode-table-return #atticScene {
+    body.${RETURN_CLASS}.mode-table-return #atticScene,
+    body.${RETURN_CLASS}.mode-return-hard-hide #atticScene {
       opacity: 1 !important;
       filter: none !important;
       transform: none !important;
     }
+
+    /* Do not trade the blackout for a flash of the old viewport layout. The
+       seated room remains visible by itself while the same root converts and
+       TableAnchorProjector settles. Only then is this class removed. */
+    body.${RETURN_CLASS} .spread-wrap,
+    body.${RETURN_CLASS} .handDock,
+    body.${RETURN_CLASS} #relicRack,
+    body.${RETURN_CLASS} .refs-layer,
+    body.${RETURN_CLASS} #titleWrap,
+    body.${RETURN_CLASS} .score-stack,
     body.${RETURN_CLASS} .spread-actions {
       opacity: 0 !important;
       visibility: hidden !important;
       pointer-events: none !important;
+      transition: none !important;
     }
   `;
   document.head.appendChild(style);
-}
-
-const RETURN_VISUAL_SELECTORS = ['.spread-wrap', '.handDock', '#relicRack'];
-const RETURN_INPUT_SELECTORS = ['#spread', '#hand'];
-
-function setReturningTableVisible(visible) {
-  for (const selector of RETURN_VISUAL_SELECTORS) {
-    const element = document.querySelector(selector);
-    if (!element) continue;
-    if (visible) {
-      element.style.setProperty('opacity', '1', 'important');
-      element.style.setProperty('transform', 'none', 'important');
-      element.style.setProperty('filter', 'none', 'important');
-      element.style.setProperty('transition', 'opacity .55s ease, transform .65s ease, filter .55s ease', 'important');
-    } else {
-      element.style.removeProperty('opacity');
-      element.style.removeProperty('transform');
-      element.style.removeProperty('filter');
-      element.style.removeProperty('transition');
-    }
-  }
-  for (const selector of RETURN_INPUT_SELECTORS) {
-    const element = document.querySelector(selector);
-    if (!element) continue;
-    if (visible) element.style.setProperty('pointer-events', 'none', 'important');
-    else element.style.removeProperty('pointer-events');
-  }
 }
 
 // Seated-backdrop plumbing shared by mountSeatedTable (attic-return path)
@@ -143,14 +126,7 @@ function createSeatedHandle(container, root) {
   const clearReturnPresentation = () => {
     clearTimeout(returnSafetyTimer);
     returnFinished = true;
-    setReturningTableVisible(false);
-    document.body.classList.remove(RETURN_CLASS, RETURN_REVEAL_CLASS);
-  };
-
-  const revealReturningTable = () => {
-    if (unmounted || returnFinished) return;
-    document.body.classList.add(RETURN_REVEAL_CLASS);
-    setReturningTableVisible(true);
+    document.body.classList.remove(RETURN_CLASS);
   };
 
   const inspectReturnState = () => {
@@ -164,12 +140,6 @@ function createSeatedHandle(container, root) {
       (phase === 'sitting' || phase === 'done')
     ) {
       classes.add(RETURN_CLASS);
-    }
-    if (
-      classes.contains(RETURN_CLASS) &&
-      (classes.contains('mode-return-hard-hide') || classes.contains('mode-to-table'))
-    ) {
-      revealReturningTable();
     }
   };
 
@@ -249,7 +219,7 @@ function createSeatedHandle(container, root) {
 
     // TableAnchorProjector reports when the DOM cards have settled onto their
     // world anchors. This ceiling prevents a failed ready event from leaving
-    // the transitional inline styles or input lock behind forever.
+    // the table hidden forever.
     returnSafetyTimer = setTimeout(finishReturn, RETURN_SETTLE_CEILING_MS);
     return true;
   };
