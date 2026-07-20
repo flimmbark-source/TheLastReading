@@ -29,6 +29,39 @@ async function waitForServer() {
   throw new Error(`Timed out waiting for ${baseUrl}`);
 }
 
+// generated-sheet-ready means the SPV2 assets exist, not that gameplay owns the
+// viewport. With the 3D start enabled, #table3dApproach deliberately remains the
+// topmost interactive surface until the walk/sit cinematic completes. The visual
+// smoke is testing the final playable composition, so finish that real path via
+// its public skip API and wait for the seated camera, anchors, and reveal veil to
+// settle before probing hit targets. A non-3D/WebGL fallback passes straight
+// through because no approach element is mounted.
+async function settleIntoInteractiveTable(page) {
+  await page.waitForFunction(() => {
+    const approach = document.getElementById('table3dApproach');
+    return !approach || Boolean(window.__tlrTable3d?.api?.skip);
+  }, null, { timeout: 6000 });
+
+  await page.evaluate(() => window.__tlrTable3d?.skip?.());
+
+  await page.waitForFunction(() => !document.getElementById('table3dApproach'), null, { timeout: 7000 });
+  await page.waitForFunction(() => {
+    const seat = document.getElementById('table3dSeat');
+    if (!seat) return true;
+    const veil = document.querySelector('.table3d-reveal-veil');
+    const veilClear = !veil || Number.parseFloat(getComputedStyle(veil).opacity || '0') <= 0.01;
+    return (
+      document.body.classList.contains('table3d-live') &&
+      !document.body.classList.contains('table3d-settling') &&
+      getComputedStyle(seat).pointerEvents === 'none' &&
+      veilClear
+    );
+  }, null, { timeout: 7000 });
+
+  // Let the first completely uncovered table paint before geometry assertions.
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+}
+
 async function verifyCardDetailTrigger(page, width) {
   // Select through the app's real card click handler, but invoke it directly so
   // the perpetual hand idle animation cannot make Playwright reject the setup
@@ -97,14 +130,15 @@ async function main() {
       });
       await page.goto(`${baseUrl}/game.html`, { waitUntil: 'networkidle' });
 
-      // Drive the real main-menu boot path instead of forcing SPv2 body classes:
-      // the SPv2 game engine (gesture drawers, ability handlers, generated-sheet
+      // Drive the real main-menu boot path instead of forcing SPV2 body classes:
+      // the SPV2 game engine (gesture drawers, ability handlers, generated-sheet
       // art) only loads once a game actually starts, so a synthetic class swap
       // renders an empty shell and can't catch real interaction regressions.
       await page.click('button[onclick="tlrMainMenuNewGame()"]');
       await page.waitForFunction(() => document.body.classList.contains('generated-sheet-ready'));
       await page.waitForFunction(() => document.getElementById('mainMenu')?.hidden === true);
       await page.waitForSelector('#abilitiesBtn');
+      await settleIntoInteractiveTable(page);
 
       const snapshot = await page.evaluate(() => {
         const boxFor = selector => {
