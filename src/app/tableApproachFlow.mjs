@@ -35,38 +35,63 @@ export function installTableApproachFlow(target = window) {
     return Boolean(target.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
   }
 
-  // The normal table boot deliberately replays the initial shuffle after its
-  // own loading curtain lifts. During the 3D approach that curtain is hidden
-  // underneath the still-running walk/sit cinematic, so the sound used to fire
-  // during the sit-down. Gate only that one sound and release it when the final
-  // table reveal veil actually starts fading out.
-  function createShuffleGate() {
+  // mainMenu.mjs deliberately replays both the initial shuffle and the initial
+  // deal animation after its own loading curtain lifts. During the 3D approach
+  // that curtain is underneath the still-running walk/sit cinematic, so both
+  // effects used to complete out of sight. Hold those two replay calls and
+  // release them together when the final table reveal veil starts fading out.
+  function createTableRevealGate() {
     const originalPlaySound = target.playSound;
-    if (typeof originalPlaySound !== 'function') return { release() {} };
+    const originalQueueDrawAnimation = target.tlrQueueDrawAnimation;
 
-    let pending = false;
+    let pendingShuffle = false;
+    let pendingDraw = null;
     let released = false;
-    const gatedPlaySound = function (soundName, ...args) {
-      if (soundName === 'shuffle') {
-        pending = true;
-        return undefined;
-      }
-      return originalPlaySound.call(this, soundName, ...args);
-    };
-    target.playSound = gatedPlaySound;
+
+    const gatedPlaySound = typeof originalPlaySound === 'function'
+      ? function (soundName, ...args) {
+          if (soundName === 'shuffle') {
+            pendingShuffle = true;
+            return undefined;
+          }
+          return originalPlaySound.call(this, soundName, ...args);
+        }
+      : null;
+
+    const gatedQueueDrawAnimation = typeof originalQueueDrawAnimation === 'function'
+      ? function (cards, ...args) {
+          pendingDraw = { cards, args };
+          return Array.isArray(cards) ? cards : [cards];
+        }
+      : null;
+
+    if (gatedPlaySound) target.playSound = gatedPlaySound;
+    if (gatedQueueDrawAnimation) target.tlrQueueDrawAnimation = gatedQueueDrawAnimation;
 
     return {
       release({ play = false } = {}) {
         if (released) return;
         released = true;
-        if (target.playSound === gatedPlaySound) target.playSound = originalPlaySound;
-        if (play && pending) originalPlaySound.call(target, 'shuffle');
-        pending = false;
+
+        if (gatedPlaySound && target.playSound === gatedPlaySound) {
+          target.playSound = originalPlaySound;
+        }
+        if (gatedQueueDrawAnimation && target.tlrQueueDrawAnimation === gatedQueueDrawAnimation) {
+          target.tlrQueueDrawAnimation = originalQueueDrawAnimation;
+        }
+
+        if (play) {
+          if (pendingShuffle) originalPlaySound?.call(target, 'shuffle');
+          if (pendingDraw) originalQueueDrawAnimation?.call(target, pendingDraw.cards, ...pendingDraw.args);
+        }
+
+        pendingShuffle = false;
+        pendingDraw = null;
       },
     };
   }
 
-  function releaseShuffleAtTableReveal(gate) {
+  function releaseEffectsAtTableReveal(gate) {
     const body = target.document?.body;
     if (!body?.classList.contains('table3d-live')) {
       gate.release();
@@ -117,13 +142,13 @@ export function installTableApproachFlow(target = window) {
         return result;
       }
 
-      let shuffleGate = { release() {} };
+      let revealGate = { release() {} };
       const overlay = entry.mountTableApproach?.({
-        onDone: () => releaseShuffleAtTableReveal(shuffleGate),
+        onDone: () => releaseEffectsAtTableReveal(revealGate),
       });
       if (!overlay) return original.apply(this, arguments);
 
-      shuffleGate = createShuffleGate();
+      revealGate = createTableRevealGate();
       const boot = (async () => original.apply(this, arguments))();
       // Once both the cinematic and the boot settle, the overlay converts
       // itself into the seated backdrop in place — never over a half-built
@@ -133,7 +158,7 @@ export function installTableApproachFlow(target = window) {
         return await boot;
       } catch (error) {
         overlay.abort();
-        shuffleGate.release();
+        revealGate.release();
         throw error;
       }
     };
