@@ -122,6 +122,10 @@ export function installAtticFlow(target = window){
     // A hard exit (main menu, Adventure boot) unmounts the 3D layer behind
     // our back; drop the dead handle so the next visit can mount again.
     if(attic3d&&attic3d.mounted===false)attic3d=null;
+    // A successful continuous return transfers the same handle to table
+    // ownership. It is still mounted, but it must no longer block the next
+    // attic promotion merely because this closure kept the old reference.
+    if(attic3d&&target.__tlrTableSeat===attic3d&&target.__tlrAttic3d!==attic3d)attic3d=null;
     if(!attic3dEnabled()||attic3d)return;
 
     const adapter=attic3dAdapter();
@@ -198,6 +202,9 @@ export function installAtticFlow(target = window){
     if(attic3dEnabled()&&document.body.classList.contains('single-player-v2')&&live3d&&live3d.mounted!==false&&typeof live3d.convertToSeat==='function'){
       let converted=null;try{converted=live3d.convertToSeat();}catch(e){converted=null;}
       if(converted){
+        // The handle is now owned by __tlrTableSeat. Release the closure's attic
+        // ownership immediately so a second visit can promote it back again.
+        if(attic3d===live3d)attic3d=null;
         const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','true');
         // Leave mode-attic (and any stale transition classes) before dealing a
         // fresh reading: atticReturnPolish's resetSession wrapper only forces the
