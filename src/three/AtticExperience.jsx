@@ -12,8 +12,9 @@ import { createContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { AtticRoom } from './AtticRoom.jsx';
 import { Interactables } from './Interactables.jsx';
-import { Diegetics } from './Diegetics.jsx';
+import { Diegetics, QuietBoundary } from './Diegetics.jsx';
 import { StandingScoreCabinet } from './StandingScoreCabinet.jsx';
+import { TableSpread } from './TableSpread.jsx';
 import { PlayerRig } from './PlayerRig.jsx';
 import { applyTableAnchors, clearTableAnchors } from './tableAnchors.mjs';
 import { NOTE_SPOT, DECK_SPOT, CHAIR, TABLE, PROP_STATIONS, TRUNK_SPOT } from './atticLayout.mjs';
@@ -288,6 +289,11 @@ export function AtticExperience({
         <Interactables />
         <Diegetics />
         {(mode === 'rising' || mode === 'attic') && <StandingScoreCabinet />}
+        {(mode === 'rising' || mode === 'attic') && (
+          <QuietBoundary>
+            <TableSpread />
+          </QuietBoundary>
+        )}
         <PlayerRig key={rigKey} />
         {(mode === 'table' || mode === 'rising') && (
           <TableAnchorProjector onReady={onTableReady} continuous={mode === 'rising'} />

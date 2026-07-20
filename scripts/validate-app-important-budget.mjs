@@ -144,12 +144,7 @@ const appStyleFiles = [
 // inGameMenu.css and atticReturnPolish.css are tracked from their creation;
 // both currently add zero marked-important declarations, so the ceiling stays
 // unchanged while future edits remain visible to this guard.
-// 655 -> 656 (components/atticFade.css, a REAL +1): getting up from the seated
-// 3D table now exempts .spread-wrap from the mode-to-attic/mode-attic fade so
-// the reading stays pinned to the cloth while the camera rises. The exemption
-// needs a single marked-important opacity:1 to beat the mode-attic rule's own
-// important opacity:0; its other properties win on specificity alone.
-const importantBudget = 656;
+const importantBudget = 655;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);

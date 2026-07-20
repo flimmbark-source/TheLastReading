@@ -23,7 +23,7 @@ import { useTlrStore } from './useTlrStore.mjs';
 const MAX_CANDLES = 7; // the obal score ladder tops out at 7
 const FLAME_CUES = ['card-place', 'pattern', 'ability-reveal', 'threshold-clear'];
 
-class QuietBoundary extends Component {
+export class QuietBoundary extends Component {
   constructor(props) {
     super(props);
     this.state = { failed: false };
