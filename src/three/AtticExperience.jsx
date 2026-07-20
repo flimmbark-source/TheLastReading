@@ -8,7 +8,7 @@
 //   'approach' — the run-start walk-in and sit-down cinematic
 //   'table'    — the stationary hybrid reading backdrop
 
-import { createContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { AtticRoom } from './AtticRoom.jsx';
 import { Interactables } from './Interactables.jsx';
@@ -17,7 +17,7 @@ import { StandingScoreCabinet } from './StandingScoreCabinet.jsx';
 import { TableSpread } from './TableSpread.jsx';
 import { PlayerRig } from './PlayerRig.jsx';
 import { applyTableAnchors, clearTableAnchors } from './tableAnchors.mjs';
-import { NOTE_SPOT, DECK_SPOT, CHAIR, TABLE, PROP_STATIONS, TRUNK_SPOT } from './atticLayout.mjs';
+import { NOTE_SPOT, DECK_SPOT, CHAIR, TABLE, POSES, PROP_STATIONS, TRUNK_SPOT } from './atticLayout.mjs';
 
 export const AtticContext = createContext(null);
 
@@ -160,6 +160,22 @@ function FovTuner({ mode }) {
   return null;
 }
 
+function poseFacing(pose) {
+  const [eyeX, eyeY, eyeZ] = pose.eye;
+  const dx = pose.look[0] - eyeX;
+  const dy = pose.look[1] - eyeY;
+  const dz = pose.look[2] - eyeZ;
+  const length = Math.max(Math.hypot(dx, dy, dz), 1e-4);
+  return {
+    x: eyeX,
+    z: eyeZ,
+    yaw: Math.atan2(-dx, -dz),
+    pitch: Math.asin(Math.max(-1, Math.min(1, dy / length))),
+  };
+}
+
+const STANDING_RETURN_POSE = poseFacing(POSES.standing);
+
 export function AtticExperience({
   adapter,
   mode = 'attic',
@@ -172,10 +188,33 @@ export function AtticExperience({
   const [focusId, setFocusId] = useState(null);
   const [hoverId, setHoverId] = useState(null);
   const sitRef = useRef(null);
+  const playerApiRef = useRef(null);
   const autoWalkRef = useRef({ active: false, x: 0, z: 0 });
   const cueRef = useRef({ cue: null, at: 0, intensity: 0 });
 
   const reducedMotion = useMemo(() => Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches), []);
+
+  const registerPlayerApi = useCallback(
+    api => {
+      playerApiRef.current = api;
+      registerApi?.(api);
+    },
+    [registerApi],
+  );
+
+  const sitAtTable = useCallback(() => {
+    // Chair interaction is reach-based, so it can fire before the camera is on
+    // the exact endpoint of the getting-up animation. Stage that endpoint first;
+    // PlayerRig can then play STANDING -> SEATED with the same duration/easing,
+    // making the return a literal reverse of the rise instead of a diagonal glide.
+    playerApiRef.current?.teleport?.(
+      STANDING_RETURN_POSE.x,
+      STANDING_RETURN_POSE.z,
+      STANDING_RETURN_POSE.yaw,
+      STANDING_RETURN_POSE.pitch,
+    );
+    sitRef.current?.();
+  }, []);
 
   const interactables = useMemo(() => {
     if (mode !== 'attic') return [];
@@ -230,7 +269,7 @@ export function AtticExperience({
       focusPoint: [TABLE.position[0], TABLE.topY, TABLE.position[2] + 0.55],
       reach: 1.9,
       label: 'Sit at the table',
-      action: () => sitRef.current?.(),
+      action: sitAtTable,
     });
     list.push({
       id: 'chair',
@@ -239,10 +278,10 @@ export function AtticExperience({
       focusPoint: [CHAIR.position[0], 0.9, CHAIR.position[2]],
       reach: 2.0,
       label: 'Sit at the table',
-      action: () => sitRef.current?.(),
+      action: sitAtTable,
     });
     return list;
-  }, [adapter, mode, snapshot]);
+  }, [adapter, mode, sitAtTable, snapshot]);
 
   const context = useMemo(
     () => ({
@@ -260,9 +299,20 @@ export function AtticExperience({
       reducedMotion,
       onFirstMove,
       onSequenceComplete,
-      registerApi,
+      registerApi: registerPlayerApi,
     }),
-    [adapter, mode, snapshot, interactables, focusId, hoverId, reducedMotion, onFirstMove, onSequenceComplete, registerApi],
+    [
+      adapter,
+      mode,
+      snapshot,
+      interactables,
+      focusId,
+      hoverId,
+      reducedMotion,
+      onFirstMove,
+      onSequenceComplete,
+      registerPlayerApi,
+    ],
   );
 
   // Table -> rising remounts only the first-person rig, not the Canvas or room.
