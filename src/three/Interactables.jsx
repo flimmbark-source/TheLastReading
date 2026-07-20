@@ -124,11 +124,14 @@ function RoomHitVolumes({ interactive, setHoverId }) {
   const chairFocus = [CHAIR.position[0], 0.9, CHAIR.position[2]];
   return (
     <group>
+      {/* A rim, not a solid cap: smaller items on the tabletop keep their own
+          raycast/hover target instead of being swallowed by the table target. */}
       <mesh
-        position={[TABLE.position[0], TABLE.topY, TABLE.position[2]]}
+        position={[TABLE.position[0], TABLE.topY + 0.04, TABLE.position[2]]}
+        rotation={[Math.PI / 2, 0, 0]}
         {...hoverHandlers('reading_table', setHoverId, true, tableFocus)}
       >
-        <cylinderGeometry args={[TABLE.radius, TABLE.radius, 0.16, 18]} />
+        <torusGeometry args={[TABLE.radius - 0.15, 0.15, 8, 28]} />
         <HitMaterial />
       </mesh>
       <mesh
