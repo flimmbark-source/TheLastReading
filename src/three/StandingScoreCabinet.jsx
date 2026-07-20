@@ -129,6 +129,19 @@ export function StandingScoreCabinet() {
   }, [storeState]);
 
   useLayoutEffect(() => {
+    // A quick re-entry can begin before the previous seat projector's delayed
+    // ready callback has cleaned its return-only inline presentation. Strip it
+    // in the same layout phase as this cabinet mounts so no stale table frame
+    // can survive into the next stand-up paint.
+    document.body?.classList.remove('table3d-continuous-return', 'table3d-return-reveal');
+    document.querySelectorAll('.spread-wrap,.handDock,#relicRack').forEach(element => {
+      element.style.removeProperty('opacity');
+      element.style.removeProperty('transform');
+      element.style.removeProperty('filter');
+      element.style.removeProperty('transition');
+    });
+    document.querySelectorAll('#spread,#hand').forEach(element => element.style.removeProperty('pointer-events'));
+
     const className = 'table3d-score-cabinet';
     document.body?.classList.add(className);
     let style = document.getElementById('table3d-score-cabinet-style');
