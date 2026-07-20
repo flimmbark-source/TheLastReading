@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 import { useFrame, useLoader, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { AtticContext } from './AtticExperience.jsx';
-import { PROP_STATIONS, NOTE_SPOT, DECK_SPOT } from './atticLayout.mjs';
+import { PROP_STATIONS, NOTE_SPOT, DECK_SPOT, TABLE, CHAIR, TRUNK_SPOT } from './atticLayout.mjs';
 import { radialGlowTexture, ringTexture } from './canvasTextures.mjs';
 
 class StationBoundary extends Component {
@@ -104,9 +104,41 @@ function DeckBox({ hover }) {
   );
 }
 
-// Screen-space, viewport-clamped label. The old sprite lived inside the room,
-// so walls, the camera edge, and portrait framing could cut it off. This DOM
-// surface is formatted for the player and stays readable at every angle.
+// Broad invisible hit volumes follow the actual furniture. They make hover
+// naming reliable across the whole table/chair/trunk silhouette instead of
+// requiring the cursor to pass near a single projected focus point.
+function RoomHitVolumes({ interactive, setHoverId }) {
+  if (!interactive) return null;
+  const material = <meshBasicMaterial transparent opacity={0.001} depthWrite={false} colorWrite={false} />;
+  return (
+    <group>
+      <mesh
+        position={[TABLE.position[0], TABLE.topY, TABLE.position[2]]}
+        {...hoverHandlers('reading_table', setHoverId, true)}
+      >
+        <cylinderGeometry args={[TABLE.radius, TABLE.radius, 0.16, 18]} />
+        {material}
+      </mesh>
+      <mesh
+        position={[CHAIR.position[0], 0.68, CHAIR.position[2]]}
+        rotation={[0, CHAIR.facing, 0]}
+        {...hoverHandlers('chair', setHoverId, true)}
+      >
+        <boxGeometry args={[0.62, 1.1, 0.62]} />
+        {material}
+      </mesh>
+      <mesh
+        position={[TRUNK_SPOT.position[0], 0.36, TRUNK_SPOT.position[2]]}
+        rotation={[0, TRUNK_SPOT.rotationY, 0]}
+        {...hoverHandlers('archives_trunk', setHoverId, true)}
+      >
+        <boxGeometry args={[1.25, 0.78, 0.78]} />
+        {material}
+      </mesh>
+    </group>
+  );
+}
+
 function PlayerPrompt() {
   const { interactables, focusId, hoverId } = useContext(AtticContext);
   const { camera, gl } = useThree();
@@ -209,6 +241,7 @@ export function Interactables() {
         />
       )}
       <DeckBox hover={hoverHandlers('deck_box', setHoverId, interactive)} />
+      <RoomHitVolumes interactive={interactive} setHoverId={setHoverId} />
       <PlayerPrompt />
       <WalkMarker />
     </group>
