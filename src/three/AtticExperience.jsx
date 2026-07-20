@@ -256,8 +256,7 @@ export function AtticExperience({
     // STANDING -> SEATED animation. That keeps the return smooth and makes the
     // seated transition the literal inverse of getting up.
     sequence.active = true;
-    const stageStartedAt = performance.now();
-    api.walkTo(STANDING_RETURN_POSE.x, STANDING_RETURN_POSE.z, null);
+    let stageStartedAt = 0;
 
     const alignAndSit = state => {
       const alignStartedAt = performance.now();
@@ -300,7 +299,16 @@ export function AtticExperience({
       sequence.frame = requestAnimationFrame(waitForStage);
     };
 
-    sequence.frame = requestAnimationFrame(waitForStage);
+    // An interactable action can run inside PlayerRig's movement frame. Starting
+    // a replacement walk immediately there lets the old walk's cleanup cancel
+    // the new one. Defer one frame so the chair-arrival frame finishes first.
+    const beginStage = () => {
+      if (!sequence.active) return;
+      stageStartedAt = performance.now();
+      api.walkTo(STANDING_RETURN_POSE.x, STANDING_RETURN_POSE.z, null);
+      sequence.frame = requestAnimationFrame(waitForStage);
+    };
+    sequence.frame = requestAnimationFrame(beginStage);
   }, [cancelSitReturn]);
 
   const interactables = useMemo(() => {
