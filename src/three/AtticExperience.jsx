@@ -174,7 +174,20 @@ function poseFacing(pose) {
   };
 }
 
+function smoothStep(t) {
+  return t * t * (3 - 2 * t);
+}
+
+function lerpAngle(a, b, t) {
+  let difference = (b - a) % (Math.PI * 2);
+  if (difference > Math.PI) difference -= Math.PI * 2;
+  if (difference < -Math.PI) difference += Math.PI * 2;
+  return a + difference * t;
+}
+
 const STANDING_RETURN_POSE = poseFacing(POSES.standing);
+const SIT_ALIGN_MS = 280;
+const SIT_STAGE_TIMEOUT_MS = 5000;
 
 export function AtticExperience({
   adapter,
@@ -189,6 +202,7 @@ export function AtticExperience({
   const [hoverId, setHoverId] = useState(null);
   const sitRef = useRef(null);
   const playerApiRef = useRef(null);
+  const sitReturnRef = useRef({ active: false, frame: 0 });
   const autoWalkRef = useRef({ active: false, x: 0, z: 0 });
   const cueRef = useRef({ cue: null, at: 0, intensity: 0 });
 
@@ -202,19 +216,92 @@ export function AtticExperience({
     [registerApi],
   );
 
-  const sitAtTable = useCallback(() => {
-    // Chair interaction is reach-based, so it can fire before the camera is on
-    // the exact endpoint of the getting-up animation. Stage that endpoint first;
-    // PlayerRig can then play STANDING -> SEATED with the same duration/easing,
-    // making the return a literal reverse of the rise instead of a diagonal glide.
-    playerApiRef.current?.teleport?.(
-      STANDING_RETURN_POSE.x,
-      STANDING_RETURN_POSE.z,
-      STANDING_RETURN_POSE.yaw,
-      STANDING_RETURN_POSE.pitch,
-    );
-    sitRef.current?.();
+  const cancelSitReturn = useCallback(() => {
+    const sequence = sitReturnRef.current;
+    if (sequence.frame) cancelAnimationFrame(sequence.frame);
+    sequence.active = false;
+    sequence.frame = 0;
   }, []);
+
+  useEffect(() => cancelSitReturn, [cancelSitReturn]);
+  useEffect(() => {
+    if (mode !== 'attic') cancelSitReturn();
+  }, [cancelSitReturn, mode]);
+
+  const sitAtTable = useCallback(() => {
+    const sequence = sitReturnRef.current;
+    if (sequence.active) return;
+
+    const api = playerApiRef.current;
+    const beginReverseRise = () => {
+      api?.teleport?.(
+        STANDING_RETURN_POSE.x,
+        STANDING_RETURN_POSE.z,
+        STANDING_RETURN_POSE.yaw,
+        STANDING_RETURN_POSE.pitch,
+      );
+      sequence.active = false;
+      sequence.frame = 0;
+      sitRef.current?.();
+    };
+
+    if (!api?.getState || !api?.walkTo || !api?.teleport) {
+      beginReverseRise();
+      return;
+    }
+
+    // Chair hit-testing is intentionally generous, but the reverse rise must
+    // start from one exact camera pose. Finish the walk to that floor mark,
+    // turn toward the table, then hand control to PlayerRig's 1.7s
+    // STANDING -> SEATED animation. That keeps the return smooth and makes the
+    // seated transition the literal inverse of getting up.
+    sequence.active = true;
+    const stageStartedAt = performance.now();
+    api.walkTo(STANDING_RETURN_POSE.x, STANDING_RETURN_POSE.z, null);
+
+    const alignAndSit = state => {
+      const alignStartedAt = performance.now();
+      const startYaw = Number(state?.yaw) || 0;
+      const startPitch = Number(state?.pitch) || 0;
+      const align = now => {
+        if (!sequence.active) return;
+        const t = smoothStep(Math.min(1, (now - alignStartedAt) / SIT_ALIGN_MS));
+        api.teleport(
+          STANDING_RETURN_POSE.x,
+          STANDING_RETURN_POSE.z,
+          lerpAngle(startYaw, STANDING_RETURN_POSE.yaw, t),
+          startPitch + (STANDING_RETURN_POSE.pitch - startPitch) * t,
+        );
+        if (t >= 1) {
+          beginReverseRise();
+          return;
+        }
+        sequence.frame = requestAnimationFrame(align);
+      };
+      sequence.frame = requestAnimationFrame(align);
+    };
+
+    const waitForStage = () => {
+      if (!sequence.active) return;
+      const state = api.getState();
+      if (!state || state.phase !== 'free') {
+        cancelSitReturn();
+        return;
+      }
+      const distance = Math.hypot(
+        state.position[0] - STANDING_RETURN_POSE.x,
+        state.position[2] - STANDING_RETURN_POSE.z,
+      );
+      const elapsed = performance.now() - stageStartedAt;
+      if (distance <= 0.18 || (!state.autoWalk && elapsed > 900) || elapsed >= SIT_STAGE_TIMEOUT_MS) {
+        alignAndSit(state);
+        return;
+      }
+      sequence.frame = requestAnimationFrame(waitForStage);
+    };
+
+    sequence.frame = requestAnimationFrame(waitForStage);
+  }, [cancelSitReturn]);
 
   const interactables = useMemo(() => {
     if (mode !== 'attic') return [];
