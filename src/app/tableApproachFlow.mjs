@@ -62,10 +62,12 @@ export function installTableApproachFlow(target = window) {
   function releaseAfterVeilClears(gate, veil) {
     let settled = false;
     let fallback = 0;
+    let removalObserver = null;
     const finish = () => {
       if (settled) return;
       settled = true;
       target.clearTimeout(fallback);
+      removalObserver?.disconnect();
       veil?.removeEventListener?.('transitionend', onTransitionEnd);
       gate.release({ play: true });
     };
@@ -78,6 +80,10 @@ export function installTableApproachFlow(target = window) {
       return;
     }
     veil.addEventListener('transitionend', onTransitionEnd);
+    removalObserver = new MutationObserver(() => {
+      if (!veil.isConnected) finish();
+    });
+    removalObserver.observe(veil.parentNode || target.document.body, { childList: true });
     fallback = target.setTimeout(finish, 760);
   }
 
