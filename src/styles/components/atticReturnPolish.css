@@ -1,0 +1,94 @@
+/* Player-facing polish for the 3D attic/table handoff. Unlayered on purpose:
+   these are temporary visibility gates and a DOM HUD that must sit above the
+   layered single-player chrome without rewriting its normal layout. */
+
+/* atticEntry may add .out on its historical timer, but the veil remains opaque
+   until TableAnchorProjector completes the final responsive anchor pass. */
+body.table3d-settling .table3d-reveal-veil.out {
+  opacity: 1;
+}
+
+/* atticFlow removes mode-return-hard-hide before the asynchronously mounted
+   seated table is ready. The synchronizer reasserts the class until readiness;
+   visibility prevents any old 2D table fragments from painting in that gap. */
+body.mode-return-hard-hide #titleWrap,
+body.mode-return-hard-hide .score-stack,
+body.mode-return-hard-hide .spread-wrap,
+body.mode-return-hard-hide .handDock,
+body.mode-return-hard-hide #handSwipeZone,
+body.mode-return-hard-hide #relicRack,
+body.mode-return-hard-hide .refs-layer,
+body.mode-return-hard-hide .tlr-pull-wrap,
+body.mode-return-hard-hide #invWrap,
+body.mode-return-hard-hide #invTab,
+body.mode-return-hard-hide #table3dDiscardPips,
+body.mode-return-hard-hide #patternHintStack,
+body.mode-return-hard-hide #constellationPill,
+body.mode-return-hard-hide #abilityPrompt,
+body.mode-return-hard-hide #purgePrompt {
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: none;
+}
+
+/* World-space prompt sprites were readable only when the camera happened to
+   frame them. This label lives in #atticScene's screen space and is clamped by
+   Interactables.jsx, so it cannot disappear behind geometry or off an edge. */
+.attic3d-item-label {
+  position: absolute;
+  z-index: 12;
+  visibility: hidden;
+  box-sizing: border-box;
+  min-width: 112px;
+  max-width: min(260px, calc(100% - 20px));
+  padding: 8px 12px 9px;
+  border: 1px solid rgba(211, 166, 88, 0.72);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(37, 24, 13, 0.96), rgba(13, 9, 6, 0.97));
+  color: #ecd8ae;
+  font-family: Georgia, 'Times New Roman', serif;
+  text-align: center;
+  line-height: 1.2;
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.68),
+    inset 0 0 0 1px rgba(255, 226, 166, 0.08);
+  pointer-events: none;
+}
+
+.attic3d-item-label b {
+  display: block;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attic3d-item-label span {
+  display: block;
+  margin-top: 4px;
+  color: #c59a58;
+  font-size: 11px;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+}
+
+.attic3d-item-label.actionable {
+  border-color: rgba(239, 196, 111, 0.9);
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.68),
+    0 0 18px rgba(208, 151, 65, 0.16),
+    inset 0 0 0 1px rgba(255, 226, 166, 0.12);
+}
+
+@media (max-width: 640px) {
+  .attic3d-item-label {
+    min-width: 104px;
+    padding: 7px 10px 8px;
+  }
+  .attic3d-item-label b { font-size: 13px; }
+  .attic3d-item-label span { font-size: 10px; }
+}
