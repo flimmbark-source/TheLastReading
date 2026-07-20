@@ -2633,8 +2633,19 @@ html body.single-player-v2 #spread .slot > .card.hint-multi:not(.ability-target)
     display: none;
   }
 
+  /* Above the hand dock (z-index 44, see actionDropTargets.css). #titleWrap
+     is a stacking context (fixed + z-index), so the corner utility buttons
+     it holds (Menu, Reference, Abilities — all z-index 65 internally) are
+     capped at titleWrap's level in the page's stacking order. At 34 they
+     were trapped BEHIND the dock, which only mattered once the dock's tray
+     graphic was extended down over the button row — the buttons vanished
+     under it. Lifting titleWrap to 46 lets those buttons paint in front of
+     the tray. (The Archive button is appended to <body> directly, which is
+     why it alone stayed visible.) Opening Settings still elevates titleWrap
+     to 10090 via actionDropTargets.css; the dock still elevates above this
+     during card selection/drag, which is intended. */
   body.single-player-v2.generated-sheet-ready #titleWrap {
-    z-index: 34;
+    z-index: 46;
     pointer-events: none;
   }
 
