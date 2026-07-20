@@ -48,7 +48,6 @@ function MoonShaft({ shaft }) {
 }
 
 export function AtticRoom() {
-  const { mode } = useContext(AtticContext);
   const materials = useMemo(
     () => ({
       floorA: lambert('#4b3320'),
@@ -64,7 +63,6 @@ export function AtticRoom() {
       trunk: lambert('#4a2e1c'),
       brass: lambert('#8a6a3a'),
       rug: lambert('#4a2430'),
-      card: lambert('#d8c9a8'),
       frame: lambert('#2e1f12'),
     }),
     [],
@@ -234,19 +232,6 @@ export function AtticRoom() {
         <mesh position={[0, 0.035, 0]} material={materials.wood}>
           <cylinderGeometry args={[0.42, 0.46, 0.07, 12]} />
         </mesh>
-        {/* face-down spread waiting at the cloth centre — hidden in seated-table
-            mode, where the real SPv2 DOM cards occupy the same reading area */}
-        {mode !== 'table' &&
-          [-0.36, 0, 0.36].map((x, i) => (
-            <mesh
-              key={i}
-              position={[x, TABLE.topY + 0.008, 0]}
-              rotation={[0, [0.12, -0.05, 0.18][i], 0]}
-              material={materials.card}
-            >
-              <boxGeometry args={[0.24, 0.008, 0.38]} />
-            </mesh>
-          ))}
       </group>
 
       {/* the chair the run begins and ends in */}

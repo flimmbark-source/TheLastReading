@@ -86,25 +86,41 @@ function controlsHintHtml() {
   return '<b>You stand up from the table.</b><span>Click a spot or a glowing object to walk to it, or use WASD and drag the mouse to look. Press E to search what you face. Sit back down at the chair when you are done.</span>';
 }
 
+// Once-per-page-session gate (not localStorage): the hint used to be
+// suppressed forever after the first attic visit, which read as "the hint
+// never shows". Showing it on the first attic visit of each session — and
+// again after a reload — keeps it useful without nagging on every entry.
+let controlsHintShownThisSession = false;
+
 function showControlsHint(scene) {
+  if (controlsHintShownThisSession) return null;
+  controlsHintShownThisSession = true;
   try {
-    if (localStorage.getItem(HINT_KEY)) return null;
+    // Legacy flag: honor it once so players who already learned the controls
+    // in the old build aren't re-taught, then clear it so the session gate
+    // above owns the behavior from here on.
+    if (localStorage.getItem(HINT_KEY)) {
+      localStorage.removeItem(HINT_KEY);
+      return null;
+    }
   } catch {
-    /* storage unavailable: still show the hint, just once per mount */
+    /* storage unavailable: still show the hint, once per session */
   }
   const hint = document.createElement('div');
   hint.id = HINT_ID;
   hint.innerHTML = controlsHintHtml();
   scene.appendChild(hint);
+  let removed = false;
   const dismiss = () => {
-    try {
-      localStorage.setItem(HINT_KEY, '1');
-    } catch {
-      /* non-fatal */
-    }
+    if (removed) return;
+    removed = true;
+    clearTimeout(autoFade);
     hint.classList.add('fade');
     setTimeout(() => hint.remove(), 650);
   };
+  // Fade on its own after a beat even if the player never moves, so it never
+  // lingers over the room.
+  const autoFade = setTimeout(dismiss, 9000);
   return { el: hint, dismiss };
 }
 

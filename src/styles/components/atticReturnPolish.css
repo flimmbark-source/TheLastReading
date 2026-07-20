@@ -36,6 +36,19 @@ body.mode-return-hard-hide .bar {
   transition: none;
 }
 
+/* The card-detail medallion ("I" button) and its expanded dialog belong to the
+   seated reading only. atticFlow.enter() removes them on the way in, but a
+   dragged-out medallion is re-placed by a requestAnimationFrame loop, so gate
+   them off in every attic mode as a belt-and-suspenders safety net. */
+body.mode-to-attic .card-detail-trigger,
+body.mode-attic .card-detail-trigger,
+body.mode-to-attic .card-detail-backdrop,
+body.mode-attic .card-detail-backdrop {
+  /* Unlayered + higher specificity than the layered .card-detail-* base rules,
+     so this wins on cascade order alone, no importance override needed. */
+  display: none;
+}
+
 /* World-space prompt sprites were readable only when the camera happened to
    frame them. This label lives in #atticScene's screen space and is clamped by
    Interactables.jsx, so it cannot disappear behind geometry or off an edge. */

@@ -141,8 +141,21 @@ export function installAtticFlow(target = window){
     if(inst&&typeof inst.unmount==='function')inst.unmount();
   }
 
+  // Leaving the reading for the attic must not drag the table's card-detail
+  // surfaces along: close any open detail dialog, drop the info medallion
+  // (even a dragged-out one, which otherwise persists with no card selected),
+  // and clear any lingering text selection from the menu button press so the
+  // "Go to Attic" label doesn't ride into the attic highlighted.
+  function clearTableDetailSurfaces(){
+    try{if(typeof target.closeCardDetail==='function')target.closeCardDetail();}catch(e){}
+    document.querySelectorAll('.card-detail-backdrop,.card-detail-trigger').forEach(function(el){el.remove();});
+    try{if(typeof target.tlrResetInfoButton==='function')target.tlrResetInfoButton();}catch(e){}
+    try{const sel=target.getSelection&&target.getSelection();if(sel&&sel.removeAllRanges)sel.removeAllRanges();}catch(e){}
+  }
+
   function enter(candles,shouldReset){
     if(target.tlrCloseArchives)target.tlrCloseArchives();
+    clearTableDetailSurfaces();
     inAttic=true;resetOnLeave=!!shouldReset;maxCandles=Math.max(1,Number(candles)||1);candleCount=maxCandles;searched={};awaitingPickup=false;renderCandles();renderObjects();renderDeck();renderNote();
     if(target.tlrStore&&target.tlrActions)target.tlrStore.dispatch({type:target.tlrActions.ENTER_ATTIC,obals:maxCandles});
     document.body.classList.remove('mode-reading','mode-to-table','mode-table-return');document.body.classList.add('mode-to-attic');

@@ -164,6 +164,69 @@ function TableReadingGlow() {
   );
 }
 
+// Standing candles scattered around the room to lift the dark corners the
+// shelf/table/window lights never reach. These are pure set-dressing (not the
+// obal counter): always lit, each with its own warm point light, so the far
+// walls, clutter, and floor read instead of falling into black.
+const ROOM_CANDLE_SPOTS = [
+  // On the crate cluster by the -X/-Z corner (near the newspaper stack)
+  { position: [-2.78, 1.32, -1.78], height: 0.16, light: 2.0, distance: 6.5, seed: 3 },
+  // Floor candelabra against the +X wall, lighting the covered frame
+  { position: [3.24, 0.0, 0.55], height: 0.9, light: 2.1, distance: 6.8, seed: 5 },
+  // Floor candle in the +Z door corner where the approach walks in
+  { position: [-3.05, 0.0, 2.25], height: 0.82, light: 1.9, distance: 6.2, seed: 7 },
+  // On the trunk lid corner, filling the +X/-Z archive corner
+  { position: [2.42, 0.74, -1.55], height: 0.15, light: 1.8, distance: 6.0, seed: 9 },
+  // Floor candle by the -X wall, lighting the old coat
+  { position: [-3.3, 0.0, 0.75], height: 0.86, light: 2.0, distance: 6.4, seed: 13 },
+];
+
+function RoomCandle({ position, height, light, distance, seed }) {
+  const { cueRef } = useContext(AtticContext);
+  const lightRef = useRef();
+  useFrame(({ clock }) => {
+    if (!lightRef.current) return;
+    const surge = 1 + cueEnergy(cueRef, FLAME_CUES, 800) * 0.6;
+    lightRef.current.intensity = (light + 0.2 * Math.sin(clock.elapsedTime * 7.6 + seed)) * surge;
+  });
+  const bodyY = height / 2;
+  const tall = height > 0.4;
+  return (
+    <group position={position}>
+      {/* a slim brass stem for the floor candelabra so it reads as a stand */}
+      {tall && (
+        <mesh position={[0, height * 0.32, 0]}>
+          <cylinderGeometry args={[0.03, 0.05, height * 0.64, 8]} />
+          <meshLambertMaterial color="#7a5a2c" />
+        </mesh>
+      )}
+      <mesh position={[0, tall ? height * 0.72 : bodyY, 0]}>
+        <cylinderGeometry args={[0.035, 0.045, tall ? height * 0.28 : height, 8]} />
+        <meshLambertMaterial color="#e8d9b0" />
+      </mesh>
+      <Flame position={[0, tall ? height * 0.88 : height + 0.06, 0]} seed={seed} scale={1.15} />
+      <pointLight
+        ref={lightRef}
+        position={[0, (tall ? height * 0.9 : height) + 0.28, 0]}
+        color="#ffb45e"
+        intensity={light}
+        distance={distance}
+        decay={1.7}
+      />
+    </group>
+  );
+}
+
+function RoomCandles() {
+  return (
+    <group>
+      {ROOM_CANDLE_SPOTS.map((spot, i) => (
+        <RoomCandle key={i} {...spot} />
+      ))}
+    </group>
+  );
+}
+
 // A fixed candle by the spread keeps the table warm even at zero obals.
 function TableCandle() {
   const { cueRef } = useContext(AtticContext);
@@ -517,6 +580,7 @@ export function Diegetics() {
     <group>
       <CandleShelf />
       <TableCandle />
+      {mode !== 'table' && <RoomCandles />}
       {mode === 'table' && (
         <>
           <TableReadingGlow />
