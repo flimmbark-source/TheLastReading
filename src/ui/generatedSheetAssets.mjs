@@ -5,6 +5,7 @@
 // underlying art improves.
 
 import { installDiscardPips } from './discardPips.mjs';
+import { installInGameMenu } from './inGameMenu.mjs';
 
 const ELEMENT_BASE = '/public/ui/single-player-v2/elements/';
 
@@ -47,9 +48,11 @@ export function installGeneratedSheetAssets(target = window) {
   const document = target?.document;
   if (!document) return Promise.resolve(false);
 
-  // The discard indicators are a live DOM readout, not part of the baked art.
-  // Install them alongside the SPv2 skin so they follow the same lifecycle.
+  // The discard indicators and full in-game menu are live DOM surfaces, not
+  // part of the baked sheet. Install them alongside the SPv2 skin so they share
+  // the same lifecycle and are absent from non-SPv2 modes.
   installDiscardPips(target);
+  installInGameMenu(target);
 
   if (applied) return applied;
 
