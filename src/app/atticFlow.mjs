@@ -100,35 +100,47 @@ export function installAtticFlow(target = window){
       return target.localStorage.getItem('tlr_attic_3d')!=='0';
     }catch(e){return true}
   }
+  function attic3dAdapter(){
+    return {
+      objects:objects,
+      note:note,
+      isSearched:function(id){return !!searched[id]},
+      foundItemIds:foundItems,
+      obalCount:function(){return candleCount},
+      rummage:function(id){rummage(id,null)},
+      collectNote:collectNote,
+      browseDeck:openDeckBrowser,
+      openArchives:function(){
+        const wrap=document.getElementById('invWrap');
+        if(wrap&&!wrap.classList.contains('open')&&typeof target.toggleInventory==='function')target.toggleInventory();
+      },
+      leave:leave,
+    };
+  }
   let attic3d=null;
   function maybeMountAttic3d(){
     // A hard exit (main menu, Adventure boot) unmounts the 3D layer behind
     // our back; drop the dead handle so the next visit can mount again.
     if(attic3d&&attic3d.mounted===false)attic3d=null;
     if(!attic3dEnabled()||attic3d)return;
-    // Suppress the classic attic's big background art immediately so it is
-    // never fetched/painted during the beat before the 3D chunk mounts; the
-    // mount promotes this to attic3d-live, and any failure path below (or
-    // atticEntry's own fallbacks) removes it to restore the 2D scene.
+
+    const adapter=attic3dAdapter();
+    // The seated reading already owns the correct room and WebGL context.
+    // Promote that live root before mode-to-attic is applied, otherwise its
+    // normal body-class observer would unmount it and recreate the black gap.
+    const seat=target.__tlrTableSeat;
+    if(seat&&seat.mounted!==false&&typeof seat.promoteToAttic==='function'){
+      const promoted=seat.promoteToAttic(adapter);
+      if(promoted){attic3d=promoted;return;}
+    }
+
+    // Fallback for classic-table starts, WebGL recovery, or older seated
+    // handles: mount the attic as a fresh canvas exactly as before.
     document.body.classList.add('attic3d-pending');
     attic3d={pending:true};
     import('../three/atticEntry.mjs').then(function(mod){
       if(!attic3d||!inAttic){attic3d=null;document.body.classList.remove('attic3d-pending');return}
-      attic3d=mod.mountAttic3D({
-        objects:objects,
-        note:note,
-        isSearched:function(id){return !!searched[id]},
-        foundItemIds:foundItems,
-        obalCount:function(){return candleCount},
-        rummage:function(id){rummage(id,null)},
-        collectNote:collectNote,
-        browseDeck:openDeckBrowser,
-        openArchives:function(){
-          const wrap=document.getElementById('invWrap');
-          if(wrap&&!wrap.classList.contains('open')&&typeof target.toggleInventory==='function')target.toggleInventory();
-        },
-        leave:leave,
-      })||null;
+      attic3d=mod.mountAttic3D(adapter)||null;
       if(!attic3d)document.body.classList.remove('attic3d-pending');
     }).catch(function(err){
       attic3d=null;
@@ -158,9 +170,11 @@ export function installAtticFlow(target = window){
     clearTableDetailSurfaces();
     inAttic=true;resetOnLeave=!!shouldReset;maxCandles=Math.max(1,Number(candles)||1);candleCount=maxCandles;searched={};awaitingPickup=false;renderCandles();renderObjects();renderDeck();renderNote();
     if(target.tlrStore&&target.tlrActions)target.tlrStore.dispatch({type:target.tlrActions.ENTER_ATTIC,obals:maxCandles});
-    document.body.classList.remove('mode-reading','mode-to-table','mode-table-return');document.body.classList.add('mode-to-attic');
     const scene=document.getElementById('atticScene');if(scene)scene.setAttribute('aria-hidden','false');
+    // Promotion must disconnect the seated canvas observer before the mode
+    // class changes. Fresh-mount fallback still behaves exactly as before.
     maybeMountAttic3d();
+    document.body.classList.remove('mode-reading','mode-to-table','mode-table-return');document.body.classList.add('mode-to-attic');
     setTimeout(function(){document.body.classList.remove('mode-to-attic');document.body.classList.add('mode-attic');if(typeof tlrArchitectureSync==='function')tlrArchitectureSync();},900);
     // The 3D attic shows its own movement-controls hint; the 2D tutorial's
     // swipe/tap copy would be wrong there.
@@ -270,7 +284,7 @@ export function installAtticFlow(target = window){
 
   target.tlrCloseArchives=closeArchives;
   target.tlrBrowseDeck=openDeckBrowser;
-  target.tlrSetAttic3d=function(on){try{target.localStorage.setItem('tlr_attic_3d',on?'1':'0')}catch(e){};return attic3dEnabled()};
+  target.tlrSetAttic3d=function(on){try{target.localStorage.setItem('tlr_attic_3d',on?'1':'0')}catch(e){};return attic3dEnabled();};
   target.tlrScoreToObals=candlesFromScore;
   target.tlrDebugEnterAttic=enter;
   target.tlrDebugLeaveAttic=leave;
