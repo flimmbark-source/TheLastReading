@@ -1,11 +1,18 @@
 // Menu panel controls extracted from the legacy inline tail.
 
+import { installAtticUx } from './atticUx.mjs';
+
 function inlineScriptStillContains(marker){
   return [...document.scripts].some(script=>script.textContent&&script.textContent.includes(marker));
 }
 
 export function installMenuControls(target = window){
   if(!target || target.__tlrMenuControlsInstalled)return;
+
+  // Attic preferences and the diegetic reference book are independent of which
+  // legacy/new menu implementation owns the drawer, so install them before the
+  // compatibility early-return below.
+  installAtticUx(target);
 
   // Keep this passive while the inline function/listener remains, otherwise the
   // menu outside-click handler would be registered twice.
