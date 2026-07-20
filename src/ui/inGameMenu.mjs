@@ -8,6 +8,7 @@ const ICONS = Object.freeze({
   speaker: '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 8.5a4.8 4.8 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12"/></svg>',
   book: '<svg viewBox="0 0 24 24"><path d="M3.5 5.5c3.2-.7 5.9.1 8.5 2.1v12c-2.6-2-5.3-2.8-8.5-2.1v-12Z"/><path d="M20.5 5.5c-3.2-.7-5.9.1-8.5 2.1v12c2.6-2 5.3-2.8 8.5-2.1v-12Z"/></svg>',
   tutorial: '<svg viewBox="0 0 24 24"><path d="m3 8 9-4 9 4-9 4-9-4Z"/><path d="M7 10.2v5.3c2.8 2 7.2 2 10 0v-5.3M21 8v6"/></svg>',
+  reset: '<svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v3.5h-3.5"/></svg>',
   attic: '<svg viewBox="0 0 24 24"><path d="m3 11 9-8 9 8"/><path d="M5.5 9.5V21h13V9.5M9 21v-7h6v7"/><circle cx="12" cy="10" r="1"/></svg>',
   return: '<svg viewBox="0 0 24 24"><path d="M5 21V4h11v17M9 9h7M9 15h7"/><path d="M16 12h5m0 0-2-2m2 2-2 2"/></svg>',
 });
@@ -235,13 +236,34 @@ export function installInGameMenu(target = window) {
   hintsRow.append(hintsLabel, hintLevelBar);
   assistance.appendChild(hintsRow);
 
+  // Closing the whole menu drawer (both the mobile pull-drawer and the desktop
+  // panel) so a menu action can dismiss the menu it lives in.
+  const closeMenu = () => {
+    if (panel) panel.classList.add('hidden');
+    const wrap = document.getElementById('menuPullWrap');
+    if (wrap && wrap.classList.contains('open')) {
+      wrap.classList.remove('open');
+      const tab = document.getElementById('menuPullTab');
+      if (tab) tab.innerHTML = '&#9660; Menu';
+    }
+  };
+
+  // Replaying the tutorial should hand the screen back to the game: close the
+  // menu first so the tutorial tips aren't drawn behind the open drawer.
+  replay.addEventListener('click', closeMenu);
+
   const game = makeSection(document, 'game-menu-game', 'game', 'Game');
   const gameList = document.createElement('div');
   gameList.className = 'game-menu-list';
-  gameList.append(
+  const gameRows = [
     decorateRowButton(document, glossary, 'book', 'Game Terms'),
     decorateRowButton(document, replay, 'tutorial', 'Replay Tutorial'),
-  );
+  ];
+  // The Reset Info Button re-attaches the card-detail medallion under the card
+  // after it has been dragged away. It only appears in the build when the
+  // detail-gesture layer registered it, so keep it optional.
+  if (reset) gameRows.push(decorateRowButton(document, reset, 'reset', 'Reset Info Button'));
+  gameList.append(...gameRows);
   game.appendChild(gameList);
 
   const actions = document.createElement('footer');
@@ -251,7 +273,7 @@ export function installInGameMenu(target = window) {
     decorateMajorButton(document, returnToMenu, 'return', 'return'),
   );
 
-  const hiddenControls = preserveHiddenControls(document, [relicHints, candlelight, reset]);
+  const hiddenControls = preserveHiddenControls(document, [relicHints, candlelight]);
   shell.append(header, audio, assistance, game, actions, hiddenControls);
   panel.replaceChildren(shell);
   panel.dataset.gameMenuBuilt = 'true';

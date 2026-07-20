@@ -269,10 +269,10 @@ export function AtticExperience({
       <AtticContext.Provider value={context}>
         <FovTuner mode={mode} />
         <CueListener cueRef={cueRef} />
-        <fog attach="fog" args={['#140b06', 6.5, 14.5]} />
-        <hemisphereLight args={['#2b3b58', '#3a2413', 0.8]} />
-        <ambientLight color="#8a6a4a" intensity={0.34} />
-        <pointLight position={[0, 2.5, 0.5]} color="#c08a4e" intensity={0.85} distance={10} decay={1.9} />
+        <fog attach="fog" args={['#140b06', 7.5, 16]} />
+        <hemisphereLight args={['#2b3b58', '#3a2413', 1.05]} />
+        <ambientLight color="#8a6a4a" intensity={0.52} />
+        <pointLight position={[0, 2.5, 0.5]} color="#c08a4e" intensity={1.05} distance={12} decay={1.7} />
         <AtticRoom />
         <Interactables />
         <Diegetics />

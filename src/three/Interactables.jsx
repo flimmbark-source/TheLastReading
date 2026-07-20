@@ -49,16 +49,20 @@ function walkToInteractable(id, focusPoint) {
   api.walkTo(focusPoint[0], focusPoint[2], id);
 }
 
-function hoverHandlers(id, setHoverId, enabled, focusPoint = null) {
+// How long an item's name popup stays up after the press moves off it, so a
+// player who brushes past an object still gets a beat to read what it was.
+const HOVER_LINGER_MS = 2800;
+
+function hoverHandlers(id, hover, enabled, focusPoint = null) {
   if (!enabled) return {};
   return {
     onPointerOver: event => {
       event.stopPropagation();
-      setHoverId(id);
+      hover.enter(id);
     },
     onPointerOut: event => {
       event.stopPropagation();
-      setHoverId(current => (current === id ? null : current));
+      hover.leave(id);
     },
     onClick: event => {
       event.stopPropagation();
@@ -117,7 +121,7 @@ function HitMaterial() {
   return <meshBasicMaterial transparent opacity={0.001} depthWrite={false} colorWrite={false} />;
 }
 
-function RoomHitVolumes({ interactive, setHoverId }) {
+function RoomHitVolumes({ interactive, hover }) {
   if (!interactive) return null;
   const tableFocus = [TABLE.position[0], TABLE.topY, TABLE.position[2] + 0.55];
   const chairFocus = [CHAIR.position[0], 0.9, CHAIR.position[2]];
@@ -128,7 +132,7 @@ function RoomHitVolumes({ interactive, setHoverId }) {
       <mesh
         position={[TABLE.position[0], TABLE.topY + 0.04, TABLE.position[2]]}
         rotation={[Math.PI / 2, 0, 0]}
-        {...hoverHandlers('reading_table', setHoverId, true, tableFocus)}
+        {...hoverHandlers('reading_table', hover, true, tableFocus)}
       >
         <torusGeometry args={[TABLE.radius - 0.15, 0.15, 8, 28]} />
         <HitMaterial />
@@ -136,7 +140,7 @@ function RoomHitVolumes({ interactive, setHoverId }) {
       <mesh
         position={[CHAIR.position[0], 0.68, CHAIR.position[2]]}
         rotation={[0, CHAIR.facing, 0]}
-        {...hoverHandlers('chair', setHoverId, true, chairFocus)}
+        {...hoverHandlers('chair', hover, true, chairFocus)}
       >
         <boxGeometry args={[0.62, 1.1, 0.62]} />
         <HitMaterial />
@@ -144,7 +148,7 @@ function RoomHitVolumes({ interactive, setHoverId }) {
       <mesh
         position={[TRUNK_SPOT.position[0], 0.36, TRUNK_SPOT.position[2]]}
         rotation={[0, TRUNK_SPOT.rotationY, 0]}
-        {...hoverHandlers('archives_trunk', setHoverId, true, TRUNK_SPOT.focusPoint)}
+        {...hoverHandlers('archives_trunk', hover, true, TRUNK_SPOT.focusPoint)}
       >
         <boxGeometry args={[1.25, 0.78, 0.78]} />
         <HitMaterial />
@@ -262,7 +266,37 @@ export function Interactables() {
   const { adapter, mode, snapshot, setHoverId } = useContext(AtticContext);
   const interactive = mode === 'attic';
 
-  useEffect(() => () => setHoverId(null), [setHoverId]);
+  // Hover controller with linger: entering an item shows its name at once;
+  // leaving it keeps the name up for a short beat before clearing, so the
+  // popup no longer blinks out the instant the press slides off the object.
+  const hover = useMemo(() => {
+    let timer = null;
+    const cancel = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    };
+    return {
+      enter(id) {
+        cancel();
+        setHoverId(id);
+      },
+      leave(id) {
+        cancel();
+        timer = setTimeout(() => {
+          timer = null;
+          setHoverId(current => (current === id ? null : current));
+        }, HOVER_LINGER_MS);
+      },
+      dispose() {
+        cancel();
+        setHoverId(null);
+      },
+    };
+  }, [setHoverId]);
+
+  useEffect(() => () => hover.dispose(), [hover]);
 
   return (
     <group>
@@ -278,7 +312,7 @@ export function Interactables() {
                 prop={prop}
                 hover={hoverHandlers(
                   station.id,
-                  setHoverId,
+                  hover,
                   interactive && !snapshot.searched[index],
                   station.focusPoint,
                 )}
@@ -292,14 +326,14 @@ export function Interactables() {
           found={snapshot.noteFound}
           hover={hoverHandlers(
             'sticky_note_01',
-            setHoverId,
+            hover,
             interactive && !snapshot.noteFound,
             NOTE_SPOT.focusPoint,
           )}
         />
       )}
-      <DeckBox hover={hoverHandlers('deck_box', setHoverId, interactive, DECK_SPOT.focusPoint)} />
-      <RoomHitVolumes interactive={interactive} setHoverId={setHoverId} />
+      <DeckBox hover={hoverHandlers('deck_box', hover, interactive, DECK_SPOT.focusPoint)} />
+      <RoomHitVolumes interactive={interactive} hover={hover} />
       <PlayerPrompt />
       <WalkMarker />
     </group>
