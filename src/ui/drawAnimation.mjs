@@ -1,4 +1,5 @@
 const QUEUE_KEY = '__tlrDrawAnimationQueue';
+const HOLD_KEY = '__tlrDrawAnimationHold';
 const FULL_HAND_ACTIONS = ['flushHand', 'mulligan'];
 const SET_DEAL_ACTIONS = new Set(['START_READING', 'START_NEXT_SET']);
 
@@ -7,9 +8,18 @@ function queueState(target) {
   return target[QUEUE_KEY];
 }
 
+function holdState(target) {
+  if (!target[HOLD_KEY]) target[HOLD_KEY] = { depth: 0, pending: null };
+  return target[HOLD_KEY];
+}
+
 function cardUid(card) {
   const uid = Number(card?.uid ?? card);
   return Number.isFinite(uid) ? uid : null;
+}
+
+function normalizeCards(cards) {
+  return (Array.isArray(cards) ? cards : [cards]).map(cardUid).filter(uid => uid !== null);
 }
 
 function animateCard(element, entry) {
@@ -44,7 +54,7 @@ function flushQueuedHandAnimations(target) {
 
 function scheduleHandAnimationFlush(target) {
   const state = queueState(target);
-  if (state.flushQueued || !target.document) return;
+  if (state.flushQueued || !target.document || holdState(target).depth > 0) return;
   state.flushQueued = true;
   const schedule = typeof target.requestAnimationFrame === 'function'
     ? target.requestAnimationFrame.bind(target)
@@ -82,8 +92,19 @@ function installSetDealDispatchHook(target) {
 }
 
 export function queueDrawAnimation(cards, target = window, { staggerMs = 72 } = {}) {
-  const list = (Array.isArray(cards) ? cards : [cards]).map(cardUid).filter(uid => uid !== null);
+  const list = normalizeCards(cards);
   if (!list.length) return [];
+
+  const hold = holdState(target);
+  if (hold.depth > 0) {
+    // Keep only the latest complete deal while a loading/reveal surface is up.
+    // START_READING and the explicit replay can both queue the same hand; one
+    // final batch after the veil clears is the intended visible result.
+    hold.pending = { cards: list, options: { staggerMs } };
+    queueState(target).entries.clear();
+    return list;
+  }
+
   const state = queueState(target);
   const batchId = ++state.batchId;
   list.forEach((uid, index) => state.entries.set(uid, {
@@ -105,8 +126,25 @@ export function consumeDrawAnimation(cardOrUid, target = window) {
   return entry;
 }
 
+export function holdDrawAnimations(target = window) {
+  const hold = holdState(target);
+  hold.depth += 1;
+  let released = false;
+  return ({ play = true } = {}) => {
+    if (released) return;
+    released = true;
+    hold.depth = Math.max(0, hold.depth - 1);
+    if (hold.depth > 0) return;
+    const pending = hold.pending;
+    hold.pending = null;
+    if (play && pending) queueDrawAnimation(pending.cards, target, pending.options);
+    else queueState(target).entries.clear();
+  };
+}
+
 export function clearDrawAnimations(target = window) {
   queueState(target).entries.clear();
+  holdState(target).pending = null;
   target.__tlrAnimateFullHandOnNextRender = false;
 }
 
@@ -131,7 +169,9 @@ export function installDrawAnimation(target = window) {
   target.tlrDrawAnimation = {
     queue: cards => queueDrawAnimation(cards, target),
     consume: uid => consumeDrawAnimation(uid, target),
+    hold: () => holdDrawAnimations(target),
     clear: () => clearDrawAnimations(target),
   };
   target.tlrQueueDrawAnimation = cards => queueDrawAnimation(cards, target);
+  target.tlrHoldDrawAnimations = () => holdDrawAnimations(target);
 }

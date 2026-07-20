@@ -48,7 +48,14 @@ for (const file of legacyReferenceFiles) {
 // 90 -> 92: spreadHints.css replaces the legacy hint-multi glow, which
 // classicCore applies via var(--hint-shadow) with !important; only an
 // !important in an earlier-declared layer can beat that tier.
-const importantBudget = 92;
+// 92 -> 94: utilityButtons.css extends the hand dock's tray graphic down to
+// line up with the utility button row without moving the card fan, by
+// overriding its bottom-anchor (`bottom`/`height`) rather than translating
+// it. states.css's `.handDock{bottom:6.2dvh!important}` (spv2.states) and
+// layout.css's plain `height:31dvh` (spv2Core, a later layer that would
+// otherwise win for a normal declaration) both need an earlier-layer
+// !important to beat.
+const importantBudget = 94;
 const sourceImportantCount = [...singlePlayerV2CascadeSources, ...singlePlayerV2ExternalComponentSources]
   .map(([path]) => read(`../src/styles/${path}`).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);

@@ -1,0 +1,321 @@
+/* 3D attic (react-three-fiber) presentation layer.
+   Everything here keys off body.attic3d-live, which src/three/atticEntry.mjs
+   adds only after a successful WebGL mount — with the flag off, or on any
+   mount failure, none of this applies and the classic 2D attic is untouched.
+
+   Stacking inside #atticScene while 3D is live:
+     canvas (3) < vignette ::before (4) < fog ::after (5) < pickup/whisper (8)
+     < tutorial hint (9). The DOM pickup card and deck-browse modal stay in
+   charge of themselves; the canvas only replaces the pannable 2D room. */
+
+#attic3dRoot {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: none;
+  background: #0d0703;
+}
+#attic3dRoot canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+body.attic3d-live #attic3dRoot {
+  display: block;
+}
+
+/* The 2D room and its screen-space HUD hand over to the diegetic scene:
+   candles on the shelf are the obal counter, the chair is the return
+   button. The background image is dropped so the fade reveals the room. */
+body.attic3d-live #atticPan {
+  display: none;
+}
+body.attic3d-live #obalsHud {
+  display: none;
+}
+body.attic3d-live #atticTableReturn {
+  display: none;
+}
+body.attic3d-live .attic-deck {
+  display: none;
+}
+body.attic3d-live #atticScene {
+  background: #0d0703 !important;
+}
+
+/* attic3d-pending covers the beats where 3D is the destination but no canvas
+   is live yet: entering the attic while the lazy chunk loads, and the gap in
+   the attic→table return between the attic unmount and the seat mount. The
+   classic art (attic background image, pannable room, painted SPv2 table)
+   must never be fetched/painted during those beats — the flash of the old 2D
+   scene was the documented transition bug. Every failure path removes this
+   class, restoring the classic visuals. */
+body.attic3d-pending #atticScene {
+  background: #0d0703 !important;
+}
+/* display (not visibility): keeps Chrome from even fetching the big 2D room
+   art (#atticRoom's background) during the pending beat. */
+body.attic3d-pending #atticPan {
+  display: none;
+}
+/* attic3d-live joins in so the suppression is continuous across the
+   pending→live handoff: the chunk often mounts before the attic fade
+   finishes, and during the attic→table fade attic3d-live is still on for
+   the whole beat where table3d-live is not yet back. Both fades pass over
+   flat dark instead of the painted 2D table. */
+html body.single-player-v2.generated-sheet-ready.attic3d-pending,
+html body.single-player-v2.generated-sheet-ready.attic3d-live {
+  background-color: #0d0703 !important;
+  background-image: none !important;
+}
+
+/* Keep the existing vignette + fog overlays as free atmosphere on top of the
+   canvas; they already animate with the attic fade transitions. Softened so
+   the lit 3D room reads through them. */
+body.attic3d-live #atticScene::before {
+  z-index: 4;
+  opacity: 0.48;
+}
+body.attic3d-live #atticScene::after {
+  z-index: 5;
+  opacity: 0.18;
+}
+
+body.attic3d-live #atticPickup {
+  z-index: 8;
+}
+body.attic3d-live #atticWhisper {
+  z-index: 8;
+}
+body.attic3d-live #atticTutorial {
+  z-index: 9;
+}
+
+/* Run-start approach overlay: full-viewport cinematic above the booting
+   table UI. Opaque from the first frame (background) so the table never
+   pops in early; .fade reveals the finished table beneath. */
+/* z 30000: above every single-player surface incl. the boot curtain (20000)
+   and matchmaking (10300); the 2147m multiplayer !important fixes never
+   coexist with a single-player run start. */
+#table3dApproach {
+  position: fixed;
+  inset: 0;
+  z-index: 30000;
+  background: #050302;
+  opacity: 1;
+  transition: opacity 0.7s ease;
+}
+#table3dApproach canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+#table3dApproach.fade {
+  opacity: 0;
+  pointer-events: none;
+}
+#table3dApproach::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('../../fx/transition_dark_vignette_1080x1920.png') center center/cover no-repeat;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Single-canvas sit-down handoff: while the approach overlay converts itself
+   into the seated backdrop in place (atticEntry.convertToSeated), this veil
+   covers the id/z-index swap and the first anchored SPv2 paint, then fades
+   to reveal the finished table. Cheaper than a second WebGL context and
+   invisible to input (pointer-events none throughout). */
+.table3d-reveal-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 30001;
+  background: #050302;
+  opacity: 1;
+  pointer-events: none;
+  transition: opacity 0.55s ease;
+}
+.table3d-reveal-veil.out {
+  opacity: 0;
+}
+
+/* ── hybrid seated-table mode (body.table3d-live) ─────────────────────────
+   The 3D room stays mounted as a fixed, pointer-transparent backdrop under
+   the live SPv2 DOM. The opaque painted table background comes off the body
+   (its grain/vignette ::before stays as free film over the canvas), and the
+   spread + hand are re-seated onto projected world anchors written by
+   src/three/tableAnchors.mjs. Score/Threshold, menus, Discard/Purge, and
+   utility chrome deliberately stay in their screen-space positions. These
+   rules are unlayered, so they win over the @layer'd SPv2 declarations. */
+
+#table3dSeat {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: #0d0703;
+}
+#table3dSeat canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+html body.single-player-v2.generated-sheet-ready.table3d-live {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/* The painted reading-circle belonged to the old background; the cloth is
+   the surface now. */
+body.table3d-live .spread-wrap::before {
+  display: none;
+}
+
+/* Five spread slots across the mid cloth: #spread leaves the wrap's grid and
+   pins to the projected spread-center anchor, scaled so its slot row spans
+   SPREAD_WORLD_WIDTH meters of table. (.spread-actions — Discard/Purge —
+   remain untouched in the wrap.)
+
+   body.table3d-anchored is the fit gate: src/three/tableAnchors.mjs adds it
+   only when the projected rows actually fit the viewport. Narrow portrait
+   keeps SPv2's own layout over the 3D backdrop instead of overflowing.
+
+   Declared in spv2.tokens (the first layer in game.html's master @layer
+   statement) with !important: SPv2's mobile spread rule pins position/top/
+   transform with !important from spv2.components, and among important
+   declarations the EARLIER layer wins. */
+@layer spv2.tokens {
+  html body.single-player-v2.generated-sheet-ready.table3d-live.table3d-anchored #spread {
+    position: fixed !important;
+    left: var(--t3d-spread-c-x, 50vw) !important;
+    top: var(--t3d-spread-c-y, 44dvh) !important;
+    right: auto !important;
+    bottom: auto !important;
+    margin: 0 !important;
+    transform: translate(-50%, -50%) scale(var(--t3d-spread-scale, 1)) !important;
+  }
+}
+
+/* Diegetic placement guides. In hybrid mode the five empty spread slots stop
+   being opaque compass-rose card backs (spread-slot.webp) — which read as
+   dark cards floating on a HUD row over the green cloth — and become guides
+   printed INTO the cloth: a dashed gold outline with a faint sigil and the
+   cloth showing through, the reference's "zones stitched on the table" look.
+   A placed card is opaque and covers its slot, and :not(:has(> .card)) keeps
+   the guide out from under dealt cards entirely, so this only ever restyles
+   the empty state. Unlayered, so it beats the layered slot-art background
+   rules; gated on table3d-live so the classic 2D table keeps its card-back
+   art. This is presentation only — slot geometry and the drop targets that
+   read it are untouched. */
+body.table3d-live .spread .slot {
+  background-image: none;
+  background-color: transparent;
+  border-color: transparent;
+}
+body.table3d-live .spread .slot:not(:has(> .card))::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 2px dashed rgba(214, 172, 92, 0.5);
+  border-radius: 11px;
+  box-shadow: inset 0 0 20px rgba(255, 206, 120, 0.1);
+  background: radial-gradient(ellipse at center, rgba(255, 205, 120, 0.05), transparent 68%);
+  pointer-events: none;
+}
+body.table3d-live .spread .slot:not(:has(> .card))::after {
+  content: '✦';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(20px, 3.4vw, 30px);
+  line-height: 1;
+  color: rgba(226, 188, 116, 0.42);
+  text-shadow: 0 0 10px rgba(255, 200, 110, 0.28);
+  pointer-events: none;
+}
+
+/* The hand fan rests along the near edge of the cloth: dock + its gesture
+   zone shift and scale together around their pinned bottom edge.
+   table3d-anchored-hand is set separately from the spread gate — always on
+   landscape/desktop when it fits, opt-in on portrait (Test B; see
+   tableAnchors.mjs). */
+html body.single-player-v2.generated-sheet-ready.table3d-live.table3d-anchored-hand .handDock,
+html body.single-player-v2.generated-sheet-ready.table3d-live.table3d-anchored-hand #handSwipeZone {
+  transform: translateY(var(--t3d-hand-dy, 0px)) scale(var(--t3d-hand-scale, 1));
+  transform-origin: 50% 100%;
+}
+
+/* Portrait Test B: when the hand is anchored on a tall screen, flatten the
+   fan (wider arc radius, tighter per-card angle) so the row hugs the near
+   cloth edge instead of towering. */
+@media (orientation: portrait) {
+  html body.single-player-v2.generated-sheet-ready.table3d-live.table3d-anchored-hand .handDock .hand {
+    --track-spacing: 4.6deg;
+    --track-radius: 940px;
+  }
+}
+
+/* First-visit controls hint (plain DOM, not in-canvas). */
+#attic3dHint {
+  position: absolute;
+  left: 50%;
+  bottom: 9%;
+  transform: translateX(-50%);
+  z-index: 8;
+  max-width: min(440px, 84vw);
+  padding: 13px 18px;
+  border: 1px solid rgba(198, 150, 77, 0.65);
+  border-radius: 12px;
+  background: rgba(17, 10, 5, 0.82);
+  color: #ead9b5;
+  font-family: Georgia, serif;
+  text-align: center;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  opacity: 0;
+  animation: attic3d-hint-in 0.8s ease 0.9s forwards;
+}
+#attic3dHint b {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 15px;
+  color: #ffd978;
+}
+#attic3dHint span {
+  display: block;
+  font-size: 13px;
+  line-height: 1.45;
+  opacity: 0.92;
+}
+#attic3dHint.fade {
+  animation: none;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+@keyframes attic3d-hint-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #attic3dHint {
+    animation: none;
+    opacity: 1;
+  }
+}

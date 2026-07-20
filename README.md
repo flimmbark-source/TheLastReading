@@ -2,6 +2,23 @@
 
 A tarot-inspired single-player card game. Draw cards, build spreads, score readings, and visit the attic between sessions to spend obals on archive fragments.
 
+## 3D single-player (react-three-fiber)
+
+On by default: starting a reading walks you into the attic and sits you down
+at the table (skippable cinematic), and the reading itself is played on the
+3D table — the real SPv2 cards sit on the cloth via projected world anchors
+while the room's candlelight answers your plays. Between sessions the attic
+is a walkable first-person room — tap/click anywhere to walk there (or WASD
+on desktop), drag anywhere to look around (flick to keep turning on touch),
+tap a glowing object to search it, then sit back down at the chair to return
+to the table. Ships as a lazy chunk and falls back to the classic attic (and
+the painted table) without WebGL. Kill-switch back to the classic 2D
+presentation: `?attic3d=0` on `game.html`, or `tlrSetAttic3d(false)` in the
+console (persists via `localStorage.tlr_attic_3d`). Architecture, controls,
+and the roadmap toward a fully 3D single-player mode:
+[`docs/r3f-singleplayer-integration.md`](docs/r3f-singleplayer-integration.md).
+Headless check: `npm run test:attic3d`.
+
 ## Running the game
 
 Serve the repo root over HTTP and open `index.html`. Any static file server works:
@@ -117,6 +134,10 @@ src/
     attic.mjs           obal conversion, attic object search
     relics.mjs          relic effect application (scoring, hand size, economy)
     shop.mjs            pack offer generation, purchase helpers, refresh ladder
+
+  three/
+    atticEntry.mjs      3D attic (react-three-fiber, on by default), own lazy chunk
+    ...                 see docs/r3f-singleplayer-integration.md
 
   ui/
     renderTable.mjs     render() orchestrator, refreshHandState, score preview

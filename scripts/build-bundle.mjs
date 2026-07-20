@@ -72,6 +72,9 @@ const CSS_GROUPS = [
       'src/styles/components/invTab.css',
       'src/styles/components/titleWrap.css',
       'src/styles/components/atticFade.css',
+      'src/styles/components/inGameMenu.css',
+      'src/styles/components/atticReturnPolish.css',
+      'src/styles/attic3d.css',
     ],
   },
 ];
@@ -144,6 +147,9 @@ async function buildJs() {
     minify: true,
     metafile: true,
     logLevel: 'warning',
+    // The 3D attic layer (src/three/*.jsx) uses JSX with the automatic
+    // React 19 runtime; .js/.mjs files are unaffected by these two options.
+    jsx: 'automatic',
     plugins: [adventureStylePlugin()],
   });
   const outputs = Object.keys(result.metafile.outputs).filter(f => !f.endsWith('.map'));

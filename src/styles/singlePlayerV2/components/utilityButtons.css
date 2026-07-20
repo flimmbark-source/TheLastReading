@@ -19,8 +19,10 @@
     body.single-player-v2.generated-sheet-ready #menuBtn,
     body.single-player-v2.generated-sheet-ready #spv2ArchiveBtn {
       display: block !important;
-      width: clamp(44px, 11.5vw, 56px) !important;
-      height: clamp(44px, 11.5vw, 56px) !important;
+      width: clamp(44px, 11.5vw, 56px);
+      height: clamp(44px, 11.5vw, 56px);
+      max-width: clamp(44px, 11.5vw, 56px);
+      max-height: clamp(44px, 11.5vw, 56px);
       border-radius: 50% !important;
     }
 
@@ -29,6 +31,24 @@
     html body.single-player-v2.generated-sheet-ready .handDock,
     html body.single-player-v2.generated-sheet-ready #handSwipeZone.hand-swipe-zone {
       translate: 0 -1.5dvh;
+    }
+
+    /* Extend the dock's tray graphic down until it centres on the utility
+       button row, WITHOUT moving the card fan. The dock is bottom-anchored
+       (states.css's `bottom: 6.2dvh`) with #hand flex-aligned to its top,
+       so simply translating or growing it the naive way drags the cards
+       down too — and #hand's own `translate` turned out to be under active
+       JS control for swipe/drag feedback, so it can't be reliably
+       counter-shifted from CSS. Instead this pushes `bottom` down and
+       `height` up by the same pixel amount: the algebra
+       (top = 100dvh - bottom - height) cancels that amount out of the
+       computed top, so #hand's flex-start anchor never moves, while the
+       tray's own background art — anchored `background-position: ...
+       bottom` (assets.css) — rides the new, lower bottom edge down by the
+       full amount. */
+    html body.single-player-v2.generated-sheet-ready .handDock {
+      bottom: calc(6.2dvh - 135px) !important;
+      height: calc(31dvh + 135px) !important;
     }
 
     /* A small warm lift remains beneath the interface after the redundant
@@ -122,5 +142,24 @@
     outline: 2px solid rgba(247,214,151,.9);
     outline-offset: 1px;
     border-radius: 50%;
+  }
+}
+
+/* Selecting a hand card raises the extended hand dock to 10062. Menu,
+   Scoring, and Abilities live inside #titleWrap, so raising those children
+   cannot escape the parent's stacking context. Lift #titleWrap itself just
+   above the active dock. Archive is appended directly to body, so keep it at
+   the same level. Both remain below prompts (10070) and modal/detail surfaces
+   (10075+). */
+@layer actionDropTargets {
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.sel) #titleWrap,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.sel) #spv2ArchiveBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.press-highlight) #titleWrap,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.press-highlight) #spv2ArchiveBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.ability-picked) #titleWrap,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.ability-picked) #spv2ArchiveBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.purge-picked) #titleWrap,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.purge-picked) #spv2ArchiveBtn {
+    z-index: 10064 !important;
   }
 }

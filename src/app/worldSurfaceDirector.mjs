@@ -96,7 +96,12 @@ export function installWorldSurfaceDirector(target = window) {
     const scoreResult = !runEnd && (title === 'threshold cleared' || title === 'reading failed');
 
     setSurface('market', market, 'presentation-surface-market', 'market-open', 720);
-    setSurface('archives', archives, 'presentation-surface-archives', 'archives-open', 650);
+    // The Archives drawer already owns a real translateY drop transition in
+    // invWrap.css. Do not fire the old presentation cue here: that cue applies
+    // a second animation whose keyframes begin at opacity:0 and translateY(32px),
+    // overriding the drawer's off-screen transform and making it fade upward
+    // instead of dropping down like the other drawers.
+    setSurface('archives', archives, 'presentation-surface-archives', null, 650);
     setSurface('archiveDetail', archiveDetail, 'presentation-surface-archive-detail', 'archive-detail', 620);
     setSurface('scoreResult', scoreResult, 'presentation-surface-score-result', 'score-result', 760);
     setSurface('runEnd', runEnd, 'presentation-surface-run-end', 'run-end', 1150);

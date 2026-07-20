@@ -27,6 +27,11 @@ export function installTableCameraDirector(target = window) {
   const reduced = () => target.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
   const cue = event => {
     if (reduced()) return;
+    // The hybrid seated table pins #spread to projected 3D anchors; a WAAPI
+    // transform on .spread-wrap would turn it into a containing block and
+    // yank those fixed coordinates. The 3D scene supplies the camera
+    // response in that mode instead (candle/shaft surges via its cue bridge).
+    if (doc.body?.classList.contains('table3d-live')) return;
     const name = event.detail?.cue;
     const spread = doc.querySelector('.spread-wrap');
     const ambient = doc.getElementById('roomAmbient');

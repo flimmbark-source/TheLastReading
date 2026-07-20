@@ -3,6 +3,8 @@
 // effectsUntil timer that score sequencing waits on.
 /* global _slots, relicIconStyle, effectsUntil, haptic */
 
+import { scoreTargetElement, scoreTargetRect } from './table3dHudBridge.mjs';
+
 function signed(v){const n=Number(v);return (n>=0?'+':'')+n.toFixed(2).replace(/\.?0+$/,'')}
 
 export function meldStr(m){const chips=m[1],mult=m[2],additive=m[3]==='add';const fmt=v=>signed(v);const shown=additive?mult:mult-1;if(chips&&mult)return`${signed(chips)} ${fmt(shown)}`;if(chips)return signed(chips);if(mult)return`${fmt(shown)}`;return'';}
@@ -21,9 +23,9 @@ export function centerGhost(name,rare=false){const g=document.createElement('div
 
 export function bump(i){const s=_slots()[i];if(!s)return;s.classList.remove('bump');requestAnimationFrame(()=>requestAnimationFrame(()=>s.classList.add('bump')));}
 
-export function fireScoreGhost(){const pill=document.querySelector('.score-stack .score-pill');if(!pill)return;const r=pill.getBoundingClientRect();const g=document.createElement('span');g.className='score-ghost';g.textContent='+1';const centerX=r.left+r.width/2;const horizontalDrift=Math.min(28,r.width*.18);g.style.left=(centerX+(Math.random()-.5)*horizontalDrift)+'px';g.style.top=(r.top+r.height*.48)+'px';document.body.appendChild(g);setTimeout(()=>g.remove(),950)}
+export function fireScoreGhost(){const r=scoreTargetRect();if(!r)return;const g=document.createElement('span');g.className='score-ghost';g.textContent='+1';const centerX=r.left+r.width/2;const horizontalDrift=Math.min(28,r.width*.18);g.style.left=(centerX+(Math.random()-.5)*horizontalDrift)+'px';g.style.top=(r.top+r.height*.48)+'px';document.body.appendChild(g);setTimeout(()=>g.remove(),950)}
 
-export function fireMultGhost(label){const pill=document.querySelector('.score-stack .score-pill');if(!pill)return;const r=pill.getBoundingClientRect();const g=document.createElement('span');g.className='score-ghost mult';g.textContent=label;g.style.left=(r.left+8+Math.random()*(r.width-16))+'px';g.style.top=(r.top+r.height*0.25)+'px';document.body.appendChild(g);if(pill.animate&&!reducedMotion())pill.animate([{filter:'brightness(1)'},{filter:'brightness(1.25)'},{filter:'brightness(1)'}],{duration:260,easing:'ease-out'});setTimeout(()=>g.remove(),950)}
+export function fireMultGhost(label){const r=scoreTargetRect();if(!r)return;const target=scoreTargetElement();const g=document.createElement('span');g.className='score-ghost mult';g.textContent=label;g.style.left=(r.left+8+Math.random()*Math.max(1,r.width-16))+'px';g.style.top=(r.top+r.height*0.25)+'px';document.body.appendChild(g);if(target?.animate&&!reducedMotion())target.animate([{filter:'brightness(1)'},{filter:'brightness(1.25)'},{filter:'brightness(1)'}],{duration:260,easing:'ease-out'});setTimeout(()=>g.remove(),950)}
 
 export function fireThresholdBonusGhost(amount){const pill=document.querySelector('.th-pill-wrap .threshold-pill');if(!pill)return;const r=pill.getBoundingClientRect();const g=document.createElement('span');g.className='score-ghost';g.textContent='+'+(amount||10);g.style.cssText+='color:#ffd978;font-size:14px;text-shadow:0 0 8px rgba(255,217,120,.6),0 1px 3px rgba(0,0,0,.9);';g.style.left=(r.left+r.width/2)+'px';g.style.top=(r.top+r.height*0.25)+'px';document.body.appendChild(g);if(pill.animate&&!reducedMotion())pill.animate([{filter:'brightness(1)'},{filter:'brightness(1.4)'},{filter:'brightness(1)'}],{duration:340,easing:'ease-out'});setTimeout(()=>g.remove(),950)}
 
@@ -36,11 +38,10 @@ export function fireChipProjectile(i,chipValue){
   if(card&&card.animate&&!reducedMotion())
     card.animate([{filter:'brightness(1)'},{filter:'brightness(1.22)'},{filter:'brightness(1)'}],{duration:220,easing:'ease-out'});
 
-  const pill=document.querySelector('.score-stack .score-pill');
-  if(reducedMotion()||!pill){ghost(i,'+'+chipValue);return;}
+  const pr=scoreTargetRect();
+  if(reducedMotion()||!pr){ghost(i,'+'+chipValue);return;}
 
   const sr=s.getBoundingClientRect();
-  const pr=pill.getBoundingClientRect();
   const startX=sr.left+sr.width/2;
   const startY=sr.top-10;
   const targetX=pr.left+pr.width/2;
@@ -66,7 +67,8 @@ export function fireChipProjectile(i,chipValue){
     {duration:popDur,easing:'ease-out',fill:'forwards'}
   );
 
-  // Phase 2: randomized, viewport-safe arc to score pill — starts after the beat.
+  // Phase 2: randomized, viewport-safe arc to the active score target — the
+  // legacy HUD pill in classic mode, or the cabinet number in seated 3D mode.
   setTimeout(()=>{
     if(!g.isConnected)return;
     const dx=targetX-startX;
@@ -102,14 +104,16 @@ export function fireChipProjectile(i,chipValue){
 
     setTimeout(()=>{
       g.remove();
-      if(!pill.isConnected||!pill.animate)return;
-      // Keep the score target stable; acknowledge the hit with a subtle light pulse only.
-      pill.animate(
-        [{filter:'brightness(1) drop-shadow(0 0 0 rgba(255,217,120,0))'},
-         {filter:'brightness(1.12) drop-shadow(0 0 5px rgba(255,217,120,.28))',offset:.38},
-         {filter:'brightness(1) drop-shadow(0 0 0 rgba(255,217,120,0))'}],
-        {duration:180,easing:'ease-out'}
-      );
+      const target=scoreTargetElement();
+      if(target?.isConnected&&target.animate&&!reducedMotion()){
+        // Keep the score target stable; acknowledge the hit with a subtle light pulse only.
+        target.animate(
+          [{filter:'brightness(1) drop-shadow(0 0 0 rgba(255,217,120,0))'},
+           {filter:'brightness(1.12) drop-shadow(0 0 5px rgba(255,217,120,.28))',offset:.38},
+           {filter:'brightness(1) drop-shadow(0 0 0 rgba(255,217,120,0))'}],
+          {duration:180,easing:'ease-out'}
+        );
+      }
       spark(targetX,targetY,'#ff9b52',2,14,2.4);
       try{haptic([0,8,50]);}catch{}
     },flyDur);
