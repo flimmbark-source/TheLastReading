@@ -267,8 +267,6 @@ function CabinetPanel({ x, label, value, note, progress, palette }) {
   useEffect(() => () => texture.dispose(), [texture]);
 
   const frame = [
-    [0, 0.118, 0.018, 0.252],
-    [0, -0.118, 0.018, 0.252],
     [-0.169, 0, 0.02, 0.218],
     [0.169, 0, 0.02, 0.218],
   ];
