@@ -51,12 +51,13 @@ function settingsPage(target,setInvert){
   ['None','Glow','Text'].forEach((label,index)=>{const button=doc.createElement('button');button.type='button';button.textContent=label;button.classList.toggle('active',index===active);button.addEventListener('click',()=>{target.setHintLevel?.(index);segments.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('active',i===index))});segments.append(button)});
   hints.append(segments);page.append(hints);return page;
 }
+function observerFor(target){return target.MutationObserver||globalThis.MutationObserver}
 function installBook(target,setInvert){
   const doc=target.document;
   const close=()=>{doc.getElementById(BOOK_ID)?.remove();doc.removeEventListener('keydown',escape,true)};
   const escape=event=>{if(event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();close()}};
   const open=(initial='scoring')=>{
-    close();target.tlrCloseArchives?.();target.dispatchEvent(new Event('blur'));
+    close();target.tlrCloseArchives?.();target.dispatchEvent?.(new (target.Event||Event)('blur'));
     const root=doc.createElement('div');root.id=BOOK_ID;root.dataset.gameTerms='off';
     root.innerHTML='<div class="attic-book-shell" tabindex="-1" role="dialog" aria-modal="true" aria-label="Reading book"><button class="attic-book-close" type="button" aria-label="Close">×</button><nav class="attic-book-tabs"><button data-page="scoring">Scoring</button><button data-page="abilities">Abilities</button><button data-page="settings">Settings</button></nav><section class="attic-book-page"></section></div>';
     const page=root.querySelector('.attic-book-page'),tabs=[...root.querySelectorAll('[data-page]')];
@@ -66,7 +67,7 @@ function installBook(target,setInvert){
     (doc.getElementById('atticScene')||doc.body).append(root);doc.addEventListener('keydown',escape,true);show(['scoring','abilities','settings'].includes(initial)?initial:'scoring');root.querySelector('.attic-book-shell')?.focus();return root;
   };
   target.tlrOpenAtticBook=open;target.tlrCloseAtticBook=close;
-  new MutationObserver(()=>{if(!doc.body.classList.contains('mode-attic')&&!doc.body.classList.contains('mode-to-attic'))close()}).observe(doc.body,{attributes:true,attributeFilter:['class']});
+  const Observer=observerFor(target);if(typeof Observer==='function')new Observer(()=>{if(!doc.body.classList.contains('mode-attic')&&!doc.body.classList.contains('mode-to-attic'))close()}).observe(doc.body,{attributes:true,attributeFilter:['class']});
 }
 function installInvertBridge(target){
   if(target.__tlrInvertedPointerBridgeInstalled)return;target.__tlrInvertedPointerBridgeInstalled=true;
@@ -83,7 +84,7 @@ function installInvertBridge(target){
 function installSurfaceGuard(target){
   const doc=target.document,blocked=new Set(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','KeyE']);
   doc.addEventListener('keydown',event=>{const open=doc.getElementById(BOOK_ID)||doc.getElementById('invWrap')?.classList.contains('open');if(open&&blocked.has(event.code)){event.preventDefault();event.stopImmediatePropagation()}},true);
-  const archive=doc.getElementById('invWrap');if(archive)new MutationObserver(()=>{if(archive.classList.contains('open')&&doc.body.classList.contains('mode-attic'))target.dispatchEvent(new Event('blur'))}).observe(archive,{attributes:true,attributeFilter:['class']});
+  const archive=doc.getElementById('invWrap'),Observer=observerFor(target);if(archive&&typeof Observer==='function')new Observer(()=>{if(archive.classList.contains('open')&&doc.body.classList.contains('mode-attic'))target.dispatchEvent?.(new (target.Event||Event)('blur'))}).observe(archive,{attributes:true,attributeFilter:['class']});
 }
 function ensureMenuToggle(target,setInvert){
   const doc=target.document,panel=doc.getElementById('settingsPanel');if(!panel||doc.getElementById(MENU_ID))return;
@@ -91,6 +92,7 @@ function ensureMenuToggle(target,setInvert){
   const candle=doc.getElementById('candlelightLighting')?.closest('label');candle?.parentElement===panel?candle.insertAdjacentElement('afterend',row):panel.append(row);
 }
 function installStyles(doc){
+  if(!doc||typeof doc.getElementById!=='function'||typeof doc.createElement!=='function'||!doc.head)return;
   if(doc.getElementById(STYLE_ID))return;const style=doc.createElement('style');style.id=STYLE_ID;style.textContent=`
 body.mode-to-attic .spread-actions,body.attic3d-pending .spread-actions,body.mode-attic .spread-actions,body.mode-to-attic #discardBtn,body.mode-to-attic #purgeBtn,body.mode-to-attic #spv2DiscardBadge,body.attic3d-pending #discardBtn,body.attic3d-pending #purgeBtn,body.attic3d-pending #spv2DiscardBadge,body.mode-attic #discardBtn,body.mode-attic #purgeBtn,body.mode-attic #spv2DiscardBadge{display:none!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important}
 body.mode-to-attic .spread-actions::before,body.attic3d-pending .spread-actions::before,body.mode-attic .spread-actions::before{content:none!important;display:none!important;opacity:0!important;visibility:hidden!important}
@@ -99,10 +101,21 @@ body.mode-attic.attic3d-live #invWrap.open{transform:translateY(0)!important;poi
 #${BOOK_ID}{position:absolute;inset:0;z-index:10160;display:grid;place-items:center;padding:18px;background:rgba(4,2,1,.74);pointer-events:auto}.attic-book-shell{position:relative;width:min(920px,94vw);height:min(690px,88dvh);padding:58px 38px 30px;overflow:hidden;border:2px solid #6f4d25;border-radius:20px;background:linear-gradient(90deg,#d7c28f,#ead9ad 47%,#c5aa70 50%,#ead9ad 53%,#d7c28f);box-shadow:0 34px 90px #000c,inset 0 0 34px #4e2c1040;color:#2a1a10;font-family:Georgia,serif}.attic-book-close{position:absolute;right:12px;top:8px;border:0;background:transparent;color:#4d2f18;font:700 30px/1 Georgia;cursor:pointer}.attic-book-tabs{position:absolute;left:28px;right:50px;top:13px;display:flex;gap:7px}.attic-book-tabs button{padding:8px 15px;border:1px solid #5b38187a;border-bottom:0;border-radius:9px 9px 2px 2px;background:#b89559;color:#3a2414;font:700 12px Georgia;cursor:pointer}.attic-book-tabs button.active{background:#ead9ad;box-shadow:0 -3px 9px #ffeeb96b}.attic-book-page{height:100%;overflow:auto;padding:12px 18px}.attic-book-copy{font-size:14px;line-height:1.5}.attic-book-copy table{width:100%;border-collapse:collapse}.attic-book-copy td,.attic-book-copy th{padding:8px;border-bottom:1px solid #52331842;text-align:left;vertical-align:top}.attic-book-empty{text-align:center;margin-top:15%;font-style:italic;color:#6b5134}.attic-book-settings{width:min(480px,100%);margin:auto;display:grid;gap:10px}.attic-book-setting{display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid #53341940;font-weight:700}.attic-book-range{justify-content:space-between}.attic-book-range input{width:min(230px,48%)}.attic-book-setting input[type=checkbox]{width:20px;height:20px;accent-color:#735329}.attic-book-hints{align-items:flex-start;flex-direction:column}.attic-book-segments{display:flex;width:100%;gap:6px}.attic-book-segments button{flex:1;padding:9px;border:1px solid #886536;background:#6f4c201f;color:#3f2918;font:700 12px Georgia}.attic-book-segments button.active{background:#735329;color:#f2dfaf}@media(max-width:640px){.attic-book-shell{height:min(760px,91dvh);padding:58px 15px 22px;border-radius:14px}.attic-book-tabs{left:10px;right:42px;gap:4px}.attic-book-tabs button{flex:1;padding:8px 4px;font-size:10px}.attic-book-page{padding:8px 2px}}
 `;doc.head.append(style);
 }
-export function installAtticUx(target=window){
-  if(!target||target.__tlrAtticUxInstalled)return;target.__tlrAtticUxInstalled=true;const doc=target.document;
-  target.__tlrInvertAtticDrag=readInvert(target);const setInvert=on=>{const value=!!on;target.__tlrInvertAtticDrag=value;try{target.localStorage.setItem(INVERT_KEY,value?'1':'0')}catch{}doc.querySelectorAll('[data-tlr-invert-look]').forEach(input=>input.checked=value);return value};
+export function installAtticUx(target=globalThis.window){
+  if(!target)return;
+  const doc=target.document||globalThis.document;
+  target.__tlrInvertAtticDrag=readInvert(target);
+  const setInvert=on=>{const value=!!on;target.__tlrInvertAtticDrag=value;try{target.localStorage.setItem(INVERT_KEY,value?'1':'0')}catch{}doc?.querySelectorAll?.('[data-tlr-invert-look]').forEach(input=>input.checked=value);return value};
   target.tlrSetInvertAtticLook=setInvert;target.tlrGetInvertAtticLook=()=>!!target.__tlrInvertAtticDrag;
+
+  // Validation harnesses deliberately pass a window-like object without a real
+  // document. Keep the preference API available, but do not install DOM surfaces
+  // until the target has the capabilities the attic UI actually requires.
+  const hasDom=!!(doc&&typeof doc.getElementById==='function'&&typeof doc.createElement==='function'&&doc.head&&doc.body);
+  if(!hasDom||target.__tlrAtticUxInstalled)return;
+  target.__tlrAtticUxInstalled=true;
+  if(!target.document)target.document=doc;
+
   installStyles(doc);installInvertBridge(target);installBook(target,setInvert);installSurfaceGuard(target);ensureMenuToggle(target,setInvert);
-  new MutationObserver(()=>ensureMenuToggle(target,setInvert)).observe(doc.body,{childList:true,subtree:true});
+  const Observer=observerFor(target);if(typeof Observer==='function')new Observer(()=>ensureMenuToggle(target,setInvert)).observe(doc.body,{childList:true,subtree:true});
 }
