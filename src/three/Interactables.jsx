@@ -44,7 +44,13 @@ function Glow({ position, scale = 1.4, speed = 1 }) {
   );
 }
 
-function hoverHandlers(id, setHoverId, enabled) {
+function walkToInteractable(id, focusPoint) {
+  const api = window.__tlrAttic3d?.api;
+  if (!api?.walkTo || !focusPoint) return;
+  api.walkTo(focusPoint[0], focusPoint[2], id);
+}
+
+function hoverHandlers(id, setHoverId, enabled, focusPoint = null) {
   if (!enabled) return {};
   return {
     onPointerOver: event => {
@@ -54,6 +60,10 @@ function hoverHandlers(id, setHoverId, enabled) {
     onPointerOut: event => {
       event.stopPropagation();
       setHoverId(current => (current === id ? null : current));
+    },
+    onClick: event => {
+      event.stopPropagation();
+      walkToInteractable(id, focusPoint);
     },
   };
 }
@@ -104,36 +114,38 @@ function DeckBox({ hover }) {
   );
 }
 
-// Broad invisible hit volumes follow the actual furniture. They make hover
-// naming reliable across the whole table/chair/trunk silhouette instead of
-// requiring the cursor to pass near a single projected focus point.
+function HitMaterial() {
+  return <meshBasicMaterial transparent opacity={0.001} depthWrite={false} colorWrite={false} />;
+}
+
 function RoomHitVolumes({ interactive, setHoverId }) {
   if (!interactive) return null;
-  const material = <meshBasicMaterial transparent opacity={0.001} depthWrite={false} colorWrite={false} />;
+  const tableFocus = [TABLE.position[0], TABLE.topY, TABLE.position[2] + 0.55];
+  const chairFocus = [CHAIR.position[0], 0.9, CHAIR.position[2]];
   return (
     <group>
       <mesh
         position={[TABLE.position[0], TABLE.topY, TABLE.position[2]]}
-        {...hoverHandlers('reading_table', setHoverId, true)}
+        {...hoverHandlers('reading_table', setHoverId, true, tableFocus)}
       >
         <cylinderGeometry args={[TABLE.radius, TABLE.radius, 0.16, 18]} />
-        {material}
+        <HitMaterial />
       </mesh>
       <mesh
         position={[CHAIR.position[0], 0.68, CHAIR.position[2]]}
         rotation={[0, CHAIR.facing, 0]}
-        {...hoverHandlers('chair', setHoverId, true)}
+        {...hoverHandlers('chair', setHoverId, true, chairFocus)}
       >
         <boxGeometry args={[0.62, 1.1, 0.62]} />
-        {material}
+        <HitMaterial />
       </mesh>
       <mesh
         position={[TRUNK_SPOT.position[0], 0.36, TRUNK_SPOT.position[2]]}
         rotation={[0, TRUNK_SPOT.rotationY, 0]}
-        {...hoverHandlers('archives_trunk', setHoverId, true)}
+        {...hoverHandlers('archives_trunk', setHoverId, true, TRUNK_SPOT.focusPoint)}
       >
         <boxGeometry args={[1.25, 0.78, 0.78]} />
-        {material}
+        <HitMaterial />
       </mesh>
     </group>
   );
@@ -228,7 +240,12 @@ export function Interactables() {
                 station={station}
                 searched={Boolean(snapshot.searched[index])}
                 prop={prop}
-                hover={hoverHandlers(station.id, setHoverId, interactive && !snapshot.searched[index])}
+                hover={hoverHandlers(
+                  station.id,
+                  setHoverId,
+                  interactive && !snapshot.searched[index],
+                  station.focusPoint,
+                )}
               />
             </Suspense>
           </StationBoundary>
@@ -237,10 +254,15 @@ export function Interactables() {
       {mode !== 'table' && (
         <NoteOnTable
           found={snapshot.noteFound}
-          hover={hoverHandlers('sticky_note_01', setHoverId, interactive && !snapshot.noteFound)}
+          hover={hoverHandlers(
+            'sticky_note_01',
+            setHoverId,
+            interactive && !snapshot.noteFound,
+            NOTE_SPOT.focusPoint,
+          )}
         />
       )}
-      <DeckBox hover={hoverHandlers('deck_box', setHoverId, interactive)} />
+      <DeckBox hover={hoverHandlers('deck_box', setHoverId, interactive, DECK_SPOT.focusPoint)} />
       <RoomHitVolumes interactive={interactive} setHoverId={setHoverId} />
       <PlayerPrompt />
       <WalkMarker />
