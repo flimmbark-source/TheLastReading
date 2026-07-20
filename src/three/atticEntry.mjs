@@ -23,13 +23,39 @@ const HINT_KEY = 'tlr_attic3d_hint_seen';
 const LIVE_CLASS = 'attic3d-live';
 const PENDING_CLASS = 'attic3d-pending';
 const SEAT_CLASS = 'table3d-live';
+const STAND_TRANSFER_CEILING_MS = 4500;
+
+function clearPromotionSceneStyles(scene) {
+  if (!scene) return;
+  scene.style.removeProperty('opacity');
+  scene.style.removeProperty('pointer-events');
+  scene.style.removeProperty('transition');
+}
 
 // Seated-backdrop plumbing shared by mountSeatedTable (attic-return path)
 // and the approach overlay's in-place conversion: one unmount contract and
 // one "leave when the reading leaves" observer.
 function createSeatedHandle(container, root) {
   let unmounted = false;
+  let promoted = false;
   let observer = null;
+  let hint = null;
+  let transferTimer = 0;
+  let promotionScene = null;
+
+  const renderAtticMode = (adapter, mode) => {
+    root.render(
+      createElement(AtticExperience, {
+        adapter,
+        mode,
+        onFirstMove: () => hint?.dismiss(),
+        registerApi: api => {
+          handle.api = api;
+        },
+      }),
+    );
+  };
+
   const handle = {
     mounted: true,
     api: null,
@@ -37,21 +63,112 @@ function createSeatedHandle(container, root) {
       if (unmounted) return;
       unmounted = true;
       handle.mounted = false;
+      clearTimeout(transferTimer);
       observer?.disconnect();
-      document.body.classList.remove(SEAT_CLASS);
+      hint?.el?.remove();
+      clearPromotionSceneStyles(promotionScene);
+      document.body.classList.remove(SEAT_CLASS, LIVE_CLASS, PENDING_CLASS);
       clearTableAnchors();
       try {
         root.unmount();
       } catch (error) {
-        console.warn('The Last Reading: seated table unmount failed.', error);
+        console.warn('The Last Reading: 3D room unmount failed.', error);
       }
       container.remove();
       if (window.__tlrTableSeat === handle) delete window.__tlrTableSeat;
+      if (window.__tlrAttic3d === handle) delete window.__tlrAttic3d;
+    },
+    // Turn the live seated reading backdrop into the walkable attic without
+    // destroying its Canvas/WebGL context. The room remains visible beneath
+    // the fading DOM table while the PlayerRig stands up; once the rig reaches
+    // free movement, the same container is moved into #atticScene and becomes
+    // the interactive attic canvas.
+    promoteToAttic(adapter) {
+      if (unmounted || promoted || !adapter) return null;
+      const scene = document.getElementById('atticScene');
+      if (!scene) return null;
+
+      promoted = true;
+      promotionScene = scene;
+      observer?.disconnect();
+      observer = null;
+
+      // Keep the classic attic shell from painting over the still-live seated
+      // canvas. #atticScene is held transparent until the canvas moves into it.
+      document.body.classList.add(PENDING_CLASS);
+      scene.style.setProperty('opacity', '0', 'important');
+      scene.style.setProperty('pointer-events', 'none', 'important');
+      scene.style.setProperty('transition', 'none', 'important');
+
+      try {
+        renderAtticMode(adapter, 'rising');
+      } catch (error) {
+        console.warn('The Last Reading: table-to-attic promotion failed; remounting the attic.', error);
+        promoted = false;
+        document.body.classList.remove(PENDING_CLASS);
+        clearPromotionSceneStyles(scene);
+        handle.observe();
+        return null;
+      }
+
+      if (window.__tlrTableSeat === handle) delete window.__tlrTableSeat;
+      window.__tlrAttic3d = handle;
+      observer = observeHardExit(() => handle.unmount());
+
+      let finished = false;
+      const startedAt = performance.now();
+      const finishPromotion = () => {
+        if (unmounted || finished) return;
+        finished = true;
+        clearTimeout(transferTimer);
+
+        // Make the destination shell visible and move the existing canvas into
+        // it in the same task, so there is no frame where either room is absent.
+        scene.style.setProperty('opacity', '1', 'important');
+        scene.style.setProperty('pointer-events', 'auto', 'important');
+        scene.style.setProperty('transition', 'none', 'important');
+        container.id = CONTAINER_ID;
+        scene.insertBefore(container, scene.querySelector('#obalsHud'));
+        document.body.classList.add(LIVE_CLASS);
+        document.body.classList.remove(SEAT_CLASS, PENDING_CLASS);
+        clearTableAnchors();
+
+        try {
+          // `rising` and `attic` share the same PlayerRig key, so this enables
+          // interactables without restarting the completed stand-up movement.
+          renderAtticMode(adapter, 'attic');
+        } catch (error) {
+          console.warn('The Last Reading: promoted attic failed to become interactive.', error);
+          handle.unmount();
+          return;
+        }
+
+        hint = showControlsHint(scene);
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            if (!unmounted) clearPromotionSceneStyles(scene);
+          }),
+        );
+      };
+
+      const waitForStanding = () => {
+        if (unmounted || finished) return;
+        const phase = handle.api?.getState?.().phase;
+        if (phase === 'free' || performance.now() - startedAt >= STAND_TRANSFER_CEILING_MS) {
+          finishPromotion();
+          return;
+        }
+        transferTimer = setTimeout(waitForStanding, 50);
+      };
+      transferTimer = setTimeout(waitForStanding, 0);
+      return handle;
     },
     // The backdrop belongs to the seated reading only: leave for the attic,
-    // the menu, or another mode and it gets out of the way. (The attic flow
-    // remounts it on the way back to the table.)
+    // the menu, or another mode and it gets out of the way. atticFlow calls
+    // promoteToAttic before setting mode-to-attic, so the observer is already
+    // disconnected on the continuous path.
     observe() {
+      observer?.disconnect();
       observer = new MutationObserver(() => {
         const cls = document.body.classList;
         const elsewhere =
