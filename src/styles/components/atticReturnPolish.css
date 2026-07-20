@@ -36,6 +36,27 @@ body.mode-return-hard-hide .bar {
   transition: none;
 }
 
+/* The archive eye is table chrome, not attic UI. The reverse sit still runs
+   under mode-attic until the camera reaches the chair, so keep the control out
+   for the entire attic visit rather than waiting for the return handoff. */
+body.mode-to-attic #spv2ArchiveBtn,
+body.mode-attic #spv2ArchiveBtn {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: none !important;
+}
+
+/* The rise confirmation is a mechanical surface, so gameTerms auto-wraps the
+   word "Reading" inside its gold action button. Preserve the text styling but
+   make that one generated term inert so pressing the action cannot open the
+   glossary popover on top of the confirmation. */
+.result-panel .rbtns .btn-gold .game-term--reading {
+  pointer-events: none;
+  cursor: inherit;
+  text-decoration: none;
+}
+
 /* The continuous single-canvas return has no veil. resetSession creates the new
    hand while its table chrome is still returning, so keep each completed card
    invisible until drawAnimation attaches its normal staggered deal class. Cards
