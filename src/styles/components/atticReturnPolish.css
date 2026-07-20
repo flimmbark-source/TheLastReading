@@ -36,6 +36,16 @@ body.mode-return-hard-hide .bar {
   transition: none;
 }
 
+/* The continuous single-canvas return has no veil. resetSession creates the new
+   hand while its table chrome is still returning, so keep each completed card
+   invisible until drawAnimation attaches its normal staggered deal class. Cards
+   already owned by the animation are excluded; fill-mode then keeps delayed cards
+   at the animation's invisible first frame until their individual deal begins. */
+body.attic-return-deal-pending #hand > .card:not(.card-draw-dealt) {
+  opacity: 0 !important;
+  transition: none !important;
+}
+
 /* The card-detail medallion ("I" button) and its expanded dialog belong to the
    seated reading only. atticFlow.enter() removes them on the way in, but a
    dragged-out medallion is re-placed by a requestAnimationFrame loop, so gate
