@@ -72,21 +72,6 @@ function readDiscardCount(target, document) {
   return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
 }
 
-function spreadSlotsRect(document) {
-  const slots = [...document.querySelectorAll('#spread .slot')]
-    .map(slot => slot.getBoundingClientRect())
-    .filter(rect => rect.width > 1 && rect.height > 1);
-
-  if (!slots.length) return null;
-
-  return {
-    left: Math.min(...slots.map(rect => rect.left)),
-    right: Math.max(...slots.map(rect => rect.right)),
-    top: Math.min(...slots.map(rect => rect.top)),
-    bottom: Math.max(...slots.map(rect => rect.bottom)),
-  };
-}
-
 export function installDiscardPips(target = window) {
   if (!target || target.__tlrDiscardPipsInstalled) return;
   target.__tlrDiscardPipsInstalled = true;
@@ -107,16 +92,23 @@ export function installDiscardPips(target = window) {
   let settleTimer = 0;
 
   const positionNow = () => {
-    const spread = spreadSlotsRect(document);
+    const spread = document.getElementById('spread');
     if (!spread) {
       pips.style.visibility = 'hidden';
       return;
     }
 
-    // Stable row directly beneath the spread, aligned with its left edge.
-    // Slots are fixed layout anchors, so card animations do not move this HUD.
-    const left = Math.max(8, spread.left + 6);
-    const top = Math.min(target.innerHeight - 28, spread.bottom + 8);
+    const rect = spread.getBoundingClientRect();
+    if (rect.width <= 1 || rect.height <= 1) {
+      pips.style.visibility = 'hidden';
+      return;
+    }
+
+    // Pin to the spread container itself, not to cards or slots. Selecting a
+    // card changes descendant classes/transforms, but the spread container's
+    // layout box stays fixed, so the icons no longer twitch with selection.
+    const left = Math.max(8, rect.left + 6);
+    const top = Math.min(target.innerHeight - 28, rect.bottom + 8);
     pips.style.left = `${left.toFixed(1)}px`;
     pips.style.top = `${top.toFixed(1)}px`;
     pips.style.visibility = 'visible';
@@ -147,12 +139,10 @@ export function installDiscardPips(target = window) {
         }),
       );
     }
-    schedulePosition();
   };
 
   let valueObserver = null;
   let spreadResizeObserver = null;
-  let spreadMutationObserver = null;
 
   const bindSpread = () => {
     const spread = document.getElementById('spread');
@@ -165,19 +155,12 @@ export function installDiscardPips(target = window) {
     if (typeof ResizeObserver === 'function') {
       spreadResizeObserver = new ResizeObserver(schedulePosition);
       spreadResizeObserver.observe(spread);
-      spread.querySelectorAll('.slot').forEach(slot => spreadResizeObserver.observe(slot));
     }
 
-    spreadMutationObserver?.disconnect();
-    spreadMutationObserver = new MutationObserver(schedulePosition);
-    spreadMutationObserver.observe(spread, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class', 'style'],
-    });
-
+    // Initial layout and the delayed 3D-anchor settle passes.
     schedulePosition();
+    target.setTimeout(schedulePosition, 500);
+    target.setTimeout(schedulePosition, 1500);
   };
 
   const bindCounter = () => {
