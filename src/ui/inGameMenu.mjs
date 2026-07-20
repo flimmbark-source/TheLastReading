@@ -132,6 +132,47 @@ function ensureGlossaryButton(target, panel) {
   return button;
 }
 
+function installDimensionGuard(target, panel) {
+  const wrap = target.document.getElementById('menuPullWrap');
+  if (!wrap) return () => {};
+
+  let scheduled = 0;
+  const apply = () => {
+    scheduled = 0;
+    const narrow = target.innerWidth <= 520;
+    const drawerHeight = narrow ? 'calc(100dvh - 46px)' : 'min(94dvh, 900px)';
+    const panelWidth = narrow ? 'calc(100vw - 12px)' : 'min(94vw, 620px)';
+
+    if (wrap.style.getPropertyValue('--tlr-drawer-h') !== drawerHeight
+      || wrap.style.getPropertyPriority('--tlr-drawer-h') !== 'important') {
+      wrap.style.setProperty('--tlr-drawer-h', drawerHeight, 'important');
+    }
+    if (panel.style.getPropertyValue('max-width') !== panelWidth
+      || panel.style.getPropertyPriority('max-width') !== 'important') {
+      panel.style.setProperty('max-width', panelWidth, 'important');
+    }
+  };
+
+  const schedule = () => {
+    if (scheduled) return;
+    scheduled = target.requestAnimationFrame(apply);
+  };
+
+  // gestureDrawers measures every drawer and writes a compact numeric height
+  // inline whenever Menu opens or the viewport changes. Restore the dedicated
+  // menu dimensions after that write without adding marked-important CSS.
+  const observer = new MutationObserver(schedule);
+  observer.observe(wrap, { attributes: true, attributeFilter: ['style'] });
+  target.addEventListener('resize', schedule, { passive: true });
+  apply();
+
+  return () => {
+    observer.disconnect();
+    target.removeEventListener('resize', schedule);
+    if (scheduled) target.cancelAnimationFrame(scheduled);
+  };
+}
+
 export function installInGameMenu(target = window) {
   if (!target?.document || target.__tlrInGameMenuInstalled) return;
   target.__tlrInGameMenuInstalled = true;
@@ -213,6 +254,12 @@ export function installInGameMenu(target = window) {
   panel.replaceChildren(shell);
   panel.dataset.gameMenuBuilt = 'true';
   panel.setAttribute('aria-label', 'In-game menu');
+
+  const removeDimensionGuard = installDimensionGuard(target, panel);
+  target.__tlrInGameMenuDestroy = () => {
+    removeDimensionGuard();
+    target.__tlrInGameMenuInstalled = false;
+  };
 
   target.requestAnimationFrame(() => {
     target.tlrFitDrawerHeights?.();
