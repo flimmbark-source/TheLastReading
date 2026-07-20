@@ -4,6 +4,8 @@
 // custom-property names means the tuned layout CSS needs no changes — only the
 // underlying art improves.
 
+import { installDiscardPips } from './discardPips.mjs';
+
 const ELEMENT_BASE = '/public/ui/single-player-v2/elements/';
 
 const ELEMENT_ART = {
@@ -42,9 +44,14 @@ function preload(target, url) {
 }
 
 export function installGeneratedSheetAssets(target = window) {
-  if (applied) return applied;
   const document = target?.document;
   if (!document) return Promise.resolve(false);
+
+  // The discard indicators are a live DOM readout, not part of the baked art.
+  // Install them alongside the SPv2 skin so they follow the same lifecycle.
+  installDiscardPips(target);
+
+  if (applied) return applied;
 
   const root = document.documentElement;
   const urls = [];
