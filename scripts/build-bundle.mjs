@@ -72,6 +72,7 @@ const CSS_GROUPS = [
       'src/styles/components/invTab.css',
       'src/styles/components/titleWrap.css',
       'src/styles/components/atticFade.css',
+      'src/styles/components/inGameMenu.css',
       'src/styles/attic3d.css',
     ],
   },
@@ -163,5 +164,5 @@ export async function buildBundle() {
   await buildJs();
 }
 
-const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(new URL('..', import.meta.url));
 if (isMain) await buildBundle();
