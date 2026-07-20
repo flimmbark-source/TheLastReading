@@ -5,14 +5,8 @@
 // boots beneath the overlay; when both the cinematic and the boot are done,
 // the SAME canvas converts in place into the hybrid seated-table backdrop
 // (atticEntry.convertToSeated) — no second WebGL context, no duplicate
-// shader compile, which was the sit-down hitch. The wrap is
-// presentation-only: the original handler runs unchanged (same return value,
-// same errors), and any failure to load or mount the 3D chunk falls back to
-// the plain transition.
-//
-// Installed from main.mjs AFTER installMainMenu so the wrapped functions are
-// the full game handlers; menuBoot re-reads window[name] on every click, so
-// the wrapper is always the one invoked.
+// shader compile, which was the sit-down hitch. The wrapper preserves the
+// original game handler and only owns when hidden presentation effects release.
 
 export function installTableApproachFlow(target = window) {
   if (!target || target.__tlrTableApproachInstalled) return;
@@ -84,9 +78,6 @@ export function installTableApproachFlow(target = window) {
       return;
     }
     veil.addEventListener('transitionend', onTransitionEnd);
-    // The veil transition is currently 550ms. Keep a generous fallback so a
-    // reduced-motion stylesheet or interrupted transition cannot swallow the
-    // initial shuffle/deal forever.
     fallback = target.setTimeout(finish, 760);
   }
 
@@ -121,6 +112,28 @@ export function installTableApproachFlow(target = window) {
     }, 2600);
   }
 
+  function releaseAtTableReady(gate, mountSeat) {
+    let settled = false;
+    let fallback = 0;
+    const finish = ({ play = true } = {}) => {
+      if (settled) return;
+      settled = true;
+      target.clearTimeout(fallback);
+      target.removeEventListener('tlr:table3d-ready', onReady);
+      gate.release({ play });
+    };
+    const onReady = () => finish({ play: true });
+
+    target.addEventListener('tlr:table3d-ready', onReady, { once: true });
+    const seat = mountSeat();
+    if (!seat) {
+      finish({ play: true });
+      return seat;
+    }
+    fallback = target.setTimeout(() => finish({ play: true }), 1900);
+    return seat;
+  }
+
   function wrap(name) {
     const original = target[name];
     if (typeof original !== 'function' || original.__tlrApproachWrapped) return;
@@ -139,10 +152,7 @@ export function installTableApproachFlow(target = window) {
         const revealGate = createTableRevealGate();
         try {
           const result = await original.apply(this, arguments);
-          const seat = entry.mountSeatedTable?.({
-            onReady: () => revealGate.release({ play: true }),
-          });
-          if (!seat) revealGate.release({ play: true });
+          releaseAtTableReady(revealGate, () => entry.mountSeatedTable?.());
           return result;
         } catch (error) {
           revealGate.release();
