@@ -35,6 +35,66 @@ export function installTableApproachFlow(target = window) {
     return Boolean(target.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches);
   }
 
+  // The normal table boot deliberately replays the initial shuffle after its
+  // own loading curtain lifts. During the 3D approach that curtain is hidden
+  // underneath the still-running walk/sit cinematic, so the sound used to fire
+  // during the sit-down. Gate only that one sound and release it when the final
+  // table reveal veil actually starts fading out.
+  function createShuffleGate() {
+    const originalPlaySound = target.playSound;
+    if (typeof originalPlaySound !== 'function') return { release() {} };
+
+    let pending = false;
+    let released = false;
+    const gatedPlaySound = function (soundName, ...args) {
+      if (soundName === 'shuffle') {
+        pending = true;
+        return undefined;
+      }
+      return originalPlaySound.call(this, soundName, ...args);
+    };
+    target.playSound = gatedPlaySound;
+
+    return {
+      release({ play = false } = {}) {
+        if (released) return;
+        released = true;
+        if (target.playSound === gatedPlaySound) target.playSound = originalPlaySound;
+        if (play && pending) originalPlaySound.call(target, 'shuffle');
+        pending = false;
+      },
+    };
+  }
+
+  function releaseShuffleAtTableReveal(gate) {
+    const body = target.document?.body;
+    if (!body?.classList.contains('table3d-live')) {
+      gate.release();
+      return;
+    }
+
+    const veil = target.document.querySelector('.table3d-reveal-veil');
+    if (!veil || veil.classList.contains('out')) {
+      gate.release({ play: true });
+      return;
+    }
+
+    let fallbackTimer = 0;
+    const observer = new MutationObserver(() => {
+      if (!veil.classList.contains('out')) return;
+      observer.disconnect();
+      target.clearTimeout(fallbackTimer);
+      gate.release({ play: true });
+    });
+    observer.observe(veil, { attributes: true, attributeFilter: ['class'] });
+
+    // Fail open if styling or another transition path removes/changes the veil.
+    fallbackTimer = target.setTimeout(() => {
+      observer.disconnect();
+      gate.release({ play: true });
+    }, 2000);
+  }
+
   function wrap(name) {
     const original = target[name];
     if (typeof original !== 'function' || original.__tlrApproachWrapped) return;
@@ -57,9 +117,13 @@ export function installTableApproachFlow(target = window) {
         return result;
       }
 
-      const overlay = entry.mountTableApproach?.({});
+      let shuffleGate = { release() {} };
+      const overlay = entry.mountTableApproach?.({
+        onDone: () => releaseShuffleAtTableReveal(shuffleGate),
+      });
       if (!overlay) return original.apply(this, arguments);
 
+      shuffleGate = createShuffleGate();
       const boot = (async () => original.apply(this, arguments))();
       // Once both the cinematic and the boot settle, the overlay converts
       // itself into the seated backdrop in place — never over a half-built
@@ -69,6 +133,7 @@ export function installTableApproachFlow(target = window) {
         return await boot;
       } catch (error) {
         overlay.abort();
+        shuffleGate.release();
         throw error;
       }
     };
