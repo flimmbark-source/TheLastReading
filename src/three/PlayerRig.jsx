@@ -3,7 +3,8 @@
 // Attic mode mirrors the fiction of the visit: the rig mounts seated at the
 // reading table (matching the 2D table UI the player just left), stands up
 // over ~1.7s, hands over free-walk control, and — when the player sits back
-// down at the chair — plays the reverse move and only then calls
+// down at the chair — plays the getting-up move in reverse (a single smooth
+// glide back down into the seat over the same ~1.7s) and only then calls
 // adapter.leave(), which runs the existing attic->table fade and unmounts us.
 //
 // Approach mode (run start) instead plays the APPROACH_KEYFRAMES timeline —
@@ -26,7 +27,9 @@ import { AtticContext, domSurfaceOpen } from './AtticExperience.jsx';
 import { POSES, PORTRAIT_POSES, ROOM, KEEP_OUT, EYE_HEIGHT, APPROACH_KEYFRAMES } from './atticLayout.mjs';
 
 const RISE_SECONDS = 1.7;
-const SIT_SECONDS = 1.6;
+// Sitting back down is the getting-up animation played in reverse, so it runs
+// over the same duration and easing as the rise rather than its own timing.
+const SIT_SECONDS = RISE_SECONDS;
 const WALK_SPEED = 2.1;
 // Touch fingers are far less precise than a mouse cursor; give taps on
 // interactables a much larger forgiving radius there.
@@ -556,20 +559,15 @@ export function PlayerRig() {
       stepMovement(r, delta, reducedMotion, interactables, setFocusId, setAutoWalk);
       updateFocus(r, camera, interactables, setFocusId);
     } else if (r.phase === 'sitting') {
+      // The reverse of the rise: one smooth glide from where the player is
+      // standing straight down into the seated pose, mirroring 'rising' rather
+      // than standing up first and then sitting.
       r.phaseT += delta / SIT_SECONDS;
-      const t = Math.min(1, r.phaseT);
-      if (t < 0.55) {
-        const k = smooth(t / 0.55);
-        r.pos.lerpVectors(r.sitFrom.pos, STANDING.eye, k);
-        r.yaw = lerpAngle(r.sitFrom.yaw, STANDING.yaw, k);
-        r.pitch = THREE.MathUtils.lerp(r.sitFrom.pitch, STANDING.pitch, k);
-      } else {
-        const k = smooth((t - 0.55) / 0.45);
-        r.pos.lerpVectors(STANDING.eye, SEATED.eye, k);
-        r.yaw = lerpAngle(STANDING.yaw, SEATED.yaw, k);
-        r.pitch = THREE.MathUtils.lerp(STANDING.pitch, SEATED.pitch, k);
-      }
-      if (t >= 1) {
+      const t = smooth(Math.min(1, r.phaseT));
+      r.pos.lerpVectors(r.sitFrom.pos, SEATED.eye, t);
+      r.yaw = lerpAngle(r.sitFrom.yaw, SEATED.yaw, t);
+      r.pitch = THREE.MathUtils.lerp(r.sitFrom.pitch, SEATED.pitch, t);
+      if (r.phaseT >= 1) {
         r.phase = 'done';
         settleSeated(r);
         leaveOnce(r, adapter);

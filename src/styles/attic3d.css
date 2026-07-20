@@ -256,6 +256,16 @@ html body.single-player-v2.generated-sheet-ready.table3d-live.table3d-anchored-h
   transform-origin: 50% 100%;
 }
 
+/* When the hand is not re-seated onto the cloth (portrait Test A keeps the
+   native SPv2 dock), still lift it a touch off the very bottom edge so it
+   matches the small raise the anchored composition gets (HAND_LIFT_PX in
+   tableAnchors.mjs). The anchored rule above is more specific, so it keeps
+   winning whenever table3d-anchored-hand is set. */
+html body.single-player-v2.generated-sheet-ready.table3d-live:not(.table3d-anchored-hand) .handDock,
+html body.single-player-v2.generated-sheet-ready.table3d-live:not(.table3d-anchored-hand) #handSwipeZone {
+  transform: translateY(-14px);
+}
+
 /* Portrait Test B: when the hand is anchored on a tall screen, flatten the
    fan (wider arc radius, tighter per-card angle) so the row hugs the near
    cloth edge instead of towering. */

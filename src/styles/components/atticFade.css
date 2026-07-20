@@ -64,4 +64,17 @@ body.mode-attic .spread-wrap,body.mode-attic .handDock,body.mode-attic #relicRac
 body.mode-to-table .spread-wrap,body.mode-to-table .handDock,body.mode-to-table #relicRack,body.mode-to-table .refs-layer{opacity:0;transform:scale(.92) translateY(12vh);filter:blur(2px);pointer-events:none;transition:opacity .65s ease,transform .9s ease,filter .65s ease}
 body.mode-table-return .spread-wrap,body.mode-table-return .handDock,body.mode-table-return #relicRack,body.mode-table-return .refs-layer{opacity:1;transform:none;filter:none;transition:opacity .8s ease,transform 1s ease,filter .8s ease}
 body.mode-return-hard-hide .spread-wrap,body.mode-return-hard-hide .handDock,body.mode-return-hard-hide #relicRack,body.mode-to-table .spread-wrap,body.mode-to-table .handDock,body.mode-to-table #relicRack{opacity:0!important;transition:none!important;pointer-events:none!important}
+/* Getting up from the seated 3D table (attic3d-pending is the promotion beat,
+   table3d-live is still on): the spread stays pinned to the cloth instead of
+   fading with the rest of the 2D chrome. The live table anchors keep #spread
+   on the table, so as the camera rises the reading simply recedes on the
+   tabletop rather than scaling/blurring away. Higher specificity than the
+   mode-to-attic/mode-attic rules above (and declared later in the same layer),
+   so it wins their important tie; scoped to the 3D states, so the classic 2D
+   attic transition and the attic->table return are untouched. Only opacity
+   needs to be marked important: it is the sole property the mode-attic rule
+   above pins important, so transform/filter/transition win on this selector's
+   higher specificity alone, and pointer-events:none is the same value the
+   mode-attic rule already forces. */
+body.table3d-live.attic3d-pending .spread-wrap{opacity:1!important;transform:none;filter:none;pointer-events:none;transition:none}
 }

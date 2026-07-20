@@ -40,6 +40,10 @@ import {
 const ANCHORED_CLASS = 'table3d-anchored';
 const HAND_CLASS = 'table3d-anchored-hand';
 const PORTRAIT_HAND_KEY = 'tlr_t3d_hand_anchor_portrait';
+// Small upward nudge (px) applied to the anchored hand dock so the fan sits a
+// touch higher off the near cloth edge. Mirrors the native-dock lift in
+// attic3d.css so both compositions raise the dock by the same amount.
+const HAND_LIFT_PX = 14;
 const APPLIED_VARS = [];
 
 function setVar(style, name, value) {
@@ -160,7 +164,9 @@ export function applyTableAnchors(camera, size) {
         // fan's visual center on the hand anchor.
         const originY = dock.getBoundingClientRect().bottom;
         const fanCenterNatural = (fanRect.top + fanRect.bottom) / 2;
-        const wanted = handAnchor.y - (originY + scale * (fanCenterNatural - originY));
+        // A small extra lift raises the dock off the very near edge so the fan
+        // reads clearly above the cloth rather than hugging the bottom rim.
+        const wanted = handAnchor.y - (originY + scale * (fanCenterNatural - originY)) - HAND_LIFT_PX;
         // Lift freely onto the cloth, but never push the bottom-pinned dock
         // further down than a whisker.
         const dy = THREE.MathUtils.clamp(wanted, -size.height * 0.3, 24);

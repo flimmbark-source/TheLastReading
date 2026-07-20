@@ -18,6 +18,12 @@ function ensureStyles(){
   style.textContent=`
 body.table3d-live.attic3d-pending .spread-actions,body.mode-to-attic .spread-actions,body.mode-attic .spread-actions,body.table3d-live.attic3d-pending #discardBtn,body.table3d-live.attic3d-pending #purgeBtn,body.table3d-live.attic3d-pending #spv2DiscardBadge,body.mode-to-attic #discardBtn,body.mode-to-attic #purgeBtn,body.mode-to-attic #spv2DiscardBadge{display:none!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important}
 body.table3d-live.attic3d-pending .spread-actions::before,body.mode-to-attic .spread-actions::before,body.mode-attic .spread-actions::before{content:none!important;display:none!important;opacity:0!important;visibility:hidden!important}
+/* Standing up: drop the reading's hand fan, its gesture zone and the discard
+   pips instantly instead of letting them re-seat to their native 2D spots and
+   fade out through the whole rise. The spread is the only reading surface that
+   stays (locked to the cloth, see atticFade.css); everything else is gone the
+   moment the getting-up move starts. */
+body.table3d-live.attic3d-pending .handDock,body.table3d-live.attic3d-pending #handSwipeZone,body.table3d-live.attic3d-pending #table3dDiscardPips{display:none!important;opacity:0!important;visibility:hidden!important;pointer-events:none!important}
 body.${RETURNING} .table3d-reveal-veil{opacity:0!important;background:transparent!important;transition:none!important}
 body.${RETURNING}.mode-to-table #atticScene,body.${RETURNING}.mode-table-return #atticScene,body.${RETURNING}.mode-return-hard-hide #atticScene{opacity:1!important;filter:none!important;transform:none!important}
 body.${RETURNING} .spread-wrap,body.${RETURNING} .handDock,body.${RETURNING} #relicRack,body.${RETURNING} .refs-layer,body.${RETURNING} #titleWrap,body.${RETURNING} .score-stack,body.${RETURNING} .spread-actions{opacity:0!important;visibility:hidden!important;pointer-events:none!important;transition:none!important}`;
