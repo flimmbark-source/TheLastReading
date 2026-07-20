@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   queueDrawAnimation,
   consumeDrawAnimation,
+  holdDrawAnimations,
   clearDrawAnimations,
   installDrawAnimation,
 } from '../src/ui/drawAnimation.mjs';
@@ -18,6 +19,23 @@ const card = uid => ({ uid, id: `major_${uid}`, type: 'major' });
   assert.equal(consumeDrawAnimation(2, target).delayMs, 80, 'second dealt card is staggered');
   assert.equal(consumeDrawAnimation(3, target).delayMs, 160, 'third dealt card is staggered again');
   assert.equal(consumeDrawAnimation(3, target), null, 'a queued animation is consumed once');
+}
+
+// A loading/reveal hold keeps the hand out of the live queue until release.
+// Multiple hidden re-queues collapse to the latest complete hand, so the store
+// dispatch and the explicit post-boot replay cannot animate the same deal twice.
+{
+  const target = {};
+  const release = holdDrawAnimations(target);
+  queueDrawAnimation([card(4), card(5)], target, { staggerMs: 60 });
+  queueDrawAnimation([card(6), card(7), card(8)], target, { staggerMs: 70 });
+  assert.equal(consumeDrawAnimation(4, target), null, 'held deal is not consumable behind the loading surface');
+  assert.equal(consumeDrawAnimation(6, target), null, 'latest held deal also stays out of the live queue');
+  release({ play: true });
+  assert.equal(consumeDrawAnimation(4, target), null, 'an older hidden replay is discarded');
+  assert.equal(consumeDrawAnimation(6, target).delayMs, 0, 'latest held deal starts when the reveal releases');
+  assert.equal(consumeDrawAnimation(7, target).delayMs, 70, 'released deal keeps its stagger');
+  assert.equal(consumeDrawAnimation(8, target).delayMs, 140, 'released deal keeps full order');
 }
 
 // Direct deck draws queue only the cards actually added to the hand.
