@@ -142,3 +142,29 @@
     border-radius: 50%;
   }
 }
+
+/* Selecting a hand card raises the extended hand dock above the spread. The
+   dock graphic reaches behind the bottom utility row, so without a matching
+   control-layer lift it paints over Menu, Archive, Scoring, and Abilities.
+   Keep those controls above the active dock (10062) but below prompts (10070)
+   and modal/detail surfaces (10075+). */
+@layer actionDropTargets {
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.sel) #menuBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.sel) #spv2ArchiveBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.sel) #scoringBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.sel) #abilitiesBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.press-highlight) #menuBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.press-highlight) #spv2ArchiveBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.press-highlight) #scoringBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.press-highlight) #abilitiesBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.ability-picked) #menuBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.ability-picked) #spv2ArchiveBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.ability-picked) #scoringBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.ability-picked) #abilitiesBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.purge-picked) #menuBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.purge-picked) #spv2ArchiveBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.purge-picked) #scoringBtn,
+  html body.single-player-v2.generated-sheet-ready:has(.hand .card.purge-picked) #abilitiesBtn {
+    z-index: 10064 !important;
+  }
+}
