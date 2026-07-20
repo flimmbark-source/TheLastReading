@@ -184,6 +184,12 @@ export const TABLE_ANCHORS = {
   'spread-4': [0.31, READING_CENTER[1], READING_CENTER[2] - 0.02],
   'spread-5': [0.62, READING_CENTER[1], READING_CENTER[2] + 0.04],
   'spread-c': [...READING_CENTER],
+  // Centre of the live number printed on the left cabinet face. The legacy
+  // score sequencer projects its animated count and +1 beats onto this point.
+  'score-counter': [-0.205, TABLE.topY + 0.188, TABLE.position[2] - 0.517],
+  // Tiny discard-charge cards sit between spread and hand, biased toward the
+  // near edge and left side of the fan.
+  'discard-icons': [-0.46, TABLE.topY + 0.015, TABLE.position[2] + 0.41],
   discard: [-0.82, 0.79, 0.42],
   purge: [0.82, 0.79, 0.42],
   'hand-c': [0, 0.79, 0.95],
