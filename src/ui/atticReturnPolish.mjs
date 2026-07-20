@@ -4,11 +4,25 @@
 // anchor settle pass is complete, and holds a newly dealt hand's sound/motion
 // until the reveal veil is actually gone.
 
+const STYLE_ID = 'attic-return-polish-style';
+const STYLE_HREF = '/src/styles/components/atticReturnPolish.css?v=1';
+
+function ensureStyles(document) {
+  if (document.getElementById(STYLE_ID)) return;
+  const link = document.createElement('link');
+  link.id = STYLE_ID;
+  link.rel = 'stylesheet';
+  link.href = STYLE_HREF;
+  document.head.appendChild(link);
+}
+
 export function installAtticReturnPolish(target = window) {
   if (!target?.document || target.__tlrAtticReturnPolishInstalled) return;
   target.__tlrAtticReturnPolishInstalled = true;
 
   const document = target.document;
+  ensureStyles(document);
+
   let returning = false;
   let fallbackTimer = 0;
   let releaseDrawHold = null;
@@ -84,8 +98,6 @@ export function installAtticReturnPolish(target = window) {
     returning = true;
     document.body.classList.add('mode-return-hard-hide');
     target.clearTimeout(fallbackTimer);
-    // Normal path: ~1080ms attic fade + ~820ms seated settle. This is only a
-    // fail-open ceiling for WebGL/context loss; it is not the reveal schedule.
     fallbackTimer = target.setTimeout(() => finishReturn({ play: true }), 2800);
   };
 
@@ -106,9 +118,6 @@ export function installAtticReturnPolish(target = window) {
   const bodyObserver = new MutationObserver(() => {
     const cls = document.body.classList;
     if (cls.contains('mode-return-hard-hide')) beginReturn();
-    // atticFlow removes this class before the async seated canvas is ready.
-    // Reassert it in the same microtask, before the browser can paint the old
-    // table chrome, and let the table-ready event release it deliberately.
     if (returning && !cls.contains('mode-return-hard-hide')) cls.add('mode-return-hard-hide');
   });
   bodyObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
