@@ -1,4 +1,4 @@
-// Small discard-count cards pinned to the hand area's top-left corner.
+// Small discard-count cards pinned directly beneath the spread.
 // Gameplay continues to own the discard count; this view only mirrors it.
 
 const STYLE_ID = 'table3d-discard-pips-style';
@@ -72,6 +72,21 @@ function readDiscardCount(target, document) {
   return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
 }
 
+function spreadSlotsRect(document) {
+  const slots = [...document.querySelectorAll('#spread .slot')]
+    .map(slot => slot.getBoundingClientRect())
+    .filter(rect => rect.width > 1 && rect.height > 1);
+
+  if (!slots.length) return null;
+
+  return {
+    left: Math.min(...slots.map(rect => rect.left)),
+    right: Math.max(...slots.map(rect => rect.right)),
+    top: Math.min(...slots.map(rect => rect.top)),
+    bottom: Math.max(...slots.map(rect => rect.bottom)),
+  };
+}
+
 export function installDiscardPips(target = window) {
   if (!target || target.__tlrDiscardPipsInstalled) return;
   target.__tlrDiscardPipsInstalled = true;
@@ -92,23 +107,16 @@ export function installDiscardPips(target = window) {
   let settleTimer = 0;
 
   const positionNow = () => {
-    const dock = document.querySelector('.handDock');
-    if (!dock) {
+    const spread = spreadSlotsRect(document);
+    if (!spread) {
       pips.style.visibility = 'hidden';
       return;
     }
 
-    const rect = dock.getBoundingClientRect();
-    if (rect.width <= 1 || rect.height <= 1) {
-      pips.style.visibility = 'hidden';
-      return;
-    }
-
-    // Fixed videogame-style corner badge: pinned to the hand area's own
-    // top-left corner. It does not follow individual cards as they fan,
-    // drift, select, animate, or leave the hand.
-    const left = Math.max(8, rect.left + 14);
-    const top = Math.max(8, rect.top + 10);
+    // Stable row directly beneath the spread, aligned with its left edge.
+    // Slots are fixed layout anchors, so card animations do not move this HUD.
+    const left = Math.max(8, spread.left + 6);
+    const top = Math.min(target.innerHeight - 28, spread.bottom + 8);
     pips.style.left = `${left.toFixed(1)}px`;
     pips.style.top = `${top.toFixed(1)}px`;
     pips.style.visibility = 'visible';
@@ -143,20 +151,31 @@ export function installDiscardPips(target = window) {
   };
 
   let valueObserver = null;
-  let dockResizeObserver = null;
+  let spreadResizeObserver = null;
+  let spreadMutationObserver = null;
 
-  const bindDock = () => {
-    const dock = document.querySelector('.handDock');
-    if (!dock) {
-      target.requestAnimationFrame(bindDock);
+  const bindSpread = () => {
+    const spread = document.getElementById('spread');
+    if (!spread) {
+      target.requestAnimationFrame(bindSpread);
       return;
     }
 
-    dockResizeObserver?.disconnect();
+    spreadResizeObserver?.disconnect();
     if (typeof ResizeObserver === 'function') {
-      dockResizeObserver = new ResizeObserver(schedulePosition);
-      dockResizeObserver.observe(dock);
+      spreadResizeObserver = new ResizeObserver(schedulePosition);
+      spreadResizeObserver.observe(spread);
+      spread.querySelectorAll('.slot').forEach(slot => spreadResizeObserver.observe(slot));
     }
+
+    spreadMutationObserver?.disconnect();
+    spreadMutationObserver = new MutationObserver(schedulePosition);
+    spreadMutationObserver.observe(spread, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style'],
+    });
 
     schedulePosition();
   };
@@ -177,6 +196,6 @@ export function installDiscardPips(target = window) {
   target.addEventListener('orientationchange', schedulePosition, { passive: true });
 
   target.__tlrRenderDiscardPips = render;
-  bindDock();
+  bindSpread();
   bindCounter();
 }
