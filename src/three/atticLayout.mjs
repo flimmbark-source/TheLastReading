@@ -73,11 +73,13 @@ export const POSES = {
 // final keyframe to this pose on portrait so the reveal stays continuous.
 export const PORTRAIT_POSES = {
   seated: {
-    // Raised (and kept in front of the chair, z < CHAIR.z) so the near cloth
-    // edge tucks up into frame and the reading sits at the table's visual
-    // centre instead of its upper third. The far rim barely moves, so the
-    // window glow still clears the top edge.
-    eye: [0, 2.0, 1.5],
+    // Lowered and moved forward (leaning in over the cloth, still in front
+    // of the chair, z < CHAIR.z) so the viewpoint sits down toward the table:
+    // the far rim rides up near the top edge and the near cloth fills the
+    // frame, so the table dominates the view instead of the room above it.
+    // Look stays on the reading centre, so the spread holds the middle of
+    // the frame.
+    eye: [0, 1.85, 1.35],
     look: [...PORTRAIT_READING_CENTER],
   },
 };
