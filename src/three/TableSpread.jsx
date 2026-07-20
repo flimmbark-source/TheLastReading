@@ -19,15 +19,21 @@ const CARD_W = 0.27;
 const CARD_H = 0.38;
 const LIFT = 0.012; // rest just above the cloth to avoid z-fighting
 
+// Dark card stock with a bright suit-coloured accent and cream ink, to match
+// the game's own hand cards (dark with gold/colour accents) and stay legible on
+// the green cloth under the attic's low light. Returns [bgTop, bgBottom,
+// accent, ink].
 function suitPalette(card) {
-  if (card.type === 'major') return ['#2c1746', '#160a26', '#e7c667', '#f3e4b0'];
-  switch (card.suit) {
-    case 'Cups': return ['#43171a', '#1c0a0c', '#e88f7e', '#f6d9cf'];
-    case 'Wands': return ['#432a12', '#1c1006', '#e7b155', '#f6e2b6'];
-    case 'Swords': return ['#152a44', '#08131f', '#84b0e6', '#d9e6f8'];
-    case 'Pentacles': return ['#123f24', '#08190e', '#7fe09a', '#d3f6dd'];
-    default: return ['#2c2618', '#151109', '#e7d29a', '#f4ead0'];
-  }
+  const ink = '#f0dcab';
+  const accent = card.type === 'major' ? '#e7c667'
+    : card.suit === 'Cups' ? '#ec8a80'
+    : card.suit === 'Wands' ? '#ecb057'
+    : card.suit === 'Swords' ? '#93b8ec'
+    : card.suit === 'Pentacles' ? '#86df9c'
+    : '#e7d29a';
+  const top = card.type === 'major' ? '#2a1830' : '#2a1810';
+  const bottom = '#140907';
+  return [top, bottom, accent, ink];
 }
 
 function cardGlyph(card) {
@@ -75,28 +81,30 @@ function cardFaceTexture(card) {
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = ink;
   ctx.shadowColor = '#000000';
-  ctx.shadowBlur = 8;
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = accent;
   ctx.font = '140px Georgia, serif';
-  ctx.fillText(cardGlyph(card), 128, 172);
+  ctx.fillText(cardGlyph(card), 128, 168);
 
   const index = cardIndex(card);
   if (index) {
     ctx.shadowBlur = 4;
-    ctx.font = '700 34px Georgia, serif';
+    ctx.fillStyle = ink;
+    ctx.font = '700 32px Georgia, serif';
     ctx.textAlign = 'left';
-    ctx.fillText(index, 32, 52);
+    ctx.fillText(index, 34, 52);
     ctx.textAlign = 'right';
-    ctx.fillText(index, 224, 320);
+    ctx.fillText(index, 222, 322);
   }
 
   const name = cardName(card);
   if (name) {
     ctx.shadowBlur = 6;
+    ctx.fillStyle = ink;
     ctx.textAlign = 'center';
-    ctx.font = '700 25px Georgia, serif';
-    ctx.fillText(name.length > 16 ? `${name.slice(0, 15)}…` : name, 128, 308);
+    ctx.font = '700 24px Georgia, serif';
+    ctx.fillText(name.length > 16 ? `${name.slice(0, 15)}…` : name, 128, 306);
   }
 
   const texture = new THREE.CanvasTexture(canvas);
