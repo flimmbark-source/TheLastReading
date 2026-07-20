@@ -5,7 +5,7 @@
 // until the reveal veil is actually gone.
 
 const STYLE_ID = 'attic-return-polish-style';
-const STYLE_HREF = '/src/styles/components/atticReturnPolish.css?v=2';
+const STYLE_HREF = '/src/styles/components/atticReturnPolish.css?v=3';
 const DEAL_PENDING_CLASS = 'attic-return-deal-pending';
 
 function ensureStyles(document) {
