@@ -1,9 +1,9 @@
 @layer drawers {
   /* The Menu is a dedicated, almost full-screen surface. Scoring and Abilities
-     keep their compact drawer heights. The important custom property beats the
-     drawer fitter's normal inline value without fighting its scroll handling. */
+     keep their compact drawer heights. The controller guards this custom
+     property after the generic drawer fitter runs. */
   #menuPullWrap {
-    --tlr-drawer-h: min(94dvh, 900px) !important;
+    --tlr-drawer-h: min(94dvh, 900px);
   }
 
   #menuPullDesk {
@@ -29,7 +29,7 @@
     box-sizing: border-box;
     width: min(94vw, 620px);
     min-width: 0;
-    max-width: min(94vw, 620px) !important;
+    max-width: min(94vw, 620px);
     align-items: stretch;
     font-family: Georgia, 'Times New Roman', serif;
   }
@@ -74,7 +74,6 @@
     z-index: 0;
     color: rgba(188, 136, 55, .62);
     font-size: 16px;
-    text-shadow: calc(100% - 34px) 0 currentColor;
     pointer-events: none;
   }
 
@@ -403,7 +402,7 @@
 
   @media (max-width: 520px) {
     #menuPullWrap {
-      --tlr-drawer-h: calc(100dvh - 46px) !important;
+      --tlr-drawer-h: calc(100dvh - 46px);
     }
 
     #menuPullDesk {
@@ -412,7 +411,7 @@
 
     #menuPullDesk #settingsPanel {
       width: calc(100vw - 12px);
-      max-width: calc(100vw - 12px) !important;
+      max-width: calc(100vw - 12px);
     }
 
     .game-menu-shell {
