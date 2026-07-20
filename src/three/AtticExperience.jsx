@@ -83,14 +83,15 @@ export function domSurfaceOpen() {
   );
 }
 
-// The reveal veil is not allowed to lift until the seated camera, responsive
-// DOM layout, and projected table anchors have all had their settle passes.
-// This removes the visible late re-projection/pop that previously happened
-// after the player was already looking at the table.
 function TableAnchorProjector({ onReady }) {
   const { camera, size } = useThree();
   const firstFrameApplied = useRef(false);
   const readySent = useRef(false);
+
+  useEffect(() => {
+    document.body.classList.add('table3d-settling');
+    return () => document.body.classList.remove('table3d-settling');
+  }, []);
 
   useEffect(() => {
     firstFrameApplied.current = false;
@@ -109,16 +110,20 @@ function TableAnchorProjector({ onReady }) {
     const apply = () => {
       if (!cancelled) applyTableAnchors(camera, size);
     };
+    const announceReady = () => {
+      if (cancelled || readySent.current) return;
+      applyTableAnchors(camera, size);
+      readySent.current = true;
+      document.body.classList.remove('table3d-settling');
+      window.dispatchEvent(new CustomEvent('tlr:table3d-ready'));
+      onReady?.();
+    };
+
     timers.push(setTimeout(apply, 160));
     timers.push(setTimeout(apply, 440));
     timers.push(setTimeout(() => {
       apply();
-      finalFrame = requestAnimationFrame(() => requestAnimationFrame(() => {
-        if (cancelled || readySent.current) return;
-        applyTableAnchors(camera, size);
-        readySent.current = true;
-        onReady?.();
-      }));
+      finalFrame = requestAnimationFrame(() => requestAnimationFrame(announceReady));
     }, 820));
 
     window.__tlrT3dReproject = apply;
