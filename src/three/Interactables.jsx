@@ -2,7 +2,6 @@
 // player-facing name/action label, and the tap-walk destination marker.
 
 import { Component, Suspense, useContext, useEffect, useMemo, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import { useFrame, useLoader, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { AtticContext } from './AtticExperience.jsx';
@@ -154,49 +153,83 @@ function RoomHitVolumes({ interactive, setHoverId }) {
   );
 }
 
+// This component lives under the R3F reconciler, so it must not return DOM JSX
+// or a react-dom portal: R3F would interpret <div>/<b>/<span> as THREE objects.
+// Create the player-facing label imperatively in #atticScene instead, while the
+// frame loop only projects and positions that ordinary DOM node.
 function PlayerPrompt() {
   const { interactables, focusId, hoverId } = useContext(AtticContext);
   const { camera, gl } = useThree();
-  const ref = useRef();
-  const sceneElement = document.getElementById('atticScene');
+  const domRef = useRef({ root: null, name: null, action: null, scene: null });
   const target = interactables.find(item => item.id === (hoverId || focusId)) || null;
   const actionable = Boolean(target && focusId === target.id);
   const coarse = useMemo(() => Boolean(window.matchMedia?.('(pointer: coarse)')?.matches), []);
   const projected = useMemo(() => new THREE.Vector3(), []);
 
+  useEffect(() => {
+    const sceneElement = document.getElementById('atticScene');
+    if (!sceneElement) return undefined;
+
+    const root = document.createElement('div');
+    root.className = 'attic3d-item-label';
+    root.setAttribute('aria-hidden', 'true');
+    const name = document.createElement('b');
+    const action = document.createElement('span');
+    action.hidden = true;
+    root.append(name, action);
+    sceneElement.appendChild(root);
+    domRef.current = { root, name, action, scene: sceneElement };
+
+    return () => {
+      root.remove();
+      domRef.current = { root: null, name: null, action: null, scene: null };
+    };
+  }, []);
+
+  useEffect(() => {
+    const { root, name, action } = domRef.current;
+    if (!root || !name || !action) return;
+    if (!target) {
+      root.style.visibility = 'hidden';
+      root.classList.remove('actionable');
+      name.textContent = '';
+      action.textContent = '';
+      action.hidden = true;
+      return;
+    }
+
+    name.textContent = target.name || target.label;
+    root.classList.toggle('actionable', actionable);
+    action.hidden = !actionable;
+    action.textContent = actionable ? (coarse ? target.label : `${target.label} · E`) : '';
+  }, [actionable, coarse, target]);
+
   useFrame(() => {
-    const element = ref.current;
-    if (!element || !target || !sceneElement) return;
+    const { root, scene } = domRef.current;
+    if (!root || !scene || !target) return;
     projected.set(...target.focusPoint).project(camera);
     if (projected.z >= 1 || projected.z <= -1) {
-      element.style.visibility = 'hidden';
+      root.style.visibility = 'hidden';
       return;
     }
 
     const canvasRect = gl.domElement.getBoundingClientRect();
-    const sceneRect = sceneElement.getBoundingClientRect();
+    const sceneRect = scene.getBoundingClientRect();
     const x = canvasRect.left - sceneRect.left + ((projected.x + 1) / 2) * canvasRect.width;
     const y = canvasRect.top - sceneRect.top + ((1 - projected.y) / 2) * canvasRect.height;
-    const width = element.offsetWidth || 150;
-    const height = element.offsetHeight || 48;
+    const width = root.offsetWidth || 150;
+    const height = root.offsetHeight || 48;
     const margin = 10;
     const left = THREE.MathUtils.clamp(x - width / 2, margin, Math.max(margin, sceneRect.width - width - margin));
     let top = y - height - 18;
     if (top < margin) top = y + 18;
     top = THREE.MathUtils.clamp(top, margin, Math.max(margin, sceneRect.height - height - margin));
-    element.style.left = `${left.toFixed(1)}px`;
-    element.style.top = `${top.toFixed(1)}px`;
-    element.style.visibility = 'visible';
+    root.style.left = `${left.toFixed(1)}px`;
+    root.style.top = `${top.toFixed(1)}px`;
+    root.style.visibility = 'visible';
   });
 
-  if (!target || !sceneElement) return null;
-  return createPortal(
-    <div ref={ref} className={`attic3d-item-label${actionable ? ' actionable' : ''}`} aria-hidden="true">
-      <b>{target.name || target.label}</b>
-      {actionable && <span>{coarse ? target.label : `${target.label} · E`}</span>}
-    </div>,
-    sceneElement,
-  );
+  return null;
 }
 
 function WalkMarker() {
