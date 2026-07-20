@@ -34,6 +34,11 @@ body:not(.mp-game-active) #scoringBtn,body:not(.mp-game-active) #abilitiesBtn,#m
 #invTab,.tlr-pull-tab{will-change:left}
 @media(min-width:641px){#titleContent .actions{height:37px!important;min-height:37px!important;margin-bottom:10px!important}}
 .tlr-pull-wrap{--tlr-drawer-h:220px;transform:translateY(calc(-1 * var(--tlr-drawer-h)))}
+/* Scoring and Abilities are compact reference drawers. The Menu contains a
+   much taller settings form, so sharing their 220px height clips the final
+   action against the lower edge. Give only the Menu a viewport-safe height;
+   short screens still scroll rather than extending past the display. */
+#menuPullWrap{--tlr-drawer-h:min(480px,calc(100dvh - 64px))}
 .tlr-pull-wrap.open{transform:translateY(0)}
 .tlr-pull-desk{height:var(--tlr-drawer-h);padding:10px 14px 12px;overflow:visible}
 .tlr-pull-tab{top:var(--tlr-drawer-h)}
@@ -51,7 +56,7 @@ body:not(.mp-game-active) #scoringBtn,body:not(.mp-game-active) #abilitiesBtn,#m
 #abilitiesPullDesk td{padding:3px 5px!important;vertical-align:top;white-space:normal!important}
 #abilitiesPullDesk td:first-child{width:86px!important;font-weight:700!important;white-space:nowrap!important;color:#3a1a06!important}
 #menuPullDesk #settingsPanel{max-width:min(92vw,300px)!important;gap:9px!important}
-#menuPullDesk.tlr-pull-desk{overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain}
+#menuPullDesk.tlr-pull-desk{overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain;padding-bottom:max(28px,calc(env(safe-area-inset-bottom) + 18px));scroll-padding-bottom:max(28px,calc(env(safe-area-inset-bottom) + 18px))}
 body.mp-game-active #handSwipeZone{display:none}
 body.mp-game-active #titleWrap{display:block;position:fixed;inset:0;width:0;height:0;overflow:visible;opacity:1;transform:none;filter:none;pointer-events:none;z-index:2147483190}
 body.mp-game-active #titleRow,body.mp-game-active #titleContent{display:contents}
