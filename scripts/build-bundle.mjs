@@ -164,5 +164,5 @@ export async function buildBundle() {
   await buildJs();
 }
 
-const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(new URL('..', import.meta.url));
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) await buildBundle();
