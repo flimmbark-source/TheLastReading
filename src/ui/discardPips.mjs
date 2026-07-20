@@ -1,4 +1,4 @@
-// Small discard-count cards anchored to the actual rendered hand fan.
+// Small discard-count cards pinned to the hand area's top-left corner.
 // Gameplay continues to own the discard count; this view only mirrors it.
 
 const STYLE_ID = 'table3d-discard-pips-style';
@@ -72,20 +72,6 @@ function readDiscardCount(target, document) {
   return Number.isFinite(parsed) ? Math.max(0, Math.floor(parsed)) : 0;
 }
 
-function visibleHandFanRect(document) {
-  const cards = [...document.querySelectorAll('#hand .card')]
-    .map(card => card.getBoundingClientRect())
-    .filter(rect => rect.width > 1 && rect.height > 1);
-
-  if (!cards.length) return null;
-
-  const left = Math.min(...cards.map(rect => rect.left));
-  const right = Math.max(...cards.map(rect => rect.right));
-  const top = Math.min(...cards.map(rect => rect.top));
-  const bottom = Math.max(...cards.map(rect => rect.bottom));
-  return { left, right, top, bottom };
-}
-
 export function installDiscardPips(target = window) {
   if (!target || target.__tlrDiscardPipsInstalled) return;
   target.__tlrDiscardPipsInstalled = true;
@@ -104,17 +90,25 @@ export function installDiscardPips(target = window) {
 
   let positionFrame = 0;
   let settleTimer = 0;
+
   const positionNow = () => {
-    const fan = visibleHandFanRect(document);
-    if (!fan) {
+    const dock = document.querySelector('.handDock');
+    if (!dock) {
       pips.style.visibility = 'hidden';
       return;
     }
 
-    // Conventional videogame badge placement: directly above the rendered
-    // hand fan's upper-left corner, not at a world-space table anchor.
-    const left = Math.max(8, fan.left + 3);
-    const top = Math.max(8, fan.top - 25);
+    const rect = dock.getBoundingClientRect();
+    if (rect.width <= 1 || rect.height <= 1) {
+      pips.style.visibility = 'hidden';
+      return;
+    }
+
+    // Fixed videogame-style corner badge: pinned to the hand area's own
+    // top-left corner. It does not follow individual cards as they fan,
+    // drift, select, animate, or leave the hand.
+    const left = Math.max(8, rect.left + 14);
+    const top = Math.max(8, rect.top + 10);
     pips.style.left = `${left.toFixed(1)}px`;
     pips.style.top = `${top.toFixed(1)}px`;
     pips.style.visibility = 'visible';
@@ -149,33 +143,21 @@ export function installDiscardPips(target = window) {
   };
 
   let valueObserver = null;
-  let handObserver = null;
-  let handResizeObserver = null;
+  let dockResizeObserver = null;
 
-  const bindHand = () => {
-    const hand = document.getElementById('hand');
-    if (!hand) {
-      target.requestAnimationFrame(bindHand);
+  const bindDock = () => {
+    const dock = document.querySelector('.handDock');
+    if (!dock) {
+      target.requestAnimationFrame(bindDock);
       return;
     }
 
-    handObserver?.disconnect();
-    handObserver = new MutationObserver(schedulePosition);
-    handObserver.observe(hand, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class', 'style'],
-    });
-
-    handResizeObserver?.disconnect();
+    dockResizeObserver?.disconnect();
     if (typeof ResizeObserver === 'function') {
-      handResizeObserver = new ResizeObserver(schedulePosition);
-      handResizeObserver.observe(hand);
+      dockResizeObserver = new ResizeObserver(schedulePosition);
+      dockResizeObserver.observe(dock);
     }
 
-    hand.addEventListener('animationend', schedulePosition, true);
-    hand.addEventListener('transitionend', schedulePosition, true);
     schedulePosition();
   };
 
@@ -193,9 +175,8 @@ export function installDiscardPips(target = window) {
 
   target.addEventListener('resize', schedulePosition, { passive: true });
   target.addEventListener('orientationchange', schedulePosition, { passive: true });
-  document.addEventListener('pointerup', schedulePosition, true);
 
   target.__tlrRenderDiscardPips = render;
-  bindHand();
+  bindDock();
   bindCounter();
 }
