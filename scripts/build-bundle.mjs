@@ -73,6 +73,7 @@ const CSS_GROUPS = [
       'src/styles/components/titleWrap.css',
       'src/styles/components/atticFade.css',
       'src/styles/components/inGameMenu.css',
+      'src/styles/components/atticReturnPolish.css',
       'src/styles/attic3d.css',
     ],
   },
