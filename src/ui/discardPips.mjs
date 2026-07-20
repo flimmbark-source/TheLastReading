@@ -108,7 +108,7 @@ export function installDiscardPips(target = window) {
     // card changes descendant classes/transforms, but the spread container's
     // layout box stays fixed, so the icons no longer twitch with selection.
     const left = Math.max(8, rect.left + 6);
-    const top = Math.min(target.innerHeight - 28, rect.bottom + 8);
+    const top = Math.min(target.innerHeight - 28, rect.bottom + 45);
     pips.style.left = `${left.toFixed(1)}px`;
     pips.style.top = `${top.toFixed(1)}px`;
     pips.style.visibility = 'visible';
