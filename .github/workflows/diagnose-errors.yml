@@ -37,8 +37,8 @@ jobs:
 
           path = Path('scripts/validate-attic3d-smoke.mjs')
           source = path.read_text()
-          needle = "    await page.waitForFunction(() => document.body.classList.contains('mode-reading'), null, { timeout: 20000 });"
-          replacement = """    try {
+          return_needle = "    await page.waitForFunction(() => document.body.classList.contains('mode-reading'), null, { timeout: 20000 });"
+          return_replacement = """    try {
               await page.waitForFunction(() => document.body.classList.contains('mode-reading'), null, { timeout: 20000 });
             } catch (error) {
               const state = await page.evaluate(() => ({
@@ -54,9 +54,43 @@ jobs:
               console.error(`ATTIC_RETURN_STATE ${JSON.stringify(state)}`);
               throw error;
             }"""
-          if source.count(needle) != 1:
-              raise SystemExit(f'expected one attic return wait, found {source.count(needle)}')
-          path.write_text(source.replace(needle, replacement))
+          click_needle = "    await page.mouse.click(cardPoint.x, cardPoint.y);"
+          click_replacement = """    const inspectCardHit = async label => {
+              const state = await page.evaluate(({ point, label }) => {
+                const chain = [];
+                for (let node = document.elementFromPoint(point.x, point.y); node && chain.length < 8; node = node.parentElement) {
+                  chain.push(`${node.tagName.toLowerCase()}${node.id ? `#${node.id}` : ''}${node.className ? `.${String(node.className).trim().replace(/\\s+/g, '.')}` : ''}`);
+                }
+                const card = document.querySelector('#hand .card[data-uid]:last-child');
+                const rect = card?.getBoundingClientRect();
+                return {
+                  label,
+                  point,
+                  chain,
+                  cardRect: rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null,
+                  handPointerEvents: getComputedStyle(document.getElementById('hand')).pointerEvents,
+                  dockPointerEvents: getComputedStyle(document.querySelector('.handDock')).pointerEvents,
+                  bodyClasses: [...document.body.classList],
+                  selected: Boolean(document.querySelector('#hand .card.sel, #hand .card.ability-picked, .card-detail-trigger')),
+                };
+              }, { point: cardPoint, label });
+              console.error(`ATTIC_CARD_HIT ${JSON.stringify(state)}`);
+            };
+            await inspectCardHit('before-move');
+            await page.mouse.move(cardPoint.x, cardPoint.y);
+            await page.waitForTimeout(250);
+            await inspectCardHit('after-hover');
+            await page.mouse.down();
+            await page.mouse.up();
+            await page.waitForTimeout(500);
+            await inspectCardHit('after-click');"""
+          if source.count(return_needle) != 1:
+              raise SystemExit(f'expected one attic return wait, found {source.count(return_needle)}')
+          if source.count(click_needle) != 1:
+              raise SystemExit(f'expected one seated card click, found {source.count(click_needle)}')
+          source = source.replace(return_needle, return_replacement)
+          source = source.replace(click_needle, click_replacement)
+          path.write_text(source)
           PY
 
           ATTIC3D_VISUAL_REQUIRED=1 npm run test:attic3d > diagnostics/attic3d-smoke.log 2>&1
