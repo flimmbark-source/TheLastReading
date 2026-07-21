@@ -40,8 +40,8 @@ assert.doesNotMatch(
   'camera focus must not be used as a fallback prompt trigger',
 );
 
-const pressBlock = source.match(/press\(id, pointerId\) \{([\s\S]*?)\n      \},\n      release/)?.[1] || '';
-const releaseBlock = source.match(/release\(id, pointerId\) \{([\s\S]*?)\n      \},\n      dispose/)?.[1] || '';
+const pressBlock = source.match(/press\(id, pointerId\) \{([\s\S]*?)\n {6}\},\n {6}release/)?.[1] || '';
+const releaseBlock = source.match(/release\(id, pointerId\) \{([\s\S]*?)\n {6}\},\n {6}dispose/)?.[1] || '';
 assert.doesNotMatch(pressBlock, /setTimeout/, 'the label must not begin expiring while the pointer is held');
 assert.match(releaseBlock, /setTimeout/, 'the 2.8-second expiry must begin only after release');
 
