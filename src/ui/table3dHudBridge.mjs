@@ -159,15 +159,19 @@ function updateActionButtons() {
   const discard = document.getElementById('discardBtn');
   const purge = document.getElementById('purgeBtn');
 
-  // The on-cloth discard-charge row was removed (its count already lives in the
-  // discard pips above the spread), so the discard button no longer overlays it
-  // as an invisible hit target — leave it in its native spread-actions spot as a
-  // normal, visible control.
-  clearInlineProperties(discard, DISCARD_INLINE_PROPERTIES);
-
   if (!cabinetActive()) {
+    clearInlineProperties(discard, DISCARD_INLINE_PROPERTIES);
     clearInlineProperties(purge, PURGE_INLINE_PROPERTIES);
     return;
+  }
+
+  // The on-cloth discard-charge row was removed and the discard medallion is not
+  // wanted on the hybrid table — hide the discard button too (its remaining
+  // count still shows in the discard pips above the spread).
+  if (discard) {
+    setImportant(discard, 'display', 'none');
+    setImportant(discard, 'visibility', 'hidden');
+    setImportant(discard, 'pointer-events', 'none');
   }
 
   if (purge) {
