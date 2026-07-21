@@ -39,6 +39,9 @@ jobs:
             "$lint_status" "$test_status" "$browser_status" "$spv2_status" "$attic_status" \
             | tee diagnostics/status.txt
 
+          tar -czf diagnostics/repair-source.tar.gz \
+            scripts src .github package.json package-lock.json eslint.config.js
+
           exit 0
       - name: Upload diagnostic output
         uses: actions/upload-artifact@v4
