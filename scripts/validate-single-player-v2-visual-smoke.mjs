@@ -97,13 +97,25 @@ async function main() {
       });
       await page.goto(`${baseUrl}/game.html`, { waitUntil: 'networkidle' });
 
-      // Drive the real main-menu boot path instead of forcing SPv2 body classes:
-      // the SPv2 game engine (gesture drawers, ability handlers, generated-sheet
+      // Drive the real main-menu boot path instead of forcing SPV2 body classes:
+      // the SPV2 game engine (gesture drawers, ability handlers, generated-sheet
       // art) only loads once a game actually starts, so a synthetic class swap
       // renders an empty shell and can't catch real interaction regressions.
       await page.click('button[onclick="tlrMainMenuNewGame()"]');
       await page.waitForFunction(() => document.body.classList.contains('generated-sheet-ready'));
       await page.waitForFunction(() => document.getElementById('mainMenu')?.hidden === true);
+
+      // The default single-player boot now includes the table-approach cinematic.
+      // This suite validates the live SPv2 controls beneath it, while the attic3d
+      // smoke owns the cinematic timeline itself. Skip only after the approach
+      // rig has registered, then require the overlay to relinquish the hit plane.
+      await page.waitForFunction(
+        () => !document.getElementById('table3dApproach') || Boolean(window.__tlrTable3d?.api?.skip),
+        null,
+        { timeout: 45000 },
+      );
+      await page.evaluate(() => window.__tlrTable3d?.skip?.());
+      await page.waitForFunction(() => !document.getElementById('table3dApproach'), null, { timeout: 20000 });
       await page.waitForSelector('#abilitiesBtn');
 
       const snapshot = await page.evaluate(() => {
