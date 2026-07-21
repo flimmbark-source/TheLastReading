@@ -64,23 +64,47 @@ const PORTRAIT_SEATED = poseAngles(PORTRAIT_POSES.seated);
 const STANDING = poseAngles(POSES.standing);
 const SEATED_EYELINE = poseAngles(POSES.seatedEyeline);
 
-// The rise is a two-beat arc, not a straight lerp: the first slice sinks from
-// the raised presentation seat down into a real seated eye-line, then the rest
-// pushes up out of it. The sit-down mirrors it (drop for 1-SETTLE, settle back
-// for SETTLE). ~0.2 keeps the initial sink quick so the push-up dominates.
-const RISE_SETTLE_FRAC = 0.2;
-
 function smooth(t) {
   return t * t * (3 - 2 * t);
 }
 
-// Decelerating rise with a subtle overshoot-and-settle at the top, so standing
-// up "plants" instead of gliding to a dead stop. Returns exactly 1 at t=1 so
-// the pose still lands precisely on STANDING for the free-walk hand-off.
-function easeOutBack(t) {
-  const c1 = 1.0;
-  const c3 = c1 + 1;
-  return 1 + c3 * (t - 1) ** 3 + c1 * (t - 1) ** 2;
+// Perlin's smootherstep: zero 1st AND 2nd derivative at both ends, so the
+// rise/sit accelerate and settle without the velocity kink smoothstep leaves.
+// The camera leaves rest and arrives at rest cleanly, which is what makes the
+// hand-off to (and from) free-look read as continuous instead of a stutter.
+function smootherstep(t) {
+  return t * t * t * (t * (t * 6 - 15) + 10);
+}
+
+// Quadratic Bézier that is *forced through* a waypoint at its midpoint: given
+// endpoints a, c and a point w the curve must pass through at s=0.5, the
+// control point is 2w - (a+c)/2. One continuous curve (no segment seam) that
+// still visits the low seated eye-line, so getting up / sitting down dips
+// through a believable seat without the mid-animation hitch two lerps caused.
+function bezierControl(a, w, c) {
+  return 2 * w - (a + c) / 2;
+}
+function bezier(a, cp, c, s) {
+  const u = 1 - s;
+  return u * u * a + 2 * u * s * cp + s * s * c;
+}
+
+// The rise is a single Bézier SEATED -> (through) SEATED_EYELINE -> STANDING;
+// its control point is constant, so precompute it per axis. The seated/standing
+// yaw are both 0, so only eye position and pitch actually curve.
+const RISE_EYE_CP = new THREE.Vector3(
+  bezierControl(SEATED.eye.x, SEATED_EYELINE.eye.x, STANDING.eye.x),
+  bezierControl(SEATED.eye.y, SEATED_EYELINE.eye.y, STANDING.eye.y),
+  bezierControl(SEATED.eye.z, SEATED_EYELINE.eye.z, STANDING.eye.z),
+);
+const RISE_PITCH_CP = bezierControl(SEATED.pitch, SEATED_EYELINE.pitch, STANDING.pitch);
+const RISE_YAW_CP = bezierControl(SEATED.yaw, SEATED_EYELINE.yaw, STANDING.yaw);
+
+function angleDelta(a, b) {
+  let difference = (b - a) % (Math.PI * 2);
+  if (difference > Math.PI) difference -= Math.PI * 2;
+  if (difference < -Math.PI) difference += Math.PI * 2;
+  return difference;
 }
 
 function lerpAngle(a, b, t) {
@@ -347,7 +371,26 @@ export function PlayerRig() {
     }
     r.phase = 'sitting';
     r.phaseT = 0;
-    r.sitFrom = { pos: r.pos.clone(), yaw: r.yaw, pitch: r.pitch };
+    // Sit is the same single Bézier as the rise, but from wherever the player
+    // is standing: curve from here, through the seated eye-line, to the seat.
+    // Yaw is unwrapped relative to the start so a player who turned around
+    // rotates back the short way instead of spinning.
+    const from = r.pos.clone();
+    const wYaw = r.yaw + angleDelta(r.yaw, SEATED_EYELINE.yaw);
+    const endYaw = wYaw + angleDelta(SEATED_EYELINE.yaw, SEATED.yaw);
+    r.sitFrom = {
+      pos: from,
+      cpEye: new THREE.Vector3(
+        bezierControl(from.x, SEATED_EYELINE.eye.x, SEATED.eye.x),
+        bezierControl(from.y, SEATED_EYELINE.eye.y, SEATED.eye.y),
+        bezierControl(from.z, SEATED_EYELINE.eye.z, SEATED.eye.z),
+      ),
+      yaw: r.yaw,
+      cpYaw: bezierControl(r.yaw, wYaw, endYaw),
+      endYaw,
+      pitch: r.pitch,
+      cpPitch: bezierControl(r.pitch, SEATED_EYELINE.pitch, SEATED.pitch),
+    };
   };
   sitRef.current = beginSit;
 
@@ -565,46 +608,39 @@ export function PlayerRig() {
       r.yaw = pose.yaw;
       r.pitch = pose.pitch;
     } else if (r.phase === 'rising') {
+      // One continuous Bézier from the presentation seat, THROUGH the low
+      // seated eye-line, up to standing — a single eased curve so the sink and
+      // the push-up read as one motion with no mid-arc hitch, ending exactly on
+      // STANDING (smootherstep is monotonic, no overshoot) for a clean hand-off
+      // to free-look.
       r.phaseT += delta / RISE_SECONDS;
-      const p = Math.min(1, r.phaseT);
-      if (p < RISE_SETTLE_FRAC) {
-        // Sink from the raised presentation backdrop down into a real seated
-        // eye-line (leaning in over the cloth), so there is a low seat to
-        // actually rise up out of. Decelerates into the seat.
-        const u = smooth(p / RISE_SETTLE_FRAC);
-        r.pos.lerpVectors(SEATED.eye, SEATED_EYELINE.eye, u);
-        r.yaw = THREE.MathUtils.lerp(SEATED.yaw, SEATED_EYELINE.yaw, u);
-        r.pitch = THREE.MathUtils.lerp(SEATED.pitch, SEATED_EYELINE.pitch, u);
-      } else {
-        // Push up out of the seat to standing, dollying back off the table and
-        // lifting the gaze from the cloth to level — the visible stand-up.
-        const u = easeOutBack((p - RISE_SETTLE_FRAC) / (1 - RISE_SETTLE_FRAC));
-        r.pos.lerpVectors(SEATED_EYELINE.eye, STANDING.eye, u);
-        r.yaw = THREE.MathUtils.lerp(SEATED_EYELINE.yaw, STANDING.yaw, u);
-        r.pitch = THREE.MathUtils.lerp(SEATED_EYELINE.pitch, STANDING.pitch, u);
-      }
+      const s = smootherstep(Math.min(1, r.phaseT));
+      r.pos.set(
+        bezier(SEATED.eye.x, RISE_EYE_CP.x, STANDING.eye.x, s),
+        bezier(SEATED.eye.y, RISE_EYE_CP.y, STANDING.eye.y, s),
+        bezier(SEATED.eye.z, RISE_EYE_CP.z, STANDING.eye.z, s),
+      );
+      r.yaw = bezier(SEATED.yaw, RISE_YAW_CP, STANDING.yaw, s);
+      r.pitch = bezier(SEATED.pitch, RISE_PITCH_CP, STANDING.pitch, s);
       if (r.phaseT >= 1) r.phase = 'free';
     } else if (r.phase === 'free') {
       stepMovement(r, delta, reducedMotion, interactables, setFocusId, setAutoWalk);
       updateFocus(r, camera, interactables, setFocusId);
     } else if (r.phase === 'sitting') {
-      // The reverse of the rise: drop from wherever the player is standing down
-      // into the seated eye-line (sitting into the chair), then settle back to
-      // the raised presentation seat — mirroring 'rising' rather than standing
-      // up first and then sitting.
+      // The reverse of the rise: one continuous Bézier from where the player is
+      // standing, through the seated eye-line, into the seat. Same single-curve
+      // easing as the rise, so sitting down glides without the seam stutter two
+      // stitched lerps produced.
+      const f = r.sitFrom;
       r.phaseT += delta / SIT_SECONDS;
-      const p = Math.min(1, r.phaseT);
-      if (p < 1 - RISE_SETTLE_FRAC) {
-        const u = smooth(p / (1 - RISE_SETTLE_FRAC));
-        r.pos.lerpVectors(r.sitFrom.pos, SEATED_EYELINE.eye, u);
-        r.yaw = lerpAngle(r.sitFrom.yaw, SEATED_EYELINE.yaw, u);
-        r.pitch = THREE.MathUtils.lerp(r.sitFrom.pitch, SEATED_EYELINE.pitch, u);
-      } else {
-        const u = smooth((p - (1 - RISE_SETTLE_FRAC)) / RISE_SETTLE_FRAC);
-        r.pos.lerpVectors(SEATED_EYELINE.eye, SEATED.eye, u);
-        r.yaw = THREE.MathUtils.lerp(SEATED_EYELINE.yaw, SEATED.yaw, u);
-        r.pitch = THREE.MathUtils.lerp(SEATED_EYELINE.pitch, SEATED.pitch, u);
-      }
+      const s = smootherstep(Math.min(1, r.phaseT));
+      r.pos.set(
+        bezier(f.pos.x, f.cpEye.x, SEATED.eye.x, s),
+        bezier(f.pos.y, f.cpEye.y, SEATED.eye.y, s),
+        bezier(f.pos.z, f.cpEye.z, SEATED.eye.z, s),
+      );
+      r.yaw = bezier(f.yaw, f.cpYaw, f.endYaw, s);
+      r.pitch = bezier(f.pitch, f.cpPitch, SEATED.pitch, s);
       if (r.phaseT >= 1) {
         r.phase = 'done';
         settleSeated(r);
