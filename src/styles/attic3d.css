@@ -273,6 +273,13 @@ html body.single-player-v2.generated-sheet-ready.table3d-live:not(.table3d-ancho
   html body.single-player-v2.generated-sheet-ready.table3d-live:not(.table3d-anchored-hand) #handSwipeZone {
     transform: translateY(-14px) scale(0.92);
   }
+
+  /* The transformed desktop dock's visual card fan overflows above its own
+     border box. Keep the dock in the hit-test tree so those overflowed cards
+     remain clickable; the seated canvas below is intentionally non-interactive. */
+  html body.single-player-v2.generated-sheet-ready.table3d-live .handDock {
+    pointer-events: auto;
+  }
 }
 
 
