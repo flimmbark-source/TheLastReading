@@ -63,8 +63,8 @@ async function verifyCardDetailTrigger(page, width) {
     `detail trigger should be the live hit target at ${width}px; topmost=${hit.chain.join(' > ')} rect=${JSON.stringify(hit.rect)}`,
   );
 
-  await page.touchscreen.tap(hit.x, hit.y);
-  await page.waitForSelector('.card-detail-backdrop', { timeout: 1500 });
+  await page.locator('.card-detail-trigger').tap({ timeout: 5000 });
+  await page.waitForSelector('.card-detail-backdrop', { timeout: 5000 });
   await page.evaluate(() => window.closeCardDetail?.());
 }
 
@@ -106,6 +106,7 @@ async function main() {
       await page.waitForFunction(() => document.body.classList.contains('generated-sheet-ready'));
       await page.waitForFunction(() => document.getElementById('mainMenu')?.hidden === true);
       await page.waitForSelector('#abilitiesBtn');
+      await page.waitForFunction(() => !document.querySelector('#hand > .card.card-draw-dealt'), null, { timeout: 5000 });
 
       const snapshot = await page.evaluate(() => {
         const boxFor = selector => {
