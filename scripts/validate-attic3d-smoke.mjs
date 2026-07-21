@@ -196,7 +196,7 @@ async function main() {
       const cards = document.querySelectorAll('#hand .card[data-uid]');
       const card = cards[cards.length - 1]; // rightmost: top of the fan stack
       const r = card.getBoundingClientRect();
-      return { x: r.left + r.width / 2, y: r.top + r.height * 0.65 };
+      return { x: r.left + r.width / 2, y: r.top + r.height * 0.25 };
     });
     await page.mouse.click(cardPoint.x, cardPoint.y);
     await page.waitForFunction(
