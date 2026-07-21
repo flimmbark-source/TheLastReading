@@ -14,7 +14,7 @@ function installStyles(document) {
     #${PIPS_ID} {
       position: absolute;
       left: 8px;
-      top: 8px;
+      top: -12px;
       z-index: 56;
       display: none;
       align-items: flex-start;
