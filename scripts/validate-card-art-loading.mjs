@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { applyCardPhoto } from '../src/ui/renderCard.mjs';
 
 let imageRequests=0;
+const requestedUrls=[];
 class FakeImage {
   constructor(){
     imageRequests+=1;
@@ -12,6 +13,7 @@ class FakeImage {
   }
   set src(value){
     this._src=value;
+    requestedUrls.push(value);
     queueMicrotask(()=>{
       this.complete=true;
       this.naturalWidth=600;
@@ -23,11 +25,7 @@ class FakeImage {
 }
 
 const appendedStyles=[];
-const view={
-  Image:FakeImage,
-  queueMicrotask,
-  requestIdleCallback:()=>0,
-};
+const view={Image:FakeImage,queueMicrotask};
 const doc={
   defaultView:view,
   head:{appendChild:node=>appendedStyles.push(node)},
@@ -46,20 +44,24 @@ function cardElement(){
 const card={id:'major_0'};
 const first=cardElement();
 const firstLoad=applyCardPhoto(first,card);
-assert.equal(first.classList.contains('photo'),true,'photo cards should retain their photo class');
-assert.equal(first.dataset.photoReady,undefined,'fallback content must remain visible before decode');
+assert.equal(first.classList.contains('photo'),true,'photo cards should retain their normal photo presentation');
 assert.match(first.style.backgroundImage,/sheet01\.small\.webp/);
+assert.equal(imageRequests,10,'the first renderer use should immediately warm all ten small sheets');
+assert.equal(new Set(requestedUrls).size,10,'sheet warmup should request each small sheet once');
 await firstLoad;
-assert.equal(first.dataset.photoReady,'1','decoded art should replace the fallback');
-assert.equal(imageRequests,1,'the first card should request its sheet once');
+assert.equal(first.dataset.photoReady,'1','the requested art should be marked decoded');
 
 const second=cardElement();
 await applyCardPhoto(second,card);
 assert.equal(second.dataset.photoReady,'1','cached sheets should render ready immediately');
-assert.equal(imageRequests,1,'cards on the same sheet must share one request/decode');
+assert.equal(imageRequests,10,'cards on the same sheet must reuse the existing request/decode');
 
 assert.equal(appendedStyles.length,1,'runtime presentation styles should install once');
-assert.match(appendedStyles[0].textContent,/photo-ready/,'runtime styles should gate fallback visibility on decode');
+assert.doesNotMatch(
+  appendedStyles[0].textContent,
+  /photo-ready|>\s*\.title|>\s*\.art/,
+  'loading must not expose the text-and-symbol card fallback',
+);
 assert.match(appendedStyles[0].textContent,/slot\.target/,'runtime styles should own the selected-slot treatment');
 assert.doesNotMatch(
   appendedStyles[0].textContent.match(/slot\.target\{([\s\S]*?)\}/)?.[1]||'',
