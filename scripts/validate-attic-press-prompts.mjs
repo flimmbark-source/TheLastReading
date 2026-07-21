@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const source = readFileSync(new URL('../src/three/Interactables.jsx', import.meta.url), 'utf8');
+const drawerCss = readFileSync(new URL('../src/styles/components/invWrap.css', import.meta.url), 'utf8');
 
 assert.match(
   source,
@@ -44,4 +45,12 @@ const releaseBlock = source.match(/release\(id, pointerId\) \{([\s\S]*?)\n      
 assert.doesNotMatch(pressBlock, /setTimeout/, 'the label must not begin expiring while the pointer is held');
 assert.match(releaseBlock, /setTimeout/, 'the 2.8-second expiry must begin only after release');
 
-console.log('Attic direct-press prompt validation passed.');
+const atticDrawerRule = drawerCss.match(/body\.mode-attic #invWrap\.open\s*\{([\s\S]*?)\}/)?.[1] || '';
+assert.match(atticDrawerRule, /transform\s*:\s*translateY\(0\)\s*!important/,
+  'using the archive trunk in the attic must bring the open drawer on-screen');
+assert.match(atticDrawerRule, /pointer-events\s*:\s*auto\s*!important/,
+  'the archive drawer must remain interactive while open in the attic');
+assert.match(atticDrawerRule, /z-index\s*:\s*10095\s*!important/,
+  'the open archive drawer must layer above the live attic scene');
+
+console.log('Attic direct-press and archives drawer validation passed.');
