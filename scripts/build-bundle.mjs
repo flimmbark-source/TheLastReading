@@ -20,6 +20,7 @@ import {
   extractAdventureCss,
   externalizeAdventureStyles,
 } from './adventure-style-extraction.mjs';
+import { writeSinglePlayerV2Cascade } from './generate-single-player-v2-cascade.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const distDir = join(root, 'dist');
@@ -158,8 +159,11 @@ async function buildJs() {
 }
 
 export async function buildBundle() {
+  writeSinglePlayerV2Cascade();
+
   rmSync(distDir, { recursive: true, force: true });
   mkdirSync(distDir, { recursive: true });
+
   await buildCss();
   await buildAdventureCss();
   await buildJs();

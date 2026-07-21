@@ -1198,7 +1198,7 @@ html body.single-player-v2 #spread .slot > .card.hint-multi:not(.ability-target)
        fixed bottom edge. */
     bottom: 47px;
     transform: translate(-50%, 50%);
-    z-index: 120;
+    z-index: 10066;
     display: flex;
     flex-direction: column;
     align-items: center;
