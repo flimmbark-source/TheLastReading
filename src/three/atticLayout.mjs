@@ -63,6 +63,19 @@ export const POSES = {
     eye: [0, 1.58, 2.05],
     look: [0, 1.05, 0.1],
   },
+  // A believable low sitting eye-line that the get-up / sit-down choreography
+  // routes *through* — it is NOT a camera the game ever holds. POSES.seated is
+  // a deliberately raised, pulled-back presentation backdrop (eye y 1.64, well
+  // behind the chair at z 2.05) so the whole cloth fits the 2D reading frame;
+  // that puts it *higher* than the standing eye (1.58), so lerping straight
+  // seated -> standing drifts the camera slightly DOWN and never reads as
+  // rising. Sinking to this real seat first (leaned in over the cloth), then
+  // pushing up out of it, restores ~0.36m of visible vertical travel — the
+  // thing that actually sells standing up. The sit-down runs it in reverse.
+  seatedEyeline: {
+    eye: [0, 1.22, 1.74],
+    look: [0, 0.8, 0.46],
+  },
 };
 
 // Portrait reading camera: deliberately NOT pose-parity with desktop. It is

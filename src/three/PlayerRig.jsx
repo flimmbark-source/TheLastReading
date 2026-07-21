@@ -62,9 +62,25 @@ function poseAngles(pose) {
 const SEATED = poseAngles(POSES.seated);
 const PORTRAIT_SEATED = poseAngles(PORTRAIT_POSES.seated);
 const STANDING = poseAngles(POSES.standing);
+const SEATED_EYELINE = poseAngles(POSES.seatedEyeline);
+
+// The rise is a two-beat arc, not a straight lerp: the first slice sinks from
+// the raised presentation seat down into a real seated eye-line, then the rest
+// pushes up out of it. The sit-down mirrors it (drop for 1-SETTLE, settle back
+// for SETTLE). ~0.2 keeps the initial sink quick so the push-up dominates.
+const RISE_SETTLE_FRAC = 0.2;
 
 function smooth(t) {
   return t * t * (3 - 2 * t);
+}
+
+// Decelerating rise with a subtle overshoot-and-settle at the top, so standing
+// up "plants" instead of gliding to a dead stop. Returns exactly 1 at t=1 so
+// the pose still lands precisely on STANDING for the free-walk hand-off.
+function easeOutBack(t) {
+  const c1 = 1.0;
+  const c3 = c1 + 1;
+  return 1 + c3 * (t - 1) ** 3 + c1 * (t - 1) ** 2;
 }
 
 function lerpAngle(a, b, t) {
@@ -550,23 +566,45 @@ export function PlayerRig() {
       r.pitch = pose.pitch;
     } else if (r.phase === 'rising') {
       r.phaseT += delta / RISE_SECONDS;
-      const t = smooth(Math.min(1, r.phaseT));
-      r.pos.lerpVectors(SEATED.eye, STANDING.eye, t);
-      r.yaw = THREE.MathUtils.lerp(SEATED.yaw, STANDING.yaw, t);
-      r.pitch = THREE.MathUtils.lerp(SEATED.pitch, STANDING.pitch, t);
+      const p = Math.min(1, r.phaseT);
+      if (p < RISE_SETTLE_FRAC) {
+        // Sink from the raised presentation backdrop down into a real seated
+        // eye-line (leaning in over the cloth), so there is a low seat to
+        // actually rise up out of. Decelerates into the seat.
+        const u = smooth(p / RISE_SETTLE_FRAC);
+        r.pos.lerpVectors(SEATED.eye, SEATED_EYELINE.eye, u);
+        r.yaw = THREE.MathUtils.lerp(SEATED.yaw, SEATED_EYELINE.yaw, u);
+        r.pitch = THREE.MathUtils.lerp(SEATED.pitch, SEATED_EYELINE.pitch, u);
+      } else {
+        // Push up out of the seat to standing, dollying back off the table and
+        // lifting the gaze from the cloth to level — the visible stand-up.
+        const u = easeOutBack((p - RISE_SETTLE_FRAC) / (1 - RISE_SETTLE_FRAC));
+        r.pos.lerpVectors(SEATED_EYELINE.eye, STANDING.eye, u);
+        r.yaw = THREE.MathUtils.lerp(SEATED_EYELINE.yaw, STANDING.yaw, u);
+        r.pitch = THREE.MathUtils.lerp(SEATED_EYELINE.pitch, STANDING.pitch, u);
+      }
       if (r.phaseT >= 1) r.phase = 'free';
     } else if (r.phase === 'free') {
       stepMovement(r, delta, reducedMotion, interactables, setFocusId, setAutoWalk);
       updateFocus(r, camera, interactables, setFocusId);
     } else if (r.phase === 'sitting') {
-      // The reverse of the rise: one smooth glide from where the player is
-      // standing straight down into the seated pose, mirroring 'rising' rather
-      // than standing up first and then sitting.
+      // The reverse of the rise: drop from wherever the player is standing down
+      // into the seated eye-line (sitting into the chair), then settle back to
+      // the raised presentation seat — mirroring 'rising' rather than standing
+      // up first and then sitting.
       r.phaseT += delta / SIT_SECONDS;
-      const t = smooth(Math.min(1, r.phaseT));
-      r.pos.lerpVectors(r.sitFrom.pos, SEATED.eye, t);
-      r.yaw = lerpAngle(r.sitFrom.yaw, SEATED.yaw, t);
-      r.pitch = THREE.MathUtils.lerp(r.sitFrom.pitch, SEATED.pitch, t);
+      const p = Math.min(1, r.phaseT);
+      if (p < 1 - RISE_SETTLE_FRAC) {
+        const u = smooth(p / (1 - RISE_SETTLE_FRAC));
+        r.pos.lerpVectors(r.sitFrom.pos, SEATED_EYELINE.eye, u);
+        r.yaw = lerpAngle(r.sitFrom.yaw, SEATED_EYELINE.yaw, u);
+        r.pitch = THREE.MathUtils.lerp(r.sitFrom.pitch, SEATED_EYELINE.pitch, u);
+      } else {
+        const u = smooth((p - (1 - RISE_SETTLE_FRAC)) / RISE_SETTLE_FRAC);
+        r.pos.lerpVectors(SEATED_EYELINE.eye, SEATED.eye, u);
+        r.yaw = THREE.MathUtils.lerp(SEATED_EYELINE.yaw, SEATED.yaw, u);
+        r.pitch = THREE.MathUtils.lerp(SEATED_EYELINE.pitch, SEATED.pitch, u);
+      }
       if (r.phaseT >= 1) {
         r.phase = 'done';
         settleSeated(r);
