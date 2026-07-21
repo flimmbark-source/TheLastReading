@@ -256,7 +256,9 @@ async function main() {
           ].forEach(key => window.localStorage.setItem(key, '1'));
         } catch {}
       });
-      await page.goto(`${baseUrl}/game.html`, { waitUntil: 'networkidle' });
+      // Presentation captures exercise DOM surfaces, while the dedicated
+      // attic3d smoke owns the default 3D approach and seated-table path.
+      await page.goto(`${baseUrl}/game.html?attic3d=0`, { waitUntil: 'networkidle' });
       const label = `${viewport.width}x${viewport.height}`;
       await startReading(page);
       await captureReadingStates(page, label);
