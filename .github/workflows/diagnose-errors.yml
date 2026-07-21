@@ -32,6 +32,33 @@ jobs:
           SPV2_VISUAL_REQUIRED=1 npm run test:spv2-visual > diagnostics/spv2-smoke.log 2>&1
           spv2_status=$?
 
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/validate-attic3d-smoke.mjs')
+          source = path.read_text()
+          needle = "    await page.waitForFunction(() => document.body.classList.contains('mode-reading'), null, { timeout: 20000 });"
+          replacement = """    try {
+              await page.waitForFunction(() => document.body.classList.contains('mode-reading'), null, { timeout: 20000 });
+            } catch (error) {
+              const state = await page.evaluate(() => ({
+                bodyClasses: [...document.body.classList],
+                rig: window.__tlrAttic3d?.api?.getState?.() || null,
+                atticMounted: window.__tlrAttic3d?.mounted ?? null,
+                seatMounted: window.__tlrTableSeat?.mounted ?? null,
+                atticRoot: Boolean(document.getElementById('attic3dRoot')),
+                tableSeat: Boolean(document.getElementById('table3dSeat')),
+                sceneAriaHidden: document.getElementById('atticScene')?.getAttribute('aria-hidden') || null,
+                archivesOpen: Boolean(document.getElementById('invWrap')?.classList.contains('open')),
+              }));
+              console.error(`ATTIC_RETURN_STATE ${JSON.stringify(state)}`);
+              throw error;
+            }"""
+          if source.count(needle) != 1:
+              raise SystemExit(f'expected one attic return wait, found {source.count(needle)}')
+          path.write_text(source.replace(needle, replacement))
+          PY
+
           ATTIC3D_VISUAL_REQUIRED=1 npm run test:attic3d > diagnostics/attic3d-smoke.log 2>&1
           attic_status=$?
 
