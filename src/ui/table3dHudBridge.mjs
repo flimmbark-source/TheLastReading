@@ -159,38 +159,15 @@ function updateActionButtons() {
   const discard = document.getElementById('discardBtn');
   const purge = document.getElementById('purgeBtn');
 
+  // The on-cloth discard-charge row was removed (its count already lives in the
+  // discard pips above the spread), so the discard button no longer overlays it
+  // as an invisible hit target — leave it in its native spread-actions spot as a
+  // normal, visible control.
+  clearInlineProperties(discard, DISCARD_INLINE_PROPERTIES);
+
   if (!cabinetActive()) {
-    clearInlineProperties(discard, DISCARD_INLINE_PROPERTIES);
     clearInlineProperties(purge, PURGE_INLINE_PROPERTIES);
     return;
-  }
-
-  if (discard) {
-    setImportant(discard, 'position', 'fixed');
-    setImportant(discard, 'left', 'var(--t3d-discard-icons-x, -9999px)');
-    setImportant(discard, 'top', 'var(--t3d-discard-icons-y, -9999px)');
-    setImportant(discard, 'right', 'auto');
-    setImportant(discard, 'bottom', 'auto');
-    setImportant(discard, 'width', '48px');
-    setImportant(discard, 'height', '36px');
-    setImportant(discard, 'min-width', '0');
-    setImportant(discard, 'min-height', '0');
-    setImportant(discard, 'margin', '0');
-    setImportant(discard, 'padding', '0');
-    setImportant(discard, 'transform', 'translate(-50%, -50%)');
-    setImportant(discard, 'opacity', '0');
-    setImportant(discard, 'visibility', 'visible');
-    setImportant(discard, 'display', 'block');
-    setImportant(discard, 'background', 'none');
-    setImportant(discard, 'background-image', 'none');
-    setImportant(discard, 'border', '0');
-    setImportant(discard, 'border-radius', '0');
-    setImportant(discard, 'box-shadow', 'none');
-    setImportant(discard, 'filter', 'none');
-    setImportant(discard, 'color', 'transparent');
-    setImportant(discard, 'font-size', '0');
-    setImportant(discard, 'z-index', '67');
-    setImportant(discard, 'pointer-events', 'auto');
   }
 
   if (purge) {
@@ -219,17 +196,12 @@ function updateScore() {
 }
 
 function updateDiscards() {
+  // The on-cloth discard-charge row is retired: the discard count is shown by
+  // the discard pips above the spread. Keep the element empty and hidden so the
+  // little card row no longer floats over the cloth above the hand.
   const overlay = ensureOverlay(DISCARD_ID);
-  const count = Math.max(0, Math.floor(numberFrom('discards')));
-  if (Number(overlay.dataset.count) === count) return;
-  overlay.dataset.count = String(count);
-  overlay.replaceChildren(
-    ...Array.from({ length: count }, () => {
-      const card = document.createElement('span');
-      card.className = 'table3d-discard-card';
-      return card;
-    }),
-  );
+  overlay.replaceChildren();
+  overlay.style.setProperty('display', 'none', 'important');
 }
 
 function updateAll() {

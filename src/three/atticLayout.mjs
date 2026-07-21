@@ -52,11 +52,11 @@ export const CHAIR = {
 // the middle of the screen instead of chasing the old far-table anchor.
 export const POSES = {
   seated: {
-    // Pulled back and up from the chair so the whole cloth (far rim to near
-    // rim) sits in frame with the reading centred, instead of the near half
-    // running off the bottom of the screen. This is a presentation backdrop,
-    // not a literal sitting eye-line.
-    eye: [0, 1.64, 2.05],
+    // Leaned in close over the cloth so the table dominates the frame (the
+    // hand fan lives at the screen bottom, off the cloth, so the camera is free
+    // to zoom the reading surface right in). Still a presentation backdrop, not
+    // a literal sitting eye-line.
+    eye: [0, 1.52, 1.66],
     look: [...READING_CENTER],
   },
   standing: {
