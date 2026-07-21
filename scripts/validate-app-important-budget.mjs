@@ -151,7 +151,15 @@ const appStyleFiles = [
 // transition, +2). Both are unlayered and must beat the layered single-player
 // chrome that would otherwise show the eye and deal the cards early, so the
 // marked-important tier is the mechanism, not decoration.
-const importantBudget = 661;
+// 661 -> 669 (atticReturnPolish.css + invWrap.css, a REAL +8): direct-press
+// attic interaction added two explicit state overrides. Hiding both the
+// constellation pill and its open callout throughout the rise/attic state needs
+// display/visibility/opacity/pointer-events/transition (+5) to beat the live
+// table chrome. Opening the physical archive trunk while mode-attic remains set
+// needs transform/pointer-events/z-index (+3) to outrank the general stowed
+// drawer rule. These declarations encode the state transition rather than
+// masking accidental cascade growth.
+const importantBudget = 669;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);
