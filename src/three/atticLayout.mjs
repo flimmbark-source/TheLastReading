@@ -56,7 +56,7 @@ export const POSES = {
     // hand fan lives at the screen bottom, off the cloth, so the camera is free
     // to zoom the reading surface right in). Still a presentation backdrop, not
     // a literal sitting eye-line.
-    eye: [0, 1.52, 1.66],
+    eye: [0, 1.82, 1.10],
     look: [...READING_CENTER],
   },
   standing: {
