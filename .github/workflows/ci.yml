@@ -6,6 +6,47 @@ on:
   pull_request:
 
 jobs:
+  apply-capture-isolation-fix:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Isolate DOM capture scripts from default 3D boot
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              Path('scripts/capture-single-player-v2.mjs'): (
+                  "    await page.goto(`${baseUrl}/game.html`, { waitUntil: 'networkidle' });\n",
+                  "    // This workflow measures the SPV2 DOM; the dedicated attic3d smoke owns\n    // the default approach and seated-backdrop flow.\n    await page.goto(`${baseUrl}/game.html?attic3d=0`, { waitUntil: 'networkidle' });\n",
+              ),
+              Path('scripts/capture-presentation-states.mjs'): (
+                  "      await page.goto(`${baseUrl}/game.html`, { waitUntil: 'networkidle' });\n",
+                  "      // Presentation captures exercise DOM surfaces, while the dedicated\n      // attic3d smoke owns the default 3D approach and seated-table path.\n      await page.goto(`${baseUrl}/game.html?attic3d=0`, { waitUntil: 'networkidle' });\n",
+              ),
+          }
+
+          for path, (old, new) in replacements.items():
+              source = path.read_text()
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'Expected one capture URL in {path}, found {count}')
+              path.write_text(source.replace(old, new))
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/capture-single-player-v2.mjs scripts/capture-presentation-states.mjs
+          git commit -m "Isolate DOM captures from 3D boot"
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
+
   validate:
     runs-on: ubuntu-latest
     steps:
