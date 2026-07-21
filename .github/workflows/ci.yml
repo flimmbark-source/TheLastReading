@@ -16,7 +16,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
-      - name: Patch cinematic timing and restore workflows
+      - name: Patch cinematic timing
         shell: bash
         run: |
           python - <<'PY'
@@ -43,15 +43,11 @@ jobs:
               source = source.replace(old, new)
 
           path.write_text(source)
-          temporary = Path('.github/workflows/apply-player-rig-fix.yml')
-          if temporary.exists():
-              temporary.unlink()
           PY
 
-          git show origin/main:.github/workflows/ci.yml > .github/workflows/ci.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/three/PlayerRig.jsx .github/workflows/ci.yml .github/workflows/apply-player-rig-fix.yml
+          git add src/three/PlayerRig.jsx
           git commit -m "Fix low-FPS 3D cinematic timing"
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
 
