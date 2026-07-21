@@ -49,23 +49,17 @@ function walkToInteractable(id, focusPoint) {
   api.walkTo(focusPoint[0], focusPoint[2], id);
 }
 
-// How long an item's name popup stays up after the press moves off it, so a
-// player who brushes past an object still gets a beat to read what it was.
-const HOVER_LINGER_MS = 2800;
+// A directly pressed item's name remains visible long enough to read while the
+// player begins walking toward it. Merely looking at or pointing over an item
+// never starts this timer.
+const PRESS_PROMPT_MS = 2800;
 
 function hoverHandlers(id, hover, enabled, focusPoint = null) {
   if (!enabled) return {};
   return {
-    onPointerOver: event => {
-      event.stopPropagation();
-      hover.enter(id);
-    },
-    onPointerOut: event => {
-      event.stopPropagation();
-      hover.leave(id);
-    },
     onClick: event => {
       event.stopPropagation();
+      hover.show(id);
       walkToInteractable(id, focusPoint);
     },
   };
@@ -128,7 +122,7 @@ function RoomHitVolumes({ interactive, hover }) {
   return (
     <group>
       {/* A rim, not a solid cap: smaller items on the tabletop keep their own
-          raycast/hover target instead of being swallowed by the table target. */}
+          raycast/press target instead of being swallowed by the table target. */}
       <mesh
         position={[TABLE.position[0], TABLE.topY + 0.04, TABLE.position[2]]}
         rotation={[Math.PI / 2, 0, 0]}
@@ -165,7 +159,9 @@ function PlayerPrompt() {
   const { interactables, focusId, hoverId } = useContext(AtticContext);
   const { camera, gl } = useThree();
   const domRef = useRef({ root: null, name: null, action: null, scene: null });
-  const target = interactables.find(item => item.id === (hoverId || focusId)) || null;
+  // `focusId` is gaze/proximity state used for keyboard interaction. It must not
+  // reveal the popup; only a completed click/tap records `hoverId` below.
+  const target = interactables.find(item => item.id === hoverId) || null;
   const actionable = Boolean(target && focusId === target.id);
   const coarse = useMemo(() => Boolean(window.matchMedia?.('(pointer: coarse)')?.matches), []);
   const projected = useMemo(() => new THREE.Vector3(), []);
@@ -266,9 +262,8 @@ export function Interactables() {
   const { adapter, mode, snapshot, setHoverId } = useContext(AtticContext);
   const interactive = mode === 'attic';
 
-  // Hover controller with linger: entering an item shows its name at once;
-  // leaving it keeps the name up for a short beat before clearing, so the
-  // popup no longer blinks out the instant the press slides off the object.
+  // Press controller: a completed click/tap shows the item's name briefly.
+  // Pointer-over and camera focus never call this path.
   const hover = useMemo(() => {
     let timer = null;
     const cancel = () => {
@@ -278,16 +273,13 @@ export function Interactables() {
       }
     };
     return {
-      enter(id) {
+      show(id) {
         cancel();
         setHoverId(id);
-      },
-      leave(id) {
-        cancel();
         timer = setTimeout(() => {
           timer = null;
           setHoverId(current => (current === id ? null : current));
-        }, HOVER_LINGER_MS);
+        }, PRESS_PROMPT_MS);
       },
       dispose() {
         cancel();
