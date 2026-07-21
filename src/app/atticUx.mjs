@@ -37,13 +37,15 @@ function rangeRow(doc,label,value,onInput){
 }
 function settingsPage(target,setInvert){
   const doc=target.document,page=doc.createElement('div');page.className='attic-book-settings';
-  const music=doc.getElementById('musicVol'),effects=doc.getElementById('sfxVol'),candle=doc.getElementById('candlelightLighting'),relic=doc.getElementById('hintRelics');
+  // Mirror the live in-game menu's user-facing settings (Audio + Scoring hints).
+  // Candlelight lighting and Relic hints were retired from the menu into hidden
+  // state-only controls, so they are no longer surfaced here. Invert drag look
+  // stays: it only applies to the 3D attic, which is exactly this book's home.
+  const music=doc.getElementById('musicVol'),effects=doc.getElementById('sfxVol');
   page.append(
     rangeRow(doc,'Music',Number(music?.value??.3),value=>{if(music)music.value=String(value);target.setMusicVol?.(value)}),
     rangeRow(doc,'Effects',Number(effects?.value??1),value=>{if(effects)effects.value=String(value);target.setSfxVol?.(value)}),
-    checkRow(doc,'Candlelight lighting',candle?.checked??true,on=>{if(candle)candle.checked=on;target.tlrSetCandlelightLighting?.(on)}),
     checkRow(doc,'Invert drag look',readInvert(target),setInvert,true),
-    checkRow(doc,'Relic hints',relic?.checked,on=>{if(relic)relic.checked=on;target.toggleHintSetting?.('relics',on)}),
   );
   const hints=doc.createElement('div');hints.className='attic-book-setting attic-book-hints';hints.append('Scoring hints');
   const segments=doc.createElement('div');segments.className='attic-book-segments';
@@ -61,7 +63,15 @@ function installBook(target,setInvert){
     const root=doc.createElement('div');root.id=BOOK_ID;root.dataset.gameTerms='off';
     root.innerHTML='<div class="attic-book-shell" tabindex="-1" role="dialog" aria-modal="true" aria-label="Reading book"><button class="attic-book-close" type="button" aria-label="Close">×</button><nav class="attic-book-tabs"><button data-page="scoring">Scoring</button><button data-page="abilities">Abilities</button><button data-page="settings">Settings</button></nav><section class="attic-book-page"></section></div>';
     const page=root.querySelector('.attic-book-page'),tabs=[...root.querySelectorAll('[data-page]')];
-    const show=name=>{page.replaceChildren();tabs.forEach(button=>button.classList.toggle('active',button.dataset.page===name));page.append(name==='settings'?settingsPage(target,setInvert):name==='abilities'?clonePage(doc,['#abilitiesPullDesk','#abilityRef'],'Ability descriptions are not available yet.'):clonePage(doc,['#scoringPullDesk','#ref'],'Scoring patterns are not available yet.'));page.scrollTop=0};
+    // The scoring/ability sheets are only populated when the player opens those
+    // drawers (renderScoringSheet/renderAbilitySheet run on toggle). Opening the
+    // book straight from the attic would otherwise clone empty desks and show
+    // the "not available" fallback, so render them fresh here first — that also
+    // keeps the pages current (live upgrades, resonations, ability prompts).
+    // Prefer the canonical #ref/#abilityRef we just rendered over the drawer copies.
+    const scoringPage=()=>{target.tlrReferenceControls?.renderScoringSheet?.(target);return clonePage(doc,['#ref','#scoringPullDesk'],'Scoring patterns are not available yet.');};
+    const abilitiesPage=()=>{target.tlrReferenceControls?.renderAbilitySheet?.(target);return clonePage(doc,['#abilityRef','#abilitiesPullDesk'],'Ability descriptions are not available yet.');};
+    const show=name=>{page.replaceChildren();tabs.forEach(button=>button.classList.toggle('active',button.dataset.page===name));page.append(name==='settings'?settingsPage(target,setInvert):name==='abilities'?abilitiesPage():scoringPage());page.scrollTop=0};
     tabs.forEach(button=>button.addEventListener('click',event=>{event.stopPropagation();show(button.dataset.page)}));
     root.querySelector('.attic-book-close').addEventListener('click',close);root.addEventListener('pointerdown',event=>event.stopPropagation());root.addEventListener('click',event=>{if(event.target===root)close()});
     (doc.getElementById('atticScene')||doc.body).append(root);doc.addEventListener('keydown',escape,true);show(['scoring','abilities','settings'].includes(initial)?initial:'scoring');root.querySelector('.attic-book-shell')?.focus();return root;
