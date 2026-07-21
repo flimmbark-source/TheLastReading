@@ -191,7 +191,9 @@ async function main() {
     await page.screenshot({ path: 'artifacts/attic3d-8-seated-hybrid.png' });
 
     // The native hand dock must stay fully interactive over the seated
-    // backdrop: a real click on a card selects it.
+    // backdrop: wait for the staged deal to relinquish pointer input, then a
+    // real click on a settled card must select it.
+    await page.waitForFunction(() => !document.querySelector('#hand > .card.card-draw-dealt'), null, { timeout: 5000 });
     const cardPoint = await page.evaluate(() => {
       const cards = document.querySelectorAll('#hand .card[data-uid]');
       const card = cards[cards.length - 1]; // rightmost: top of the fan stack
