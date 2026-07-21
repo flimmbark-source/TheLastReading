@@ -1,0 +1,51 @@
+name: Diagnose current errors
+
+on:
+  pull_request:
+
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Capture validation and smoke failures
+        shell: bash
+        run: |
+          mkdir -p diagnostics artifacts
+          set +e
+
+          npm run lint > diagnostics/lint.log 2>&1
+          lint_status=$?
+
+          npm test > diagnostics/test.log 2>&1
+          test_status=$?
+
+          npx playwright install --with-deps chromium > diagnostics/playwright-install.log 2>&1
+          browser_status=$?
+
+          SPV2_VISUAL_REQUIRED=1 npm run test:spv2-visual > diagnostics/spv2-smoke.log 2>&1
+          spv2_status=$?
+
+          ATTIC3D_VISUAL_REQUIRED=1 npm run test:attic3d > diagnostics/attic3d-smoke.log 2>&1
+          attic_status=$?
+
+          printf 'lint=%s\ntest=%s\nplaywright=%s\nspv2=%s\nattic3d=%s\n' \
+            "$lint_status" "$test_status" "$browser_status" "$spv2_status" "$attic_status" \
+            | tee diagnostics/status.txt
+
+          exit 0
+      - name: Upload diagnostic output
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-error-diagnostics
+          path: |
+            diagnostics/
+            artifacts/
+          if-no-files-found: error
+          retention-days: 3
