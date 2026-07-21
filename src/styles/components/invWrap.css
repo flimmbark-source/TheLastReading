@@ -34,6 +34,15 @@ body.mode-table-return #invWrap{
   pointer-events:none!important;
   z-index:150!important;
 }
+/* The attic normally keeps the drawer stowed, but using the physical archive
+   trunk deliberately adds .open while mode-attic remains active. That explicit
+   state must outrank the general mode rule above so the drawer can slide over
+   the live 3D room instead of remaining translated off-screen. */
+body.mode-attic #invWrap.open{
+  transform:translateY(0)!important;
+  pointer-events:auto!important;
+  z-index:10095!important;
+}
 body.mode-return-hard-hide #invWrap,body.mode-to-table #invWrap{transform:translateY(calc(-1 * var(--inv-h)))!important;pointer-events:none!important}
 /* Deck-of-cards button in the desk's top-right corner (see archives.mjs).
    z-index 40 keeps it above idle desk items but under one being dragged (50). */
