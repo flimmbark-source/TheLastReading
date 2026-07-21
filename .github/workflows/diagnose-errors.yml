@@ -35,13 +35,52 @@ jobs:
           python - <<'PY'
           from pathlib import Path
 
+          rig_path = Path('src/three/PlayerRig.jsx')
+          rig_source = rig_path.read_text()
+          state_needle = """      completed: false,
+          """
+          state_replacement = """      completed: false,
+                debugFrames: 0,
+                debugLastDelta: 0,
+          """
+          frame_needle = """  useFrame((_, rawDelta) => {
+              const r = rig.current;
+              const delta = Math.min(rawDelta, 1 / 20);
+          """
+          frame_replacement = """  useFrame((_, rawDelta) => {
+              const r = rig.current;
+              const delta = Math.min(rawDelta, 1 / 20);
+              r.debugFrames += 1;
+              r.debugLastDelta = delta;
+          """
+          api_needle = """          phase: r.phase,
+                    position: [r.pos.x, r.pos.y, r.pos.z],
+          """
+          api_replacement = """          phase: r.phase,
+                    phaseT: r.phaseT,
+                    debugFrames: r.debugFrames,
+                    debugLastDelta: r.debugLastDelta,
+                    left: r.left,
+                    hasSitCurve: Boolean(r.sitCurve),
+                    position: [r.pos.x, r.pos.y, r.pos.z],
+          """
+          for needle, replacement, label in (
+              (state_needle, state_replacement, 'rig debug state'),
+              (frame_needle, frame_replacement, 'frame counter'),
+              (api_needle, api_replacement, 'debug api state'),
+          ):
+              if rig_source.count(needle) != 1:
+                  raise SystemExit(f'expected one {label}, found {rig_source.count(needle)}')
+              rig_source = rig_source.replace(needle, replacement)
+          rig_path.write_text(rig_source)
+
           path = Path('scripts/validate-attic3d-smoke.mjs')
           source = path.read_text()
           return_needle = "    await page.waitForFunction(() => document.body.classList.contains('mode-reading'), null, { timeout: 20000 });"
           return_replacement = """    try {
               await page.waitForFunction(() => document.body.classList.contains('mode-reading'), null, { timeout: 20000 });
             } catch (error) {
-              const state = await page.evaluate(() => ({
+              const readReturnState = () => page.evaluate(() => ({
                 bodyClasses: [...document.body.classList],
                 rig: window.__tlrAttic3d?.api?.getState?.() || null,
                 atticMounted: window.__tlrAttic3d?.mounted ?? null,
@@ -50,8 +89,14 @@ jobs:
                 tableSeat: Boolean(document.getElementById('table3dSeat')),
                 sceneAriaHidden: document.getElementById('atticScene')?.getAttribute('aria-hidden') || null,
                 archivesOpen: Boolean(document.getElementById('invWrap')?.classList.contains('open')),
+                visibilityState: document.visibilityState,
               }));
-              console.error(`ATTIC_RETURN_STATE ${JSON.stringify(state)}`);
+              const first = await readReturnState();
+              await page.waitForTimeout(1200);
+              const second = await readReturnState();
+              console.error(`ATTIC_RETURN_STATE_1 ${JSON.stringify(first)}`);
+              console.error(`ATTIC_RETURN_STATE_2 ${JSON.stringify(second)}`);
+              console.error(`ATTIC_PAGE_ERRORS ${JSON.stringify(pageErrors)}`);
               throw error;
             }"""
           click_needle = "    await page.mouse.click(cardPoint.x, cardPoint.y);"
