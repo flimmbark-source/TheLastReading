@@ -26,6 +26,7 @@ body.mode-return-hard-hide #spv2ArchiveBtn,
 body.mode-return-hard-hide #table3dDiscardPips,
 body.mode-return-hard-hide #patternHintStack,
 body.mode-return-hard-hide #constellationPill,
+body.mode-return-hard-hide #constellationCallout,
 body.mode-return-hard-hide #abilityPrompt,
 body.mode-return-hard-hide #purgePrompt,
 body.mode-return-hard-hide #tutTip,
@@ -41,6 +42,23 @@ body.mode-return-hard-hide .bar {
    for the entire attic visit rather than waiting for the return handoff. */
 body.mode-to-attic #spv2ArchiveBtn,
 body.mode-attic #spv2ArchiveBtn {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: none !important;
+}
+
+/* The constellation indicator is also direct body-level table chrome, so the
+   normal spread/hand visibility gate does not catch it during the stand-up
+   transition. Hide both the pill and an open callout from the pending rise
+   through the entire attic visit. */
+body.table3d-live.attic3d-pending #constellationPill,
+body.table3d-live.attic3d-pending #constellationCallout,
+body.mode-to-attic #constellationPill,
+body.mode-to-attic #constellationCallout,
+body.mode-attic #constellationPill,
+body.mode-attic #constellationCallout {
+  display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;

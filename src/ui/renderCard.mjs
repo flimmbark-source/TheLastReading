@@ -5,7 +5,10 @@
 /* global ROMAN, GLYPH, MEAN, COURT_MEAN, SUIT_MEAN, MAJOR_G, TXT, RANKS */
 
 const cardHTMLCache = new Map();
+const cardSheetLoads = new Map();
 let detailStyleInstalled = false;
+let cardPresentationStyleInstalled = false;
+let smallSheetWarmupScheduled = false;
 
 function isInteraction(c){return c?.type==='interaction'}
 function interactionSymbol(c){return c?.abilityType==='mp_banish'?'⚔':'🔇'}
@@ -40,6 +43,7 @@ export function title(c){
   if(c?.type==='court')return c.rank+' of '+c.suit;
   return c?.name||'';
 }
+
 export function meanings(c){if(isInteraction(c))return interactionMeaning(c);if(c.type==='major')return MEAN[c.id]||['',''];if(c.type==='court')return COURT_MEAN[c.rank]||['',''];return SUIT_MEAN[c.suit]||['','']}
 export function symbol(c){if(isInteraction(c))return interactionSymbol(c);if(c.type==='major'){const num=majorNumber(c);return(num!==null?MAJOR_G[num]:null)||'✦'}return GLYPH[c.suit]}
 
@@ -56,6 +60,95 @@ export const CARD_SHEET={
   court_Wands_King:[10,0],court_Cups_King:[10,1],court_Swords_King:[10,2],court_Pentacles_King:[10,3],
 };
 
+function sheetUrl(card,{full=false}={}){
+  const sheet=CARD_SHEET[card?.id]?.[0];
+  if(!sheet)return null;
+  const num=String(sheet).padStart(2,'0');
+  return full?`assets/sheets/sheet${num}.webp`:`assets/sheets/sheet${num}.small.webp`;
+}
+
+function presentationWindow(el){
+  return el?.ownerDocument?.defaultView||(typeof window!=='undefined'?window:globalThis);
+}
+
+function ensureCardPresentationStyles(doc){
+  if(!doc||cardPresentationStyleInstalled)return;
+  cardPresentationStyleInstalled=true;
+  const style=doc.createElement('style');
+  style.id='card-presentation-runtime-style';
+  style.textContent=`
+    /* Selecting a hand card should identify valid empty positions without
+       lifting those slots off the table. Preserve the green rim/halo, but drop
+       the final black contact-shadow layer used by the old target treatment. */
+    html body.single-player-v2 #spread .slot.target{
+      box-shadow:0 0 0 2px rgba(126,190,126,.42),0 0 18px rgba(106,181,112,.28)!important
+    }
+  `;
+  doc.head?.appendChild(style);
+}
+
+function ensureCardSheet(url,view,priority='auto'){
+  const existing=cardSheetLoads.get(url);
+  if(existing){
+    if(priority==='high'&&existing.image&&'fetchPriority' in existing.image)existing.image.fetchPriority='high';
+    return existing;
+  }
+
+  const ImageCtor=view?.Image||globalThis.Image;
+  if(typeof ImageCtor!=='function'){
+    const record={image:null,status:'ready',promise:Promise.resolve(true)};
+    cardSheetLoads.set(url,record);
+    return record;
+  }
+
+  const record={image:null,status:'loading',promise:null};
+  record.promise=new Promise(resolve=>{
+    const image=new ImageCtor();
+    record.image=image;
+    let settled=false;
+    let decoding=false;
+    const settle=ok=>{
+      if(settled)return;
+      settled=true;
+      record.status=ok?'ready':'error';
+      resolve(ok);
+    };
+    const finishLoaded=()=>{
+      if(decoding||settled)return;
+      decoding=true;
+      if(typeof image.decode==='function'){
+        Promise.resolve(image.decode()).catch(()=>undefined).then(()=>settle(true));
+      }else settle(true);
+    };
+    image.onload=finishLoaded;
+    image.onerror=()=>settle(false);
+    try{image.decoding='async';}catch{}
+    try{if('fetchPriority' in image)image.fetchPriority=priority;}catch{}
+    image.src=url;
+    if(image.complete){
+      const queue=view?.queueMicrotask||globalThis.queueMicrotask||(fn=>Promise.resolve().then(fn));
+      queue(()=>image.naturalWidth?finishLoaded():settle(false));
+    }
+  });
+  cardSheetLoads.set(url,record);
+  return record;
+}
+
+export function preloadCardPhotos(cards,{full=false,priority='high',target=(typeof window!=='undefined'?window:globalThis)}={}){
+  const urls=[...new Set((cards||[]).map(card=>sheetUrl(card,{full})).filter(Boolean))];
+  return Promise.all(urls.map(url=>ensureCardSheet(url,target,priority).promise));
+}
+
+function scheduleSmallSheetWarmup(view){
+  if(smallSheetWarmupScheduled||!view)return;
+  smallSheetWarmupScheduled=true;
+  const urls=[...new Set(Object.values(CARD_SHEET).map(([sheet])=>`assets/sheets/sheet${String(sheet).padStart(2,'0')}.small.webp`))];
+  // Start the table-resolution sheets as soon as the renderer module loads.
+  // Previously this waited for browser idle time (or a 1.2-2.5 second timeout),
+  // which meant the first cards could appear before their sheet request began.
+  urls.forEach(url=>ensureCardSheet(url,view,'auto'));
+}
+
 // Table cards render at ~100-130px, so they use the offline-downscaled
 // table-res sheets (sheetNN.small.webp, 300x450 per tile) which are sharper
 // under the hand's rotate transforms and far lighter than the full sheets.
@@ -63,13 +156,31 @@ export const CARD_SHEET={
 // original 512x768 tiles. background-size:200% 200% is sheet-size agnostic.
 export function applyCardPhoto(el,card,{full=false}={}){
   const s=CARD_SHEET[card.id];
-  if(!s)return;
-  const[sheet,pos]=s;
+  if(!s)return Promise.resolve(false);
+  const[,pos]=s;
   const col=pos%2,row=Math.floor(pos/2);
-  const num=String(sheet).padStart(2,'0');
+  const url=sheetUrl(card,{full});
+  const view=presentationWindow(el);
+  ensureCardPresentationStyles(el?.ownerDocument||(typeof document!=='undefined'?document:null));
+  scheduleSmallSheetWarmup(view);
   el.classList.add('photo');
-  el.style.backgroundImage=full?`url(assets/sheets/sheet${num}.webp)`:`url(assets/sheets/sheet${num}.small.webp)`;
+  el.dataset.photoSource=url;
+  delete el.dataset.photoReady;
+  el.style.backgroundImage=`url(${url})`;
   el.style.backgroundPosition=`${col*100}% ${row*100}%`;
+  const record=ensureCardSheet(url,view,'high');
+  if(record.status==='ready')el.dataset.photoReady='1';
+  else record.promise.then(ready=>{
+    if(el.dataset.photoSource!==url)return;
+    if(ready)el.dataset.photoReady='1';
+    else delete el.dataset.photoReady;
+  });
+  return record.promise;
+}
+
+if(typeof document!=='undefined'){
+  ensureCardPresentationStyles(document);
+  scheduleSmallSheetWarmup(typeof window!=='undefined'?window:document.defaultView);
 }
 
 export function cardHTML(c){

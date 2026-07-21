@@ -49,20 +49,27 @@ function walkToInteractable(id, focusPoint) {
   api.walkTo(focusPoint[0], focusPoint[2], id);
 }
 
-// How long an item's name popup stays up after the press moves off it, so a
-// player who brushes past an object still gets a beat to read what it was.
-const HOVER_LINGER_MS = 2800;
+// The label appears as soon as an item is pressed, stays up for the entire hold,
+// then remains readable for this long after the final pointer is released.
+const PRESS_PROMPT_MS = 2800;
 
 function hoverHandlers(id, hover, enabled, focusPoint = null) {
   if (!enabled) return {};
   return {
-    onPointerOver: event => {
+    onPointerDown: event => {
       event.stopPropagation();
-      hover.enter(id);
+      event.target?.setPointerCapture?.(event.pointerId);
+      hover.press(id, event.pointerId);
     },
-    onPointerOut: event => {
+    onPointerUp: event => {
       event.stopPropagation();
-      hover.leave(id);
+      event.target?.releasePointerCapture?.(event.pointerId);
+      hover.release(id, event.pointerId);
+    },
+    onPointerCancel: event => {
+      event.stopPropagation();
+      event.target?.releasePointerCapture?.(event.pointerId);
+      hover.release(id, event.pointerId);
     },
     onClick: event => {
       event.stopPropagation();
@@ -128,7 +135,7 @@ function RoomHitVolumes({ interactive, hover }) {
   return (
     <group>
       {/* A rim, not a solid cap: smaller items on the tabletop keep their own
-          raycast/hover target instead of being swallowed by the table target. */}
+          raycast/press target instead of being swallowed by the table target. */}
       <mesh
         position={[TABLE.position[0], TABLE.topY + 0.04, TABLE.position[2]]}
         rotation={[Math.PI / 2, 0, 0]}
@@ -165,7 +172,10 @@ function PlayerPrompt() {
   const { interactables, focusId, hoverId } = useContext(AtticContext);
   const { camera, gl } = useThree();
   const domRef = useRef({ root: null, name: null, action: null, scene: null });
-  const target = interactables.find(item => item.id === (hoverId || focusId)) || null;
+  // `focusId` is gaze/proximity state used for keyboard interaction. It must not
+  // reveal the popup; only an active or recently released direct press sets
+  // `hoverId` through the controller below.
+  const target = interactables.find(item => item.id === hoverId) || null;
   const actionable = Boolean(target && focusId === target.id);
   const coarse = useMemo(() => Boolean(window.matchMedia?.('(pointer: coarse)')?.matches), []);
   const projected = useMemo(() => new THREE.Vector3(), []);
@@ -266,11 +276,11 @@ export function Interactables() {
   const { adapter, mode, snapshot, setHoverId } = useContext(AtticContext);
   const interactive = mode === 'attic';
 
-  // Hover controller with linger: entering an item shows its name at once;
-  // leaving it keeps the name up for a short beat before clearing, so the
-  // popup no longer blinks out the instant the press slides off the object.
+  // Direct-press controller. Press-down reveals immediately; release begins the
+  // 2.8-second linger. Pointer-over and camera focus never call this path.
   const hover = useMemo(() => {
     let timer = null;
+    const activePointers = new Map();
     const cancel = () => {
       if (timer) {
         clearTimeout(timer);
@@ -278,19 +288,27 @@ export function Interactables() {
       }
     };
     return {
-      enter(id) {
+      press(id, pointerId) {
         cancel();
+        activePointers.set(pointerId, id);
         setHoverId(id);
       },
-      leave(id) {
+      release(id, pointerId) {
+        activePointers.delete(pointerId);
+        const remainingIds = [...activePointers.values()];
+        if (remainingIds.length) {
+          setHoverId(remainingIds[remainingIds.length - 1]);
+          return;
+        }
         cancel();
         timer = setTimeout(() => {
           timer = null;
           setHoverId(current => (current === id ? null : current));
-        }, HOVER_LINGER_MS);
+        }, PRESS_PROMPT_MS);
       },
       dispose() {
         cancel();
+        activePointers.clear();
         setHoverId(null);
       },
     };

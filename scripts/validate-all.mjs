@@ -28,6 +28,9 @@ import './validate-upgrade-announcements.mjs';
 import './validate-single-player-v2-cascade.mjs';
 import './validate-app-important-budget.mjs';
 import './validate-app-cascade-layers.mjs';
+import './validate-run-lifecycle.mjs';
+import './validate-card-art-loading.mjs';
+import './validate-attic-press-prompts.mjs';
 // jsdom-based UI checks run last: they populate a jsdom window on globalThis.
 import './validate-menu.mjs';
 import './validate-render.mjs';
