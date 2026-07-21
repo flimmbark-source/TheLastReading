@@ -77,15 +77,6 @@ function ensureCardPresentationStyles(doc){
   const style=doc.createElement('style');
   style.id='card-presentation-runtime-style';
   style.textContent=`
-    /* A CSS background image normally leaves the photo card's hidden fallback
-       as an empty black rectangle while its sheet downloads. Keep the ordinary
-       title/symbol/plaque card visible until the shared Image loader confirms
-       that the requested WebP has decoded. */
-    .card.photo:not([data-photo-ready="1"]) > .title{display:block!important}
-    .card.photo:not([data-photo-ready="1"]) > .art{display:flex!important}
-    .card.photo[data-photo-ready="1"] > .title,
-    .card.photo[data-photo-ready="1"] > .art{display:none!important}
-
     /* Selecting a hand card should identify valid empty positions without
        lifting those slots off the table. Preserve the green rim/halo, but drop
        the final black contact-shadow layer used by the old target treatment. */
@@ -151,13 +142,11 @@ export function preloadCardPhotos(cards,{full=false,priority='high',target=(type
 function scheduleSmallSheetWarmup(view){
   if(smallSheetWarmupScheduled||!view)return;
   smallSheetWarmupScheduled=true;
-  const warm=()=>{
-    const urls=[...new Set(Object.values(CARD_SHEET).map(([sheet])=>`assets/sheets/sheet${String(sheet).padStart(2,'0')}.small.webp`))];
-    urls.forEach(url=>ensureCardSheet(url,view,'low'));
-  };
-  if(typeof view.requestIdleCallback==='function')view.requestIdleCallback(warm,{timeout:2500});
-  else if(typeof view.setTimeout==='function')view.setTimeout(warm,1200);
-  else setTimeout(warm,1200);
+  const urls=[...new Set(Object.values(CARD_SHEET).map(([sheet])=>`assets/sheets/sheet${String(sheet).padStart(2,'0')}.small.webp`))];
+  // Start the table-resolution sheets as soon as the renderer module loads.
+  // Previously this waited for browser idle time (or a 1.2-2.5 second timeout),
+  // which meant the first cards could appear before their sheet request began.
+  urls.forEach(url=>ensureCardSheet(url,view,'auto'));
 }
 
 // Table cards render at ~100-130px, so they use the offline-downscaled
@@ -168,7 +157,7 @@ function scheduleSmallSheetWarmup(view){
 export function applyCardPhoto(el,card,{full=false}={}){
   const s=CARD_SHEET[card.id];
   if(!s)return Promise.resolve(false);
-  const[sheet,pos]=s;
+  const[,pos]=s;
   const col=pos%2,row=Math.floor(pos/2);
   const url=sheetUrl(card,{full});
   const view=presentationWindow(el);
@@ -189,7 +178,10 @@ export function applyCardPhoto(el,card,{full=false}={}){
   return record.promise;
 }
 
-if(typeof document!=='undefined')ensureCardPresentationStyles(document);
+if(typeof document!=='undefined'){
+  ensureCardPresentationStyles(document);
+  scheduleSmallSheetWarmup(typeof window!=='undefined'?window:document.defaultView);
+}
 
 export function cardHTML(c){
   if(cardHTMLCache.has(c.uid))return cardHTMLCache.get(c.uid);
