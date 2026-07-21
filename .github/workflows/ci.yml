@@ -6,51 +6,6 @@ on:
   pull_request:
 
 jobs:
-  apply-player-rig-fix:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'github-actions[bot]'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          fetch-depth: 0
-      - name: Patch cinematic timing
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          path = Path('src/three/PlayerRig.jsx')
-          source = path.read_text()
-
-          replacements = [
-              (
-                  """  useFrame((_, rawDelta) => {\n    const r = rig.current;\n    const delta = Math.min(rawDelta, 1 / 20);\n""",
-                  """  useFrame((_, rawDelta) => {\n    const r = rig.current;\n    // Keep movement/collision steps bounded, but let cinematic phases advance\n    // against real elapsed time. Reusing the 50 ms movement cap made the\n    // nominal 1.7-second rise/sit take 10+ seconds on low-FPS software WebGL.\n    const delta = Math.min(rawDelta, 1 / 20);\n    const sequenceDelta = Math.min(rawDelta, 1 / 4);\n""",
-                  'frame deltas',
-              ),
-              ('      r.phaseT += delta;\n', '      r.phaseT += sequenceDelta;\n', 'approach timing'),
-              ('      r.phaseT += delta / RISE_SECONDS;\n', '      r.phaseT += sequenceDelta / RISE_SECONDS;\n', 'rise timing'),
-              ('      r.phaseT += delta / SIT_SECONDS;\n', '      r.phaseT += sequenceDelta / SIT_SECONDS;\n', 'sit timing'),
-          ]
-
-          for old, new, label in replacements:
-              count = source.count(old)
-              if count != 1:
-                  raise SystemExit(f'Expected exactly one {label} target, found {count}')
-              source = source.replace(old, new)
-
-          path.write_text(source)
-          PY
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/three/PlayerRig.jsx
-          git commit -m "Fix low-FPS 3D cinematic timing"
-          git push origin HEAD:${{ github.event.pull_request.head.ref }}
-
   validate:
     runs-on: ubuntu-latest
     steps:
