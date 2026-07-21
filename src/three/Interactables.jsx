@@ -49,17 +49,30 @@ function walkToInteractable(id, focusPoint) {
   api.walkTo(focusPoint[0], focusPoint[2], id);
 }
 
-// A directly pressed item's name remains visible long enough to read while the
-// player begins walking toward it. Merely looking at or pointing over an item
-// never starts this timer.
+// The label appears as soon as an item is pressed, stays up for the entire hold,
+// then remains readable for this long after the final pointer is released.
 const PRESS_PROMPT_MS = 2800;
 
 function hoverHandlers(id, hover, enabled, focusPoint = null) {
   if (!enabled) return {};
   return {
+    onPointerDown: event => {
+      event.stopPropagation();
+      event.target?.setPointerCapture?.(event.pointerId);
+      hover.press(id, event.pointerId);
+    },
+    onPointerUp: event => {
+      event.stopPropagation();
+      event.target?.releasePointerCapture?.(event.pointerId);
+      hover.release(id, event.pointerId);
+    },
+    onPointerCancel: event => {
+      event.stopPropagation();
+      event.target?.releasePointerCapture?.(event.pointerId);
+      hover.release(id, event.pointerId);
+    },
     onClick: event => {
       event.stopPropagation();
-      hover.show(id);
       walkToInteractable(id, focusPoint);
     },
   };
@@ -160,7 +173,8 @@ function PlayerPrompt() {
   const { camera, gl } = useThree();
   const domRef = useRef({ root: null, name: null, action: null, scene: null });
   // `focusId` is gaze/proximity state used for keyboard interaction. It must not
-  // reveal the popup; only a completed click/tap records `hoverId` below.
+  // reveal the popup; only an active or recently released direct press sets
+  // `hoverId` through the controller below.
   const target = interactables.find(item => item.id === hoverId) || null;
   const actionable = Boolean(target && focusId === target.id);
   const coarse = useMemo(() => Boolean(window.matchMedia?.('(pointer: coarse)')?.matches), []);
@@ -262,10 +276,11 @@ export function Interactables() {
   const { adapter, mode, snapshot, setHoverId } = useContext(AtticContext);
   const interactive = mode === 'attic';
 
-  // Press controller: a completed click/tap shows the item's name briefly.
-  // Pointer-over and camera focus never call this path.
+  // Direct-press controller. Press-down reveals immediately; release begins the
+  // 2.8-second linger. Pointer-over and camera focus never call this path.
   const hover = useMemo(() => {
     let timer = null;
+    const activePointers = new Map();
     const cancel = () => {
       if (timer) {
         clearTimeout(timer);
@@ -273,9 +288,19 @@ export function Interactables() {
       }
     };
     return {
-      show(id) {
+      press(id, pointerId) {
         cancel();
+        activePointers.set(pointerId, id);
         setHoverId(id);
+      },
+      release(id, pointerId) {
+        activePointers.delete(pointerId);
+        const remainingIds = [...activePointers.values()];
+        if (remainingIds.length) {
+          setHoverId(remainingIds[remainingIds.length - 1]);
+          return;
+        }
+        cancel();
         timer = setTimeout(() => {
           timer = null;
           setHoverId(current => (current === id ? null : current));
@@ -283,6 +308,7 @@ export function Interactables() {
       },
       dispose() {
         cancel();
+        activePointers.clear();
         setHoverId(null);
       },
     };
