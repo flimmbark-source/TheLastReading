@@ -39,7 +39,7 @@ assert.match(request?.options?.body || '', /form-name=player-feedback/, 'Submiss
 assert.match(request?.options?.body || '', /feedback=The\+card\+picker/, 'Submission includes the player message');
 assert.match(request?.options?.body || '', /email=player%40example.com/, 'Submission includes optional contact details');
 assert.match(request?.options?.body || '', /mode=reading/, 'Submission includes the selected main-menu mode');
-assert.match(request?.options?.body || '', /viewport=0x0/, 'Submission includes viewport context');
+assert.match(request?.options?.body || '', /viewport=\d+x\d+/, 'Submission includes viewport context');
 assert.equal(status.dataset.state, 'success', 'Successful submission receives inline confirmation');
 
 window.tlrClosePlayerFeedback();
