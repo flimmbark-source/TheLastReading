@@ -32,6 +32,7 @@ import './validate-run-lifecycle.mjs';
 import './validate-card-art-loading.mjs';
 import './validate-attic-press-prompts.mjs';
 // jsdom-based UI checks run last: they populate a jsdom window on globalThis.
+import './validate-player-feedback.mjs';
 import './validate-menu.mjs';
 import './validate-render.mjs';
 import './validate-adventure-ui.mjs';
