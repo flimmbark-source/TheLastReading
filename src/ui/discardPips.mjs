@@ -1,4 +1,4 @@
-// Small discard-count cards pinned directly beneath the spread.
+// Small discard-count cards locked to the spread's top-left corner.
 // Gameplay continues to own the discard count; this view only mirrors it.
 
 import { installDiscardPipsTutorial } from './discardPipsTutorial.mjs';
@@ -12,19 +12,21 @@ function installStyles(document) {
   style.id = STYLE_ID;
   style.textContent = `
     #${PIPS_ID} {
-      position: fixed;
-      left: 0;
-      top: 0;
+      position: absolute;
+      left: 8px;
+      top: -12px;
       z-index: 56;
       display: none;
-      align-items: flex-end;
+      align-items: flex-start;
       gap: 3px;
       pointer-events: none;
       visibility: hidden;
+      transform: none;
     }
 
     body.table3d-live #${PIPS_ID} {
       display: flex;
+      visibility: visible;
     }
 
     #${PIPS_ID} .table3d-discard-pip {
@@ -87,48 +89,34 @@ export function installDiscardPips(target = window) {
     pips = document.createElement('div');
     pips.id = PIPS_ID;
     pips.setAttribute('role', 'img');
-    document.body.appendChild(pips);
   }
   installDiscardPipsTutorial(target, pips);
 
-  let positionFrame = 0;
-  let settleTimer = 0;
+  let spreadObserver = null;
 
-  const positionNow = () => {
+  const attachToSpread = () => {
     const spread = document.getElementById('spread');
     if (!spread) {
-      pips.style.visibility = 'hidden';
+      if (!pips.isConnected) document.body.appendChild(pips);
+      target.requestAnimationFrame(attachToSpread);
       return;
     }
 
-    const rect = spread.getBoundingClientRect();
-    if (rect.width <= 1 || rect.height <= 1) {
-      pips.style.visibility = 'hidden';
-      return;
-    }
+    if (pips.parentElement !== spread) spread.appendChild(pips);
 
-    // Pin to the spread container itself, not to cards or slots. Selecting a
-    // card changes descendant classes/transforms, but the spread container's
-    // layout box stays fixed, so the icons no longer twitch with selection.
-    const left = Math.max(8, rect.left + 15);
-    const top = Math.min(target.innerHeight - 28, rect.bottom - 139);
-    pips.style.left = `${left.toFixed(1)}px`;
-    pips.style.top = `${top.toFixed(1)}px`;
-    pips.style.visibility = 'visible';
-  };
-
-  const schedulePosition = () => {
-    if (positionFrame) target.cancelAnimationFrame(positionFrame);
-    positionFrame = target.requestAnimationFrame(() => {
-      positionFrame = 0;
-      positionNow();
+    spreadObserver?.disconnect();
+    spreadObserver = new MutationObserver(() => {
+      // renderSpread may rebuild the slot children with replaceChildren().
+      // Re-append the pips immediately so their containing block remains the
+      // spread itself instead of falling back to viewport coordinates.
+      if (pips.parentElement !== spread) spread.appendChild(pips);
     });
-    target.clearTimeout(settleTimer);
-    settleTimer = target.setTimeout(positionNow, 180);
+    spreadObserver.observe(spread, { childList: true });
   };
 
   let shown = -1;
   const render = () => {
+    attachToSpread();
     const count = readDiscardCount(target, document);
     pips.setAttribute('aria-label', `${count} discard${count === 1 ? '' : 's'} remaining`);
     if (count !== shown) {
@@ -145,27 +133,6 @@ export function installDiscardPips(target = window) {
   };
 
   let valueObserver = null;
-  let spreadResizeObserver = null;
-
-  const bindSpread = () => {
-    const spread = document.getElementById('spread');
-    if (!spread) {
-      target.requestAnimationFrame(bindSpread);
-      return;
-    }
-
-    spreadResizeObserver?.disconnect();
-    if (typeof ResizeObserver === 'function') {
-      spreadResizeObserver = new ResizeObserver(schedulePosition);
-      spreadResizeObserver.observe(spread);
-    }
-
-    // Initial layout and the delayed 3D-anchor settle passes.
-    schedulePosition();
-    target.setTimeout(schedulePosition, 500);
-    target.setTimeout(schedulePosition, 1500);
-  };
-
   const bindCounter = () => {
     const counter = document.getElementById('discards');
     if (!counter) {
@@ -178,10 +145,7 @@ export function installDiscardPips(target = window) {
     render();
   };
 
-  target.addEventListener('resize', schedulePosition, { passive: true });
-  target.addEventListener('orientationchange', schedulePosition, { passive: true });
-
   target.__tlrRenderDiscardPips = render;
-  bindSpread();
+  attachToSpread();
   bindCounter();
 }

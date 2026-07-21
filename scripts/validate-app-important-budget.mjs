@@ -141,10 +141,17 @@ const appStyleFiles = [
 // drag-tier styling while a card is held, so both declarations are important.
 // The flick-and-pop clone, particle trail, and reduced-motion fallbacks are all
 // plain -- only these two need the marked-important tier.
-// inGameMenu.css and atticReturnPolish.css are tracked from their creation;
-// both currently add zero marked-important declarations, so the ceiling stays
-// unchanged while future edits remain visible to this guard.
-const importantBudget = 655;
+// inGameMenu.css is tracked from creation and still adds zero marked-important
+// declarations, so it does not move the ceiling.
+// 655 -> 661 (atticReturnPolish.css, a REAL +6): the "Refresh attic transition
+// polish styles" pass added two unlayered visibility gates for the attic/table
+// handoff — the archive-eye hide (body.mode-to-attic/.mode-attic #spv2ArchiveBtn:
+// visibility/opacity/pointer-events/transition, +4) and the continuous-return
+// deal-pending card hide (#hand > .card:not(.card-draw-dealt): opacity/
+// transition, +2). Both are unlayered and must beat the layered single-player
+// chrome that would otherwise show the eye and deal the cards early, so the
+// marked-important tier is the mechanism, not decoration.
+const importantBudget = 661;
 const total = appStyleFiles
   .map(path => read(path).match(/!important/g)?.length ?? 0)
   .reduce((sum, count) => sum + count, 0);

@@ -3,7 +3,8 @@
 // Attic mode mirrors the fiction of the visit: the rig mounts seated at the
 // reading table (matching the 2D table UI the player just left), stands up
 // over ~1.7s, hands over free-walk control, and — when the player sits back
-// down at the chair — plays the reverse move and only then calls
+// down at the chair — plays the getting-up move in reverse (a single smooth
+// glide back down into the seat over the same ~1.7s) and only then calls
 // adapter.leave(), which runs the existing attic->table fade and unmounts us.
 //
 // Approach mode (run start) instead plays the APPROACH_KEYFRAMES timeline —
@@ -26,7 +27,9 @@ import { AtticContext, domSurfaceOpen } from './AtticExperience.jsx';
 import { POSES, PORTRAIT_POSES, ROOM, KEEP_OUT, EYE_HEIGHT, APPROACH_KEYFRAMES } from './atticLayout.mjs';
 
 const RISE_SECONDS = 1.7;
-const SIT_SECONDS = 1.6;
+// Sitting back down is the getting-up animation played in reverse, so it runs
+// over the same duration and easing as the rise rather than its own timing.
+const SIT_SECONDS = RISE_SECONDS;
 const WALK_SPEED = 2.1;
 // Touch fingers are far less precise than a mouse cursor; give taps on
 // interactables a much larger forgiving radius there.
@@ -59,9 +62,62 @@ function poseAngles(pose) {
 const SEATED = poseAngles(POSES.seated);
 const PORTRAIT_SEATED = poseAngles(PORTRAIT_POSES.seated);
 const STANDING = poseAngles(POSES.standing);
+const SEATED_EYELINE = poseAngles(POSES.seatedEyeline);
 
 function smooth(t) {
   return t * t * (3 - 2 * t);
+}
+
+// Perlin's smootherstep: zero 1st AND 2nd derivative at both ends, so the
+// rise/sit accelerate and settle without the velocity kink smoothstep leaves.
+// The camera leaves rest and arrives at rest cleanly, which is what makes the
+// hand-off to (and from) free-look read as continuous instead of a stutter.
+function smootherstep(t) {
+  return t * t * t * (t * (t * 6 - 15) + 10);
+}
+
+// Quadratic Bézier that is *forced through* a waypoint at its midpoint: given
+// endpoints a, c and a point w the curve must pass through at s=0.5, the
+// control point is 2w - (a+c)/2. One continuous curve (no segment seam) that
+// still visits the low seated eye-line, so getting up / sitting down dips
+// through a believable seat without the mid-animation hitch two lerps caused.
+function bezierControl(a, w, c) {
+  return 2 * w - (a + c) / 2;
+}
+function bezier(a, cp, c, s) {
+  const u = 1 - s;
+  return u * u * a + 2 * u * s * cp + s * s * c;
+}
+
+function angleDelta(a, b) {
+  let difference = (b - a) % (Math.PI * 2);
+  if (difference > Math.PI) difference -= Math.PI * 2;
+  if (difference < -Math.PI) difference += Math.PI * 2;
+  return difference;
+}
+
+// Build the single Bézier get-up/sit-down curve between a seated pose and
+// standing, routed through the low eye-line. `from` is the *seated* end and
+// `to` the *standing* end (the rise runs from -> to, the sit runs to -> from),
+// so the seated end MUST be the exact pose the 2D reading is showing — the
+// portrait reading is far more top-down than landscape, and using the wrong one
+// snaps the view ~26° at the hand-off. Yaw is unwrapped along the path so a
+// turned-around sitter rotates back the short way.
+function buildSeatCurve(from, to) {
+  const wYaw = from.yaw + angleDelta(from.yaw, SEATED_EYELINE.yaw);
+  return {
+    from,
+    to,
+    eyeCp: new THREE.Vector3(
+      bezierControl(from.eye.x, SEATED_EYELINE.eye.x, to.eye.x),
+      bezierControl(from.eye.y, SEATED_EYELINE.eye.y, to.eye.y),
+      bezierControl(from.eye.z, SEATED_EYELINE.eye.z, to.eye.z),
+    ),
+    pitchCp: bezierControl(from.pitch, SEATED_EYELINE.pitch, to.pitch),
+    fromYaw: from.yaw,
+    yawCp: bezierControl(from.yaw, wYaw, wYaw + angleDelta(SEATED_EYELINE.yaw, to.yaw)),
+    toYaw: wYaw + angleDelta(SEATED_EYELINE.yaw, to.yaw),
+  };
 }
 
 function lerpAngle(a, b, t) {
@@ -131,6 +187,12 @@ export function PlayerRig() {
   const seatedTable = mode === 'table'; // hybrid reading backdrop: static camera, no input
   const portrait = size.width < size.height;
 
+  // The seated pose the 2D reading actually shows — far more top-down in
+  // portrait. The get-up/sit-down curve MUST share this exact pose at its
+  // seated end, or the view snaps at the hand-off (portrait was ~26° off).
+  const seatedPose = portrait ? PORTRAIT_SEATED : SEATED;
+  const riseCurve = useMemo(() => buildSeatCurve(portrait ? PORTRAIT_SEATED : SEATED, STANDING), [portrait]);
+
   // Portrait sacrifices pose parity: the approach ends (and the seated table
   // holds) the dedicated top-down portrait pose, so the reveal into the
   // hybrid stays continuous on both orientations.
@@ -149,14 +211,14 @@ export function PlayerRig() {
       phase: seatedTable ? 'table' : approach ? 'approach' : reducedMotion ? 'free' : 'rising',
       phaseT: 0,
       pos: seatedTable
-        ? SEATED.eye.clone()
+        ? seatedPose.eye.clone()
         : approach
           ? start.eye.clone()
           : reducedMotion
             ? STANDING.eye.clone()
-            : SEATED.eye.clone(),
-      yaw: seatedTable ? SEATED.yaw : approach ? start.yaw : reducedMotion ? STANDING.yaw : SEATED.yaw,
-      pitch: seatedTable ? SEATED.pitch : approach ? start.pitch : reducedMotion ? STANDING.pitch : SEATED.pitch,
+            : seatedPose.eye.clone(),
+      yaw: seatedTable ? seatedPose.yaw : approach ? start.yaw : reducedMotion ? STANDING.yaw : seatedPose.yaw,
+      pitch: seatedTable ? seatedPose.pitch : approach ? start.pitch : reducedMotion ? STANDING.pitch : seatedPose.pitch,
       vel: new THREE.Vector3(),
       keys: new Set(),
       pointers: new Map(),
@@ -322,13 +384,17 @@ export function PlayerRig() {
     setAutoWalk(null);
     if (reducedMotion) {
       r.phase = 'done';
-      settleSeated(r);
+      settleSeated(r, seatedPose);
       leaveOnce(r, adapter);
       return;
     }
     r.phase = 'sitting';
     r.phaseT = 0;
-    r.sitFrom = { pos: r.pos.clone(), yaw: r.yaw, pitch: r.pitch };
+    // The reverse of the rise: build the same seat<->stand curve, but with the
+    // standing end at wherever the player actually is, and the seated end at
+    // the current orientation's reading pose (so sitting lands exactly where
+    // the 2D reading resumes — no hand-off snap in portrait).
+    r.sitCurve = buildSeatCurve(seatedPose, { eye: r.pos.clone(), yaw: r.yaw, pitch: r.pitch });
   };
   sitRef.current = beginSit;
 
@@ -546,32 +612,42 @@ export function PlayerRig() {
       r.yaw = pose.yaw;
       r.pitch = pose.pitch;
     } else if (r.phase === 'rising') {
+      // One continuous Bézier from the seated reading pose, THROUGH the low
+      // seated eye-line, up to standing — a single eased curve so the sink and
+      // the push-up read as one motion with no mid-arc hitch. `from` is the
+      // orientation-aware reading pose, so the first frame matches the 2D
+      // reading exactly (no snap), and it ends on STANDING for a clean hand-off.
+      const c = riseCurve;
       r.phaseT += delta / RISE_SECONDS;
-      const t = smooth(Math.min(1, r.phaseT));
-      r.pos.lerpVectors(SEATED.eye, STANDING.eye, t);
-      r.yaw = THREE.MathUtils.lerp(SEATED.yaw, STANDING.yaw, t);
-      r.pitch = THREE.MathUtils.lerp(SEATED.pitch, STANDING.pitch, t);
+      const s = smootherstep(Math.min(1, r.phaseT));
+      r.pos.set(
+        bezier(c.from.eye.x, c.eyeCp.x, c.to.eye.x, s),
+        bezier(c.from.eye.y, c.eyeCp.y, c.to.eye.y, s),
+        bezier(c.from.eye.z, c.eyeCp.z, c.to.eye.z, s),
+      );
+      r.yaw = bezier(c.fromYaw, c.yawCp, c.toYaw, s);
+      r.pitch = bezier(c.from.pitch, c.pitchCp, c.to.pitch, s);
       if (r.phaseT >= 1) r.phase = 'free';
     } else if (r.phase === 'free') {
       stepMovement(r, delta, reducedMotion, interactables, setFocusId, setAutoWalk);
       updateFocus(r, camera, interactables, setFocusId);
     } else if (r.phase === 'sitting') {
+      // The reverse of the rise: the same seat<->stand curve traversed standing
+      // (`to`) -> eye-line -> seated (`from`), so sitting glides down and lands
+      // exactly on the orientation's reading pose the 2D table resumes at.
+      const c = r.sitCurve;
       r.phaseT += delta / SIT_SECONDS;
-      const t = Math.min(1, r.phaseT);
-      if (t < 0.55) {
-        const k = smooth(t / 0.55);
-        r.pos.lerpVectors(r.sitFrom.pos, STANDING.eye, k);
-        r.yaw = lerpAngle(r.sitFrom.yaw, STANDING.yaw, k);
-        r.pitch = THREE.MathUtils.lerp(r.sitFrom.pitch, STANDING.pitch, k);
-      } else {
-        const k = smooth((t - 0.55) / 0.45);
-        r.pos.lerpVectors(STANDING.eye, SEATED.eye, k);
-        r.yaw = lerpAngle(STANDING.yaw, SEATED.yaw, k);
-        r.pitch = THREE.MathUtils.lerp(STANDING.pitch, SEATED.pitch, k);
-      }
-      if (t >= 1) {
+      const s = smootherstep(Math.min(1, r.phaseT));
+      r.pos.set(
+        bezier(c.to.eye.x, c.eyeCp.x, c.from.eye.x, s),
+        bezier(c.to.eye.y, c.eyeCp.y, c.from.eye.y, s),
+        bezier(c.to.eye.z, c.eyeCp.z, c.from.eye.z, s),
+      );
+      r.yaw = bezier(c.toYaw, c.yawCp, c.fromYaw, s);
+      r.pitch = bezier(c.to.pitch, c.pitchCp, c.from.pitch, s);
+      if (r.phaseT >= 1) {
         r.phase = 'done';
-        settleSeated(r);
+        settleSeated(r, seatedPose);
         leaveOnce(r, adapter);
       }
     }
@@ -582,10 +658,10 @@ export function PlayerRig() {
   return null;
 }
 
-function settleSeated(r) {
-  r.pos.copy(SEATED.eye);
-  r.yaw = SEATED.yaw;
-  r.pitch = SEATED.pitch;
+function settleSeated(r, pose = SEATED) {
+  r.pos.copy(pose.eye);
+  r.yaw = pose.yaw;
+  r.pitch = pose.pitch;
   if (r.focusId) r.focusId = null;
 }
 

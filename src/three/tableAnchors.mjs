@@ -39,7 +39,10 @@ import {
 
 const ANCHORED_CLASS = 'table3d-anchored';
 const HAND_CLASS = 'table3d-anchored-hand';
-const PORTRAIT_HAND_KEY = 'tlr_t3d_hand_anchor_portrait';
+// Small upward nudge (px) applied to the anchored hand dock so the fan sits a
+// touch higher off the near cloth edge. Mirrors the native-dock lift in
+// attic3d.css so both compositions raise the dock by the same amount.
+const HAND_LIFT_PX = 14;
 const APPLIED_VARS = [];
 
 function setVar(style, name, value) {
@@ -83,9 +86,11 @@ function unionRect(elements) {
   return { left, right, top, bottom, width: right - left, height: bottom - top };
 }
 
-function portraitHandEnabled() {
+// The hand fan now stays as the native bottom-of-screen dock by default; this
+// only re-seats it onto the cloth when explicitly opted in for comparison.
+function handAnchorOptIn() {
   try {
-    return localStorage.getItem(PORTRAIT_HAND_KEY) === '1';
+    return localStorage.getItem('tlr_t3d_hand_anchor') === '1';
   } catch {
     return false;
   }
@@ -138,9 +143,12 @@ export function applyTableAnchors(camera, size) {
     spreadFits = spreadCenter.x - halfWidth >= 0 && spreadCenter.x + halfWidth <= size.width;
   }
 
-  // Controlled escalation: the hand only anchors where it has room —
-  // always attempted on landscape/desktop, opt-in on portrait (Test B).
-  const attemptHand = spreadFits && (!portrait || portraitHandEnabled());
+  // The hand fan is deliberately NOT re-seated onto the cloth: it stays as the
+  // native SPv2 dock at the screen bottom, full size (matching the spread's
+  // card size) rather than shrunk to fit the near cloth edge. Anchoring it was
+  // what crushed it to the 0.45 scale floor. Kept behind an opt-in debug flag
+  // (tlr_t3d_hand_anchor === '1') only for comparison.
+  const attemptHand = spreadFits && handAnchorOptIn();
   const hand = document.getElementById('hand');
   const dock = document.querySelector('.handDock');
   const handAnchor = projectPoint(camera, size, anchors['hand-c']);
@@ -160,7 +168,9 @@ export function applyTableAnchors(camera, size) {
         // fan's visual center on the hand anchor.
         const originY = dock.getBoundingClientRect().bottom;
         const fanCenterNatural = (fanRect.top + fanRect.bottom) / 2;
-        const wanted = handAnchor.y - (originY + scale * (fanCenterNatural - originY));
+        // A small extra lift raises the dock off the very near edge so the fan
+        // reads clearly above the cloth rather than hugging the bottom rim.
+        const wanted = handAnchor.y - (originY + scale * (fanCenterNatural - originY)) - HAND_LIFT_PX;
         // Lift freely onto the cloth, but never push the bottom-pinned dock
         // further down than a whisker.
         const dy = THREE.MathUtils.clamp(wanted, -size.height * 0.3, 24);

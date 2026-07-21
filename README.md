@@ -21,15 +21,23 @@ Headless check: `npm run test:attic3d`.
 
 ## Running the game
 
-Serve the repo root over HTTP and open `index.html`. Any static file server works:
+From the repository root, run:
 
 ```sh
-npx serve .
-# or
-python3 -m http.server 8080
+npm start
 ```
 
-Opening `index.html` directly via `file://` works for basic play but disables ES module loading, which means the architecture bridge (store, reducer, live mirror) will not mount. The game falls back to legacy-only mode automatically in that case.
+The start command restores dependencies with `npm ci` when `node_modules` is
+missing, builds the generated `dist/` bundles, and then serves the game at
+`http://localhost:8080`.
+
+Do not start a fresh checkout with a plain static file server. `game.html`
+loads generated files under `dist/`, and that directory is intentionally not
+committed. After `npm start` or `npm run build` has generated `dist/`, another
+HTTP server can serve the repository root if needed.
+
+Opening `index.html` directly via `file://` disables ES module loading and is
+not a supported run path.
 
 ## Multiplayer with Ably
 
@@ -56,7 +64,7 @@ For local multiplayer testing, use Netlify's local dev server so the function ro
 npx netlify dev
 ```
 
-The old `npm run dev` static server still works for singleplayer, but it does not serve Netlify Functions.
+The `npm run dev` server works for singleplayer, but it does not serve Netlify Functions.
 
 ## Validation suite
 
@@ -84,7 +92,7 @@ Individual suites:
 ## Development tooling
 
 ```sh
-npm install        # one-time: installs ESLint + Prettier (dev only)
+npm ci             # clean dependency install
 npm run lint       # correctness-focused lint over src/ and scripts/
 npm run format     # Prettier (skips the terse legacy app/ modules)
 ```
