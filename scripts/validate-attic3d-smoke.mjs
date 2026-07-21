@@ -153,18 +153,21 @@ async function main() {
     assert.ok(afterApproach.overlayGone, 'approach debug handle should clear on dispose');
 
     // Hybrid seated table: the 3D room stays mounted beneath the live SPv2
-    // DOM, the painted body background comes off, and the spread + hand are
-    // anchored onto the projected table points.
+    // DOM, the painted body background comes off, and the spread is anchored
+    // onto the projected cloth. The hand dock intentionally stays in its native
+    // bottom-of-screen position unless the comparison-only opt-in is enabled.
     await page.waitForFunction(() => window.__tlrTableSeat?.mounted === true, null, { timeout: 15000 });
     await page.waitForFunction(
       () =>
         document.body.classList.contains('table3d-live') &&
-        document.body.classList.contains('table3d-anchored') &&
-        // landscape/desktop anchors the hand as well (portrait keeps it native)
-        document.body.classList.contains('table3d-anchored-hand'),
+        document.body.classList.contains('table3d-anchored'),
       null,
       { timeout: 12000 },
     );
+    const defaultHandAnchored = await page.evaluate(() =>
+      document.body.classList.contains('table3d-anchored-hand'),
+    );
+    assert.equal(defaultHandAnchored, false, 'the default seated view should keep the hand dock native');
     const hybrid = await page.evaluate(() => {
       const canvas = document.querySelector('#table3dSeat canvas');
       const rootStyle = getComputedStyle(document.documentElement);
@@ -187,8 +190,8 @@ async function main() {
     );
     await page.screenshot({ path: 'artifacts/attic3d-8-seated-hybrid.png' });
 
-    // The transformed hand must stay fully interactive: a real click on a
-    // card (through the scaled dock) selects it.
+    // The native hand dock must stay fully interactive over the seated
+    // backdrop: a real click on a card selects it.
     const cardPoint = await page.evaluate(() => {
       const cards = document.querySelectorAll('#hand .card[data-uid]');
       const card = cards[cards.length - 1]; // rightmost: top of the fan stack
