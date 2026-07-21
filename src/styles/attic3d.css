@@ -257,13 +257,22 @@ html body.single-player-v2.generated-sheet-ready.table3d-live.table3d-anchored-h
 }
 
 /* The hand fan is the native bottom-of-screen dock (no longer re-seated onto
-   the cloth — that shrank it). Scale it UP a touch about its bottom edge so the
-   cards read at roughly the spread's card size and the dock feels substantial,
-   and lift it off the very bottom edge. */
+   the cloth — that shrank it). Lift it a touch off the very bottom edge. This
+   base rule applies in every orientation, so it stays the untouched native
+   mobile/portrait dock. */
 html body.single-player-v2.generated-sheet-ready.table3d-live:not(.table3d-anchored-hand) .handDock,
 html body.single-player-v2.generated-sheet-ready.table3d-live:not(.table3d-anchored-hand) #handSwipeZone {
-  transform: translateY(-14px) scale(0.92);
+  transform: translateY(-14px);
   transform-origin: 50% 100%;
+}
+
+/* Landscape/desktop only: size the dock so the cards read at roughly the
+   spread's card size on the zoomed-in table. Portrait keeps its own dock. */
+@media (orientation: landscape) {
+  html body.single-player-v2.generated-sheet-ready.table3d-live:not(.table3d-anchored-hand) .handDock,
+  html body.single-player-v2.generated-sheet-ready.table3d-live:not(.table3d-anchored-hand) #handSwipeZone {
+    transform: translateY(-14px) scale(0.92);
+  }
 }
 
 
