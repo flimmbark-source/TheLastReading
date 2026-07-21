@@ -57,19 +57,37 @@ jobs:
           click_needle = "    await page.mouse.click(cardPoint.x, cardPoint.y);"
           click_replacement = """    const inspectCardHit = async label => {
               const state = await page.evaluate(({ point, label }) => {
-                const chain = [];
-                for (let node = document.elementFromPoint(point.x, point.y); node && chain.length < 8; node = node.parentElement) {
-                  chain.push(`${node.tagName.toLowerCase()}${node.id ? `#${node.id}` : ''}${node.className ? `.${String(node.className).trim().replace(/\\s+/g, '.')}` : ''}`);
-                }
+                const describe = element => {
+                  if (!element) return null;
+                  const style = getComputedStyle(element);
+                  const rect = element.getBoundingClientRect();
+                  return {
+                    tag: element.tagName.toLowerCase(),
+                    id: element.id || null,
+                    className: String(element.className || ''),
+                    pointerEvents: style.pointerEvents,
+                    position: style.position,
+                    zIndex: style.zIndex,
+                    display: style.display,
+                    visibility: style.visibility,
+                    opacity: style.opacity,
+                    transform: style.transform,
+                    translate: style.translate,
+                    rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+                  };
+                };
                 const card = document.querySelector('#hand .card[data-uid]:last-child');
-                const rect = card?.getBoundingClientRect();
+                const stack = document.elementsFromPoint(point.x, point.y).slice(0, 10).map(describe);
                 return {
                   label,
+                  viewport: { innerWidth, innerHeight, visualWidth: visualViewport?.width, visualHeight: visualViewport?.height },
                   point,
-                  chain,
-                  cardRect: rect ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height } : null,
-                  handPointerEvents: getComputedStyle(document.getElementById('hand')).pointerEvents,
-                  dockPointerEvents: getComputedStyle(document.querySelector('.handDock')).pointerEvents,
+                  stack,
+                  card: describe(card),
+                  hand: describe(document.getElementById('hand')),
+                  dock: describe(document.querySelector('.handDock')),
+                  zone: describe(document.getElementById('handSwipeZone')),
+                  lower: describe(document.querySelector('.hand-swipe-zone-lower')),
                   bodyClasses: [...document.body.classList],
                   selected: Boolean(document.querySelector('#hand .card.sel, #hand .card.ability-picked, .card-detail-trigger')),
                 };
