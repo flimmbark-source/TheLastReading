@@ -1,0 +1,106 @@
+name: Apply attic window outside vista
+
+on:
+  push:
+    branches: [agent/attic-window-outside]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/attic-window-outside
+          fetch-depth: 0
+      - name: Put outside.png beyond the attic window
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/three/AtticRoom.jsx')
+          source = path.read_text()
+
+          import_old = "import { useFrame } from '@react-three/fiber';"
+          import_new = "import { useFrame, useLoader } from '@react-three/fiber';"
+          if source.count(import_old) != 1:
+              raise SystemExit(f'Expected one fiber import, found {source.count(import_old)}')
+          source = source.replace(import_old, import_new)
+
+          lambert_block = """function lambert(color, extra = {}) {
+            return new THREE.MeshLambertMaterial({ color, ...extra });
+          }
+          """
+          outside_component = """
+          // A real plane beyond the gable opening, not a decal on the room-facing
+          // glass. The moon sprite, frame, point light, and MoonShaft all remain
+          // closer to the camera so their glow and atmosphere layer over the art.
+          function WindowOutside() {
+            const loadedTexture = useLoader(THREE.TextureLoader, '/outside.png');
+            const texture = useMemo(() => {
+              const imageWidth = Number(loadedTexture.image?.width) || 1;
+              const imageHeight = Number(loadedTexture.image?.height) || 1;
+              const imageAspect = imageWidth / imageHeight;
+              const windowAspect = WINDOW_SPOT.width / WINDOW_SPOT.height;
+
+              loadedTexture.colorSpace = THREE.SRGBColorSpace;
+              loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
+              loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
+              loadedTexture.repeat.set(1, 1);
+              loadedTexture.offset.set(0, 0);
+
+              // Cover the opening without stretching the supplied artwork.
+              if (imageAspect > windowAspect) {
+                const visibleWidth = windowAspect / imageAspect;
+                loadedTexture.repeat.x = visibleWidth;
+                loadedTexture.offset.x = (1 - visibleWidth) / 2;
+              } else if (imageAspect < windowAspect) {
+                const visibleHeight = imageAspect / windowAspect;
+                loadedTexture.repeat.y = visibleHeight;
+                loadedTexture.offset.y = (1 - visibleHeight) / 2;
+              }
+
+              loadedTexture.needsUpdate = true;
+              return loadedTexture;
+            }, [loadedTexture]);
+
+            return (
+              <mesh name="attic-window-outside" position={[0, 0, -0.36]} renderOrder={-2}>
+                <planeGeometry args={[WINDOW_SPOT.width + 0.12, WINDOW_SPOT.height + 0.12]} />
+                <meshBasicMaterial map={texture} fog={false} />
+              </mesh>
+            );
+          }
+          """
+          if source.count(lambert_block) != 1:
+              raise SystemExit('Could not find lambert helper insertion point')
+          source = source.replace(lambert_block, lambert_block + outside_component)
+
+          window_old = """      {/* window: night sky, moon, frame cross, light shaft */}
+                <group position={[WINDOW_SPOT.center[0], WINDOW_SPOT.center[1], -ROOM.halfZ]}>
+                  <mesh position={[0, 0, -0.35]}>
+                    <planeGeometry args={[WINDOW_SPOT.width + 1.6, WINDOW_SPOT.height + 1.6]} />
+                    <meshBasicMaterial color="#0e1a33" />
+                  </mesh>
+          """
+          window_new = """      {/* window: outside vista, moon, frame cross, light shaft */}
+                <group position={[WINDOW_SPOT.center[0], WINDOW_SPOT.center[1], -ROOM.halfZ]}>
+                  <WindowOutside />
+          """
+          if source.count(window_old) != 1:
+              raise SystemExit('Could not find the existing window backdrop block')
+          source = source.replace(window_old, window_new)
+          path.write_text(source)
+
+          Path('.github/workflows/apply-attic-window-outside.yml').unlink()
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/three/AtticRoom.jsx .github/workflows/apply-attic-window-outside.yml
+          git commit -m "Render outside vista behind attic moonlight"
+          git push origin HEAD:agent/attic-window-outside
