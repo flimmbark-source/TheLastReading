@@ -273,6 +273,17 @@ html body.single-player-v2.generated-sheet-ready.table3d-live:not(.table3d-ancho
   html body.single-player-v2.generated-sheet-ready.table3d-live:not(.table3d-anchored-hand) #handSwipeZone {
     transform: translateY(-14px) scale(0.92);
   }
+
+  /* The desktop hand is taller than its decorative dock. Once the dock is
+     transformed for the seated view, Chromium clips descendant hit testing to
+     that smaller transformed border box even though the cards still paint above
+     it. Match the dock's box to the existing hand height without moving either
+     the bottom-aligned hand or the bottom-anchored tray art. The established
+     pointer contract remains intact: empty fan space passes through to the
+     swipe zone, while individual cards stay directly clickable. */
+  html body.single-player-v2.generated-sheet-ready.table3d-live .handDock {
+    height: 25.5dvh;
+  }
 }
 
 

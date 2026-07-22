@@ -63,8 +63,8 @@ async function verifyCardDetailTrigger(page, width) {
     `detail trigger should be the live hit target at ${width}px; topmost=${hit.chain.join(' > ')} rect=${JSON.stringify(hit.rect)}`,
   );
 
-  await page.touchscreen.tap(hit.x, hit.y);
-  await page.waitForSelector('.card-detail-backdrop', { timeout: 1500 });
+  await page.locator('.card-detail-trigger').tap({ timeout: 5000 });
+  await page.waitForSelector('.card-detail-backdrop', { timeout: 5000 });
   await page.evaluate(() => window.closeCardDetail?.());
 }
 
@@ -95,16 +95,18 @@ async function main() {
       await page.addInitScript(() => {
         try { window.localStorage.setItem('tlr_tut_done', '1'); } catch {}
       });
-      await page.goto(`${baseUrl}/game.html`, { waitUntil: 'networkidle' });
+      await page.goto(`${baseUrl}/game.html?attic3d=0`, { waitUntil: 'networkidle' });
 
-      // Drive the real main-menu boot path instead of forcing SPv2 body classes:
-      // the SPv2 game engine (gesture drawers, ability handlers, generated-sheet
-      // art) only loads once a game actually starts, so a synthetic class swap
-      // renders an empty shell and can't catch real interaction regressions.
+      // Drive the real main-menu boot path with the 3D kill-switch enabled.
+      // The separate attic3d smoke owns the default cinematic and seated
+      // backdrop; this suite isolates the SPv2 DOM engine, which only loads
+      // once a game actually starts. A synthetic class swap would render an
+      // empty shell and could not catch real interaction regressions.
       await page.click('button[onclick="tlrMainMenuNewGame()"]');
       await page.waitForFunction(() => document.body.classList.contains('generated-sheet-ready'));
       await page.waitForFunction(() => document.getElementById('mainMenu')?.hidden === true);
       await page.waitForSelector('#abilitiesBtn');
+      await page.waitForFunction(() => !document.querySelector('#hand > .card.card-draw-dealt'), null, { timeout: 5000 });
 
       const snapshot = await page.evaluate(() => {
         const boxFor = selector => {

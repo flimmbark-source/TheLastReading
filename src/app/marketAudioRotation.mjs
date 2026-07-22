@@ -1,4 +1,5 @@
 import { installPackOpeningSafety } from './packOpeningSafety.mjs';
+import { installPlayerFeedback } from './playerFeedback.mjs';
 
 const MARKET_AMBIENCE_FILES = Object.freeze([
   'assets/audio/soundreality-bell-fx-410608.mp3',
@@ -35,7 +36,10 @@ function rotatedMarketSource(src, target = window) {
 }
 
 export function installMarketAudioRotation(target = window) {
+  // This module is part of the lightweight menu boot, so small menu services
+  // that must exist before the full game bundle loads are installed here.
   installPackOpeningSafety(target);
+  installPlayerFeedback(target);
   if (!target || target.__tlrMarketAudioRotationInstalled) return;
   const NativeAudio = target.Audio || globalThis.Audio;
   if (typeof NativeAudio !== 'function') return;

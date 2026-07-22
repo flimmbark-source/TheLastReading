@@ -49,7 +49,9 @@ try {
     });
     page.on('pageerror', error => consoleErrors.push(error.message));
 
-    await page.goto(`${baseUrl}/game.html`, { waitUntil: 'networkidle' });
+    // This workflow measures the SPV2 DOM; the dedicated attic3d smoke owns
+    // the default approach and seated-backdrop flow.
+    await page.goto(`${baseUrl}/game.html?attic3d=0`, { waitUntil: 'networkidle' });
     await page.locator('button', { hasText: 'New Reading' }).click();
     await page.waitForSelector('body.single-player-v2.generated-sheet-ready', { timeout: 15000 });
 

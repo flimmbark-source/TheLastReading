@@ -584,10 +584,14 @@ export function PlayerRig() {
 
   useFrame((_, rawDelta) => {
     const r = rig.current;
+    // Keep movement/collision steps bounded, but let cinematic phases advance
+    // against real elapsed time. Reusing the 50 ms movement cap made the
+    // nominal 1.7-second rise/sit take 10+ seconds on low-FPS software WebGL.
     const delta = Math.min(rawDelta, 1 / 20);
+    const sequenceDelta = Math.min(rawDelta, 1 / 4);
 
     if (r.phase === 'approach') {
-      r.phaseT += delta;
+      r.phaseT += sequenceDelta;
       const sample = sampleKeyframes(approachFrames, r.phaseT);
       r.pos.copy(sample.eye);
       r.yaw = sample.yaw;
@@ -618,7 +622,7 @@ export function PlayerRig() {
       // orientation-aware reading pose, so the first frame matches the 2D
       // reading exactly (no snap), and it ends on STANDING for a clean hand-off.
       const c = riseCurve;
-      r.phaseT += delta / RISE_SECONDS;
+      r.phaseT += sequenceDelta / RISE_SECONDS;
       const s = smootherstep(Math.min(1, r.phaseT));
       r.pos.set(
         bezier(c.from.eye.x, c.eyeCp.x, c.to.eye.x, s),
@@ -636,7 +640,7 @@ export function PlayerRig() {
       // (`to`) -> eye-line -> seated (`from`), so sitting glides down and lands
       // exactly on the orientation's reading pose the 2D table resumes at.
       const c = r.sitCurve;
-      r.phaseT += delta / SIT_SECONDS;
+      r.phaseT += sequenceDelta / SIT_SECONDS;
       const s = smootherstep(Math.min(1, r.phaseT));
       r.pos.set(
         bezier(c.to.eye.x, c.eyeCp.x, c.from.eye.x, s),
