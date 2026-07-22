@@ -4,7 +4,7 @@
 // purpose — the game's ps1aesthetic direction, not a budget shortcut.
 
 import { useContext, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useLoader } from '@react-three/fiber';
 import * as THREE from 'three';
 import { AtticContext, cueEnergy } from './AtticExperience.jsx';
 import { ROOM, TABLE, CHAIR, DECK_SPOT, WINDOW_SPOT, DOOR_SPOT, TRUNK_SPOT } from './atticLayout.mjs';
@@ -12,6 +12,46 @@ import { radialGlowTexture, shaftTexture } from './canvasTextures.mjs';
 
 function lambert(color, extra = {}) {
   return new THREE.MeshLambertMaterial({ color, ...extra });
+}
+
+// A real plane beyond the gable opening, not a decal on the room-facing
+// glass. The moon sprite, frame, point light, and MoonShaft all remain
+// closer to the camera so their glow and atmosphere layer over the art.
+function WindowOutside() {
+  const loadedTexture = useLoader(THREE.TextureLoader, '/outside.png');
+  const texture = useMemo(() => {
+    const imageWidth = Number(loadedTexture.image?.width) || 1;
+    const imageHeight = Number(loadedTexture.image?.height) || 1;
+    const imageAspect = imageWidth / imageHeight;
+    const windowAspect = WINDOW_SPOT.width / WINDOW_SPOT.height;
+
+    loadedTexture.colorSpace = THREE.SRGBColorSpace;
+    loadedTexture.wrapS = THREE.ClampToEdgeWrapping;
+    loadedTexture.wrapT = THREE.ClampToEdgeWrapping;
+    loadedTexture.repeat.set(1, 1);
+    loadedTexture.offset.set(0, 0);
+
+    // Cover the opening without stretching the supplied artwork.
+    if (imageAspect > windowAspect) {
+      const visibleWidth = windowAspect / imageAspect;
+      loadedTexture.repeat.x = visibleWidth;
+      loadedTexture.offset.x = (1 - visibleWidth) / 2;
+    } else if (imageAspect < windowAspect) {
+      const visibleHeight = imageAspect / windowAspect;
+      loadedTexture.repeat.y = visibleHeight;
+      loadedTexture.offset.y = (1 - visibleHeight) / 2;
+    }
+
+    loadedTexture.needsUpdate = true;
+    return loadedTexture;
+  }, [loadedTexture]);
+
+  return (
+    <mesh name="attic-window-outside" position={[0, 0, -0.36]} renderOrder={-2}>
+      <planeGeometry args={[WINDOW_SPOT.width + 0.12, WINDOW_SPOT.height + 0.12]} />
+      <meshBasicMaterial map={texture} fog={false} />
+    </mesh>
+  );
 }
 
 // The moonlight shaft breathes slowly and answers presentation cues — the
@@ -199,12 +239,9 @@ export function AtticRoom() {
         </group>
       ))}
 
-      {/* window: night sky, moon, frame cross, light shaft */}
+      {/* window: outside vista, moon, frame cross, light shaft */}
       <group position={[WINDOW_SPOT.center[0], WINDOW_SPOT.center[1], -ROOM.halfZ]}>
-        <mesh position={[0, 0, -0.35]}>
-          <planeGeometry args={[WINDOW_SPOT.width + 1.6, WINDOW_SPOT.height + 1.6]} />
-          <meshBasicMaterial color="#0e1a33" />
-        </mesh>
+        <WindowOutside />
         <sprite position={[0.15, 0.32, -0.3]} scale={[1.15, 1.15, 1]}>
           <spriteMaterial map={moonTexture} transparent depthWrite={false} blending={THREE.AdditiveBlending} />
         </sprite>
